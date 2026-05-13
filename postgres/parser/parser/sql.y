@@ -1266,7 +1266,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 
 %type <str> name opt_name opt_name_parens use_db_name
 %type <str> privilege savepoint_name
-%type <tree.KVOption> role_option password_clause valid_until_clause
+%type <tree.KVOption> role_option create_role_option password_clause valid_until_clause
 %type <tree.Operator> subquery_op
 %type <*tree.UnresolvedName> func_name func_name_no_crdb_extra
 %type <str> opt_compression 
@@ -1521,7 +1521,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %type <privilege.List> privileges
 %type <tree.PrivForCols> privilege_for_cols
 %type <[]tree.PrivForCols> privilege_for_cols_list privileges_for_cols
-%type <[]tree.KVOption> opt_role_options role_options
+%type <[]tree.KVOption> opt_role_options role_options opt_create_role_options create_role_options
 %type <str> opt_grant_role_with admin_inherit_set option_true_false opt_granted_by
 
 %type <tree.Expr> opt_alter_column_using
@@ -9854,11 +9854,11 @@ opt_constraint:
 // %Text: CREATE ROLE [IF NOT EXISTS] <name> [ [WITH] <OPTIONS...> ]
 // %SeeAlso: ALTER ROLE, DROP ROLE, SHOW ROLES
 create_role_stmt:
-  CREATE role_or_group_or_user non_reserved_word_or_sconst opt_role_options
+  CREATE role_or_group_or_user non_reserved_word_or_sconst opt_create_role_options
   {
     $$.val = &tree.CreateRole{Name: $3, KVOptions: $4.kvOptions(), IsRole: $2.bool()}
   }
-| CREATE role_or_group_or_user IF NOT EXISTS non_reserved_word_or_sconst opt_role_options
+| CREATE role_or_group_or_user IF NOT EXISTS non_reserved_word_or_sconst opt_create_role_options
   {
     $$.val = &tree.CreateRole{Name: $6, IfNotExists: true, KVOptions: $7.kvOptions(), IsRole: $2.bool()}
   }
@@ -10111,6 +10111,20 @@ role_option:
   {
     $$.val = tree.KVOption{Key: tree.Name($1), Value: nil}
   }
+| CONNECTION LIMIT signed_iconst32
+  {
+    $$.val = tree.KVOption{Key: tree.Name(fmt.Sprintf("%s_%s", $1, $2)), Value: tree.NewDInt(tree.DInt($3.val.(int32)))}
+  }
+| SYSID ICONST
+  {
+    $$.val = tree.KVOption{Key: tree.Name($1), Value: nil}
+  }
+| password_clause
+| valid_until_clause
+
+
+create_role_option:
+  role_option
 | IN ROLE name_list
   {
     $$.val = tree.KVOption{Key: tree.Name("IN_ROLE"), Value: tree.NewDString(strings.Join($3.nameList().ToStrings(), "\x00"))}
@@ -10123,16 +10137,6 @@ role_option:
   {
     $$.val = tree.KVOption{Key: tree.Name("ADMIN"), Value: tree.NewDString(strings.Join($2.nameList().ToStrings(), "\x00"))}
   }
-| CONNECTION LIMIT signed_iconst32
-  {
-    $$.val = tree.KVOption{Key: tree.Name(fmt.Sprintf("%s_%s", $1, $2)), Value: tree.NewDInt(tree.DInt($3.val.(int32)))}
-  }
-| SYSID ICONST
-  {
-    $$.val = tree.KVOption{Key: tree.Name($1), Value: nil}
-  }
-| password_clause
-| valid_until_clause
 
 
 role_options:
@@ -10147,6 +10151,26 @@ role_options:
 
 opt_role_options:
   opt_with role_options
+  {
+    $$.val = $2.kvOptions()
+  }
+| /* EMPTY */
+  {
+    $$.val = nil
+  }
+
+create_role_options:
+  create_role_option
+  {
+    $$.val = []tree.KVOption{$1.kvOption()}
+  }
+|  create_role_options create_role_option
+  {
+    $$.val = append($1.kvOptions(), $2.kvOption())
+  }
+
+opt_create_role_options:
+  opt_with create_role_options
   {
     $$.val = $2.kvOptions()
   }

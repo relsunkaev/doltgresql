@@ -82,6 +82,12 @@ func nodeCreateRole(ctx *Context, node *tree.CreateRole) (vitess.Statement, erro
 			createRole.CanCreateRoles = true
 		case "INHERIT":
 			createRole.InheritPrivileges = true
+		case "IN_ROLE":
+			roleNames, err := createRoleMembershipOption(kvOption)
+			if err != nil {
+				return nil, err
+			}
+			createRole.AddToRoles = append(createRole.AddToRoles, roleNames...)
 		case "LOGIN":
 			createRole.CanLogin = true
 		case "NOBYPASSRLS":
@@ -116,6 +122,12 @@ func nodeCreateRole(ctx *Context, node *tree.CreateRole) (vitess.Statement, erro
 			}
 		case "REPLICATION":
 			createRole.IsReplicationRole = true
+		case "ROLE":
+			roleNames, err := createRoleMembershipOption(kvOption)
+			if err != nil {
+				return nil, err
+			}
+			createRole.AddAsMembers = append(createRole.AddAsMembers, roleNames...)
 		case "SUPERUSER":
 			createRole.IsSuperUser = true
 		case "SYSID":
@@ -132,6 +144,12 @@ func nodeCreateRole(ctx *Context, node *tree.CreateRole) (vitess.Statement, erro
 				createRole.ValidUntil = string(*strVal)
 				createRole.IsValidUntilSet = true
 			}
+		case "ADMIN":
+			roleNames, err := createRoleMembershipOption(kvOption)
+			if err != nil {
+				return nil, err
+			}
+			createRole.AddAsAdminMembers = append(createRole.AddAsAdminMembers, roleNames...)
 		default:
 			return nil, errors.Errorf(`unknown role option "%s"`, kvOption.Key)
 		}
@@ -140,4 +158,12 @@ func nodeCreateRole(ctx *Context, node *tree.CreateRole) (vitess.Statement, erro
 		Statement: createRole,
 		Children:  nil,
 	}, nil
+}
+
+func createRoleMembershipOption(kvOption tree.KVOption) ([]string, error) {
+	value, ok := kvOption.Value.(*tree.DString)
+	if !ok || value == nil {
+		return nil, errors.Errorf(`unknown role option value (%T) for option "%s"`, kvOption.Value, kvOption.Key)
+	}
+	return strings.Split(string(*value), "\x00"), nil
 }

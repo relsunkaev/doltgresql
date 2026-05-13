@@ -1231,20 +1231,32 @@ func (o KVOptions) ToRoleOptions(
 
 func (o *KVOptions) formatAsRoleOptions(ctx *FmtCtx) {
 	for _, option := range *o {
+		optionName := strings.ToUpper(option.Key.String())
 		ctx.WriteString(" ")
 		ctx.WriteString(
 			// "_" replaces space (" ") in YACC for handling tree.Name formatting.
 			strings.ReplaceAll(
-				strings.ToUpper(option.Key.String()), "_", " "),
+				optionName, "_", " "),
 		)
 
 		// Password is a special case.
-		if strings.ToUpper(option.Key.String()) == "PASSWORD" {
+		if optionName == "PASSWORD" {
 			ctx.WriteString(" ")
 			if ctx.flags.HasFlags(FmtShowPasswords) {
 				ctx.FormatNode(option.Value)
 			} else {
 				ctx.WriteString("*****")
+			}
+		} else if optionName == "IN_ROLE" || optionName == "ROLE" || optionName == "ADMIN" {
+			if roleList, ok := option.Value.(*DString); ok {
+				for i, roleName := range strings.Split(string(*roleList), "\x00") {
+					if i == 0 {
+						ctx.WriteString(" ")
+					} else {
+						ctx.WriteString(", ")
+					}
+					ctx.WriteString(roleName)
+				}
 			}
 		} else if option.Value == DNull {
 			ctx.WriteString(" ")

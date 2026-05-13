@@ -70,10 +70,26 @@ func (c *CreateRole) Resolved() bool {
 func (c *CreateRole) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 	var userRole auth.Role
 	var roleExists bool
+	var addToRoles []auth.Role
+	var addAsMembers []auth.Role
+	var addAsAdminMembers []auth.Role
+	var resolveErr error
 	auth.LockRead(func() {
 		roleExists = auth.RoleExists(c.Name)
 		userRole = auth.GetRole(ctx.Client().User)
+		addToRoles, resolveErr = resolveCreateRoleMembershipRoles(c.AddToRoles)
+		if resolveErr != nil {
+			return
+		}
+		addAsMembers, resolveErr = resolveCreateRoleMembershipRoles(c.AddAsMembers)
+		if resolveErr != nil {
+			return
+		}
+		addAsAdminMembers, resolveErr = resolveCreateRoleMembershipRoles(c.AddAsAdminMembers)
 	})
+	if resolveErr != nil {
+		return nil, resolveErr
+	}
 	if !userRole.IsValid() {
 		return nil, errors.Errorf(`role "%s" does not exist`, ctx.Client().User)
 	}
@@ -100,10 +116,23 @@ func (c *CreateRole) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 	if !userRole.IsSuperUser && c.CanCreateDB && !userRole.CanCreateDB {
 		return nil, errors.New("permission denied")
 	}
+	if !userRole.IsSuperUser {
+		var membershipErr error
+		auth.LockRead(func() {
+			for _, group := range addToRoles {
+				groupID, _, withAdminOption := auth.IsRoleAMember(userRole.ID(), group.ID())
+				if !groupID.IsValid() || !withAdminOption {
+					membershipErr = errors.Errorf(`role "%s" does not have permission to grant role "%s"`, userRole.Name, group.Name)
+					return
+				}
+			}
+		})
+		if membershipErr != nil {
+			return nil, membershipErr
+		}
+	}
 	var role auth.Role
-	auth.LockWrite(func() {
-		role = auth.CreateDefaultRole(c.Name)
-	})
+	role = auth.CreateDefaultRole(c.Name)
 	if !c.IsPasswordNull {
 		password, err := auth.NewScramSha256Password(c.Password)
 		if err != nil {
@@ -127,25 +156,37 @@ func (c *CreateRole) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 		validUntilTime := validUntilAny.(time.Time)
 		role.ValidUntil = &validUntilTime
 	}
-	if len(c.AddToRoles) > 0 {
-		return nil, errors.New("IN ROLE is not yet supported")
-	}
-	if len(c.AddAsMembers) > 0 {
-		return nil, errors.New("ROLE is not yet supported")
-	}
-	if len(c.AddAsAdminMembers) > 0 {
-		return nil, errors.New("ADMIN is not yet supported")
-	}
 
 	var err error
 	auth.LockWrite(func() {
 		auth.SetRole(role)
+		for _, group := range addToRoles {
+			auth.AddMemberToGroup(role.ID(), group.ID(), false, userRole.ID())
+		}
+		for _, member := range addAsMembers {
+			auth.AddMemberToGroup(member.ID(), role.ID(), false, userRole.ID())
+		}
+		for _, member := range addAsAdminMembers {
+			auth.AddMemberToGroup(member.ID(), role.ID(), true, userRole.ID())
+		}
 		err = auth.PersistChanges()
 	})
 	if err != nil {
 		return nil, err
 	}
 	return sql.RowsToRowIter(), nil
+}
+
+func resolveCreateRoleMembershipRoles(roleNames []string) ([]auth.Role, error) {
+	roles := make([]auth.Role, len(roleNames))
+	for i, roleName := range roleNames {
+		role := auth.GetRole(roleName)
+		if !role.IsValid() {
+			return nil, errors.Errorf(`role "%s" does not exist`, roleName)
+		}
+		roles[i] = role
+	}
+	return roles, nil
 }
 
 // Schema implements the interface sql.ExecSourceRel.
