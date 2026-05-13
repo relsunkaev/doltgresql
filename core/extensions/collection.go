@@ -120,6 +120,32 @@ func (pge *Collection) AddLoadedExtension(ctx context.Context, ext Extension) er
 	return pge.reloadCaches(ctx)
 }
 
+// UpdateLoadedExtension updates an existing loaded extension in the collection.
+func (pge *Collection) UpdateLoadedExtension(ctx context.Context, ext Extension) error {
+	if _, ok := pge.accessCache[ext.ExtName]; !ok {
+		return errors.Errorf(`extension "%s" does not exist`, ext.ExtName)
+	}
+	data, err := ext.Serialize(ctx)
+	if err != nil {
+		return err
+	}
+	h, err := pge.ns.WriteBytes(ctx, data)
+	if err != nil {
+		return err
+	}
+	mapEditor := pge.underlyingMap.Editor()
+	if err = mapEditor.Update(ctx, string(ext.ExtName), h); err != nil {
+		return err
+	}
+	newMap, err := mapEditor.Flush(ctx)
+	if err != nil {
+		return err
+	}
+	pge.underlyingMap = newMap
+	pge.mapHash = pge.underlyingMap.HashOf()
+	return pge.reloadCaches(ctx)
+}
+
 // DropLoadedExtension drops a loaded extension. This should be called when unloading an extension, but this function
 // itself does not perform the necessary logic.
 func (pge *Collection) DropLoadedExtension(ctx context.Context, names ...id.Extension) error {

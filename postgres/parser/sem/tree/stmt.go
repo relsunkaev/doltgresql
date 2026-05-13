@@ -241,6 +241,14 @@ func (*AlterForeignDataWrapper) StatementType() StatementType { return DDL }
 func (*AlterForeignDataWrapper) StatementTag() string { return "ALTER FOREIGN DATA WRAPPER" }
 
 // StatementType implements the Statement interface.
+func (*AlterExtension) StatementType() StatementType { return DDL }
+
+// StatementTag returns a short string identifying the type of statement.
+func (*AlterExtension) StatementTag() string { return "ALTER EXTENSION" }
+
+func (*AlterExtension) hiddenFromShowQueries() {}
+
+// StatementType implements the Statement interface.
 func (*AlterForeignTable) StatementType() StatementType { return DDL }
 
 // StatementTag returns a short string identifying the type of statement.
@@ -1357,6 +1365,7 @@ func (n *AlterConversion) String() string           { return AsString(n) }
 func (n *AlterDatabase) String() string             { return AsString(n) }
 func (n *AlterDomain) String() string               { return AsString(n) }
 func (n *AlterDefaultPrivileges) String() string    { return AsString(n) }
+func (n *AlterExtension) String() string            { return AsString(n) }
 func (n *AlterForeignDataWrapper) String() string   { return AsString(n) }
 func (n *AlterForeignServer) String() string        { return AsString(n) }
 func (n *AlterForeignTable) String() string         { return AsString(n) }

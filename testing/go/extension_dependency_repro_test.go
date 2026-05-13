@@ -164,6 +164,10 @@ func TestAlterExtensionSetSchemaMovesObjectsRepro(t *testing.T) {
 					Query:    `SELECT to_regtype('extension_move_target.hstore')::text;`,
 					Expected: []sql.Row{{"extension_move_target.hstore"}},
 				},
+				{
+					Query:    `SELECT to_regtype('public.hstore')::text;`,
+					Expected: []sql.Row{{nil}},
+				},
 			},
 		},
 	})

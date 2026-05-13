@@ -970,6 +970,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %type <tree.Statement> alter_type_stmt
 %type <tree.Statement> alter_schema_stmt
 %type <tree.Statement> alter_domain_stmt
+%type <tree.Statement> alter_extension_stmt
 
 // ALTER TABLE
 %type <tree.Statement> alter_onetable_stmt
@@ -1686,6 +1687,7 @@ alter_ddl_stmt:
 | alter_trigger_stmt            // EXTEND WITH HELP: ALTER TRIGGER
 | alter_language_stmt           // EXTEND WITH HELP: ALTER LANGUAGE
 | alter_domain_stmt             // EXTEND WITH HELP: ALTER DOMAIN
+| alter_extension_stmt          // EXTEND WITH HELP: ALTER EXTENSION
 | alter_foreign_table_stmt
 | alter_foreign_data_wrapper_stmt
 | alter_foreign_server_stmt
@@ -2233,6 +2235,17 @@ opt_not_valid:
   {
     $$.val = true
   }
+
+// %Help: ALTER EXTENSION - alter the definition of an extension
+// %Category: DDL
+// %Text: ALTER EXTENSION <name> SET SCHEMA <newschemaname>
+// %SeeAlso: WEBDOCS/alter-extension.html
+alter_extension_stmt:
+  ALTER EXTENSION name set_schema
+  {
+    $$.val = &tree.AlterExtension{Name: tree.Name($3), Schema: $4}
+  }
+| ALTER EXTENSION error // SHOW HELP: ALTER EXTENSION
 
 alter_function_stmt:
   ALTER FUNCTION routine_name opt_routine_args_with_paren alter_function_option_list opt_restrict

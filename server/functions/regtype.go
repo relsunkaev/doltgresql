@@ -26,6 +26,7 @@ import (
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/postgres/parser/types"
 	"github.com/dolthub/doltgresql/server/functions/framework"
+	"github.com/dolthub/doltgresql/server/settings"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 	"github.com/dolthub/doltgresql/utils"
 )
@@ -121,9 +122,18 @@ var regtypeout = framework.Function1{
 		toid := id.Cache().ToOID(internalID)
 		if t, ok := types.OidToType[oid.Oid(toid)]; ok {
 			return t.SQLStandardName(), nil
-		} else {
-			return internalID.Segment(1), nil
 		}
+		schemasMap, err := settings.GetCurrentSchemasAsMap(ctx)
+		if err != nil {
+			return "", err
+		}
+		schemasMap["pg_catalog"] = struct{}{}
+		schemaName := internalID.Segment(0)
+		typeName := internalID.Segment(1)
+		if _, ok := schemasMap[schemaName]; ok {
+			return typeName, nil
+		}
+		return schemaName + "." + typeName, nil
 	},
 }
 

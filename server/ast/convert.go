@@ -43,6 +43,8 @@ func Convert(postgresStmt parser.Statement) (vitess.Statement, error) {
 		return nodeAlterForeignTable(ctx, stmt)
 	case *tree.AlterDomain:
 		return nodeAlterDomain(ctx, stmt)
+	case *tree.AlterExtension:
+		return nodeAlterExtension(ctx, stmt)
 	case *tree.AlterFunction:
 		return nodeAlterFunction(ctx, stmt)
 	case *tree.AlterIndex:
