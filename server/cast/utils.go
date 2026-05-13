@@ -37,11 +37,7 @@ func handleStringCast(input string, targetType *pgtypes.DoltgresType) (string, e
 		if tm == -1 {
 			return input, nil
 		}
-		maxChars, err := pgtypes.GetTypModFromCharLength("char", tm)
-		if err != nil {
-			return "", err
-		}
-		length := uint32(maxChars)
+		length := uint32(pgtypes.GetCharLengthFromTypmod(tm))
 		str, runeLength := truncateString(input, length)
 		if runeLength > length {
 			return input, cerrors.Wrap(pgtypes.ErrCastOutOfRange, fmt.Sprintf("value too long for type %s", targetType.String()))
