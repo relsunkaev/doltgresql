@@ -47,11 +47,15 @@ func formatMissingNonNullableColumnError(message string) string {
 func formatColumnSpecifiedTwiceError(message string) string {
 	const prefix = "column '"
 	const suffix = "' specified twice"
-	if !strings.HasPrefix(message, prefix) || !strings.HasSuffix(message, suffix) {
+	if !strings.HasPrefix(message, prefix) {
 		return message
 	}
-	columnName := strings.TrimSuffix(strings.TrimPrefix(message, prefix), suffix)
-	return `column "` + columnName + `" specified more than once`
+	rest := strings.TrimPrefix(message, prefix)
+	columnName, trailing, ok := strings.Cut(rest, suffix)
+	if !ok {
+		return message
+	}
+	return `column "` + columnName + `" specified more than once` + trailing
 }
 
 func formatSerializedJSONBInUniqueKeyError(message string) string {

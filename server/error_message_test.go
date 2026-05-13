@@ -43,6 +43,9 @@ func TestSanitizeErrorMessageFormatsDuplicateTargetColumn(t *testing.T) {
 	sanitized := sanitizeErrorMessage("column 'a' specified twice")
 
 	require.Equal(t, `column "a" specified more than once`, sanitized)
+
+	wrapped := sanitizeErrorMessage("column 'a' specified twice (errno 1110) (sqlstate HY000)")
+	require.Equal(t, `column "a" specified more than once (errno 1110) (sqlstate HY000)`, wrapped)
 }
 
 func TestSanitizeErrorMessageFormatsMissingNonNullableColumn(t *testing.T) {
