@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"sort"
 	"strings"
 
 	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
@@ -282,6 +283,9 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 	if err != nil {
 		return err
 	}
+	if err = addTemporaryTableClasses(ctx, &classes, nameIdx, oidIdx); err != nil {
+		return err
+	}
 	pgCatalogSchemaID := id.NewNamespace(PgCatalogName).AsId()
 	for _, handler := range tables.HandlersForSchema(PgCatalogName) {
 		relationID := id.NewTable(PgCatalogName, handler.Name()).AsId()
@@ -308,6 +312,83 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 	}
 
 	return nil
+}
+
+func addTemporaryTableClasses(ctx *sql.Context, classes *[]*pgClass, nameIdx, oidIdx *inMemIndexStorage[*pgClass]) error {
+	db, err := core.GetSqlDatabaseFromContext(ctx, ctx.GetCurrentDatabase())
+	if err != nil || db == nil {
+		return err
+	}
+	tempDB, ok := db.(sql.TemporaryTableDatabase)
+	if !ok {
+		return nil
+	}
+	tempTables, err := tempDB.GetAllTemporaryTables(ctx)
+	if err != nil {
+		return err
+	}
+	sort.Slice(tempTables, func(i, j int) bool {
+		return tempTables[i].Name() < tempTables[j].Name()
+	})
+
+	schemaName := "pg_temp"
+	schemaID := id.NewNamespace(schemaName).AsId()
+	schemaOID := id.Cache().ToOID(schemaID)
+	for _, table := range tempTables {
+		hasIndexes, err := temporaryTableHasIndexes(ctx, table)
+		if err != nil {
+			return err
+		}
+		checkCount, err := temporaryTableCheckCount(ctx, table)
+		if err != nil {
+			return err
+		}
+		tableID := id.NewTable(schemaName, table.Name()).AsId()
+		class := &pgClass{
+			oid:             tableID,
+			oidNative:       id.Cache().ToOID(tableID),
+			name:            table.Name(),
+			schemaName:      schemaName,
+			hasIndexes:      hasIndexes,
+			kind:            "r",
+			schemaOid:       schemaID,
+			schemaOidNative: schemaOID,
+			replicaIdentity: replicaidentity.IdentityDefault.String(),
+			relType:         id.NewType(schemaName, table.Name()).AsId(),
+			relpersistence:  "t",
+			relNatts:        int16(len(table.Schema(ctx))),
+			relChecks:       checkCount,
+			owner:           ctx.Client().User,
+		}
+		nameIdx.Add(class)
+		oidIdx.Add(class)
+		*classes = append(*classes, class)
+	}
+	return nil
+}
+
+func temporaryTableHasIndexes(ctx *sql.Context, table sql.Table) (bool, error) {
+	indexedTable, ok := table.(sql.IndexAddressableTable)
+	if !ok {
+		return false, nil
+	}
+	indexes, err := indexedTable.GetIndexes(ctx)
+	if err != nil {
+		return false, err
+	}
+	return len(indexes) > 0, nil
+}
+
+func temporaryTableCheckCount(ctx *sql.Context, table sql.Table) (int16, error) {
+	checkTable, ok := table.(sql.CheckTable)
+	if !ok {
+		return 0, nil
+	}
+	checks, err := checkTable.GetChecks(ctx)
+	if err != nil {
+		return 0, err
+	}
+	return int16(len(checks)), nil
 }
 
 // formatIndexName returns the name of an index for display
