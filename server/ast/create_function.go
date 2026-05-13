@@ -132,16 +132,23 @@ func nodeCreateFunction(ctx *Context, node *tree.CreateFunction) (vitess.Stateme
 			}
 			sqlBody, ok := options[tree.OptionSqlBody]
 			if ok {
-				beginAtomic, ok := sqlBody.SqlBody.(*tree.BeginEndBlock)
-				if !ok {
-					return nil, errors.Errorf("Expected BEGIN in CREATE FUNCTION definition, got %T", sqlBody.SqlBody)
-				}
-				stmts := make([]parser.Statement, len(beginAtomic.Statements))
-				for i, s := range beginAtomic.Statements {
-					stmts[i] = parser.Statement{
-						AST: s,
-						SQL: s.String(),
+				var stmts []parser.Statement
+				switch body := sqlBody.SqlBody.(type) {
+				case *tree.BeginEndBlock:
+					stmts = make([]parser.Statement, len(body.Statements))
+					for i, s := range body.Statements {
+						stmts[i] = parser.Statement{
+							AST: s,
+							SQL: s.String(),
+						}
 					}
+				case *tree.Return:
+					stmts = []parser.Statement{{
+						AST: body,
+						SQL: body.String(),
+					}}
+				default:
+					return nil, errors.Errorf("Expected BEGIN or RETURN in CREATE FUNCTION definition, got %T", sqlBody.SqlBody)
 				}
 				sqlDef, sqlDefParsedStmts, err = convertSQLStmts(stmts, params)
 				if err != nil {
