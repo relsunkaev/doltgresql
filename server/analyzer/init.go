@@ -18,6 +18,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/analyzer"
 	"github.com/dolthub/go-mysql-server/sql/expression"
+	gmsfunction "github.com/dolthub/go-mysql-server/sql/expression/function"
 	"github.com/dolthub/go-mysql-server/sql/memo"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	"github.com/dolthub/go-mysql-server/sql/planbuilder"
@@ -193,6 +194,10 @@ func initEngine() {
 	plan.ValidateForeignKeyDefinition = validateForeignKeyDefinition
 
 	planbuilder.IsAggregateFunc = IsAggregateFunc
+	gmsfunction.BuiltIns = append(gmsfunction.BuiltIns, sql.Function1{
+		Name: pgexpression.ArrayAggWindowFunctionName,
+		Fn:   pgexpression.NewArrayAggWindow,
+	})
 	sql.ErrFunctionNotFound = goerrors.NewKind("function: '%s' not found; function does not exist")
 	sql.ErrTableNotFound = goerrors.NewKind("table not found: %s; relation does not exist")
 

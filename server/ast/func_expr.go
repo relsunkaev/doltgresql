@@ -171,10 +171,23 @@ func nodeFuncExpr(ctx *Context, node *tree.FuncExpr) (vitess.Expr, error) {
 	case "array_agg":
 		var orderBy vitess.OrderBy
 		if len(node.OrderBy) > 0 {
+			if windowDef != nil {
+				return nil, errors.Errorf("array_agg ORDER BY with OVER is not yet supported")
+			}
 			orderBy, err = nodeOrderBy(ctx, node.OrderBy, nil)
 			if err != nil {
 				return nil, err
 			}
+		}
+		if windowDef != nil {
+			if distinct {
+				return nil, errors.Errorf("array_agg DISTINCT with OVER is not yet supported")
+			}
+			return &vitess.FuncExpr{
+				Name:  vitess.NewColIdent(pgexprs.ArrayAggWindowFunctionName),
+				Exprs: exprs,
+				Over:  (*vitess.Over)(windowDef),
+			}, nil
 		}
 
 		return &vitess.OrderedInjectedExpr{

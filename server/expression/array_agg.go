@@ -20,15 +20,19 @@ import (
 	"strings"
 
 	"github.com/dolthub/go-mysql-server/sql"
-	"github.com/dolthub/go-mysql-server/sql/expression"
+	gmsexpression "github.com/dolthub/go-mysql-server/sql/expression"
+	gmsaggregation "github.com/dolthub/go-mysql-server/sql/expression/function/aggregation"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/server/types"
 )
 
+const ArrayAggWindowFunctionName = "count_distinct"
+
 type ArrayAgg struct {
 	selectExprs []sql.Expression
 	orderBy     sql.SortFields
+	window      *sql.WindowDefinition
 	id          sql.ColumnId
 	distinct    bool
 }
@@ -39,9 +43,16 @@ func NewArrayAgg(distinct bool) *ArrayAgg {
 	return &ArrayAgg{distinct: distinct}
 }
 
+// NewArrayAggWindow constructs the internal GMS window-function hook for
+// PostgreSQL array_agg(... ) OVER (...).
+func NewArrayAggWindow(ctx *sql.Context, child sql.Expression) sql.Expression {
+	return &ArrayAgg{selectExprs: []sql.Expression{child}}
+}
+
 var _ sql.Aggregation = (*ArrayAgg)(nil)
 var _ vitess.Injectable = (*ArrayAgg)(nil)
 var _ sql.OrderedAggregation = (*ArrayAgg)(nil)
+var _ sql.WindowAdaptableExpression = (*ArrayAgg)(nil)
 
 // WithResolvedChildren returns a new ArrayAgg with the provided children as its select expressions.
 // The last child is expected to be the order by expressions.
@@ -57,7 +68,13 @@ func (a *ArrayAgg) WithResolvedChildren(ctx context.Context, children []any) (an
 
 // Resolved implements sql.Expression
 func (a *ArrayAgg) Resolved() bool {
-	return expression.ExpressionsResolved(a.selectExprs...) && expression.ExpressionsResolved(a.orderBy.ToExpressions()...)
+	if !gmsexpression.ExpressionsResolved(a.selectExprs...) || !gmsexpression.ExpressionsResolved(a.orderBy.ToExpressions()...) {
+		return false
+	}
+	if a.window == nil {
+		return true
+	}
+	return gmsexpression.ExpressionsResolved(append(a.window.OrderBy.ToExpressions(), a.window.PartitionBy...)...)
 }
 
 // String implements sql.Expression
@@ -85,6 +102,10 @@ func (a *ArrayAgg) String() string {
 	}
 
 	sb.WriteString(")")
+	if a.window != nil {
+		sb.WriteString(" ")
+		sb.WriteString(a.window.String())
+	}
 	return sb.String()
 }
 
@@ -106,7 +127,11 @@ func (a *ArrayAgg) Eval(ctx *sql.Context, row sql.Row) (interface{}, error) {
 
 // Children implements sql.Expression
 func (a *ArrayAgg) Children() []sql.Expression {
-	return append(a.selectExprs, a.orderBy.ToExpressions()...)
+	children := make([]sql.Expression, 0, len(a.selectExprs)+len(a.orderBy)+len(a.window.ToExpressions()))
+	children = append(children, a.selectExprs...)
+	children = append(children, a.orderBy.ToExpressions()...)
+	children = append(children, a.window.ToExpressions()...)
+	return children
 }
 
 func (a *ArrayAgg) OutputExpressions() []sql.Expression {
@@ -115,12 +140,21 @@ func (a *ArrayAgg) OutputExpressions() []sql.Expression {
 
 // WithChildren implements sql.Expression
 func (a ArrayAgg) WithChildren(ctx *sql.Context, children ...sql.Expression) (sql.Expression, error) {
-	if len(children) != len(a.selectExprs)+len(a.orderBy) {
-		return nil, sql.ErrInvalidChildrenNumber.New(a, len(children), len(a.selectExprs)+len(a.orderBy))
+	expected := len(a.selectExprs) + len(a.orderBy) + len(a.window.ToExpressions())
+	if len(children) != expected {
+		return nil, sql.ErrInvalidChildrenNumber.New(a, len(children), expected)
 	}
 
 	a.selectExprs = children[:len(a.selectExprs)]
-	a.orderBy = a.orderBy.FromExpressions(ctx, children[len(a.selectExprs):]...)
+	orderByEnd := len(a.selectExprs) + len(a.orderBy)
+	a.orderBy = a.orderBy.FromExpressions(ctx, children[len(a.selectExprs):orderByEnd]...)
+	if a.window != nil {
+		window, err := a.window.FromExpressions(ctx, children[orderByEnd:])
+		if err != nil {
+			return nil, err
+		}
+		a.window = window
+	}
 	return &a, nil
 }
 
@@ -137,17 +171,18 @@ func (a ArrayAgg) WithId(id sql.ColumnId) sql.IdExpression {
 
 // NewWindowFunction implements sql.WindowAdaptableExpression
 func (a *ArrayAgg) NewWindowFunction(ctx *sql.Context) (sql.WindowFunction, error) {
-	panic("window functions not yet supported for array_agg")
+	return (&arrayAggWindowFunction{a: a}).WithWindow(ctx, a.Window())
 }
 
 // WithWindow implements sql.WindowAdaptableExpression
-func (a *ArrayAgg) WithWindow(ctx *sql.Context, window *sql.WindowDefinition) sql.WindowAdaptableExpression {
-	panic("window functions not yet supported for array_agg")
+func (a ArrayAgg) WithWindow(ctx *sql.Context, window *sql.WindowDefinition) sql.WindowAdaptableExpression {
+	a.window = window
+	return &a
 }
 
 // Window implements sql.WindowAdaptableExpression
 func (a *ArrayAgg) Window() *sql.WindowDefinition {
-	return nil
+	return a.window
 }
 
 // NewBuffer implements sql.Aggregation
@@ -181,7 +216,7 @@ func (a *arrayAggBuffer) Eval(ctx *sql.Context) (interface{}, error) {
 	}
 
 	if a.a.orderBy != nil {
-		sorter := &expression.Sorter{
+		sorter := &gmsexpression.Sorter{
 			SortFields: a.a.orderBy,
 			Rows:       a.elements,
 			Ctx:        ctx,
@@ -239,4 +274,52 @@ func evalExprs(ctx *sql.Context, exprs []sql.Expression, row sql.Row) (sql.Row, 
 	}
 
 	return result, nil
+}
+
+type arrayAggWindowFunction struct {
+	a      *ArrayAgg
+	framer sql.WindowFramer
+}
+
+var _ sql.WindowFunction = (*arrayAggWindowFunction)(nil)
+
+func (a *arrayAggWindowFunction) WithWindow(ctx *sql.Context, window *sql.WindowDefinition) (sql.WindowFunction, error) {
+	next := *a
+	if window != nil && window.Frame != nil {
+		framer, err := window.Frame.NewFramer(window)
+		if err != nil {
+			return nil, err
+		}
+		next.framer = framer
+	}
+	return &next, nil
+}
+
+func (a *arrayAggWindowFunction) Dispose(ctx *sql.Context) {
+	gmsexpression.Dispose(ctx, a.a)
+}
+
+func (a *arrayAggWindowFunction) StartPartition(ctx *sql.Context, interval sql.WindowInterval, buffer sql.WindowBuffer) error {
+	return nil
+}
+
+func (a *arrayAggWindowFunction) DefaultFramer() sql.WindowFramer {
+	if a.framer != nil {
+		return a.framer
+	}
+	return gmsaggregation.NewUnboundedPrecedingToCurrentRowFramer()
+}
+
+func (a *arrayAggWindowFunction) Compute(ctx *sql.Context, interval sql.WindowInterval, buffer sql.WindowBuffer) (interface{}, error) {
+	aggBuffer, err := a.a.NewBuffer(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer aggBuffer.Dispose(ctx)
+	for i := interval.Start; i < interval.End; i++ {
+		if err := aggBuffer.Update(ctx, buffer[i]); err != nil {
+			return nil, err
+		}
+	}
+	return aggBuffer.Eval(ctx)
 }
