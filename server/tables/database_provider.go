@@ -21,6 +21,8 @@ import (
 
 	"github.com/dolthub/dolt/go/libraries/doltcore/sqle"
 	"github.com/dolthub/go-mysql-server/sql"
+
+	"github.com/dolthub/doltgresql/server/functions/framework"
 )
 
 const encodedDatabaseNamePrefix = "__doltgres_database_"
@@ -123,11 +125,12 @@ func (p sequenceAwareDatabaseProvider) ExternalStoredProcedures(ctx *sql.Context
 }
 
 func (p sequenceAwareDatabaseProvider) TableFunction(ctx *sql.Context, name string) (sql.TableFunction, bool) {
-	provider, ok := p.provider.(sql.TableFunctionProvider)
-	if !ok {
-		return nil, false
+	if provider, ok := p.provider.(sql.TableFunctionProvider); ok {
+		if tableFunction, found := provider.TableFunction(ctx, name); found {
+			return tableFunction, true
+		}
 	}
-	return provider.TableFunction(ctx, name)
+	return framework.FunctionTable(ctx, name)
 }
 
 func (p sequenceAwareDatabaseProvider) WithTableFunctions(fns ...sql.TableFunction) (sql.TableFunctionProvider, error) {

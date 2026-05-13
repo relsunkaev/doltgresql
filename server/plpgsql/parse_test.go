@@ -128,6 +128,34 @@ func TestParseReturnQueryOperations(t *testing.T) {
 	}
 }
 
+func TestParseReturnNextOperations(t *testing.T) {
+	ops, err := Parse(`CREATE FUNCTION func2(n INT) RETURNS SETOF INT
+		LANGUAGE plpgsql
+		AS $$
+		BEGIN
+			RETURN NEXT n;
+			RETURN NEXT n + 1;
+			RETURN;
+		END;
+		$$;`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(ops) != 5 {
+		t.Fatalf("expected 5 operations, found %d: %#v", len(ops), ops)
+	}
+	for i, expected := range []OpCode{OpCode_ScopeBegin, OpCode_ReturnNext, OpCode_ReturnNext, OpCode_Return, OpCode_ScopeEnd} {
+		if ops[i].OpCode != expected {
+			t.Fatalf("operation %d opcode = %d, expected %d; all ops: %#v", i, ops[i].OpCode, expected, ops)
+		}
+	}
+	for i := 1; i <= 2; i++ {
+		if len(ops[i].SecondaryData) != 1 || ops[i].SecondaryData[0] != "n" {
+			t.Fatalf("RETURN NEXT operation %d bindings = %#v, expected n", i, ops[i].SecondaryData)
+		}
+	}
+}
+
 func TestParseDynamicExecuteExpressionBindings(t *testing.T) {
 	ops, err := Parse(`CREATE FUNCTION test_block() RETURNS void AS $$
 		DECLARE

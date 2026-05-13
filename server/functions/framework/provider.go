@@ -187,6 +187,7 @@ func (fp *FunctionProvider) Function(ctx *sql.Context, name string) (sql.Functio
 				ParameterNames:     overload.ParameterNames,
 				ParameterTypes:     paramTypes,
 				Variadic:           overload.Variadic,
+				SetOf:              overload.SetOf,
 				IsNonDeterministic: overload.IsNonDeterministic,
 				Strict:             overload.Strict,
 				Statements:         overload.Operations,

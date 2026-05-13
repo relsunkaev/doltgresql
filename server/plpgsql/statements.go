@@ -582,6 +582,40 @@ func (r ReturnQuery) AppendOperations(ops *[]InterpreterOperation, stack *Interp
 	return nil
 }
 
+// ReturnNext represents a RETURN NEXT statement.
+type ReturnNext struct {
+	Expression string
+	LineNumber int32
+}
+
+var _ Statement = ReturnNext{}
+
+// OperationSize implements the interface Statement.
+func (ReturnNext) OperationSize() int32 {
+	return 1
+}
+
+// AppendOperations implements the interface Statement.
+func (stmt ReturnNext) AppendOperations(ops *[]InterpreterOperation, stack *InterpreterStack) error {
+	expression := strings.TrimSpace(stmt.Expression)
+	var referencedVariables []string
+	var err error
+	if len(expression) > 0 {
+		expression, referencedVariables, err = substituteVariableReferences(expression, stack)
+		if err != nil {
+			return err
+		}
+		expression = "SELECT " + expression + ";"
+	}
+	*ops = append(*ops, InterpreterOperation{
+		OpCode:        OpCode_ReturnNext,
+		PrimaryData:   expression,
+		SecondaryData: referencedVariables,
+		Options:       diagnosticStatementOptions(stmt.LineNumber, "RETURN NEXT", stmt.Expression),
+	})
+	return nil
+}
+
 // Return represents a RETURN statement.
 type Return struct {
 	Expression string

@@ -38,6 +38,7 @@ type InterpretedFunction struct {
 	ParameterTypes     []*pgtypes.DoltgresType
 	ParameterModes     []uint8
 	Variadic           bool
+	SetOf              bool
 	IsNonDeterministic bool
 	Strict             bool
 	Statements         []plpgsql.InterpreterOperation
@@ -106,6 +107,9 @@ func (iFunc InterpretedFunction) IsStrict() bool {
 
 // IsSRF implements the interface FunctionInterface.
 func (iFunc InterpretedFunction) IsSRF() bool {
+	if iFunc.SetOf {
+		return true
+	}
 	switch iFunc.ReturnType.TypCategory {
 	case pgtypes.TypeCategory_CompositeTypes:
 		return true

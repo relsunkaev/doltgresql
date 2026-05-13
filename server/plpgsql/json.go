@@ -297,6 +297,12 @@ type plpgSQL_stmt_return struct {
 	LineNumber int32 `json:"lineno"`
 }
 
+// plpgSQL_stmt_return_next exists to match the expected JSON format.
+type plpgSQL_stmt_return_next struct {
+	Expression expr  `json:"expr"`
+	LineNumber int32 `json:"lineno"`
+}
+
 // plpgSQL_stmt_return_query exists to match the expected JSON format.
 type plpgSQL_stmt_return_query struct {
 	Query      expr  `json:"query"`
@@ -347,6 +353,7 @@ type statement struct {
 	Perform     *plpgSQL_stmt_perform      `json:"PLpgSQL_stmt_perform"`
 	Raise       *plpgSQL_stmt_raise        `json:"PLpgSQL_stmt_raise"`
 	Return      *plpgSQL_stmt_return       `json:"PLpgSQL_stmt_return"`
+	ReturnNext  *plpgSQL_stmt_return_next  `json:"PLpgSQL_stmt_return_next"`
 	ReturnQuery *plpgSQL_stmt_return_query `json:"PLpgSQL_stmt_return_query"`
 	When        *plpgSQL_case_when         `json:"PLpgSQL_case_when"`
 	While       *plpgSQL_stmt_while        `json:"PLpgSQL_stmt_while"`
@@ -838,6 +845,17 @@ func (stmt *plpgSQL_stmt_raise) Convert() Raise {
 func (stmt *plpgSQL_stmt_return) Convert() Return {
 	return Return{
 		Expression: stmt.Expression.Expression.Query,
+	}
+}
+
+// Convert converts the JSON statement into its output form.
+func (stmt *plpgSQL_stmt_return_next) Convert(fallbackExpression string) ReturnNext {
+	if stmt.Expression.Expression.Query != "" {
+		fallbackExpression = stmt.Expression.Expression.Query
+	}
+	return ReturnNext{
+		Expression: fallbackExpression,
+		LineNumber: stmt.LineNumber,
 	}
 }
 

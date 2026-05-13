@@ -153,6 +153,17 @@ func (is *InterpreterStack) GetVariable(name string) InterpreterVariableReferenc
 	return InterpreterVariableReference{}
 }
 
+// GetRecord returns the schema and row value for a RECORD variable.
+func (is *InterpreterStack) GetRecord(name string) (sql.Schema, sql.Row, bool) {
+	for i := 0; i < is.stack.Len(); i++ {
+		if iv, ok := is.stack.PeekDepth(i).variables[name]; ok && len(iv.Record) > 0 {
+			row, _ := iv.Value.(sql.Row)
+			return iv.Record, row, true
+		}
+	}
+	return nil, nil, false
+}
+
 // ListVariables returns a map with the names of all variables. The attached slice represents field names for records.
 // All names are lowercased.
 func (is *InterpreterStack) ListVariables() map[string][]string {

@@ -125,6 +125,7 @@ func ResolveProcedureDefaults(ctx *sql.Context, a *analyzer.Analyzer, node sql.N
 					ParameterTypes:     paramTypes,
 					ParameterModes:     procedureParameterModes(overload.ParameterModes),
 					Variadic:           false,
+					SetOf:              false,
 					IsNonDeterministic: true,
 					Strict:             false,
 					Statements:         overload.Operations,

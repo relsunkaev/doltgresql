@@ -605,7 +605,7 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 
 				rows := make([]sql.Row, len(records))
 				for i, record := range records {
-					rows[i] = sql.Row{record}
+					rows[i] = returnRecordToRow(iFunc.GetReturn(), record)
 				}
 
 				return sql.RowsToRowIter(rows...), true, nil
@@ -690,6 +690,18 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 			}
 			stack.BufferReturnQueryResults(records)
 
+		case OpCode_ReturnNext:
+			records, err := returnNextRecords(ctx, iFunc, stack, operation)
+			if err != nil {
+				state.lastExceptionContext = diagnosticPGExceptionContext(ctx, iFunc, operation)
+				return nil, false, err
+			}
+			stack.BufferReturnQueryResults(records)
+			state.lastRowCount = int64(len(records))
+			if err = setFoundVariable(ctx, stack, len(records) > 0); err != nil {
+				return nil, false, err
+			}
+
 		case OpCode_ScopeBegin:
 			stack.PushScope()
 		case OpCode_ScopeEnd:
@@ -710,6 +722,61 @@ func rowCountFromResultRows(rows []sql.Row) int64 {
 		return int64(gmstypes.GetOkResult(rows[0]).RowsAffected)
 	}
 	return int64(len(rows))
+}
+
+func returnRecordToRow(returnType *pgtypes.DoltgresType, record []pgtypes.RecordValue) sql.Row {
+	if returnType.TypCategory == pgtypes.TypeCategory_CompositeTypes {
+		return sql.Row{record}
+	}
+	if len(record) == 1 {
+		return sql.Row{record[0].Value}
+	}
+	row := make(sql.Row, len(record))
+	for i, field := range record {
+		row[i] = field.Value
+	}
+	return row
+}
+
+func returnNextRecords(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack, operation InterpreterOperation) ([][]pgtypes.RecordValue, error) {
+	if len(operation.PrimaryData) == 0 {
+		return nil, errors.New("RETURN NEXT requires a value")
+	}
+	if len(operation.SecondaryData) == 1 {
+		normalized := strings.ReplaceAll(strings.ToLower(operation.PrimaryData), " ", "")
+		if normalized == "select$1;" {
+			varName := operation.SecondaryData[0]
+			if schema, row, ok := stack.GetRecord(varName); ok {
+				return convertRowsToRecords(schema, []sql.Row{row})
+			}
+			retVariable := stack.GetVariable(varName)
+			if retVariable.Type != nil {
+				var retVal any
+				if retVariable.Value != nil {
+					retVal = *retVariable.Value
+				}
+				return [][]pgtypes.RecordValue{{
+					{
+						Value: retVal,
+						Type:  retVariable.Type,
+					},
+				}}, nil
+			}
+		}
+	}
+	val, err := iFunc.QuerySingleReturn(ctx, stack, operation.PrimaryData, iFunc.GetReturn(), operation.SecondaryData)
+	if err != nil {
+		return nil, err
+	}
+	if record, ok := val.([]pgtypes.RecordValue); ok {
+		return [][]pgtypes.RecordValue{record}, nil
+	}
+	return [][]pgtypes.RecordValue{{
+		{
+			Value: val,
+			Type:  iFunc.GetReturn(),
+		},
+	}}, nil
 }
 
 func plpgsqlExceptionDiagnosticsFromRaise(ctx *sql.Context, iFunc InterpretedFunction, operation InterpreterOperation, message string) plpgsqlExceptionDiagnostics {

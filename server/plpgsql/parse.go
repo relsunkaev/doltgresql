@@ -39,7 +39,7 @@ func Parse(fullCreateFunctionString string) ([]InterpreterOperation, error) {
 	if len(functions) != 1 {
 		return nil, errors.New("CREATE FUNCTION parsed multiple blocks")
 	}
-	block, err := jsonConvert(functions[0].Function)
+	block, err := jsonConvert(functions[0].Function, fullCreateFunctionString)
 	if err != nil {
 		return nil, err
 	}

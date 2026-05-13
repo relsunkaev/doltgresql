@@ -15,18 +15,24 @@
 package plpgsql
 
 import (
+	"regexp"
 	"strings"
 
 	"github.com/cockroachdb/errors"
 )
 
 type jsonConversionContext struct {
-	datumNames map[int32]string
+	datumNames            map[int32]string
+	returnNextExpressions []string
+	returnNextIndex       *int
 }
 
-func newJSONConversionContext(datums []datum) jsonConversionContext {
+func newJSONConversionContext(datums []datum, source string) jsonConversionContext {
+	returnNextIndex := 0
 	conv := jsonConversionContext{
-		datumNames: make(map[int32]string, len(datums)),
+		datumNames:            make(map[int32]string, len(datums)),
+		returnNextExpressions: extractReturnNextExpressions(source),
+		returnNextIndex:       &returnNextIndex,
 	}
 	for i, d := range datums {
 		datumNumber := int32(i)
@@ -49,14 +55,38 @@ func newJSONConversionContext(datums []datum) jsonConversionContext {
 	return conv
 }
 
+var returnNextExpressionRegex = regexp.MustCompile(`(?i)\breturn\s+next(?:\s+([^;]*))?;`)
+
+func extractReturnNextExpressions(source string) []string {
+	matches := returnNextExpressionRegex.FindAllStringSubmatch(source, -1)
+	expressions := make([]string, 0, len(matches))
+	for _, match := range matches {
+		if len(match) < 2 {
+			expressions = append(expressions, "")
+			continue
+		}
+		expressions = append(expressions, strings.TrimSpace(match[1]))
+	}
+	return expressions
+}
+
+func (conv jsonConversionContext) nextReturnNextExpression() string {
+	if conv.returnNextIndex == nil || *conv.returnNextIndex >= len(conv.returnNextExpressions) {
+		return ""
+	}
+	expression := conv.returnNextExpressions[*conv.returnNextIndex]
+	*conv.returnNextIndex = *conv.returnNextIndex + 1
+	return expression
+}
+
 func (conv jsonConversionContext) datumName(datumNumber int32) (string, bool) {
 	name, ok := conv.datumNames[datumNumber]
 	return name, ok
 }
 
 // jsonConvert handles the conversion from the JSON format into a format that is easier to work with.
-func jsonConvert(jsonBlock plpgSQL_block) (Block, error) {
-	conv := newJSONConversionContext(jsonBlock.Datums)
+func jsonConvert(jsonBlock plpgSQL_block, source string) (Block, error) {
+	conv := newJSONConversionContext(jsonBlock.Datums, source)
 	block := Block{
 		TriggerNew: jsonBlock.NewVariableNumber,
 		TriggerOld: jsonBlock.OldVariableNumber,
@@ -183,6 +213,8 @@ func (conv jsonConversionContext) convertStatement(stmt statement) (Statement, e
 		return stmt.Raise.Convert(), nil
 	case stmt.Return != nil:
 		return stmt.Return.Convert(), nil
+	case stmt.ReturnNext != nil:
+		return stmt.ReturnNext.Convert(conv.nextReturnNextExpression()), nil
 	case stmt.ReturnQuery != nil:
 		return stmt.ReturnQuery.Convert(), nil
 	case stmt.While != nil:
