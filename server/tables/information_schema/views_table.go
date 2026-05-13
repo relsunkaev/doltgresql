@@ -74,18 +74,22 @@ func viewsRowIter(ctx *sql.Context, catalog sql.Catalog) (sql.RowIter, error) {
 
 			checkOpt := viewCheckOption(cv)
 			isUpdatable, isInsertable := viewUpdatability(cv)
+			tableSchema := schema.Item.SchemaName()
+			if cv.Persistence.IsTemporary() {
+				tableSchema = "pg_temp_3"
+			}
 
 			rows = append(rows, sql.Row{
-				schema.Item.Name(),       // table_catalog
-				schema.Item.SchemaName(), // table_schema
-				view.Item.Name,           // table_name
-				viewDef,                  // view_definition
-				checkOpt,                 // check_option
-				isUpdatable,              // is_updatable
-				isInsertable,             // is_insertable_into
-				"NO",                     // is_trigger_updatable
-				"NO",                     // is_trigger_deletable
-				"NO",                     // is_trigger_insertable_into
+				schema.Item.Name(), // table_catalog
+				tableSchema,        // table_schema
+				view.Item.Name,     // table_name
+				viewDef,            // view_definition
+				checkOpt,           // check_option
+				isUpdatable,        // is_updatable
+				isInsertable,       // is_insertable_into
+				"NO",               // is_trigger_updatable
+				"NO",               // is_trigger_deletable
+				"NO",               // is_trigger_insertable_into
 			})
 			return true, nil
 		},

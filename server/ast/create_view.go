@@ -28,9 +28,6 @@ func nodeCreateView(ctx *Context, node *tree.CreateView) (*vitess.DDL, error) {
 	if node == nil {
 		return nil, nil
 	}
-	if node.Persistence.IsTemporary() {
-		return nil, errors.Errorf("CREATE TEMPORARY VIEW is not yet supported")
-	}
 	if node.IsRecursive {
 		return nil, errors.Errorf("CREATE RECURSIVE VIEW is not yet supported")
 	}
@@ -97,6 +94,7 @@ func nodeCreateView(ctx *Context, node *tree.CreateView) (*vitess.DDL, error) {
 	stmt := &vitess.DDL{
 		Action:    vitess.CreateStr,
 		OrReplace: node.Replace,
+		Temporary: node.Persistence.IsTemporary(),
 		ViewSpec: &vitess.ViewSpec{
 			ViewName:    tableName,
 			ViewExpr:    selectStmt,
