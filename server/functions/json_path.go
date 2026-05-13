@@ -177,6 +177,16 @@ func jsonPathEval(root pgtypes.JsonValue, path string) ([]pgtypes.JsonValue, err
 			}
 			current = jsonPathArrayIndex(current, idx)
 			i += end + 1
+		case '?':
+			predicate, next, err := jsonPathReadFilterPredicate(path, i)
+			if err != nil {
+				return nil, err
+			}
+			current, err = jsonPathFilterPredicate(current, predicate)
+			if err != nil {
+				return nil, err
+			}
+			i = next
 		default:
 			if unicode.IsSpace(rune(path[i])) {
 				i++
@@ -284,6 +294,67 @@ func jsonPathArrayIndex(values []pgtypes.JsonValue, idx int) []pgtypes.JsonValue
 	return out
 }
 
+func jsonPathReadFilterPredicate(path string, start int) (string, int, error) {
+	i := start + 1
+	for i < len(path) && unicode.IsSpace(rune(path[i])) {
+		i++
+	}
+	if i >= len(path) || path[i] != '(' {
+		return "", i, errors.Errorf("expected jsonpath filter predicate")
+	}
+	predicateStart := i + 1
+	inString := false
+	escaped := false
+	for i = predicateStart; i < len(path); i++ {
+		if escaped {
+			escaped = false
+			continue
+		}
+		if path[i] == '\\' && inString {
+			escaped = true
+			continue
+		}
+		if path[i] == '"' {
+			inString = !inString
+			continue
+		}
+		if !inString && path[i] == ')' {
+			return strings.TrimSpace(path[predicateStart:i]), i + 1, nil
+		}
+	}
+	return "", len(path), errors.Errorf("unterminated jsonpath filter predicate")
+}
+
+func jsonPathFilterPredicate(values []pgtypes.JsonValue, predicate string) ([]pgtypes.JsonValue, error) {
+	lhsPath, op, rhsText, ok := jsonPathSplitComparison(predicate)
+	if !ok {
+		return nil, errors.Errorf("unsupported jsonpath filter predicate %q", predicate)
+	}
+	lhsPath = strings.TrimSpace(lhsPath)
+	if !strings.HasPrefix(lhsPath, "@") {
+		return nil, errors.Errorf("unsupported jsonpath filter predicate %q", predicate)
+	}
+	lhsPath = "$" + strings.TrimPrefix(lhsPath, "@")
+	rhs, err := jsonPathLiteral(rhsText)
+	if err != nil {
+		return nil, err
+	}
+	var out []pgtypes.JsonValue
+	for _, value := range values {
+		lhsValues, err := jsonPathEval(value, lhsPath)
+		if err != nil {
+			return nil, err
+		}
+		for _, lhs := range lhsValues {
+			if jsonPathCompare(lhs, op, rhs) {
+				out = append(out, value)
+				break
+			}
+		}
+	}
+	return out, nil
+}
+
 func jsonPathMatch(root pgtypes.JsonValue, path string) (any, error) {
 	lhsPath, op, rhsText, ok := jsonPathSplitComparison(path)
 	if !ok {
@@ -302,35 +373,31 @@ func jsonPathMatch(root pgtypes.JsonValue, path string) (any, error) {
 		return nil, err
 	}
 	for _, lhs := range lhsValues {
-		cmp := pgtypes.JsonValueCompare(lhs, rhs)
-		switch op {
-		case "==":
-			if cmp == 0 {
-				return true, nil
-			}
-		case "!=":
-			if cmp != 0 {
-				return true, nil
-			}
-		case ">":
-			if cmp > 0 {
-				return true, nil
-			}
-		case ">=":
-			if cmp >= 0 {
-				return true, nil
-			}
-		case "<":
-			if cmp < 0 {
-				return true, nil
-			}
-		case "<=":
-			if cmp <= 0 {
-				return true, nil
-			}
+		if jsonPathCompare(lhs, op, rhs) {
+			return true, nil
 		}
 	}
 	return false, nil
+}
+
+func jsonPathCompare(lhs pgtypes.JsonValue, op string, rhs pgtypes.JsonValue) bool {
+	cmp := pgtypes.JsonValueCompare(lhs, rhs)
+	switch op {
+	case "==":
+		return cmp == 0
+	case "!=":
+		return cmp != 0
+	case ">":
+		return cmp > 0
+	case ">=":
+		return cmp >= 0
+	case "<":
+		return cmp < 0
+	case "<=":
+		return cmp <= 0
+	default:
+		return false
+	}
 }
 
 func jsonPathSplitComparison(path string) (string, string, string, bool) {
