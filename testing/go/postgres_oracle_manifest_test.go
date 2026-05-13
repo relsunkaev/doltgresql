@@ -302,7 +302,13 @@ func runPostgresOracleEntry(t testing.TB, ctx context.Context, conn *pgx.Conn, p
 	t.Helper()
 	require.Contains(t, []string{"exact", "structural", "regex", "sqlstate"}, entry.Compare, "comparison mode for %s", entry.ID)
 	variables := oracleVariables(entry)
-	defer runOracleStatements(t, ctx, conn, variables, entry.Cleanup)
+	resetOracleSession(t, ctx, conn)
+	runOracleStatements(t, ctx, conn, variables, entry.Cleanup)
+	defer func() {
+		runOracleStatements(t, ctx, conn, variables, entry.Cleanup)
+		resetOracleSession(t, ctx, conn)
+	}()
+	resetOracleSession(t, ctx, conn)
 	runOracleStatements(t, ctx, conn, variables, entry.Setup)
 
 	query := expandOracleVariables(entry.Query, variables)
@@ -344,6 +350,14 @@ func runOracleStatements(t testing.TB, ctx context.Context, conn *pgx.Conn, vari
 		_, err := conn.Exec(ctx, expandOracleVariables(statement, variables))
 		require.NoError(t, err, "oracle statement failed: %s", statement)
 	}
+}
+
+func resetOracleSession(t testing.TB, ctx context.Context, conn *pgx.Conn) {
+	t.Helper()
+	_, err := conn.Exec(ctx, "RESET ROLE")
+	require.NoError(t, err)
+	_, err = conn.Exec(ctx, "RESET search_path")
+	require.NoError(t, err)
 }
 
 func oracleVariables(entry postgresOracleEntry) map[string]string {

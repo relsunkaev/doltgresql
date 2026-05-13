@@ -153,18 +153,18 @@
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
-        "CREATE SCHEMA {{quotedSchema}}",
-        "CREATE ROLE {{schema}}_allowed LOGIN",
-        "CREATE ROLE {{schema}}_unlisted LOGIN",
-        "CREATE TABLE {{quotedSchema}}.docs (id integer PRIMARY KEY, owner_name text, label text)",
-        "INSERT INTO {{quotedSchema}}.docs VALUES (1, '{{schema}}_allowed', 'allowed row'), (2, '{{schema}}_unlisted', 'unlisted row')",
-        "GRANT USAGE ON SCHEMA {{quotedSchema}} TO {{schema}}_allowed, {{schema}}_unlisted",
-        "GRANT SELECT ON {{quotedSchema}}.docs TO {{schema}}_allowed, {{schema}}_unlisted",
-        "CREATE POLICY docs_owner_select ON {{quotedSchema}}.docs FOR SELECT TO {{schema}}_allowed USING (owner_name = current_user)",
-        "ALTER TABLE {{quotedSchema}}.docs ENABLE ROW LEVEL SECURITY",
-        "SET ROLE {{schema}}_allowed"
+        "CREATE USER rls_policy_list_allowed PASSWORD 'allowed';",
+        "CREATE USER rls_policy_list_unlisted PASSWORD 'unlisted';",
+        "CREATE TABLE rls_policy_list_docs (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\towner_name TEXT,\n\t\t\t\t\tlabel TEXT\n\t\t\t\t);",
+        "INSERT INTO rls_policy_list_docs VALUES\n\t\t\t\t\t(1, 'rls_policy_list_allowed', 'allowed row'),\n\t\t\t\t\t(2, 'rls_policy_list_unlisted', 'unlisted row');",
+        "GRANT USAGE ON SCHEMA public TO rls_policy_list_allowed;",
+        "GRANT USAGE ON SCHEMA public TO rls_policy_list_unlisted;",
+        "GRANT SELECT ON rls_policy_list_docs\n\t\t\t\t\tTO rls_policy_list_allowed, rls_policy_list_unlisted;",
+        "CREATE POLICY rls_policy_list_docs_owner_select\n\t\t\t\t\tON rls_policy_list_docs\n\t\t\t\t\tFOR SELECT\n\t\t\t\t\tTO rls_policy_list_allowed\n\t\t\t\t\tUSING (owner_name = current_user);",
+        "ALTER TABLE rls_policy_list_docs ENABLE ROW LEVEL SECURITY;",
+        "SET ROLE rls_policy_list_allowed"
       ],
-      "query": "SELECT id, label FROM {{quotedSchema}}.docs ORDER BY id",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM rls_policy_list_docs\n\t\t\t\t\t\tORDER BY id;",
       "expectedRows": [
         [
           {
@@ -181,9 +181,10 @@
       ],
       "cleanup": [
         "RESET ROLE",
-        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE",
-        "DROP ROLE IF EXISTS {{schema}}_allowed",
-        "DROP ROLE IF EXISTS {{schema}}_unlisted"
+        "DROP TABLE IF EXISTS rls_policy_list_docs",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_policy_list_allowed') THEN REVOKE USAGE ON SCHEMA public FROM rls_policy_list_allowed; END IF; IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_policy_list_unlisted') THEN REVOKE USAGE ON SCHEMA public FROM rls_policy_list_unlisted; END IF; END $$",
+        "DROP ROLE IF EXISTS rls_policy_list_allowed",
+        "DROP ROLE IF EXISTS rls_policy_list_unlisted"
       ]
     },
     {
@@ -192,18 +193,18 @@
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
-        "CREATE SCHEMA {{quotedSchema}}",
-        "CREATE ROLE {{schema}}_allowed LOGIN",
-        "CREATE ROLE {{schema}}_unlisted LOGIN",
-        "CREATE TABLE {{quotedSchema}}.docs (id integer PRIMARY KEY, owner_name text, label text)",
-        "INSERT INTO {{quotedSchema}}.docs VALUES (1, '{{schema}}_allowed', 'allowed row'), (2, '{{schema}}_unlisted', 'unlisted row')",
-        "GRANT USAGE ON SCHEMA {{quotedSchema}} TO {{schema}}_allowed, {{schema}}_unlisted",
-        "GRANT SELECT ON {{quotedSchema}}.docs TO {{schema}}_allowed, {{schema}}_unlisted",
-        "CREATE POLICY docs_owner_select ON {{quotedSchema}}.docs FOR SELECT TO {{schema}}_allowed USING (owner_name = current_user)",
-        "ALTER TABLE {{quotedSchema}}.docs ENABLE ROW LEVEL SECURITY",
-        "SET ROLE {{schema}}_unlisted"
+        "CREATE USER rls_policy_list_allowed PASSWORD 'allowed';",
+        "CREATE USER rls_policy_list_unlisted PASSWORD 'unlisted';",
+        "CREATE TABLE rls_policy_list_docs (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\towner_name TEXT,\n\t\t\t\t\tlabel TEXT\n\t\t\t\t);",
+        "INSERT INTO rls_policy_list_docs VALUES\n\t\t\t\t\t(1, 'rls_policy_list_allowed', 'allowed row'),\n\t\t\t\t\t(2, 'rls_policy_list_unlisted', 'unlisted row');",
+        "GRANT USAGE ON SCHEMA public TO rls_policy_list_allowed;",
+        "GRANT USAGE ON SCHEMA public TO rls_policy_list_unlisted;",
+        "GRANT SELECT ON rls_policy_list_docs\n\t\t\t\t\tTO rls_policy_list_allowed, rls_policy_list_unlisted;",
+        "CREATE POLICY rls_policy_list_docs_owner_select\n\t\t\t\t\tON rls_policy_list_docs\n\t\t\t\t\tFOR SELECT\n\t\t\t\t\tTO rls_policy_list_allowed\n\t\t\t\t\tUSING (owner_name = current_user);",
+        "ALTER TABLE rls_policy_list_docs ENABLE ROW LEVEL SECURITY;",
+        "SET ROLE rls_policy_list_unlisted"
       ],
-      "query": "SELECT id, label FROM {{quotedSchema}}.docs ORDER BY id",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM rls_policy_list_docs\n\t\t\t\t\t\tORDER BY id;",
       "expectedRows": [],
       "columnModes": [
         "structural",
@@ -211,9 +212,10 @@
       ],
       "cleanup": [
         "RESET ROLE",
-        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE",
-        "DROP ROLE IF EXISTS {{schema}}_allowed",
-        "DROP ROLE IF EXISTS {{schema}}_unlisted"
+        "DROP TABLE IF EXISTS rls_policy_list_docs",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_policy_list_allowed') THEN REVOKE USAGE ON SCHEMA public FROM rls_policy_list_allowed; END IF; IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_policy_list_unlisted') THEN REVOKE USAGE ON SCHEMA public FROM rls_policy_list_unlisted; END IF; END $$",
+        "DROP ROLE IF EXISTS rls_policy_list_allowed",
+        "DROP ROLE IF EXISTS rls_policy_list_unlisted"
       ]
     }
   ]

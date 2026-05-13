@@ -57,6 +57,18 @@ func TestRowLevelSecurityPolicyRoleListRestrictsPolicyRepro(t *testing.T) {
 					Expected: []sql.Row{{1, "allowed row"}},
 					Username: `rls_policy_list_allowed`,
 					Password: `allowed`,
+					PostgresOracle: ScriptTestPostgresOracle{
+						ID:          "rls-policy-role-list-allows-listed-role",
+						Compare:     "structural",
+						ColumnModes: []string{"structural", "structural"},
+						Cleanup: []string{
+							"RESET ROLE",
+							"DROP TABLE IF EXISTS rls_policy_list_docs",
+							"DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_policy_list_allowed') THEN REVOKE USAGE ON SCHEMA public FROM rls_policy_list_allowed; END IF; IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_policy_list_unlisted') THEN REVOKE USAGE ON SCHEMA public FROM rls_policy_list_unlisted; END IF; END $$",
+							"DROP ROLE IF EXISTS rls_policy_list_allowed",
+							"DROP ROLE IF EXISTS rls_policy_list_unlisted",
+						},
+					},
 				},
 				{
 					Query: `SELECT id, label
@@ -65,6 +77,18 @@ func TestRowLevelSecurityPolicyRoleListRestrictsPolicyRepro(t *testing.T) {
 					Expected: []sql.Row{},
 					Username: `rls_policy_list_unlisted`,
 					Password: `unlisted`,
+					PostgresOracle: ScriptTestPostgresOracle{
+						ID:          "rls-policy-role-list-denies-unlisted-role",
+						Compare:     "structural",
+						ColumnModes: []string{"structural", "structural"},
+						Cleanup: []string{
+							"RESET ROLE",
+							"DROP TABLE IF EXISTS rls_policy_list_docs",
+							"DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_policy_list_allowed') THEN REVOKE USAGE ON SCHEMA public FROM rls_policy_list_allowed; END IF; IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_policy_list_unlisted') THEN REVOKE USAGE ON SCHEMA public FROM rls_policy_list_unlisted; END IF; END $$",
+							"DROP ROLE IF EXISTS rls_policy_list_allowed",
+							"DROP ROLE IF EXISTS rls_policy_list_unlisted",
+						},
+					},
 				},
 			},
 		},

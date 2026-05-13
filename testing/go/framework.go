@@ -100,6 +100,7 @@ type ScriptTestAssertion struct {
 	ExpectedErr     string
 	ExpectedNotices []ExpectedNotice
 	Focus           bool
+	PostgresOracle  ScriptTestPostgresOracle
 
 	BindVars []any
 
@@ -135,6 +136,17 @@ type ScriptTestAssertion struct {
 
 	// CopyFromSTDIN is used to test the COPY FROM STDIN command.
 	CopyFromStdInFile string
+}
+
+// ScriptTestPostgresOracle marks a ScriptTestAssertion for promotion into the
+// generated PostgreSQL oracle manifest.
+type ScriptTestPostgresOracle struct {
+	ID                    string
+	Compare               string
+	ColumnModes           []string
+	ExpectedSQLState      string
+	ExpectedErrorSeverity string
+	Cleanup               []string
 }
 
 // EmptyCommandTag is special command tag placeholder to check for the empty string
