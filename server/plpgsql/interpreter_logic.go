@@ -162,8 +162,8 @@ func Call(ctx *sql.Context, iFunc InterpretedFunction, runner sql.StatementRunne
 	defer restoreSetConfig()
 	restoreDiagnosticContext := pushDiagnosticCallFrame(ctx, iFunc)
 	defer restoreDiagnosticContext()
-	result, err := call(ctx, iFunc, stack)
-	if err != nil || result != nil {
+	result, returned, err := call(ctx, iFunc, stack)
+	if err != nil || returned {
 		return result, err
 	}
 	if iFunc.IsSRF() {
@@ -218,22 +218,23 @@ func TriggerCall(ctx *sql.Context, iFunc InterpretedFunction, runner sql.Stateme
 	}
 	restoreDiagnosticContext := pushDiagnosticCallFrame(ctx, iFunc)
 	defer restoreDiagnosticContext()
-	return call(ctx, iFunc, stack)
+	result, _, err := call(ctx, iFunc, stack)
+	return result, err
 }
 
 // call runs the contained operations on the given runner.
-func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (any, error) {
+func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (any, bool, error) {
 	state := &interpreterExecutionState{
 		statements: iFunc.GetStatements(),
 	}
 	ret, returned, err := runOperations(ctx, iFunc, stack, state, 0, len(state.statements))
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	if returned {
-		return ret, nil
+		return ret, true, nil
 	}
-	return nil, nil
+	return nil, false, nil
 }
 
 func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack, state *interpreterExecutionState, start, end int) (any, bool, error) {
@@ -611,6 +612,12 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 			}
 
 			if len(operation.PrimaryData) == 0 {
+				if iFunc.IsSRF() {
+					return sql.RowsToRowIter(), true, nil
+				}
+				if outputRow := procedureOutputRow(iFunc, stack); outputRow != nil {
+					return outputRow, true, nil
+				}
 				return nil, true, nil
 			}
 
