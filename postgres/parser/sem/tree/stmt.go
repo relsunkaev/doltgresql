@@ -789,6 +789,12 @@ func (*DropExtension) StatementType() StatementType { return DDL }
 func (*DropExtension) StatementTag() string { return "DROP EXTENSION" }
 
 // StatementType implements the Statement interface.
+func (*DropConversion) StatementType() StatementType { return DDL }
+
+// StatementTag returns a short string identifying the type of statement.
+func (*DropConversion) StatementTag() string { return "DROP CONVERSION" }
+
+// StatementType implements the Statement interface.
 func (*DropFunction) StatementType() StatementType { return DDL }
 
 // StatementTag returns a short string identifying the type of statement.
@@ -1443,6 +1449,7 @@ func (n *DropAccessMethod) String() string          { return AsString(n) }
 func (n *DropDatabase) String() string              { return AsString(n) }
 func (n *DropDomain) String() string                { return AsString(n) }
 func (n *DropExtension) String() string             { return AsString(n) }
+func (n *DropConversion) String() string            { return AsString(n) }
 func (n *DropForeignDataWrapper) String() string    { return AsString(n) }
 func (n *DropForeignServer) String() string         { return AsString(n) }
 func (n *DropForeignTable) String() string          { return AsString(n) }

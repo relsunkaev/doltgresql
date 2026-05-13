@@ -183,6 +183,28 @@ func (node *DropExtension) Format(ctx *FmtCtx) {
 	}
 }
 
+var _ Statement = &DropConversion{}
+
+// DropConversion represents a DROP CONVERSION statement.
+type DropConversion struct {
+	Name         Name
+	IfExists     bool
+	DropBehavior DropBehavior
+}
+
+// Format implements the NodeFormatter interface.
+func (node *DropConversion) Format(ctx *FmtCtx) {
+	ctx.WriteString("DROP CONVERSION ")
+	if node.IfExists {
+		ctx.WriteString("IF EXISTS ")
+	}
+	ctx.FormatNode(&node.Name)
+	if node.DropBehavior != DropDefault {
+		ctx.WriteByte(' ')
+		ctx.WriteString(node.DropBehavior.String())
+	}
+}
+
 var _ Statement = &DropFunction{}
 
 // DropFunction represents a DROP FUNCTION statement.

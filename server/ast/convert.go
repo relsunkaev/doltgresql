@@ -177,6 +177,8 @@ func Convert(postgresStmt parser.Statement) (vitess.Statement, error) {
 		return nodeDropDomain(ctx, stmt)
 	case *tree.DropExtension:
 		return nodeDropExtension(ctx, stmt)
+	case *tree.DropConversion:
+		return nodeDropConversion(ctx, stmt)
 	case *tree.DropForeignDataWrapper:
 		return nodeDropForeignDataWrapper(ctx, stmt)
 	case *tree.DropForeignServer:

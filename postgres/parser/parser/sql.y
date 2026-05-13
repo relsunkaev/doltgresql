@@ -1110,6 +1110,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %type <tree.Statement> drop_sequence_stmt
 %type <tree.Statement> drop_subscription_stmt
 %type <tree.Statement> drop_access_method_stmt
+%type <tree.Statement> drop_conversion_stmt
 %type <tree.Statement> drop_extension_stmt
 %type <tree.Statement> drop_language_stmt
 %type <tree.Statement> drop_function_stmt
@@ -5582,7 +5583,6 @@ opt_procedural:
 drop_unsupported:
   DROP CAST error { return unimplemented(sqllex, "drop cast") }
 | DROP COLLATION error { return unimplemented(sqllex, "drop collation") }
-| DROP CONVERSION error { return unimplemented(sqllex, "drop conversion") }
 | DROP FOREIGN TABLE error { return unimplemented(sqllex, "drop foreign table") }
 | DROP FOREIGN DATA error { return unimplemented(sqllex, "drop fdw") }
 | DROP OPERATOR error { return unimplemented(sqllex, "drop operator") }
@@ -5921,6 +5921,7 @@ drop_stmt:
 | drop_extension_stmt // EXTEND WITH HELP: DROP EXTENSION
 | drop_language_stmt // EXTEND WITH HELP: DROP LANGUAGE
 | drop_access_method_stmt // EXTEND WITH HELP: DROP ACCESS METHOD
+| drop_conversion_stmt // EXTEND WITH HELP: DROP CONVERSION
 | drop_aggregate_stmt // EXTEND WITH HELP: DROP AGGREGATE
 | drop_unsupported   {}
 | DROP error         // SHOW HELP: DROP
@@ -5936,6 +5937,19 @@ drop_access_method_stmt:
 | DROP ACCESS METHOD IF EXISTS name opt_drop_behavior
   {
     $$.val = &tree.DropAccessMethod{Names: tree.NameList{tree.Name($6)}, IfExists: true, DropBehavior: $7.dropBehavior()}
+  }
+
+// %Help: DROP CONVERSION - remove a conversion
+// %Category: DDL
+// %Text: DROP CONVERSION [IF EXISTS] <name> [CASCADE | RESTRICT]
+drop_conversion_stmt:
+  DROP CONVERSION name opt_drop_behavior
+  {
+    $$.val = &tree.DropConversion{Name: tree.Name($3), DropBehavior: $4.dropBehavior()}
+  }
+| DROP CONVERSION IF EXISTS name opt_drop_behavior
+  {
+    $$.val = &tree.DropConversion{Name: tree.Name($5), IfExists: true, DropBehavior: $6.dropBehavior()}
   }
 
 drop_foreign_table_stmt:
