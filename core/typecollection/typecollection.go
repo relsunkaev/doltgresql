@@ -159,7 +159,11 @@ func (pgs *TypeCollection) GetType(ctx context.Context, name id.Type) (*pgtypes.
 		switch name.TypeName() {
 		case "document", "content":
 			return pgtypes.Xml, nil
-		case "tsquery", "tsvector", "gtsvector":
+		case "tsquery":
+			return pgtypes.TsQuery, nil
+		case "tsvector":
+			return pgtypes.TsVector, nil
+		case "gtsvector":
 			return pgtypes.Text, nil
 		}
 	}

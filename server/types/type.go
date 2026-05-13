@@ -520,6 +520,22 @@ func (t *DoltgresType) Convert(ctx context.Context, v interface{}) (interface{},
 		if ok {
 			return v, sql.InRange, ValidateXMLContent(str)
 		}
+	case "tsquery":
+		str, ok, err := sql.Unwrap[string](ctx, v)
+		if err != nil {
+			return nil, sql.InRange, err
+		}
+		if ok {
+			return CanonicalTSQuery(str), sql.InRange, nil
+		}
+	case "tsvector":
+		str, ok, err := sql.Unwrap[string](ctx, v)
+		if err != nil {
+			return nil, sql.InRange, err
+		}
+		if ok {
+			return CanonicalTSVector(str), sql.InRange, nil
+		}
 	case "date", "timestamp", "timestamptz":
 		if _, ok := v.(time.Time); ok {
 			return v, sql.InRange, nil

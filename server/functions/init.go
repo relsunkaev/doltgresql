@@ -73,6 +73,7 @@ func initTypeFunctions() {
 	initRegtype()
 	initShell()
 	initText()
+	initTextSearchTypes()
 	initTime()
 	initTimestamp()
 	initTimestampTZ()
