@@ -50,6 +50,15 @@ func RemoveSchemaOwner(schema string) {
 	delete(globalDatabase.schemaOwners.Data, schema)
 }
 
+// RenameSchemaOwner moves explicit ownership metadata to a renamed schema.
+func RenameSchemaOwner(oldSchema string, newSchema string) {
+	owner := globalDatabase.schemaOwners.Data[oldSchema]
+	delete(globalDatabase.schemaOwners.Data, oldSchema)
+	if owner != "" {
+		SetSchemaOwner(newSchema, owner)
+	}
+}
+
 // SchemaOwnedByRole returns whether roleName owns schema.
 func SchemaOwnedByRole(schema string, roleName string) bool {
 	return roleName != "" && GetSchemaOwner(schema) == roleName

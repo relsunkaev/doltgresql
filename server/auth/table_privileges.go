@@ -242,6 +242,23 @@ func RenameTablePrivileges(oldTable doltdb.TableName, newTable doltdb.TableName)
 	}
 }
 
+// RenameTableSchemaPrivileges moves table ACL entries when a schema is renamed.
+func RenameTableSchemaPrivileges(oldSchema string, newSchema string) {
+	var renamed []TablePrivilegeValue
+	for key, value := range globalDatabase.tablePrivileges.Data {
+		if key.Table.Schema != oldSchema {
+			continue
+		}
+		delete(globalDatabase.tablePrivileges.Data, key)
+		key.Table.Schema = newSchema
+		value.Key = key
+		renamed = append(renamed, value)
+	}
+	for _, value := range renamed {
+		globalDatabase.tablePrivileges.Data[value.Key] = value
+	}
+}
+
 // RenameTableColumnPrivileges renames explicit column-level privilege entries for a table column.
 func RenameTableColumnPrivileges(table doltdb.TableName, oldColumn string, newColumn string) {
 	var renamed []TablePrivilegeValue

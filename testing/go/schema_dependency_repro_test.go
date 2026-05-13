@@ -204,6 +204,30 @@ func TestAlterSchemaRenameRepro(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name: "ALTER SCHEMA RENAME TO rejects existing target",
+			SetUpScript: []string{
+				`CREATE SCHEMA rename_namespace_collision_old;`,
+				`CREATE SCHEMA rename_namespace_collision_new;`,
+				`CREATE TABLE rename_namespace_collision_old.items (
+					id INT PRIMARY KEY,
+					label TEXT
+				);`,
+				`INSERT INTO rename_namespace_collision_old.items VALUES (1, 'kept');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `ALTER SCHEMA rename_namespace_collision_old
+						RENAME TO rename_namespace_collision_new;`,
+					ExpectedErr: `schema exists`,
+				},
+				{
+					Query: `SELECT id, label
+						FROM rename_namespace_collision_old.items;`,
+					Expected: []sql.Row{{1, "kept"}},
+				},
+			},
+		},
 	})
 }
 

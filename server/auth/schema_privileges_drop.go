@@ -23,3 +23,20 @@ func RemoveAllSchemaPrivileges(schema string) {
 		}
 	}
 }
+
+// RenameSchemaPrivileges moves explicit schema ACL entries to a renamed schema.
+func RenameSchemaPrivileges(oldSchema string, newSchema string) {
+	var renamed []SchemaPrivilegeValue
+	for key, value := range globalDatabase.schemaPrivileges.Data {
+		if key.Schema != oldSchema {
+			continue
+		}
+		delete(globalDatabase.schemaPrivileges.Data, key)
+		key.Schema = newSchema
+		value.Key = key
+		renamed = append(renamed, value)
+	}
+	for _, value := range renamed {
+		globalDatabase.schemaPrivileges.Data[value.Key] = value
+	}
+}

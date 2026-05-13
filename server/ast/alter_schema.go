@@ -34,6 +34,12 @@ func nodeAlterSchema(ctx *Context, node *tree.AlterSchema) (vitess.Statement, er
 			Children:  nil,
 		}, nil
 	}
+	if rename, ok := node.Cmd.(*tree.AlterSchemaRename); ok {
+		return vitess.InjectedStatement{
+			Statement: pgnodes.NewAlterSchemaRename(node.Schema, rename.NewName),
+			Children:  nil,
+		}, nil
+	}
 
 	return NotYetSupportedError("ALTER SCHEMA is not yet supported")
 }
