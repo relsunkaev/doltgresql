@@ -8506,6 +8506,52 @@
       ]
     },
     {
+      "id": "sql-merge-repro-test-testsqlmergeupdateandinsertrepro-0001-select-id-label-from-sql_merge_target",
+      "source": "testing/go/sql_merge_repro_test.go:TestSqlMergeUpdateAndInsertRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE sql_merge_target (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tlabel TEXT NOT NULL\n\t\t\t\t);",
+        "CREATE TABLE sql_merge_source (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tlabel TEXT NOT NULL\n\t\t\t\t);",
+        "INSERT INTO sql_merge_target VALUES (1, 'old'), (2, 'keep');",
+        "INSERT INTO sql_merge_source VALUES (1, 'updated'), (3, 'inserted');",
+        "MERGE INTO sql_merge_target AS target\n\t\t\t\t\t\tUSING sql_merge_source AS source\n\t\t\t\t\t\tON target.id = source.id\n\t\t\t\t\t\tWHEN MATCHED THEN\n\t\t\t\t\t\t\tUPDATE SET label = source.label\n\t\t\t\t\t\tWHEN NOT MATCHED THEN\n\t\t\t\t\t\t\tINSERT (id, label) VALUES (source.id, source.label);"
+      ],
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM sql_merge_target\n\t\t\t\t\t\tORDER BY id;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "updated"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "keep"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "inserted"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "subscription-oracle-repro-test-testsubscriptionaddpublicationrefreshrejectedwhendisabledrepro-0001-alter-subscription-sub_disabled_sub-add-publication",
       "source": "testing/go/subscription_oracle_repro_test.go:TestSubscriptionAddPublicationRefreshRejectedWhenDisabledRepro",
       "ordinal": 1,
