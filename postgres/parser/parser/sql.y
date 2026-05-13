@@ -4182,6 +4182,10 @@ legacy_copy_options:
   {
     $$.val = &tree.CopyOptions{Header: true}
   }
+| FREEZE
+  {
+    $$.val = &tree.CopyOptions{Freeze: true}
+  }
 
 copy_options_list:
   copy_options
@@ -4215,6 +4219,14 @@ copy_options:
 | HEADER boolean_value
   {
     $$.val = &tree.CopyOptions{Header: $2.val.(bool)}
+  }
+| FREEZE
+  {
+    $$.val = &tree.CopyOptions{Freeze: true}
+  }
+| FREEZE boolean_value
+  {
+    $$.val = &tree.CopyOptions{Freeze: $2.val.(bool)}
   }
 | DELIMITER SCONST
   {

@@ -50,6 +50,7 @@ type CopyTo struct {
 type CopyOptions struct {
 	CopyFormat CopyFormat
 	Header     bool
+	Freeze     bool
 	Delimiter  string
 	Default    string
 	DefaultSet bool
@@ -126,6 +127,10 @@ func (o *CopyOptions) Format(ctx *FmtCtx) {
 		maybeAddSep()
 		ctx.WriteString("HEADER")
 	}
+	if o.Freeze {
+		maybeAddSep()
+		ctx.WriteString("FREEZE")
+	}
 	if o.DefaultSet {
 		maybeAddSep()
 		ctx.WriteString("DEFAULT '" + o.Default + "'")
@@ -152,6 +157,13 @@ func (o *CopyOptions) CombineWith(other *CopyOptions) error {
 			return errors.New("header option specified multiple times")
 		}
 		o.Header = other.Header
+	}
+
+	if other.Freeze {
+		if o.Freeze {
+			return errors.New("freeze option specified multiple times")
+		}
+		o.Freeze = other.Freeze
 	}
 
 	if other.Delimiter != "" {
