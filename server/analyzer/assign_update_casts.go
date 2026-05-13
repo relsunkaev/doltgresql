@@ -89,7 +89,7 @@ func AssignUpdateCasts(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, sc
 // assignUpdateCastsHandleSource handles the *plan.UpdateSource portion of AssignUpdateCasts.
 func assignUpdateCastsHandleSource(ctx *sql.Context, a *analyzer.Analyzer, updateSource *plan.UpdateSource) (*plan.UpdateSource, error) {
 	updateExprs := updateSource.UpdateExprs
-	newUpdateExprs, err := assignUpdateFieldCasts(ctx, a, updateExprs.AllExpressions())
+	newUpdateExprs, err := assignUpdateFieldCasts(ctx, a, updateExprs.AllExpressions(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func assignUpdateCastsHandleSource(ctx *sql.Context, a *analyzer.Analyzer, updat
 	), nil
 }
 
-func assignUpdateFieldCasts(ctx *sql.Context, a *analyzer.Analyzer, updateExprs []sql.Expression) ([]sql.Expression, error) {
+func assignUpdateFieldCasts(ctx *sql.Context, a *analyzer.Analyzer, updateExprs []sql.Expression, destinationSchema sql.Schema) ([]sql.Expression, error) {
 	newUpdateExprs := make([]sql.Expression, len(updateExprs))
 	for i, updateExpr := range updateExprs {
 		setField, ok := updateExpr.(*expression.SetField)
@@ -120,9 +120,9 @@ func assignUpdateFieldCasts(ctx *sql.Context, a *analyzer.Analyzer, updateExprs 
 			// Only non-Doltgres destination tables will have GMS types (such as system tables), so we don't error here
 			toType = pgtypes.FromGmsType(setField.LeftChild.Type(ctx))
 		}
-		fromSqlType := setField.RightChild.Type(ctx)
+		fromSqlType := setFieldRightChildType(ctx, setField.RightChild)
 		if fromSqlType == nil {
-			defaultExpr, err := updateDefaultExpression(ctx, a, setField, toType)
+			defaultExpr, err := updateDefaultExpression(ctx, a, setField, toType, destinationSchema)
 			if err != nil {
 				return nil, err
 			}
@@ -151,7 +151,29 @@ func assignUpdateFieldCasts(ctx *sql.Context, a *analyzer.Analyzer, updateExprs 
 	return newUpdateExprs, nil
 }
 
-func updateDefaultExpression(ctx *sql.Context, a *analyzer.Analyzer, setField *expression.SetField, toType *pgtypes.DoltgresType) (sql.Expression, error) {
+func setFieldRightChildType(ctx *sql.Context, expr sql.Expression) sql.Type {
+	if isDefaultColumnExpression(expr) {
+		return nil
+	}
+	return expr.Type(ctx)
+}
+
+func isDefaultColumnExpression(expr sql.Expression) bool {
+	switch expr := expr.(type) {
+	case *expression.DefaultColumn:
+		return true
+	case *expression.Wrapper:
+		_, ok := expr.Unwrap().(*expression.DefaultColumn)
+		return ok
+	default:
+		return false
+	}
+}
+
+func updateDefaultExpression(ctx *sql.Context, a *analyzer.Analyzer, setField *expression.SetField, toType *pgtypes.DoltgresType, destinationSchema sql.Schema) (sql.Expression, error) {
+	if defaultValue := updateColumnDefaultExpression(setField, destinationSchema); defaultValue != nil {
+		return defaultValue, nil
+	}
 	if toType.TypType == pgtypes.TypeType_Domain && toType.Default != "" {
 		tableName := ""
 		if getField, ok := setField.LeftChild.(*expression.GetField); ok {
@@ -166,4 +188,21 @@ func updateDefaultExpression(ctx *sql.Context, a *analyzer.Analyzer, setField *e
 		}
 	}
 	return expression.NewLiteral(nil, toType), nil
+}
+
+func updateColumnDefaultExpression(setField *expression.SetField, destinationSchema sql.Schema) *sql.ColumnDefaultValue {
+	if destinationSchema == nil {
+		return nil
+	}
+	getField, ok := setField.LeftChild.(*expression.GetField)
+	if !ok {
+		return nil
+	}
+	if index := destinationSchema.IndexOfColName(getField.Name()); index >= 0 {
+		return destinationSchema[index].Default
+	}
+	if index := getField.Index(); index >= 0 && index < len(destinationSchema) {
+		return destinationSchema[index].Default
+	}
+	return nil
 }
