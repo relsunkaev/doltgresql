@@ -215,6 +215,9 @@ func (c *CreateExtension) addLoadedExtension(ctx *sql.Context, extCollection *ex
 
 func (c *CreateExtension) resolveTargetNamespace(ctx *sql.Context, ext *pg_extension.ExtensionFiles) (id.Namespace, error) {
 	schemaName := c.SchemaName
+	if !ext.Control.Relocatable && ext.Control.Schema != "" && schemaName != "" && !strings.EqualFold(schemaName, ext.Control.Schema) {
+		return id.NullNamespace, errors.Errorf(`extension "%s" must be installed in schema "%s"`, c.Name, ext.Control.Schema)
+	}
 	if len(schemaName) == 0 {
 		schemaName = ext.Control.Schema
 	}
