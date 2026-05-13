@@ -91,6 +91,54 @@ func TestCompareRecordsEqualityNullSemantics(t *testing.T) {
 	}
 }
 
+func TestRecordsAreNotDistinctNullSemantics(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+
+	tests := []struct {
+		name  string
+		left  []pgtypes.RecordValue
+		right []pgtypes.RecordValue
+		want  bool
+	}{
+		{
+			name:  "matching null fields are not distinct",
+			left:  int32Record(int32(1), nil),
+			right: int32Record(int32(1), nil),
+			want:  true,
+		},
+		{
+			name:  "one null field is distinct",
+			left:  int32Record(int32(1), nil),
+			right: int32Record(int32(1), int32(2)),
+			want:  false,
+		},
+		{
+			name:  "later non-null difference is distinct",
+			left:  int32Record(int32(1), nil, int32(3)),
+			right: int32Record(int32(1), nil, int32(4)),
+			want:  false,
+		},
+		{
+			name: "nested record null fields are compared null-safely",
+			left: []pgtypes.RecordValue{
+				{Type: pgtypes.Record, Value: int32Record(int32(1), nil)},
+			},
+			right: []pgtypes.RecordValue{
+				{Type: pgtypes.Record, Value: int32Record(int32(1), nil)},
+			},
+			want: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := compare.RecordsAreNotDistinct(ctx, tt.left, tt.right)
+			require.NoError(t, err)
+			require.Equal(t, tt.want, got)
+		})
+	}
+}
+
 func TestCompareRecordsOrderingStopsAtDecisiveField(t *testing.T) {
 	ctx := sql.NewEmptyContext()
 

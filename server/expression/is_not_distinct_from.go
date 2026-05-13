@@ -22,6 +22,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/expression"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/doltgresql/server/compare"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -66,6 +67,11 @@ func (n *IsNotDistinctFrom) Eval(ctx *sql.Context, row sql.Row) (any, error) {
 		return true, nil
 	} else if left == nil || right == nil {
 		return false, nil
+	}
+	if _, ok := left.([]pgtypes.RecordValue); ok {
+		if _, ok = right.([]pgtypes.RecordValue); ok {
+			return compare.RecordsAreNotDistinct(ctx, left, right)
+		}
 	}
 
 	n.staticLeftLiteral.Val = left

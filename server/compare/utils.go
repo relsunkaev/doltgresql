@@ -100,6 +100,53 @@ func CompareRecords(ctx *sql.Context, op framework.Operator, v1 interface{}, v2 
 	}
 }
 
+// RecordsAreNotDistinct compares two record values using IS NOT DISTINCT FROM
+// semantics, where NULL fields are equal only to other NULL fields.
+func RecordsAreNotDistinct(ctx *sql.Context, v1 interface{}, v2 interface{}) (bool, error) {
+	leftRecord, rightRecord, err := checkRecordArgs(v1, v2)
+	if err != nil {
+		return false, err
+	}
+
+	for i := 0; i < len(leftRecord); i++ {
+		leftValue := leftRecord[i].Value
+		rightValue := rightRecord[i].Value
+		if leftValue == nil && rightValue == nil {
+			continue
+		}
+		if leftValue == nil || rightValue == nil {
+			return false, nil
+		}
+
+		if leftNested, ok := leftValue.([]pgtypes.RecordValue); ok {
+			rightNested, ok := rightValue.([]pgtypes.RecordValue)
+			if !ok {
+				return false, nil
+			}
+			notDistinct, err := RecordsAreNotDistinct(ctx, leftNested, rightNested)
+			if err != nil {
+				return false, err
+			}
+			if !notDistinct {
+				return false, nil
+			}
+			continue
+		}
+
+		leftLiteral := expression.NewLiteral(leftValue, leftRecord[i].Type)
+		rightLiteral := expression.NewLiteral(rightValue, rightRecord[i].Type)
+		equal, err := callComparisonFunction(ctx, framework.Operator_BinaryEqual, leftLiteral, rightLiteral)
+		if err != nil {
+			return false, err
+		}
+		if equal != true {
+			return false, nil
+		}
+	}
+
+	return true, nil
+}
+
 // checkRecordArgs asserts that |v1| and |v2| are both []pgtypes.RecordValue, and that they have the same number of
 // elements, then returns them. If any problems were detected, an error is returnd instead.
 func checkRecordArgs(v1, v2 interface{}) (leftRecord, rightRecord []pgtypes.RecordValue, err error) {
