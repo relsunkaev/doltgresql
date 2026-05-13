@@ -148,6 +148,7 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 			return true, nil
 		},
 		Table: func(ctx *sql.Context, schema functions.ItemSchema, table functions.ItemTable) (cont bool, err error) {
+			tableName := table.OID.TableName()
 			_, hasIndexes := tableHasIndexes[id.Cache().ToOID(table.OID.AsId())]
 			_, hasTriggers := tableHasTriggers[id.Cache().ToOID(table.OID.AsId())]
 			tableOidNative := id.Cache().ToOID(table.OID.AsId())
@@ -170,22 +171,22 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 			if relPersistence == "" {
 				relPersistence = "p"
 			}
-			owner := auth.GetRelationOwner(doltdb.TableName{Name: table.Item.Name(), Schema: schema.Item.SchemaName()})
+			owner := auth.GetRelationOwner(doltdb.TableName{Name: tableName, Schema: schema.Item.SchemaName()})
 			if owner == "" {
 				owner = tablemetadata.Owner(comment)
 			}
 			class := &pgClass{
 				oid:             table.OID.AsId(),
 				oidNative:       id.Cache().ToOID(table.OID.AsId()),
-				name:            table.Item.Name(),
+				name:            tableName,
 				schemaName:      schema.Item.SchemaName(),
 				hasIndexes:      hasIndexes,
 				hasTriggers:     hasTriggers,
 				kind:            kind,
 				schemaOid:       schema.OID.AsId(),
 				schemaOidNative: id.Cache().ToOID(schema.OID.AsId()),
-				replicaIdentity: replicaidentity.Get(ctx.GetCurrentDatabase(), schema.Item.SchemaName(), table.Item.Name()).Identity.String(),
-				relType:         id.NewType(table.OID.SchemaName(), table.OID.SchemaName()).AsId(),
+				replicaIdentity: replicaidentity.Get(ctx.GetCurrentDatabase(), schema.Item.SchemaName(), tableName).Identity.String(),
+				relType:         id.NewType(table.OID.SchemaName(), tableName).AsId(),
 				relOfType:       relOfType,
 				reloptions:      pgClassRelOptions(comment),
 				relpersistence:  relPersistence,

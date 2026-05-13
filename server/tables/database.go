@@ -15,6 +15,8 @@
 package tables
 
 import (
+	"strings"
+
 	"github.com/dolthub/dolt/go/libraries/doltcore/sqle"
 	"github.com/dolthub/go-mysql-server/sql"
 
@@ -87,8 +89,25 @@ func (d Database) GetTableNames(ctx *sql.Context) ([]string, error) {
 		return nil, err
 	}
 	tableNameSet := make(map[string]struct{}, len(tableNames))
+	lowerTableNameSet := make(map[string]struct{}, len(tableNames))
 	for _, tableName := range tableNames {
 		tableNameSet[tableName] = struct{}{}
+		lowerTableNameSet[strings.ToLower(tableName)] = struct{}{}
+	}
+	if core.IsContextValid(ctx) {
+		_, root, err := core.GetRootFromContext(ctx)
+		if err == nil {
+			if rootTableNames, err := root.GetTableNames(ctx, d.Database.Schema(), false); err == nil {
+				for _, tableName := range rootTableNames {
+					if _, ok := tableNameSet[tableName]; ok {
+						continue
+					}
+					if _, ok := lowerTableNameSet[strings.ToLower(tableName)]; ok {
+						tableNameSet[tableName] = struct{}{}
+					}
+				}
+			}
+		}
 	}
 	for handlerName := range handlers[d.Database.Schema()] {
 		tableNameSet[handlerName] = struct{}{}

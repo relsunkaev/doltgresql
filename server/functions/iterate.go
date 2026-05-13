@@ -323,7 +323,7 @@ func iterateTables(ctx *sql.Context, callbacks Callbacks, itemSchema ItemSchema,
 			continue
 		}
 		itemTable := ItemTable{
-			OID:  id.NewTable(itemSchema.Item.SchemaName(), table.Name()),
+			OID:  id.NewTable(itemSchema.Item.SchemaName(), tableName),
 			Item: table,
 		}
 
