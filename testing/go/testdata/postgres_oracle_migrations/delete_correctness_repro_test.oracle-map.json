@@ -1,0 +1,44 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map delete_correctness_repro_test.go --oracle-test-name TestDeleteUsingDeletesJoinedRowsRepro --force-postgres-oracle",
+  "sourceFile": "testing/go/delete_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/delete_correctness_repro_test.go:TestDeleteUsingDeletesJoinedRowsRepro#0001",
+      "source": "testing/go/delete_correctness_repro_test.go:TestDeleteUsingDeletesJoinedRowsRepro",
+      "ordinal": 1,
+      "scriptName": "DELETE USING deletes joined target rows",
+      "oracle": "postgres",
+      "postgresId": "delete-correctness-repro-test-testdeleteusingdeletesjoinedrowsrepro-0001-delete-from-delete_using_items-as-i",
+      "suggestedId": "delete-correctness-repro-test-testdeleteusingdeletesjoinedrowsrepro-0001-delete-from-delete_using_items-as-i",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "DELETE FROM delete_using_items AS i\n\t\t\t\t\t\tUSING delete_using_groups AS g\n\t\t\t\t\t\tWHERE i.group_id = g.group_id\n\t\t\t\t\t\t\tAND g.should_delete\n\t\t\t\t\t\tRETURNING i.id;",
+      "querySha256": "a51624f9503adfb62c22c23f5b2c1755b5fa5b2727388810345623f06ae40af5",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

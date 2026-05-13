@@ -1787,6 +1787,37 @@
       ]
     },
     {
+      "id": "delete-correctness-repro-test-testdeleteusingdeletesjoinedrowsrepro-0001-delete-from-delete_using_items-as-i",
+      "source": "testing/go/delete_correctness_repro_test.go:TestDeleteUsingDeletesJoinedRowsRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE delete_using_items (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tgroup_id INT,\n\t\t\t\t\tlabel TEXT\n\t\t\t\t);",
+        "CREATE TABLE delete_using_groups (\n\t\t\t\t\tgroup_id INT PRIMARY KEY,\n\t\t\t\t\tname TEXT,\n\t\t\t\t\tshould_delete BOOL\n\t\t\t\t);",
+        "INSERT INTO delete_using_items VALUES\n\t\t\t\t\t(1, 10, 'keep-a'),\n\t\t\t\t\t(2, 20, 'delete-b'),\n\t\t\t\t\t(3, 20, 'delete-c');",
+        "INSERT INTO delete_using_groups VALUES\n\t\t\t\t\t(10, 'keepers', false),\n\t\t\t\t\t(20, 'doomed', true);"
+      ],
+      "query": "DELETE FROM delete_using_items AS i\n\t\t\t\t\t\tUSING delete_using_groups AS g\n\t\t\t\t\t\tWHERE i.group_id = g.group_id\n\t\t\t\t\t\t\tAND g.should_delete\n\t\t\t\t\t\tRETURNING i.id;",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "delete-test-testdelete-0001-delete-from-t123-where-id",
       "source": "testing/go/delete_test.go:TestDelete",
       "ordinal": 1,
@@ -2080,6 +2111,96 @@
           },
           {
             "value": "21"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "dml-returning-correctness-repro-test-testdmlreturningcanprojecttableoidrepro-0001-insert-into-returning_tableoid_items-values-1",
+      "source": "testing/go/dml_returning_correctness_repro_test.go:TestDmlReturningCanProjectTableoidRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE returning_tableoid_items (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tv INT\n\t\t\t\t);"
+      ],
+      "query": "INSERT INTO returning_tableoid_items VALUES (1, 10)\n\t\t\t\t\t\tRETURNING tableoid::regclass::text, id, v;",
+      "expectedRows": [
+        [
+          {
+            "value": "returning_tableoid_items"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "dml-returning-correctness-repro-test-testdmlreturningcanprojecttableoidrepro-0002-update-returning_tableoid_items-set-v-=",
+      "source": "testing/go/dml_returning_correctness_repro_test.go:TestDmlReturningCanProjectTableoidRepro",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE returning_tableoid_items (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tv INT\n\t\t\t\t);",
+        "INSERT INTO returning_tableoid_items VALUES (1, 10)\n\t\t\t\t\t\tRETURNING tableoid::regclass::text, id, v;"
+      ],
+      "query": "UPDATE returning_tableoid_items\n\t\t\t\t\t\tSET v = 20\n\t\t\t\t\t\tWHERE id = 1\n\t\t\t\t\t\tRETURNING tableoid::regclass::text, id, v;",
+      "expectedRows": [
+        [
+          {
+            "value": "returning_tableoid_items"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "20"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "dml-returning-correctness-repro-test-testdmlreturningcanprojecttableoidrepro-0003-delete-from-returning_tableoid_items-where-id",
+      "source": "testing/go/dml_returning_correctness_repro_test.go:TestDmlReturningCanProjectTableoidRepro",
+      "ordinal": 3,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE returning_tableoid_items (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tv INT\n\t\t\t\t);",
+        "INSERT INTO returning_tableoid_items VALUES (1, 10)\n\t\t\t\t\t\tRETURNING tableoid::regclass::text, id, v;",
+        "UPDATE returning_tableoid_items\n\t\t\t\t\t\tSET v = 20\n\t\t\t\t\t\tWHERE id = 1\n\t\t\t\t\t\tRETURNING tableoid::regclass::text, id, v;"
+      ],
+      "query": "DELETE FROM returning_tableoid_items\n\t\t\t\t\t\tWHERE id = 1\n\t\t\t\t\t\tRETURNING tableoid::regclass::text, id, v;",
+      "expectedRows": [
+        [
+          {
+            "value": "returning_tableoid_items"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "20"
           }
         ]
       ],
