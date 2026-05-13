@@ -1,0 +1,61 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map replica_identity_full_probe_test.go --oracle-test-name TestReplicaIdentityFullProbe",
+  "sourceFile": "testing/go/replica_identity_full_probe_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/replica_identity_full_probe_test.go:TestReplicaIdentityFullProbe#0001",
+      "source": "testing/go/replica_identity_full_probe_test.go:TestReplicaIdentityFullProbe",
+      "ordinal": 1,
+      "scriptName": "ALTER TABLE ... REPLICA IDENTITY FULL keyword acceptance",
+      "oracle": "postgres",
+      "postgresId": "replica-identity-full-probe-test-testreplicaidentityfullprobe-0001-select-relreplident-from-pg_catalog.pg_class-where",
+      "suggestedId": "replica-identity-full-probe-test-testreplicaidentityfullprobe-0001-select-relreplident-from-pg_catalog.pg_class-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT relreplident FROM pg_catalog.pg_class WHERE relname = 'shapes';",
+      "querySha256": "66892ec56fddcadb35a22c7366c88d363fb2c7a4fde48c99d117a5dfba6958cc",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/replica_identity_full_probe_test.go:TestReplicaIdentityFullProbe#0002",
+      "source": "testing/go/replica_identity_full_probe_test.go:TestReplicaIdentityFullProbe",
+      "ordinal": 2,
+      "scriptName": "ALTER TABLE ... REPLICA IDENTITY DEFAULT keyword acceptance",
+      "oracle": "postgres",
+      "postgresId": "replica-identity-full-probe-test-testreplicaidentityfullprobe-0002-select-relreplident-from-pg_catalog.pg_class-where",
+      "suggestedId": "replica-identity-full-probe-test-testreplicaidentityfullprobe-0002-select-relreplident-from-pg_catalog.pg_class-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT relreplident FROM pg_catalog.pg_class WHERE relname = 'other';",
+      "querySha256": "17075b6c60f077502a79a7b9c126195e7cb87df387800d9c091bf1f589098a16",
+      "expectedRows": [
+        [
+          {
+            "value": "d"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}
