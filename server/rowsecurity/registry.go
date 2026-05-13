@@ -158,6 +158,18 @@ func DropPolicy(connectionID uint32, database, schema, table string, policyName 
 	return false
 }
 
+// DropTable removes all row-level security state for a dropped table.
+func DropTable(connectionID uint32, database, schema, table string) {
+	registry.Lock()
+	defer registry.Unlock()
+	key := makeKey(database, schema, table)
+	if _, ok := registry.tables[key]; !ok {
+		return
+	}
+	trackMutationLocked(connectionID)
+	delete(registry.tables, key)
+}
+
 // RenameTable moves row-level security state to a renamed table.
 func RenameTable(connectionID uint32, database, oldSchema, oldTable, newSchema, newTable string) {
 	registry.Lock()

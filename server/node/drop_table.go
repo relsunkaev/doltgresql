@@ -28,6 +28,7 @@ import (
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/comments"
 	"github.com/dolthub/doltgresql/server/functions"
+	"github.com/dolthub/doltgresql/server/rowsecurity"
 	"github.com/dolthub/doltgresql/server/tablemetadata"
 )
 
@@ -111,6 +112,7 @@ func (c *DropTable) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sql.
 			return nil, err
 		}
 		comments.RemoveObject(target.tableID, "pg_class")
+		rowsecurity.DropTable(uint32(ctx.Session.ID()), target.dbName, target.relation.Schema, target.relation.Name)
 	}
 	if len(targets) > 0 {
 		var persistErr error
