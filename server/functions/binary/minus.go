@@ -410,11 +410,11 @@ var time_mi_interval = framework.Function2{
 var timetz_mi_interval = framework.Function2{
 	Name:       "timetz_mi_interval",
 	Return:     pgtypes.TimeTZ,
-	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Interval, pgtypes.TimeTZ},
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.TimeTZ, pgtypes.Interval},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
-		interval := val1.(duration.Duration)
-		timetzVal := val2.(timetz.TimeTZ)
+		timetzVal := val1.(timetz.TimeTZ)
+		interval := val2.(duration.Duration)
 		timetzVal.TimeOfDay = timetzVal.TimeOfDay.Sub(interval)
 		return timetzVal, nil
 	},

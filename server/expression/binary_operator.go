@@ -174,9 +174,25 @@ func (b *BinaryOperator) WithResolvedChildren(ctx context.Context, children []an
 	compiledFunc := framework.GetBinaryFunction(b.operator).Compile(sqlCtx, funcName, left, right)
 	if compiledFunc == nil {
 		return nil, errors.Errorf("operator does not exist: %s %s %s",
-			left.Type(sqlCtx).String(), b.operator.String(), right.Type(sqlCtx).String())
+			binaryOperatorTypeName(sqlCtx, left), b.operator.String(), binaryOperatorTypeName(sqlCtx, right))
+	}
+	if framework.ErrFunctionDoesNotExist.Is(compiledFunc.StashedError()) {
+		return nil, errors.Errorf("operator does not exist: %s %s %s",
+			binaryOperatorTypeName(sqlCtx, left), b.operator.String(), binaryOperatorTypeName(sqlCtx, right))
 	}
 	return newResolvedBinaryOperator(b.operator, compiledFunc), nil
+}
+
+func binaryOperatorTypeName(ctx *sql.Context, expr sql.Expression) string {
+	if typ, ok := expr.Type(ctx).(*pgtypes.DoltgresType); ok {
+		switch typ.ID.TypeName() {
+		case "timetz":
+			return "time with time zone"
+		case "timestamptz":
+			return "timestamp with time zone"
+		}
+	}
+	return expr.Type(ctx).String()
 }
 
 func newResolvedBinaryOperator(operator framework.Operator, compiledFunc framework.Function) *BinaryOperator {
