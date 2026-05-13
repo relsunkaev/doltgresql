@@ -15,6 +15,8 @@
 package ast
 
 import (
+	"strings"
+
 	"github.com/cockroachdb/errors"
 
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
@@ -40,17 +42,17 @@ func nodeTruncate(ctx *Context, node *tree.Truncate) (vitess.Statement, error) {
 	if err != nil {
 		return nil, err
 	}
-	if len(node.Tables) > 1 {
-		queries := make([]string, 0, len(node.Tables))
+	if len(node.Tables) > 1 || hasExplicitNonTempSchema(node.Tables) {
+		statements := make([]pgnodes.TruncateTableStatement, 0, len(node.Tables))
 		for i := range node.Tables {
 			tableName, err = nodeTableName(ctx, &node.Tables[i])
 			if err != nil {
 				return nil, err
 			}
-			queries = append(queries, "TRUNCATE TABLE "+vitess.String(tableName))
+			statements = append(statements, truncateTableStatement(tableName, &node.Tables[i]))
 		}
 		return vitess.InjectedStatement{
-			Statement: pgnodes.NewTruncateTables(queries),
+			Statement: pgnodes.NewTruncateTables(statements),
 			Children:  nil,
 		}, nil
 	}
@@ -63,4 +65,31 @@ func nodeTruncate(ctx *Context, node *tree.Truncate) (vitess.Statement, error) {
 			TargetNames: []string{tableName.DbQualifier.String(), tableName.SchemaQualifier.String(), tableName.Name.String()},
 		},
 	}, nil
+}
+
+func hasExplicitNonTempSchema(tableNames tree.TableNames) bool {
+	for i := range tableNames {
+		if tableNames[i].ExplicitSchema && !isTempSchemaName(string(tableNames[i].SchemaName)) {
+			return true
+		}
+	}
+	return false
+}
+
+func truncateTableStatement(tableName vitess.TableName, original *tree.TableName) pgnodes.TruncateTableStatement {
+	statement := pgnodes.TruncateTableStatement{
+		Query: "TRUNCATE TABLE " + vitess.String(tableName),
+	}
+	if original.ExplicitSchema && !isTempSchemaName(string(original.SchemaName)) {
+		statement.TempShadow = &pgnodes.TruncateTempShadow{
+			Database: tableName.DbQualifier.String(),
+			Table:    tableName.Name.String(),
+		}
+	}
+	return statement
+}
+
+func isTempSchemaName(schema string) bool {
+	schema = strings.ToLower(schema)
+	return schema == "pg_temp" || strings.HasPrefix(schema, "pg_temp_")
 }
