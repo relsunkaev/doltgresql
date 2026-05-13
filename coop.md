@@ -10,6 +10,18 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### delta - 2026-05-13 10:05 America/Phoenix
+
+- Lane complete: domain constraint enforcement for UPDATE aliases/FROM and nested domains from the alpha full-run output (`TestUpdateAliasEnforcesDomainConstraintsRepro`, `TestUpdateAliasDomainColumnValidAssignmentRepro`, `TestUpdateFromEnforcesDomainConstraintsRepro`, and `TestNestedDomainEnforcesBaseDomainConstraintsRepro`).
+- Files touched: `server/analyzer/domain_constraints.go` only. Avoided active beta/default-cast files, active epsilon UPDATE RETURNING files, active alpha CREATE INDEX files, dirty grant/oracle files, and Alpha-owned full `./testing/go`.
+- Red proof in clean verifier `/Users/ramazan/.cache/doltgresql-delta-domain-post-d34bfe48` at `d34bfe48` plus the first delta patch: update alias/FROM checks failed from fake-table domain check compilation, valid alias update tried `GetField(2)` against a two-column update row, and nested scalar domains failed with `operator does not exist: nested_small_positive > integer`.
+- Fix: UPDATE domain checks now use the updatable table schema, table checks compile `VALUE` without a fake `FROM` for non-composite domains, scalar nested domains compile `VALUE` as the final base type, and composite-domain INSERT checks keep the existing table-column build path so `(VALUE).field` checks still use planner-owned composite row mapping.
+- Current-head green proof in clean verifier `/Users/ramazan/.cache/doltgresql-delta-domain-post-4af04978` at `4af04978` plus delta patch, after replacing the stale d34 verifier and clearing delta-owned Go cache/temp dirs when the first current-head compile hit `no space left on device`:
+  - `go test -vet=off ./server/analyzer -run '^$' -count=1`
+  - `go test -vet=off ./testing/go -run '^(TestUpdateAliasEnforcesDomainConstraintsRepro|TestUpdateAliasDomainColumnValidAssignmentRepro|TestUpdateFromEnforcesDomainConstraintsRepro|TestNestedDomainEnforcesBaseDomainConstraintsRepro)$' -count=1 -v`
+  - `go test -vet=off ./testing/go -run '^(TestDomainCheckAllowsUserDefinedFunctionRepro|TestSchemaQualifiedDomainCheckFunctionUsesExplicitSchemaRepro|TestCompositeDomainAcceptsValidValuesRepro|TestCompositeTypeDomainFieldEnforcesConstraintsRepro|TestInsertSelectEnforcesDomainConstraintsGuard|TestOnConflictUpdateEnforcesDomainConstraintsRepro|TestOnConflictUpdateEnforcesDomainNotNullRepro)$' -count=1 -v`
+- No Alpha-owned full `./testing/go` run started.
+
 ### delta - 2026-05-13 09:56 America/Phoenix
 
 - Lane complete: SQL function return values enforcing domain constraints from `TestSqlFunctionReturnEnforcesDomainConstraintsRepro`.

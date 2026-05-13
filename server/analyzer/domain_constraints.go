@@ -44,9 +44,13 @@ import (
 func AddDomainConstraints(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, scope *plan.Scope, selector analyzer.RuleSelector, qFlags *sql.QueryFlags) (sql.Node, transform.TreeIdentity, error) {
 	switch n := node.(type) {
 	case *plan.InsertInto:
-		return loadDomainConstraints(ctx, a, n, n.Destination.Schema(ctx))
+		return loadDomainConstraints(ctx, a, n, n.Destination.Schema(ctx), true)
 	case *plan.Update:
-		return loadDomainConstraints(ctx, a, n, n.Schema(ctx))
+		schema := n.Schema(ctx)
+		if updatable, err := plan.GetUpdatable(n.Child); err == nil && updatable != nil {
+			schema = updatable.Schema(ctx)
+		}
+		return loadDomainConstraints(ctx, a, n, schema, false)
 	default:
 		return node, transform.SameTree, nil
 	}
@@ -54,11 +58,11 @@ func AddDomainConstraints(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node,
 
 // loadDomainConstraints retrieves and assigns domain type's default value, nullable and check constraints
 // to the destination table schema and InsertNode/Update node's checks.
-func loadDomainConstraints(ctx *sql.Context, a *analyzer.Analyzer, c sql.CheckConstraintNode, schema sql.Schema) (sql.Node, transform.TreeIdentity, error) {
+func loadDomainConstraints(ctx *sql.Context, a *analyzer.Analyzer, c sql.CheckConstraintNode, schema sql.Schema, useTableColumnReferences bool) (sql.Node, transform.TreeIdentity, error) {
 	// get current checks to append the domain checks to.
 	checks := c.Checks()
 	var same = transform.SameTree
-	for _, col := range schema {
+	for colIdx, col := range schema {
 		if dt, ok := col.Type.(*pgtypes.DoltgresType); ok && dt.TypType == pgtypes.TypeType_Domain {
 			// assign column nullable
 			col.Nullable = !dt.NotNull
@@ -75,7 +79,7 @@ func loadDomainConstraints(ctx *sql.Context, a *analyzer.Analyzer, c sql.CheckCo
 			if err != nil {
 				return nil, transform.SameTree, err
 			}
-			colChecks, err := getDomainCheckConstraintsForTable(ctx, a, col.Name, col.Source, checkDefs)
+			colChecks, err := getDomainCheckConstraintsForTable(ctx, a, colIdx, col, checkDefs, dt, useTableColumnReferences)
 			if err != nil {
 				return nil, transform.SameTree, err
 			}
@@ -195,17 +199,42 @@ func updateDomainDefaultExpressions(exprs []sql.Expression, schema sql.Schema) (
 }
 
 // getDomainCheckConstraintsForTable takes the check constraint definitions, parses, builds and returns sql.CheckConstraints.
-func getDomainCheckConstraintsForTable(ctx *sql.Context, a *analyzer.Analyzer, colName string, tblName string, checkDefs []*sql.CheckDefinition) (sql.CheckConstraints, error) {
+func getDomainCheckConstraintsForTable(ctx *sql.Context, a *analyzer.Analyzer, colIdx int, col *sql.Column, checkDefs []*sql.CheckDefinition, domainType *pgtypes.DoltgresType, useTableColumnReferences bool) (sql.CheckConstraints, error) {
+	baseType, err := domainType.DomainUnderlyingBaseTypeWithContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 	checks := make(sql.CheckConstraints, len(checkDefs))
 	for i, check := range checkDefs {
-		q := fmt.Sprintf("select %s from %s", check.CheckExpression, tblName)
-		checkExpr, err := parseAndReplaceDomainCheckConstraint(ctx, a, check.CheckExpression, q, &tree.ColumnItem{
-			ColumnName: tree.Name(colName),
-			TableName:  &tree.UnresolvedObjectName{NumParts: 1, Parts: [3]string{tblName}},
-		})
+		if useTableColumnReferences && baseType.IsCompositeType() && col.Source != "" {
+			q := fmt.Sprintf("select %s from %s", check.CheckExpression, col.Source)
+			checkExpr, err := parseAndReplaceDomainCheckConstraint(ctx, a, check.CheckExpression, q, &tree.ColumnItem{
+				ColumnName: tree.Name(col.Name),
+				TableName:  &tree.UnresolvedObjectName{NumParts: 1, Parts: [3]string{col.Source}},
+			})
+			if err != nil {
+				return nil, err
+			}
+			checks[i] = &sql.CheckConstraint{
+				Name:     check.Name,
+				Expr:     checkExpr,
+				Enforced: true,
+			}
+			continue
+		}
+		q := fmt.Sprintf("select %s", check.CheckExpression)
+		checkExpr, err := parseAndReplaceDomainCheckConstraint(ctx, a, check.CheckExpression, q, domainColumnForType(domainCheckValueType(domainType, baseType)))
 		if err != nil {
 			return nil, err
 		}
+		checkExpr, _, _ = transform.Expr(ctx, checkExpr, func(ctx *sql.Context, expr sql.Expression) (sql.Expression, transform.TreeIdentity, error) {
+			switch expr.(type) {
+			case *node.DomainColumn:
+				return gmsexpression.NewGetField(colIdx, baseType, col.Name, col.Nullable), transform.NewTree, nil
+			default:
+				return expr, transform.SameTree, nil
+			}
+		})
 
 		checks[i] = &sql.CheckConstraint{
 			Name:     check.Name,
@@ -458,7 +487,7 @@ func getDomainCheckConstraintsForCast(ctx *sql.Context, a *analyzer.Analyzer, ch
 	checks := make(sql.CheckConstraints, len(checkDefs))
 	for i, check := range checkDefs {
 		q := fmt.Sprintf("select %s", check.CheckExpression)
-		checkExpr, err := parseAndReplaceDomainCheckConstraint(ctx, a, check.CheckExpression, q, domainColumnForType(domainType))
+		checkExpr, err := parseAndReplaceDomainCheckConstraint(ctx, a, check.CheckExpression, q, domainColumnForType(domainCheckValueType(domainType, baseType)))
 		if err != nil {
 			return nil, err
 		}
@@ -479,6 +508,13 @@ func getDomainCheckConstraintsForCast(ctx *sql.Context, a *analyzer.Analyzer, ch
 		}
 	}
 	return checks, nil
+}
+
+func domainCheckValueType(domainType, baseType *pgtypes.DoltgresType) *pgtypes.DoltgresType {
+	if baseType != nil && baseType.IsCompositeType() {
+		return domainType
+	}
+	return baseType
 }
 
 func domainColumnForType(domainType *pgtypes.DoltgresType) tree.DomainColumn {
