@@ -25,6 +25,7 @@ import (
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/auth"
+	"github.com/dolthub/doltgresql/server/deferrable"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
 	pgnodes "github.com/dolthub/doltgresql/server/node"
 	"github.com/dolthub/doltgresql/server/replicaidentity"
@@ -105,6 +106,23 @@ func nodeAlterTable(ctx *Context, node *tree.AlterTable) (vitess.Statement, erro
 					TargetType: auth.AuthTargetType_Ignore,
 				},
 			}, nil
+		case *tree.AlterTableAlterConstraint:
+			timing, err := alterConstraintTiming(cmd)
+			if err != nil {
+				return nil, err
+			}
+			return vitess.InjectedStatement{
+				Statement: pgnodes.NewAlterForeignKeyConstraintTiming(
+					tableName.SchemaQualifier.String(),
+					tableName.Name.String(),
+					string(cmd.Constraint),
+					timing,
+				),
+				Auth: vitess.AuthInformation{
+					AuthType:   auth.AuthType_IGNORE,
+					TargetType: auth.AuthTargetType_Ignore,
+				},
+			}, nil
 		}
 	}
 	statements, noOps, err := nodeAlterTableCmds(ctx, node.Cmds, tableName, node.IfExists)
@@ -164,6 +182,25 @@ func nodeAlterTableAddNullsNotDistinctUniqueConstraint(ctx *Context, cmd *tree.A
 			metadata,
 		),
 	}, true, nil
+}
+
+func alterConstraintTiming(cmd *tree.AlterTableAlterConstraint) (deferrable.Timing, error) {
+	timing := deferrable.Timing{}
+	switch cmd.Deferrable {
+	case tree.Deferrable:
+		timing.Deferrable = true
+	case tree.NotDeferrable:
+		timing.Deferrable = false
+	case tree.UnspecifiedDeferrableMode:
+		if cmd.Initially == tree.UnspecifiedInitiallyMode {
+			return timing, errors.Errorf("ALTER CONSTRAINT requires DEFERRABLE, NOT DEFERRABLE, or INITIALLY timing")
+		}
+		timing.Deferrable = true
+	default:
+		return timing, errors.Errorf("unknown deferrable mode %d", cmd.Deferrable)
+	}
+	timing.InitiallyDeferred = timing.Deferrable && cmd.Initially == tree.InitiallyDeferred
+	return timing, nil
 }
 
 func nodeAlterTableRowLevelSecurity(tableName tree.TableName, cmd *tree.AlterTableRowLevelSecurity) (vitess.Statement, error) {

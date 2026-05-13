@@ -203,6 +203,22 @@ func FlushPendingForeignKeys(ctx *sql.Context) error {
 	return nil
 }
 
+// SetForeignKeyTiming persists and publishes timing metadata for an existing FK.
+func SetForeignKeyTiming(ctx *sql.Context, fk sql.ForeignKeyConstraint, timing Timing) error {
+	if err := persistForeignKeyTiming(ctx, fk, timing); err != nil {
+		return err
+	}
+	registry.Lock()
+	defer registry.Unlock()
+	key := foreignKeyKey(fk)
+	if timing.Deferrable {
+		registry.timing[key] = timing
+	} else {
+		delete(registry.timing, key)
+	}
+	return nil
+}
+
 // DiscardPendingForeignKeys drops FK timing metadata captured for a statement
 // that failed before it could be persisted.
 func DiscardPendingForeignKeys(ctx *sql.Context) {
