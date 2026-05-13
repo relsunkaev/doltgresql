@@ -18,26 +18,22 @@ import (
 	"testing"
 )
 
-// TestGistIndexProbe pins the GiST index DDL boundary today.
-// Per the Index/planner TODO in
-// docs/app-compatibility-checklist.md.
+// TestGistIndexProbe pins the PostgreSQL behavior for GiST index DDL.
+// Per the Index/planner TODO in docs/app-compatibility-checklist.md.
 func TestGistIndexProbe(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
-			Name: "CREATE INDEX USING gist probe",
+			Name: "CREATE INDEX USING gist follows PostgreSQL",
 			SetUpScript: []string{
 				`CREATE TABLE shapes (id INT PRIMARY KEY, geom TEXT);`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					// Today: SQLSTATE 0A000 'index method gist is
-					// not yet supported'. Apps that need GiST
-					// (geometry, range non-overlap, btree_gist
-					// composite uniqueness) must rewrite to btree
-					// with a custom unique key or strip the
-					// USING gist suffix from the dump.
 					Query:       `CREATE INDEX shapes_geom_gist_idx ON shapes USING gist (geom);`,
-					ExpectedErr: "index method gist is not yet supported",
+					ExpectedRaw: [][][]byte{},
+					PostgresOracle: ScriptTestPostgresOracle{
+						ID: "gist-index-probe-test-testgistindexprobe-0001-create-index-shapes_geom_gist_idx-on-shapes",
+					},
 				},
 			},
 		},

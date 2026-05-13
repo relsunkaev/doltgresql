@@ -1,0 +1,32 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map gist_index_probe_test.go --oracle-test-name TestGistIndexProbe --force-postgres-oracle",
+  "sourceFile": "testing/go/gist_index_probe_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/gist_index_probe_test.go:TestGistIndexProbe#0001",
+      "source": "testing/go/gist_index_probe_test.go:TestGistIndexProbe",
+      "ordinal": 1,
+      "scriptName": "CREATE INDEX USING gist follows PostgreSQL",
+      "oracle": "postgres",
+      "postgresId": "gist-index-probe-test-testgistindexprobe-0001-create-index-shapes_geom_gist_idx-on-shapes",
+      "suggestedId": "gist-index-probe-test-testgistindexprobe-0001-create-index-shapes_geom_gist_idx-on-shapes",
+      "expectedKind": "rawRows",
+      "query": "CREATE INDEX shapes_geom_gist_idx ON shapes USING gist (geom);",
+      "querySha256": "6955dc1d7498b71acd992b7d05f211e47a03de2068264167e3f4a1834a8c41da",
+      "expectedRows": [],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    }
+  ]
+}

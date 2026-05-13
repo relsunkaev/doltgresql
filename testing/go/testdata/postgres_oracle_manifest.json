@@ -2533,6 +2533,23 @@
       ]
     },
     {
+      "id": "gist-index-probe-test-testgistindexprobe-0001-create-index-shapes_geom_gist_idx-on-shapes",
+      "source": "testing/go/gist_index_probe_test.go:TestGistIndexProbe",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE shapes (id INT PRIMARY KEY, geom TEXT);"
+      ],
+      "query": "CREATE INDEX shapes_geom_gist_idx ON shapes USING gist (geom);",
+      "expectedRows": [],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "greatest-least-repro-test-testgreatestleastevaluatescalarargumentsrepro-0001-select-greatest-1-2-3",
       "source": "testing/go/greatest_least_repro_test.go:TestGreatestLeastEvaluateScalarArgumentsRepro",
       "ordinal": 1,
