@@ -35,6 +35,9 @@ func nodeCreateProcedure(ctx *Context, node *tree.CreateProcedure) (vitess.State
 	if err != nil {
 		return nil, err
 	}
+	if err = validateRoutineArgs(node.Args); err != nil {
+		return nil, err
+	}
 	setConfig, err := routineSetOptions(options)
 	if err != nil {
 		return nil, err

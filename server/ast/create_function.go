@@ -43,6 +43,9 @@ func nodeCreateFunction(ctx *Context, node *tree.CreateFunction) (vitess.Stateme
 	if err = validateCreateFunctionRoutineOptions(node.ReturnsSetOf, options); err != nil {
 		return nil, err
 	}
+	if err = validateRoutineArgs(node.Args); err != nil {
+		return nil, err
+	}
 	metadata := routineOptionMetadata(options, node.ReturnsSetOf)
 	setConfig, err := routineSetOptions(options)
 	if err != nil {
@@ -340,6 +343,32 @@ func validateRoutineOptions(ctx *Context, options []tree.RoutineOption) (map[tre
 		}
 	}
 	return optDefined, nil
+}
+
+func validateRoutineArgs(args tree.RoutineArgs) error {
+	seenDefault := false
+	seenVariadic := false
+	for _, arg := range args {
+		if seenVariadic {
+			return errors.New("VARIADIC parameter must be the last parameter")
+		}
+		if arg.Default != nil && arg.Mode == tree.RoutineArgModeOut {
+			return errors.New("only input parameters can have default values")
+		}
+		switch arg.Mode {
+		case tree.RoutineArgModeIn, tree.RoutineArgModeInout, tree.RoutineArgModeVariadic:
+			if seenDefault && arg.Default == nil {
+				return errors.New("input parameters after one with a default value must also have defaults")
+			}
+			if arg.Default != nil {
+				seenDefault = true
+			}
+		}
+		if arg.Mode == tree.RoutineArgModeVariadic {
+			seenVariadic = true
+		}
+	}
+	return nil
 }
 
 // validateCreateFunctionRoutineOptions validates options that PostgreSQL restricts on CREATE FUNCTION.
