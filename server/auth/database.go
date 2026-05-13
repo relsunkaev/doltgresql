@@ -70,6 +70,9 @@ type Database struct {
 
 // ClearDatabase clears the internal database, leaving only the default users. This is primarily for use by tests.
 func ClearDatabase() {
+	authFileName = "auth.db"
+	fileSystem = nil
+	userIDCounter.Store(0)
 	clear(globalDatabase.rolesByName)
 	clear(globalDatabase.rolesByID)
 	clear(globalDatabase.databaseMetadata.Data)

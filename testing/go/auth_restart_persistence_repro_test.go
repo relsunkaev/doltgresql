@@ -15,6 +15,7 @@
 package _go
 
 import (
+	"os"
 	"testing"
 
 	"github.com/dolthub/go-mysql-server/sql"
@@ -62,4 +63,29 @@ func TestRoleMembershipSurvivesRestart(t *testing.T) {
 		WHERE pg_get_userbyid(roleid) = 'restart_parent_role'
 			AND pg_get_userbyid(member) = 'restart_child_role';`).Scan(&afterCount))
 	require.EqualValues(t, 1, afterCount)
+}
+
+func TestInMemoryServerClearsOnDiskAuthStateAfterLocalServer(t *testing.T) {
+	dbDir, err := os.MkdirTemp("", t.Name())
+	require.NoError(t, err)
+
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, connection, controller := CreateServerLocalInDirWithPort(t, "postgres", dbDir, port)
+	_, err = connection.Exec(ctx, `CREATE ROLE disk_auth_role;`)
+	require.NoError(t, err)
+	connection.Close(ctx)
+	controller.Stop()
+	require.NoError(t, controller.WaitForStop())
+	require.NoError(t, os.RemoveAll(dbDir))
+
+	ctx, connection, controller = CreateServer(t, "postgres")
+	defer func() {
+		connection.Close(ctx)
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	_, err = connection.Exec(ctx, `CREATE ROLE memory_auth_role;`)
+	require.NoError(t, err)
 }
