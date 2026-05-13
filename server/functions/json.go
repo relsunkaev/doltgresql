@@ -446,6 +446,24 @@ func buildJsonObjectFromTextArray(ctx *sql.Context, val any, sortKeys bool) (pgt
 	if err != nil {
 		return pgtypes.JsonValueObject{}, err
 	}
+	rows, ok, err := textArrayRows(ctx, values)
+	if err != nil {
+		return pgtypes.JsonValueObject{}, err
+	}
+	if ok {
+		items := make([]pgtypes.JsonValueObjectItem, 0, len(rows))
+		for _, row := range rows {
+			if len(row) != 2 {
+				return pgtypes.JsonValueObject{}, errors.New("array must have two columns")
+			}
+			item, err := jsonObjectItemFromTextValues(ctx, row[0], row[1])
+			if err != nil {
+				return pgtypes.JsonValueObject{}, err
+			}
+			items = append(items, item)
+		}
+		return jsonObjectFromItems(items, sortKeys), nil
+	}
 	if len(values)%2 != 0 {
 		return pgtypes.JsonValueObject{}, errors.New("array must have even number of elements")
 	}
@@ -468,6 +486,17 @@ func buildJsonObjectFromTextArrays(ctx *sql.Context, keys any, values any, sortK
 	valueValues, err := textArrayArg(ctx, values)
 	if err != nil {
 		return pgtypes.JsonValueObject{}, err
+	}
+	keysAreMultidimensional, err := textArrayIsMultidimensional(ctx, keyValues)
+	if err != nil {
+		return pgtypes.JsonValueObject{}, err
+	}
+	valuesAreMultidimensional, err := textArrayIsMultidimensional(ctx, valueValues)
+	if err != nil {
+		return pgtypes.JsonValueObject{}, err
+	}
+	if keysAreMultidimensional || valuesAreMultidimensional {
+		return pgtypes.JsonValueObject{}, errors.New("wrong number of array subscripts")
 	}
 	if len(keyValues) != len(valueValues) {
 		return pgtypes.JsonValueObject{}, errors.New("mismatched array dimensions")
@@ -498,6 +527,69 @@ func textArrayArg(ctx *sql.Context, val any) ([]any, error) {
 	return values, nil
 }
 
+func textArrayRows(ctx *sql.Context, values []any) ([][]any, bool, error) {
+	if len(values) == 0 {
+		return nil, false, nil
+	}
+	rows := make([][]any, 0, len(values))
+	foundNested := false
+	foundScalar := false
+	for _, value := range values {
+		row, ok, err := textArrayNestedValue(ctx, value)
+		if err != nil {
+			return nil, false, err
+		}
+		if !ok {
+			foundScalar = true
+			if foundNested {
+				return nil, false, errors.New("array must have two columns")
+			}
+			continue
+		}
+		if foundScalar {
+			return nil, false, errors.New("array must have two columns")
+		}
+		foundNested = true
+		rows = append(rows, row)
+	}
+	if !foundNested {
+		return nil, false, nil
+	}
+	return rows, true, nil
+}
+
+func textArrayIsMultidimensional(ctx *sql.Context, values []any) (bool, error) {
+	for _, value := range values {
+		if _, ok, err := textArrayNestedValue(ctx, value); err != nil {
+			return false, err
+		} else if ok {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func textArrayNestedValue(ctx *sql.Context, value any) ([]any, bool, error) {
+	unwrapped, err := sql.UnwrapAny(ctx, value)
+	if err != nil {
+		return nil, false, err
+	}
+	switch row := value.(type) {
+	case []any:
+		return row, true, nil
+	case sql.Row:
+		return []any(row), true, nil
+	}
+	switch row := unwrapped.(type) {
+	case []any:
+		return row, true, nil
+	case sql.Row:
+		return []any(row), true, nil
+	default:
+		return nil, false, nil
+	}
+}
+
 func jsonObjectItemFromTextValues(ctx *sql.Context, keyValue any, itemValue any) (pgtypes.JsonValueObjectItem, error) {
 	key, err := jsonObjectTextKey(ctx, keyValue)
 	if err != nil {
@@ -518,7 +610,11 @@ func jsonObjectTextKey(ctx *sql.Context, val any) (string, error) {
 	if res == nil {
 		return "", errors.New("null value not allowed for object key")
 	}
-	return res.(string), nil
+	str, ok := res.(string)
+	if !ok {
+		return "", errors.Errorf("expected text value for object key, but got %T", res)
+	}
+	return str, nil
 }
 
 func jsonObjectTextValue(ctx *sql.Context, val any) (pgtypes.JsonValue, error) {

@@ -78,8 +78,14 @@ func parseArrayLiteral(ctx *sql.Context, input string, baseType *pgtypes.Doltgre
 		if inQuotes {
 			switch r {
 			case '\\':
+				if braceDepth > 0 {
+					sb.WriteRune(r)
+				}
 				escaped = true
 			case '"':
+				if braceDepth > 0 {
+					sb.WriteRune(r)
+				}
 				inQuotes = false
 			default:
 				sb.WriteRune(r)
@@ -93,7 +99,11 @@ func parseArrayLiteral(ctx *sql.Context, input string, baseType *pgtypes.Doltgre
 			escaped = true
 		case '"':
 			inQuotes = true
-			tokenQuoted = true
+			if braceDepth == 0 {
+				tokenQuoted = true
+			} else {
+				sb.WriteRune(r)
+			}
 		case '{':
 			braceDepth++
 			sb.WriteRune(r)
