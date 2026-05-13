@@ -40,6 +40,7 @@ const (
 	ruleId_AssignInsertCasts                                                      // assignInsertCasts
 	ruleId_AssignJsonbGinLookups                                                  // assignJsonbGinLookups
 	ruleId_AssignJsonbGinMaintainers                                              // assignJsonbGinMaintainers
+	ruleId_AssignPartitionedTableWrites                                           // assignPartitionedTableWrites
 	ruleId_AssignBtreePlannerBoundaries                                           // assignBtreePlannerBoundaries
 	ruleId_AssignBatchedIndexLookups                                              // assignBatchedIndexLookups
 	ruleId_InferInnerJoinPredicates                                               // inferInnerJoinPredicates
@@ -114,6 +115,7 @@ func Init() {
 		analyzer.Rule{Id: ruleId_AssignUpdateCasts, Apply: AssignUpdateCasts},
 		analyzer.Rule{Id: ruleId_UseSchemaAwareStatsProvider, Apply: UseSchemaAwareStatsProvider},
 		analyzer.Rule{Id: ruleId_AssignJsonbGinMaintainers, Apply: AssignJsonbGinMaintainers},
+		analyzer.Rule{Id: ruleId_AssignPartitionedTableWrites, Apply: AssignPartitionedTableWrites},
 		analyzer.Rule{Id: ruleId_AssignNullsNotDistinctUniqueChecks, Apply: AssignNullsNotDistinctUniqueChecks},
 		analyzer.Rule{Id: ruleId_AssignBtreePlannerBoundaries, Apply: AssignBtreePlannerBoundaries},
 		analyzer.Rule{Id: ruleId_AssignRowLevelLocking, Apply: AssignRowLevelLocking},
