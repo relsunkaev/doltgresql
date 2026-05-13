@@ -225,3 +225,87 @@ func (c *CreateOperator) WithResolvedChildren(ctx context.Context, children []an
 	}
 	return c, nil
 }
+
+// DropOperator implements DROP OPERATOR for user-defined binary operators.
+type DropOperator struct {
+	Namespace string
+	Name      string
+	LeftType  string
+	RightType string
+	IfExists  bool
+}
+
+var _ sql.ExecSourceRel = (*DropOperator)(nil)
+var _ vitess.Injectable = (*DropOperator)(nil)
+
+// NewDropOperator returns a new *DropOperator.
+func NewDropOperator(namespace string, name string, leftType string, rightType string, ifExists bool) *DropOperator {
+	return &DropOperator{
+		Namespace: namespace,
+		Name:      name,
+		LeftType:  leftType,
+		RightType: rightType,
+		IfExists:  ifExists,
+	}
+}
+
+// Children implements the interface sql.ExecSourceRel.
+func (d *DropOperator) Children() []sql.Node { return nil }
+
+// IsReadOnly implements the interface sql.ExecSourceRel.
+func (d *DropOperator) IsReadOnly() bool { return false }
+
+// Resolved implements the interface sql.ExecSourceRel.
+func (d *DropOperator) Resolved() bool { return true }
+
+// RowIter implements the interface sql.ExecSourceRel.
+func (d *DropOperator) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error) {
+	leftID, err := transformTypeID(ctx, d.LeftType)
+	if err != nil {
+		return nil, err
+	}
+	rightID, err := transformTypeID(ctx, d.RightType)
+	if err != nil {
+		return nil, err
+	}
+	schemaName := d.Namespace
+	if schemaName == "" {
+		schemaName, err = core.GetCurrentSchema(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+	var dropped bool
+	auth.LockWrite(func() {
+		dropped = auth.DropOperator(id.NewNamespace(schemaName), d.Name, id.Type(leftID), id.Type(rightID))
+		if dropped {
+			err = auth.PersistChanges()
+		}
+	})
+	if err != nil {
+		return nil, err
+	}
+	if !dropped && !d.IfExists {
+		return nil, errors.Errorf(`operator "%s" does not exist`, d.Name)
+	}
+	return sql.RowsToRowIter(), nil
+}
+
+// Schema implements the interface sql.ExecSourceRel.
+func (d *DropOperator) Schema(ctx *sql.Context) sql.Schema { return nil }
+
+// String implements the interface sql.ExecSourceRel.
+func (d *DropOperator) String() string { return "DROP OPERATOR" }
+
+// WithChildren implements the interface sql.ExecSourceRel.
+func (d *DropOperator) WithChildren(ctx *sql.Context, children ...sql.Node) (sql.Node, error) {
+	return plan.NillaryWithChildren(d, children...)
+}
+
+// WithResolvedChildren implements the interface vitess.Injectable.
+func (d *DropOperator) WithResolvedChildren(ctx context.Context, children []any) (any, error) {
+	if len(children) != 0 {
+		return nil, ErrVitessChildCount.New(0, len(children))
+	}
+	return d, nil
+}
