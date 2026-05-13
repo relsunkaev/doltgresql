@@ -4386,6 +4386,10 @@ func errMessageToSQLState(msg string) (string, bool) {
 		return pgcode.DatetimeFieldOverflow.String(), true
 	case strings.HasPrefix(msg, "invalid input syntax for type "):
 		return pgcode.InvalidTextRepresentation.String(), true
+	case strings.HasPrefix(msg, "function: '") && strings.Contains(msg, "' not found; function does not exist"):
+		return pgcode.UndefinedFunction.String(), true
+	case strings.HasPrefix(msg, "function ") && strings.HasSuffix(msg, " does not exist"):
+		return pgcode.UndefinedFunction.String(), true
 	}
 	return "", false
 }

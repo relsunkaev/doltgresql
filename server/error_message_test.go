@@ -122,3 +122,13 @@ func TestErrMessageToSQLStateFormatsRefreshMaterializedViewErrors(t *testing.T) 
 	require.True(t, ok)
 	require.Equal(t, pgcode.ObjectNotInPrerequisiteState.String(), code)
 }
+
+func TestErrMessageToSQLStateFormatsUndefinedFunction(t *testing.T) {
+	code, ok := errMessageToSQLState(`function: 'missing_sum' not found; function does not exist`)
+	require.True(t, ok)
+	require.Equal(t, pgcode.UndefinedFunction.String(), code)
+
+	code, ok = errMessageToSQLState(`function missing_sum(integer) does not exist`)
+	require.True(t, ok)
+	require.Equal(t, pgcode.UndefinedFunction.String(), code)
+}
