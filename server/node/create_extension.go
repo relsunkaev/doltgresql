@@ -30,6 +30,7 @@ import (
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/postgres/parser/parser"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	"github.com/dolthub/doltgresql/server/auth"
 	pgexprs "github.com/dolthub/doltgresql/server/expression"
 	"github.com/dolthub/doltgresql/server/functions"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -96,8 +97,14 @@ func (c *CreateExtension) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, err
 	if err != nil {
 		return nil, err
 	}
+	if err = checkExtensionDatabaseCreatePrivilege(ctx); err != nil {
+		return nil, err
+	}
 	targetNamespace, err := c.resolveTargetNamespace(ctx, ext)
 	if err != nil {
+		return nil, err
+	}
+	if err = checkSchemaCreatePrivilege(ctx, targetNamespace.SchemaName()); err != nil {
 		return nil, err
 	}
 	if createExtensionSkipsSQL(c.Name) {
@@ -162,6 +169,24 @@ func (c *CreateExtension) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, err
 		return nil, err
 	}
 	return sql.RowsToRowIter(), nil
+}
+
+func checkExtensionDatabaseCreatePrivilege(ctx *sql.Context) error {
+	var userRole, publicRole auth.Role
+	auth.LockRead(func() {
+		userRole = auth.GetRole(ctx.Client().User)
+		publicRole = auth.GetRole("public")
+	})
+	if !userRole.IsValid() {
+		return errors.Errorf(`role "%s" does not exist`, ctx.Client().User)
+	}
+	databaseName := ctx.GetCurrentDatabase()
+	roleKey := auth.DatabasePrivilegeKey{Role: userRole.ID(), Name: databaseName}
+	publicKey := auth.DatabasePrivilegeKey{Role: publicRole.ID(), Name: databaseName}
+	if !auth.HasDatabasePrivilege(roleKey, auth.Privilege_CREATE) && !auth.HasDatabasePrivilege(publicKey, auth.Privilege_CREATE) {
+		return errors.Errorf("permission denied for database %s", databaseName)
+	}
+	return nil
 }
 
 func (c *CreateExtension) addLoadedExtension(ctx *sql.Context, extCollection *extensions.Collection, ext *pg_extension.ExtensionFiles, namespace id.Namespace) error {
