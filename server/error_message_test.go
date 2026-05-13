@@ -111,6 +111,14 @@ func TestErrMessageToSQLStateFormatsTruncateForeignKeyDependency(t *testing.T) {
 	require.Equal(t, pgcode.FeatureNotSupported.String(), code)
 }
 
+func TestErrMessageToSQLStateFormatsTemporaryTablePersistentSchema(t *testing.T) {
+	msg := `cannot create temporary relation in non-temporary schema`
+	code, ok := errMessageToSQLState(msg)
+	require.True(t, ok)
+	require.Equal(t, pgcode.InvalidTableDefinition.String(), code)
+	require.Equal(t, pgcode.InvalidTableDefinition.String(), errorResponseCode(errors.New(msg)))
+}
+
 func TestErrMessageToSQLStateFormatsTypmodOverflow(t *testing.T) {
 	code, ok := errMessageToSQLState(`numeric field overflow - A field with precision 5, scale 2 must round to an absolute value less than 10^3`)
 	require.True(t, ok)

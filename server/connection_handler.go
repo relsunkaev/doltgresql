@@ -4341,6 +4341,9 @@ func errorResponseCode(err error) string {
 			return code
 		}
 	}
+	if code, ok := errMessageToSQLState(err.Error()); ok {
+		return code
+	}
 	if isFeatureNotSupportedMessage(err) {
 		return pgcode.FeatureNotSupported.String()
 	}
@@ -4365,6 +4368,8 @@ func errMessageToSQLState(msg string) (string, bool) {
 		return pgcode.FeatureNotSupported.String(), true
 	case strings.HasPrefix(msg, "cannot truncate table ") && strings.Contains(msg, " as it is referenced in foreign key "):
 		return pgcode.FeatureNotSupported.String(), true
+	case msg == "cannot create temporary relation in non-temporary schema":
+		return pgcode.InvalidTableDefinition.String(), true
 	case strings.HasPrefix(msg, "column '") && strings.HasSuffix(msg, "' specified twice"):
 		return pgcode.DuplicateColumn.String(), true
 	case strings.HasPrefix(msg, `column "`) && strings.HasSuffix(msg, `" specified more than once`):
