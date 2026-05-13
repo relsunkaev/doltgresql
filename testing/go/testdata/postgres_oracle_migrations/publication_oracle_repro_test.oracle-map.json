@@ -1,0 +1,34 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map publication_oracle_repro_test.go",
+  "sourceFile": "testing/go/publication_oracle_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/publication_oracle_repro_test.go:TestPublicationRejectsSchemaAddAfterColumnListOrFilterRepro#0001",
+      "source": "testing/go/publication_oracle_repro_test.go:TestPublicationRejectsSchemaAddAfterColumnListOrFilterRepro",
+      "ordinal": 1,
+      "scriptName": "publication rejects schema add after column list and row filter",
+      "oracle": "postgres",
+      "postgresId": "publication-oracle-repro-test-testpublicationrejectsschemaaddaftercolumnlistorfilterrepro-0001-alter-publication-pub_filter_pub-add-tables",
+      "suggestedId": "publication-oracle-repro-test-testpublicationrejectsschemaaddaftercolumnlistorfilterrepro-0001-alter-publication-pub_filter_pub-add-tables",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "ALTER PUBLICATION pub_filter_pub ADD TABLES IN SCHEMA pub_filter_aux;",
+      "querySha256": "be53af68dd9a63a5e58bb0f587298b6aa48ee96b38cefa2b0d2b8472f6fe9f30",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

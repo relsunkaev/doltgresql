@@ -204,6 +204,25 @@ func TestPostgresOraclePromotedMapGenerated(t *testing.T) {
 	}
 }
 
+func TestPostgresOracleManifestCleansGeneratedDatabaseObjects(t *testing.T) {
+	cmd := exec.Command("go", "run", "gen_postgres_oracle_manifest.go", "--stdout")
+	output, err := cmd.CombinedOutput()
+	require.NoError(t, err, string(output))
+
+	var generated postgresOracleManifest
+	require.NoError(t, json.Unmarshal(output, &generated))
+	for _, entry := range generated.Entries {
+		if entry.Source != "testing/go/publication_oracle_repro_test.go:TestPublicationRejectsSchemaAddAfterColumnListOrFilterRepro" {
+			continue
+		}
+		require.Contains(t, entry.Cleanup, "DROP PUBLICATION IF EXISTS pub_filter_pub")
+		require.Contains(t, entry.Cleanup, "DROP SCHEMA IF EXISTS pub_filter_aux CASCADE")
+		require.Contains(t, entry.Cleanup, "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE")
+		return
+	}
+	require.Fail(t, "expected publication oracle manifest entry")
+}
+
 func TestPostgresOracleManifestInventory(t *testing.T) {
 	manifest := loadPostgresOracleManifest(t)
 	validatePostgresOracleManifest(t, manifest)

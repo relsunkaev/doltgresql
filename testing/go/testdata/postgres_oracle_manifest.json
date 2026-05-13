@@ -1000,6 +1000,29 @@
       ]
     },
     {
+      "id": "publication-oracle-repro-test-testpublicationrejectsschemaaddaftercolumnlistorfilterrepro-0001-alter-publication-pub_filter_pub-add-tables",
+      "source": "testing/go/publication_oracle_repro_test.go:TestPublicationRejectsSchemaAddAfterColumnListOrFilterRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE pub_filter_items (tenant_id BIGINT PRIMARY KEY, label TEXT);",
+        "CREATE SCHEMA pub_filter_aux;",
+        "CREATE TABLE pub_filter_aux.schema_items (tenant_id BIGINT PRIMARY KEY, label TEXT);",
+        "CREATE PUBLICATION pub_filter_pub FOR TABLE pub_filter_items (tenant_id) WHERE (tenant_id > 0);"
+      ],
+      "query": "ALTER PUBLICATION pub_filter_pub ADD TABLES IN SCHEMA pub_filter_aux;",
+      "expectedSqlstate": "22023",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "DROP PUBLICATION IF EXISTS pub_filter_pub",
+        "DROP SCHEMA IF EXISTS pub_filter_aux CASCADE",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "rls-multiple-select-policies-combine",
       "source": "testing/go/row_level_security_policy_composition_repro_test.go:TestRowLevelSecurityMultipleSelectPoliciesCombineRepro",
       "ordinal": 1,

@@ -489,17 +489,27 @@ func writePromotedOracleMap(sourceFile string, outputPath string) error {
 	candidates.GeneratedBy = "go run gen_postgres_oracle_manifest.go --promote-oracle-map " + sourceFile
 	for i := range candidates.Assertions {
 		assertion := &candidates.Assertions[i]
-		if assertion.ExpectedKind != "rows" || assertion.Query == "" || len(assertion.NonLiteral) > 0 {
+		if assertion.Query == "" || len(assertion.NonLiteral) > 0 {
 			continue
 		}
-		assertion.Oracle = "postgres"
-		if assertion.PostgresID == "" {
-			assertion.PostgresID = assertion.SuggestedID
+		switch assertion.ExpectedKind {
+		case "rows":
+			assertion.Oracle = "postgres"
+			if assertion.PostgresID == "" {
+				assertion.PostgresID = assertion.SuggestedID
+			}
+			if assertion.Compare == "" {
+				assertion.Compare = "structural"
+			}
+			assertion.NeedsCleanup = false
+		case "error":
+			assertion.Oracle = "postgres"
+			if assertion.PostgresID == "" {
+				assertion.PostgresID = assertion.SuggestedID
+			}
+			assertion.Compare = "sqlstate"
+			assertion.NeedsCleanup = false
 		}
-		if assertion.Compare == "" {
-			assertion.Compare = "structural"
-		}
-		assertion.NeedsCleanup = false
 	}
 
 	data, err := marshalJSON(candidates)
@@ -621,7 +631,7 @@ func readPostgresOracleExpected(ctx context.Context, conn *pgx.Conn, entry entry
 	}
 
 	query := expandOracleVariables(entry.Query, variables)
-	if entry.ExpectedSQLState != "" {
+	if entry.Compare == "sqlstate" || entry.ExpectedSQLState != "" {
 		_, err := conn.Exec(ctx, query)
 		if err == nil {
 			return nil, "", "", fmt.Errorf("expected SQLSTATE %s but query succeeded", entry.ExpectedSQLState)
@@ -1179,7 +1189,10 @@ func entryFromScriptTestAssertion(source string, setup []string, ordinal int, as
 			"CREATE SCHEMA {{quotedSchema}}",
 			"SET search_path TO {{quotedSchema}}, public, pg_catalog",
 		}, generatedSetup...)
-		generatedCleanup = []string{"DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"}
+		generatedCleanup = append(generatedCleanup, cleanupForCreatedSubscriptions(generatedSetup)...)
+		generatedCleanup = append(generatedCleanup, cleanupForCreatedPublications(generatedSetup)...)
+		generatedCleanup = append(generatedCleanup, cleanupForCreatedSchemas(generatedSetup)...)
+		generatedCleanup = append(generatedCleanup, "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE")
 	}
 
 	generated := entry{
@@ -1198,7 +1211,7 @@ func entryFromScriptTestAssertion(source string, setup []string, ordinal int, as
 	if generated.Compare == "" {
 		generated.Compare = "structural"
 	}
-	if generated.ExpectedSQLState != "" {
+	if generated.Compare == "sqlstate" || generated.ExpectedSQLState != "" {
 		return generated, true, nil
 	}
 
@@ -1212,6 +1225,120 @@ func entryFromScriptTestAssertion(source string, setup []string, ordinal int, as
 	}
 	generated.ExpectedRows = expectedRows
 	return generated, true, nil
+}
+
+func cleanupForCreatedSubscriptions(statements []string) []string {
+	return cleanupForCreatedObjects(statements, "create subscription ", "DROP SUBSCRIPTION IF EXISTS ")
+}
+
+func cleanupForCreatedPublications(statements []string) []string {
+	return cleanupForCreatedObjects(statements, "create publication ", "DROP PUBLICATION IF EXISTS ")
+}
+
+func cleanupForCreatedObjects(statements []string, prefix string, dropPrefix string) []string {
+	seen := map[string]struct{}{}
+	cleanup := make([]string, 0)
+	for _, statement := range statements {
+		name, ok := createdObjectName(statement, prefix)
+		if !ok {
+			continue
+		}
+		if strings.Contains(name, "{{") || strings.Contains(name, "}}") {
+			continue
+		}
+		if _, ok := seen[name]; ok {
+			continue
+		}
+		seen[name] = struct{}{}
+		cleanup = append(cleanup, dropPrefix+name)
+	}
+	return cleanup
+}
+
+func createdObjectName(statement string, prefix string) (string, bool) {
+	trimmed := strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(statement), ";"))
+	lower := strings.ToLower(trimmed)
+	if !strings.HasPrefix(lower, prefix) {
+		return "", false
+	}
+	rest := strings.TrimSpace(trimmed[len(prefix):])
+	lowerRest := strings.ToLower(rest)
+	const ifNotExists = "if not exists "
+	if strings.HasPrefix(lowerRest, ifNotExists) {
+		rest = strings.TrimSpace(rest[len(ifNotExists):])
+	}
+	return firstSQLName(rest)
+}
+
+func cleanupForCreatedSchemas(statements []string) []string {
+	seen := map[string]struct{}{}
+	cleanup := make([]string, 0)
+	for _, statement := range statements {
+		schema, ok := createdSchemaName(statement)
+		if !ok {
+			continue
+		}
+		if strings.Contains(schema, "{{") || strings.Contains(schema, "}}") {
+			continue
+		}
+		unquoted := strings.ToLower(strings.Trim(schema, `"`))
+		if unquoted == "public" || unquoted == "pg_catalog" || unquoted == "information_schema" {
+			continue
+		}
+		if _, ok := seen[schema]; ok {
+			continue
+		}
+		seen[schema] = struct{}{}
+		cleanup = append(cleanup, "DROP SCHEMA IF EXISTS "+schema+" CASCADE")
+	}
+	return cleanup
+}
+
+func createdSchemaName(statement string) (string, bool) {
+	trimmed := strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(statement), ";"))
+	lower := strings.ToLower(trimmed)
+	const prefix = "create schema "
+	if !strings.HasPrefix(lower, prefix) {
+		return "", false
+	}
+	rest := strings.TrimSpace(trimmed[len(prefix):])
+	lowerRest := strings.ToLower(rest)
+	const ifNotExists = "if not exists "
+	if strings.HasPrefix(lowerRest, ifNotExists) {
+		rest = strings.TrimSpace(rest[len(ifNotExists):])
+	}
+	return firstSQLName(rest)
+}
+
+func firstSQLName(rest string) (string, bool) {
+	if rest == "" {
+		return "", false
+	}
+	if rest[0] == '"' {
+		for i := 1; i < len(rest); i++ {
+			if rest[i] != '"' {
+				continue
+			}
+			if i+1 < len(rest) && rest[i+1] == '"' {
+				i++
+				continue
+			}
+			return rest[:i+1], true
+		}
+		return "", false
+	}
+	end := len(rest)
+	for i, r := range rest {
+		if r == ';' || r == '(' || r == '\t' || r == '\n' || r == '\r' || r == ' ' {
+			end = i
+			break
+		}
+	}
+	schema := strings.TrimSpace(rest[:end])
+	if schema == "" {
+		return "", false
+	}
+	return schema, true
 }
 
 func parseOracleMeta(expr ast.Expr, stringSlices map[string][]string) (oracleMeta, error) {
