@@ -60,6 +60,9 @@ func (fp *FunctionProvider) Function(ctx *sql.Context, name string) (sql.Functio
 			if fn, ok := compiledPgCatalogFunction(schemaName, functionName); ok {
 				return fn, true
 			}
+			if fn, ok := compiledExtensionFunction(ctx, schemaName, functionName); ok {
+				return fn, true
+			}
 			return nil, false
 		}
 	} else {
@@ -228,6 +231,74 @@ func compiledPgCatalogFunction(schemaName string, functionName string) (sql.Func
 		Name: functionName,
 		Fn:   createFunc,
 	}, true
+}
+
+var compiledExtensionFunctionNames = map[string]map[string]struct{}{
+	"hstore": {
+		"akeys":                 {},
+		"avals":                 {},
+		"defined":               {},
+		"delete":                {},
+		"each":                  {},
+		"exist":                 {},
+		"exists_all":            {},
+		"exists_any":            {},
+		"fetchval":              {},
+		"hs_concat":             {},
+		"hs_contained":          {},
+		"hs_contains":           {},
+		"hstore":                {},
+		"hstore_cmp":            {},
+		"hstore_eq":             {},
+		"hstore_ge":             {},
+		"hstore_gt":             {},
+		"hstore_hash":           {},
+		"hstore_hash_extended":  {},
+		"hstore_in":             {},
+		"hstore_le":             {},
+		"hstore_lt":             {},
+		"hstore_ne":             {},
+		"hstore_out":            {},
+		"hstore_recv":           {},
+		"hstore_send":           {},
+		"hstore_to_array":       {},
+		"hstore_to_json":        {},
+		"hstore_to_json_loose":  {},
+		"hstore_to_jsonb":       {},
+		"hstore_to_jsonb_loose": {},
+		"hstore_to_matrix":      {},
+		"hstore_version_diag":   {},
+		"isdefined":             {},
+		"isexists":              {},
+		"populate_record":       {},
+		"skeys":                 {},
+		"slice":                 {},
+		"slice_array":           {},
+		"svals":                 {},
+		"tconvert":              {},
+	},
+}
+
+func compiledExtensionFunction(ctx *sql.Context, schemaName string, functionName string) (sql.Function, bool) {
+	functionName = strings.ToLower(functionName)
+	for extName, functionNames := range compiledExtensionFunctionNames {
+		if _, ok := functionNames[functionName]; !ok {
+			continue
+		}
+		extCollection, err := core.GetExtensionsCollectionFromContext(ctx, "")
+		if err != nil {
+			return nil, false
+		}
+		loadedExtension, err := extCollection.GetLoadedExtension(ctx, id.NewExtension(extName))
+		if err != nil || !loadedExtension.ExtName.IsValid() {
+			return nil, false
+		}
+		if !strings.EqualFold(loadedExtension.Namespace.SchemaName(), schemaName) {
+			continue
+		}
+		return compiledPgCatalogFunction("pg_catalog", functionName)
+	}
+	return nil, false
 }
 
 func parseQualifiedFunctionName(name string) (databaseName string, schemaName string, functionName string, qualified bool) {

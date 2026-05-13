@@ -255,6 +255,9 @@ func castLookupType(typ *pgtypes.DoltgresType) *pgtypes.DoltgresType {
 	if base, ok := pgtypes.PgvectorBuiltinEquivalent(typ); ok {
 		return base
 	}
+	if base, ok := pgtypes.HstoreBuiltinEquivalent(typ); ok {
+		return base
+	}
 	return typ
 }
 

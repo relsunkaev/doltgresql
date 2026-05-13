@@ -148,7 +148,9 @@ func nodeExpr(ctx *Context, node tree.Expr) (vitess.Expr, error) {
 		}, nil
 	case *tree.BinaryExpr:
 		// We will eventually support operators in other schemas, but for now we only can handle built-ins
-		if len(node.Schema) > 0 && node.Schema != "pg_catalog" && !isPublicVectorBinaryOperator(node.Schema, node.Operator) {
+		if len(node.Schema) > 0 && node.Schema != "pg_catalog" &&
+			!isPublicVectorBinaryOperator(node.Schema, node.Operator) &&
+			!isSchemaQualifiedHstoreBinaryOperator(node.Operator) {
 			return nil, errors.Errorf("schema %q not allowed in OPERATOR syntax", node.Schema)
 		}
 
@@ -350,7 +352,9 @@ func nodeExpr(ctx *Context, node tree.Expr) (vitess.Expr, error) {
 		return nil, errors.Errorf("comment on column is not yet supported")
 	case *tree.ComparisonExpr:
 		// We will eventually support operators in other schemas, but for now we only can handle built-ins
-		if len(node.Schema) > 0 && node.Schema != "pg_catalog" && !isPublicHstoreComparisonOperator(node.Schema, node.Operator) {
+		if len(node.Schema) > 0 && node.Schema != "pg_catalog" &&
+			!isPublicHstoreComparisonOperator(node.Schema, node.Operator) &&
+			!isSchemaQualifiedHstoreComparisonOperator(node.Operator) {
 			return nil, errors.Errorf("schema %q not allowed in OPERATOR syntax", node.Schema)
 		}
 
@@ -976,11 +980,33 @@ func isPublicHstoreComparisonOperator(schema tree.Name, operator tree.Comparison
 	if schema != "public" {
 		return false
 	}
+	return isHstoreOrderingOperator(operator)
+}
+
+func isHstoreOrderingOperator(operator tree.ComparisonOperator) bool {
 	switch operator {
 	case tree.HstoreLT, tree.HstoreLE, tree.HstoreGT, tree.HstoreGE:
 		return true
 	default:
 		return false
+	}
+}
+
+func isSchemaQualifiedHstoreBinaryOperator(operator tree.BinaryOperator) bool {
+	switch operator {
+	case tree.JSONFetchVal, tree.JSONFetchText, tree.HstorePopulate:
+		return true
+	default:
+		return false
+	}
+}
+
+func isSchemaQualifiedHstoreComparisonOperator(operator tree.ComparisonOperator) bool {
+	switch operator {
+	case tree.JSONExists, tree.JSONSomeExists, tree.JSONAllExists:
+		return true
+	default:
+		return isHstoreOrderingOperator(operator)
 	}
 }
 
