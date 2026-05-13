@@ -7399,6 +7399,29 @@
       ]
     },
     {
+      "id": "routine-sql-body-repro-test-testsqlfunctionreturnexpressionbodyrepro-0001-select-sql_return_expression_body-7",
+      "source": "testing/go/routine_sql_body_repro_test.go:TestSqlFunctionReturnExpressionBodyRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE FUNCTION sql_return_expression_body(input_value INT)\n\t\t\t\t\t\tRETURNS INT\n\t\t\t\t\t\tLANGUAGE SQL\n\t\t\t\t\t\tRETURN input_value + 1;"
+      ],
+      "query": "SELECT sql_return_expression_body(7);",
+      "expectedRows": [
+        [
+          {
+            "value": "8"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "rls-multiple-select-policies-combine",
       "source": "testing/go/row_level_security_policy_composition_repro_test.go:TestRowLevelSecurityMultipleSelectPoliciesCombineRepro",
       "ordinal": 1,

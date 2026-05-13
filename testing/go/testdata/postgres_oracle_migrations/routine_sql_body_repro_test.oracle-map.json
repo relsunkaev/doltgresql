@@ -1,0 +1,39 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map routine_sql_body_repro_test.go",
+  "sourceFile": "testing/go/routine_sql_body_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/routine_sql_body_repro_test.go:TestSqlFunctionReturnExpressionBodyRepro#0001",
+      "source": "testing/go/routine_sql_body_repro_test.go:TestSqlFunctionReturnExpressionBodyRepro",
+      "ordinal": 1,
+      "scriptName": "SQL function RETURN expression body executes",
+      "oracle": "postgres",
+      "postgresId": "routine-sql-body-repro-test-testsqlfunctionreturnexpressionbodyrepro-0001-select-sql_return_expression_body-7",
+      "suggestedId": "routine-sql-body-repro-test-testsqlfunctionreturnexpressionbodyrepro-0001-select-sql_return_expression_body-7",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT sql_return_expression_body(7);",
+      "querySha256": "30b4fca482aa6dafe27c0caf17794c4fffb226a1073a85d969777ef1330a183e",
+      "expectedRows": [
+        [
+          {
+            "value": "8"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}
