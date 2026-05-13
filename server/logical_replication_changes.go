@@ -732,6 +732,8 @@ func evalPublicationFilterBool(ctx *sql.Context, expr vitess.Expr, values map[st
 		return evalPublicationFilterBool(ctx, typed.Expr, values)
 	case *vitess.ComparisonExpr:
 		return evalPublicationFilterComparison(ctx, typed, values)
+	case *vitess.RangeCond:
+		return evalPublicationFilterRange(ctx, typed, values)
 	case *vitess.IsExpr:
 		value, err := evalPublicationFilterScalar(typed.Expr, values)
 		if err != nil {
@@ -769,6 +771,38 @@ func evalPublicationFilterBool(ctx *sql.Context, expr vitess.Expr, values map[st
 		return boolValue, nil
 	default:
 		return false, errors.Errorf("publication row filter expression %T is not supported", expr)
+	}
+}
+
+func evalPublicationFilterRange(ctx *sql.Context, expr *vitess.RangeCond, values map[string]rowFilterValue) (bool, error) {
+	left, err := evalPublicationFilterScalar(expr.Left, values)
+	if err != nil {
+		return false, err
+	}
+	from, err := evalPublicationFilterScalar(expr.From, values)
+	if err != nil {
+		return false, err
+	}
+	to, err := evalPublicationFilterScalar(expr.To, values)
+	if err != nil {
+		return false, err
+	}
+	lower, ok := rowFilterValuesCompare(ctx, left, from)
+	if !ok {
+		return false, nil
+	}
+	upper, ok := rowFilterValuesCompare(ctx, left, to)
+	if !ok {
+		return false, nil
+	}
+	between := lower >= 0 && upper <= 0
+	switch strings.ToLower(expr.Operator) {
+	case vitess.BetweenStr:
+		return between, nil
+	case vitess.NotBetweenStr:
+		return !between, nil
+	default:
+		return false, errors.Errorf("publication row filter range operator %q is not supported", expr.Operator)
 	}
 }
 

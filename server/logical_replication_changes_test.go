@@ -253,6 +253,77 @@ func TestPublicationRowFilterTextCastPredicates(t *testing.T) {
 	}
 }
 
+func TestPublicationRowFilterBetweenPredicates(t *testing.T) {
+	tests := []struct {
+		name   string
+		filter string
+		value  rowFilterValue
+		match  bool
+	}{
+		{
+			name:   "between includes lower bound",
+			filter: "score BETWEEN 10 AND 20",
+			value:  rowFilterValue{data: []byte("10")},
+			match:  true,
+		},
+		{
+			name:   "between includes upper bound",
+			filter: "score BETWEEN 10 AND 20",
+			value:  rowFilterValue{data: []byte("20")},
+			match:  true,
+		},
+		{
+			name:   "between matches interior",
+			filter: "score BETWEEN 10 AND 20",
+			value:  rowFilterValue{data: []byte("15")},
+			match:  true,
+		},
+		{
+			name:   "between rejects outside range",
+			filter: "score BETWEEN 10 AND 20",
+			value:  rowFilterValue{data: []byte("21")},
+			match:  false,
+		},
+		{
+			name:   "not between inverts complete comparison",
+			filter: "score NOT BETWEEN 10 AND 20",
+			value:  rowFilterValue{data: []byte("21")},
+			match:  true,
+		},
+		{
+			name:   "not between rejects inside range",
+			filter: "score NOT BETWEEN 10 AND 20",
+			value:  rowFilterValue{data: []byte("15")},
+			match:  false,
+		},
+		{
+			name:   "between rejects null",
+			filter: "score BETWEEN 10 AND 20",
+			value:  rowFilterValue{null: true},
+			match:  false,
+		},
+		{
+			name:   "not between rejects null",
+			filter: "score NOT BETWEEN 10 AND 20",
+			value:  rowFilterValue{null: true},
+			match:  false,
+		},
+	}
+
+	ctx := sql.NewEmptyContext()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			expr, err := parsePublicationRowFilter(tt.filter)
+			require.NoError(t, err)
+			match, err := evalPublicationFilterBool(ctx, expr, map[string]rowFilterValue{
+				"score": tt.value,
+			})
+			require.NoError(t, err)
+			require.Equal(t, tt.match, match)
+		})
+	}
+}
+
 func TestPublicationRowFilterLikePredicates(t *testing.T) {
 	tests := []struct {
 		name   string
