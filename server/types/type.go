@@ -620,6 +620,22 @@ func (t *DoltgresType) Convert(ctx context.Context, v interface{}) (interface{},
 		if _, ok := v.(JsonDocument); ok {
 			return v, sql.InRange, nil
 		}
+	case "numeric":
+		switch n := v.(type) {
+		case decimal.Decimal:
+			return n, sql.InRange, nil
+		case pgtype.Numeric:
+			if special, ok := NumericSpecialValueFromPgtype(n); ok {
+				return special, sql.InRange, nil
+			}
+			dec, ok, err := NumericValueAsDecimal(n)
+			if err != nil {
+				return nil, sql.InRange, err
+			}
+			if ok {
+				return dec, sql.InRange, nil
+			}
+		}
 	case "oid", "regclass", "regdatabase", "regproc", "regtype":
 		if _, ok := v.(id.Id); ok {
 			return v, sql.InRange, nil
