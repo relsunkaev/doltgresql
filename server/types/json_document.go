@@ -392,6 +392,110 @@ func JsonValueInsertPath(value JsonValue, path []string, newValue JsonValue, ins
 	return newValue, err
 }
 
+// JsonValueExtractPath returns the JSON value at path. Missing paths return ok=false.
+func JsonValueExtractPath(value JsonValue, path []string) (JsonValue, bool, error) {
+	value = JsonValueUnwrapRaw(value)
+	for _, element := range path {
+		switch current := value.(type) {
+		case JsonValueObject:
+			idx, ok := current.Index[element]
+			if !ok {
+				return nil, false, nil
+			}
+			value = current.Items[idx].Value
+		case JsonValueArray:
+			idx, err := strconv.Atoi(element)
+			if err != nil {
+				return nil, false, nil
+			}
+			if idx < 0 {
+				idx += len(current)
+			}
+			if idx < 0 || idx >= len(current) {
+				return nil, false, nil
+			}
+			value = current[idx]
+		default:
+			return nil, false, nil
+		}
+		value = JsonValueUnwrapRaw(value)
+	}
+	return JsonValueCopy(value), true, nil
+}
+
+// JsonValueSetPath returns a copy of target with newValue stored at path.
+func JsonValueSetPath(target JsonValue, path []string, newValue JsonValue, createMissing bool) (JsonValue, error) {
+	return jsonValueSetPath(target, path, newValue, createMissing, 1)
+}
+
+func jsonValueSetPath(target JsonValue, path []string, newValue JsonValue, createMissing bool, position int) (JsonValue, error) {
+	target = JsonValueUnwrapRaw(target)
+	if len(path) == 0 {
+		return JsonValueCopy(newValue), nil
+	}
+	switch value := target.(type) {
+	case JsonValueObject:
+		newObject := JsonValueCopy(value).(JsonValueObject)
+		key := path[0]
+		if len(path) == 1 {
+			if idx, ok := newObject.Index[key]; ok {
+				newObject.Items[idx].Value = JsonValueCopy(newValue)
+			} else if createMissing {
+				newObject.Items = append(newObject.Items, JsonValueObjectItem{Key: key, Value: JsonValueCopy(newValue)})
+				newObject = JsonObjectFromItems(newObject.Items, true)
+			}
+			return newObject, nil
+		}
+		if idx, ok := newObject.Index[key]; ok {
+			nested, err := jsonValueSetPath(newObject.Items[idx].Value, path[1:], newValue, createMissing, position+1)
+			if err != nil {
+				return nil, err
+			}
+			newObject.Items[idx].Value = nested
+		}
+		return newObject, nil
+	case JsonValueArray:
+		newArray := JsonValueCopy(value).(JsonValueArray)
+		idx, ok := jsonValueArrayPathIndex(path[0], len(newArray))
+		if !ok {
+			return nil, errors.Errorf("path element at position %d is not an integer: %q", position, path[0])
+		}
+		if len(path) == 1 {
+			if idx >= 0 && idx < len(newArray) {
+				newArray[idx] = JsonValueCopy(newValue)
+			} else if createMissing {
+				if idx < 0 {
+					return append(JsonValueArray{JsonValueCopy(newValue)}, newArray...), nil
+				}
+				return append(newArray, JsonValueCopy(newValue)), nil
+			}
+			return newArray, nil
+		}
+		if idx < 0 || idx >= len(newArray) {
+			return newArray, nil
+		}
+		nested, err := jsonValueSetPath(newArray[idx], path[1:], newValue, createMissing, position+1)
+		if err != nil {
+			return nil, err
+		}
+		newArray[idx] = nested
+		return newArray, nil
+	default:
+		return nil, errors.New("cannot set path in scalar")
+	}
+}
+
+func jsonValueArrayPathIndex(path string, length int) (int, bool) {
+	idx, err := strconv.Atoi(path)
+	if err != nil {
+		return 0, false
+	}
+	if idx < 0 {
+		idx += length
+	}
+	return idx, true
+}
+
 func jsonValueObjectDeleteKeys(value JsonValueObject, keys map[string]struct{}) JsonValueObject {
 	items := make([]JsonValueObjectItem, 0, len(value.Items))
 	for _, item := range value.Items {

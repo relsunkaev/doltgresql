@@ -47,24 +47,27 @@ func nodeUpdateExpr(ctx *Context, node *tree.UpdateExpr) (vitess.AssignmentExprs
 				Children:   vitess.Exprs{expr},
 			}
 		} else if len(node.Indirection) > 0 {
-			if len(node.Indirection) > 1 {
-				return nil, fmt.Errorf("multi dimensional array subscript assignment is not yet supported")
+			indexExprs := make(vitess.Exprs, len(node.Indirection))
+			for i, subscript := range node.Indirection {
+				if subscript.Slice {
+					return nil, fmt.Errorf("array slice assignment is not yet supported")
+				}
+				indexExpr, err := nodeExpr(ctx, subscript.Begin)
+				if err != nil {
+					return nil, err
+				}
+				indexExprs[i] = indexExpr
 			}
-			subscript := node.Indirection[0]
-			if subscript.Slice {
-				return nil, fmt.Errorf("array slice assignment is not yet supported")
-			}
-			indexExpr, err := nodeExpr(ctx, subscript.Begin)
-			if err != nil {
-				return nil, err
-			}
-			assignmentExpr = vitess.InjectedExpr{
-				Expression: &pgexprs.ArraySetElement{},
-				Children: vitess.Exprs{
-					&vitess.ColName{Name: vitess.NewColIdent(string(name))},
-					indexExpr,
-					expr,
-				},
+			assignmentExpr = expr
+			for depth := len(indexExprs) - 1; depth >= 0; depth-- {
+				assignmentExpr = vitess.InjectedExpr{
+					Expression: &pgexprs.ArraySetElement{},
+					Children: vitess.Exprs{
+						subscriptAssignmentTarget(name, indexExprs[:depth]),
+						indexExprs[depth],
+						assignmentExpr,
+					},
+				}
 			}
 		}
 		assignmentExprs = append(assignmentExprs, &vitess.AssignmentExpr{
@@ -73,6 +76,17 @@ func nodeUpdateExpr(ctx *Context, node *tree.UpdateExpr) (vitess.AssignmentExprs
 		})
 	}
 	return assignmentExprs, nil
+}
+
+func subscriptAssignmentTarget(name tree.Name, indexExprs vitess.Exprs) vitess.Expr {
+	var target vitess.Expr = &vitess.ColName{Name: vitess.NewColIdent(string(name))}
+	for _, indexExpr := range indexExprs {
+		target = vitess.InjectedExpr{
+			Expression: &pgexprs.Subscript{},
+			Children:   vitess.Exprs{target, indexExpr},
+		}
+	}
+	return target
 }
 
 // nodeUpdateExprs handles tree.UpdateExprs nodes.

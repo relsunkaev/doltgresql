@@ -749,43 +749,41 @@ func nodeExpr(ctx *Context, node tree.Expr) (vitess.Expr, error) {
 			return nil, err
 		}
 
-		if len(node.Indirection) > 1 {
-			return nil, errors.Errorf("multi dimensional array subscripts are not yet supported")
-		}
-
-		subscript := node.Indirection[0]
-		if subscript.Slice {
-			children := vitess.Exprs{childExpr}
-			if subscript.Begin != nil {
-				beginExpr, err := nodeExpr(ctx, subscript.Begin)
-				if err != nil {
-					return nil, err
+		for _, subscript := range node.Indirection {
+			if subscript.Slice {
+				children := vitess.Exprs{childExpr}
+				if subscript.Begin != nil {
+					beginExpr, err := nodeExpr(ctx, subscript.Begin)
+					if err != nil {
+						return nil, err
+					}
+					children = append(children, beginExpr)
 				}
-				children = append(children, beginExpr)
-			}
-			if subscript.End != nil {
-				endExpr, err := nodeExpr(ctx, subscript.End)
-				if err != nil {
-					return nil, err
+				if subscript.End != nil {
+					endExpr, err := nodeExpr(ctx, subscript.End)
+					if err != nil {
+						return nil, err
+					}
+					children = append(children, endExpr)
 				}
-				children = append(children, endExpr)
+				childExpr = vitess.InjectedExpr{
+					Expression: pgexprs.NewSliceSubscriptInjectable(subscript.Begin != nil, subscript.End != nil),
+					Children:   children,
+				}
+				continue
 			}
 
-			return vitess.InjectedExpr{
-				Expression: pgexprs.NewSliceSubscriptInjectable(subscript.Begin != nil, subscript.End != nil),
-				Children:   children,
-			}, nil
-		}
+			indexExpr, err := nodeExpr(ctx, subscript.Begin)
+			if err != nil {
+				return nil, err
+			}
 
-		indexExpr, err := nodeExpr(ctx, subscript.Begin)
-		if err != nil {
-			return nil, err
+			childExpr = vitess.InjectedExpr{
+				Expression: &pgexprs.Subscript{},
+				Children:   vitess.Exprs{childExpr, indexExpr},
+			}
 		}
-
-		return vitess.InjectedExpr{
-			Expression: &pgexprs.Subscript{},
-			Children:   vitess.Exprs{childExpr, indexExpr},
-		}, nil
+		return childExpr, nil
 	case *tree.IsNotNullExpr:
 		expr, err := nodeExpr(ctx, node.Expr)
 		if err != nil {

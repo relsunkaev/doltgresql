@@ -17,6 +17,7 @@ package expression
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/dolthub/go-mysql-server/sql"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
@@ -63,6 +64,9 @@ func (s Subscript) Type(ctx *sql.Context) sql.Type {
 	if !ok {
 		panic(fmt.Sprintf("unexpected type %T for subscript", s.Child.Type(ctx)))
 	}
+	if dt.ID == types.JsonB.ID {
+		return types.JsonB
+	}
 	if dt == types.Name {
 		return types.InternalChar
 	}
@@ -94,6 +98,22 @@ func (s Subscript) Eval(ctx *sql.Context, row sql.Row) (interface{}, error) {
 	}
 	if indexVal == nil {
 		return nil, nil
+	}
+
+	if dt, ok := s.Child.Type(ctx).(*types.DoltgresType); ok && dt.ID == types.JsonB.ID {
+		pathElement, err := jsonbSubscriptPathElement(ctx, indexVal)
+		if err != nil {
+			return nil, err
+		}
+		doc, err := types.JsonDocumentFromSQLValue(ctx, types.JsonB, childVal)
+		if err != nil {
+			return nil, err
+		}
+		value, ok, err := types.JsonValueExtractPath(doc.Value, []string{pathElement})
+		if err != nil || !ok {
+			return nil, err
+		}
+		return types.JsonDocument{Value: value}, nil
 	}
 
 	if child, ok := types.ArrayElements(childVal); ok {
@@ -228,6 +248,12 @@ func (s ArraySetElement) Eval(ctx *sql.Context, row sql.Row) (interface{}, error
 	if indexVal == nil {
 		return s.Array.Eval(ctx, row)
 	}
+
+	arrayType, ok := s.Array.Type(ctx).(*types.DoltgresType)
+	if ok && arrayType.ID == types.JsonB.ID {
+		return s.evalJsonb(ctx, row, indexVal)
+	}
+
 	index, ok := indexVal.(int32)
 	if !ok {
 		converted, _, err := types.Int32.Convert(ctx, indexVal)
@@ -241,7 +267,7 @@ func (s ArraySetElement) Eval(ctx *sql.Context, row sql.Row) (interface{}, error
 	if err != nil {
 		return nil, err
 	}
-	arrayType, ok := s.Array.Type(ctx).(*types.DoltgresType)
+	arrayType, ok = s.Array.Type(ctx).(*types.DoltgresType)
 	if !ok {
 		return nil, fmt.Errorf("unsupported array assignment target type %T", s.Array.Type(ctx))
 	}
@@ -287,6 +313,67 @@ func (s ArraySetElement) Eval(ctx *sql.Context, row sql.Row) (interface{}, error
 	copy(newElements[int(lowerBound-newLowerBound):], elements)
 	newElements[int(index-newLowerBound)] = value
 	return types.NewArrayValue(newElements, []int32{newLowerBound}), nil
+}
+
+func (s ArraySetElement) evalJsonb(ctx *sql.Context, row sql.Row, indexVal any) (interface{}, error) {
+	pathElement, err := jsonbSubscriptPathElement(ctx, indexVal)
+	if err != nil {
+		return nil, err
+	}
+	value, err := s.Value.Eval(ctx, row)
+	if err != nil {
+		return nil, err
+	}
+	newDoc, err := types.JsonDocumentFromSQLValue(ctx, types.JsonB, value)
+	if err != nil {
+		return nil, err
+	}
+	target, err := s.Array.Eval(ctx, row)
+	if err != nil {
+		return nil, err
+	}
+	targetDoc, err := types.JsonDocumentFromSQLValue(ctx, types.JsonB, target)
+	if err != nil {
+		return nil, err
+	}
+	newValue, err := types.JsonValueSetPath(targetDoc.Value, []string{pathElement}, newDoc.Value, true)
+	if err != nil {
+		return nil, err
+	}
+	return types.JsonDocument{Value: newValue}, nil
+}
+
+func jsonbSubscriptPathElement(ctx *sql.Context, value any) (string, error) {
+	switch value := value.(type) {
+	case string:
+		return value, nil
+	case int:
+		return strconv.Itoa(value), nil
+	case int8:
+		return strconv.FormatInt(int64(value), 10), nil
+	case int16:
+		return strconv.FormatInt(int64(value), 10), nil
+	case int32:
+		return strconv.FormatInt(int64(value), 10), nil
+	case int64:
+		return strconv.FormatInt(value, 10), nil
+	case uint:
+		return strconv.FormatUint(uint64(value), 10), nil
+	case uint8:
+		return strconv.FormatUint(uint64(value), 10), nil
+	case uint16:
+		return strconv.FormatUint(uint64(value), 10), nil
+	case uint32:
+		return strconv.FormatUint(uint64(value), 10), nil
+	case uint64:
+		return strconv.FormatUint(value, 10), nil
+	default:
+		converted, _, err := types.Text.Convert(ctx, value)
+		if err != nil {
+			return "", err
+		}
+		return converted.(string), nil
+	}
 }
 
 // Children implements the sql.Expression interface.
