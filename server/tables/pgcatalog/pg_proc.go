@@ -119,6 +119,48 @@ var pgProcSchema = sql.Schema{
 	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgProcName},
 }
 
+func pgProcRoutineArgs(paramTypes []id.Type, paramNames []string, paramModes []coreprocedures.ParameterMode) (pronargs int16, proargtypes []any, proallargtypes []any, proargmodes []any, proargnames []any, provariadic any) {
+	provariadic = id.Null
+	allArgTypes := make([]any, len(paramTypes))
+	modeChars := make([]any, len(paramTypes))
+	hasNonInMode := false
+	for i, paramType := range paramTypes {
+		mode := coreprocedures.ParameterMode_IN
+		if i < len(paramModes) {
+			mode = paramModes[i]
+		}
+		allArgTypes[i] = paramType.AsId()
+		switch mode {
+		case coreprocedures.ParameterMode_OUT:
+			modeChars[i] = "o"
+			hasNonInMode = true
+		case coreprocedures.ParameterMode_INOUT:
+			modeChars[i] = "b"
+			hasNonInMode = true
+			proargtypes = append(proargtypes, paramType.AsId())
+		case coreprocedures.ParameterMode_VARIADIC:
+			modeChars[i] = "v"
+			hasNonInMode = true
+			provariadic = paramType.AsId()
+			proargtypes = append(proargtypes, paramType.AsId())
+		default:
+			modeChars[i] = "i"
+			proargtypes = append(proargtypes, paramType.AsId())
+		}
+	}
+	if hasNonInMode {
+		proallargtypes = allArgTypes
+		proargmodes = modeChars
+	}
+	if len(paramNames) > 0 {
+		proargnames = make([]any, len(paramNames))
+		for i, argName := range paramNames {
+			proargnames[i] = argName
+		}
+	}
+	return int16(len(proargtypes)), proargtypes, proallargtypes, proargmodes, proargnames, provariadic
+}
+
 func pgProcFunctionRow(function corefunctions.Function) sql.Row {
 	owner := function.Owner
 	if owner == "" {
@@ -142,14 +184,7 @@ func pgProcFunctionRow(function corefunctions.Function) sql.Row {
 	if parallel == "" {
 		parallel = "u"
 	}
-	argTypes := make([]any, len(function.ParameterTypes))
-	for i, argType := range function.ParameterTypes {
-		argTypes[i] = argType.AsId()
-	}
-	argNames := make([]any, len(function.ParameterNames))
-	for i, argName := range function.ParameterNames {
-		argNames[i] = argName
-	}
+	pronargs, argTypes, allArgTypes, argModes, argNames, variadic := pgProcRoutineArgs(function.ParameterTypes, function.ParameterNames, function.ParameterModes)
 	proConfig := []any(nil)
 	for name, value := range function.SetConfig {
 		proConfig = append(proConfig, name+"="+value)
@@ -170,7 +205,7 @@ func pgProcFunctionRow(function corefunctions.Function) sql.Row {
 		proLang,                                          // prolang
 		cost,                                             // procost
 		rows,                                             // prorows
-		id.Null,                                          // provariadic
+		variadic,                                         // provariadic
 		"-",                                              // prosupport
 		proKind,                                          // prokind
 		function.SecurityDefiner,                         // prosecdef
@@ -179,12 +214,12 @@ func pgProcFunctionRow(function corefunctions.Function) sql.Row {
 		function.SetOf,                                   // proretset
 		volatility,                                       // provolatile
 		parallel,                                         // proparallel
-		int16(len(function.ParameterTypes)),              // pronargs
+		pronargs,                                         // pronargs
 		int16(len(function.ParameterDefaults)),           // pronargdefaults
 		function.ReturnType.AsId(),                       // prorettype
 		argTypes,                                         // proargtypes
-		nil,                                              // proallargtypes
-		nil,                                              // proargmodes
+		allArgTypes,                                      // proallargtypes
+		argModes,                                         // proargmodes
 		argNames,                                         // proargnames
 		nil,                                              // proargdefaults
 		nil,                                              // protrftypes
@@ -278,17 +313,7 @@ func pgProcProcedureRow(procedure coreprocedures.Procedure) sql.Row {
 	if owner == "" {
 		owner = "postgres"
 	}
-	argTypes := make([]any, 0, len(procedure.ParameterTypes))
-	argNames := make([]any, len(procedure.ParameterNames))
-	for i, argName := range procedure.ParameterNames {
-		argNames[i] = argName
-	}
-	for i, argType := range procedure.ParameterTypes {
-		if i < len(procedure.ParameterModes) && procedure.ParameterModes[i] == coreprocedures.ParameterMode_OUT {
-			continue
-		}
-		argTypes = append(argTypes, argType.AsId())
-	}
+	pronargs, argTypes, allArgTypes, argModes, argNames, variadic := pgProcRoutineArgs(procedure.ParameterTypes, procedure.ParameterNames, procedure.ParameterModes)
 	proConfig := []any(nil)
 	for name, value := range procedure.SetConfig {
 		proConfig = append(proConfig, name+"="+value)
@@ -305,7 +330,7 @@ func pgProcProcedureRow(procedure coreprocedures.Procedure) sql.Row {
 		proLang,                                           // prolang
 		float32(100),                                      // procost
 		float32(0),                                        // prorows
-		id.Null,                                           // provariadic
+		variadic,                                          // provariadic
 		"-",                                               // prosupport
 		"p",                                               // prokind
 		procedure.SecurityDefiner,                         // prosecdef
@@ -314,12 +339,12 @@ func pgProcProcedureRow(procedure coreprocedures.Procedure) sql.Row {
 		false,                                             // proretset
 		"v",                                               // provolatile
 		"u",                                               // proparallel
-		int16(len(argTypes)),                              // pronargs
+		pronargs,                                          // pronargs
 		int16(len(procedure.ParameterDefaults)),           // pronargdefaults
 		pgtypes.Void.ID.AsId(),                            // prorettype
 		argTypes,                                          // proargtypes
-		nil,                                               // proallargtypes
-		nil,                                               // proargmodes
+		allArgTypes,                                       // proallargtypes
+		argModes,                                          // proargmodes
 		argNames,                                          // proargnames
 		nil,                                               // proargdefaults
 		nil,                                               // protrftypes

@@ -168,10 +168,12 @@ func (c *CreateFunction) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, erro
 	}
 	paramNames := make([]string, len(c.Parameters))
 	paramTypes := make([]id.Type, len(c.Parameters))
+	paramModes := make([]procedures.ParameterMode, len(c.Parameters))
 	paramDefaults := make([]string, len(c.Parameters))
 	for i, param := range c.Parameters {
 		paramNames[i] = param.Name
 		paramTypes[i] = param.Type.ID
+		paramModes[i] = param.Mode
 		if param.Default != nil {
 			paramDefaults[i] = param.Default.String()
 		}
@@ -218,6 +220,7 @@ func (c *CreateFunction) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, erro
 		ReturnType:         c.ReturnType.ID,
 		ParameterNames:     paramNames,
 		ParameterTypes:     paramTypes,
+		ParameterModes:     paramModes,
 		ParameterDefaults:  paramDefaults,
 		Variadic:           false, // TODO: implement this
 		IsNonDeterministic: true,

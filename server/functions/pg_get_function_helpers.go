@@ -25,6 +25,7 @@ import (
 	"github.com/dolthub/doltgresql/core"
 	corefunctions "github.com/dolthub/doltgresql/core/functions"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/core/procedures"
 	"github.com/dolthub/doltgresql/postgres/parser/types"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -183,6 +184,35 @@ func pgBuiltinFunctionID(function framework.FunctionInterface) id.Function {
 	return functionID
 }
 
+func pgFunctionParameterModes(modes []procedures.ParameterMode, count int) []string {
+	if len(modes) == 0 {
+		return nil
+	}
+	result := make([]string, count)
+	hasNonInMode := false
+	for i := 0; i < count; i++ {
+		mode := procedures.ParameterMode_IN
+		if i < len(modes) {
+			mode = modes[i]
+		}
+		switch mode {
+		case procedures.ParameterMode_OUT:
+			result[i] = "OUT"
+			hasNonInMode = true
+		case procedures.ParameterMode_INOUT:
+			result[i] = "INOUT"
+			hasNonInMode = true
+		case procedures.ParameterMode_VARIADIC:
+			result[i] = "VARIADIC"
+			hasNonInMode = true
+		}
+	}
+	if !hasNonInMode {
+		return nil
+	}
+	return result
+}
+
 func pgUserFunctionMetadata(function corefunctions.Function) pgFunctionMetadata {
 	body := function.SQLDefinition
 	language := "sql"
@@ -196,6 +226,7 @@ func pgUserFunctionMetadata(function corefunctions.Function) pgFunctionMetadata 
 		ReturnType:        function.ReturnType,
 		ParameterNames:    function.ParameterNames,
 		ParameterTypes:    function.ParameterTypes,
+		ParameterModes:    pgFunctionParameterModes(function.ParameterModes, len(function.ParameterTypes)),
 		ParameterDefaults: function.ParameterDefaults,
 		Language:          language,
 		Body:              body,

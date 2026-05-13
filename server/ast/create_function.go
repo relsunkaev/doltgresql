@@ -24,6 +24,7 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/core/procedures"
 	"github.com/dolthub/doltgresql/postgres/parser/parser"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/auth"
@@ -50,15 +51,13 @@ func nodeCreateFunction(ctx *Context, node *tree.CreateFunction) (vitess.Stateme
 	// Grab the general information that we'll need to create the function
 	tableName := node.Name.ToTableName()
 	var retType *pgtypes.DoltgresType
-	if len(node.RetType) == 0 {
-		retType = pgtypes.Void
-	} else if !node.ReturnsTable {
+	if len(node.RetType) > 0 && !node.ReturnsTable {
 		// Return types may specify "trigger", but this doesn't apply elsewhere
 		_, retType, err = nodeResolvableTypeReference(ctx, node.RetType[0].Type, true)
 		if err != nil {
 			return nil, err
 		}
-	} else {
+	} else if node.ReturnsTable {
 		retType = createAnonymousCompositeType(node.RetType)
 	}
 
@@ -72,6 +71,19 @@ func nodeCreateFunction(ctx *Context, node *tree.CreateFunction) (vitess.Stateme
 		if err != nil {
 			return nil, err
 		}
+		// parameter mode
+		switch arg.Mode {
+		case tree.RoutineArgModeIn:
+			params[i].Mode = procedures.ParameterMode_IN
+		case tree.RoutineArgModeVariadic:
+			params[i].Mode = procedures.ParameterMode_VARIADIC
+		case tree.RoutineArgModeOut:
+			params[i].Mode = procedures.ParameterMode_OUT
+		case tree.RoutineArgModeInout:
+			params[i].Mode = procedures.ParameterMode_INOUT
+		default:
+			return nil, errors.Newf("unknown function argmode: `%v`", arg.Mode)
+		}
 		// parameter default
 		if arg.Default != nil {
 			params[i].HasDefault = true
@@ -81,6 +93,9 @@ func nodeCreateFunction(ctx *Context, node *tree.CreateFunction) (vitess.Stateme
 			}
 			defaults = append(defaults, d)
 		}
+	}
+	if retType == nil {
+		retType = createRoutineOutputReturnType(params)
 	}
 	var strict bool
 	if nullInputOption, ok := options[tree.OptionNullInput]; ok {
@@ -199,6 +214,44 @@ func nodeCreateFunction(ctx *Context, node *tree.CreateFunction) (vitess.Stateme
 		},
 		Children: defaults,
 	}, nil
+}
+
+func createRoutineOutputReturnType(params []pgnodes.RoutineParam) *pgtypes.DoltgresType {
+	outputParams := make([]pgnodes.RoutineParam, 0)
+	for _, param := range params {
+		if param.Mode == procedures.ParameterMode_OUT || param.Mode == procedures.ParameterMode_INOUT {
+			outputParams = append(outputParams, param)
+		}
+	}
+	switch len(outputParams) {
+	case 0:
+		return pgtypes.Void
+	case 1:
+		return outputParams[0].Type
+	default:
+		return createAnonymousCompositeTypeFromRoutineParams(outputParams)
+	}
+}
+
+func createAnonymousCompositeTypeFromRoutineParams(params []pgnodes.RoutineParam) *pgtypes.DoltgresType {
+	attrs := make([]pgtypes.CompositeAttribute, len(params))
+	for i, param := range params {
+		attrs[i] = pgtypes.NewCompositeAttribute(nil, id.Null, param.Name, param.Type.ID, -1, int16(i), "")
+	}
+
+	typeIdString := "table("
+	for i, attr := range attrs {
+		if i > 0 {
+			typeIdString += ","
+		}
+		typeIdString += attr.Name
+		typeIdString += ":"
+		typeIdString += attr.TypeID.TypeName()
+	}
+	typeIdString += ")"
+
+	typeID := id.NewType("", typeIdString)
+	return pgtypes.NewCompositeType(context.Background(), id.Null, id.NullType, typeID, attrs)
 }
 
 // createAnonymousCompositeType creates a new DoltgresType for the anonymous composite return

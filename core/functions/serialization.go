@@ -20,6 +20,7 @@ import (
 	"github.com/cockroachdb/errors"
 
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/core/procedures"
 	"github.com/dolthub/doltgresql/server/plpgsql"
 	"github.com/dolthub/doltgresql/utils"
 )
@@ -32,7 +33,7 @@ func (function Function) Serialize(ctx context.Context) ([]byte, error) {
 
 	// Write all of the functions to the writer
 	writer := utils.NewWriter(256)
-	writer.VariableUint(8) // Version
+	writer.VariableUint(9) // Version
 	// Write the function data
 	writer.Id(function.ID.AsId())
 	writer.Id(function.ReturnType.AsId())
@@ -78,6 +79,11 @@ func (function Function) Serialize(ctx context.Context) ([]byte, error) {
 	writer.Float32(function.Rows)
 	// Write version 8 data
 	writer.StringSlice(function.ExtensionDeps)
+	// Write version 9 data
+	writer.VariableUint(uint64(len(function.ParameterModes)))
+	for _, mode := range function.ParameterModes {
+		writer.Uint8(uint8(mode))
+	}
 	// Returns the data
 	return writer.Data(), nil
 }
@@ -90,7 +96,7 @@ func DeserializeFunction(ctx context.Context, data []byte) (Function, error) {
 	}
 	reader := utils.NewReader(data)
 	version := reader.VariableUint()
-	if version > 8 {
+	if version > 9 {
 		return Function{}, errors.Errorf("version %d of functions is not supported, please upgrade the server", version)
 	}
 
@@ -150,6 +156,13 @@ func DeserializeFunction(ctx context.Context, data []byte) (Function, error) {
 	}
 	if version >= 8 {
 		f.ExtensionDeps = reader.StringSlice()
+	}
+	if version >= 9 {
+		modeCount := reader.VariableUint()
+		f.ParameterModes = make([]procedures.ParameterMode, modeCount)
+		for modeIdx := uint64(0); modeIdx < modeCount; modeIdx++ {
+			f.ParameterModes[modeIdx] = procedures.ParameterMode(reader.Uint8())
+		}
 	}
 	if !reader.IsEmpty() {
 		return Function{}, errors.Errorf("extra data found while deserializing a function")
