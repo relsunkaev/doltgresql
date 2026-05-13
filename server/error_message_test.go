@@ -99,6 +99,12 @@ func TestErrMessageToSQLStateFormatsMissingAlterTableColumn(t *testing.T) {
 	require.Equal(t, pgcode.UndefinedColumn.String(), code)
 }
 
+func TestErrMessageToSQLStateFormatsAlterTableRowTypeDependency(t *testing.T) {
+	code, ok := errMessageToSQLState(`cannot alter table "row_type_parent" because column "row_type_child.parent_row" uses its row type`)
+	require.True(t, ok)
+	require.Equal(t, pgcode.FeatureNotSupported.String(), code)
+}
+
 func TestErrMessageToSQLStateFormatsTypmodOverflow(t *testing.T) {
 	code, ok := errMessageToSQLState(`numeric field overflow - A field with precision 5, scale 2 must round to an absolute value less than 10^3`)
 	require.True(t, ok)
