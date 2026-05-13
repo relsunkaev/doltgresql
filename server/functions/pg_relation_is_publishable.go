@@ -17,6 +17,7 @@ package functions
 import (
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -34,7 +35,25 @@ var pg_relation_is_publishable = framework.Function1{
 	IsNonDeterministic: true,
 	Strict:             true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
-		// TODO: true is returned if the relation is a non-system catalog, non-temporary table or partitioned table, otherwise false.
-		return nil, nil
+		var publishable bool
+		err := RunCallback(ctx, val.(id.Id), Callbacks{
+			Table: func(ctx *sql.Context, schema ItemSchema, table ItemTable) (cont bool, err error) {
+				if schema.IsSystemSchema() {
+					return false, nil
+				}
+				if tempTable, ok := sql.GetUnderlyingTable(table.Item).(sql.TemporaryTable); ok && tempTable.IsTemporary() {
+					return false, nil
+				}
+				publishable = true
+				return false, nil
+			},
+			View: func(ctx *sql.Context, schema ItemSchema, view ItemView) (cont bool, err error) {
+				return false, nil
+			},
+		})
+		if err != nil {
+			return nil, err
+		}
+		return publishable, nil
 	},
 }
