@@ -118,6 +118,7 @@ func Init() {
 	initCosh()
 	initCot()
 	initCotd()
+	initCurrVal()
 	initCurrentDatabase()
 	initCurrentSchema()
 	initCurrentSetting()

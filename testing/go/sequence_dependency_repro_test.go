@@ -575,6 +575,10 @@ func TestCurrvalReturnsSessionSequenceValueRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
+					Query:       `SELECT currval('currval_session_seq');`,
+					ExpectedErr: `not yet defined in this session`,
+				},
+				{
 					Query:    `SELECT nextval('currval_session_seq');`,
 					Expected: []sql.Row{{1}},
 				},
@@ -599,6 +603,10 @@ func TestLastvalReturnsLatestSessionSequenceValueRepro(t *testing.T) {
 				`CREATE SEQUENCE lastval_second_seq START 10;`,
 			},
 			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `SELECT lastval();`,
+					ExpectedErr: `not yet defined in this session`,
+				},
 				{
 					Query:    `SELECT nextval('lastval_first_seq');`,
 					Expected: []sql.Row{{1}},

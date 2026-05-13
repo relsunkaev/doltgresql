@@ -51,8 +51,13 @@ var nextval_text = framework.Function1{
 		if err != nil {
 			return nil, err
 		}
-
-		return collection.NextVal(ctx, id.NewSequence(schema, sequence))
+		sequenceID := id.NewSequence(schema, sequence)
+		value, err := collection.NextVal(ctx, sequenceID)
+		if err != nil {
+			return nil, err
+		}
+		recordSessionSequenceValue(ctx, sequenceID, value)
+		return value, nil
 	},
 }
 
@@ -77,7 +82,12 @@ var nextval_regclass = framework.Function1{
 		if err != nil {
 			return nil, err
 		}
-
-		return collection.NextVal(ctx, id.NewSequence(schema, sequence))
+		sequenceID := id.NewSequence(schema, sequence)
+		value, err := collection.NextVal(ctx, sequenceID)
+		if err != nil {
+			return nil, err
+		}
+		recordSessionSequenceValue(ctx, sequenceID, value)
+		return value, nil
 	},
 }
