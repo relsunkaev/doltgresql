@@ -47,9 +47,10 @@ const (
 
 // CreateTable is a node that implements functionality specifically relevant to Doltgres' table creation needs.
 type CreateTable struct {
-	gmsCreateTable    *plan.CreateTable
-	sequences         []*CreateSequence
-	temporaryOnCommit TemporaryTableOnCommit
+	gmsCreateTable     *plan.CreateTable
+	sequences          []*CreateSequence
+	inheritanceParents []tablemetadata.InheritedTable
+	temporaryOnCommit  TemporaryTableOnCommit
 }
 
 var _ sql.ExecBuilderNode = (*CreateTable)(nil)
@@ -57,11 +58,12 @@ var _ sql.SchemaTarget = (*CreateTable)(nil)
 var _ sql.Expressioner = (*CreateTable)(nil)
 
 // NewCreateTable returns a new *CreateTable.
-func NewCreateTable(createTable *plan.CreateTable, sequences []*CreateSequence) *CreateTable {
+func NewCreateTable(createTable *plan.CreateTable, sequences []*CreateSequence, inheritanceParents ...tablemetadata.InheritedTable) *CreateTable {
 	return &CreateTable{
-		gmsCreateTable:    createTable,
-		sequences:         sequences,
-		temporaryOnCommit: temporaryOnCommitFromTableOpts(createTable.TableOpts),
+		gmsCreateTable:     createTable,
+		sequences:          sequences,
+		inheritanceParents: append([]tablemetadata.InheritedTable(nil), inheritanceParents...),
+		temporaryOnCommit:  temporaryOnCommitFromTableOpts(createTable.TableOpts),
 	}
 }
 
@@ -127,6 +129,9 @@ func (c *CreateTable) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sq
 		comment := ""
 		if existingComment, ok := doltgresTableMetadataComment(c.gmsCreateTable.TableOpts); ok {
 			comment = existingComment
+		}
+		if len(c.inheritanceParents) > 0 {
+			comment = tablemetadata.SetInherits(comment, c.inheritanceParents)
 		}
 		if user := ctx.Client().User; user != "" {
 			comment = tablemetadata.SetOwner(comment, user)
@@ -223,9 +228,10 @@ func (c *CreateTable) WithChildren(ctx *sql.Context, children ...sql.Node) (sql.
 		return nil, err
 	}
 	return &CreateTable{
-		gmsCreateTable:    gmsCreateTable.(*plan.CreateTable),
-		sequences:         c.sequences,
-		temporaryOnCommit: c.temporaryOnCommit,
+		gmsCreateTable:     gmsCreateTable.(*plan.CreateTable),
+		sequences:          c.sequences,
+		inheritanceParents: append([]tablemetadata.InheritedTable(nil), c.inheritanceParents...),
+		temporaryOnCommit:  c.temporaryOnCommit,
 	}, nil
 }
 

@@ -48,8 +48,15 @@ type Metadata struct {
 	ColumnIdentity              map[string]string            `json:"columnIdentity,omitempty"`
 	ColumnMissingValues         map[string]string            `json:"columnMissingValues,omitempty"`
 	NotNullConstraints          map[string]NotNullConstraint `json:"notNullConstraints,omitempty"`
+	Inherits                    []InheritedTable             `json:"inherits,omitempty"`
 	DroppedColumns              []DroppedColumn              `json:"droppedColumns,omitempty"`
 	ExtendedStatistics          []ExtendedStatistic          `json:"extendedStatistics,omitempty"`
+}
+
+// InheritedTable stores one parent relation from CREATE TABLE ... INHERITS.
+type InheritedTable struct {
+	Schema string `json:"schema,omitempty"`
+	Name   string `json:"name,omitempty"`
 }
 
 // DroppedColumn stores the original attribute slot for a dropped table column.
@@ -88,6 +95,7 @@ func EncodeComment(metadata Metadata) string {
 	normalizeColumnIdentity(metadata.ColumnIdentity)
 	normalizeColumnMissingValues(metadata.ColumnMissingValues)
 	normalizeNotNullConstraints(metadata.NotNullConstraints)
+	normalizeInheritedTables(&metadata.Inherits)
 	normalizeDroppedColumns(&metadata.DroppedColumns)
 	normalizeExtendedStatistics(&metadata.ExtendedStatistics)
 	encoded, _ := json.Marshal(metadata)
@@ -118,6 +126,7 @@ func DecodeComment(comment string) (Metadata, bool) {
 	normalizeColumnIdentity(metadata.ColumnIdentity)
 	normalizeColumnMissingValues(metadata.ColumnMissingValues)
 	normalizeNotNullConstraints(metadata.NotNullConstraints)
+	normalizeInheritedTables(&metadata.Inherits)
 	normalizeDroppedColumns(&metadata.DroppedColumns)
 	normalizeExtendedStatistics(&metadata.ExtendedStatistics)
 	return metadata, true
@@ -139,6 +148,28 @@ func PrimaryKeyConstraintName(comment string) string {
 func SetPrimaryKeyConstraintName(comment string, name string) string {
 	metadata, _ := DecodeComment(comment)
 	metadata.PrimaryKeyConstraint = strings.TrimSpace(name)
+	if metadata.empty() {
+		return ""
+	}
+	return EncodeComment(metadata)
+}
+
+// Inherits returns the parent relations encoded for CREATE TABLE ... INHERITS.
+func Inherits(comment string) []InheritedTable {
+	metadata, ok := DecodeComment(comment)
+	if !ok || len(metadata.Inherits) == 0 {
+		return nil
+	}
+	return append([]InheritedTable(nil), metadata.Inherits...)
+}
+
+// SetInherits returns a table metadata comment with the given inherited parent
+// relations. An empty list clears Doltgres table metadata when no other table
+// metadata is present.
+func SetInherits(comment string, inheritedTables []InheritedTable) string {
+	metadata, _ := DecodeComment(comment)
+	metadata.Inherits = append([]InheritedTable(nil), inheritedTables...)
+	normalizeInheritedTables(&metadata.Inherits)
 	if metadata.empty() {
 		return ""
 	}
@@ -853,6 +884,27 @@ func normalizeNotNullConstraints(values map[string]NotNullConstraint) {
 	}
 }
 
+func normalizeInheritedTables(values *[]InheritedTable) {
+	if len(*values) == 0 {
+		return
+	}
+	ret := (*values)[:0]
+	seen := make(map[InheritedTable]struct{}, len(*values))
+	for _, value := range *values {
+		value.Schema = strings.TrimSpace(value.Schema)
+		value.Name = strings.TrimSpace(value.Name)
+		if value.Name == "" {
+			continue
+		}
+		if _, ok := seen[value]; ok {
+			continue
+		}
+		seen[value] = struct{}{}
+		ret = append(ret, value)
+	}
+	*values = ret
+}
+
 func normalizeColumnMissingValues(values map[string]string) {
 	for column, value := range values {
 		trimmedColumn := strings.TrimSpace(column)
@@ -952,6 +1004,7 @@ func (metadata Metadata) empty() bool {
 		len(metadata.ColumnIdentity) == 0 &&
 		len(metadata.ColumnMissingValues) == 0 &&
 		len(metadata.NotNullConstraints) == 0 &&
+		len(metadata.Inherits) == 0 &&
 		len(metadata.DroppedColumns) == 0 &&
 		len(metadata.ExtendedStatistics) == 0
 }

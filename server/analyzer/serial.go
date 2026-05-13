@@ -31,6 +31,8 @@ import (
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/core/sequences"
+	"github.com/dolthub/doltgresql/postgres/parser/parser"
+	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/ast"
 	"github.com/dolthub/doltgresql/server/auth"
 	pgexprs "github.com/dolthub/doltgresql/server/expression"
@@ -167,7 +169,33 @@ func ReplaceSerial(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, scope 
 		}
 		ctSequences = append(ctSequences, pgnodes.NewCreateSequence(false, databaseName, "", false, seq))
 	}
-	return pgnodes.NewCreateTable(createTable, ctSequences), transform.NewTree, nil
+	return pgnodes.NewCreateTable(createTable, ctSequences, inheritedTablesForCreate(ctx.Query(), createTable.Name())...), transform.NewTree, nil
+}
+
+func inheritedTablesForCreate(query string, tableName string) []tablemetadata.InheritedTable {
+	if query == "" {
+		return nil
+	}
+	statements, err := parser.Parse(query)
+	if err != nil {
+		return nil
+	}
+	for _, statement := range statements {
+		createTable, ok := statement.AST.(*tree.CreateTable)
+		if !ok || len(createTable.Inherits) == 0 || !strings.EqualFold(string(createTable.Table.ObjectName), tableName) {
+			continue
+		}
+		inheritedTables := make([]tablemetadata.InheritedTable, 0, len(createTable.Inherits))
+		for _, parent := range createTable.Inherits {
+			inherited := tablemetadata.InheritedTable{Name: string(parent.ObjectName)}
+			if parent.ExplicitSchema {
+				inherited.Schema = string(parent.SchemaName)
+			}
+			inheritedTables = append(inheritedTables, inherited)
+		}
+		return inheritedTables
+	}
+	return nil
 }
 
 func applyIdentitySequenceOptions(seq *sequences.Sequence, options []pgnodes.AlterSequenceOption) error {

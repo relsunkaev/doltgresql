@@ -19,6 +19,9 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/functions"
+	"github.com/dolthub/doltgresql/server/tablemetadata"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +46,32 @@ func (p PgInheritsHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgInheritsHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_inherits row iter
-	return emptyRowIter()
+	var rows []sql.Row
+	err := functions.IterateCurrentDatabase(ctx, functions.Callbacks{
+		Table: func(ctx *sql.Context, schema functions.ItemSchema, table functions.ItemTable) (cont bool, err error) {
+			parents := tablemetadata.Inherits(tableComment(table.Item))
+			for idx, parent := range parents {
+				parentSchema := parent.Schema
+				if parentSchema == "" {
+					parentSchema = schema.Item.SchemaName()
+				}
+				rows = append(rows, sql.Row{
+					table.OID.AsId(),
+					id.NewTable(parentSchema, parent.Name).AsId(),
+					int32(idx + 1),
+					false,
+				})
+			}
+			return true, nil
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(rows) == 0 {
+		return emptyRowIter()
+	}
+	return &pgInheritsRowIter{rows: rows}, nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -65,13 +92,20 @@ var pgInheritsSchema = sql.Schema{
 
 // pgInheritsRowIter is the sql.RowIter for the pg_inherits table.
 type pgInheritsRowIter struct {
+	rows []sql.Row
+	idx  int
 }
 
 var _ sql.RowIter = (*pgInheritsRowIter)(nil)
 
 // Next implements the interface sql.RowIter.
 func (iter *pgInheritsRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
+	if iter.idx >= len(iter.rows) {
+		return nil, io.EOF
+	}
+	row := iter.rows[iter.idx]
+	iter.idx++
+	return row, nil
 }
 
 // Close implements the interface sql.RowIter.
