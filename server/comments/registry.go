@@ -71,6 +71,18 @@ func GetForObject(objOID uint32) (string, bool) {
 	return "", false
 }
 
+func RemoveObject(objID id.Id, className string) {
+	objOID := id.Cache().ToOID(objID)
+	classOID := ClassOID(className)
+	registry.Lock()
+	defer registry.Unlock()
+	for key := range registry.entries {
+		if key.ObjOID == objOID && key.ClassOID == classOID {
+			delete(registry.entries, key)
+		}
+	}
+}
+
 func Entries() []Entry {
 	registry.RLock()
 	defer registry.RUnlock()

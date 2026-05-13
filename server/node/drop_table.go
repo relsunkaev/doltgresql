@@ -24,6 +24,7 @@ import (
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/auth"
+	"github.com/dolthub/doltgresql/server/comments"
 )
 
 // DropTable is a node that implements functionality specifically relevant to Doltgres' table dropping needs.
@@ -96,6 +97,7 @@ func (c *DropTable) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sql.
 		if err = id.PerformOperation(ctx, id.Section_Table, id.Operation_Delete, target.dbName, target.tableID, id.Null); err != nil {
 			return nil, err
 		}
+		comments.RemoveObject(target.tableID, "pg_class")
 	}
 	if len(targets) > 0 {
 		var persistErr error
