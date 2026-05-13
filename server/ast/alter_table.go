@@ -703,6 +703,9 @@ func nodeAlterTableAddColumn(ctx *Context, node *tree.AlterTableAddColumn, table
 
 	tableSpec := &vitess.TableSpec{}
 	tableSpec.AddColumn(vitessColumnDef)
+	if err := appendAdditionalColumnCheckConstraints(ctx, tableSpec, tableName.Name.String(), node.ColumnDef); err != nil {
+		return nil, err
+	}
 
 	if node.ColumnDef.References.Table != nil {
 		constraintDef, err := nodeForeignKeyDefinitionFromColumnTableDef(ctx, tableName.Name.String(), node.ColumnDef.Name, node.ColumnDef)

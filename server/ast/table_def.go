@@ -60,6 +60,9 @@ func assignTableDef(ctx *Context, node tree.TableDef, target *vitess.DDL) error 
 			columnDef.Type.KeyOpt = vitess.ColumnKeyOption(0)
 		}
 		target.TableSpec.AddColumn(columnDef)
+		if err := appendAdditionalColumnCheckConstraints(ctx, target.TableSpec, target.Table.Name.String(), node); err != nil {
+			return err
+		}
 		if node.Unique {
 			indexDef, err := columnUniqueIndexDefinition(ctx, target.Table.Name.String(), node.Name, node.UniqueConstraintName, node.UniqueNullsNotDistinct)
 			if err != nil {
@@ -217,6 +220,30 @@ func assignTableDefs(ctx *Context, node tree.TableDefs, target *vitess.DDL) erro
 		if err := assignTableDef(ctx, sortedNode[i], target); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func appendAdditionalColumnCheckConstraints(ctx *Context, tableSpec *vitess.TableSpec, tableName string, columnDef *tree.ColumnTableDef) error {
+	if tableSpec == nil || columnDef == nil || len(columnDef.CheckExprs) <= 1 {
+		return nil
+	}
+	for _, checkExpr := range columnDef.CheckExprs[1:] {
+		expr, err := nodeExpr(ctx, checkExpr.Expr)
+		if err != nil {
+			return err
+		}
+		name := string(checkExpr.ConstraintName)
+		if name == "" {
+			name = defaultColumnCheckConstraintName(tableName, columnDef.Name)
+		}
+		tableSpec.Constraints = append(tableSpec.Constraints, &vitess.ConstraintDefinition{
+			Name: name,
+			Details: &vitess.CheckConstraintDefinition{
+				Expr:     expr,
+				Enforced: true,
+			},
+		})
 	}
 	return nil
 }

@@ -168,26 +168,18 @@ func nodeColumnTableDef(ctx *Context, node *tree.ColumnTableDef, tableSchema str
 	}
 
 	if len(node.CheckExprs) > 0 {
-		// TODO: vitess does not support multiple check constraint on a single column
-		if len(node.CheckExprs) > 1 {
-			return nil, errors.Errorf("column-declared multiple CHECK expressions are not yet supported")
+		checkExpr := node.CheckExprs[0]
+		expr, err := nodeExpr(ctx, checkExpr.Expr)
+		if err != nil {
+			return nil, err
 		}
-		var checkConstraints = make([]*vitess.ConstraintDefinition, len(node.CheckExprs))
-		for i, checkExpr := range node.CheckExprs {
-			expr, err := nodeExpr(ctx, checkExpr.Expr)
-			if err != nil {
-				return nil, err
-			}
-			checkConstraints[i] = &vitess.ConstraintDefinition{
-				Name: string(checkExpr.ConstraintName),
-				Details: &vitess.CheckConstraintDefinition{
-					Expr:     expr,
-					Enforced: true,
-				},
-			}
+		colDef.Type.Constraint = &vitess.ConstraintDefinition{
+			Name: string(checkExpr.ConstraintName),
+			Details: &vitess.CheckConstraintDefinition{
+				Expr:     expr,
+				Enforced: true,
+			},
 		}
-		// until we support multiple constraints in a column
-		colDef.Type.Constraint = checkConstraints[0]
 	}
 	return colDef, nil
 }
