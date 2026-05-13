@@ -16,6 +16,7 @@ package node
 
 import (
 	"context"
+	"math"
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
@@ -27,7 +28,9 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/core/sequences"
 	"github.com/dolthub/doltgresql/server/auth"
+	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
 // AlterSequence handles the ALTER SEQUENCE statement.
@@ -37,6 +40,7 @@ type AlterSequence struct {
 	targetSequence string
 	owner          string
 	ownedBy        AlterSequenceOwnedBy
+	options        []AlterSequenceOption
 	warnings       []string
 }
 
@@ -47,17 +51,34 @@ type AlterSequenceOwnedBy struct {
 	Column string
 }
 
+// AlterSequenceOption is a supported option in an ALTER SEQUENCE statement.
+type AlterSequenceOption struct {
+	Name   string
+	IntVal *int64
+}
+
+const (
+	AlterSequenceOptionRestart   = "RESTART"
+	AlterSequenceOptionStart     = "START WITH"
+	AlterSequenceOptionIncrement = "INCREMENT BY"
+	AlterSequenceOptionMinValue  = "MINVALUE"
+	AlterSequenceOptionMaxValue  = "MAXVALUE"
+	AlterSequenceOptionCycle     = "CYCLE"
+	AlterSequenceOptionNoCycle   = "NO CYCLE"
+)
+
 var _ sql.ExecSourceRel = (*AlterSequence)(nil)
 var _ vitess.Injectable = (*AlterSequence)(nil)
 
 // NewAlterSequence returns a new *AlterSequence.
-func NewAlterSequence(ifExists bool, targetSchema string, targetSequence string, owner string, ownedBy AlterSequenceOwnedBy, warnings ...string) *AlterSequence {
+func NewAlterSequence(ifExists bool, targetSchema string, targetSequence string, owner string, ownedBy AlterSequenceOwnedBy, options []AlterSequenceOption, warnings ...string) *AlterSequence {
 	return &AlterSequence{
 		ifExists:       ifExists,
 		targetSchema:   targetSchema,
 		targetSequence: targetSequence,
 		owner:          owner,
 		ownedBy:        ownedBy,
+		options:        options,
 		warnings:       warnings,
 	}
 }
@@ -152,6 +173,11 @@ func (c *AlterSequence) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error
 			seq.OwnerColumn = ""
 		}
 	}
+	if len(c.options) > 0 {
+		if err = applyAlterSequenceOptions(seq, c.options); err != nil {
+			return nil, err
+		}
+	}
 	// Display any warnings that were encountered during parsing
 	for _, warning := range c.warnings {
 		noticeResponse := &pgproto3.NoticeResponse{
@@ -163,6 +189,75 @@ func (c *AlterSequence) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error
 	}
 	// Any changes made to the sequence will be persisted at the end of the transaction, so we can just return now
 	return sql.RowsToRowIter(), nil
+}
+
+func applyAlterSequenceOptions(seq *sequences.Sequence, options []AlterSequenceOption) error {
+	for _, option := range options {
+		switch option.Name {
+		case AlterSequenceOptionRestart:
+			restart := seq.Start
+			if option.IntVal != nil {
+				restart = *option.IntVal
+			}
+			seq.Current = restart
+			seq.IsAtEnd = false
+			seq.IsCalled = false
+		case AlterSequenceOptionStart:
+			seq.Start = *option.IntVal
+		case AlterSequenceOptionIncrement:
+			if *option.IntVal == 0 {
+				return errors.Errorf("INCREMENT must not be zero")
+			}
+			seq.Increment = *option.IntVal
+			seq.IsAtEnd = false
+		case AlterSequenceOptionMinValue:
+			if option.IntVal == nil {
+				seq.Minimum = defaultSequenceMinimum(seq)
+			} else {
+				seq.Minimum = *option.IntVal
+			}
+			seq.IsAtEnd = false
+		case AlterSequenceOptionMaxValue:
+			if option.IntVal == nil {
+				seq.Maximum = defaultSequenceMaximum(seq)
+			} else {
+				seq.Maximum = *option.IntVal
+			}
+			seq.IsAtEnd = false
+		case AlterSequenceOptionCycle:
+			seq.Cycle = true
+		case AlterSequenceOptionNoCycle:
+			seq.Cycle = false
+		default:
+			return errors.Errorf(`unsupported ALTER SEQUENCE option "%s"`, option.Name)
+		}
+	}
+	if seq.Minimum > seq.Maximum {
+		return errors.Errorf("MINVALUE must be less than or equal to MAXVALUE")
+	}
+	if seq.Current < seq.Minimum || seq.Current > seq.Maximum {
+		return errors.Errorf(`RESTART value %d is out of bounds for sequence "%s" (%d..%d)`,
+			seq.Current, seq.Id, seq.Minimum, seq.Maximum)
+	}
+	return nil
+}
+
+func defaultSequenceMinimum(seq *sequences.Sequence) int64 {
+	if seq.Increment < 0 {
+		return math.MinInt64
+	}
+	return 1
+}
+
+func defaultSequenceMaximum(seq *sequences.Sequence) int64 {
+	switch seq.DataTypeID {
+	case pgtypes.Int16.ID:
+		return math.MaxInt16
+	case pgtypes.Int32.ID:
+		return math.MaxInt32
+	default:
+		return math.MaxInt64
+	}
 }
 
 // Schema implements the interface sql.ExecSourceRel.

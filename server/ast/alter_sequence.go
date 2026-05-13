@@ -46,6 +46,7 @@ func nodeAlterSequence(ctx *Context, node *tree.AlterSequence) (vitess.Statement
 	}
 
 	ownedBy := pgnodes.AlterSequenceOwnedBy{}
+	var options []pgnodes.AlterSequenceOption
 	for _, option := range node.Options {
 		switch option.Name {
 		case tree.SeqOptOwnedBy:
@@ -73,6 +74,43 @@ func nodeAlterSequence(ctx *Context, node *tree.AlterSequence) (vitess.Statement
 				ownedBy.Table = colName.Qualifier.Name.String()
 				ownedBy.Column = colName.Name.String()
 			}
+		case tree.SeqOptRestart:
+			options = append(options, pgnodes.AlterSequenceOption{
+				Name:   pgnodes.AlterSequenceOptionRestart,
+				IntVal: option.IntVal,
+			})
+		case tree.SeqOptStart:
+			options = append(options, pgnodes.AlterSequenceOption{
+				Name:   pgnodes.AlterSequenceOptionStart,
+				IntVal: option.IntVal,
+			})
+		case tree.SeqOptIncrement:
+			options = append(options, pgnodes.AlterSequenceOption{
+				Name:   pgnodes.AlterSequenceOptionIncrement,
+				IntVal: option.IntVal,
+			})
+		case tree.SeqOptMinValue:
+			options = append(options, pgnodes.AlterSequenceOption{
+				Name:   pgnodes.AlterSequenceOptionMinValue,
+				IntVal: option.IntVal,
+			})
+		case tree.SeqOptMaxValue:
+			options = append(options, pgnodes.AlterSequenceOption{
+				Name:   pgnodes.AlterSequenceOptionMaxValue,
+				IntVal: option.IntVal,
+			})
+		case tree.SeqOptCycle:
+			options = append(options, pgnodes.AlterSequenceOption{
+				Name: pgnodes.AlterSequenceOptionCycle,
+			})
+		case tree.SeqOptNoCycle:
+			options = append(options, pgnodes.AlterSequenceOption{
+				Name: pgnodes.AlterSequenceOptionNoCycle,
+			})
+		case tree.SeqOptCache:
+			if option.IntVal == nil || *option.IntVal != 1 {
+				return NotYetSupportedError("sequence caching for values other than 1 are not yet supported")
+			}
 		default:
 			return NotYetSupportedError(fmt.Sprintf("%s is not yet supported", option.Name))
 		}
@@ -85,6 +123,7 @@ func nodeAlterSequence(ctx *Context, node *tree.AlterSequence) (vitess.Statement
 			name.Name.String(),
 			node.Owner,
 			ownedBy,
+			options,
 			warnings...),
 		Children: nil,
 		Auth: vitess.AuthInformation{
