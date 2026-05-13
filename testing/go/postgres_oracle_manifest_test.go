@@ -661,6 +661,9 @@ func normalizePostgresOracleValue(profile string, mode string, value any, oid ui
 		case "array":
 			return normalizePostgresOracleArray(v)
 		default:
+			if normalized, ok := normalizePostgresOracleBracketArray(v); ok {
+				return normalized
+			}
 			return v
 		}
 	default:
@@ -675,6 +678,9 @@ func normalizePostgresOracleValue(profile string, mode string, value any, oid ui
 			}
 		}
 		text := fmt.Sprint(v)
+		if normalized, ok := normalizePostgresOracleBracketArray(text); ok {
+			return normalized
+		}
 		if mode == "numeric" {
 			return normalizePostgresOracleNumeric(text)
 		}
