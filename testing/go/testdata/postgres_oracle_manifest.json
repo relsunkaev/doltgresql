@@ -688,6 +688,43 @@
         "DROP ROLE IF EXISTS rls_delete_policy_list_allowed",
         "DROP ROLE IF EXISTS rls_delete_policy_list_unlisted"
       ]
+    },
+    {
+      "id": "rls-table-owner-bypasses-unforced-rls",
+      "source": "testing/go/row_level_security_repro_test.go:TestRowLevelSecurityTableOwnerBypassesPolicyUnlessForcedRepro",
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE USER rls_owner_bypass_user PASSWORD 'owner';",
+        "CREATE TABLE rls_owner_bypass_docs (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tlabel TEXT\n\t\t\t\t);",
+        "INSERT INTO rls_owner_bypass_docs VALUES (1, 'visible to owner');",
+        "ALTER TABLE rls_owner_bypass_docs OWNER TO rls_owner_bypass_user;",
+        "GRANT USAGE ON SCHEMA public TO rls_owner_bypass_user;",
+        "GRANT SELECT ON rls_owner_bypass_docs TO rls_owner_bypass_user;",
+        "ALTER TABLE rls_owner_bypass_docs ENABLE ROW LEVEL SECURITY;",
+        "SET ROLE rls_owner_bypass_user"
+      ],
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM rls_owner_bypass_docs\n\t\t\t\t\t\tORDER BY id;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "visible to owner"
+          }
+        ]
+      ],
+      "columnModes": [
+        "structural",
+        "structural"
+      ],
+      "cleanup": [
+        "RESET ROLE",
+        "DROP TABLE IF EXISTS rls_owner_bypass_docs",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_owner_bypass_user') THEN REVOKE USAGE ON SCHEMA public FROM rls_owner_bypass_user; END IF; END $$",
+        "DROP ROLE IF EXISTS rls_owner_bypass_user"
+      ]
     }
   ]
 }

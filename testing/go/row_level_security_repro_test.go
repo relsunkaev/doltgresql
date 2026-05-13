@@ -545,6 +545,52 @@ func TestRowLevelSecurityNoForcePgClassMetadataRepro(t *testing.T) {
 	})
 }
 
+// TestRowLevelSecurityTableOwnerBypassesPolicyUnlessForcedRepro reproduces a
+// row-level security bug: PostgreSQL lets the table owner bypass RLS unless the
+// table is marked FORCE ROW LEVEL SECURITY, but Doltgres applies default-deny
+// RLS to the owner.
+func TestRowLevelSecurityTableOwnerBypassesPolicyUnlessForcedRepro(t *testing.T) {
+	cleanup := []string{
+		"RESET ROLE",
+		"DROP TABLE IF EXISTS rls_owner_bypass_docs",
+		"DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_owner_bypass_user') THEN REVOKE USAGE ON SCHEMA public FROM rls_owner_bypass_user; END IF; END $$",
+		"DROP ROLE IF EXISTS rls_owner_bypass_user",
+	}
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "table owner bypasses non-forced RLS",
+			SetUpScript: []string{
+				`CREATE USER rls_owner_bypass_user PASSWORD 'owner';`,
+				`CREATE TABLE rls_owner_bypass_docs (
+					id INT PRIMARY KEY,
+					label TEXT
+				);`,
+				`INSERT INTO rls_owner_bypass_docs VALUES (1, 'visible to owner');`,
+				`ALTER TABLE rls_owner_bypass_docs OWNER TO rls_owner_bypass_user;`,
+				`GRANT USAGE ON SCHEMA public TO rls_owner_bypass_user;`,
+				`GRANT SELECT ON rls_owner_bypass_docs TO rls_owner_bypass_user;`,
+				`ALTER TABLE rls_owner_bypass_docs ENABLE ROW LEVEL SECURITY;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT id, label
+						FROM rls_owner_bypass_docs
+						ORDER BY id;`,
+					Expected: []sql.Row{{1, "visible to owner"}},
+					Username: `rls_owner_bypass_user`,
+					Password: `owner`,
+					PostgresOracle: ScriptTestPostgresOracle{
+						ID:          "rls-table-owner-bypasses-unforced-rls",
+						Compare:     "structural",
+						ColumnModes: []string{"structural", "structural"},
+						Cleanup:     cleanup,
+					},
+				},
+			},
+		},
+	})
+}
+
 // TestForcedRowLevelSecurityAppliesToTableOwnerRepro reproduces a security bug:
 // PostgreSQL FORCE ROW LEVEL SECURITY applies policies to the table owner.
 func TestForcedRowLevelSecurityAppliesToTableOwnerRepro(t *testing.T) {
