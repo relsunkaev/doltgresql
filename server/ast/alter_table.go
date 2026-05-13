@@ -670,12 +670,13 @@ func nodeAlterTableAddConstraint(
 		}
 		return nodeUniqueConstraintTableDef(ctx, constraintDef, tableName, ifExists)
 	case *tree.ForeignKeyConstraintTableDef:
-		if node.ValidationBehavior == tree.ValidationSkip {
-			return nil, errors.Errorf("NOT VALID is not supported yet")
-		}
 		foreignKeyDefinition, err := nodeForeignKeyConstraintTableDef(ctx, tableName.Name.String(), constraintDef)
 		if err != nil {
 			return nil, err
+		}
+		name := bareIdentifier(constraintDef.Name)
+		if node.ValidationBehavior == tree.ValidationSkip {
+			name = EncodeNotValidForeignKeyConstraintName(name)
 		}
 		return &vitess.DDL{
 			Action:           "alter",
@@ -685,7 +686,7 @@ func nodeAlterTableAddConstraint(
 			TableSpec: &vitess.TableSpec{
 				Constraints: []*vitess.ConstraintDefinition{
 					{
-						Name:    bareIdentifier(constraintDef.Name),
+						Name:    name,
 						Details: foreignKeyDefinition,
 					},
 				},

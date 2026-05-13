@@ -53,6 +53,16 @@ func ReplaceNode(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, scope *p
 			return pgnodes.NewCreateCheck(&stripped, a.Overrides, true), transform.NewTree, nil
 		}
 		return pgnodes.NewCreateCheck(node, a.Overrides, false), transform.NewTree, nil
+	case *plan.CreateForeignKey:
+		cleanName, notValid := ast.DecodeNotValidForeignKeyConstraintName(node.FkDef.Name)
+		if notValid {
+			stripped := *node
+			fkDef := *node.FkDef
+			fkDef.Name = cleanName
+			stripped.FkDef = &fkDef
+			return pgnodes.NewCreateForeignKey(&stripped, true), transform.NewTree, nil
+		}
+		return node, transform.SameTree, nil
 	case *plan.DropCheck:
 		return pgnodes.NewDropCheck(node), transform.NewTree, nil
 	case *plan.InsertInto:

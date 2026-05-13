@@ -1580,6 +1580,11 @@ func TestNotValidForeignKeyConstraintEnforcesNewRowsRepro(t *testing.T) {
 					ExpectedErr: `Foreign key violation`,
 				},
 				{
+					Query: `ALTER TABLE not_valid_fk_children
+						VALIDATE CONSTRAINT not_valid_fk_children_parent_fk;`,
+					ExpectedErr: `Foreign key violation`,
+				},
+				{
 					Query: `INSERT INTO not_valid_fk_parents VALUES (42);`,
 				},
 				{

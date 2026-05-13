@@ -23,6 +23,11 @@ import "strings"
 // can wrap the resolved *plan.CreateCheck.
 const notValidCheckConstraintMarker = "\x00pg_not_valid_check\x00"
 
+// notValidForeignKeyConstraintMarker tags foreign keys declared with
+// ALTER TABLE ... ADD CONSTRAINT ... NOT VALID until the analyzer can wrap the
+// resolved *plan.CreateForeignKey.
+const notValidForeignKeyConstraintMarker = "\x00pg_not_valid_fk\x00"
+
 // EncodeNotValidCheckConstraintName wraps a constraint name with the NOT VALID
 // marker.
 func EncodeNotValidCheckConstraintName(name string) string {
@@ -34,6 +39,21 @@ func EncodeNotValidCheckConstraintName(name string) string {
 func DecodeNotValidCheckConstraintName(name string) (cleaned string, hadMarker bool) {
 	if strings.HasPrefix(name, notValidCheckConstraintMarker) {
 		return strings.TrimPrefix(name, notValidCheckConstraintMarker), true
+	}
+	return name, false
+}
+
+// EncodeNotValidForeignKeyConstraintName wraps a foreign key name with the NOT
+// VALID marker.
+func EncodeNotValidForeignKeyConstraintName(name string) string {
+	return notValidForeignKeyConstraintMarker + name
+}
+
+// DecodeNotValidForeignKeyConstraintName strips the NOT VALID foreign key
+// marker and reports whether it was present.
+func DecodeNotValidForeignKeyConstraintName(name string) (cleaned string, hadMarker bool) {
+	if strings.HasPrefix(name, notValidForeignKeyConstraintMarker) {
+		return strings.TrimPrefix(name, notValidForeignKeyConstraintMarker), true
 	}
 	return name, false
 }

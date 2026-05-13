@@ -30,7 +30,7 @@ import (
 )
 
 // ValidateCheckConstraint implements ALTER TABLE ... VALIDATE CONSTRAINT for
-// table CHECK constraints.
+// table CHECK and foreign key constraints.
 type ValidateCheckConstraint struct {
 	ifExists   bool
 	schema     string
@@ -102,27 +102,37 @@ func (v *ValidateCheckConstraint) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowI
 		}
 		return nil, errors.Errorf(`relation "%s" does not exist`, v.table)
 	}
+	if rowIter, found, err := v.validateCheckConstraint(ctx, relation, table); err != nil || found {
+		return rowIter, err
+	}
+	if rowIter, found, err := v.validateForeignKeyConstraint(ctx, relation, table); err != nil || found {
+		return rowIter, err
+	}
+	return nil, errors.Errorf(`constraint "%s" of relation "%s" does not exist`, core.DecodePhysicalConstraintName(v.constraint), v.table)
+}
+
+func (v *ValidateCheckConstraint) validateCheckConstraint(ctx *sql.Context, relation doltdb.TableName, table sql.Table) (sql.RowIter, bool, error) {
 	checkTable, ok := table.(sql.CheckTable)
-	if !ok {
+	if !ok && table != nil {
 		checkTable, ok = sql.GetUnderlyingTable(table).(sql.CheckTable)
 	}
 	if !ok {
-		return nil, errors.Errorf(`relation "%s" does not support check constraints`, v.table)
+		return nil, false, nil
 	}
 	checks, err := checkTable.GetChecks(ctx)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	var target *sql.CheckDefinition
 	for i := range checks {
-		if strings.EqualFold(checks[i].Name, v.constraint) {
+		if constraintNameMatches(checks[i].Name, v.constraint) {
 			check := checks[i]
 			target = &check
 			break
 		}
 	}
 	if target == nil {
-		return nil, errors.Errorf(`constraint "%s" of relation "%s" does not exist`, core.DecodePhysicalConstraintName(v.constraint), v.table)
+		return nil, false, nil
 	}
 
 	query := fmt.Sprintf(
@@ -132,12 +142,54 @@ func (v *ValidateCheckConstraint) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowI
 	)
 	hasViolation, err := v.hasViolation(ctx, query)
 	if err != nil {
-		return nil, err
+		return nil, true, err
 	}
 	if hasViolation {
-		return nil, sql.ErrCheckConstraintViolated.New(core.DecodePhysicalConstraintName(target.Name))
+		return nil, true, sql.ErrCheckConstraintViolated.New(core.DecodePhysicalConstraintName(target.Name))
 	}
-	return sql.RowsToRowIter(), nil
+	return sql.RowsToRowIter(), true, nil
+}
+
+func (v *ValidateCheckConstraint) validateForeignKeyConstraint(ctx *sql.Context, relation doltdb.TableName, table sql.Table) (sql.RowIter, bool, error) {
+	fkTable, ok := typedTableForeignKeyTable(table)
+	if !ok {
+		return nil, false, nil
+	}
+	foreignKeys, err := fkTable.GetDeclaredForeignKeys(ctx)
+	if err != nil {
+		return nil, false, err
+	}
+	var target *sql.ForeignKeyConstraint
+	for i := range foreignKeys {
+		if constraintNameMatches(foreignKeys[i].Name, v.constraint) {
+			foreignKey := foreignKeys[i]
+			target = &foreignKey
+			break
+		}
+	}
+	if target == nil {
+		return nil, false, nil
+	}
+
+	parentSchema := target.ParentSchema
+	if parentSchema == "" {
+		parentSchema = relation.Schema
+	}
+	parentTable, err := core.GetSqlTableFromContext(ctx, target.ParentDatabase, doltdb.TableName{Name: target.ParentTable, Schema: parentSchema})
+	if err != nil {
+		return nil, true, err
+	}
+	parentForeignKeyTable, ok := typedTableForeignKeyTable(parentTable)
+	if !ok {
+		return nil, true, sql.ErrNoForeignKeySupport.New(target.ParentTable)
+	}
+
+	foreignKey := *target
+	foreignKey.IsResolved = false
+	if err = plan.ResolveForeignKey(ctx, fkTable, parentForeignKeyTable, foreignKey, false, true, true); err != nil {
+		return nil, true, err
+	}
+	return sql.RowsToRowIter(), true, nil
 }
 
 // Schema implements sql.ExecSourceRel.
@@ -199,4 +251,11 @@ func qualifiedCheckTableName(schema string, table string) string {
 
 func quoteCheckIdentifier(identifier string) string {
 	return `"` + strings.ReplaceAll(identifier, `"`, `""`) + `"`
+}
+
+func constraintNameMatches(stored string, requested string) bool {
+	if stored == requested {
+		return true
+	}
+	return core.DecodePhysicalConstraintName(stored) == core.DecodePhysicalConstraintName(requested)
 }
