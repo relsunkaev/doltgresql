@@ -1,0 +1,221 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map materialized_view_probe_test.go --oracle-test-name TestMaterializedViewProbe --oracle-script-name CREATE MATERIALIZED VIEW snapshot probe --force-postgres-oracle",
+  "sourceFile": "testing/go/materialized_view_probe_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe#0001",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 1,
+      "scriptName": "CREATE MATERIALIZED VIEW snapshot probe",
+      "oracle": "postgres",
+      "postgresId": "materialized-view-probe-test-testmaterializedviewprobe-0001-select-id-v-from-source_mv",
+      "suggestedId": "materialized-view-probe-test-testmaterializedviewprobe-0001-select-id-v-from-source_mv",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, v FROM source_mv ORDER BY id;",
+      "querySha256": "100d87f80104687af7ef6af644b0a936f74dfeb7a56f4f327ef7acfcfcd235a9",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "100"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "200"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe#0002",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 2,
+      "scriptName": "CREATE MATERIALIZED VIEW snapshot probe",
+      "oracle": "postgres",
+      "postgresId": "materialized-view-probe-test-testmaterializedviewprobe-0002-select-relkind-from-pg_class-where",
+      "suggestedId": "materialized-view-probe-test-testmaterializedviewprobe-0002-select-relkind-from-pg_class-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT relkind FROM pg_class WHERE relname = 'source_mv';",
+      "querySha256": "5fdd5714034802d7b8afb185b9cbf0ea5bcb50e0ca17270bfb218af742f098b0",
+      "expectedRows": [
+        [
+          {
+            "value": "m"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe#0003",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 3,
+      "scriptName": "CREATE MATERIALIZED VIEW snapshot probe",
+      "oracle": "postgres",
+      "postgresId": "materialized-view-probe-test-testmaterializedviewprobe-0003-select-schemaname-=-current_schema-::text",
+      "suggestedId": "materialized-view-probe-test-testmaterializedviewprobe-0003-select-schemaname-=-current_schema-::text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT (schemaname = current_schema())::text, matviewname, hasindexes::text, ispopulated::text,\n\t\t\t\t\t\t\ttrim(trailing ';' from regexp_replace(trim(definition), '\\s+', ' ', 'g')) AS definition\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+      "querySha256": "21d111b41f856eef6523f1b22f92cd11a73abf5975ff66d30adac6cbdd3d317a",
+      "expectedRows": [
+        [
+          {
+            "value": "true"
+          },
+          {
+            "value": "source_mv"
+          },
+          {
+            "value": "false"
+          },
+          {
+            "value": "true"
+          },
+          {
+            "value": "SELECT id, v FROM source"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe#0004",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 4,
+      "scriptName": "CREATE MATERIALIZED VIEW snapshot probe",
+      "oracle": "postgres",
+      "postgresId": "materialized-view-probe-test-testmaterializedviewprobe-0004-select-count-*-::text-from",
+      "suggestedId": "materialized-view-probe-test-testmaterializedviewprobe-0004-select-count-*-::text-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)::text FROM pg_tables WHERE schemaname = current_schema() AND tablename = 'source_mv';",
+      "querySha256": "ef428887ccbd98f9d5c14b603e0ae6f2698c71229091f114fc84972d052d94af",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe#0005",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 5,
+      "scriptName": "CREATE MATERIALIZED VIEW snapshot probe",
+      "oracle": "postgres",
+      "postgresId": "materialized-view-probe-test-testmaterializedviewprobe-0005-select-table_type-from-information_schema.tables-where",
+      "suggestedId": "materialized-view-probe-test-testmaterializedviewprobe-0005-select-table_type-from-information_schema.tables-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT table_type\n\t\t\t\t\t\tFROM information_schema.tables\n\t\t\t\t\t\tWHERE table_schema = current_schema() AND table_name = 'source_mv';",
+      "querySha256": "84c0d50b3aab76dafdd5da4352b8af85c3cfa5c2516f569f2d25d7113239ad1f",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe#0006",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 6,
+      "scriptName": "CREATE MATERIALIZED VIEW snapshot probe",
+      "oracle": "postgres",
+      "postgresId": "materialized-view-probe-test-testmaterializedviewprobe-0006-select-indexname-replace-indexdef-current_schema",
+      "suggestedId": "materialized-view-probe-test-testmaterializedviewprobe-0006-select-indexname-replace-indexdef-current_schema",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT indexname, replace(indexdef, current_schema() || '.', '') AS indexdef\n\t\t\t\t\t\tFROM pg_indexes\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND tablename = 'source_mv'\n\t\t\t\t\t\tORDER BY indexname;",
+      "querySha256": "105a8b428aeb599464ad7821e1930fcab67d5bfbf6c25eb1a38a16e5a3babefa",
+      "expectedRows": [
+        [
+          {
+            "value": "source_mv_id_idx"
+          },
+          {
+            "value": "CREATE UNIQUE INDEX source_mv_id_idx ON source_mv USING btree (id)"
+          }
+        ],
+        [
+          {
+            "value": "source_mv_v_idx"
+          },
+          {
+            "value": "CREATE INDEX source_mv_v_idx ON source_mv USING btree (v)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe#0007",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 7,
+      "scriptName": "CREATE MATERIALIZED VIEW snapshot probe",
+      "oracle": "postgres",
+      "postgresId": "materialized-view-probe-test-testmaterializedviewprobe-0007-select-relhasindex::text-from-pg_class-where",
+      "suggestedId": "materialized-view-probe-test-testmaterializedviewprobe-0007-select-relhasindex::text-from-pg_class-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT relhasindex::text FROM pg_class WHERE relname = 'source_mv';",
+      "querySha256": "38c265b2a40ad9b48e3d9fec802807ea11269867ea006a72c2f18fc090228570",
+      "expectedRows": [
+        [
+          {
+            "value": "true"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe#0008",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 8,
+      "scriptName": "CREATE MATERIALIZED VIEW snapshot probe",
+      "oracle": "postgres",
+      "postgresId": "materialized-view-probe-test-testmaterializedviewprobe-0008-select-hasindexes::text-from-pg_matviews-where",
+      "suggestedId": "materialized-view-probe-test-testmaterializedviewprobe-0008-select-hasindexes::text-from-pg_matviews-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT hasindexes::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+      "querySha256": "28910a47d183068442d9e97b52c5e2b6e865ac6401a45d307d13cf2b3af886a5",
+      "expectedRows": [
+        [
+          {
+            "value": "true"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

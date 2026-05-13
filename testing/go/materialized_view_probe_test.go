@@ -49,21 +49,22 @@ func TestMaterializedViewProbe(t *testing.T) {
 					},
 				},
 				{
-					Query: `SELECT schemaname, matviewname, hasindexes::text, ispopulated::text, definition
+					Query: `SELECT (schemaname = current_schema())::text, matviewname, hasindexes::text, ispopulated::text,
+							trim(trailing ';' from regexp_replace(trim(definition), '\s+', ' ', 'g')) AS definition
 						FROM pg_matviews
-						WHERE schemaname = 'public' AND matviewname = 'source_mv';`,
+						WHERE schemaname = current_schema() AND matviewname = 'source_mv';`,
 					Expected: []sql.Row{
-						{"public", "source_mv", "false", "true", "SELECT id, v FROM source"},
+						{"true", "source_mv", "false", "true", "SELECT id, v FROM source"},
 					},
 				},
 				{
-					Query:    `SELECT count(*)::text FROM pg_tables WHERE schemaname = 'public' AND tablename = 'source_mv';`,
+					Query:    `SELECT count(*)::text FROM pg_tables WHERE schemaname = current_schema() AND tablename = 'source_mv';`,
 					Expected: []sql.Row{{"0"}},
 				},
 				{
 					Query: `SELECT table_type
 						FROM information_schema.tables
-						WHERE table_schema = 'public' AND table_name = 'source_mv';`,
+						WHERE table_schema = current_schema() AND table_name = 'source_mv';`,
 					Expected: []sql.Row{},
 				},
 				{
@@ -73,13 +74,13 @@ func TestMaterializedViewProbe(t *testing.T) {
 					Query: `CREATE INDEX source_mv_v_idx ON source_mv (v);`,
 				},
 				{
-					Query: `SELECT indexname, indexdef
+					Query: `SELECT indexname, replace(indexdef, current_schema() || '.', '') AS indexdef
 						FROM pg_indexes
-						WHERE tablename = 'source_mv'
+						WHERE schemaname = current_schema() AND tablename = 'source_mv'
 						ORDER BY indexname;`,
 					Expected: []sql.Row{
-						{"source_mv_id_idx", "CREATE UNIQUE INDEX source_mv_id_idx ON public.source_mv USING btree (id)"},
-						{"source_mv_v_idx", "CREATE INDEX source_mv_v_idx ON public.source_mv USING btree (v)"},
+						{"source_mv_id_idx", "CREATE UNIQUE INDEX source_mv_id_idx ON source_mv USING btree (id)"},
+						{"source_mv_v_idx", "CREATE INDEX source_mv_v_idx ON source_mv USING btree (v)"},
 					},
 				},
 				{
@@ -91,7 +92,7 @@ func TestMaterializedViewProbe(t *testing.T) {
 				{
 					Query: `SELECT hasindexes::text
 						FROM pg_matviews
-						WHERE schemaname = 'public' AND matviewname = 'source_mv';`,
+						WHERE schemaname = current_schema() AND matviewname = 'source_mv';`,
 					Expected: []sql.Row{
 						{"true"},
 					},
