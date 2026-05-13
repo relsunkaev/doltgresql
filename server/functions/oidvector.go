@@ -89,7 +89,7 @@ var oidvectorsend = framework.Function1{
 	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Oidvector},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, t [2]*pgtypes.DoltgresType, val any) (any, error) {
-		return array_send.Callable(ctx, t, val)
+		return catalogVectorSend(ctx, t[0], val)
 	},
 }
 

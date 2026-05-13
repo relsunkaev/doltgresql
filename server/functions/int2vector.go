@@ -88,6 +88,6 @@ var int2vectorsend = framework.Function1{
 	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Int16vector},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, t [2]*pgtypes.DoltgresType, val any) (any, error) {
-		return array_send.Callable(ctx, t, val)
+		return catalogVectorSend(ctx, t[0], val)
 	},
 }
