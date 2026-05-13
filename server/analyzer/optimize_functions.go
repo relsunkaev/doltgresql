@@ -45,28 +45,39 @@ func OptimizeFunctions(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, sc
 	_, isInsertNode := node.(*plan.InsertInto)
 	return pgtransform.NodeWithOpaque(ctx, node, func(ctx *sql.Context, n sql.Node) (sql.Node, transform.TreeIdentity, error) {
 		if windowNode, ok := n.(*plan.Window); ok {
-			return rewriteWindowSelectExprCasts(ctx, windowNode)
+			newNode, sameWindow, err := rewriteWindowSelectExprCasts(ctx, windowNode)
+			if err != nil {
+				return nil, transform.SameTree, err
+			}
+			newNode, sameFunctions, err := optimizeNodeCompiledFunctions(ctx, a, newNode)
+			return newNode, sameWindow && sameFunctions, err
 		}
 		if groupByNode, ok := n.(*plan.GroupBy); ok {
 			groupByNode, sameVectorAggregates, err := rewriteGroupByVectorAggregates(ctx, groupByNode)
 			if err != nil {
 				return nil, transform.SameTree, err
 			}
-			node, sameAggregateCasts, err := rewriteGroupByAggregateCasts(ctx, groupByNode)
-			return node, sameVectorAggregates && sameAggregateCasts, err
+			newNode, sameAggregateCasts, err := rewriteGroupByAggregateCasts(ctx, groupByNode)
+			if err != nil {
+				return nil, transform.SameTree, err
+			}
+			newNode, sameFunctions, err := optimizeNodeCompiledFunctions(ctx, a, newNode)
+			return newNode, sameVectorAggregates && sameAggregateCasts && sameFunctions, err
 		}
 		if sortNode, ok := n.(*plan.Sort); ok {
-			sortNode, sameTree := rewriteSortFieldsWithProjectedSRFs(ctx, sortNode)
-			return sortNode, sameTree, nil
+			sortNode, sameSort := rewriteSortFieldsWithProjectedSRFs(ctx, sortNode)
+			newNode, sameFunctions, err := optimizeNodeCompiledFunctions(ctx, a, sortNode)
+			return newNode, sameSort && sameFunctions, err
 		}
 		if topNNode, ok := n.(*plan.TopN); ok {
-			topNNode, sameTree := rewriteTopNFieldsWithProjectedSRFs(ctx, topNNode)
-			return topNNode, sameTree, nil
+			topNNode, sameTopN := rewriteTopNFieldsWithProjectedSRFs(ctx, topNNode)
+			newNode, sameFunctions, err := optimizeNodeCompiledFunctions(ctx, a, topNNode)
+			return newNode, sameTopN && sameFunctions, err
 		}
 
 		projectNode, ok := n.(*plan.Project)
 		if !ok {
-			return n, transform.SameTree, nil
+			return optimizeNodeCompiledFunctions(ctx, a, n)
 		}
 		projectNode, sameProjection := rewriteProjectionsWithProjectedSRFs(ctx, projectNode)
 		projectNode, sameGetFields := rewriteProjectionGetFieldsFromChildSchema(ctx, projectNode)
@@ -75,36 +86,17 @@ func OptimizeFunctions(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, sc
 		hasSRF := false
 		// Check if there is set returning function in the source node (e.g. SELECT * FROM unnest())
 		n, sameNode, err := transform.NodeExprsWithNode(ctx, projectNode.Child, func(ctx *sql.Context, in sql.Node, expr sql.Expression) (sql.Expression, transform.TreeIdentity, error) {
+			expr, sameFunction, err := optimizeCompiledFunction(ctx, a, expr)
+			if err != nil {
+				return nil, transform.SameTree, err
+			}
 			if rowIterExpr, ok := expr.(sql.RowIterExpression); ok {
 				hasSRF = hasSRF || rowIterExpr.ReturnsRowIter()
-			}
-			if compiledFunction, ok := expr.(*framework.CompiledFunction); ok {
-				if err := checkResolvedRoutineExecutePrivilege(ctx, compiledFunction); err != nil {
-					return nil, transform.SameTree, err
-				}
-				// TODO: need better way to detect sequence usage
-				switch compiledFunction.FunctionName() {
-				case "nextval", "setval", "currval":
-					err := authCheckSequenceFromExpr(ctx, a.Catalog.AuthHandler, compiledFunction.Arguments[0])
-					if err != nil {
-						return nil, transform.SameTree, err
-					}
-				}
-				if quickFunction := compiledFunction.GetQuickFunction(); quickFunction != nil {
-					return quickFunction, transform.NewTree, nil
-				}
-
-				// fill in default exprs if applicable
-				if err := compiledFunction.ResolveDefaultValues(ctx, func(defExpr string) (sql.Expression, error) {
-					return getDefaultExpr(ctx, a.Catalog, defExpr)
-				}); err != nil {
-					return nil, transform.SameTree, err
-				}
 			}
 			if v, ok := in.(*plan.Values); ok {
 				hasMultipleExpressionTuples = len(v.ExpressionTuples) > 1
 			}
-			return expr, transform.SameTree, nil
+			return expr, sameFunction, nil
 		})
 		if err != nil {
 			return nil, transform.SameTree, err
@@ -121,30 +113,7 @@ func OptimizeFunctions(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, sc
 
 		// Check if there is set returning function in the projection expressions (e.g. SELECT unnest() [FROM table/srf])
 		exprs, sameExprs, err := transform.Exprs(ctx, projectNode.Projections, func(ctx *sql.Context, expr sql.Expression) (sql.Expression, transform.TreeIdentity, error) {
-			if compiledFunction, ok := expr.(*framework.CompiledFunction); ok {
-				if err := checkResolvedRoutineExecutePrivilege(ctx, compiledFunction); err != nil {
-					return nil, transform.SameTree, err
-				}
-				if quickFunction := compiledFunction.GetQuickFunction(); quickFunction != nil {
-					return quickFunction, transform.NewTree, nil
-				}
-				// TODO: need better way to detect sequence usage
-				switch compiledFunction.FunctionName() {
-				case "nextval", "setval", "currval":
-					err = authCheckSequenceFromExpr(ctx, a.Catalog.AuthHandler, compiledFunction.Arguments[0])
-					if err != nil {
-						return nil, transform.SameTree, err
-					}
-				}
-
-				// fill in default exprs if applicablea
-				if err = compiledFunction.ResolveDefaultValues(ctx, func(defExpr string) (sql.Expression, error) {
-					return getDefaultExpr(ctx, a.Catalog, defExpr)
-				}); err != nil {
-					return nil, transform.SameTree, err
-				}
-			}
-			return expr, transform.SameTree, nil
+			return optimizeCompiledFunction(ctx, a, expr)
 		})
 		if err != nil {
 			return nil, transform.SameTree, err
@@ -170,6 +139,43 @@ func OptimizeFunctions(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, sc
 
 		return projectNode, sameNode && sameExprs && sameProjection && sameGetFields && sameGetFieldsAfterChildRewrite, err
 	})
+}
+
+func optimizeNodeCompiledFunctions(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node) (sql.Node, transform.TreeIdentity, error) {
+	return transform.OneNodeExprsWithNode(ctx, node, func(ctx *sql.Context, in sql.Node, expr sql.Expression) (sql.Expression, transform.TreeIdentity, error) {
+		return optimizeCompiledFunction(ctx, a, expr)
+	})
+}
+
+func optimizeCompiledFunction(ctx *sql.Context, a *analyzer.Analyzer, expr sql.Expression) (sql.Expression, transform.TreeIdentity, error) {
+	compiledFunction, ok := expr.(*framework.CompiledFunction)
+	if !ok {
+		return expr, transform.SameTree, nil
+	}
+
+	compiledFunction = compiledFunction.SetStatementRunner(ctx, a.Runner).(*framework.CompiledFunction)
+	if err := checkResolvedRoutineExecutePrivilege(ctx, compiledFunction); err != nil {
+		return nil, transform.SameTree, err
+	}
+	// TODO: need better way to detect sequence usage
+	switch compiledFunction.FunctionName() {
+	case "nextval", "setval", "currval":
+		err := authCheckSequenceFromExpr(ctx, a.Catalog.AuthHandler, compiledFunction.Arguments[0])
+		if err != nil {
+			return nil, transform.SameTree, err
+		}
+	}
+	if quickFunction := compiledFunction.GetQuickFunction(); quickFunction != nil {
+		return quickFunction, transform.NewTree, nil
+	}
+
+	// Fill in default exprs if applicable.
+	if err := compiledFunction.ResolveDefaultValues(ctx, func(defExpr string) (sql.Expression, error) {
+		return getDefaultExpr(ctx, a.Catalog, defExpr)
+	}); err != nil {
+		return nil, transform.SameTree, err
+	}
+	return compiledFunction, transform.NewTree, nil
 }
 
 func rewriteGroupByVectorAggregates(ctx *sql.Context, groupByNode *plan.GroupBy) (*plan.GroupBy, transform.TreeIdentity, error) {
