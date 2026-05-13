@@ -133,6 +133,7 @@ func main() {
 	promoteOracleMapOutput := flag.String("promote-oracle-map-output", "", "output path for --promote-oracle-map; defaults to testdata/postgres_oracle_migrations/<source>.oracle-map.json")
 	oracleTestName := flag.String("oracle-test-name", "", "optional comma-separated Test function filter for --promote-oracle-map or --refresh-oracle-map")
 	oracleScriptName := flag.String("oracle-script-name", "", "optional comma-separated ScriptTest Name filter for --promote-oracle-map or --refresh-oracle-map")
+	forcePostgresOracle := flag.Bool("force-postgres-oracle", false, "for --refresh-oracle-map, promote literal-query assertions to PostgreSQL even when expected fields are non-literal")
 	postgresDSN := flag.String("postgres-dsn", "", "PostgreSQL DSN for --refresh-oracle-map; defaults to DOLTGRES_POSTGRES_TEST_DSN, POSTGRES_TEST_DSN, or DOLTGRES_ORACLE default")
 	flag.Parse()
 
@@ -148,7 +149,7 @@ func main() {
 		}
 		testNames := parseOracleTestNameFilter(*oracleTestName)
 		scriptNames := parseOracleScriptNameFilter(*oracleScriptName)
-		if err := refreshPromotedOracleMap(*refreshOracleMap, *promoteOracleMapOutput, testNames, scriptNames, dsn); err != nil {
+		if err := refreshPromotedOracleMap(*refreshOracleMap, *promoteOracleMapOutput, testNames, scriptNames, dsn, *forcePostgresOracle); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
@@ -156,13 +157,17 @@ func main() {
 	}
 
 	if *promoteOracleMap != "" {
+		if *forcePostgresOracle {
+			fmt.Fprintln(os.Stderr, "--force-postgres-oracle requires --refresh-oracle-map")
+			os.Exit(1)
+		}
 		if *stdout || *migrationCandidatesDir != "" {
 			fmt.Fprintln(os.Stderr, "--promote-oracle-map cannot be combined with --stdout or --migration-candidates-dir")
 			os.Exit(1)
 		}
 		testNames := parseOracleTestNameFilter(*oracleTestName)
 		scriptNames := parseOracleScriptNameFilter(*oracleScriptName)
-		if err := writePromotedOracleMap(*promoteOracleMap, *promoteOracleMapOutput, testNames, scriptNames); err != nil {
+		if err := writePromotedOracleMap(*promoteOracleMap, *promoteOracleMapOutput, testNames, scriptNames, false); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
@@ -170,6 +175,10 @@ func main() {
 	}
 
 	if *migrationCandidatesDir != "" {
+		if *forcePostgresOracle {
+			fmt.Fprintln(os.Stderr, "--force-postgres-oracle requires --refresh-oracle-map")
+			os.Exit(1)
+		}
 		if *stdout {
 			fmt.Fprintln(os.Stderr, "--stdout cannot be combined with --migration-candidates-dir")
 			os.Exit(1)
@@ -179,6 +188,11 @@ func main() {
 			os.Exit(1)
 		}
 		return
+	}
+
+	if *forcePostgresOracle {
+		fmt.Fprintln(os.Stderr, "--force-postgres-oracle requires --refresh-oracle-map")
+		os.Exit(1)
 	}
 
 	data, err := generateManifest()
@@ -502,7 +516,7 @@ func writeMigrationCandidates(dir string) error {
 	return nil
 }
 
-func writePromotedOracleMap(sourceFile string, outputPath string, testNameFilter map[string]struct{}, scriptNameFilter map[string]struct{}) error {
+func writePromotedOracleMap(sourceFile string, outputPath string, testNameFilter map[string]struct{}, scriptNameFilter map[string]struct{}, forcePostgresOracle bool) error {
 	sourceFile = strings.TrimPrefix(sourceFile, "testing/go/")
 	if sourceFile == "" || strings.Contains(sourceFile, string(filepath.Separator)+".."+string(filepath.Separator)) || strings.HasPrefix(sourceFile, "..") {
 		return fmt.Errorf("invalid source file %q", sourceFile)
@@ -529,9 +543,15 @@ func writePromotedOracleMap(sourceFile string, outputPath string, testNameFilter
 	if len(scriptNameFilter) > 0 {
 		candidates.GeneratedBy += " --oracle-script-name " + strings.Join(sortedFilterKeys(scriptNameFilter), ",")
 	}
+	if forcePostgresOracle {
+		candidates.GeneratedBy += " --force-postgres-oracle"
+	}
 	for i := range candidates.Assertions {
 		assertion := &candidates.Assertions[i]
-		if assertion.Query == "" || len(assertion.NonLiteral) > 0 {
+		if assertion.Query == "" || hasAnyNonLiteral(assertion.NonLiteral, "Query", "Username") {
+			continue
+		}
+		if !forcePostgresOracle && len(assertion.NonLiteral) > 0 {
 			continue
 		}
 		switch assertion.ExpectedKind {
@@ -567,12 +587,12 @@ func writePromotedOracleMap(sourceFile string, outputPath string, testNameFilter
 	return os.WriteFile(outputPath, data, 0644)
 }
 
-func refreshPromotedOracleMap(sourceFile string, outputPath string, testNameFilter map[string]struct{}, scriptNameFilter map[string]struct{}, dsn string) error {
+func refreshPromotedOracleMap(sourceFile string, outputPath string, testNameFilter map[string]struct{}, scriptNameFilter map[string]struct{}, dsn string, forcePostgresOracle bool) error {
 	sourceFile = strings.TrimPrefix(sourceFile, "testing/go/")
 	if outputPath == "" {
 		outputPath = filepath.Join("testdata", "postgres_oracle_migrations", strings.TrimSuffix(sourceFile, ".go")+".oracle-map.json")
 	}
-	if err := writePromotedOracleMap(sourceFile, outputPath, testNameFilter, scriptNameFilter); err != nil {
+	if err := writePromotedOracleMap(sourceFile, outputPath, testNameFilter, scriptNameFilter, forcePostgresOracle); err != nil {
 		return err
 	}
 
@@ -586,6 +606,10 @@ func refreshPromotedOracleMap(sourceFile string, outputPath string, testNameFilt
 	}
 	assertionsByKey := make(map[string]*migrationAssertion, len(mapped.Assertions))
 	for i := range mapped.Assertions {
+		if forcePostgresOracle && mapped.Assertions[i].Oracle == "postgres" && mapped.Assertions[i].Compare != "sqlstate" && mapped.Assertions[i].SQLState == "" && mapped.Assertions[i].ExpectedRows == nil {
+			placeholder := make([][]cell, 0)
+			mapped.Assertions[i].ExpectedRows = &placeholder
+		}
 		assertionsByKey[mapped.Assertions[i].Key] = &mapped.Assertions[i]
 	}
 
@@ -647,6 +671,22 @@ func sortedFilterKeys(filter map[string]struct{}) []string {
 	}
 	sort.Strings(keys)
 	return keys
+}
+
+func hasAnyNonLiteral(nonLiteral []string, names ...string) bool {
+	if len(nonLiteral) == 0 {
+		return false
+	}
+	nameSet := make(map[string]struct{}, len(names))
+	for _, name := range names {
+		nameSet[name] = struct{}{}
+	}
+	for _, field := range nonLiteral {
+		if _, ok := nameSet[field]; ok {
+			return true
+		}
+	}
+	return false
 }
 
 func postgresOracleDSN(flagValue string) (string, error) {

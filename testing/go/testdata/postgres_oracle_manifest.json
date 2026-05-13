@@ -1086,6 +1086,53 @@
       ]
     },
     {
+      "id": "network-type-correctness-repro-test-testinetcolumnroundtripsandusesnetworkoperatorsrepro-0001-select-id-host-addr-masklen",
+      "source": "testing/go/network_type_correctness_repro_test.go:TestInetColumnRoundTripsAndUsesNetworkOperatorsRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE inet_roundtrip_items (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\taddr inet\n\t\t\t\t);",
+        "INSERT INTO inet_roundtrip_items VALUES\n\t\t\t\t\t(1, '192.168.1.5/24'),\n\t\t\t\t\t(2, '10.0.0.1/8');"
+      ],
+      "query": "SELECT id, host(addr), masklen(addr),\n\t\t\t\t\t\t\taddr << inet '192.168.0.0/16'\n\t\t\t\t\t\tFROM inet_roundtrip_items\n\t\t\t\t\t\tORDER BY id;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "192.168.1.5"
+          },
+          {
+            "value": "24"
+          },
+          {
+            "value": "t"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "10.0.0.1"
+          },
+          {
+            "value": "8"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "publication-oracle-repro-test-testpublicationrejectsschemaaddaftercolumnlistorfilterrepro-0001-alter-publication-pub_filter_pub-add-tables",
       "source": "testing/go/publication_oracle_repro_test.go:TestPublicationRejectsSchemaAddAfterColumnListOrFilterRepro",
       "ordinal": 1,
