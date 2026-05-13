@@ -20,6 +20,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -28,6 +30,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
 )
@@ -38,6 +41,7 @@ type postgresOracleManifest struct {
 	Version                int                   `json:"version"`
 	CanonicalPostgresMajor int                   `json:"canonicalPostgresMajor"`
 	NormalizationProfile   string                `json:"normalizationProfile"`
+	DefaultOracle          string                `json:"defaultOracle"`
 	Entries                []postgresOracleEntry `json:"entries"`
 }
 
@@ -99,6 +103,7 @@ func validatePostgresOracleManifest(t testing.TB, manifest postgresOracleManifes
 	require.Equal(t, 1, manifest.Version)
 	require.Equal(t, 16, manifest.CanonicalPostgresMajor)
 	require.Equal(t, "pg16-structural-v1", manifest.NormalizationProfile)
+	require.Equal(t, "internal", manifest.DefaultOracle)
 	require.NotEmpty(t, manifest.Entries)
 
 	seen := map[string]struct{}{}
@@ -116,6 +121,7 @@ func validatePostgresOracleManifest(t testing.TB, manifest postgresOracleManifes
 				"column mode for %s", entry.ID)
 		}
 		if entry.Oracle == "postgres" {
+			requireOracleSourceExists(t, entry)
 			require.NotEmpty(t, entry.Query, "query for %s", entry.ID)
 			if entry.ExpectedSQLState != "" {
 				require.Empty(t, entry.ExpectedRows, "sqlstate oracle entries cannot also expect rows: %s", entry.ID)
@@ -125,6 +131,19 @@ func validatePostgresOracleManifest(t testing.TB, manifest postgresOracleManifes
 			}
 		}
 	}
+}
+
+func requireOracleSourceExists(t testing.TB, entry postgresOracleEntry) {
+	t.Helper()
+	sourceFile, testName, ok := strings.Cut(entry.Source, ":")
+	require.True(t, ok, "source must be file:TestName for %s", entry.ID)
+	data, err := os.ReadFile(sourceFile)
+	if err != nil {
+		data, err = os.ReadFile(filepath.Join("..", "..", sourceFile))
+	}
+	require.NoError(t, err, "source file for %s", entry.ID)
+	pattern := regexp.MustCompile(`func\s+` + regexp.QuoteMeta(testName) + `\s*\(`)
+	require.Regexp(t, pattern, string(data), "source test for %s", entry.ID)
 }
 
 func loadPostgresOracleManifest(t testing.TB) postgresOracleManifest {
@@ -267,6 +286,8 @@ func normalizePostgresOracleValue(profile string, mode string, value any, oid ui
 		return fmt.Sprint(v)
 	case float32, float64:
 		return fmt.Sprint(v)
+	case pgtype.Numeric:
+		return normalizePostgresOraclePgNumeric(v)
 	case []byte:
 		switch mode {
 		case "json":
@@ -295,6 +316,16 @@ func normalizePostgresOracleValue(profile string, mode string, value any, oid ui
 			return v
 		}
 	default:
+		if mode == "json" {
+			if canonical, err := json.Marshal(v); err == nil {
+				return string(canonical)
+			}
+		}
+		if mode == "array" {
+			if normalized, ok := normalizePostgresOracleSlice(v); ok {
+				return normalized
+			}
+		}
 		text := fmt.Sprint(v)
 		if mode == "numeric" {
 			return normalizePostgresOracleNumeric(text)
@@ -331,6 +362,19 @@ func normalizePostgresOracleNumeric(value string) string {
 	return dec.String()
 }
 
+func normalizePostgresOraclePgNumeric(value pgtype.Numeric) string {
+	if !value.Valid {
+		return "<null>"
+	}
+	if value.NaN {
+		return "NaN"
+	}
+	if value.Int == nil || value.Int.Sign() == 0 {
+		return "0"
+	}
+	return decimal.NewFromBigInt(value.Int, value.Exp).String()
+}
+
 func normalizePostgresOracleJSON(value string) string {
 	trimmed := strings.TrimSpace(value)
 	var decoded any
@@ -351,6 +395,23 @@ func normalizePostgresOracleArray(value string) string {
 	trimmed := strings.TrimSpace(value)
 	trimmed = strings.ReplaceAll(trimmed, ", ", ",")
 	return trimmed
+}
+
+func normalizePostgresOracleSlice(value any) (string, bool) {
+	rv := reflect.ValueOf(value)
+	if rv.Kind() != reflect.Slice && rv.Kind() != reflect.Array {
+		return "", false
+	}
+	parts := make([]string, rv.Len())
+	for i := range parts {
+		element := rv.Index(i)
+		if element.Kind() == reflect.Pointer && element.IsNil() {
+			parts[i] = "NULL"
+			continue
+		}
+		parts[i] = fmt.Sprint(element.Interface())
+	}
+	return "{" + strings.Join(parts, ",") + "}", true
 }
 
 func comparePostgresOracleRows(t testing.TB, entry postgresOracleEntry, actual [][]string) {

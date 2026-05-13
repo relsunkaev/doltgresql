@@ -2,7 +2,33 @@
   "version": 1,
   "canonicalPostgresMajor": 16,
   "normalizationProfile": "pg16-structural-v1",
+  "defaultOracle": "internal",
   "entries": [
+    {
+      "id": "oracle-selftest-sqlstate-division-by-zero",
+      "source": "testing/go/postgres_oracle_manifest_test.go:TestPostgresOracleManifest",
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "query": "SELECT 1 / 0",
+      "expectedSqlstate": "22012",
+      "expectedErrorSeverity": "ERROR"
+    },
+    {
+      "id": "oracle-selftest-normalization-regex-and-wildcard",
+      "source": "testing/go/postgres_oracle_manifest_test.go:TestPostgresOracleManifest",
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT 1.2300::numeric, '-0'::numeric, '{\"b\":2,\"a\":1}'::jsonb, ARRAY[1, 2]::int[], now(), pg_backend_pid()",
+      "expectedRows": [[
+        {"value": "1.23"},
+        {"value": "0"},
+        {"value": "{\"a\":1,\"b\":2}"},
+        {"value": "{1,2}"},
+        {"any": true},
+        {"regex": "^[0-9]+$"}
+      ]],
+      "columnModes": ["numeric", "numeric", "json", "array", "timestamptz", "structural"]
+    },
     {
       "id": "drop-operator-if-exists-removes-existing-operator",
       "source": "testing/go/operator_definition_repro_test.go:TestDropOperatorIfExistsDropsExistingOperatorRepro",
