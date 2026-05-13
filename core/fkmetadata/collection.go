@@ -53,6 +53,7 @@ type Metadata struct {
 	ParentTable   string
 	ParentColumns []string
 	Timing        Timing
+	MatchFull     bool
 }
 
 // Collection contains foreign-key metadata in the current database root.
@@ -83,7 +84,7 @@ func NewCollection(ctx context.Context, underlyingMap prolly.AddressMap, ns tree
 }
 
 // MetadataFromForeignKey returns persisted metadata for fk using the given resolved schema name.
-func MetadataFromForeignKey(schemaName string, fk sql.ForeignKeyConstraint, timing Timing) Metadata {
+func MetadataFromForeignKey(schemaName string, fk sql.ForeignKeyConstraint, timing Timing, matchFull bool) Metadata {
 	if schemaName == "" {
 		schemaName = fk.SchemaName
 	}
@@ -94,6 +95,7 @@ func MetadataFromForeignKey(schemaName string, fk sql.ForeignKeyConstraint, timi
 		ParentTable:   fk.ParentTable,
 		ParentColumns: slices.Clone(fk.ParentColumns),
 		Timing:        timing,
+		MatchFull:     matchFull,
 	}
 }
 
@@ -103,14 +105,42 @@ func (pgf *Collection) SetTiming(ctx context.Context, metadata Metadata) error {
 	if !metadata.ID.IsValid() {
 		return nil
 	}
-	if !metadata.Timing.Deferrable {
-		return pgf.DeleteTiming(ctx, metadata.ID)
+	if existing, ok := pgf.accessCache[metadata.ID]; ok {
+		metadata.MatchFull = existing.MatchFull
+	}
+	return pgf.setMetadata(ctx, metadata)
+}
+
+// SetMatchFull persists MATCH FULL metadata for a FK.
+func (pgf *Collection) SetMatchFull(ctx context.Context, metadata Metadata) error {
+	metadata.normalize()
+	if !metadata.ID.IsValid() {
+		return nil
+	}
+	if existing, ok := pgf.accessCache[metadata.ID]; ok {
+		metadata.Timing = existing.Timing
+	}
+	return pgf.setMetadata(ctx, metadata)
+}
+
+// SetMetadata persists the complete metadata record for a FK.
+func (pgf *Collection) SetMetadata(ctx context.Context, metadata Metadata) error {
+	metadata.normalize()
+	if !metadata.ID.IsValid() {
+		return nil
+	}
+	return pgf.setMetadata(ctx, metadata)
+}
+
+func (pgf *Collection) setMetadata(ctx context.Context, metadata Metadata) error {
+	if !metadata.Timing.Deferrable && !metadata.MatchFull {
+		return pgf.DeleteMetadata(ctx, metadata.ID)
 	}
 	return pgf.putMetadata(ctx, metadata)
 }
 
-// DeleteTiming removes timing metadata for the given FK if it exists.
-func (pgf *Collection) DeleteTiming(ctx context.Context, fkID id.ForeignKey) error {
+// DeleteMetadata removes metadata for the given FK if it exists.
+func (pgf *Collection) DeleteMetadata(ctx context.Context, fkID id.ForeignKey) error {
 	if !fkID.IsValid() {
 		return nil
 	}
@@ -147,6 +177,26 @@ func (pgf *Collection) TimingForForeignKey(ctx context.Context, fkID id.ForeignK
 		}
 	}
 	return Timing{}, false, nil
+}
+
+// MatchFullForForeignKey returns whether fk was declared with MATCH FULL.
+func (pgf *Collection) MatchFullForForeignKey(ctx context.Context, fkID id.ForeignKey, fk sql.ForeignKeyConstraint) (bool, bool, error) {
+	if fkID.IsValid() {
+		if metadata, ok := pgf.accessCache[fkID]; ok && metadata.matchesForeignKey(fkID.SchemaName(), fk) {
+			return metadata.MatchFull, true, nil
+		}
+	}
+	schemaName := fk.SchemaName
+	if fkID.IsValid() {
+		schemaName = fkID.SchemaName()
+	}
+	for _, cachedID := range pgf.idCache {
+		metadata := pgf.accessCache[cachedID]
+		if metadata.matchesForeignKey(schemaName, fk) {
+			return metadata.MatchFull, true, nil
+		}
+	}
+	return false, false, nil
 }
 
 func (pgf *Collection) putMetadata(ctx context.Context, metadata Metadata) error {
@@ -231,6 +281,7 @@ func (metadata Metadata) Serialize(ctx context.Context) ([]byte, error) {
 	writer.StringSlice(metadata.ParentColumns)
 	writer.Bool(metadata.Timing.Deferrable)
 	writer.Bool(metadata.Timing.InitiallyDeferred)
+	writer.Bool(metadata.MatchFull)
 	return writer.Data(), nil
 }
 
@@ -252,6 +303,9 @@ func DeserializeMetadata(ctx context.Context, data []byte) (Metadata, error) {
 	metadata.ParentColumns = reader.StringSlice()
 	metadata.Timing.Deferrable = reader.Bool()
 	metadata.Timing.InitiallyDeferred = reader.Bool()
+	if !reader.IsEmpty() {
+		metadata.MatchFull = reader.Bool()
+	}
 	if !reader.IsEmpty() {
 		return Metadata{}, errors.New("extra data found while deserializing foreign-key metadata")
 	}
@@ -311,9 +365,9 @@ func equalStringSlices(left []string, right []string) bool {
 
 func (metadata Metadata) summary() string {
 	metadata.normalize()
-	return fmt.Sprintf("%s columns=%v parent=%s.%s(%v) deferrable=%t initiallyDeferred=%t",
+	return fmt.Sprintf("%s columns=%v parent=%s.%s(%v) deferrable=%t initiallyDeferred=%t matchFull=%t",
 		metadata.ID.AsId().String(), metadata.Columns, metadata.ParentSchema, metadata.ParentTable, metadata.ParentColumns,
-		metadata.Timing.Deferrable, metadata.Timing.InitiallyDeferred)
+		metadata.Timing.Deferrable, metadata.Timing.InitiallyDeferred, metadata.MatchFull)
 }
 
 // DeserializeRootObject implements the interface objinterface.Collection.
@@ -349,7 +403,7 @@ func (pgf *Collection) DropRootObject(ctx context.Context, identifier id.Id) err
 	if identifier.Section() != id.Section_ForeignKey {
 		return errors.Errorf(`foreign key metadata %s does not exist`, identifier.String())
 	}
-	return pgf.DeleteTiming(ctx, id.ForeignKey(identifier))
+	return pgf.DeleteMetadata(ctx, id.ForeignKey(identifier))
 }
 
 // GetFieldType implements the interface objinterface.Collection.
@@ -420,7 +474,7 @@ func (pgf *Collection) PutRootObject(ctx context.Context, rootObj objinterface.R
 	if !ok {
 		return errors.Newf("invalid foreign-key metadata root object: %T", rootObj)
 	}
-	return pgf.SetTiming(ctx, metadata)
+	return pgf.setMetadata(ctx, metadata)
 }
 
 // RenameRootObject implements the interface objinterface.Collection.
@@ -432,11 +486,11 @@ func (pgf *Collection) RenameRootObject(ctx context.Context, oldName id.Id, newN
 	if !ok {
 		return errors.Errorf(`foreign-key metadata "%s" does not exist`, id.ForeignKey(oldName).ForeignKeyName())
 	}
-	if err := pgf.DeleteTiming(ctx, id.ForeignKey(oldName)); err != nil {
+	if err := pgf.DeleteMetadata(ctx, id.ForeignKey(oldName)); err != nil {
 		return err
 	}
 	metadata.ID = id.ForeignKey(newName)
-	return pgf.SetTiming(ctx, metadata)
+	return pgf.setMetadata(ctx, metadata)
 }
 
 // ResolveName implements the interface objinterface.Collection.

@@ -32,9 +32,6 @@ func nodeForeignKeyConstraintTableDef(ctx *Context, childTable string, node *tre
 	case tree.MatchSimple:
 		// This is the default behavior
 	case tree.MatchFull:
-		if len(node.FromCols) > 1 {
-			return nil, errors.Errorf("MATCH FULL on composite foreign keys is not yet supported")
-		}
 	case tree.MatchPartial:
 		return nil, errors.Errorf("MATCH PARTIAL is not yet supported")
 	default:
@@ -63,6 +60,7 @@ func nodeForeignKeyConstraintTableDef(ctx *Context, childTable string, node *tre
 				Deferrable:        node.Deferrable == tree.Deferrable,
 				InitiallyDeferred: node.Initially == tree.InitiallyDeferred,
 			},
+			MatchFull: node.Match == tree.MatchFull,
 		})
 	}
 	var refActions [2]vitess.ReferenceAction

@@ -90,6 +90,13 @@ func getConstraintDef(ctx *sql.Context, oidVal id.Id) (string, error) {
 				parentTableName,
 				getColumnNamesString(fk.Item.ParentColumns),
 			)
+			matchFull, err := deferrable.ForeignKeyMatchFullForID(ctx, fk.OID, fk.Item)
+			if err != nil {
+				return false, err
+			}
+			if matchFull {
+				result += " MATCH FULL"
+			}
 			if action := formatForeignKeyAction("ON UPDATE", fk.Item.OnUpdate); action != "" {
 				result += " " + action
 			}

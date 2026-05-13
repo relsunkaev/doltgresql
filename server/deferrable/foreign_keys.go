@@ -16,9 +16,11 @@ package deferrable
 
 import (
 	"fmt"
+	"io"
 	"strings"
 	"sync"
 
+	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/core"
@@ -38,6 +40,7 @@ type ParsedForeignKey struct {
 	ParentTable   string
 	ParentColumns []string
 	Timing        Timing
+	MatchFull     bool
 }
 
 type Check struct {
@@ -54,23 +57,26 @@ type txnState struct {
 }
 
 type pendingForeignKeyTiming struct {
-	key    string
-	fk     sql.ForeignKeyConstraint
-	timing Timing
+	key       string
+	fk        sql.ForeignKeyConstraint
+	timing    Timing
+	matchFull bool
 }
 
 const foreignKeyKeySeparator = "\x00"
 
 var registry = struct {
 	sync.Mutex
-	parsed  []ParsedForeignKey
-	timing  map[string]Timing
-	pending map[uint32]map[string]pendingForeignKeyTiming
-	txns    map[uint32]*txnState
+	parsed    []ParsedForeignKey
+	timing    map[string]Timing
+	matchFull map[string]bool
+	pending   map[uint32]map[string]pendingForeignKeyTiming
+	txns      map[uint32]*txnState
 }{
-	timing:  make(map[string]Timing),
-	pending: make(map[uint32]map[string]pendingForeignKeyTiming),
-	txns:    make(map[uint32]*txnState),
+	timing:    make(map[string]Timing),
+	matchFull: make(map[string]bool),
+	pending:   make(map[uint32]map[string]pendingForeignKeyTiming),
+	txns:      make(map[uint32]*txnState),
 }
 
 func RegisterParsedForeignKey(parsed ParsedForeignKey) {
@@ -98,9 +104,10 @@ func BindForeignKey(ctx *sql.Context, fk sql.ForeignKeyConstraint) error {
 				registry.pending[connectionID] = make(map[string]pendingForeignKeyTiming)
 			}
 			registry.pending[connectionID][key] = pendingForeignKeyTiming{
-				key:    key,
-				fk:     fk,
-				timing: parsed.Timing,
+				key:       key,
+				fk:        fk,
+				timing:    parsed.Timing,
+				matchFull: parsed.MatchFull,
 			}
 			return nil
 		}
@@ -133,6 +140,29 @@ func ForeignKeyTimingForID(ctx *sql.Context, fkID id.ForeignKey, fk sql.ForeignK
 	return Timing{}, nil
 }
 
+// ForeignKeyMatchFull returns whether fk was declared with MATCH FULL.
+func ForeignKeyMatchFull(ctx *sql.Context, fk sql.ForeignKeyConstraint) (bool, error) {
+	return ForeignKeyMatchFullForID(ctx, id.NullForeignKey, fk)
+}
+
+// ForeignKeyMatchFullForID returns whether fk was declared with MATCH FULL from
+// Doltgres-parsed DDL or persisted Doltgres metadata.
+func ForeignKeyMatchFullForID(ctx *sql.Context, fkID id.ForeignKey, fk sql.ForeignKeyConstraint) (bool, error) {
+	registry.Lock()
+	matchFull, ok := lookupMatchFullLocked(fk)
+	if ok {
+		registry.Unlock()
+		return matchFull, nil
+	}
+	registry.Unlock()
+
+	matchFull, ok, err := persistentForeignKeyMatchFull(ctx, fkID, fk)
+	if err != nil || ok {
+		return matchFull, err
+	}
+	return false, nil
+}
+
 func Begin(connectionID uint32) {
 	registry.Lock()
 	defer registry.Unlock()
@@ -160,6 +190,7 @@ func ResetForTests() {
 	defer registry.Unlock()
 	registry.parsed = nil
 	registry.timing = make(map[string]Timing)
+	registry.matchFull = make(map[string]bool)
 	registry.pending = make(map[uint32]map[string]pendingForeignKeyTiming)
 	registry.txns = make(map[uint32]*txnState)
 }
@@ -186,7 +217,12 @@ func FlushPendingForeignKeys(ctx *sql.Context) error {
 	registry.Unlock()
 
 	for _, timing := range pending {
-		if err := persistForeignKeyTiming(ctx, timing.fk, timing.timing); err != nil {
+		if timing.matchFull {
+			if err := validateMatchFullExistingRows(ctx, timing.fk); err != nil {
+				return err
+			}
+		}
+		if err := persistForeignKeyMetadata(ctx, timing.fk, timing.timing, timing.matchFull); err != nil {
 			return err
 		}
 	}
@@ -198,6 +234,11 @@ func FlushPendingForeignKeys(ctx *sql.Context) error {
 			registry.timing[timing.key] = timing.timing
 		} else {
 			delete(registry.timing, timing.key)
+		}
+		if timing.matchFull {
+			registry.matchFull[timing.key] = true
+		} else {
+			delete(registry.matchFull, timing.key)
 		}
 	}
 	return nil
@@ -280,6 +321,13 @@ func lookupTimingLocked(fk sql.ForeignKeyConstraint) (Timing, bool) {
 	return Timing{}, false
 }
 
+func lookupMatchFullLocked(fk sql.ForeignKeyConstraint) (bool, bool) {
+	if matchFull, ok := registry.matchFull[foreignKeyKey(fk)]; ok {
+		return matchFull, true
+	}
+	return false, false
+}
+
 func MarkDirty(connectionID uint32, fk sql.ForeignKeyConstraint) {
 	registry.Lock()
 	defer registry.Unlock()
@@ -354,7 +402,32 @@ func persistForeignKeyTiming(ctx *sql.Context, fk sql.ForeignKeyConstraint, timi
 	return collection.SetTiming(ctx, fkmetadata.MetadataFromForeignKey(schemaName, fk, fkmetadata.Timing{
 		Deferrable:        timing.Deferrable,
 		InitiallyDeferred: timing.InitiallyDeferred,
-	}))
+	}, false))
+}
+
+func persistForeignKeyMetadata(ctx *sql.Context, fk sql.ForeignKeyConstraint, timing Timing, matchFull bool) error {
+	if !core.IsContextValid(ctx) {
+		return nil
+	}
+	if fk.Table == "" || fk.Name == "" {
+		return nil
+	}
+	schemaName := fk.SchemaName
+	if schemaName == "" {
+		var err error
+		schemaName, err = core.GetSchemaName(ctx, nil, "")
+		if err != nil {
+			return err
+		}
+	}
+	collection, err := core.GetForeignKeyMetadataCollectionFromContext(ctx, ctx.GetCurrentDatabase())
+	if err != nil {
+		return err
+	}
+	return collection.SetMetadata(ctx, fkmetadata.MetadataFromForeignKey(schemaName, fk, fkmetadata.Timing{
+		Deferrable:        timing.Deferrable,
+		InitiallyDeferred: timing.InitiallyDeferred,
+	}, matchFull))
 }
 
 func persistentForeignKeyTiming(ctx *sql.Context, fkID id.ForeignKey, fk sql.ForeignKeyConstraint) (Timing, bool, error) {
@@ -387,6 +460,92 @@ func persistentForeignKeyTiming(ctx *sql.Context, fkID id.ForeignKey, fk sql.For
 		Deferrable:        timing.Deferrable,
 		InitiallyDeferred: timing.InitiallyDeferred,
 	}, true, nil
+}
+
+func persistentForeignKeyMatchFull(ctx *sql.Context, fkID id.ForeignKey, fk sql.ForeignKeyConstraint) (bool, bool, error) {
+	if !core.IsContextValid(ctx) {
+		return false, false, nil
+	}
+	if !fkID.IsValid() {
+		if fk.Table == "" || fk.Name == "" {
+			return false, false, nil
+		}
+		schemaName := fk.SchemaName
+		if schemaName == "" {
+			var err error
+			schemaName, err = core.GetSchemaName(ctx, nil, "")
+			if err != nil {
+				return false, false, err
+			}
+		}
+		fkID = id.NewForeignKey(schemaName, fk.Table, fk.Name)
+	}
+	collection, err := core.GetForeignKeyMetadataCollectionFromContext(ctx, ctx.GetCurrentDatabase())
+	if err != nil {
+		return false, false, err
+	}
+	return collection.MatchFullForForeignKey(ctx, fkID, fk)
+}
+
+func validateMatchFullExistingRows(ctx *sql.Context, fk sql.ForeignKeyConstraint) error {
+	if len(fk.Columns) < 2 {
+		return nil
+	}
+	schemaName := fk.SchemaName
+	if schemaName == "" {
+		var err error
+		schemaName, err = core.GetSchemaName(ctx, nil, "")
+		if err != nil {
+			return err
+		}
+	}
+	table, err := core.GetSqlTableFromContext(ctx, fk.Database, doltdb.TableName{
+		Name:   fk.Table,
+		Schema: schemaName,
+	})
+	if err != nil || table == nil {
+		return err
+	}
+	columnPositions := make([]int, len(fk.Columns))
+	tableSchema := table.Schema(ctx)
+	for i, fkColumn := range fk.Columns {
+		columnPositions[i] = -1
+		for j, column := range tableSchema {
+			if strings.EqualFold(column.Name, fkColumn) {
+				columnPositions[i] = j
+				break
+			}
+		}
+		if columnPositions[i] == -1 {
+			return nil
+		}
+	}
+
+	partitions, err := table.Partitions(ctx)
+	if err != nil {
+		return err
+	}
+	rows := sql.NewTableRowIter(ctx, table, partitions)
+	defer rows.Close(ctx)
+	for row, err := rows.Next(ctx); err == nil; row, err = rows.Next(ctx) {
+		if matchFullPartialNull(row, columnPositions) {
+			return sql.ErrForeignKeyChildViolation.New(fk.Name, fk.Table, fk.ParentTable, "MATCH FULL")
+		}
+	}
+	if err != io.EOF {
+		return err
+	}
+	return nil
+}
+
+func matchFullPartialNull(row sql.Row, columnPositions []int) bool {
+	nullCount := 0
+	for _, position := range columnPositions {
+		if position >= 0 && position < len(row) && row[position] == nil {
+			nullCount++
+		}
+	}
+	return nullCount > 0 && nullCount < len(columnPositions)
 }
 
 func pendingChecksFor(connectionID uint32, names []string, all bool) []Check {

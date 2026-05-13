@@ -156,6 +156,13 @@ func TestCompositeForeignKeyMatchFullRepro(t *testing.T) {
 					);`,
 				},
 				{
+					Query: `SELECT confmatchtype, pg_get_constraintdef(oid) LIKE '%MATCH FULL%'
+						FROM pg_constraint
+						WHERE conrelid = 'match_full_child'::regclass
+							AND contype = 'f';`,
+					Expected: []sql.Row{{"f", true}},
+				},
+				{
 					Query: `INSERT INTO match_full_child VALUES (1, 1, 1);`,
 				},
 				{

@@ -485,6 +485,14 @@ func cachePgConstraints(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error 
 			if err != nil {
 				return false, err
 			}
+			matchFull, err := deferrable.ForeignKeyMatchFullForID(ctx, foreignKey.OID, foreignKey.Item)
+			if err != nil {
+				return false, err
+			}
+			matchType := "s"
+			if matchFull {
+				matchType = "f"
+			}
 			constraint := &pgConstraint{
 				oid:             foreignKey.OID.AsId(),
 				oidNative:       id.Cache().ToOID(foreignKey.OID.AsId()),
@@ -500,7 +508,7 @@ func cachePgConstraints(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error 
 				tableRefOid:     tableOIDs[schema.OID.AsId()][foreignKey.Item.ParentTable],
 				fkUpdateType:    getFKAction(foreignKey.Item.OnUpdate),
 				fkDeleteType:    getFKAction(foreignKey.Item.OnDelete),
-				fkMatchType:     "s",
+				fkMatchType:     matchType,
 				conKey:          conKey,
 				conFkey:         conFkey,
 				typeOid:         id.Id(id.NewOID(0)),

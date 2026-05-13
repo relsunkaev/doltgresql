@@ -64,8 +64,9 @@ func TestAlterTable(t *testing.T) {
 					Expected: []sql.Row{},
 				},
 				{
+					// Existing rows still have to satisfy the composite reference.
 					Query:       "ALTER TABLE parent ADD FOREIGN KEY (c1, c2) REFERENCES child (pk, c1) MATCH FULL;",
-					ExpectedErr: "MATCH FULL on composite foreign keys is not yet supported",
+					ExpectedErr: "Foreign key violation",
 				},
 				{
 					// Unsupported syntax: MATCH PARTIAL

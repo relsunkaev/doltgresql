@@ -71,6 +71,7 @@ const (
 	ruleId_AssignRowLevelLocking                                                  // assignRowLevelLocking
 	ruleId_SuppressReplicaRoleForeignKeys                                         // suppressReplicaRoleForeignKeys
 	ruleId_SuppressDeferrableForeignKeys                                          // suppressDeferrableForeignKeys
+	ruleId_EnforceForeignKeyMatchFull                                             // enforceForeignKeyMatchFull
 	ruleId_UnwrapTableCopierCreateTable                                           // unwrapTableCopierCreateTable
 	ruleId_PreserveTableMetadata                                                  // preserveTableMetadata
 	ruleId_ValidateCreateIndexOwnership                                           // validateCreateIndexOwnership
@@ -174,6 +175,7 @@ func Init() {
 		// AddDomainConstraintsToCasts needs to run after 'assignExecIndexes' rule in GMS.
 		analyzer.Rule{Id: ruleId_AddDomainConstraintsToCasts, Apply: AddDomainConstraintsToCasts},
 		analyzer.Rule{Id: ruleId_AssignIndexStats, Apply: AssignIndexStats},
+		analyzer.Rule{Id: ruleId_EnforceForeignKeyMatchFull, Apply: EnforceForeignKeyMatchFull},
 		analyzer.Rule{Id: ruleId_SuppressDeferrableForeignKeys, Apply: SuppressDeferrableForeignKeys},
 		analyzer.Rule{Id: ruleId_SuppressReplicaRoleForeignKeys, Apply: SuppressReplicaRoleForeignKeys},
 		analyzer.Rule{Id: ruleId_ReplaceNode, Apply: ReplaceNode},
