@@ -262,6 +262,7 @@ func (h *DoltgresHandler) ComQuery(ctx context.Context, c *mysql.Conn, query str
 func castSQLError(err error) error {
 	switch pgerror.GetPGCode(err) {
 	case pgcode.DeadlockDetected,
+		pgcode.CheckViolation,
 		pgcode.DuplicateObject,
 		pgcode.FeatureNotSupported,
 		pgcode.Grouping,

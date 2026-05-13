@@ -18,8 +18,6 @@ import (
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 
-	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
-	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/tablemetadata"
 )
 
@@ -200,7 +198,7 @@ func (i *partitionedTableInserter) StatementComplete(ctx *sql.Context) error {
 }
 
 func (i *partitionedTableInserter) Insert(ctx *sql.Context, row sql.Row) error {
-	return pgerror.Newf(pgcode.CheckViolation, `no partition of relation "%s" found for row`, i.name)
+	return sql.ErrCheckConstraintViolated.New(i.name + "_partition_check")
 }
 
 func (i *partitionedTableInserter) Close(ctx *sql.Context) error {
