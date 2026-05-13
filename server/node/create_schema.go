@@ -28,26 +28,35 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/server/auth"
+	pgexprs "github.com/dolthub/doltgresql/server/expression"
 )
 
 // CreateSchema implements PostgreSQL CREATE SCHEMA.
 type CreateSchema struct {
-	Name        string
-	Owner       string
-	IfNotExists bool
+	Name           string
+	Owner          string
+	IfNotExists    bool
+	SchemaElements []string
+	Runner         pgexprs.StatementRunner
 }
 
 var _ sql.ExecSourceRel = (*CreateSchema)(nil)
+var _ sql.Expressioner = (*CreateSchema)(nil)
 var _ vitess.Injectable = (*CreateSchema)(nil)
 
 // NewCreateSchema returns a new *CreateSchema.
-func NewCreateSchema(name string, owner string, ifNotExists bool) *CreateSchema {
-	return &CreateSchema{Name: name, Owner: owner, IfNotExists: ifNotExists}
+func NewCreateSchema(name string, owner string, ifNotExists bool, schemaElements []string) *CreateSchema {
+	return &CreateSchema{Name: name, Owner: owner, IfNotExists: ifNotExists, SchemaElements: schemaElements}
 }
 
 // Children implements the interface sql.ExecSourceRel.
 func (c *CreateSchema) Children() []sql.Node {
 	return nil
+}
+
+// Expressions implements the interface sql.Expressioner.
+func (c *CreateSchema) Expressions() []sql.Expression {
+	return []sql.Expression{c.Runner}
 }
 
 // IsReadOnly implements the interface sql.ExecSourceRel.
@@ -106,7 +115,32 @@ func (c *CreateSchema) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error)
 	if err != nil {
 		return nil, err
 	}
+	if err = c.runSchemaElements(ctx); err != nil {
+		return nil, err
+	}
 	return sql.RowsToRowIter(rows...), nil
+}
+
+func (c *CreateSchema) runSchemaElements(ctx *sql.Context) error {
+	if len(c.SchemaElements) == 0 {
+		return nil
+	}
+	if c.Runner.Runner == nil {
+		return errors.New("statement runner is not available for CREATE SCHEMA schema elements")
+	}
+	for _, query := range c.SchemaElements {
+		_, err := sql.RunInterpreted(ctx, func(subCtx *sql.Context) ([]sql.Row, error) {
+			_, rowIter, _, err := c.Runner.Runner.QueryWithBindings(subCtx, query, nil, nil, nil)
+			if err != nil {
+				return nil, err
+			}
+			return sql.RowIterToRows(subCtx, rowIter)
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (c *CreateSchema) checkCreatePrivileges(ctx *sql.Context, owner string) error {
@@ -147,6 +181,16 @@ func (c *CreateSchema) WithChildren(ctx *sql.Context, children ...sql.Node) (sql
 		return nil, ErrVitessChildCount.New(0, len(children))
 	}
 	return c, nil
+}
+
+// WithExpressions implements the interface sql.Expressioner.
+func (c *CreateSchema) WithExpressions(ctx *sql.Context, expressions ...sql.Expression) (sql.Node, error) {
+	if len(expressions) != 1 {
+		return nil, sql.ErrInvalidChildrenNumber.New(c, len(expressions), 1)
+	}
+	newC := *c
+	newC.Runner = expressions[0].(pgexprs.StatementRunner)
+	return &newC, nil
 }
 
 // WithResolvedChildren implements the interface vitess.Injectable.

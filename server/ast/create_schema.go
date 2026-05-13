@@ -15,6 +15,7 @@
 package ast
 
 import (
+	"github.com/cockroachdb/errors"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	pgnodes "github.com/dolthub/doltgresql/server/node"
@@ -33,9 +34,31 @@ func nodeCreateSchema(ctx *Context, node *tree.CreateSchema) (vitess.Statement, 
 	if schemaName == "" {
 		schemaName = node.AuthRole
 	}
+	schemaElements := make([]string, 0, len(node.SchemaElements))
+	for _, element := range node.SchemaElements {
+		elementSQL, err := createSchemaElementSQL(schemaName, element)
+		if err != nil {
+			return nil, err
+		}
+		schemaElements = append(schemaElements, elementSQL)
+	}
 
 	return vitess.InjectedStatement{
-		Statement: pgnodes.NewCreateSchema(schemaName, node.AuthRole, node.IfNotExists),
+		Statement: pgnodes.NewCreateSchema(schemaName, node.AuthRole, node.IfNotExists, schemaElements),
 		Children:  nil,
 	}, nil
+}
+
+func createSchemaElementSQL(schemaName string, element tree.Statement) (string, error) {
+	switch stmt := element.(type) {
+	case *tree.CreateTable:
+		createTable := *stmt
+		if !createTable.Table.ExplicitSchema {
+			createTable.Table.SchemaName = tree.Name(schemaName)
+			createTable.Table.ExplicitSchema = true
+		}
+		return tree.AsString(&createTable), nil
+	default:
+		return "", errors.Errorf("CREATE SCHEMA schema element %T is not yet supported", element)
+	}
 }
