@@ -32,7 +32,7 @@ func (trigger Trigger) Serialize(ctx context.Context) ([]byte, error) {
 
 	// Initialize the writer and version
 	writer := utils.NewWriter(256)
-	writer.VariableUint(0) // Version
+	writer.VariableUint(1) // Version
 	// Write the trigger data
 	writer.Id(trigger.ID.AsId())
 	writer.Id(trigger.Function.AsId())
@@ -45,6 +45,7 @@ func (trigger Trigger) Serialize(ctx context.Context) ([]byte, error) {
 	writer.String(trigger.NewTransitionName)
 	writer.StringSlice(trigger.Arguments)
 	writer.String(trigger.Definition)
+	writer.String(trigger.EnabledMode())
 	// Write the WHEN operations
 	writer.VariableUint(uint64(len(trigger.When)))
 	for _, op := range trigger.When {
@@ -73,7 +74,7 @@ func DeserializeTrigger(ctx context.Context, data []byte) (Trigger, error) {
 	}
 	reader := utils.NewReader(data)
 	version := reader.VariableUint()
-	if version != 0 {
+	if version > 1 {
 		return Trigger{}, errors.Errorf("version %d of triggers is not supported, please upgrade the server", version)
 	}
 
@@ -90,6 +91,11 @@ func DeserializeTrigger(ctx context.Context, data []byte) (Trigger, error) {
 	t.NewTransitionName = reader.String()
 	t.Arguments = reader.StringSlice()
 	t.Definition = reader.String()
+	if version >= 1 {
+		t.Enabled = reader.String()
+	} else {
+		t.Enabled = TriggerEnabledOrigin
+	}
 	// Read the WHEN operations
 	opCount := reader.VariableUint()
 	t.When = make([]plpgsql.InterpreterOperation, opCount)

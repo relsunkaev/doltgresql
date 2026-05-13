@@ -23,6 +23,7 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 	"github.com/sirupsen/logrus"
 
+	"github.com/dolthub/doltgresql/core/triggers"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/deferrable"
@@ -123,6 +124,8 @@ func nodeAlterTable(ctx *Context, node *tree.AlterTable) (vitess.Statement, erro
 					TargetType: auth.AuthTargetType_Ignore,
 				},
 			}, nil
+		case *tree.AlterTableTrigger:
+			return nodeAlterTableTrigger(treeTableName, cmd, node.IfExists)
 		}
 	}
 	statements, noOps, err := nodeAlterTableCmds(ctx, node.Cmds, tableName, node.IfExists)
@@ -201,6 +204,29 @@ func alterConstraintTiming(cmd *tree.AlterTableAlterConstraint) (deferrable.Timi
 	}
 	timing.InitiallyDeferred = timing.Deferrable && cmd.Initially == tree.InitiallyDeferred
 	return timing, nil
+}
+
+func nodeAlterTableTrigger(tableName tree.TableName, cmd *tree.AlterTableTrigger, ifExists bool) (vitess.Statement, error) {
+	enabled := triggers.TriggerEnabledOrigin
+	if cmd.Disable {
+		enabled = triggers.TriggerEnabledDisabled
+	}
+	if cmd.IsReplica || cmd.IsAlways {
+		return NotYetSupportedError("ALTER TABLE ENABLE REPLICA/ALWAYS TRIGGER is not yet supported")
+	}
+	return vitess.InjectedStatement{
+		Statement: pgnodes.NewAlterTableTrigger(
+			ifExists,
+			tableName.Schema(),
+			tableName.Object(),
+			cmd.Trigger,
+			enabled,
+		),
+		Auth: vitess.AuthInformation{
+			AuthType:   auth.AuthType_IGNORE,
+			TargetType: auth.AuthTargetType_Ignore,
+		},
+	}, nil
 }
 
 func nodeAlterTableRowLevelSecurity(tableName tree.TableName, cmd *tree.AlterTableRowLevelSecurity) (vitess.Statement, error) {

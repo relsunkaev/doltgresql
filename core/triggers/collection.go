@@ -77,6 +77,13 @@ type TriggerEvent struct {
 	ColumnNames []string
 }
 
+const (
+	TriggerEnabledOrigin   = "O"
+	TriggerEnabledDisabled = "D"
+	TriggerEnabledReplica  = "R"
+	TriggerEnabledAlways   = "A"
+)
+
 // Trigger represents a trigger.
 type Trigger struct {
 	ID                  id.Trigger
@@ -92,10 +99,32 @@ type Trigger struct {
 	NewTransitionName   string // REFERENCING NEW TABLE AS transition_relation_name
 	Arguments           []string
 	Definition          string
+	Enabled             string
 }
 
 var _ objinterface.Collection = (*Collection)(nil)
 var _ objinterface.RootObject = Trigger{}
+
+// EnabledMode returns the PostgreSQL tgenabled value for this trigger.
+func (trigger Trigger) EnabledMode() string {
+	switch trigger.Enabled {
+	case TriggerEnabledDisabled, TriggerEnabledReplica, TriggerEnabledAlways:
+		return trigger.Enabled
+	default:
+		return TriggerEnabledOrigin
+	}
+}
+
+// FiresInOriginMode returns whether this trigger fires under the default
+// session_replication_role = origin mode.
+func (trigger Trigger) FiresInOriginMode() bool {
+	switch trigger.EnabledMode() {
+	case TriggerEnabledOrigin, TriggerEnabledAlways:
+		return true
+	default:
+		return false
+	}
+}
 
 // NewCollection returns a new Collection.
 func NewCollection(ctx context.Context, underlyingMap prolly.AddressMap, ns tree.NodeStore) (*Collection, error) {
@@ -174,6 +203,32 @@ func (pgt *Collection) AddTrigger(ctx context.Context, t Trigger) error {
 	}
 	mapEditor := pgt.underlyingMap.Editor()
 	if err = mapEditor.Add(ctx, string(t.ID), h); err != nil {
+		return err
+	}
+	newMap, err := mapEditor.Flush(ctx)
+	if err != nil {
+		return err
+	}
+	pgt.underlyingMap = newMap
+	pgt.mapHash = pgt.underlyingMap.HashOf()
+	return pgt.reloadCaches(ctx)
+}
+
+// UpdateTrigger updates an existing trigger.
+func (pgt *Collection) UpdateTrigger(ctx context.Context, t Trigger) error {
+	if _, ok := pgt.accessCache[t.ID]; !ok {
+		return errors.Errorf(`trigger "%s" for table "%s" does not exist`, t.ID.TriggerName(), t.ID.TableName())
+	}
+	data, err := t.Serialize(ctx)
+	if err != nil {
+		return err
+	}
+	h, err := pgt.ns.WriteBytes(ctx, data)
+	if err != nil {
+		return err
+	}
+	mapEditor := pgt.underlyingMap.Editor()
+	if err = mapEditor.Update(ctx, string(t.ID), h); err != nil {
 		return err
 	}
 	newMap, err := mapEditor.Flush(ctx)

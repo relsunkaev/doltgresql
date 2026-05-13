@@ -112,7 +112,7 @@ func pgTriggerToRow(schema sql.Schema, trigger triggers.Trigger) sql.Row {
 		trigger.ID.TriggerName(), // tgname
 		trigger.Function.AsId(),  // tgfoid
 		pgTriggerType(trigger),   // tgtype
-		"O",                      // tgenabled
+		trigger.EnabledMode(),    // tgenabled
 		false,                    // tgisinternal
 		id.Null,                  // tgconstrrelid
 		id.Null,                  // tgconstrindid

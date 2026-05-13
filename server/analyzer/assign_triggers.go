@@ -226,6 +226,9 @@ func getTriggerInformation(ctx *sql.Context, node sql.Node) (triggerInformation,
 		return allTrigs[i].ID.TriggerName() < allTrigs[j].ID.TriggerName()
 	})
 	for _, trig := range allTrigs {
+		if !trig.FiresInOriginMode() {
+			continue
+		}
 		matchesEventType := false
 		for _, event := range trig.Events {
 			switch node.(type) {

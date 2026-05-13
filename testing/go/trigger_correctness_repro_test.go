@@ -481,6 +481,12 @@ func TestAlterTableDisableEnableTriggerRepro(t *testing.T) {
 					Query: `ALTER TABLE trigger_toggle_target DISABLE TRIGGER trigger_toggle_after_insert;`,
 				},
 				{
+					Query: `SELECT tgenabled
+						FROM pg_catalog.pg_trigger
+						WHERE tgname = 'trigger_toggle_after_insert';`,
+					Expected: []sql.Row{{"D"}},
+				},
+				{
 					Query: `INSERT INTO trigger_toggle_target VALUES (1, 'disabled');`,
 				},
 				{
@@ -489,6 +495,12 @@ func TestAlterTableDisableEnableTriggerRepro(t *testing.T) {
 				},
 				{
 					Query: `ALTER TABLE trigger_toggle_target ENABLE TRIGGER trigger_toggle_after_insert;`,
+				},
+				{
+					Query: `SELECT tgenabled
+						FROM pg_catalog.pg_trigger
+						WHERE tgname = 'trigger_toggle_after_insert';`,
+					Expected: []sql.Row{{"O"}},
 				},
 				{
 					Query: `INSERT INTO trigger_toggle_target VALUES (2, 'enabled');`,
