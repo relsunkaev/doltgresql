@@ -187,6 +187,7 @@ func initEngine() {
 
 	planbuilder.IsAggregateFunc = IsAggregateFunc
 	sql.ErrFunctionNotFound = goerrors.NewKind("function: '%s' not found; function does not exist")
+	sql.ErrTableNotFound = goerrors.NewKind("table not found: %s; relation does not exist")
 
 	expression.DefaultExpressionFactory = pgexpression.PostgresExpressionFactory{}
 

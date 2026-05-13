@@ -26,6 +26,7 @@ import (
 
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	"github.com/dolthub/doltgresql/server/replsource"
+	"github.com/dolthub/doltgresql/server/sessionstate"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 	"github.com/dolthub/doltgresql/utils"
 )
@@ -221,6 +222,9 @@ func queueTransactionalLogicalDecodingMessage(ctx *sql.Context, message replsour
 // CommitSessionLogicalDecodingMessages publishes transactional logical decoding
 // messages queued by pg_logical_emit_message(..., true, ...).
 func CommitSessionLogicalDecodingMessages(connectionID uint32) error {
+	if err := sessionstate.RunCommitActions(connectionID); err != nil {
+		return err
+	}
 	messages := takeSessionLogicalDecodingMessages(connectionID)
 	if len(messages) == 0 {
 		return nil

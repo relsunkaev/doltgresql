@@ -15,21 +15,40 @@
 package node
 
 import (
+	"context"
 	"fmt"
+	"io"
 	"strings"
 
+	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/dsess"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/server/auth"
+	"github.com/dolthub/doltgresql/server/sessionstate"
 	"github.com/dolthub/doltgresql/server/tablemetadata"
+)
+
+// TableOptionTemporaryOnCommit carries PostgreSQL's ON COMMIT setting through
+// the go-mysql-server CREATE TABLE plan for Doltgres execution.
+const TableOptionTemporaryOnCommit = "doltgres_on_commit"
+
+// TemporaryTableOnCommit is the PostgreSQL ON COMMIT action for a temporary table.
+type TemporaryTableOnCommit string
+
+const (
+	TemporaryTableOnCommitUnset        TemporaryTableOnCommit = ""
+	TemporaryTableOnCommitPreserveRows TemporaryTableOnCommit = "preserve_rows"
+	TemporaryTableOnCommitDeleteRows   TemporaryTableOnCommit = "delete_rows"
+	TemporaryTableOnCommitDrop         TemporaryTableOnCommit = "drop"
 )
 
 // CreateTable is a node that implements functionality specifically relevant to Doltgres' table creation needs.
 type CreateTable struct {
-	gmsCreateTable *plan.CreateTable
-	sequences      []*CreateSequence
+	gmsCreateTable    *plan.CreateTable
+	sequences         []*CreateSequence
+	temporaryOnCommit TemporaryTableOnCommit
 }
 
 var _ sql.ExecBuilderNode = (*CreateTable)(nil)
@@ -39,8 +58,9 @@ var _ sql.Expressioner = (*CreateTable)(nil)
 // NewCreateTable returns a new *CreateTable.
 func NewCreateTable(createTable *plan.CreateTable, sequences []*CreateSequence) *CreateTable {
 	return &CreateTable{
-		gmsCreateTable: createTable,
-		sequences:      sequences,
+		gmsCreateTable:    createTable,
+		sequences:         sequences,
+		temporaryOnCommit: temporaryOnCommitFromTableOpts(createTable.TableOpts),
 	}
 }
 
@@ -97,7 +117,7 @@ func (c *CreateTable) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sq
 		return nil, err
 	}
 
-	if !tableAlreadyExisted {
+	if !tableAlreadyExisted && !c.gmsCreateTable.Temporary() {
 		comment := ""
 		if existingComment, ok := doltgresTableMetadataComment(c.gmsCreateTable.TableOpts); ok {
 			comment = existingComment
@@ -110,6 +130,12 @@ func (c *CreateTable) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sq
 				_ = createTableIter.Close(ctx)
 				return nil, err
 			}
+		}
+	}
+	if !tableAlreadyExisted {
+		if err = c.registerTemporaryOnCommit(ctx); err != nil {
+			_ = createTableIter.Close(ctx)
+			return nil, err
 		}
 	}
 
@@ -172,8 +198,9 @@ func (c *CreateTable) WithChildren(ctx *sql.Context, children ...sql.Node) (sql.
 		return nil, err
 	}
 	return &CreateTable{
-		gmsCreateTable: gmsCreateTable.(*plan.CreateTable),
-		sequences:      c.sequences,
+		gmsCreateTable:    gmsCreateTable.(*plan.CreateTable),
+		sequences:         c.sequences,
+		temporaryOnCommit: c.temporaryOnCommit,
 	}, nil
 }
 
@@ -213,6 +240,128 @@ func doltgresTableMetadataComment(tableOpts map[string]any) (string, bool) {
 		return "", false
 	}
 	return comment, true
+}
+
+func temporaryOnCommitFromTableOpts(tableOpts map[string]any) TemporaryTableOnCommit {
+	if tableOpts == nil {
+		return TemporaryTableOnCommitUnset
+	}
+	value, _ := tableOpts[TableOptionTemporaryOnCommit].(string)
+	switch TemporaryTableOnCommit(value) {
+	case TemporaryTableOnCommitPreserveRows, TemporaryTableOnCommitDeleteRows, TemporaryTableOnCommitDrop:
+		return TemporaryTableOnCommit(value)
+	default:
+		return TemporaryTableOnCommitUnset
+	}
+}
+
+func (c *CreateTable) registerTemporaryOnCommit(ctx *sql.Context) error {
+	if !c.gmsCreateTable.Temporary() {
+		return nil
+	}
+	switch c.temporaryOnCommit {
+	case TemporaryTableOnCommitUnset, TemporaryTableOnCommitPreserveRows:
+		return nil
+	case TemporaryTableOnCommitDeleteRows, TemporaryTableOnCommitDrop:
+	default:
+		return nil
+	}
+
+	dbName := c.gmsCreateTable.Db.Name()
+	tableName := c.gmsCreateTable.Name()
+	action := c.temporaryOnCommit
+	connectionID := ctx.Session.ID()
+	callbackCtx := ctx.WithContext(context.Background())
+	key := strings.ToLower(dbName) + "." + strings.ToLower(tableName)
+	sessionstate.RegisterCommitAction(connectionID, key, func() (bool, error) {
+		session := dsess.DSessFromSess(callbackCtx.Session)
+		table, ok := session.GetTemporaryTable(callbackCtx, dbName, tableName)
+		if !ok {
+			return false, nil
+		}
+		switch action {
+		case TemporaryTableOnCommitDeleteRows:
+			if err := deleteAllTemporaryRows(callbackCtx, table); err != nil {
+				return true, err
+			}
+			return true, nil
+		case TemporaryTableOnCommitDrop:
+			session.DropTemporaryTable(callbackCtx, dbName, tableName)
+			return false, nil
+		default:
+			return false, nil
+		}
+	})
+	return nil
+}
+
+func deleteAllTemporaryRows(ctx *sql.Context, table sql.Table) error {
+	if truncateable, ok := table.(sql.TruncateableTable); ok {
+		_, err := truncateable.Truncate(ctx)
+		return err
+	}
+	deletable, ok := table.(sql.DeletableTable)
+	if !ok {
+		return fmt.Errorf("temporary table %s does not support row deletion", table.Name())
+	}
+	rows, err := collectTableRows(ctx, table)
+	if err != nil {
+		return err
+	}
+	if len(rows) == 0 {
+		return nil
+	}
+	deleter := deletable.Deleter(ctx)
+	deleter.StatementBegin(ctx)
+	for _, row := range rows {
+		if err = deleter.Delete(ctx, row); err != nil {
+			_ = deleter.DiscardChanges(ctx, err)
+			_ = deleter.Close(ctx)
+			return err
+		}
+	}
+	if err = deleter.StatementComplete(ctx); err != nil {
+		_ = deleter.Close(ctx)
+		return err
+	}
+	return deleter.Close(ctx)
+}
+
+func collectTableRows(ctx *sql.Context, table sql.Table) ([]sql.Row, error) {
+	partitionIter, err := table.Partitions(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer partitionIter.Close(ctx)
+
+	var rows []sql.Row
+	for {
+		partition, err := partitionIter.Next(ctx)
+		if err == io.EOF {
+			return rows, nil
+		}
+		if err != nil {
+			return nil, err
+		}
+		rowIter, err := table.PartitionRows(ctx, partition)
+		if err != nil {
+			return nil, err
+		}
+		for {
+			row, err := rowIter.Next(ctx)
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				_ = rowIter.Close(ctx)
+				return nil, err
+			}
+			rows = append(rows, append(sql.Row(nil), row...))
+		}
+		if err = rowIter.Close(ctx); err != nil {
+			return nil, err
+		}
+	}
 }
 
 func modifyTableComment(ctx *sql.Context, db sql.Database, tableName string, comment string) error {

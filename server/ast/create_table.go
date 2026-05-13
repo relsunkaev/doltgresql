@@ -33,9 +33,6 @@ func nodeCreateTable(ctx *Context, node *tree.CreateTable) (vitess.Statement, er
 	if node == nil {
 		return nil, nil
 	}
-	if node.OnCommit != tree.CreateTableOnCommitUnset {
-		return nil, errors.Errorf("ON COMMIT is not yet supported")
-	}
 	relOptions, err := nodeTableRelOptions(node.StorageParams)
 	if err != nil {
 		return nil, err
@@ -57,6 +54,17 @@ func nodeCreateTable(ctx *Context, node *tree.CreateTable) (vitess.Statement, er
 		relPersistence = "u"
 	default:
 		return nil, errors.Errorf("unknown persistence strategy encountered")
+	}
+	if node.OnCommit != tree.CreateTableOnCommitUnset && !isTemporary {
+		return nil, errors.Errorf("ON COMMIT can only be used on temporary tables")
+	}
+	if isTemporary {
+		if dbName := tableName.DbQualifier.String(); dbName != "" {
+			return nil, errors.Errorf("cannot create temporary relation in non-temporary schema")
+		}
+		if schemaName := tableName.SchemaQualifier.String(); schemaName != "" && !strings.EqualFold(schemaName, "pg_temp") {
+			return nil, errors.Errorf("cannot create temporary relation in non-temporary schema")
+		}
 	}
 	var optSelect *vitess.OptSelect
 	if node.Using != "" && !strings.EqualFold(node.Using, "heap") {
@@ -247,6 +255,15 @@ func nodeCreateTable(ctx *Context, node *tree.CreateTable) (vitess.Statement, er
 			return tablemetadata.SetForeignTable(comment, foreignServer, fdwOptionsToStrings(node.ForeignOptions))
 		})
 	}
+	if onCommitOption := createTableOnCommitOption(node.OnCommit); onCommitOption != "" {
+		if ddl.TableSpec == nil {
+			ddl.TableSpec = &vitess.TableSpec{}
+		}
+		ddl.TableSpec.TableOpts = append(ddl.TableSpec.TableOpts, &vitess.TableOption{
+			Name:  pgnodes.TableOptionTemporaryOnCommit,
+			Value: onCommitOption,
+		})
+	}
 
 	if node.PartitionBy != nil {
 		switch node.PartitionBy.Type {
@@ -268,6 +285,19 @@ func nodeCreateTable(ctx *Context, node *tree.CreateTable) (vitess.Statement, er
 		return nil, errors.Errorf("PARTITION OF is not yet supported")
 	}
 	return ddl, nil
+}
+
+func createTableOnCommitOption(onCommit tree.CreateTableOnCommitSetting) string {
+	switch onCommit {
+	case tree.CreateTableOnCommitPreserveRows:
+		return string(pgnodes.TemporaryTableOnCommitPreserveRows)
+	case tree.CreateTableOnCommitDeleteRows:
+		return string(pgnodes.TemporaryTableOnCommitDeleteRows)
+	case tree.CreateTableOnCommitDrop:
+		return string(pgnodes.TemporaryTableOnCommitDrop)
+	default:
+		return ""
+	}
 }
 
 func setColumnIdentityMetadata(tableSpec *vitess.TableSpec, defs tree.TableDefs) {
