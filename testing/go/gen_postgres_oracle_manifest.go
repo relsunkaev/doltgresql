@@ -1839,6 +1839,9 @@ func entryFromScriptTestAssertion(source string, setup []string, ordinal int, as
 			}, generatedSetup...)
 			generatedSetup = rewriteAutoIsolatedSetupSchemaReferences(generatedSetup)
 		}
+		if setupNeedsPlpgsql(generatedSetup) {
+			generatedSetup = append([]string{"CREATE EXTENSION IF NOT EXISTS plpgsql"}, generatedSetup...)
+		}
 		cleanupStatements := append(append([]string{}, generatedSetup...), query)
 		if setupSetsRole(generatedSetup) {
 			generatedCleanup = append(generatedCleanup, "RESET ROLE")
@@ -1903,6 +1906,16 @@ func setupSetsRole(statements []string) bool {
 	return false
 }
 
+func setupNeedsPlpgsql(statements []string) bool {
+	for _, statement := range statements {
+		normalized := strings.ToLower(strings.TrimSpace(statement))
+		if strings.Contains(normalized, "language plpgsql") || strings.HasPrefix(normalized, "do ") {
+			return true
+		}
+	}
+	return false
+}
+
 func queryNeedsGeneratedCleanup(query string) bool {
 	return len(cleanupForCreatedTables([]string{query})) > 0 ||
 		len(cleanupForCreatedForeignDataWrappers([]string{query})) > 0 ||
@@ -1945,7 +1958,7 @@ func cleanupForCreatedPublications(statements []string) []string {
 }
 
 func cleanupForCreatedExtensions(statements []string) []string {
-	return cleanupForCreatedObjects(statements, "create extension ", "DROP EXTENSION IF EXISTS ", " CASCADE")
+	return cleanupForCreatedObjectsFiltered(statements, "create extension ", "DROP EXTENSION IF EXISTS ", " CASCADE", map[string]struct{}{"plpgsql": {}})
 }
 
 func cleanupForCreatedTables(statements []string) []string {
@@ -2073,6 +2086,10 @@ func cleanupForCreatedObjects(statements []string, prefix string, dropPrefix str
 	if len(dropSuffixes) > 0 {
 		dropSuffix = dropSuffixes[0]
 	}
+	return cleanupForCreatedObjectsFiltered(statements, prefix, dropPrefix, dropSuffix, nil)
+}
+
+func cleanupForCreatedObjectsFiltered(statements []string, prefix string, dropPrefix string, dropSuffix string, excluded map[string]struct{}) []string {
 	seen := map[string]struct{}{}
 	cleanup := make([]string, 0)
 	for _, statement := range statements {
@@ -2081,6 +2098,9 @@ func cleanupForCreatedObjects(statements []string, prefix string, dropPrefix str
 			continue
 		}
 		if strings.Contains(name, "{{") || strings.Contains(name, "}}") {
+			continue
+		}
+		if _, ok := excluded[strings.ToLower(unquoteSQLName(name))]; ok {
 			continue
 		}
 		if _, ok := seen[name]; ok {

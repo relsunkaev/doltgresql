@@ -9448,6 +9448,7 @@
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
         "CREATE SCHEMA {{quotedSchema}}",
         "SET search_path TO {{quotedSchema}}, public, pg_catalog",
         "DO $$\n\t\t\t\t\t\tBEGIN\n\t\t\t\t\t\t\tIF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'created_by_do') THEN\n\t\t\t\t\t\t\t\tCREATE TABLE created_by_do (id INT PRIMARY KEY);\n\t\t\t\t\t\t\tEND IF;\n\t\t\t\t\t\tEND;\n\t\t\t\t\t$$;",
@@ -9482,6 +9483,7 @@
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
         "CREATE SCHEMA {{quotedSchema}}",
         "SET search_path TO {{quotedSchema}}, public, pg_catalog",
         "CREATE TABLE drop_trigger_restrict_items (id INT PRIMARY KEY);",
@@ -9510,6 +9512,7 @@
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
         "CREATE SCHEMA {{quotedSchema}}",
         "SET search_path TO {{quotedSchema}}, public, pg_catalog",
         "CREATE TABLE drop_trigger_cascade_items (id INT PRIMARY KEY);",
@@ -9538,6 +9541,7 @@
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
         "CREATE SCHEMA {{quotedSchema}}",
         "SET search_path TO {{quotedSchema}}, public, pg_catalog",
         "CREATE TABLE drop_function_cascade_items (id INT PRIMARY KEY);",
@@ -65584,6 +65588,7 @@
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
         "CREATE SCHEMA {{quotedSchema}}",
         "SET search_path TO {{quotedSchema}}, public, pg_catalog",
         "CREATE TABLE main (id INT PRIMARY KEY, v INT);",
@@ -65625,6 +65630,7 @@
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
         "CREATE SCHEMA {{quotedSchema}}",
         "SET search_path TO {{quotedSchema}}, public, pg_catalog",
         "CREATE TABLE main (id INT PRIMARY KEY, v INT);",
@@ -65667,6 +65673,7 @@
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
         "CREATE SCHEMA {{quotedSchema}}",
         "SET search_path TO {{quotedSchema}}, public, pg_catalog",
         "CREATE TABLE main (id INT PRIMARY KEY, v INT);",
@@ -65695,6 +65702,7 @@
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
         "CREATE SCHEMA {{quotedSchema}}",
         "SET search_path TO {{quotedSchema}}, public, pg_catalog",
         "CREATE TABLE main (id INT PRIMARY KEY, v INT);",
@@ -65724,6 +65732,7 @@
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
         "CREATE SCHEMA {{quotedSchema}}",
         "SET search_path TO {{quotedSchema}}, public, pg_catalog",
         "CREATE TABLE main (id INT PRIMARY KEY, v INT);",
@@ -65762,6 +65771,7 @@
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
         "CREATE SCHEMA {{quotedSchema}}",
         "SET search_path TO {{quotedSchema}}, public, pg_catalog",
         "CREATE TABLE rows (id INT PRIMARY KEY, label TEXT, marked TEXT);",
@@ -65799,6 +65809,7 @@
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
         "CREATE SCHEMA {{quotedSchema}}",
         "SET search_path TO {{quotedSchema}}, public, pg_catalog",
         "CREATE TABLE partial_rows (id INT PRIMARY KEY, label TEXT, marked TEXT);",
@@ -71697,6 +71708,7 @@
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
         "CREATE SCHEMA {{quotedSchema}}",
         "SET search_path TO {{quotedSchema}}, public, pg_catalog",
         "CREATE TABLE main (id INT PRIMARY KEY, label TEXT);",
@@ -71725,6 +71737,7 @@
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
         "CREATE SCHEMA {{quotedSchema}}",
         "SET search_path TO {{quotedSchema}}, public, pg_catalog",
         "CREATE TABLE main (id INT PRIMARY KEY, label TEXT);",
@@ -73383,6 +73396,7 @@
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
         "CREATE SCHEMA {{quotedSchema}}",
         "SET search_path TO {{quotedSchema}}, public, pg_catalog",
         "CREATE TABLE drop_recreate_comment_trigger_table (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tv INT\n\t\t\t\t);",
