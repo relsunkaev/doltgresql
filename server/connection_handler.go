@@ -2067,8 +2067,14 @@ func (h *ConnectionHandler) copyFromFileQuery(stmt *node.CopyFrom) error {
 		return errors.Errorf("relative path not allowed for COPY FROM")
 	}
 
-	// TODO: security check for file path
-	// TODO: Privilege Checking: https://www.postgresql.org/docs/15/sql-copy.html
+	sqlCtx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, "COPY FROM")
+	if err != nil {
+		return err
+	}
+	if err = requireCopyFromServerFilePrivilege(sqlCtx); err != nil {
+		return err
+	}
+
 	f, err := os.Open(stmt.File)
 	if err != nil {
 		return err
@@ -2080,7 +2086,7 @@ func (h *ConnectionHandler) copyFromFileQuery(stmt *node.CopyFrom) error {
 		return err
 	}
 
-	sqlCtx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, "")
+	sqlCtx, err = h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, "")
 	if err != nil {
 		return err
 	}
@@ -2156,6 +2162,18 @@ func (h *ConnectionHandler) handleCopyDataHelper(copyState *copyFromStdinState, 
 	// We expect to see more CopyData messages until we see either a CopyDone or CopyFail message, so
 	// return false for endOfMessages
 	return false, false, nil
+}
+
+func requireCopyFromServerFilePrivilege(ctx *sql.Context) error {
+	var allowed bool
+	auth.LockRead(func() {
+		role := auth.GetRole(ctx.Client().User)
+		allowed = role.IsValid() && (role.IsSuperUser || auth.HasInheritedRole(role.ID(), "pg_read_server_files"))
+	})
+	if !allowed {
+		return errors.Errorf("permission denied to COPY from a file: must be superuser or have privileges of the pg_read_server_files role")
+	}
+	return nil
 }
 
 func (h *ConnectionHandler) initializeCopyFromState(sqlCtx *sql.Context, copyState *copyFromStdinState) error {
