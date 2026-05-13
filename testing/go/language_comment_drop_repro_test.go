@@ -28,6 +28,7 @@ func TestDropLanguageClearsCommentRepro(t *testing.T) {
 		{
 			Name: "DROP LANGUAGE clears language comment before recreate",
 			SetUpScript: []string{
+				`DROP LANGUAGE IF EXISTS drop_recreate_comment_language;`,
 				`CREATE LANGUAGE drop_recreate_comment_language
 					HANDLER plpgsql_call_handler;`,
 				`COMMENT ON LANGUAGE drop_recreate_comment_language

@@ -1,0 +1,39 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map language_comment_drop_repro_test.go --oracle-test-name TestDropLanguageClearsCommentRepro --force-postgres-oracle",
+  "sourceFile": "testing/go/language_comment_drop_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/language_comment_drop_repro_test.go:TestDropLanguageClearsCommentRepro#0001",
+      "source": "testing/go/language_comment_drop_repro_test.go:TestDropLanguageClearsCommentRepro",
+      "ordinal": 1,
+      "scriptName": "DROP LANGUAGE clears language comment before recreate",
+      "oracle": "postgres",
+      "postgresId": "language-comment-drop-repro-test-testdroplanguageclearscommentrepro-0001-select-obj_description-select-oid-from",
+      "suggestedId": "language-comment-drop-repro-test-testdroplanguageclearscommentrepro-0001-select-obj_description-select-oid-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT obj_description(\n\t\t\t\t\t\t(SELECT oid FROM pg_language\n\t\t\t\t\t\t WHERE lanname = 'drop_recreate_comment_language'),\n\t\t\t\t\t\t'pg_language');",
+      "querySha256": "99f4d30005785b90c631dfdfe68adad4fc7cd30503bfaf46b8014f8c5e717aa7",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

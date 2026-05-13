@@ -3717,6 +3717,33 @@
       ]
     },
     {
+      "id": "language-comment-drop-repro-test-testdroplanguageclearscommentrepro-0001-select-obj_description-select-oid-from",
+      "source": "testing/go/language_comment_drop_repro_test.go:TestDropLanguageClearsCommentRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "DROP LANGUAGE IF EXISTS drop_recreate_comment_language;",
+        "CREATE LANGUAGE drop_recreate_comment_language\n\t\t\t\t\tHANDLER plpgsql_call_handler;",
+        "COMMENT ON LANGUAGE drop_recreate_comment_language\n\t\t\t\t\tIS 'old private language';",
+        "DROP LANGUAGE drop_recreate_comment_language;",
+        "CREATE LANGUAGE drop_recreate_comment_language\n\t\t\t\t\t\tHANDLER plpgsql_call_handler;"
+      ],
+      "query": "SELECT obj_description(\n\t\t\t\t\t\t(SELECT oid FROM pg_language\n\t\t\t\t\t\t WHERE lanname = 'drop_recreate_comment_language'),\n\t\t\t\t\t\t'pg_language');",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "lateral-test-testlateraljoins-0001-select-c.id-c.name-o.amount-as",
       "source": "testing/go/lateral_test.go:TestLateralJoins",
       "ordinal": 1,
