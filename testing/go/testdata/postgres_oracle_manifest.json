@@ -1955,6 +1955,64 @@
         "DROP PUBLICATION IF EXISTS sub_refresh_false_extra",
         "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
       ]
+    },
+    {
+      "id": "to-date-correctness-repro-test-testtodaterejectsoutputonlyofpatternrepro-0001-select-to_date-2011-12-18-+05-yyyy-mm-dd",
+      "source": "testing/go/to_date_correctness_repro_test.go:TestToDateRejectsOutputOnlyOFPatternRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "query": "SELECT to_date('2011-12-18 +05', 'YYYY-MM-DD OF');",
+      "expectedSqlstate": "0A000",
+      "expectedErrorSeverity": "ERROR"
+    },
+    {
+      "id": "to-date-correctness-repro-test-testtodateisoweekdayparsesmondayrepro-0001-select-to_date-2005521-iyyyiwid-::text",
+      "source": "testing/go/to_date_correctness_repro_test.go:TestToDateIsoWeekdayParsesMondayRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT to_date('2005521', 'IYYYIWID')::text;",
+      "expectedRows": [
+        [
+          {
+            "value": "2005-12-26"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "to-timestamp-correctness-repro-test-testtotimestamprejectsoutputonlyofpatternrepro-0001-select-to_timestamp-2011-12-18-11:38-+05",
+      "source": "testing/go/to_timestamp_correctness_repro_test.go:TestToTimestampRejectsOutputOnlyOFPatternRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "query": "SELECT to_timestamp('2011-12-18 11:38 +05', 'YYYY-MM-DD HH12:MI OF');",
+      "expectedSqlstate": "0A000",
+      "expectedErrorSeverity": "ERROR"
+    },
+    {
+      "id": "to-timestamp-correctness-repro-test-testtotimestampisoweekdayparsesmondayrepro-0001-select-to_timestamp-2005521-iyyyiwid-::text",
+      "source": "testing/go/to_timestamp_correctness_repro_test.go:TestToTimestampIsoWeekdayParsesMondayRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SET TIME ZONE 'UTC';"
+      ],
+      "query": "SELECT to_timestamp('2005521', 'IYYYIWID')::text;",
+      "expectedRows": [
+        [
+          {
+            "value": "2005-12-26 00:00:00+00"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
     }
   ]
 }
