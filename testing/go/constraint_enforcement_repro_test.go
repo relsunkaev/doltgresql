@@ -68,5 +68,30 @@ func TestPostgres18CheckConstraintNotEnforcedRepro(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name: "ALTER TABLE ADD CHECK NOT ENFORCED allows violating rows",
+			SetUpScript: []string{
+				`CREATE TABLE alter_check_not_enforced_items (
+					id INT PRIMARY KEY,
+					qty INT
+				);`,
+				`INSERT INTO alter_check_not_enforced_items VALUES (1, -5);`,
+				`ALTER TABLE alter_check_not_enforced_items
+					ADD CONSTRAINT alter_qty_positive CHECK (qty > 0) NOT ENFORCED;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO alter_check_not_enforced_items VALUES (2, -10);`,
+				},
+				{
+					Query:    `SELECT qty FROM alter_check_not_enforced_items ORDER BY id;`,
+					Expected: []sql.Row{{-5}, {-10}},
+				},
+				{
+					Query:    `SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conname = 'alter_qty_positive';`,
+					Expected: []sql.Row{{"CHECK ((qty > 0)) NOT ENFORCED"}},
+				},
+			},
+		},
 	})
 }
