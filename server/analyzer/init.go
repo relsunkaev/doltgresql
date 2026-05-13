@@ -79,6 +79,7 @@ const (
 	ruleId_ValidateCreateIndexOwnership                                           // validateCreateIndexOwnership
 	ruleId_AssignUnpopulatedMatviewScans                                          // assignUnpopulatedMaterializedViewScans
 	ruleId_AssignInheritedTableScans                                              // assignInheritedTableScans
+	ruleId_AssignInheritedAlterTable                                              // assignInheritedAlterTable
 	ruleId_AssignInheritedAlterDefaults                                           // assignInheritedAlterDefaults
 	ruleId_AssignInheritedNotNull                                                 // assignInheritedNotNull
 	ruleId_AssignIndexStats                                                       // assignIndexStats
@@ -155,6 +156,7 @@ func Init() {
 		analyzer.Rule{Id: ruleId_AssignBtreePlannerBoundaries, Apply: AssignBtreePlannerBoundaries},
 		analyzer.Rule{Id: ruleId_AssignUnpopulatedMatviewScans, Apply: AssignUnpopulatedMaterializedViewScans},
 		analyzer.Rule{Id: ruleId_AssignInheritedTableScans, Apply: AssignInheritedTableScans},
+		analyzer.Rule{Id: ruleId_AssignInheritedAlterTable, Apply: AssignInheritedAlterTable},
 		analyzer.Rule{Id: ruleId_AssignInheritedAlterDefaults, Apply: AssignInheritedAlterDefaults},
 		analyzer.Rule{Id: ruleId_AssignInheritedNotNull, Apply: AssignInheritedNotNull},
 		analyzer.Rule{Id: ruleId_AssignBatchedIndexLookups, Apply: AssignBatchedIndexLookups},
