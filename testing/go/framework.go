@@ -790,6 +790,16 @@ func NormalizeValToString(dt *types.DoltgresType, v any) any {
 				Radius: val.R,
 			})
 		}
+	case types.Line.ID:
+		switch val := v.(type) {
+		case types.LineValue:
+			return types.FormatLine(val)
+		case pgtype.Line:
+			if !val.Valid {
+				return nil
+			}
+			return types.FormatLine(types.LineValue{A: val.A, B: val.B, C: val.C})
+		}
 	case types.Timestamp.ID, types.TimestampTZ.ID:
 		if v == nil {
 			return nil

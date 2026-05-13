@@ -243,7 +243,7 @@ func init() {
 		toInternal("json"):             Json,
 		toInternal("jsonb"):            JsonB,
 		toInternal("language_handler"): Unknown,
-		toInternal("line"):             Unknown,
+		toInternal("line"):             Line,
 		toInternal("lseg"):             Unknown,
 		toInternal("macaddr"):          Macaddr,
 		toInternal("money"):            Money,

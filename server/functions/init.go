@@ -48,6 +48,7 @@ func initTypeFunctions() {
 	initJson()
 	initJsonB()
 	initJsonTableFunctions()
+	initLine()
 	initMoney()
 	initName()
 	initNumeric()
