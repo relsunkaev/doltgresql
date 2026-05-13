@@ -1867,6 +1867,9 @@ func (h *ConnectionHandler) executeSQLStatement(stmt node.ExecuteStatement) erro
 			h.preparedStatements[stmt.Name] = preparedData
 		}
 	}
+	if err := validatePreparedStatementResultShape(preparedData.ReturnFields, fields); err != nil {
+		return err
+	}
 
 	query := preparedData.Query
 	query.StatementTag = preparedData.Query.StatementTag
@@ -1926,8 +1929,6 @@ func (h *ConnectionHandler) executeSQLStatement(stmt node.ExecuteStatement) erro
 	}
 
 	sessionstate.IncrementPreparedStatementPlanCount(h.mysqlConn.ConnectionID, stmt.Name, len(stmt.Params) == 0)
-	preparedData.ReturnFields = fields
-	h.preparedStatements[stmt.Name] = preparedData
 	return h.send(makeCommandComplete(query.StatementTag, rowsAffected))
 }
 
@@ -2234,6 +2235,9 @@ func (h *ConnectionHandler) handleBind(message *pgproto3.Bind) error {
 			h.cachePreparedPlan(cacheCtx, &preparedData, boundPlan)
 			h.preparedStatements[message.PreparedStatement] = preparedData
 		}
+	}
+	if err := validatePreparedStatementResultShape(preparedData.ReturnFields, fields); err != nil {
+		return err
 	}
 
 	resultFormatCodes, err := executionFormatCodes(len(fields), message.ResultFormatCodes)

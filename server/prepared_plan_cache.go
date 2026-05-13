@@ -18,8 +18,11 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/planbuilder"
 	"github.com/dolthub/vitess/go/vt/sqlparser"
+	"github.com/jackc/pgx/v5/pgproto3"
 	"github.com/sirupsen/logrus"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/node"
 )
 
@@ -58,6 +61,23 @@ func (h *ConnectionHandler) cachedPreparedPlan(ctx *sql.Context, data PreparedSt
 		return nil, false
 	}
 	return planCopy, true
+}
+
+func validatePreparedStatementResultShape(expected, actual []pgproto3.FieldDescription) error {
+	if len(expected) != len(actual) {
+		return preparedStatementResultShapeChangedError()
+	}
+	for i := range expected {
+		if expected[i].DataTypeOID != actual[i].DataTypeOID ||
+			expected[i].TypeModifier != actual[i].TypeModifier {
+			return preparedStatementResultShapeChangedError()
+		}
+	}
+	return nil
+}
+
+func preparedStatementResultShapeChangedError() error {
+	return pgerror.New(pgcode.FeatureNotSupported, "cached plan must not change result type")
 }
 
 func (h *ConnectionHandler) invalidatePreparedPlanCacheIfNeeded(query ConvertedQuery) {

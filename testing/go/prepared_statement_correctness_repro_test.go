@@ -85,7 +85,9 @@ func TestPreparedSelectStarRejectsChangedResultShapeRepro(t *testing.T) {
 		}
 		actualRows, _, readErr := ReadRows(rows, true)
 		rows.Close()
-		require.NoError(t, readErr)
+		if readErr != nil {
+			err = readErr
+		}
 		require.Error(t, err, "prepared SELECT * should reject changed result shape; fields=%v rows=%v", fieldNames, actualRows)
 	}
 	require.Contains(t, err.Error(), "cached plan must not change result type")
