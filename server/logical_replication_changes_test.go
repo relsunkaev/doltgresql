@@ -134,3 +134,74 @@ func TestPublicationRowFilterDistinctFromPredicates(t *testing.T) {
 		})
 	}
 }
+
+func TestPublicationRowFilterLikePredicates(t *testing.T) {
+	tests := []struct {
+		name   string
+		filter string
+		value  rowFilterValue
+		match  bool
+	}{
+		{
+			name:   "like prefix matches",
+			filter: "label LIKE 'show%'",
+			value:  rowFilterValue{data: []byte("shown")},
+			match:  true,
+		},
+		{
+			name:   "like prefix rejects non-match",
+			filter: "label LIKE 'show%'",
+			value:  rowFilterValue{data: []byte("hidden")},
+			match:  false,
+		},
+		{
+			name:   "not like prefix inverts match",
+			filter: "label NOT LIKE 'hid%'",
+			value:  rowFilterValue{data: []byte("shown")},
+			match:  true,
+		},
+		{
+			name:   "not like prefix rejects match",
+			filter: "label NOT LIKE 'hid%'",
+			value:  rowFilterValue{data: []byte("hidden")},
+			match:  false,
+		},
+		{
+			name:   "like rejects null",
+			filter: "label LIKE 'show%'",
+			value:  rowFilterValue{null: true},
+			match:  false,
+		},
+	}
+
+	ctx := sql.NewEmptyContext()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			expr, err := parsePublicationRowFilter(tt.filter)
+			require.NoError(t, err)
+			match, err := evalPublicationFilterBool(ctx, expr, map[string]rowFilterValue{
+				"label": tt.value,
+			})
+			require.NoError(t, err)
+			require.Equal(t, tt.match, match)
+		})
+	}
+}
+
+func TestRowFilterLikePatternEscapes(t *testing.T) {
+	match, ok, err := rowFilterValuesLike(
+		rowFilterValue{data: []byte("show_item")},
+		rowFilterValue{data: []byte(`show\_%`)},
+	)
+	require.NoError(t, err)
+	require.True(t, ok)
+	require.True(t, match)
+
+	match, ok, err = rowFilterValuesLike(
+		rowFilterValue{data: []byte("showXitem")},
+		rowFilterValue{data: []byte(`show\_%`)},
+	)
+	require.NoError(t, err)
+	require.True(t, ok)
+	require.False(t, match)
+}

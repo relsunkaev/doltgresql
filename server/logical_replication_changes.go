@@ -808,6 +808,15 @@ func evalPublicationFilterComparison(ctx *sql.Context, expr *vitess.ComparisonEx
 			return left.null && right.null, nil
 		}
 		return rowFilterValuesEqual(ctx, left, right), nil
+	case vitess.LikeStr, vitess.NotLikeStr:
+		match, ok, err := rowFilterValuesLike(left, right)
+		if err != nil || !ok {
+			return false, err
+		}
+		if strings.EqualFold(expr.Operator, vitess.NotLikeStr) {
+			return !match, nil
+		}
+		return match, nil
 	case vitess.NotEqualStr, "<>":
 		if left.null || right.null {
 			return false, nil
@@ -894,6 +903,41 @@ func rowFilterValuesCompare(ctx *sql.Context, left rowFilterValue, right rowFilt
 		}
 	}
 	return bytes.Compare(left.data, right.data), true
+}
+
+func rowFilterValuesLike(left rowFilterValue, right rowFilterValue) (bool, bool, error) {
+	if left.null || right.null {
+		return false, false, nil
+	}
+	re, err := regexp.Compile("(?s)" + rowFilterLikePatternToRegex(string(right.data)))
+	if err != nil {
+		return false, false, err
+	}
+	return re.Match(left.data), true, nil
+}
+
+func rowFilterLikePatternToRegex(pattern string) string {
+	var b strings.Builder
+	b.WriteByte('^')
+	for i := 0; i < len(pattern); i++ {
+		switch pattern[i] {
+		case '%':
+			b.WriteString(".*")
+		case '_':
+			b.WriteByte('.')
+		case '\\':
+			if i+1 < len(pattern) {
+				i++
+				b.WriteString(regexp.QuoteMeta(pattern[i : i+1]))
+			} else {
+				b.WriteString(regexp.QuoteMeta(`\`))
+			}
+		default:
+			b.WriteString(regexp.QuoteMeta(pattern[i : i+1]))
+		}
+	}
+	b.WriteByte('$')
+	return b.String()
 }
 
 func rowFilterTypedCompare(ctx *sql.Context, left rowFilterValue, right rowFilterValue) (int, bool) {
