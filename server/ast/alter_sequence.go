@@ -60,7 +60,8 @@ func nodeAlterSequence(ctx *Context, node *tree.AlterSequence) (vitess.Statement
 				if !ok {
 					return nil, errors.New("expected sequence owner to be a table and column name")
 				}
-				if colName.Qualifier.SchemaQualifier.String() != name.SchemaQualifier.String() {
+				ownerSchema := colName.Qualifier.SchemaQualifier.String()
+				if ownerSchema != "" && ownerSchema != name.SchemaQualifier.String() {
 					return nil, errors.New("ALTER SEQUENCE must use the same schema for the sequence and owned table")
 				}
 				if len(colName.Qualifier.DbQualifier.String()) > 0 {

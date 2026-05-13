@@ -92,7 +92,8 @@ func nodeCreateSequence(ctx *Context, node *tree.CreateSequence) (vitess.Stateme
 			if !ok {
 				return nil, errors.New("expected sequence owner to be a table and column name")
 			}
-			if colName.Qualifier.SchemaQualifier.String() != name.SchemaQualifier.String() {
+			ownerSchema := colName.Qualifier.SchemaQualifier.String()
+			if ownerSchema != "" && ownerSchema != name.SchemaQualifier.String() {
 				return nil, errors.New("CREATE SEQUENCE must use the same schema for the sequence and owned table")
 			}
 			if len(colName.Qualifier.DbQualifier.String()) > 0 {
