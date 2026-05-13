@@ -27,7 +27,10 @@ type Policy struct {
 	Name        string
 	Command     string
 	UsingColumn string
+	UsingAll    bool
 	CheckColumn string
+	CheckAll    bool
+	Roles       []string
 }
 
 // State is row-level security metadata for one table.
@@ -80,6 +83,9 @@ func AddPolicy(database, schema, table string, policy Policy) {
 	state := registry.tables[key]
 	policy.Name = normalizeIdentifier(policy.Name)
 	policy.Command = strings.ToLower(strings.TrimSpace(policy.Command))
+	for i := range policy.Roles {
+		policy.Roles[i] = normalizeIdentifier(policy.Roles[i])
+	}
 	for i, existing := range state.Policies {
 		if existing.Name == policy.Name {
 			state.Policies[i] = policy
@@ -147,6 +153,37 @@ func (s State) PolicyForCommand(command string) (Policy, bool) {
 		}
 	}
 	return Policy{}, false
+}
+
+// PoliciesForCommand returns every permissive policy that applies to the given
+// command and role. PostgreSQL ORs permissive policies together.
+func (s State) PoliciesForCommand(command string, user string) []Policy {
+	command = strings.ToLower(command)
+	user = normalizeIdentifier(user)
+	var policies []Policy
+	for _, policy := range s.Policies {
+		if policy.Command != command && policy.Command != "all" {
+			continue
+		}
+		if !policyAppliesToRole(policy, user) {
+			continue
+		}
+		policies = append(policies, policy)
+	}
+	return policies
+}
+
+func policyAppliesToRole(policy Policy, user string) bool {
+	if len(policy.Roles) == 0 {
+		return true
+	}
+	for _, role := range policy.Roles {
+		role = normalizeIdentifier(role)
+		if role == "public" || role == user {
+			return true
+		}
+	}
+	return false
 }
 
 // NormalizeName normalizes an SQL identifier for registry lookup.

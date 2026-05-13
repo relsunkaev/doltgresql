@@ -2586,18 +2586,14 @@ func (h *ConnectionHandler) rewriteRowSecurityQuery(query string) (string, bool,
 }
 
 func (h *ConnectionHandler) rewriteRowSecurityRead(query string, rawTable string, command string) (string, bool, error) {
-	state, _, active, err := h.rowSecurityState(rawTable)
+	state, user, active, err := h.rowSecurityState(rawTable)
 	if err != nil || !active {
 		return query, false, err
 	}
 	if err = h.checkRowSecurityGUC(rawTable); err != nil {
 		return "", false, err
 	}
-	policy, ok := state.PolicyForCommand(command)
-	predicate := "false"
-	if ok && policy.UsingColumn != "" {
-		predicate = quoteSQLIdentifier(policy.UsingColumn) + " = current_user"
-	}
+	predicate := rowSecurityUsingPredicate(state.PoliciesForCommand(command, user))
 	return addRowSecurityPredicate(query, predicate), true, nil
 }
 
@@ -2609,12 +2605,9 @@ func (h *ConnectionHandler) rewriteRowSecurityWrite(query string, rawTable strin
 	if err = h.checkRowSecurityGUC(rawTable); err != nil {
 		return "", false, err
 	}
-	policy, ok := state.PolicyForCommand(command)
-	predicate := "false"
-	if ok && policy.UsingColumn != "" {
-		predicate = quoteSQLIdentifier(policy.UsingColumn) + " = current_user"
-	}
-	if command == "update" && ok && policy.CheckColumn != "" && rowSecurityUpdateViolatesCheck(query, policy.CheckColumn, user) {
+	policies := state.PoliciesForCommand(command, user)
+	predicate := rowSecurityUsingPredicate(policies)
+	if command == "update" && rowSecurityUpdateViolatesCheck(query, policies, user) {
 		return "", false, rowSecurityViolation(rawTable)
 	}
 	return addRowSecurityPredicate(query, predicate), true, nil
@@ -2629,11 +2622,8 @@ func (h *ConnectionHandler) rewriteRowSecurityInsert(query string, matches []str
 	if err = h.checkRowSecurityGUC(rawTable); err != nil {
 		return "", false, err
 	}
-	policy, ok := state.PolicyForCommand("insert")
-	if !ok || policy.CheckColumn == "" {
-		return "", false, rowSecurityViolation(rawTable)
-	}
-	if !rowSecurityInsertSatisfiesCheck(matches[2], matches[3], policy.CheckColumn, user) {
+	policies := state.PoliciesForCommand("insert", user)
+	if !rowSecurityInsertSatisfiesCheck(matches[2], matches[3], policies, user) {
 		return "", false, rowSecurityViolation(rawTable)
 	}
 	return query, false, nil
@@ -2707,7 +2697,62 @@ func addRowSecurityPredicate(query string, predicate string) string {
 	return head + " WHERE " + predicate + tail + semicolon
 }
 
-func rowSecurityUpdateViolatesCheck(query string, checkColumn string, user string) bool {
+func rowSecurityUsingPredicate(policies []rowsecurity.Policy) string {
+	allowAll, columns := rowSecurityUsingTerms(policies)
+	if allowAll {
+		return "true"
+	}
+	if len(columns) == 0 {
+		return "false"
+	}
+	terms := make([]string, len(columns))
+	for i, column := range columns {
+		terms[i] = quoteSQLIdentifier(column) + " = current_user"
+	}
+	if len(terms) == 1 {
+		return terms[0]
+	}
+	return "(" + strings.Join(terms, ") OR (") + ")"
+}
+
+func rowSecurityUsingTerms(policies []rowsecurity.Policy) (bool, []string) {
+	var columns []string
+	for _, policy := range policies {
+		if policy.UsingAll {
+			return true, nil
+		}
+		if policy.UsingColumn != "" {
+			columns = append(columns, policy.UsingColumn)
+		}
+	}
+	return false, columns
+}
+
+func rowSecurityCheckTerms(policies []rowsecurity.Policy) (bool, []string) {
+	var columns []string
+	for _, policy := range policies {
+		if policy.CheckAll {
+			return true, nil
+		}
+		if policy.CheckColumn != "" {
+			columns = append(columns, policy.CheckColumn)
+			continue
+		}
+		if policy.UsingAll {
+			return true, nil
+		}
+		if policy.UsingColumn != "" {
+			columns = append(columns, policy.UsingColumn)
+		}
+	}
+	return false, columns
+}
+
+func rowSecurityUpdateViolatesCheck(query string, policies []rowsecurity.Policy, user string) bool {
+	allowAll, checkColumns := rowSecurityCheckTerms(policies)
+	if allowAll || len(checkColumns) == 0 {
+		return false
+	}
 	loc := rlsUpdateSetKeyword.FindStringIndex(query)
 	if loc == nil {
 		return false
@@ -2717,30 +2762,54 @@ func rowSecurityUpdateViolatesCheck(query string, checkColumn string, user strin
 	if loc := rlsUpdateSetEnd.FindStringIndex(afterSet); loc != nil {
 		end = loc[0]
 	}
+	assignments := map[string]string{}
 	for _, assignment := range splitSQLList(afterSet[:end]) {
 		name, value, ok := strings.Cut(assignment, "=")
-		if !ok || rowsecurity.NormalizeName(name) != checkColumn {
+		if !ok {
 			continue
 		}
-		return unquoteSQLString(value) != user
+		assignments[rowsecurity.NormalizeName(name)] = value
 	}
-	return false
+	checkedAssignment := false
+	for _, checkColumn := range checkColumns {
+		value, ok := assignments[checkColumn]
+		if !ok {
+			continue
+		}
+		checkedAssignment = true
+		if unquoteSQLString(value) == user {
+			return false
+		}
+	}
+	return checkedAssignment
 }
 
-func rowSecurityInsertSatisfiesCheck(columns string, values string, checkColumn string, user string) bool {
-	valueList := splitSQLList(values)
-	idx := -1
-	if strings.TrimSpace(columns) != "" {
-		for i, column := range splitSQLList(columns) {
-			if rowsecurity.NormalizeName(column) == checkColumn {
-				idx = i
-				break
-			}
-		}
-	} else if checkColumn == "owner_name" && len(valueList) > 1 {
-		idx = 1
+func rowSecurityInsertSatisfiesCheck(columns string, values string, policies []rowsecurity.Policy, user string) bool {
+	allowAll, checkColumns := rowSecurityCheckTerms(policies)
+	if allowAll {
+		return true
 	}
-	return idx >= 0 && idx < len(valueList) && unquoteSQLString(valueList[idx]) == user
+	if len(checkColumns) == 0 {
+		return false
+	}
+	valueList := splitSQLList(values)
+	for _, checkColumn := range checkColumns {
+		idx := -1
+		if strings.TrimSpace(columns) != "" {
+			for i, column := range splitSQLList(columns) {
+				if rowsecurity.NormalizeName(column) == checkColumn {
+					idx = i
+					break
+				}
+			}
+		} else if checkColumn == "owner_name" && len(valueList) > 1 {
+			idx = 1
+		}
+		if idx >= 0 && idx < len(valueList) && unquoteSQLString(valueList[idx]) == user {
+			return true
+		}
+	}
+	return false
 }
 
 func splitSQLList(input string) []string {
@@ -3608,52 +3677,54 @@ func (h *ConnectionHandler) convertQuery(query string) ([]ConvertedQuery, error)
 }
 
 var (
-	createTransformPattern    = regexp.MustCompile(`(?is)^\s*create\s+transform\s+for\s+([a-z_][a-z0-9_."$]*)\s+language\s+([a-z_][a-z0-9_"$]*)\s*\((.*)\)\s*;?\s*$`)
-	transformFromPattern      = regexp.MustCompile(`(?is)\bfrom\s+sql\s+with\s+function\s+([a-z_][a-z0-9_."$]*)\s*\(`)
-	transformToPattern        = regexp.MustCompile(`(?is)\bto\s+sql\s+with\s+function\s+([a-z_][a-z0-9_."$]*)\s*\(`)
-	createConversionPattern   = regexp.MustCompile(`(?is)^\s*create\s+(default\s+)?conversion\s+([a-z_][a-z0-9_."$]*)\s+for\s+'([^']+)'\s+to\s+'([^']+)'\s+from\s+([a-z_][a-z0-9_."$]*)\s*;?\s*$`)
-	dropConversionPattern     = regexp.MustCompile(`(?is)^\s*drop\s+conversion\s+(if\s+exists\s+)?([a-z_][a-z0-9_."$]*)\s*(?:cascade|restrict)?\s*;?\s*$`)
-	createCastPattern         = regexp.MustCompile(`(?is)^\s*create\s+cast\s*\(\s*([a-z_][a-z0-9_."$]*)\s+as\s+([a-z_][a-z0-9_."$]*)\s*\)\s+with\s+function\s+([a-z_][a-z0-9_."$]*)\s*\([^)]*\)\s*;?\s*$`)
-	dropCastPattern           = regexp.MustCompile(`(?is)^\s*drop\s+cast\s+(if\s+exists\s+)?\(\s*([a-z_][a-z0-9_."$]*)\s+as\s+([a-z_][a-z0-9_."$]*)\s*\)\s*(?:cascade|restrict)?\s*;?\s*$`)
-	createOperatorPattern     = regexp.MustCompile(`(?is)^\s*create\s+operator\s+(\S+)\s*\((.*)\)\s*;?\s*$`)
-	createPolicyPattern       = regexp.MustCompile(`(?is)^\s*create\s+policy\s+([a-z_][a-z0-9_"$]*)\s+on\s+([a-z_][a-z0-9_."$]*)\s+for\s+(select|insert|update|delete|all)(.*)\s*;?\s*$`)
-	policyUsingPattern        = regexp.MustCompile(`(?is)\busing\s*\(([^)]*)\)`)
-	policyCheckPattern        = regexp.MustCompile(`(?is)\bwith\s+check\s*\(([^)]*)\)`)
-	policyCurrentUserPattern  = regexp.MustCompile(`(?is)^\s*([a-z_][a-z0-9_"$]*)\s*=\s*current_user\s*$`)
-	createTsConfigPattern     = regexp.MustCompile(`(?is)^\s*create\s+text\s+search\s+configuration\s+([a-z_][a-z0-9_."$]*)\s*\(\s*copy\s*=\s*[a-z_][a-z0-9_."$]*\s*\)\s*;?\s*$`)
-	createRuleDoAlsoPattern   = regexp.MustCompile(`(?is)^\s*create\s+rule\s+([a-z_][a-z0-9_"$]*)\s+as\s+on\s+insert\s+to\s+([a-z_][a-z0-9_."$]*)\s+do\s+also\s+(insert\s+into\s+.+?)\s*;?\s*$`)
-	alterSystemPattern        = regexp.MustCompile(`(?is)^\s*alter\s+system\s+(?:set|reset)\b.+;?\s*$`)
-	clusterIndexPattern       = regexp.MustCompile(`(?is)^\s*cluster\s+((?:"[^"]+"|[a-z_][a-z0-9_$]*)(?:\.(?:"[^"]+"|[a-z_][a-z0-9_$]*))?)\s+on\s+((?:"[^"]+"|[a-z_][a-z0-9_$]*)(?:\.(?:"[^"]+"|[a-z_][a-z0-9_$]*))?)\s*;?\s*$`)
-	dropOperatorPattern       = regexp.MustCompile(`(?is)^\s*drop\s+operator\s+if\s+exists\s+(\S+)\s*\(\s*([^,)]*)\s*,\s*([^)]*)\)\s*(?:cascade|restrict)?\s*;?\s*$`)
-	dropOperatorClassPattern  = regexp.MustCompile(`(?is)^\s*drop\s+operator\s+class\s+if\s+exists\s+\S+\s+using\s+\S+\s*(?:cascade|restrict)?\s*;?\s*$`)
-	dropOperatorFamilyPattern = regexp.MustCompile(`(?is)^\s*drop\s+operator\s+family\s+if\s+exists\s+\S+\s+using\s+\S+\s*(?:cascade|restrict)?\s*;?\s*$`)
-	dropPolicyIfExistsPattern = regexp.MustCompile(`(?is)^\s*drop\s+policy\s+if\s+exists\s+([a-z_][a-z0-9_"$]*)\s+on\s+([a-z_][a-z0-9_."$]*)\s*(?:cascade|restrict)?\s*;?\s*$`)
-	dropRuleIfExistsPattern   = regexp.MustCompile(`(?is)^\s*drop\s+rule\s+if\s+exists\s+([a-z_][a-z0-9_"$]*)\s+on\s+([a-z_][a-z0-9_."$]*)\s*(?:cascade|restrict)?\s*;?\s*$`)
-	dropTextSearchPattern     = regexp.MustCompile(`(?is)^\s*drop\s+text\s+search\s+(configuration|dictionary|parser|template)\s+if\s+exists\s+([a-z_][a-z0-9_."$]*)\s*(?:cascade|restrict)?\s*;?\s*$`)
-	securityLabelPattern      = regexp.MustCompile(`(?is)^\s*security\s+label\b`)
-	selectStatementPattern    = regexp.MustCompile(`(?is)^\s*select\s+(.+?)\s*;?\s*$`)
-	insertReturningPattern    = regexp.MustCompile(`(?is)^\s*insert\s+into\s+([a-z_][a-z0-9_."$]*)(?:\s*\([^)]*\))?\s+.+\breturning\b`)
-	updateReturningPattern    = regexp.MustCompile(`(?is)^\s*update\s+([a-z_][a-z0-9_."$]*)\s+.+\breturning\b`)
-	deleteReturningPattern    = regexp.MustCompile(`(?is)^\s*delete\s+from\s+([a-z_][a-z0-9_."$]*)\s+.+\breturning\b`)
-	rlsIdentifier             = `(?:"[^"]+"|[a-z_][a-z0-9_$]*)(?:\.(?:"[^"]+"|[a-z_][a-z0-9_$]*))?`
-	rlsSelectPattern          = regexp.MustCompile(`(?is)^\s*select\s+.+?\s+from\s+(` + rlsIdentifier + `)(.*)$`)
-	rlsInsertPattern          = regexp.MustCompile(`(?is)^\s*insert\s+into\s+(` + rlsIdentifier + `)(?:\s*\(([^)]*)\))?\s+values\s*\(([^)]*)\)(.*)$`)
-	rlsUpdatePattern          = regexp.MustCompile(`(?is)^\s*update\s+(` + rlsIdentifier + `)\s+set\s+(.+?)(\s+where\s+.+?)?(\s+returning\s+.*)?;?\s*$`)
-	rlsDeletePattern          = regexp.MustCompile(`(?is)^\s*delete\s+from\s+(` + rlsIdentifier + `)(.*)$`)
-	rlsPredicateInsertPoint   = regexp.MustCompile(`(?is)\s(returning|order\s+by|group\s+by|limit|offset)\s`)
-	rlsUpdateSetKeyword       = regexp.MustCompile(`(?is)\sset\s`)
-	rlsUpdateSetEnd           = regexp.MustCompile(`(?is)\s(where|returning)\s`)
-	rlsWherePattern           = regexp.MustCompile(`(?is)\swhere\s`)
-	returningTableoidPattern  = regexp.MustCompile(`(?is)\btableoid\b(?:\s*::\s*regclass)?`)
-	textSearchMatchPattern    = regexp.MustCompile(`(?is)(to_tsvector\s*\([^)]*\))\s*@@\s*(to_tsquery\s*\([^)]*\))`)
-	xmlElementNamePattern     = regexp.MustCompile(`(?is)xmlelement\s*\(\s*name\s+([a-z_][a-z0-9_$]*)\s*\)`)
-	xmlForestCallPattern      = regexp.MustCompile(`(?is)xmlforest\s*\((.+?)\)`)
-	xmlForestArgPattern       = regexp.MustCompile(`(?is)^\s*(.+?)\s+as\s+([a-z_][a-z0-9_$]*)\s*$`)
-	temporalOverlapsPattern   = regexp.MustCompile(`(?is)\(\s*(date\s+'[^']+')\s*,\s*((?:date|interval)\s+'[^']+')\s*\)\s+overlaps\s+\(\s*(date\s+'[^']+')\s*,\s*((?:date|interval)\s+'[^']+')\s*\)`)
-	pgInputErrorInfoPattern   = regexp.MustCompile(`(?is)\(\s*pg_input_error_info\s*\(([^)]*)\)\s*\)\s*\.\s*sql_error_code`)
-	systemUserPattern         = regexp.MustCompile(`(?i)\bsystem_user\b`)
-	anyValuePattern           = regexp.MustCompile(`(?i)\bany_value\s*\(`)
-	advancedGroupByPattern    = regexp.MustCompile(`(?is)^\s*select\s+coalesce\s*\(\s*([a-z_][a-z0-9_]*)\s*,\s*'([^']*)'\s*\)\s+as\s+([a-z_][a-z0-9_]*)\s*,\s*coalesce\s*\(\s*([a-z_][a-z0-9_]*)\s*,\s*'([^']*)'\s*\)\s+as\s+([a-z_][a-z0-9_]*)\s*,\s*sum\s*\(\s*([a-z_][a-z0-9_]*)\s*\)::text\s+as\s+([a-z_][a-z0-9_]*)\s+from\s+([a-z_][a-z0-9_]*)\s+group\s+by\s+(.+?)\s+order\s+by\s+.+?;?\s*$`)
+	createTransformPattern       = regexp.MustCompile(`(?is)^\s*create\s+transform\s+for\s+([a-z_][a-z0-9_."$]*)\s+language\s+([a-z_][a-z0-9_"$]*)\s*\((.*)\)\s*;?\s*$`)
+	transformFromPattern         = regexp.MustCompile(`(?is)\bfrom\s+sql\s+with\s+function\s+([a-z_][a-z0-9_."$]*)\s*\(`)
+	transformToPattern           = regexp.MustCompile(`(?is)\bto\s+sql\s+with\s+function\s+([a-z_][a-z0-9_."$]*)\s*\(`)
+	createConversionPattern      = regexp.MustCompile(`(?is)^\s*create\s+(default\s+)?conversion\s+([a-z_][a-z0-9_."$]*)\s+for\s+'([^']+)'\s+to\s+'([^']+)'\s+from\s+([a-z_][a-z0-9_."$]*)\s*;?\s*$`)
+	dropConversionPattern        = regexp.MustCompile(`(?is)^\s*drop\s+conversion\s+(if\s+exists\s+)?([a-z_][a-z0-9_."$]*)\s*(?:cascade|restrict)?\s*;?\s*$`)
+	createCastPattern            = regexp.MustCompile(`(?is)^\s*create\s+cast\s*\(\s*([a-z_][a-z0-9_."$]*)\s+as\s+([a-z_][a-z0-9_."$]*)\s*\)\s+with\s+function\s+([a-z_][a-z0-9_."$]*)\s*\([^)]*\)\s*;?\s*$`)
+	dropCastPattern              = regexp.MustCompile(`(?is)^\s*drop\s+cast\s+(if\s+exists\s+)?\(\s*([a-z_][a-z0-9_."$]*)\s+as\s+([a-z_][a-z0-9_."$]*)\s*\)\s*(?:cascade|restrict)?\s*;?\s*$`)
+	createOperatorPattern        = regexp.MustCompile(`(?is)^\s*create\s+operator\s+(\S+)\s*\((.*)\)\s*;?\s*$`)
+	createPolicyPattern          = regexp.MustCompile(`(?is)^\s*create\s+policy\s+([a-z_][a-z0-9_"$]*)\s+on\s+([a-z_][a-z0-9_."$]*)\s+for\s+(select|insert|update|delete|all)(.*)\s*;?\s*$`)
+	policyUsingPattern           = regexp.MustCompile(`(?is)\busing\s*\(([^)]*)\)`)
+	policyCheckPattern           = regexp.MustCompile(`(?is)\bwith\s+check\s*\(([^)]*)\)`)
+	policyRolesPattern           = regexp.MustCompile(`(?is)\bto\s+(.+?)(?:\busing\s*\(|\bwith\s+check\s*\(|$)`)
+	policyCurrentUserPattern     = regexp.MustCompile(`(?is)^\s*([a-z_][a-z0-9_"$]*)\s*=\s*current_user\s*$`)
+	policyCurrentUserLeftPattern = regexp.MustCompile(`(?is)^\s*current_user\s*=\s*([a-z_][a-z0-9_"$]*)\s*$`)
+	createTsConfigPattern        = regexp.MustCompile(`(?is)^\s*create\s+text\s+search\s+configuration\s+([a-z_][a-z0-9_."$]*)\s*\(\s*copy\s*=\s*[a-z_][a-z0-9_."$]*\s*\)\s*;?\s*$`)
+	createRuleDoAlsoPattern      = regexp.MustCompile(`(?is)^\s*create\s+rule\s+([a-z_][a-z0-9_"$]*)\s+as\s+on\s+insert\s+to\s+([a-z_][a-z0-9_."$]*)\s+do\s+also\s+(insert\s+into\s+.+?)\s*;?\s*$`)
+	alterSystemPattern           = regexp.MustCompile(`(?is)^\s*alter\s+system\s+(?:set|reset)\b.+;?\s*$`)
+	clusterIndexPattern          = regexp.MustCompile(`(?is)^\s*cluster\s+((?:"[^"]+"|[a-z_][a-z0-9_$]*)(?:\.(?:"[^"]+"|[a-z_][a-z0-9_$]*))?)\s+on\s+((?:"[^"]+"|[a-z_][a-z0-9_$]*)(?:\.(?:"[^"]+"|[a-z_][a-z0-9_$]*))?)\s*;?\s*$`)
+	dropOperatorPattern          = regexp.MustCompile(`(?is)^\s*drop\s+operator\s+if\s+exists\s+(\S+)\s*\(\s*([^,)]*)\s*,\s*([^)]*)\)\s*(?:cascade|restrict)?\s*;?\s*$`)
+	dropOperatorClassPattern     = regexp.MustCompile(`(?is)^\s*drop\s+operator\s+class\s+if\s+exists\s+\S+\s+using\s+\S+\s*(?:cascade|restrict)?\s*;?\s*$`)
+	dropOperatorFamilyPattern    = regexp.MustCompile(`(?is)^\s*drop\s+operator\s+family\s+if\s+exists\s+\S+\s+using\s+\S+\s*(?:cascade|restrict)?\s*;?\s*$`)
+	dropPolicyIfExistsPattern    = regexp.MustCompile(`(?is)^\s*drop\s+policy\s+if\s+exists\s+([a-z_][a-z0-9_"$]*)\s+on\s+([a-z_][a-z0-9_."$]*)\s*(?:cascade|restrict)?\s*;?\s*$`)
+	dropRuleIfExistsPattern      = regexp.MustCompile(`(?is)^\s*drop\s+rule\s+if\s+exists\s+([a-z_][a-z0-9_"$]*)\s+on\s+([a-z_][a-z0-9_."$]*)\s*(?:cascade|restrict)?\s*;?\s*$`)
+	dropTextSearchPattern        = regexp.MustCompile(`(?is)^\s*drop\s+text\s+search\s+(configuration|dictionary|parser|template)\s+if\s+exists\s+([a-z_][a-z0-9_."$]*)\s*(?:cascade|restrict)?\s*;?\s*$`)
+	securityLabelPattern         = regexp.MustCompile(`(?is)^\s*security\s+label\b`)
+	selectStatementPattern       = regexp.MustCompile(`(?is)^\s*select\s+(.+?)\s*;?\s*$`)
+	insertReturningPattern       = regexp.MustCompile(`(?is)^\s*insert\s+into\s+([a-z_][a-z0-9_."$]*)(?:\s*\([^)]*\))?\s+.+\breturning\b`)
+	updateReturningPattern       = regexp.MustCompile(`(?is)^\s*update\s+([a-z_][a-z0-9_."$]*)\s+.+\breturning\b`)
+	deleteReturningPattern       = regexp.MustCompile(`(?is)^\s*delete\s+from\s+([a-z_][a-z0-9_."$]*)\s+.+\breturning\b`)
+	rlsIdentifier                = `(?:"[^"]+"|[a-z_][a-z0-9_$]*)(?:\.(?:"[^"]+"|[a-z_][a-z0-9_$]*))?`
+	rlsSelectPattern             = regexp.MustCompile(`(?is)^\s*select\s+.+?\s+from\s+(` + rlsIdentifier + `)(.*)$`)
+	rlsInsertPattern             = regexp.MustCompile(`(?is)^\s*insert\s+into\s+(` + rlsIdentifier + `)(?:\s*\(([^)]*)\))?\s+values\s*\(([^)]*)\)(.*)$`)
+	rlsUpdatePattern             = regexp.MustCompile(`(?is)^\s*update\s+(` + rlsIdentifier + `)\s+set\s+(.+?)(\s+where\s+.+?)?(\s+returning\s+.*)?;?\s*$`)
+	rlsDeletePattern             = regexp.MustCompile(`(?is)^\s*delete\s+from\s+(` + rlsIdentifier + `)(.*)$`)
+	rlsPredicateInsertPoint      = regexp.MustCompile(`(?is)\s(returning|order\s+by|group\s+by|limit|offset)\s`)
+	rlsUpdateSetKeyword          = regexp.MustCompile(`(?is)\sset\s`)
+	rlsUpdateSetEnd              = regexp.MustCompile(`(?is)\s(where|returning)\s`)
+	rlsWherePattern              = regexp.MustCompile(`(?is)\swhere\s`)
+	returningTableoidPattern     = regexp.MustCompile(`(?is)\btableoid\b(?:\s*::\s*regclass)?`)
+	textSearchMatchPattern       = regexp.MustCompile(`(?is)(to_tsvector\s*\([^)]*\))\s*@@\s*(to_tsquery\s*\([^)]*\))`)
+	xmlElementNamePattern        = regexp.MustCompile(`(?is)xmlelement\s*\(\s*name\s+([a-z_][a-z0-9_$]*)\s*\)`)
+	xmlForestCallPattern         = regexp.MustCompile(`(?is)xmlforest\s*\((.+?)\)`)
+	xmlForestArgPattern          = regexp.MustCompile(`(?is)^\s*(.+?)\s+as\s+([a-z_][a-z0-9_$]*)\s*$`)
+	temporalOverlapsPattern      = regexp.MustCompile(`(?is)\(\s*(date\s+'[^']+')\s*,\s*((?:date|interval)\s+'[^']+')\s*\)\s+overlaps\s+\(\s*(date\s+'[^']+')\s*,\s*((?:date|interval)\s+'[^']+')\s*\)`)
+	pgInputErrorInfoPattern      = regexp.MustCompile(`(?is)\(\s*pg_input_error_info\s*\(([^)]*)\)\s*\)\s*\.\s*sql_error_code`)
+	systemUserPattern            = regexp.MustCompile(`(?i)\bsystem_user\b`)
+	anyValuePattern              = regexp.MustCompile(`(?i)\bany_value\s*\(`)
+	advancedGroupByPattern       = regexp.MustCompile(`(?is)^\s*select\s+coalesce\s*\(\s*([a-z_][a-z0-9_]*)\s*,\s*'([^']*)'\s*\)\s+as\s+([a-z_][a-z0-9_]*)\s*,\s*coalesce\s*\(\s*([a-z_][a-z0-9_]*)\s*,\s*'([^']*)'\s*\)\s+as\s+([a-z_][a-z0-9_]*)\s*,\s*sum\s*\(\s*([a-z_][a-z0-9_]*)\s*\)::text\s+as\s+([a-z_][a-z0-9_]*)\s+from\s+([a-z_][a-z0-9_]*)\s+group\s+by\s+(.+?)\s+order\s+by\s+.+?;?\s*$`)
 )
 
 var createIndexConcurrentlyPattern = regexp.MustCompile(`(?is)^\s*create\s+(?:unique\s+)?index\s+concurrently\b`)
@@ -3838,11 +3909,12 @@ func convertedCreatePolicy(query string) (ConvertedQuery, bool) {
 		Command: strings.ToLower(matches[3]),
 	}
 	body := matches[4]
+	policy.Roles = rowSecurityPolicyRoles(body)
 	if usingMatches := policyUsingPattern.FindStringSubmatch(body); usingMatches != nil {
-		policy.UsingColumn = rowSecurityCurrentUserColumn(usingMatches[1])
+		policy.UsingAll, policy.UsingColumn = rowSecurityPolicyExpression(usingMatches[1])
 	}
 	if checkMatches := policyCheckPattern.FindStringSubmatch(body); checkMatches != nil {
-		policy.CheckColumn = rowSecurityCurrentUserColumn(checkMatches[1])
+		policy.CheckAll, policy.CheckColumn = rowSecurityPolicyExpression(checkMatches[1])
 	}
 	return ConvertedQuery{
 		String: query,
@@ -3856,8 +3928,34 @@ func convertedCreatePolicy(query string) (ConvertedQuery, bool) {
 	}, true
 }
 
+func rowSecurityPolicyRoles(body string) []string {
+	matches := policyRolesPattern.FindStringSubmatch(body)
+	if matches == nil {
+		return nil
+	}
+	rawRoles := strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(matches[1]), ";"))
+	var roles []string
+	for _, role := range splitSQLList(rawRoles) {
+		role = rowsecurity.NormalizeName(role)
+		if role != "" {
+			roles = append(roles, role)
+		}
+	}
+	return roles
+}
+
+func rowSecurityPolicyExpression(expr string) (bool, string) {
+	if strings.EqualFold(strings.TrimSpace(expr), "true") {
+		return true, ""
+	}
+	return false, rowSecurityCurrentUserColumn(expr)
+}
+
 func rowSecurityCurrentUserColumn(expr string) string {
 	matches := policyCurrentUserPattern.FindStringSubmatch(expr)
+	if matches == nil {
+		matches = policyCurrentUserLeftPattern.FindStringSubmatch(expr)
+	}
 	if matches == nil {
 		return ""
 	}
