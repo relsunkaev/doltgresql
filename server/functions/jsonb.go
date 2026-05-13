@@ -482,7 +482,11 @@ func jsonbSetCallable(ctx *sql.Context, target any, path any, newValue any, crea
 	if err != nil {
 		return nil, err
 	}
-	return pgtypes.JsonDocument{Value: jsonbSetValue(targetDoc.Value, jsonPath, newDoc.Value, createMissing)}, nil
+	value, err := jsonbSetValue(targetDoc.Value, jsonPath, newDoc.Value, createMissing)
+	if err != nil {
+		return nil, err
+	}
+	return pgtypes.JsonDocument{Value: value}, nil
 }
 
 // jsonb_set_lax represents the PostgreSQL function jsonb_set_lax with default create_if_missing and null treatment.

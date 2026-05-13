@@ -161,9 +161,9 @@ func jsonbContainsValue(container pgtypes.JsonValue, contained pgtypes.JsonValue
 	return pgtypes.JsonBContainsValue(container, contained)
 }
 
-func jsonbSetValue(target pgtypes.JsonValue, path []string, newValue pgtypes.JsonValue, createMissing bool) pgtypes.JsonValue {
+func jsonbSetValue(target pgtypes.JsonValue, path []string, newValue pgtypes.JsonValue, createMissing bool) (pgtypes.JsonValue, error) {
 	if len(path) == 0 {
-		return pgtypes.JsonValueCopy(target)
+		return pgtypes.JsonValueCopy(newValue), nil
 	}
 	switch value := target.(type) {
 	case pgtypes.JsonValueObject:
@@ -176,36 +176,44 @@ func jsonbSetValue(target pgtypes.JsonValue, path []string, newValue pgtypes.Jso
 				newObject.Items = append(newObject.Items, pgtypes.JsonValueObjectItem{Key: key, Value: pgtypes.JsonValueCopy(newValue)})
 				newObject = jsonObjectFromItems(newObject.Items, true)
 			}
-			return newObject
+			return newObject, nil
 		}
 		if idx, ok := newObject.Index[key]; ok {
-			newObject.Items[idx].Value = jsonbSetValue(newObject.Items[idx].Value, path[1:], newValue, createMissing)
+			nested, err := jsonbSetValue(newObject.Items[idx].Value, path[1:], newValue, createMissing)
+			if err != nil {
+				return nil, err
+			}
+			newObject.Items[idx].Value = nested
 		}
-		return newObject
+		return newObject, nil
 	case pgtypes.JsonValueArray:
 		newArray := pgtypes.JsonValueCopy(value).(pgtypes.JsonValueArray)
 		idx, ok := jsonArrayPathIndex(path[0], len(newArray))
 		if !ok {
-			return newArray
+			return newArray, nil
 		}
 		if len(path) == 1 {
 			if idx >= 0 && idx < len(newArray) {
 				newArray[idx] = pgtypes.JsonValueCopy(newValue)
 			} else if createMissing {
 				if idx < 0 {
-					return append(pgtypes.JsonValueArray{pgtypes.JsonValueCopy(newValue)}, newArray...)
+					return append(pgtypes.JsonValueArray{pgtypes.JsonValueCopy(newValue)}, newArray...), nil
 				}
-				return append(newArray, pgtypes.JsonValueCopy(newValue))
+				return append(newArray, pgtypes.JsonValueCopy(newValue)), nil
 			}
-			return newArray
+			return newArray, nil
 		}
 		if idx < 0 || idx >= len(newArray) {
-			return newArray
+			return newArray, nil
 		}
-		newArray[idx] = jsonbSetValue(newArray[idx], path[1:], newValue, createMissing)
-		return newArray
+		nested, err := jsonbSetValue(newArray[idx], path[1:], newValue, createMissing)
+		if err != nil {
+			return nil, err
+		}
+		newArray[idx] = nested
+		return newArray, nil
 	default:
-		return pgtypes.JsonValueCopy(target)
+		return nil, errors.New("cannot set path in scalar")
 	}
 }
 
