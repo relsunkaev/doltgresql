@@ -2271,6 +2271,40 @@
       ]
     },
     {
+      "id": "do-block-probe-test-testdoblockprobe-0001-select-count-*-::text-from",
+      "source": "testing/go/do_block_probe_test.go:TestDoBlockProbe",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "DO $$\n\t\t\t\t\t\tBEGIN\n\t\t\t\t\t\t\tIF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'created_by_do') THEN\n\t\t\t\t\t\t\t\tCREATE TABLE created_by_do (id INT PRIMARY KEY);\n\t\t\t\t\t\t\tEND IF;\n\t\t\t\t\t\tEND;\n\t\t\t\t\t$$;",
+        "INSERT INTO created_by_do VALUES (1);"
+      ],
+      "query": "SELECT count(*)::text FROM created_by_do;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "do-block-probe-test-testdoblockprobe-0002-do-language-sql-$$-select",
+      "source": "testing/go/do_block_probe_test.go:TestDoBlockProbe",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "query": "DO LANGUAGE sql $$\n\t\t\t\t\t\tSELECT 1;\n\t\t\t\t\t$$;",
+      "expectedSqlstate": "0A000",
+      "expectedErrorSeverity": "ERROR"
+    },
+    {
       "id": "dump-version-identity-probe-test-testdumpversionidentity-0001-select-version-like-postgresql-%",
       "source": "testing/go/dump_version_identity_probe_test.go:TestDumpVersionIdentity",
       "ordinal": 1,

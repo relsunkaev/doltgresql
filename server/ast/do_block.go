@@ -18,9 +18,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cockroachdb/errors"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	pgnodes "github.com/dolthub/doltgresql/server/node"
 	"github.com/dolthub/doltgresql/server/plpgsql"
@@ -36,7 +37,7 @@ func nodeDoBlock(ctx *Context, node *tree.DoBlock) (vitess.Statement, error) {
 		language = "plpgsql"
 	}
 	if !strings.EqualFold(language, "plpgsql") {
-		return nil, errors.Errorf("DO only supports LANGUAGE plpgsql")
+		return nil, pgerror.New(pgcode.FeatureNotSupported, "DO only supports LANGUAGE plpgsql")
 	}
 
 	wrapped := fmt.Sprintf("CREATE FUNCTION __doltgres_do_block() RETURNS void AS %s LANGUAGE plpgsql;", node.Code)

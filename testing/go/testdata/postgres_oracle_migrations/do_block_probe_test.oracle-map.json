@@ -1,0 +1,56 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map do_block_probe_test.go --oracle-test-name TestDoBlockProbe",
+  "sourceFile": "testing/go/do_block_probe_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/do_block_probe_test.go:TestDoBlockProbe#0001",
+      "source": "testing/go/do_block_probe_test.go:TestDoBlockProbe",
+      "ordinal": 1,
+      "scriptName": "DO block runs conditional CREATE",
+      "oracle": "postgres",
+      "postgresId": "do-block-probe-test-testdoblockprobe-0001-select-count-*-::text-from",
+      "suggestedId": "do-block-probe-test-testdoblockprobe-0001-select-count-*-::text-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)::text FROM created_by_do;",
+      "querySha256": "5ce3a764f5b02e35c052daa4c6fc6d2ed88fc12d412e016b008c7f0a289cc8f9",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/do_block_probe_test.go:TestDoBlockProbe#0002",
+      "source": "testing/go/do_block_probe_test.go:TestDoBlockProbe",
+      "ordinal": 2,
+      "scriptName": "DO block rejects unsupported language",
+      "oracle": "postgres",
+      "postgresId": "do-block-probe-test-testdoblockprobe-0002-do-language-sql-$$-select",
+      "suggestedId": "do-block-probe-test-testdoblockprobe-0002-do-language-sql-$$-select",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "0A000",
+      "errorSeverity": "ERROR",
+      "query": "DO LANGUAGE sql $$\n\t\t\t\t\t\tSELECT 1;\n\t\t\t\t\t$$;",
+      "querySha256": "3c3b721a6fd3d98d6ceda05a3d8eccf44f0b90beea89c218b0f1885fbc5ad7d5",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}
