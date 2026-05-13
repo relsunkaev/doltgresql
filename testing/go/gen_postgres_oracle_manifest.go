@@ -603,11 +603,27 @@ func refreshPromotedOracleMap(sourceFile string, outputPath string, testNameFilt
 	if outputPath == "" {
 		outputPath = filepath.Join("testdata", "postgres_oracle_migrations", strings.TrimSuffix(sourceFile, ".go")+".oracle-map.json")
 	}
-	if err := writePromotedOracleMap(sourceFile, outputPath, testNameFilter, scriptNameFilter, forcePostgresOracle); err != nil {
+	if err := os.MkdirAll(filepath.Dir(outputPath), 0755); err != nil {
+		return err
+	}
+	tempOutput, err := os.CreateTemp(filepath.Dir(outputPath), "."+filepath.Base(outputPath)+".*.tmp")
+	if err != nil {
+		return err
+	}
+	tempOutputPath := tempOutput.Name()
+	if err := tempOutput.Close(); err != nil {
+		_ = os.Remove(tempOutputPath)
+		return err
+	}
+	defer func() {
+		_ = os.Remove(tempOutputPath)
+	}()
+
+	if err := writePromotedOracleMap(sourceFile, tempOutputPath, testNameFilter, scriptNameFilter, forcePostgresOracle); err != nil {
 		return err
 	}
 
-	data, err := os.ReadFile(outputPath)
+	data, err := os.ReadFile(tempOutputPath)
 	if err != nil {
 		return err
 	}
@@ -655,6 +671,9 @@ func refreshPromotedOracleMap(sourceFile string, outputPath string, testNameFilt
 		if assertion == nil {
 			continue
 		}
+		if hasUnsafeAutoIsolatedPublicReference(entry) {
+			return fmt.Errorf("%s: generated oracle entry uses an isolated schema but setup or query explicitly references public; add an explicit PostgresOracle override or skip this migration", entry.ID)
+		}
 		expectedRows, sqlstate, severity, err := readPostgresOracleExpected(ctx, conn, entry)
 		if err != nil {
 			return fmt.Errorf("%s: %w", entry.ID, err)
@@ -673,6 +692,45 @@ func refreshPromotedOracleMap(sourceFile string, outputPath string, testNameFilt
 		return err
 	}
 	return os.WriteFile(outputPath, refreshed, 0644)
+}
+
+func hasUnsafeAutoIsolatedPublicReference(entry entry) bool {
+	if len(entry.Setup) < 2 || entry.Setup[0] != "CREATE SCHEMA {{quotedSchema}}" || !strings.Contains(entry.Setup[1], "{{quotedSchema}}") {
+		return false
+	}
+	for _, statement := range append(append([]string{}, entry.Setup...), entry.Query) {
+		if hasExplicitPublicSchemaReference(statement) {
+			return true
+		}
+	}
+	return false
+}
+
+func hasExplicitPublicSchemaReference(statement string) bool {
+	normalized := strings.ToLower(statement)
+	normalized = strings.ReplaceAll(normalized, "\n", " ")
+	normalized = strings.ReplaceAll(normalized, "\t", " ")
+	for strings.Contains(normalized, "  ") {
+		normalized = strings.ReplaceAll(normalized, "  ", " ")
+	}
+	checks := []string{
+		"public.",
+		"schema public",
+		"with schema public",
+		"set search_path to public",
+		"array['public'",
+		"array[ 'public'",
+		"table_schema = 'public'",
+		"table_schema='public'",
+		"schemaname = 'public'",
+		"schemaname='public'",
+	}
+	for _, check := range checks {
+		if strings.Contains(normalized, check) {
+			return true
+		}
+	}
+	return false
 }
 
 func sortedFilterKeys(filter map[string]struct{}) []string {
