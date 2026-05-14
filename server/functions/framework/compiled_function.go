@@ -688,10 +688,7 @@ func (c *CompiledFunction) GetQuickFunction() QuickFunction {
 // resolve returns an overloadMatch that either matches the given parameters exactly, or is a viable match after casting.
 // Returns an invalid overloadMatch if a viable match is not found.
 func (c *CompiledFunction) resolve(overloads *Overloads, fnOverloads []Overload, argTypes []*pgtypes.DoltgresType) (overloadMatch, error) {
-	lookupArgTypes := argTypes
-	if c.IsOperator {
-		lookupArgTypes = operatorLookupTypes(argTypes)
-	}
+	lookupArgTypes := domainBaseLookupTypes(argTypes)
 
 	// First check for an exact match
 	exactMatch, found := overloads.ExactMatchForTypes(lookupArgTypes...)
@@ -710,11 +707,11 @@ func (c *CompiledFunction) resolve(overloads *Overloads, fnOverloads []Overload,
 	if c.IsOperator {
 		return c.resolveOperator(lookupArgTypes, overloads, fnOverloads)
 	} else {
-		return c.resolveFunction(argTypes, fnOverloads)
+		return c.resolveFunction(lookupArgTypes, fnOverloads)
 	}
 }
 
-func operatorLookupTypes(argTypes []*pgtypes.DoltgresType) []*pgtypes.DoltgresType {
+func domainBaseLookupTypes(argTypes []*pgtypes.DoltgresType) []*pgtypes.DoltgresType {
 	var lookupArgTypes []*pgtypes.DoltgresType
 	for i, argType := range argTypes {
 		if argType.TypType != pgtypes.TypeType_Domain {

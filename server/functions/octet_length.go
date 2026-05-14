@@ -24,6 +24,7 @@ import (
 // initOctetLength registers the functions to the catalog.
 func initOctetLength() {
 	framework.RegisterFunction(octet_length_text)
+	framework.RegisterFunction(octet_length_bpchar)
 	framework.RegisterFunction(octet_length_bytea)
 }
 
@@ -35,6 +36,22 @@ var octet_length_text = framework.Function1{
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val1 any) (any, error) {
 		return int32(len(val1.(string))), nil
+	},
+}
+
+// octet_length_bpchar represents the PostgreSQL function of the same name for
+// fixed-length character values. Unlike text casts, this counts pad spaces.
+var octet_length_bpchar = framework.Function1{
+	Name:       "octet_length",
+	Return:     pgtypes.Int32,
+	Parameters: [1]*pgtypes.DoltgresType{pgtypes.BpChar},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, t [2]*pgtypes.DoltgresType, val1 any) (any, error) {
+		out, err := t[0].IoOutput(ctx, val1)
+		if err != nil {
+			return nil, err
+		}
+		return int32(len(out)), nil
 	},
 }
 
