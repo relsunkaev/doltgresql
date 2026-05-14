@@ -186,12 +186,14 @@ func TestAuthQuick(t *testing.T) {
 		{
 			Queries: []string{
 				"GRANT DELETE ON ALL TABLES IN SCHEMA mysch TO tester;",
+				"GRANT SELECT ON ALL TABLES IN SCHEMA mysch TO tester;",
 				"DELETE FROM mysch.test WHERE pk >= 0;",
 			},
 		},
 		{
 			Queries: []string{
 				"GRANT DELETE ON mysch.test TO tester;",
+				"GRANT SELECT ON mysch.test TO tester;",
 				"DELETE FROM mysch.test WHERE pk >= 0;",
 			},
 		},
@@ -199,6 +201,7 @@ func TestAuthQuick(t *testing.T) {
 			Queries: []string{
 				"CREATE USER tester2;",
 				"GRANT DELETE ON ALL TABLES IN SCHEMA mysch TO tester2;",
+				"GRANT SELECT ON ALL TABLES IN SCHEMA mysch TO tester2;",
 				"GRANT tester2 TO tester;",
 				"DELETE FROM mysch.test WHERE pk >= 0;",
 			},
