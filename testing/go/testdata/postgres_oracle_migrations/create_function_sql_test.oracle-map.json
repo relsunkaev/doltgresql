@@ -397,65 +397,130 @@
       "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
       "ordinal": 19,
       "scriptName": "function with create or replace view",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0019-select-public.sp_build_view_bathymetry_layer",
       "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0019-select-public.sp_build_view_bathymetry_layer",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT public.sp_build_view_bathymetry_layer()",
       "querySha256": "ef2d01af2011ca27c30885fb3585c1dba26fe58776346a0006ebc3b5257d5c63",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "cleanup": [
+        "DO $$ DECLARE r record; BEGIN FOR r IN SELECT p.oid::pg_catalog.regprocedure AS signature FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'sp_build_view_bathymetry_layer' AND p.prokind = 'f' LOOP EXECUTE 'DROP FUNCTION IF EXISTS ' || r.signature || ' CASCADE'; END LOOP; END $$"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0020",
       "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
       "ordinal": 20,
       "scriptName": "function with create or replace view",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0020-select-*-from-view_bathymetry_layer",
       "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0020-select-*-from-view_bathymetry_layer",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * from view_bathymetry_layer",
       "querySha256": "fef3f234ae5263225e8c00fc8b52c7f6dd18ce02d4e0cb7635c0b377a46063ed",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DO $$ DECLARE r record; BEGIN FOR r IN SELECT p.oid::pg_catalog.regprocedure AS signature FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'sp_build_view_bathymetry_layer' AND p.prokind = 'f' LOOP EXECUTE 'DROP FUNCTION IF EXISTS ' || r.signature || ' CASCADE'; END LOOP; END $$"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0021",
       "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
       "ordinal": 21,
       "scriptName": "function with update ... returning",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0021-create-function-public.tax_job_take-arg_worker-text",
       "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0021-create-function-public.tax_job_take-arg_worker-text",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "CREATE FUNCTION public.tax_job_take(arg_worker text) RETURNS SETOF public.tax_job\n\t\t\t\t\t\t\t\tLANGUAGE sql\n\t\t\t\t\t\t\t\tAS '\n\t\t\t\t\t\t\t\tUPDATE\n\t\t\t\t\t\t\t\t\ttax_job\n\t\t\t\t\t\t\t\tSET\n\t\t\t\t\t\t\t\t\tstate = ''busy'',\n\t\t\t\t\t\t\t\t\tworker = arg_worker\n\t\t\t\t\t\t\t\tWHERE\n\t\t\t\t\t\t\t\t\tstate = ''sched''\n\t\t\t\t\t\t\t\t\tAND scheduled <= CURRENT_TIMESTAMP\n\t\t\t\t\t\t\t\tRETURNING\n\t\t\t\t\t\t\t\t\t*;\n\t\t\t\t\t\t\t';",
       "querySha256": "991d16e9fc577deb8117892282b7b45ffd2236a8490184e45f6c44d6b5b02d37",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DO $$ DECLARE r record; BEGIN FOR r IN SELECT p.oid::pg_catalog.regprocedure AS signature FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'tax_job_take' AND p.prokind = 'f' LOOP EXECUTE 'DROP FUNCTION IF EXISTS ' || r.signature || ' CASCADE'; END LOOP; END $$",
+        "DROP TABLE IF EXISTS public.tax_job CASCADE",
+        "DROP TYPE IF EXISTS public.tax_job_state CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0022",
       "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
       "ordinal": 22,
       "scriptName": "function with update ... returning",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0022-select-public.tax_job_take-worker",
       "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0022-select-public.tax_job_take-worker",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT public.tax_job_take('worker')",
       "querySha256": "6fcf403929b50baedd1ab2ca7d952f002478435378af70c625cd92caddccf94d",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "(1,busy,\"2025-05-05 05:05:05\",\"2025-05-05 05:05:05\",\"2025-05-05 05:05:05\",worker,processor,ext_id,,,,)"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DO $$ DECLARE r record; BEGIN FOR r IN SELECT p.oid::pg_catalog.regprocedure AS signature FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'tax_job_take' AND p.prokind = 'f' LOOP EXECUTE 'DROP FUNCTION IF EXISTS ' || r.signature || ' CASCADE'; END LOOP; END $$",
+        "DROP TABLE IF EXISTS public.tax_job CASCADE",
+        "DROP TYPE IF EXISTS public.tax_job_state CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0023",
       "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
       "ordinal": 23,
       "scriptName": "function with update ... returning",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0023-select-public.tax_job_take-worker",
       "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0023-select-public.tax_job_take-worker",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT public.tax_job_take('worker')",
       "querySha256": "6fcf403929b50baedd1ab2ca7d952f002478435378af70c625cd92caddccf94d",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "(2,busy,\"2025-05-05 05:05:06\",\"2025-05-05 05:05:06\",\"2025-05-05 05:05:06\",worker,processor,ext_id,,,,)"
+          }
+        ],
+        [
+          {
+            "value": "(3,busy,\"2025-05-05 05:05:07\",\"2025-05-05 05:05:07\",\"2025-05-05 05:05:07\",worker,processor,ext_id,,,,)"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DO $$ DECLARE r record; BEGIN FOR r IN SELECT p.oid::pg_catalog.regprocedure AS signature FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'tax_job_take' AND p.prokind = 'f' LOOP EXECUTE 'DROP FUNCTION IF EXISTS ' || r.signature || ' CASCADE'; END LOOP; END $$",
+        "DROP TABLE IF EXISTS public.tax_job CASCADE",
+        "DROP TYPE IF EXISTS public.tax_job_state CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0024",
@@ -920,39 +985,71 @@
       "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
       "ordinal": 45,
       "scriptName": "use sql statements in BEGIN ATOMIC ... END in sql_body",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0045-select-public.match_default",
       "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0045-select-public.match_default",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT public.match_default();",
       "querySha256": "05c44467c44eea278bee63542590dbc591b96db3ef928cca2f8d95278593aafe",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "{\"include_original\":true,\"k\":6,\"m\":2048,\"token_filters\":[{\"kind\":\"downcase\"}],\"tokenizer\":{\"kind\":\"ngram\",\"token_length\":3}}"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DO $$ DECLARE r record; BEGIN FOR r IN SELECT p.oid::pg_catalog.regprocedure AS signature FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'match_default' AND p.prokind = 'f' LOOP EXECUTE 'DROP FUNCTION IF EXISTS ' || r.signature || ' CASCADE'; END LOOP; END $$"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0046",
       "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
       "ordinal": 46,
       "scriptName": "use sql statements in BEGIN ATOMIC ... END in sql_body",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0046-create-function-select1-returns-int",
       "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0046-create-function-select1-returns-int",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "CREATE FUNCTION select1() RETURNS int\n            LANGUAGE sql\n            BEGIN ATOMIC \n\t\t\t\tSELECT 1; \n\t\t\tEND;",
       "querySha256": "8f898a1a999145e72ed982287dcf75f94fec0594a962611b6463ec6cd58e707f",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DO $$ DECLARE r record; BEGIN FOR r IN SELECT p.oid::pg_catalog.regprocedure AS signature FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'match_default' AND p.prokind = 'f' LOOP EXECUTE 'DROP FUNCTION IF EXISTS ' || r.signature || ' CASCADE'; END LOOP; END $$",
+        "DO $$ DECLARE r record; BEGIN FOR r IN SELECT p.oid::pg_catalog.regprocedure AS signature FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'select1' AND p.prokind = 'f' LOOP EXECUTE 'DROP FUNCTION IF EXISTS ' || r.signature || ' CASCADE'; END LOOP; END $$"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0047",
       "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
       "ordinal": 47,
       "scriptName": "use sql statements in BEGIN ATOMIC ... END in sql_body",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0047-select-select1",
       "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0047-select-select1",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT select1();",
       "querySha256": "f9e62a924f78ebc6b8d12db42654bfb863caea21347ed1658c2aad69f90bd57a",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DO $$ DECLARE r record; BEGIN FOR r IN SELECT p.oid::pg_catalog.regprocedure AS signature FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'match_default' AND p.prokind = 'f' LOOP EXECUTE 'DROP FUNCTION IF EXISTS ' || r.signature || ' CASCADE'; END LOOP; END $$",
+        "DO $$ DECLARE r record; BEGIN FOR r IN SELECT p.oid::pg_catalog.regprocedure AS signature FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'select1' AND p.prokind = 'f' LOOP EXECUTE 'DROP FUNCTION IF EXISTS ' || r.signature || ' CASCADE'; END LOOP; END $$"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0048",

@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 func TestCreateFunctionsLanguageSQL(t *testing.T) {
@@ -137,12 +135,10 @@ func TestCreateFunctionsLanguageSQL(t *testing.T) {
 					Query: `SELECT * from view_bathymetry_layer`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0018-select-*-from-view_bathymetry_layer", Cleanup: []string{"DROP VIEW IF EXISTS public.view_bathymetry_layer", "DROP FUNCTION IF EXISTS public.sp_build_view_bathymetry_layer()"}},
 				},
 				{
-					Query:    `SELECT public.sp_build_view_bathymetry_layer()`,
-					Expected: []sql.Row{{nil}},
+					Query: `SELECT public.sp_build_view_bathymetry_layer()`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0019-select-public.sp_build_view_bathymetry_layer"},
 				},
 				{
-					Query:    `SELECT * from view_bathymetry_layer`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT * from view_bathymetry_layer`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0020-select-*-from-view_bathymetry_layer"},
 				},
 			},
 		},
@@ -188,22 +184,16 @@ func TestCreateFunctionsLanguageSQL(t *testing.T) {
 									AND scheduled <= CURRENT_TIMESTAMP
 								RETURNING
 									*;
-							';`,
-					Expected: []sql.Row{},
+							';`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0021-create-function-public.tax_job_take-arg_worker-text"},
 				},
 				{
-					Query:    `SELECT public.tax_job_take('worker')`,
-					Expected: []sql.Row{{`(1,busy,"2025-05-05 05:05:05","2025-05-05 05:05:05","2025-05-05 05:05:05",worker,processor,ext_id,,,,)`}},
+					Query: `SELECT public.tax_job_take('worker')`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0022-select-public.tax_job_take-worker"},
 				},
 				{
 					Query: `INSERT INTO tax_job (id, state, created, modified, scheduled, worker, processor, ext_id, data) VALUES (2, 'sched', '2025-05-05 05:05:06', '2025-05-05 05:05:06', '2025-05-05 05:05:06', 'worker', 'processor', 'ext_id', NULL), (3, 'sched', '2025-05-05 05:05:07', '2025-05-05 05:05:07', '2025-05-05 05:05:07', 'worker', 'processor', 'ext_id', NULL)`,
 				},
 				{
-					Query: `SELECT public.tax_job_take('worker')`,
-					Expected: []sql.Row{
-						{`(2,busy,"2025-05-05 05:05:06","2025-05-05 05:05:06","2025-05-05 05:05:06",worker,processor,ext_id,,,,)`},
-						{`(3,busy,"2025-05-05 05:05:07","2025-05-05 05:05:07","2025-05-05 05:05:07",worker,processor,ext_id,,,,)`},
-					},
+					Query: `SELECT public.tax_job_take('worker')`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0023-select-public.tax_job_take-worker"},
 				},
 			},
 		},
@@ -335,21 +325,18 @@ func TestCreateFunctionsLanguageSQL(t *testing.T) {
 			END;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0044-create-function-match_default-returns-jsonb"},
 				},
 				{
-					Skip:     true, // TODO support json_build_object() function
-					Query:    `SELECT public.match_default();`,
-					Expected: []sql.Row{{`{"k": 6, "m": 2048, "tokenizer": {"kind": "ngram", "token_length": 3}, "token_filters": [{"kind": "downcase"}], "include_original": true}`}},
+					Skip:  true, // TODO support json_build_object() function
+					Query: `SELECT public.match_default();`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0045-select-public.match_default"},
 				},
 				{
 					Query: `CREATE FUNCTION select1() RETURNS int
             LANGUAGE sql
             BEGIN ATOMIC 
 				SELECT 1; 
-			END;`,
-					Expected: []sql.Row{},
+			END;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0046-create-function-select1-returns-int"},
 				},
 				{
-					Query:    `SELECT select1();`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT select1();`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0047-select-select1"},
 				},
 			},
 		},
