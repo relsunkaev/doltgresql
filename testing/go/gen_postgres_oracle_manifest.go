@@ -1142,16 +1142,18 @@ func refreshPromotedOracleMap(sourceFile string, outputPath string, testNameFilt
 	for _, assertion := range mapped.Assertions {
 		refreshedKeys[assertion.Key] = struct{}{}
 	}
-	if len(testNameFilter) > 0 || len(scriptNameFilter) > 0 || len(skipScriptNameFilter) > 0 || len(postgresIDFilter) > 0 {
-		existing, ok, err := readExistingMigrationFile(outputPath)
-		if err != nil {
-			return err
-		}
-		if ok {
+	existing, ok, err := readExistingMigrationFile(outputPath)
+	if err != nil {
+		return err
+	}
+	if ok {
+		if len(testNameFilter) > 0 || len(scriptNameFilter) > 0 || len(skipScriptNameFilter) > 0 || len(postgresIDFilter) > 0 {
 			mapped, err = mergeMigrationFiles(existing, mapped)
 			if err != nil {
 				return err
 			}
+		} else {
+			preserveGeneratedCachedExpectations(&mapped, existing)
 		}
 	}
 	assertionsByKey := make(map[string]*migrationAssertion, len(mapped.Assertions))
@@ -1368,6 +1370,18 @@ func mergeMigrationFiles(existing migrationFile, generated migrationFile) (migra
 	}
 	existing.Assertions = merged
 	return existing, nil
+}
+
+func preserveGeneratedCachedExpectations(generated *migrationFile, existing migrationFile) {
+	existingByKey := make(map[string]migrationAssertion, len(existing.Assertions))
+	for _, assertion := range existing.Assertions {
+		existingByKey[assertion.Key] = assertion
+	}
+	for i := range generated.Assertions {
+		if existingAssertion, ok := existingByKey[generated.Assertions[i].Key]; ok {
+			preserveCachedExpectation(&generated.Assertions[i], existingAssertion)
+		}
+	}
 }
 
 func preserveCachedExpectation(replacement *migrationAssertion, existing migrationAssertion) {
