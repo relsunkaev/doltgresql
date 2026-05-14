@@ -4373,6 +4373,12 @@ func errMessageToSQLState(msg string) (string, bool) {
 	case strings.HasPrefix(msg, "permission denied"),
 		strings.HasPrefix(msg, "must be owner"):
 		return pgcode.InsufficientPrivilege.String(), true
+	case strings.HasPrefix(msg, `role "`) && strings.HasSuffix(msg, `" does not exist`):
+		return pgcode.UndefinedObject.String(), true
+	case strings.HasPrefix(msg, `extension "`) && strings.Contains(msg, `" must be installed in schema "`):
+		return pgcode.DuplicateObject.String(), true
+	case strings.HasPrefix(msg, "division by zero"):
+		return pgcode.DivisionByZero.String(), true
 	case strings.HasPrefix(msg, "column '") && strings.HasSuffix(msg, "' specified twice"):
 		return pgcode.DuplicateColumn.String(), true
 	case strings.HasPrefix(msg, `column "`) && strings.HasSuffix(msg, `" specified more than once`):
