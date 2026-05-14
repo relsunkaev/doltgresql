@@ -25,7 +25,42 @@
       "expectedKind": "rows",
       "query": "SELECT c.column_name, c.data_type, constraint_type, constraint_name, constraint_schema\nFROM information_schema.table_constraints tc\nJOIN information_schema.constraint_column_usage AS ccu USING (constraint_schema, constraint_name)\nJOIN information_schema.columns AS c ON c.table_schema = tc.constraint_schema\n  AND tc.table_name = c.table_name AND ccu.column_name = c.column_name\nWHERE tc.table_name = 'customers' and constraint_schema = 'public'\nORDER BY constraint_type, constraint_name, c.column_name;",
       "querySha256": "ee272127a467699552e09e968095a2e05aec972064c0dee0858f577ab4a7af27",
-      "expectedRows": [],
+      "expectedRows": [
+        [
+          {
+            "value": "id"
+          },
+          {
+            "value": "integer"
+          },
+          {
+            "value": "PRIMARY KEY"
+          },
+          {
+            "value": "customers_pkey"
+          },
+          {
+            "value": "public"
+          }
+        ],
+        [
+          {
+            "value": "email"
+          },
+          {
+            "value": "text"
+          },
+          {
+            "value": "UNIQUE"
+          },
+          {
+            "value": "customers_email_key"
+          },
+          {
+            "value": "public"
+          }
+        ]
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -41,7 +76,42 @@
       "expectedKind": "rows",
       "query": "SELECT c.column_name, c.data_type, constraint_type, constraint_name, constraint_schema\nFROM information_schema.table_constraints tc\nJOIN information_schema.constraint_column_usage AS ccu USING (constraint_schema, constraint_name)\nJOIN information_schema.columns AS c ON c.table_schema = tc.constraint_schema\n  AND tc.table_name = c.table_name AND ccu.column_name = c.column_name\nWHERE tc.table_name = 'order_items' and constraint_schema = 'public'\nORDER BY c.column_name;",
       "querySha256": "3bad7630c2859fc8e3f055c08ea76e90f9b6d762f1e646e3531c94c553e743a0",
-      "expectedRows": [],
+      "expectedRows": [
+        [
+          {
+            "value": "line_no"
+          },
+          {
+            "value": "integer"
+          },
+          {
+            "value": "PRIMARY KEY"
+          },
+          {
+            "value": "order_items_pkey"
+          },
+          {
+            "value": "public"
+          }
+        ],
+        [
+          {
+            "value": "order_id"
+          },
+          {
+            "value": "integer"
+          },
+          {
+            "value": "PRIMARY KEY"
+          },
+          {
+            "value": "order_items_pkey"
+          },
+          {
+            "value": "public"
+          }
+        ]
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -57,7 +127,13 @@
       "expectedKind": "rows",
       "query": "SELECT conname AS primary_key\nFROM pg_constraint join pg_class on (pg_class.oid = conrelid)\nWHERE contype = 'p' AND connamespace = 'public'::regnamespace AND pg_class.relname = 'order_items';",
       "querySha256": "4c8e9a16771ec9a578caf8d8921f29ad914eca2c424a6cdb5d8061a890a347e2",
-      "expectedRows": [],
+      "expectedRows": [
+        [
+          {
+            "value": "order_items_pkey"
+          }
+        ]
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
