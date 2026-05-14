@@ -28,6 +28,8 @@ import (
 	corefunctions "github.com/dolthub/doltgresql/core/functions"
 	"github.com/dolthub/doltgresql/core/id"
 	coreprocedures "github.com/dolthub/doltgresql/core/procedures"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/comments"
 	"github.com/dolthub/doltgresql/server/tablemetadata"
@@ -147,7 +149,7 @@ func (c *DropType) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 					// TODO: handle cascade
 					return nil, errors.Errorf(`cascading type drops are not yet supported`)
 				}
-				return nil, errors.Errorf(`cannot drop type %s because other objects depend on it - table %s depends on type %s'`, c.typName, t.Name(), c.typName)
+				return nil, pgerror.Newf(pgcode.DependentObjectsStillExist, `cannot drop type %s because other objects depend on it - table %s depends on type %s'`, c.typName, t.Name(), c.typName)
 			}
 			for _, col := range t.Schema(ctx) {
 				if dt, isDoltgresType := col.Type.(*types.DoltgresType); isDoltgresType {
@@ -158,7 +160,7 @@ func (c *DropType) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 						}
 						// TODO: issue a detail (list of all columns and tables that uses this type)
 						//  and a hint (when we support CASCADE)
-						return nil, errors.Errorf(`cannot drop type %s because other objects depend on it - column %s of table %s depends on type %s'`, c.typName, col.Name, t.Name(), c.typName)
+						return nil, pgerror.Newf(pgcode.DependentObjectsStillExist, `cannot drop type %s because other objects depend on it - column %s of table %s depends on type %s'`, c.typName, col.Name, t.Name(), c.typName)
 					}
 				}
 			}
@@ -172,7 +174,7 @@ func (c *DropType) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 			// TODO: handle cascade
 			return nil, errors.Errorf(`cascading type drops are not yet supported`)
 		}
-		return nil, errors.Errorf(`cannot drop type %s because other objects depend on it - %s`, c.typName, dependency)
+		return nil, pgerror.Newf(pgcode.DependentObjectsStillExist, `cannot drop type %s because other objects depend on it - %s`, c.typName, dependency)
 	}
 
 	if err = collection.DropType(ctx, typeID); err != nil {
