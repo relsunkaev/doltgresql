@@ -542,12 +542,6 @@ func (capture *replicationChangeCapture) publicationTargets(ctx *sql.Context, sc
 		if !publicationPublishesCaptureAction(pub, capture.action) {
 			return false, nil
 		}
-		for _, relation := range pub.Tables {
-			if relation.Table == tableID {
-				targets = append(targets, publicationChangeTargetFor(pub, relation.Columns, relation.RowFilter))
-				return false, nil
-			}
-		}
 		if pub.AllTables {
 			targets = append(targets, publicationChangeTargetFor(pub, nil, ""))
 			return false, nil
@@ -555,6 +549,12 @@ func (capture *replicationChangeCapture) publicationTargets(ctx *sql.Context, sc
 		for _, pubSchema := range pub.Schemas {
 			if strings.EqualFold(pubSchema, schema) {
 				targets = append(targets, publicationChangeTargetFor(pub, nil, ""))
+				return false, nil
+			}
+		}
+		for _, relation := range pub.Tables {
+			if relation.Table == tableID {
+				targets = append(targets, publicationChangeTargetFor(pub, relation.Columns, relation.RowFilter))
 				return false, nil
 			}
 		}

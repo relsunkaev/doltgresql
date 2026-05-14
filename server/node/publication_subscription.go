@@ -200,7 +200,7 @@ func (a *AlterPublication) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, er
 		}, publicationSchemaRestrictionColumnList); err != nil {
 			return nil, err
 		}
-		if len(schemas) > 0 && publicationHasRestrictedTable(pub.Tables) {
+		if len(schemas) > 0 && publicationHasColumnListTable(pub.Tables) {
 			return nil, publicationAddSchemaRestrictionError(pub.ID.PublicationName())
 		}
 		if err = addPublicationTables(&pub, tables); err != nil {
@@ -939,18 +939,14 @@ func validatePublicationSchemaMembership(pub publications.Publication, errorKind
 		return nil
 	}
 	for _, table := range pub.Tables {
-		if len(table.Columns) == 0 && strings.TrimSpace(table.RowFilter) == "" {
+		if len(table.Columns) == 0 {
 			continue
 		}
 		if errorKind == publicationSchemaRestrictionAddSchema {
 			return publicationAddSchemaRestrictionError(pub.ID.PublicationName())
 		}
-		if len(table.Columns) > 0 {
-			return pgerror.New(pgcode.InvalidParameterValue,
-				"cannot use column list in publication that publishes tables in schemas")
-		}
 		return pgerror.New(pgcode.InvalidParameterValue,
-			"cannot use row filter in publication that publishes tables in schemas")
+			"cannot use column list in publication that publishes tables in schemas")
 	}
 	return nil
 }
@@ -1033,9 +1029,9 @@ func publicationReplicaIdentityColumns(ctx *sql.Context, table sql.Table, settin
 	}
 }
 
-func publicationHasRestrictedTable(tables []publications.PublicationRelation) bool {
+func publicationHasColumnListTable(tables []publications.PublicationRelation) bool {
 	for _, table := range tables {
-		if len(table.Columns) > 0 || strings.TrimSpace(table.RowFilter) != "" {
+		if len(table.Columns) > 0 {
 			return true
 		}
 	}
@@ -1044,7 +1040,7 @@ func publicationHasRestrictedTable(tables []publications.PublicationRelation) bo
 
 func publicationAddSchemaRestrictionError(publicationName string) error {
 	return pgerror.Newf(pgcode.InvalidParameterValue,
-		`cannot add schema to publication "%s" because it contains a table where a row filter or column list is specified`,
+		`cannot add schema to publication "%s" because it contains a table where a column list is specified`,
 		publicationName)
 }
 
