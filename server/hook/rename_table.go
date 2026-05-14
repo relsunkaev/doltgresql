@@ -125,6 +125,13 @@ func renameRelationMetadata(ctx *sql.Context, oldTableName doltdb.TableName, new
 	if err != nil {
 		return err
 	}
+	publicationCollection, err := core.GetPublicationsCollectionFromContext(ctx)
+	if err != nil {
+		return err
+	}
+	if err = publicationCollection.RenameTable(ctx, oldTableName, newTableName); err != nil {
+		return err
+	}
 	rowsecurity.RenameTable(uint32(ctx.Session.ID()), ctx.GetCurrentDatabase(), oldTableName.Schema, oldTableName.Name, newTableName.Schema, newTableName.Name)
 	return nil
 }

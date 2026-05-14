@@ -174,6 +174,39 @@ func (pgp *Collection) DropPublication(ctx context.Context, pubIDs ...id.Publica
 	return pgp.reloadCaches(ctx)
 }
 
+// RenameTable moves publication table memberships to a renamed table.
+func (pgp *Collection) RenameTable(ctx context.Context, oldName doltdb.TableName, newName doltdb.TableName) error {
+	oldID := id.NewTable(oldName.Schema, oldName.Name)
+	newID := id.NewTable(newName.Schema, newName.Name)
+	if oldID == newID {
+		return nil
+	}
+	var updates []Publication
+	err := pgp.IteratePublications(ctx, func(pub Publication) (stop bool, err error) {
+		updated := pub
+		changed := false
+		for i := range updated.Tables {
+			if updated.Tables[i].Table == oldID {
+				updated.Tables[i].Table = newID
+				changed = true
+			}
+		}
+		if changed {
+			updates = append(updates, updated)
+		}
+		return false, nil
+	})
+	if err != nil {
+		return err
+	}
+	for _, pub := range updates {
+		if err = pgp.UpdatePublication(ctx, pub); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // IteratePublications iterates over all publications.
 func (pgp *Collection) IteratePublications(_ context.Context, callback func(f Publication) (stop bool, err error)) error {
 	for _, pubID := range pgp.idCache {

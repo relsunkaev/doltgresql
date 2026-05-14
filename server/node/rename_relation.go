@@ -253,6 +253,13 @@ func renameTableMetadata(ctx *sql.Context, oldName doltdb.TableName, newName dol
 	if persistErr != nil {
 		return persistErr
 	}
+	publicationCollection, err := core.GetPublicationsCollectionFromContext(ctx)
+	if err != nil {
+		return err
+	}
+	if err = publicationCollection.RenameTable(ctx, oldName, newName); err != nil {
+		return err
+	}
 	rowsecurity.RenameTable(uint32(ctx.Session.ID()), ctx.GetCurrentDatabase(), oldName.Schema, oldName.Name, newName.Schema, newName.Name)
 	return nil
 }
