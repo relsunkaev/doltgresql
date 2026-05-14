@@ -25,6 +25,8 @@ import (
 	"github.com/dolthub/doltgresql/core/functions"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/core/procedures"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
@@ -105,7 +107,7 @@ OuterLoop:
 			}
 			if dgtype.ID == tableAsType {
 				// TODO: portion after newline should be in DETAILS but we don't yet support that in our error messages
-				return errors.Newf("cannot drop table %s because other objects depend on it\ncolumn %s of table %s depends on type %s",
+				return pgerror.Newf(pgcode.DependentObjectsStillExist, "cannot drop table %s because other objects depend on it\ncolumn %s of table %s depends on type %s",
 					tableName.Name, col.Name, otherTableName.Name, tableName.Name)
 			}
 		}
@@ -126,7 +128,7 @@ func beforeTableDeletionCheckFuncsProcs(ctx *sql.Context, doltTable *sqle.DoltTa
 		for _, paramType := range f.ParameterTypes {
 			if paramType == tableAsType {
 				// TODO: portion after newline should be in DETAILS but we don't yet support that in our error messages
-				return true, errors.Newf("cannot drop table %s because other objects depend on it\nfunction %s depends on type %s",
+				return true, pgerror.Newf(pgcode.DependentObjectsStillExist, "cannot drop table %s because other objects depend on it\nfunction %s depends on type %s",
 					tableName.Name, f.Name().Name, tableName.Name)
 			}
 		}
@@ -143,7 +145,7 @@ func beforeTableDeletionCheckFuncsProcs(ctx *sql.Context, doltTable *sqle.DoltTa
 		for _, paramType := range p.ParameterTypes {
 			if paramType == tableAsType {
 				// TODO: portion after newline should be in DETAILS but we don't yet support that in our error messages
-				return true, errors.Newf("cannot drop table %s because other objects depend on it\nfunction %s depends on type %s",
+				return true, pgerror.Newf(pgcode.DependentObjectsStillExist, "cannot drop table %s because other objects depend on it\nfunction %s depends on type %s",
 					tableName.Name, p.Name().Name, tableName.Name)
 			}
 		}
