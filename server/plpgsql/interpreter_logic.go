@@ -702,7 +702,7 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 				return nil, false, err
 			}
 			state.lastRowCount = rowCountFromResultRows(rows)
-			records, err := convertRowsToRecords(schema, rows)
+			records, err := returnQueryRecords(ctx, iFunc.GetReturn(), schema, rows)
 			if err != nil {
 				return nil, false, err
 			}
@@ -1173,6 +1173,67 @@ func convertRowsToRecords(schema sql.Schema, rows []sql.Row) ([][]pgtypes.Record
 	}
 
 	return records, nil
+}
+
+func returnQueryRecords(ctx *sql.Context, returnType *pgtypes.DoltgresType, schema sql.Schema, rows []sql.Row) ([][]pgtypes.RecordValue, error) {
+	if returnType == nil || !returnType.IsCompositeType() || returnType.IsRecordType() || len(returnType.CompositeAttrs) == 0 {
+		return convertRowsToRecords(schema, rows)
+	}
+	if len(schema) != len(returnType.CompositeAttrs) {
+		return nil, pgerror.New(pgcode.DatatypeMismatch, "structure of query does not match function result type")
+	}
+	typeCollection, err := GetTypesCollectionFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	targetTypes := make([]*pgtypes.DoltgresType, len(returnType.CompositeAttrs))
+	for i, attr := range returnType.CompositeAttrs {
+		targetTypes[i], err = resolveReturnQueryAttributeType(ctx, typeCollection, attr)
+		if err != nil {
+			return nil, err
+		}
+		if targetTypes[i] == nil {
+			return nil, pgtypes.ErrTypeDoesNotExist.New(attr.TypeID.TypeName())
+		}
+		fromType, err := doltgresTypeFromSQLType(schema[i].Type)
+		if err != nil {
+			return nil, err
+		}
+		if fromType.ID != pgtypes.Unknown.ID && fromType.ID != targetTypes[i].ID {
+			return nil, pgerror.New(pgcode.DatatypeMismatch, "structure of query does not match function result type")
+		}
+	}
+
+	records := make([][]pgtypes.RecordValue, 0, len(rows))
+	for _, row := range rows {
+		if len(row) != len(targetTypes) {
+			return nil, pgerror.New(pgcode.DatatypeMismatch, "structure of query does not match function result type")
+		}
+		record := make([]pgtypes.RecordValue, len(row))
+		for i, field := range row {
+			record[i] = pgtypes.RecordValue{
+				Value: field,
+				Type:  targetTypes[i],
+			}
+		}
+		records = append(records, record)
+	}
+	return records, nil
+}
+
+func resolveReturnQueryAttributeType(ctx *sql.Context, typeCollection *typecollection.TypeCollection, attr pgtypes.CompositeAttribute) (*pgtypes.DoltgresType, error) {
+	attrType, err := attr.ResolveType(ctx, typeCollection)
+	if err != nil || attrType != nil {
+		return attrType, err
+	}
+	if attr.TypeID.SchemaName() == "" {
+		attrType, err = typeCollection.GetType(ctx, id.NewType("pg_catalog", attr.TypeID.TypeName()))
+		if err != nil || attrType == nil {
+			return attrType, err
+		}
+		return attr.ApplyTypMod(attrType), nil
+	}
+	return nil, nil
 }
 
 type diagnosticCallFrame struct {

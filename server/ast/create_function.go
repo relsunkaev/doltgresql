@@ -68,7 +68,10 @@ func nodeCreateFunction(ctx *Context, node *tree.CreateFunction) (vitess.Stateme
 				return nil, err
 			}
 		} else {
-			retType = createAnonymousCompositeType(node.RetType)
+			retType, err = createAnonymousCompositeType(ctx, node.RetType)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -268,11 +271,18 @@ func createAnonymousCompositeTypeFromRoutineParams(params []pgnodes.RoutineParam
 // createAnonymousCompositeType creates a new DoltgresType for the anonymous composite return
 // type for a function, as represented by the |fieldTypes| that were specified in the function
 // definition.
-func createAnonymousCompositeType(fieldTypes []tree.SimpleColumnDef) *pgtypes.DoltgresType {
+func createAnonymousCompositeType(ctx *Context, fieldTypes []tree.SimpleColumnDef) (*pgtypes.DoltgresType, error) {
 	attrs := make([]pgtypes.CompositeAttribute, len(fieldTypes))
 	for i, fieldType := range fieldTypes {
+		_, resolvedType, err := nodeResolvableTypeReference(ctx, fieldType.Type, false)
+		if err != nil {
+			return nil, err
+		}
+		if resolvedType == nil {
+			return nil, errors.Errorf("return table field type could not be resolved")
+		}
 		attrs[i] = pgtypes.NewCompositeAttribute(nil, id.Null, fieldType.Name.String(),
-			id.NewType("", fieldType.Type.SQLString()), -1, int16(i), "")
+			resolvedType.ID, resolvedType.GetAttTypMod(), int16(i), "")
 	}
 
 	typeIdString := "table("
@@ -289,7 +299,7 @@ func createAnonymousCompositeType(fieldTypes []tree.SimpleColumnDef) *pgtypes.Do
 	// NOTE: there is no schema needed, since these types are anonymous and can't be directly referenced
 	typeId := id.NewType("", typeIdString)
 
-	return pgtypes.NewCompositeType(context.Background(), id.Null, id.NullType, typeId, attrs)
+	return pgtypes.NewCompositeType(context.Background(), id.Null, id.NullType, typeId, attrs), nil
 }
 
 // handleLanguageSQLAs handles parsing SQL definition strings in both CREATE FUNCTION and CREATE PROCEDURE
