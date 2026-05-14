@@ -1918,12 +1918,33 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 31,
       "scriptName": "Covering Composite Index",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0031-select-*-from-test-join",
       "suggestedId": "index-test-testbasicindexing-0031-select-*-from-test-join",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "select * from test join jointable on test.v1 = jointable.v3 and test.v2 = jointable.v4 order by 1",
       "querySha256": "6df346c8c97c07d790bfc42039c4410a2be45885619a2da8578e7c074560e51c",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "12"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "22"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "22"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1944,12 +1965,27 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 33,
       "scriptName": "Covering Composite Index",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0033-select-*-from-test-where",
       "suggestedId": "index-test-testbasicindexing-0033-select-*-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test WHERE v1 > 2 AND v2 = 24 ORDER BY pk;",
       "querySha256": "98d02120128d0e50e62e2a7e06d8ba1de350139bca1558d01ba260cc9f75af6f",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "14"
+          },
+          {
+            "value": "4"
+          },
+          {
+            "value": "24"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1957,12 +1993,27 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 34,
       "scriptName": "Covering Composite Index",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0034-select-*-from-test-where",
       "suggestedId": "index-test-testbasicindexing-0034-select-*-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test WHERE v1 >= 4 AND v2 = 25 ORDER BY pk;",
       "querySha256": "a6e18287c20666278c81898c68616ae28e6911a27ef62aab3c2366def01e8264",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "15"
+          },
+          {
+            "value": "5"
+          },
+          {
+            "value": "25"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1970,12 +2021,27 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 35,
       "scriptName": "Covering Composite Index",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0035-select-*-from-test-where",
       "suggestedId": "index-test-testbasicindexing-0035-select-*-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test WHERE v1 < 3 AND v2 = 21 ORDER BY pk;",
       "querySha256": "dc51228582df97dc521e767d83c083c426f45ff37d69c060a857cb0a58867eb0",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "11"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "21"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1983,12 +2049,27 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 36,
       "scriptName": "Covering Composite Index",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0036-select-*-from-test-where",
       "suggestedId": "index-test-testbasicindexing-0036-select-*-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test WHERE v1 <= 3 AND v2 = 22 ORDER BY pk;",
       "querySha256": "b6465a9e02ed7ed7a11ca3343a650ba115c527ccdec05015fbdb8e713b3dadc3",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "12"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "22"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1996,12 +2077,27 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 37,
       "scriptName": "Covering Composite Index",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0037-select-*-from-test-where",
       "suggestedId": "index-test-testbasicindexing-0037-select-*-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test WHERE v1 = 2 AND v2 < 23 ORDER BY pk;",
       "querySha256": "e1619bdc91531b5ad7d65afc02f408b3b27acf8c77a5d18e241d67cddaee4cdf",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "12"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "22"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -2009,12 +2105,15 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 38,
       "scriptName": "Covering Composite Index",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0038-select-*-from-test-where",
       "suggestedId": "index-test-testbasicindexing-0038-select-*-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test WHERE v1 = 2 AND v2 < 22 ORDER BY pk;",
       "querySha256": "9c8c96a2ce8366d3989c35f693634f42859548b7ff84b304f5a4b50931c5d342",
-      "needsCleanup": true,
+      "expectedRows": [],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -2022,12 +2121,38 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 39,
       "scriptName": "Covering Composite Index",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0039-select-*-from-test-where",
       "suggestedId": "index-test-testbasicindexing-0039-select-*-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test WHERE v1 > 2 AND v2 < 25 ORDER BY pk;",
       "querySha256": "be48fae66fcbde7ba962664fcbbe42e1b1f35fe77224dd260858bd94512b6d20",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "13"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "23"
+          }
+        ],
+        [
+          {
+            "value": "14"
+          },
+          {
+            "value": "4"
+          },
+          {
+            "value": "24"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -2035,12 +2160,27 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 40,
       "scriptName": "Covering Composite Index",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0040-select-*-from-test-where",
       "suggestedId": "index-test-testbasicindexing-0040-select-*-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test WHERE v1 >= 4 AND v2 <= 24 ORDER BY pk;",
       "querySha256": "3294213d7e4c5c2a6e7cd022c4fc80de6688114037c4e3814a73218f0ad71fb2",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "14"
+          },
+          {
+            "value": "4"
+          },
+          {
+            "value": "24"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -2048,12 +2188,27 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 41,
       "scriptName": "Covering Composite Index",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0041-select-*-from-test-where",
       "suggestedId": "index-test-testbasicindexing-0041-select-*-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test WHERE v1 < 3 AND v2 < 22 ORDER BY pk;",
       "querySha256": "c752db43caf80d89b8ffde4221a7da388228549ceacb66596b8aac2b325b81df",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "11"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "21"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -2061,12 +2216,38 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 42,
       "scriptName": "Covering Composite Index",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0042-select-*-from-test-where",
       "suggestedId": "index-test-testbasicindexing-0042-select-*-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test WHERE v1 <= 3 AND v2 < 23 ORDER BY pk;",
       "querySha256": "b8dd9b6694a7e601c9e19b45f81e30137be13265a5374f4b0f4efc24151b35c3",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "11"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "21"
+          }
+        ],
+        [
+          {
+            "value": "12"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "22"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {

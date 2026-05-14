@@ -10,6 +10,15 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### omega - 2026-05-13 21:43 MST
+
+- Lane claimed/read-only first: temp-refresh classification for literal non-Dolt residual rows in `testing/go/index_test.go` / `index_test.oracle-map.json`.
+- Expected files during probe: temp map only; no shared source/map/manifest edits until the generator proves a clean promotable subset.
+- Plan: select internal rows with literal queries and no obvious Dolt/public references, run `--refresh-oracle-map` to a temp map with `--skip-refresh-errors`, then promote only refreshed IDs if the batch is coherent.
+- Result: temp refresh found 67 possible rows but nonliteral setup/source rewrite and planner/HINT rows made that too broad. Narrowed to 11 passing data assertions in `TestBasicIndexing/Covering Composite Index` (`#0031`, `#0033-#0042`); left EXPLAIN rows and Dolt/HINT syntax internal/parked.
+- Validation: clean detached verifier `/tmp/doltgresql-omega-index-clean2` at `366bb514` plus only the index patch passed manifest/cache generated gates after `./postgres/parser/build.sh`. Focused `TestBasicIndexing/Covering_Composite_Index` remains red only on pre-existing EXPLAIN/HINT rows; all 11 newly migrated data rows passed.
+- Boundary: avoid active/parked delta `TestSetStatements` config lane, epsilon trigger SQLSTATE source lane, gamma Issue #2548 lane, alpha/zeta clean verifiers, dirty peer source/harness files, and `third_party/dolt`.
+
 ### omega - 2026-05-13 21:34 MST
 
 - Lane claimed: promote seven pre-classified stable `SHOW` rows in `testing/go/set_test.go:TestSetStatements` (`#0031`, `#0401`, `#0403`, `#0967`, `#0969`, `#1456`, `#1468`).

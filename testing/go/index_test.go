@@ -793,10 +793,7 @@ func TestBasicIndexing(t *testing.T) {
 					},
 				},
 				{
-					Query: "select * from test join jointable on test.v1 = jointable.v3 and test.v2 = jointable.v4 order by 1",
-					Expected: []sql.Row{
-						{12, 2, 22, 2, 22},
-					},
+					Query: "select * from test join jointable on test.v1 = jointable.v3 and test.v2 = jointable.v4 order by 1", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0031-select-*-from-test-join"},
 				},
 				{
 					Query: "explain select * from test join jointable on test.v1 = jointable.v3 and test.v2 = jointable.v4 order by 1",
@@ -813,64 +810,34 @@ func TestBasicIndexing(t *testing.T) {
 					},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 > 2 AND v2 = 24 ORDER BY pk;",
-					Expected: []sql.Row{
-						{14, 4, 24},
-					},
+					Query: "SELECT * FROM test WHERE v1 > 2 AND v2 = 24 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0033-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 >= 4 AND v2 = 25 ORDER BY pk;",
-					Expected: []sql.Row{
-						{15, 5, 25},
-					},
+					Query: "SELECT * FROM test WHERE v1 >= 4 AND v2 = 25 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0034-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 < 3 AND v2 = 21 ORDER BY pk;",
-					Expected: []sql.Row{
-						{11, 1, 21},
-					},
+					Query: "SELECT * FROM test WHERE v1 < 3 AND v2 = 21 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0035-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 <= 3 AND v2 = 22 ORDER BY pk;",
-					Expected: []sql.Row{
-						{12, 2, 22},
-					},
+					Query: "SELECT * FROM test WHERE v1 <= 3 AND v2 = 22 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0036-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 = 2 AND v2 < 23 ORDER BY pk;",
-					Expected: []sql.Row{
-						{12, 2, 22},
-					},
+					Query: "SELECT * FROM test WHERE v1 = 2 AND v2 < 23 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0037-select-*-from-test-where"},
 				},
 				{
-					Query:    "SELECT * FROM test WHERE v1 = 2 AND v2 < 22 ORDER BY pk;",
-					Expected: []sql.Row{},
+					Query: "SELECT * FROM test WHERE v1 = 2 AND v2 < 22 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0038-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 > 2 AND v2 < 25 ORDER BY pk;",
-					Expected: []sql.Row{
-						{13, 3, 23},
-						{14, 4, 24},
-					},
+					Query: "SELECT * FROM test WHERE v1 > 2 AND v2 < 25 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0039-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 >= 4 AND v2 <= 24 ORDER BY pk;",
-					Expected: []sql.Row{
-						{14, 4, 24},
-					},
+					Query: "SELECT * FROM test WHERE v1 >= 4 AND v2 <= 24 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0040-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 < 3 AND v2 < 22 ORDER BY pk;",
-					Expected: []sql.Row{
-						{11, 1, 21},
-					},
+					Query: "SELECT * FROM test WHERE v1 < 3 AND v2 < 22 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0041-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 <= 3 AND v2 < 23 ORDER BY pk;",
-					Expected: []sql.Row{
-						{11, 1, 21},
-						{12, 2, 22},
-					},
+					Query: "SELECT * FROM test WHERE v1 <= 3 AND v2 < 23 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0042-select-*-from-test-where"},
 				},
 			},
 		},
