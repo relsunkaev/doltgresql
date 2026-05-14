@@ -32,7 +32,6 @@ func initBinaryConcatenate() {
 	framework.RegisterBinaryFunction(framework.Operator_BinaryConcatenate, array_cat_array_unknown)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryConcatenate, array_cat_text_array)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryConcatenate, array_cat_unknown_array)
-	framework.RegisterBinaryFunction(framework.Operator_BinaryConcatenate, array_cat_unknown_unknown)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryConcatenate, array_prepend)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryConcatenate, byteacat)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryConcatenate, bitcat)
@@ -111,14 +110,6 @@ var array_cat_unknown_array = framework.Function2{
 	Name:       "array_cat",
 	Return:     pgtypes.AnyArray,
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Unknown, pgtypes.AnyArray},
-	Strict:     false,
-	Callable:   array_cat_callable,
-}
-
-var array_cat_unknown_unknown = framework.Function2{
-	Name:       "array_cat",
-	Return:     pgtypes.TextArray,
-	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Unknown, pgtypes.Unknown},
 	Strict:     false,
 	Callable:   array_cat_callable,
 }
