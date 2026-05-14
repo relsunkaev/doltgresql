@@ -1,5 +1,5 @@
 {
-  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map limit_test.go --force-postgres-oracle",
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map limit_test.go",
   "sourceFile": "testing/go/limit_test.go",
   "defaultOracle": "internal",
   "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
@@ -51,15 +51,38 @@
       "source": "testing/go/limit_test.go:TestLimitOffset",
       "ordinal": 2,
       "scriptName": "basic limit tests",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "limit-test-testlimitoffset-0002-select-*-from-t-limit",
       "suggestedId": "limit-test-testlimitoffset-0002-select-*-from-t-limit",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM t LIMIT $1",
       "querySha256": "f8cfa46927233b2416369ff07c329207532f25f8473df746826c0a48182daf0a",
-      "nonLiteral": [
-        "BindVars"
+      "bindVars": [
+        {
+          "kind": "int",
+          "value": "2"
+        }
       ],
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {

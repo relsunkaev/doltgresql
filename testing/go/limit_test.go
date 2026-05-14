@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 func TestLimitOffset(t *testing.T) {
@@ -34,8 +32,7 @@ func TestLimitOffset(t *testing.T) {
 				},
 				{
 					Query:    `SELECT * FROM t LIMIT $1`,
-					BindVars: []interface{}{int64(2)},
-					Expected: []sql.Row{{1, 1}, {2, 2}},
+					BindVars: []interface{}{int64(2)}, PostgresOracle: ScriptTestPostgresOracle{ID: "limit-test-testlimitoffset-0002-select-*-from-t-limit"},
 				},
 				{
 					Query: `SELECT * FROM t LIMIT 2 OFFSET 2`, PostgresOracle: ScriptTestPostgresOracle{ID: "limit-test-testlimitoffset-0003-select-*-from-t-limit"},
