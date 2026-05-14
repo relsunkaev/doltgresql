@@ -26,6 +26,8 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/comments"
 	"github.com/dolthub/doltgresql/server/functions"
@@ -285,7 +287,7 @@ func (c *DropTable) inheritanceExpandedDropTables(ctx *sql.Context) ([]sql.Node,
 				return nil, err
 			}
 			if _, explicit := explicitKeys[childKey]; !c.cascade && !explicit {
-				return nil, errors.Errorf("cannot drop table %s because table %s depends on table %s", resolved.Name(), child.Name(), resolved.Name())
+				return nil, pgerror.Newf(pgcode.DependentObjectsStillExist, "cannot drop table %s because table %s depends on table %s", resolved.Name(), child.Name(), resolved.Name())
 			}
 			if _, ok := seen[childKey]; ok {
 				continue
