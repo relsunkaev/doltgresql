@@ -17,8 +17,6 @@ package ast
 import (
 	"strings"
 
-	"github.com/cockroachdb/errors"
-
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/core"
@@ -84,8 +82,9 @@ func nodeAlterTableDropConstraint(
 	tableName vitess.TableName,
 	ifExists bool) (*vitess.DDL, error) {
 
+	constraintName := core.EncodePhysicalConstraintName(node.Constraint.String())
 	if node.DropBehavior == tree.DropCascade {
-		return nil, errors.Errorf("CASCADE is not yet supported for drop constraint")
+		constraintName = EncodeDropConstraintCascade(constraintName)
 	}
 
 	return &vitess.DDL{
@@ -96,7 +95,7 @@ func nodeAlterTableDropConstraint(
 		ConstraintIfExists: node.IfExists,
 		TableSpec: &vitess.TableSpec{
 			Constraints: []*vitess.ConstraintDefinition{
-				{Name: core.EncodePhysicalConstraintName(node.Constraint.String())},
+				{Name: constraintName},
 			},
 		},
 	}, nil

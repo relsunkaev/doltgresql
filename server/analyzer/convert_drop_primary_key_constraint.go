@@ -22,6 +22,9 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	"github.com/dolthub/go-mysql-server/sql/transform"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
+	"github.com/dolthub/doltgresql/server/ast"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
 	pgnodes "github.com/dolthub/doltgresql/server/node"
 	"github.com/dolthub/doltgresql/server/tablemetadata"
@@ -43,23 +46,48 @@ func convertDropPrimaryKeyConstraint(ctx *sql.Context, _ *analyzer.Analyzer, n s
 		}
 
 		table := rt.Table
+		dropConstraintName, cascade := ast.DecodeDropConstraintCascade(dropConstraint.Name)
+		if cascade {
+			dropConstraint = dropConstraintWithName(dropConstraint, dropConstraintName)
+		}
 		if it, ok := table.(sql.IndexAddressableTable); ok {
 			indexes, err := it.GetIndexes(ctx)
 			if err != nil {
 				return nil, transform.SameTree, err
 			}
 			for _, index := range indexes {
-				if index.ID() == "PRIMARY" && indexNameMatchesDropConstraint(index, rt.Table, dropConstraint.Name) {
+				if index.ID() == "PRIMARY" && indexNameMatchesDropConstraint(index, rt.Table, dropConstraintName) {
+					dependentForeignKeys, err := dependentForeignKeysForPrimaryKey(ctx, table)
+					if err != nil {
+						return nil, transform.SameTree, err
+					}
+					if len(dependentForeignKeys) > 0 && !cascade {
+						return nil, transform.SameTree, pgerror.Newf(
+							pgcode.DependentObjectsStillExist,
+							"cannot drop constraint %s on table %s because other objects depend on it",
+							dropConstraintName,
+							table.Name(),
+						)
+					}
 					alterDropPk := plan.NewAlterDropPk(rt.Database(), rt)
 					newNode, err := alterDropPk.WithTargetSchema(rt.Schema(ctx))
 					if err != nil {
 						return n, transform.SameTree, err
+					}
+					if len(dependentForeignKeys) > 0 {
+						return plan.NewBlock([]sql.Node{
+							newNode,
+							pgnodes.NewDropDependentForeignKeys(dependentForeignKeys),
+						}), transform.NewTree, nil
 					}
 					return newNode, transform.NewTree, nil
 				}
 			}
 		}
 
+		if cascade {
+			return dropConstraint, transform.NewTree, nil
+		}
 		return n, transform.SameTree, nil
 	})
 }
@@ -113,4 +141,57 @@ func wrapCreatePrimaryKeyMetadata(nodes []sql.Node) ([]sql.Node, bool) {
 
 func indexNameMatchesDropConstraint(index sql.Index, table sql.Table, name string) bool {
 	return strings.EqualFold(indexmetadata.DisplayNameForTable(index, table), name)
+}
+
+func dropConstraintWithName(dropConstraint *plan.DropConstraint, name string) *plan.DropConstraint {
+	copied := *dropConstraint
+	copied.Name = name
+	return &copied
+}
+
+func dependentForeignKeysForPrimaryKey(ctx *sql.Context, table sql.Table) ([]sql.ForeignKeyConstraint, error) {
+	primaryKeyColumns := primaryKeyColumnNames(ctx, table)
+	if len(primaryKeyColumns) == 0 {
+		return nil, nil
+	}
+
+	foreignKeyTable, ok := table.(sql.ForeignKeyTable)
+	if !ok {
+		return nil, nil
+	}
+	referencedForeignKeys, err := foreignKeyTable.GetReferencedForeignKeys(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	dependentForeignKeys := make([]sql.ForeignKeyConstraint, 0, len(referencedForeignKeys))
+	for _, foreignKey := range referencedForeignKeys {
+		if columnListsEqualFold(foreignKey.ParentColumns, primaryKeyColumns) {
+			dependentForeignKeys = append(dependentForeignKeys, foreignKey)
+		}
+	}
+	return dependentForeignKeys, nil
+}
+
+func primaryKeyColumnNames(ctx *sql.Context, table sql.Table) []string {
+	schema := table.Schema(ctx)
+	columnNames := make([]string, 0, len(schema))
+	for _, column := range schema {
+		if column.PrimaryKey {
+			columnNames = append(columnNames, column.Name)
+		}
+	}
+	return columnNames
+}
+
+func columnListsEqualFold(left []string, right []string) bool {
+	if len(left) != len(right) {
+		return false
+	}
+	for i := range left {
+		if !strings.EqualFold(left[i], right[i]) {
+			return false
+		}
+	}
+	return true
 }
