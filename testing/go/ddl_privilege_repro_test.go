@@ -2406,13 +2406,13 @@ func TestDropExtensionRequiresOwnershipRepro(t *testing.T) {
 	})
 }
 
-// TestCreateExtensionWithSchemaRequiresSchemaCreatePrivilegeRepro reproduces a
-// security bug: Doltgres allows a role to install extension objects into a
-// schema where it only has USAGE.
+// TestCreateExtensionWithSchemaRequiresSchemaCreatePrivilegeRepro captures
+// PostgreSQL parity: CREATE EXTENSION WITH SCHEMA requires database CREATE
+// privilege, but not CREATE privilege on the target schema.
 func TestCreateExtensionWithSchemaRequiresSchemaCreatePrivilegeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
-			Name: "CREATE EXTENSION WITH SCHEMA requires schema CREATE privilege",
+			Name: "CREATE EXTENSION WITH SCHEMA uses database CREATE privilege",
 			SetUpScript: []string{
 				`CREATE USER extension_schema_intruder PASSWORD 'intruder';`,
 				`CREATE SCHEMA extension_private_schema;`,
@@ -2421,7 +2421,8 @@ func TestCreateExtensionWithSchemaRequiresSchemaCreatePrivilegeRepro(t *testing.
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `CREATE EXTENSION hstore WITH SCHEMA extension_private_schema;`,
+					Query:    `CREATE EXTENSION hstore WITH SCHEMA extension_private_schema;`,
+					Expected: []sql.Row{},
 
 					Username: `extension_schema_intruder`,
 					Password: `intruder`, PostgresOracle: ScriptTestPostgresOracle{
@@ -2429,7 +2430,7 @@ func TestCreateExtensionWithSchemaRequiresSchemaCreatePrivilegeRepro(t *testing.
 						// TestDropTableRequiresOwnershipDespiteAllPrivilegesRepro reproduces a
 						// PostgreSQL authorization bug: GRANT ALL PRIVILEGES ON TABLE does not transfer
 						// ownership and should not allow the grantee to DROP the table.
-						ID: "ddl-privilege-repro-test-testcreateextensionwithschemarequiresschemacreateprivilegerepro-0001-create-extension-hstore-with-schema", Compare: "sqlstate"},
+						ID: "ddl-privilege-repro-test-testcreateextensionwithschemarequiresschemacreateprivilegerepro-0001-create-extension-hstore-with-schema", Compare: "structural"},
 				},
 			},
 		},

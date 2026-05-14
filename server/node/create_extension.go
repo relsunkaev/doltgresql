@@ -108,9 +108,6 @@ func (c *CreateExtension) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, err
 	if err != nil {
 		return nil, err
 	}
-	if err = checkSchemaCreatePrivilege(ctx, targetNamespace.SchemaName()); err != nil {
-		return nil, err
-	}
 	if createExtensionSkipsSQL(c.Name) {
 		if err = c.installBuiltinExtensionObjects(ctx, targetNamespace); err != nil {
 			return nil, err
