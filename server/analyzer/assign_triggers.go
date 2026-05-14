@@ -47,7 +47,7 @@ func AssignTriggers(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, scope
 	return pgtransform.NodeWithOpaque(ctx, node, func(ctx *sql.Context, node sql.Node) (sql.Node, transform.TreeIdentity, error) {
 		switch node := node.(type) {
 		case *plan.DeleteFrom, *plan.InsertInto, *plan.Truncate, *plan.Update:
-			triggerInfo, err := getTriggerInformation(ctx, node)
+			triggerInfo, err := getTriggerInformation(ctx, node, a.Overrides)
 			if err != nil {
 				return nil, transform.NewTree, err
 			}
@@ -189,7 +189,7 @@ func (ti triggerInformation) isEmpty() bool {
 }
 
 // getTriggerInformation loads information that is common for the different trigger types.
-func getTriggerInformation(ctx *sql.Context, node sql.Node) (triggerInformation, error) {
+func getTriggerInformation(ctx *sql.Context, node sql.Node, overrides sql.EngineOverrides) (triggerInformation, error) {
 	var tbl sql.Table
 	var err error
 	switch node := node.(type) {
@@ -277,7 +277,12 @@ func getTriggerInformation(ctx *sql.Context, node sql.Node) (triggerInformation,
 					matchesEventType = true
 				}
 			case *plan.Update:
-				if event.Type == triggers.TriggerEventType_Update {
+				updateNode := node.(*plan.Update)
+				matchesUpdate, err := updateTriggerEventMatches(ctx, updateNode, event, info.sch, dbName, tbl.Name(), overrides)
+				if err != nil {
+					return triggerInformation{}, err
+				}
+				if matchesUpdate {
 					matchesEventType = true
 				}
 			}
@@ -303,6 +308,90 @@ func getTriggerInformation(ctx *sql.Context, node sql.Node) (triggerInformation,
 		}
 	}
 	return info, nil
+}
+
+func updateTriggerEventMatches(ctx *sql.Context, update *plan.Update, event triggers.TriggerEvent, schema sql.Schema, dbName string, tableName string, overrides sql.EngineOverrides) (bool, error) {
+	if event.Type != triggers.TriggerEventType_Update {
+		return false, nil
+	}
+	if len(event.ColumnNames) == 0 {
+		return true, nil
+	}
+
+	updatedColumns := explicitUpdateColumnSet(update)
+	if len(updatedColumns) == 0 {
+		return false, nil
+	}
+
+	generatedDeps, err := generatedColumnDependencies(ctx, dbName, tableName, schema, overrides)
+	if err != nil {
+		return false, err
+	}
+	for _, columnName := range event.ColumnNames {
+		columnKey := strings.ToLower(columnName)
+		if _, ok := updatedColumns[columnKey]; ok {
+			return true, nil
+		}
+		for dependency := range generatedDeps[columnKey] {
+			if _, ok := updatedColumns[dependency]; ok {
+				return true, nil
+			}
+		}
+	}
+	return false, nil
+}
+
+func explicitUpdateColumnSet(update *plan.Update) map[string]struct{} {
+	updateSource, ok := update.Child.(*plan.UpdateSource)
+	if !ok || updateSource.UpdateExprs == nil {
+		return nil
+	}
+
+	columnSet := make(map[string]struct{})
+	for _, expr := range updateSource.UpdateExprs.ExplicitUpdateExprs() {
+		setField, ok := expr.(*expression.SetField)
+		if !ok {
+			continue
+		}
+		getField, ok := setField.LeftChild.(*expression.GetField)
+		if !ok {
+			continue
+		}
+		columnSet[strings.ToLower(getField.Name())] = struct{}{}
+	}
+	return columnSet
+}
+
+func generatedColumnDependencies(ctx *sql.Context, dbName string, tableName string, schema sql.Schema, overrides sql.EngineOverrides) (map[string]map[string]struct{}, error) {
+	dependencies := make(map[string]map[string]struct{})
+	hasGeneratedColumn := false
+	for _, col := range schema {
+		if col.Generated != nil && !col.AutoIncrement {
+			hasGeneratedColumn = true
+			break
+		}
+	}
+	if !hasGeneratedColumn {
+		return dependencies, nil
+	}
+
+	builder := planbuilder.NewBuilderForColumnDefaultResolution(ctx, overrides)
+	resolvedSchema := builder.ResolveSchemaDefaults(dbName, tableName, schema)
+	for _, col := range resolvedSchema {
+		if col.Generated == nil || col.AutoIncrement {
+			continue
+		}
+		columnKey := strings.ToLower(col.Name)
+		deps := make(map[string]struct{})
+		transform.InspectExpr(ctx, col.Generated, func(ctx *sql.Context, expr sql.Expression) bool {
+			if getField, ok := expr.(*expression.GetField); ok {
+				deps[strings.ToLower(getField.Name())] = struct{}{}
+			}
+			return true
+		})
+		dependencies[columnKey] = deps
+	}
+	return dependencies, nil
 }
 
 // hasJoinNode returns true if |node| or any child is a JoinNode.

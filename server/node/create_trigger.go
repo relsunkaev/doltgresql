@@ -28,6 +28,8 @@ import (
 	"github.com/dolthub/doltgresql/core/functions"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/core/triggers"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/comments"
 	"github.com/dolthub/doltgresql/server/plpgsql"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -116,6 +118,9 @@ func (c *CreateTrigger) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error
 	if err = checkTableTriggerPrivilege(ctx, doltdb.TableName{Name: c.Name.TableName(), Schema: schema}); err != nil {
 		return nil, err
 	}
+	if err = c.validateUpdateOfColumns(ctx, schema); err != nil {
+		return nil, err
+	}
 	if err = c.validateGeneratedColumnWhen(ctx, schema); err != nil {
 		return nil, err
 	}
@@ -161,6 +166,37 @@ func (c *CreateTrigger) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error
 	return sql.RowsToRowIter(), nil
 }
 
+func (c *CreateTrigger) validateUpdateOfColumns(ctx *sql.Context, schema string) error {
+	updateColumns := make(map[string]string)
+	for _, event := range c.Events {
+		if event.Type != triggers.TriggerEventType_Update {
+			continue
+		}
+		for _, columnName := range event.ColumnNames {
+			updateColumns[strings.ToLower(columnName)] = columnName
+		}
+	}
+	if len(updateColumns) == 0 {
+		return nil
+	}
+
+	table, err := core.GetSqlTableFromContext(ctx, "", doltdb.TableName{
+		Name:   c.Name.TableName(),
+		Schema: schema,
+	})
+	if err != nil || table == nil {
+		return err
+	}
+
+	for _, col := range table.Schema(ctx) {
+		delete(updateColumns, strings.ToLower(col.Name))
+	}
+	for _, columnName := range updateColumns {
+		return pgerror.Newf(pgcode.UndefinedColumn, `column "%s" of relation "%s" does not exist`, columnName, c.Name.TableName())
+	}
+	return nil
+}
+
 func (c *CreateTrigger) validateGeneratedColumnWhen(ctx *sql.Context, schema string) error {
 	if c.Timing != triggers.TriggerTiming_Before || !c.ForEachRow || len(c.When) == 0 {
 		return nil
@@ -191,7 +227,7 @@ func (c *CreateTrigger) validateGeneratedColumnWhen(ctx *sql.Context, schema str
 				continue
 			}
 			if _, ok = generatedColumns[name]; ok {
-				return errors.Errorf(`BEFORE trigger WHEN cannot reference generated column "%s"`, name)
+				return pgerror.Newf(pgcode.InvalidObjectDefinition, `BEFORE trigger WHEN cannot reference generated column "%s"`, name)
 			}
 		}
 	}

@@ -266,6 +266,7 @@ func castSQLError(err error) error {
 		pgcode.DuplicateObject,
 		pgcode.FeatureNotSupported,
 		pgcode.Grouping,
+		pgcode.InvalidObjectDefinition,
 		pgcode.InvalidTableDefinition,
 		pgcode.InvalidParameterValue,
 		pgcode.InsufficientPrivilege,
@@ -273,6 +274,7 @@ func castSQLError(err error) error {
 		pgcode.ObjectNotInPrerequisiteState,
 		pgcode.RaiseException,
 		pgcode.Syntax,
+		pgcode.UndefinedColumn,
 		pgcode.UndefinedFunction,
 		pgcode.UndefinedObject,
 		pgcode.Windowing:

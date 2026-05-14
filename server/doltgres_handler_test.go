@@ -23,8 +23,17 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
+
+func TestCastSQLErrorPreservesDDLPGCodes(t *testing.T) {
+	for _, code := range []pgcode.Code{pgcode.InvalidObjectDefinition, pgcode.UndefinedColumn} {
+		err := pgerror.New(code, "ddl validation error")
+		require.Equal(t, code, pgerror.GetPGCode(castSQLError(err)))
+	}
+}
 
 func TestExecutionResultFieldsUsesSuppliedFields(t *testing.T) {
 	schema := sql.Schema{{Name: "from_schema", Type: pgtypes.Int32}}
