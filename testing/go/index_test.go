@@ -214,7 +214,18 @@ func TestJsonbGinPostingChunkLookupGate(t *testing.T) {
 				{
 					Query: `EXPLAIN SELECT id FROM jsonb_gin_lookup
 WHERE doc @> '{"a":1}'
-ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testjsonbginpostingchunklookupgate-0001-explain-select-id-from-jsonb_gin_lookup", ColumnModes: []string{"explain"}},
+ORDER BY id;`,
+					Expected: []sql.Row{
+						{"Project"},
+						{" ├─ columns: [jsonb_gin_lookup.id]"},
+						{" └─ Sort(jsonb_gin_lookup.id ASC)"},
+						{"     └─ Filter"},
+						{`         ├─ jsonb_gin_lookup.doc @> '{"a":1}'`},
+						{"         └─ IndexedTableAccess(jsonb_gin_lookup)"},
+						{"             ├─ index: [jsonb_gin(doc)]"},
+						{"             ├─ filters: [{[jsonb_gin_lookup_idx intersect 2 token(s), jsonb_gin_lookup_idx intersect 2 token(s)]}]"},
+						{"             └─ columns: [id doc]"},
+					},
 				},
 				{
 					Query: `SELECT id FROM jsonb_gin_lookup

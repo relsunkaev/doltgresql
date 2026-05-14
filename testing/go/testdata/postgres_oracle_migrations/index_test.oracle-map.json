@@ -235,37 +235,13 @@
       "source": "testing/go/index_test.go:TestJsonbGinPostingChunkLookupGate",
       "ordinal": 1,
       "scriptName": "PostgreSQL jsonb gin indexed lookup and recheck",
-      "oracle": "postgres",
-      "postgresId": "index-test-testjsonbginpostingchunklookupgate-0001-explain-select-id-from-jsonb_gin_lookup",
+      "oracle": "internal",
       "suggestedId": "index-test-testjsonbginpostingchunklookupgate-0001-explain-select-id-from-jsonb_gin_lookup",
-      "compare": "structural",
-      "columnModes": [
-        "explain"
-      ],
       "expectedKind": "rows",
       "query": "EXPLAIN SELECT id FROM jsonb_gin_lookup\nWHERE doc @> '{\"a\":1}'\nORDER BY id;",
       "querySha256": "de2d4f99d083e3ca9044c9aa87c9cd2c254bcae7973568c955b492aa672da798",
-      "expectedRows": [
-        [
-          {
-            "value": "Sort  (cost=1.07..1.08 rows=1 width=4)"
-          }
-        ],
-        [
-          {
-            "value": "  Sort Key: id"
-          }
-        ],
-        [
-          {
-            "value": "  ->  Seq Scan on jsonb_gin_lookup  (cost=0.00..1.06 rows=1 width=4)"
-          }
-        ],
-        [
-          {
-            "value": "        Filter: (doc @> '{\"a\": 1}'::jsonb)"
-          }
-        ]
+      "nonLiteral": [
+        "Expected"
       ],
       "needsCleanup": false,
       "cleanupProvided": false

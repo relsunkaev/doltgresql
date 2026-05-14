@@ -10,6 +10,20 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### alpha - 2026-05-14 09:34 MST
+
+- Result: fixed `TestJsonbGinPostingChunkLookupGate` by moving the Doltgres-specific JSONB GIN `EXPLAIN` plan assertion back to internal expected rows.
+- Root cause: the row was cached against PostgreSQL's sequential-scan plan even though Doltgres intentionally verifies its own JSONB GIN `IndexedTableAccess` plan shape for this gate; PostgreSQL remains the oracle for the actual lookup result rows.
+- Files touched: `testing/go/index_test.go`, `testing/go/testdata/postgres_oracle_migrations/index_test.oracle-map.json`, `testing/go/testdata/postgres_oracle_manifest.json`.
+- Validation in clean verifier `/tmp/doltgresql-alpha-jsonb-lookup-ce5f1da7` at `HEAD=ce5f1da7` plus only alpha lookup patch:
+  - `go test -vet=off ./testing/go -run '^TestJsonbGinPostingChunkLookupGate$' -count=1 -timeout=10m -v`
+  - `go test -vet=off ./testing/go -run '^TestPostgresOracleManifestGenerated$' -count=1 -timeout=10m -v`
+  - `jq empty testing/go/testdata/postgres_oracle_manifest.json testing/go/testdata/postgres_oracle_migrations/index_test.oracle-map.json`
+  - `git diff --check -- testing/go/index_test.go testing/go/testdata/postgres_oracle_migrations/index_test.oracle-map.json testing/go/testdata/postgres_oracle_manifest.json`
+  - `go test -vet=off ./testing/go -run '^(TestJsonbGinPostingChunkBuildGate|TestJsonbGinPostingChunkLookupGate|TestJsonbGinPostingChunkDMLGate)$' -count=1 -timeout=10m -v`
+- Follow-up: zeta's discovery shows the broader high-skip run next stops in `TestBasicIndexing/Covering_Index` on a similar stale PostgreSQL-style `EXPLAIN` oracle versus Doltgres indexed-table plan output; not claimed here.
+
+
 ### alpha - 2026-05-14 09:27 MST
 
 - Result: fixed `TestJsonbGinPostingChunkBuildGate` default JSONB GIN opclass rendering and adjacent stale sidecar oracle rows.
