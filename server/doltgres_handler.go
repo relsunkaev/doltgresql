@@ -53,6 +53,7 @@ import (
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
 	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
+	pganalyzer "github.com/dolthub/doltgresql/server/analyzer"
 	"github.com/dolthub/doltgresql/server/ast"
 	"github.com/dolthub/doltgresql/server/auth"
 	pgexprs "github.com/dolthub/doltgresql/server/expression"
@@ -143,6 +144,15 @@ func (h *DoltgresHandler) ComBind(ctx context.Context, c *mysql.Conn, query stri
 	if err != nil {
 		if printErrorStackTraces {
 			fmt.Printf("unable to bind query plan: %+v\n", err)
+		}
+		return nil, nil, err
+	}
+	queryPlan, _, err = pgtransform.NodeWithOpaque(sqlCtx, queryPlan, func(ctx *sql.Context, node sql.Node) (sql.Node, transform.TreeIdentity, error) {
+		return pganalyzer.ValidateOnConflictArbiter(ctx, nil, node, nil, nil, nil)
+	})
+	if err != nil {
+		if printErrorStackTraces {
+			fmt.Printf("unable to validate ON CONFLICT arbiter: %+v\n", err)
 		}
 		return nil, nil, err
 	}

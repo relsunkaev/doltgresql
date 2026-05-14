@@ -383,7 +383,7 @@ func wrapDestinationForArbiterPreCheck(ctx *sql.Context, insert *plan.InsertInto
 		if !ok {
 			return n, transform.SameTree, nil
 		}
-		wrapped, wasWrapped, err := pgnodes.WrapOnConflictDoNothingArbiterTable(ctx, resolved.Table, targetSet)
+		wrapped, wasWrapped, err := wrapTableForArbiterPreCheck(ctx, resolved.Table, targetSet)
 		if err != nil || !wasWrapped {
 			return n, transform.SameTree, err
 		}
@@ -404,6 +404,17 @@ func wrapDestinationForArbiterPreCheck(ctx *sql.Context, insert *plan.InsertInto
 		return nil, err
 	}
 	return out, nil
+}
+
+func wrapTableForArbiterPreCheck(ctx *sql.Context, table sql.Table, targetSet map[string]struct{}) (sql.Table, bool, error) {
+	if processTable, ok := table.(*plan.ProcessTable); ok {
+		wrapped, wasWrapped, err := pgnodes.WrapOnConflictDoNothingArbiterTable(ctx, processTable.Underlying(), targetSet)
+		if err != nil || !wasWrapped {
+			return table, false, err
+		}
+		return plan.NewProcessTable(wrapped, processTable.OnPartitionDone, processTable.OnPartitionStart, processTable.OnRowNext), true, nil
+	}
+	return pgnodes.WrapOnConflictDoNothingArbiterTable(ctx, table, targetSet)
 }
 
 func wrapOnConflictUpdateWhereReturning(ctx *sql.Context, insert *plan.InsertInto, conflict *tree.OnConflict) (*plan.InsertInto, bool, error) {
