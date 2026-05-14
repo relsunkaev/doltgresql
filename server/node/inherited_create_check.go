@@ -23,6 +23,8 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/types"
 
 	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 )
 
 // InheritedCreateCheck creates CHECK constraints for a parent table and each
@@ -151,7 +153,7 @@ func validateInheritedCreateCheckRows(ctx *sql.Context, b sql.NodeExecBuilder, r
 			return err
 		}
 		if sql.IsFalse(res) {
-			return errors.Errorf("check constraint %q of relation %q is violated by some row", core.DecodePhysicalConstraintName(node.Check.Name), node.Table.Name())
+			return pgerror.Newf(pgcode.CheckViolation, "check constraint %q of relation %q is violated by some row", core.DecodePhysicalConstraintName(node.Check.Name), node.Table.Name())
 		}
 	}
 }
