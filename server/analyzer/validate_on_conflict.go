@@ -451,7 +451,7 @@ func wrapOnConflictUpdateExpressions(ctx *sql.Context, insert *plan.InsertInto, 
 				changed = true
 			}
 		}
-		wrappedRight = pgexprs.NewOnConflictUpdateSource(wrappedRight, explicitExprCount, target.schemaLen, target.targetIndexes)
+		wrappedRight = pgexprs.NewOnConflictUpdateSource(wrappedRight, target.schemaLen, target.targetIndexes)
 		replaced, err := setField.WithChildren(ctx, setField.LeftChild, wrappedRight)
 		if err != nil {
 			return nil, false, err

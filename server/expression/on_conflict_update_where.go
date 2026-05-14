@@ -31,12 +31,11 @@ type onConflictUpdateWhereStateKey struct{}
 // OnConflictUpdateWhereState tracks whether the current ON CONFLICT row was
 // skipped by the DO UPDATE WHERE predicate.
 type OnConflictUpdateWhereState struct {
-	skipped                bool
-	originalRow            sql.Row
-	remainingOriginalExprs int
-	whereEvaluated         bool
-	whereMatches           bool
-	seenTargetRows         map[string]struct{}
+	skipped        bool
+	originalRow    sql.Row
+	whereEvaluated bool
+	whereMatches   bool
+	seenTargetRows map[string]struct{}
 }
 
 // NewOnConflictUpdateWhereState returns a fresh ON CONFLICT WHERE state.
@@ -69,16 +68,16 @@ func (s *OnConflictUpdateWhereState) ConsumeSkipped() bool {
 	}
 	skipped := s.skipped
 	s.skipped = false
+	s.clearOriginalRow()
 	return skipped
 }
 
-func (s *OnConflictUpdateWhereState) evalOriginalRow(ctx *sql.Context, row sql.Row, explicitExprCount int, destinationLen int, targetIndexes []int, child sql.Expression) (interface{}, error) {
+func (s *OnConflictUpdateWhereState) evalOriginalRow(ctx *sql.Context, row sql.Row, destinationLen int, targetIndexes []int, child sql.Expression) (interface{}, error) {
 	if s == nil {
 		return child.Eval(ctx, row)
 	}
-	if s.originalRow == nil || s.remainingOriginalExprs <= 0 {
+	if s.originalRow == nil {
 		s.originalRow = row.Copy()
-		s.remainingOriginalExprs = explicitExprCount
 		s.whereEvaluated = false
 		s.whereMatches = false
 		if err := s.markTargetRow(row, destinationLen, targetIndexes); err != nil {
@@ -86,17 +85,11 @@ func (s *OnConflictUpdateWhereState) evalOriginalRow(ctx *sql.Context, row sql.R
 			return nil, err
 		}
 	}
-	val, err := child.Eval(ctx, s.originalRow)
-	s.remainingOriginalExprs--
-	if s.remainingOriginalExprs <= 0 {
-		s.clearOriginalRow()
-	}
-	return val, err
+	return child.Eval(ctx, s.originalRow)
 }
 
 func (s *OnConflictUpdateWhereState) clearOriginalRow() {
 	s.originalRow = nil
-	s.remainingOriginalExprs = 0
 	s.whereEvaluated = false
 	s.whereMatches = false
 }
@@ -150,23 +143,21 @@ func (s *OnConflictUpdateWhereState) evaluateWhere(ctx *sql.Context, row sql.Row
 // the original ON CONFLICT old+excluded row while applying the result to GMS'
 // mutable update accumulator.
 type OnConflictUpdateSource struct {
-	child             sql.Expression
-	explicitExprCount int
-	destinationLen    int
-	targetIndexes     []int
+	child          sql.Expression
+	destinationLen int
+	targetIndexes  []int
 }
 
 var _ sql.Expression = (*OnConflictUpdateSource)(nil)
 var _ sql.CollationCoercible = (*OnConflictUpdateSource)(nil)
 
 // NewOnConflictUpdateSource returns a new ON CONFLICT source-row wrapper.
-func NewOnConflictUpdateSource(child sql.Expression, explicitExprCount int, destinationLen int, targetIndexes []int) *OnConflictUpdateSource {
+func NewOnConflictUpdateSource(child sql.Expression, destinationLen int, targetIndexes []int) *OnConflictUpdateSource {
 	indexes := append([]int(nil), targetIndexes...)
 	return &OnConflictUpdateSource{
-		child:             child,
-		explicitExprCount: explicitExprCount,
-		destinationLen:    destinationLen,
-		targetIndexes:     indexes,
+		child:          child,
+		destinationLen: destinationLen,
+		targetIndexes:  indexes,
 	}
 }
 
@@ -183,7 +174,7 @@ func (e *OnConflictUpdateSource) CollationCoercibility(ctx *sql.Context) (collat
 // Eval implements sql.Expression.
 func (e *OnConflictUpdateSource) Eval(ctx *sql.Context, row sql.Row) (interface{}, error) {
 	state := onConflictUpdateWhereStateFromContext(ctx)
-	return state.evalOriginalRow(ctx, row, e.explicitExprCount, e.destinationLen, e.targetIndexes, e.child)
+	return state.evalOriginalRow(ctx, row, e.destinationLen, e.targetIndexes, e.child)
 }
 
 // IsNullable implements sql.Expression.
@@ -211,7 +202,7 @@ func (e *OnConflictUpdateSource) WithChildren(ctx *sql.Context, children ...sql.
 	if len(children) != 1 {
 		return nil, sql.ErrInvalidChildrenNumber.New(e, len(children), 1)
 	}
-	return NewOnConflictUpdateSource(children[0], e.explicitExprCount, e.destinationLen, e.targetIndexes), nil
+	return NewOnConflictUpdateSource(children[0], e.destinationLen, e.targetIndexes), nil
 }
 
 // OnConflictUpdateWhere preserves the existing CASE-based lowering of
