@@ -67,7 +67,7 @@ func (s Subscript) Type(ctx *sql.Context) sql.Type {
 	if dt.ID == types.JsonB.ID {
 		return types.JsonB
 	}
-	if dt == types.Name {
+	if dt.ID == types.Name.ID {
 		return types.InternalChar
 	}
 	baseType, err := dt.ResolveArrayBaseType(ctx)
@@ -139,7 +139,7 @@ func (s Subscript) Eval(ctx *sql.Context, row sql.Row) (interface{}, error) {
 	switch child := childVal.(type) {
 	case string:
 		dt, ok := s.Child.Type(ctx).(*types.DoltgresType)
-		if !ok || dt != types.Name {
+		if !ok || dt.ID != types.Name.ID {
 			return nil, fmt.Errorf("unsupported type %T for subscript", child)
 		}
 
@@ -154,8 +154,11 @@ func (s Subscript) Eval(ctx *sql.Context, row sql.Row) (interface{}, error) {
 
 		// PostgreSQL name uses raw_array_subscript_handler over its fixed byte buffer.
 		// Unlike SQL arrays, this raw subscript path is zero-based.
-		if index < 0 || int(index) >= len(child) {
+		if index < 0 || int(index) >= types.NameLength+1 {
 			return nil, nil
+		}
+		if int(index) >= len(child) {
+			return "\x00", nil
 		}
 		return child[index : index+1], nil
 	default:

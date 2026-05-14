@@ -861,13 +861,19 @@ func NormalizeValToString(dt *types.DoltgresType, v any) any {
 		if v == nil {
 			return nil
 		}
-		var b []byte
-		if v.(int32) == 0 {
-			b = []byte{}
-		} else {
-			b = []byte{uint8(v.(int32))}
+		switch val := v.(type) {
+		case int32:
+			if val == 0 {
+				return "\x00"
+			}
+			v = string([]byte{uint8(val)})
+		case string:
+			if val == "" {
+				return "\x00"
+			}
+			return val
 		}
-		val, err := dt.FormatValue(string(b))
+		val, err := dt.FormatValue(v)
 		if err != nil {
 			panic(err)
 		}

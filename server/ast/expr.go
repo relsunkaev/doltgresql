@@ -749,6 +749,10 @@ func nodeExpr(ctx *Context, node tree.Expr) (vitess.Expr, error) {
 		// TODO: figure out if I can delete this
 		return nil, errors.Errorf("this should probably be deleted (internal error, IndexedVar)")
 	case *tree.IndirectionExpr:
+		if _, ok := node.Expr.(*tree.Array); ok {
+			return nil, pgerror.New(pgcode.Syntax, `syntax error at or near "["`)
+		}
+
 		childExpr, err := nodeExpr(ctx, node.Expr)
 		if err != nil {
 			return nil, err
