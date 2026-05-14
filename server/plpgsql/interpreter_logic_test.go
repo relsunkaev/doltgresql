@@ -108,6 +108,19 @@ func TestParseColumnPercentType(t *testing.T) {
 	require.False(t, ok)
 }
 
+func TestParseTablePercentRowType(t *testing.T) {
+	tableParts, ok := parseTablePercentRowType("public.items%ROWTYPE")
+	require.True(t, ok)
+	require.Equal(t, []string{"public", "items"}, tableParts)
+
+	tableParts, ok = parseTablePercentRowType("items%rowtype")
+	require.True(t, ok)
+	require.Equal(t, []string{"items"}, tableParts)
+
+	_, ok = parseTablePercentRowType("items%type")
+	require.False(t, ok)
+}
+
 func TestCallVoidFunctionWithoutReturnReturnsVoidValue(t *testing.T) {
 	result, err := Call(sql.NewEmptyContext(), testInterpretedFunction{returnType: pgtypes.Void}, nil, nil, nil)
 	require.NoError(t, err)

@@ -313,6 +313,15 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 				return nil, false, err
 			}
 
+			recordSchema, resolvedRowType, err := resolveTablePercentRowType(ctx, iFunc, stack, operation.PrimaryData)
+			if err != nil {
+				return nil, false, err
+			}
+			if resolvedRowType {
+				stack.NewRecord(operation.Target, recordSchema, nil)
+				continue
+			}
+
 			resolvedType, resolvedColumnType, err := resolveColumnPercentType(ctx, iFunc, stack, operation.PrimaryData)
 			if err != nil {
 				return nil, false, err
@@ -1913,6 +1922,35 @@ func parseColumnPercentType(rawTypeName string) (tableParts []string, columnName
 		}
 	}
 	return parts[:len(parts)-1], parts[len(parts)-1], true
+}
+
+func resolveTablePercentRowType(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack, rawTypeName string) (sql.Schema, bool, error) {
+	tableParts, ok := parseTablePercentRowType(rawTypeName)
+	if !ok {
+		return nil, false, nil
+	}
+	query := fmt.Sprintf("SELECT * FROM %s LIMIT 0", formatSQLQualifiedIdentifier(tableParts))
+	schema, _, err := iFunc.QueryMultiReturn(ctx, stack, query, nil)
+	if err != nil {
+		return nil, true, err
+	}
+	return schema, true, nil
+}
+
+func parseTablePercentRowType(rawTypeName string) (tableParts []string, ok bool) {
+	typeName := strings.TrimSpace(strings.ReplaceAll(rawTypeName, `"`, ""))
+	if !strings.HasSuffix(strings.ToLower(typeName), "%rowtype") {
+		return nil, false
+	}
+	reference := strings.TrimSpace(typeName[:len(typeName)-len("%rowtype")])
+	parts := strings.Split(reference, ".")
+	for i := range parts {
+		parts[i] = strings.TrimSpace(parts[i])
+		if parts[i] == "" {
+			return nil, false
+		}
+	}
+	return parts, len(parts) > 0
 }
 
 func formatSQLQualifiedIdentifier(parts []string) string {
