@@ -143,6 +143,12 @@ func TestErrMessageToSQLStateFormatsTruncateForeignKeyDependency(t *testing.T) {
 	require.Equal(t, pgcode.FeatureNotSupported.String(), code)
 }
 
+func TestErrMessageToSQLStateFormatsDropTableForeignKeyDependency(t *testing.T) {
+	code, ok := errMessageToSQLState("cannot drop table `fk_drop_parent` as it is referenced in foreign key `fk_drop_child_parent_id_fkey`")
+	require.True(t, ok)
+	require.Equal(t, pgcode.DependentObjectsStillExist.String(), code)
+}
+
 func TestErrMessageToSQLStateFormatsTemporaryTablePersistentSchema(t *testing.T) {
 	msg := `cannot create temporary relation in non-temporary schema`
 	code, ok := errMessageToSQLState(msg)

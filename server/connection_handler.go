@@ -4407,6 +4407,8 @@ func errMessageToSQLState(msg string) (string, bool) {
 		return pgcode.UndefinedTable.String(), true
 	case strings.HasPrefix(msg, "cannot truncate table ") && strings.Contains(msg, " as it is referenced in foreign key "):
 		return pgcode.FeatureNotSupported.String(), true
+	case strings.HasPrefix(msg, "cannot drop table ") && strings.Contains(msg, " as it is referenced in foreign key "):
+		return pgcode.DependentObjectsStillExist.String(), true
 	case msg == "cannot create temporary relation in non-temporary schema":
 		return pgcode.InvalidTableDefinition.String(), true
 	case strings.HasPrefix(msg, "permission denied"),
