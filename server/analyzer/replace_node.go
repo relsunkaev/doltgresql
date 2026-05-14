@@ -82,7 +82,7 @@ func replaceNode(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node) (sql.Nod
 	case *plan.DropCheck:
 		return pgnodes.NewDropCheck(node), transform.NewTree, nil
 	case *plan.InsertInto:
-		if len(node.Returning) > 0 && (node.Ignore || (node.OnDupExprs != nil && node.OnDupExprs.HasUpdates())) {
+		if (node.OnDupExprs != nil && node.OnDupExprs.HasUpdates()) || (len(node.Returning) > 0 && node.Ignore) {
 			return pgnodes.NewOnConflictReturningInsert(node), transform.NewTree, nil
 		}
 		return node, transform.SameTree, nil

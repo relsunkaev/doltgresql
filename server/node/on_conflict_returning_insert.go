@@ -81,10 +81,10 @@ func (i *OnConflictReturningInsert) BuildRowIter(ctx *sql.Context, b sql.NodeExe
 	inner := *i.insert
 	inner.Returning = nil
 	execCtx := ctx
-	var updateWhereState *pgexprs.OnConflictUpdateWhereState
-	if hasOnConflictUpdateWhereMarker(ctx, i.insert.OnDupExprs) {
-		updateWhereState = pgexprs.NewOnConflictUpdateWhereState()
-		execCtx = pgexprs.ContextWithOnConflictUpdateWhereState(ctx, updateWhereState)
+	var updateState *pgexprs.OnConflictUpdateWhereState
+	if hasOnConflictUpdateStateMarker(ctx, i.insert.OnDupExprs) {
+		updateState = pgexprs.NewOnConflictUpdateWhereState()
+		execCtx = pgexprs.ContextWithOnConflictUpdateWhereState(ctx, updateState)
 	}
 	child, err := b.Build(execCtx, &inner, row)
 	if err != nil {
@@ -96,7 +96,7 @@ func (i *OnConflictReturningInsert) BuildRowIter(ctx *sql.Context, b sql.NodeExe
 		returning:      i.insert.Returning,
 		destinationLen: len(i.insert.Destination.Schema(ctx)),
 		onDupUpdates:   i.insert.OnDupExprs != nil && i.insert.OnDupExprs.HasUpdates(),
-		updateWhere:    updateWhereState,
+		updateState:    updateState,
 		observer:       i.observer,
 	}, nil
 }
@@ -139,7 +139,7 @@ type onConflictReturningInsertIter struct {
 	returning      []sql.Expression
 	destinationLen int
 	onDupUpdates   bool
-	updateWhere    *pgexprs.OnConflictUpdateWhereState
+	updateState    *pgexprs.OnConflictUpdateWhereState
 	observer       OnConflictReturningObserver
 }
 
@@ -159,7 +159,8 @@ func (i *onConflictReturningInsertIter) Next(ctx *sql.Context) (sql.Row, error) 
 		if err != nil {
 			return row, err
 		}
-		if i.updateWhere.ConsumeSkipped() {
+		skipped := i.updateState.ConsumeSkipped()
+		if skipped && len(i.returning) > 0 {
 			continue
 		}
 		if i.onDupUpdates && len(row) == i.destinationLen*2 {
@@ -175,6 +176,9 @@ func (i *onConflictReturningInsertIter) Next(ctx *sql.Context) (sql.Row, error) 
 			if err = i.observer.ObserveOnConflictReturningRow(execCtx, nil, row); err != nil {
 				return nil, err
 			}
+		}
+		if len(i.returning) == 0 {
+			return sql.Row{}, nil
 		}
 		return evalReturning(execCtx, row, i.returning)
 	}
@@ -197,14 +201,18 @@ func evalReturning(ctx *sql.Context, row sql.Row, returning []sql.Expression) (s
 	return retRow, nil
 }
 
-func hasOnConflictUpdateWhereMarker(ctx *sql.Context, exprs *plan.UpdateExprs) bool {
+func hasOnConflictUpdateStateMarker(ctx *sql.Context, exprs *plan.UpdateExprs) bool {
 	if exprs == nil {
 		return false
 	}
 	for _, expr := range exprs.AllExpressions() {
 		if transform.InspectExpr(ctx, expr, func(ctx *sql.Context, expr sql.Expression) bool {
-			_, ok := expr.(*pgexprs.OnConflictUpdateWhere)
-			return ok
+			switch expr.(type) {
+			case *pgexprs.OnConflictUpdateSource, *pgexprs.OnConflictUpdateWhere:
+				return true
+			default:
+				return false
+			}
 		}) {
 			return true
 		}
