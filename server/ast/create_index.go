@@ -492,7 +492,7 @@ func nodeIndexPredicate(predicate tree.Expr) (string, []string, error) {
 		return "", nil, nil
 	}
 	columns := referencedIndexColumns(predicate)
-	return indexExpressionDefinition(predicate), columns, nil
+	return indexPredicateDefinition(predicate), columns, nil
 }
 
 func nodeIndexRelOptions(params tree.StorageParams) ([]string, error) {
@@ -663,6 +663,14 @@ func (v *indexColumnReferenceVisitor) add(name string) {
 
 func indexExpressionDefinition(expr tree.Expr) string {
 	return trimIndexExpressionParens(tree.AsString(expr))
+}
+
+func indexPredicateDefinition(expr tree.Expr) string {
+	predicate := indexExpressionDefinition(expr)
+	if predicate == "" {
+		return ""
+	}
+	return "(" + predicate + ")"
 }
 
 func trimIndexExpressionParens(expr string) string {

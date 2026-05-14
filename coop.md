@@ -10,6 +10,23 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### alpha - 2026-05-14 11:02 MST
+
+- Result: fixed the partial-index metadata slice by storing partial index predicates with PostgreSQL-style outer parentheses and translating GMS missing key-column errors to PostgreSQL `UndefinedColumn` (`42703`).
+- Source touched: `server/ast/create_index.go` and `server/doltgres_handler.go`.
+- Validation in clean verifier `/private/tmp/doltgresql-alpha-partial.zSh1EV` at `HEAD=0b3e034a` plus only this patch:
+  - `go test -vet=off ./testing/go -run '^TestBasicIndexing$/^PostgreSQL btree partial index metadata$' -count=1 -timeout=10m -v`
+  - `go test -vet=off ./server/ast ./server -run '^$' -count=1 -timeout=10m`
+- Boundary: no oracle-map/manifest changes; later INCLUDE/opclass/JSONB/index-attribute/statistics BasicIndexing failures remain for separate slices.
+- Next action: commit this narrow source slice, then rerun broad `TestBasicIndexing` from clean current HEAD.
+
+### alpha - 2026-05-14 11:00 MST
+
+- Lane claimed: `TestBasicIndexing/PostgreSQL btree partial index metadata` predicate formatting and missing-column SQLSTATE slice.
+- Discovery proof: clean verifier `/private/tmp/doltgresql-alpha-basicindex-3bf.hg27wc` at `HEAD=3bffa71d`, log `/tmp/doltgresql-alpha-basicindex-3bffa71d.jsonl`, gets past reloptions/tablespace and now fails first because partial-index predicate metadata lacks PostgreSQL's outer predicate parentheses and missing predicate columns return generic `XX000` instead of `42703`.
+- Expected files: `server/ast/create_index.go`, `server/doltgres_handler.go`, and this log only. Boundary: avoid peer harness connection, VACUUM oracle, functions/oracle, startup/schema/create-table/create-view/relation-schema, grant/auth, pg-constraint, and later BasicIndexing INCLUDE/opclass/JSONB/index-statistics lanes unless the focused repro proves shared missing-column SQLSTATE coverage.
+- Next action: make predicate storage/deparse match the cached PostgreSQL oracle and map GMS missing key-column errors to `UndefinedColumn`, then validate the focused partial-index group plus touched packages in a clean verifier.
+
 ### alpha - 2026-05-14 10:55 MST
 
 - Result: fixed the default tablespace index SQLSTATE slice by returning typed `pgcode.UndefinedObject` (`42704`) for non-`pg_default` index tablespaces while preserving the existing unsupported-tablespace message used by internal assertions.
