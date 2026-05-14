@@ -26,6 +26,8 @@ import (
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/core/procedures"
 	"github.com/dolthub/doltgresql/postgres/parser/parser"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/functions/framework"
@@ -380,15 +382,15 @@ func validateRoutineArgs(args tree.RoutineArgs) error {
 	seenVariadic := false
 	for _, arg := range args {
 		if seenVariadic {
-			return errors.New("VARIADIC parameter must be the last parameter")
+			return pgerror.Newf(pgcode.InvalidFunctionDefinition, "VARIADIC parameter must be the last parameter")
 		}
 		if arg.Default != nil && arg.Mode == tree.RoutineArgModeOut {
-			return errors.New("only input parameters can have default values")
+			return pgerror.Newf(pgcode.InvalidFunctionDefinition, "only input parameters can have default values")
 		}
 		switch arg.Mode {
 		case tree.RoutineArgModeIn, tree.RoutineArgModeInout, tree.RoutineArgModeVariadic:
 			if seenDefault && arg.Default == nil {
-				return errors.New("input parameters after one with a default value must also have defaults")
+				return pgerror.Newf(pgcode.InvalidFunctionDefinition, "input parameters after one with a default value must also have defaults")
 			}
 			if arg.Default != nil {
 				seenDefault = true
