@@ -500,6 +500,9 @@ func (c *CompiledFunction) callResolvedFunction(ctx *sql.Context, fn FunctionInt
 	case Function0:
 		return f.Callable(ctx)
 	case Function1:
+		if f.CallableWithExpr != nil {
+			return f.CallableWithExpr(ctx, ([2]*pgtypes.DoltgresType)(c.callResolved), c.Arguments[0], args[0])
+		}
 		return f.Callable(ctx, ([2]*pgtypes.DoltgresType)(c.callResolved), args[0])
 	case Function1N:
 		return f.Callable(ctx, c.callResolved, args[0], args[1:])

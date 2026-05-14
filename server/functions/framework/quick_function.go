@@ -138,6 +138,9 @@ func (q *QuickFunction1) Eval(ctx *sql.Context, row sql.Row) (interface{}, error
 	if arg == nil && q.IsStrict {
 		return nil, nil
 	}
+	if q.function.CallableWithExpr != nil {
+		return q.function.CallableWithExpr(ctx, q.callResolved, q.Argument, arg)
+	}
 	return q.function.Callable(ctx, q.callResolved, arg)
 }
 

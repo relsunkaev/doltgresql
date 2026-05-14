@@ -18,6 +18,7 @@ import (
 	"fmt"
 
 	"github.com/dolthub/go-mysql-server/sql"
+	"github.com/dolthub/go-mysql-server/sql/expression"
 
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -35,33 +36,70 @@ var pg_column_size_any = framework.Function1{
 	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Any},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, resolved [2]*pgtypes.DoltgresType, val any) (any, error) {
-		unwrapped, err := sql.UnwrapAny(ctx, val)
-		if err != nil {
-			return nil, err
-		}
-		if unwrapped == nil {
-			return nil, nil
-		}
-
-		valueType := resolved[0]
-		if !valueType.IsEmptyType() {
-			if valueType.TypLength > 0 {
-				return int32(valueType.TypLength), nil
-			}
-			switch value := unwrapped.(type) {
-			case string:
-				return int32(len(value) + 4), nil
-			case []byte:
-				return int32(len(value) + 4), nil
-			}
-			if serialized, err := valueType.SerializeValue(ctx, unwrapped); err == nil && serialized != nil {
-				return int32(len(serialized)), nil
-			}
-			if output, err := valueType.IoOutput(ctx, unwrapped); err == nil {
-				return int32(len(output) + 4), nil
-			}
-		}
-
-		return int32(len(fmt.Sprint(unwrapped)) + 4), nil
+		return pgColumnSize(ctx, resolved, nil, val)
 	},
+	CallableWithExpr: func(ctx *sql.Context, resolved [2]*pgtypes.DoltgresType, expr sql.Expression, val any) (any, error) {
+		return pgColumnSize(ctx, resolved, expr, val)
+	},
+}
+
+func pgColumnSize(ctx *sql.Context, resolved [2]*pgtypes.DoltgresType, expr sql.Expression, val any) (any, error) {
+	valueType := resolved[0]
+	if !valueType.IsEmptyType() && valueType.TypLength > 0 {
+		return int32(valueType.TypLength), nil
+	}
+
+	if _, ok := expr.(*expression.GetField); ok {
+		size, ok, err := pgColumnStoredSize(ctx, val)
+		if err != nil || ok {
+			return size, err
+		}
+	}
+
+	unwrapped, err := sql.UnwrapAny(ctx, val)
+	if err != nil {
+		return nil, err
+	}
+	if unwrapped == nil {
+		return nil, nil
+	}
+
+	if !valueType.IsEmptyType() {
+		switch value := unwrapped.(type) {
+		case string:
+			return int32(len(value) + 4), nil
+		case []byte:
+			return int32(len(value) + 4), nil
+		}
+		if serialized, err := valueType.SerializeValue(ctx, unwrapped); err == nil && serialized != nil {
+			return int32(len(serialized)), nil
+		}
+		if output, err := valueType.IoOutput(ctx, unwrapped); err == nil {
+			return int32(len(output) + 4), nil
+		}
+	}
+
+	return int32(len(fmt.Sprint(unwrapped)) + 4), nil
+}
+
+func pgColumnStoredSize(ctx *sql.Context, val any) (int32, bool, error) {
+	unwrapped, err := sql.UnwrapAny(ctx, val)
+	if err != nil {
+		return 0, false, err
+	}
+	switch value := unwrapped.(type) {
+	case string:
+		return pgVarlenaStoredSize(len(value)), true, nil
+	case []byte:
+		return pgVarlenaStoredSize(len(value)), true, nil
+	default:
+		return 0, false, nil
+	}
+}
+
+func pgVarlenaStoredSize(length int) int32 {
+	if length <= 126 {
+		return int32(length + 1)
+	}
+	return int32(length + 4)
 }

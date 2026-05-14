@@ -96,6 +96,7 @@ type Function1 struct {
 	Strict             bool
 	SRF                bool
 	Callable           func(ctx *sql.Context, paramsAndReturn [2]*pgtypes.DoltgresType, val1 any) (any, error)
+	CallableWithExpr   func(ctx *sql.Context, paramsAndReturn [2]*pgtypes.DoltgresType, expr1 sql.Expression, val1 any) (any, error)
 }
 
 // Function1N is a function that takes at least one parameter. This is different from a SQL variadic function, as the
