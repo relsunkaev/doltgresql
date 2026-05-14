@@ -1023,13 +1023,13 @@ func TestSystemInformationFunctions(t *testing.T) {
 					Query: `SELECT pg_get_expr(adbin, adrelid) FROM pg_catalog.pg_attrdef WHERE adrelid = 'temperature'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testsysteminformationfunctions-0100-select-pg_get_expr-adbin-adrelid-from"},
 				},
 				{
-					Query: `SELECT indexrelid, pg_get_expr(indpred, indrelid) FROM pg_catalog.pg_index WHERE indrelid='testing'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testsysteminformationfunctions-0101-select-indexrelid-pg_get_expr-indpred-indrelid"},
+					Query: `SELECT pg_get_expr(indpred, indrelid) FROM pg_catalog.pg_index WHERE indrelid='testing'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testsysteminformationfunctions-0101-select-indexrelid-pg_get_expr-indpred-indrelid"},
 				},
 				{
-					Query: `SELECT indexrelid, pg_get_expr(indpred, indrelid, true) FROM pg_catalog.pg_index WHERE indrelid='testing'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testsysteminformationfunctions-0102-select-indexrelid-pg_get_expr-indpred-indrelid"},
+					Query: `SELECT pg_get_expr(indpred, indrelid, true) FROM pg_catalog.pg_index WHERE indrelid='testing'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testsysteminformationfunctions-0102-select-indexrelid-pg_get_expr-indpred-indrelid"},
 				},
 				{
-					Query: `SELECT indexrelid, pg_get_expr(indpred, indrelid, NULL) FROM pg_catalog.pg_index WHERE indrelid='testing'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testsysteminformationfunctions-0103-select-indexrelid-pg_get_expr-indpred-indrelid"},
+					Query: `SELECT pg_get_expr(indpred, indrelid, NULL) FROM pg_catalog.pg_index WHERE indrelid='testing'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testsysteminformationfunctions-0103-select-indexrelid-pg_get_expr-indpred-indrelid"},
 				},
 			},
 		},

@@ -4727,13 +4727,10 @@
       "suggestedId": "functions-test-testsysteminformationfunctions-0101-select-indexrelid-pg_get_expr-indpred-indrelid",
       "compare": "structural",
       "expectedKind": "rows",
-      "query": "SELECT indexrelid, pg_get_expr(indpred, indrelid) FROM pg_catalog.pg_index WHERE indrelid='testing'::regclass;",
-      "querySha256": "b4845fed265173426f64a21c2da9547ad3272b2eb7749daef5d71813ce38e4a3",
+      "query": "SELECT pg_get_expr(indpred, indrelid) FROM pg_catalog.pg_index WHERE indrelid='testing'::regclass;",
+      "querySha256": "aceab8b66200066e797aeb2e80d222ca7a84e48d6f10cff9aeae272ff1901028",
       "expectedRows": [
         [
-          {
-            "value": "26073"
-          },
           {
             "null": true
           }
@@ -4752,13 +4749,10 @@
       "suggestedId": "functions-test-testsysteminformationfunctions-0102-select-indexrelid-pg_get_expr-indpred-indrelid",
       "compare": "structural",
       "expectedKind": "rows",
-      "query": "SELECT indexrelid, pg_get_expr(indpred, indrelid, true) FROM pg_catalog.pg_index WHERE indrelid='testing'::regclass;",
-      "querySha256": "814e966c6072b38cae643adec20cb33df705fc0831a8194aa5df7782dcfe4682",
+      "query": "SELECT pg_get_expr(indpred, indrelid, true) FROM pg_catalog.pg_index WHERE indrelid='testing'::regclass;",
+      "querySha256": "47f5fb6e743de5fc9e19d6a65cb920dad766965ca4312e99c0d289558fb61ec6",
       "expectedRows": [
         [
-          {
-            "value": "26083"
-          },
           {
             "null": true
           }
@@ -4777,13 +4771,10 @@
       "suggestedId": "functions-test-testsysteminformationfunctions-0103-select-indexrelid-pg_get_expr-indpred-indrelid",
       "compare": "structural",
       "expectedKind": "rows",
-      "query": "SELECT indexrelid, pg_get_expr(indpred, indrelid, NULL) FROM pg_catalog.pg_index WHERE indrelid='testing'::regclass;",
-      "querySha256": "820bf9fc3dcdc82113d3790c8ef8b4872565d1ccd8a7b284e6c9f059cb3cba28",
+      "query": "SELECT pg_get_expr(indpred, indrelid, NULL) FROM pg_catalog.pg_index WHERE indrelid='testing'::regclass;",
+      "querySha256": "efb96e368004c3ee0630ecad19bc06ce9310479db23521e6c2595ef45b6e5319",
       "expectedRows": [
         [
-          {
-            "value": "26093"
-          },
           {
             "null": true
           }
