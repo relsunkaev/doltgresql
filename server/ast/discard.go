@@ -34,6 +34,8 @@ func nodeDiscard(ctx *Context, discard *tree.Discard) (vitess.Statement, error) 
 		mode = node.DiscardModeAll
 	case tree.DiscardModeTemp:
 		mode = node.DiscardModeTemp
+	case tree.DiscardModeSequences:
+		return NewNoOp(), nil
 	default:
 		return nil, errors.Errorf("unhandled DISCARD mode: %v", discard.Mode)
 	}

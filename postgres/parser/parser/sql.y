@@ -5937,7 +5937,10 @@ discard_stmt:
     $$.val = &tree.Discard{Mode: tree.DiscardModeAll}
   }
 | DISCARD PLANS { return unimplemented(sqllex, "discard plans") }
-| DISCARD SEQUENCES { return unimplemented(sqllex, "discard sequences") }
+| DISCARD SEQUENCES
+  {
+    $$.val = &tree.Discard{Mode: tree.DiscardModeSequences}
+  }
 | DISCARD TEMP
   {
     $$.val = &tree.Discard{Mode: tree.DiscardModeTemp}

@@ -20,9 +20,9 @@ func TestDiscard(t *testing.T) {
 	tests := []QueryParses{
 		Converts("DISCARD ALL"),
 		Unimplemented("DISCARD PLANS"),
-		Unimplemented("DISCARD SEQUENCES"),
-		Unimplemented("DISCARD TEMPORARY"),
-		Unimplemented("DISCARD TEMP"),
+		Converts("DISCARD SEQUENCES"),
+		Converts("DISCARD TEMPORARY"),
+		Converts("DISCARD TEMP"),
 	}
 	RunTests(t, tests)
 }

@@ -39,6 +39,8 @@ const (
 	DiscardModeAll DiscardMode = iota
 	// DiscardModeTemp represents a DISCARD TEMP statement.
 	DiscardModeTemp
+	// DiscardModeSequences represents a DISCARD SEQUENCES statement.
+	DiscardModeSequences
 )
 
 // Format implements the NodeFormatter interface.
@@ -48,6 +50,8 @@ func (node *Discard) Format(ctx *FmtCtx) {
 		ctx.WriteString("DISCARD ALL")
 	case DiscardModeTemp:
 		ctx.WriteString("DISCARD TEMP")
+	case DiscardModeSequences:
+		ctx.WriteString("DISCARD SEQUENCES")
 	}
 }
 
