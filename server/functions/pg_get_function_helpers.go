@@ -47,10 +47,10 @@ type pgFunctionMetadata struct {
 	InternalSymbol    string
 }
 
-func pgGetFunctionResult(ctx *sql.Context, oidVal id.Id) (string, error) {
+func pgGetFunctionResult(ctx *sql.Context, oidVal id.Id) (any, error) {
 	metadata, ok, err := pgFunctionMetadataForOID(ctx, oidVal)
 	if err != nil || !ok {
-		return "", err
+		return nil, err
 	}
 	result := pgFunctionTypeName(ctx, metadata.ReturnType)
 	if metadata.SetOf {
@@ -59,11 +59,15 @@ func pgGetFunctionResult(ctx *sql.Context, oidVal id.Id) (string, error) {
 	return result, nil
 }
 
-func pgGetFunctionArguments(ctx *sql.Context, oidVal id.Id, includeDefaults bool) (string, error) {
+func pgGetFunctionArguments(ctx *sql.Context, oidVal id.Id, includeDefaults bool) (any, error) {
 	metadata, ok, err := pgFunctionMetadataForOID(ctx, oidVal)
 	if err != nil || !ok {
-		return "", err
+		return nil, err
 	}
+	return pgFunctionArguments(ctx, metadata, includeDefaults), nil
+}
+
+func pgFunctionArguments(ctx *sql.Context, metadata pgFunctionMetadata, includeDefaults bool) string {
 	args := make([]string, len(metadata.ParameterTypes))
 	firstDefault := len(metadata.ParameterTypes) - len(metadata.ParameterDefaults)
 	for i, typ := range metadata.ParameterTypes {
@@ -80,7 +84,7 @@ func pgGetFunctionArguments(ctx *sql.Context, oidVal id.Id, includeDefaults bool
 		}
 		args[i] = strings.Join(parts, " ")
 	}
-	return strings.Join(args, ", "), nil
+	return strings.Join(args, ", ")
 }
 
 func pgGetFunctionArgDefault(ctx *sql.Context, oidVal id.Id, argNum int32) (any, error) {
@@ -106,15 +110,12 @@ func pgGetFunctionArgDefault(ctx *sql.Context, oidVal id.Id, argNum int32) (any,
 	return metadata.ParameterDefaults[defaultIdx], nil
 }
 
-func pgGetFunctionDef(ctx *sql.Context, oidVal id.Id) (string, error) {
+func pgGetFunctionDef(ctx *sql.Context, oidVal id.Id) (any, error) {
 	metadata, ok, err := pgFunctionMetadataForOID(ctx, oidVal)
 	if err != nil || !ok {
-		return "", err
+		return nil, err
 	}
-	args, err := pgGetFunctionArguments(ctx, oidVal, true)
-	if err != nil {
-		return "", err
-	}
+	args := pgFunctionArguments(ctx, metadata, true)
 	var b strings.Builder
 	fmt.Fprintf(&b, "CREATE OR REPLACE FUNCTION %s.%s(%s)\n", metadata.SchemaName, metadata.FunctionName, args)
 	fmt.Fprintf(&b, " RETURNS %s\n", func() string {
