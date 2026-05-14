@@ -99,35 +99,58 @@ func (c *CreateTable) Resolved() bool {
 
 // BuildRowIter implements the interface sql.ExecBuilderNode.
 func (c *CreateTable) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sql.Row) (sql.RowIter, error) {
-	// Prevent tables from having names like `guid()`, which resembles a function
-	leftParen := strings.IndexByte(c.gmsCreateTable.Name(), '(')
-	rightParen := strings.IndexByte(c.gmsCreateTable.Name(), ')')
-	if leftParen != -1 && rightParen != -1 && rightParen > leftParen {
-		return nil, fmt.Errorf("table name `%s` cannot contain a parenthesized portion", c.gmsCreateTable.Name())
+	createTable := c.gmsCreateTable
+	var schemaName string
+	if createTable.Temporary() {
+		var err error
+		schemaName, err = core.GetSchemaName(ctx, createTable.Db, "")
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		targetDb, resolvedSchemaName, err := relationSchemaDatabase(ctx, createTable.Db)
+		if err != nil {
+			return nil, err
+		}
+		schemaName = resolvedSchemaName
+		if targetDb != createTable.Db {
+			retargeted, err := createTable.WithDatabase(targetDb)
+			if err != nil {
+				return nil, err
+			}
+			createTable = retargeted.(*plan.CreateTable)
+		}
 	}
-	for _, check := range c.gmsCreateTable.Checks() {
+
+	// Prevent tables from having names like `guid()`, which resembles a function
+	leftParen := strings.IndexByte(createTable.Name(), '(')
+	rightParen := strings.IndexByte(createTable.Name(), ')')
+	if leftParen != -1 && rightParen != -1 && rightParen > leftParen {
+		return nil, fmt.Errorf("table name `%s` cannot contain a parenthesized portion", createTable.Name())
+	}
+	for _, check := range createTable.Checks() {
 		if err := validateCheckConstraintExpression(ctx, check); err != nil {
 			return nil, err
 		}
 	}
 
 	tableAlreadyExisted := false
-	if c.gmsCreateTable.IfNotExists() {
-		_, alreadyExisted, err := c.gmsCreateTable.Db.GetTableInsensitive(ctx, c.gmsCreateTable.Name())
+	if createTable.IfNotExists() {
+		_, alreadyExisted, err := createTable.Db.GetTableInsensitive(ctx, createTable.Name())
 		if err != nil {
 			return nil, err
 		}
 		tableAlreadyExisted = alreadyExisted
 	}
 
-	createTableIter, err := b.Build(ctx, c.gmsCreateTable, r)
+	createTableIter, err := b.Build(ctx, createTable, r)
 	if err != nil {
 		return nil, err
 	}
 
-	if !tableAlreadyExisted && !c.gmsCreateTable.Temporary() {
+	if !tableAlreadyExisted && !createTable.Temporary() {
 		comment := ""
-		if existingComment, ok := doltgresTableMetadataComment(c.gmsCreateTable.TableOpts); ok {
+		if existingComment, ok := doltgresTableMetadataComment(createTable.TableOpts); ok {
 			comment = existingComment
 		}
 		if len(c.inheritanceParents) > 0 {
@@ -137,7 +160,7 @@ func (c *CreateTable) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sq
 			comment = tablemetadata.SetOwner(comment, user)
 		}
 		if comment != "" {
-			if err = modifyTableComment(ctx, c.gmsCreateTable.Db, c.gmsCreateTable.Name(), comment); err != nil {
+			if err = modifyTableComment(ctx, createTable.Db, createTable.Name(), comment); err != nil {
 				_ = createTableIter.Close(ctx)
 				return nil, err
 			}
@@ -151,17 +174,13 @@ func (c *CreateTable) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sq
 		c.registerTemporaryCreateRollback(ctx)
 	}
 
-	schemaName, err := core.GetSchemaName(ctx, c.gmsCreateTable.Db, "")
-	if err != nil {
-		return nil, err
-	}
-	if !tableAlreadyExisted && !c.gmsCreateTable.Temporary() {
-		if err = c.applyPrimaryKeyIndexMetadata(ctx); err != nil {
+	if !tableAlreadyExisted && !createTable.Temporary() {
+		if err = c.applyPrimaryKeyIndexMetadata(ctx, createTable); err != nil {
 			_ = createTableIter.Close(ctx)
 			return nil, err
 		}
 	}
-	databaseName := databaseNameForSQLDatabase(c.gmsCreateTable.Db)
+	databaseName := databaseNameForSQLDatabase(createTable.Db)
 	for _, sequence := range c.sequences {
 		sequence.database = databaseName
 		sequence.schema = schemaName
@@ -172,7 +191,7 @@ func (c *CreateTable) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sq
 		}
 	}
 	if !tableAlreadyExisted {
-		if err = auth.ApplyDefaultPrivilegesToTable(ctx.Client().User, schemaName, c.gmsCreateTable.Name()); err != nil {
+		if err = auth.ApplyDefaultPrivilegesToTable(ctx.Client().User, schemaName, createTable.Name()); err != nil {
 			_ = createTableIter.Close(ctx)
 			return nil, err
 		}
@@ -180,15 +199,15 @@ func (c *CreateTable) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sq
 	return createTableIter, err
 }
 
-func (c *CreateTable) applyPrimaryKeyIndexMetadata(ctx *sql.Context) error {
-	for _, indexDef := range c.gmsCreateTable.Indexes() {
+func (c *CreateTable) applyPrimaryKeyIndexMetadata(ctx *sql.Context, createTable *plan.CreateTable) error {
+	for _, indexDef := range createTable.Indexes() {
 		if indexDef == nil || indexDef.Constraint != sql.IndexConstraint_Primary || indexDef.Comment == "" {
 			continue
 		}
 		if _, ok := indexmetadata.DecodeComment(indexDef.Comment); !ok {
 			continue
 		}
-		return modifyPrimaryKeyIndexComment(ctx, c.gmsCreateTable.Db, c.gmsCreateTable.Name(), indexDef.Comment)
+		return modifyPrimaryKeyIndexComment(ctx, createTable.Db, createTable.Name(), indexDef.Comment)
 	}
 	return nil
 }

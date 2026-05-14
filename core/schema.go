@@ -15,8 +15,11 @@
 package core
 
 import (
-	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/resolve"
+	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
 	"github.com/dolthub/go-mysql-server/sql"
+
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 )
 
 // GetCurrentSchema returns the current schema used by the context. Defaults to "public" if the context does not specify
@@ -27,7 +30,20 @@ func GetCurrentSchema(ctx *sql.Context) (string, error) {
 		return "", nil
 	}
 
-	return resolve.FirstExistingSchemaOnSearchPath(ctx, root)
+	searchPath, err := sessionSearchPath(ctx)
+	if err != nil {
+		return "", err
+	}
+	for _, schema := range searchPath {
+		schemaName, exists, err := doltdb.ResolveDatabaseSchema(ctx, root, schema)
+		if err != nil {
+			return "", err
+		}
+		if exists {
+			return schemaName, nil
+		}
+	}
+	return "", pgerror.New(pgcode.InvalidSchemaName, sql.ErrDatabaseNoDatabaseSchemaSelectedCreate.New().Error())
 }
 
 // GetSchemaName returns the schema name if there is any exist.

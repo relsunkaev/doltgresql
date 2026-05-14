@@ -54,25 +54,34 @@ func (c *CreateView) Resolved() bool {
 
 // BuildRowIter implements the interface sql.ExecBuilderNode.
 func (c *CreateView) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sql.Row) (sql.RowIter, error) {
-	existed, err := viewExists(ctx, c.gmsCreateView)
+	createView := c.gmsCreateView
+	targetDb, schemaName, err := relationSchemaDatabase(ctx, createView.Database())
+	if err != nil {
+		return nil, err
+	}
+	if targetDb != createView.Database() {
+		retargeted, err := createView.WithDatabase(targetDb)
+		if err != nil {
+			return nil, err
+		}
+		createView = retargeted.(*plan.CreateView)
+	}
+
+	existed, err := viewExists(ctx, createView)
 	if err != nil {
 		return nil, err
 	}
 	if !existed {
-		schemaName, err := core.GetSchemaName(ctx, c.gmsCreateView.Database(), "")
-		if err != nil {
-			return nil, err
-		}
 		if err = checkSchemaCreatePrivilege(ctx, schemaName); err != nil {
 			return nil, err
 		}
 	}
-	iter, err := b.Build(ctx, c.gmsCreateView, r)
+	iter, err := b.Build(ctx, createView, r)
 	if err != nil {
 		return nil, err
 	}
 	if !existed {
-		if err = recordCreatedViewOwner(ctx, c.gmsCreateView); err != nil {
+		if err = recordCreatedViewOwner(ctx, createView); err != nil {
 			if iter != nil {
 				_ = iter.Close(ctx)
 			}

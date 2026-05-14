@@ -301,6 +301,7 @@ func castSQLError(err error) error {
 		pgcode.InvalidColumnDefinition,
 		pgcode.InvalidName,
 		pgcode.InvalidObjectDefinition,
+		pgcode.InvalidSchemaName,
 		pgcode.InvalidTableDefinition,
 		pgcode.InvalidParameterValue,
 		pgcode.InvalidTextRepresentation,

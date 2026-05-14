@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"maps"
 	"slices"
+	"strings"
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
@@ -261,13 +262,71 @@ func GetSqlTableFromContext(ctx *sql.Context, databaseName string, tableName dol
 	return nil, nil
 }
 
-// SearchPath returns the effective schema search path for the current session
-func SearchPath(ctx *sql.Context) ([]string, error) {
-	path, err := resolve.SearchPath(ctx)
+func sessionSearchPath(ctx *sql.Context) ([]string, error) {
+	searchPathVar, err := ctx.GetSessionVariable(ctx, "search_path")
 	if err != nil {
 		return nil, err
 	}
+	pathElems := splitSearchPath(searchPathVar.(string))
+	path := make([]string, len(pathElems))
+	for i, pathElem := range pathElems {
+		path[i] = normalizeSearchPathSchema(ctx, pathElem)
+	}
+	return path, nil
+}
 
+func splitSearchPath(searchPath string) []string {
+	parts := make([]string, 0, 1)
+	start := 0
+	inQuotedIdentifier := false
+	for i := 0; i < len(searchPath); i++ {
+		switch searchPath[i] {
+		case '"':
+			if inQuotedIdentifier && i+1 < len(searchPath) && searchPath[i+1] == '"' {
+				i++
+				continue
+			}
+			inQuotedIdentifier = !inQuotedIdentifier
+		case ',':
+			if !inQuotedIdentifier {
+				parts = append(parts, searchPath[start:i])
+				start = i + 1
+			}
+		}
+	}
+	return append(parts, searchPath[start:])
+}
+
+func normalizeSearchPathSchema(ctx *sql.Context, schemaName string) string {
+	schemaName = unquoteSearchPathSchema(strings.TrimSpace(schemaName))
+	if schemaName == "$user" {
+		return ctx.Session.Client().User
+	}
+	return schemaName
+}
+
+func unquoteSearchPathSchema(schemaName string) string {
+	for len(schemaName) >= 2 {
+		quote := schemaName[0]
+		if quote != schemaName[len(schemaName)-1] || (quote != '"' && quote != '\'') {
+			break
+		}
+		schemaName = schemaName[1 : len(schemaName)-1]
+		if quote == '"' {
+			schemaName = strings.ReplaceAll(schemaName, `""`, `"`)
+		} else {
+			schemaName = strings.ReplaceAll(schemaName, `''`, `'`)
+		}
+	}
+	return schemaName
+}
+
+// SearchPath returns the effective schema search path for the current session
+func SearchPath(ctx *sql.Context) ([]string, error) {
+	path, err := sessionSearchPath(ctx)
+	if err != nil {
+		return nil, err
+	}
 	// pg_catalog is *always* implicitly part of the search path as the first element, unless it's specifically
 	// included later. This allows users to override built-in names with user-defined names, but they have to
 	// opt in to that behavior.
