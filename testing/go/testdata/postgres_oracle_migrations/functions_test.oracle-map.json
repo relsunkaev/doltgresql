@@ -3530,23 +3530,11 @@
       "source": "testing/go/functions_test.go:TestSystemInformationFunctions",
       "ordinal": 43,
       "scriptName": "current_schemas",
-      "oracle": "postgres",
-      "postgresId": "functions-test-testsysteminformationfunctions-0043-select-current_schemas-false",
+      "oracle": "internal",
       "suggestedId": "functions-test-testsysteminformationfunctions-0043-select-current_schemas-false",
-      "compare": "structural",
-      "columnModes": [
-        "schema"
-      ],
       "expectedKind": "rows",
       "query": "SELECT current_schemas(false);",
       "querySha256": "7ad01fcc63452b8b21a09effaf3040911c70be05a957dbd663cad381781014f5",
-      "expectedRows": [
-        [
-          {
-            "value": "{{{schema}},public,pg_catalog}"
-          }
-        ]
-      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },

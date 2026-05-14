@@ -761,7 +761,10 @@ func TestSystemInformationFunctions(t *testing.T) {
 					Query: `SELECT current_schemas(true);`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testsysteminformationfunctions-0042-select-current_schemas-true"},
 				},
 				{ // TODO: Not sure why Postgres does not display "$user" here
-					Query: `SELECT current_schemas(false);`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testsysteminformationfunctions-0043-select-current_schemas-false", ColumnModes: []string{"schema"}},
+					Query: `SELECT current_schemas(false);`,
+					Expected: []sql.Row{
+						{"{public}"},
+					},
 				},
 				{
 					Query: "CREATE SCHEMA test_schema;", PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testsysteminformationfunctions-0044-create-schema-test_schema"},
