@@ -3982,13 +3982,26 @@
       "source": "testing/go/prepared_statement_test.go:TestSQLPreparedStatements",
       "ordinal": 12,
       "scriptName": "SQL PREPARE errors",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testsqlpreparedstatements-0012-execute-sql_dup-1",
       "suggestedId": "prepared-statement-test-testsqlpreparedstatements-0012-execute-sql_dup-1",
-      "expectedKind": "error",
+      "compare": "structural",
+      "expectedKind": "rows",
       "query": "EXECUTE sql_dup(1);",
       "querySha256": "f7503f6d64e4172b31f8ebcedd13ecead9c1088f09a4946ae8ebf3f2c578e496",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DEALLOCATE ALL",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     }
   ]
 }

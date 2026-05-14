@@ -1499,6 +1499,7 @@ func explicitPublicSchemaCleanup(setupQueries []string, query string) []string {
 	cleanup = append(cleanup, cleanupForCreatedSchemas(cleanupStatements)...)
 	cleanup = append(cleanup, cleanupForCreatedLanguages(cleanupStatements)...)
 	cleanup = append(cleanup, cleanupForCreatedTransforms(cleanupStatements)...)
+	cleanup = append(cleanup, cleanupForPreparedStatements(cleanupStatements)...)
 	cleanup = append(cleanup, cleanupForCreatedDatabases(cleanupStatements)...)
 	cleanup = append(cleanup, cleanupForCreatedTypes(cleanupStatements)...)
 	cleanup = append(cleanup, cleanupForCreatedUsers(cleanupStatements)...)
@@ -2814,6 +2815,7 @@ func entryFromScriptTestAssertion(source string, setup []oracleStatement, ordina
 		generatedCleanup = append(generatedCleanup, cleanupForCreatedSchemas(cleanupStatements)...)
 		generatedCleanup = append(generatedCleanup, cleanupForCreatedLanguages(cleanupStatements)...)
 		generatedCleanup = append(generatedCleanup, cleanupForCreatedTransforms(cleanupStatements)...)
+		generatedCleanup = append(generatedCleanup, cleanupForPreparedStatements(cleanupStatements)...)
 		generatedCleanup = append(generatedCleanup, cleanupForCreatedDatabases(cleanupStatements)...)
 		generatedCleanup = append(generatedCleanup, cleanupForCreatedTypes(cleanupStatements)...)
 		generatedCleanup = append(generatedCleanup, cleanupForCreatedUsers(cleanupStatements)...)
@@ -2894,6 +2896,7 @@ func queryNeedsGeneratedCleanup(query string) bool {
 		len(cleanupForCreatedExtensions([]string{query})) > 0 ||
 		len(cleanupForCreatedLanguages([]string{query})) > 0 ||
 		len(cleanupForCreatedTransforms([]string{query})) > 0 ||
+		len(cleanupForPreparedStatements([]string{query})) > 0 ||
 		len(cleanupForCreatedPublications([]string{query})) > 0 ||
 		len(cleanupForCreatedSubscriptions([]string{query})) > 0 ||
 		len(cleanupForCreatedUsers([]string{query})) > 0 ||
@@ -3260,6 +3263,19 @@ func createdTransformTarget(statement string) (string, string, bool) {
 		return "", "", false
 	}
 	return typeName, languageName, true
+}
+
+func cleanupForPreparedStatements(statements []string) []string {
+	for _, statement := range statements {
+		fields := strings.Fields(strings.TrimSpace(strings.TrimSuffix(statement, ";")))
+		if len(fields) == 0 {
+			continue
+		}
+		if strings.EqualFold(fields[0], "prepare") {
+			return []string{"DEALLOCATE ALL"}
+		}
+	}
+	return nil
 }
 
 func cleanupForCreatedTypes(statements []string) []string {

@@ -105,8 +105,7 @@ func TestSQLPreparedStatements(t *testing.T) {
 					Query: "EXECUTE sql_missing;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testsqlpreparedstatements-0011-execute-sql_missing", Compare: "sqlstate"},
 				},
 				{
-					Query:       "EXECUTE sql_dup(1);",
-					ExpectedErr: "expected 0 parameters but got 1",
+					Query: "EXECUTE sql_dup(1);", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testsqlpreparedstatements-0012-execute-sql_dup-1"},
 				},
 			},
 		},
