@@ -153,13 +153,29 @@
       "source": "testing/go/schema_dependency_repro_test.go:TestAlterSchemaRenameRepro",
       "ordinal": 1,
       "scriptName": "ALTER SCHEMA RENAME TO renames namespace",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "schema-dependency-repro-test-testalterschemarenamerepro-0001-select-id-label-from-rename_namespace_new.items",
       "suggestedId": "schema-dependency-repro-test-testalterschemarenamerepro-0001-select-id-label-from-rename_namespace_new.items",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT id, label\n\t\t\t\t\t\tFROM rename_namespace_new.items;",
       "querySha256": "997d75e2ec2c234647f5b5df0e2d72102b526be73d4a367905c7922dbb7ae331",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "kept"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS rename_namespace_new CASCADE",
+        "DROP SCHEMA IF EXISTS rename_namespace_old CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/schema_dependency_repro_test.go:TestAlterSchemaRenameRepro#0002",
@@ -246,13 +262,21 @@
       "source": "testing/go/schema_dependency_repro_test.go:TestAlterTableSetSchemaMovesRelationRepro",
       "ordinal": 2,
       "scriptName": "ALTER TABLE SET SCHEMA moves relation",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "schema-dependency-repro-test-testaltertablesetschemamovesrelationrepro-0002-select-id-label-from-public.alter_set_schema_items",
       "suggestedId": "schema-dependency-repro-test-testaltertablesetschemamovesrelationrepro-0002-select-id-label-from-public.alter_set_schema_items",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
       "query": "SELECT id, label FROM public.alter_set_schema_items;",
       "querySha256": "125c88e695189b8759565c27555ff960142078b5d5a00d1182689516c62a96fb",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "cleanup": [
+        "DROP TABLE IF EXISTS alter_set_schema_items CASCADE",
+        "DROP SCHEMA IF EXISTS move_target_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/schema_dependency_repro_test.go:TestAlterViewSetSchemaMovesViewRepro#0001",
@@ -284,13 +308,21 @@
       "source": "testing/go/schema_dependency_repro_test.go:TestAlterViewSetSchemaMovesViewRepro",
       "ordinal": 2,
       "scriptName": "ALTER VIEW SET SCHEMA moves view",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "schema-dependency-repro-test-testalterviewsetschemamovesviewrepro-0002-select-id-label-from-public.alter_view_set_schema_reader",
       "suggestedId": "schema-dependency-repro-test-testalterviewsetschemamovesviewrepro-0002-select-id-label-from-public.alter_view_set_schema_reader",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
       "query": "SELECT id, label FROM public.alter_view_set_schema_reader;",
       "querySha256": "7377629af9d1cafb3d333444c4c92741bc915643a76f189a007796271439f093",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "cleanup": [
+        "DROP TABLE IF EXISTS alter_view_set_schema_source CASCADE",
+        "DROP SCHEMA IF EXISTS move_view_target_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/schema_dependency_repro_test.go:TestAlterMaterializedViewSetSchemaMovesViewRepro#0001",
@@ -322,13 +354,21 @@
       "source": "testing/go/schema_dependency_repro_test.go:TestAlterMaterializedViewSetSchemaMovesViewRepro",
       "ordinal": 2,
       "scriptName": "ALTER MATERIALIZED VIEW SET SCHEMA moves materialized view",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "schema-dependency-repro-test-testaltermaterializedviewsetschemamovesviewrepro-0002-select-id-label-from-public.alter_matview_set_schema_reader",
       "suggestedId": "schema-dependency-repro-test-testaltermaterializedviewsetschemamovesviewrepro-0002-select-id-label-from-public.alter_matview_set_schema_reader",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
       "query": "SELECT id, label FROM public.alter_matview_set_schema_reader;",
       "querySha256": "c0c5c2eda20e501ad34ad89b81e775c0a2daff96eec71e89ef9f81b69213106f",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "cleanup": [
+        "DROP TABLE IF EXISTS alter_matview_set_schema_source CASCADE",
+        "DROP SCHEMA IF EXISTS move_matview_target_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/schema_dependency_repro_test.go:TestAlterSequenceSetSchemaMovesSequenceRepro#0001",
@@ -360,13 +400,21 @@
       "source": "testing/go/schema_dependency_repro_test.go:TestAlterSequenceSetSchemaMovesSequenceRepro",
       "ordinal": 2,
       "scriptName": "ALTER SEQUENCE SET SCHEMA moves sequence",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "schema-dependency-repro-test-testaltersequencesetschemamovessequencerepro-0002-select-nextval-public.alter_sequence_set_schema_seq",
       "suggestedId": "schema-dependency-repro-test-testaltersequencesetschemamovessequencerepro-0002-select-nextval-public.alter_sequence_set_schema_seq",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
       "query": "SELECT nextval('public.alter_sequence_set_schema_seq');",
       "querySha256": "8586ce2aadee6fde54171a853eb316db24c41297c09475707283b627b7fee417",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "cleanup": [
+        "DROP SEQUENCE IF EXISTS alter_sequence_set_schema_seq CASCADE",
+        "DROP SCHEMA IF EXISTS move_sequence_target_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/schema_dependency_repro_test.go:TestAlterFunctionSetSchemaMovesFunctionRepro#0001",
@@ -395,13 +443,21 @@
       "source": "testing/go/schema_dependency_repro_test.go:TestAlterFunctionSetSchemaMovesFunctionRepro",
       "ordinal": 2,
       "scriptName": "ALTER FUNCTION SET SCHEMA moves function",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "schema-dependency-repro-test-testalterfunctionsetschemamovesfunctionrepro-0002-select-public.alter_function_set_schema_value",
       "suggestedId": "schema-dependency-repro-test-testalterfunctionsetschemamovesfunctionrepro-0002-select-public.alter_function_set_schema_value",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "42883",
+      "errorSeverity": "ERROR",
       "query": "SELECT public.alter_function_set_schema_value();",
       "querySha256": "91eb4cc7447d559d943bed1310e1df7eeddfd5e75873e6b5abd3ab17a6993d4a",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "cleanup": [
+        "DO $$ DECLARE r record; BEGIN FOR r IN SELECT p.oid::pg_catalog.regprocedure AS signature FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'alter_function_set_schema_value' AND p.prokind = 'f' LOOP EXECUTE 'DROP FUNCTION IF EXISTS ' || r.signature || ' CASCADE'; END LOOP; END $$",
+        "DROP SCHEMA IF EXISTS move_function_target_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/schema_dependency_repro_test.go:TestAlterProcedureSetSchemaMovesProcedureRepro#0001",
@@ -430,13 +486,22 @@
       "source": "testing/go/schema_dependency_repro_test.go:TestAlterProcedureSetSchemaMovesProcedureRepro",
       "ordinal": 2,
       "scriptName": "ALTER PROCEDURE SET SCHEMA moves procedure",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "schema-dependency-repro-test-testalterproceduresetschemamovesprocedurerepro-0002-call-public.alter_procedure_set_schema_log",
       "suggestedId": "schema-dependency-repro-test-testalterproceduresetschemamovesprocedurerepro-0002-call-public.alter_procedure_set_schema_log",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "42883",
+      "errorSeverity": "ERROR",
       "query": "CALL public.alter_procedure_set_schema_log();",
       "querySha256": "20a73d062868740ec1d9b9710d705d1b08ecf639245eeb2936b10e63dfd19d4b",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "cleanup": [
+        "DO $$ DECLARE r record; BEGIN FOR r IN SELECT p.oid::pg_catalog.regprocedure AS signature FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'alter_procedure_set_schema_log' AND p.prokind = 'p' LOOP EXECUTE 'DROP PROCEDURE IF EXISTS ' || r.signature || ' CASCADE'; END LOOP; END $$",
+        "DROP TABLE IF EXISTS alter_procedure_set_schema_audit CASCADE",
+        "DROP SCHEMA IF EXISTS move_procedure_target_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/schema_dependency_repro_test.go:TestAlterRoutineSetSchemaMovesFunctionRepro#0001",
@@ -465,13 +530,21 @@
       "source": "testing/go/schema_dependency_repro_test.go:TestAlterRoutineSetSchemaMovesFunctionRepro",
       "ordinal": 2,
       "scriptName": "ALTER ROUTINE SET SCHEMA moves function",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "schema-dependency-repro-test-testalterroutinesetschemamovesfunctionrepro-0002-select-public.alter_routine_set_schema_value",
       "suggestedId": "schema-dependency-repro-test-testalterroutinesetschemamovesfunctionrepro-0002-select-public.alter_routine_set_schema_value",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "42883",
+      "errorSeverity": "ERROR",
       "query": "SELECT public.alter_routine_set_schema_value();",
       "querySha256": "d7b5f59da1b22317851a5c0988f9e01ef79aa34bab3ed98c1b9350c83bb903d1",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "cleanup": [
+        "DO $$ DECLARE r record; BEGIN FOR r IN SELECT p.oid::pg_catalog.regprocedure AS signature FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'alter_routine_set_schema_value' AND p.prokind = 'f' LOOP EXECUTE 'DROP FUNCTION IF EXISTS ' || r.signature || ' CASCADE'; END LOOP; END $$",
+        "DROP SCHEMA IF EXISTS move_routine_target_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/schema_dependency_repro_test.go:TestAlterTypeSetSchemaMovesEnumRepro#0001",
@@ -500,13 +573,21 @@
       "source": "testing/go/schema_dependency_repro_test.go:TestAlterTypeSetSchemaMovesEnumRepro",
       "ordinal": 2,
       "scriptName": "ALTER TYPE SET SCHEMA moves enum",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "schema-dependency-repro-test-testaltertypesetschemamovesenumrepro-0002-select-one",
       "suggestedId": "schema-dependency-repro-test-testaltertypesetschemamovesenumrepro-0002-select-one",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "42704",
+      "errorSeverity": "ERROR",
       "query": "SELECT 'one'::public.alter_type_set_schema_enum::text;",
       "querySha256": "7d05a6caed3d1115e3b759429d8a68ab5c6c50aebda7a2dc2a25784bfac9b8fa",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS move_type_target_schema CASCADE",
+        "DROP TYPE IF EXISTS alter_type_set_schema_enum CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/schema_dependency_repro_test.go:TestAlterDomainSetSchemaMovesDomainRepro#0001",
@@ -535,13 +616,20 @@
       "source": "testing/go/schema_dependency_repro_test.go:TestAlterDomainSetSchemaMovesDomainRepro",
       "ordinal": 2,
       "scriptName": "ALTER DOMAIN SET SCHEMA moves domain",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "schema-dependency-repro-test-testalterdomainsetschemamovesdomainrepro-0002-select",
       "suggestedId": "schema-dependency-repro-test-testalterdomainsetschemamovesdomainrepro-0002-select",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "42704",
+      "errorSeverity": "ERROR",
       "query": "SELECT 5::public.alter_domain_set_schema_positive;",
       "querySha256": "2b0aae5873e1617907a90cdb57a2db26849225e59f37ad7ec8997ed537744c1c",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS move_domain_target_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     }
   ]
 }

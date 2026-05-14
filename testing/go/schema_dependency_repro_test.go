@@ -17,7 +17,6 @@ package _go
 import (
 	"testing"
 
-	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/stretchr/testify/require"
 )
 
@@ -228,8 +227,7 @@ func TestAlterSchemaRenameRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT id, label
-						FROM rename_namespace_new.items;`,
-					Expected: []sql.Row{{1, "kept"}},
+						FROM rename_namespace_new.items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "schema-dependency-repro-test-testalterschemarenamerepro-0001-select-id-label-from-rename_namespace_new.items"},
 				},
 				{
 					Query:       `SELECT id, label FROM rename_namespace_old.items;`,
@@ -286,8 +284,7 @@ func TestAlterTableSetSchemaMovesRelationRepro(t *testing.T) {
 						FROM move_target_schema.alter_set_schema_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "schema-dependency-repro-test-testaltertablesetschemamovesrelationrepro-0001-select-id-label-from"},
 				},
 				{
-					Query:       `SELECT id, label FROM public.alter_set_schema_items;`,
-					ExpectedErr: `not found`,
+					Query: `SELECT id, label FROM public.alter_set_schema_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "schema-dependency-repro-test-testaltertablesetschemamovesrelationrepro-0002-select-id-label-from-public.alter_set_schema_items"},
 				},
 			},
 		},
@@ -320,8 +317,7 @@ func TestAlterViewSetSchemaMovesViewRepro(t *testing.T) {
 						FROM move_view_target_schema.alter_view_set_schema_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "schema-dependency-repro-test-testalterviewsetschemamovesviewrepro-0001-select-id-label-from"},
 				},
 				{
-					Query:       `SELECT id, label FROM public.alter_view_set_schema_reader;`,
-					ExpectedErr: `not found`,
+					Query: `SELECT id, label FROM public.alter_view_set_schema_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "schema-dependency-repro-test-testalterviewsetschemamovesviewrepro-0002-select-id-label-from-public.alter_view_set_schema_reader"},
 				},
 			},
 		},
@@ -355,8 +351,7 @@ func TestAlterMaterializedViewSetSchemaMovesViewRepro(t *testing.T) {
 						FROM move_matview_target_schema.alter_matview_set_schema_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "schema-dependency-repro-test-testaltermaterializedviewsetschemamovesviewrepro-0001-select-id-label-from"},
 				},
 				{
-					Query:       `SELECT id, label FROM public.alter_matview_set_schema_reader;`,
-					ExpectedErr: `not found`,
+					Query: `SELECT id, label FROM public.alter_matview_set_schema_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "schema-dependency-repro-test-testaltermaterializedviewsetschemamovesviewrepro-0002-select-id-label-from-public.alter_matview_set_schema_reader"},
 				},
 			},
 		},
@@ -382,8 +377,7 @@ func TestAlterSequenceSetSchemaMovesSequenceRepro(t *testing.T) {
 					Query: `SELECT nextval('move_sequence_target_schema.alter_sequence_set_schema_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "schema-dependency-repro-test-testaltersequencesetschemamovessequencerepro-0001-select-nextval"},
 				},
 				{
-					Query:       `SELECT nextval('public.alter_sequence_set_schema_seq');`,
-					ExpectedErr: `does not exist`,
+					Query: `SELECT nextval('public.alter_sequence_set_schema_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "schema-dependency-repro-test-testaltersequencesetschemamovessequencerepro-0002-select-nextval-public.alter_sequence_set_schema_seq"},
 				},
 			},
 		},
@@ -413,8 +407,7 @@ func TestAlterFunctionSetSchemaMovesFunctionRepro(t *testing.T) {
 					Query: `SELECT move_function_target_schema.alter_function_set_schema_value();`, PostgresOracle: ScriptTestPostgresOracle{ID: "schema-dependency-repro-test-testalterfunctionsetschemamovesfunctionrepro-0001-select"},
 				},
 				{
-					Query:       `SELECT public.alter_function_set_schema_value();`,
-					ExpectedErr: `not found`,
+					Query: `SELECT public.alter_function_set_schema_value();`, PostgresOracle: ScriptTestPostgresOracle{ID: "schema-dependency-repro-test-testalterfunctionsetschemamovesfunctionrepro-0002-select-public.alter_function_set_schema_value"},
 				},
 			},
 		},
@@ -449,8 +442,7 @@ func TestAlterProcedureSetSchemaMovesProcedureRepro(t *testing.T) {
 					Query: `SELECT COUNT(*) FROM alter_procedure_set_schema_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "schema-dependency-repro-test-testalterproceduresetschemamovesprocedurerepro-0001-select-count-*-from-alter_procedure_set_schema_audit"},
 				},
 				{
-					Query:       `CALL public.alter_procedure_set_schema_log();`,
-					ExpectedErr: `does not exist`,
+					Query: `CALL public.alter_procedure_set_schema_log();`, PostgresOracle: ScriptTestPostgresOracle{ID: "schema-dependency-repro-test-testalterproceduresetschemamovesprocedurerepro-0002-call-public.alter_procedure_set_schema_log"},
 				},
 			},
 		},
@@ -480,8 +472,7 @@ func TestAlterRoutineSetSchemaMovesFunctionRepro(t *testing.T) {
 					Query: `SELECT move_routine_target_schema.alter_routine_set_schema_value();`, PostgresOracle: ScriptTestPostgresOracle{ID: "schema-dependency-repro-test-testalterroutinesetschemamovesfunctionrepro-0001-select"},
 				},
 				{
-					Query:       `SELECT public.alter_routine_set_schema_value();`,
-					ExpectedErr: `not found`,
+					Query: `SELECT public.alter_routine_set_schema_value();`, PostgresOracle: ScriptTestPostgresOracle{ID: "schema-dependency-repro-test-testalterroutinesetschemamovesfunctionrepro-0002-select-public.alter_routine_set_schema_value"},
 				},
 			},
 		},
@@ -507,8 +498,7 @@ func TestAlterTypeSetSchemaMovesEnumRepro(t *testing.T) {
 					Query: `SELECT 'one'::move_type_target_schema.alter_type_set_schema_enum::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "schema-dependency-repro-test-testaltertypesetschemamovesenumrepro-0001-select-one"},
 				},
 				{
-					Query:       `SELECT 'one'::public.alter_type_set_schema_enum::text;`,
-					ExpectedErr: `does not exist`,
+					Query: `SELECT 'one'::public.alter_type_set_schema_enum::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "schema-dependency-repro-test-testaltertypesetschemamovesenumrepro-0002-select-one"},
 				},
 			},
 		},
@@ -535,8 +525,7 @@ func TestAlterDomainSetSchemaMovesDomainRepro(t *testing.T) {
 					Query: `SELECT 5::move_domain_target_schema.alter_domain_set_schema_positive;`, PostgresOracle: ScriptTestPostgresOracle{ID: "schema-dependency-repro-test-testalterdomainsetschemamovesdomainrepro-0001-select"},
 				},
 				{
-					Query:       `SELECT 5::public.alter_domain_set_schema_positive;`,
-					ExpectedErr: `does not exist`,
+					Query: `SELECT 5::public.alter_domain_set_schema_positive;`, PostgresOracle: ScriptTestPostgresOracle{ID: "schema-dependency-repro-test-testalterdomainsetschemamovesdomainrepro-0002-select"},
 				},
 			},
 		},
