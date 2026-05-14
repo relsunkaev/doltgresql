@@ -1536,28 +1536,22 @@ func TestJsonFunctions(t *testing.T) {
 					Query: `SELECT s.pk, e.json_array_elements FROM json_shapes s JOIN LATERAL (SELECT * FROM json_array_elements(s.raw->'items')) AS e ON true ORDER BY s.pk, e.json_array_elements;`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testjsonfunctions-0127-select-s.pk-e.json_array_elements-from-json_shapes", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT s.pk, e.json_array_elements FROM json_shapes s JOIN LATERAL json_array_elements(s.raw->'items') AS e ON true ORDER BY s.pk, e.json_array_elements;`,
-					Expected: []sql.Row{{1, "1"}, {1, "2"}, {2, "2"}, {2, "3"}},
+					Query: `SELECT s.pk, e.json_array_elements FROM json_shapes s JOIN LATERAL json_array_elements(s.raw->'items') AS e ON true ORDER BY s.pk, e.json_array_elements;`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testjsonfunctions-0128-select-s.pk-e.json_array_elements-from-json_shapes", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT DISTINCT elem FROM json_shapes s JOIN LATERAL json_array_elements(s.raw->'items') AS elem ON true ORDER BY elem;`,
-					Expected: []sql.Row{{"1"}, {"2"}, {"3"}},
+					Query: `SELECT DISTINCT elem FROM json_shapes s JOIN LATERAL json_array_elements(s.raw->'items') AS elem ON true ORDER BY elem;`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testjsonfunctions-0129-select-distinct-elem-from-json_shapes", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT DISTINCT elem FROM json_shapes s JOIN LATERAL jsonb_array_elements_text(s.doc->'items') AS elem ON true ORDER BY elem;`,
-					Expected: []sql.Row{{"1"}, {"2"}, {"3"}},
+					Query: `SELECT DISTINCT elem FROM json_shapes s JOIN LATERAL jsonb_array_elements_text(s.doc->'items') AS elem ON true ORDER BY elem;`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testjsonfunctions-0130-select-distinct-elem-from-json_shapes"},
 				},
 				{
-					Query:    `SELECT length(doc->>'payload') FROM json_shapes WHERE pk = 2;`,
-					Expected: []sql.Row{{512}},
+					Query: `SELECT length(doc->>'payload') FROM json_shapes WHERE pk = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testjsonfunctions-0131-select-length-doc->>-payload-from"},
 				},
 				{
-					Query:    `UPDATE json_shapes SET doc = jsonb_set(doc, '{items,1}', '9'::jsonb) WHERE pk = 1;`,
-					Expected: []sql.Row{},
+					Query: `UPDATE json_shapes SET doc = jsonb_set(doc, '{items,1}', '9'::jsonb) WHERE pk = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testjsonfunctions-0132-update-json_shapes-set-doc-="},
 				},
 				{
-					Query:    `SELECT doc->'items' FROM json_shapes WHERE pk = 1;`,
-					Expected: []sql.Row{{`[1, 9]`}},
+					Query: `SELECT doc->'items' FROM json_shapes WHERE pk = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testjsonfunctions-0133-select-doc->-items-from-json_shapes"},
 				},
 			},
 		},
@@ -2833,8 +2827,7 @@ func TestDateAndTimeFunction(t *testing.T) {
 					Query: `SELECT now()::timetz(4)::text = current_time(5)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testdateandtimefunction-0268-select-now-::timetz-4-::text"},
 				},
 				{
-					Query:    `SELECT length(to_char(current_date + 'now'::timetz, 'HH24:MI:SS.USTZH:TZM'));`,
-					Expected: []sql.Row{{int32(21)}},
+					Query: `SELECT length(to_char(current_date + 'now'::timetz, 'HH24:MI:SS.USTZH:TZM'));`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testdateandtimefunction-0269-select-length-to_char-current_date-+"},
 				},
 				{
 					Query: `SELECT length('now'::timetz::text) > length('now'::time::text);`, PostgresOracle:
@@ -2842,8 +2835,7 @@ func TestDateAndTimeFunction(t *testing.T) {
 					ScriptTestPostgresOracle{ID: "functions-test-testdateandtimefunction-0270-select-length-now-::timetz::text->"},
 				},
 				{
-					Query:    `SELECT length(to_char('now'::time, 'HH24:MI:SS.US'));`,
-					Expected: []sql.Row{{int32(15)}},
+					Query: `SELECT length(to_char('now'::time, 'HH24:MI:SS.US'));`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testdateandtimefunction-0271-select-length-to_char-now-::time"},
 				},
 			},
 		},

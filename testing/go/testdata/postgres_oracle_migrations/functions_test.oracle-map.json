@@ -8210,12 +8210,16 @@
       "source": "testing/go/functions_test.go:TestJsonFunctions",
       "ordinal": 128,
       "scriptName": "json mixed representation coverage",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "functions-test-testjsonfunctions-0128-select-s.pk-e.json_array_elements-from-json_shapes",
       "suggestedId": "functions-test-testjsonfunctions-0128-select-s.pk-e.json_array_elements-from-json_shapes",
-      "expectedKind": "rows",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42883",
+      "errorSeverity": "ERROR",
       "query": "SELECT s.pk, e.json_array_elements FROM json_shapes s JOIN LATERAL json_array_elements(s.raw->'items') AS e ON true ORDER BY s.pk, e.json_array_elements;",
       "querySha256": "15c1cc8c12798e3112c092edfbb97b01b5b31595b3fda38f25cd4de6686d52d2",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -8223,12 +8227,16 @@
       "source": "testing/go/functions_test.go:TestJsonFunctions",
       "ordinal": 129,
       "scriptName": "json mixed representation coverage",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "functions-test-testjsonfunctions-0129-select-distinct-elem-from-json_shapes",
       "suggestedId": "functions-test-testjsonfunctions-0129-select-distinct-elem-from-json_shapes",
-      "expectedKind": "rows",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42883",
+      "errorSeverity": "ERROR",
       "query": "SELECT DISTINCT elem FROM json_shapes s JOIN LATERAL json_array_elements(s.raw->'items') AS elem ON true ORDER BY elem;",
       "querySha256": "6a11ba541c8115011bc36b5182c1fbcce1c295e890cde74986c256da21288eb9",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -8236,12 +8244,31 @@
       "source": "testing/go/functions_test.go:TestJsonFunctions",
       "ordinal": 130,
       "scriptName": "json mixed representation coverage",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "functions-test-testjsonfunctions-0130-select-distinct-elem-from-json_shapes",
       "suggestedId": "functions-test-testjsonfunctions-0130-select-distinct-elem-from-json_shapes",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT DISTINCT elem FROM json_shapes s JOIN LATERAL jsonb_array_elements_text(s.doc->'items') AS elem ON true ORDER BY elem;",
       "querySha256": "3297bf67af3b5bbbb2cd25b53055f063d85041196d30624ed676fbd118832f92",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -8249,12 +8276,21 @@
       "source": "testing/go/functions_test.go:TestJsonFunctions",
       "ordinal": 131,
       "scriptName": "json mixed representation coverage",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "functions-test-testjsonfunctions-0131-select-length-doc->>-payload-from",
       "suggestedId": "functions-test-testjsonfunctions-0131-select-length-doc->>-payload-from",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT length(doc->>'payload') FROM json_shapes WHERE pk = 2;",
       "querySha256": "41923974f2d8dc4256dbee697235bbef5e65157c1cfce11c5359aedcf1206301",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "512"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -8262,12 +8298,15 @@
       "source": "testing/go/functions_test.go:TestJsonFunctions",
       "ordinal": 132,
       "scriptName": "json mixed representation coverage",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "functions-test-testjsonfunctions-0132-update-json_shapes-set-doc-=",
       "suggestedId": "functions-test-testjsonfunctions-0132-update-json_shapes-set-doc-=",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "UPDATE json_shapes SET doc = jsonb_set(doc, '{items,1}', '9'::jsonb) WHERE pk = 1;",
       "querySha256": "97b8255bc9735b84cd11d358d2f0fed565237f3f045f6475c591cf7712cb36b6",
-      "needsCleanup": true,
+      "expectedRows": [],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -8275,12 +8314,21 @@
       "source": "testing/go/functions_test.go:TestJsonFunctions",
       "ordinal": 133,
       "scriptName": "json mixed representation coverage",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "functions-test-testjsonfunctions-0133-select-doc->-items-from-json_shapes",
       "suggestedId": "functions-test-testjsonfunctions-0133-select-doc->-items-from-json_shapes",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT doc->'items' FROM json_shapes WHERE pk = 1;",
       "querySha256": "91ef87d3b0502157d02897c7f8a4ce776ec3bf0371fbef4eeb66e4bf0260bcd3",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "[1,9]"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -15772,15 +15820,24 @@
       "source": "testing/go/functions_test.go:TestDateAndTimeFunction",
       "ordinal": 269,
       "scriptName": "current_time and now functions",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "functions-test-testdateandtimefunction-0269-select-length-to_char-current_date-+",
       "suggestedId": "functions-test-testdateandtimefunction-0269-select-length-to_char-current_date-+",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT length(to_char(current_date + 'now'::timetz, 'HH24:MI:SS.USTZH:TZM'));",
       "querySha256": "ac9e2b90295378f5ea155a0b1865636919f1d11378dc17aac7172227d8c65c51",
+      "expectedRows": [
+        [
+          {
+            "value": "21"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -15810,15 +15867,24 @@
       "source": "testing/go/functions_test.go:TestDateAndTimeFunction",
       "ordinal": 271,
       "scriptName": "current_time and now functions",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "functions-test-testdateandtimefunction-0271-select-length-to_char-now-::time",
       "suggestedId": "functions-test-testdateandtimefunction-0271-select-length-to_char-now-::time",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT length(to_char('now'::time, 'HH24:MI:SS.US'));",
       "querySha256": "2d10492f3d3493baf8a5f414dc44eabc4d094a3df99376d65dc7439e9ba8b1d3",
+      "expectedRows": [
+        [
+          {
+            "value": "15"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
