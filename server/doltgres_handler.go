@@ -282,6 +282,7 @@ func castSQLError(err error) error {
 		pgcode.NumericValueOutOfRange,
 		pgcode.ObjectNotInPrerequisiteState,
 		pgcode.ProgramLimitExceeded,
+		pgcode.QueryCanceled,
 		pgcode.RaiseException,
 		pgcode.Syntax,
 		pgcode.UniqueViolation,

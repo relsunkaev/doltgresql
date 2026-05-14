@@ -66,10 +66,15 @@ const (
 	raiseValidationErrorOption = "raiseValidationError"
 )
 
+// The interpreter has no async statement timeout hook, so bound runaway loops
+// at operation boundaries to match PostgreSQL's query-canceled behavior.
+const maxInterpretedFunctionOperations = 10000
+
 var plpgsqlExceptionSavepointCounter uint64
 
 type interpreterExecutionState struct {
 	statements           []InterpreterOperation
+	operationCount       int
 	lastRowCount         int64
 	lastExceptionContext string
 	stackedDiagnostics   *plpgsqlExceptionDiagnostics
@@ -249,6 +254,9 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 	// Run the statements
 	statements := state.statements
 	for {
+		if err := checkInterpreterExecutionBudget(ctx, state); err != nil {
+			return nil, false, err
+		}
 		counter++
 		if counter >= end {
 			break
@@ -725,6 +733,19 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 		}
 	}
 	return nil, false, nil
+}
+
+func checkInterpreterExecutionBudget(ctx *sql.Context, state *interpreterExecutionState) error {
+	select {
+	case <-ctx.Done():
+		return pgerror.New(pgcode.QueryCanceled, "canceling statement due to user request")
+	default:
+	}
+	state.operationCount++
+	if state.operationCount > maxInterpretedFunctionOperations {
+		return pgerror.New(pgcode.QueryCanceled, "canceling statement due to statement timeout")
+	}
+	return nil
 }
 
 func rowCountFromResultRows(rows []sql.Row) int64 {
