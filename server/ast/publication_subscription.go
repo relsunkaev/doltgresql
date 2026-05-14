@@ -20,6 +20,8 @@ import (
 	"github.com/cockroachdb/errors"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	pgnodes "github.com/dolthub/doltgresql/server/node"
 )
@@ -239,7 +241,7 @@ func nodeReplicationKVOptions(options tree.KVOptions) (map[string]string, error)
 	for _, option := range options {
 		key := strings.ToLower(string(option.Key))
 		if _, ok := seen[key]; ok {
-			return nil, errors.Errorf("conflicting or redundant options: %s", key)
+			return nil, pgerror.Newf(pgcode.Syntax, "conflicting or redundant options: %s", key)
 		}
 		seen[key] = struct{}{}
 		ret[key] = nodeOptionValue(option.Value)

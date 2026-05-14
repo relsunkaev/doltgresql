@@ -761,7 +761,7 @@ func validateSubscriptionPublicationsUnique(publications []string) error {
 	seen := make(map[string]struct{}, len(publications))
 	for _, publication := range publications {
 		if _, ok := seen[publication]; ok {
-			return errors.Errorf(`publication name "%s" used more than once`, publication)
+			return pgerror.Newf(pgcode.DuplicateObject, `publication name "%s" used more than once`, publication)
 		}
 		seen[publication] = struct{}{}
 	}
@@ -834,7 +834,7 @@ func validatePublicationColumns(tableSchema sql.Schema, columns []string) ([]str
 			return nil, errors.Errorf(`column "%s" does not exist`, column)
 		}
 		if _, ok := seen[resolved[i]]; ok {
-			return nil, errors.Errorf(`duplicate column "%s" in publication column list`, resolved[i])
+			return nil, pgerror.Newf(pgcode.DuplicateObject, `duplicate column "%s" in publication column list`, resolved[i])
 		}
 		seen[resolved[i]] = struct{}{}
 	}
