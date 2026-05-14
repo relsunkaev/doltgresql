@@ -23,6 +23,8 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/auth"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -97,7 +99,7 @@ func (c *CreateRole) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 		if c.IfNotExists {
 			return sql.RowsToRowIter(), nil
 		}
-		return nil, errors.Errorf(`role "%s" already exists`, c.Name)
+		return nil, pgerror.Newf(pgcode.DuplicateObject, `role "%s" already exists`, c.Name)
 	}
 	if c.ConnectionLimit < -1 {
 		return nil, errors.New("invalid connection limit")
