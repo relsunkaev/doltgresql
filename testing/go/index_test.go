@@ -26,9 +26,13 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 )
 
-func unsupportedAccessMethodBoundaryScript(displayName string, accessMethod string, handler string) ScriptTest {
+func unsupportedAccessMethodBoundaryScript(displayName string, accessMethod string, handler string, createIndexSupported bool) ScriptTest {
 	tableName := "access_method_boundary_" + accessMethod
 	indexName := tableName + "_idx"
+	expectedIndexCount := int64(0)
+	if createIndexSupported {
+		expectedIndexCount = 1
+	}
 	return ScriptTest{
 		Name: "PostgreSQL " + displayName + " access method boundary",
 		SetUpScript: []string{
@@ -74,13 +78,14 @@ WHERE am.amname = '` + accessMethod + `';`,
 			},
 			{
 				Query:       "CREATE INDEX " + indexName + " ON " + tableName + " USING " + accessMethod + " (v);",
-				ExpectedErr: "index method " + accessMethod + " is not yet supported",
+				ExpectedErr: map[bool]string{false: "index method " + accessMethod + " is not yet supported"}[createIndexSupported],
+				ExpectedTag: map[bool]string{true: "CREATE INDEX"}[createIndexSupported],
 			},
 			{
 				Query: `SELECT COUNT(*)
 FROM pg_catalog.pg_class
 WHERE relname = '` + indexName + `';`,
-				Expected: []sql.Row{{0}},
+				Expected: []sql.Row{{expectedIndexCount}},
 			},
 		},
 	}
@@ -1441,10 +1446,10 @@ func TestBasicIndexing(t *testing.T) {
 				},
 			},
 		},
-		unsupportedAccessMethodBoundaryScript("hash", "hash", "hashhandler"),
-		unsupportedAccessMethodBoundaryScript("GiST", "gist", "gisthandler"),
-		unsupportedAccessMethodBoundaryScript("SP-GiST", "spgist", "spghandler"),
-		unsupportedAccessMethodBoundaryScript("BRIN", "brin", "brinhandler"),
+		unsupportedAccessMethodBoundaryScript("hash", "hash", "hashhandler", false),
+		unsupportedAccessMethodBoundaryScript("GiST", "gist", "gisthandler", true),
+		unsupportedAccessMethodBoundaryScript("SP-GiST", "spgist", "spghandler", false),
+		unsupportedAccessMethodBoundaryScript("BRIN", "brin", "brinhandler", false),
 		{
 			Name: "PostgreSQL btree reloptions metadata",
 			SetUpScript: []string{

@@ -10,6 +10,17 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### alpha - 2026-05-14 10:41 MST
+
+- Result: fixed `TestBasicIndexing/PostgreSQL_GiST_access_method_boundary` after metadata-backed GiST support by making only GiST expect successful `CREATE INDEX` with command tag `CREATE INDEX` and a catalog count of `1`; hash/SP-GiST/BRIN still assert unsupported errors and zero catalog rows.
+- Generator note: kept the helper create-index assertion inline so the oracle generator still counts the helper assertion, and refreshed the affected `TestBasicIndexing` manifest setup rows that now include alpha's earlier internal lookup-join assertion.
+- Validation in clean verifier `/private/tmp/doltgresql-alpha-gist-head.sLMeCl` at `HEAD=a0a20d83` plus only alpha index source/manifest changes:
+  - `go test -vet=off ./testing/go -run '^TestBasicIndexing$/^PostgreSQL (hash|GiST|SP-GiST|BRIN) access method boundary$' -count=1 -timeout=10m -v`
+  - `go test -vet=off ./testing/go -run '^TestPostgresOracleManifestGenerated$' -count=1 -timeout=10m -v`
+  - `jq empty testing/go/testdata/postgres_oracle_manifest.json testing/go/testdata/postgres_oracle_migrations/index_test.oracle-map.json`
+- Boundary: source behavior unchanged; no index oracle-map changes; stage only `testing/go/index_test.go`, the index-related manifest setup additions, and this alpha entry.
+- Next action: commit this narrow slice, then rerun broad `TestBasicIndexing` from clean current HEAD to find the next non-overlapping index failure.
+
 ### alpha - 2026-05-14 10:26 MST
 
 - Result: fixed `TestBasicIndexing/Unsupported options` ordinals 119-125 by replacing PostgreSQL sqlstate oracles with internal `ExpectedErr` assertions for current Doltgres unsupported-index behavior.
