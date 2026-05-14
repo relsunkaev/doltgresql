@@ -9811,12 +9811,21 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 310,
       "scriptName": "multi column int index, part 2",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0310-select-pk-from-test-where",
       "suggestedId": "index-test-testbasicindexing-0310-select-pk-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT pk FROM test WHERE a = 2 and b = 2;",
       "querySha256": "112170c51926cbd0514409deb148758df84fe61eb199fc40ee58d5b53c67e1b2",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9824,12 +9833,21 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 311,
       "scriptName": "multi column int index, part 2",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0311-select-pk-from-test-where",
       "suggestedId": "index-test-testbasicindexing-0311-select-pk-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT pk FROM test WHERE a = 2 and b = 3;",
       "querySha256": "02c4a375d5e25dc559f4f59d25579a09f49e51795cdda35dbfad355131b52686",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9837,12 +9855,21 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 312,
       "scriptName": "multi column int index, reverse traversal",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0312-select-pk-from-test-where",
       "suggestedId": "index-test-testbasicindexing-0312-select-pk-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT pk FROM test WHERE a < 3 and b = 2 order by a desc, b desc;",
       "querySha256": "9150281fd5ec48763ca5dfd95449f9c86fe50a71d648141e197f2a3e004e4da2",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9850,12 +9877,21 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 313,
       "scriptName": "multi column int index, reverse traversal",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0313-select-pk-from-test-where",
       "suggestedId": "index-test-testbasicindexing-0313-select-pk-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT pk FROM test WHERE a < 2 and b = 3 order by a desc, b desc;",
       "querySha256": "79e7774e8e4adad603009d4b7ffd46da3d88fb3f010b06a834bcb8907990701e",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9863,12 +9899,26 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 314,
       "scriptName": "multi column int index, reverse traversal",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0314-select-pk-from-test-where",
       "suggestedId": "index-test-testbasicindexing-0314-select-pk-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT pk FROM test WHERE a < 2 and b < 10 order by a desc, b desc;",
       "querySha256": "6b3d0e38116f15585b0b581c851440b388eaab66decbf4f0e48493b84097204b",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {

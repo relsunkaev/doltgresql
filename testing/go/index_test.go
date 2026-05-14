@@ -2801,16 +2801,10 @@ WHERE doc @> '{"a":1}';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-te
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT pk FROM test WHERE a = 2 and b = 2;`,
-					Expected: []sql.Row{
-						{3},
-					},
+					Query: `SELECT pk FROM test WHERE a = 2 and b = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0310-select-pk-from-test-where"},
 				},
 				{
-					Query: `SELECT pk FROM test WHERE a = 2 and b = 3;`,
-					Expected: []sql.Row{
-						{4},
-					},
+					Query: `SELECT pk FROM test WHERE a = 2 and b = 3;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0311-select-pk-from-test-where"},
 				},
 			},
 		},
@@ -2825,23 +2819,13 @@ WHERE doc @> '{"a":1}';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-te
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT pk FROM test WHERE a < 3 and b = 2 order by a desc, b desc;`,
-					Expected: []sql.Row{
-						{3},
-					},
+					Query: `SELECT pk FROM test WHERE a < 3 and b = 2 order by a desc, b desc;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0312-select-pk-from-test-where"},
 				},
 				{
-					Query: `SELECT pk FROM test WHERE a < 2 and b = 3 order by a desc, b desc;`,
-					Expected: []sql.Row{
-						{2},
-					},
+					Query: `SELECT pk FROM test WHERE a < 2 and b = 3 order by a desc, b desc;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0313-select-pk-from-test-where"},
 				},
 				{
-					Query: `SELECT pk FROM test WHERE a < 2 and b < 10 order by a desc, b desc;`,
-					Expected: []sql.Row{
-						{2},
-						{1},
-					},
+					Query: `SELECT pk FROM test WHERE a < 2 and b < 10 order by a desc, b desc;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0314-select-pk-from-test-where"},
 				},
 			},
 		},
