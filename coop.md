@@ -10,6 +10,19 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### alpha - 2026-05-14 08:13 MST
+
+- Result: fixed `TestIndexDefinitionsRejectInvalidExpressionsRepro` SQLSTATE classification for PostgreSQL-invalid index expressions and partial-index predicates.
+- Root cause: the index validator returned generic errors for subquery/aggregate/window/SRF/volatility rejection paths, so client SQLSTATEs surfaced as `XX000`; additionally, the user-defined volatile/stable fixture bodies were simple SQL wrappers that PostgreSQL can inline, so those cached `42P07` rows were stale for the test name.
+- Files touched: `server/analyzer/validate_create_table.go`, `testing/go/index_correctness_repro_test.go`, `testing/go/testdata/postgres_oracle_migrations/index_correctness_repro_test.oracle-map.json`, and generated `testing/go/testdata/postgres_oracle_manifest.json`.
+- Validation in clean verifier `/tmp/doltgresql-codex-072b61ce-verify` with parser artifacts regenerated:
+  - `go test -vet=off ./testing/go -run '^TestIndexDefinitionsRejectInvalidExpressionsRepro$' -count=1 -timeout=10m -v`
+  - `go test -vet=off ./server/analyzer -run '^$' -count=1`
+  - `go test -vet=off ./testing/go -run '^TestPostgresOracleManifestGenerated$' -count=1 -timeout=10m -v`
+  - `git diff --check -- server/analyzer/validate_create_table.go testing/go/index_correctness_repro_test.go testing/go/testdata/postgres_oracle_migrations/index_correctness_repro_test.oracle-map.json testing/go/testdata/postgres_oracle_manifest.json`
+- Follow-up discovery: filtered chunk `1151-1200` now advances past the index-expression suite and stops at `TestPgGetIndexdefQuotesIdentifiersRepro/pg_get_indexdef_quotes_identifiers` with `public."IndexQuoteItems"` vs oracle isolated schema qualification. Alpha has not claimed that lane yet.
+
+
 ### epsilon - 2026-05-14 07:58 MST
 
 - Result: fixed `TestAuthDoltProcedures` flaking on stale file remotes during `select dolt_backup('sync-url', ...)`.

@@ -664,10 +664,10 @@ func TestIndexDefinitionsRejectInvalidExpressionsRepro(t *testing.T) {
 					v INT
 				);`,
 				`CREATE FUNCTION index_udf_volatile_value(input_value INT)
-				RETURNS INT
+				RETURNS DOUBLE PRECISION
 				LANGUAGE SQL
 				VOLATILE
-				AS $$ SELECT input_value $$;`,
+				AS $$ SELECT random() $$;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
@@ -687,7 +687,7 @@ func TestIndexDefinitionsRejectInvalidExpressionsRepro(t *testing.T) {
 				RETURNS INT
 				LANGUAGE SQL
 				STABLE
-				AS $$ SELECT input_value $$;`,
+				AS $$ SELECT extract(epoch from now())::INT $$;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
@@ -770,7 +770,7 @@ func TestIndexDefinitionsRejectInvalidExpressionsRepro(t *testing.T) {
 				RETURNS BOOL
 				LANGUAGE SQL
 				VOLATILE
-				AS $$ SELECT input_value > 0 $$;`,
+				AS $$ SELECT random() > 0 $$;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
@@ -791,7 +791,7 @@ func TestIndexDefinitionsRejectInvalidExpressionsRepro(t *testing.T) {
 				RETURNS BOOL
 				LANGUAGE SQL
 				STABLE
-				AS $$ SELECT input_value > 0 $$;`,
+				AS $$ SELECT now() IS NOT NULL $$;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
