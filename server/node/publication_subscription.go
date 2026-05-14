@@ -673,6 +673,9 @@ func (d *DropSubscription) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, er
 	if err = checkSubscriptionOwnership(ctx, sub); err != nil {
 		return nil, err
 	}
+	if sub.SlotName != "" && ctx.GetIgnoreAutoCommit() {
+		return nil, pgerror.New(pgcode.ActiveSQLTransaction, "DROP SUBSCRIPTION cannot run inside a transaction block")
+	}
 	if err = collection.DropSubscription(ctx, subID); err != nil {
 		return nil, err
 	}
