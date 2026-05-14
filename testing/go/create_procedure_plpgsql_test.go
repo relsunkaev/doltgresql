@@ -134,7 +134,7 @@ END;
 $$ LANGUAGE plpgsql;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0011-create-procedure-interpreted_branch-input-int4"},
 				},
 				{
-					Query: "CALL interpreted_branch(4);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0012-call-interpreted_branch-4", Compare: "sqlstate"},
+					Query: "CALL interpreted_branch(4);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0012-call-interpreted_branch-4"},
 				},
 				{
 					Query: "SELECT * FROM test;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0013-select-*-from-test"},

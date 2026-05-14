@@ -235,12 +235,11 @@
       "oracle": "postgres",
       "postgresId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0012-call-interpreted_branch-4",
       "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0012-call-interpreted_branch-4",
-      "compare": "sqlstate",
+      "compare": "structural",
       "expectedKind": "rows",
-      "sqlstate": "55000",
-      "errorSeverity": "ERROR",
       "query": "CALL interpreted_branch(4);",
       "querySha256": "f95b4e17179e6db89d750cd724ea0db2b43c2d959c4450a7519b76903d67ac2b",
+      "expectedRows": [],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -256,7 +255,16 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM test;",
       "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
-      "expectedRows": [],
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "104"
+          }
+        ]
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
