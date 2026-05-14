@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestLanguageUsagePrivilegeCanBeRevokedAndGrantedRepro reproduces a language
@@ -40,9 +38,9 @@ func TestLanguageUsagePrivilegeCanBeRevokedAndGrantedRepro(t *testing.T) {
 					Query: `CREATE FUNCTION language_acl_denied() RETURNS INT
 						LANGUAGE plpgsql
 						AS $$ BEGIN RETURN 7; END; $$;`,
-					ExpectedErr: `permission denied`,
-					Username:    `language_usage_acl_user`,
-					Password:    `pw`,
+
+					Username: `language_usage_acl_user`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{ID: "language-privilege-repro-test-testlanguageusageprivilegecanberevokedandgrantedrepro-0002-create-function-language_acl_denied-returns-int", Compare: "sqlstate"},
 				},
 				{
 					Query:       `GRANT USAGE ON LANGUAGE plpgsql TO language_usage_acl_user;`,
@@ -63,17 +61,19 @@ func TestLanguageUsagePrivilegeCanBeRevokedAndGrantedRepro(t *testing.T) {
 					Query: `CREATE FUNCTION language_acl_denied_again() RETURNS INT
 						LANGUAGE plpgsql
 						AS $$ BEGIN RETURN 7; END; $$;`,
-					ExpectedErr: `permission denied`,
-					Username:    `language_usage_acl_user`,
-					Password:    `pw`,
+
+					Username: `language_usage_acl_user`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCreateUntrustedLanguageRequiresSuperuserRepro reproduces a language DDL
+						// security bug: PostgreSQL restricts untrusted language creation to superusers.
+						ID: "language-privilege-repro-test-testlanguageusageprivilegecanberevokedandgrantedrepro-0005-create-function-language_acl_denied_again-returns-int", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateUntrustedLanguageRequiresSuperuserRepro reproduces a language DDL
-// security bug: PostgreSQL restricts untrusted language creation to superusers.
 func TestCreateUntrustedLanguageRequiresSuperuserRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -83,18 +83,20 @@ func TestCreateUntrustedLanguageRequiresSuperuserRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CREATE LANGUAGE untrusted_user_lang HANDLER plpgsql_call_handler;`,
-					ExpectedErr: `superuser`,
-					Username:    `untrusted_language_creator`,
-					Password:    `pw`,
+					Query: `CREATE LANGUAGE untrusted_user_lang HANDLER plpgsql_call_handler;`,
+
+					Username: `untrusted_language_creator`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestAlterLanguageOwnerUpdatesPgLanguageRepro reproduces a procedural-language
+						// catalog persistence gap: ALTER LANGUAGE OWNER TO should update pg_language.
+						ID: "language-privilege-repro-test-testcreateuntrustedlanguagerequiressuperuserrepro-0001-create-language-untrusted_user_lang-handler-plpgsql_call_handler", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterLanguageOwnerUpdatesPgLanguageRepro reproduces a procedural-language
-// catalog persistence gap: ALTER LANGUAGE OWNER TO should update pg_language.
 func TestAlterLanguageOwnerUpdatesPgLanguageRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -109,8 +111,7 @@ func TestAlterLanguageOwnerUpdatesPgLanguageRepro(t *testing.T) {
 				{
 					Query: `SELECT pg_get_userbyid(lanowner)
 						FROM pg_catalog.pg_language
-						WHERE lanname = 'plpgsql';`,
-					Expected: []sql.Row{{"language_owner_target"}},
+						WHERE lanname = 'plpgsql';`, PostgresOracle: ScriptTestPostgresOracle{ID: "language-privilege-repro-test-testalterlanguageownerupdatespglanguagerepro-0001-select-pg_get_userbyid-lanowner-from-pg_catalog.pg_language"},
 				},
 			},
 		},
@@ -129,18 +130,20 @@ func TestAlterLanguageOwnerToRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER LANGUAGE plpgsql OWNER TO language_owner_hijacker;`,
-					ExpectedErr: `must be owner`,
-					Username:    `language_owner_hijacker`,
-					Password:    `hijacker`,
+					Query: `ALTER LANGUAGE plpgsql OWNER TO language_owner_hijacker;`,
+
+					Username: `language_owner_hijacker`,
+					Password: `hijacker`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestDropLanguageRequiresOwnershipRepro reproduces a language DDL security
+						// bug: a normal login role can drop a procedural language it does not own.
+						ID: "language-privilege-repro-test-testalterlanguageownertorequiresownershiprepro-0001-alter-language-plpgsql-owner-to", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropLanguageRequiresOwnershipRepro reproduces a language DDL security
-// bug: a normal login role can drop a procedural language it does not own.
 func TestDropLanguageRequiresOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -150,16 +153,15 @@ func TestDropLanguageRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP LANGUAGE plpgsql;`,
-					ExpectedErr: `must be owner`,
-					Username:    `language_dropper`,
-					Password:    `dropper`,
+					Query: `DROP LANGUAGE plpgsql;`,
+
+					Username: `language_dropper`,
+					Password: `dropper`, PostgresOracle: ScriptTestPostgresOracle{ID: "language-privilege-repro-test-testdroplanguagerequiresownershiprepro-0001-drop-language-plpgsql", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT count(*)
 						FROM pg_catalog.pg_language
-						WHERE lanname = 'plpgsql';`,
-					Expected: []sql.Row{{int64(1)}},
+						WHERE lanname = 'plpgsql';`, PostgresOracle: ScriptTestPostgresOracle{ID: "language-privilege-repro-test-testdroplanguagerequiresownershiprepro-0002-select-count-*-from-pg_catalog.pg_language"},
 				},
 			},
 		},
@@ -180,8 +182,7 @@ func TestCreateLanguagePopulatesPgLanguageRepro(t *testing.T) {
 				{
 					Query: `SELECT lanname
 						FROM pg_catalog.pg_language
-						WHERE lanname = 'compat_lang';`,
-					Expected: []sql.Row{{"compat_lang"}},
+						WHERE lanname = 'compat_lang';`, PostgresOracle: ScriptTestPostgresOracle{ID: "language-privilege-repro-test-testcreatelanguagepopulatespglanguagerepro-0001-select-lanname-from-pg_catalog.pg_language-where"},
 				},
 			},
 		},

@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestDropViewClearsViewPrivilegesRepro reproduces an ACL persistence bug:
@@ -44,9 +42,9 @@ func TestDropViewClearsViewPrivilegesRepro(t *testing.T) {
 				{
 					Query: `SELECT id, label
 						FROM drop_recreate_view_target;`,
-					Expected: []sql.Row{{1, "new sensitive"}},
+
 					Username: `drop_recreate_view_reader`,
-					Password: `reader`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-drop-privilege-repro-test-testdropviewclearsviewprivilegesrepro-0001-select-id-label-from-drop_recreate_view_target"},
 				},
 				{
 					Query: `DROP VIEW drop_recreate_view_target;`,
@@ -56,10 +54,10 @@ func TestDropViewClearsViewPrivilegesRepro(t *testing.T) {
 						SELECT id, label FROM drop_recreate_view_source;`,
 				},
 				{
-					Query:       `SELECT id, label FROM drop_recreate_view_target;`,
-					ExpectedErr: `permission denied`,
-					Username:    `drop_recreate_view_reader`,
-					Password:    `reader`,
+					Query: `SELECT id, label FROM drop_recreate_view_target;`,
+
+					Username: `drop_recreate_view_reader`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-drop-privilege-repro-test-testdropviewclearsviewprivilegesrepro-0002-select-id-label-from-drop_recreate_view_target", Compare: "sqlstate"},
 				},
 			},
 		},

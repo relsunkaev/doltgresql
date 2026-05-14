@@ -36,19 +36,21 @@ func TestFunctionExecuteGrantDoesNotApplyToOtherOverloadsRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT overload_secret('hidden'::TEXT);`,
-					ExpectedErr: `permission denied`,
-					Username:    `function_overload_user`,
-					Password:    `pw`,
+					Query: `SELECT overload_secret('hidden'::TEXT);`,
+
+					Username: `function_overload_user`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
+
+					// TestProcedureExecuteGrantDoesNotApplyToOtherOverloadsRepro reproduces a
+					// security bug: granting EXECUTE on one procedure overload grants access to
+					// another overload with the same name.
+					ID: "routine-privilege-repro-test-testfunctionexecutegrantdoesnotapplytootheroverloadsrepro-0001-select-overload_secret-hidden-::text"},
 				},
 			},
 		},
 	})
 }
 
-// TestProcedureExecuteGrantDoesNotApplyToOtherOverloadsRepro reproduces a
-// security bug: granting EXECUTE on one procedure overload grants access to
-// another overload with the same name.
 func TestProcedureExecuteGrantDoesNotApplyToOtherOverloadsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -66,19 +68,21 @@ func TestProcedureExecuteGrantDoesNotApplyToOtherOverloadsRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CALL overload_secret_proc('hidden'::TEXT);`,
-					ExpectedErr: `permission denied`,
-					Username:    `procedure_overload_user`,
-					Password:    `pw`,
+					Query: `CALL overload_secret_proc('hidden'::TEXT);`,
+
+					Username: `procedure_overload_user`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
+
+					// TestCreateFunctionLeakproofRequiresSuperuserRepro reproduces a security bug:
+					// PostgreSQL only allows superusers to create LEAKPROOF functions because the
+					// optimizer may execute leakproof predicates ahead of security barriers.
+					ID: "routine-privilege-repro-test-testprocedureexecutegrantdoesnotapplytootheroverloadsrepro-0001-call-overload_secret_proc-hidden-::text"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateFunctionLeakproofRequiresSuperuserRepro reproduces a security bug:
-// PostgreSQL only allows superusers to create LEAKPROOF functions because the
-// optimizer may execute leakproof predicates ahead of security barriers.
 func TestCreateFunctionLeakproofRequiresSuperuserRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -94,9 +98,9 @@ func TestCreateFunctionLeakproofRequiresSuperuserRepro(t *testing.T) {
 						LANGUAGE SQL
 						LEAKPROOF
 						AS $$ SELECT input > 0 $$;`,
-					ExpectedErr: `permission denied`,
-					Username:    `leakproof_function_user`,
-					Password:    `pw`,
+
+					Username: `leakproof_function_user`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-privilege-repro-test-testcreatefunctionleakproofrequiressuperuserrepro-0001-create-function-leakproof_user_func-input-int", Compare: "sqlstate"},
 				},
 			},
 		},

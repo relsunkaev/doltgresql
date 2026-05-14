@@ -129,10 +129,7 @@ func TestInfoSchemaColumns(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT DISTINCT table_schema FROM information_schema.columns ORDER BY table_schema;`,
-					Expected: []sql.Row{
-						{"information_schema"}, {"pg_catalog"}, {"public"},
-					},
+					Query: `SELECT DISTINCT table_schema FROM information_schema.columns ORDER BY table_schema;`, PostgresOracle: ScriptTestPostgresOracle{ID: "information-schema-test-testinfoschemacolumns-0001-select-distinct-table_schema-from-information_schema.columns", ColumnModes: []string{"schema"}},
 				},
 				{
 					Query: `SELECT table_catalog, table_schema, table_name, column_name FROM information_schema.columns WHERE table_schema='public' ORDER BY table_name;`,
@@ -280,24 +277,10 @@ func TestInfoSchemaSchemata(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT catalog_name, schema_name FROM information_schema.schemata order by schema_name;`,
-					Expected: []sql.Row{
-						{"newdb", "dolt"},
-						{"newdb", "information_schema"},
-						{"newdb", "pg_catalog"},
-						{"newdb", "public"},
-						{"newdb", "test_schema"},
-					},
+					Query: `SELECT catalog_name, schema_name FROM information_schema.schemata order by schema_name;`, PostgresOracle: ScriptTestPostgresOracle{ID: "information-schema-test-testinfoschemaschemata-0001-select-catalog_name-schema_name-from-information_schema.schemata", ColumnModes: []string{"structural", "schema"}},
 				},
 				{
-					Query: `SELECT * FROM information_schema.schemata order by schema_name;`,
-					Expected: []sql.Row{
-						{"newdb", "dolt", "", nil, nil, nil, nil},
-						{"newdb", "information_schema", "", nil, nil, nil, nil},
-						{"newdb", "pg_catalog", "", nil, nil, nil, nil},
-						{"newdb", "public", "", nil, nil, nil, nil},
-						{"newdb", "test_schema", "", nil, nil, nil, nil},
-					},
+					Query: `SELECT * FROM information_schema.schemata order by schema_name;`, PostgresOracle: ScriptTestPostgresOracle{ID: "information-schema-test-testinfoschemaschemata-0002-select-*-from-information_schema.schemata-order", ColumnModes: []string{"structural", "schema"}},
 				},
 			},
 		},
@@ -313,24 +296,13 @@ func TestInfoSchemaTables(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM information_schema.tables WHERE table_name='test_table';`,
-					Expected: []sql.Row{
-						{"postgres", "public", "test_table", "BASE TABLE", nil, nil, nil, nil, nil, "YES", "NO", nil},
-					},
+					Query: `SELECT * FROM information_schema.tables WHERE table_name='test_table';`, PostgresOracle: ScriptTestPostgresOracle{ID: "information-schema-test-testinfoschematables-0001-select-*-from-information_schema.tables-where", ColumnModes: []string{"structural", "schema"}},
 				},
 				{
-					Query: `SELECT DISTINCT table_schema FROM information_schema.tables order by table_schema;`,
-					Expected: []sql.Row{
-						{"information_schema"}, {"pg_catalog"}, {"public"},
-					},
+					Query: `SELECT DISTINCT table_schema FROM information_schema.tables order by table_schema;`, PostgresOracle: ScriptTestPostgresOracle{ID: "information-schema-test-testinfoschematables-0002-select-distinct-table_schema-from-information_schema.tables", ColumnModes: []string{"schema"}},
 				},
 				{
-					Query: `SELECT table_catalog, table_schema FROM information_schema.tables group by table_catalog, table_schema order by table_schema;`,
-					Expected: []sql.Row{
-						{"postgres", "information_schema"},
-						{"postgres", "pg_catalog"},
-						{"postgres", "public"},
-					},
+					Query: `SELECT table_catalog, table_schema FROM information_schema.tables group by table_catalog, table_schema order by table_schema;`, PostgresOracle: ScriptTestPostgresOracle{ID: "information-schema-test-testinfoschematables-0003-select-table_catalog-table_schema-from-information_schema.tables", ColumnModes: []string{"structural", "schema"}},
 				},
 				{
 					Query: `SELECT table_catalog, table_schema, table_name FROM information_schema.tables WHERE table_schema='public';`,
@@ -408,22 +380,13 @@ func TestInfoSchemaViews(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM information_schema.views order by table_schema;`,
-					Expected: []sql.Row{
-						{"postgres", "public", "test_view", "SELECT * FROM test_table", "NONE", "YES", "YES", "NO", "NO", "NO"},
-					},
+					Query: `SELECT * FROM information_schema.views order by table_schema;`, PostgresOracle: ScriptTestPostgresOracle{ID: "information-schema-test-testinfoschemaviews-0001-select-*-from-information_schema.views-order", ColumnModes: []string{"structural", "schema"}},
 				},
 				{
-					Query: `SELECT DISTINCT table_schema FROM information_schema.views order by table_schema;`,
-					Expected: []sql.Row{
-						{"public"},
-					},
+					Query: `SELECT DISTINCT table_schema FROM information_schema.views order by table_schema;`, PostgresOracle: ScriptTestPostgresOracle{ID: "information-schema-test-testinfoschemaviews-0002-select-distinct-table_schema-from-information_schema.views", ColumnModes: []string{"schema"}},
 				},
 				{
-					Query: `SELECT table_catalog, table_schema FROM information_schema.views group by table_catalog, table_schema order by table_schema;`,
-					Expected: []sql.Row{
-						{"postgres", "public"},
-					},
+					Query: `SELECT table_catalog, table_schema FROM information_schema.views group by table_catalog, table_schema order by table_schema;`, PostgresOracle: ScriptTestPostgresOracle{ID: "information-schema-test-testinfoschemaviews-0003-select-table_catalog-table_schema-from-information_schema.views", ColumnModes: []string{"structural", "schema"}},
 				},
 				{
 					Query: `SELECT table_catalog, table_schema, table_name FROM information_schema.views WHERE table_schema='public';`,
@@ -491,28 +454,16 @@ func TestInfoSchemaSequences(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "select * from information_schema.sequences where sequence_name = 'standard';",
-					Expected: []sql.Row{
-						{"postgres", "public", "standard", "smallint", 16, 2, 0, "1", "1", "32767", "1", "NO"},
-					},
+					Query: "select * from information_schema.sequences where sequence_name = 'standard';", PostgresOracle: ScriptTestPostgresOracle{ID: "information-schema-test-testinfoschemasequences-0001-select-*-from-information_schema.sequences-where", ColumnModes: []string{"structural", "schema"}},
 				},
 				{
-					Query: "select sequence_schema,sequence_name,data_type,numeric_precision from information_schema.sequences where sequence_name = 'test_table_id_seq';",
-					Expected: []sql.Row{
-						{"test_schema", "test_table_id_seq", "integer", 32},
-					},
+					Query: "select sequence_schema,sequence_name,data_type,numeric_precision from information_schema.sequences where sequence_name = 'test_table_id_seq';", PostgresOracle: ScriptTestPostgresOracle{ID: "information-schema-test-testinfoschemasequences-0002-select-sequence_schema-sequence_name-data_type-numeric_precision"},
 				},
 				{
-					Query: "select sequence_name,data_type,numeric_precision,minimum_value,increment,cycle_option from information_schema.sequences where sequence_name = 'big';",
-					Expected: []sql.Row{
-						{"big", "bigint", 64, "1", "3", "YES"},
-					},
+					Query: "select sequence_name,data_type,numeric_precision,minimum_value,increment,cycle_option from information_schema.sequences where sequence_name = 'big';", PostgresOracle: ScriptTestPostgresOracle{ID: "information-schema-test-testinfoschemasequences-0003-select-sequence_name-data_type-numeric_precision-minimum_value"},
 				},
 				{
-					Query: "select sequence_name, increment from information_schema.sequences where sequence_name = 'negative';",
-					Expected: []sql.Row{
-						{"negative", "-1"},
-					},
+					Query: "select sequence_name, increment from information_schema.sequences where sequence_name = 'negative';", PostgresOracle: ScriptTestPostgresOracle{ID: "information-schema-test-testinfoschemasequences-0004-select-sequence_name-increment-from-information_schema.sequences"},
 				},
 			},
 		},

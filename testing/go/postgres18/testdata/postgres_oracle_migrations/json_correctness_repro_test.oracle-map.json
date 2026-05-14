@@ -1,0 +1,136 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map json_correctness_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres18/json_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/postgres18/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres18/json_correctness_repro_test.go:TestPostgres18JsonStripNullsStripInArraysRepro#0001",
+      "source": "testing/go/postgres18/json_correctness_repro_test.go:TestPostgres18JsonStripNullsStripInArraysRepro",
+      "ordinal": 1,
+      "scriptName": "json strip nulls supports strip_in_arrays",
+      "oracle": "postgres",
+      "postgresId": "postgres18/json-correctness-repro-test-testpostgres18jsonstripnullsstripinarraysrepro-0001-select-json_strip_nulls-[1-null-{",
+      "suggestedId": "postgres18/json-correctness-repro-test-testpostgres18jsonstripnullsstripinarraysrepro-0001-select-json_strip_nulls-[1-null-{",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT json_strip_nulls('[1,null,{\"a\":null,\"b\":2}]'::json, true)::text;",
+      "querySha256": "b9c2a016fb5efe86bd7a27898d83cb38055715e4f3fd493315eb7aee2ea0e18d",
+      "expectedRows": [
+        [
+          {
+            "value": "[1,{\"b\":2}]"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres18/json_correctness_repro_test.go:TestPostgres18JsonStripNullsStripInArraysRepro#0002",
+      "source": "testing/go/postgres18/json_correctness_repro_test.go:TestPostgres18JsonStripNullsStripInArraysRepro",
+      "ordinal": 2,
+      "scriptName": "json strip nulls supports strip_in_arrays",
+      "oracle": "postgres",
+      "postgresId": "postgres18/json-correctness-repro-test-testpostgres18jsonstripnullsstripinarraysrepro-0002-select-jsonb_strip_nulls-[1-null-{",
+      "suggestedId": "postgres18/json-correctness-repro-test-testpostgres18jsonstripnullsstripinarraysrepro-0002-select-jsonb_strip_nulls-[1-null-{",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT jsonb_strip_nulls('[1,null,{\"a\":null,\"b\":2}]'::jsonb, true)::text;",
+      "querySha256": "38f9ab3258c5b28221cab58ef474df8d7a325dbb617bce6b8cebde2f16d68b42",
+      "expectedRows": [
+        [
+          {
+            "value": "[1, {\"b\": 2}]"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres18/json_correctness_repro_test.go:TestPostgres18JsonStripNullsStripInArraysRepro#0003",
+      "source": "testing/go/postgres18/json_correctness_repro_test.go:TestPostgres18JsonStripNullsStripInArraysRepro",
+      "ordinal": 3,
+      "scriptName": "json strip nulls supports strip_in_arrays",
+      "oracle": "postgres",
+      "postgresId": "postgres18/json-correctness-repro-test-testpostgres18jsonstripnullsstripinarraysrepro-0003-select-jsonb_strip_nulls-[1-null-{",
+      "suggestedId": "postgres18/json-correctness-repro-test-testpostgres18jsonstripnullsstripinarraysrepro-0003-select-jsonb_strip_nulls-[1-null-{",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT jsonb_strip_nulls('[1,null,{\"a\":null,\"b\":2}]'::jsonb, false)::text;",
+      "querySha256": "0e028060cfdc1a1a573466ca126a13b791b0dd83a3aa2f17bf01f1a889a82269",
+      "expectedRows": [
+        [
+          {
+            "value": "[1, null, {\"b\": 2}]"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres18/json_correctness_repro_test.go:TestPostgres18JsonStripNullsStripInArraysRepro#0004",
+      "source": "testing/go/postgres18/json_correctness_repro_test.go:TestPostgres18JsonStripNullsStripInArraysRepro",
+      "ordinal": 4,
+      "scriptName": "json strip nulls supports strip_in_arrays",
+      "oracle": "postgres",
+      "postgresId": "postgres18/json-correctness-repro-test-testpostgres18jsonstripnullsstripinarraysrepro-0004-select-json_strip_nulls-null-::json-true",
+      "suggestedId": "postgres18/json-correctness-repro-test-testpostgres18jsonstripnullsstripinarraysrepro-0004-select-json_strip_nulls-null-::json-true",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT json_strip_nulls('null'::json, true)::text, jsonb_strip_nulls('null'::jsonb, true)::text;",
+      "querySha256": "c360e8f9867da3a5ae52eb6ba18f7cac50166a0862b0574e63ba10c7c5fb3091",
+      "expectedRows": [
+        [
+          {
+            "value": "null"
+          },
+          {
+            "value": "null"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres18/json_correctness_repro_test.go:TestPostgres18JsonbNullCastsToSqlNullRepro#0001",
+      "source": "testing/go/postgres18/json_correctness_repro_test.go:TestPostgres18JsonbNullCastsToSqlNullRepro",
+      "ordinal": 1,
+      "scriptName": "jsonb null casts to scalar SQL null",
+      "oracle": "postgres",
+      "postgresId": "postgres18/json-correctness-repro-test-testpostgres18jsonbnullcaststosqlnullrepro-0001-select-null-::jsonb-::int4-is",
+      "suggestedId": "postgres18/json-correctness-repro-test-testpostgres18jsonbnullcaststosqlnullrepro-0001-select-null-::jsonb-::int4-is",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT\n\t\t\t\t\t\t(('null'::jsonb)::int4 IS NULL)::text,\n\t\t\t\t\t\t(('null'::jsonb)::bool IS NULL)::text,\n\t\t\t\t\t\t(('null'::jsonb)::numeric IS NULL)::text;",
+      "querySha256": "e2ecd105136496ca7568f44d5b9849d78e036649f907a9ef82f3abb0906be2d9",
+      "expectedRows": [
+        [
+          {
+            "value": "true"
+          },
+          {
+            "value": "true"
+          },
+          {
+            "value": "true"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

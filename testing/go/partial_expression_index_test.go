@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestPartialAndExpressionIndexes probes how far partial-index and
@@ -45,17 +43,12 @@ func TestPartialAndExpressionIndexes(t *testing.T) {
 					// Index existence and indpred should round-trip
 					// through pg_index (the catalog row, not the
 					// planner choice).
-					Query:    `SELECT count(*)::text FROM pg_indexes WHERE tablename = 'users' AND indexname = 'users_active_email_idx';`,
-					Expected: []sql.Row{{"1"}},
+					Query: `SELECT count(*)::text FROM pg_indexes WHERE tablename = 'users' AND indexname = 'users_active_email_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0001-select-count-*-::text-from"},
 				},
 				{
 					// Reading through the partial-index predicate
 					// must still return the right rows.
-					Query: `SELECT id, email FROM users WHERE deleted_at IS NULL ORDER BY id;`,
-					Expected: []sql.Row{
-						{int32(1), "a@x"},
-						{int32(2), "b@x"},
-					},
+					Query: `SELECT id, email FROM users WHERE deleted_at IS NULL ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0002-select-id-email-from-users"},
 				},
 			},
 		},
@@ -68,15 +61,10 @@ func TestPartialAndExpressionIndexes(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT count(*)::text FROM pg_indexes WHERE tablename = 'jobs' AND indexname = 'jobs_active_idx';`,
-					Expected: []sql.Row{{"1"}},
+					Query: `SELECT count(*)::text FROM pg_indexes WHERE tablename = 'jobs' AND indexname = 'jobs_active_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0003-select-count-*-::text-from"},
 				},
 				{
-					Query: `SELECT id, payload FROM jobs WHERE active = true ORDER BY id;`,
-					Expected: []sql.Row{
-						{int32(1), "p1"},
-						{int32(3), "p3"},
-					},
+					Query: `SELECT id, payload FROM jobs WHERE active = true ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0004-select-id-payload-from-jobs"},
 				},
 			},
 		},
@@ -96,12 +84,10 @@ func TestPartialAndExpressionIndexes(t *testing.T) {
 						(3, 10, 'active');`,
 				},
 				{
-					Query:       `INSERT INTO memberships VALUES (4, 10, 'active');`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO memberships VALUES (4, 10, 'active');`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0005-insert-into-memberships-values-4", Compare: "sqlstate"},
 				},
 				{
-					Query:       `UPDATE memberships SET status = 'active' WHERE id = 2;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE memberships SET status = 'active' WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0006-update-memberships-set-status-=", Compare: "sqlstate"},
 				},
 				{
 					Query: `UPDATE memberships SET status = 'inactive' WHERE id = 3;`,
@@ -113,26 +99,19 @@ func TestPartialAndExpressionIndexes(t *testing.T) {
 					Query: `INSERT INTO memberships VALUES (5, 10, 'active') ON CONFLICT DO NOTHING;`,
 				},
 				{
-					Query:    `SELECT count(*)::text FROM memberships WHERE user_id = 10 AND status = 'active';`,
-					Expected: []sql.Row{{"1"}},
+					Query: `SELECT count(*)::text FROM memberships WHERE user_id = 10 AND status = 'active';`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0007-select-count-*-::text-from"},
 				},
 				{
 					Query: `SELECT c.relname, i.indisunique, pg_catalog.pg_get_expr(i.indpred, i.indrelid)
 FROM pg_catalog.pg_index i
 JOIN pg_catalog.pg_class c ON c.oid = i.indexrelid
-WHERE c.relname = 'memberships_one_active_idx';`,
-					Expected: []sql.Row{
-						{"memberships_one_active_idx", "t", "status = 'active'"},
-					},
+WHERE c.relname = 'memberships_one_active_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0008-select-c.relname-i.indisunique-pg_catalog.pg_get_expr-i.indpred"},
 				},
 				{
 					Query: `SELECT indexdef
 FROM pg_catalog.pg_indexes
 WHERE tablename = 'memberships'
-  AND indexname = 'memberships_one_active_idx';`,
-					Expected: []sql.Row{
-						{"CREATE UNIQUE INDEX memberships_one_active_idx ON public.memberships USING btree (user_id) WHERE status = 'active'"},
-					},
+  AND indexname = 'memberships_one_active_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0009-select-indexdef-from-pg_catalog.pg_indexes-where", ColumnModes: []string{"schema"}},
 				},
 			},
 		},
@@ -168,12 +147,10 @@ WHERE tablename = 'memberships'
 						(5, 10, NULL, true);`,
 				},
 				{
-					Query:       `INSERT INTO nullable_memberships VALUES (6, 10, NULL, true);`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO nullable_memberships VALUES (6, 10, NULL, true);`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0010-insert-into-nullable_memberships-values-6", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*)::text FROM nullable_memberships;`,
-					Expected: []sql.Row{{"5"}},
+					Query: `SELECT count(*)::text FROM nullable_memberships;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0011-select-count-*-::text-from"},
 				},
 				{
 					Query: `INSERT INTO nullable_membership_pairs VALUES
@@ -186,12 +163,10 @@ WHERE tablename = 'memberships'
 						(7, 30, 'en', true);`,
 				},
 				{
-					Query:       `INSERT INTO nullable_membership_pairs VALUES (8, 30, 'en', true);`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO nullable_membership_pairs VALUES (8, 30, 'en', true);`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0012-insert-into-nullable_membership_pairs-values-8", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*)::text FROM nullable_membership_pairs;`,
-					Expected: []sql.Row{{"7"}},
+					Query: `SELECT count(*)::text FROM nullable_membership_pairs;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0013-select-count-*-::text-from"},
 				},
 			},
 		},
@@ -212,12 +187,10 @@ WHERE tablename = 'memberships'
 					Query: `INSERT INTO partial_unique_atomic_memberships VALUES
 						(1, 10, false),
 						(2, 10, true),
-						(3, 10, true);`,
-					ExpectedErr: "duplicate unique key given",
+						(3, 10, true);`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0014-insert-into-partial_unique_atomic_memberships-values-1", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*)::text FROM partial_unique_atomic_memberships;`,
-					Expected: []sql.Row{{"0"}},
+					Query: `SELECT count(*)::text FROM partial_unique_atomic_memberships;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0015-select-count-*-::text-from"},
 				},
 			},
 		},
@@ -239,18 +212,12 @@ WHERE tablename = 'memberships'
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `UPDATE partial_unique_update_atomic_memberships SET active = true WHERE user_id = 10;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE partial_unique_update_atomic_memberships SET active = true WHERE user_id = 10;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0016-update-partial_unique_update_atomic_memberships-set-active-=", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, active
 						FROM partial_unique_update_atomic_memberships
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{int32(1), "f"},
-						{int32(2), "f"},
-						{int32(3), "t"},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0017-select-id-active-from-partial_unique_update_atomic_memberships"},
 				},
 			},
 		},
@@ -266,12 +233,10 @@ WHERE tablename = 'memberships'
 					Query: `INSERT INTO inventory VALUES (1, 42, false), (2, 42, true);`,
 				},
 				{
-					Query:       `INSERT INTO inventory VALUES (3, 42, false);`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO inventory VALUES (3, 42, false);`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0018-insert-into-inventory-values-3", Compare: "sqlstate"},
 				},
 				{
-					Query:       `INSERT INTO inventory VALUES (4, 42, true);`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO inventory VALUES (4, 42, true);`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0019-insert-into-inventory-values-4", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO inventory VALUES (5, 42, NULL), (6, 42, NULL);`,
@@ -293,12 +258,10 @@ WHERE tablename = 'memberships'
 					Query: `INSERT INTO quota_windows VALUES (1, 10, 50), (2, 10, 0), (3, 10, 101);`,
 				},
 				{
-					Query:       `INSERT INTO quota_windows VALUES (4, 10, 60);`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO quota_windows VALUES (4, 10, 60);`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0020-insert-into-quota_windows-values-4", Compare: "sqlstate"},
 				},
 				{
-					Query:       `UPDATE quota_windows SET score = 75 WHERE id = 2;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE quota_windows SET score = 75 WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0021-update-quota_windows-set-score-=", Compare: "sqlstate"},
 				},
 				{
 					Query: `UPDATE quota_windows SET score = 101 WHERE id = 1;`,
@@ -307,15 +270,13 @@ WHERE tablename = 'memberships'
 					Query: `INSERT INTO quota_windows VALUES (4, 10, 60);`,
 				},
 				{
-					Query:    `SELECT id, score FROM quota_windows WHERE user_id = 10 ORDER BY id;`,
-					Expected: []sql.Row{{int32(1), int32(101)}, {int32(2), int32(0)}, {int32(3), int32(101)}, {int32(4), int32(60)}},
+					Query: `SELECT id, score FROM quota_windows WHERE user_id = 10 ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0022-select-id-score-from-quota_windows"},
 				},
 				{
 					Query: `INSERT INTO quota_not_windows VALUES (1, 20, 0), (2, 20, 50);`,
 				},
 				{
-					Query:       `INSERT INTO quota_not_windows VALUES (3, 20, 101);`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO quota_not_windows VALUES (3, 20, 101);`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0023-insert-into-quota_not_windows-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO quota_not_windows VALUES (4, 20, 60);`,
@@ -324,8 +285,7 @@ WHERE tablename = 'memberships'
 					Query: `INSERT INTO quota_symmetric_windows VALUES (1, 30, 50), (2, 30, 0), (3, 30, 101);`,
 				},
 				{
-					Query:       `INSERT INTO quota_symmetric_windows VALUES (4, 30, 60);`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO quota_symmetric_windows VALUES (4, 30, 60);`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0024-insert-into-quota_symmetric_windows-values-4", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -342,12 +302,10 @@ WHERE tablename = 'memberships'
 					Query: `INSERT INTO workflow_states VALUES (1, 10, 'active'), (2, 10, 'archived');`,
 				},
 				{
-					Query:       `INSERT INTO workflow_states VALUES (3, 10, 'pending');`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO workflow_states VALUES (3, 10, 'pending');`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0025-insert-into-workflow_states-values-3", Compare: "sqlstate"},
 				},
 				{
-					Query:       `UPDATE workflow_states SET status = 'pending' WHERE id = 2;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE workflow_states SET status = 'pending' WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0026-update-workflow_states-set-status-=", Compare: "sqlstate"},
 				},
 				{
 					Query: `UPDATE workflow_states SET status = 'archived' WHERE id = 1;`,
@@ -359,8 +317,7 @@ WHERE tablename = 'memberships'
 					Query: `INSERT INTO workflow_not_states VALUES (1, 20, 'active'), (2, 20, 'archived');`,
 				},
 				{
-					Query:       `INSERT INTO workflow_not_states VALUES (3, 20, 'pending');`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO workflow_not_states VALUES (3, 20, 'pending');`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0027-insert-into-workflow_not_states-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO workflow_not_states VALUES (4, 20, 'deleted');`,
@@ -382,15 +339,13 @@ WHERE tablename = 'memberships'
 						(2, 'other@example.com');`,
 				},
 				{
-					Query:       `INSERT INTO case_folded_accounts VALUES (3, 'Active@Example.com');`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO case_folded_accounts VALUES (3, 'Active@Example.com');`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0028-insert-into-case_folded_accounts-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO case_folded_accounts VALUES (4, 'Other@Example.com');`,
 				},
 				{
-					Query:       `UPDATE case_folded_accounts SET email = 'Active@Example.com' WHERE id = 2;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE case_folded_accounts SET email = 'Active@Example.com' WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0029-update-case_folded_accounts-set-email-=", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -410,12 +365,10 @@ WHERE tablename = 'memberships'
 						(3, 10, '');`,
 				},
 				{
-					Query:       `INSERT INTO nullif_codes VALUES (4, 10, 'active');`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO nullif_codes VALUES (4, 10, 'active');`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0030-insert-into-nullif_codes-values-4", Compare: "sqlstate"},
 				},
 				{
-					Query:       `UPDATE nullif_codes SET code = 'active' WHERE id = 2;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE nullif_codes SET code = 'active' WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0031-update-nullif_codes-set-code-=", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO nullif_codes VALUES (5, 10, 'pending');`,
@@ -454,12 +407,10 @@ WHERE tablename = 'memberships'
 						(3, 10, NULL);`,
 				},
 				{
-					Query:       `INSERT INTO arithmetic_plus_scores VALUES (4, 10, 7);`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO arithmetic_plus_scores VALUES (4, 10, 7);`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0032-insert-into-arithmetic_plus_scores-values-4", Compare: "sqlstate"},
 				},
 				{
-					Query:       `UPDATE arithmetic_plus_scores SET score = 7 WHERE id = 2;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE arithmetic_plus_scores SET score = 7 WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0033-update-arithmetic_plus_scores-set-score-=", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO arithmetic_plus_scores VALUES (5, 10, 9);`,
@@ -470,8 +421,7 @@ WHERE tablename = 'memberships'
 						(2, 20, 8);`,
 				},
 				{
-					Query:       `INSERT INTO arithmetic_minus_scores VALUES (3, 20, 7);`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO arithmetic_minus_scores VALUES (3, 20, 7);`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0034-insert-into-arithmetic_minus_scores-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO arithmetic_mult_scores VALUES
@@ -479,8 +429,7 @@ WHERE tablename = 'memberships'
 						(2, 30, 8);`,
 				},
 				{
-					Query:       `INSERT INTO arithmetic_mult_scores VALUES (3, 30, 7);`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO arithmetic_mult_scores VALUES (3, 30, 7);`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0035-insert-into-arithmetic_mult_scores-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO arithmetic_commuted_plus_scores VALUES
@@ -488,8 +437,7 @@ WHERE tablename = 'memberships'
 						(2, 40, 8);`,
 				},
 				{
-					Query:       `INSERT INTO arithmetic_commuted_plus_scores VALUES (3, 40, 7);`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO arithmetic_commuted_plus_scores VALUES (3, 40, 7);`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0036-insert-into-arithmetic_commuted_plus_scores-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO arithmetic_commuted_mult_scores VALUES
@@ -497,8 +445,7 @@ WHERE tablename = 'memberships'
 						(2, 50, 8);`,
 				},
 				{
-					Query:       `INSERT INTO arithmetic_commuted_mult_scores VALUES (3, 50, 7);`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO arithmetic_commuted_mult_scores VALUES (3, 50, 7);`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0037-insert-into-arithmetic_commuted_mult_scores-values-3", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -517,15 +464,13 @@ WHERE tablename = 'memberships'
 						(2, 10, 5);`,
 				},
 				{
-					Query:       `INSERT INTO absolute_scores VALUES (3, 10, 10);`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO absolute_scores VALUES (3, 10, 10);`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0038-insert-into-absolute_scores-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO absolute_scores VALUES (4, 10, -5);`,
 				},
 				{
-					Query:       `UPDATE absolute_scores SET delta = 10 WHERE id = 2;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE absolute_scores SET delta = 10 WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0039-update-absolute_scores-set-delta-=", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -544,15 +489,13 @@ WHERE tablename = 'memberships'
 						(2, 10, '\x0102');`,
 				},
 				{
-					Query:       `INSERT INTO byte_payloads VALUES (3, 10, '\xAABBCC');`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO byte_payloads VALUES (3, 10, '\xAABBCC');`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0040-insert-into-byte_payloads-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO byte_payloads VALUES (4, 10, '\xAABB');`,
 				},
 				{
-					Query:       `UPDATE byte_payloads SET payload = '\xAABBCC' WHERE id = 2;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE byte_payloads SET payload = '\xAABBCC' WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0041-update-byte_payloads-set-payload-=", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -571,15 +514,13 @@ WHERE tablename = 'memberships'
 						(2, 10, '\x0102');`,
 				},
 				{
-					Query:       `INSERT INTO bit_payloads VALUES (3, 10, '\xAABBCC');`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO bit_payloads VALUES (3, 10, '\xAABBCC');`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0042-insert-into-bit_payloads-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO bit_payloads VALUES (4, 10, '\xAABB');`,
 				},
 				{
-					Query:       `UPDATE bit_payloads SET payload = '\xAABBCC' WHERE id = 2;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE bit_payloads SET payload = '\xAABBCC' WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0043-update-bit_payloads-set-payload-=", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -598,15 +539,13 @@ WHERE tablename = 'memberships'
 						(2, 10, 'pending');`,
 				},
 				{
-					Query:       `INSERT INTO prefixed_codes VALUES (3, 10, 'active-b');`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO prefixed_codes VALUES (3, 10, 'active-b');`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0044-insert-into-prefixed_codes-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO prefixed_codes VALUES (4, 10, 'inactive');`,
 				},
 				{
-					Query:       `UPDATE prefixed_codes SET code = 'active-c' WHERE id = 2;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE prefixed_codes SET code = 'active-c' WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0045-update-prefixed_codes-set-code-=", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -625,15 +564,13 @@ WHERE tablename = 'memberships'
 						(2, 10, 'pending');`,
 				},
 				{
-					Query:       `INSERT INTO prefix_codes VALUES (3, 10, 'active-b');`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO prefix_codes VALUES (3, 10, 'active-b');`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0046-insert-into-prefix_codes-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO prefix_codes VALUES (4, 10, 'inactive');`,
 				},
 				{
-					Query:       `UPDATE prefix_codes SET code = 'active-c' WHERE id = 2;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE prefix_codes SET code = 'active-c' WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0047-update-prefix_codes-set-code-=", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -652,15 +589,13 @@ WHERE tablename = 'memberships'
 						(2, 10, 'pending');`,
 				},
 				{
-					Query:       `INSERT INTO like_prefix_codes VALUES (3, 10, 'active-b');`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO like_prefix_codes VALUES (3, 10, 'active-b');`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0048-insert-into-like_prefix_codes-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO like_prefix_codes VALUES (4, 10, 'inactive');`,
 				},
 				{
-					Query:       `UPDATE like_prefix_codes SET code = 'active-c' WHERE id = 2;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE like_prefix_codes SET code = 'active-c' WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0049-update-like_prefix_codes-set-code-=", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -687,15 +622,13 @@ WHERE tablename = 'memberships'
 						(2, 10, 'pending');`,
 				},
 				{
-					Query:       `INSERT INTO custom_ltrim_codes VALUES (3, 10, '00active');`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO custom_ltrim_codes VALUES (3, 10, '00active');`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0050-insert-into-custom_ltrim_codes-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO custom_ltrim_codes VALUES (4, 10, '-active');`,
 				},
 				{
-					Query:       `UPDATE custom_ltrim_codes SET code = '0_active' WHERE id = 2;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE custom_ltrim_codes SET code = '0_active' WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0051-update-custom_ltrim_codes-set-code-=", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO custom_rtrim_codes VALUES
@@ -703,15 +636,13 @@ WHERE tablename = 'memberships'
 						(2, 20, 'pending');`,
 				},
 				{
-					Query:       `INSERT INTO custom_rtrim_codes VALUES (3, 20, 'active_');`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO custom_rtrim_codes VALUES (3, 20, 'active_');`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0052-insert-into-custom_rtrim_codes-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO custom_rtrim_codes VALUES (4, 20, 'active-');`,
 				},
 				{
-					Query:       `UPDATE custom_rtrim_codes SET code = 'active_' WHERE id = 2;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE custom_rtrim_codes SET code = 'active_' WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0053-update-custom_rtrim_codes-set-code-=", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO custom_btrim_codes VALUES
@@ -719,15 +650,13 @@ WHERE tablename = 'memberships'
 						(2, 30, 'pending');`,
 				},
 				{
-					Query:       `INSERT INTO custom_btrim_codes VALUES (3, 30, '_activex');`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO custom_btrim_codes VALUES (3, 30, '_activex');`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0054-insert-into-custom_btrim_codes-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO custom_btrim_codes VALUES (4, 30, 'yactive');`,
 				},
 				{
-					Query:       `UPDATE custom_btrim_codes SET code = 'xactivex' WHERE id = 2;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE custom_btrim_codes SET code = 'xactivex' WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0055-update-custom_btrim_codes-set-code-=", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -746,15 +675,13 @@ WHERE tablename = 'memberships'
 						(2, 10, 'pending');`,
 				},
 				{
-					Query:       `INSERT INTO repeat_codes VALUES (3, 10, 'active');`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO repeat_codes VALUES (3, 10, 'active');`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0056-insert-into-repeat_codes-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO repeat_codes VALUES (4, 10, 'activeactive');`,
 				},
 				{
-					Query:       `UPDATE repeat_codes SET code = 'active' WHERE id = 2;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE repeat_codes SET code = 'active' WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0057-update-repeat_codes-set-code-=", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -801,15 +728,13 @@ WHERE tablename = 'memberships'
 						(2, 10, -5);`,
 				},
 				{
-					Query:       `INSERT INTO signed_scores VALUES (3, 10, 20);`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO signed_scores VALUES (3, 10, 20);`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0060-insert-into-signed_scores-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO signed_scores VALUES (4, 10, 0);`,
 				},
 				{
-					Query:       `UPDATE signed_scores SET delta = 1 WHERE id = 2;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE signed_scores SET delta = 1 WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0061-update-signed_scores-set-delta-=", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -832,15 +757,13 @@ WHERE tablename = 'memberships'
 						(2, 10, 9, 6);`,
 				},
 				{
-					Query:       `INSERT INTO gcd_scores VALUES (3, 10, 16, 20);`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO gcd_scores VALUES (3, 10, 16, 20);`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0062-insert-into-gcd_scores-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO gcd_scores VALUES (4, 10, 6, 10);`,
 				},
 				{
-					Query:       `UPDATE gcd_scores SET width = 12, height = 16 WHERE id = 2;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE gcd_scores SET width = 12, height = 16 WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0063-update-gcd_scores-set-width-=", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO gcd_commuted_scores VALUES
@@ -848,8 +771,7 @@ WHERE tablename = 'memberships'
 						(2, 20, 9, 6);`,
 				},
 				{
-					Query:       `INSERT INTO gcd_commuted_scores VALUES (3, 20, 16, 20);`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO gcd_commuted_scores VALUES (3, 20, 16, 20);`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0064-insert-into-gcd_commuted_scores-values-3", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -872,19 +794,16 @@ WHERE tablename = 'memberships'
 						(2, 10, 5, 6);`,
 				},
 				{
-					Query:       `INSERT INTO lcm_scores VALUES (3, 10, 4, 6);`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO lcm_scores VALUES (3, 10, 4, 6);`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0065-insert-into-lcm_scores-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO lcm_scores VALUES (4, 10, 5, 10);`,
 				},
 				{
-					Query:       `UPDATE lcm_scores SET width = 6, height = 12 WHERE id = 2;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE lcm_scores SET width = 6, height = 12 WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0066-update-lcm_scores-set-width-=", Compare: "sqlstate"},
 				},
 				{
-					Query:       `INSERT INTO lcm_scores VALUES (5, 11, 9223372036854775807, 9223372036854775806);`,
-					ExpectedErr: "bigint out of range",
+					Query: `INSERT INTO lcm_scores VALUES (5, 11, 9223372036854775807, 9223372036854775806);`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0067-insert-into-lcm_scores-values-5", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO lcm_commuted_scores VALUES
@@ -892,8 +811,7 @@ WHERE tablename = 'memberships'
 						(2, 20, 5, 6);`,
 				},
 				{
-					Query:       `INSERT INTO lcm_commuted_scores VALUES (3, 20, 4, 6);`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO lcm_commuted_scores VALUES (3, 20, 4, 6);`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0068-insert-into-lcm_commuted_scores-values-3", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -912,19 +830,16 @@ WHERE tablename = 'memberships'
 						(2, 10, 8, 3);`,
 				},
 				{
-					Query:       `INSERT INTO mod_scores VALUES (3, 10, 10, 3);`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO mod_scores VALUES (3, 10, 10, 3);`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0069-insert-into-mod_scores-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO mod_scores VALUES (4, 10, 11, 3);`,
 				},
 				{
-					Query:       `UPDATE mod_scores SET account_id = 10 WHERE id = 2;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE mod_scores SET account_id = 10 WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0070-update-mod_scores-set-account_id-=", Compare: "sqlstate"},
 				},
 				{
-					Query:       `INSERT INTO mod_scores VALUES (5, 11, 3, 0);`,
-					ExpectedErr: "division by zero",
+					Query: `INSERT INTO mod_scores VALUES (5, 11, 3, 0);`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0071-insert-into-mod_scores-values-5", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -943,15 +858,13 @@ WHERE tablename = 'memberships'
 						(2, 10, 66);`,
 				},
 				{
-					Query:       `INSERT INTO chr_codes VALUES (3, 10, 65);`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO chr_codes VALUES (3, 10, 65);`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0072-insert-into-chr_codes-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO chr_codes VALUES (4, 10, 67);`,
 				},
 				{
-					Query:       `UPDATE chr_codes SET codepoint = 65 WHERE id = 2;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE chr_codes SET codepoint = 65 WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0073-update-chr_codes-set-codepoint-=", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -974,15 +887,13 @@ WHERE tablename = 'memberships'
 						(2, 10, 'pending');`,
 				},
 				{
-					Query:       `INSERT INTO left_codes VALUES (3, 10, 'åctor');`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO left_codes VALUES (3, 10, 'åctor');`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0074-insert-into-left_codes-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO left_codes VALUES (4, 10, 'archive');`,
 				},
 				{
-					Query:       `UPDATE left_codes SET code = 'åction' WHERE id = 2;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE left_codes SET code = 'åction' WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0075-update-left_codes-set-code-=", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO right_codes VALUES
@@ -990,15 +901,13 @@ WHERE tablename = 'memberships'
 						(2, 20, 'pending');`,
 				},
 				{
-					Query:       `INSERT INTO right_codes VALUES (3, 20, 'bctive');`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO right_codes VALUES (3, 20, 'bctive');`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0076-insert-into-right_codes-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO right_codes VALUES (4, 20, 'inactive');`,
 				},
 				{
-					Query:       `UPDATE right_codes SET code = 'cctive' WHERE id = 2;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE right_codes SET code = 'cctive' WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0077-update-right_codes-set-code-=", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1017,15 +926,13 @@ WHERE tablename = 'memberships'
 						(2, 10, 'pending');`,
 				},
 				{
-					Query:       `INSERT INTO normalized_codes VALUES (3, 10, 'active--a');`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO normalized_codes VALUES (3, 10, 'active--a');`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0078-insert-into-normalized_codes-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO normalized_codes VALUES (4, 10, 'active_a');`,
 				},
 				{
-					Query:       `UPDATE normalized_codes SET code = 'active-a' WHERE id = 2;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE normalized_codes SET code = 'active-a' WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0079-update-normalized_codes-set-code-=", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1044,15 +951,13 @@ WHERE tablename = 'memberships'
 						(2, 10, 'pending');`,
 				},
 				{
-					Query:       `INSERT INTO translated_codes VALUES (3, 10, 'active__a');`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO translated_codes VALUES (3, 10, 'active__a');`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0080-insert-into-translated_codes-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO translated_codes VALUES (4, 10, 'active.a');`,
 				},
 				{
-					Query:       `UPDATE translated_codes SET code = 'active_a' WHERE id = 2;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE translated_codes SET code = 'active_a' WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0081-update-translated_codes-set-code-=", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1071,15 +976,13 @@ WHERE tablename = 'memberships'
 						(2, 10, 'pending');`,
 				},
 				{
-					Query:       `INSERT INTO hashed_codes VALUES (3, 10, 'active');`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO hashed_codes VALUES (3, 10, 'active');`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0082-insert-into-hashed_codes-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO hashed_codes VALUES (4, 10, 'ACTIVE');`,
 				},
 				{
-					Query:       `UPDATE hashed_codes SET code = 'active' WHERE id = 2;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE hashed_codes SET code = 'active' WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0083-update-hashed_codes-set-code-=", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1098,15 +1001,13 @@ WHERE tablename = 'memberships'
 						(2, 10, 'pending');`,
 				},
 				{
-					Query:       `INSERT INTO hashtext_codes VALUES (3, 10, 'abc');`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO hashtext_codes VALUES (3, 10, 'abc');`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0084-insert-into-hashtext_codes-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO hashtext_codes VALUES (4, 10, 'ABC');`,
 				},
 				{
-					Query:       `UPDATE hashtext_codes SET code = 'abc' WHERE id = 2;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE hashtext_codes SET code = 'abc' WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0085-update-hashtext_codes-set-code-=", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1129,12 +1030,10 @@ WHERE tablename = 'memberships'
 						(2, 10, 8);`,
 				},
 				{
-					Query:       `INSERT INTO rounded_floor_scores VALUES (3, 10, 7);`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO rounded_floor_scores VALUES (3, 10, 7);`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0086-insert-into-rounded_floor_scores-values-3", Compare: "sqlstate"},
 				},
 				{
-					Query:       `UPDATE rounded_floor_scores SET score = 7 WHERE id = 2;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE rounded_floor_scores SET score = 7 WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0087-update-rounded_floor_scores-set-score-=", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO rounded_ceiling_scores VALUES
@@ -1142,12 +1041,10 @@ WHERE tablename = 'memberships'
 						(2, 20, 10);`,
 				},
 				{
-					Query:       `INSERT INTO rounded_ceiling_scores VALUES (3, 20, 9);`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO rounded_ceiling_scores VALUES (3, 20, 9);`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0088-insert-into-rounded_ceiling_scores-values-3", Compare: "sqlstate"},
 				},
 				{
-					Query:       `UPDATE rounded_ceiling_scores SET score = 9 WHERE id = 2;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE rounded_ceiling_scores SET score = 9 WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0089-update-rounded_ceiling_scores-set-score-=", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1170,12 +1067,10 @@ WHERE tablename = 'memberships'
 						(2, 10, 8);`,
 				},
 				{
-					Query:       `INSERT INTO rounded_scores VALUES (3, 10, 7);`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO rounded_scores VALUES (3, 10, 7);`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0090-insert-into-rounded_scores-values-3", Compare: "sqlstate"},
 				},
 				{
-					Query:       `UPDATE rounded_scores SET score = 7 WHERE id = 2;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE rounded_scores SET score = 7 WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0091-update-rounded_scores-set-score-=", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO truncated_scores VALUES
@@ -1183,12 +1078,10 @@ WHERE tablename = 'memberships'
 						(2, 20, 10);`,
 				},
 				{
-					Query:       `INSERT INTO truncated_scores VALUES (3, 20, 9);`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO truncated_scores VALUES (3, 20, 9);`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0092-insert-into-truncated_scores-values-3", Compare: "sqlstate"},
 				},
 				{
-					Query:       `UPDATE truncated_scores SET score = 9 WHERE id = 2;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE truncated_scores SET score = 9 WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0093-update-truncated_scores-set-score-=", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1207,15 +1100,13 @@ WHERE tablename = 'memberships'
 						(2, 10, 'second@example.org');`,
 				},
 				{
-					Query:       `INSERT INTO email_domains VALUES (3, 10, 'other@example.com');`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO email_domains VALUES (3, 10, 'other@example.com');`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0094-insert-into-email_domains-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO email_domains VALUES (4, 10, 'missing-domain');`,
 				},
 				{
-					Query:       `UPDATE email_domains SET email = 'third@example.com' WHERE id = 2;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE email_domains SET email = 'third@example.com' WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0095-update-email_domains-set-email-=", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1234,15 +1125,13 @@ WHERE tablename = 'memberships'
 						(2, 10, 'beta');`,
 				},
 				{
-					Query:       `INSERT INTO ascii_codes VALUES (3, 10, 'Admin');`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO ascii_codes VALUES (3, 10, 'Admin');`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0096-insert-into-ascii_codes-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO ascii_codes VALUES (4, 10, 'alpha');`,
 				},
 				{
-					Query:       `UPDATE ascii_codes SET code = 'April' WHERE id = 2;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE ascii_codes SET code = 'April' WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0097-update-ascii_codes-set-code-=", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1261,15 +1150,13 @@ WHERE tablename = 'memberships'
 						(2, 10, 'Alpha');`,
 				},
 				{
-					Query:       `INSERT INTO substring_codes VALUES (3, 10, 'Admiral');`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO substring_codes VALUES (3, 10, 'Admiral');`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0098-insert-into-substring_codes-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO substring_codes VALUES (4, 10, 'admin');`,
 				},
 				{
-					Query:       `UPDATE substring_codes SET code = 'Admire' WHERE id = 2;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE substring_codes SET code = 'Admire' WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0099-update-substring_codes-set-code-=", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1288,15 +1175,13 @@ WHERE tablename = 'memberships'
 						(2, 10, 'XYZ');`,
 				},
 				{
-					Query:       `INSERT INTO lpad_codes VALUES (3, 10, 'ABCD');`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO lpad_codes VALUES (3, 10, 'ABCD');`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0100-insert-into-lpad_codes-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO lpad_codes VALUES (4, 10, 'AXYZ');`,
 				},
 				{
-					Query:       `UPDATE lpad_codes SET code = 'ABCD' WHERE id = 2;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE lpad_codes SET code = 'ABCD' WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0101-update-lpad_codes-set-code-=", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1315,15 +1200,13 @@ WHERE tablename = 'memberships'
 						(2, 10, 'XYZ');`,
 				},
 				{
-					Query:       `INSERT INTO rpad_codes VALUES (3, 10, 'ABCD');`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO rpad_codes VALUES (3, 10, 'ABCD');`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0102-insert-into-rpad_codes-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO rpad_codes VALUES (4, 10, 'AXYZ');`,
 				},
 				{
-					Query:       `UPDATE rpad_codes SET code = 'ABCD' WHERE id = 2;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE rpad_codes SET code = 'ABCD' WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0103-update-rpad_codes-set-code-=", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1342,15 +1225,13 @@ WHERE tablename = 'memberships'
 						(2, 10, 'Alpha');`,
 				},
 				{
-					Query:       `INSERT INTO reverse_codes VALUES (3, 10, 'Admin');`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO reverse_codes VALUES (3, 10, 'Admin');`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0104-insert-into-reverse_codes-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO reverse_codes VALUES (4, 10, 'admin');`,
 				},
 				{
-					Query:       `UPDATE reverse_codes SET code = 'Admin' WHERE id = 2;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE reverse_codes SET code = 'Admin' WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0105-update-reverse_codes-set-code-=", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1369,15 +1250,13 @@ WHERE tablename = 'memberships'
 						(2, 10, 11);`,
 				},
 				{
-					Query:       `INSERT INTO hex_codes VALUES (3, 10, 10);`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO hex_codes VALUES (3, 10, 10);`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0106-insert-into-hex_codes-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO hex_codes VALUES (4, 10, 12);`,
 				},
 				{
-					Query:       `UPDATE hex_codes SET account_id = 10 WHERE id = 2;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE hex_codes SET account_id = 10 WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0107-update-hex_codes-set-account_id-=", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1396,15 +1275,13 @@ WHERE tablename = 'memberships'
 						(2, 10, 'regular user');`,
 				},
 				{
-					Query:       `INSERT INTO initcap_roles VALUES (3, 10, 'admin user');`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO initcap_roles VALUES (3, 10, 'admin user');`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0108-insert-into-initcap_roles-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO initcap_roles VALUES (4, 10, 'billing user');`,
 				},
 				{
-					Query:       `UPDATE initcap_roles SET role = 'admin user' WHERE id = 2;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE initcap_roles SET role = 'admin user' WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0109-update-initcap_roles-set-role-=", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1423,15 +1300,13 @@ WHERE tablename = 'memberships'
 						(2, 10, 'regular user');`,
 				},
 				{
-					Query:       `INSERT INTO quote_literal_roles VALUES (3, 10, 'admin user');`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO quote_literal_roles VALUES (3, 10, 'admin user');`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0110-insert-into-quote_literal_roles-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO quote_literal_roles VALUES (4, 10, 'billing user');`,
 				},
 				{
-					Query:       `UPDATE quote_literal_roles SET role = 'admin user' WHERE id = 2;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE quote_literal_roles SET role = 'admin user' WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0111-update-quote_literal_roles-set-role-=", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1450,15 +1325,13 @@ WHERE tablename = 'memberships'
 						(2, 10, 'regular user');`,
 				},
 				{
-					Query:       `INSERT INTO quote_ident_roles VALUES (3, 10, 'admin user');`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `INSERT INTO quote_ident_roles VALUES (3, 10, 'admin user');`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0112-insert-into-quote_ident_roles-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO quote_ident_roles VALUES (4, 10, 'billing user');`,
 				},
 				{
-					Query:       `UPDATE quote_ident_roles SET role = 'admin user' WHERE id = 2;`,
-					ExpectedErr: "duplicate unique key given",
+					Query: `UPDATE quote_ident_roles SET role = 'admin user' WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0113-update-quote_ident_roles-set-role-=", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1472,8 +1345,7 @@ WHERE tablename = 'memberships'
 				{
 					Query: `CREATE UNIQUE INDEX duplicate_memberships_active_idx
 						ON duplicate_memberships (user_id)
-						WHERE status = 'active';`,
-					ExpectedErr: "duplicate unique key given",
+						WHERE status = 'active';`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0114-create-unique-index-duplicate_memberships_active_idx-on", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1486,12 +1358,10 @@ WHERE tablename = 'memberships'
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT count(*)::text FROM pg_indexes WHERE tablename = 'accounts' AND indexname = 'accounts_lower_email_idx';`,
-					Expected: []sql.Row{{"1"}},
+					Query: `SELECT count(*)::text FROM pg_indexes WHERE tablename = 'accounts' AND indexname = 'accounts_lower_email_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0115-select-count-*-::text-from"},
 				},
 				{
-					Query:    `SELECT id FROM accounts WHERE lower(email) = 'bob@x';`,
-					Expected: []sql.Row{{int32(2)}},
+					Query: `SELECT id FROM accounts WHERE lower(email) = 'bob@x';`, PostgresOracle: ScriptTestPostgresOracle{ID: "partial-expression-index-test-testpartialandexpressionindexes-0116-select-id-from-accounts-where"},
 				},
 			},
 		},

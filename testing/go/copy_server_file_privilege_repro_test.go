@@ -140,13 +140,13 @@ func TestCopyFromProgramRequiresPrivilegeRepro(t *testing.T) {
 					Query: `COPY copy_program_private (id, label) FROM PROGRAM 'printf ''1,program\n''' WITH (FORMAT CSV);`,
 
 					Username: "copy_program_reader",
-					Password: "pw", PostgresOracle: ScriptTestPostgresOracle{
+					Password: "pw", PostgresOracle: ScriptTestPostgresOracle{ID: "copy-server-file-privilege-repro-test-testcopyfromprogramrequiresprivilegerepro-0001-copy-copy_program_private-id-label-from", Compare: "sqlstate"},
 
-						// TestCopyToProgramRequiresPrivilegeRepro reproduces a COPY privilege
-						// semantics bug: PostgreSQL parses COPY TO PROGRAM and requires
-						// pg_execute_server_program or superuser privileges before executing a server
-						// program.
-						ID: "copy-server-file-privilege-repro-test-testcopyfromprogramrequiresprivilegerepro-0001-copy-copy_program_private-id-label-from", Compare: "sqlstate"},
+					// TestCopyToProgramRequiresPrivilegeRepro reproduces a COPY privilege
+					// semantics bug: PostgreSQL parses COPY TO PROGRAM and requires
+					// pg_execute_server_program or superuser privileges before executing a server
+					// program.
+
 				},
 			},
 		},

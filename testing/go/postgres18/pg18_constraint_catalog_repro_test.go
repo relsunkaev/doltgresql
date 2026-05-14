@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package _go
+package postgres18
 
 import (
-	"testing"
+	. "github.com/dolthub/doltgresql/testing/go"
 
-	"github.com/dolthub/go-mysql-server/sql"
+	"testing"
 )
 
 // TestPostgres18NotNullConstraintCatalogRepro reproduces a PostgreSQL 18
@@ -38,8 +38,7 @@ func TestPostgres18NotNullConstraintCatalogRepro(t *testing.T) {
 					Query: `SELECT contype, conkey::text, connoinherit
 						FROM pg_catalog.pg_constraint
 						WHERE conrelid = 'pg18_not_null_constraint_items'::regclass
-							AND contype = 'n';`,
-					Expected: []sql.Row{{"n", "{2}", "f"}},
+							AND contype = 'n';`, PostgresOracle: ScriptTestPostgresOracle{ID: "postgres18/pg18-constraint-catalog-repro-test-testpostgres18notnullconstraintcatalogrepro-0001-select-contype-conkey::text-connoinherit-from"},
 				},
 			},
 		},
@@ -65,21 +64,21 @@ func TestPostgres18TableNotNullConstraintSyntaxRepro(t *testing.T) {
 					Query: `SELECT conname, contype, conkey::text
 						FROM pg_catalog.pg_constraint
 						WHERE conrelid = 'pg18_table_not_null_constraint_items'::regclass
-							AND conname = 'label_required';`,
-					Expected: []sql.Row{{"label_required", "n", "{2}"}},
+							AND conname = 'label_required';`, PostgresOracle: ScriptTestPostgresOracle{ID: "postgres18/pg18-constraint-catalog-repro-test-testpostgres18tablenotnullconstraintsyntaxrepro-0001-select-conname-contype-conkey::text-from"},
 				},
 				{
-					Query:       `INSERT INTO pg18_table_not_null_constraint_items VALUES (1, NULL);`,
-					ExpectedErr: `null value in column`,
+					Query: `INSERT INTO pg18_table_not_null_constraint_items VALUES (1, NULL);`, PostgresOracle: ScriptTestPostgresOracle{ID: "postgres18/pg18-constraint-catalog-repro-test-testpostgres18tablenotnullconstraintsyntaxrepro-0002-insert-into-pg18_table_not_null_constraint_items-values-1", Compare: "sqlstate"},
+
+					// TestPostgres18AlterNotNullConstraintInheritanceRepro reproduces a PostgreSQL
+					// 18 constraint parity gap: named NOT NULL constraints can be marked
+					// NO INHERIT and later changed with ALTER CONSTRAINT ... INHERIT.
+
 				},
 			},
 		},
 	})
 }
 
-// TestPostgres18AlterNotNullConstraintInheritanceRepro reproduces a PostgreSQL
-// 18 constraint parity gap: named NOT NULL constraints can be marked
-// NO INHERIT and later changed with ALTER CONSTRAINT ... INHERIT.
 func TestPostgres18AlterNotNullConstraintInheritanceRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -95,8 +94,7 @@ func TestPostgres18AlterNotNullConstraintInheritanceRepro(t *testing.T) {
 					Query: `SELECT conname, connoinherit
 						FROM pg_catalog.pg_constraint
 						WHERE conrelid = 'pg18_not_null_inherit_items'::regclass
-							AND conname = 'label_required';`,
-					Expected: []sql.Row{{"label_required", "t"}},
+							AND conname = 'label_required';`, PostgresOracle: ScriptTestPostgresOracle{ID: "postgres18/pg18-constraint-catalog-repro-test-testpostgres18alternotnullconstraintinheritancerepro-0001-select-conname-connoinherit-from-pg_catalog.pg_constraint"},
 				},
 				{
 					Query: `ALTER TABLE pg18_not_null_inherit_items
@@ -106,12 +104,10 @@ func TestPostgres18AlterNotNullConstraintInheritanceRepro(t *testing.T) {
 					Query: `SELECT conname, connoinherit
 						FROM pg_catalog.pg_constraint
 						WHERE conrelid = 'pg18_not_null_inherit_items'::regclass
-							AND conname = 'label_required';`,
-					Expected: []sql.Row{{"label_required", "f"}},
+							AND conname = 'label_required';`, PostgresOracle: ScriptTestPostgresOracle{ID: "postgres18/pg18-constraint-catalog-repro-test-testpostgres18alternotnullconstraintinheritancerepro-0002-select-conname-connoinherit-from-pg_catalog.pg_constraint"},
 				},
 				{
-					Query:       `INSERT INTO pg18_not_null_inherit_items VALUES (1, NULL);`,
-					ExpectedErr: `null value in column`,
+					Query: `INSERT INTO pg18_not_null_inherit_items VALUES (1, NULL);`, PostgresOracle: ScriptTestPostgresOracle{ID: "postgres18/pg18-constraint-catalog-repro-test-testpostgres18alternotnullconstraintinheritancerepro-0003-insert-into-pg18_not_null_inherit_items-values-1", Compare: "sqlstate"},
 				},
 			},
 		},

@@ -34,17 +34,18 @@ func TestGeneratedColumnRejectsVolatileFunctionsRepro(t *testing.T) {
 					Query: `CREATE TABLE generated_volatile_items (
 						id INT PRIMARY KEY,
 						random_value DOUBLE PRECISION GENERATED ALWAYS AS (random()) STORED
-					);`,
-					ExpectedErr: `generation expression is not immutable`,
+					);`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-column-correctness-repro-test-testgeneratedcolumnrejectsvolatilefunctionsrepro-0001-create-table-generated_volatile_items-id-int",
+
+						// TestGeneratedColumnRejectsSelfReferenceRepro reproduces a generated-column
+						// correctness bug: Doltgres accepts a stored generated column that references
+						// itself.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestGeneratedColumnRejectsSelfReferenceRepro reproduces a generated-column
-// correctness bug: Doltgres accepts a stored generated column that references
-// itself.
 func TestGeneratedColumnRejectsSelfReferenceRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -54,17 +55,18 @@ func TestGeneratedColumnRejectsSelfReferenceRepro(t *testing.T) {
 					Query: `CREATE TABLE generated_self_ref_items (
 						id INT PRIMARY KEY,
 						doubled INT GENERATED ALWAYS AS (doubled * 2) STORED
-					);`,
-					ExpectedErr: `cannot use generated column "doubled" in column generation expression`,
+					);`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-column-correctness-repro-test-testgeneratedcolumnrejectsselfreferencerepro-0001-create-table-generated_self_ref_items-id-int",
+
+						// TestGeneratedColumnRejectsGeneratedColumnReferenceRepro reproduces a
+						// generated-column correctness bug: Doltgres accepts a stored generated column
+						// that references another generated column.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestGeneratedColumnRejectsGeneratedColumnReferenceRepro reproduces a
-// generated-column correctness bug: Doltgres accepts a stored generated column
-// that references another generated column.
 func TestGeneratedColumnRejectsGeneratedColumnReferenceRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -76,17 +78,18 @@ func TestGeneratedColumnRejectsGeneratedColumnReferenceRepro(t *testing.T) {
 						base_value INT,
 						doubled INT GENERATED ALWAYS AS (base_value * 2) STORED,
 						quadrupled INT GENERATED ALWAYS AS (doubled * 2) STORED
-					);`,
-					ExpectedErr: `cannot use generated column "doubled" in column generation expression`,
+					);`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-column-correctness-repro-test-testgeneratedcolumnrejectsgeneratedcolumnreferencerepro-0001-create-table-generated_generated_ref_items-id-int",
+
+						// TestGeneratedColumnRejectsMalformedReferencesRepro reproduces a
+						// generated-column correctness bug: Doltgres accepts a duplicate generation
+						// clause that PostgreSQL rejects before persisting the table.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestGeneratedColumnRejectsMalformedReferencesRepro reproduces a
-// generated-column correctness bug: Doltgres accepts a duplicate generation
-// clause that PostgreSQL rejects before persisting the table.
 func TestGeneratedColumnRejectsMalformedReferencesRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -96,8 +99,7 @@ func TestGeneratedColumnRejectsMalformedReferencesRepro(t *testing.T) {
 					Query: `CREATE TABLE generated_duplicate_clause_items (
 						id INT PRIMARY KEY,
 						doubled INT GENERATED ALWAYS AS (id * 2) STORED GENERATED ALWAYS AS (id * 3) STORED
-					);`,
-					ExpectedErr: `generation`,
+					);`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-column-correctness-repro-test-testgeneratedcolumnrejectsmalformedreferencesrepro-0001-create-table-generated_duplicate_clause_items-id-int", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -108,8 +110,7 @@ func TestGeneratedColumnRejectsMalformedReferencesRepro(t *testing.T) {
 					Query: `CREATE TABLE generated_missing_ref_items (
 						id INT PRIMARY KEY,
 						doubled INT GENERATED ALWAYS AS (missing_value * 2) STORED
-					);`,
-					ExpectedErr: `missing_value`,
+					);`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-column-correctness-repro-test-testgeneratedcolumnrejectsmalformedreferencesrepro-0002-create-table-generated_missing_ref_items-id-int", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -120,17 +121,18 @@ func TestGeneratedColumnRejectsMalformedReferencesRepro(t *testing.T) {
 					Query: `CREATE TABLE generated_whole_row_items (
 						id INT PRIMARY KEY,
 						null_count INT GENERATED ALWAYS AS (num_nulls(generated_whole_row_items)) STORED
-					);`,
-					ExpectedErr: `ERROR`,
+					);`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-column-correctness-repro-test-testgeneratedcolumnrejectsmalformedreferencesrepro-0003-create-table-generated_whole_row_items-id-int",
+
+						// TestGeneratedColumnRejectsAggregateExpressionsRepro reproduces a
+						// generated-column correctness bug: Doltgres accepts an aggregate expression
+						// for a stored generated column.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestGeneratedColumnRejectsAggregateExpressionsRepro reproduces a
-// generated-column correctness bug: Doltgres accepts an aggregate expression
-// for a stored generated column.
 func TestGeneratedColumnRejectsAggregateExpressionsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -140,17 +142,18 @@ func TestGeneratedColumnRejectsAggregateExpressionsRepro(t *testing.T) {
 					Query: `CREATE TABLE generated_aggregate_items (
 						id INT PRIMARY KEY,
 						aggregate_value INT GENERATED ALWAYS AS (avg(id)) STORED
-					);`,
-					ExpectedErr: `aggregate functions are not allowed in column generation expressions`,
+					);`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-column-correctness-repro-test-testgeneratedcolumnrejectsaggregateexpressionsrepro-0001-create-table-generated_aggregate_items-id-int",
+
+						// TestGeneratedColumnRejectsWindowExpressionsRepro reproduces a
+						// generated-column correctness bug: Doltgres accepts a window expression for a
+						// stored generated column.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestGeneratedColumnRejectsWindowExpressionsRepro reproduces a
-// generated-column correctness bug: Doltgres accepts a window expression for a
-// stored generated column.
 func TestGeneratedColumnRejectsWindowExpressionsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -160,17 +163,18 @@ func TestGeneratedColumnRejectsWindowExpressionsRepro(t *testing.T) {
 					Query: `CREATE TABLE generated_window_items (
 						id INT PRIMARY KEY,
 						ranked INT GENERATED ALWAYS AS (row_number() OVER (ORDER BY id)) STORED
-					);`,
-					ExpectedErr: `window functions are not allowed in column generation expressions`,
+					);`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-column-correctness-repro-test-testgeneratedcolumnrejectswindowexpressionsrepro-0001-create-table-generated_window_items-id-int",
+
+						// TestGeneratedColumnRejectsSetReturningExpressionsRepro reproduces a
+						// generated-column correctness bug: Doltgres accepts a set-returning expression
+						// for a stored generated column.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestGeneratedColumnRejectsSetReturningExpressionsRepro reproduces a
-// generated-column correctness bug: Doltgres accepts a set-returning expression
-// for a stored generated column.
 func TestGeneratedColumnRejectsSetReturningExpressionsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -180,17 +184,18 @@ func TestGeneratedColumnRejectsSetReturningExpressionsRepro(t *testing.T) {
 					Query: `CREATE TABLE generated_srf_items (
 						id INT PRIMARY KEY,
 						from_series INT GENERATED ALWAYS AS (generate_series(1, id)) STORED
-					);`,
-					ExpectedErr: `set-returning functions are not allowed in column generation expressions`,
+					);`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-column-correctness-repro-test-testgeneratedcolumnrejectssetreturningexpressionsrepro-0001-create-table-generated_srf_items-id-int",
+
+						// TestGeneratedColumnRejectsSubqueryExpressionsRepro reproduces a generated
+						// column correctness bug: PostgreSQL rejects subqueries in stored generated
+						// column expressions.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestGeneratedColumnRejectsSubqueryExpressionsRepro reproduces a generated
-// column correctness bug: PostgreSQL rejects subqueries in stored generated
-// column expressions.
 func TestGeneratedColumnRejectsSubqueryExpressionsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -200,17 +205,18 @@ func TestGeneratedColumnRejectsSubqueryExpressionsRepro(t *testing.T) {
 					Query: `CREATE TABLE generated_subquery_items (
 						id INT PRIMARY KEY,
 						from_subquery INT GENERATED ALWAYS AS ((SELECT id)) STORED
-					);`,
-					ExpectedErr: `subqueries`,
+					);`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-column-correctness-repro-test-testgeneratedcolumnrejectssubqueryexpressionsrepro-0001-create-table-generated_subquery_items-id-int",
+
+						// TestGeneratedColumnRejectsSystemColumnReferencesRepro reproduces a generated
+						// column correctness bug: system columns other than tableoid cannot be used in
+						// stored generated column expressions.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestGeneratedColumnRejectsSystemColumnReferencesRepro reproduces a generated
-// column correctness bug: system columns other than tableoid cannot be used in
-// stored generated column expressions.
 func TestGeneratedColumnRejectsSystemColumnReferencesRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -220,17 +226,18 @@ func TestGeneratedColumnRejectsSystemColumnReferencesRepro(t *testing.T) {
 					Query: `CREATE TABLE generated_system_column_items (
 						id INT PRIMARY KEY,
 						xid_seen BOOL GENERATED ALWAYS AS (xmin <> 37) STORED
-					);`,
-					ExpectedErr: `xmin`,
+					);`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-column-correctness-repro-test-testgeneratedcolumnrejectssystemcolumnreferencesrepro-0001-create-table-generated_system_column_items-id-int",
+
+						// TestGeneratedColumnAllowsTableoidReferenceRepro reproduces a generated-column
+						// correctness bug: PostgreSQL permits tableoid in stored generated expressions
+						// even though other system columns are rejected.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestGeneratedColumnAllowsTableoidReferenceRepro reproduces a generated-column
-// correctness bug: PostgreSQL permits tableoid in stored generated expressions
-// even though other system columns are rejected.
 func TestGeneratedColumnAllowsTableoidReferenceRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -247,8 +254,7 @@ func TestGeneratedColumnAllowsTableoidReferenceRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT id, is_self, rel::text
-						FROM generated_tableoid_items;`,
-					Expected: []sql.Row{{1, true, "generated_tableoid_items"}},
+						FROM generated_tableoid_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-column-correctness-repro-test-testgeneratedcolumnallowstableoidreferencerepro-0001-select-id-is_self-rel::text-from"},
 				},
 			},
 		},
@@ -268,8 +274,7 @@ func TestGeneratedColumnRejectsConflictingGenerationClausesRepro(t *testing.T) {
 					Query: `CREATE TABLE generated_conflicting_default_items (
 						id INT PRIMARY KEY,
 						doubled INT DEFAULT 5 GENERATED ALWAYS AS (id * 2) STORED
-					);`,
-					ExpectedErr: `ERROR`,
+					);`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-column-correctness-repro-test-testgeneratedcolumnrejectsconflictinggenerationclausesrepro-0001-create-table-generated_conflicting_default_items-id-int", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -280,8 +285,7 @@ func TestGeneratedColumnRejectsConflictingGenerationClausesRepro(t *testing.T) {
 					Query: `CREATE TABLE generated_conflicting_identity_items (
 						id INT PRIMARY KEY,
 						doubled INT GENERATED ALWAYS AS IDENTITY GENERATED ALWAYS AS (id * 2) STORED
-					);`,
-					ExpectedErr: `both identity and generation expression specified`,
+					);`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-column-correctness-repro-test-testgeneratedcolumnrejectsconflictinggenerationclausesrepro-0002-create-table-generated_conflicting_identity_items-id-int", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -292,16 +296,17 @@ func TestGeneratedColumnRejectsConflictingGenerationClausesRepro(t *testing.T) {
 					Query: `CREATE TABLE generated_by_default_expression_items (
 						id INT PRIMARY KEY,
 						doubled INT GENERATED BY DEFAULT AS (id * 2) STORED
-					);`,
-					ExpectedErr: `ERROR`,
+					);`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-column-correctness-repro-test-testgeneratedcolumnrejectsconflictinggenerationclausesrepro-0003-create-table-generated_by_default_expression_items-id-int",
+
+						// TestGeneratedColumnRejectsExplicitInsertGuard guards that callers cannot
+						// provide stored generated-column values directly.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestGeneratedColumnRejectsExplicitInsertGuard guards that callers cannot
-// provide stored generated-column values directly.
 func TestGeneratedColumnRejectsExplicitInsertGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -316,16 +321,17 @@ func TestGeneratedColumnRejectsExplicitInsertGuard(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `INSERT INTO generated_insert_items (id, base_value, doubled)
-						VALUES (1, 5, 999);`,
-					ExpectedErr: `generated column`,
+						VALUES (1, 5, 999);`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-column-correctness-repro-test-testgeneratedcolumnrejectsexplicitinsertguard-0001-insert-into-generated_insert_items-id-base_value",
+
+						// TestGeneratedColumnRejectsExplicitUpdateGuard guards that callers cannot
+						// update stored generated-column values directly.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestGeneratedColumnRejectsExplicitUpdateGuard guards that callers cannot
-// update stored generated-column values directly.
 func TestGeneratedColumnRejectsExplicitUpdateGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -340,17 +346,18 @@ func TestGeneratedColumnRejectsExplicitUpdateGuard(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `UPDATE generated_update_items SET doubled = 999 WHERE id = 1;`,
-					ExpectedErr: `generated column`,
+					Query: `UPDATE generated_update_items SET doubled = 999 WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-column-correctness-repro-test-testgeneratedcolumnrejectsexplicitupdateguard-0001-update-generated_update_items-set-doubled-=",
+
+						// TestCopyFromGeneratedColumnErrorKeepsSessionUsableRepro reproduces a COPY
+						// error-handling correctness bug: rejecting an explicit stored generated-column
+						// value should not poison the session.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCopyFromGeneratedColumnErrorKeepsSessionUsableRepro reproduces a COPY
-// error-handling correctness bug: rejecting an explicit stored generated-column
-// value should not poison the session.
 func TestCopyFromGeneratedColumnErrorKeepsSessionUsableRepro(t *testing.T) {
 	ctx, connection, controller := CreateServer(t, "postgres")
 	defer func() {
@@ -405,8 +412,7 @@ func TestGeneratedColumnAcceptsDefaultKeywordGuard(t *testing.T) {
 						WHERE id = 1;`,
 				},
 				{
-					Query:    `SELECT base_value, doubled FROM generated_default_items;`,
-					Expected: []sql.Row{{8, 16}},
+					Query: `SELECT base_value, doubled FROM generated_default_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-column-correctness-repro-test-testgeneratedcolumnacceptsdefaultkeywordguard-0001-select-base_value-doubled-from-generated_default_items"},
 				},
 			},
 		},
@@ -434,11 +440,7 @@ func TestGeneratedColumnAddedToExistingRowsBackfillsValuesGuard(t *testing.T) {
 				{
 					Query: `SELECT id, base_value, doubled
 						FROM generated_add_items
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, 5, 10},
-						{2, 7, 14},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-column-correctness-repro-test-testgeneratedcolumnaddedtoexistingrowsbackfillsvaluesguard-0001-select-id-base_value-doubled-from"},
 				},
 			},
 		},
@@ -460,16 +462,17 @@ func TestGeneratedColumnCheckConstraintUsesGeneratedValueGuard(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `INSERT INTO generated_check_items (id, base_value) VALUES (1, 30);`,
-					ExpectedErr: `Check constraint`,
+					Query: `INSERT INTO generated_check_items (id, base_value) VALUES (1, 30);`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-column-correctness-repro-test-testgeneratedcolumncheckconstraintusesgeneratedvalueguard-0001-insert-into-generated_check_items-id-base_value",
+
+						// TestGeneratedColumnUniqueConstraintUsesGeneratedValueGuard verifies generated
+						// column values participate in ordinary UNIQUE constraints.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestGeneratedColumnUniqueConstraintUsesGeneratedValueGuard verifies generated
-// column values participate in ordinary UNIQUE constraints.
 func TestGeneratedColumnUniqueConstraintUsesGeneratedValueGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -484,17 +487,18 @@ func TestGeneratedColumnUniqueConstraintUsesGeneratedValueGuard(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `INSERT INTO generated_unique_items (id, base_value) VALUES (2, 5);`,
-					ExpectedErr: `duplicate unique key`,
+					Query: `INSERT INTO generated_unique_items (id, base_value) VALUES (2, 5);`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-column-correctness-repro-test-testgeneratedcolumnuniqueconstraintusesgeneratedvalueguard-0001-insert-into-generated_unique_items-id-base_value",
+
+						// TestGeneratedColumnUniqueConstraintUsesUpdatedGeneratedValueGuard guards that
+						// generated column values participate in UNIQUE constraints after base-column
+						// updates.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestGeneratedColumnUniqueConstraintUsesUpdatedGeneratedValueGuard guards that
-// generated column values participate in UNIQUE constraints after base-column
-// updates.
 func TestGeneratedColumnUniqueConstraintUsesUpdatedGeneratedValueGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -510,14 +514,12 @@ func TestGeneratedColumnUniqueConstraintUsesUpdatedGeneratedValueGuard(t *testin
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `UPDATE generated_unique_update_items SET base_value = 5 WHERE id = 2;`,
-					ExpectedErr: `duplicate unique key`,
+					Query: `UPDATE generated_unique_update_items SET base_value = 5 WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-column-correctness-repro-test-testgeneratedcolumnuniqueconstraintusesupdatedgeneratedvalueguard-0001-update-generated_unique_update_items-set-base_value-=", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, base_value, doubled
 						FROM generated_unique_update_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, 5, 10}, {2, 7, 14}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-column-correctness-repro-test-testgeneratedcolumnuniqueconstraintusesupdatedgeneratedvalueguard-0002-select-id-base_value-doubled-from"},
 				},
 			},
 		},
@@ -541,20 +543,20 @@ func TestGeneratedColumnCheckConstraintUsesUpdatedGeneratedValueGuard(t *testing
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `UPDATE generated_check_update_items SET base_value = 30 WHERE id = 1;`,
-					ExpectedErr: `Check constraint`,
+					Query: `UPDATE generated_check_update_items SET base_value = 30 WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-column-correctness-repro-test-testgeneratedcolumncheckconstraintusesupdatedgeneratedvalueguard-0001-update-generated_check_update_items-set-base_value-=",
+
+						// TestGeneratedColumnNotNullConstraintUsesGeneratedValueGuard guards that
+						// generated column values participate in ordinary NOT NULL constraints.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT id, base_value, doubled FROM generated_check_update_items;`,
-					Expected: []sql.Row{{1, 10, 20}},
+					Query: `SELECT id, base_value, doubled FROM generated_check_update_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-column-correctness-repro-test-testgeneratedcolumncheckconstraintusesupdatedgeneratedvalueguard-0002-select-id-base_value-doubled-from"},
 				},
 			},
 		},
 	})
 }
 
-// TestGeneratedColumnNotNullConstraintUsesGeneratedValueGuard guards that
-// generated column values participate in ordinary NOT NULL constraints.
 func TestGeneratedColumnNotNullConstraintUsesGeneratedValueGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -571,20 +573,20 @@ func TestGeneratedColumnNotNullConstraintUsesGeneratedValueGuard(t *testing.T) {
 					Query: `INSERT INTO generated_not_null_items (id, base_value) VALUES (1, 5);`,
 				},
 				{
-					Query:       `INSERT INTO generated_not_null_items (id, base_value) VALUES (2, 0);`,
-					ExpectedErr: `non-nullable`,
+					Query: `INSERT INTO generated_not_null_items (id, base_value) VALUES (2, 0);`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-column-correctness-repro-test-testgeneratedcolumnnotnullconstraintusesgeneratedvalueguard-0001-insert-into-generated_not_null_items-id-base_value",
+
+						// TestAlterGeneratedColumnSetNotNullEnforcesGeneratedValueRepro guards that
+						// ALTER COLUMN ... SET NOT NULL applies to generated column values.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT id, base_value, nonzero FROM generated_not_null_items;`,
-					Expected: []sql.Row{{1, 5, 5}},
+					Query: `SELECT id, base_value, nonzero FROM generated_not_null_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-column-correctness-repro-test-testgeneratedcolumnnotnullconstraintusesgeneratedvalueguard-0002-select-id-base_value-nonzero-from"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterGeneratedColumnSetNotNullEnforcesGeneratedValueRepro guards that
-// ALTER COLUMN ... SET NOT NULL applies to generated column values.
 func TestAlterGeneratedColumnSetNotNullEnforcesGeneratedValueRepro(t *testing.T) {
 	ctx, conn, controller := CreateServer(t, "postgres")
 	t.Cleanup(func() {
@@ -673,8 +675,7 @@ func TestGeneratedColumnRecomputesAfterBaseUpdateGuard(t *testing.T) {
 					Query: `UPDATE generated_update_recompute_items SET base_value = 5 WHERE id = 1;`,
 				},
 				{
-					Query:    `SELECT base_value, doubled FROM generated_update_recompute_items;`,
-					Expected: []sql.Row{{5, 10}},
+					Query: `SELECT base_value, doubled FROM generated_update_recompute_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-column-correctness-repro-test-testgeneratedcolumnrecomputesafterbaseupdateguard-0001-select-base_value-doubled-from-generated_update_recompute_items"},
 				},
 			},
 		},
@@ -712,11 +713,7 @@ func TestGeneratedColumnRecomputesAfterUpdateFromGuard(t *testing.T) {
 				{
 					Query: `SELECT id, base_value, doubled
 						FROM generated_update_from_recompute_items
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, 5, 10},
-						{2, 7, 14},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-column-correctness-repro-test-testgeneratedcolumnrecomputesafterupdatefromguard-0001-select-id-base_value-doubled-from"},
 				},
 			},
 		},
@@ -747,8 +744,7 @@ func TestGeneratedColumnRecomputesAfterOnConflictUpdateGuard(t *testing.T) {
 				},
 				{
 					Query: `SELECT id, base_value, doubled
-						FROM generated_on_conflict_recompute_items;`,
-					Expected: []sql.Row{{1, 5, 10}},
+						FROM generated_on_conflict_recompute_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-column-correctness-repro-test-testgeneratedcolumnrecomputesafteronconflictupdateguard-0001-select-id-base_value-doubled-from"},
 				},
 			},
 		},
@@ -786,8 +782,7 @@ func TestBeforeTriggerGeneratedColumnAssignmentIsIgnoredRepro(t *testing.T) {
 					Query: `UPDATE generated_trigger_assignment_items SET base_value = 7 WHERE id = 1;`,
 				},
 				{
-					Query:    `SELECT base_value, doubled FROM generated_trigger_assignment_items;`,
-					Expected: []sql.Row{{10, 20}},
+					Query: `SELECT base_value, doubled FROM generated_trigger_assignment_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-column-correctness-repro-test-testbeforetriggergeneratedcolumnassignmentisignoredrepro-0001-select-base_value-doubled-from-generated_trigger_assignment_items"},
 				},
 			},
 		},
@@ -820,17 +815,18 @@ func TestBeforeTriggerWhenCannotReferenceNewGeneratedColumnRepro(t *testing.T) {
 						BEFORE INSERT ON generated_trigger_when_items
 						FOR EACH ROW
 						WHEN (NEW.doubled > 10)
-						EXECUTE FUNCTION noop_generated_trigger_when();`,
-					ExpectedErr: `generated column`,
+						EXECUTE FUNCTION noop_generated_trigger_when();`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-column-correctness-repro-test-testbeforetriggerwhencannotreferencenewgeneratedcolumnrepro-0001-create-trigger-generated_trigger_when_before_insert-before-insert",
+
+						// TestUpdateOfGeneratedColumnFiresForBaseColumnChangeRepro guards PostgreSQL's
+						// trigger rule that UPDATE OF a stored generated column fires when one of its
+						// base columns changes.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestUpdateOfGeneratedColumnFiresForBaseColumnChangeRepro guards PostgreSQL's
-// trigger rule that UPDATE OF a stored generated column fires when one of its
-// base columns changes.
 func TestUpdateOfGeneratedColumnFiresForBaseColumnChangeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -862,8 +858,7 @@ func TestUpdateOfGeneratedColumnFiresForBaseColumnChangeRepro(t *testing.T) {
 					Query: `UPDATE generated_update_of_items SET base_value = 4 WHERE id = 1;`,
 				},
 				{
-					Query:    `SELECT id, old_doubled, new_doubled FROM generated_update_of_audit;`,
-					Expected: []sql.Row{{1, 6, 8}},
+					Query: `SELECT id, old_doubled, new_doubled FROM generated_update_of_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-column-correctness-repro-test-testupdateofgeneratedcolumnfiresforbasecolumnchangerepro-0001-select-id-old_doubled-new_doubled-from"},
 				},
 			},
 		},
@@ -894,8 +889,7 @@ func TestRenameColumnUsedByGeneratedColumnKeepsGeneratedColumnUsableGuard(t *tes
 				{
 					Query: `SELECT id, amount, doubled
 						FROM generated_column_rename_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, 5, 10}, {2, 7, 14}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-column-correctness-repro-test-testrenamecolumnusedbygeneratedcolumnkeepsgeneratedcolumnusableguard-0001-select-id-amount-doubled-from"},
 				},
 			},
 		},
@@ -918,17 +912,18 @@ func TestDropColumnUsedByGeneratedColumnRequiresCascadeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER TABLE generated_column_dependency_items DROP COLUMN base_value;`,
-					ExpectedErr: `because other objects depend on it`,
+					Query: `ALTER TABLE generated_column_dependency_items DROP COLUMN base_value;`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-column-correctness-repro-test-testdropcolumnusedbygeneratedcolumnrequirescascaderepro-0001-alter-table-generated_column_dependency_items-drop-column",
+
+						// TestGeneratedColumnRejectsOnUpdateCascadeReferenceRepro reproduces a
+						// generated-column correctness bug: Doltgres accepts ON UPDATE CASCADE on a
+						// foreign key whose referencing column is generated.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestGeneratedColumnRejectsOnUpdateCascadeReferenceRepro reproduces a
-// generated-column correctness bug: Doltgres accepts ON UPDATE CASCADE on a
-// foreign key whose referencing column is generated.
 func TestGeneratedColumnRejectsOnUpdateCascadeReferenceRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -942,17 +937,18 @@ func TestGeneratedColumnRejectsOnUpdateCascadeReferenceRepro(t *testing.T) {
 						id INT PRIMARY KEY,
 						parent_id INT GENERATED ALWAYS AS (id * 2) STORED
 							REFERENCES generated_fk_parent(id) ON UPDATE CASCADE
-					);`,
-					ExpectedErr: `generated column`,
+					);`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-column-correctness-repro-test-testgeneratedcolumnrejectsonupdatecascadereferencerepro-0001-create-table-generated_fk_update_child-id-int",
+
+						// TestGeneratedColumnRejectsOnDeleteSetNullReferenceRepro reproduces a
+						// generated-column correctness bug: Doltgres accepts ON DELETE SET NULL on a
+						// foreign key whose referencing column is generated.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestGeneratedColumnRejectsOnDeleteSetNullReferenceRepro reproduces a
-// generated-column correctness bug: Doltgres accepts ON DELETE SET NULL on a
-// foreign key whose referencing column is generated.
 func TestGeneratedColumnRejectsOnDeleteSetNullReferenceRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -966,43 +962,7 @@ func TestGeneratedColumnRejectsOnDeleteSetNullReferenceRepro(t *testing.T) {
 						id INT PRIMARY KEY,
 						parent_id INT GENERATED ALWAYS AS (id * 2) STORED
 							REFERENCES generated_fk_delete_parent(id) ON DELETE SET NULL
-					);`,
-					ExpectedErr: `generated column`,
-				},
-			},
-		},
-	})
-}
-
-// TestPostgres18VirtualGeneratedColumnRepro reproduces a PostgreSQL 18
-// persistence gap: virtual generated columns are computed on read rather than
-// stored in the row.
-func TestPostgres18VirtualGeneratedColumnRepro(t *testing.T) {
-	RunScripts(t, []ScriptTest{
-		{
-			Name: "virtual generated columns compute on read",
-			SetUpScript: []string{
-				`CREATE TABLE generated_virtual_items (
-					id INT PRIMARY KEY,
-					width INT NOT NULL,
-					height INT NOT NULL,
-					area INT GENERATED ALWAYS AS (width * height) VIRTUAL
-				);`,
-				`INSERT INTO generated_virtual_items (id, width, height) VALUES (1, 3, 4);`,
-			},
-			Assertions: []ScriptTestAssertion{
-				{
-					Query:    `SELECT area FROM generated_virtual_items WHERE id = 1;`,
-					Expected: []sql.Row{{12}},
-				},
-				{
-					Query: `UPDATE generated_virtual_items
-						SET width = 5
-						WHERE id = 1;`,
-				},
-				{
-					Query:    `SELECT area FROM generated_virtual_items WHERE id = 1;`,
-					Expected: []sql.Row{{20}},
+					);`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-column-correctness-repro-test-testgeneratedcolumnrejectsondeletesetnullreferencerepro-0001-create-table-generated_fk_delete_child-id-int", Compare: "sqlstate"},
 				},
 			},
 		},

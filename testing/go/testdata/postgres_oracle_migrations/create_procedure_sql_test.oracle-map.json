@@ -1,0 +1,259 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map create_procedure_sql_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/create_procedure_sql_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/create_procedure_sql_test.go:TestSqlProcedureInsertReturningExecutesRepro#0001",
+      "source": "testing/go/create_procedure_sql_test.go:TestSqlProcedureInsertReturningExecutesRepro",
+      "ordinal": 1,
+      "scriptName": "SQL procedure INSERT RETURNING executes",
+      "oracle": "postgres",
+      "postgresId": "create-procedure-sql-test-testsqlprocedureinsertreturningexecutesrepro-0001-select-label-from-sql_proc_returning_items-order",
+      "suggestedId": "create-procedure-sql-test-testsqlprocedureinsertreturningexecutesrepro-0001-select-label-from-sql_proc_returning_items-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT label\n\t\t\t\t\t\tFROM sql_proc_returning_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "949e4e898660cf12b232bf270c70868adc5769c7bd5641720af85ad8c0d35f38",
+      "expectedRows": [
+        [
+          {
+            "value": "first"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_procedure_sql_test.go:TestSqlProcedureBeginAtomicBodyRepro#0001",
+      "source": "testing/go/create_procedure_sql_test.go:TestSqlProcedureBeginAtomicBodyRepro",
+      "ordinal": 1,
+      "scriptName": "SQL procedure BEGIN ATOMIC body executes",
+      "oracle": "postgres",
+      "postgresId": "create-procedure-sql-test-testsqlprocedurebeginatomicbodyrepro-0001-select-id-label-from-sql_proc_atomic_items",
+      "suggestedId": "create-procedure-sql-test-testsqlprocedurebeginatomicbodyrepro-0001-select-id-label-from-sql_proc_atomic_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label FROM sql_proc_atomic_items;",
+      "querySha256": "1305b6ff4cf2e32aa12d31e79496b6d856d772f42ac98d922a9d42e09ecab3f3",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "first"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql#0001",
+      "source": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql",
+      "ordinal": 1,
+      "scriptName": "procedure with insert returning",
+      "oracle": "internal",
+      "suggestedId": "create-procedure-sql-test-testcreateprocedurelanguagesql-0001-create-procedure-public.add-inout-new_host_connection_id",
+      "expectedKind": "rows",
+      "query": "CREATE PROCEDURE public.add(INOUT new_host_connection_id character varying)\n    LANGUAGE sql\n    AS $$\n\tINSERT INTO public.games (\n\t\tgame_id,\n\t\thost_connection_id\n\t)\n\tVALUES (2222, new_host_connection_id)\n\tRETURNING game_id;\n$$;",
+      "querySha256": "65bba6c91c18092f4c541b55b0dfa424dd3eec7ed616e33aacbe7eb0ca6ff95b",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql#0002",
+      "source": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql",
+      "ordinal": 2,
+      "scriptName": "procedure with insert returning",
+      "oracle": "internal",
+      "suggestedId": "create-procedure-sql-test-testcreateprocedurelanguagesql-0002-call-add-f",
+      "expectedKind": "rows",
+      "query": "CALL add('f')",
+      "querySha256": "e8dae28ed33f65cf0bedf80397c90c31fc0ddd756254415bd29443a6bb985f91",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql#0003",
+      "source": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql",
+      "ordinal": 3,
+      "scriptName": "procedure with insert returning",
+      "oracle": "internal",
+      "suggestedId": "create-procedure-sql-test-testcreateprocedurelanguagesql-0003-select-id-game_id-host_connection_id-from",
+      "expectedKind": "rows",
+      "query": "SELECT id, game_id, host_connection_id FROM games",
+      "querySha256": "9e6e16344f8533cf4db801356cb418f981923df06efde2a91048432ebe168d43",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql#0004",
+      "source": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql",
+      "ordinal": 4,
+      "scriptName": "procedure with insert returning",
+      "oracle": "internal",
+      "suggestedId": "create-procedure-sql-test-testcreateprocedurelanguagesql-0004-create-procedure-public.create_game-inout-new_host_connection_id",
+      "expectedKind": "rows",
+      "query": "CREATE PROCEDURE public.create_game(INOUT new_host_connection_id character varying)\n    LANGUAGE sql\n    AS $$\n\tWITH new_game_id_holder (new_game_id) AS (\n\t\tSELECT n.random_number\n\t\tFROM (\n\t\t\tSELECT LPAD(FLOOR(random() * 10000)::varchar, 4, '0') AS random_number\n\t\t\tFROM generate_series(1, (SELECT COUNT(*) FROM public.games) + 10)\n\t\t) AS n\n\t\tLEFT OUTER JOIN \n\t\t\tpublic.games AS g on g.game_id = n.random_number\n\t\tWHERE g.id IS NULL\n\t\tLIMIT 1\n\t)\n\tINSERT INTO public.games (\n\t\tgame_id,\n\t\thost_connection_id\n\t)\n\tVALUES ( \n\t\t(SELECT new_game_id FROM new_game_id_holder),\n\t\tnew_host_connection_id\n\t)\n\tRETURNING game_id;\n$$;",
+      "querySha256": "d44b00613bab49087ef213fc8a3cfcaa0e60564e426ede8bf125b2d36fd81a6e",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql#0005",
+      "source": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql",
+      "ordinal": 5,
+      "scriptName": "procedure with insert returning",
+      "oracle": "internal",
+      "suggestedId": "create-procedure-sql-test-testcreateprocedurelanguagesql-0005-select-id-host_connection_id-from-games",
+      "expectedKind": "rows",
+      "query": "SELECT id, host_connection_id FROM games",
+      "querySha256": "d8b65cbe017c15e81c8cbc68eb6166e1b6b6772bc4331f477e113d30152acd2b",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql#0006",
+      "source": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql",
+      "ordinal": 6,
+      "scriptName": "procedure with default expression in parameter",
+      "oracle": "postgres",
+      "postgresId": "create-procedure-sql-test-testcreateprocedurelanguagesql-0006-create-or-replace-procedure-ptest5",
+      "suggestedId": "create-procedure-sql-test-testcreateprocedurelanguagesql-0006-create-or-replace-procedure-ptest5",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE OR REPLACE PROCEDURE ptest5(a int, b text, c int default 100)\n\t\t\t\t\t\t\tLANGUAGE SQL\n\t\t\t\t\t\t\tAS $$\n\t\t\t\t\t\t\t\tINSERT INTO cp_test VALUES(a, b);\n\t\t\t\t\t\t\t\tINSERT INTO cp_test VALUES(c, b);\n\t\t\t\t\t\t\t$$;",
+      "querySha256": "0718d732400dc31e8eafa52ad875e0a56ff732a39aeca576fd5d75e0a1e18752",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql#0007",
+      "source": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql",
+      "ordinal": 7,
+      "scriptName": "procedure with default expression in parameter",
+      "oracle": "postgres",
+      "postgresId": "create-procedure-sql-test-testcreateprocedurelanguagesql-0007-call-ptest5-10-hello-20",
+      "suggestedId": "create-procedure-sql-test-testcreateprocedurelanguagesql-0007-call-ptest5-10-hello-20",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CALL ptest5(10, 'Hello', 20);",
+      "querySha256": "cfb001dfeee459353beec76fcf973308cac2eadad757d7ab28c9cf6c330dbbc4",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql#0008",
+      "source": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql",
+      "ordinal": 8,
+      "scriptName": "procedure with default expression in parameter",
+      "oracle": "postgres",
+      "postgresId": "create-procedure-sql-test-testcreateprocedurelanguagesql-0008-select-*-from-cp_test",
+      "suggestedId": "create-procedure-sql-test-testcreateprocedurelanguagesql-0008-select-*-from-cp_test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM cp_test",
+      "querySha256": "74c99766e796620292ee2d0f5a9e8d5801b0559eb4781f092c815c3215698f48",
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          },
+          {
+            "value": "Hello"
+          }
+        ],
+        [
+          {
+            "value": "20"
+          },
+          {
+            "value": "Hello"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql#0009",
+      "source": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql",
+      "ordinal": 9,
+      "scriptName": "procedure with default expression in parameter",
+      "oracle": "postgres",
+      "postgresId": "create-procedure-sql-test-testcreateprocedurelanguagesql-0009-call-ptest5-50-bye",
+      "suggestedId": "create-procedure-sql-test-testcreateprocedurelanguagesql-0009-call-ptest5-50-bye",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CALL ptest5(50, 'Bye');",
+      "querySha256": "3e610eda5100f5faf4a424ddd5556417f5faa83ffdaa18f17b9f1236bae6cb4a",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql#0010",
+      "source": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql",
+      "ordinal": 10,
+      "scriptName": "procedure with default expression in parameter",
+      "oracle": "postgres",
+      "postgresId": "create-procedure-sql-test-testcreateprocedurelanguagesql-0010-select-*-from-cp_test",
+      "suggestedId": "create-procedure-sql-test-testcreateprocedurelanguagesql-0010-select-*-from-cp_test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM cp_test",
+      "querySha256": "74c99766e796620292ee2d0f5a9e8d5801b0559eb4781f092c815c3215698f48",
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          },
+          {
+            "value": "Hello"
+          }
+        ],
+        [
+          {
+            "value": "20"
+          },
+          {
+            "value": "Hello"
+          }
+        ],
+        [
+          {
+            "value": "50"
+          },
+          {
+            "value": "Bye"
+          }
+        ],
+        [
+          {
+            "value": "100"
+          },
+          {
+            "value": "Bye"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

@@ -36,15 +36,17 @@ func TestUnsupportedDdlProbes(t *testing.T) {
 					Query: `CREATE AGGREGATE my_sum (int) (
 						sfunc = int4pl,
 						stype = int
-					);`,
-					ExpectedErr: "CREATE AGGREGATE is not yet supported",
+					);`, PostgresOracle: ScriptTestPostgresOracle{ID: "unsupported-ddl-probes-test-testunsupportedddlprobes-0001-create-aggregate-my_sum-int-sfunc",
+
+						// EXCLUDE constraints on a table (e.g. EXCLUDE USING gist)
+						// are how PG enforces non-overlapping ranges; not
+						// supported today.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 		{
-			// EXCLUDE constraints on a table (e.g. EXCLUDE USING gist)
-			// are how PG enforces non-overlapping ranges; not
-			// supported today.
+
 			Name:        "EXCLUDE constraint via CREATE TABLE is rejected",
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
@@ -54,14 +56,16 @@ func TestUnsupportedDdlProbes(t *testing.T) {
 						room_id INT,
 						period TEXT,
 						EXCLUDE USING gist (room_id WITH =, period WITH &&)
-					);`,
-					ExpectedErr: "EXCLUDE constraints are not yet supported",
+					);`, PostgresOracle: ScriptTestPostgresOracle{ID: "unsupported-ddl-probes-test-testunsupportedddlprobes-0002-create-table-bookings-id-int",
+
+						// Transition tables are PostgreSQL-only AFTER-trigger
+						// state. BEFORE triggers must still reject REFERENCING.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 		{
-			// Transition tables are PostgreSQL-only AFTER-trigger
-			// state. BEFORE triggers must still reject REFERENCING.
+
 			Name: "BEFORE trigger with REFERENCING NEW TABLE is rejected",
 			SetUpScript: []string{
 				`CREATE TABLE t (id INT PRIMARY KEY, v INT);`,
@@ -76,21 +80,22 @@ func TestUnsupportedDdlProbes(t *testing.T) {
 					Query: `CREATE TRIGGER tg
 						BEFORE INSERT ON t
 						REFERENCING NEW TABLE AS new_rows
-						FOR EACH STATEMENT EXECUTE FUNCTION audit_fn();`,
-					ExpectedErr: "transition tables are only supported for AFTER triggers",
+						FOR EACH STATEMENT EXECUTE FUNCTION audit_fn();`, PostgresOracle: ScriptTestPostgresOracle{ID: "unsupported-ddl-probes-test-testunsupportedddlprobes-0003-create-trigger-tg-before-insert",
+
+						// Event triggers fire on DDL statements.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 		{
-			// Event triggers fire on DDL statements.
+
 			Name:        "CREATE EVENT TRIGGER is rejected",
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `CREATE EVENT TRIGGER ddl_audit
 						ON ddl_command_end
-						EXECUTE FUNCTION audit_fn();`,
-					ExpectedErr: "permission denied to create event trigger",
+						EXECUTE FUNCTION audit_fn();`, PostgresOracle: ScriptTestPostgresOracle{ID: "unsupported-ddl-probes-test-testunsupportedddlprobes-0004-create-event-trigger-ddl_audit-on", Compare: "sqlstate"},
 				},
 			},
 		},

@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 func TestDropTable(t *testing.T) {
@@ -31,16 +29,13 @@ func TestDropTable(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP TABLE test1;`,
-					ExpectedErr: "cannot drop table test1 because other objects depend on it\ncolumn v1 of table test2 depends on type test1",
+					Query: `DROP TABLE test1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "drop-table-test-testdroptable-0001-drop-table-test1", Compare: "sqlstate"},
 				},
 				{
-					Query:    `DROP TABLE test2;`,
-					Expected: []sql.Row{},
+					Query: `DROP TABLE test2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "drop-table-test-testdroptable-0002-drop-table-test2"},
 				},
 				{
-					Query:    `DROP TABLE test1;`,
-					Expected: []sql.Row{},
+					Query: `DROP TABLE test1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "drop-table-test-testdroptable-0003-drop-table-test1"},
 				},
 			},
 		},
@@ -52,16 +47,13 @@ func TestDropTable(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP TABLE test;`,
-					ExpectedErr: "cannot drop table test because other objects depend on it\nfunction example_func(test) depends on type test",
+					Query: `DROP TABLE test;`, PostgresOracle: ScriptTestPostgresOracle{ID: "drop-table-test-testdroptable-0004-drop-table-test", Compare: "sqlstate"},
 				},
 				{
-					Query:    `DROP FUNCTION example_func(test);`,
-					Expected: []sql.Row{},
+					Query: `DROP FUNCTION example_func(test);`, PostgresOracle: ScriptTestPostgresOracle{ID: "drop-table-test-testdroptable-0005-drop-function-example_func-test"},
 				},
 				{
-					Query:    `DROP TABLE test;`,
-					Expected: []sql.Row{},
+					Query: `DROP TABLE test;`, PostgresOracle: ScriptTestPostgresOracle{ID: "drop-table-test-testdroptable-0006-drop-table-test"},
 				},
 			},
 		},
@@ -70,12 +62,10 @@ func TestDropTable(t *testing.T) {
 			SetUpScript: []string{`CREATE TABLE cascade_ok (pk INT4 PRIMARY KEY);`},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `DROP TABLE IF EXISTS missing_cascade_ok CASCADE;`,
-					Expected: []sql.Row{},
+					Query: `DROP TABLE IF EXISTS missing_cascade_ok CASCADE;`, PostgresOracle: ScriptTestPostgresOracle{ID: "drop-table-test-testdroptable-0007-drop-table-if-exists-missing_cascade_ok"},
 				},
 				{
-					Query:    `DROP TABLE cascade_ok CASCADE;`,
-					Expected: []sql.Row{},
+					Query: `DROP TABLE cascade_ok CASCADE;`, PostgresOracle: ScriptTestPostgresOracle{ID: "drop-table-test-testdroptable-0008-drop-table-cascade_ok-cascade"},
 				},
 			},
 		},
@@ -88,16 +78,13 @@ func TestDropTable(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP TABLE test1;`,
-					ExpectedErr: "cannot drop table test1 because other objects depend on it\nfunction example_proc(test1) depends on type test1",
+					Query: `DROP TABLE test1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "drop-table-test-testdroptable-0009-drop-table-test1", Compare: "sqlstate"},
 				},
 				{
-					Query:    `DROP PROCEDURE example_proc(test1);`,
-					Expected: []sql.Row{},
+					Query: `DROP PROCEDURE example_proc(test1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "drop-table-test-testdroptable-0010-drop-procedure-example_proc-test1"},
 				},
 				{
-					Query:    `DROP TABLE test1;`,
-					Expected: []sql.Row{},
+					Query: `DROP TABLE test1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "drop-table-test-testdroptable-0011-drop-table-test1"},
 				},
 			},
 		},
@@ -110,12 +97,10 @@ func TestDropTable(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP TABLE test1;`,
-					ExpectedErr: "cannot drop table test1 because other objects depend on it\ncolumn v1 of table test2 depends on type test1",
+					Query: `DROP TABLE test1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "drop-table-test-testdroptable-0012-drop-table-test1", Compare: "sqlstate"},
 				},
 				{
-					Query:    `DROP TABLE test1, test2;`,
-					Expected: []sql.Row{},
+					Query: `DROP TABLE test1, test2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "drop-table-test-testdroptable-0013-drop-table-test1-test2"},
 				},
 			},
 		},

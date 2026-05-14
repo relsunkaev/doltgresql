@@ -130,6 +130,7 @@ const defaultPostgresOracleDSN = "postgres://postgres:password@127.0.0.1:5432/po
 
 func main() {
 	stdout := flag.Bool("stdout", false, "write generated manifest to stdout instead of testdata/postgres_oracle_manifest.json")
+	canonicalPostgresMajor := flag.Int("canonical-postgres-major", 16, "PostgreSQL major version used as the canonical oracle for generated expectations")
 	migrationCandidatesDir := flag.String("migration-candidates-dir", "", "write per-file ScriptTest oracle migration candidate maps to this directory")
 	promoteOracleMap := flag.String("promote-oracle-map", "", "write a postgres oracle migration map for one ScriptTest source file")
 	refreshOracleMap := flag.String("refresh-oracle-map", "", "promote one ScriptTest source file and refresh its cached expected rows from PostgreSQL")
@@ -137,12 +138,14 @@ func main() {
 	rewriteOracleSourcesFlag := flag.Bool("rewrite-oracle-sources", false, "remove handwritten Expected* fields from source assertions covered by PostgreSQL oracle maps and add explicit PostgresOracle markers")
 	oracleTestName := flag.String("oracle-test-name", "", "optional comma-separated Test function filter for --promote-oracle-map or --refresh-oracle-map")
 	oracleScriptName := flag.String("oracle-script-name", "", "optional comma-separated ScriptTest Name filter for --promote-oracle-map or --refresh-oracle-map")
+	oracleSkipScriptName := flag.String("oracle-skip-script-name", "", "optional comma-separated ScriptTest Name filter to exclude for --promote-oracle-map or --refresh-oracle-map")
 	forcePostgresOracle := flag.Bool("force-postgres-oracle", false, "for --refresh-oracle-map, promote literal-query assertions to PostgreSQL even when expected fields are non-literal")
+	skipRefreshErrors := flag.Bool("skip-refresh-errors", false, "for --refresh-oracle-map, leave entries internal when PostgreSQL refresh fails and continue refreshing the rest")
 	postgresDSN := flag.String("postgres-dsn", "", "PostgreSQL DSN for --refresh-oracle-map; defaults to DOLTGRES_POSTGRES_TEST_DSN, POSTGRES_TEST_DSN, or DOLTGRES_ORACLE default")
 	flag.Parse()
 
 	if *rewriteOracleSourcesFlag {
-		if *stdout || *migrationCandidatesDir != "" || *promoteOracleMap != "" || *refreshOracleMap != "" || *promoteOracleMapOutput != "" || *oracleTestName != "" || *oracleScriptName != "" || *forcePostgresOracle || *postgresDSN != "" {
+		if *stdout || *migrationCandidatesDir != "" || *promoteOracleMap != "" || *refreshOracleMap != "" || *promoteOracleMapOutput != "" || *oracleTestName != "" || *oracleScriptName != "" || *oracleSkipScriptName != "" || *forcePostgresOracle || *skipRefreshErrors || *postgresDSN != "" {
 			fmt.Fprintln(os.Stderr, "--rewrite-oracle-sources cannot be combined with other generator modes or options")
 			os.Exit(1)
 		}
@@ -165,7 +168,8 @@ func main() {
 		}
 		testNames := parseOracleTestNameFilter(*oracleTestName)
 		scriptNames := parseOracleScriptNameFilter(*oracleScriptName)
-		if err := refreshPromotedOracleMap(*refreshOracleMap, *promoteOracleMapOutput, testNames, scriptNames, dsn, *forcePostgresOracle); err != nil {
+		skipScriptNames := parseOracleScriptNameFilter(*oracleSkipScriptName)
+		if err := refreshPromotedOracleMap(*refreshOracleMap, *promoteOracleMapOutput, testNames, scriptNames, skipScriptNames, dsn, *forcePostgresOracle, *skipRefreshErrors); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
@@ -173,6 +177,10 @@ func main() {
 	}
 
 	if *promoteOracleMap != "" {
+		if *skipRefreshErrors {
+			fmt.Fprintln(os.Stderr, "--skip-refresh-errors requires --refresh-oracle-map")
+			os.Exit(1)
+		}
 		if *forcePostgresOracle {
 			fmt.Fprintln(os.Stderr, "--force-postgres-oracle requires --refresh-oracle-map")
 			os.Exit(1)
@@ -183,7 +191,8 @@ func main() {
 		}
 		testNames := parseOracleTestNameFilter(*oracleTestName)
 		scriptNames := parseOracleScriptNameFilter(*oracleScriptName)
-		if err := writePromotedOracleMap(*promoteOracleMap, *promoteOracleMapOutput, testNames, scriptNames, false); err != nil {
+		skipScriptNames := parseOracleScriptNameFilter(*oracleSkipScriptName)
+		if err := writePromotedOracleMap(*promoteOracleMap, *promoteOracleMapOutput, testNames, scriptNames, skipScriptNames, false); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
@@ -210,8 +219,12 @@ func main() {
 		fmt.Fprintln(os.Stderr, "--force-postgres-oracle requires --refresh-oracle-map")
 		os.Exit(1)
 	}
+	if *skipRefreshErrors {
+		fmt.Fprintln(os.Stderr, "--skip-refresh-errors requires --refresh-oracle-map")
+		os.Exit(1)
+	}
 
-	data, err := generateManifest()
+	data, err := generateManifest(*canonicalPostgresMajor)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -249,31 +262,56 @@ func parseOracleNameFilter(value string) map[string]struct{} {
 	return filter
 }
 
-func generateManifest() ([]byte, error) {
+func currentSourceRoot() string {
+	const root = "testing/go"
+	wd, err := os.Getwd()
+	if err != nil {
+		return root
+	}
+	slashWD := filepath.ToSlash(wd)
+	anchor := "/" + root
+	if idx := strings.LastIndex(slashWD, anchor); idx >= 0 {
+		return slashWD[idx+1:]
+	}
+	if slashWD == root || strings.HasSuffix(slashWD, anchor[1:]) {
+		if idx := strings.LastIndex(slashWD, root); idx >= 0 {
+			return slashWD[idx:]
+		}
+	}
+	return root
+}
+
+func sourcePathForFile(file string) string {
+	return currentSourceRoot() + "/" + file
+}
+
+func generateManifest(canonicalPostgresMajor int) ([]byte, error) {
 	migrationOverrides, err := loadMigrationOverrides()
 	if err != nil {
 		return nil, err
 	}
+	sourceRoot := currentSourceRoot()
 	scriptEntries, err := annotatedScriptTestEntries(migrationOverrides)
 	if err != nil {
 		return nil, err
 	}
+	entries := scriptEntries
+	if sourceRoot == "testing/go" {
+		entries = append(oracleSelftestEntries(sourceRoot), append(dropDefinitionEntries(), scriptEntries...)...)
+	}
 	m := manifest{
-		GeneratedBy:            "go generate ./testing/go",
+		GeneratedBy:            "go generate ./" + sourceRoot,
 		Version:                1,
-		CanonicalPostgresMajor: 16,
-		NormalizationProfile:   "pg16-structural-v1",
+		CanonicalPostgresMajor: canonicalPostgresMajor,
+		NormalizationProfile:   fmt.Sprintf("pg%d-structural-v1", canonicalPostgresMajor),
 		DefaultOracle:          "internal",
 		Inventory: inventory{
-			Scope:                   "testing/go/*_test.go ScriptTest expectation literals",
+			Scope:                   sourceRoot + "/*_test.go ScriptTest expectation literals",
 			AssertionsDefaultOracle: "internal",
 			PostgresOverrides:       "entries where oracle == postgres",
 			AssertionFields:         manifestAssertionFields,
 		},
-		Entries: append(
-			oracleSelftestEntries(),
-			append(dropDefinitionEntries(), scriptEntries...)...,
-		),
+		Entries: entries,
 	}
 
 	var buf bytes.Buffer
@@ -286,11 +324,11 @@ func generateManifest() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func oracleSelftestEntries() []entry {
+func oracleSelftestEntries(sourceRoot string) []entry {
 	return []entry{
 		{
 			ID:                    "oracle-selftest-sqlstate-division-by-zero",
-			Source:                "testing/go/postgres_oracle_manifest_test.go:TestPostgresOracleManifest",
+			Source:                sourceRoot + "/postgres_oracle_manifest_test.go:TestPostgresOracleManifest",
 			Oracle:                "postgres",
 			Compare:               "sqlstate",
 			Query:                 "SELECT 1 / 0",
@@ -299,7 +337,7 @@ func oracleSelftestEntries() []entry {
 		},
 		{
 			ID:      "oracle-selftest-normalization-regex-and-wildcard",
-			Source:  "testing/go/postgres_oracle_manifest_test.go:TestPostgresOracleManifest",
+			Source:  sourceRoot + "/postgres_oracle_manifest_test.go:TestPostgresOracleManifest",
 			Oracle:  "postgres",
 			Compare: "structural",
 			Query:   "SELECT 1.2300::numeric, '-0'::numeric, '{\"b\":2,\"a\":1}'::jsonb, ARRAY[1, 2]::int[], now(), pg_backend_pid()",
@@ -315,13 +353,23 @@ func oracleSelftestEntries() []entry {
 		},
 		{
 			ID:      "oracle-selftest-text-values-that-look-like-arrays-stay-text",
-			Source:  "testing/go/postgres_oracle_manifest_test.go:TestPostgresOracleManifest",
+			Source:  sourceRoot + "/postgres_oracle_manifest_test.go:TestPostgresOracleManifest",
 			Oracle:  "postgres",
 			Compare: "structural",
 			Query:   `SELECT '[{"a": 1}]'::text, '[1, 2]'::text`,
 			ExpectedRows: rows(row(
 				value(`[{"a": 1}]`),
 				value(`[1, 2]`),
+			)),
+		},
+		{
+			ID:      "oracle-selftest-name-array-normalizes-to-postgres-text",
+			Source:  sourceRoot + "/postgres_oracle_manifest_test.go:TestPostgresOracleManifest",
+			Oracle:  "postgres",
+			Compare: "structural",
+			Query:   `SELECT ARRAY['one', 'two']::name[]`,
+			ExpectedRows: rows(row(
+				value(`{one,two}`),
 			)),
 		},
 	}
@@ -466,7 +514,7 @@ func rewriteOracleSources() error {
 		if !ok {
 			continue
 		}
-		sourceFile = strings.TrimPrefix(sourceFile, "testing/go/")
+		sourceFile = strings.TrimPrefix(sourceFile, currentSourceRoot()+"/")
 		if sourceFile == "" {
 			continue
 		}
@@ -491,50 +539,36 @@ func rewriteOracleSourceFile(file string, migrationOverrides map[string]oracleMe
 	if err != nil {
 		return err
 	}
+	packageScriptTests := packageScriptTestSlices(parsed)
+	packageStrings := packageStringSlices(parsed)
 	changed := false
 	for _, decl := range parsed.Decls {
 		fn, ok := decl.(*ast.FuncDecl)
 		if !ok || fn.Body == nil || !strings.HasPrefix(fn.Name.Name, "Test") {
 			continue
 		}
-		source := fmt.Sprintf("testing/go/%s:%s", file, fn.Name.Name)
+		source := fmt.Sprintf("%s:%s", sourcePathForFile(file), fn.Name.Name)
+		stringSlices := mergeStringSlices(packageStrings, localStringSlices(fn.Body))
 		ordinal := 0
 		ast.Inspect(fn.Body, func(node ast.Node) bool {
 			lit, ok := node.(*ast.CompositeLit)
-			if !ok || !isScriptTestSliceType(lit.Type) {
+			if ok && isScriptTestSliceType(lit.Type) {
+				if rewriteOracleScriptTestSlice(lit, source, &ordinal, stringSlices, migrationOverrides) {
+					changed = true
+				}
+				return false
+			}
+			call, ok := node.(*ast.CallExpr)
+			if !ok {
 				return true
 			}
-			for _, element := range lit.Elts {
-				scriptLit, ok := element.(*ast.CompositeLit)
-				if !ok {
-					continue
+			if lit, ok := packageScriptTestSliceForRunScripts(call, packageScriptTests); ok {
+				if rewriteOracleScriptTestSlice(lit, source, &ordinal, stringSlices, migrationOverrides) {
+					changed = true
 				}
-				scriptFields := compositeFields(scriptLit)
-				assertionsLit, ok := scriptFields["Assertions"].(*ast.CompositeLit)
-				if !ok {
-					continue
-				}
-				for _, assertionExpr := range assertionsLit.Elts {
-					assertionLit, ok := assertionExpr.(*ast.CompositeLit)
-					if !ok {
-						continue
-					}
-					assertionFields := compositeFields(assertionLit)
-					if !isOracleOrdinalAnchor(assertionFields) {
-						continue
-					}
-					ordinal++
-					key := fmt.Sprintf("%s#%04d", source, ordinal)
-					meta, ok := migrationOverrides[key]
-					if !ok || meta.ID == "" {
-						continue
-					}
-					if rewriteOracleAssertion(assertionLit, meta) {
-						changed = true
-					}
-				}
+				return false
 			}
-			return false
+			return true
 		})
 	}
 	if removeUnusedImport(parsed, "sql", "github.com/dolthub/go-mysql-server/sql") {
@@ -548,6 +582,41 @@ func rewriteOracleSourceFile(file string, migrationOverrides map[string]oracleMe
 		return err
 	}
 	return os.WriteFile(file, buf.Bytes(), 0644)
+}
+
+func rewriteOracleScriptTestSlice(lit *ast.CompositeLit, source string, ordinal *int, stringSlices map[string][]string, migrationOverrides map[string]oracleMeta) bool {
+	changed := false
+	for _, element := range lit.Elts {
+		scriptLit, ok := element.(*ast.CompositeLit)
+		if !ok {
+			continue
+		}
+		scriptFields := compositeFields(scriptLit)
+		assertionsLit, ok := scriptFields["Assertions"].(*ast.CompositeLit)
+		if !ok {
+			continue
+		}
+		for _, assertionExpr := range assertionsLit.Elts {
+			assertionLit, ok := assertionExpr.(*ast.CompositeLit)
+			if !ok {
+				continue
+			}
+			assertionFields := compositeFields(assertionLit)
+			if !isOracleOrdinalAnchor(assertionFields) {
+				continue
+			}
+			*ordinal = *ordinal + 1
+			key := fmt.Sprintf("%s#%04d", source, *ordinal)
+			meta, ok := migrationOverrides[key]
+			if !ok || meta.ID == "" {
+				continue
+			}
+			if rewriteOracleAssertion(assertionLit, meta) {
+				changed = true
+			}
+		}
+	}
+	return changed
 }
 
 func removeUnusedImport(parsed *ast.File, packageName string, importPath string) bool {
@@ -743,13 +812,15 @@ func annotatedScriptTestEntriesForFiles(files []string, migrationOverrides map[s
 		if err != nil {
 			return nil, err
 		}
+		packageScriptTests := packageScriptTestSlices(parsed)
+		packageStrings := packageStringSlices(parsed)
 		for _, decl := range parsed.Decls {
 			fn, ok := decl.(*ast.FuncDecl)
 			if !ok || fn.Body == nil || !strings.HasPrefix(fn.Name.Name, "Test") {
 				continue
 			}
-			stringSlices := localStringSlices(fn.Body)
-			source := fmt.Sprintf("testing/go/%s:%s", file, fn.Name.Name)
+			stringSlices := mergeStringSlices(packageStrings, localStringSlices(fn.Body))
+			source := fmt.Sprintf("%s:%s", sourcePathForFile(file), fn.Name.Name)
 			ordinal := 0
 			var inspectErr error
 			ast.Inspect(fn.Body, func(node ast.Node) bool {
@@ -757,22 +828,29 @@ func annotatedScriptTestEntriesForFiles(files []string, migrationOverrides map[s
 					return false
 				}
 				lit, ok := node.(*ast.CompositeLit)
-				if !ok || !isScriptTestSliceType(lit.Type) {
-					return true
-				}
-				for _, element := range lit.Elts {
-					scriptLit, ok := element.(*ast.CompositeLit)
-					if !ok {
-						continue
-					}
-					generated, err := entriesFromScriptTest(source, &ordinal, scriptLit, stringSlices, migrationOverrides)
+				if ok && isScriptTestSliceType(lit.Type) {
+					generated, err := entriesFromScriptTestSlice(source, &ordinal, lit, stringSlices, migrationOverrides)
 					if err != nil {
 						inspectErr = fmt.Errorf("%s: %w", source, err)
 						return false
 					}
 					entries = append(entries, generated...)
+					return false
 				}
-				return false
+				call, ok := node.(*ast.CallExpr)
+				if !ok {
+					return true
+				}
+				if lit, ok := packageScriptTestSliceForRunScripts(call, packageScriptTests); ok {
+					generated, err := entriesFromScriptTestSlice(source, &ordinal, lit, stringSlices, migrationOverrides)
+					if err != nil {
+						inspectErr = fmt.Errorf("%s: %w", source, err)
+						return false
+					}
+					entries = append(entries, generated...)
+					return false
+				}
+				return true
 			})
 			if inspectErr != nil {
 				return nil, inspectErr
@@ -799,7 +877,7 @@ func writeMigrationCandidates(dir string) error {
 		if strings.HasPrefix(file, "postgres_oracle_") {
 			continue
 		}
-		candidates, err := migrationCandidatesForFile(file, migrationOverrides, nil, nil)
+		candidates, err := migrationCandidatesForFile(file, migrationOverrides, nil, nil, nil)
 		if err != nil {
 			return err
 		}
@@ -818,7 +896,7 @@ func writeMigrationCandidates(dir string) error {
 	return nil
 }
 
-func writePromotedOracleMap(sourceFile string, outputPath string, testNameFilter map[string]struct{}, scriptNameFilter map[string]struct{}, forcePostgresOracle bool) error {
+func writePromotedOracleMap(sourceFile string, outputPath string, testNameFilter map[string]struct{}, scriptNameFilter map[string]struct{}, skipScriptNameFilter map[string]struct{}, forcePostgresOracle bool) error {
 	sourceFile = strings.TrimPrefix(sourceFile, "testing/go/")
 	if sourceFile == "" || strings.Contains(sourceFile, string(filepath.Separator)+".."+string(filepath.Separator)) || strings.HasPrefix(sourceFile, "..") {
 		return fmt.Errorf("invalid source file %q", sourceFile)
@@ -827,11 +905,11 @@ func writePromotedOracleMap(sourceFile string, outputPath string, testNameFilter
 		return fmt.Errorf("source file must be a *_test.go file: %s", sourceFile)
 	}
 
-	migrationOverrides, err := loadMigrationOverridesExcludingSource("testing/go/" + sourceFile)
+	migrationOverrides, err := loadMigrationOverridesExcludingSource(sourcePathForFile(sourceFile))
 	if err != nil {
 		return err
 	}
-	candidates, err := migrationCandidatesForFile(sourceFile, migrationOverrides, testNameFilter, scriptNameFilter)
+	candidates, err := migrationCandidatesForFile(sourceFile, migrationOverrides, testNameFilter, scriptNameFilter, skipScriptNameFilter)
 	if err != nil {
 		return err
 	}
@@ -845,12 +923,15 @@ func writePromotedOracleMap(sourceFile string, outputPath string, testNameFilter
 	if len(scriptNameFilter) > 0 {
 		candidates.GeneratedBy += " --oracle-script-name " + strings.Join(sortedFilterKeys(scriptNameFilter), ",")
 	}
+	if len(skipScriptNameFilter) > 0 {
+		candidates.GeneratedBy += " --oracle-skip-script-name " + strings.Join(sortedFilterKeys(skipScriptNameFilter), ",")
+	}
 	if forcePostgresOracle {
 		candidates.GeneratedBy += " --force-postgres-oracle"
 	}
 	for i := range candidates.Assertions {
 		assertion := &candidates.Assertions[i]
-		if assertion.Query == "" || hasAnyNonLiteral(assertion.NonLiteral, "Query", "Username", "BindVars", "CopyFromStdInFile") {
+		if assertion.Query == "" || hasAnyNonLiteral(assertion.NonLiteral, "Query", "Username", "BindVars", "CopyFromStdInFile", "SetUpScript", "DoltSpecific", "PriorQuery", "PriorUsername", "PriorBindVars", "PriorCopyFromStdInFile") {
 			continue
 		}
 		if !forcePostgresOracle && len(assertion.NonLiteral) > 0 {
@@ -892,7 +973,7 @@ func writePromotedOracleMap(sourceFile string, outputPath string, testNameFilter
 	return os.WriteFile(outputPath, data, 0644)
 }
 
-func refreshPromotedOracleMap(sourceFile string, outputPath string, testNameFilter map[string]struct{}, scriptNameFilter map[string]struct{}, dsn string, forcePostgresOracle bool) error {
+func refreshPromotedOracleMap(sourceFile string, outputPath string, testNameFilter map[string]struct{}, scriptNameFilter map[string]struct{}, skipScriptNameFilter map[string]struct{}, dsn string, forcePostgresOracle bool, skipRefreshErrors bool) error {
 	sourceFile = strings.TrimPrefix(sourceFile, "testing/go/")
 	if outputPath == "" {
 		outputPath = filepath.Join("testdata", "postgres_oracle_migrations", strings.TrimSuffix(sourceFile, ".go")+".oracle-map.json")
@@ -913,7 +994,7 @@ func refreshPromotedOracleMap(sourceFile string, outputPath string, testNameFilt
 		_ = os.Remove(tempOutputPath)
 	}()
 
-	if err := writePromotedOracleMap(sourceFile, tempOutputPath, testNameFilter, scriptNameFilter, forcePostgresOracle); err != nil {
+	if err := writePromotedOracleMap(sourceFile, tempOutputPath, testNameFilter, scriptNameFilter, skipScriptNameFilter, forcePostgresOracle); err != nil {
 		return err
 	}
 
@@ -924,6 +1005,22 @@ func refreshPromotedOracleMap(sourceFile string, outputPath string, testNameFilt
 	var mapped migrationFile
 	if err := json.Unmarshal(data, &mapped); err != nil {
 		return err
+	}
+	refreshedKeys := map[string]struct{}{}
+	for _, assertion := range mapped.Assertions {
+		refreshedKeys[assertion.Key] = struct{}{}
+	}
+	if len(testNameFilter) > 0 || len(scriptNameFilter) > 0 || len(skipScriptNameFilter) > 0 {
+		existing, ok, err := readExistingMigrationFile(outputPath)
+		if err != nil {
+			return err
+		}
+		if ok {
+			mapped, err = mergeMigrationFiles(existing, mapped)
+			if err != nil {
+				return err
+			}
+		}
 	}
 	assertionsByKey := make(map[string]*migrationAssertion, len(mapped.Assertions))
 	for i := range mapped.Assertions {
@@ -952,15 +1049,30 @@ func refreshPromotedOracleMap(sourceFile string, outputPath string, testNameFilt
 		return err
 	}
 	config.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
+	if config.RuntimeParams == nil {
+		config.RuntimeParams = map[string]string{}
+	}
+	if _, ok := config.RuntimeParams["statement_timeout"]; !ok {
+		config.RuntimeParams["statement_timeout"] = "30s"
+	}
 	conn, err := pgx.ConnectConfig(ctx, config)
 	if err != nil {
 		return err
+	}
+	reconnect := func() error {
+		_ = conn.Close(ctx)
+		next, err := pgx.ConnectConfig(ctx, config)
+		if err != nil {
+			return err
+		}
+		conn = next
+		return nil
 	}
 	defer func() {
 		_ = conn.Close(ctx)
 	}()
 
-	sourcePrefix := "testing/go/" + sourceFile + ":"
+	sourcePrefix := sourcePathForFile(sourceFile) + ":"
 	for _, entry := range entries {
 		if entry.Oracle != "postgres" || !strings.HasPrefix(entry.Source, sourcePrefix) || entry.Ordinal == 0 {
 			continue
@@ -970,11 +1082,39 @@ func refreshPromotedOracleMap(sourceFile string, outputPath string, testNameFilt
 		if assertion == nil {
 			continue
 		}
+		if len(refreshedKeys) > 0 {
+			if _, ok := refreshedKeys[key]; !ok {
+				continue
+			}
+		}
+		if hasDoltSpecificStatement(entry) {
+			err := fmt.Errorf("generated oracle entry references Dolt-specific SQL that PostgreSQL cannot be source-of-truth for")
+			if skipRefreshErrors {
+				fmt.Fprintf(os.Stderr, "skipping %s: %v\n", entry.ID, err)
+				markOracleAssertionInternal(assertion)
+				continue
+			}
+			return fmt.Errorf("%s: %w", entry.ID, err)
+		}
 		if hasUnsafeAutoIsolatedPublicReference(entry) {
-			return fmt.Errorf("%s: generated oracle entry uses an isolated schema but setup or query explicitly references public; add an explicit PostgresOracle override or skip this migration", entry.ID)
+			err := fmt.Errorf("generated oracle entry uses an isolated schema but setup or query explicitly references public; add an explicit PostgresOracle override or skip this migration")
+			if skipRefreshErrors {
+				fmt.Fprintf(os.Stderr, "skipping %s: %v\n", entry.ID, err)
+				markOracleAssertionInternal(assertion)
+				continue
+			}
+			return fmt.Errorf("%s: %w", entry.ID, err)
 		}
 		expectedRows, columnModes, sqlstate, severity, err := readPostgresOracleExpected(ctx, conn, entry)
 		if err != nil {
+			if skipRefreshErrors {
+				fmt.Fprintf(os.Stderr, "skipping %s: %v\n", entry.ID, err)
+				markOracleAssertionInternal(assertion)
+				if reconnectErr := reconnect(); reconnectErr != nil {
+					return fmt.Errorf("%s: reconnecting PostgreSQL oracle after refresh error: %w", entry.ID, reconnectErr)
+				}
+				continue
+			}
 			return fmt.Errorf("%s: %w", entry.ID, err)
 		}
 		for index, mode := range columnModes {
@@ -1001,6 +1141,63 @@ func refreshPromotedOracleMap(sourceFile string, outputPath string, testNameFilt
 		return err
 	}
 	return os.WriteFile(outputPath, refreshed, 0644)
+}
+
+func markOracleAssertionInternal(assertion *migrationAssertion) {
+	assertion.Oracle = "internal"
+	assertion.PostgresID = ""
+	assertion.Compare = ""
+	assertion.ColumnModes = nil
+	assertion.SQLState = ""
+	assertion.ErrorSeverity = ""
+	assertion.ExpectedRows = nil
+	assertion.Cleanup = nil
+	assertion.NeedsCleanup = true
+	assertion.CleanupProvided = false
+}
+
+func readExistingMigrationFile(path string) (migrationFile, bool, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return migrationFile{}, false, nil
+		}
+		return migrationFile{}, false, err
+	}
+	var mapped migrationFile
+	if err := json.Unmarshal(data, &mapped); err != nil {
+		return migrationFile{}, false, fmt.Errorf("%s: %w", path, err)
+	}
+	return mapped, true, nil
+}
+
+func mergeMigrationFiles(existing migrationFile, generated migrationFile) (migrationFile, error) {
+	if existing.SourceFile != "" && generated.SourceFile != "" && existing.SourceFile != generated.SourceFile {
+		return migrationFile{}, fmt.Errorf("cannot merge oracle maps for different source files: %s and %s", existing.SourceFile, generated.SourceFile)
+	}
+	replaced := make(map[string]struct{}, len(generated.Assertions))
+	for _, assertion := range generated.Assertions {
+		replaced[assertion.Key] = struct{}{}
+	}
+	merged := make([]migrationAssertion, 0, len(existing.Assertions)+len(generated.Assertions))
+	for _, assertion := range existing.Assertions {
+		if _, ok := replaced[assertion.Key]; ok {
+			continue
+		}
+		merged = append(merged, assertion)
+	}
+	merged = append(merged, generated.Assertions...)
+	sort.SliceStable(merged, func(i int, j int) bool {
+		if merged[i].Source != merged[j].Source {
+			return merged[i].Source < merged[j].Source
+		}
+		if merged[i].Ordinal != merged[j].Ordinal {
+			return merged[i].Ordinal < merged[j].Ordinal
+		}
+		return merged[i].Key < merged[j].Key
+	})
+	generated.Assertions = merged
+	return generated, nil
 }
 
 func hasUnsafeAutoIsolatedPublicReference(entry entry) bool {
@@ -1041,6 +1238,73 @@ func hasExplicitPublicSchemaReference(statement string) bool {
 	}
 	return false
 }
+
+func hasDoltSpecificStatement(entry entry) bool {
+	for _, statement := range entry.Setup {
+		if hasDoltSpecificSQL(statement) {
+			return true
+		}
+	}
+	return hasDoltSpecificSQL(entry.Query)
+}
+
+func hasDoltSpecificSQL(statement string) bool {
+	code, stringLiterals := sqlCodeAndStringLiterals(strings.ToLower(statement))
+	if doltSpecificIdentifierPattern.MatchString(code) {
+		return true
+	}
+	for _, literal := range stringLiterals {
+		if isDoltSpecificStringLiteral(literal) {
+			return true
+		}
+	}
+	return false
+}
+
+var doltSpecificIdentifierPattern = regexp.MustCompile(`(^|[^a-z0-9_])dolt[._][a-z0-9_]+`)
+
+func sqlCodeAndStringLiterals(statement string) (string, []string) {
+	var code strings.Builder
+	var literals []string
+	for i := 0; i < len(statement); {
+		if statement[i] != '\'' {
+			code.WriteByte(statement[i])
+			i++
+			continue
+		}
+
+		code.WriteByte(' ')
+		i++
+		var literal strings.Builder
+		for i < len(statement) {
+			if statement[i] == '\'' {
+				if i+1 < len(statement) && statement[i+1] == '\'' {
+					literal.WriteByte('\'')
+					code.WriteString("  ")
+					i += 2
+					continue
+				}
+				code.WriteByte(' ')
+				i++
+				break
+			}
+			literal.WriteByte(statement[i])
+			code.WriteByte(' ')
+			i++
+		}
+		literals = append(literals, literal.String())
+	}
+	return code.String(), literals
+}
+
+func isDoltSpecificStringLiteral(literal string) bool {
+	if literal == "dolt_" || literal == "dolt_%" {
+		return false
+	}
+	return strings.Contains(literal, "dolt.") || doltSpecificLiteralPattern.MatchString(literal)
+}
+
+var doltSpecificLiteralPattern = regexp.MustCompile(`(^|[^a-z0-9_])dolt_[a-z0-9][a-z0-9_]*`)
 
 func sortedFilterKeys(filter map[string]struct{}) []string {
 	keys := make([]string, 0, len(filter))
@@ -1134,7 +1398,10 @@ func readPostgresOracleExpected(ctx context.Context, conn *pgx.Conn, entry entry
 
 	expected := make([][]cell, 0)
 	columnModes := append([]string(nil), entry.ColumnModes...)
-	fields := rows.FieldDescriptions()
+	fields, err := oracleFieldDescriptions(rows)
+	if err != nil {
+		return nil, nil, "", "", err
+	}
 	for rows.Next() {
 		values, err := rows.Values()
 		if err != nil {
@@ -1161,6 +1428,15 @@ func readPostgresOracleExpected(ctx context.Context, conn *pgx.Conn, entry entry
 		return nil, nil, pgErr.Code, pgErr.Severity, nil
 	}
 	return &expected, columnModes, "", "", nil
+}
+
+func oracleFieldDescriptions(rows pgx.Rows) (fields []pgconn.FieldDescription, err error) {
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			err = fmt.Errorf("query returned no row description: %v", recovered)
+		}
+	}()
+	return rows.FieldDescriptions(), nil
 }
 
 func normalizeGeneratedPostgresValue(entry entry, index int, value interface{}, oid uint32) string {
@@ -1291,7 +1567,7 @@ func inferGeneratedPostgresMode(oid uint32) string {
 		return "timestamp"
 	case 1184, 1266:
 		return "timestamptz"
-	case 1000, 1005, 1007, 1016, 1021, 1022, 1009, 1015, 1231:
+	case 1000, 1003, 1005, 1007, 1009, 1015, 1016, 1021, 1022, 1231:
 		return "array"
 	default:
 		return "structural"
@@ -1455,7 +1731,13 @@ func runOracleStatements(ctx context.Context, conn *pgx.Conn, variables map[stri
 }
 
 func resetOracleSession(ctx context.Context, conn *pgx.Conn) error {
+	// Previous oracle probes may intentionally fail inside a transaction. Roll
+	// back first so RESET commands do not cascade with SQLSTATE 25P02.
+	_, _ = conn.Exec(ctx, "ROLLBACK")
 	if _, err := conn.Exec(ctx, "RESET ROLE"); err != nil {
+		return err
+	}
+	if _, err := conn.Exec(ctx, "RESET ALL"); err != nil {
 		return err
 	}
 	if _, err := conn.Exec(ctx, "RESET search_path"); err != nil {
@@ -1484,7 +1766,7 @@ func expandOracleVariables(query string, variables map[string]string) string {
 	return expanded
 }
 
-func migrationCandidatesForFile(file string, migrationOverrides map[string]oracleMeta, testNameFilter map[string]struct{}, scriptNameFilter map[string]struct{}) (migrationFile, error) {
+func migrationCandidatesForFile(file string, migrationOverrides map[string]oracleMeta, testNameFilter map[string]struct{}, scriptNameFilter map[string]struct{}, skipScriptNameFilter map[string]struct{}) (migrationFile, error) {
 	fset := token.NewFileSet()
 	parsed, err := parser.ParseFile(fset, file, nil, 0)
 	if err != nil {
@@ -1492,12 +1774,14 @@ func migrationCandidatesForFile(file string, migrationOverrides map[string]oracl
 	}
 	candidates := migrationFile{
 		GeneratedBy:       "go run gen_postgres_oracle_manifest.go --migration-candidates-dir",
-		SourceFile:        "testing/go/" + file,
+		SourceFile:        sourcePathForFile(file),
 		DefaultOracle:     "internal",
-		AssertionKeyStyle: "testing/go/<file>:<TestName>#<expectation-ordinal>",
+		AssertionKeyStyle: currentSourceRoot() + "/<file>:<TestName>#<expectation-ordinal>",
 		AssertionFields:   manifestAssertionFields,
 	}
 	fieldSet := assertionFieldSet()
+	packageScriptTests := packageScriptTestSlices(parsed)
+	packageStrings := packageStringSlices(parsed)
 	for _, decl := range parsed.Decls {
 		fn, ok := decl.(*ast.FuncDecl)
 		if !ok || fn.Body == nil || !strings.HasPrefix(fn.Name.Name, "Test") {
@@ -1508,8 +1792,8 @@ func migrationCandidatesForFile(file string, migrationOverrides map[string]oracl
 				continue
 			}
 		}
-		stringSlices := localStringSlices(fn.Body)
-		source := fmt.Sprintf("testing/go/%s:%s", file, fn.Name.Name)
+		stringSlices := mergeStringSlices(packageStrings, localStringSlices(fn.Body))
+		source := fmt.Sprintf("%s:%s", sourcePathForFile(file), fn.Name.Name)
 		ordinal := 0
 		var inspectErr error
 		ast.Inspect(fn.Body, func(node ast.Node) bool {
@@ -1517,49 +1801,82 @@ func migrationCandidatesForFile(file string, migrationOverrides map[string]oracl
 				return false
 			}
 			lit, ok := node.(*ast.CompositeLit)
-			if !ok || !isScriptTestSliceType(lit.Type) {
+			if ok && isScriptTestSliceType(lit.Type) {
+				generated, err := migrationCandidatesFromScriptTestSlice(source, &ordinal, lit, stringSlices, fieldSet, scriptNameFilter, skipScriptNameFilter, migrationOverrides)
+				if err != nil {
+					inspectErr = err
+					return false
+				}
+				candidates.Assertions = append(candidates.Assertions, generated...)
+				return false
+			}
+			call, ok := node.(*ast.CallExpr)
+			if !ok {
 				return true
 			}
-			for _, element := range lit.Elts {
-				scriptLit, ok := element.(*ast.CompositeLit)
-				if !ok {
-					continue
+			if lit, ok := packageScriptTestSliceForRunScripts(call, packageScriptTests); ok {
+				generated, err := migrationCandidatesFromScriptTestSlice(source, &ordinal, lit, stringSlices, fieldSet, scriptNameFilter, skipScriptNameFilter, migrationOverrides)
+				if err != nil {
+					inspectErr = err
+					return false
 				}
-				scriptFields := compositeFields(scriptLit)
-				scriptName, _ := optionalStringLiteral(scriptFields["Name"])
-				includeScript := len(scriptNameFilter) == 0
-				if !includeScript {
-					_, includeScript = scriptNameFilter[scriptName]
-				}
-				assertionsLit, ok := scriptFields["Assertions"].(*ast.CompositeLit)
-				if !ok {
-					continue
-				}
-				for _, assertionExpr := range assertionsLit.Elts {
-					assertionLit, ok := assertionExpr.(*ast.CompositeLit)
-					if !ok {
-						continue
-					}
-					assertionFields := compositeFields(assertionLit)
-					if !hasAnyField(assertionFields, fieldSet) {
-						continue
-					}
-					ordinal++
-					if !includeScript {
-						continue
-					}
-					candidate, err := migrationCandidate(source, ordinal, scriptName, assertionFields, stringSlices, migrationOverrides)
-					if err != nil {
-						inspectErr = fmt.Errorf("%s#%04d: %w", source, ordinal, err)
-						return false
-					}
-					candidates.Assertions = append(candidates.Assertions, candidate)
-				}
+				candidates.Assertions = append(candidates.Assertions, generated...)
+				return false
 			}
-			return false
+			return true
 		})
 		if inspectErr != nil {
 			return migrationFile{}, inspectErr
+		}
+	}
+	return candidates, nil
+}
+
+func migrationCandidatesFromScriptTestSlice(source string, ordinal *int, lit *ast.CompositeLit, stringSlices map[string][]string, fieldSet map[string]struct{}, scriptNameFilter map[string]struct{}, skipScriptNameFilter map[string]struct{}, migrationOverrides map[string]oracleMeta) ([]migrationAssertion, error) {
+	candidates := make([]migrationAssertion, 0)
+	for _, element := range lit.Elts {
+		scriptLit, ok := element.(*ast.CompositeLit)
+		if !ok {
+			continue
+		}
+		scriptFields := compositeFields(scriptLit)
+		scriptName, _ := optionalStringLiteral(scriptFields["Name"])
+		scriptNonLiteral := candidateStringSlice(scriptFields["SetUpScript"], "SetUpScript", stringSlices, nil)
+		includeScript := len(scriptNameFilter) == 0
+		if !includeScript {
+			_, includeScript = scriptNameFilter[scriptName]
+		}
+		if _, skipScript := skipScriptNameFilter[scriptName]; skipScript {
+			includeScript = false
+		}
+		assertionsLit, ok := scriptFields["Assertions"].(*ast.CompositeLit)
+		if !ok {
+			continue
+		}
+		priorNonLiteral := make([]string, 0)
+		for _, assertionExpr := range assertionsLit.Elts {
+			assertionLit, ok := assertionExpr.(*ast.CompositeLit)
+			if !ok {
+				continue
+			}
+			assertionFields := compositeFields(assertionLit)
+			if !hasAnyField(assertionFields, fieldSet) {
+				priorNonLiteral = appendPriorSetupNonLiteral(priorNonLiteral, assertionFields)
+				continue
+			}
+			*ordinal = *ordinal + 1
+			if !includeScript {
+				priorNonLiteral = appendPriorSetupNonLiteral(priorNonLiteral, assertionFields)
+				continue
+			}
+			candidate, err := migrationCandidate(source, *ordinal, scriptName, assertionFields, stringSlices, migrationOverrides)
+			if err != nil {
+				return nil, fmt.Errorf("%s#%04d: %w", source, *ordinal, err)
+			}
+			candidate.NonLiteral = append(candidate.NonLiteral, scriptNonLiteral...)
+			candidate.NonLiteral = append(candidate.NonLiteral, priorNonLiteral...)
+			candidates = append(candidates, candidate)
+			priorNonLiteral = appendPriorSetupNonLiteral(priorNonLiteral, assertionFields)
 		}
 	}
 	return candidates, nil
@@ -1593,6 +1910,9 @@ func migrationCandidate(source string, ordinal int, scriptName string, fields ma
 	}
 	if fields["CopyFromStdInFile"] != nil {
 		candidate.NonLiteral = append(candidate.NonLiteral, "CopyFromStdInFile")
+	}
+	if hasDoltSpecificSQL(query) {
+		candidate.NonLiteral = append(candidate.NonLiteral, "DoltSpecific")
 	}
 	if expectedKind == "rows" {
 		if _, err := expectedRowsFromExpr(fields["Expected"]); err != nil {
@@ -1649,6 +1969,16 @@ func candidateStringLiteral(expr ast.Expr, name string, nonLiteral []string) (st
 	return "", append(nonLiteral, name)
 }
 
+func candidateStringSlice(expr ast.Expr, name string, stringSlices map[string][]string, nonLiteral []string) []string {
+	if expr == nil {
+		return nonLiteral
+	}
+	if _, err := stringSlice(expr, stringSlices); err == nil {
+		return nonLiteral
+	}
+	return append(nonLiteral, name)
+}
+
 func assertionFieldSet() map[string]struct{} {
 	fields := map[string]struct{}{}
 	for _, field := range manifestAssertionFields {
@@ -1697,6 +2027,25 @@ func setupQueryFromAssertion(fields map[string]ast.Expr) (string, bool) {
 	return query, true
 }
 
+func appendPriorSetupNonLiteral(nonLiteral []string, fields map[string]ast.Expr) []string {
+	if expectationKind(fields) == "error" {
+		return nonLiteral
+	}
+	if _, err := optionalStringLiteral(fields["Query"]); err != nil {
+		nonLiteral = append(nonLiteral, "PriorQuery")
+	}
+	if fields["Username"] != nil {
+		nonLiteral = append(nonLiteral, "PriorUsername")
+	}
+	if fields["BindVars"] != nil {
+		nonLiteral = append(nonLiteral, "PriorBindVars")
+	}
+	if fields["CopyFromStdInFile"] != nil {
+		nonLiteral = append(nonLiteral, "PriorCopyFromStdInFile")
+	}
+	return nonLiteral
+}
+
 func suggestedOracleID(source string, ordinal int, query string) string {
 	source = strings.TrimPrefix(source, "testing/go/")
 	source = strings.TrimSuffix(source, "_test.go")
@@ -1728,6 +2077,22 @@ func oracleIDWords(query string) string {
 		}
 	}
 	return strings.Join(kept, "-")
+}
+
+func entriesFromScriptTestSlice(source string, ordinal *int, lit *ast.CompositeLit, stringSlices map[string][]string, migrationOverrides map[string]oracleMeta) ([]entry, error) {
+	entries := make([]entry, 0)
+	for _, element := range lit.Elts {
+		scriptLit, ok := element.(*ast.CompositeLit)
+		if !ok {
+			continue
+		}
+		generated, err := entriesFromScriptTest(source, ordinal, scriptLit, stringSlices, migrationOverrides)
+		if err != nil {
+			return nil, err
+		}
+		entries = append(entries, generated...)
+	}
+	return entries, nil
 }
 
 func entriesFromScriptTest(source string, ordinal *int, scriptLit *ast.CompositeLit, stringSlices map[string][]string, migrationOverrides map[string]oracleMeta) ([]entry, error) {
@@ -2261,6 +2626,90 @@ func isScriptTestSliceType(expr ast.Expr) bool {
 	}
 	ident, ok := array.Elt.(*ast.Ident)
 	return ok && ident.Name == "ScriptTest"
+}
+
+func packageScriptTestSlices(parsed *ast.File) map[string]*ast.CompositeLit {
+	slices := map[string]*ast.CompositeLit{}
+	for _, decl := range parsed.Decls {
+		gen, ok := decl.(*ast.GenDecl)
+		if !ok || gen.Tok != token.VAR {
+			continue
+		}
+		for _, spec := range gen.Specs {
+			valueSpec, ok := spec.(*ast.ValueSpec)
+			if !ok {
+				continue
+			}
+			for i, name := range valueSpec.Names {
+				if i >= len(valueSpec.Values) {
+					continue
+				}
+				lit, ok := valueSpec.Values[i].(*ast.CompositeLit)
+				if !ok || !isScriptTestSliceType(lit.Type) {
+					continue
+				}
+				slices[name.Name] = lit
+			}
+		}
+	}
+	return slices
+}
+
+func packageStringSlices(parsed *ast.File) map[string][]string {
+	slices := map[string][]string{}
+	for _, decl := range parsed.Decls {
+		gen, ok := decl.(*ast.GenDecl)
+		if !ok || gen.Tok != token.VAR {
+			continue
+		}
+		for _, spec := range gen.Specs {
+			valueSpec, ok := spec.(*ast.ValueSpec)
+			if !ok {
+				continue
+			}
+			for i, name := range valueSpec.Names {
+				if i >= len(valueSpec.Values) {
+					continue
+				}
+				values, err := stringSlice(valueSpec.Values[i], nil)
+				if err == nil {
+					slices[name.Name] = values
+				}
+			}
+		}
+	}
+	return slices
+}
+
+func mergeStringSlices(base map[string][]string, overlay map[string][]string) map[string][]string {
+	if len(base) == 0 {
+		return overlay
+	}
+	merged := make(map[string][]string, len(base)+len(overlay))
+	for name, values := range base {
+		merged[name] = values
+	}
+	for name, values := range overlay {
+		merged[name] = values
+	}
+	return merged
+}
+
+func packageScriptTestSliceForRunScripts(call *ast.CallExpr, packageScriptTests map[string]*ast.CompositeLit) (*ast.CompositeLit, bool) {
+	if len(call.Args) < 2 || !isIdentCall(call, "RunScripts") {
+		return nil, false
+	}
+	ident, ok := call.Args[1].(*ast.Ident)
+	if !ok {
+		return nil, false
+	}
+	lit, ok := packageScriptTests[ident.Name]
+	return lit, ok
+}
+
+func isIdentCall(call *ast.CallExpr, name string) bool {
+	ident, ok := call.Fun.(*ast.Ident)
+	return ok && ident.Name == name
 }
 
 func localStringSlices(body *ast.BlockStmt) map[string][]string {

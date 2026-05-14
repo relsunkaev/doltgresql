@@ -31,18 +31,15 @@ func TestLargeObjectCreatePersistsMetadataRepro(t *testing.T) {
 			Name: "lo_create persists large object metadata",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT lo_create(424242);`,
-					Expected: []sql.Row{{"424242"}},
+					Query: `SELECT lo_create(424242);`, PostgresOracle: ScriptTestPostgresOracle{ID: "large-object-persistence-repro-test-testlargeobjectcreatepersistsmetadatarepro-0001-select-lo_create-424242"},
 				},
 				{
 					Query: `SELECT oid::TEXT
 						FROM pg_catalog.pg_largeobject_metadata
-						WHERE oid = 424242;`,
-					Expected: []sql.Row{{"424242"}},
+						WHERE oid = 424242;`, PostgresOracle: ScriptTestPostgresOracle{ID: "large-object-persistence-repro-test-testlargeobjectcreatepersistsmetadatarepro-0002-select-oid::text-from-pg_catalog.pg_largeobject_metadata-where"},
 				},
 				{
-					Query:    `SELECT lo_unlink(424242);`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT lo_unlink(424242);`, PostgresOracle: ScriptTestPostgresOracle{ID: "large-object-persistence-repro-test-testlargeobjectcreatepersistsmetadatarepro-0003-select-lo_unlink-424242"},
 				},
 			},
 		},
@@ -62,16 +59,17 @@ func TestAlterLargeObjectOwnerReachesValidationRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `ALTER LARGE OBJECT 515151
-						OWNER TO large_object_owner_target;`,
-					ExpectedErr: `large object`,
+						OWNER TO large_object_owner_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "large-object-persistence-repro-test-testalterlargeobjectownerreachesvalidationrepro-0001-alter-large-object-515151-owner",
+
+						// TestAlterLargeObjectOwnerRequiresOwnershipRepro reproduces a security bug:
+						// non-owners must not be able to transfer ownership of a large object.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterLargeObjectOwnerRequiresOwnershipRepro reproduces a security bug:
-// non-owners must not be able to transfer ownership of a large object.
 func TestAlterLargeObjectOwnerRequiresOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -85,9 +83,9 @@ func TestAlterLargeObjectOwnerRequiresOwnershipRepro(t *testing.T) {
 				{
 					Query: `ALTER LARGE OBJECT 424255
 						OWNER TO large_object_owner_hijack_target;`,
-					ExpectedErr: `permission denied`,
-					Username:    `large_object_owner_intruder`,
-					Password:    `pw`,
+
+					Username: `large_object_owner_intruder`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{ID: "large-object-persistence-repro-test-testalterlargeobjectownerrequiresownershiprepro-0001-alter-large-object-424255-owner", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT pg_get_userbyid(lomowner)
@@ -122,8 +120,7 @@ func TestLargeObjectGrantPopulatesMetadataAclRepro(t *testing.T) {
 							false
 						)::TEXT
 						FROM pg_catalog.pg_largeobject_metadata
-						WHERE oid = 424243;`,
-					Expected: []sql.Row{{"true"}},
+						WHERE oid = 424243;`, PostgresOracle: ScriptTestPostgresOracle{ID: "large-object-persistence-repro-test-testlargeobjectgrantpopulatesmetadataaclrepro-0001-select-coalesce-lomacl::text-like-%large_object_acl_reader=r/%"},
 				},
 			},
 		},
@@ -145,8 +142,7 @@ func TestLargeObjectByteaRoundTripRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT encode(lo_get(loid), 'hex')
-						FROM large_object_round_trip_stash;`,
-					Expected: []sql.Row{{"deadbeef"}},
+						FROM large_object_round_trip_stash;`, PostgresOracle: ScriptTestPostgresOracle{ID: "large-object-persistence-repro-test-testlargeobjectbytearoundtriprepro-0001-select-encode-lo_get-loid-hex"},
 				},
 			},
 		},
@@ -168,18 +164,15 @@ func TestLargeObjectPutAndSlicedGetRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT lo_put(loid, 2, decode('aabb', 'hex'))
-						FROM large_object_put_stash;`,
-					Expected: []sql.Row{{""}},
+						FROM large_object_put_stash;`, PostgresOracle: ScriptTestPostgresOracle{ID: "large-object-persistence-repro-test-testlargeobjectputandslicedgetrepro-0001-select-lo_put-loid-2-decode"},
 				},
 				{
 					Query: `SELECT encode(lo_get(loid, 0, 6), 'hex')
-						FROM large_object_put_stash;`,
-					Expected: []sql.Row{{"0011aabb4455"}},
+						FROM large_object_put_stash;`, PostgresOracle: ScriptTestPostgresOracle{ID: "large-object-persistence-repro-test-testlargeobjectputandslicedgetrepro-0002-select-encode-lo_get-loid-0"},
 				},
 				{
 					Query: `SELECT encode(lo_get(loid, 2, 2), 'hex')
-						FROM large_object_put_stash;`,
-					Expected: []sql.Row{{"aabb"}},
+						FROM large_object_put_stash;`, PostgresOracle: ScriptTestPostgresOracle{ID: "large-object-persistence-repro-test-testlargeobjectputandslicedgetrepro-0003-select-encode-lo_get-loid-2"},
 				},
 			},
 		},
@@ -199,19 +192,21 @@ func TestLargeObjectGetRequiresSelectPrivilegeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT encode(lo_get(424244), 'hex');`,
-					ExpectedErr: `permission denied`,
-					Username:    `large_object_get_intruder`,
-					Password:    `pw`,
+					Query: `SELECT encode(lo_get(424244), 'hex');`,
+
+					Username: `large_object_get_intruder`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestLargeObjectPutRequiresUpdatePrivilegeRepro reproduces a security bug:
+						// lo_put should require ownership, UPDATE on the large object, or superuser
+						// privileges when lo_compat_privileges is off.
+						ID: "large-object-persistence-repro-test-testlargeobjectgetrequiresselectprivilegerepro-0001-select-encode-lo_get-424244-hex", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestLargeObjectPutRequiresUpdatePrivilegeRepro reproduces a security bug:
-// lo_put should require ownership, UPDATE on the large object, or superuser
-// privileges when lo_compat_privileges is off.
 func TestLargeObjectPutRequiresUpdatePrivilegeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -222,10 +217,15 @@ func TestLargeObjectPutRequiresUpdatePrivilegeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT lo_put(424245, 1, decode('ff', 'hex'));`,
-					ExpectedErr: `permission denied`,
-					Username:    `large_object_put_intruder`,
-					Password:    `pw`,
+					Query: `SELECT lo_put(424245, 1, decode('ff', 'hex'));`,
+
+					Username: `large_object_put_intruder`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{ID: "large-object-persistence-repro-test-testlargeobjectputrequiresupdateprivilegerepro-0001-select-lo_put-424245-1-decode",
+
+						// TestLargeObjectCompatPrivilegesRequiresSuperuserRepro reproduces a security
+						// bug: lo_compat_privileges disables large-object ACL checks, so ordinary roles
+						// must not be able to enable it for their session.
+						Compare: "sqlstate"},
 				},
 				{
 					Query:    `SELECT encode(lo_get(424245), 'hex');`,
@@ -236,9 +236,6 @@ func TestLargeObjectPutRequiresUpdatePrivilegeRepro(t *testing.T) {
 	})
 }
 
-// TestLargeObjectCompatPrivilegesRequiresSuperuserRepro reproduces a security
-// bug: lo_compat_privileges disables large-object ACL checks, so ordinary roles
-// must not be able to enable it for their session.
 func TestLargeObjectCompatPrivilegesRequiresSuperuserRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -249,10 +246,10 @@ func TestLargeObjectCompatPrivilegesRequiresSuperuserRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SET lo_compat_privileges = on;`,
-					ExpectedErr: `permission denied`,
-					Username:    `large_object_compat_intruder`,
-					Password:    `pw`,
+					Query: `SET lo_compat_privileges = on;`,
+
+					Username: `large_object_compat_intruder`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{ID: "large-object-persistence-repro-test-testlargeobjectcompatprivilegesrequiressuperuserrepro-0001-set-lo_compat_privileges-=-on", Compare: "sqlstate"},
 				},
 				{
 					Query:       `SELECT encode(lo_get(424256), 'hex');`,
@@ -277,10 +274,10 @@ func TestLargeObjectUnlinkRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT lo_unlink(424246);`,
-					ExpectedErr: `permission denied`,
-					Username:    `large_object_unlink_intruder`,
-					Password:    `pw`,
+					Query: `SELECT lo_unlink(424246);`,
+
+					Username: `large_object_unlink_intruder`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{ID: "large-object-persistence-repro-test-testlargeobjectunlinkrequiresownershiprepro-0001-select-lo_unlink-424246", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT oid::TEXT
@@ -350,8 +347,7 @@ func TestLargeObjectCreateRollsBackRepro(t *testing.T) {
 				{
 					Query: `SELECT count(*)
 						FROM pg_catalog.pg_largeobject_metadata
-						WHERE oid = 424248;`,
-					Expected: []sql.Row{{int64(0)}},
+						WHERE oid = 424248;`, PostgresOracle: ScriptTestPostgresOracle{ID: "large-object-persistence-repro-test-testlargeobjectcreaterollsbackrepro-0001-select-count-*-from-pg_catalog.pg_largeobject_metadata"},
 				},
 			},
 		},
@@ -379,8 +375,7 @@ func TestLargeObjectPutRollsBackRepro(t *testing.T) {
 					Query: `ROLLBACK;`,
 				},
 				{
-					Query:    `SELECT encode(lo_get(424249), 'hex');`,
-					Expected: []sql.Row{{"00112233"}},
+					Query: `SELECT encode(lo_get(424249), 'hex');`, PostgresOracle: ScriptTestPostgresOracle{ID: "large-object-persistence-repro-test-testlargeobjectputrollsbackrepro-0001-select-encode-lo_get-424249-hex"},
 				},
 			},
 		},
@@ -401,15 +396,13 @@ func TestLargeObjectUnlinkRollsBackRepro(t *testing.T) {
 					Query: `BEGIN;`,
 				},
 				{
-					Query:    `SELECT lo_unlink(424250);`,
-					Expected: []sql.Row{{int32(1)}},
+					Query: `SELECT lo_unlink(424250);`, PostgresOracle: ScriptTestPostgresOracle{ID: "large-object-persistence-repro-test-testlargeobjectunlinkrollsbackrepro-0001-select-lo_unlink-424250"},
 				},
 				{
 					Query: `ROLLBACK;`,
 				},
 				{
-					Query:    `SELECT encode(lo_get(424250), 'hex');`,
-					Expected: []sql.Row{{"aabbccdd"}},
+					Query: `SELECT encode(lo_get(424250), 'hex');`, PostgresOracle: ScriptTestPostgresOracle{ID: "large-object-persistence-repro-test-testlargeobjectunlinkrollsbackrepro-0002-select-encode-lo_get-424250-hex"},
 				},
 			},
 		},
@@ -443,8 +436,7 @@ func TestLargeObjectCreateRollsBackToSavepointRepro(t *testing.T) {
 				{
 					Query: `SELECT count(*)
 						FROM pg_catalog.pg_largeobject_metadata
-						WHERE oid = 424251;`,
-					Expected: []sql.Row{{int64(0)}},
+						WHERE oid = 424251;`, PostgresOracle: ScriptTestPostgresOracle{ID: "large-object-persistence-repro-test-testlargeobjectcreaterollsbacktosavepointrepro-0001-select-count-*-from-pg_catalog.pg_largeobject_metadata"},
 				},
 			},
 		},
@@ -479,8 +471,7 @@ func TestLargeObjectPutRollsBackToSavepointRepro(t *testing.T) {
 					Query: `COMMIT;`,
 				},
 				{
-					Query:    `SELECT encode(lo_get(424252), 'hex');`,
-					Expected: []sql.Row{{"10203040"}},
+					Query: `SELECT encode(lo_get(424252), 'hex');`, PostgresOracle: ScriptTestPostgresOracle{ID: "large-object-persistence-repro-test-testlargeobjectputrollsbacktosavepointrepro-0001-select-encode-lo_get-424252-hex"},
 				},
 			},
 		},
@@ -505,8 +496,7 @@ func TestLargeObjectUnlinkRollsBackToSavepointRepro(t *testing.T) {
 					Query: `SAVEPOINT before_large_object_unlink;`,
 				},
 				{
-					Query:    `SELECT lo_unlink(424253);`,
-					Expected: []sql.Row{{int32(1)}},
+					Query: `SELECT lo_unlink(424253);`, PostgresOracle: ScriptTestPostgresOracle{ID: "large-object-persistence-repro-test-testlargeobjectunlinkrollsbacktosavepointrepro-0001-select-lo_unlink-424253"},
 				},
 				{
 					Query: `ROLLBACK TO SAVEPOINT before_large_object_unlink;`,
@@ -515,8 +505,7 @@ func TestLargeObjectUnlinkRollsBackToSavepointRepro(t *testing.T) {
 					Query: `COMMIT;`,
 				},
 				{
-					Query:    `SELECT encode(lo_get(424253), 'hex');`,
-					Expected: []sql.Row{{"55667788"}},
+					Query: `SELECT encode(lo_get(424253), 'hex');`, PostgresOracle: ScriptTestPostgresOracle{ID: "large-object-persistence-repro-test-testlargeobjectunlinkrollsbacktosavepointrepro-0002-select-encode-lo_get-424253-hex"},
 				},
 			},
 		},

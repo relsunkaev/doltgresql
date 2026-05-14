@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestDoBlockProbe pins where PG `DO $$ ... $$` anonymous code blocks
@@ -97,10 +95,7 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 					$$;`,
 				},
 				{
-					Query: `SELECT array_to_string(array_agg(label ORDER BY id), ',') FROM do_loop_log;`,
-					Expected: []sql.Row{
-						{"alpha,beta,gamma"},
-					},
+					Query: `SELECT array_to_string(array_agg(label ORDER BY id), ',') FROM do_loop_log;`, PostgresOracle: ScriptTestPostgresOracle{ID: "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0001-select-array_to_string-array_agg-label-order"},
 				},
 			},
 		},
@@ -132,16 +127,10 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 					$$;`,
 				},
 				{
-					Query: `SELECT id, label, touched FROM do_items ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, "one-seen", "f"},
-						{2, "two", "t"},
-						{3, "three-seen", "f"},
-					},
+					Query: `SELECT id, label, touched FROM do_items ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0002-select-id-label-touched-from"},
 				},
 				{
-					Query:    `SELECT nextval('do_perform_seq');`,
-					Expected: []sql.Row{{2}},
+					Query: `SELECT nextval('do_perform_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0003-select-nextval-do_perform_seq"},
 				},
 			},
 		},
@@ -165,8 +154,7 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 					$$;`,
 				},
 				{
-					Query:    `SELECT label FROM do_dynamic_target WHERE id = 7;`,
-					Expected: []sql.Row{{"made by execute"}},
+					Query: `SELECT label FROM do_dynamic_target WHERE id = 7;`, PostgresOracle: ScriptTestPostgresOracle{ID: "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0004-select-label-from-do_dynamic_target-where"},
 				},
 			},
 		},
@@ -188,8 +176,7 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 					$$;`,
 				},
 				{
-					Query:    `SELECT label FROM do_dynamic_expr_target WHERE id = 7;`,
-					Expected: []sql.Row{{"made by literal"}},
+					Query: `SELECT label FROM do_dynamic_expr_target WHERE id = 7;`, PostgresOracle: ScriptTestPostgresOracle{ID: "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0005-select-label-from-do_dynamic_expr_target-where"},
 				},
 			},
 		},
@@ -210,8 +197,7 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 					Query: `INSERT INTO do_dynamic_ddl_target VALUES (1, 'created by dynamic ddl');`,
 				},
 				{
-					Query:    `SELECT label FROM do_dynamic_ddl_target WHERE id = 1;`,
-					Expected: []sql.Row{{"created by dynamic ddl"}},
+					Query: `SELECT label FROM do_dynamic_ddl_target WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0006-select-label-from-do_dynamic_ddl_target-where"},
 				},
 			},
 		},
@@ -238,8 +224,7 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 					$$;`,
 				},
 				{
-					Query:    `SELECT label FROM do_dynamic_into_seen WHERE id = 7;`,
-					Expected: []sql.Row{{"from execute into"}},
+					Query: `SELECT label FROM do_dynamic_into_seen WHERE id = 7;`, PostgresOracle: ScriptTestPostgresOracle{ID: "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0007-select-label-from-do_dynamic_into_seen-where"},
 				},
 			},
 		},
@@ -264,8 +249,7 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 					$$;`,
 				},
 				{
-					Query:    `SELECT label FROM do_dynamic_into_many_seen WHERE id = 1;`,
-					Expected: []sql.Row{{"first row"}},
+					Query: `SELECT label FROM do_dynamic_into_many_seen WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0008-select-label-from-do_dynamic_into_many_seen-where"},
 				},
 				{
 					Query: `DO $$
@@ -275,8 +259,7 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 							EXECUTE 'SELECT id FROM do_dynamic_into_many WHERE id = 99'
 								INTO STRICT got_id;
 						END;
-					$$;`,
-					ExpectedErr: `query returned no rows`,
+					$$;`, PostgresOracle: ScriptTestPostgresOracle{ID: "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0009-do-$$-declare-got_id-int", Compare: "sqlstate"},
 				},
 				{
 					Query: `DO $$
@@ -286,8 +269,7 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 							EXECUTE 'SELECT id FROM do_dynamic_into_many ORDER BY id'
 								INTO STRICT got_id;
 						END;
-					$$;`,
-					ExpectedErr: `query returned more than one row`,
+					$$;`, PostgresOracle: ScriptTestPostgresOracle{ID: "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0010-do-$$-declare-got_id-int", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -324,13 +306,7 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 					$$;`,
 				},
 				{
-					Query: `SELECT seq, affected FROM do_diag_seen ORDER BY seq;`,
-					Expected: []sql.Row{
-						{1, 2},
-						{2, 1},
-						{3, 0},
-						{4, 2},
-					},
+					Query: `SELECT seq, affected FROM do_diag_seen ORDER BY seq;`, PostgresOracle: ScriptTestPostgresOracle{ID: "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0011-select-seq-affected-from-do_diag_seen"},
 				},
 			},
 		},
@@ -380,8 +356,7 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 				{
 					Query: `SELECT affected,
 							(context LIKE 'PL/pgSQL function inline_code_block line % at GET DIAGNOSTICS')::text
-						FROM do_diag_context_seen;`,
-					Expected: []sql.Row{{1, "true"}},
+						FROM do_diag_context_seen;`, PostgresOracle: ScriptTestPostgresOracle{ID: "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0012-select-affected-context-like-pl/pgsql"},
 				},
 				{
 					Query: `DO $$
@@ -401,8 +376,7 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 							(position('PL/pgSQL function inline_code_block line 0' in context) = 0)::text,
 							(position(' at PERFORM' in context) > 0)::text
 						FROM do_diag_context_stack_seen
-						WHERE kind = 'assignment';`,
-					Expected: []sql.Row{{"true", "true", "true", "true", "true", "true", "true"}},
+						WHERE kind = 'assignment';`, PostgresOracle: ScriptTestPostgresOracle{ID: "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0013-select-context-like-pl/pgsql-function"},
 				},
 				{
 					Query: `SELECT
@@ -414,8 +388,7 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 							(position('PL/pgSQL function inline_code_block line ' in context) > 0)::text,
 							(position(' at PERFORM' in context) > 0)::text
 						FROM do_diag_context_stack_seen
-						WHERE kind = 'sql_statement';`,
-					Expected: []sql.Row{{"true", "true", "true", "true", "true", "true", "true"}},
+						WHERE kind = 'sql_statement';`, PostgresOracle: ScriptTestPostgresOracle{ID: "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0014-select-context-like-pl/pgsql-function"},
 				},
 			},
 		},
@@ -436,8 +409,7 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 					$$;`,
 				},
 				{
-					Query:    `SELECT routine_oid_text FROM do_diag_routine_oid_seen;`,
-					Expected: []sql.Row{{"0"}},
+					Query: `SELECT routine_oid_text FROM do_diag_routine_oid_seen;`, PostgresOracle: ScriptTestPostgresOracle{ID: "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0015-select-routine_oid_text-from-do_diag_routine_oid_seen"},
 				},
 				{
 					Query: `CREATE FUNCTION diag_routine_oid() RETURNS oid AS $$
@@ -450,8 +422,7 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 					$$ LANGUAGE plpgsql;`,
 				},
 				{
-					Query:    `SELECT (diag_routine_oid()::text <> '0')::text;`,
-					Expected: []sql.Row{{"true"}},
+					Query: `SELECT (diag_routine_oid()::text <> '0')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0016-select-diag_routine_oid-::text-<>-0"},
 				},
 			},
 		},
@@ -500,8 +471,7 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 					$$;`,
 				},
 				{
-					Query:    `SELECT kind, message, sqlstate, detail, hint, has_context FROM do_stacked_diag_seen;`,
-					Expected: []sql.Row{{"do", "custom exception 7", "P0001", "some detail", "some hint", "true"}},
+					Query: `SELECT kind, message, sqlstate, detail, hint, has_context FROM do_stacked_diag_seen;`, PostgresOracle: ScriptTestPostgresOracle{ID: "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0017-select-kind-message-sqlstate-detail"},
 				},
 			},
 		},
@@ -523,8 +493,7 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT diag_catch_raise();`,
-					Expected: []sql.Row{{"function failed"}},
+					Query: `SELECT diag_catch_raise();`, PostgresOracle: ScriptTestPostgresOracle{ID: "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0018-select-diag_catch_raise"},
 				},
 			},
 		},
@@ -539,8 +508,7 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 						BEGIN
 							GET STACKED DIAGNOSTICS message = MESSAGE_TEXT;
 						END;
-					$$;`,
-					ExpectedErr: `GET STACKED DIAGNOSTICS cannot be used outside an exception handler`,
+					$$;`, PostgresOracle: ScriptTestPostgresOracle{ID: "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0019-do-$$-declare-message-text", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -560,8 +528,7 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 									GET STACKED DIAGNOSTICS routine_oid = PG_ROUTINE_OID;
 							END;
 						END;
-					$$;`,
-					ExpectedErr: `diagnostics item PG_ROUTINE_OID is not allowed in GET STACKED DIAGNOSTICS`,
+					$$;`, PostgresOracle: ScriptTestPostgresOracle{ID: "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0020-do-$$-declare-routine_oid-oid", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -599,8 +566,7 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 					$$;`,
 				},
 				{
-					Query:    `SELECT marker, message, sqlstate FROM do_multi_handler_seen;`,
-					Expected: []sql.Row{{"matched", "duplicate key branch", "23505"}},
+					Query: `SELECT marker, message, sqlstate FROM do_multi_handler_seen;`, PostgresOracle: ScriptTestPostgresOracle{ID: "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0021-select-marker-message-sqlstate-from"},
 				},
 			},
 		},
@@ -632,8 +598,7 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 					$$;`,
 				},
 				{
-					Query:    `SELECT marker, sqlstate FROM do_sqlstate_handler_seen;`,
-					Expected: []sql.Row{{"matched", "P0001"}},
+					Query: `SELECT marker, sqlstate FROM do_sqlstate_handler_seen;`, PostgresOracle: ScriptTestPostgresOracle{ID: "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0022-select-marker-sqlstate-from-do_sqlstate_handler_seen"},
 				},
 			},
 		},
@@ -674,8 +639,7 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 					$$;`,
 				},
 				{
-					Query:    `SELECT marker, sqlstate FROM do_condition_class_seen ORDER BY marker;`,
-					Expected: []sql.Row{{"syntax", "42P01"}, {"transaction", "40001"}},
+					Query: `SELECT marker, sqlstate FROM do_condition_class_seen ORDER BY marker;`, PostgresOracle: ScriptTestPostgresOracle{ID: "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0023-select-marker-sqlstate-from-do_condition_class_seen"},
 				},
 			},
 		},
@@ -729,8 +693,7 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 				},
 				{
 					Query: `SELECT column_name, constraint_name, datatype_name, table_name, schema_name
-						FROM do_stacked_object_diag_seen;`,
-					Expected: []sql.Row{{"amount", "amount_positive", "numeric", "invoice_lines", "public"}},
+						FROM do_stacked_object_diag_seen;`, PostgresOracle: ScriptTestPostgresOracle{ID: "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0024-select-column_name-constraint_name-datatype_name-table_name"},
 				},
 			},
 		},
@@ -770,8 +733,7 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 					$$;`,
 				},
 				{
-					Query:    `SELECT sqlstate, has_message FROM do_native_sqlstate_seen;`,
-					Expected: []sql.Row{{"23505", "true"}},
+					Query: `SELECT sqlstate, has_message FROM do_native_sqlstate_seen;`, PostgresOracle: ScriptTestPostgresOracle{ID: "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0025-select-sqlstate-has_message-from-do_native_sqlstate_seen"},
 				},
 			},
 		},
@@ -808,8 +770,7 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 					$$;`,
 				},
 				{
-					Query:    `SELECT has_statement, has_plpgsql_frame FROM do_native_context_seen;`,
-					Expected: []sql.Row{{"true", "true"}},
+					Query: `SELECT has_statement, has_plpgsql_frame FROM do_native_context_seen;`, PostgresOracle: ScriptTestPostgresOracle{ID: "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0026-select-has_statement-has_plpgsql_frame-from-do_native_context_seen"},
 				},
 			},
 		},
@@ -842,8 +803,7 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 					$$;`,
 				},
 				{
-					Query:    `SELECT sqlstate FROM do_native_category_seen;`,
-					Expected: []sql.Row{{"23505"}},
+					Query: `SELECT sqlstate FROM do_native_category_seen;`, PostgresOracle: ScriptTestPostgresOracle{ID: "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0027-select-sqlstate-from-do_native_category_seen"},
 				},
 			},
 		},
@@ -872,8 +832,7 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 					$$;`,
 				},
 				{
-					Query:    `SELECT sqlstate FROM do_native_data_category_seen;`,
-					Expected: []sql.Row{{"22P02"}},
+					Query: `SELECT sqlstate FROM do_native_data_category_seen;`, PostgresOracle: ScriptTestPostgresOracle{ID: "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0028-select-sqlstate-from-do_native_data_category_seen"},
 				},
 			},
 		},
@@ -897,8 +856,7 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 									RAISE NOTICE 'wrong handler';
 							END;
 						END;
-					$$;`,
-					ExpectedErr: "duplicate unique key given",
+					$$;`, PostgresOracle: ScriptTestPostgresOracle{ID: "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0029-do-$$-begin-begin-insert", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -918,8 +876,7 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 									RAISE NOTICE 'wrong handler';
 							END;
 						END;
-					$$;`,
-					ExpectedErr: "uncaught branch",
+					$$;`, PostgresOracle: ScriptTestPostgresOracle{ID: "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0030-do-$$-begin-begin-raise", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -932,8 +889,7 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 						BEGIN
 							RAISE EXCEPTION 'do block failed: %', 42;
 						END;
-					$$;`,
-					ExpectedErr: `do block failed: 42`,
+					$$;`, PostgresOracle: ScriptTestPostgresOracle{ID: "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0031-do-$$-begin-raise-exception", Compare: "sqlstate"},
 				},
 			},
 		},

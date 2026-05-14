@@ -59,8 +59,7 @@ var CommandTagTests = []ScriptTest{
 				ExpectedTag: "INSERT 0 3",
 			},
 			{
-				Query:    "SELECT * FROM table0 order by id",
-				Expected: []sql.Row{{1, "Dolt"}, {2, "Doltgres"}, {3, "DoltHub"}},
+				Query: "SELECT * FROM table0 order by id", PostgresOracle: ScriptTestPostgresOracle{ID: "command-tag-test-testcommandtag-0005-select-*-from-table0-order"},
 			},
 			{
 				Query:       "SELECT * FROM table0",

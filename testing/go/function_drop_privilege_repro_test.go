@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestDropFunctionClearsExecutePrivilegeRepro reproduces an ACL persistence bug:
@@ -40,10 +38,10 @@ func TestDropFunctionClearsExecutePrivilegeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT drop_recreate_acl_func();`,
-					Expected: []sql.Row{{"old visible"}},
+					Query: `SELECT drop_recreate_acl_func();`,
+
 					Username: `drop_recreate_function_user`,
-					Password: `function`,
+					Password: `function`, PostgresOracle: ScriptTestPostgresOracle{ID: "function-drop-privilege-repro-test-testdropfunctionclearsexecuteprivilegerepro-0001-select-drop_recreate_acl_func"},
 				},
 				{
 					Query: `DROP FUNCTION drop_recreate_acl_func();`,
@@ -58,10 +56,10 @@ func TestDropFunctionClearsExecutePrivilegeRepro(t *testing.T) {
 					Query: `REVOKE ALL ON FUNCTION drop_recreate_acl_func() FROM PUBLIC;`,
 				},
 				{
-					Query:       `SELECT drop_recreate_acl_func();`,
-					ExpectedErr: `permission denied`,
-					Username:    `drop_recreate_function_user`,
-					Password:    `function`,
+					Query: `SELECT drop_recreate_acl_func();`,
+
+					Username: `drop_recreate_function_user`,
+					Password: `function`, PostgresOracle: ScriptTestPostgresOracle{ID: "function-drop-privilege-repro-test-testdropfunctionclearsexecuteprivilegerepro-0002-select-drop_recreate_acl_func", Compare: "sqlstate"},
 				},
 			},
 		},

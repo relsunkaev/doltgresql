@@ -104,17 +104,11 @@ func TestJsonbGinPostingChunkBuildGate(t *testing.T) {
 				{
 					Query: `SELECT indexdef
 FROM pg_catalog.pg_indexes
-WHERE tablename = 'jsonb_gin_build' AND indexname = 'jsonb_gin_build_doc_idx';`,
-					Expected: []sql.Row{
-						{"CREATE INDEX jsonb_gin_build_doc_idx ON public.jsonb_gin_build USING gin (doc jsonb_ops)"},
-					},
+WHERE tablename = 'jsonb_gin_build' AND indexname = 'jsonb_gin_build_doc_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testjsonbginpostingchunkbuildgate-0001-select-indexdef-from-pg_catalog.pg_indexes-where", ColumnModes: []string{"schema"}},
 				},
 				{
 					Query: `SELECT COUNT(*) > 0, MIN(format_version), SUM(row_count), COUNT(payload), COUNT(checksum)
-FROM dg_gin_jsonb_gin_build_jsonb_gin_build_doc_idx_posting_chunks;`,
-					Expected: []sql.Row{
-						{"t", 1, int64(22), 11, 11},
-					},
+FROM dg_gin_jsonb_gin_build_jsonb_gin_build_doc_idx_posting_chunks;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testjsonbginpostingchunkbuildgate-0002-select-count-*->-0", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -134,21 +128,16 @@ FROM dg_gin_jsonb_gin_build_jsonb_gin_build_doc_idx_posting_chunks;`,
 				{
 					Query: `SELECT indexdef
 FROM pg_catalog.pg_indexes
-WHERE tablename = 'jsonb_gin_numeric_pk' AND indexname = 'jsonb_gin_numeric_pk_doc_idx';`,
-					Expected: []sql.Row{
-						{"CREATE INDEX jsonb_gin_numeric_pk_doc_idx ON public.jsonb_gin_numeric_pk USING gin (doc jsonb_ops)"},
-					},
+WHERE tablename = 'jsonb_gin_numeric_pk' AND indexname = 'jsonb_gin_numeric_pk_doc_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testjsonbginpostingchunkbuildgate-0003-select-indexdef-from-pg_catalog.pg_indexes-where", ColumnModes: []string{"schema"}},
 				},
 				{
 					Query: `SELECT id::text FROM jsonb_gin_numeric_pk
 WHERE doc @> '{"tags":["vip"]}'
-ORDER BY id;`,
-					Expected: []sql.Row{{"1.1"}, {"2.2"}},
+ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testjsonbginpostingchunkbuildgate-0004-select-id::text-from-jsonb_gin_numeric_pk-where"},
 				},
 				{
 					Query: `SELECT COUNT(*) > 0, SUM(row_count) > 0
-FROM dg_gin_jsonb_gin_numeric_pk_jsonb_gin_numeric_pk_doc_idx_posting_chunks;`,
-					Expected: []sql.Row{{"t", "t"}},
+FROM dg_gin_jsonb_gin_numeric_pk_jsonb_gin_numeric_pk_doc_idx_posting_chunks;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testjsonbginpostingchunkbuildgate-0005-select-count-*->-0", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -168,16 +157,12 @@ FROM dg_gin_jsonb_gin_numeric_pk_jsonb_gin_numeric_pk_doc_idx_posting_chunks;`,
 				{
 					Query: `SELECT indexdef
 FROM pg_catalog.pg_indexes
-WHERE tablename = 'jsonb_gin_no_pk' AND indexname = 'jsonb_gin_no_pk_doc_idx';`,
-					Expected: []sql.Row{
-						{"CREATE INDEX jsonb_gin_no_pk_doc_idx ON public.jsonb_gin_no_pk USING gin (doc jsonb_ops)"},
-					},
+WHERE tablename = 'jsonb_gin_no_pk' AND indexname = 'jsonb_gin_no_pk_doc_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testjsonbginpostingchunkbuildgate-0006-select-indexdef-from-pg_catalog.pg_indexes-where", ColumnModes: []string{"schema"}},
 				},
 				{
 					Query: `SELECT id FROM jsonb_gin_no_pk
 WHERE doc @> '{"tags":["vip"]}'
-ORDER BY id;`,
-					Expected: []sql.Row{{1}, {3}},
+ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testjsonbginpostingchunkbuildgate-0007-select-id-from-jsonb_gin_no_pk-where"},
 				},
 			},
 		},
@@ -189,20 +174,17 @@ ORDER BY id;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       "CREATE INDEX jsonb_gin_bad_create_doc_idx ON jsonb_gin_bad_create USING gin (doc);",
-					ExpectedErr: "gin indexes are only supported on jsonb columns",
+					Query: "CREATE INDEX jsonb_gin_bad_create_doc_idx ON jsonb_gin_bad_create USING gin (doc);", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testjsonbginpostingchunkbuildgate-0008-create-index-jsonb_gin_bad_create_doc_idx-on-jsonb_gin_bad_create", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT COUNT(*)
 FROM pg_catalog.pg_indexes
-WHERE tablename = 'jsonb_gin_bad_create' AND indexname = 'jsonb_gin_bad_create_doc_idx';`,
-					Expected: []sql.Row{{0}},
+WHERE tablename = 'jsonb_gin_bad_create' AND indexname = 'jsonb_gin_bad_create_doc_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testjsonbginpostingchunkbuildgate-0009-select-count-*-from-pg_catalog.pg_indexes"},
 				},
 				{
 					Query: `SELECT COUNT(*)
 FROM pg_catalog.pg_class
-WHERE relname = 'dg_gin_jsonb_gin_bad_create_jsonb_gin_bad_create_doc_idx_posting_chunks';`,
-					Expected: []sql.Row{{0}},
+WHERE relname = 'dg_gin_jsonb_gin_bad_create_jsonb_gin_bad_create_doc_idx_posting_chunks';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testjsonbginpostingchunkbuildgate-0010-select-count-*-from-pg_catalog.pg_class"},
 				},
 			},
 		},
@@ -227,53 +209,36 @@ func TestJsonbGinPostingChunkLookupGate(t *testing.T) {
 				{
 					Query: `EXPLAIN SELECT id FROM jsonb_gin_lookup
 WHERE doc @> '{"a":1}'
-ORDER BY id;`,
-					Expected: []sql.Row{
-						{"Project"},
-						{" ├─ columns: [jsonb_gin_lookup.id]"},
-						{" └─ Sort(jsonb_gin_lookup.id ASC)"},
-						{"     └─ Filter"},
-						{`         ├─ jsonb_gin_lookup.doc @> '{"a":1}'`},
-						{"         └─ IndexedTableAccess(jsonb_gin_lookup)"},
-						{"             ├─ index: [jsonb_gin(doc)]"},
-						{"             ├─ filters: [{[jsonb_gin_lookup_idx intersect 2 token(s), jsonb_gin_lookup_idx intersect 2 token(s)]}]"},
-						{"             └─ columns: [id doc]"},
-					},
+ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testjsonbginpostingchunklookupgate-0001-explain-select-id-from-jsonb_gin_lookup", ColumnModes: []string{"explain"}},
 				},
 				{
 					Query: `SELECT id FROM jsonb_gin_lookup
 WHERE doc @> '{"a":1}'
-ORDER BY id;`,
-					Expected: []sql.Row{{1}, {2}},
+ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testjsonbginpostingchunklookupgate-0002-select-id-from-jsonb_gin_lookup-where"},
 				},
 				{
 					Query: `SELECT count(*) FROM jsonb_gin_lookup
-WHERE doc @> '{"a":1}';`,
-					Expected: []sql.Row{{2}},
+WHERE doc @> '{"a":1}';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testjsonbginpostingchunklookupgate-0003-select-count-*-from-jsonb_gin_lookup"},
 				},
 				{
 					Query: `SELECT id FROM jsonb_gin_lookup
 WHERE doc @> '{"nested":{"a":1}}'
-ORDER BY id;`,
-					Expected: []sql.Row{{4}},
+ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testjsonbginpostingchunklookupgate-0004-select-id-from-jsonb_gin_lookup-where"},
 				},
 				{
 					Query: `SELECT id FROM jsonb_gin_lookup
 WHERE doc ? 'a'
-ORDER BY id;`,
-					Expected: []sql.Row{{1}, {2}, {3}, {5}},
+ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testjsonbginpostingchunklookupgate-0005-select-id-from-jsonb_gin_lookup-where"},
 				},
 				{
 					Query: `SELECT id FROM jsonb_gin_lookup
 WHERE doc ?| ARRAY['missing','a']
-ORDER BY id;`,
-					Expected: []sql.Row{{1}, {2}, {3}, {5}},
+ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testjsonbginpostingchunklookupgate-0006-select-id-from-jsonb_gin_lookup-where"},
 				},
 				{
 					Query: `SELECT id FROM jsonb_gin_lookup
 WHERE doc ?& ARRAY['a','tags']
-ORDER BY id;`,
-					Expected: []sql.Row{{1}, {2}, {3}, {5}},
+ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testjsonbginpostingchunklookupgate-0007-select-id-from-jsonb_gin_lookup-where"},
 				},
 			},
 		},
@@ -291,8 +256,7 @@ ORDER BY id;`,
 				{
 					Query: `SELECT id FROM jsonb_gin_path_lookup
 WHERE doc @> '{"a":{"b":1}}'
-ORDER BY id;`,
-					Expected: []sql.Row{{1}},
+ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testjsonbginpostingchunklookupgate-0008-select-id-from-jsonb_gin_path_lookup-where"},
 				},
 			},
 		},
@@ -310,8 +274,7 @@ ORDER BY id;`,
 				{
 					Query: `SELECT id::text FROM jsonb_gin_fallback_lookup
 WHERE doc @> '{"a":1}'
-ORDER BY id;`,
-					Expected: []sql.Row{{"1.1"}, {"2.2"}},
+ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testjsonbginpostingchunklookupgate-0009-select-id::text-from-jsonb_gin_fallback_lookup-where"},
 				},
 			},
 		},
@@ -337,8 +300,7 @@ func TestJsonbGinPostingChunkDMLGate(t *testing.T) {
 				{
 					Query: `SELECT id FROM jsonb_gin_dml
 WHERE doc @> '{"tags":["vip"]}'
-ORDER BY id;`,
-					Expected: []sql.Row{{1}, {3}},
+ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testjsonbginpostingchunkdmlgate-0001-select-id-from-jsonb_gin_dml-where"},
 				},
 				{
 					Query: `UPDATE jsonb_gin_dml
@@ -348,8 +310,7 @@ WHERE id = 2;`,
 				{
 					Query: `SELECT id FROM jsonb_gin_dml
 WHERE doc @> '{"tags":["vip"]}'
-ORDER BY id;`,
-					Expected: []sql.Row{{1}, {2}, {3}},
+ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testjsonbginpostingchunkdmlgate-0002-select-id-from-jsonb_gin_dml-where"},
 				},
 				{
 					Query: "DELETE FROM jsonb_gin_dml WHERE id = 1;",
@@ -357,18 +318,15 @@ ORDER BY id;`,
 				{
 					Query: `SELECT id FROM jsonb_gin_dml
 WHERE doc @> '{"tags":["vip"]}'
-ORDER BY id;`,
-					Expected: []sql.Row{{2}, {3}},
+ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testjsonbginpostingchunkdmlgate-0003-select-id-from-jsonb_gin_dml-where"},
 				},
 				{
-					Query:       `INSERT INTO jsonb_gin_dml VALUES (2, '{"tags":["vip"],"status":"duplicate"}');`,
-					ExpectedErr: "duplicate",
+					Query: `INSERT INTO jsonb_gin_dml VALUES (2, '{"tags":["vip"],"status":"duplicate"}');`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testjsonbginpostingchunkdmlgate-0004-insert-into-jsonb_gin_dml-values-2", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id FROM jsonb_gin_dml
 WHERE doc @> '{"status":"duplicate"}'
-ORDER BY id;`,
-					Expected: []sql.Row{},
+ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testjsonbginpostingchunkdmlgate-0005-select-id-from-jsonb_gin_dml-where"},
 				},
 				{
 					Query: "BEGIN;",
@@ -380,8 +338,7 @@ ORDER BY id;`,
 				{
 					Query: `SELECT id FROM jsonb_gin_dml
 WHERE doc @> '{"status":"rolled-back"}'
-ORDER BY id;`,
-					Expected: []sql.Row{{4}},
+ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testjsonbginpostingchunkdmlgate-0006-select-id-from-jsonb_gin_dml-where"},
 				},
 				{
 					Query: "ROLLBACK;",
@@ -389,8 +346,7 @@ ORDER BY id;`,
 				{
 					Query: `SELECT id FROM jsonb_gin_dml
 WHERE doc @> '{"status":"rolled-back"}'
-ORDER BY id;`,
-					Expected: []sql.Row{},
+ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testjsonbginpostingchunkdmlgate-0007-select-id-from-jsonb_gin_dml-where"},
 				},
 			},
 		},
@@ -412,8 +368,7 @@ WHERE id = 2.2;`,
 				{
 					Query: `SELECT id::text FROM jsonb_gin_numeric_dml
 WHERE doc @> '{"tags":["vip"]}'
-ORDER BY id;`,
-					Expected: []sql.Row{{"1.1"}, {"2.2"}},
+ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testjsonbginpostingchunkdmlgate-0008-select-id::text-from-jsonb_gin_numeric_dml-where"},
 				},
 				{
 					Query: "DELETE FROM jsonb_gin_numeric_dml WHERE id = 1.1;",
@@ -421,8 +376,7 @@ ORDER BY id;`,
 				{
 					Query: `SELECT id::text FROM jsonb_gin_numeric_dml
 WHERE doc @> '{"tags":["vip"]}'
-ORDER BY id;`,
-					Expected: []sql.Row{{"2.2"}},
+ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testjsonbginpostingchunkdmlgate-0009-select-id::text-from-jsonb_gin_numeric_dml-where"},
 				},
 			},
 		},
@@ -444,8 +398,7 @@ WHERE id = 2;`,
 				{
 					Query: `SELECT id FROM jsonb_gin_no_pk_dml
 WHERE doc @> '{"tags":["vip"]}'
-ORDER BY id;`,
-					Expected: []sql.Row{{1}, {2}},
+ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testjsonbginpostingchunkdmlgate-0010-select-id-from-jsonb_gin_no_pk_dml-where"},
 				},
 				{
 					Query: "DELETE FROM jsonb_gin_no_pk_dml WHERE id = 1;",
@@ -453,8 +406,7 @@ ORDER BY id;`,
 				{
 					Query: `SELECT id FROM jsonb_gin_no_pk_dml
 WHERE doc @> '{"tags":["vip"]}'
-ORDER BY id;`,
-					Expected: []sql.Row{{2}},
+ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testjsonbginpostingchunkdmlgate-0011-select-id-from-jsonb_gin_no_pk_dml-where"},
 				},
 			},
 		},
@@ -691,161 +643,61 @@ func TestBasicIndexing(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT * FROM test WHERE v1 = 2 ORDER BY pk;",
-					Expected: []sql.Row{
-						{12, 2},
-					},
+					Query: "SELECT * FROM test WHERE v1 = 2 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0001-select-*-from-test-where"},
 				},
 				{
-					Query: "explain SELECT * FROM test WHERE v1 = 2 ORDER BY pk;",
-					Expected: []sql.Row{
-						{"Sort(test.pk ASC)"},
-						{" └─ IndexedTableAccess(test)"},
-						{"     ├─ index: [test.v1]"},
-						{"     ├─ filters: [{[2, 2]}]"},
-						{"     └─ columns: [pk v1]"},
-					},
+					Query: "explain SELECT * FROM test WHERE v1 = 2 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0002-explain-select-*-from-test", ColumnModes: []string{"explain"}},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 > 2 ORDER BY pk;",
-					Expected: []sql.Row{
-						{13, 3},
-						{14, 4},
-						{15, 5},
-					},
+					Query: "SELECT * FROM test WHERE v1 > 2 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0003-select-*-from-test-where"},
 				},
 				{
-					Query: "explain SELECT * FROM test WHERE v1 > 2 ORDER BY pk;",
-					Expected: []sql.Row{
-						{"Sort(test.pk ASC)"},
-						{" └─ IndexedTableAccess(test)"},
-						{"     ├─ index: [test.v1]"},
-						{"     ├─ filters: [{(2, ∞)}]"},
-						{"     └─ columns: [pk v1]"},
-					},
+					Query: "explain SELECT * FROM test WHERE v1 > 2 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0004-explain-select-*-from-test", ColumnModes: []string{"explain"}},
 				},
 				{
-					Query: "SELECT * FROM test WHERE (v1 > 3 OR v1 < 2) AND v1 <> 5 ORDER BY pk;",
-					Expected: []sql.Row{
-						{11, 1},
-						{14, 4}},
+					Query: "SELECT * FROM test WHERE (v1 > 3 OR v1 < 2) AND v1 <> 5 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0005-select-*-from-test-where"},
 				},
 				{
-					Query: "explain SELECT * FROM test WHERE (v1 > 3 OR v1 < 2) AND v1 <> 5 ORDER BY pk;",
-					Expected: []sql.Row{
-						{"Sort(test.pk ASC)"},
-						{" └─ IndexedTableAccess(test)"},
-						{"     ├─ index: [test.v1]"},
-						{"     ├─ filters: [{(NULL, 2)}, {(3, 5)}, {(5, ∞)}]"},
-						{"     └─ columns: [pk v1]"},
-					},
+					Query: "explain SELECT * FROM test WHERE (v1 > 3 OR v1 < 2) AND v1 <> 5 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0006-explain-select-*-from-test", ColumnModes: []string{"explain"}},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 = 2 OR v1 = 4 ORDER BY pk;",
-					Expected: []sql.Row{
-						{12, 2},
-						{14, 4},
-					},
+					Query: "SELECT * FROM test WHERE v1 = 2 OR v1 = 4 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0007-select-*-from-test-where"},
 				},
 				{
-					Query: "explain SELECT * FROM test WHERE v1 = 2 OR v1 = 4 ORDER BY pk;",
-					Expected: []sql.Row{
-						{"Sort(test.pk ASC)"},
-						{" └─ IndexedTableAccess(test)"},
-						{"     ├─ index: [test.v1]"},
-						{"     ├─ filters: [{[2, 2]}, {[4, 4]}]"},
-						{"     └─ columns: [pk v1]"},
-					},
+					Query: "explain SELECT * FROM test WHERE v1 = 2 OR v1 = 4 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0008-explain-select-*-from-test", ColumnModes: []string{"explain"}},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 IN (2, 4) ORDER BY pk;",
-					Expected: []sql.Row{
-						{12, 2},
-						{14, 4},
-					},
+					Query: "SELECT * FROM test WHERE v1 IN (2, 4) ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0009-select-*-from-test-where"},
 				},
 				{
-					Query: "explain SELECT * FROM test WHERE v1 IN (2, 4) ORDER BY pk;",
-					Expected: []sql.Row{
-						{"Sort(test.pk ASC)"},
-						{" └─ IndexedTableAccess(test)"},
-						{"     ├─ index: [test.v1]"},
-						{"     ├─ filters: [{[2, 2]}, {[4, 4]}]"},
-						{"     └─ columns: [pk v1]"},
-					},
+					Query: "explain SELECT * FROM test WHERE v1 IN (2, 4) ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0010-explain-select-*-from-test", ColumnModes: []string{"explain"}},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 IN (4, 2, 4, 2) ORDER BY pk;",
-					Expected: []sql.Row{
-						{12, 2},
-						{14, 4},
-					},
+					Query: "SELECT * FROM test WHERE v1 IN (4, 2, 4, 2) ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0011-select-*-from-test-where"},
 				},
 				{
-					Query: "explain SELECT * FROM test WHERE v1 IN (4, 2, 4, 2) ORDER BY pk;",
-					Expected: []sql.Row{
-						{"Sort(test.pk ASC)"},
-						{" └─ IndexedTableAccess(test)"},
-						{"     ├─ index: [test.v1]"},
-						{"     ├─ filters: [{[2, 2]}, {[4, 4]}]"},
-						{"     └─ columns: [pk v1]"},
-					},
+					Query: "explain SELECT * FROM test WHERE v1 IN (4, 2, 4, 2) ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0012-explain-select-*-from-test", ColumnModes: []string{"explain"}},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 IN (NULL, 2, 2) ORDER BY pk;",
-					Expected: []sql.Row{
-						{12, 2},
-					},
+					Query: "SELECT * FROM test WHERE v1 IN (NULL, 2, 2) ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0013-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 NOT IN (2, 4) ORDER BY pk;",
-					Expected: []sql.Row{
-						{11, 1},
-						{13, 3},
-						{15, 5},
-					},
+					Query: "SELECT * FROM test WHERE v1 NOT IN (2, 4) ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0014-select-*-from-test-where"},
 				},
 				{
-					Query: "explain SELECT * FROM test WHERE v1 NOT IN (2, 4) ORDER BY pk;",
-					Expected: []sql.Row{
-						{"Sort(test.pk ASC)"},
-						{" └─ IndexedTableAccess(test)"},
-						{"     ├─ index: [test.v1]"},
-						{"     ├─ filters: [{(NULL, 2)}, {(2, 4)}, {(4, ∞)}]"},
-						{"     └─ columns: [pk v1]"},
-					},
+					Query: "explain SELECT * FROM test WHERE v1 NOT IN (2, 4) ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0015-explain-select-*-from-test", ColumnModes: []string{"explain"}},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 >= 4 ORDER BY pk;",
-					Expected: []sql.Row{
-						{14, 4},
-						{15, 5},
-					},
+					Query: "SELECT * FROM test WHERE v1 >= 4 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0016-select-*-from-test-where"},
 				},
 				{
-					Query: "explain SELECT * FROM test WHERE v1 >= 4 ORDER BY pk;",
-					Expected: []sql.Row{
-						{"Sort(test.pk ASC)"},
-						{" └─ IndexedTableAccess(test)"},
-						{"     ├─ index: [test.v1]"},
-						{"     ├─ filters: [{[4, ∞)}]"},
-						{"     └─ columns: [pk v1]"},
-					},
+					Query: "explain SELECT * FROM test WHERE v1 >= 4 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0017-explain-select-*-from-test", ColumnModes: []string{"explain"}},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 < 3 ORDER BY pk;",
-					Expected: []sql.Row{
-						{11, 1},
-						{12, 2},
-					},
+					Query: "SELECT * FROM test WHERE v1 < 3 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0018-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 <= 3 ORDER BY pk;",
-					Expected: []sql.Row{
-						{11, 1},
-						{12, 2},
-						{13, 3},
-					},
+					Query: "SELECT * FROM test WHERE v1 <= 3 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0019-select-*-from-test-where"},
 				},
 			},
 		},
@@ -860,36 +712,20 @@ func TestBasicIndexing(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT * FROM test WHERE v1 = 'twelve' ORDER BY pk;",
-					Expected: []sql.Row{
-						{12, "twelve"},
-					},
+					Query: "SELECT * FROM test WHERE v1 = 'twelve' ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0020-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 > 't' OR v1 < 'f' ORDER BY pk;",
-					Expected: []sql.Row{
-						{11, "eleven"},
-						{12, "twelve"},
-						{13, "thirteen"},
-					},
+					Query: "SELECT * FROM test WHERE v1 > 't' OR v1 < 'f' ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0021-select-*-from-test-where"},
 				},
 				{
-					Query: "explain SELECT * FROM test WHERE v1 > 't' OR v1 < 'f' ORDER BY pk;",
-					Expected: []sql.Row{
-						{"Sort(test.pk ASC)"},
-						{" └─ IndexedTableAccess(test)"},
-						{"     ├─ index: [test.pk,test.v1]"},
-						{"     ├─ filters: [{[NULL, ∞), (NULL, f)}, {[NULL, ∞), (t, ∞)}]"},
-						{"     └─ columns: [pk v1]"},
-					},
+					Query: "explain SELECT * FROM test WHERE v1 > 't' OR v1 < 'f' ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0022-explain-select-*-from-test", ColumnModes: []string{"explain"}},
 				},
 				{
 					Query:            "DELETE FROM test WHERE v1 = 'twelve'",
 					SkipResultsCheck: true,
 				},
 				{
-					Query:    "SELECT * FROM test WHERE v1 = 'twelve' ORDER BY pk;",
-					Expected: []sql.Row{},
+					Query: "SELECT * FROM test WHERE v1 = 'twelve' ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0023-select-*-from-test-where"},
 				},
 			},
 		},
@@ -903,8 +739,7 @@ func TestBasicIndexing(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "select * from t order by s;",
-					Expected: []sql.Row{{"bar"}, {"baz"}, {"foo"}},
+					Query: "select * from t order by s;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0024-select-*-from-t-order"},
 				},
 			},
 		},
@@ -917,16 +752,10 @@ func TestBasicIndexing(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT * FROM test WHERE v1 > 2 ORDER BY pk;",
-					Expected: []sql.Row{
-						{13, 3},
-						{14, 4},
-						{15, 5},
-					},
+					Query: "SELECT * FROM test WHERE v1 > 2 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0025-select-*-from-test-where"},
 				},
 				{
-					Query:       "insert into test values (16, 3);",
-					ExpectedErr: "duplicate unique key given",
+					Query: "insert into test values (16, 3);", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0026-insert-into-test-values-16", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -941,26 +770,13 @@ func TestBasicIndexing(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT * FROM test WHERE v1 = 2 AND v2 = 22 ORDER BY pk;",
-					Expected: []sql.Row{
-						{12, 2, 22},
-					},
+					Query: "SELECT * FROM test WHERE v1 = 2 AND v2 = 22 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0027-select-*-from-test-where"},
 				},
 				{
-					Query: "explain SELECT * FROM test WHERE v1 = 2 AND v2 = 22 ORDER BY pk;",
-					Expected: []sql.Row{
-						{"Sort(test.pk ASC)"},
-						{" └─ IndexedTableAccess(test)"},
-						{"     ├─ index: [test.v1,test.v2]"},
-						{"     ├─ filters: [{[2, 2], [22, 22]}]"},
-						{"     └─ columns: [pk v1 v2]"},
-					},
+					Query: "explain SELECT * FROM test WHERE v1 = 2 AND v2 = 22 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0028-explain-select-*-from-test", ColumnModes: []string{"explain"}},
 				},
 				{
-					Query: "select /*+ lookup_join(jointable, test) */ HINT * from test join jointable on test.v1 = jointable.v3 and test.v2 = 22 order by 1",
-					Expected: []sql.Row{
-						{12, 2, 22, 2, 22},
-					},
+					Query: "select /*+ lookup_join(jointable, test) */ HINT * from test join jointable on test.v1 = jointable.v3 and test.v2 = 22 order by 1", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0029-select-/*+-lookup_join-jointable-test", Compare: "sqlstate"},
 				},
 				{
 					Query: "explain select * from test join jointable on test.v1 = jointable.v3 and test.v2 = 22 order by 1",
@@ -1070,10 +886,7 @@ func TestBasicIndexing(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "select /*+ lookup_join(jointable, test) */ HINT * from test join jointable on test.v1 = jointable.v3 and test.v2 = 22 order by 1",
-					Expected: []sql.Row{
-						{12, 2, 22, 2, 22},
-					},
+					Query: "select /*+ lookup_join(jointable, test) */ HINT * from test join jointable on test.v1 = jointable.v3 and test.v2 = 22 order by 1", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0043-select-/*+-lookup_join-jointable-test", Compare: "sqlstate"},
 				},
 				{
 					Query: "explain select /*+ lookup_join(jointable, test) */ HINT * from test join jointable on test.v1 = jointable.v3 and test.v2 = 22 order by 1",
@@ -1127,8 +940,7 @@ func TestBasicIndexing(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "select /*+ lookup_join(jointable, test) */ HINT * from test join jointable on test.v1 = jointable.v3 and test.v2 = 22 order by 1",
-					Expected: []sql.Row{},
+					Query: "select /*+ lookup_join(jointable, test) */ HINT * from test join jointable on test.v1 = jointable.v3 and test.v2 = 22 order by 1", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0047-select-/*+-lookup_join-jointable-test", Compare: "sqlstate"},
 				},
 				{
 					Query: "select /*+ lookup_join(jointable, test) */ HINT * from test join jointable on test.v1 = jointable.v3 and test.v2 = 21 order by 1",
@@ -1213,32 +1025,19 @@ func TestBasicIndexing(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "SELECT * FROM test WHERE v1 = 2 AND v1 = '3' ORDER BY pk;",
-					Expected: []sql.Row{},
+					Query: "SELECT * FROM test WHERE v1 = 2 AND v1 = '3' ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0053-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 > 2 AND v1 > '3' ORDER BY pk;",
-					Expected: []sql.Row{
-						{14, 4},
-						{15, 5},
-					},
+					Query: "SELECT * FROM test WHERE v1 > 2 AND v1 > '3' ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0054-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 >= 3 AND v1 <= 4.0 ORDER BY pk;",
-					Expected: []sql.Row{
-						{13, 3},
-						{14, 4},
-					},
+					Query: "SELECT * FROM test WHERE v1 >= 3 AND v1 <= 4.0 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0055-select-*-from-test-where"},
 				},
 				{
-					Query:    "SELECT * FROM test WHERE v1 < 3 AND v1 > 3::float8 ORDER BY pk;",
-					Expected: []sql.Row{},
+					Query: "SELECT * FROM test WHERE v1 < 3 AND v1 > 3::float8 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0056-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 <= 3 AND v1 = 1 ORDER BY pk;",
-					Expected: []sql.Row{
-						{11, 1},
-					},
+					Query: "SELECT * FROM test WHERE v1 <= 3 AND v1 = 1 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0057-select-*-from-test-where"},
 				},
 			},
 		},
@@ -1251,81 +1050,40 @@ func TestBasicIndexing(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT * FROM test WHERE v1 BETWEEN 1 AND 4 ORDER BY pk;",
-					Expected: []sql.Row{
-						{float64(11), float64(1)},
-						{float64(13), float64(3)},
-					},
+					Query: "SELECT * FROM test WHERE v1 BETWEEN 1 AND 4 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0058-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 BETWEEN 2 AND 4 ORDER BY pk;",
-					Expected: []sql.Row{
-						{float64(13), float64(3)},
-					},
+					Query: "SELECT * FROM test WHERE v1 BETWEEN 2 AND 4 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0059-select-*-from-test-where"},
 				},
 				{
-					Query:    "SELECT * FROM test WHERE v1 BETWEEN 4 AND 2 ORDER BY pk;",
-					Expected: []sql.Row{},
+					Query: "SELECT * FROM test WHERE v1 BETWEEN 4 AND 2 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0060-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 BETWEEN SYMMETRIC 1 AND 4 ORDER BY pk;",
-					Expected: []sql.Row{
-						{float64(11), float64(1)},
-						{float64(13), float64(3)},
-					},
+					Query: "SELECT * FROM test WHERE v1 BETWEEN SYMMETRIC 1 AND 4 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0061-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 BETWEEN SYMMETRIC 2 AND 4 ORDER BY pk;",
-					Expected: []sql.Row{
-						{float64(13), float64(3)},
-					},
+					Query: "SELECT * FROM test WHERE v1 BETWEEN SYMMETRIC 2 AND 4 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0062-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 BETWEEN SYMMETRIC 4 AND 2 ORDER BY pk;",
-					Expected: []sql.Row{
-						{float64(13), float64(3)},
-					},
+					Query: "SELECT * FROM test WHERE v1 BETWEEN SYMMETRIC 4 AND 2 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0063-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 NOT BETWEEN 1 AND 4 ORDER BY pk;",
-					Expected: []sql.Row{
-						{float64(17), float64(7)},
-					},
+					Query: "SELECT * FROM test WHERE v1 NOT BETWEEN 1 AND 4 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0064-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 NOT BETWEEN 2 AND 4 ORDER BY pk;",
-					Expected: []sql.Row{
-						{float64(11), float64(1)},
-						{float64(17), float64(7)},
-					},
+					Query: "SELECT * FROM test WHERE v1 NOT BETWEEN 2 AND 4 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0065-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 NOT BETWEEN 4 AND 2 ORDER BY pk;",
-					Expected: []sql.Row{
-						{float64(11), float64(1)},
-						{float64(13), float64(3)},
-						{float64(17), float64(7)},
-					},
+					Query: "SELECT * FROM test WHERE v1 NOT BETWEEN 4 AND 2 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0066-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 NOT BETWEEN SYMMETRIC 1 AND 4 ORDER BY pk;",
-					Expected: []sql.Row{
-						{float64(17), float64(7)},
-					},
+					Query: "SELECT * FROM test WHERE v1 NOT BETWEEN SYMMETRIC 1 AND 4 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0067-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 NOT BETWEEN SYMMETRIC 2 AND 4 ORDER BY pk;",
-					Expected: []sql.Row{
-						{float64(11), float64(1)},
-						{float64(17), float64(7)},
-					},
+					Query: "SELECT * FROM test WHERE v1 NOT BETWEEN SYMMETRIC 2 AND 4 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0068-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 NOT BETWEEN SYMMETRIC 4 AND 2 ORDER BY pk;",
-					Expected: []sql.Row{
-						{float64(11), float64(1)},
-						{float64(17), float64(7)},
-					},
+					Query: "SELECT * FROM test WHERE v1 NOT BETWEEN SYMMETRIC 4 AND 2 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0069-select-*-from-test-where"},
 				},
 			},
 		},
@@ -1338,33 +1096,16 @@ func TestBasicIndexing(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT * FROM test WHERE v1 IN (2, '3', 4) ORDER BY v1;",
-					Expected: []sql.Row{
-						{2, 2, 2},
-						{3, 3, 3},
-						{4, 4, 4},
-					},
+					Query: "SELECT * FROM test WHERE v1 IN (2, '3', 4) ORDER BY v1;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0070-select-*-from-test-where"},
 				},
 				{
-					Query: "explain SELECT * FROM test WHERE v1 IN (2, '3', 4) ORDER BY v1;",
-					Expected: []sql.Row{
-						{"IndexedTableAccess(test)"},
-						{" ├─ index: [test.v1]"},
-						{" ├─ filters: [{[2, 2]}, {[3, 3]}, {[4, 4]}]"},
-						{" └─ columns: [pk v1 v2]"},
-					},
+					Query: "explain SELECT * FROM test WHERE v1 IN (2, '3', 4) ORDER BY v1;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0071-explain-select-*-from-test", ColumnModes: []string{"explain"}},
 				},
 				{
-					Query:    "CREATE INDEX v2_idx ON test(v2);",
-					Expected: []sql.Row{},
+					Query: "CREATE INDEX v2_idx ON test(v2);", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0072-create-index-v2_idx-on-test"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v2 IN (2, '3', 4) ORDER BY v1;",
-					Expected: []sql.Row{
-						{2, 2, 2},
-						{3, 3, 3},
-						{4, 4, 4},
-					},
+					Query: "SELECT * FROM test WHERE v2 IN (2, '3', 4) ORDER BY v1;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0073-select-*-from-test-where"},
 				},
 			},
 		},
@@ -1377,40 +1118,19 @@ func TestBasicIndexing(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT * FROM test WHERE v1 = 2 ORDER BY pk;",
-					Expected: []sql.Row{
-						{12, 2, 22},
-					},
+					Query: "SELECT * FROM test WHERE v1 = 2 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0074-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 > 2 ORDER BY pk;",
-					Expected: []sql.Row{
-						{13, 3, 23},
-						{14, 4, 24},
-						{15, 5, 25},
-					},
+					Query: "SELECT * FROM test WHERE v1 > 2 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0075-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 >= 4 ORDER BY pk;",
-					Expected: []sql.Row{
-						{14, 4, 24},
-						{15, 5, 25},
-					},
+					Query: "SELECT * FROM test WHERE v1 >= 4 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0076-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 < 3 ORDER BY pk;",
-					Expected: []sql.Row{
-						{11, 1, 21},
-						{12, 2, 22},
-					},
+					Query: "SELECT * FROM test WHERE v1 < 3 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0077-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 <= 3 ORDER BY pk;",
-					Expected: []sql.Row{
-						{11, 1, 21},
-						{12, 2, 22},
-						{13, 3, 23},
-					},
+					Query: "SELECT * FROM test WHERE v1 <= 3 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0078-select-*-from-test-where"},
 				},
 			},
 		},
@@ -1423,16 +1143,10 @@ func TestBasicIndexing(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT * FROM test WHERE v1 > 2 ORDER BY pk;",
-					Expected: []sql.Row{
-						{13, 3, 23},
-						{14, 4, 24},
-						{15, 5, 25},
-					},
+					Query: "SELECT * FROM test WHERE v1 > 2 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0079-select-*-from-test-where"},
 				},
 				{
-					Query:       "insert into test values (16, 3, 23);",
-					ExpectedErr: "duplicate unique key given",
+					Query: "insert into test values (16, 3, 23);", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0080-insert-into-test-values-16", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1445,70 +1159,37 @@ func TestBasicIndexing(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT * FROM test WHERE v1 = 2 AND v2 = 22 ORDER BY pk;",
-					Expected: []sql.Row{
-						{12, 2, 22, 32},
-					},
+					Query: "SELECT * FROM test WHERE v1 = 2 AND v2 = 22 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0081-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 > 2 AND v2 = 24 ORDER BY pk;",
-					Expected: []sql.Row{
-						{14, 4, 24, 34},
-					},
+					Query: "SELECT * FROM test WHERE v1 > 2 AND v2 = 24 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0082-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 >= 4 AND v2 = 25 ORDER BY pk;",
-					Expected: []sql.Row{
-						{15, 5, 25, 35},
-					},
+					Query: "SELECT * FROM test WHERE v1 >= 4 AND v2 = 25 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0083-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 < 3 AND v2 = 21 ORDER BY pk;",
-					Expected: []sql.Row{
-						{11, 1, 21, 31},
-					},
+					Query: "SELECT * FROM test WHERE v1 < 3 AND v2 = 21 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0084-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 <= 3 AND v2 = 22 ORDER BY pk;",
-					Expected: []sql.Row{
-						{12, 2, 22, 32},
-					},
+					Query: "SELECT * FROM test WHERE v1 <= 3 AND v2 = 22 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0085-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 = 2 AND v2 < 23 ORDER BY pk;",
-					Expected: []sql.Row{
-						{12, 2, 22, 32},
-					},
+					Query: "SELECT * FROM test WHERE v1 = 2 AND v2 < 23 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0086-select-*-from-test-where"},
 				},
 				{
-					Query:    "SELECT * FROM test WHERE v1 = 2 AND v2 < 22 ORDER BY pk;",
-					Expected: []sql.Row{},
+					Query: "SELECT * FROM test WHERE v1 = 2 AND v2 < 22 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0087-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 > 2 AND v2 < 25 ORDER BY pk;",
-					Expected: []sql.Row{
-						{13, 3, 23, 33},
-						{14, 4, 24, 34},
-					},
+					Query: "SELECT * FROM test WHERE v1 > 2 AND v2 < 25 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0088-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 >= 4 AND v2 <= 24 ORDER BY pk;",
-					Expected: []sql.Row{
-						{14, 4, 24, 34},
-					},
+					Query: "SELECT * FROM test WHERE v1 >= 4 AND v2 <= 24 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0089-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 < 3 AND v2 < 22 ORDER BY pk;",
-					Expected: []sql.Row{
-						{11, 1, 21, 31},
-					},
+					Query: "SELECT * FROM test WHERE v1 < 3 AND v2 < 22 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0090-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 <= 3 AND v2 < 23 ORDER BY pk;",
-					Expected: []sql.Row{
-						{11, 1, 21, 31},
-						{12, 2, 22, 32},
-					},
+					Query: "SELECT * FROM test WHERE v1 <= 3 AND v2 < 23 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0091-select-*-from-test-where"},
 				},
 			},
 		},
@@ -1521,21 +1202,13 @@ func TestBasicIndexing(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT * FROM test WHERE v1 < 3 AND v2 = 21 ORDER BY pk;",
-					Expected: []sql.Row{
-						{11, 1, 21, 31},
-					},
+					Query: "SELECT * FROM test WHERE v1 < 3 AND v2 = 21 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0092-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 <= 3 AND v2 < 23 ORDER BY pk;",
-					Expected: []sql.Row{
-						{11, 1, 21, 31},
-						{12, 2, 22, 32},
-					},
+					Query: "SELECT * FROM test WHERE v1 <= 3 AND v2 < 23 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0093-select-*-from-test-where"},
 				},
 				{
-					Query:       "insert into test values (16, 3, 23, 33);",
-					ExpectedErr: "duplicate unique key given",
+					Query: "insert into test values (16, 3, 23, 33);", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0094-insert-into-test-values-16", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1548,40 +1221,19 @@ func TestBasicIndexing(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT * FROM test WHERE v1 = 2 ORDER BY v0;",
-					Expected: []sql.Row{
-						{12, 2, 22},
-					},
+					Query: "SELECT * FROM test WHERE v1 = 2 ORDER BY v0;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0095-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 > 2 ORDER BY v0;",
-					Expected: []sql.Row{
-						{13, 3, 23},
-						{14, 4, 24},
-						{15, 5, 25},
-					},
+					Query: "SELECT * FROM test WHERE v1 > 2 ORDER BY v0;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0096-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 >= 4 ORDER BY v0;",
-					Expected: []sql.Row{
-						{14, 4, 24},
-						{15, 5, 25},
-					},
+					Query: "SELECT * FROM test WHERE v1 >= 4 ORDER BY v0;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0097-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 < 3 ORDER BY v0;",
-					Expected: []sql.Row{
-						{11, 1, 21},
-						{12, 2, 22},
-					},
+					Query: "SELECT * FROM test WHERE v1 < 3 ORDER BY v0;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0098-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 <= 3 ORDER BY v0;",
-					Expected: []sql.Row{
-						{11, 1, 21},
-						{12, 2, 22},
-						{13, 3, 23},
-					},
+					Query: "SELECT * FROM test WHERE v1 <= 3 ORDER BY v0;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0099-select-*-from-test-where"},
 				},
 			},
 		},
@@ -1594,22 +1246,13 @@ func TestBasicIndexing(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT * FROM test WHERE v1 = 2 ORDER BY v0;",
-					Expected: []sql.Row{
-						{12, 2, 22},
-					},
+					Query: "SELECT * FROM test WHERE v1 = 2 ORDER BY v0;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0100-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 > 2 ORDER BY v0;",
-					Expected: []sql.Row{
-						{13, 3, 23},
-						{14, 4, 24},
-						{15, 5, 25},
-					},
+					Query: "SELECT * FROM test WHERE v1 > 2 ORDER BY v0;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0101-select-*-from-test-where"},
 				},
 				{
-					Query:       "INSERT INTO test VALUES (16, 3, 23);",
-					ExpectedErr: "duplicate unique key given",
+					Query: "INSERT INTO test VALUES (16, 3, 23);", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0102-insert-into-test-values-16", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1622,70 +1265,37 @@ func TestBasicIndexing(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT * FROM test WHERE v1 = 2 AND v2 = 22 ORDER BY v0;",
-					Expected: []sql.Row{
-						{12, 2, 22, 32},
-					},
+					Query: "SELECT * FROM test WHERE v1 = 2 AND v2 = 22 ORDER BY v0;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0103-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 > 2 AND v2 = 24 ORDER BY v0;",
-					Expected: []sql.Row{
-						{14, 4, 24, 34},
-					},
+					Query: "SELECT * FROM test WHERE v1 > 2 AND v2 = 24 ORDER BY v0;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0104-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 >= 4 AND v2 = 25 ORDER BY v0;",
-					Expected: []sql.Row{
-						{15, 5, 25, 35},
-					},
+					Query: "SELECT * FROM test WHERE v1 >= 4 AND v2 = 25 ORDER BY v0;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0105-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 < 3 AND v2 = 21 ORDER BY v0;",
-					Expected: []sql.Row{
-						{11, 1, 21, 31},
-					},
+					Query: "SELECT * FROM test WHERE v1 < 3 AND v2 = 21 ORDER BY v0;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0106-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 <= 3 AND v2 = 22 ORDER BY v0;",
-					Expected: []sql.Row{
-						{12, 2, 22, 32},
-					},
+					Query: "SELECT * FROM test WHERE v1 <= 3 AND v2 = 22 ORDER BY v0;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0107-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 = 2 AND v2 < 23 ORDER BY v0;",
-					Expected: []sql.Row{
-						{12, 2, 22, 32},
-					},
+					Query: "SELECT * FROM test WHERE v1 = 2 AND v2 < 23 ORDER BY v0;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0108-select-*-from-test-where"},
 				},
 				{
-					Query:    "SELECT * FROM test WHERE v1 = 2 AND v2 < 22 ORDER BY v0;",
-					Expected: []sql.Row{},
+					Query: "SELECT * FROM test WHERE v1 = 2 AND v2 < 22 ORDER BY v0;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0109-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 > 2 AND v2 < 25 ORDER BY v0;",
-					Expected: []sql.Row{
-						{13, 3, 23, 33},
-						{14, 4, 24, 34},
-					},
+					Query: "SELECT * FROM test WHERE v1 > 2 AND v2 < 25 ORDER BY v0;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0110-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 >= 4 AND v2 <= 24 ORDER BY v0;",
-					Expected: []sql.Row{
-						{14, 4, 24, 34},
-					},
+					Query: "SELECT * FROM test WHERE v1 >= 4 AND v2 <= 24 ORDER BY v0;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0111-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 < 3 AND v2 < 22 ORDER BY v0;",
-					Expected: []sql.Row{
-						{11, 1, 21, 31},
-					},
+					Query: "SELECT * FROM test WHERE v1 < 3 AND v2 < 22 ORDER BY v0;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0112-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 <= 3 AND v2 < 23 ORDER BY v0;",
-					Expected: []sql.Row{
-						{11, 1, 21, 31},
-						{12, 2, 22, 32},
-					},
+					Query: "SELECT * FROM test WHERE v1 <= 3 AND v2 < 23 ORDER BY v0;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0113-select-*-from-test-where"},
 				},
 			},
 		},
@@ -1698,21 +1308,13 @@ func TestBasicIndexing(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT * FROM test WHERE v1 = 2 AND v2 < 23 ORDER BY v0;",
-					Expected: []sql.Row{
-						{12, 2, 22, 32},
-					},
+					Query: "SELECT * FROM test WHERE v1 = 2 AND v2 < 23 ORDER BY v0;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0114-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 <= 3 AND v2 < 23 ORDER BY v0;",
-					Expected: []sql.Row{
-						{11, 1, 21, 31},
-						{12, 2, 22, 32},
-					},
+					Query: "SELECT * FROM test WHERE v1 <= 3 AND v2 < 23 ORDER BY v0;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0115-select-*-from-test-where"},
 				},
 				{
-					Query:       "insert into test values (16, 3, 23, 33);",
-					ExpectedErr: "duplicate unique key given",
+					Query: "insert into test values (16, 3, 23, 33);", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0116-insert-into-test-values-16", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1728,22 +1330,10 @@ func TestBasicIndexing(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT t1.pk, t2.pk FROM test1 t1 JOIN test2 t2 ON t1.v1 = t2.v1 ORDER BY t1.v1;",
-					Expected: []sql.Row{
-						{11, 31},
-						{12, 32},
-						{13, 33},
-						{15, 35},
-					},
+					Query: "SELECT t1.pk, t2.pk FROM test1 t1 JOIN test2 t2 ON t1.v1 = t2.v1 ORDER BY t1.v1;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0117-select-t1.pk-t2.pk-from-test1"},
 				},
 				{
-					Query: "SELECT t1.pk, t2.pk FROM test1 t1, test2 t2 WHERE t1.v1 = t2.v1 ORDER BY t1.v1;",
-					Expected: []sql.Row{
-						{11, 31},
-						{12, 32},
-						{13, 33},
-						{15, 35},
-					},
+					Query: "SELECT t1.pk, t2.pk FROM test1 t1, test2 t2 WHERE t1.v1 = t2.v1 ORDER BY t1.v1;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0118-select-t1.pk-t2.pk-from-test1"},
 				},
 			},
 		},
@@ -1755,32 +1345,25 @@ func TestBasicIndexing(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       "CREATE INDEX v1_idx ON test(v1 varchar_pattern_ops) WITH (storage_opt1 = foo) TABLESPACE tablespace_name;",
-					ExpectedErr: "index storage parameter storage_opt1 is not yet supported",
+					Query: "CREATE INDEX v1_idx ON test(v1 varchar_pattern_ops) WITH (storage_opt1 = foo) TABLESPACE tablespace_name;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0119-create-index-v1_idx-on-test", Compare: "sqlstate"},
 				},
 				{
-					Query:       "CREATE INDEX v1_idx2 ON test using hash (v1);",
-					ExpectedErr: "index method hash is not yet supported",
+					Query: "CREATE INDEX v1_idx2 ON test using hash (v1);", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0120-create-index-v1_idx2-on-test", Compare: "sqlstate"},
 				},
 				{
-					Query:       "CREATE INDEX v1_idx_storage ON test(v1) WITH (definitely_not_supported = 1);",
-					ExpectedErr: "index storage parameter definitely_not_supported is not yet supported",
+					Query: "CREATE INDEX v1_idx_storage ON test(v1) WITH (definitely_not_supported = 1);", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0121-create-index-v1_idx_storage-on-test", Compare: "sqlstate"},
 				},
 				{
-					Query:       "CREATE INDEX v1_idx_tablespace ON test(v1) TABLESPACE definitely_not_supported;",
-					ExpectedErr: "TABLESPACE is not yet supported for indexes",
+					Query: "CREATE INDEX v1_idx_tablespace ON test(v1) TABLESPACE definitely_not_supported;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0122-create-index-v1_idx_tablespace-on-test", Compare: "sqlstate"},
 				},
 				{
-					Query:       "ALTER INDEX v1_idx_storage SET (definitely_not_supported = 1);",
-					ExpectedErr: "index storage parameter definitely_not_supported is not yet supported",
+					Query: "ALTER INDEX v1_idx_storage SET (definitely_not_supported = 1);", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0123-alter-index-v1_idx_storage-set-definitely_not_supported", Compare: "sqlstate"},
 				},
 				{
-					Query:       "ALTER INDEX v1_idx_storage SET TABLESPACE definitely_not_supported;",
-					ExpectedErr: "TABLESPACE is not yet supported for indexes",
+					Query: "ALTER INDEX v1_idx_storage SET TABLESPACE definitely_not_supported;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0124-alter-index-v1_idx_storage-set-tablespace", Compare: "sqlstate"},
 				},
 				{
-					Query:       "ALTER INDEX v1_idx_existing ALTER COLUMN 1 SET STATISTICS 100;",
-					ExpectedErr: `cannot alter statistics on non-expression column "v1" of index "v1_idx_existing"`,
+					Query: "ALTER INDEX v1_idx_existing ALTER COLUMN 1 SET STATISTICS 100;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0125-alter-index-v1_idx_existing-alter-column", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1801,26 +1384,18 @@ func TestBasicIndexing(t *testing.T) {
 	pg_catalog.pg_get_indexdef(c.oid, 1, false),
 	CAST(c.reloptions AS TEXT)
 FROM pg_catalog.pg_class c
-WHERE c.relname = 'btree_reloptions_meta_v_idx';`,
-					Expected: []sql.Row{
-						{"CREATE INDEX btree_reloptions_meta_v_idx ON public.btree_reloptions_meta USING btree (v) WITH (fillfactor='70')", "v", "{fillfactor=70}"},
-					},
+WHERE c.relname = 'btree_reloptions_meta_v_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0126-select-pg_catalog.pg_get_indexdef-c.oid-pg_catalog.pg_get_indexdef-c.oid", ColumnModes: []string{"schema"}},
 				},
 				{
 					Query: `SELECT indexdef
 FROM pg_catalog.pg_indexes
-WHERE tablename = 'btree_reloptions_meta' AND indexname = 'btree_reloptions_meta_v_idx';`,
-					Expected: []sql.Row{
-						{"CREATE INDEX btree_reloptions_meta_v_idx ON public.btree_reloptions_meta USING btree (v) WITH (fillfactor='70')"},
-					},
+WHERE tablename = 'btree_reloptions_meta' AND indexname = 'btree_reloptions_meta_v_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0127-select-indexdef-from-pg_catalog.pg_indexes-where", ColumnModes: []string{"schema"}},
 				},
 				{
-					Query:       "CREATE INDEX btree_reloptions_bad_name_idx ON btree_reloptions_meta (v) WITH (definitely_not_supported = 1);",
-					ExpectedErr: "index storage parameter definitely_not_supported is not yet supported",
+					Query: "CREATE INDEX btree_reloptions_bad_name_idx ON btree_reloptions_meta (v) WITH (definitely_not_supported = 1);", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0128-create-index-btree_reloptions_bad_name_idx-on-btree_reloptions_meta", Compare: "sqlstate"},
 				},
 				{
-					Query:       "CREATE INDEX btree_reloptions_bad_fillfactor_idx ON btree_reloptions_meta (v) WITH (fillfactor = 9);",
-					ExpectedErr: "fillfactor must be between 10 and 100",
+					Query: "CREATE INDEX btree_reloptions_bad_fillfactor_idx ON btree_reloptions_meta (v) WITH (fillfactor = 9);", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0129-create-index-btree_reloptions_bad_fillfactor_idx-on-btree_reloptions_meta", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1846,11 +1421,7 @@ WHERE tablename = 'btree_reloptions_meta' AND indexname = 'btree_reloptions_meta
 	CAST(c.reloptions AS TEXT)
 FROM pg_catalog.pg_class c
 WHERE c.relname IN ('alter_index_fillfactor_v_idx', 'alter_index_fillfactor_code_idx')
-ORDER BY c.relname;`,
-					Expected: []sql.Row{
-						{"alter_index_fillfactor_code_idx", "CREATE UNIQUE INDEX alter_index_fillfactor_code_idx ON public.alter_index_fillfactor USING btree (code) WITH (fillfactor='75')", "{fillfactor=75}"},
-						{"alter_index_fillfactor_v_idx", "CREATE INDEX alter_index_fillfactor_v_idx ON public.alter_index_fillfactor USING btree (v) WITH (fillfactor='80')", "{fillfactor=80}"},
-					},
+ORDER BY c.relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0130-select-c.relname-pg_catalog.pg_get_indexdef-c.oid-cast", ColumnModes: []string{"structural", "schema"}},
 				},
 				{
 					Query: "ALTER INDEX alter_index_fillfactor_v_idx RESET (fillfactor);",
@@ -1860,30 +1431,22 @@ ORDER BY c.relname;`,
 	pg_catalog.pg_get_indexdef(c.oid),
 	c.reloptions IS NULL
 FROM pg_catalog.pg_class c
-WHERE c.relname = 'alter_index_fillfactor_v_idx';`,
-					Expected: []sql.Row{
-						{"CREATE INDEX alter_index_fillfactor_v_idx ON public.alter_index_fillfactor USING btree (v)", "t"},
-					},
+WHERE c.relname = 'alter_index_fillfactor_v_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0131-select-pg_catalog.pg_get_indexdef-c.oid-c.reloptions-is", ColumnModes: []string{"schema"}},
 				},
 				{
-					Query:    "SELECT id, v, code, owned FROM alter_index_fillfactor ORDER BY code;",
-					Expected: []sql.Row{{1, "a", 10, 100}, {2, "b", 20, 200}, {3, "c", 30, 300}},
+					Query: "SELECT id, v, code, owned FROM alter_index_fillfactor ORDER BY code;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0132-select-id-v-code-owned"},
 				},
 				{
-					Query:       "ALTER INDEX alter_index_fillfactor_v_idx SET (fillfactor = 9);",
-					ExpectedErr: "fillfactor must be between 10 and 100",
+					Query: "ALTER INDEX alter_index_fillfactor_v_idx SET (fillfactor = 9);", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0133-alter-index-alter_index_fillfactor_v_idx-set-fillfactor", Compare: "sqlstate"},
 				},
 				{
-					Query:       "ALTER INDEX alter_index_fillfactor_v_idx SET (definitely_not_supported = 1);",
-					ExpectedErr: "index storage parameter definitely_not_supported is not yet supported",
+					Query: "ALTER INDEX alter_index_fillfactor_v_idx SET (definitely_not_supported = 1);", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0134-alter-index-alter_index_fillfactor_v_idx-set-definitely_not_supported", Compare: "sqlstate"},
 				},
 				{
-					Query:       "ALTER INDEX alter_index_fillfactor_pkey SET (fillfactor = 80);",
-					ExpectedErr: "ALTER INDEX storage parameters for constraint-backed indexes are not yet supported",
+					Query: "ALTER INDEX alter_index_fillfactor_pkey SET (fillfactor = 80);", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0135-alter-index-alter_index_fillfactor_pkey-set-fillfactor"},
 				},
 				{
-					Query:       "ALTER INDEX alter_index_fillfactor_owned_key SET (fillfactor = 80);",
-					ExpectedErr: "ALTER INDEX storage parameters for constraint-backed indexes are not yet supported",
+					Query: "ALTER INDEX alter_index_fillfactor_owned_key SET (fillfactor = 80);", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0136-alter-index-alter_index_fillfactor_owned_key-set-fillfactor"},
 				},
 			},
 		},
@@ -1902,14 +1465,10 @@ WHERE c.relname = 'alter_index_fillfactor_v_idx';`,
 FROM pg_catalog.pg_indexes idx
 JOIN pg_catalog.pg_class c ON c.relname = idx.indexname
 WHERE idx.tablename = 'btree_default_tablespace_meta'
-  AND idx.indexname = 'btree_default_tablespace_meta_v_idx';`,
-					Expected: []sql.Row{
-						{"CREATE INDEX btree_default_tablespace_meta_v_idx ON public.btree_default_tablespace_meta USING btree (v)", 0, nil},
-					},
+  AND idx.indexname = 'btree_default_tablespace_meta_v_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0137-select-idx.indexdef-c.reltablespace-idx.tablespace-from", ColumnModes: []string{"schema"}},
 				},
 				{
-					Query:       "CREATE INDEX btree_custom_tablespace_meta_v_idx ON btree_default_tablespace_meta (v) TABLESPACE definitely_not_supported;",
-					ExpectedErr: "TABLESPACE is not yet supported for indexes",
+					Query: "CREATE INDEX btree_custom_tablespace_meta_v_idx ON btree_default_tablespace_meta (v) TABLESPACE definitely_not_supported;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0138-create-index-btree_custom_tablespace_meta_v_idx-on-btree_default_tablespace_meta", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1938,15 +1497,10 @@ WHERE idx.tablename = 'btree_default_tablespace_meta'
 FROM pg_catalog.pg_indexes idx
 JOIN pg_catalog.pg_class c ON c.relname = idx.indexname
 WHERE idx.tablename = 'alter_index_default_tablespace'
-ORDER BY idx.indexname;`,
-					Expected: []sql.Row{
-						{"alter_index_default_tablespace_pkey", "CREATE UNIQUE INDEX alter_index_default_tablespace_pkey ON public.alter_index_default_tablespace USING btree (id)", 0, nil},
-						{"alter_index_default_tablespace_v_idx", "CREATE INDEX alter_index_default_tablespace_v_idx ON public.alter_index_default_tablespace USING btree (v)", 0, nil},
-					},
+ORDER BY idx.indexname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0139-select-idx.indexname-idx.indexdef-c.reltablespace-idx.tablespace", ColumnModes: []string{"structural", "schema"}},
 				},
 				{
-					Query:       "ALTER INDEX alter_index_default_tablespace_v_idx SET TABLESPACE definitely_not_supported;",
-					ExpectedErr: "TABLESPACE is not yet supported for indexes",
+					Query: "ALTER INDEX alter_index_default_tablespace_v_idx SET TABLESPACE definitely_not_supported;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0140-alter-index-alter_index_default_tablespace_v_idx-set-tablespace", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1966,38 +1520,22 @@ ORDER BY idx.indexname;`,
 	pg_catalog.pg_get_indexdef(i.indexrelid)
 FROM pg_catalog.pg_index i
 JOIN pg_catalog.pg_class c ON c.oid = i.indexrelid
-WHERE c.relname = 'btree_partial_meta_a_idx';`,
-					Expected: []sql.Row{
-						{
-							"2",
-							"t",
-							"(a > 10) AND (b IS NOT NULL)",
-							"CREATE INDEX btree_partial_meta_a_idx ON public.btree_partial_meta USING btree (a) WHERE (a > 10) AND (b IS NOT NULL)",
-						},
-					},
+WHERE c.relname = 'btree_partial_meta_a_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0141-select-i.indkey-i.indpred-is-not", ColumnModes: []string{"structural", "structural", "structural", "schema"}},
 				},
 				{
 					Query: `SELECT indexdef
 FROM pg_catalog.pg_indexes
 WHERE tablename = 'btree_partial_meta'
-  AND indexname = 'btree_partial_meta_a_idx';`,
-					Expected: []sql.Row{
-						{"CREATE INDEX btree_partial_meta_a_idx ON public.btree_partial_meta USING btree (a) WHERE (a > 10) AND (b IS NOT NULL)"},
-					},
+  AND indexname = 'btree_partial_meta_a_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0142-select-indexdef-from-pg_catalog.pg_indexes-where", ColumnModes: []string{"schema"}},
 				},
 				{
 					Query: `SELECT id
 FROM btree_partial_meta
 WHERE a > 10
-ORDER BY id;`,
-					Expected: []sql.Row{
-						{2},
-						{3},
-					},
+ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0143-select-id-from-btree_partial_meta-where"},
 				},
 				{
-					Query:       "CREATE INDEX btree_partial_missing_idx ON btree_partial_meta (a) WHERE missing > 0;",
-					ExpectedErr: "key column 'missing' doesn't exist in table",
+					Query: "CREATE INDEX btree_partial_missing_idx ON btree_partial_meta (a) WHERE missing > 0;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0144-create-index-btree_partial_missing_idx-on-btree_partial_meta", Compare: "sqlstate"},
 				},
 				{
 					Query: "CREATE UNIQUE INDEX btree_partial_unique_idx ON btree_partial_meta (a) WHERE b IS NOT NULL;",
@@ -2010,15 +1548,7 @@ ORDER BY id;`,
 	pg_catalog.pg_get_indexdef(i.indexrelid)
 FROM pg_catalog.pg_index i
 JOIN pg_catalog.pg_class c ON c.oid = i.indexrelid
-WHERE c.relname = 'btree_partial_unique_idx';`,
-					Expected: []sql.Row{
-						{
-							"t",
-							"t",
-							"b IS NOT NULL",
-							"CREATE UNIQUE INDEX btree_partial_unique_idx ON public.btree_partial_meta USING btree (a) WHERE b IS NOT NULL",
-						},
-					},
+WHERE c.relname = 'btree_partial_unique_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0145-select-i.indisunique-i.indpred-is-not", ColumnModes: []string{"structural", "structural", "structural", "schema"}},
 				},
 			},
 		},
@@ -2046,49 +1576,28 @@ WHERE c.relname = 'btree_partial_unique_idx';`,
 	pg_catalog.pg_get_indexdef(i.indexrelid, 3, true)
 FROM pg_catalog.pg_index i
 JOIN pg_catalog.pg_class c ON c.oid = i.indexrelid
-WHERE c.relname = 'btree_include_meta_a_idx';`,
-					Expected: []sql.Row{
-						{
-							3,
-							1,
-							"2 3 4",
-							collationOidVector(""),
-							opClassOidVector("int4_ops"),
-							"0",
-							"CREATE INDEX btree_include_meta_a_idx ON public.btree_include_meta USING btree (a) INCLUDE (b, c)",
-							"a",
-							"b",
-							"c",
-						},
-					},
+WHERE c.relname = 'btree_include_meta_a_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0146-select-i.indnatts-i.indnkeyatts-i.indkey-i.indcollation", ColumnModes: []string{"structural", "structural", "structural", "structural", "structural", "structural", "schema"}},
 				},
 				{
 					Query: `SELECT id
 FROM btree_include_meta
 WHERE a = 10
-ORDER BY id;`,
-					Expected: []sql.Row{
-						{1},
-						{3},
-					},
+ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0147-select-id-from-btree_include_meta-where"},
 				},
 				{
 					Query: "INSERT INTO btree_include_unique_meta VALUES (1, 10, 'x');",
 				},
 				{
-					Query:       "INSERT INTO btree_include_unique_meta VALUES (2, 10, 'y');",
-					ExpectedErr: "duplicate unique key given",
+					Query: "INSERT INTO btree_include_unique_meta VALUES (2, 10, 'y');", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0148-insert-into-btree_include_unique_meta-values-2", Compare: "sqlstate"},
 				},
 				{
 					Query: "INSERT INTO btree_include_unique_meta VALUES (3, 11, 'y');",
 				},
 				{
-					Query:       "CREATE INDEX btree_include_missing_idx ON btree_include_meta (a) INCLUDE (missing);",
-					ExpectedErr: "key column 'missing' doesn't exist in table",
+					Query: "CREATE INDEX btree_include_missing_idx ON btree_include_meta (a) INCLUDE (missing);", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0149-create-index-btree_include_missing_idx-on-btree_include_meta", Compare: "sqlstate"},
 				},
 				{
-					Query:       "CREATE INDEX btree_include_expr_idx ON btree_include_meta (a) INCLUDE ((lower(b)));",
-					ExpectedErr: "syntax error",
+					Query: "CREATE INDEX btree_include_expr_idx ON btree_include_meta (a) INCLUDE ((lower(b)));", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0150-create-index-btree_include_expr_idx-on-btree_include_meta", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -2113,8 +1622,7 @@ ORDER BY id;`,
 				{
 					Query: `SELECT COUNT(*)
 FROM pg_catalog.pg_class
-WHERE relname = 'drop_index_restrict_concurrent_idx';`,
-					Expected: []sql.Row{{1}},
+WHERE relname = 'drop_index_restrict_concurrent_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0151-select-count-*-from-pg_catalog.pg_class"},
 				},
 				{
 					Query: "DROP INDEX CONCURRENTLY drop_index_restrict_concurrent_idx;",
@@ -2122,8 +1630,7 @@ WHERE relname = 'drop_index_restrict_concurrent_idx';`,
 				{
 					Query: `SELECT COUNT(*)
 FROM pg_catalog.pg_class
-WHERE relname = 'drop_index_restrict_concurrent_idx';`,
-					Expected: []sql.Row{{0}},
+WHERE relname = 'drop_index_restrict_concurrent_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0152-select-count-*-from-pg_catalog.pg_class"},
 				},
 				{
 					Query: "REINDEX INDEX CONCURRENTLY drop_index_restrict_idx;",
@@ -2137,24 +1644,16 @@ WHERE relname = 'drop_index_restrict_concurrent_idx';`,
 				{
 					Query: `SELECT pg_catalog.pg_get_indexdef(c.oid)
 FROM pg_catalog.pg_class c
-WHERE c.relname = 'drop_index_restrict_idx';`,
-					Expected: []sql.Row{
-						{"CREATE INDEX drop_index_restrict_idx ON public.drop_index_restrict USING btree (v)"},
-					},
+WHERE c.relname = 'drop_index_restrict_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0153-select-pg_catalog.pg_get_indexdef-c.oid-from-pg_catalog.pg_class", ColumnModes: []string{"schema"}},
 				},
 				{
-					Query: "SELECT id FROM drop_index_restrict WHERE v = 20;",
-					Expected: []sql.Row{
-						{2},
-					},
+					Query: "SELECT id FROM drop_index_restrict WHERE v = 20;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0154-select-id-from-drop_index_restrict-where"},
 				},
 				{
-					Query:       "REINDEX INDEX drop_index_restrict_missing_idx;",
-					ExpectedErr: `index "drop_index_restrict_missing_idx" does not exist`,
+					Query: "REINDEX INDEX drop_index_restrict_missing_idx;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0155-reindex-index-drop_index_restrict_missing_idx", Compare: "sqlstate"},
 				},
 				{
-					Query:       "REINDEX TABLE drop_index_restrict_missing;",
-					ExpectedErr: "table not found: drop_index_restrict_missing",
+					Query: "REINDEX TABLE drop_index_restrict_missing;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0156-reindex-table-drop_index_restrict_missing", Compare: "sqlstate"},
 				},
 				{
 					Query: "DROP INDEX drop_index_restrict_idx RESTRICT;",
@@ -2166,21 +1665,16 @@ WHERE c.relname = 'drop_index_restrict_idx';`,
 					Query: `SELECT indexname
 FROM pg_catalog.pg_indexes
 WHERE tablename = 'drop_index_restrict'
-ORDER BY indexname;`,
-					Expected: []sql.Row{
-						{"drop_index_restrict_pkey"},
-					},
+ORDER BY indexname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0157-select-indexname-from-pg_catalog.pg_indexes-where"},
 				},
 				{
 					Query: "DROP INDEX IF EXISTS drop_index_restrict_missing_idx RESTRICT;",
 				},
 				{
-					Query:       "DROP INDEX drop_index_restrict_pkey RESTRICT;",
-					ExpectedErr: `because constraint "drop_index_restrict_pkey" on table "drop_index_restrict" requires it`,
+					Query: "DROP INDEX drop_index_restrict_pkey RESTRICT;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0158-drop-index-drop_index_restrict_pkey-restrict", Compare: "sqlstate"},
 				},
 				{
-					Query:       "DROP INDEX drop_index_restrict_pkey CASCADE;",
-					ExpectedErr: `because constraint "drop_index_restrict_pkey" on table "drop_index_restrict" requires it`,
+					Query: "DROP INDEX drop_index_restrict_pkey CASCADE;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0159-drop-index-drop_index_restrict_pkey-cascade", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -2200,11 +1694,7 @@ ORDER BY indexname;`,
 					Query: `SELECT indexname
 FROM pg_catalog.pg_indexes
 WHERE tablename = 'drop_index_multi'
-ORDER BY indexname;`,
-					Expected: []sql.Row{
-						{"drop_index_multi_c_idx"},
-						{"drop_index_multi_pkey"},
-					},
+ORDER BY indexname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0160-select-indexname-from-pg_catalog.pg_indexes-where"},
 				},
 				{
 					Query: "DROP INDEX IF EXISTS drop_index_multi_missing_idx, drop_index_multi_c_idx;",
@@ -2213,10 +1703,7 @@ ORDER BY indexname;`,
 					Query: `SELECT indexname
 FROM pg_catalog.pg_indexes
 WHERE tablename = 'drop_index_multi'
-ORDER BY indexname;`,
-					Expected: []sql.Row{
-						{"drop_index_multi_pkey"},
-					},
+ORDER BY indexname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0161-select-indexname-from-pg_catalog.pg_indexes-where"},
 				},
 			},
 		},
@@ -2229,8 +1716,7 @@ ORDER BY indexname;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       "DROP INDEX drop_index_unique_constraint_code_key RESTRICT;",
-					ExpectedErr: `because constraint "drop_index_unique_constraint_code_key" on table "drop_index_unique_constraint" requires it`,
+					Query: "DROP INDEX drop_index_unique_constraint_code_key RESTRICT;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0162-drop-index-drop_index_unique_constraint_code_key-restrict", Compare: "sqlstate"},
 				},
 				{
 					Query: "DROP INDEX drop_index_unique_constraint_email_idx RESTRICT;",
@@ -2239,11 +1725,7 @@ ORDER BY indexname;`,
 					Query: `SELECT indexname
 FROM pg_catalog.pg_indexes
 WHERE tablename = 'drop_index_unique_constraint'
-ORDER BY indexname;`,
-					Expected: []sql.Row{
-						{"drop_index_unique_constraint_code_key"},
-						{"drop_index_unique_constraint_pkey"},
-					},
+ORDER BY indexname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0163-select-indexname-from-pg_catalog.pg_indexes-where"},
 				},
 			},
 		},
@@ -2277,33 +1759,28 @@ ORDER BY indexname;`,
 					Query: "INSERT INTO unique_nulls_not_distinct VALUES (1, NULL, 10);",
 				},
 				{
-					Query:       "INSERT INTO unique_nulls_not_distinct VALUES (2, NULL, 11);",
-					ExpectedErr: "duplicate unique key given",
+					Query: "INSERT INTO unique_nulls_not_distinct VALUES (2, NULL, 11);", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0164-insert-into-unique_nulls_not_distinct-values-2", Compare: "sqlstate"},
 				},
 				{
 					Query: "INSERT INTO unique_nulls_not_distinct VALUES (3, 20, NULL);",
 				},
 				{
-					Query:       "INSERT INTO unique_nulls_not_distinct VALUES (4, 20, NULL);",
-					ExpectedErr: "duplicate unique key given",
+					Query: "INSERT INTO unique_nulls_not_distinct VALUES (4, 20, NULL);", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0165-insert-into-unique_nulls_not_distinct-values-4", Compare: "sqlstate"},
 				},
 				{
 					Query: "INSERT INTO unique_nulls_not_distinct VALUES (5, 21, NULL);",
 				},
 				{
-					Query:       "UPDATE unique_nulls_not_distinct SET v = NULL WHERE id = 5;",
-					ExpectedErr: "duplicate unique key given",
+					Query: "UPDATE unique_nulls_not_distinct SET v = NULL WHERE id = 5;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0166-update-unique_nulls_not_distinct-set-v-=", Compare: "sqlstate"},
 				},
 				{
-					Query:       "INSERT INTO unique_nulls_not_distinct_batch VALUES (1, NULL), (2, NULL);",
-					ExpectedErr: "duplicate unique key given",
+					Query: "INSERT INTO unique_nulls_not_distinct_batch VALUES (1, NULL), (2, NULL);", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0167-insert-into-unique_nulls_not_distinct_batch-values-1", Compare: "sqlstate"},
 				},
 				{
 					Query: "INSERT INTO unique_nulls_not_distinct_update_batch VALUES (1, 100), (2, 101);",
 				},
 				{
-					Query:       "UPDATE unique_nulls_not_distinct_update_batch SET v = NULL;",
-					ExpectedErr: "duplicate unique key given",
+					Query: "UPDATE unique_nulls_not_distinct_update_batch SET v = NULL;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0168-update-unique_nulls_not_distinct_update_batch-set-v-=", Compare: "sqlstate"},
 				},
 				{
 					Query: "INSERT INTO unique_nulls_distinct_default VALUES (1, NULL), (2, NULL);",
@@ -2312,15 +1789,13 @@ ORDER BY indexname;`,
 					Query: "INSERT INTO unique_nulls_column_constraint VALUES (1, NULL);",
 				},
 				{
-					Query:       "INSERT INTO unique_nulls_column_constraint VALUES (2, NULL);",
-					ExpectedErr: "duplicate unique key given",
+					Query: "INSERT INTO unique_nulls_column_constraint VALUES (2, NULL);", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0169-insert-into-unique_nulls_column_constraint-values-2", Compare: "sqlstate"},
 				},
 				{
 					Query: "INSERT INTO unique_nulls_table_constraint VALUES (1, NULL);",
 				},
 				{
-					Query:       "INSERT INTO unique_nulls_table_constraint VALUES (2, NULL);",
-					ExpectedErr: "duplicate unique key given",
+					Query: "INSERT INTO unique_nulls_table_constraint VALUES (2, NULL);", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0170-insert-into-unique_nulls_table_constraint-values-2", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT c.relname, i.indnullsnotdistinct
@@ -2335,30 +1810,13 @@ WHERE c.relname IN (
 	'unique_nulls_column_constraint_v_key',
 	'unique_nulls_table_constraint_v_key'
 )
-ORDER BY c.relname;`,
-					Expected: []sql.Row{
-						{"unique_nulls_column_constraint_v_key", "t"},
-						{"unique_nulls_distinct_default_idx", "f"},
-						{"unique_nulls_not_distinct_batch_idx", "t"},
-						{"unique_nulls_not_distinct_idx", "t"},
-						{"unique_nulls_not_distinct_multi_idx", "t"},
-						{"unique_nulls_not_distinct_update_batch_idx", "t"},
-						{"unique_nulls_table_constraint_v_key", "t"},
-					},
+ORDER BY c.relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0171-select-c.relname-i.indnullsnotdistinct-from-pg_catalog.pg_class"},
 				},
 				{
 					Query: `SELECT indexname
 FROM pg_catalog.pg_indexes
 WHERE indexdef LIKE '%NULLS NOT DISTINCT%'
-ORDER BY indexname;`,
-					Expected: []sql.Row{
-						{"unique_nulls_column_constraint_v_key"},
-						{"unique_nulls_not_distinct_batch_idx"},
-						{"unique_nulls_not_distinct_idx"},
-						{"unique_nulls_not_distinct_multi_idx"},
-						{"unique_nulls_not_distinct_update_batch_idx"},
-						{"unique_nulls_table_constraint_v_key"},
-					},
+ORDER BY indexname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0172-select-indexname-from-pg_catalog.pg_indexes-where"},
 				},
 			},
 		},
@@ -2369,12 +1827,10 @@ ORDER BY indexname;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       "ALTER INDEX rename_primary_key_index_pkey RENAME TO rename_primary_key_index_id_key;",
-					ExpectedErr: "renaming primary key indexes is not yet supported",
+					Query: "ALTER INDEX rename_primary_key_index_pkey RENAME TO rename_primary_key_index_id_key;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0173-alter-index-rename_primary_key_index_pkey-rename-to", Compare: "sqlstate"},
 				},
 				{
-					Query:       "DROP INDEX rename_primary_key_index_pkey;",
-					ExpectedErr: `because constraint "rename_primary_key_index_pkey" on table "rename_primary_key_index" requires it`,
+					Query: "DROP INDEX rename_primary_key_index_pkey;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0174-drop-index-rename_primary_key_index_pkey", Compare: "sqlstate"},
 				},
 				{
 					Query: "ALTER TABLE rename_primary_key_index DROP CONSTRAINT rename_primary_key_index_pkey;",
@@ -2383,8 +1839,7 @@ ORDER BY indexname;`,
 					Query: `SELECT con.conname, con.contype
 FROM pg_catalog.pg_constraint con
 JOIN pg_catalog.pg_class cls ON cls.oid = con.conrelid
-WHERE cls.relname = 'rename_primary_key_index';`,
-					Expected: []sql.Row{},
+WHERE cls.relname = 'rename_primary_key_index';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0175-select-con.conname-con.contype-from-pg_catalog.pg_constraint"},
 				},
 			},
 		},
@@ -2420,14 +1875,7 @@ WHERE cls.relname IN (
 	'primary_key_constraint_add_column_named',
 	'primary_key_constraint_default'
 )
-ORDER BY cls.relname;`,
-					Expected: []sql.Row{
-						{"primary_key_constraint_add_column_named", "primary_key_constraint_add_column_custom", "p"},
-						{"primary_key_constraint_alter_named", "primary_key_constraint_alter_custom", "p"},
-						{"primary_key_constraint_column_named", "primary_key_constraint_column_custom", "p"},
-						{"primary_key_constraint_default", "primary_key_constraint_default_pkey", "p"},
-						{"primary_key_constraint_table_named", "primary_key_constraint_table_custom", "p"},
-					},
+ORDER BY cls.relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0176-select-cls.relname-con.conname-con.contype-from"},
 				},
 				{
 					Query: `SELECT tablename, indexname
@@ -2439,14 +1887,7 @@ WHERE tablename IN (
 	'primary_key_constraint_add_column_named',
 	'primary_key_constraint_default'
 )
-ORDER BY tablename;`,
-					Expected: []sql.Row{
-						{"primary_key_constraint_add_column_named", "primary_key_constraint_add_column_custom"},
-						{"primary_key_constraint_alter_named", "primary_key_constraint_alter_custom"},
-						{"primary_key_constraint_column_named", "primary_key_constraint_column_custom"},
-						{"primary_key_constraint_default", "primary_key_constraint_default_pkey"},
-						{"primary_key_constraint_table_named", "primary_key_constraint_table_custom"},
-					},
+ORDER BY tablename;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0177-select-tablename-indexname-from-pg_catalog.pg_indexes"},
 				},
 				{
 					Query: `SELECT cls.relname, idx.indisunique, idx.indisprimary
@@ -2458,13 +1899,7 @@ WHERE cls.relname IN (
 	'primary_key_constraint_alter_custom',
 	'primary_key_constraint_add_column_custom'
 )
-ORDER BY cls.relname;`,
-					Expected: []sql.Row{
-						{"primary_key_constraint_add_column_custom", "t", "t"},
-						{"primary_key_constraint_alter_custom", "t", "t"},
-						{"primary_key_constraint_column_custom", "t", "t"},
-						{"primary_key_constraint_table_custom", "t", "t"},
-					},
+ORDER BY cls.relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0178-select-cls.relname-idx.indisunique-idx.indisprimary-from"},
 				},
 				{
 					Query: `SELECT c.relname, pg_catalog.pg_get_indexdef(c.oid)
@@ -2475,38 +1910,23 @@ WHERE c.relname IN (
 	'primary_key_constraint_alter_custom',
 	'primary_key_constraint_add_column_custom'
 )
-ORDER BY c.relname;`,
-					Expected: []sql.Row{
-						{"primary_key_constraint_add_column_custom", "CREATE UNIQUE INDEX primary_key_constraint_add_column_custom ON public.primary_key_constraint_add_column_named USING btree (id)"},
-						{"primary_key_constraint_alter_custom", "CREATE UNIQUE INDEX primary_key_constraint_alter_custom ON public.primary_key_constraint_alter_named USING btree (id)"},
-						{"primary_key_constraint_column_custom", "CREATE UNIQUE INDEX primary_key_constraint_column_custom ON public.primary_key_constraint_column_named USING btree (id)"},
-						{"primary_key_constraint_table_custom", "CREATE UNIQUE INDEX primary_key_constraint_table_custom ON public.primary_key_constraint_table_named USING btree (id)"},
-					},
+ORDER BY c.relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0179-select-c.relname-pg_catalog.pg_get_indexdef-c.oid-from", ColumnModes: []string{"structural", "schema"}},
 				},
 				{
 					Query: `SELECT
 	'primary_key_constraint_table_custom'::regclass::text,
 	'primary_key_constraint_column_custom'::regclass::text,
 	'primary_key_constraint_alter_custom'::regclass::text,
-	'primary_key_constraint_add_column_custom'::regclass::text;`,
-					Expected: []sql.Row{{
-						"primary_key_constraint_table_custom",
-						"primary_key_constraint_column_custom",
-						"primary_key_constraint_alter_custom",
-						"primary_key_constraint_add_column_custom",
-					}},
+	'primary_key_constraint_add_column_custom'::regclass::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0180-select-primary_key_constraint_table_custom-::regclass::text-primary_key_constraint_column_custom-::regclass::text"},
 				},
 				{
-					Query:       "ALTER INDEX primary_key_constraint_table_custom RENAME TO primary_key_constraint_table_other;",
-					ExpectedErr: "renaming primary key indexes is not yet supported",
+					Query: "ALTER INDEX primary_key_constraint_table_custom RENAME TO primary_key_constraint_table_other;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0181-alter-index-primary_key_constraint_table_custom-rename-to", Compare: "sqlstate"},
 				},
 				{
-					Query:       "DROP INDEX primary_key_constraint_column_custom;",
-					ExpectedErr: `because constraint "primary_key_constraint_column_custom" on table "primary_key_constraint_column_named" requires it`,
+					Query: "DROP INDEX primary_key_constraint_column_custom;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0182-drop-index-primary_key_constraint_column_custom", Compare: "sqlstate"},
 				},
 				{
-					Query:       "ALTER INDEX primary_key_constraint_default_pkey RENAME TO primary_key_constraint_default_other;",
-					ExpectedErr: "renaming primary key indexes is not yet supported",
+					Query: "ALTER INDEX primary_key_constraint_default_pkey RENAME TO primary_key_constraint_default_other;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0183-alter-index-primary_key_constraint_default_pkey-rename-to", Compare: "sqlstate"},
 				},
 				{
 					Query: "ALTER TABLE primary_key_constraint_table_named DROP CONSTRAINT primary_key_constraint_table_custom;",
@@ -2530,8 +1950,7 @@ WHERE cls.relname IN (
 	'primary_key_constraint_alter_named',
 	'primary_key_constraint_add_column_named'
 )
-ORDER BY cls.relname;`,
-					Expected: []sql.Row{},
+ORDER BY cls.relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0184-select-cls.relname-con.conname-from-pg_catalog.pg_constraint"},
 				},
 				{
 					Query: "ALTER TABLE primary_key_constraint_alter_named ADD PRIMARY KEY (id);",
@@ -2539,10 +1958,7 @@ ORDER BY cls.relname;`,
 				{
 					Query: `SELECT indexname
 FROM pg_catalog.pg_indexes
-WHERE tablename = 'primary_key_constraint_alter_named';`,
-					Expected: []sql.Row{
-						{"primary_key_constraint_alter_named_pkey"},
-					},
+WHERE tablename = 'primary_key_constraint_alter_named';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0185-select-indexname-from-pg_catalog.pg_indexes-where"},
 				},
 			},
 		},
@@ -2560,10 +1976,7 @@ WHERE tablename = 'primary_key_constraint_alter_named';`,
 	pg_catalog.pg_get_indexdef(c.oid, 1, false),
 	pg_catalog.pg_get_indexdef(c.oid, 2, false)
 FROM pg_catalog.pg_class c
-WHERE c.relname = 'index_sort_meta_idx';`,
-					Expected: []sql.Row{
-						{"CREATE INDEX index_sort_meta_idx ON public.index_sort_meta USING btree (a DESC, b NULLS FIRST)", "a DESC", "b NULLS FIRST"},
-					},
+WHERE c.relname = 'index_sort_meta_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0186-select-pg_catalog.pg_get_indexdef-c.oid-pg_catalog.pg_get_indexdef-c.oid", ColumnModes: []string{"schema"}},
 				},
 				{
 					Query: `SELECT
@@ -2572,93 +1985,57 @@ WHERE c.relname = 'index_sort_meta_idx';`,
 	pg_catalog.pg_get_indexdef(c.oid, 2, false),
 	pg_catalog.pg_get_indexdef(c.oid, 3, false)
 FROM pg_catalog.pg_class c
-WHERE c.relname = 'index_sort_nulls_last_idx';`,
-					Expected: []sql.Row{
-						{"CREATE INDEX index_sort_nulls_last_idx ON public.index_sort_meta USING btree (a, b DESC, id DESC NULLS LAST)", "a", "b DESC", "id DESC NULLS LAST"},
-					},
+WHERE c.relname = 'index_sort_nulls_last_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0187-select-pg_catalog.pg_get_indexdef-c.oid-pg_catalog.pg_get_indexdef-c.oid", ColumnModes: []string{"schema"}},
 				},
 				{
 					Query: `SELECT unnest(i.indoption)
 FROM pg_catalog.pg_class c
 JOIN pg_catalog.pg_index i ON i.indexrelid = c.oid
-WHERE c.relname = 'index_sort_meta_idx';`,
-					Expected: []sql.Row{
-						{3},
-						{2},
-					},
+WHERE c.relname = 'index_sort_meta_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0188-select-unnest-i.indoption-from-pg_catalog.pg_class"},
 				},
 				{
 					Query: `SELECT unnest(i.indoption)
 FROM pg_catalog.pg_class c
 JOIN pg_catalog.pg_index i ON i.indexrelid = c.oid
-WHERE c.relname = 'index_sort_nulls_last_idx';`,
-					Expected: []sql.Row{
-						{0},
-						{3},
-						{1},
-					},
+WHERE c.relname = 'index_sort_nulls_last_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0189-select-unnest-i.indoption-from-pg_catalog.pg_class"},
 				},
 				{
 					Query: `SELECT c.relname, i.indclass
 FROM pg_catalog.pg_index i
 JOIN pg_catalog.pg_class c ON c.oid = i.indexrelid
 WHERE c.relname IN ('index_sort_meta_idx', 'index_sort_meta_pkey', 'index_sort_nulls_last_idx')
-ORDER BY c.relname;`,
-					Expected: []sql.Row{
-						{"index_sort_meta_idx", opClassOidVector("int4_ops", "int4_ops")},
-						{"index_sort_meta_pkey", opClassOidVector("int4_ops")},
-						{"index_sort_nulls_last_idx", opClassOidVector("int4_ops", "int4_ops", "int4_ops")},
-					},
+ORDER BY c.relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0190-select-c.relname-i.indclass-from-pg_catalog.pg_index"},
 				},
 				{
 					Query: `SELECT opc.opcname, am.amname, typ.typname, opc.opcdefault
 FROM pg_catalog.pg_opclass opc
 JOIN pg_catalog.pg_am am ON am.oid = opc.opcmethod
 JOIN pg_catalog.pg_type typ ON typ.oid = opc.opcintype
-WHERE opc.opcname = 'int4_ops';`,
-					Expected: []sql.Row{
-						{"int4_ops", "btree", "int4", "t"},
-					},
+WHERE opc.opcname = 'int4_ops';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0191-select-opc.opcname-am.amname-typ.typname-opc.opcdefault"},
 				},
 				{
 					Query: `SELECT i.indnatts, i.indnkeyatts
 FROM pg_catalog.pg_class c
 JOIN pg_catalog.pg_index i ON i.indexrelid = c.oid
-WHERE c.relname = 'index_sort_meta_idx';`,
-					Expected: []sql.Row{
-						{2, 2},
-					},
+WHERE c.relname = 'index_sort_meta_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0192-select-i.indnatts-i.indnkeyatts-from-pg_catalog.pg_class"},
 				},
 				{
 					Query: `SELECT i.indisunique, i.indimmediate
 FROM pg_catalog.pg_class c
 JOIN pg_catalog.pg_index i ON i.indexrelid = c.oid
-WHERE c.relname = 'index_sort_meta_pkey';`,
-					Expected: []sql.Row{
-						{"t", "t"},
-					},
+WHERE c.relname = 'index_sort_meta_pkey';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0193-select-i.indisunique-i.indimmediate-from-pg_catalog.pg_class"},
 				},
 				{
 					Query: `SELECT indexrelname, idx_scan, last_idx_scan, idx_tup_read, idx_tup_fetch
 FROM pg_catalog.pg_stat_user_indexes
 WHERE relname = 'index_sort_meta'
-ORDER BY indexrelname;`,
-					Expected: []sql.Row{
-						{"index_sort_meta_idx", 0, nil, 0, 0},
-						{"index_sort_meta_pkey", 0, nil, 0, 0},
-						{"index_sort_nulls_last_idx", 0, nil, 0, 0},
-					},
+ORDER BY indexrelname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0194-select-indexrelname-idx_scan-last_idx_scan-idx_tup_read"},
 				},
 				{
 					Query: `SELECT indexrelname, idx_blks_read, idx_blks_hit
 FROM pg_catalog.pg_statio_user_indexes
 WHERE relname = 'index_sort_meta'
-ORDER BY indexrelname;`,
-					Expected: []sql.Row{
-						{"index_sort_meta_idx", 0, 0},
-						{"index_sort_meta_pkey", 0, 0},
-						{"index_sort_nulls_last_idx", 0, 0},
-					},
+ORDER BY indexrelname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0195-select-indexrelname-idx_blks_read-idx_blks_hit-from"},
 				},
 			},
 		},
@@ -2675,11 +2052,7 @@ ORDER BY indexrelname;`,
 FROM pg_catalog.pg_constraint con
 JOIN pg_catalog.pg_class cls ON cls.oid = con.conrelid
 WHERE cls.relname = 'unique_index_constraint_boundary'
-ORDER BY con.conname;`,
-					Expected: []sql.Row{
-						{"unique_index_constraint_boundary_code_key", "u"},
-						{"unique_index_constraint_boundary_pkey", "p"},
-					},
+ORDER BY con.conname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0196-select-con.conname-con.contype-from-pg_catalog.pg_constraint"},
 				},
 				{
 					Query: `SELECT idx.relname, i.indisunique
@@ -2687,27 +2060,16 @@ FROM pg_catalog.pg_index i
 JOIN pg_catalog.pg_class idx ON idx.oid = i.indexrelid
 JOIN pg_catalog.pg_class tbl ON tbl.oid = i.indrelid
 WHERE tbl.relname = 'unique_index_constraint_boundary'
-ORDER BY idx.relname;`,
-					Expected: []sql.Row{
-						{"unique_index_constraint_boundary_code_key", "t"},
-						{"unique_index_constraint_boundary_email_idx", "t"},
-						{"unique_index_constraint_boundary_pkey", "t"},
-					},
+ORDER BY idx.relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0197-select-idx.relname-i.indisunique-from-pg_catalog.pg_index"},
 				},
 				{
-					Query:       "ALTER TABLE unique_index_constraint_boundary DROP CONSTRAINT unique_index_constraint_boundary_email_idx;",
-					ExpectedErr: `Constraint "unique_index_constraint_boundary_email_idx" does not exist`,
+					Query: "ALTER TABLE unique_index_constraint_boundary DROP CONSTRAINT unique_index_constraint_boundary_email_idx;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0198-alter-table-unique_index_constraint_boundary-drop-constraint", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT indexname
 FROM pg_catalog.pg_indexes
 WHERE tablename = 'unique_index_constraint_boundary'
-ORDER BY indexname;`,
-					Expected: []sql.Row{
-						{"unique_index_constraint_boundary_code_key"},
-						{"unique_index_constraint_boundary_email_idx"},
-						{"unique_index_constraint_boundary_pkey"},
-					},
+ORDER BY indexname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0199-select-indexname-from-pg_catalog.pg_indexes-where"},
 				},
 			},
 		},
@@ -2743,111 +2105,65 @@ ORDER BY indexname;`,
 FROM pg_catalog.pg_constraint con
 JOIN pg_catalog.pg_class cls ON cls.oid = con.conrelid
 WHERE cls.relname = 'unique_constraint_default_name'
-ORDER BY con.conname;`,
-					Expected: []sql.Row{
-						{"unique_constraint_default_name_account_id_code_key", "u"},
-						{"unique_constraint_default_name_email_key", "u"},
-						{"unique_constraint_default_name_pkey", "p"},
-					},
+ORDER BY con.conname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0200-select-con.conname-con.contype-from-pg_catalog.pg_constraint"},
 				},
 				{
 					Query: `SELECT indexname
 FROM pg_catalog.pg_indexes
 WHERE tablename = 'unique_constraint_default_name'
-ORDER BY indexname;`,
-					Expected: []sql.Row{
-						{"unique_constraint_default_name_account_id_code_key"},
-						{"unique_constraint_default_name_email_key"},
-						{"unique_constraint_default_name_pkey"},
-					},
+ORDER BY indexname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0201-select-indexname-from-pg_catalog.pg_indexes-where"},
 				},
 				{
 					Query: `SELECT con.conname, con.contype
 FROM pg_catalog.pg_constraint con
 JOIN pg_catalog.pg_class cls ON cls.oid = con.conrelid
 WHERE cls.relname = 'unique_constraint_create_default_name'
-ORDER BY con.conname;`,
-					Expected: []sql.Row{
-						{"unique_constraint_create_default_name_account_id_code_key", "u"},
-						{"unique_constraint_create_default_name_email_key", "u"},
-						{"unique_constraint_create_default_name_pkey", "p"},
-					},
+ORDER BY con.conname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0202-select-con.conname-con.contype-from-pg_catalog.pg_constraint"},
 				},
 				{
 					Query: `SELECT indexname
 FROM pg_catalog.pg_indexes
 WHERE tablename = 'unique_constraint_create_default_name'
-ORDER BY indexname;`,
-					Expected: []sql.Row{
-						{"unique_constraint_create_default_name_account_id_code_key"},
-						{"unique_constraint_create_default_name_email_key"},
-						{"unique_constraint_create_default_name_pkey"},
-					},
+ORDER BY indexname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0203-select-indexname-from-pg_catalog.pg_indexes-where"},
 				},
 				{
 					Query: `SELECT con.conname, con.contype
 FROM pg_catalog.pg_constraint con
 JOIN pg_catalog.pg_class cls ON cls.oid = con.conrelid
 WHERE cls.relname = 'unique_constraint_column_default_name'
-ORDER BY con.conname;`,
-					Expected: []sql.Row{
-						{"unique_constraint_column_default_name_email_key", "u"},
-						{"unique_constraint_column_default_name_pkey", "p"},
-					},
+ORDER BY con.conname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0204-select-con.conname-con.contype-from-pg_catalog.pg_constraint"},
 				},
 				{
 					Query: `SELECT indexname
 FROM pg_catalog.pg_indexes
 WHERE tablename = 'unique_constraint_column_default_name'
-ORDER BY indexname;`,
-					Expected: []sql.Row{
-						{"unique_constraint_column_default_name_email_key"},
-						{"unique_constraint_column_default_name_pkey"},
-					},
+ORDER BY indexname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0205-select-indexname-from-pg_catalog.pg_indexes-where"},
 				},
 				{
 					Query: `SELECT con.conname, con.contype
 FROM pg_catalog.pg_constraint con
 JOIN pg_catalog.pg_class cls ON cls.oid = con.conrelid
 WHERE cls.relname = 'unique_constraint_column_named'
-ORDER BY con.conname;`,
-					Expected: []sql.Row{
-						{"unique_constraint_column_named_email_custom", "u"},
-						{"unique_constraint_column_named_pkey", "p"},
-					},
+ORDER BY con.conname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0206-select-con.conname-con.contype-from-pg_catalog.pg_constraint"},
 				},
 				{
 					Query: `SELECT indexname
 FROM pg_catalog.pg_indexes
 WHERE tablename = 'unique_constraint_column_named'
-ORDER BY indexname;`,
-					Expected: []sql.Row{
-						{"unique_constraint_column_named_email_custom"},
-						{"unique_constraint_column_named_pkey"},
-					},
+ORDER BY indexname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0207-select-indexname-from-pg_catalog.pg_indexes-where"},
 				},
 				{
 					Query: `SELECT con.conname, con.contype
 FROM pg_catalog.pg_constraint con
 JOIN pg_catalog.pg_class cls ON cls.oid = con.conrelid
 WHERE cls.relname = 'unique_constraint_alter_add_column'
-ORDER BY con.conname;`,
-					Expected: []sql.Row{
-						{"unique_constraint_alter_add_column_code_custom", "u"},
-						{"unique_constraint_alter_add_column_email_key", "u"},
-						{"unique_constraint_alter_add_column_pkey", "p"},
-					},
+ORDER BY con.conname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0208-select-con.conname-con.contype-from-pg_catalog.pg_constraint"},
 				},
 				{
 					Query: `SELECT indexname
 FROM pg_catalog.pg_indexes
 WHERE tablename = 'unique_constraint_alter_add_column'
-ORDER BY indexname;`,
-					Expected: []sql.Row{
-						{"unique_constraint_alter_add_column_code_custom"},
-						{"unique_constraint_alter_add_column_email_key"},
-						{"unique_constraint_alter_add_column_pkey"},
-					},
+ORDER BY indexname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0209-select-indexname-from-pg_catalog.pg_indexes-where"},
 				},
 				{
 					Query: `SELECT cls.relname, idx.indisunique, idx.indisprimary
@@ -2857,18 +2173,13 @@ WHERE cls.relname IN (
 	'unique_constraint_alter_add_column_code_custom',
 	'unique_constraint_alter_add_column_email_key'
 )
-ORDER BY cls.relname;`,
-					Expected: []sql.Row{
-						{"unique_constraint_alter_add_column_code_custom", "t", "f"},
-						{"unique_constraint_alter_add_column_email_key", "t", "f"},
-					},
+ORDER BY cls.relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0210-select-cls.relname-idx.indisunique-idx.indisprimary-from"},
 				},
 				{
 					Query: "INSERT INTO unique_constraint_column_default_name VALUES (1, 'hello');",
 				},
 				{
-					Query:       "INSERT INTO unique_constraint_column_default_name VALUES (2, 'hello');",
-					ExpectedErr: "duplicate unique key given",
+					Query: "INSERT INTO unique_constraint_column_default_name VALUES (2, 'hello');", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0211-insert-into-unique_constraint_column_default_name-values-2", Compare: "sqlstate"},
 				},
 				{
 					Query: "ALTER TABLE unique_constraint_column_default_name DROP CONSTRAINT unique_constraint_column_default_name_email_key;",
@@ -2880,21 +2191,16 @@ ORDER BY cls.relname;`,
 					Query: `SELECT indexname
 FROM pg_catalog.pg_indexes
 WHERE tablename = 'unique_constraint_column_default_name'
-ORDER BY indexname;`,
-					Expected: []sql.Row{
-						{"unique_constraint_column_default_name_pkey"},
-					},
+ORDER BY indexname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0212-select-indexname-from-pg_catalog.pg_indexes-where"},
 				},
 				{
 					Query: "INSERT INTO unique_constraint_alter_add_column VALUES (1, 'hello', 'code-1');",
 				},
 				{
-					Query:       "INSERT INTO unique_constraint_alter_add_column VALUES (2, 'hello', 'code-2');",
-					ExpectedErr: "duplicate unique key given",
+					Query: "INSERT INTO unique_constraint_alter_add_column VALUES (2, 'hello', 'code-2');", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0213-insert-into-unique_constraint_alter_add_column-values-2", Compare: "sqlstate"},
 				},
 				{
-					Query:       "INSERT INTO unique_constraint_alter_add_column VALUES (3, 'goodbye', 'code-1');",
-					ExpectedErr: "duplicate unique key given",
+					Query: "INSERT INTO unique_constraint_alter_add_column VALUES (3, 'goodbye', 'code-1');", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0214-insert-into-unique_constraint_alter_add_column-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: "ALTER TABLE unique_constraint_alter_add_column DROP CONSTRAINT unique_constraint_alter_add_column_email_key;",
@@ -2906,11 +2212,7 @@ ORDER BY indexname;`,
 					Query: `SELECT indexname
 FROM pg_catalog.pg_indexes
 WHERE tablename = 'unique_constraint_alter_add_column'
-ORDER BY indexname;`,
-					Expected: []sql.Row{
-						{"unique_constraint_alter_add_column_code_custom"},
-						{"unique_constraint_alter_add_column_pkey"},
-					},
+ORDER BY indexname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0215-select-indexname-from-pg_catalog.pg_indexes-where"},
 				},
 			},
 		},
@@ -2927,23 +2229,16 @@ ORDER BY indexname;`,
 	pg_catalog.pg_get_indexdef(c.oid, 1, false),
 	pg_catalog.pg_get_indexdef(c.oid, 2, false)
 FROM pg_catalog.pg_class c
-WHERE c.relname = 'btree_opclass_meta_idx';`,
-					Expected: []sql.Row{
-						{"CREATE INDEX btree_opclass_meta_idx ON public.btree_opclass_meta USING btree (a int4_ops, b)", "a int4_ops", "b"},
-					},
+WHERE c.relname = 'btree_opclass_meta_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0216-select-pg_catalog.pg_get_indexdef-c.oid-pg_catalog.pg_get_indexdef-c.oid", ColumnModes: []string{"schema"}},
 				},
 				{
 					Query: `SELECT i.indclass
 FROM pg_catalog.pg_index i
 JOIN pg_catalog.pg_class c ON c.oid = i.indexrelid
-WHERE c.relname = 'btree_opclass_meta_idx';`,
-					Expected: []sql.Row{
-						{opClassOidVector("int4_ops", "int4_ops")},
-					},
+WHERE c.relname = 'btree_opclass_meta_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0217-select-i.indclass-from-pg_catalog.pg_index-i"},
 				},
 				{
-					Query:       "CREATE INDEX btree_opclass_meta_bad_idx ON btree_opclass_meta (a jsonb_path_ops);",
-					ExpectedErr: "operator class jsonb_path_ops is not yet supported for btree indexes",
+					Query: "CREATE INDEX btree_opclass_meta_bad_idx ON btree_opclass_meta (a jsonb_path_ops);", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0218-create-index-btree_opclass_meta_bad_idx-on-btree_opclass_meta", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -2972,20 +2267,16 @@ WHERE c.relname = 'btree_opclass_meta_idx';`,
 					Query: "CREATE INDEX btree_opclass_type_validation_varchar_bpchar_pattern_idx ON btree_opclass_type_validation (v bpchar_pattern_ops);",
 				},
 				{
-					Query:       "CREATE INDEX btree_opclass_type_validation_text_on_int_bad_idx ON btree_opclass_type_validation (i text_ops);",
-					ExpectedErr: `operator class "text_ops" does not accept data type integer`,
+					Query: "CREATE INDEX btree_opclass_type_validation_text_on_int_bad_idx ON btree_opclass_type_validation (i text_ops);", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0219-create-index-on-btree_opclass_type_validation-i", Compare: "sqlstate"},
 				},
 				{
-					Query:       "CREATE INDEX btree_opclass_type_validation_int_on_text_bad_idx ON btree_opclass_type_validation (t int4_ops);",
-					ExpectedErr: `operator class "int4_ops" does not accept data type text`,
+					Query: "CREATE INDEX btree_opclass_type_validation_int_on_text_bad_idx ON btree_opclass_type_validation (t int4_ops);", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0220-create-index-on-btree_opclass_type_validation-t", Compare: "sqlstate"},
 				},
 				{
-					Query:       "CREATE INDEX btree_opclass_type_validation_int_on_jsonb_bad_idx ON btree_opclass_type_validation (doc int4_ops);",
-					ExpectedErr: `operator class "int4_ops" does not accept data type jsonb`,
+					Query: "CREATE INDEX btree_opclass_type_validation_int_on_jsonb_bad_idx ON btree_opclass_type_validation (doc int4_ops);", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0221-create-index-on-btree_opclass_type_validation-doc", Compare: "sqlstate"},
 				},
 				{
-					Query:       "CREATE INDEX btree_opclass_type_validation_varchar_pattern_on_bpchar_bad_idx ON btree_opclass_type_validation (c varchar_pattern_ops);",
-					ExpectedErr: `operator class "varchar_pattern_ops" does not accept data type character`,
+					Query: "CREATE INDEX btree_opclass_type_validation_varchar_pattern_on_bpchar_bad_idx ON btree_opclass_type_validation (c varchar_pattern_ops);", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0222-create-index-on-btree_opclass_type_validation-c", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -3008,11 +2299,7 @@ WHERE c.relname = 'btree_opclass_meta_idx';`,
 FROM pg_catalog.pg_class c
 JOIN pg_catalog.pg_index i ON i.indexrelid = c.oid
 WHERE c.relname IN ('btree_jsonb_default_idx', 'btree_jsonb_explicit_idx')
-ORDER BY c.relname;`,
-					Expected: []sql.Row{
-						{"btree_jsonb_default_idx", "CREATE INDEX btree_jsonb_default_idx ON public.btree_jsonb_opclass_meta USING btree (doc)", "doc", opClassOidVector("jsonb_ops"), collationOidVector(""), "0"},
-						{"btree_jsonb_explicit_idx", "CREATE INDEX btree_jsonb_explicit_idx ON public.btree_jsonb_opclass_meta USING btree (doc jsonb_ops)", "doc jsonb_ops", opClassOidVector("jsonb_ops"), collationOidVector(""), "0"},
-					},
+ORDER BY c.relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0223-select-c.relname-pg_catalog.pg_get_indexdef-c.oid-pg_catalog.pg_get_indexdef", ColumnModes: []string{"structural", "schema"}},
 				},
 				{
 					Query: `SELECT opc.opcname, am.amname, typ.typname, opc.opcdefault, opc.opckeytype
@@ -3020,11 +2307,7 @@ FROM pg_catalog.pg_opclass opc
 JOIN pg_catalog.pg_am am ON am.oid = opc.opcmethod
 JOIN pg_catalog.pg_type typ ON typ.oid = opc.opcintype
 WHERE opc.opcname = 'jsonb_ops'
-ORDER BY am.amname;`,
-					Expected: []sql.Row{
-						{"jsonb_ops", "btree", "jsonb", "t", 0},
-						{"jsonb_ops", "gin", "jsonb", "t", typeOid("text")},
-					},
+ORDER BY am.amname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0224-select-opc.opcname-am.amname-typ.typname-opc.opcdefault"},
 				},
 				{
 					Query: `SELECT btree_opc.oid <> gin_opc.oid
@@ -3034,8 +2317,7 @@ JOIN pg_catalog.pg_opclass gin_opc ON gin_opc.opcname = btree_opc.opcname
 JOIN pg_catalog.pg_am gin_am ON gin_am.oid = gin_opc.opcmethod
 WHERE btree_opc.opcname = 'jsonb_ops'
 	AND btree_am.amname = 'btree'
-	AND gin_am.amname = 'gin';`,
-					Expected: []sql.Row{{"t"}},
+	AND gin_am.amname = 'gin';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0225-select-btree_opc.oid-<>-gin_opc.oid-from"},
 				},
 			},
 		},
@@ -3059,12 +2341,7 @@ WHERE btree_opc.opcname = 'jsonb_ops'
 FROM pg_catalog.pg_class c
 JOIN pg_catalog.pg_index i ON i.indexrelid = c.oid
 WHERE c.relname LIKE 'btree_pattern_%_idx'
-ORDER BY c.relname;`,
-					Expected: []sql.Row{
-						{"btree_pattern_bpchar_idx", "CREATE INDEX btree_pattern_bpchar_idx ON public.btree_pattern_opclass_meta USING btree (c bpchar_pattern_ops)", "c bpchar_pattern_ops", opClassOidVector("bpchar_pattern_ops"), collationOidVector("default"), "0"},
-						{"btree_pattern_text_idx", "CREATE INDEX btree_pattern_text_idx ON public.btree_pattern_opclass_meta USING btree (t text_pattern_ops)", "t text_pattern_ops", opClassOidVector("text_pattern_ops"), collationOidVector("default"), "0"},
-						{"btree_pattern_varchar_idx", "CREATE INDEX btree_pattern_varchar_idx ON public.btree_pattern_opclass_meta USING btree (v varchar_pattern_ops)", "v varchar_pattern_ops", opClassOidVector("varchar_pattern_ops"), collationOidVector("default"), "0"},
-					},
+ORDER BY c.relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0226-select-c.relname-pg_catalog.pg_get_indexdef-c.oid-pg_catalog.pg_get_indexdef", ColumnModes: []string{"structural", "schema"}},
 				},
 				{
 					Query: `SELECT opc.opcname, opf.opfname, typ.typname, opc.opcdefault, opc.opckeytype
@@ -3074,12 +2351,7 @@ JOIN pg_catalog.pg_type typ ON typ.oid = opc.opcintype
 JOIN pg_catalog.pg_am am ON am.oid = opc.opcmethod
 WHERE am.amname = 'btree'
 	AND opc.opcname IN ('text_pattern_ops', 'varchar_pattern_ops', 'bpchar_pattern_ops')
-ORDER BY opc.opcname;`,
-					Expected: []sql.Row{
-						{"bpchar_pattern_ops", "bpchar_pattern_ops", "bpchar", "f", 0},
-						{"text_pattern_ops", "text_pattern_ops", "text", "f", 0},
-						{"varchar_pattern_ops", "text_pattern_ops", "text", "f", 0},
-					},
+ORDER BY opc.opcname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0227-select-opc.opcname-opf.opfname-typ.typname-opc.opcdefault"},
 				},
 			},
 		},
@@ -3103,20 +2375,7 @@ ORDER BY opc.opcname;`,
 	i.indoption
 FROM pg_catalog.pg_class c
 JOIN pg_catalog.pg_index i ON i.indexrelid = c.oid
-WHERE c.relname = 'btree_scalar_opclass_idx';`,
-					Expected: []sql.Row{
-						{
-							"CREATE INDEX btree_scalar_opclass_idx ON public.btree_scalar_opclass_meta USING btree (b bytea_ops, o oid_ops, t time_ops, tz timetz_ops, i interval_ops)",
-							"b bytea_ops",
-							"o oid_ops",
-							"t time_ops",
-							"tz timetz_ops",
-							"i interval_ops",
-							opClassOidVector("bytea_ops", "oid_ops", "time_ops", "timetz_ops", "interval_ops"),
-							collationOidVector("", "", "", "", ""),
-							"0 0 0 0 0",
-						},
-					},
+WHERE c.relname = 'btree_scalar_opclass_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0228-select-pg_catalog.pg_get_indexdef-c.oid-pg_catalog.pg_get_indexdef-c.oid", ColumnModes: []string{"schema"}},
 				},
 			},
 		},
@@ -3140,20 +2399,7 @@ WHERE c.relname = 'btree_scalar_opclass_idx';`,
 	i.indoption
 FROM pg_catalog.pg_class c
 JOIN pg_catalog.pg_index i ON i.indexrelid = c.oid
-WHERE c.relname = 'btree_system_opclass_idx';`,
-					Expected: []sql.Row{
-						{
-							`CREATE INDEX btree_system_opclass_idx ON public.btree_system_opclass_meta USING btree (b bit_ops, v varbit_ops, c char_ops, ov oidvector_ops, l pg_lsn_ops)`,
-							"b bit_ops",
-							"v varbit_ops",
-							"c char_ops",
-							"ov oidvector_ops",
-							"l pg_lsn_ops",
-							opClassOidVector("bit_ops", "varbit_ops", "char_ops", "oidvector_ops", "pg_lsn_ops"),
-							collationOidVector("", "", "", "", ""),
-							"0 0 0 0 0",
-						},
-					},
+WHERE c.relname = 'btree_system_opclass_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0229-select-pg_catalog.pg_get_indexdef-c.oid-pg_catalog.pg_get_indexdef-c.oid", ColumnModes: []string{"schema"}},
 				},
 			},
 		},
@@ -3170,11 +2416,7 @@ WHERE c.relname = 'btree_system_opclass_idx';`,
 FROM pg_catalog.pg_index i
 JOIN pg_catalog.pg_class c ON c.oid = i.indexrelid
 WHERE c.relname IN ('btree_collation_meta_idx', 'btree_collation_meta_pkey')
-ORDER BY c.relname;`,
-					Expected: []sql.Row{
-						{"btree_collation_meta_idx", "1 2 3", collationOidVector("", "default", "default")},
-						{"btree_collation_meta_pkey", "1", collationOidVector("")},
-					},
+ORDER BY c.relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0230-select-c.relname-i.indkey-i.indcollation-from"},
 				},
 				{
 					Query: `SELECT
@@ -3184,26 +2426,17 @@ ORDER BY c.relname;`,
 	i.indcollation
 FROM pg_catalog.pg_class c
 JOIN pg_catalog.pg_index i ON i.indexrelid = c.oid
-WHERE c.relname = 'btree_collation_meta_c_idx';`,
-					Expected: []sql.Row{
-						{`CREATE INDEX btree_collation_meta_c_idx ON public.btree_collation_meta USING btree (name COLLATE "C", code)`, `name COLLATE "C"`, "code", collationOidVector("C", "default")},
-					},
+WHERE c.relname = 'btree_collation_meta_c_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0231-select-pg_catalog.pg_get_indexdef-c.oid-pg_catalog.pg_get_indexdef-c.oid", ColumnModes: []string{"schema"}},
 				},
 				{
-					Query:       `CREATE INDEX btree_collation_meta_bad_idx ON btree_collation_meta (name COLLATE "definitely-not-a-collation");`,
-					ExpectedErr: "index collation definitely-not-a-collation is not yet supported",
+					Query: `CREATE INDEX btree_collation_meta_bad_idx ON btree_collation_meta (name COLLATE "definitely-not-a-collation");`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0232-create-index-btree_collation_meta_bad_idx-on-btree_collation_meta", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT a.attname, a.attcollation
 FROM pg_catalog.pg_attribute a
 JOIN pg_catalog.pg_class c ON c.oid = a.attrelid
 WHERE c.relname = 'btree_collation_meta' AND a.attname IN ('id', 'name', 'code')
-ORDER BY a.attnum;`,
-					Expected: []sql.Row{
-						{"id", 0},
-						{"name", id.Cache().ToOID(id.NewCollation("pg_catalog", "default").AsId())},
-						{"code", id.Cache().ToOID(id.NewCollation("pg_catalog", "default").AsId())},
-					},
+ORDER BY a.attnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0233-select-a.attname-a.attcollation-from-pg_catalog.pg_attribute"},
 				},
 			},
 		},
@@ -3220,30 +2453,20 @@ ORDER BY a.attnum;`,
 					Query: "CREATE INDEX jsonb_gin_path_idx ON jsonb_gin_idx USING gin (doc jsonb_path_ops);",
 				},
 				{
-					Query:       "CREATE INDEX jsonb_gin_bad_idx ON jsonb_gin_idx USING gin (doc jsonb_hash_ops);",
-					ExpectedErr: "operator class jsonb_hash_ops is not yet supported for gin indexes",
+					Query: "CREATE INDEX jsonb_gin_bad_idx ON jsonb_gin_idx USING gin (doc jsonb_hash_ops);", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0234-create-index-jsonb_gin_bad_idx-on-jsonb_gin_idx", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT c.relname, am.amname
 	FROM pg_catalog.pg_class c
 JOIN pg_catalog.pg_am am ON am.oid = c.relam
 WHERE c.relname IN ('jsonb_gin_ops_idx', 'jsonb_gin_path_idx')
-ORDER BY c.relname;`,
-					Expected: []sql.Row{
-						{"jsonb_gin_ops_idx", "gin"},
-						{"jsonb_gin_path_idx", "gin"},
-					},
+ORDER BY c.relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0235-select-c.relname-am.amname-from-pg_catalog.pg_class"},
 				},
 				{
 					Query: `SELECT indexname, indexdef
 FROM pg_catalog.pg_indexes
 WHERE tablename = 'jsonb_gin_idx'
-ORDER BY indexname;`,
-					Expected: []sql.Row{
-						{"jsonb_gin_idx_pkey", "CREATE UNIQUE INDEX jsonb_gin_idx_pkey ON public.jsonb_gin_idx USING btree (id)"},
-						{"jsonb_gin_ops_idx", "CREATE INDEX jsonb_gin_ops_idx ON public.jsonb_gin_idx USING gin (doc jsonb_ops)"},
-						{"jsonb_gin_path_idx", "CREATE INDEX jsonb_gin_path_idx ON public.jsonb_gin_idx USING gin (doc jsonb_path_ops)"},
-					},
+ORDER BY indexname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0236-select-indexname-indexdef-from-pg_catalog.pg_indexes", ColumnModes: []string{"structural", "schema"}},
 				},
 				{
 					Query: `SELECT c.relname,
@@ -3252,23 +2475,14 @@ ORDER BY indexname;`,
 	pg_catalog.pg_get_indexdef(c.oid, 1, false)
 FROM pg_catalog.pg_class c
 WHERE c.relname IN ('jsonb_gin_idx_pkey', 'jsonb_gin_ops_idx', 'jsonb_gin_path_idx')
-ORDER BY c.relname;`,
-					Expected: []sql.Row{
-						{"jsonb_gin_idx_pkey", "CREATE UNIQUE INDEX jsonb_gin_idx_pkey ON public.jsonb_gin_idx USING btree (id)", "CREATE UNIQUE INDEX jsonb_gin_idx_pkey ON public.jsonb_gin_idx USING btree (id)", "id"},
-						{"jsonb_gin_ops_idx", "CREATE INDEX jsonb_gin_ops_idx ON public.jsonb_gin_idx USING gin (doc jsonb_ops)", "CREATE INDEX jsonb_gin_ops_idx ON public.jsonb_gin_idx USING gin (doc jsonb_ops)", "doc jsonb_ops"},
-						{"jsonb_gin_path_idx", "CREATE INDEX jsonb_gin_path_idx ON public.jsonb_gin_idx USING gin (doc jsonb_path_ops)", "CREATE INDEX jsonb_gin_path_idx ON public.jsonb_gin_idx USING gin (doc jsonb_path_ops)", "doc jsonb_path_ops"},
-					},
+ORDER BY c.relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0237-select-c.relname-pg_catalog.pg_get_indexdef-c.oid-pg_catalog.pg_get_indexdef", ColumnModes: []string{"structural", "schema"}},
 				},
 				{
 					Query: `SELECT c.relname, i.indclass
 FROM pg_catalog.pg_index i
 JOIN pg_catalog.pg_class c ON c.oid = i.indexrelid
 WHERE c.relname IN ('jsonb_gin_ops_idx', 'jsonb_gin_path_idx')
-ORDER BY c.relname;`,
-					Expected: []sql.Row{
-						{"jsonb_gin_ops_idx", ginOpClassOidVector("jsonb_ops")},
-						{"jsonb_gin_path_idx", ginOpClassOidVector("jsonb_path_ops")},
-					},
+ORDER BY c.relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0238-select-c.relname-i.indclass-from-pg_catalog.pg_index"},
 				},
 			},
 		},
@@ -3286,8 +2500,7 @@ ORDER BY c.relname;`,
 				},
 				{
 					Query: `SELECT SUM(row_count), COUNT(payload) > 0, COUNT(checksum) > 0
-FROM dg_gin_jsonb_gin_backfill_jsonb_gin_backfill_idx_posting_chunks;`,
-					Expected: []sql.Row{{float64(12), "t", "t"}},
+FROM dg_gin_jsonb_gin_backfill_jsonb_gin_backfill_idx_posting_chunks;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0239-select-sum-row_count-count-payload", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT token, SUM(row_count)
@@ -3317,8 +2530,7 @@ ORDER BY token;`,
 				},
 				{
 					Query: `SELECT SUM(row_count), COUNT(payload) > 0, COUNT(checksum) > 0
-FROM dg_gin_jsonb_gin_dml_jsonb_gin_dml_idx_posting_chunks;`,
-					Expected: []sql.Row{{float64(8), "t", "t"}},
+FROM dg_gin_jsonb_gin_dml_jsonb_gin_dml_idx_posting_chunks;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0241-select-sum-row_count-count-payload", Compare: "sqlstate"},
 				},
 				{
 					Query: `UPDATE jsonb_gin_dml
@@ -3363,8 +2575,7 @@ FROM dg_gin_jsonb_gin_dml_jsonb_gin_dml_idx_posting_chunks;`,
 				},
 				{
 					Query: `SELECT SUM(row_count), COUNT(payload) > 0, COUNT(checksum) > 0
-	FROM dg_gin_jsonb_gin_txn_jsonb_gin_txn_idx_posting_chunks;`,
-					Expected: []sql.Row{{float64(8), "t", "t"}},
+	FROM dg_gin_jsonb_gin_txn_jsonb_gin_txn_idx_posting_chunks;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0244-select-sum-row_count-count-payload", Compare: "sqlstate"},
 				},
 				{
 					Query: "ROLLBACK;",

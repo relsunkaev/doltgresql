@@ -1,0 +1,3278 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map transaction_ddl_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/transaction_ddl_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsTempTableCreatedInTransactionRepro#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsTempTableCreatedInTransactionRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK drops temp table created in transaction",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackdropstemptablecreatedintransactionrepro-0001-select-*-from-rollback_temp_table",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackdropstemptablecreatedintransactionrepro-0001-select-*-from-rollback_temp_table",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM rollback_temp_table;",
+      "querySha256": "4bb3e3df3c70dc88f8ff69b038d3afbe64b5ad12097169e8686244f7840091b1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsTempTableCreatedInTransactionRepro#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsTempTableCreatedInTransactionRepro",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK drops temp table created in transaction",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackdropstemptablecreatedintransactionrepro-0002-select-*-from-rollback_temp_table",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackdropstemptablecreatedintransactionrepro-0002-select-*-from-rollback_temp_table",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
+      "query": "SELECT * FROM rollback_temp_table;",
+      "querySha256": "4bb3e3df3c70dc88f8ff69b038d3afbe64b5ad12097169e8686244f7840091b1",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsTableCreatedInTransactionRepro#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsTableCreatedInTransactionRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK drops table created in transaction",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackdropstablecreatedintransactionrepro-0001-select-*-from-rollback_regular_table",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackdropstablecreatedintransactionrepro-0001-select-*-from-rollback_regular_table",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM rollback_regular_table;",
+      "querySha256": "f6999aaa3ec022fbd89b3440f6c3802c6653c8e6904b7986de895473e33c33a3",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsTableCreatedInTransactionRepro#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsTableCreatedInTransactionRepro",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK drops table created in transaction",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackdropstablecreatedintransactionrepro-0002-select-*-from-rollback_regular_table",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackdropstablecreatedintransactionrepro-0002-select-*-from-rollback_regular_table",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
+      "query": "SELECT * FROM rollback_regular_table;",
+      "querySha256": "f6999aaa3ec022fbd89b3440f6c3802c6653c8e6904b7986de895473e33c33a3",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRevertsAlterTableAddColumnRepro#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRevertsAlterTableAddColumnRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK reverts ALTER TABLE ADD COLUMN",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrevertsaltertableaddcolumnrepro-0001-select-id-v-from-rollback_alter_table",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrevertsaltertableaddcolumnrepro-0001-select-id-v-from-rollback_alter_table",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, v FROM rollback_alter_table;",
+      "querySha256": "92be3171b62fdec8640265d2b1b5f263b0d190053329097f00d51b0eebd5a25e",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRevertsAlterTableAddColumnRepro#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRevertsAlterTableAddColumnRepro",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK reverts ALTER TABLE ADD COLUMN",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrevertsaltertableaddcolumnrepro-0002-select-v-from-rollback_alter_table",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrevertsaltertableaddcolumnrepro-0002-select-v-from-rollback_alter_table",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42703",
+      "errorSeverity": "ERROR",
+      "query": "SELECT v FROM rollback_alter_table;",
+      "querySha256": "7413b1c6fadec830711baf23013252d9956c282ecd3748e3689b15d2f5c99d2a",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedColumnRepro#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedColumnRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK restores dropped column",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresdroppedcolumnrepro-0001-select-label-from-rollback_drop_column_items",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresdroppedcolumnrepro-0001-select-label-from-rollback_drop_column_items",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42703",
+      "errorSeverity": "ERROR",
+      "query": "SELECT label FROM rollback_drop_column_items;",
+      "querySha256": "e692b4cdc8d740a3252302f2d771d6816754ef5fd9767f72523a1ed2e3b58ed1",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedColumnRepro#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedColumnRepro",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK restores dropped column",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresdroppedcolumnrepro-0002-select-id-label-from-rollback_drop_column_items",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresdroppedcolumnrepro-0002-select-id-label-from-rollback_drop_column_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label FROM rollback_drop_column_items;",
+      "querySha256": "b0cc439d75c71388e9920cc14cf406f076534536843518ddfb6fe897273fc7b2",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "before"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresRenamedTableRepro#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresRenamedTableRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK restores renamed table",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresrenamedtablerepro-0001-select-id-label-from-rollback_rename_table_new",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresrenamedtablerepro-0001-select-id-label-from-rollback_rename_table_new",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label FROM rollback_rename_table_new;",
+      "querySha256": "c4f44300fe19d0b5cfe4ccb413e136c4f1749cde795017f30efcfcf1932e8b89",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "before"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresRenamedTableRepro#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresRenamedTableRepro",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK restores renamed table",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresrenamedtablerepro-0002-select-id-label-from-rollback_rename_table_old",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresrenamedtablerepro-0002-select-id-label-from-rollback_rename_table_old",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
+      "query": "SELECT id, label FROM rollback_rename_table_old;",
+      "querySha256": "1cb1aeb57ca25a88b8a85dd88bbefc57d1cb027e4fc766b021c1fda532f89cc8",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresRenamedTableRepro#0003",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresRenamedTableRepro",
+      "ordinal": 3,
+      "scriptName": "ROLLBACK restores renamed table",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresrenamedtablerepro-0003-select-id-label-from-rollback_rename_table_old",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresrenamedtablerepro-0003-select-id-label-from-rollback_rename_table_old",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label FROM rollback_rename_table_old;",
+      "querySha256": "1cb1aeb57ca25a88b8a85dd88bbefc57d1cb027e4fc766b021c1fda532f89cc8",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "before"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresRenamedTableRepro#0004",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresRenamedTableRepro",
+      "ordinal": 4,
+      "scriptName": "ROLLBACK restores renamed table",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresrenamedtablerepro-0004-select-id-label-from-rollback_rename_table_new",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresrenamedtablerepro-0004-select-id-label-from-rollback_rename_table_new",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
+      "query": "SELECT id, label FROM rollback_rename_table_new;",
+      "querySha256": "c4f44300fe19d0b5cfe4ccb413e136c4f1749cde795017f30efcfcf1932e8b89",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresRenamedColumnRepro#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresRenamedColumnRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK restores renamed column",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresrenamedcolumnrepro-0001-select-id-new_label-from-rollback_rename_column_items",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresrenamedcolumnrepro-0001-select-id-new_label-from-rollback_rename_column_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, new_label FROM rollback_rename_column_items;",
+      "querySha256": "51f53999965a2afcc73aa8926480b16963877980b44a8a5eca2191364de080b8",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "before"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresRenamedColumnRepro#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresRenamedColumnRepro",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK restores renamed column",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresrenamedcolumnrepro-0002-select-old_label-from-rollback_rename_column_items",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresrenamedcolumnrepro-0002-select-old_label-from-rollback_rename_column_items",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42703",
+      "errorSeverity": "ERROR",
+      "query": "SELECT old_label FROM rollback_rename_column_items;",
+      "querySha256": "f515e4460a9908f25f7931867c5e65783019869fed75c82cff70da75131a6679",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresRenamedColumnRepro#0003",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresRenamedColumnRepro",
+      "ordinal": 3,
+      "scriptName": "ROLLBACK restores renamed column",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresrenamedcolumnrepro-0003-select-id-old_label-from-rollback_rename_column_items",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresrenamedcolumnrepro-0003-select-id-old_label-from-rollback_rename_column_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, old_label FROM rollback_rename_column_items;",
+      "querySha256": "70412059622ba470ae60f556c5cb3b442ab00dc3977612849854f587ccb10a70",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "before"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresRenamedColumnRepro#0004",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresRenamedColumnRepro",
+      "ordinal": 4,
+      "scriptName": "ROLLBACK restores renamed column",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresrenamedcolumnrepro-0004-select-new_label-from-rollback_rename_column_items",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresrenamedcolumnrepro-0004-select-new_label-from-rollback_rename_column_items",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42703",
+      "errorSeverity": "ERROR",
+      "query": "SELECT new_label FROM rollback_rename_column_items;",
+      "querySha256": "70679fe68bb5b3e3ebecedf2e9a300de04f14db70e568ce8d5e023ea35e80c35",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRevertsAddedCheckConstraintRepro#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRevertsAddedCheckConstraintRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK reverts added CHECK constraint",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrevertsaddedcheckconstraintrepro-0001-insert-into-rollback_add_check_items-values-1",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrevertsaddedcheckconstraintrepro-0001-insert-into-rollback_add_check_items-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO rollback_add_check_items VALUES (1, -1);",
+      "querySha256": "fd1f491ddce57a4be56670af600d2b87f18971ad1aa03dbbf3a15e55d1d102ba",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRevertsAddedCheckConstraintRepro#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRevertsAddedCheckConstraintRepro",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK reverts added CHECK constraint",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrevertsaddedcheckconstraintrepro-0002-select-id-amount-from-rollback_add_check_items",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrevertsaddedcheckconstraintrepro-0002-select-id-amount-from-rollback_add_check_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, amount FROM rollback_add_check_items;",
+      "querySha256": "88ef60515079df880e141ee96744e0064c69481419d9d07ab41f9cfc12172f70",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "-1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedCheckConstraintRepro#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedCheckConstraintRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK restores dropped CHECK constraint",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresdroppedcheckconstraintrepro-0001-insert-into-rollback_drop_check_items-values-2",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresdroppedcheckconstraintrepro-0001-insert-into-rollback_drop_check_items-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO rollback_drop_check_items VALUES (2, -2);",
+      "querySha256": "292a6c94afbd85ec358afb6de47289d72fc6c449cab6574a65d03ffc662a54e6",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedCheckConstraintRepro#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedCheckConstraintRepro",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK restores dropped CHECK constraint",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresdroppedcheckconstraintrepro-0002-select-count-*-from-rollback_drop_check_items",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresdroppedcheckconstraintrepro-0002-select-count-*-from-rollback_drop_check_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM rollback_drop_check_items;",
+      "querySha256": "6faee96b296e2999349e1a9de8eaa942453a35feade2619aed4b243499046f0e",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRevertsAddedUniqueConstraintGuard#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRevertsAddedUniqueConstraintGuard",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK reverts added UNIQUE constraint",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrevertsaddeduniqueconstraintguard-0001-insert-into-rollback_add_unique_items-values-2",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrevertsaddeduniqueconstraintguard-0001-insert-into-rollback_add_unique_items-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO rollback_add_unique_items VALUES (2, 10);",
+      "querySha256": "e3969d06aa7a5e50b805edb9a448879065df67c3fc1460f29d30dcaa2208b261",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRevertsAddedUniqueConstraintGuard#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRevertsAddedUniqueConstraintGuard",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK reverts added UNIQUE constraint",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrevertsaddeduniqueconstraintguard-0002-select-id-code-from-rollback_add_unique_items",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrevertsaddeduniqueconstraintguard-0002-select-id-code-from-rollback_add_unique_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, code\n\t\t\t\t\t\tFROM rollback_add_unique_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "91e8860350293d0c0091107e23c4f625bd520a5eefaeb7879ef900c6dba3b64c",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "10"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedUniqueConstraintGuard#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedUniqueConstraintGuard",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK restores dropped UNIQUE constraint",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresdroppeduniqueconstraintguard-0001-insert-into-rollback_drop_unique_items-values-3",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresdroppeduniqueconstraintguard-0001-insert-into-rollback_drop_unique_items-values-3",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO rollback_drop_unique_items VALUES (3, 10);",
+      "querySha256": "6e053fa4ab476824dbe3b67db41ae20eb24617e94affa09490cb512d8da763b3",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedUniqueConstraintGuard#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedUniqueConstraintGuard",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK restores dropped UNIQUE constraint",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresdroppeduniqueconstraintguard-0002-select-id-code-from-rollback_drop_unique_items",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresdroppeduniqueconstraintguard-0002-select-id-code-from-rollback_drop_unique_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, code\n\t\t\t\t\t\tFROM rollback_drop_unique_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "7e5a25bfb53717af2506aeefc7e664be4fbd3bff15ecd4ca6b416ff92490a6f9",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRevertsAddedForeignKeyConstraintGuard#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRevertsAddedForeignKeyConstraintGuard",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK reverts added FOREIGN KEY constraint",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrevertsaddedforeignkeyconstraintguard-0001-insert-into-rollback_add_fk_children-values-1",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrevertsaddedforeignkeyconstraintguard-0001-insert-into-rollback_add_fk_children-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23503",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO rollback_add_fk_children VALUES (1, 999);",
+      "querySha256": "40e9e3e579051240bc176bd23657a4efe0cb03ab61a8355830256410ede104bb",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRevertsAddedForeignKeyConstraintGuard#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRevertsAddedForeignKeyConstraintGuard",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK reverts added FOREIGN KEY constraint",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrevertsaddedforeignkeyconstraintguard-0002-select-id-parent_id-from-rollback_add_fk_children",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrevertsaddedforeignkeyconstraintguard-0002-select-id-parent_id-from-rollback_add_fk_children",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, parent_id FROM rollback_add_fk_children;",
+      "querySha256": "d1f9e4475651800ceaf52039b0c4a811dce5e7949b6493e96533aa4cb20c8ff2",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "999"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedForeignKeyConstraintGuard#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedForeignKeyConstraintGuard",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK restores dropped FOREIGN KEY constraint",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresdroppedforeignkeyconstraintguard-0001-insert-into-rollback_drop_fk_children-values-2",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresdroppedforeignkeyconstraintguard-0001-insert-into-rollback_drop_fk_children-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23503",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO rollback_drop_fk_children VALUES (2, 999);",
+      "querySha256": "cf23e331fc8e8c8c3796ca4685e885e46c630acf08a2184e4857810ed7a3705f",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedForeignKeyConstraintGuard#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedForeignKeyConstraintGuard",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK restores dropped FOREIGN KEY constraint",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresdroppedforeignkeyconstraintguard-0002-select-count-*-from-rollback_drop_fk_children",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresdroppedforeignkeyconstraintguard-0002-select-count-*-from-rollback_drop_fk_children",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM rollback_drop_fk_children;",
+      "querySha256": "4a84772b92e46899ed3e8869df49d84525e8dc5f4ad8ca81e89097de5b3d8a05",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsIndexCreatedInTransactionRepro#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsIndexCreatedInTransactionRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK drops index created in transaction",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackdropsindexcreatedintransactionrepro-0001-select-indexname-from-pg_indexes-where",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackdropsindexcreatedintransactionrepro-0001-select-indexname-from-pg_indexes-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT indexname\n\t\t\t\t\t\tFROM pg_indexes\n\t\t\t\t\t\tWHERE tablename = 'rollback_create_index_items'\n\t\t\t\t\t\t\tAND indexname = 'rollback_create_index_items_v_idx';",
+      "querySha256": "7fa23fe1b3a0d9a910475db8cfdaa965a25e2d2ee2757e205780fde840860dfb",
+      "expectedRows": [
+        [
+          {
+            "value": "rollback_create_index_items_v_idx"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsIndexCreatedInTransactionRepro#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsIndexCreatedInTransactionRepro",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK drops index created in transaction",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackdropsindexcreatedintransactionrepro-0002-select-indexname-from-pg_indexes-where",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackdropsindexcreatedintransactionrepro-0002-select-indexname-from-pg_indexes-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT indexname\n\t\t\t\t\t\tFROM pg_indexes\n\t\t\t\t\t\tWHERE tablename = 'rollback_create_index_items'\n\t\t\t\t\t\t\tAND indexname = 'rollback_create_index_items_v_idx';",
+      "querySha256": "7fa23fe1b3a0d9a910475db8cfdaa965a25e2d2ee2757e205780fde840860dfb",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsSequenceCreatedInTransactionRepro#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsSequenceCreatedInTransactionRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK drops sequence created in transaction",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackdropssequencecreatedintransactionrepro-0001-select-nextval-rollback_create_sequence_seq",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackdropssequencecreatedintransactionrepro-0001-select-nextval-rollback_create_sequence_seq",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('rollback_create_sequence_seq');",
+      "querySha256": "938dd99674eec720a0449b803a3516ae2b36f44c978fc60a7be47fb0b478f9db",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsSequenceCreatedInTransactionRepro#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsSequenceCreatedInTransactionRepro",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK drops sequence created in transaction",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackdropssequencecreatedintransactionrepro-0002-select-nextval-rollback_create_sequence_seq",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackdropssequencecreatedintransactionrepro-0002-select-nextval-rollback_create_sequence_seq",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
+      "query": "SELECT nextval('rollback_create_sequence_seq');",
+      "querySha256": "938dd99674eec720a0449b803a3516ae2b36f44c978fc60a7be47fb0b478f9db",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedIndexRepro#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedIndexRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK restores dropped index",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresdroppedindexrepro-0001-select-indexname-from-pg_indexes-where",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresdroppedindexrepro-0001-select-indexname-from-pg_indexes-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT indexname\n\t\t\t\t\t\tFROM pg_indexes\n\t\t\t\t\t\tWHERE tablename = 'rollback_drop_index_items'\n\t\t\t\t\t\t\tAND indexname = 'rollback_drop_index_items_v_idx';",
+      "querySha256": "a65a01b4f60076c4cdc48640f39c93eda43588fe65d26c81b962d30c7fc5a973",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedIndexRepro#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedIndexRepro",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK restores dropped index",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresdroppedindexrepro-0002-select-indexname-from-pg_indexes-where",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresdroppedindexrepro-0002-select-indexname-from-pg_indexes-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT indexname\n\t\t\t\t\t\tFROM pg_indexes\n\t\t\t\t\t\tWHERE tablename = 'rollback_drop_index_items'\n\t\t\t\t\t\t\tAND indexname = 'rollback_drop_index_items_v_idx';",
+      "querySha256": "a65a01b4f60076c4cdc48640f39c93eda43588fe65d26c81b962d30c7fc5a973",
+      "expectedRows": [
+        [
+          {
+            "value": "rollback_drop_index_items_v_idx"
+          }
+        ],
+        [
+          {
+            "value": "rollback_drop_index_items_v_idx"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresTruncatedRowsRepro#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresTruncatedRowsRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK restores truncated rows",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestorestruncatedrowsrepro-0001-select-count-*-from-rollback_truncate_items",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestorestruncatedrowsrepro-0001-select-count-*-from-rollback_truncate_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM rollback_truncate_items;",
+      "querySha256": "63b95fd7baae6064aa3265c4119ad153f01a4a4631bf6d5d061a0fe4a65b62e5",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresTruncatedRowsRepro#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresTruncatedRowsRepro",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK restores truncated rows",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestorestruncatedrowsrepro-0002-select-id-label-from-rollback_truncate_items",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestorestruncatedrowsrepro-0002-select-id-label-from-rollback_truncate_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM rollback_truncate_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "1e06486a471e8309e17abd34fabbc3f27ee9b241a632d1bc4b4321aae02d0bb0",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "one"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "two"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedSequenceRepro#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedSequenceRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK restores dropped sequence",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresdroppedsequencerepro-0001-select-nextval-rollback_drop_sequence_seq",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresdroppedsequencerepro-0001-select-nextval-rollback_drop_sequence_seq",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
+      "query": "SELECT nextval('rollback_drop_sequence_seq');",
+      "querySha256": "a9516344cb56630ddb83944c3409a8e3991172c601ca9619605d4cc48ab042cc",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedSequenceRepro#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedSequenceRepro",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK restores dropped sequence",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresdroppedsequencerepro-0002-select-nextval-rollback_drop_sequence_seq",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresdroppedsequencerepro-0002-select-nextval-rollback_drop_sequence_seq",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('rollback_drop_sequence_seq');",
+      "querySha256": "a9516344cb56630ddb83944c3409a8e3991172c601ca9619605d4cc48ab042cc",
+      "expectedRows": [
+        [
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresAlterSequenceOwnedByDependencyRepro#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresAlterSequenceOwnedByDependencyRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK restores ALTER SEQUENCE OWNED BY dependency",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresaltersequenceownedbydependencyrepro-0001-select-nextval-rollback_sequence_owned_seq",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresaltersequenceownedbydependencyrepro-0001-select-nextval-rollback_sequence_owned_seq",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('rollback_sequence_owned_seq');",
+      "querySha256": "03963689bd12c327cc433a5bb6d4e98dc6d2a8c3240277a5669cb06e2ce5bc1d",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresAlterSequenceOwnedByNoneDependencyGuard#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresAlterSequenceOwnedByNoneDependencyGuard",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK restores ALTER SEQUENCE OWNED BY NONE dependency",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresaltersequenceownedbynonedependencyguard-0001-select-nextval-rollback_sequence_owned_none_seq",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresaltersequenceownedbynonedependencyguard-0001-select-nextval-rollback_sequence_owned_none_seq",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
+      "query": "SELECT nextval('rollback_sequence_owned_none_seq');",
+      "querySha256": "9bda7fec831ab3f69a3d4c6b8ebc753f8458a032c0622b6f141584388e6d8033",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsFunctionCreatedInTransactionGuard#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsFunctionCreatedInTransactionGuard",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK drops function created in transaction",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackdropsfunctioncreatedintransactionguard-0001-select-rollback_create_function_value",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackdropsfunctioncreatedintransactionguard-0001-select-rollback_create_function_value",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT rollback_create_function_value();",
+      "querySha256": "fefc43d111ec2c2213176fe39944ddd2186d6326e95d23e79348cfe47bbbc58c",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsFunctionCreatedInTransactionGuard#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsFunctionCreatedInTransactionGuard",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK drops function created in transaction",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackdropsfunctioncreatedintransactionguard-0002-select-rollback_create_function_value",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackdropsfunctioncreatedintransactionguard-0002-select-rollback_create_function_value",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42883",
+      "errorSeverity": "ERROR",
+      "query": "SELECT rollback_create_function_value();",
+      "querySha256": "fefc43d111ec2c2213176fe39944ddd2186d6326e95d23e79348cfe47bbbc58c",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedFunctionGuard#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedFunctionGuard",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK restores dropped function",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresdroppedfunctionguard-0001-select-rollback_drop_function_value",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresdroppedfunctionguard-0001-select-rollback_drop_function_value",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42883",
+      "errorSeverity": "ERROR",
+      "query": "SELECT rollback_drop_function_value();",
+      "querySha256": "cab1be02ccc84696e7c744ff0d43d0e5c033f6968289cef9775d23667426bc44",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedFunctionGuard#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedFunctionGuard",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK restores dropped function",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresdroppedfunctionguard-0002-select-rollback_drop_function_value",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresdroppedfunctionguard-0002-select-rollback_drop_function_value",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT rollback_drop_function_value();",
+      "querySha256": "cab1be02ccc84696e7c744ff0d43d0e5c033f6968289cef9775d23667426bc44",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsProcedureCreatedInTransactionGuard#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsProcedureCreatedInTransactionGuard",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK drops procedure created in transaction",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackdropsprocedurecreatedintransactionguard-0001-call-rollback_create_procedure_value",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackdropsprocedurecreatedintransactionguard-0001-call-rollback_create_procedure_value",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42883",
+      "errorSeverity": "ERROR",
+      "query": "CALL rollback_create_procedure_value();",
+      "querySha256": "6c399f396bec7692c4c60fb43473715e9c4fac60d7da90b793413208da8caae8",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedProcedureRepro#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedProcedureRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK restores dropped procedure",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresdroppedprocedurerepro-0001-call-rollback_drop_procedure_value",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresdroppedprocedurerepro-0001-call-rollback_drop_procedure_value",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42883",
+      "errorSeverity": "ERROR",
+      "query": "CALL rollback_drop_procedure_value();",
+      "querySha256": "a5c3818d41a2d20819d9b0556271cc6b33008045b41b8ab94c86a4e9939817af",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedProcedureRepro#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedProcedureRepro",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK restores dropped procedure",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresdroppedprocedurerepro-0002-select-value-from-rollback_drop_procedure_audit",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresdroppedprocedurerepro-0002-select-value-from-rollback_drop_procedure_audit",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT value FROM rollback_drop_procedure_audit;",
+      "querySha256": "975ea11fdc68c9848b2be908e9020dff73c924d3aeb520fcffb5a8c1ccebb2e4",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresReplacedFunctionDefinitionRepro#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresReplacedFunctionDefinitionRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK restores replaced function definition",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresreplacedfunctiondefinitionrepro-0001-select-rollback_replace_function_value",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresreplacedfunctiondefinitionrepro-0001-select-rollback_replace_function_value",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT rollback_replace_function_value();",
+      "querySha256": "7c8e813f360c1c7363acec660ed10fd5e6b211b2d32edd15b4131b3553a990d0",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresReplacedFunctionDefinitionRepro#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresReplacedFunctionDefinitionRepro",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK restores replaced function definition",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresreplacedfunctiondefinitionrepro-0002-select-rollback_replace_function_value",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresreplacedfunctiondefinitionrepro-0002-select-rollback_replace_function_value",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT rollback_replace_function_value();",
+      "querySha256": "7c8e813f360c1c7363acec660ed10fd5e6b211b2d32edd15b4131b3553a990d0",
+      "expectedRows": [
+        [
+          {
+            "value": "8"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresReplacedFunctionDefinitionRepro#0003",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresReplacedFunctionDefinitionRepro",
+      "ordinal": 3,
+      "scriptName": "ROLLBACK restores replaced function definition",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresreplacedfunctiondefinitionrepro-0003-select-rollback_replace_function_value",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresreplacedfunctiondefinitionrepro-0003-select-rollback_replace_function_value",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT rollback_replace_function_value();",
+      "querySha256": "7c8e813f360c1c7363acec660ed10fd5e6b211b2d32edd15b4131b3553a990d0",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresReplacedProcedureDefinitionRepro#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresReplacedProcedureDefinitionRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK restores replaced procedure definition",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresreplacedproceduredefinitionrepro-0001-select-value-from-rollback_replace_procedure_audit",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresreplacedproceduredefinitionrepro-0001-select-value-from-rollback_replace_procedure_audit",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT value FROM rollback_replace_procedure_audit;",
+      "querySha256": "3c450e979aac87810b1231af8faa61bf9c0f1feb625daae73e5ea8505dc77145",
+      "expectedRows": [
+        [
+          {
+            "value": "8"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresReplacedProcedureDefinitionRepro#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresReplacedProcedureDefinitionRepro",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK restores replaced procedure definition",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresreplacedproceduredefinitionrepro-0002-select-value-from-rollback_replace_procedure_audit",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresreplacedproceduredefinitionrepro-0002-select-value-from-rollback_replace_procedure_audit",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT value FROM rollback_replace_procedure_audit;",
+      "querySha256": "3c450e979aac87810b1231af8faa61bf9c0f1feb625daae73e5ea8505dc77145",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresReplacedViewDefinitionRepro#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresReplacedViewDefinitionRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK restores replaced view definition",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresreplacedviewdefinitionrepro-0001-select-id-from-rollback_replace_view_reader",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresreplacedviewdefinitionrepro-0001-select-id-from-rollback_replace_view_reader",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM rollback_replace_view_reader;",
+      "querySha256": "b58aeef38bd527c9872540f16342c903ff47777e119649172d21b4b8873247ff",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresReplacedViewDefinitionRepro#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresReplacedViewDefinitionRepro",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK restores replaced view definition",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresreplacedviewdefinitionrepro-0002-select-id-from-rollback_replace_view_reader",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresreplacedviewdefinitionrepro-0002-select-id-from-rollback_replace_view_reader",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM rollback_replace_view_reader;",
+      "querySha256": "b58aeef38bd527c9872540f16342c903ff47777e119649172d21b4b8873247ff",
+      "expectedRows": [
+        [
+          {
+            "value": "8"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresReplacedViewDefinitionRepro#0003",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresReplacedViewDefinitionRepro",
+      "ordinal": 3,
+      "scriptName": "ROLLBACK restores replaced view definition",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresreplacedviewdefinitionrepro-0003-select-id-from-rollback_replace_view_reader",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresreplacedviewdefinitionrepro-0003-select-id-from-rollback_replace_view_reader",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM rollback_replace_view_reader;",
+      "querySha256": "b58aeef38bd527c9872540f16342c903ff47777e119649172d21b4b8873247ff",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsViewCreatedInTransactionGuard#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsViewCreatedInTransactionGuard",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK drops view created in transaction",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackdropsviewcreatedintransactionguard-0001-select-id-from-rollback_create_view_reader",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackdropsviewcreatedintransactionguard-0001-select-id-from-rollback_create_view_reader",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM rollback_create_view_reader;",
+      "querySha256": "5a46429b6a2cf52e6bf6d215fde052b4f5c34bd34a63a2fa2c01bef55fd457a3",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsViewCreatedInTransactionGuard#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsViewCreatedInTransactionGuard",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK drops view created in transaction",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackdropsviewcreatedintransactionguard-0002-select-id-from-rollback_create_view_reader",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackdropsviewcreatedintransactionguard-0002-select-id-from-rollback_create_view_reader",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
+      "query": "SELECT id FROM rollback_create_view_reader;",
+      "querySha256": "5a46429b6a2cf52e6bf6d215fde052b4f5c34bd34a63a2fa2c01bef55fd457a3",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedViewGuard#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedViewGuard",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK restores dropped view",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresdroppedviewguard-0001-select-id-from-rollback_drop_view_reader",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresdroppedviewguard-0001-select-id-from-rollback_drop_view_reader",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
+      "query": "SELECT id FROM rollback_drop_view_reader;",
+      "querySha256": "e711de4c3a21cc21d6a0c15ad268bf401ede33b20c326e02434bf4c9c77a03ba",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedViewGuard#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedViewGuard",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK restores dropped view",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresdroppedviewguard-0002-select-id-from-rollback_drop_view_reader",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresdroppedviewguard-0002-select-id-from-rollback_drop_view_reader",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM rollback_drop_view_reader;",
+      "querySha256": "e711de4c3a21cc21d6a0c15ad268bf401ede33b20c326e02434bf4c9c77a03ba",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsMaterializedViewCreatedInTransactionGuard#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsMaterializedViewCreatedInTransactionGuard",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK drops materialized view created in transaction",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackdropsmaterializedviewcreatedintransactionguard-0001-select-id-from-rollback_create_matview_reader",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackdropsmaterializedviewcreatedintransactionguard-0001-select-id-from-rollback_create_matview_reader",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM rollback_create_matview_reader;",
+      "querySha256": "03126d6475bbbbb1107ff77cef4e25d700b09edd4e1804739859538065e25d1b",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsMaterializedViewCreatedInTransactionGuard#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsMaterializedViewCreatedInTransactionGuard",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK drops materialized view created in transaction",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackdropsmaterializedviewcreatedintransactionguard-0002-select-id-from-rollback_create_matview_reader",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackdropsmaterializedviewcreatedintransactionguard-0002-select-id-from-rollback_create_matview_reader",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
+      "query": "SELECT id FROM rollback_create_matview_reader;",
+      "querySha256": "03126d6475bbbbb1107ff77cef4e25d700b09edd4e1804739859538065e25d1b",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedMaterializedViewGuard#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedMaterializedViewGuard",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK restores dropped materialized view",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresdroppedmaterializedviewguard-0001-select-id-from-rollback_drop_matview_reader",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresdroppedmaterializedviewguard-0001-select-id-from-rollback_drop_matview_reader",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
+      "query": "SELECT id FROM rollback_drop_matview_reader;",
+      "querySha256": "4ccb375ac4a6d3db0040a187062593fc74ad87448d68e857a77804c37095c366",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedMaterializedViewGuard#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedMaterializedViewGuard",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK restores dropped materialized view",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresdroppedmaterializedviewguard-0002-select-id-from-rollback_drop_matview_reader",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresdroppedmaterializedviewguard-0002-select-id-from-rollback_drop_matview_reader",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM rollback_drop_matview_reader;",
+      "querySha256": "4ccb375ac4a6d3db0040a187062593fc74ad87448d68e857a77804c37095c366",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresRefreshedMaterializedViewGuard#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresRefreshedMaterializedViewGuard",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK restores refreshed materialized view",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresrefreshedmaterializedviewguard-0001-select-id-from-rollback_refresh_matview_reader",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresrefreshedmaterializedviewguard-0001-select-id-from-rollback_refresh_matview_reader",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM rollback_refresh_matview_reader;",
+      "querySha256": "a621238f8a86c0142590c7b5f380e849f90c7773a1082b7d57a9ea4f4ca5437c",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresRefreshedMaterializedViewGuard#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresRefreshedMaterializedViewGuard",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK restores refreshed materialized view",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresrefreshedmaterializedviewguard-0002-select-id-from-rollback_refresh_matview_reader-order",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresrefreshedmaterializedviewguard-0002-select-id-from-rollback_refresh_matview_reader-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM rollback_refresh_matview_reader\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "07501d64d70c12b0271b6f7897278e978082fdad692644edbc1d9c5c9989fc88",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresRefreshedMaterializedViewGuard#0003",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresRefreshedMaterializedViewGuard",
+      "ordinal": 3,
+      "scriptName": "ROLLBACK restores refreshed materialized view",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresrefreshedmaterializedviewguard-0003-select-id-from-rollback_refresh_matview_reader",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresrefreshedmaterializedviewguard-0003-select-id-from-rollback_refresh_matview_reader",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM rollback_refresh_matview_reader;",
+      "querySha256": "a621238f8a86c0142590c7b5f380e849f90c7773a1082b7d57a9ea4f4ca5437c",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresRenamedMaterializedViewGuard#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresRenamedMaterializedViewGuard",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK restores renamed materialized view",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresrenamedmaterializedviewguard-0001-select-id-from-rollback_rename_matview_new",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresrenamedmaterializedviewguard-0001-select-id-from-rollback_rename_matview_new",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM rollback_rename_matview_new;",
+      "querySha256": "481a43ae39c99e9bfe8909a506f5d813110443dcb8f8f4463a8f16ffebdd7720",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresRenamedMaterializedViewGuard#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresRenamedMaterializedViewGuard",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK restores renamed materialized view",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresrenamedmaterializedviewguard-0002-select-id-from-rollback_rename_matview_old",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresrenamedmaterializedviewguard-0002-select-id-from-rollback_rename_matview_old",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
+      "query": "SELECT id FROM rollback_rename_matview_old;",
+      "querySha256": "09238bd278be91cc7dcc8c8e44fc71a34465872966afe27ff96854bc9cefde79",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresRenamedMaterializedViewGuard#0003",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresRenamedMaterializedViewGuard",
+      "ordinal": 3,
+      "scriptName": "ROLLBACK restores renamed materialized view",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresrenamedmaterializedviewguard-0003-select-id-from-rollback_rename_matview_old",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresrenamedmaterializedviewguard-0003-select-id-from-rollback_rename_matview_old",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM rollback_rename_matview_old;",
+      "querySha256": "09238bd278be91cc7dcc8c8e44fc71a34465872966afe27ff96854bc9cefde79",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresRenamedMaterializedViewGuard#0004",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresRenamedMaterializedViewGuard",
+      "ordinal": 4,
+      "scriptName": "ROLLBACK restores renamed materialized view",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresrenamedmaterializedviewguard-0004-select-id-from-rollback_rename_matview_new",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresrenamedmaterializedviewguard-0004-select-id-from-rollback_rename_matview_new",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
+      "query": "SELECT id FROM rollback_rename_matview_new;",
+      "querySha256": "481a43ae39c99e9bfe8909a506f5d813110443dcb8f8f4463a8f16ffebdd7720",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresRenamedMaterializedViewColumnGuard#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresRenamedMaterializedViewColumnGuard",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK restores renamed materialized view column",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresrenamedmaterializedviewcolumnguard-0001-select-id-renamed_label-from-rollback_rename_matview_column_reader",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresrenamedmaterializedviewcolumnguard-0001-select-id-renamed_label-from-rollback_rename_matview_column_reader",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, renamed_label FROM rollback_rename_matview_column_reader;",
+      "querySha256": "b586b62f416881ac42666a831374ea2deb7bc8105ec35178a3d0aaeae206b8fc",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "before"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresRenamedMaterializedViewColumnGuard#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresRenamedMaterializedViewColumnGuard",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK restores renamed materialized view column",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresrenamedmaterializedviewcolumnguard-0002-select-label-from-rollback_rename_matview_column_reader",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresrenamedmaterializedviewcolumnguard-0002-select-label-from-rollback_rename_matview_column_reader",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42703",
+      "errorSeverity": "ERROR",
+      "query": "SELECT label FROM rollback_rename_matview_column_reader;",
+      "querySha256": "4429bdc27a5cede5aa984ed4e9a80e8ccc1e749c66a1c508b0d715c33fc3c7b3",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresRenamedMaterializedViewColumnGuard#0003",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresRenamedMaterializedViewColumnGuard",
+      "ordinal": 3,
+      "scriptName": "ROLLBACK restores renamed materialized view column",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresrenamedmaterializedviewcolumnguard-0003-select-id-label-from-rollback_rename_matview_column_reader",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresrenamedmaterializedviewcolumnguard-0003-select-id-label-from-rollback_rename_matview_column_reader",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label FROM rollback_rename_matview_column_reader;",
+      "querySha256": "3b1dd49268bf2e4bc30956f4e3c7f3bb36a1320e5340e31a3456bfd4fd34b88d",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "before"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresRenamedMaterializedViewColumnGuard#0004",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresRenamedMaterializedViewColumnGuard",
+      "ordinal": 4,
+      "scriptName": "ROLLBACK restores renamed materialized view column",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresrenamedmaterializedviewcolumnguard-0004-select-renamed_label-from-rollback_rename_matview_column_reader",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresrenamedmaterializedviewcolumnguard-0004-select-renamed_label-from-rollback_rename_matview_column_reader",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42703",
+      "errorSeverity": "ERROR",
+      "query": "SELECT renamed_label FROM rollback_rename_matview_column_reader;",
+      "querySha256": "0344a6d9034fb4e8e50428d34b2e04ab29e8ec2eed60d60545f341ffbca1b341",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsTriggerCreatedInTransactionGuard#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsTriggerCreatedInTransactionGuard",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK drops trigger created in transaction",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackdropstriggercreatedintransactionguard-0001-insert-into-rollback_create_trigger_items-values-1",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackdropstriggercreatedintransactionguard-0001-insert-into-rollback_create_trigger_items-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO rollback_create_trigger_items VALUES (1, 'plain');",
+      "querySha256": "23b7593ad32e6d7d828210c197b931478036647fd46675587b14c47f438c6b63",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsTriggerCreatedInTransactionGuard#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsTriggerCreatedInTransactionGuard",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK drops trigger created in transaction",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackdropstriggercreatedintransactionguard-0002-select-label-from-rollback_create_trigger_items-where",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackdropstriggercreatedintransactionguard-0002-select-label-from-rollback_create_trigger_items-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT label FROM rollback_create_trigger_items WHERE id = 1;",
+      "querySha256": "25b4e7e4a8ac0b6a18cedc0efbe3e4fd25d5839eb4397fada3d3e34e57828699",
+      "expectedRows": [
+        [
+          {
+            "value": "triggered"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsTriggerCreatedInTransactionGuard#0003",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsTriggerCreatedInTransactionGuard",
+      "ordinal": 3,
+      "scriptName": "ROLLBACK drops trigger created in transaction",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackdropstriggercreatedintransactionguard-0003-insert-into-rollback_create_trigger_items-values-2",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackdropstriggercreatedintransactionguard-0003-insert-into-rollback_create_trigger_items-values-2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO rollback_create_trigger_items VALUES (2, 'plain');",
+      "querySha256": "7a4afefa2a2b371dbf11fbe3079cca34ad0a1192d169765921c47265fe04e022",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsTriggerCreatedInTransactionGuard#0004",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsTriggerCreatedInTransactionGuard",
+      "ordinal": 4,
+      "scriptName": "ROLLBACK drops trigger created in transaction",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackdropstriggercreatedintransactionguard-0004-select-label-from-rollback_create_trigger_items-where",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackdropstriggercreatedintransactionguard-0004-select-label-from-rollback_create_trigger_items-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT label FROM rollback_create_trigger_items WHERE id = 2;",
+      "querySha256": "c6d7f5b8469294a468c489591771237bee8fe993b342123bb2ddddc420e03714",
+      "expectedRows": [
+        [
+          {
+            "value": "plain"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedTriggerGuard#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedTriggerGuard",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK restores dropped trigger",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresdroppedtriggerguard-0001-insert-into-rollback_drop_trigger_items-values-1",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresdroppedtriggerguard-0001-insert-into-rollback_drop_trigger_items-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO rollback_drop_trigger_items VALUES (1, 'plain');",
+      "querySha256": "b7bac4b37ed7f056f00d426b2ef30e477008922164731f7b0e7221e7965feec1",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedTriggerGuard#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedTriggerGuard",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK restores dropped trigger",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresdroppedtriggerguard-0002-select-label-from-rollback_drop_trigger_items-where",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresdroppedtriggerguard-0002-select-label-from-rollback_drop_trigger_items-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT label FROM rollback_drop_trigger_items WHERE id = 1;",
+      "querySha256": "b4b181b56c0fd757b89edc15aa5cf6e42f4319c6f8ae3ef40a633ab6addac95c",
+      "expectedRows": [
+        [
+          {
+            "value": "plain"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedTriggerGuard#0003",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedTriggerGuard",
+      "ordinal": 3,
+      "scriptName": "ROLLBACK restores dropped trigger",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresdroppedtriggerguard-0003-insert-into-rollback_drop_trigger_items-values-2",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresdroppedtriggerguard-0003-insert-into-rollback_drop_trigger_items-values-2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO rollback_drop_trigger_items VALUES (2, 'plain');",
+      "querySha256": "7703cd9176a9b670261485270ec78164512f31c56359b1354e4833e95b3ffb17",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedTriggerGuard#0004",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedTriggerGuard",
+      "ordinal": 4,
+      "scriptName": "ROLLBACK restores dropped trigger",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresdroppedtriggerguard-0004-select-label-from-rollback_drop_trigger_items-where",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresdroppedtriggerguard-0004-select-label-from-rollback_drop_trigger_items-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT label FROM rollback_drop_trigger_items WHERE id = 2;",
+      "querySha256": "75b273cee1b4c137d4b719cc3df174c3c9d2f36d843e3bd0e982c91772daa0a7",
+      "expectedRows": [
+        [
+          {
+            "value": "triggered"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresReplacedTriggerDefinitionGuard#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresReplacedTriggerDefinitionGuard",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK restores replaced trigger definition",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresreplacedtriggerdefinitionguard-0001-select-label-from-rollback_replace_trigger_items-where",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresreplacedtriggerdefinitionguard-0001-select-label-from-rollback_replace_trigger_items-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT label FROM rollback_replace_trigger_items WHERE id = 1;",
+      "querySha256": "a6c5084a61941d9b05747388f13146ac2c88e52f93286e4f57c0dd88dc818d4d",
+      "expectedRows": [
+        [
+          {
+            "value": "eight"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresReplacedTriggerDefinitionGuard#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresReplacedTriggerDefinitionGuard",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK restores replaced trigger definition",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresreplacedtriggerdefinitionguard-0002-select-label-from-rollback_replace_trigger_items-where",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresreplacedtriggerdefinitionguard-0002-select-label-from-rollback_replace_trigger_items-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT label FROM rollback_replace_trigger_items WHERE id = 1;",
+      "querySha256": "a6c5084a61941d9b05747388f13146ac2c88e52f93286e4f57c0dd88dc818d4d",
+      "expectedRows": [
+        [
+          {
+            "value": "seven"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedTableRepro#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedTableRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK restores dropped table",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresdroppedtablerepro-0001-select-*-from-rollback_drop_table",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresdroppedtablerepro-0001-select-*-from-rollback_drop_table",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
+      "query": "SELECT * FROM rollback_drop_table;",
+      "querySha256": "682e4259330535ca05ba703c0872c941265e313fe7c6c52ca827ff5b345ffb38",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedTableRepro#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedTableRepro",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK restores dropped table",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresdroppedtablerepro-0002-select-*-from-rollback_drop_table",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresdroppedtablerepro-0002-select-*-from-rollback_drop_table",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM rollback_drop_table;",
+      "querySha256": "682e4259330535ca05ba703c0872c941265e313fe7c6c52ca827ff5b345ffb38",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "before"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointDropsTableCreatedAfterSavepointRepro#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointDropsTableCreatedAfterSavepointRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK TO SAVEPOINT drops table created after savepoint",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointdropstablecreatedaftersavepointrepro-0001-select-*-from-savepoint_create_table",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointdropstablecreatedaftersavepointrepro-0001-select-*-from-savepoint_create_table",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM savepoint_create_table;",
+      "querySha256": "f5e33704212d68a04a58621f57f1a1a960e12ee9fd5a0671f24c9c1a58490b75",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointDropsTableCreatedAfterSavepointRepro#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointDropsTableCreatedAfterSavepointRepro",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK TO SAVEPOINT drops table created after savepoint",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointdropstablecreatedaftersavepointrepro-0002-select-*-from-savepoint_create_table",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointdropstablecreatedaftersavepointrepro-0002-select-*-from-savepoint_create_table",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
+      "query": "SELECT * FROM savepoint_create_table;",
+      "querySha256": "f5e33704212d68a04a58621f57f1a1a960e12ee9fd5a0671f24c9c1a58490b75",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRevertsAlterTableAddColumnRepro#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRevertsAlterTableAddColumnRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK TO SAVEPOINT reverts ALTER TABLE ADD COLUMN",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrevertsaltertableaddcolumnrepro-0001-select-id-v-from-savepoint_alter_table",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrevertsaltertableaddcolumnrepro-0001-select-id-v-from-savepoint_alter_table",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, v FROM savepoint_alter_table;",
+      "querySha256": "ef5c328390527e7ba62112748aa8d4b7eae11616f2497b5a25179e93497100b8",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRevertsAlterTableAddColumnRepro#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRevertsAlterTableAddColumnRepro",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK TO SAVEPOINT reverts ALTER TABLE ADD COLUMN",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrevertsaltertableaddcolumnrepro-0002-select-v-from-savepoint_alter_table",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrevertsaltertableaddcolumnrepro-0002-select-v-from-savepoint_alter_table",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42703",
+      "errorSeverity": "ERROR",
+      "query": "SELECT v FROM savepoint_alter_table;",
+      "querySha256": "611c00d9770b84e70a1fbd5be9b40953200addf0c1226f31c085652250e9097b",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresDroppedColumnRepro#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresDroppedColumnRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores dropped column",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedcolumnrepro-0001-select-label-from-savepoint_drop_column_items",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedcolumnrepro-0001-select-label-from-savepoint_drop_column_items",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42703",
+      "errorSeverity": "ERROR",
+      "query": "SELECT label FROM savepoint_drop_column_items;",
+      "querySha256": "971052ea56f7e4276fb2a96b483680e9e6254ba70271712a0f258bf4e30e47f1",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresDroppedColumnRepro#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresDroppedColumnRepro",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores dropped column",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedcolumnrepro-0002-select-id-label-from-savepoint_drop_column_items",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedcolumnrepro-0002-select-id-label-from-savepoint_drop_column_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label FROM savepoint_drop_column_items;",
+      "querySha256": "ba806ccdac9a047a9945089c8abc86adb50d73635797ed37ac4237e01197a7a4",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "before"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresRenamedTableRepro#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresRenamedTableRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores renamed table",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedtablerepro-0001-select-id-label-from-savepoint_rename_table_new",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedtablerepro-0001-select-id-label-from-savepoint_rename_table_new",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label FROM savepoint_rename_table_new;",
+      "querySha256": "65a296dee985203defaa1e7d71f7ee4a5e7539af2565ed6c20fd51c5305e1545",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "before"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresRenamedTableRepro#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresRenamedTableRepro",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores renamed table",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedtablerepro-0002-select-id-label-from-savepoint_rename_table_old",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedtablerepro-0002-select-id-label-from-savepoint_rename_table_old",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
+      "query": "SELECT id, label FROM savepoint_rename_table_old;",
+      "querySha256": "a93cb38979cc833f992f7b3f28fa514c75d2dffab9524099f6c301989c56c105",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresRenamedTableRepro#0003",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresRenamedTableRepro",
+      "ordinal": 3,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores renamed table",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedtablerepro-0003-select-id-label-from-savepoint_rename_table_old",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedtablerepro-0003-select-id-label-from-savepoint_rename_table_old",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label FROM savepoint_rename_table_old;",
+      "querySha256": "a93cb38979cc833f992f7b3f28fa514c75d2dffab9524099f6c301989c56c105",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "before"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresRenamedTableRepro#0004",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresRenamedTableRepro",
+      "ordinal": 4,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores renamed table",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedtablerepro-0004-select-id-label-from-savepoint_rename_table_new",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedtablerepro-0004-select-id-label-from-savepoint_rename_table_new",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
+      "query": "SELECT id, label FROM savepoint_rename_table_new;",
+      "querySha256": "65a296dee985203defaa1e7d71f7ee4a5e7539af2565ed6c20fd51c5305e1545",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresRenamedColumnRepro#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresRenamedColumnRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores renamed column",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedcolumnrepro-0001-select-id-new_label-from-savepoint_rename_column_items",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedcolumnrepro-0001-select-id-new_label-from-savepoint_rename_column_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, new_label FROM savepoint_rename_column_items;",
+      "querySha256": "3ecb856c607335aa854ee67d2b79e6df2afb64fa97c123b27c478c1573d7675e",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "before"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresRenamedColumnRepro#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresRenamedColumnRepro",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores renamed column",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedcolumnrepro-0002-select-old_label-from-savepoint_rename_column_items",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedcolumnrepro-0002-select-old_label-from-savepoint_rename_column_items",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42703",
+      "errorSeverity": "ERROR",
+      "query": "SELECT old_label FROM savepoint_rename_column_items;",
+      "querySha256": "c284c6ab6b6e597aaac36201c3afc81c76cde90651496345f1236e70df7923c8",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresRenamedColumnRepro#0003",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresRenamedColumnRepro",
+      "ordinal": 3,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores renamed column",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedcolumnrepro-0003-select-id-old_label-from-savepoint_rename_column_items",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedcolumnrepro-0003-select-id-old_label-from-savepoint_rename_column_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, old_label FROM savepoint_rename_column_items;",
+      "querySha256": "467592291ffc1a2712b463407d72b7aa7eaccf46b1dac713137f77399ca77d60",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "before"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresRenamedColumnRepro#0004",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresRenamedColumnRepro",
+      "ordinal": 4,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores renamed column",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedcolumnrepro-0004-select-new_label-from-savepoint_rename_column_items",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedcolumnrepro-0004-select-new_label-from-savepoint_rename_column_items",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42703",
+      "errorSeverity": "ERROR",
+      "query": "SELECT new_label FROM savepoint_rename_column_items;",
+      "querySha256": "3b54b0ed6746f396ece0a637a5335d279b1e6c8b103b3c2e27106bb34b46b41d",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRevertsAddedCheckConstraintRepro#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRevertsAddedCheckConstraintRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK TO SAVEPOINT reverts added CHECK constraint",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrevertsaddedcheckconstraintrepro-0001-insert-into-savepoint_add_check_items-values-1",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrevertsaddedcheckconstraintrepro-0001-insert-into-savepoint_add_check_items-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO savepoint_add_check_items VALUES (1, -1);",
+      "querySha256": "5cff8bf27558dddd91c254554488e826191b5065d941520153c6a775d990bb7b",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRevertsAddedCheckConstraintRepro#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRevertsAddedCheckConstraintRepro",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK TO SAVEPOINT reverts added CHECK constraint",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrevertsaddedcheckconstraintrepro-0002-select-id-amount-from-savepoint_add_check_items",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrevertsaddedcheckconstraintrepro-0002-select-id-amount-from-savepoint_add_check_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, amount FROM savepoint_add_check_items;",
+      "querySha256": "c901bd7c46b32b1ff89c1fcda4044afba243ef957d1bf5f614425e66412a13a2",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "-1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresDroppedCheckConstraintRepro#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresDroppedCheckConstraintRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores dropped CHECK constraint",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedcheckconstraintrepro-0001-insert-into-savepoint_drop_check_items-values-2",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedcheckconstraintrepro-0001-insert-into-savepoint_drop_check_items-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO savepoint_drop_check_items VALUES (2, -2);",
+      "querySha256": "82ee5b0f45529fc47182894e0a7b209f382a1a813622885c4780a48e6ebd5506",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresDroppedCheckConstraintRepro#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresDroppedCheckConstraintRepro",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores dropped CHECK constraint",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedcheckconstraintrepro-0002-select-count-*-from-savepoint_drop_check_items",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedcheckconstraintrepro-0002-select-count-*-from-savepoint_drop_check_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM savepoint_drop_check_items;",
+      "querySha256": "b107690a57e5069e0debe332ac806b9a321fdc0f6e6667d9e718d899da9892ad",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRevertsAddedUniqueConstraintGuard#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRevertsAddedUniqueConstraintGuard",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK TO SAVEPOINT reverts added UNIQUE constraint",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrevertsaddeduniqueconstraintguard-0001-insert-into-savepoint_add_unique_items-values-2",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrevertsaddeduniqueconstraintguard-0001-insert-into-savepoint_add_unique_items-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO savepoint_add_unique_items VALUES (2, 10);",
+      "querySha256": "5626a5b5b06179511c0dad2529243d27b02f6d1a4f216d4a476d34af7d1124ec",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRevertsAddedUniqueConstraintGuard#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRevertsAddedUniqueConstraintGuard",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK TO SAVEPOINT reverts added UNIQUE constraint",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrevertsaddeduniqueconstraintguard-0002-select-id-code-from-savepoint_add_unique_items",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrevertsaddeduniqueconstraintguard-0002-select-id-code-from-savepoint_add_unique_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, code\n\t\t\t\t\t\tFROM savepoint_add_unique_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "f8f7dc33febef3edef92cce7970a122c9eeb723e6c71c7cb3007eee197b5bfa1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "10"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresDroppedUniqueConstraintGuard#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresDroppedUniqueConstraintGuard",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores dropped UNIQUE constraint",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppeduniqueconstraintguard-0001-insert-into-savepoint_drop_unique_items-values-3",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppeduniqueconstraintguard-0001-insert-into-savepoint_drop_unique_items-values-3",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO savepoint_drop_unique_items VALUES (3, 10);",
+      "querySha256": "072d1cee233e4e318a774633473c801bb5ba58c64fd75d328b8917904d22a528",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresDroppedUniqueConstraintGuard#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresDroppedUniqueConstraintGuard",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores dropped UNIQUE constraint",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppeduniqueconstraintguard-0002-select-id-code-from-savepoint_drop_unique_items",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppeduniqueconstraintguard-0002-select-id-code-from-savepoint_drop_unique_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, code\n\t\t\t\t\t\tFROM savepoint_drop_unique_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "8fe887a1f4eec90a8f7d0d1dd66466e2b5de025f98b431417a73d6f7abb34c3c",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRevertsAddedForeignKeyConstraintGuard#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRevertsAddedForeignKeyConstraintGuard",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK TO SAVEPOINT reverts added FOREIGN KEY constraint",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrevertsaddedforeignkeyconstraintguard-0001-insert-into-savepoint_add_fk_children-values-1",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrevertsaddedforeignkeyconstraintguard-0001-insert-into-savepoint_add_fk_children-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23503",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO savepoint_add_fk_children VALUES (1, 999);",
+      "querySha256": "d8f33e332acb3b7d7de27624ba45a97fda7afba32a28f20990c6782780551c19",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRevertsAddedForeignKeyConstraintGuard#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRevertsAddedForeignKeyConstraintGuard",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK TO SAVEPOINT reverts added FOREIGN KEY constraint",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrevertsaddedforeignkeyconstraintguard-0002-select-id-parent_id-from-savepoint_add_fk_children",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrevertsaddedforeignkeyconstraintguard-0002-select-id-parent_id-from-savepoint_add_fk_children",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, parent_id FROM savepoint_add_fk_children;",
+      "querySha256": "9bd7d51725222609930e6e17e3bfb440ab313b689e0bda78d9cbcfa18f9eccd2",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "999"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresDroppedForeignKeyConstraintGuard#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresDroppedForeignKeyConstraintGuard",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores dropped FOREIGN KEY constraint",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedforeignkeyconstraintguard-0001-insert-into-savepoint_drop_fk_children-values-2",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedforeignkeyconstraintguard-0001-insert-into-savepoint_drop_fk_children-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23503",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO savepoint_drop_fk_children VALUES (2, 999);",
+      "querySha256": "e75a20a352fc0e2ddabc61391fe265a42e5ada12a7fc6b82ff13ed5eb11f4251",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresDroppedForeignKeyConstraintGuard#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresDroppedForeignKeyConstraintGuard",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores dropped FOREIGN KEY constraint",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedforeignkeyconstraintguard-0002-select-count-*-from-savepoint_drop_fk_children",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedforeignkeyconstraintguard-0002-select-count-*-from-savepoint_drop_fk_children",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM savepoint_drop_fk_children;",
+      "querySha256": "50dffa2c768fc2ed5002bc5e87322c8c15ee83cab73f89f55a05a408295a39de",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresDroppedTableRepro#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresDroppedTableRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores dropped table",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedtablerepro-0001-select-*-from-savepoint_drop_table",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedtablerepro-0001-select-*-from-savepoint_drop_table",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
+      "query": "SELECT * FROM savepoint_drop_table;",
+      "querySha256": "182143d08e90fc13bb2da6f08cf9f31012709fa5bb4faf9d3401e17004b02ad6",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresDroppedTableRepro#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresDroppedTableRepro",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores dropped table",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedtablerepro-0002-select-*-from-savepoint_drop_table",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedtablerepro-0002-select-*-from-savepoint_drop_table",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM savepoint_drop_table;",
+      "querySha256": "182143d08e90fc13bb2da6f08cf9f31012709fa5bb4faf9d3401e17004b02ad6",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "before"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointDropsIndexCreatedAfterSavepointRepro#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointDropsIndexCreatedAfterSavepointRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK TO SAVEPOINT drops index created after savepoint",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointdropsindexcreatedaftersavepointrepro-0001-select-indexname-from-pg_indexes-where",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointdropsindexcreatedaftersavepointrepro-0001-select-indexname-from-pg_indexes-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT indexname\n\t\t\t\t\t\tFROM pg_indexes\n\t\t\t\t\t\tWHERE tablename = 'savepoint_create_index_items'\n\t\t\t\t\t\t\tAND indexname = 'savepoint_create_index_items_v_idx';",
+      "querySha256": "5727c312e186449507a98a25aebfea387e39ee76509f5905ff2889027cc417bb",
+      "expectedRows": [
+        [
+          {
+            "value": "savepoint_create_index_items_v_idx"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointDropsIndexCreatedAfterSavepointRepro#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointDropsIndexCreatedAfterSavepointRepro",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK TO SAVEPOINT drops index created after savepoint",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointdropsindexcreatedaftersavepointrepro-0002-select-indexname-from-pg_indexes-where",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointdropsindexcreatedaftersavepointrepro-0002-select-indexname-from-pg_indexes-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT indexname\n\t\t\t\t\t\tFROM pg_indexes\n\t\t\t\t\t\tWHERE tablename = 'savepoint_create_index_items'\n\t\t\t\t\t\t\tAND indexname = 'savepoint_create_index_items_v_idx';",
+      "querySha256": "5727c312e186449507a98a25aebfea387e39ee76509f5905ff2889027cc417bb",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresDroppedIndexRepro#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresDroppedIndexRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores dropped index",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedindexrepro-0001-select-indexname-from-pg_indexes-where",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedindexrepro-0001-select-indexname-from-pg_indexes-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT indexname\n\t\t\t\t\t\tFROM pg_indexes\n\t\t\t\t\t\tWHERE tablename = 'savepoint_drop_index_items'\n\t\t\t\t\t\t\tAND indexname = 'savepoint_drop_index_items_v_idx';",
+      "querySha256": "85f3421169260e219fdbeeea0d7bf54eaa39a9aa3bc8a247155cbf3a217df0f6",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresDroppedIndexRepro#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresDroppedIndexRepro",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores dropped index",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedindexrepro-0002-select-indexname-from-pg_indexes-where",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedindexrepro-0002-select-indexname-from-pg_indexes-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT indexname\n\t\t\t\t\t\tFROM pg_indexes\n\t\t\t\t\t\tWHERE tablename = 'savepoint_drop_index_items'\n\t\t\t\t\t\t\tAND indexname = 'savepoint_drop_index_items_v_idx';",
+      "querySha256": "85f3421169260e219fdbeeea0d7bf54eaa39a9aa3bc8a247155cbf3a217df0f6",
+      "expectedRows": [
+        [
+          {
+            "value": "savepoint_drop_index_items_v_idx"
+          }
+        ],
+        [
+          {
+            "value": "savepoint_drop_index_items_v_idx"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointDropsSequenceCreatedAfterSavepointRepro#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointDropsSequenceCreatedAfterSavepointRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK TO SAVEPOINT drops sequence created after savepoint",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointdropssequencecreatedaftersavepointrepro-0001-select-nextval-savepoint_create_sequence_seq",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointdropssequencecreatedaftersavepointrepro-0001-select-nextval-savepoint_create_sequence_seq",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('savepoint_create_sequence_seq');",
+      "querySha256": "9d837e0b912690150e237892ca0674c5f5c50fea701aaeff958fe69bafc5abd9",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointDropsSequenceCreatedAfterSavepointRepro#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointDropsSequenceCreatedAfterSavepointRepro",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK TO SAVEPOINT drops sequence created after savepoint",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointdropssequencecreatedaftersavepointrepro-0002-select-nextval-savepoint_create_sequence_seq",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointdropssequencecreatedaftersavepointrepro-0002-select-nextval-savepoint_create_sequence_seq",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
+      "query": "SELECT nextval('savepoint_create_sequence_seq');",
+      "querySha256": "9d837e0b912690150e237892ca0674c5f5c50fea701aaeff958fe69bafc5abd9",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresDroppedSequenceRepro#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresDroppedSequenceRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores dropped sequence",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedsequencerepro-0001-select-nextval-savepoint_drop_sequence_seq",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedsequencerepro-0001-select-nextval-savepoint_drop_sequence_seq",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
+      "query": "SELECT nextval('savepoint_drop_sequence_seq');",
+      "querySha256": "56cbd57334ad62566f936dd48c23f2626352d03406e3f67b930d1ca23c714900",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresDroppedSequenceRepro#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresDroppedSequenceRepro",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores dropped sequence",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedsequencerepro-0002-select-nextval-savepoint_drop_sequence_seq",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedsequencerepro-0002-select-nextval-savepoint_drop_sequence_seq",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('savepoint_drop_sequence_seq');",
+      "querySha256": "56cbd57334ad62566f936dd48c23f2626352d03406e3f67b930d1ca23c714900",
+      "expectedRows": [
+        [
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresAlterSequenceOwnedByDependencyRepro#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresAlterSequenceOwnedByDependencyRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores ALTER SEQUENCE OWNED BY dependency",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresaltersequenceownedbydependencyrepro-0001-select-nextval-savepoint_sequence_owned_seq",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresaltersequenceownedbydependencyrepro-0001-select-nextval-savepoint_sequence_owned_seq",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('savepoint_sequence_owned_seq');",
+      "querySha256": "c6533ca2a62823ab5b642a7da85a9c849b073b1d0ec75ebeecf2b8d209fe1658",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresAlterSequenceOwnedByNoneDependencyGuard#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresAlterSequenceOwnedByNoneDependencyGuard",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores ALTER SEQUENCE OWNED BY NONE dependency",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresaltersequenceownedbynonedependencyguard-0001-select-nextval-savepoint_sequence_owned_none_seq",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresaltersequenceownedbynonedependencyguard-0001-select-nextval-savepoint_sequence_owned_none_seq",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
+      "query": "SELECT nextval('savepoint_sequence_owned_none_seq');",
+      "querySha256": "5a06524e78f85b597313df7022f962eb99ef43379a815ddf32d87e290921dea9",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresReplacedFunctionDefinitionRepro#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresReplacedFunctionDefinitionRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores replaced function definition",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresreplacedfunctiondefinitionrepro-0001-select-savepoint_replace_function_value",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresreplacedfunctiondefinitionrepro-0001-select-savepoint_replace_function_value",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT savepoint_replace_function_value();",
+      "querySha256": "0e0d74977e9a4bfbfbf5f760ac5d37c84c5e43d388eb77b3366e20f76624371e",
+      "expectedRows": [
+        [
+          {
+            "value": "8"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresReplacedFunctionDefinitionRepro#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresReplacedFunctionDefinitionRepro",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores replaced function definition",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresreplacedfunctiondefinitionrepro-0002-select-savepoint_replace_function_value",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresreplacedfunctiondefinitionrepro-0002-select-savepoint_replace_function_value",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT savepoint_replace_function_value();",
+      "querySha256": "0e0d74977e9a4bfbfbf5f760ac5d37c84c5e43d388eb77b3366e20f76624371e",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresReplacedProcedureDefinitionRepro#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresReplacedProcedureDefinitionRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores replaced procedure definition",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresreplacedproceduredefinitionrepro-0001-select-value-from-savepoint_replace_procedure_audit",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresreplacedproceduredefinitionrepro-0001-select-value-from-savepoint_replace_procedure_audit",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT value FROM savepoint_replace_procedure_audit;",
+      "querySha256": "959c2b0497a5fb05a892f379e3f3f5542ee132bc48747fd5b87918be5d23bf66",
+      "expectedRows": [
+        [
+          {
+            "value": "8"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresReplacedProcedureDefinitionRepro#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresReplacedProcedureDefinitionRepro",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores replaced procedure definition",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresreplacedproceduredefinitionrepro-0002-select-value-from-savepoint_replace_procedure_audit",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresreplacedproceduredefinitionrepro-0002-select-value-from-savepoint_replace_procedure_audit",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT value FROM savepoint_replace_procedure_audit;",
+      "querySha256": "959c2b0497a5fb05a892f379e3f3f5542ee132bc48747fd5b87918be5d23bf66",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresReplacedViewDefinitionRepro#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresReplacedViewDefinitionRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores replaced view definition",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresreplacedviewdefinitionrepro-0001-select-id-from-savepoint_replace_view_reader",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresreplacedviewdefinitionrepro-0001-select-id-from-savepoint_replace_view_reader",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM savepoint_replace_view_reader;",
+      "querySha256": "19a1d3b824128546754ca23b348bc2d57b541ea9129df3d69542d1064c5044cc",
+      "expectedRows": [
+        [
+          {
+            "value": "8"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresReplacedViewDefinitionRepro#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresReplacedViewDefinitionRepro",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores replaced view definition",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresreplacedviewdefinitionrepro-0002-select-id-from-savepoint_replace_view_reader",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresreplacedviewdefinitionrepro-0002-select-id-from-savepoint_replace_view_reader",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM savepoint_replace_view_reader;",
+      "querySha256": "19a1d3b824128546754ca23b348bc2d57b541ea9129df3d69542d1064c5044cc",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresReplacedTriggerDefinitionRepro#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresReplacedTriggerDefinitionRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores replaced trigger definition",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresreplacedtriggerdefinitionrepro-0001-select-label-from-savepoint_replace_trigger_items-where",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresreplacedtriggerdefinitionrepro-0001-select-label-from-savepoint_replace_trigger_items-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT label FROM savepoint_replace_trigger_items WHERE id = 1;",
+      "querySha256": "0ada2364b8eb84039d765808ea5989cf1c4ad4a32cfb10f38acac636989a8dcd",
+      "expectedRows": [
+        [
+          {
+            "value": "eight"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresReplacedTriggerDefinitionRepro#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresReplacedTriggerDefinitionRepro",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores replaced trigger definition",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresreplacedtriggerdefinitionrepro-0002-select-label-from-savepoint_replace_trigger_items-where",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresreplacedtriggerdefinitionrepro-0002-select-label-from-savepoint_replace_trigger_items-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT label FROM savepoint_replace_trigger_items WHERE id = 1;",
+      "querySha256": "0ada2364b8eb84039d765808ea5989cf1c4ad4a32cfb10f38acac636989a8dcd",
+      "expectedRows": [
+        [
+          {
+            "value": "seven"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresRefreshedMaterializedViewGuard#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresRefreshedMaterializedViewGuard",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores refreshed materialized view",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresrefreshedmaterializedviewguard-0001-select-id-from-savepoint_refresh_matview_reader-order",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresrefreshedmaterializedviewguard-0001-select-id-from-savepoint_refresh_matview_reader-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM savepoint_refresh_matview_reader\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "174a24c68d98b60b5315ba486b8285f243825d7bd06dea02b6970aa4902fbda6",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresRefreshedMaterializedViewGuard#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresRefreshedMaterializedViewGuard",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores refreshed materialized view",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresrefreshedmaterializedviewguard-0002-select-id-from-savepoint_refresh_matview_reader",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresrefreshedmaterializedviewguard-0002-select-id-from-savepoint_refresh_matview_reader",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM savepoint_refresh_matview_reader;",
+      "querySha256": "bc619c281ae5936392c4d80410e2977e8c9a3f8031c0905f90dfdb65b21cbfe4",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresRenamedMaterializedViewGuard#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresRenamedMaterializedViewGuard",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores renamed materialized view",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedmaterializedviewguard-0001-select-id-from-savepoint_rename_matview_new",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedmaterializedviewguard-0001-select-id-from-savepoint_rename_matview_new",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM savepoint_rename_matview_new;",
+      "querySha256": "54b97009ef1a16fb62b95a4783ba45362bad011d7ef32f7bc1221633df14ceb6",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresRenamedMaterializedViewGuard#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresRenamedMaterializedViewGuard",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores renamed materialized view",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedmaterializedviewguard-0002-select-id-from-savepoint_rename_matview_old",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedmaterializedviewguard-0002-select-id-from-savepoint_rename_matview_old",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM savepoint_rename_matview_old;",
+      "querySha256": "07131216d861a9f125e3d92164d1fb98dc4f38aa087ef77c38cbd943caa4abad",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresRenamedMaterializedViewGuard#0003",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresRenamedMaterializedViewGuard",
+      "ordinal": 3,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores renamed materialized view",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedmaterializedviewguard-0003-select-id-from-savepoint_rename_matview_new",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedmaterializedviewguard-0003-select-id-from-savepoint_rename_matview_new",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
+      "query": "SELECT id FROM savepoint_rename_matview_new;",
+      "querySha256": "54b97009ef1a16fb62b95a4783ba45362bad011d7ef32f7bc1221633df14ceb6",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresRenamedMaterializedViewColumnGuard#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresRenamedMaterializedViewColumnGuard",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores renamed materialized view column",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedmaterializedviewcolumnguard-0001-select-id-renamed_label-from-savepoint_rename_matview_column_reader",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedmaterializedviewcolumnguard-0001-select-id-renamed_label-from-savepoint_rename_matview_column_reader",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, renamed_label FROM savepoint_rename_matview_column_reader;",
+      "querySha256": "14af296f9a2b77b1858597429680ffd6524388d17ba328f51e3c2e48915305ae",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "before"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresRenamedMaterializedViewColumnGuard#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresRenamedMaterializedViewColumnGuard",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores renamed materialized view column",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedmaterializedviewcolumnguard-0002-select-id-label-from-savepoint_rename_matview_column_reader",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedmaterializedviewcolumnguard-0002-select-id-label-from-savepoint_rename_matview_column_reader",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label FROM savepoint_rename_matview_column_reader;",
+      "querySha256": "5393d3486fd19d3ed1a6a0f2ff4f2613a8a5831414dd20e6388b5a8b49306dba",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "before"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresRenamedMaterializedViewColumnGuard#0003",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresRenamedMaterializedViewColumnGuard",
+      "ordinal": 3,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores renamed materialized view column",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedmaterializedviewcolumnguard-0003-select-renamed_label-from-savepoint_rename_matview_column_reader",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedmaterializedviewcolumnguard-0003-select-renamed_label-from-savepoint_rename_matview_column_reader",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42703",
+      "errorSeverity": "ERROR",
+      "query": "SELECT renamed_label FROM savepoint_rename_matview_column_reader;",
+      "querySha256": "99d1adb8f3d6b5a04004e0ec14dd502740dd0239f42dc38804a85e4124d46b75",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresTruncatedRowsRepro#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresTruncatedRowsRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores truncated rows",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestorestruncatedrowsrepro-0001-select-count-*-from-savepoint_truncate_items",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestorestruncatedrowsrepro-0001-select-count-*-from-savepoint_truncate_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM savepoint_truncate_items;",
+      "querySha256": "a6d10480a047f8c901fd53ae8b839ac035bf059ab89fd3567a91506998a7c732",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresTruncatedRowsRepro#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresTruncatedRowsRepro",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores truncated rows",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestorestruncatedrowsrepro-0002-select-id-label-from-savepoint_truncate_items",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestorestruncatedrowsrepro-0002-select-id-label-from-savepoint_truncate_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM savepoint_truncate_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "c62bca19a90ea1a32bc040349320114b675e360ef3e2d1a33566b878a6fac87e",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "one"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "two"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsSchemaCreatedInTransactionGuard#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsSchemaCreatedInTransactionGuard",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK drops schema created in transaction",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackdropsschemacreatedintransactionguard-0001-select-count-*-from-information_schema.schemata",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackdropsschemacreatedintransactionguard-0001-select-count-*-from-information_schema.schemata",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM information_schema.schemata\n\t\t\t\t\t\tWHERE schema_name = 'rollback_create_schema';",
+      "querySha256": "efd6ff1172a07bd76a65334ace18d4b2b322486f5192fc41c30f3c3878860c91",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsSchemaCreatedInTransactionGuard#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackDropsSchemaCreatedInTransactionGuard",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK drops schema created in transaction",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackdropsschemacreatedintransactionguard-0002-select-count-*-from-information_schema.schemata",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackdropsschemacreatedintransactionguard-0002-select-count-*-from-information_schema.schemata",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM information_schema.schemata\n\t\t\t\t\t\tWHERE schema_name = 'rollback_create_schema';",
+      "querySha256": "efd6ff1172a07bd76a65334ace18d4b2b322486f5192fc41c30f3c3878860c91",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedSchemaGuard#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedSchemaGuard",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK restores dropped schema",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresdroppedschemaguard-0001-select-count-*-from-information_schema.schemata",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresdroppedschemaguard-0001-select-count-*-from-information_schema.schemata",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM information_schema.schemata\n\t\t\t\t\t\tWHERE schema_name = 'rollback_drop_schema';",
+      "querySha256": "71dad0ea81c7d23d6fbecc6078bdfae13a0166029b09b4716d74d209037cfdfb",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedSchemaGuard#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRestoresDroppedSchemaGuard",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK restores dropped schema",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbackrestoresdroppedschemaguard-0002-select-count-*-from-information_schema.schemata",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrestoresdroppedschemaguard-0002-select-count-*-from-information_schema.schemata",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM information_schema.schemata\n\t\t\t\t\t\tWHERE schema_name = 'rollback_drop_schema';",
+      "querySha256": "71dad0ea81c7d23d6fbecc6078bdfae13a0166029b09b4716d74d209037cfdfb",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointDropsSchemaCreatedAfterSavepointGuard#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointDropsSchemaCreatedAfterSavepointGuard",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK TO SAVEPOINT drops schema created after savepoint",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointdropsschemacreatedaftersavepointguard-0001-select-count-*-from-information_schema.schemata",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointdropsschemacreatedaftersavepointguard-0001-select-count-*-from-information_schema.schemata",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM information_schema.schemata\n\t\t\t\t\t\tWHERE schema_name = 'savepoint_create_schema';",
+      "querySha256": "c3ddcfcf874d0e01ea05dfe4cd666318cc07f84b4442f87c3251b0d563ccb341",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointDropsSchemaCreatedAfterSavepointGuard#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointDropsSchemaCreatedAfterSavepointGuard",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK TO SAVEPOINT drops schema created after savepoint",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointdropsschemacreatedaftersavepointguard-0002-select-count-*-from-information_schema.schemata",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointdropsschemacreatedaftersavepointguard-0002-select-count-*-from-information_schema.schemata",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM information_schema.schemata\n\t\t\t\t\t\tWHERE schema_name = 'savepoint_create_schema';",
+      "querySha256": "c3ddcfcf874d0e01ea05dfe4cd666318cc07f84b4442f87c3251b0d563ccb341",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresDroppedSchemaGuard#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresDroppedSchemaGuard",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores dropped schema",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedschemaguard-0001-select-count-*-from-information_schema.schemata",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedschemaguard-0001-select-count-*-from-information_schema.schemata",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM information_schema.schemata\n\t\t\t\t\t\tWHERE schema_name = 'savepoint_drop_schema';",
+      "querySha256": "c26f84704db171121ea524a3c4e57428d55ef56d69d59066a3d34d3007527cde",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresDroppedSchemaGuard#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackToSavepointRestoresDroppedSchemaGuard",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK TO SAVEPOINT restores dropped schema",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedschemaguard-0002-select-count-*-from-information_schema.schemata",
+      "suggestedId": "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedschemaguard-0002-select-count-*-from-information_schema.schemata",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM information_schema.schemata\n\t\t\t\t\t\tWHERE schema_name = 'savepoint_drop_schema';",
+      "querySha256": "c26f84704db171121ea524a3c4e57428d55ef56d69d59066a3d34d3007527cde",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRevertsCreateExtensionRepro#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRevertsCreateExtensionRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK reverts CREATE EXTENSION",
+      "oracle": "internal",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrevertscreateextensionrepro-0001-select-extname-from-pg_catalog.pg_extension-where",
+      "expectedKind": "rows",
+      "query": "SELECT extname\n\t\t\t\t\t\tFROM pg_catalog.pg_extension\n\t\t\t\t\t\tWHERE extname = 'hstore';",
+      "querySha256": "28517973bc0d5431ea4ef957b7b263161e539bfa374fdb5699d52dc6e50cb51f",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRevertsCreateExtensionRepro#0002",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRevertsCreateExtensionRepro",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK reverts CREATE EXTENSION",
+      "oracle": "internal",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrevertscreateextensionrepro-0002-select-count-*-from-pg_catalog.pg_extension",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_extension\n\t\t\t\t\t\tWHERE extname = 'hstore';",
+      "querySha256": "1ce3040fec60491fbc96785e6ef256092a584f358ed12bf443222c285a10571c",
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestRollbackRevertsCreateExtensionRepro#0003",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestRollbackRevertsCreateExtensionRepro",
+      "ordinal": 3,
+      "scriptName": "ROLLBACK reverts CREATE EXTENSION",
+      "oracle": "internal",
+      "suggestedId": "transaction-ddl-repro-test-testrollbackrevertscreateextensionrepro-0003-select-to_regtype-public.hstore-is-null",
+      "expectedKind": "rows",
+      "query": "SELECT to_regtype('public.hstore') IS NULL;",
+      "querySha256": "d636617eabb2681152421b0834c69be7531034a02c6f4a4c20c4dad448f0adf3",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestCreateDatabaseInsideTransactionRejectedRepro#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestCreateDatabaseInsideTransactionRejectedRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE DATABASE inside transaction is rejected",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testcreatedatabaseinsidetransactionrejectedrepro-0001-create-database-tx_create_database_repro",
+      "suggestedId": "transaction-ddl-repro-test-testcreatedatabaseinsidetransactionrejectedrepro-0001-create-database-tx_create_database_repro",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "25001",
+      "errorSeverity": "ERROR",
+      "query": "CREATE DATABASE tx_create_database_repro;",
+      "querySha256": "abc50b6a6a33280474e635c96dfdceabdaca153c8a30846406cbfcbf48b24db2",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_repro_test.go:TestDropDatabaseInsideTransactionRejectedRepro#0001",
+      "source": "testing/go/transaction_ddl_repro_test.go:TestDropDatabaseInsideTransactionRejectedRepro",
+      "ordinal": 1,
+      "scriptName": "DROP DATABASE inside transaction is rejected",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-repro-test-testdropdatabaseinsidetransactionrejectedrepro-0001-drop-database-tx_drop_database_repro",
+      "suggestedId": "transaction-ddl-repro-test-testdropdatabaseinsidetransactionrejectedrepro-0001-drop-database-tx_drop_database_repro",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "25001",
+      "errorSeverity": "ERROR",
+      "query": "DROP DATABASE tx_drop_database_repro;",
+      "querySha256": "1dee4780627579387c0ca8204743ce936e528ed28674bab770d957042b009422",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

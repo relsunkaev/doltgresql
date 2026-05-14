@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestDropSchemaClearsDefaultPrivilegesRepro reproduces an ACL persistence bug:
@@ -45,10 +43,10 @@ func TestDropSchemaClearsDefaultPrivilegesRepro(t *testing.T) {
 					Query: `INSERT INTO drop_schema_default_acl.before_drop VALUES (1, 'old visible');`,
 				},
 				{
-					Query:    `SELECT label FROM drop_schema_default_acl.before_drop;`,
-					Expected: []sql.Row{{"old visible"}},
+					Query: `SELECT label FROM drop_schema_default_acl.before_drop;`,
+
 					Username: `drop_schema_default_reader`,
-					Password: `default`,
+					Password: `default`, PostgresOracle: ScriptTestPostgresOracle{ID: "default-privileges-schema-drop-repro-test-testdropschemaclearsdefaultprivilegesrepro-0001-select-label-from-drop_schema_default_acl.before_drop"},
 				},
 				{
 					Query: `DROP TABLE drop_schema_default_acl.before_drop;`,
@@ -72,10 +70,10 @@ func TestDropSchemaClearsDefaultPrivilegesRepro(t *testing.T) {
 					Query: `INSERT INTO drop_schema_default_acl.after_drop VALUES (1, 'new sensitive');`,
 				},
 				{
-					Query:       `SELECT label FROM drop_schema_default_acl.after_drop;`,
-					ExpectedErr: `permission denied`,
-					Username:    `drop_schema_default_reader`,
-					Password:    `default`,
+					Query: `SELECT label FROM drop_schema_default_acl.after_drop;`,
+
+					Username: `drop_schema_default_reader`,
+					Password: `default`, PostgresOracle: ScriptTestPostgresOracle{ID: "default-privileges-schema-drop-repro-test-testdropschemaclearsdefaultprivilegesrepro-0002-select-label-from-drop_schema_default_acl.after_drop", Compare: "sqlstate"},
 				},
 			},
 		},

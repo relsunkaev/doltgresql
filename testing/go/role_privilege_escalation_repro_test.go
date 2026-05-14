@@ -27,18 +27,20 @@ func TestAlterRoleSelfCreatedbPrivilegeEscalationRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER ROLE self_createdb CREATEDB;`,
-					ExpectedErr: `permission denied`,
-					Username:    `self_createdb`,
-					Password:    `pw`,
+					Query: `ALTER ROLE self_createdb CREATEDB;`,
+
+					Username: `self_createdb`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
+
+					// TestAlterRoleSelfCreateRolePrivilegeEscalationRepro reproduces a security
+					// bug: a normal role can grant itself CREATEROLE.
+					ID: "role-privilege-escalation-repro-test-testalterroleselfcreatedbprivilegeescalationrepro-0001-alter-role-self_createdb-createdb", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterRoleSelfCreateRolePrivilegeEscalationRepro reproduces a security
-// bug: a normal role can grant itself CREATEROLE.
 func TestAlterRoleSelfCreateRolePrivilegeEscalationRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -48,18 +50,20 @@ func TestAlterRoleSelfCreateRolePrivilegeEscalationRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER ROLE self_createrole CREATEROLE;`,
-					ExpectedErr: `permission denied`,
-					Username:    `self_createrole`,
-					Password:    `pw`,
+					Query: `ALTER ROLE self_createrole CREATEROLE;`,
+
+					Username: `self_createrole`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
+
+					// TestAlterRoleSelfLoginAttributeRepro reproduces a role-authorization bug: a
+					// normal role cannot change its own LOGIN attribute.
+					ID: "role-privilege-escalation-repro-test-testalterroleselfcreateroleprivilegeescalationrepro-0001-alter-role-self_createrole-createrole", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterRoleSelfLoginAttributeRepro reproduces a role-authorization bug: a
-// normal role cannot change its own LOGIN attribute.
 func TestAlterRoleSelfLoginAttributeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -69,18 +73,20 @@ func TestAlterRoleSelfLoginAttributeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER ROLE self_login_attr NOLOGIN;`,
-					ExpectedErr: `permission denied`,
-					Username:    `self_login_attr`,
-					Password:    `pw`,
+					Query: `ALTER ROLE self_login_attr NOLOGIN;`,
+
+					Username: `self_login_attr`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
+
+					// TestAlterRoleSelfInheritAttributeRepro reproduces a role-authorization bug:
+					// a normal role cannot change its own INHERIT attribute.
+					ID: "role-privilege-escalation-repro-test-testalterroleselfloginattributerepro-0001-alter-role-self_login_attr-nologin", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterRoleSelfInheritAttributeRepro reproduces a role-authorization bug:
-// a normal role cannot change its own INHERIT attribute.
 func TestAlterRoleSelfInheritAttributeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -90,18 +96,20 @@ func TestAlterRoleSelfInheritAttributeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER ROLE self_inherit_attr NOINHERIT;`,
-					ExpectedErr: `permission denied`,
-					Username:    `self_inherit_attr`,
-					Password:    `pw`,
+					Query: `ALTER ROLE self_inherit_attr NOINHERIT;`,
+
+					Username: `self_inherit_attr`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
+
+					// TestAlterRoleSelfSuperuserPrivilegeEscalationGuard guards that a normal role
+					// cannot grant itself SUPERUSER.
+					ID: "role-privilege-escalation-repro-test-testalterroleselfinheritattributerepro-0001-alter-role-self_inherit_attr-noinherit", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterRoleSelfSuperuserPrivilegeEscalationGuard guards that a normal role
-// cannot grant itself SUPERUSER.
 func TestAlterRoleSelfSuperuserPrivilegeEscalationGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -111,18 +119,20 @@ func TestAlterRoleSelfSuperuserPrivilegeEscalationGuard(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER ROLE self_superuser SUPERUSER;`,
-					ExpectedErr: `does not have permission`,
-					Username:    `self_superuser`,
-					Password:    `pw`,
+					Query: `ALTER ROLE self_superuser SUPERUSER;`,
+
+					Username: `self_superuser`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
+
+					// TestCreateRoleSuperuserRequiresSuperuserGuard guards that a non-superuser
+					// role with CREATEROLE cannot create a SUPERUSER role.
+					ID: "role-privilege-escalation-repro-test-testalterroleselfsuperuserprivilegeescalationguard-0001-alter-role-self_superuser-superuser", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateRoleSuperuserRequiresSuperuserGuard guards that a non-superuser
-// role with CREATEROLE cannot create a SUPERUSER role.
 func TestCreateRoleSuperuserRequiresSuperuserGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -132,18 +142,20 @@ func TestCreateRoleSuperuserRequiresSuperuserGuard(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CREATE ROLE superuser_created SUPERUSER;`,
-					ExpectedErr: `does not have permission`,
-					Username:    `superuser_role_creator`,
-					Password:    `pw`,
+					Query: `CREATE ROLE superuser_created SUPERUSER;`,
+
+					Username: `superuser_role_creator`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
+
+					// TestCreateRoleBypassRLSRequiresSuperuserRepro reproduces a security bug:
+					// a non-superuser role with CREATEROLE can create a BYPASSRLS role.
+					ID: "role-privilege-escalation-repro-test-testcreaterolesuperuserrequiressuperuserguard-0001-create-role-superuser_created-superuser", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateRoleBypassRLSRequiresSuperuserRepro reproduces a security bug:
-// a non-superuser role with CREATEROLE can create a BYPASSRLS role.
 func TestCreateRoleBypassRLSRequiresSuperuserRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -153,18 +165,20 @@ func TestCreateRoleBypassRLSRequiresSuperuserRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CREATE ROLE bypass_created BYPASSRLS;`,
-					ExpectedErr: `permission denied`,
-					Username:    `bypass_role_creator`,
-					Password:    `pw`,
+					Query: `CREATE ROLE bypass_created BYPASSRLS;`,
+
+					Username: `bypass_role_creator`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
+
+					// TestCreateRoleReplicationRequiresSuperuserRepro reproduces a security bug:
+					// a non-superuser role with CREATEROLE can create a REPLICATION role.
+					ID: "role-privilege-escalation-repro-test-testcreaterolebypassrlsrequiressuperuserrepro-0001-create-role-bypass_created-bypassrls", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateRoleReplicationRequiresSuperuserRepro reproduces a security bug:
-// a non-superuser role with CREATEROLE can create a REPLICATION role.
 func TestCreateRoleReplicationRequiresSuperuserRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -174,18 +188,20 @@ func TestCreateRoleReplicationRequiresSuperuserRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CREATE ROLE replication_created REPLICATION;`,
-					ExpectedErr: `permission denied`,
-					Username:    `replication_role_creator`,
-					Password:    `pw`,
+					Query: `CREATE ROLE replication_created REPLICATION;`,
+
+					Username: `replication_role_creator`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
+
+					// TestCreateRoleCreatedbRequiresCreatedbRepro reproduces a security bug:
+					// CREATEROLE alone does not allow creating roles with CREATEDB.
+					ID: "role-privilege-escalation-repro-test-testcreaterolereplicationrequiressuperuserrepro-0001-create-role-replication_created-replication", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateRoleCreatedbRequiresCreatedbRepro reproduces a security bug:
-// CREATEROLE alone does not allow creating roles with CREATEDB.
 func TestCreateRoleCreatedbRequiresCreatedbRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -195,18 +211,20 @@ func TestCreateRoleCreatedbRequiresCreatedbRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CREATE ROLE createdb_created CREATEDB;`,
-					ExpectedErr: `permission denied`,
-					Username:    `createdb_role_creator`,
-					Password:    `pw`,
+					Query: `CREATE ROLE createdb_created CREATEDB;`,
+
+					Username: `createdb_role_creator`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
+
+					// TestAlterRoleBypassRLSRequiresSuperuserGuard guards that a non-superuser role
+					// with CREATEROLE cannot grant BYPASSRLS to another role.
+					ID: "role-privilege-escalation-repro-test-testcreaterolecreatedbrequirescreatedbrepro-0001-create-role-createdb_created-createdb", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterRoleBypassRLSRequiresSuperuserGuard guards that a non-superuser role
-// with CREATEROLE cannot grant BYPASSRLS to another role.
 func TestAlterRoleBypassRLSRequiresSuperuserGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -217,18 +235,20 @@ func TestAlterRoleBypassRLSRequiresSuperuserGuard(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER ROLE bypass_altered BYPASSRLS;`,
-					ExpectedErr: `does not have permission`,
-					Username:    `bypass_role_alterer`,
-					Password:    `pw`,
+					Query: `ALTER ROLE bypass_altered BYPASSRLS;`,
+
+					Username: `bypass_role_alterer`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
+
+					// TestAlterRoleReplicationRequiresSuperuserGuard guards that a non-superuser
+					// role with CREATEROLE cannot grant REPLICATION to another role.
+					ID: "role-privilege-escalation-repro-test-testalterrolebypassrlsrequiressuperuserguard-0001-alter-role-bypass_altered-bypassrls", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterRoleReplicationRequiresSuperuserGuard guards that a non-superuser
-// role with CREATEROLE cannot grant REPLICATION to another role.
 func TestAlterRoleReplicationRequiresSuperuserGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -239,18 +259,20 @@ func TestAlterRoleReplicationRequiresSuperuserGuard(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER ROLE replication_altered REPLICATION;`,
-					ExpectedErr: `does not have permission`,
-					Username:    `replication_role_alterer`,
-					Password:    `pw`,
+					Query: `ALTER ROLE replication_altered REPLICATION;`,
+
+					Username: `replication_role_alterer`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
+
+					// TestAlterRoleCreatedbRequiresCreatedbRepro reproduces a security bug:
+					// CREATEROLE alone does not allow granting CREATEDB to another role.
+					ID: "role-privilege-escalation-repro-test-testalterrolereplicationrequiressuperuserguard-0001-alter-role-replication_altered-replication", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterRoleCreatedbRequiresCreatedbRepro reproduces a security bug:
-// CREATEROLE alone does not allow granting CREATEDB to another role.
 func TestAlterRoleCreatedbRequiresCreatedbRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -261,18 +283,20 @@ func TestAlterRoleCreatedbRequiresCreatedbRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER ROLE createdb_altered CREATEDB;`,
-					ExpectedErr: `permission denied`,
-					Username:    `createdb_role_alterer`,
-					Password:    `pw`,
+					Query: `ALTER ROLE createdb_altered CREATEDB;`,
+
+					Username: `createdb_role_alterer`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
+
+					// TestAlterRoleSuperuserRequiresSuperuserGuard guards that a non-superuser role
+					// with CREATEROLE cannot grant SUPERUSER to another role.
+					ID: "role-privilege-escalation-repro-test-testalterrolecreatedbrequirescreatedbrepro-0001-alter-role-createdb_altered-createdb", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterRoleSuperuserRequiresSuperuserGuard guards that a non-superuser role
-// with CREATEROLE cannot grant SUPERUSER to another role.
 func TestAlterRoleSuperuserRequiresSuperuserGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -283,10 +307,10 @@ func TestAlterRoleSuperuserRequiresSuperuserGuard(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER ROLE superuser_altered SUPERUSER;`,
-					ExpectedErr: `does not have permission`,
-					Username:    `superuser_role_alterer`,
-					Password:    `pw`,
+					Query: `ALTER ROLE superuser_altered SUPERUSER;`,
+
+					Username: `superuser_role_alterer`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-privilege-escalation-repro-test-testalterrolesuperuserrequiressuperuserguard-0001-alter-role-superuser_altered-superuser", Compare: "sqlstate"},
 				},
 			},
 		},

@@ -30,36 +30,22 @@ func TestGroupBy(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "select team as f from members order by id, f",
-					Expected: []sql.Row{{"red"}, {"red"}, {"orange"}, {"orange"}, {"orange"}, {"purple"}},
+					Query: "select team as f from members order by id, f", PostgresOracle: ScriptTestPostgresOracle{ID: "groupby-test-testgroupby-0001-select-team-as-f-from"},
 				},
 				{
-					Query: "SELECT team, COUNT(*) FROM members GROUP BY team ORDER BY 2",
-					Expected: []sql.Row{
-						{"purple", int64(1)},
-						{"red", int64(2)},
-						{"orange", int64(3)},
-					},
+					Query: "SELECT team, COUNT(*) FROM members GROUP BY team ORDER BY 2", PostgresOracle: ScriptTestPostgresOracle{ID: "groupby-test-testgroupby-0002-select-team-count-*-from"},
 				},
 				{
-					Query: "SELECT team, COUNT(*) FROM members GROUP BY 1 ORDER BY 2",
-					Expected: []sql.Row{
-						{"purple", int64(1)},
-						{"red", int64(2)},
-						{"orange", int64(3)},
-					},
+					Query: "SELECT team, COUNT(*) FROM members GROUP BY 1 ORDER BY 2", PostgresOracle: ScriptTestPostgresOracle{ID: "groupby-test-testgroupby-0003-select-team-count-*-from"},
 				},
 				{
-					Query:       "SELECT team, COUNT(*) FROM members GROUP BY team ORDER BY columndoesnotexist",
-					ExpectedErr: "not be found",
+					Query: "SELECT team, COUNT(*) FROM members GROUP BY team ORDER BY columndoesnotexist", PostgresOracle: ScriptTestPostgresOracle{ID: "groupby-test-testgroupby-0004-select-team-count-*-from", Compare: "sqlstate"},
 				},
 				{
-					Query:    "SELECT DISTINCT t1.id as id FROM members AS t1 JOIN members AS t2 ON t1.id = t2.id WHERE t2.id > 0 ORDER BY t1.id",
-					Expected: []sql.Row{{3}, {4}, {5}, {6}, {7}, {8}},
+					Query: "SELECT DISTINCT t1.id as id FROM members AS t1 JOIN members AS t2 ON t1.id = t2.id WHERE t2.id > 0 ORDER BY t1.id", PostgresOracle: ScriptTestPostgresOracle{ID: "groupby-test-testgroupby-0005-select-distinct-t1.id-as-id"},
 				},
 				{
-					Query:    "SELECT id as alias1, (SELECT alias1+1 group by alias1 having alias1 > 0) FROM members where id < 6;",
-					Expected: []sql.Row{{3, 4}, {4, 5}, {5, 6}},
+					Query: "SELECT id as alias1, (SELECT alias1+1 group by alias1 having alias1 > 0) FROM members where id < 6;", PostgresOracle: ScriptTestPostgresOracle{ID: "groupby-test-testgroupby-0006-select-id-as-alias1-select", Compare: "sqlstate"},
 				},
 				{
 					Query:    "SELECT id, (SELECT UPPER(team) having id > 3) as upper_team FROM members where id < 6;",
@@ -91,8 +77,7 @@ func TestGroupBy(t *testing.T) {
 						table_name,
 						json_object_agg(DISTINCT col, key_pos ORDER BY key_pos)
 					FROM published_columns
-					GROUP BY schema_name, table_name;`,
-					Expected: []sql.Row{{"public", "items", `{"id":1,"label":null}`}},
+					GROUP BY schema_name, table_name;`, PostgresOracle: ScriptTestPostgresOracle{ID: "groupby-test-testgroupby-0009-select-schema_name-table_name-json_object_agg-distinct"},
 				},
 				{
 					Query: `SELECT
@@ -106,8 +91,7 @@ func TestGroupBy(t *testing.T) {
 							)
 						), ',') AS primary_key
 					FROM published_columns
-					GROUP BY schema_name, table_name;`,
-					Expected: []sql.Row{{"public", "items", "id"}},
+					GROUP BY schema_name, table_name;`, PostgresOracle: ScriptTestPostgresOracle{ID: "groupby-test-testgroupby-0010-select-schema_name-table_name-array_to_string-array"},
 				},
 			},
 		},

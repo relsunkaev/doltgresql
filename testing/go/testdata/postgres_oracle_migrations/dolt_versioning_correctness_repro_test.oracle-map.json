@@ -1,0 +1,3187 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map dolt_versioning_correctness_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/dolt_versioning_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltStashPushPopRestoresTrackedRowRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltStashPushPopRestoresTrackedRowRepro",
+      "ordinal": 1,
+      "scriptName": "DOLT_STASH push pop restores tracked row edits",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltstashpushpoprestorestrackedrowrepro-0001-select-label-from-stash_tracked_items",
+      "expectedKind": "rows",
+      "query": "SELECT label FROM stash_tracked_items;",
+      "querySha256": "dd03560ec0df472acb0dd427f0dc232d9965a5349f2955832771f7eef2596f7b",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltStashPushPopRestoresTrackedRowRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltStashPushPopRestoresTrackedRowRepro",
+      "ordinal": 2,
+      "scriptName": "DOLT_STASH push pop restores tracked row edits",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltstashpushpoprestorestrackedrowrepro-0002-select-dolt_stash-push-tracked-edit",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_STASH('push', 'tracked-edit');",
+      "querySha256": "ad468250893be491f20e0028f5d922c85363ddc07f87240c7479b1380cc8418d",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltStashPushPopRestoresTrackedRowRepro#0003",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltStashPushPopRestoresTrackedRowRepro",
+      "ordinal": 3,
+      "scriptName": "DOLT_STASH push pop restores tracked row edits",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltstashpushpoprestorestrackedrowrepro-0003-select-label-from-stash_tracked_items",
+      "expectedKind": "rows",
+      "query": "SELECT label FROM stash_tracked_items;",
+      "querySha256": "dd03560ec0df472acb0dd427f0dc232d9965a5349f2955832771f7eef2596f7b",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltStashPushPopRestoresTrackedRowRepro#0004",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltStashPushPopRestoresTrackedRowRepro",
+      "ordinal": 4,
+      "scriptName": "DOLT_STASH push pop restores tracked row edits",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltstashpushpoprestorestrackedrowrepro-0004-select-dolt_stash-pop-tracked-edit",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_STASH('pop', 'tracked-edit');",
+      "querySha256": "6383f15a3e38bc77d2a6176f8bfdc31926132c07dc33c97ada1615df7f51f57b",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltStashPushPopRestoresTrackedRowRepro#0005",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltStashPushPopRestoresTrackedRowRepro",
+      "ordinal": 5,
+      "scriptName": "DOLT_STASH push pop restores tracked row edits",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltstashpushpoprestorestrackedrowrepro-0005-select-label-from-stash_tracked_items",
+      "expectedKind": "rows",
+      "query": "SELECT label FROM stash_tracked_items;",
+      "querySha256": "dd03560ec0df472acb0dd427f0dc232d9965a5349f2955832771f7eef2596f7b",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestBranchQualifiedSerialTableCreatesSequenceRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestBranchQualifiedSerialTableCreatesSequenceRepro",
+      "ordinal": 1,
+      "scriptName": "branch-qualified SERIAL table creates sequence",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testbranchqualifiedserialtablecreatessequencerepro-0001-select-label-from-postgres/serial_branch-.public.branch_plain_items",
+      "expectedKind": "rows",
+      "query": "SELECT label\n\t\t\t\t\t\tFROM \"postgres/serial_branch\".public.branch_plain_items\n\t\t\t\t\t\tWHERE id = 1;",
+      "querySha256": "afdbe408d16e9cdfb8817b5e455cd3d64966093ae858d1ed7b7dc7537fcf428c",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestBranchQualifiedSerialTableCreatesSequenceRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestBranchQualifiedSerialTableCreatesSequenceRepro",
+      "ordinal": 2,
+      "scriptName": "branch-qualified SERIAL table creates sequence",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testbranchqualifiedserialtablecreatessequencerepro-0002-select-id-label-from-postgres/serial_branch",
+      "expectedKind": "rows",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM \"postgres/serial_branch\".public.branch_serial_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "a4046023f38ed98734e5f3543f7fff6c13d3075efc038efea353f9d7dca52e2f",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestBranchQualifiedFunctionDefinitionRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestBranchQualifiedFunctionDefinitionRepro",
+      "ordinal": 1,
+      "scriptName": "branch-qualified function definition is branch-local",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testbranchqualifiedfunctiondefinitionrepro-0001-select-branch_function_value-abcd",
+      "expectedKind": "rows",
+      "query": "SELECT branch_function_value('abcd');",
+      "querySha256": "089dd1dcb477665a26db00270e08b77fc29d90aece6400e7182b12818173b06a",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestBranchQualifiedFunctionDefinitionRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestBranchQualifiedFunctionDefinitionRepro",
+      "ordinal": 2,
+      "scriptName": "branch-qualified function definition is branch-local",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testbranchqualifiedfunctiondefinitionrepro-0002-select-postgres/function_branch-.public.branch_function_value-55",
+      "expectedKind": "rows",
+      "query": "SELECT \"postgres/function_branch\".public.branch_function_value(55);",
+      "querySha256": "dee2eeee5c1f3886490eb1ff8eede55add7aa200dc292997ba499c78cd6e42fa",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestBranchQualifiedFunctionDefinitionRepro#0003",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestBranchQualifiedFunctionDefinitionRepro",
+      "ordinal": 3,
+      "scriptName": "branch-qualified function definition is branch-local",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testbranchqualifiedfunctiondefinitionrepro-0003-select-dolt_checkout-function_branch",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_CHECKOUT('function_branch');",
+      "querySha256": "70542e90d51cdc7bf9127e6c64def71eca57bb6ae590a2f166df01197889b349",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestBranchQualifiedFunctionDefinitionRepro#0004",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestBranchQualifiedFunctionDefinitionRepro",
+      "ordinal": 4,
+      "scriptName": "branch-qualified function definition is branch-local",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testbranchqualifiedfunctiondefinitionrepro-0004-select-branch_function_value-55",
+      "expectedKind": "rows",
+      "query": "SELECT branch_function_value(55);",
+      "querySha256": "5865caa48b1a093f639db74bb957eedc4ca2a092467d3274f232afc48d5b36ec",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestBranchQualifiedProcedureDefinitionRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestBranchQualifiedProcedureDefinitionRepro",
+      "ordinal": 1,
+      "scriptName": "branch-qualified procedure definition is branch-local",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testbranchqualifiedproceduredefinitionrepro-0001-call-branch_procedure_value-4",
+      "expectedKind": "rows",
+      "query": "CALL branch_procedure_value(4);",
+      "querySha256": "fba217fca09ff24d09f8ca557b61f2cbac5f839cb5f84aea1014a69d592ddfb5",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestBranchQualifiedProcedureDefinitionRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestBranchQualifiedProcedureDefinitionRepro",
+      "ordinal": 2,
+      "scriptName": "branch-qualified procedure definition is branch-local",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testbranchqualifiedproceduredefinitionrepro-0002-call-postgres/procedure_branch-.public.branch_procedure_value-55",
+      "expectedKind": "rows",
+      "query": "CALL \"postgres/procedure_branch\".public.branch_procedure_value(55);",
+      "querySha256": "8f0ed153e0f8f8347d80060aaeb5b5619eabf6aa99d6d68f78dafe5eb04d2701",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestBranchQualifiedProcedureDefinitionRepro#0003",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestBranchQualifiedProcedureDefinitionRepro",
+      "ordinal": 3,
+      "scriptName": "branch-qualified procedure definition is branch-local",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testbranchqualifiedproceduredefinitionrepro-0003-select-dolt_checkout-procedure_branch",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_CHECKOUT('procedure_branch');",
+      "querySha256": "8bff88c34346b691e7707e4880796cbb0355b9ad5b06df4552376dd1da3aadae",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestBranchQualifiedProcedureDefinitionRepro#0004",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestBranchQualifiedProcedureDefinitionRepro",
+      "ordinal": 4,
+      "scriptName": "branch-qualified procedure definition is branch-local",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testbranchqualifiedproceduredefinitionrepro-0004-call-branch_procedure_value-55",
+      "expectedKind": "rows",
+      "query": "CALL branch_procedure_value(55);",
+      "querySha256": "e11376816daad4f79b246223cd1052638bc262d0da08028ae9fd39daffbfd289",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestBranchQualifiedSequenceDefinitionRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestBranchQualifiedSequenceDefinitionRepro",
+      "ordinal": 1,
+      "scriptName": "branch-qualified sequence definition is branch-local",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testbranchqualifiedsequencedefinitionrepro-0001-select-dolt_checkout-sequence_branch",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_CHECKOUT('sequence_branch');",
+      "querySha256": "338ce0450b43fb338d5308a8e21b930563a85168395dc07f1a60a4b28f5b4b38",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestBranchQualifiedSequenceDefinitionRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestBranchQualifiedSequenceDefinitionRepro",
+      "ordinal": 2,
+      "scriptName": "branch-qualified sequence definition is branch-local",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testbranchqualifiedsequencedefinitionrepro-0002-select-nextval-branch_plain_seq",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('branch_plain_seq');",
+      "querySha256": "dc1746556a2219b4c5764909808d43857f027e999f337dd7787fc3b7a508e1cb",
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestBranchQualifiedEnumTypeDefinitionRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestBranchQualifiedEnumTypeDefinitionRepro",
+      "ordinal": 1,
+      "scriptName": "branch-qualified enum type definition is branch-local",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testbranchqualifiedenumtypedefinitionrepro-0001-select-dolt_checkout-type_branch",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_CHECKOUT('type_branch');",
+      "querySha256": "e3a50a281195efbf0fa19343e53a338a5f7d9a79074bed293d39b2fd0d9561c4",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestBranchQualifiedEnumTypeDefinitionRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestBranchQualifiedEnumTypeDefinitionRepro",
+      "ordinal": 2,
+      "scriptName": "branch-qualified enum type definition is branch-local",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testbranchqualifiedenumtypedefinitionrepro-0002-select-ok-::branch_enum_mood::text",
+      "expectedKind": "rows",
+      "query": "SELECT 'ok'::branch_enum_mood::text;",
+      "querySha256": "26d1a1a0e3ef590e8dec7f5b0c9b9d52bf6764c7e0ccc675578d1bfb2218acba",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestBranchQualifiedCompositeTypeDefinitionRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestBranchQualifiedCompositeTypeDefinitionRepro",
+      "ordinal": 1,
+      "scriptName": "branch-qualified composite type definition is branch-local",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testbranchqualifiedcompositetypedefinitionrepro-0001-select-dolt_checkout-composite_type_branch",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_CHECKOUT('composite_type_branch');",
+      "querySha256": "c3df9dab5424570c0dba5b12971dbddfdb0ba825a915971aba81275490a51cd3",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestBranchQualifiedCompositeTypeDefinitionRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestBranchQualifiedCompositeTypeDefinitionRepro",
+      "ordinal": 2,
+      "scriptName": "branch-qualified composite type definition is branch-local",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testbranchqualifiedcompositetypedefinitionrepro-0002-select-row-7-::branch_pair_type-.id",
+      "expectedKind": "rows",
+      "query": "SELECT (ROW(7)::branch_pair_type).id;",
+      "querySha256": "b925ffb6c42ee51cbc7acda60c641310a6899942e92f56832fe389aef59a41c0",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestBranchQualifiedDomainDefinitionRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestBranchQualifiedDomainDefinitionRepro",
+      "ordinal": 1,
+      "scriptName": "branch-qualified domain definition is branch-local",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testbranchqualifieddomaindefinitionrepro-0001-select-dolt_checkout-domain_branch",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_CHECKOUT('domain_branch');",
+      "querySha256": "1e4718c3a0c3bc5a84c81cd08ebbd0c8c39e7f887154d9b31e5340d3edbcbbd8",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestBranchQualifiedDomainDefinitionRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestBranchQualifiedDomainDefinitionRepro",
+      "ordinal": 2,
+      "scriptName": "branch-qualified domain definition is branch-local",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testbranchqualifieddomaindefinitionrepro-0002-select-7::branch_positive_domain::integer",
+      "expectedKind": "rows",
+      "query": "SELECT 7::branch_positive_domain::integer;",
+      "querySha256": "b62b4d252ef6732954e908fc268c1a1a9eaa3877b607a2263ed782f05e9fa753",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltStashPushPopRestoresUntrackedTableRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltStashPushPopRestoresUntrackedTableRepro",
+      "ordinal": 1,
+      "scriptName": "DOLT_STASH push pop restores untracked table",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltstashpushpoprestoresuntrackedtablerepro-0001-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status;",
+      "querySha256": "d1e78fb3f90b9dfdcfe071698c29f56f3408ad67f31e3e4bcfb4b82927693831",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltStashPushPopRestoresUntrackedTableRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltStashPushPopRestoresUntrackedTableRepro",
+      "ordinal": 2,
+      "scriptName": "DOLT_STASH push pop restores untracked table",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltstashpushpoprestoresuntrackedtablerepro-0002-select-dolt_stash-push-untracked-table-all",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_STASH('push', 'untracked-table', '--all');",
+      "querySha256": "650159b368cedc342a8104ff98747e4169b45c32a182f82182e8889cc45d6ad6",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltStashPushPopRestoresUntrackedTableRepro#0003",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltStashPushPopRestoresUntrackedTableRepro",
+      "ordinal": 3,
+      "scriptName": "DOLT_STASH push pop restores untracked table",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltstashpushpoprestoresuntrackedtablerepro-0003-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status;",
+      "querySha256": "d1e78fb3f90b9dfdcfe071698c29f56f3408ad67f31e3e4bcfb4b82927693831",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltStashPushPopRestoresUntrackedTableRepro#0004",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltStashPushPopRestoresUntrackedTableRepro",
+      "ordinal": 4,
+      "scriptName": "DOLT_STASH push pop restores untracked table",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltstashpushpoprestoresuntrackedtablerepro-0004-select-dolt_stash-pop-untracked-table",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_STASH('pop', 'untracked-table');",
+      "querySha256": "1416d255560399dbbf902f1336b13103f5f36292aef4706209bd69ce0a30b40f",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltStashPushPopRestoresUntrackedTableRepro#0005",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltStashPushPopRestoresUntrackedTableRepro",
+      "ordinal": 5,
+      "scriptName": "DOLT_STASH push pop restores untracked table",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltstashpushpoprestoresuntrackedtablerepro-0005-select-id-label-from-stash_untracked_items",
+      "expectedKind": "rows",
+      "query": "SELECT id, label FROM stash_untracked_items;",
+      "querySha256": "474d8cdcde3709e992f81da8c3100ac1e1240831d34890c52c2ce5b236c0659a",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCommitDiffWorkingSetFilterRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCommitDiffWorkingSetFilterRepro",
+      "ordinal": 1,
+      "scriptName": "dolt_commit_diff table reports filtered working-set additions",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcommitdiffworkingsetfilterrepro-0001-select-diff_type-from_pk-to_pk-from",
+      "expectedKind": "rows",
+      "query": "SELECT diff_type, from_pk, to_pk\n\t\t\t\t\t\tFROM dolt_diff('HEAD', 'WORKING', 'commit_diff_working_items');",
+      "querySha256": "43858817e6cd614310ef61f0ddaaee7606d77ad477a61c87d5fd4d90a38d0c05",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCommitDiffWorkingSetFilterRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCommitDiffWorkingSetFilterRepro",
+      "ordinal": 2,
+      "scriptName": "dolt_commit_diff table reports filtered working-set additions",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcommitdiffworkingsetfilterrepro-0002-select-diff_type-from_pk-to_pk-from",
+      "expectedKind": "rows",
+      "query": "SELECT diff_type, from_pk, to_pk\n\t\t\t\t\t\t\tFROM dolt_commit_diff_commit_diff_working_items\n\t\t\t\t\t\t\tWHERE to_commit = 'WORKING'\n\t\t\t\t\t\t\t\tAND from_commit = HASHOF('main');",
+      "querySha256": "357b3cdb06a67b8b06d347bc1ffe51057cc5f2366bfa71d4c14dfb6257c230c9",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltDiffSummaryFiltersDoltDocsByReportedNameRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltDiffSummaryFiltersDoltDocsByReportedNameRepro",
+      "ordinal": 1,
+      "scriptName": "dolt_diff_summary filters dolt docs by reported name",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltdiffsummaryfiltersdoltdocsbyreportednamerepro-0001-select-to_table_name-diff_type-from-dolt_diff_summary",
+      "expectedKind": "rows",
+      "query": "SELECT to_table_name, diff_type\n\t\t\t\t\t\tFROM dolt_diff_summary('main', 'WORKING')\n\t\t\t\t\t\tWHERE to_table_name = 'dolt.docs';",
+      "querySha256": "42fa5e9001ee2fe4a18108b93759381e39ae1e78124f2df0efcaa86b437d79ce",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltDiffSummaryFiltersDoltDocsByReportedNameRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltDiffSummaryFiltersDoltDocsByReportedNameRepro",
+      "ordinal": 2,
+      "scriptName": "dolt_diff_summary filters dolt docs by reported name",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltdiffsummaryfiltersdoltdocsbyreportednamerepro-0002-select-to_table_name-diff_type-from-dolt_diff_summary",
+      "expectedKind": "rows",
+      "query": "SELECT to_table_name, diff_type\n\t\t\t\t\t\tFROM dolt_diff_summary('main', 'WORKING', 'dolt.docs');",
+      "querySha256": "e32f720c5651b9c67d5f32175d1c7dfcad1bc68f3ea488c5f84ff6e6fadab9b5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltDiffSummaryFiltersSchemaDoltSchemasByQualifiedNameRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltDiffSummaryFiltersSchemaDoltSchemasByQualifiedNameRepro",
+      "ordinal": 1,
+      "scriptName": "dolt_diff_summary filters dolt_schemas by qualified name",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltdiffsummaryfiltersschemadoltschemasbyqualifiednamerepro-0001-select-to_table_name-diff_type-from-dolt_diff_summary",
+      "expectedKind": "rows",
+      "query": "SELECT to_table_name, diff_type\n\t\t\t\t\t\tFROM dolt_diff_summary('main', 'WORKING')\n\t\t\t\t\t\tWHERE to_table_name = 'public.dolt_schemas';",
+      "querySha256": "9909e9d981d040f9d24063bcb9387d71dfaad971e0a4d4979b4cbd0e56ec3f69",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltDiffSummaryFiltersSchemaDoltSchemasByQualifiedNameRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltDiffSummaryFiltersSchemaDoltSchemasByQualifiedNameRepro",
+      "ordinal": 2,
+      "scriptName": "dolt_diff_summary filters dolt_schemas by qualified name",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltdiffsummaryfiltersschemadoltschemasbyqualifiednamerepro-0002-select-to_table_name-diff_type-from-dolt_diff_summary",
+      "expectedKind": "rows",
+      "query": "SELECT to_table_name, diff_type\n\t\t\t\t\t\tFROM dolt_diff_summary('main', 'WORKING', 'public.dolt_schemas');",
+      "querySha256": "b78f665b80af31a6d31a8475c14d3032b185a7cd9bbf313b68be8bd7b01b1488",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltQueryDiffSupportsAsOfRevisionRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltQueryDiffSupportsAsOfRevisionRepro",
+      "ordinal": 1,
+      "scriptName": "dolt_query_diff compares AS OF query to working query",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltquerydiffsupportsasofrevisionrepro-0001-select-*-from-dolt_query_diff-select",
+      "expectedKind": "rows",
+      "query": "SELECT *\n\t\t\t\t\t\tFROM dolt_query_diff(\n\t\t\t\t\t\t\t'SELECT * FROM query_diff_asof_items AS OF main',\n\t\t\t\t\t\t\t'SELECT * FROM query_diff_asof_items'\n\t\t\t\t\t\t);",
+      "querySha256": "09290f20457ba0b9bf4e54242224419410b4910f578f0cb551dd116f6ec7993f",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltDiffReportsViewDefinitionChangesRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltDiffReportsViewDefinitionChangesRepro",
+      "ordinal": 1,
+      "scriptName": "DOLT_DIFF reports changed view definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltdiffreportsviewdefinitionchangesrepro-0001-select-table_name-from-dolt_diff_stat-main",
+      "expectedKind": "rows",
+      "query": "SELECT table_name\n\t\t\t\t\t\tFROM DOLT_DIFF_STAT(\n\t\t\t\t\t\t\t'main',\n\t\t\t\t\t\t\t'original',\n\t\t\t\t\t\t\t'diff_view_reader'\n\t\t\t\t\t\t);",
+      "querySha256": "5ff609b227d5816463e08e6d833258cfb1604db9fd236adbef6be463347180fd",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltDiffReportsViewDefinitionChangesRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltDiffReportsViewDefinitionChangesRepro",
+      "ordinal": 2,
+      "scriptName": "DOLT_DIFF reports changed view definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltdiffreportsviewdefinitionchangesrepro-0002-select-count-*-from-dolt_diff",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM DOLT_DIFF('main', 'original', 'diff_view_reader');",
+      "querySha256": "6440cb722332f6b31ce4319664d0d035c86f94b9a1a391d30165d8daa5c37e90",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltDiffReportsFunctionDefinitionChangesRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltDiffReportsFunctionDefinitionChangesRepro",
+      "ordinal": 1,
+      "scriptName": "DOLT_DIFF reports changed function definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltdiffreportsfunctiondefinitionchangesrepro-0001-select-table_name-from-dolt_diff_stat-main",
+      "expectedKind": "rows",
+      "query": "SELECT table_name\n\t\t\t\t\t\tFROM DOLT_DIFF_STAT(\n\t\t\t\t\t\t\t'main',\n\t\t\t\t\t\t\t'original',\n\t\t\t\t\t\t\t'diff_function_value()'\n\t\t\t\t\t\t);",
+      "querySha256": "a669e88df91ac0dcb94f7c386c651c6104f082cdd9a9d43eefae918b74345f5f",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltDiffReportsFunctionDefinitionChangesRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltDiffReportsFunctionDefinitionChangesRepro",
+      "ordinal": 2,
+      "scriptName": "DOLT_DIFF reports changed function definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltdiffreportsfunctiondefinitionchangesrepro-0002-select-count-*-from-dolt_diff",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM DOLT_DIFF('main', 'original', 'diff_function_value()');",
+      "querySha256": "ed03d529b5846771072c723a8af3efb61cd8c1bd22b3bf7d85312faa1da8680d",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltDiffReportsProcedureDefinitionChangesRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltDiffReportsProcedureDefinitionChangesRepro",
+      "ordinal": 1,
+      "scriptName": "DOLT_DIFF reports changed procedure definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltdiffreportsproceduredefinitionchangesrepro-0001-select-table_name-from-dolt_diff_stat-main",
+      "expectedKind": "rows",
+      "query": "SELECT table_name\n\t\t\t\t\t\tFROM DOLT_DIFF_STAT(\n\t\t\t\t\t\t\t'main',\n\t\t\t\t\t\t\t'original',\n\t\t\t\t\t\t\t'diff_procedure_value(integer)'\n\t\t\t\t\t\t);",
+      "querySha256": "fba61dcd0e75f3fe37851d1c9a0f081a2cb4740603c9e48370dd7f5697cd4031",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltDiffReportsProcedureDefinitionChangesRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltDiffReportsProcedureDefinitionChangesRepro",
+      "ordinal": 2,
+      "scriptName": "DOLT_DIFF reports changed procedure definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltdiffreportsproceduredefinitionchangesrepro-0002-select-count-*-from-dolt_diff",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM DOLT_DIFF(\n\t\t\t\t\t\t\t'main',\n\t\t\t\t\t\t\t'original',\n\t\t\t\t\t\t\t'diff_procedure_value(integer)'\n\t\t\t\t\t\t);",
+      "querySha256": "d02b008e0ec48c0cd678e4208c8a92fc526847d5448140e1c6f2c23c68de31e8",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltDiffReportsSequenceChangesRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltDiffReportsSequenceChangesRepro",
+      "ordinal": 1,
+      "scriptName": "DOLT_DIFF reports changed sequence state",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltdiffreportssequencechangesrepro-0001-select-table_name-from-dolt_diff_stat-main",
+      "expectedKind": "rows",
+      "query": "SELECT table_name\n\t\t\t\t\t\tFROM DOLT_DIFF_STAT(\n\t\t\t\t\t\t\t'main',\n\t\t\t\t\t\t\t'original',\n\t\t\t\t\t\t\t'diff_sequence_items_id_seq'\n\t\t\t\t\t\t);",
+      "querySha256": "9be41de61924de657e63caf72d0427253d961d020c6ad4a568a0b936c8298c64",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltDiffReportsSequenceChangesRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltDiffReportsSequenceChangesRepro",
+      "ordinal": 2,
+      "scriptName": "DOLT_DIFF reports changed sequence state",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltdiffreportssequencechangesrepro-0002-select-count-*-from-dolt_diff",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM DOLT_DIFF(\n\t\t\t\t\t\t\t'main',\n\t\t\t\t\t\t\t'original',\n\t\t\t\t\t\t\t'diff_sequence_items_id_seq'\n\t\t\t\t\t\t);",
+      "querySha256": "8f574206fc36fe4d6a232924aa02abf77aff58e7cb845648fbd883caea3a126e",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltDiffReportsTriggerChangesRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltDiffReportsTriggerChangesRepro",
+      "ordinal": 1,
+      "scriptName": "DOLT_DIFF reports changed trigger definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltdiffreportstriggerchangesrepro-0001-select-table_name-from-dolt_diff_stat-main",
+      "expectedKind": "rows",
+      "query": "SELECT table_name\n\t\t\t\t\t\tFROM DOLT_DIFF_STAT(\n\t\t\t\t\t\t\t'main',\n\t\t\t\t\t\t\t'original',\n\t\t\t\t\t\t\t'diff_trigger_items.diff_trigger_changed'\n\t\t\t\t\t\t);",
+      "querySha256": "5d70e8af2737597e6b375f2fc717c58e40474b92a266ee6383d028f7489de467",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltDiffReportsTriggerChangesRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltDiffReportsTriggerChangesRepro",
+      "ordinal": 2,
+      "scriptName": "DOLT_DIFF reports changed trigger definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltdiffreportstriggerchangesrepro-0002-select-count-*-from-dolt_diff",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM DOLT_DIFF(\n\t\t\t\t\t\t\t'main',\n\t\t\t\t\t\t\t'original',\n\t\t\t\t\t\t\t'diff_trigger_items.diff_trigger_changed'\n\t\t\t\t\t\t);",
+      "querySha256": "24bcec37d3c4d3150668e24df71c63f01e8149e896d36e05a0b106a64c526a20",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltDiffReportsEnumTypeChangesRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltDiffReportsEnumTypeChangesRepro",
+      "ordinal": 1,
+      "scriptName": "DOLT_DIFF reports changed enum type metadata",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltdiffreportsenumtypechangesrepro-0001-select-table_name-from-dolt_diff_stat-main",
+      "expectedKind": "rows",
+      "query": "SELECT table_name\n\t\t\t\t\t\tFROM DOLT_DIFF_STAT(\n\t\t\t\t\t\t\t'main',\n\t\t\t\t\t\t\t'original',\n\t\t\t\t\t\t\t'diff_enum_type'\n\t\t\t\t\t\t);",
+      "querySha256": "9c623553a26c1d5d5be9317636476804bf39d16b9810fabc822c29a676bba66d",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltDiffReportsEnumTypeChangesRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltDiffReportsEnumTypeChangesRepro",
+      "ordinal": 2,
+      "scriptName": "DOLT_DIFF reports changed enum type metadata",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltdiffreportsenumtypechangesrepro-0002-select-count-*-from-dolt_diff",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM DOLT_DIFF('main', 'original', 'diff_enum_type');",
+      "querySha256": "6a25aa3a7b4cbd2e225e29c78882ce02ba16c7230b0dfa6518698cd96efa7ec1",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltDiffReportsCompositeTypeChangesRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltDiffReportsCompositeTypeChangesRepro",
+      "ordinal": 1,
+      "scriptName": "DOLT_DIFF reports changed composite type metadata",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltdiffreportscompositetypechangesrepro-0001-select-table_name-from-dolt_diff_stat-main",
+      "expectedKind": "rows",
+      "query": "SELECT table_name\n\t\t\t\t\t\tFROM DOLT_DIFF_STAT(\n\t\t\t\t\t\t\t'main',\n\t\t\t\t\t\t\t'original',\n\t\t\t\t\t\t\t'diff_composite_type'\n\t\t\t\t\t\t);",
+      "querySha256": "93c70e8f4068460e228cb591428cb6e623aee091deeb111895a835f5aede9b62",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltDiffReportsCompositeTypeChangesRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltDiffReportsCompositeTypeChangesRepro",
+      "ordinal": 2,
+      "scriptName": "DOLT_DIFF reports changed composite type metadata",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltdiffreportscompositetypechangesrepro-0002-select-count-*-from-dolt_diff",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM DOLT_DIFF('main', 'original', 'diff_composite_type');",
+      "querySha256": "05cfb1d8f6ce05c00c1eed81771a47733dfa0381c4428fda944a124526f4ed7c",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltDiffReportsDomainTypeChangesRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltDiffReportsDomainTypeChangesRepro",
+      "ordinal": 1,
+      "scriptName": "DOLT_DIFF reports changed domain metadata",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltdiffreportsdomaintypechangesrepro-0001-select-table_name-from-dolt_diff_stat-main",
+      "expectedKind": "rows",
+      "query": "SELECT table_name\n\t\t\t\t\t\tFROM DOLT_DIFF_STAT(\n\t\t\t\t\t\t\t'main',\n\t\t\t\t\t\t\t'original',\n\t\t\t\t\t\t\t'diff_domain_type'\n\t\t\t\t\t\t);",
+      "querySha256": "1a4a887a20a57a50f597820f6eca404142d986d5de12caf6b872ffd194b7419a",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltDiffReportsDomainTypeChangesRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltDiffReportsDomainTypeChangesRepro",
+      "ordinal": 2,
+      "scriptName": "DOLT_DIFF reports changed domain metadata",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltdiffreportsdomaintypechangesrepro-0002-select-count-*-from-dolt_diff",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM DOLT_DIFF('main', 'original', 'diff_domain_type');",
+      "querySha256": "735c77bec3ffab7f35a1d85ad76043783d9be9964a75d6c6a7fc168564a656ad",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedFunctionRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedFunctionRepro",
+      "ordinal": 1,
+      "scriptName": "DOLT_RESET hard removes uncommitted function",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedfunctionrepro-0001-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status;",
+      "querySha256": "d1e78fb3f90b9dfdcfe071698c29f56f3408ad67f31e3e4bcfb4b82927693831",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedFunctionRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedFunctionRepro",
+      "ordinal": 2,
+      "scriptName": "DOLT_RESET hard removes uncommitted function",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedfunctionrepro-0002-select-dolt_reset-hard",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_RESET('--hard');",
+      "querySha256": "c0599609c210c3a05608a89ffe1a1186d6961d793af1b0e858ff4718e5012c3d",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedFunctionRepro#0003",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedFunctionRepro",
+      "ordinal": 3,
+      "scriptName": "DOLT_RESET hard removes uncommitted function",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedfunctionrepro-0003-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status;",
+      "querySha256": "d1e78fb3f90b9dfdcfe071698c29f56f3408ad67f31e3e4bcfb4b82927693831",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedFunctionRepro#0004",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedFunctionRepro",
+      "ordinal": 4,
+      "scriptName": "DOLT_RESET hard removes uncommitted function",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedfunctionrepro-0004-select-reset_uncommitted_function_value",
+      "expectedKind": "error",
+      "query": "SELECT reset_uncommitted_function_value();",
+      "querySha256": "e0822c90acb2c13b2f2d9ac35641954b62b38569af8a8d0d081aa0d24e4c2978",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedProcedureRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedProcedureRepro",
+      "ordinal": 1,
+      "scriptName": "DOLT_RESET hard removes uncommitted procedure",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedprocedurerepro-0001-select-id-from-reset_procedure_audit",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM reset_procedure_audit;",
+      "querySha256": "2e259b9ff2fd451fa527acc7db94968ceb4a99843f497e6225b212f798b5e355",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedProcedureRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedProcedureRepro",
+      "ordinal": 2,
+      "scriptName": "DOLT_RESET hard removes uncommitted procedure",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedprocedurerepro-0002-select-dolt_reset-hard",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_RESET('--hard');",
+      "querySha256": "c0599609c210c3a05608a89ffe1a1186d6961d793af1b0e858ff4718e5012c3d",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedProcedureRepro#0003",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedProcedureRepro",
+      "ordinal": 3,
+      "scriptName": "DOLT_RESET hard removes uncommitted procedure",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedprocedurerepro-0003-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status;",
+      "querySha256": "d1e78fb3f90b9dfdcfe071698c29f56f3408ad67f31e3e4bcfb4b82927693831",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedProcedureRepro#0004",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedProcedureRepro",
+      "ordinal": 4,
+      "scriptName": "DOLT_RESET hard removes uncommitted procedure",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedprocedurerepro-0004-call-reset_uncommitted_procedure",
+      "expectedKind": "error",
+      "query": "CALL reset_uncommitted_procedure();",
+      "querySha256": "ca404e477a6cac97528dac56c161bd6eb87746bc4f532fe89b20916dfcbae974",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedViewRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedViewRepro",
+      "ordinal": 1,
+      "scriptName": "DOLT_RESET hard removes uncommitted view",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedviewrepro-0001-select-id-from-reset_uncommitted_view",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM reset_uncommitted_view;",
+      "querySha256": "d69e93fcebcc6c3a36540a1b2bb303665a58041d6d3b9d80d152797b08361479",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedViewRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedViewRepro",
+      "ordinal": 2,
+      "scriptName": "DOLT_RESET hard removes uncommitted view",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedviewrepro-0002-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status;",
+      "querySha256": "d1e78fb3f90b9dfdcfe071698c29f56f3408ad67f31e3e4bcfb4b82927693831",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedViewRepro#0003",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedViewRepro",
+      "ordinal": 3,
+      "scriptName": "DOLT_RESET hard removes uncommitted view",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedviewrepro-0003-select-dolt_reset-hard",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_RESET('--hard');",
+      "querySha256": "c0599609c210c3a05608a89ffe1a1186d6961d793af1b0e858ff4718e5012c3d",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedViewRepro#0004",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedViewRepro",
+      "ordinal": 4,
+      "scriptName": "DOLT_RESET hard removes uncommitted view",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedviewrepro-0004-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status;",
+      "querySha256": "d1e78fb3f90b9dfdcfe071698c29f56f3408ad67f31e3e4bcfb4b82927693831",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedViewRepro#0005",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedViewRepro",
+      "ordinal": 5,
+      "scriptName": "DOLT_RESET hard removes uncommitted view",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedviewrepro-0005-select-id-from-reset_uncommitted_view",
+      "expectedKind": "error",
+      "query": "SELECT id FROM reset_uncommitted_view;",
+      "querySha256": "d69e93fcebcc6c3a36540a1b2bb303665a58041d6d3b9d80d152797b08361479",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedMaterializedViewRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedMaterializedViewRepro",
+      "ordinal": 1,
+      "scriptName": "DOLT_RESET hard removes uncommitted materialized view",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedmaterializedviewrepro-0001-select-id-from-reset_uncommitted_matview",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM reset_uncommitted_matview;",
+      "querySha256": "c6a106076567da91493a46de70a35944e5db127c43913dc54afa62926873e237",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedMaterializedViewRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedMaterializedViewRepro",
+      "ordinal": 2,
+      "scriptName": "DOLT_RESET hard removes uncommitted materialized view",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedmaterializedviewrepro-0002-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status;",
+      "querySha256": "d1e78fb3f90b9dfdcfe071698c29f56f3408ad67f31e3e4bcfb4b82927693831",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedMaterializedViewRepro#0003",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedMaterializedViewRepro",
+      "ordinal": 3,
+      "scriptName": "DOLT_RESET hard removes uncommitted materialized view",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedmaterializedviewrepro-0003-select-dolt_reset-hard",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_RESET('--hard');",
+      "querySha256": "c0599609c210c3a05608a89ffe1a1186d6961d793af1b0e858ff4718e5012c3d",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedMaterializedViewRepro#0004",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedMaterializedViewRepro",
+      "ordinal": 4,
+      "scriptName": "DOLT_RESET hard removes uncommitted materialized view",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedmaterializedviewrepro-0004-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status;",
+      "querySha256": "d1e78fb3f90b9dfdcfe071698c29f56f3408ad67f31e3e4bcfb4b82927693831",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedMaterializedViewRepro#0005",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedMaterializedViewRepro",
+      "ordinal": 5,
+      "scriptName": "DOLT_RESET hard removes uncommitted materialized view",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedmaterializedviewrepro-0005-select-id-from-reset_uncommitted_matview",
+      "expectedKind": "error",
+      "query": "SELECT id FROM reset_uncommitted_matview;",
+      "querySha256": "c6a106076567da91493a46de70a35944e5db127c43913dc54afa62926873e237",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedEnumTypeRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedEnumTypeRepro",
+      "ordinal": 1,
+      "scriptName": "DOLT_RESET hard removes uncommitted enum type",
+      "oracle": "postgres",
+      "postgresId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedenumtyperepro-0001-select-count-*-from-pg_catalog.pg_type",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedenumtyperepro-0001-select-count-*-from-pg_catalog.pg_type",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_type\n\t\t\t\t\t\tWHERE typname = 'reset_uncommitted_enum';",
+      "querySha256": "ec94d6a3e820efeed0e44d32ae93ae6d89728ee8cb66a1686fa163cdf85401d7",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedEnumTypeRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedEnumTypeRepro",
+      "ordinal": 2,
+      "scriptName": "DOLT_RESET hard removes uncommitted enum type",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedenumtyperepro-0002-select-dolt_reset-hard",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_RESET('--hard');",
+      "querySha256": "c0599609c210c3a05608a89ffe1a1186d6961d793af1b0e858ff4718e5012c3d",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedEnumTypeRepro#0003",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedEnumTypeRepro",
+      "ordinal": 3,
+      "scriptName": "DOLT_RESET hard removes uncommitted enum type",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedenumtyperepro-0003-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status;",
+      "querySha256": "d1e78fb3f90b9dfdcfe071698c29f56f3408ad67f31e3e4bcfb4b82927693831",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedEnumTypeRepro#0004",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedEnumTypeRepro",
+      "ordinal": 4,
+      "scriptName": "DOLT_RESET hard removes uncommitted enum type",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedenumtyperepro-0004-select-count-*-from-pg_catalog.pg_type",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_type\n\t\t\t\t\t\tWHERE typname = 'reset_uncommitted_enum';",
+      "querySha256": "ec94d6a3e820efeed0e44d32ae93ae6d89728ee8cb66a1686fa163cdf85401d7",
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedCompositeTypeRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedCompositeTypeRepro",
+      "ordinal": 1,
+      "scriptName": "DOLT_RESET hard removes uncommitted composite type",
+      "oracle": "postgres",
+      "postgresId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedcompositetyperepro-0001-select-count-*-from-pg_catalog.pg_type",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedcompositetyperepro-0001-select-count-*-from-pg_catalog.pg_type",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_type\n\t\t\t\t\t\tWHERE typname = 'reset_uncommitted_composite';",
+      "querySha256": "a8b331555fb357dfd5767b57c0d212447084eab264ffb7c7e0cdb6abf48fb70c",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedCompositeTypeRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedCompositeTypeRepro",
+      "ordinal": 2,
+      "scriptName": "DOLT_RESET hard removes uncommitted composite type",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedcompositetyperepro-0002-select-dolt_reset-hard",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_RESET('--hard');",
+      "querySha256": "c0599609c210c3a05608a89ffe1a1186d6961d793af1b0e858ff4718e5012c3d",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedCompositeTypeRepro#0003",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedCompositeTypeRepro",
+      "ordinal": 3,
+      "scriptName": "DOLT_RESET hard removes uncommitted composite type",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedcompositetyperepro-0003-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status;",
+      "querySha256": "d1e78fb3f90b9dfdcfe071698c29f56f3408ad67f31e3e4bcfb4b82927693831",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedCompositeTypeRepro#0004",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedCompositeTypeRepro",
+      "ordinal": 4,
+      "scriptName": "DOLT_RESET hard removes uncommitted composite type",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedcompositetyperepro-0004-select-count-*-from-pg_catalog.pg_type",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_type\n\t\t\t\t\t\tWHERE typname = 'reset_uncommitted_composite';",
+      "querySha256": "a8b331555fb357dfd5767b57c0d212447084eab264ffb7c7e0cdb6abf48fb70c",
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedDomainRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedDomainRepro",
+      "ordinal": 1,
+      "scriptName": "DOLT_RESET hard removes uncommitted domain",
+      "oracle": "postgres",
+      "postgresId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommitteddomainrepro-0001-select-count-*-from-pg_catalog.pg_type",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommitteddomainrepro-0001-select-count-*-from-pg_catalog.pg_type",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_type\n\t\t\t\t\t\tWHERE typname = 'reset_uncommitted_domain';",
+      "querySha256": "8d4569d451a04cb66642162eac610a920e6671a004343ef877bd5d0e25bb219f",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedDomainRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedDomainRepro",
+      "ordinal": 2,
+      "scriptName": "DOLT_RESET hard removes uncommitted domain",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommitteddomainrepro-0002-select-dolt_reset-hard",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_RESET('--hard');",
+      "querySha256": "c0599609c210c3a05608a89ffe1a1186d6961d793af1b0e858ff4718e5012c3d",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedDomainRepro#0003",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedDomainRepro",
+      "ordinal": 3,
+      "scriptName": "DOLT_RESET hard removes uncommitted domain",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommitteddomainrepro-0003-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status;",
+      "querySha256": "d1e78fb3f90b9dfdcfe071698c29f56f3408ad67f31e3e4bcfb4b82927693831",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedDomainRepro#0004",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedDomainRepro",
+      "ordinal": 4,
+      "scriptName": "DOLT_RESET hard removes uncommitted domain",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommitteddomainrepro-0004-select-count-*-from-pg_catalog.pg_type",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_type\n\t\t\t\t\t\tWHERE typname = 'reset_uncommitted_domain';",
+      "querySha256": "8d4569d451a04cb66642162eac610a920e6671a004343ef877bd5d0e25bb219f",
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedExtensionRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedExtensionRepro",
+      "ordinal": 1,
+      "scriptName": "DOLT_RESET hard removes uncommitted extension",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedextensionrepro-0001-select-count-*-from-pg_catalog.pg_extension",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_extension\n\t\t\t\t\t\tWHERE extname = 'hstore';",
+      "querySha256": "17165c81f391d3c2e0e6ad337d940a90c2ef9f4b8701130fc3eca44f90f34e97",
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedExtensionRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedExtensionRepro",
+      "ordinal": 2,
+      "scriptName": "DOLT_RESET hard removes uncommitted extension",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedextensionrepro-0002-select-count-*-from-pg_catalog.pg_type",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_type\n\t\t\t\t\t\tWHERE typname = 'hstore';",
+      "querySha256": "2a768355eac723f97f84153f23300fb510a1ba896c2cc1dfb39786fc9d2d9618",
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedExtensionRepro#0003",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedExtensionRepro",
+      "ordinal": 3,
+      "scriptName": "DOLT_RESET hard removes uncommitted extension",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedextensionrepro-0003-select-dolt_reset-hard",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_RESET('--hard');",
+      "querySha256": "c0599609c210c3a05608a89ffe1a1186d6961d793af1b0e858ff4718e5012c3d",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedExtensionRepro#0004",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedExtensionRepro",
+      "ordinal": 4,
+      "scriptName": "DOLT_RESET hard removes uncommitted extension",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedextensionrepro-0004-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status;",
+      "querySha256": "d1e78fb3f90b9dfdcfe071698c29f56f3408ad67f31e3e4bcfb4b82927693831",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedExtensionRepro#0005",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedExtensionRepro",
+      "ordinal": 5,
+      "scriptName": "DOLT_RESET hard removes uncommitted extension",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedextensionrepro-0005-select-count-*-from-pg_catalog.pg_extension",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_extension\n\t\t\t\t\t\tWHERE extname = 'hstore';",
+      "querySha256": "17165c81f391d3c2e0e6ad337d940a90c2ef9f4b8701130fc3eca44f90f34e97",
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedExtensionRepro#0006",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedExtensionRepro",
+      "ordinal": 6,
+      "scriptName": "DOLT_RESET hard removes uncommitted extension",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedextensionrepro-0006-select-count-*-from-pg_catalog.pg_type",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_type\n\t\t\t\t\t\tWHERE typname = 'hstore';",
+      "querySha256": "2a768355eac723f97f84153f23300fb510a1ba896c2cc1dfb39786fc9d2d9618",
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedSequenceGuard#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedSequenceGuard",
+      "ordinal": 1,
+      "scriptName": "DOLT_RESET hard removes uncommitted sequence",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedsequenceguard-0001-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status;",
+      "querySha256": "d1e78fb3f90b9dfdcfe071698c29f56f3408ad67f31e3e4bcfb4b82927693831",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedSequenceGuard#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedSequenceGuard",
+      "ordinal": 2,
+      "scriptName": "DOLT_RESET hard removes uncommitted sequence",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedsequenceguard-0002-select-dolt_reset-hard",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_RESET('--hard');",
+      "querySha256": "c0599609c210c3a05608a89ffe1a1186d6961d793af1b0e858ff4718e5012c3d",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedSequenceGuard#0003",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedSequenceGuard",
+      "ordinal": 3,
+      "scriptName": "DOLT_RESET hard removes uncommitted sequence",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedsequenceguard-0003-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status;",
+      "querySha256": "d1e78fb3f90b9dfdcfe071698c29f56f3408ad67f31e3e4bcfb4b82927693831",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedSequenceGuard#0004",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedSequenceGuard",
+      "ordinal": 4,
+      "scriptName": "DOLT_RESET hard removes uncommitted sequence",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedsequenceguard-0004-select-nextval-reset_uncommitted_sequence_value",
+      "expectedKind": "error",
+      "query": "SELECT nextval('reset_uncommitted_sequence_value');",
+      "querySha256": "e6a44c787e97356d668bbc72ade9c4bd85222d910633e5b011981129f44e1d49",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedTriggerGuard#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedTriggerGuard",
+      "ordinal": 1,
+      "scriptName": "DOLT_RESET hard removes uncommitted trigger",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedtriggerguard-0001-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status;",
+      "querySha256": "d1e78fb3f90b9dfdcfe071698c29f56f3408ad67f31e3e4bcfb4b82927693831",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedTriggerGuard#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedTriggerGuard",
+      "ordinal": 2,
+      "scriptName": "DOLT_RESET hard removes uncommitted trigger",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedtriggerguard-0002-select-dolt_reset-hard",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_RESET('--hard');",
+      "querySha256": "c0599609c210c3a05608a89ffe1a1186d6961d793af1b0e858ff4718e5012c3d",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedTriggerGuard#0003",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedTriggerGuard",
+      "ordinal": 3,
+      "scriptName": "DOLT_RESET hard removes uncommitted trigger",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedtriggerguard-0003-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status;",
+      "querySha256": "d1e78fb3f90b9dfdcfe071698c29f56f3408ad67f31e3e4bcfb4b82927693831",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedTriggerGuard#0004",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardRemovesUncommittedTriggerGuard",
+      "ordinal": 4,
+      "scriptName": "DOLT_RESET hard removes uncommitted trigger",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedtriggerguard-0004-select-count-*-from-information_schema.triggers",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM information_schema.triggers\n\t\t\t\t\t\tWHERE trigger_name = 'reset_uncommitted_trigger';",
+      "querySha256": "26155ff26c675a56329d779012c5ea35fb73d7aca00b1769e73b11e9521a2dfc",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardToRevisionRestoresFunctionDefinitionRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardToRevisionRestoresFunctionDefinitionRepro",
+      "ordinal": 1,
+      "scriptName": "DOLT_RESET hard to revision restores function definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardtorevisionrestoresfunctiondefinitionrepro-0001-select-reset_revision_function_value",
+      "expectedKind": "rows",
+      "query": "SELECT reset_revision_function_value();",
+      "querySha256": "880ae48dc799e19c61f66070554a8f1786b3549de0176011c3f1f831e1ef264e",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardToRevisionRestoresFunctionDefinitionRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardToRevisionRestoresFunctionDefinitionRepro",
+      "ordinal": 2,
+      "scriptName": "DOLT_RESET hard to revision restores function definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardtorevisionrestoresfunctiondefinitionrepro-0002-select-dolt_reset-hard-head~1",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_RESET('--hard', 'HEAD~1');",
+      "querySha256": "fde524107d73a46c5a932eacb206fc2beb8391d66268f2c1142e668bd8d19e20",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardToRevisionRestoresFunctionDefinitionRepro#0003",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardToRevisionRestoresFunctionDefinitionRepro",
+      "ordinal": 3,
+      "scriptName": "DOLT_RESET hard to revision restores function definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardtorevisionrestoresfunctiondefinitionrepro-0003-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status;",
+      "querySha256": "d1e78fb3f90b9dfdcfe071698c29f56f3408ad67f31e3e4bcfb4b82927693831",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardToRevisionRestoresFunctionDefinitionRepro#0004",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardToRevisionRestoresFunctionDefinitionRepro",
+      "ordinal": 4,
+      "scriptName": "DOLT_RESET hard to revision restores function definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardtorevisionrestoresfunctiondefinitionrepro-0004-select-reset_revision_function_value",
+      "expectedKind": "rows",
+      "query": "SELECT reset_revision_function_value();",
+      "querySha256": "880ae48dc799e19c61f66070554a8f1786b3549de0176011c3f1f831e1ef264e",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardToRevisionRestoresSequenceStateGuard#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardToRevisionRestoresSequenceStateGuard",
+      "ordinal": 1,
+      "scriptName": "DOLT_RESET hard to revision restores sequence state",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardtorevisionrestoressequencestateguard-0001-select-count-*-from-reset_revision_sequence_items",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM reset_revision_sequence_items;",
+      "querySha256": "cebedf13771ec0fea2d8b4b53f33d863e69eefd4d5719a89c7a9ee7d0865d035",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardToRevisionRestoresSequenceStateGuard#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardToRevisionRestoresSequenceStateGuard",
+      "ordinal": 2,
+      "scriptName": "DOLT_RESET hard to revision restores sequence state",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardtorevisionrestoressequencestateguard-0002-select-dolt_reset-hard-head~1",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_RESET('--hard', 'HEAD~1');",
+      "querySha256": "fde524107d73a46c5a932eacb206fc2beb8391d66268f2c1142e668bd8d19e20",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardToRevisionRestoresSequenceStateGuard#0003",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardToRevisionRestoresSequenceStateGuard",
+      "ordinal": 3,
+      "scriptName": "DOLT_RESET hard to revision restores sequence state",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardtorevisionrestoressequencestateguard-0003-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status;",
+      "querySha256": "d1e78fb3f90b9dfdcfe071698c29f56f3408ad67f31e3e4bcfb4b82927693831",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardToRevisionRestoresSequenceStateGuard#0004",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardToRevisionRestoresSequenceStateGuard",
+      "ordinal": 4,
+      "scriptName": "DOLT_RESET hard to revision restores sequence state",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardtorevisionrestoressequencestateguard-0004-select-count-*-from-reset_revision_sequence_items",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM reset_revision_sequence_items;",
+      "querySha256": "cebedf13771ec0fea2d8b4b53f33d863e69eefd4d5719a89c7a9ee7d0865d035",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardToRevisionRestoresSequenceStateGuard#0005",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardToRevisionRestoresSequenceStateGuard",
+      "ordinal": 5,
+      "scriptName": "DOLT_RESET hard to revision restores sequence state",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardtorevisionrestoressequencestateguard-0005-select-nextval-reset_revision_sequence_items_id_seq",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('reset_revision_sequence_items_id_seq');",
+      "querySha256": "11659b6b1d16d7be725c545cdada18ea1a30c467bd77db07badaad78a8c6353c",
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardToRevisionRestoresTriggerDefinitionRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardToRevisionRestoresTriggerDefinitionRepro",
+      "ordinal": 1,
+      "scriptName": "DOLT_RESET hard to revision restores trigger definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardtorevisionrestorestriggerdefinitionrepro-0001-select-count-*-from-information_schema.triggers",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM information_schema.triggers\n\t\t\t\t\t\tWHERE trigger_name = 'reset_revision_trigger';",
+      "querySha256": "d882544c64db614b90e1224e392bcc74765f9a55854eb6e69febd43692fe05a8",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardToRevisionRestoresTriggerDefinitionRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardToRevisionRestoresTriggerDefinitionRepro",
+      "ordinal": 2,
+      "scriptName": "DOLT_RESET hard to revision restores trigger definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardtorevisionrestorestriggerdefinitionrepro-0002-select-dolt_reset-hard-head~1",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_RESET('--hard', 'HEAD~1');",
+      "querySha256": "fde524107d73a46c5a932eacb206fc2beb8391d66268f2c1142e668bd8d19e20",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardToRevisionRestoresTriggerDefinitionRepro#0003",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardToRevisionRestoresTriggerDefinitionRepro",
+      "ordinal": 3,
+      "scriptName": "DOLT_RESET hard to revision restores trigger definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardtorevisionrestorestriggerdefinitionrepro-0003-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status;",
+      "querySha256": "d1e78fb3f90b9dfdcfe071698c29f56f3408ad67f31e3e4bcfb4b82927693831",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardToRevisionRestoresTriggerDefinitionRepro#0004",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardToRevisionRestoresTriggerDefinitionRepro",
+      "ordinal": 4,
+      "scriptName": "DOLT_RESET hard to revision restores trigger definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardtorevisionrestorestriggerdefinitionrepro-0004-select-count-*-from-information_schema.triggers",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM information_schema.triggers\n\t\t\t\t\t\tWHERE trigger_name = 'reset_revision_trigger';",
+      "querySha256": "d882544c64db614b90e1224e392bcc74765f9a55854eb6e69febd43692fe05a8",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardToRevisionRestoresTriggerDefinitionRepro#0005",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardToRevisionRestoresTriggerDefinitionRepro",
+      "ordinal": 5,
+      "scriptName": "DOLT_RESET hard to revision restores trigger definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardtorevisionrestorestriggerdefinitionrepro-0005-insert-into-reset_revision_trigger_items-values-1",
+      "expectedKind": "rows",
+      "query": "INSERT INTO reset_revision_trigger_items VALUES (1, 'plain');",
+      "querySha256": "d473d2d2dbc525ab731c68b59304e0db81df46dd748423dea7e8661fc2429179",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardToRevisionRestoresTriggerDefinitionRepro#0006",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetHardToRevisionRestoresTriggerDefinitionRepro",
+      "ordinal": 6,
+      "scriptName": "DOLT_RESET hard to revision restores trigger definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresethardtorevisionrestorestriggerdefinitionrepro-0006-select-label-from-reset_revision_trigger_items",
+      "expectedKind": "rows",
+      "query": "SELECT label FROM reset_revision_trigger_items;",
+      "querySha256": "8608074ed244cdab06c9c439bb5b4270c743309a3a53854e7b2326fbbad3686d",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesFunctionDefinitionRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesFunctionDefinitionRepro",
+      "ordinal": 1,
+      "scriptName": "DOLT_RESET unstages function definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresetunstagesfunctiondefinitionrepro-0001-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status WHERE staged = 'f';",
+      "querySha256": "54c00d498be88bc1f35a7b824984f448fe229b7ce4ad55410c67e0e0d6509cd8",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesFunctionDefinitionRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesFunctionDefinitionRepro",
+      "ordinal": 2,
+      "scriptName": "DOLT_RESET unstages function definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresetunstagesfunctiondefinitionrepro-0002-select-dolt_add-a",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_ADD('-A');",
+      "querySha256": "6697e24a3bd125fb590a53ad4f8672a4c1e82fc048868c915363e3e9c49a22ea",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesFunctionDefinitionRepro#0003",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesFunctionDefinitionRepro",
+      "ordinal": 3,
+      "scriptName": "DOLT_RESET unstages function definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresetunstagesfunctiondefinitionrepro-0003-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status WHERE staged = 't';",
+      "querySha256": "fba518bbeba5ed49d13355ec3e8e11ba8494e49dfc0d770005d5fd2f0f9d0c76",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesFunctionDefinitionRepro#0004",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesFunctionDefinitionRepro",
+      "ordinal": 4,
+      "scriptName": "DOLT_RESET unstages function definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresetunstagesfunctiondefinitionrepro-0004-select-dolt_reset-public.reset_staged_function_value",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_RESET('public.reset_staged_function_value()');",
+      "querySha256": "7a8c235364dea1a6cd3c87cfef20d27e1e3c0b31f78092d38463006d25cb7362",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesFunctionDefinitionRepro#0005",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesFunctionDefinitionRepro",
+      "ordinal": 5,
+      "scriptName": "DOLT_RESET unstages function definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresetunstagesfunctiondefinitionrepro-0005-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status WHERE staged = 'f';",
+      "querySha256": "54c00d498be88bc1f35a7b824984f448fe229b7ce4ad55410c67e0e0d6509cd8",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesFunctionDefinitionRepro#0006",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesFunctionDefinitionRepro",
+      "ordinal": 6,
+      "scriptName": "DOLT_RESET unstages function definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresetunstagesfunctiondefinitionrepro-0006-select-reset_staged_function_value",
+      "expectedKind": "rows",
+      "query": "SELECT reset_staged_function_value();",
+      "querySha256": "3bbdee7d50725614bc4b0c81bf452de4fd4c9ff938d31a9acc70633875c85014",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesProcedureDefinitionRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesProcedureDefinitionRepro",
+      "ordinal": 1,
+      "scriptName": "DOLT_RESET unstages procedure definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresetunstagesproceduredefinitionrepro-0001-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status WHERE staged = 't';",
+      "querySha256": "fba518bbeba5ed49d13355ec3e8e11ba8494e49dfc0d770005d5fd2f0f9d0c76",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesProcedureDefinitionRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesProcedureDefinitionRepro",
+      "ordinal": 2,
+      "scriptName": "DOLT_RESET unstages procedure definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresetunstagesproceduredefinitionrepro-0002-select-dolt_reset-select-table_name-from",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_RESET((\n\t\t\t\t\t\t\tSELECT table_name\n\t\t\t\t\t\t\tFROM dolt_status\n\t\t\t\t\t\t\tWHERE staged = 't'\n\t\t\t\t\t\t\tLIMIT 1\n\t\t\t\t\t\t));",
+      "querySha256": "c7d4581aad248ef4dfd34d8abc6177a9fc556a0963a159fba264eaaaee0fc170",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesProcedureDefinitionRepro#0003",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesProcedureDefinitionRepro",
+      "ordinal": 3,
+      "scriptName": "DOLT_RESET unstages procedure definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresetunstagesproceduredefinitionrepro-0003-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status WHERE staged = 'f';",
+      "querySha256": "54c00d498be88bc1f35a7b824984f448fe229b7ce4ad55410c67e0e0d6509cd8",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesViewDefinitionRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesViewDefinitionRepro",
+      "ordinal": 1,
+      "scriptName": "DOLT_RESET unstages view definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresetunstagesviewdefinitionrepro-0001-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status WHERE staged = 't';",
+      "querySha256": "fba518bbeba5ed49d13355ec3e8e11ba8494e49dfc0d770005d5fd2f0f9d0c76",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesViewDefinitionRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesViewDefinitionRepro",
+      "ordinal": 2,
+      "scriptName": "DOLT_RESET unstages view definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresetunstagesviewdefinitionrepro-0002-select-dolt_reset-select-table_name-from",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_RESET((\n\t\t\t\t\t\t\tSELECT table_name\n\t\t\t\t\t\t\tFROM dolt_status\n\t\t\t\t\t\t\tWHERE staged = 't'\n\t\t\t\t\t\t\tLIMIT 1\n\t\t\t\t\t\t));",
+      "querySha256": "c7d4581aad248ef4dfd34d8abc6177a9fc556a0963a159fba264eaaaee0fc170",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesViewDefinitionRepro#0003",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesViewDefinitionRepro",
+      "ordinal": 3,
+      "scriptName": "DOLT_RESET unstages view definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresetunstagesviewdefinitionrepro-0003-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status WHERE staged = 'f';",
+      "querySha256": "54c00d498be88bc1f35a7b824984f448fe229b7ce4ad55410c67e0e0d6509cd8",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesViewDefinitionRepro#0004",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesViewDefinitionRepro",
+      "ordinal": 4,
+      "scriptName": "DOLT_RESET unstages view definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresetunstagesviewdefinitionrepro-0004-select-count-*-from-reset_staged_view",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM reset_staged_view;",
+      "querySha256": "cb78f0f531ea946b96d61cf01986eea14944a5b03c0e6b9de99881c73a705a50",
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesMaterializedViewDefinitionRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesMaterializedViewDefinitionRepro",
+      "ordinal": 1,
+      "scriptName": "DOLT_RESET unstages materialized view definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresetunstagesmaterializedviewdefinitionrepro-0001-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status WHERE staged = 't';",
+      "querySha256": "fba518bbeba5ed49d13355ec3e8e11ba8494e49dfc0d770005d5fd2f0f9d0c76",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesMaterializedViewDefinitionRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesMaterializedViewDefinitionRepro",
+      "ordinal": 2,
+      "scriptName": "DOLT_RESET unstages materialized view definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresetunstagesmaterializedviewdefinitionrepro-0002-select-dolt_reset-select-table_name-from",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_RESET((\n\t\t\t\t\t\t\tSELECT table_name\n\t\t\t\t\t\t\tFROM dolt_status\n\t\t\t\t\t\t\tWHERE staged = 't'\n\t\t\t\t\t\t\tLIMIT 1\n\t\t\t\t\t\t));",
+      "querySha256": "c7d4581aad248ef4dfd34d8abc6177a9fc556a0963a159fba264eaaaee0fc170",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesMaterializedViewDefinitionRepro#0003",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesMaterializedViewDefinitionRepro",
+      "ordinal": 3,
+      "scriptName": "DOLT_RESET unstages materialized view definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresetunstagesmaterializedviewdefinitionrepro-0003-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status WHERE staged = 'f';",
+      "querySha256": "54c00d498be88bc1f35a7b824984f448fe229b7ce4ad55410c67e0e0d6509cd8",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesMaterializedViewDefinitionRepro#0004",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesMaterializedViewDefinitionRepro",
+      "ordinal": 4,
+      "scriptName": "DOLT_RESET unstages materialized view definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresetunstagesmaterializedviewdefinitionrepro-0004-select-id-from-reset_staged_matview",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM reset_staged_matview;",
+      "querySha256": "d160f63d4082db244aab3c6c1fe53cf2b658db7ab33915d9619ff90484721e37",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesSequenceDefinitionRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesSequenceDefinitionRepro",
+      "ordinal": 1,
+      "scriptName": "DOLT_RESET unstages sequence definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresetunstagessequencedefinitionrepro-0001-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status WHERE staged = 'f';",
+      "querySha256": "54c00d498be88bc1f35a7b824984f448fe229b7ce4ad55410c67e0e0d6509cd8",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesSequenceDefinitionRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesSequenceDefinitionRepro",
+      "ordinal": 2,
+      "scriptName": "DOLT_RESET unstages sequence definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresetunstagessequencedefinitionrepro-0002-select-dolt_add-a",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_ADD('-A');",
+      "querySha256": "6697e24a3bd125fb590a53ad4f8672a4c1e82fc048868c915363e3e9c49a22ea",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesSequenceDefinitionRepro#0003",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesSequenceDefinitionRepro",
+      "ordinal": 3,
+      "scriptName": "DOLT_RESET unstages sequence definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresetunstagessequencedefinitionrepro-0003-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status WHERE staged = 't';",
+      "querySha256": "fba518bbeba5ed49d13355ec3e8e11ba8494e49dfc0d770005d5fd2f0f9d0c76",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesSequenceDefinitionRepro#0004",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesSequenceDefinitionRepro",
+      "ordinal": 4,
+      "scriptName": "DOLT_RESET unstages sequence definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresetunstagessequencedefinitionrepro-0004-select-dolt_reset-public.reset_staged_sequence_value",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_RESET('public.reset_staged_sequence_value');",
+      "querySha256": "1758cd55477afece79d2916f18d04e5f037edd06a84c743f5cf2b73704f421b1",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesSequenceDefinitionRepro#0005",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesSequenceDefinitionRepro",
+      "ordinal": 5,
+      "scriptName": "DOLT_RESET unstages sequence definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresetunstagessequencedefinitionrepro-0005-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status WHERE staged = 'f';",
+      "querySha256": "54c00d498be88bc1f35a7b824984f448fe229b7ce4ad55410c67e0e0d6509cd8",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesSequenceDefinitionRepro#0006",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesSequenceDefinitionRepro",
+      "ordinal": 6,
+      "scriptName": "DOLT_RESET unstages sequence definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresetunstagessequencedefinitionrepro-0006-select-nextval-reset_staged_sequence_value",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('reset_staged_sequence_value');",
+      "querySha256": "c75d05163456a480914c4f0cf49a93f017256c19ac01cd61d0719be60c3572c3",
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesTriggerDefinitionRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesTriggerDefinitionRepro",
+      "ordinal": 1,
+      "scriptName": "DOLT_RESET unstages trigger definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresetunstagestriggerdefinitionrepro-0001-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status WHERE staged = 'f';",
+      "querySha256": "54c00d498be88bc1f35a7b824984f448fe229b7ce4ad55410c67e0e0d6509cd8",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesTriggerDefinitionRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesTriggerDefinitionRepro",
+      "ordinal": 2,
+      "scriptName": "DOLT_RESET unstages trigger definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresetunstagestriggerdefinitionrepro-0002-select-dolt_add-a",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_ADD('-A');",
+      "querySha256": "6697e24a3bd125fb590a53ad4f8672a4c1e82fc048868c915363e3e9c49a22ea",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesTriggerDefinitionRepro#0003",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesTriggerDefinitionRepro",
+      "ordinal": 3,
+      "scriptName": "DOLT_RESET unstages trigger definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresetunstagestriggerdefinitionrepro-0003-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status WHERE staged = 't';",
+      "querySha256": "fba518bbeba5ed49d13355ec3e8e11ba8494e49dfc0d770005d5fd2f0f9d0c76",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesTriggerDefinitionRepro#0004",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesTriggerDefinitionRepro",
+      "ordinal": 4,
+      "scriptName": "DOLT_RESET unstages trigger definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresetunstagestriggerdefinitionrepro-0004-select-dolt_reset",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_RESET('public.reset_staged_trigger_items.reset_staged_trigger');",
+      "querySha256": "d916d027ea0469b37c5167c03896fbb293d4aaa10f589d346c1e434b53463c27",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesTriggerDefinitionRepro#0005",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesTriggerDefinitionRepro",
+      "ordinal": 5,
+      "scriptName": "DOLT_RESET unstages trigger definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresetunstagestriggerdefinitionrepro-0005-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status WHERE staged = 'f';",
+      "querySha256": "54c00d498be88bc1f35a7b824984f448fe229b7ce4ad55410c67e0e0d6509cd8",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesTriggerDefinitionRepro#0006",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesTriggerDefinitionRepro",
+      "ordinal": 6,
+      "scriptName": "DOLT_RESET unstages trigger definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresetunstagestriggerdefinitionrepro-0006-insert-into-reset_staged_trigger_items-values-1",
+      "expectedKind": "rows",
+      "query": "INSERT INTO reset_staged_trigger_items VALUES (1, 'plain');",
+      "querySha256": "8e992b2f67ae8f14cc18a07f3c010e61ba96db0eeb85b8fd9bf27285faea44e3",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesTriggerDefinitionRepro#0007",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltResetUnstagesTriggerDefinitionRepro",
+      "ordinal": 7,
+      "scriptName": "DOLT_RESET unstages trigger definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltresetunstagestriggerdefinitionrepro-0007-select-label-from-reset_staged_trigger_items",
+      "expectedKind": "rows",
+      "query": "SELECT label FROM reset_staged_trigger_items;",
+      "querySha256": "7666961c734460c6442d4169cfebfb41e00f02056a8ad0cf7802fb16ecacb5d4",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCheckoutRestoresFunctionDefinitionGuard#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCheckoutRestoresFunctionDefinitionGuard",
+      "ordinal": 1,
+      "scriptName": "DOLT_CHECKOUT restores function definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcheckoutrestoresfunctiondefinitionguard-0001-select-checkout_function_value",
+      "expectedKind": "rows",
+      "query": "SELECT checkout_function_value();",
+      "querySha256": "465154dac3f5dabfa7a500015cbb17c58ead32b978f9cd4a6823c6d435479c3d",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCheckoutRestoresFunctionDefinitionGuard#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCheckoutRestoresFunctionDefinitionGuard",
+      "ordinal": 2,
+      "scriptName": "DOLT_CHECKOUT restores function definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcheckoutrestoresfunctiondefinitionguard-0002-select-dolt_checkout-original",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_CHECKOUT('original');",
+      "querySha256": "f70728cad5bccf96e22fa9ed84fadfb60d49b1de6984e4303aa3d1a6cc31f68d",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCheckoutRestoresFunctionDefinitionGuard#0003",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCheckoutRestoresFunctionDefinitionGuard",
+      "ordinal": 3,
+      "scriptName": "DOLT_CHECKOUT restores function definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcheckoutrestoresfunctiondefinitionguard-0003-select-checkout_function_value",
+      "expectedKind": "rows",
+      "query": "SELECT checkout_function_value();",
+      "querySha256": "465154dac3f5dabfa7a500015cbb17c58ead32b978f9cd4a6823c6d435479c3d",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCheckoutRestoresSequenceStateGuard#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCheckoutRestoresSequenceStateGuard",
+      "ordinal": 1,
+      "scriptName": "DOLT_CHECKOUT restores sequence state",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcheckoutrestoressequencestateguard-0001-select-dolt_checkout-original",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_CHECKOUT('original');",
+      "querySha256": "f70728cad5bccf96e22fa9ed84fadfb60d49b1de6984e4303aa3d1a6cc31f68d",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCheckoutRestoresSequenceStateGuard#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCheckoutRestoresSequenceStateGuard",
+      "ordinal": 2,
+      "scriptName": "DOLT_CHECKOUT restores sequence state",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcheckoutrestoressequencestateguard-0002-select-nextval-checkout_sequence_items_id_seq",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('checkout_sequence_items_id_seq');",
+      "querySha256": "c0a2b141ddffe5470e5cda7c32c18bb005a5b5cedff8ddfa9fd21ad48f32ad72",
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestSerialDefaultUsesCheckedOutBranchAfterCheckoutRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestSerialDefaultUsesCheckedOutBranchAfterCheckoutRepro",
+      "ordinal": 1,
+      "scriptName": "SERIAL default uses checked-out branch after checkout",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testserialdefaultusescheckedoutbranchaftercheckoutrepro-0001-select-id-label-from-serial_default_branch_items",
+      "expectedKind": "rows",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM serial_default_branch_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "d8cde8602d57a58ca58e8128d77b1983e29b8bd909359ab994444f3b09dc1b17",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestSerialDefaultUsesCheckedOutBranchAfterCheckoutRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestSerialDefaultUsesCheckedOutBranchAfterCheckoutRepro",
+      "ordinal": 2,
+      "scriptName": "SERIAL default uses checked-out branch after checkout",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testserialdefaultusescheckedoutbranchaftercheckoutrepro-0002-select-dolt_checkout-main",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_CHECKOUT('main');",
+      "querySha256": "58ff81e0a255165b8ba396138be58adc31b779b2c8c24540089e1a42b554647a",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestSerialDefaultUsesCheckedOutBranchAfterCheckoutRepro#0003",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestSerialDefaultUsesCheckedOutBranchAfterCheckoutRepro",
+      "ordinal": 3,
+      "scriptName": "SERIAL default uses checked-out branch after checkout",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testserialdefaultusescheckedoutbranchaftercheckoutrepro-0003-select-id-label-from-serial_default_branch_items",
+      "expectedKind": "rows",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM serial_default_branch_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "d8cde8602d57a58ca58e8128d77b1983e29b8bd909359ab994444f3b09dc1b17",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCheckoutRestoresTriggerDefinitionsGuard#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCheckoutRestoresTriggerDefinitionsGuard",
+      "ordinal": 1,
+      "scriptName": "DOLT_CHECKOUT restores trigger definitions",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcheckoutrestorestriggerdefinitionsguard-0001-select-dolt_checkout-original",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_CHECKOUT('original');",
+      "querySha256": "f70728cad5bccf96e22fa9ed84fadfb60d49b1de6984e4303aa3d1a6cc31f68d",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCheckoutRestoresTriggerDefinitionsGuard#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCheckoutRestoresTriggerDefinitionsGuard",
+      "ordinal": 2,
+      "scriptName": "DOLT_CHECKOUT restores trigger definitions",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcheckoutrestorestriggerdefinitionsguard-0002-insert-into-checkout_trigger_items-values-1",
+      "expectedKind": "rows",
+      "query": "INSERT INTO checkout_trigger_items VALUES (1, 'plain');",
+      "querySha256": "7f7d1c443cf0545f9d1c680472b2329159de6c7a511d5d00ede5411ac7c16302",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCheckoutRestoresTriggerDefinitionsGuard#0003",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCheckoutRestoresTriggerDefinitionsGuard",
+      "ordinal": 3,
+      "scriptName": "DOLT_CHECKOUT restores trigger definitions",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcheckoutrestorestriggerdefinitionsguard-0003-select-label-from-checkout_trigger_items",
+      "expectedKind": "rows",
+      "query": "SELECT label FROM checkout_trigger_items;",
+      "querySha256": "69b685efbeff9cb155083eb0c291426089430d2136bfb3e7ae25d9d07909cfda",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCommitPersistsExtensionMetadataRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCommitPersistsExtensionMetadataRepro",
+      "ordinal": 1,
+      "scriptName": "DOLT_COMMIT persists extension metadata",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcommitpersistsextensionmetadatarepro-0001-select-count-*-from-pg_catalog.pg_extension",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_extension\n\t\t\t\t\t\tWHERE extname = 'hstore';",
+      "querySha256": "17165c81f391d3c2e0e6ad337d940a90c2ef9f4b8701130fc3eca44f90f34e97",
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCommitPersistsExtensionMetadataRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCommitPersistsExtensionMetadataRepro",
+      "ordinal": 2,
+      "scriptName": "DOLT_COMMIT persists extension metadata",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcommitpersistsextensionmetadatarepro-0002-select-count-*-from-pg_catalog.pg_type",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_type\n\t\t\t\t\t\tWHERE typname = 'hstore';",
+      "querySha256": "2a768355eac723f97f84153f23300fb510a1ba896c2cc1dfb39786fc9d2d9618",
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCommitPersistsExtensionMetadataRepro#0003",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCommitPersistsExtensionMetadataRepro",
+      "ordinal": 3,
+      "scriptName": "DOLT_COMMIT persists extension metadata",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcommitpersistsextensionmetadatarepro-0003-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status;",
+      "querySha256": "d1e78fb3f90b9dfdcfe071698c29f56f3408ad67f31e3e4bcfb4b82927693831",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCommitPersistsExtensionMetadataRepro#0004",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCommitPersistsExtensionMetadataRepro",
+      "ordinal": 4,
+      "scriptName": "DOLT_COMMIT persists extension metadata",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcommitpersistsextensionmetadatarepro-0004-select-count-*-from-pg_catalog.pg_extension",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_extension\n\t\t\t\t\t\tWHERE extname = 'hstore';",
+      "querySha256": "17165c81f391d3c2e0e6ad337d940a90c2ef9f4b8701130fc3eca44f90f34e97",
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCommitPersistsExtensionMetadataRepro#0005",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCommitPersistsExtensionMetadataRepro",
+      "ordinal": 5,
+      "scriptName": "DOLT_COMMIT persists extension metadata",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcommitpersistsextensionmetadatarepro-0005-select-count-*-from-pg_catalog.pg_type",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_type\n\t\t\t\t\t\tWHERE typname = 'hstore';",
+      "querySha256": "2a768355eac723f97f84153f23300fb510a1ba896c2cc1dfb39786fc9d2d9618",
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCleanRemovesUncommittedFunctionGuard#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCleanRemovesUncommittedFunctionGuard",
+      "ordinal": 1,
+      "scriptName": "DOLT_CLEAN removes uncommitted function",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcleanremovesuncommittedfunctionguard-0001-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status;",
+      "querySha256": "d1e78fb3f90b9dfdcfe071698c29f56f3408ad67f31e3e4bcfb4b82927693831",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCleanRemovesUncommittedFunctionGuard#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCleanRemovesUncommittedFunctionGuard",
+      "ordinal": 2,
+      "scriptName": "DOLT_CLEAN removes uncommitted function",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcleanremovesuncommittedfunctionguard-0002-select-dolt_clean",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_CLEAN();",
+      "querySha256": "6c67f65e0de8882caf07e1bfe3df790a70cc91d3cff7d8bc74ddbaa8aebca03e",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCleanRemovesUncommittedFunctionGuard#0003",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCleanRemovesUncommittedFunctionGuard",
+      "ordinal": 3,
+      "scriptName": "DOLT_CLEAN removes uncommitted function",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcleanremovesuncommittedfunctionguard-0003-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status;",
+      "querySha256": "d1e78fb3f90b9dfdcfe071698c29f56f3408ad67f31e3e4bcfb4b82927693831",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCleanRemovesUncommittedFunctionGuard#0004",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCleanRemovesUncommittedFunctionGuard",
+      "ordinal": 4,
+      "scriptName": "DOLT_CLEAN removes uncommitted function",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcleanremovesuncommittedfunctionguard-0004-select-clean_uncommitted_function_value",
+      "expectedKind": "error",
+      "query": "SELECT clean_uncommitted_function_value();",
+      "querySha256": "1d66db63e369c65c11c21b5542d52a9d36026765a06bdf939e3f2bc75f797d5b",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCleanRemovesUncommittedSequenceGuard#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCleanRemovesUncommittedSequenceGuard",
+      "ordinal": 1,
+      "scriptName": "DOLT_CLEAN removes uncommitted sequence",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcleanremovesuncommittedsequenceguard-0001-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status;",
+      "querySha256": "d1e78fb3f90b9dfdcfe071698c29f56f3408ad67f31e3e4bcfb4b82927693831",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCleanRemovesUncommittedSequenceGuard#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCleanRemovesUncommittedSequenceGuard",
+      "ordinal": 2,
+      "scriptName": "DOLT_CLEAN removes uncommitted sequence",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcleanremovesuncommittedsequenceguard-0002-select-dolt_clean",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_CLEAN();",
+      "querySha256": "6c67f65e0de8882caf07e1bfe3df790a70cc91d3cff7d8bc74ddbaa8aebca03e",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCleanRemovesUncommittedSequenceGuard#0003",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCleanRemovesUncommittedSequenceGuard",
+      "ordinal": 3,
+      "scriptName": "DOLT_CLEAN removes uncommitted sequence",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcleanremovesuncommittedsequenceguard-0003-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status;",
+      "querySha256": "d1e78fb3f90b9dfdcfe071698c29f56f3408ad67f31e3e4bcfb4b82927693831",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCleanRemovesUncommittedSequenceGuard#0004",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCleanRemovesUncommittedSequenceGuard",
+      "ordinal": 4,
+      "scriptName": "DOLT_CLEAN removes uncommitted sequence",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcleanremovesuncommittedsequenceguard-0004-select-nextval-clean_uncommitted_sequence_value",
+      "expectedKind": "error",
+      "query": "SELECT nextval('clean_uncommitted_sequence_value');",
+      "querySha256": "81089b8b263cabef592f6f6567e3b04d02ef43d493bd3c71d54a65e7cee97824",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCleanRemovesUncommittedTypeAndDomainRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCleanRemovesUncommittedTypeAndDomainRepro",
+      "ordinal": 1,
+      "scriptName": "DOLT_CLEAN removes uncommitted type and domain",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcleanremovesuncommittedtypeanddomainrepro-0001-select-dolt_clean",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_CLEAN();",
+      "querySha256": "6c67f65e0de8882caf07e1bfe3df790a70cc91d3cff7d8bc74ddbaa8aebca03e",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCleanRemovesUncommittedTypeAndDomainRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCleanRemovesUncommittedTypeAndDomainRepro",
+      "ordinal": 2,
+      "scriptName": "DOLT_CLEAN removes uncommitted type and domain",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcleanremovesuncommittedtypeanddomainrepro-0002-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status;",
+      "querySha256": "d1e78fb3f90b9dfdcfe071698c29f56f3408ad67f31e3e4bcfb4b82927693831",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCleanRemovesUncommittedTypeAndDomainRepro#0003",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCleanRemovesUncommittedTypeAndDomainRepro",
+      "ordinal": 3,
+      "scriptName": "DOLT_CLEAN removes uncommitted type and domain",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcleanremovesuncommittedtypeanddomainrepro-0003-select-count-*-from-pg_catalog.pg_type",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_type\n\t\t\t\t\t\tWHERE typname IN (\n\t\t\t\t\t\t\t'clean_uncommitted_enum',\n\t\t\t\t\t\t\t'clean_uncommitted_composite',\n\t\t\t\t\t\t\t'clean_uncommitted_domain'\n\t\t\t\t\t\t);",
+      "querySha256": "6071e35e951bab075043b538462d02e3d403cb6ba5eb29baca3853bcb0c5376b",
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCleanRemovesUncommittedExtensionRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCleanRemovesUncommittedExtensionRepro",
+      "ordinal": 1,
+      "scriptName": "DOLT_CLEAN removes uncommitted extension",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcleanremovesuncommittedextensionrepro-0001-select-dolt_clean",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_CLEAN();",
+      "querySha256": "6c67f65e0de8882caf07e1bfe3df790a70cc91d3cff7d8bc74ddbaa8aebca03e",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCleanRemovesUncommittedExtensionRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCleanRemovesUncommittedExtensionRepro",
+      "ordinal": 2,
+      "scriptName": "DOLT_CLEAN removes uncommitted extension",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcleanremovesuncommittedextensionrepro-0002-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status;",
+      "querySha256": "d1e78fb3f90b9dfdcfe071698c29f56f3408ad67f31e3e4bcfb4b82927693831",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCleanRemovesUncommittedExtensionRepro#0003",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCleanRemovesUncommittedExtensionRepro",
+      "ordinal": 3,
+      "scriptName": "DOLT_CLEAN removes uncommitted extension",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcleanremovesuncommittedextensionrepro-0003-select-count-*-from-pg_catalog.pg_extension",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_extension\n\t\t\t\t\t\tWHERE extname = 'hstore';",
+      "querySha256": "17165c81f391d3c2e0e6ad337d940a90c2ef9f4b8701130fc3eca44f90f34e97",
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCleanRemovesUncommittedExtensionRepro#0004",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCleanRemovesUncommittedExtensionRepro",
+      "ordinal": 4,
+      "scriptName": "DOLT_CLEAN removes uncommitted extension",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcleanremovesuncommittedextensionrepro-0004-select-count-*-from-pg_catalog.pg_type",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_type\n\t\t\t\t\t\tWHERE typname = 'hstore';",
+      "querySha256": "2a768355eac723f97f84153f23300fb510a1ba896c2cc1dfb39786fc9d2d9618",
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCleanRemovesUncommittedTriggerRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCleanRemovesUncommittedTriggerRepro",
+      "ordinal": 1,
+      "scriptName": "DOLT_CLEAN removes uncommitted trigger",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcleanremovesuncommittedtriggerrepro-0001-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status;",
+      "querySha256": "d1e78fb3f90b9dfdcfe071698c29f56f3408ad67f31e3e4bcfb4b82927693831",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCleanRemovesUncommittedTriggerRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCleanRemovesUncommittedTriggerRepro",
+      "ordinal": 2,
+      "scriptName": "DOLT_CLEAN removes uncommitted trigger",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcleanremovesuncommittedtriggerrepro-0002-select-dolt_clean",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_CLEAN();",
+      "querySha256": "6c67f65e0de8882caf07e1bfe3df790a70cc91d3cff7d8bc74ddbaa8aebca03e",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCleanRemovesUncommittedTriggerRepro#0003",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCleanRemovesUncommittedTriggerRepro",
+      "ordinal": 3,
+      "scriptName": "DOLT_CLEAN removes uncommitted trigger",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcleanremovesuncommittedtriggerrepro-0003-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status;",
+      "querySha256": "d1e78fb3f90b9dfdcfe071698c29f56f3408ad67f31e3e4bcfb4b82927693831",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCleanRemovesUncommittedTriggerRepro#0004",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCleanRemovesUncommittedTriggerRepro",
+      "ordinal": 4,
+      "scriptName": "DOLT_CLEAN removes uncommitted trigger",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcleanremovesuncommittedtriggerrepro-0004-insert-into-clean_trigger_items-values-1",
+      "expectedKind": "rows",
+      "query": "INSERT INTO clean_trigger_items VALUES (1, 'plain');",
+      "querySha256": "d76e01ace3abf25909cbc2c1c6bdb3ba45d5af44c866cea25aebdccbd7de78d2",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCleanRemovesUncommittedTriggerRepro#0005",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCleanRemovesUncommittedTriggerRepro",
+      "ordinal": 5,
+      "scriptName": "DOLT_CLEAN removes uncommitted trigger",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcleanremovesuncommittedtriggerrepro-0005-select-label-from-clean_trigger_items",
+      "expectedKind": "rows",
+      "query": "SELECT label FROM clean_trigger_items;",
+      "querySha256": "84cfe446f9b1836e2e53c717db4ee8e84a0230ca769a9dfbf15d50a4117028d2",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCherryPickAppliesFunctionDefinitionRepro#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCherryPickAppliesFunctionDefinitionRepro",
+      "ordinal": 1,
+      "scriptName": "DOLT_CHERRY_PICK applies function definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcherrypickappliesfunctiondefinitionrepro-0001-select-cherry_pick_function_value",
+      "expectedKind": "rows",
+      "query": "SELECT cherry_pick_function_value();",
+      "querySha256": "605479f5f4b992c2466c4338cfda195268ccd405c6f0728877b4f906295d04f9",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCherryPickAppliesFunctionDefinitionRepro#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCherryPickAppliesFunctionDefinitionRepro",
+      "ordinal": 2,
+      "scriptName": "DOLT_CHERRY_PICK applies function definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcherrypickappliesfunctiondefinitionrepro-0002-select-substring-dolt_cherry_pick-main-::text",
+      "expectedKind": "rows",
+      "query": "SELECT substring(DOLT_CHERRY_PICK('main')::text, 34);",
+      "querySha256": "ad4113bfd3adeba58a1681837ed580ecb41c5d50eda0b7f28c8d60b6c4ba691c",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCherryPickAppliesFunctionDefinitionRepro#0003",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCherryPickAppliesFunctionDefinitionRepro",
+      "ordinal": 3,
+      "scriptName": "DOLT_CHERRY_PICK applies function definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcherrypickappliesfunctiondefinitionrepro-0003-select-cherry_pick_function_value",
+      "expectedKind": "rows",
+      "query": "SELECT cherry_pick_function_value();",
+      "querySha256": "605479f5f4b992c2466c4338cfda195268ccd405c6f0728877b4f906295d04f9",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCherryPickAdvancesSequenceStateGuard#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCherryPickAdvancesSequenceStateGuard",
+      "ordinal": 1,
+      "scriptName": "DOLT_CHERRY_PICK advances sequence state",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcherrypickadvancessequencestateguard-0001-select-count-*-from-cherry_pick_sequence_items",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM cherry_pick_sequence_items;",
+      "querySha256": "9ead9bfeaf6f8905edecbcfeec1c69f3ac8a2258dcfb1d01bab68a4bc22d182b",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCherryPickAdvancesSequenceStateGuard#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCherryPickAdvancesSequenceStateGuard",
+      "ordinal": 2,
+      "scriptName": "DOLT_CHERRY_PICK advances sequence state",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcherrypickadvancessequencestateguard-0002-select-substring-dolt_cherry_pick-main-::text",
+      "expectedKind": "rows",
+      "query": "SELECT substring(DOLT_CHERRY_PICK('main')::text, 34);",
+      "querySha256": "ad4113bfd3adeba58a1681837ed580ecb41c5d50eda0b7f28c8d60b6c4ba691c",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCherryPickAdvancesSequenceStateGuard#0003",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCherryPickAdvancesSequenceStateGuard",
+      "ordinal": 3,
+      "scriptName": "DOLT_CHERRY_PICK advances sequence state",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcherrypickadvancessequencestateguard-0003-select-label-from-cherry_pick_sequence_items-where",
+      "expectedKind": "rows",
+      "query": "SELECT label FROM cherry_pick_sequence_items WHERE id = 2;",
+      "querySha256": "3e516e04d0b5594ced0954eeb2e5d33f06e7a4f73db55109c2d8dfb530ed98eb",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCherryPickAdvancesSequenceStateGuard#0004",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCherryPickAdvancesSequenceStateGuard",
+      "ordinal": 4,
+      "scriptName": "DOLT_CHERRY_PICK advances sequence state",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcherrypickadvancessequencestateguard-0004-select-nextval-cherry_pick_sequence_items_id_seq",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('cherry_pick_sequence_items_id_seq');",
+      "querySha256": "df9d9ccf5c23ba04ffff617f894646022d257692e6c19f572c2f5c5c21e179b2",
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCherryPickAppliesTriggerDefinitionGuard#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCherryPickAppliesTriggerDefinitionGuard",
+      "ordinal": 1,
+      "scriptName": "DOLT_CHERRY_PICK applies trigger definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcherrypickappliestriggerdefinitionguard-0001-select-count-*-from-information_schema.triggers",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM information_schema.triggers\n\t\t\t\t\t\tWHERE trigger_name = 'cherry_pick_trigger_changed';",
+      "querySha256": "c87672e1ffd08b12aced01ae0488c46a442ffa428016c35eac4f36b76edd2d28",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCherryPickAppliesTriggerDefinitionGuard#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCherryPickAppliesTriggerDefinitionGuard",
+      "ordinal": 2,
+      "scriptName": "DOLT_CHERRY_PICK applies trigger definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcherrypickappliestriggerdefinitionguard-0002-select-substring-dolt_cherry_pick-main-::text",
+      "expectedKind": "rows",
+      "query": "SELECT substring(DOLT_CHERRY_PICK('main')::text, 34);",
+      "querySha256": "ad4113bfd3adeba58a1681837ed580ecb41c5d50eda0b7f28c8d60b6c4ba691c",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCherryPickAppliesTriggerDefinitionGuard#0003",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCherryPickAppliesTriggerDefinitionGuard",
+      "ordinal": 3,
+      "scriptName": "DOLT_CHERRY_PICK applies trigger definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcherrypickappliestriggerdefinitionguard-0003-insert-into-cherry_pick_trigger_items-values-1",
+      "expectedKind": "rows",
+      "query": "INSERT INTO cherry_pick_trigger_items VALUES (1, 'plain');",
+      "querySha256": "788f4a067821c480d0280ef9dfacefc36664459def148244757b942f5a8b221d",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCherryPickAppliesTriggerDefinitionGuard#0004",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltCherryPickAppliesTriggerDefinitionGuard",
+      "ordinal": 4,
+      "scriptName": "DOLT_CHERRY_PICK applies trigger definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltcherrypickappliestriggerdefinitionguard-0004-select-label-from-cherry_pick_trigger_items",
+      "expectedKind": "rows",
+      "query": "SELECT label FROM cherry_pick_trigger_items;",
+      "querySha256": "4155fa70e798611e6ac2dd7529af94537cd29d5a4bd1ffae3fcd980748d328ad",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltRevertRestoresSequenceStateGuard#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltRevertRestoresSequenceStateGuard",
+      "ordinal": 1,
+      "scriptName": "DOLT_REVERT restores sequence state",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltrevertrestoressequencestateguard-0001-select-count-*-from-revert_sequence_items",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM revert_sequence_items;",
+      "querySha256": "f84f407a80641aa582167cc1a86a253506ac7cbf9869cde4cd15cd67d23c1649",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltRevertRestoresSequenceStateGuard#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltRevertRestoresSequenceStateGuard",
+      "ordinal": 2,
+      "scriptName": "DOLT_REVERT restores sequence state",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltrevertrestoressequencestateguard-0002-select-substring-dolt_revert-head-::text",
+      "expectedKind": "rows",
+      "query": "SELECT substring(DOLT_REVERT('HEAD')::text, 34);",
+      "querySha256": "92abfe6e1ea4234b870fe36e288eb0d16ec5cc146974b17eda45eac8274eb7d8",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltRevertRestoresSequenceStateGuard#0003",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltRevertRestoresSequenceStateGuard",
+      "ordinal": 3,
+      "scriptName": "DOLT_REVERT restores sequence state",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltrevertrestoressequencestateguard-0003-select-count-*-from-revert_sequence_items",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM revert_sequence_items;",
+      "querySha256": "f84f407a80641aa582167cc1a86a253506ac7cbf9869cde4cd15cd67d23c1649",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltRevertRestoresSequenceStateGuard#0004",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltRevertRestoresSequenceStateGuard",
+      "ordinal": 4,
+      "scriptName": "DOLT_REVERT restores sequence state",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltrevertrestoressequencestateguard-0004-select-nextval-revert_sequence_items_id_seq",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('revert_sequence_items_id_seq');",
+      "querySha256": "3dc46ba0a17f0ab5604a9cb088a562ec830c8b91e002a7af7394e8010f61ae6d",
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltRevertRemovesTriggerDefinitionGuard#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltRevertRemovesTriggerDefinitionGuard",
+      "ordinal": 1,
+      "scriptName": "DOLT_REVERT removes trigger definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltrevertremovestriggerdefinitionguard-0001-select-count-*-from-information_schema.triggers",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM information_schema.triggers\n\t\t\t\t\t\tWHERE trigger_name = 'revert_trigger_changed';",
+      "querySha256": "e498afb56cf7e527f2507d47825b307885864713151998e38c954a4cfb141bb5",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltRevertRemovesTriggerDefinitionGuard#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltRevertRemovesTriggerDefinitionGuard",
+      "ordinal": 2,
+      "scriptName": "DOLT_REVERT removes trigger definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltrevertremovestriggerdefinitionguard-0002-select-substring-dolt_revert-head-::text",
+      "expectedKind": "rows",
+      "query": "SELECT substring(DOLT_REVERT('HEAD')::text, 34);",
+      "querySha256": "92abfe6e1ea4234b870fe36e288eb0d16ec5cc146974b17eda45eac8274eb7d8",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltRevertRemovesTriggerDefinitionGuard#0003",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltRevertRemovesTriggerDefinitionGuard",
+      "ordinal": 3,
+      "scriptName": "DOLT_REVERT removes trigger definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltrevertremovestriggerdefinitionguard-0003-select-count-*-from-information_schema.triggers",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM information_schema.triggers\n\t\t\t\t\t\tWHERE trigger_name = 'revert_trigger_changed';",
+      "querySha256": "e498afb56cf7e527f2507d47825b307885864713151998e38c954a4cfb141bb5",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltRevertRemovesTriggerDefinitionGuard#0004",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltRevertRemovesTriggerDefinitionGuard",
+      "ordinal": 4,
+      "scriptName": "DOLT_REVERT removes trigger definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltrevertremovestriggerdefinitionguard-0004-insert-into-revert_trigger_items-values-1",
+      "expectedKind": "rows",
+      "query": "INSERT INTO revert_trigger_items VALUES (1, 'plain');",
+      "querySha256": "f04a2d9fab0cfaa2b34cd13375a93587898bdc47c72ee67ae6a99c210ee7edc4",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltRevertRemovesTriggerDefinitionGuard#0005",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltRevertRemovesTriggerDefinitionGuard",
+      "ordinal": 5,
+      "scriptName": "DOLT_REVERT removes trigger definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltrevertremovestriggerdefinitionguard-0005-select-label-from-revert_trigger_items",
+      "expectedKind": "rows",
+      "query": "SELECT label FROM revert_trigger_items;",
+      "querySha256": "0e35ad73f779455643d7f150eddb874a9942f5d9a27316daec57e57487d9849c",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltRmRemovesFunctionDefinitionGuard#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltRmRemovesFunctionDefinitionGuard",
+      "ordinal": 1,
+      "scriptName": "DOLT_RM removes function definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltrmremovesfunctiondefinitionguard-0001-select-rm_function_value",
+      "expectedKind": "rows",
+      "query": "SELECT rm_function_value();",
+      "querySha256": "2fc0f863575471ad27ad41ad40d1e5baaf1b60bf14de150c8202d2688974fcc2",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltRmRemovesFunctionDefinitionGuard#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltRmRemovesFunctionDefinitionGuard",
+      "ordinal": 2,
+      "scriptName": "DOLT_RM removes function definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltrmremovesfunctiondefinitionguard-0002-select-dolt_rm-rm_function_value",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_RM('rm_function_value()');",
+      "querySha256": "c4966ba7c3ca67834f5a8413e77ecf093cabc58ec7f6985c022f0e2c8fc4ce11",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltRmRemovesFunctionDefinitionGuard#0003",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltRmRemovesFunctionDefinitionGuard",
+      "ordinal": 3,
+      "scriptName": "DOLT_RM removes function definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltrmremovesfunctiondefinitionguard-0003-select-rm_function_value",
+      "expectedKind": "error",
+      "query": "SELECT rm_function_value();",
+      "querySha256": "2fc0f863575471ad27ad41ad40d1e5baaf1b60bf14de150c8202d2688974fcc2",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltRmRemovesSequenceDefinitionGuard#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltRmRemovesSequenceDefinitionGuard",
+      "ordinal": 1,
+      "scriptName": "DOLT_RM removes sequence definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltrmremovessequencedefinitionguard-0001-select-nextval-rm_sequence_value",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('rm_sequence_value');",
+      "querySha256": "abc79b8d8bb0cc4c096fd62a984c46a4fa556893000a63394136e41f2a4c2f6a",
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltRmRemovesSequenceDefinitionGuard#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltRmRemovesSequenceDefinitionGuard",
+      "ordinal": 2,
+      "scriptName": "DOLT_RM removes sequence definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltrmremovessequencedefinitionguard-0002-select-dolt_rm-rm_sequence_value",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_RM('rm_sequence_value');",
+      "querySha256": "f152dfc9c7ee38895a5088fe167cfd7a5f5073fdb7bd714d5f2359f1c965e30a",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltRmRemovesSequenceDefinitionGuard#0003",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltRmRemovesSequenceDefinitionGuard",
+      "ordinal": 3,
+      "scriptName": "DOLT_RM removes sequence definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltrmremovessequencedefinitionguard-0003-select-nextval-rm_sequence_value",
+      "expectedKind": "error",
+      "query": "SELECT nextval('rm_sequence_value');",
+      "querySha256": "abc79b8d8bb0cc4c096fd62a984c46a4fa556893000a63394136e41f2a4c2f6a",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltRmRemovesTriggerDefinitionGuard#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltRmRemovesTriggerDefinitionGuard",
+      "ordinal": 1,
+      "scriptName": "DOLT_RM removes trigger definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltrmremovestriggerdefinitionguard-0001-select-count-*-from-information_schema.triggers",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM information_schema.triggers\n\t\t\t\t\t\tWHERE trigger_name = 'rm_trigger_changed';",
+      "querySha256": "aed36ace52121177a754291fb93c02dfa7dc1020999ce7c5777b7b9e0de3a535",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltRmRemovesTriggerDefinitionGuard#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltRmRemovesTriggerDefinitionGuard",
+      "ordinal": 2,
+      "scriptName": "DOLT_RM removes trigger definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltrmremovestriggerdefinitionguard-0002-select-dolt_rm-rm_trigger_items.rm_trigger_changed",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_RM('rm_trigger_items.rm_trigger_changed');",
+      "querySha256": "52199146226c24cf5f2502786cd5cc0ec29f13c6129b28c981e6d728cd5350d7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltRmRemovesTriggerDefinitionGuard#0003",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltRmRemovesTriggerDefinitionGuard",
+      "ordinal": 3,
+      "scriptName": "DOLT_RM removes trigger definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltrmremovestriggerdefinitionguard-0003-select-count-*-from-information_schema.triggers",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM information_schema.triggers\n\t\t\t\t\t\tWHERE trigger_name = 'rm_trigger_changed';",
+      "querySha256": "aed36ace52121177a754291fb93c02dfa7dc1020999ce7c5777b7b9e0de3a535",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltRmRemovesTriggerDefinitionGuard#0004",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltRmRemovesTriggerDefinitionGuard",
+      "ordinal": 4,
+      "scriptName": "DOLT_RM removes trigger definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltrmremovestriggerdefinitionguard-0004-insert-into-rm_trigger_items-values-1",
+      "expectedKind": "rows",
+      "query": "INSERT INTO rm_trigger_items VALUES (1, 'plain');",
+      "querySha256": "3fa3e85513956e00bba3a26e32cab2a05d373af9a18c95871b76b086d0650246",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltRmRemovesTriggerDefinitionGuard#0005",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestDoltRmRemovesTriggerDefinitionGuard",
+      "ordinal": 5,
+      "scriptName": "DOLT_RM removes trigger definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testdoltrmremovestriggerdefinitionguard-0005-select-label-from-rm_trigger_items",
+      "expectedKind": "rows",
+      "query": "SELECT label FROM rm_trigger_items;",
+      "querySha256": "a2a4a197af5fe47dd4e22e140aee2bc393790d07d93384dfb865dba3fd6df3dc",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestCreateOrReplaceFunctionUpdatesCommittedDefinitionGuard#0001",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestCreateOrReplaceFunctionUpdatesCommittedDefinitionGuard",
+      "ordinal": 1,
+      "scriptName": "CREATE OR REPLACE FUNCTION updates committed definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testcreateorreplacefunctionupdatescommitteddefinitionguard-0001-select-replace_committed_function_value",
+      "expectedKind": "rows",
+      "query": "SELECT replace_committed_function_value();",
+      "querySha256": "79560c5f8bad38ea197d7c74479275aaefdc73f5641e2397306e813def29b850",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/dolt_versioning_correctness_repro_test.go:TestCreateOrReplaceFunctionUpdatesCommittedDefinitionGuard#0002",
+      "source": "testing/go/dolt_versioning_correctness_repro_test.go:TestCreateOrReplaceFunctionUpdatesCommittedDefinitionGuard",
+      "ordinal": 2,
+      "scriptName": "CREATE OR REPLACE FUNCTION updates committed definition",
+      "oracle": "internal",
+      "suggestedId": "dolt-versioning-correctness-repro-test-testcreateorreplacefunctionupdatescommitteddefinitionguard-0002-select-count-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM dolt_status;",
+      "querySha256": "d1e78fb3f90b9dfdcfe071698c29f56f3408ad67f31e3e4bcfb4b82927693831",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    }
+  ]
+}

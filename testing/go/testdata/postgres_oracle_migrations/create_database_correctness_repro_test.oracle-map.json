@@ -1,0 +1,254 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map create_database_correctness_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/create_database_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/create_database_correctness_repro_test.go:TestCreateDatabaseRejectsInvalidEncodingRepro#0001",
+      "source": "testing/go/create_database_correctness_repro_test.go:TestCreateDatabaseRejectsInvalidEncodingRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE DATABASE rejects invalid encoding",
+      "oracle": "postgres",
+      "postgresId": "create-database-correctness-repro-test-testcreatedatabaserejectsinvalidencodingrepro-0001-create-database-invalid_encoding_db-encoding-notexist",
+      "suggestedId": "create-database-correctness-repro-test-testcreatedatabaserejectsinvalidencodingrepro-0001-create-database-invalid_encoding_db-encoding-notexist",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42704",
+      "errorSeverity": "ERROR",
+      "query": "CREATE DATABASE invalid_encoding_db ENCODING notexist;",
+      "querySha256": "7751f9508c5983da44c926e2f4c1232609eacb66f94f8885915d12bcb898737f",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_database_correctness_repro_test.go:TestCreateDatabaseUnknownTablespaceErrors#0001",
+      "source": "testing/go/create_database_correctness_repro_test.go:TestCreateDatabaseUnknownTablespaceErrors",
+      "ordinal": 1,
+      "scriptName": "CREATE DATABASE rejects unknown tablespace",
+      "oracle": "postgres",
+      "postgresId": "create-database-correctness-repro-test-testcreatedatabaseunknowntablespaceerrors-0001-create-database-bad_tablespace_db-tablespace-custom_space",
+      "suggestedId": "create-database-correctness-repro-test-testcreatedatabaseunknowntablespaceerrors-0001-create-database-bad_tablespace_db-tablespace-custom_space",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42704",
+      "errorSeverity": "ERROR",
+      "query": "CREATE DATABASE bad_tablespace_db TABLESPACE custom_space;",
+      "querySha256": "625efb440f79b463626d30b12c1fceb3208ac7e29b2cd2e2d004a8d04308ba77",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_database_correctness_repro_test.go:TestCreateDatabaseCatalogOptionsRepro#0001",
+      "source": "testing/go/create_database_correctness_repro_test.go:TestCreateDatabaseCatalogOptionsRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE DATABASE ALLOW_CONNECTIONS persists datallowconn",
+      "oracle": "postgres",
+      "postgresId": "create-database-correctness-repro-test-testcreatedatabasecatalogoptionsrepro-0001-select-datallowconn-from-pg_database-where",
+      "suggestedId": "create-database-correctness-repro-test-testcreatedatabasecatalogoptionsrepro-0001-select-datallowconn-from-pg_database-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT datallowconn\n\t\t\t\t\t\tFROM pg_database\n\t\t\t\t\t\tWHERE datname = 'no_connections_db';",
+      "querySha256": "20a86a38a437cb50045ff15368e78f0dea5f842da699b0324af6067df5c43c6b",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_database_correctness_repro_test.go:TestCreateDatabaseCatalogOptionsRepro#0002",
+      "source": "testing/go/create_database_correctness_repro_test.go:TestCreateDatabaseCatalogOptionsRepro",
+      "ordinal": 2,
+      "scriptName": "CREATE DATABASE CONNECTION LIMIT persists datconnlimit",
+      "oracle": "postgres",
+      "postgresId": "create-database-correctness-repro-test-testcreatedatabasecatalogoptionsrepro-0002-select-datconnlimit-from-pg_database-where",
+      "suggestedId": "create-database-correctness-repro-test-testcreatedatabasecatalogoptionsrepro-0002-select-datconnlimit-from-pg_database-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT datconnlimit\n\t\t\t\t\t\tFROM pg_database\n\t\t\t\t\t\tWHERE datname = 'connection_limit_db';",
+      "querySha256": "a0ca374b4187da813bd13868240913b9dd9abfff5a908ee42fcfdf61300037ab",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_database_correctness_repro_test.go:TestCreateDatabaseCatalogOptionsRepro#0003",
+      "source": "testing/go/create_database_correctness_repro_test.go:TestCreateDatabaseCatalogOptionsRepro",
+      "ordinal": 3,
+      "scriptName": "CREATE DATABASE IS_TEMPLATE persists datistemplate",
+      "oracle": "postgres",
+      "postgresId": "create-database-correctness-repro-test-testcreatedatabasecatalogoptionsrepro-0003-select-datistemplate-from-pg_database-where",
+      "suggestedId": "create-database-correctness-repro-test-testcreatedatabasecatalogoptionsrepro-0003-select-datistemplate-from-pg_database-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT datistemplate\n\t\t\t\t\t\tFROM pg_database\n\t\t\t\t\t\tWHERE datname = 'template_option_db';",
+      "querySha256": "9b92b163c684f862ba9439a19c43179325a4605a8afb185f792246af5a898bf3",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_database_correctness_repro_test.go:TestCreateDatabaseTemplateCopiesDataRepro#0001",
+      "source": "testing/go/create_database_correctness_repro_test.go:TestCreateDatabaseTemplateCopiesDataRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE DATABASE TEMPLATE copies source database data",
+      "oracle": "internal",
+      "suggestedId": "create-database-correctness-repro-test-testcreatedatabasetemplatecopiesdatarepro-0001-select-id-label-from-template_copy_items",
+      "expectedKind": "rows",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM template_copy_items;",
+      "querySha256": "b9e20a036a83d89d873c32fbd470a9807ce6bf6a56a20e99d7e903e4fccefa66",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_database_correctness_repro_test.go:TestCreateDatabaseStrategyWalLogRepro#0001",
+      "source": "testing/go/create_database_correctness_repro_test.go:TestCreateDatabaseStrategyWalLogRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE DATABASE STRATEGY WAL_LOG creates usable database",
+      "oracle": "internal",
+      "suggestedId": "create-database-correctness-repro-test-testcreatedatabasestrategywallogrepro-0001-select-datname-from-pg_database-where",
+      "expectedKind": "rows",
+      "query": "SELECT datname\n\t\t\t\t\t\tFROM pg_database\n\t\t\t\t\t\tWHERE datname = 'strategy_wal_log_db';",
+      "querySha256": "41018e2657aea0e4eca8df8c4cdcaa8edf9c20fa2c65e50a40df3d62f12c257b",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_database_correctness_repro_test.go:TestCreateDatabaseOidOptionPersistsCatalogRepro#0001",
+      "source": "testing/go/create_database_correctness_repro_test.go:TestCreateDatabaseOidOptionPersistsCatalogRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE DATABASE OID persists pg_database oid",
+      "oracle": "postgres",
+      "postgresId": "create-database-correctness-repro-test-testcreatedatabaseoidoptionpersistscatalogrepro-0001-select-oid::int-from-pg_database-where",
+      "suggestedId": "create-database-correctness-repro-test-testcreatedatabaseoidoptionpersistscatalogrepro-0001-select-oid::int-from-pg_database-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT oid::INT\n\t\t\t\t\t\tFROM pg_database\n\t\t\t\t\t\tWHERE datname = 'oid_option_db';",
+      "querySha256": "7ae29ecdee6f96c267b99cd11b5edb35f25783b3278f41d431e5f0226e789870",
+      "expectedRows": [
+        [
+          {
+            "value": "987654"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_database_correctness_repro_test.go:TestCreateDatabaseLocaleProviderRepro#0001",
+      "source": "testing/go/create_database_correctness_repro_test.go:TestCreateDatabaseLocaleProviderRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE DATABASE LOCALE_PROVIDER creates usable database",
+      "oracle": "internal",
+      "suggestedId": "create-database-correctness-repro-test-testcreatedatabaselocaleproviderrepro-0001-select-datname-from-pg_database-where",
+      "expectedKind": "rows",
+      "query": "SELECT datname\n\t\t\t\t\t\tFROM pg_database\n\t\t\t\t\t\tWHERE datname = 'locale_provider_db';",
+      "querySha256": "ef97cd248012d3c6d1e7fb2b1f1bb77cd99bd0cf2f8e733412ce288a8768eea0",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_database_correctness_repro_test.go:TestCreateDatabaseLocaleCatalogRepro#0001",
+      "source": "testing/go/create_database_correctness_repro_test.go:TestCreateDatabaseLocaleCatalogRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE DATABASE LC_COLLATE LC_CTYPE persist catalog values",
+      "oracle": "postgres",
+      "postgresId": "create-database-correctness-repro-test-testcreatedatabaselocalecatalogrepro-0001-select-datcollate-datctype-from-pg_database",
+      "suggestedId": "create-database-correctness-repro-test-testcreatedatabaselocalecatalogrepro-0001-select-datcollate-datctype-from-pg_database",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT datcollate, datctype\n\t\t\t\t\t\tFROM pg_database\n\t\t\t\t\t\tWHERE datname = 'locale_catalog_db';",
+      "querySha256": "220b3afcfecd8c334692bc01cfe2cc3ab050481fa2523de1b4d9a03204ce1943",
+      "expectedRows": [
+        [
+          {
+            "value": "C"
+          },
+          {
+            "value": "C"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_database_correctness_repro_test.go:TestCreateDatabaseCollationVersionRepro#0001",
+      "source": "testing/go/create_database_correctness_repro_test.go:TestCreateDatabaseCollationVersionRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE DATABASE COLLATION_VERSION persists datcollversion",
+      "oracle": "postgres",
+      "postgresId": "create-database-correctness-repro-test-testcreatedatabasecollationversionrepro-0001-select-datcollversion-from-pg_database-where",
+      "suggestedId": "create-database-correctness-repro-test-testcreatedatabasecollationversionrepro-0001-select-datcollversion-from-pg_database-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT datcollversion\n\t\t\t\t\t\tFROM pg_database\n\t\t\t\t\t\tWHERE datname = 'collation_version_db';",
+      "querySha256": "b52e44d10455ad96602eea4f44aa4da8871bdc657de8f4bac1facd0ac768528d",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_database_correctness_repro_test.go:TestCreateDatabaseIcuLocaleRepro#0001",
+      "source": "testing/go/create_database_correctness_repro_test.go:TestCreateDatabaseIcuLocaleRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE DATABASE ICU_LOCALE persists daticulocale",
+      "oracle": "internal",
+      "suggestedId": "create-database-correctness-repro-test-testcreatedatabaseiculocalerepro-0001-select-daticulocale-from-pg_database-where",
+      "expectedKind": "rows",
+      "query": "SELECT daticulocale\n\t\t\t\t\t\tFROM pg_database\n\t\t\t\t\t\tWHERE datname = 'icu_locale_db';",
+      "querySha256": "04dea060c191de314e35dd35eeda237d118ae088a404d83175cf65863049b248",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_database_correctness_repro_test.go:TestCreateDatabaseIcuRulesRepro#0001",
+      "source": "testing/go/create_database_correctness_repro_test.go:TestCreateDatabaseIcuRulesRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE DATABASE ICU_RULES persists daticurules",
+      "oracle": "internal",
+      "suggestedId": "create-database-correctness-repro-test-testcreatedatabaseicurulesrepro-0001-select-daticurules-from-pg_database-where",
+      "expectedKind": "rows",
+      "query": "SELECT daticurules\n\t\t\t\t\t\tFROM pg_database\n\t\t\t\t\t\tWHERE datname = 'icu_rules_db';",
+      "querySha256": "6095f38db859b189b31ea70909e4e2c049c3b2c21232393342d187ab0b5836a5",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    }
+  ]
+}

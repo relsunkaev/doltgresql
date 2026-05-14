@@ -1,5 +1,5 @@
 {
-  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map json_correctness_repro_test.go --oracle-test-name TestJsonAggregatesPreserveJsonInputTextRepro,TestJsonArrayElementsPreservesJsonElementTextRepro,TestJsonEachPreservesJsonObjectOrderAndDuplicatesRepro,TestJsonExtractionPreservesJsonObjectKeyOrderRepro,TestJsonExtractionPreservesJsonSubdocumentTextRepro,TestJsonObjectKeysPreservesJsonObjectOrderAndDuplicatesRepro,TestJsonPopulateRecordPreservesNestedJsonTextRepro,TestJsonToRecordPreservesNestedJsonTextRepro --force-postgres-oracle",
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map json_correctness_repro_test.go --force-postgres-oracle",
   "sourceFile": "testing/go/json_correctness_repro_test.go",
   "defaultOracle": "internal",
   "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
@@ -13,6 +13,62 @@
     "ExpectedNotices"
   ],
   "assertions": [
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonAggDistinctRequiresJsonEqualityOperatorRepro#0001",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonAggDistinctRequiresJsonEqualityOperatorRepro",
+      "ordinal": 1,
+      "scriptName": "json_agg DISTINCT rejects json inputs without equality",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonaggdistinctrequiresjsonequalityoperatorrepro-0001-select-json_agg-distinct-doc-::text",
+      "suggestedId": "json-correctness-repro-test-testjsonaggdistinctrequiresjsonequalityoperatorrepro-0001-select-json_agg-distinct-doc-::text",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42883",
+      "errorSeverity": "ERROR",
+      "query": "SELECT json_agg(DISTINCT doc)::text\n\t\t\t\t\t\tFROM (VALUES ('{\"a\":1}'::json), ('{\"a\":1}'::json)) AS v(doc);",
+      "querySha256": "788e87aaa7ee6ffa6beb5c04b082fe0dc7784bcee96aa62a96509fd5445ad2c6",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonObjectAggDistinctRequiresJsonEqualityOperatorRepro#0001",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonObjectAggDistinctRequiresJsonEqualityOperatorRepro",
+      "ordinal": 1,
+      "scriptName": "json_object_agg DISTINCT rejects json inputs without equality",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonobjectaggdistinctrequiresjsonequalityoperatorrepro-0001-select-json_object_agg-distinct-key-doc",
+      "suggestedId": "json-correctness-repro-test-testjsonobjectaggdistinctrequiresjsonequalityoperatorrepro-0001-select-json_object_agg-distinct-key-doc",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42883",
+      "errorSeverity": "ERROR",
+      "query": "SELECT json_object_agg(DISTINCT key, doc)::text\n\t\t\t\t\t\tFROM (VALUES ('a', '{\"x\":1}'::json), ('a', '{\"x\":1}'::json)) AS v(key, doc);",
+      "querySha256": "0cd65c48801b4e567a9edc2b9583fe2a757f3165046d8e9e421ce04b06f2fa7b",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonbAggDistinctDeduplicatesJsonbValuesRepro#0001",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonbAggDistinctDeduplicatesJsonbValuesRepro",
+      "ordinal": 1,
+      "scriptName": "jsonb_agg DISTINCT deduplicates jsonb inputs",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonbaggdistinctdeduplicatesjsonbvaluesrepro-0001-select-jsonb_agg-distinct-doc-::text",
+      "suggestedId": "json-correctness-repro-test-testjsonbaggdistinctdeduplicatesjsonbvaluesrepro-0001-select-jsonb_agg-distinct-doc-::text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT jsonb_agg(DISTINCT doc)::text\n\t\t\t\t\t\tFROM (VALUES ('{\"a\":1}'::jsonb), ('{\"a\":1}'::jsonb)) AS v(doc);",
+      "querySha256": "2eaea39cc363d21b1a4faa5729411bde0b4dfab5676164d1dc9025fbf000eaf1",
+      "expectedRows": [
+        [
+          {
+            "value": "[{\"a\": 1}]"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
     {
       "key": "testing/go/json_correctness_repro_test.go:TestJsonExtractionPreservesJsonSubdocumentTextRepro#0001",
       "source": "testing/go/json_correctness_repro_test.go:TestJsonExtractionPreservesJsonSubdocumentTextRepro",
@@ -202,6 +258,159 @@
       "cleanupProvided": false
     },
     {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonBuildObjectRejectsNonScalarKeysRepro#0001",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonBuildObjectRejectsNonScalarKeysRepro",
+      "ordinal": 1,
+      "scriptName": "json_build_object rejects non-scalar keys",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonbuildobjectrejectsnonscalarkeysrepro-0001-select-json_build_object-json-{-a",
+      "suggestedId": "json-correctness-repro-test-testjsonbuildobjectrejectsnonscalarkeysrepro-0001-select-json_build_object-json-{-a",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "SELECT json_build_object(json '{\"a\":1}', 2);",
+      "querySha256": "93d82b9a08d2ff02ee3475dc26678a8e706da5348a277b006e62cd99d765ca8f",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonBuildObjectRejectsNonScalarKeysRepro#0002",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonBuildObjectRejectsNonScalarKeysRepro",
+      "ordinal": 2,
+      "scriptName": "json_build_object rejects non-scalar keys",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonbuildobjectrejectsnonscalarkeysrepro-0002-select-json_build_object-array[1-2-3]",
+      "suggestedId": "json-correctness-repro-test-testjsonbuildobjectrejectsnonscalarkeysrepro-0002-select-json_build_object-array[1-2-3]",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "SELECT json_build_object(ARRAY[1,2,3], 2);",
+      "querySha256": "58404c3357eb13b670edf1ff9f017afca96698bac90fd0e8004ea956e046fa79",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonBuildObjectRejectsNonScalarKeysRepro#0003",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonBuildObjectRejectsNonScalarKeysRepro",
+      "ordinal": 3,
+      "scriptName": "json_build_object rejects non-scalar keys",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonbuildobjectrejectsnonscalarkeysrepro-0003-select-json_build_object-r-2-from",
+      "suggestedId": "json-correctness-repro-test-testjsonbuildobjectrejectsnonscalarkeysrepro-0003-select-json_build_object-r-2-from",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "SELECT json_build_object(r, 2) FROM (SELECT 1 AS a, 2 AS b) AS r;",
+      "querySha256": "e794161c60471a6e5cebf55e99bb898298f09ea92dc5b485347ea0b3a3cd6a73",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonbBuildObjectRejectsNonScalarKeysRepro#0001",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonbBuildObjectRejectsNonScalarKeysRepro",
+      "ordinal": 1,
+      "scriptName": "jsonb_build_object rejects non-scalar keys",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonbbuildobjectrejectsnonscalarkeysrepro-0001-select-jsonb_build_object-json-{-a",
+      "suggestedId": "json-correctness-repro-test-testjsonbbuildobjectrejectsnonscalarkeysrepro-0001-select-jsonb_build_object-json-{-a",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "SELECT jsonb_build_object(json '{\"a\":1}', 2);",
+      "querySha256": "0ea09cb80062a3966bfd3ed0b37bab21678b81a058588b6ebe1d510ea3f94908",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonbBuildObjectRejectsNonScalarKeysRepro#0002",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonbBuildObjectRejectsNonScalarKeysRepro",
+      "ordinal": 2,
+      "scriptName": "jsonb_build_object rejects non-scalar keys",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonbbuildobjectrejectsnonscalarkeysrepro-0002-select-jsonb_build_object-array[1-2-3]",
+      "suggestedId": "json-correctness-repro-test-testjsonbbuildobjectrejectsnonscalarkeysrepro-0002-select-jsonb_build_object-array[1-2-3]",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "SELECT jsonb_build_object(ARRAY[1,2,3], 2);",
+      "querySha256": "4b72efee64d0cdc3a35800ebc715b9c75f3db0a40960ef95e11964b2fde3c5fb",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonbBuildObjectRejectsNonScalarKeysRepro#0003",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonbBuildObjectRejectsNonScalarKeysRepro",
+      "ordinal": 3,
+      "scriptName": "jsonb_build_object rejects non-scalar keys",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonbbuildobjectrejectsnonscalarkeysrepro-0003-select-jsonb_build_object-r-2-from",
+      "suggestedId": "json-correctness-repro-test-testjsonbbuildobjectrejectsnonscalarkeysrepro-0003-select-jsonb_build_object-r-2-from",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "SELECT jsonb_build_object(r, 2) FROM (SELECT 1 AS a, 2 AS b) AS r;",
+      "querySha256": "308598c36dc3db24a2ba33522a82eceb939d55601be7d1c9418301d2cdce81f9",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonObjectAggRejectsNonScalarKeysRepro#0001",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonObjectAggRejectsNonScalarKeysRepro",
+      "ordinal": 1,
+      "scriptName": "json_object_agg rejects non-scalar keys",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonobjectaggrejectsnonscalarkeysrepro-0001-select-json_object_agg-k-2-from",
+      "suggestedId": "json-correctness-repro-test-testjsonobjectaggrejectsnonscalarkeysrepro-0001-select-json_object_agg-k-2-from",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "SELECT json_object_agg(k, 2) FROM (VALUES (json '{\"a\":1}')) AS v(k);",
+      "querySha256": "3201cc27781f3abdf10eef8942f6b96cbebf4dbba384498df2765d0d644a6cb5",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonObjectAggRejectsNonScalarKeysRepro#0002",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonObjectAggRejectsNonScalarKeysRepro",
+      "ordinal": 2,
+      "scriptName": "json_object_agg rejects non-scalar keys",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonobjectaggrejectsnonscalarkeysrepro-0002-select-json_object_agg-k-2-from",
+      "suggestedId": "json-correctness-repro-test-testjsonobjectaggrejectsnonscalarkeysrepro-0002-select-json_object_agg-k-2-from",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "SELECT json_object_agg(k, 2) FROM (VALUES (ARRAY[1,2,3])) AS v(k);",
+      "querySha256": "84c6ec0644a1f9fd4b5572a4c8b378748b3d7acdfdb3d413c71dcafdfa69bb85",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonObjectAggRejectsNonScalarKeysRepro#0003",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonObjectAggRejectsNonScalarKeysRepro",
+      "ordinal": 3,
+      "scriptName": "json_object_agg rejects non-scalar keys",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonobjectaggrejectsnonscalarkeysrepro-0003-select-json_object_agg-r-2-from",
+      "suggestedId": "json-correctness-repro-test-testjsonobjectaggrejectsnonscalarkeysrepro-0003-select-json_object_agg-r-2-from",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "SELECT json_object_agg(r, 2) FROM (SELECT 1 AS a, 2 AS b) AS r;",
+      "querySha256": "83ff425946dda64f41216382e1f307f142439c883514834e6161958c2d403f6b",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
       "key": "testing/go/json_correctness_repro_test.go:TestJsonAggregatesPreserveJsonInputTextRepro#0001",
       "source": "testing/go/json_correctness_repro_test.go:TestJsonAggregatesPreserveJsonInputTextRepro",
       "ordinal": 1,
@@ -327,6 +536,956 @@
         [
           {
             "value": "{\"a\":1,\"a\":2}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonbObjectAggRejectsNonScalarKeysRepro#0001",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonbObjectAggRejectsNonScalarKeysRepro",
+      "ordinal": 1,
+      "scriptName": "jsonb_object_agg rejects non-scalar keys",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonbobjectaggrejectsnonscalarkeysrepro-0001-select-jsonb_object_agg-k-2-from",
+      "suggestedId": "json-correctness-repro-test-testjsonbobjectaggrejectsnonscalarkeysrepro-0001-select-jsonb_object_agg-k-2-from",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "SELECT jsonb_object_agg(k, 2) FROM (VALUES (json '{\"a\":1}')) AS v(k);",
+      "querySha256": "39a841b2ac8b8410d0fbb35eaff9daaa3dcff84944d22e7716bfdc529136b435",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonbObjectAggRejectsNonScalarKeysRepro#0002",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonbObjectAggRejectsNonScalarKeysRepro",
+      "ordinal": 2,
+      "scriptName": "jsonb_object_agg rejects non-scalar keys",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonbobjectaggrejectsnonscalarkeysrepro-0002-select-jsonb_object_agg-k-2-from",
+      "suggestedId": "json-correctness-repro-test-testjsonbobjectaggrejectsnonscalarkeysrepro-0002-select-jsonb_object_agg-k-2-from",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "SELECT jsonb_object_agg(k, 2) FROM (VALUES (ARRAY[1,2,3])) AS v(k);",
+      "querySha256": "c7615eb3c40b11d21e438c8c84e89beab40a95fddc8e92a8abb55b049039199a",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonbObjectAggRejectsNonScalarKeysRepro#0003",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonbObjectAggRejectsNonScalarKeysRepro",
+      "ordinal": 3,
+      "scriptName": "jsonb_object_agg rejects non-scalar keys",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonbobjectaggrejectsnonscalarkeysrepro-0003-select-jsonb_object_agg-r-2-from",
+      "suggestedId": "json-correctness-repro-test-testjsonbobjectaggrejectsnonscalarkeysrepro-0003-select-jsonb_object_agg-r-2-from",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "SELECT jsonb_object_agg(r, 2) FROM (SELECT 1 AS a, 2 AS b) AS r;",
+      "querySha256": "6d5d3881ef351395f69c9a7422279afeefd9e97aef83b4dc55b41a571f3bf4b7",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonObjectAcceptsTwoDimensionalTextArrayRepro#0001",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonObjectAcceptsTwoDimensionalTextArrayRepro",
+      "ordinal": 1,
+      "scriptName": "json_object accepts two-dimensional text array",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonobjectacceptstwodimensionaltextarrayrepro-0001-select-json_object-{{a-1}-{b",
+      "suggestedId": "json-correctness-repro-test-testjsonobjectacceptstwodimensionaltextarrayrepro-0001-select-json_object-{{a-1}-{b",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT json_object('{{a,1},{b,2},{3,NULL},{\"d e f\",\"a b c\"}}'::text[])::jsonb::text,\n\t\t\t\t\t\tjsonb_object('{{a,1},{b,2},{3,NULL},{\"d e f\",\"a b c\"}}'::text[])::text;",
+      "querySha256": "d0639228a1f7f2b44fa05b345ac7ec40b84094cadbf3171462535c6aef292b73",
+      "expectedRows": [
+        [
+          {
+            "value": "{\"3\": null, \"a\": \"1\", \"b\": \"2\", \"d e f\": \"a b c\"}"
+          },
+          {
+            "value": "{\"3\": null, \"a\": \"1\", \"b\": \"2\", \"d e f\": \"a b c\"}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonObjectTwoDimensionalArrayRequiresTwoColumnsRepro#0001",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonObjectTwoDimensionalArrayRequiresTwoColumnsRepro",
+      "ordinal": 1,
+      "scriptName": "json_object two-dimensional text array requires two columns",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonobjecttwodimensionalarrayrequirestwocolumnsrepro-0001-select-json_object-{{a}-{b}}-::text[]",
+      "suggestedId": "json-correctness-repro-test-testjsonobjecttwodimensionalarrayrequirestwocolumnsrepro-0001-select-json_object-{{a}-{b}}-::text[]",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "2202E",
+      "errorSeverity": "ERROR",
+      "query": "SELECT json_object('{{a},{b}}'::text[]);",
+      "querySha256": "41077e99701818ce830bde58e18066a0156514e423a2338ff97a3764cb031ee8",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonObjectTwoDimensionalArrayRequiresTwoColumnsRepro#0002",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonObjectTwoDimensionalArrayRequiresTwoColumnsRepro",
+      "ordinal": 2,
+      "scriptName": "json_object two-dimensional text array requires two columns",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonobjecttwodimensionalarrayrequirestwocolumnsrepro-0002-select-jsonb_object-{{a}-{b}}-::text[]",
+      "suggestedId": "json-correctness-repro-test-testjsonobjecttwodimensionalarrayrequirestwocolumnsrepro-0002-select-jsonb_object-{{a}-{b}}-::text[]",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "2202E",
+      "errorSeverity": "ERROR",
+      "query": "SELECT jsonb_object('{{a},{b}}'::text[]);",
+      "querySha256": "1a8c9d97c6cc38bd858a8de14673f1832122624fe0de6c4627552961e3f16c85",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonObjectTwoDimensionalArrayRequiresTwoColumnsRepro#0003",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonObjectTwoDimensionalArrayRequiresTwoColumnsRepro",
+      "ordinal": 3,
+      "scriptName": "json_object two-dimensional text array requires two columns",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonobjecttwodimensionalarrayrequirestwocolumnsrepro-0003-select-json_object-{{a-b-c}",
+      "suggestedId": "json-correctness-repro-test-testjsonobjecttwodimensionalarrayrequirestwocolumnsrepro-0003-select-json_object-{{a-b-c}",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "2202E",
+      "errorSeverity": "ERROR",
+      "query": "SELECT json_object('{{a,b,c},{b,c,d}}'::text[]);",
+      "querySha256": "3a4bba0aa61d179c2ac989e02db6114959240ddcfe08020417fd0fe256e52b7e",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonObjectTwoDimensionalArrayRequiresTwoColumnsRepro#0004",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonObjectTwoDimensionalArrayRequiresTwoColumnsRepro",
+      "ordinal": 4,
+      "scriptName": "json_object two-dimensional text array requires two columns",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonobjecttwodimensionalarrayrequirestwocolumnsrepro-0004-select-jsonb_object-{{a-b-c}",
+      "suggestedId": "json-correctness-repro-test-testjsonobjecttwodimensionalarrayrequirestwocolumnsrepro-0004-select-jsonb_object-{{a-b-c}",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "2202E",
+      "errorSeverity": "ERROR",
+      "query": "SELECT jsonb_object('{{a,b,c},{b,c,d}}'::text[]);",
+      "querySha256": "c07562d15d12290492b9cdf854ab8bd1ae47e2b23fffd97e921a06a3a73e01e6",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonObjectTwoArrayFormMultidimensionalInputsErrorRepro#0001",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonObjectTwoArrayFormMultidimensionalInputsErrorRepro",
+      "ordinal": 1,
+      "scriptName": "json_object two-array form rejects multidimensional inputs",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonobjecttwoarrayformmultidimensionalinputserrorrepro-0001-select-json_object-{{a-1}-{b",
+      "suggestedId": "json-correctness-repro-test-testjsonobjecttwoarrayformmultidimensionalinputserrorrepro-0001-select-json_object-{{a-1}-{b",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "2202E",
+      "errorSeverity": "ERROR",
+      "query": "SELECT json_object('{{a,1},{b,2}}'::text[], '{1,2}'::text[]);",
+      "querySha256": "b77210c687af98254d3c335d619d59013edf4534e5a1653ca222cc6725eb7c15",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonObjectTwoArrayFormMultidimensionalInputsErrorRepro#0002",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonObjectTwoArrayFormMultidimensionalInputsErrorRepro",
+      "ordinal": 2,
+      "scriptName": "json_object two-array form rejects multidimensional inputs",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonobjecttwoarrayformmultidimensionalinputserrorrepro-0002-select-jsonb_object-{{a-1}-{b",
+      "suggestedId": "json-correctness-repro-test-testjsonobjecttwoarrayformmultidimensionalinputserrorrepro-0002-select-jsonb_object-{{a-1}-{b",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "2202E",
+      "errorSeverity": "ERROR",
+      "query": "SELECT jsonb_object('{{a,1},{b,2}}'::text[], '{1,2}'::text[]);",
+      "querySha256": "4b0d98ea198f37fa1afb54f743a9c7caa8717ed3c8b43ea12c5c4b9528d1cabc",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonObjectTwoArrayFormMultidimensionalInputsErrorRepro#0003",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonObjectTwoArrayFormMultidimensionalInputsErrorRepro",
+      "ordinal": 3,
+      "scriptName": "json_object two-array form rejects multidimensional inputs",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonobjecttwoarrayformmultidimensionalinputserrorrepro-0003-select-json_object-{a-b}-::text[]",
+      "suggestedId": "json-correctness-repro-test-testjsonobjecttwoarrayformmultidimensionalinputserrorrepro-0003-select-json_object-{a-b}-::text[]",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "2202E",
+      "errorSeverity": "ERROR",
+      "query": "SELECT json_object('{a,b}'::text[], '{{1,2},{3,4}}'::text[]);",
+      "querySha256": "dfaab660318e245768871923cdded6678e1a5cba37f729fbbe8b3dca811e5410",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonObjectTwoArrayFormMultidimensionalInputsErrorRepro#0004",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonObjectTwoArrayFormMultidimensionalInputsErrorRepro",
+      "ordinal": 4,
+      "scriptName": "json_object two-array form rejects multidimensional inputs",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonobjecttwoarrayformmultidimensionalinputserrorrepro-0004-select-jsonb_object-{a-b}-::text[]",
+      "suggestedId": "json-correctness-repro-test-testjsonobjecttwoarrayformmultidimensionalinputserrorrepro-0004-select-jsonb_object-{a-b}-::text[]",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "2202E",
+      "errorSeverity": "ERROR",
+      "query": "SELECT jsonb_object('{a,b}'::text[], '{{1,2},{3,4}}'::text[]);",
+      "querySha256": "2da79fb7a68d245e6ab0d4504aa4846c9ee7ea986588d7a6c2d2a1ebcb2a0da9",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestToJsonFloatNonFiniteValuesBecomeStringsRepro#0001",
+      "source": "testing/go/json_correctness_repro_test.go:TestToJsonFloatNonFiniteValuesBecomeStringsRepro",
+      "ordinal": 1,
+      "scriptName": "to_json non-finite floats become strings",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testtojsonfloatnonfinitevaluesbecomestringsrepro-0001-select-to_json-nan-::float8-::text",
+      "suggestedId": "json-correctness-repro-test-testtojsonfloatnonfinitevaluesbecomestringsrepro-0001-select-to_json-nan-::float8-::text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT to_json('NaN'::float8)::text,\n\t\t\t\t\t\tto_json('Infinity'::float8)::text,\n\t\t\t\t\t\tto_json('-Infinity'::float8)::text,\n\t\t\t\t\t\tto_jsonb('NaN'::float8)::text,\n\t\t\t\t\t\tto_jsonb('Infinity'::float8)::text,\n\t\t\t\t\t\tto_jsonb('-Infinity'::float8)::text;",
+      "querySha256": "77afd20d9d2da6d6ff4e2e9030eeaaabcda12c6a8a8a6893f2e4fb2624dd5bdc",
+      "expectedRows": [
+        [
+          {
+            "value": "\"NaN\""
+          },
+          {
+            "value": "\"Infinity\""
+          },
+          {
+            "value": "\"-Infinity\""
+          },
+          {
+            "value": "\"NaN\""
+          },
+          {
+            "value": "\"Infinity\""
+          },
+          {
+            "value": "\"-Infinity\""
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonBuildersFloatNonFiniteValuesBecomeStringsRepro#0001",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonBuildersFloatNonFiniteValuesBecomeStringsRepro",
+      "ordinal": 1,
+      "scriptName": "json builders convert non-finite floats to strings",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonbuildersfloatnonfinitevaluesbecomestringsrepro-0001-select-json_build_array-nan-::float8-infinity",
+      "suggestedId": "json-correctness-repro-test-testjsonbuildersfloatnonfinitevaluesbecomestringsrepro-0001-select-json_build_array-nan-::float8-infinity",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT json_build_array('NaN'::float8, 'Infinity'::float8)::text,\n\t\t\t\t\t\tjsonb_build_array('NaN'::float8, '-Infinity'::float8)::text,\n\t\t\t\t\t\tjson_build_object('x', 'NaN'::float8)::text,\n\t\t\t\t\t\tjsonb_build_object('x', 'Infinity'::float8)::text;",
+      "querySha256": "2c4dedc1f698d17618bec79667b15669a7f831daab19d4a37eaca7a9e0cc8c10",
+      "expectedRows": [
+        [
+          {
+            "value": "[\"NaN\", \"Infinity\"]"
+          },
+          {
+            "value": "[\"NaN\", \"-Infinity\"]"
+          },
+          {
+            "value": "{\"x\" : \"NaN\"}"
+          },
+          {
+            "value": "{\"x\": \"Infinity\"}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonFloatNegativeZeroPreservesJsonSpellingRepro#0001",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonFloatNegativeZeroPreservesJsonSpellingRepro",
+      "ordinal": 1,
+      "scriptName": "plain json float negative zero preserves spelling",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonfloatnegativezeropreservesjsonspellingrepro-0001-select-to_json-0-::float8-::text",
+      "suggestedId": "json-correctness-repro-test-testjsonfloatnegativezeropreservesjsonspellingrepro-0001-select-to_json-0-::float8-::text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT to_json('-0'::float8)::text,\n\t\t\t\t\t\tto_jsonb('-0'::float8)::text,\n\t\t\t\t\t\tjson_build_array('-0'::float8)::text,\n\t\t\t\t\t\tjsonb_build_array('-0'::float8)::text;",
+      "querySha256": "c223dae935947ed976cc66d54f6db01cf540b5b5bc8ea4fa4836c30d04f9d9d6",
+      "expectedRows": [
+        [
+          {
+            "value": "-0"
+          },
+          {
+            "value": "0"
+          },
+          {
+            "value": "[-0]"
+          },
+          {
+            "value": "[0]"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestToJsonMultidimensionalArrayPreservesNestingRepro#0001",
+      "source": "testing/go/json_correctness_repro_test.go:TestToJsonMultidimensionalArrayPreservesNestingRepro",
+      "ordinal": 1,
+      "scriptName": "to_json multidimensional array preserves nesting",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testtojsonmultidimensionalarraypreservesnestingrepro-0001-select-to_json-{{1-2}-{3",
+      "suggestedId": "json-correctness-repro-test-testtojsonmultidimensionalarraypreservesnestingrepro-0001-select-to_json-{{1-2}-{3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT to_json('{{1,2},{3,4}}'::int[])::text,\n\t\t\t\t\t\tto_jsonb('{{1,2},{3,4}}'::int[])::text;",
+      "querySha256": "9e98f543f30ba37b62b0a29676126c5360001f7b3907c1018a852b4773570ea5",
+      "expectedRows": [
+        [
+          {
+            "value": "[[1,2],[3,4]]"
+          },
+          {
+            "value": "[[1, 2], [3, 4]]"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestToJsonDateTimestampUsePostgresFormattingRepro#0001",
+      "source": "testing/go/json_correctness_repro_test.go:TestToJsonDateTimestampUsePostgresFormattingRepro",
+      "ordinal": 1,
+      "scriptName": "to_json date and timestamp values use PostgreSQL formatting",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testtojsondatetimestampusepostgresformattingrepro-0001-select-to_json-2020-01-02-::date-::text",
+      "suggestedId": "json-correctness-repro-test-testtojsondatetimestampusepostgresformattingrepro-0001-select-to_json-2020-01-02-::date-::text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT to_json('2020-01-02'::date)::text,\n\t\t\t\t\t\tto_jsonb('2020-01-02'::date)::text,\n\t\t\t\t\t\tto_json('2020-01-02 03:04:05.123456'::timestamp)::text,\n\t\t\t\t\t\tto_jsonb('2020-01-02 03:04:05.123456'::timestamp)::text;",
+      "querySha256": "6e203606ccd9a0b8d95b6e61caac71a4a0d2e076e36419daabde6c1149fa16e0",
+      "expectedRows": [
+        [
+          {
+            "value": "\"2020-01-02\""
+          },
+          {
+            "value": "\"2020-01-02\""
+          },
+          {
+            "value": "\"2020-01-02T03:04:05.123456\""
+          },
+          {
+            "value": "\"2020-01-02T03:04:05.123456\""
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonBuildersDateTimestampUsePostgresFormattingRepro#0001",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonBuildersDateTimestampUsePostgresFormattingRepro",
+      "ordinal": 1,
+      "scriptName": "json builders date and timestamp values use PostgreSQL formatting",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonbuildersdatetimestampusepostgresformattingrepro-0001-select-json_build_array-2020-01-02-::date-2020-01-02",
+      "suggestedId": "json-correctness-repro-test-testjsonbuildersdatetimestampusepostgresformattingrepro-0001-select-json_build_array-2020-01-02-::date-2020-01-02",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT json_build_array('2020-01-02'::date,\n\t\t\t\t\t\t\t'2020-01-02 03:04:05.123456'::timestamp)::text,\n\t\t\t\t\t\tjsonb_build_array('2020-01-02'::date,\n\t\t\t\t\t\t\t'2020-01-02 03:04:05.123456'::timestamp)::text,\n\t\t\t\t\t\tjson_build_object('d', '2020-01-02'::date,\n\t\t\t\t\t\t\t'ts', '2020-01-02 03:04:05.123456'::timestamp)::text,\n\t\t\t\t\t\tjsonb_build_object('d', '2020-01-02'::date,\n\t\t\t\t\t\t\t'ts', '2020-01-02 03:04:05.123456'::timestamp)::text;",
+      "querySha256": "1d893dc6ae16804d8b0af08f246e02fb134a1a190a4e30eff8c26387eb3cab08",
+      "expectedRows": [
+        [
+          {
+            "value": "[\"2020-01-02\", \"2020-01-02T03:04:05.123456\"]"
+          },
+          {
+            "value": "[\"2020-01-02\", \"2020-01-02T03:04:05.123456\"]"
+          },
+          {
+            "value": "{\"d\" : \"2020-01-02\", \"ts\" : \"2020-01-02T03:04:05.123456\"}"
+          },
+          {
+            "value": "{\"d\": \"2020-01-02\", \"ts\": \"2020-01-02T03:04:05.123456\"}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestToJsonRecordPreservesFieldOrderRepro#0001",
+      "source": "testing/go/json_correctness_repro_test.go:TestToJsonRecordPreservesFieldOrderRepro",
+      "ordinal": 1,
+      "scriptName": "to_json record conversion preserves field order",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testtojsonrecordpreservesfieldorderrepro-0001-select-to_json-r-::text-row_to_json",
+      "suggestedId": "json-correctness-repro-test-testtojsonrecordpreservesfieldorderrepro-0001-select-to_json-r-::text-row_to_json",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT to_json(r)::text,\n\t\t\t\t\t\trow_to_json(r)::text,\n\t\t\t\t\t\tto_jsonb(r)::text\n\t\t\t\t\t\tFROM (SELECT 1 AS b, 2 AS a) AS r;",
+      "querySha256": "8e8aeac380bef9e4a8165c60c1f8ac6c7bced3f83d0c365f54f98fc77274b734",
+      "expectedRows": [
+        [
+          {
+            "value": "{\"b\":1,\"a\":2}"
+          },
+          {
+            "value": "{\"b\":1,\"a\":2}"
+          },
+          {
+            "value": "{\"a\": 2, \"b\": 1}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonbComparisonTypePrecedenceMatchesPostgresRepro#0001",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonbComparisonTypePrecedenceMatchesPostgresRepro",
+      "ordinal": 1,
+      "scriptName": "jsonb comparison uses PostgreSQL type precedence",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonbcomparisontypeprecedencematchespostgresrepro-0001-select-[]-::jsonb-<-null",
+      "suggestedId": "json-correctness-repro-test-testjsonbcomparisontypeprecedencematchespostgresrepro-0001-select-[]-::jsonb-<-null",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT '[]'::jsonb < 'null'::jsonb,\n\t\t\t\t\t\t'null'::jsonb < '\"a\"'::jsonb,\n\t\t\t\t\t\t'\"a\"'::jsonb < '1'::jsonb,\n\t\t\t\t\t\t'1'::jsonb < 'false'::jsonb,\n\t\t\t\t\t\t'false'::jsonb < '{}'::jsonb;",
+      "querySha256": "bc0360ee026d69c383429953c76c13d6dc5ac5e8ee7308027edfb401ca1c4166",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonbPathMatchJsonNullReturnsSqlNullRepro#0001",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonbPathMatchJsonNullReturnsSqlNullRepro",
+      "ordinal": 1,
+      "scriptName": "jsonb_path_match maps JSON null to SQL null",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonbpathmatchjsonnullreturnssqlnullrepro-0001-select-jsonb_path_match-null-::jsonb-$",
+      "suggestedId": "json-correctness-repro-test-testjsonbpathmatchjsonnullreturnssqlnullrepro-0001-select-jsonb_path_match-null-::jsonb-$",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT jsonb_path_match('null'::jsonb, '$');",
+      "querySha256": "dd7d1c0ee51c81d29345395e43416436fc91284bdc9f4dd101285363c974dd17",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonbPathMatchRequiresSingleBooleanResultRepro#0001",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonbPathMatchRequiresSingleBooleanResultRepro",
+      "ordinal": 1,
+      "scriptName": "jsonb_path_match rejects non-boolean results",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonbpathmatchrequiressinglebooleanresultrepro-0001-select-jsonb_path_match-[true]-::jsonb-$",
+      "suggestedId": "json-correctness-repro-test-testjsonbpathmatchrequiressinglebooleanresultrepro-0001-select-jsonb_path_match-[true]-::jsonb-$",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22038",
+      "errorSeverity": "ERROR",
+      "query": "SELECT jsonb_path_match('[true]'::jsonb, '$');",
+      "querySha256": "ea20e5dae39849193e567de7fc25b16e3eae109d5218ed8a0927b09d49f34d25",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonbPathQueryArrayFilterPredicateRepro#0001",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonbPathQueryArrayFilterPredicateRepro",
+      "ordinal": 1,
+      "scriptName": "jsonb_path_query_array applies filter predicates",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonbpathqueryarrayfilterpredicaterepro-0001-select-jsonb_path_query_array-[{-a-:",
+      "suggestedId": "json-correctness-repro-test-testjsonbpathqueryarrayfilterpredicaterepro-0001-select-jsonb_path_query_array-[{-a-:",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT jsonb_path_query_array('[{\"a\": 1}, {\"a\": 2}]'::jsonb,\n\t\t\t\t\t\t'$[*].a ? (@ > 1)')::text;",
+      "querySha256": "0b80755a39a0f19305cdbd4edf2a1245c02a4a6fd6cf573e3e41a027ea11bc63",
+      "expectedRows": [
+        [
+          {
+            "value": "[2]"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonpathPostgres16NumericLiteralSyntaxRepro#0001",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonpathPostgres16NumericLiteralSyntaxRepro",
+      "ordinal": 1,
+      "scriptName": "JSONPath accepts PostgreSQL 16 numeric literal syntax",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonpathpostgres16numericliteralsyntaxrepro-0001-select-jsonb_path_match-1000-::jsonb-$",
+      "suggestedId": "json-correctness-repro-test-testjsonpathpostgres16numericliteralsyntaxrepro-0001-select-jsonb_path_match-1000-::jsonb-$",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT jsonb_path_match('1000'::jsonb, '$ == 1_000'),\n\t\t\t\t\t\tjsonb_path_match('16'::jsonb, '$ == 0x10'),\n\t\t\t\t\t\tjsonb_path_match('8'::jsonb, '$ == 0o10'),\n\t\t\t\t\t\tjsonb_path_match('10'::jsonb, '$ == 0b1010');",
+      "querySha256": "9a2062f25336c591eed252c079f48212b661f74d754921191579d10d554e9706",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonbNestedArrayContainmentGuard#0001",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonbNestedArrayContainmentGuard",
+      "ordinal": 1,
+      "scriptName": "jsonb containment matches nested array elements",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonbnestedarraycontainmentguard-0001-select-[1-[2-3]-4]",
+      "suggestedId": "json-correctness-repro-test-testjsonbnestedarraycontainmentguard-0001-select-[1-[2-3]-4]",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT '[1,[2,3],4]'::jsonb @> '[[2,3]]'::jsonb,\n\t\t\t\t\t\t'[[2,3]]'::jsonb <@ '[1,[2,3],4]'::jsonb,\n\t\t\t\t\t\t'{\"a\":[1,[2,3]]}'::jsonb @> '{\"a\":[[2,3]]}'::jsonb;",
+      "querySha256": "ff13d5041dad734d5bc0e67e5f5e68f08bd9bec88ee656ddd7104714c231a726",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonbArrayContainmentSemanticsGuard#0001",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonbArrayContainmentSemanticsGuard",
+      "ordinal": 1,
+      "scriptName": "jsonb array containment uses PostgreSQL containment semantics",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonbarraycontainmentsemanticsguard-0001-select-[1-2-3]-::jsonb",
+      "suggestedId": "json-correctness-repro-test-testjsonbarraycontainmentsemanticsguard-0001-select-[1-2-3]-::jsonb",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT '[1,2,3]'::jsonb @> '2'::jsonb,\n\t\t\t\t\t\t'2'::jsonb <@ '[1,2,3]'::jsonb,\n\t\t\t\t\t\t'[1]'::jsonb @> '[1,1]'::jsonb,\n\t\t\t\t\t\t'[1,2,3]'::jsonb @> '[3,1]'::jsonb,\n\t\t\t\t\t\t'[1,2,3]'::jsonb @> '[[1]]'::jsonb;",
+      "querySha256": "afb0cf927ede1c2a56dc5837baca4d74f184a2ad3d61af9cf8662e528ebe0363",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonbObjectContainmentSemanticsGuard#0001",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonbObjectContainmentSemanticsGuard",
+      "ordinal": 1,
+      "scriptName": "jsonb object containment uses PostgreSQL containment semantics",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonbobjectcontainmentsemanticsguard-0001-select-{-a-:1-b",
+      "suggestedId": "json-correctness-repro-test-testjsonbobjectcontainmentsemanticsguard-0001-select-{-a-:1-b",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT '{\"a\":1, \"b\":2}'::jsonb @> '{\"b\":2}'::jsonb,\n\t\t\t\t\t\t'{\"b\":2}'::jsonb <@ '{\"a\":1, \"b\":2}'::jsonb;",
+      "querySha256": "e5fb19b82efaba5198853916a034d22f7347795875c06eb08e09af9d1c3b2fcc",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonbSetEmptyPathReplacesWholeDocumentRepro#0001",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonbSetEmptyPathReplacesWholeDocumentRepro",
+      "ordinal": 1,
+      "scriptName": "jsonb_set empty path replaces whole document",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonbsetemptypathreplaceswholedocumentrepro-0001-select-jsonb_set-{-a-:1}",
+      "suggestedId": "json-correctness-repro-test-testjsonbsetemptypathreplaceswholedocumentrepro-0001-select-jsonb_set-{-a-:1}",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT jsonb_set('{\"a\":1}'::jsonb, '{}', '2'::jsonb)::text;",
+      "querySha256": "823fa969bfefdc7aaa71524588a5a253a923874c449a4e193dc2cb799ff3f7ec",
+      "expectedRows": [
+        [
+          {
+            "value": "{\"a\": 1}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonbSetEmptyPathUpdateReplacesStoredDocumentRepro#0001",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonbSetEmptyPathUpdateReplacesStoredDocumentRepro",
+      "ordinal": 1,
+      "scriptName": "jsonb_set empty path update replaces stored document",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonbsetemptypathupdatereplacesstoreddocumentrepro-0001-select-doc::text-from-jsonb_set_empty_path_items",
+      "suggestedId": "json-correctness-repro-test-testjsonbsetemptypathupdatereplacesstoreddocumentrepro-0001-select-doc::text-from-jsonb_set_empty_path_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT doc::text FROM jsonb_set_empty_path_items;",
+      "querySha256": "03c51be34caff29e948ebcae051fa0827a26c9b02edb86046c969eabf2d94b0a",
+      "expectedRows": [
+        [
+          {
+            "value": "{\"a\": 1}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonbSetLaxEmptyPathReplacesWholeDocumentRepro#0001",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonbSetLaxEmptyPathReplacesWholeDocumentRepro",
+      "ordinal": 1,
+      "scriptName": "jsonb_set_lax empty path replaces whole document",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonbsetlaxemptypathreplaceswholedocumentrepro-0001-select-jsonb_set_lax-{-a-:1}",
+      "suggestedId": "json-correctness-repro-test-testjsonbsetlaxemptypathreplaceswholedocumentrepro-0001-select-jsonb_set_lax-{-a-:1}",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT jsonb_set_lax('{\"a\":1}'::jsonb, '{}', '2'::jsonb)::text;",
+      "querySha256": "bf051725e57686563bcc4ccf56ff8a5bb575b1be7270b8648a7fca01c7a95cb6",
+      "expectedRows": [
+        [
+          {
+            "value": "{\"a\": 1}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonbExistsDecodesEscapedStringElementsRepro#0001",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonbExistsDecodesEscapedStringElementsRepro",
+      "ordinal": 1,
+      "scriptName": "jsonb existence operators decode escaped string values",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonbexistsdecodesescapedstringelementsrepro-0001-select-[-a\\nb-]-::jsonb",
+      "suggestedId": "json-correctness-repro-test-testjsonbexistsdecodesescapedstringelementsrepro-0001-select-[-a\\nb-]-::jsonb",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT '[\"a\\nb\"]'::jsonb ? E'a\\nb',\n\t\t\t\t\t\t'\"a\\nb\"'::jsonb ? E'a\\nb',\n\t\t\t\t\t\t'[\"a\\nb\",\"c\"]'::jsonb ?| ARRAY[E'a\\nb'],\n\t\t\t\t\t\t'[\"a\\nb\",\"c\"]'::jsonb ?& ARRAY[E'a\\nb','c'];",
+      "querySha256": "08cafb1fa573202b5f250a8212448874b4a0f3759ec2f7e95f0bd7599455e290",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonbSetRejectsScalarTargetRepro#0001",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonbSetRejectsScalarTargetRepro",
+      "ordinal": 1,
+      "scriptName": "jsonb_set rejects scalar targets",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonbsetrejectsscalartargetrepro-0001-select-jsonb_set-a-::jsonb-{a}",
+      "suggestedId": "json-correctness-repro-test-testjsonbsetrejectsscalartargetrepro-0001-select-jsonb_set-a-::jsonb-{a}",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "SELECT jsonb_set('\"a\"'::jsonb, '{a}', '\"b\"'::jsonb);",
+      "querySha256": "8fb69f05b72dede8a9e01d1b406a9eb7f141f7d3ded962461b19111a4ce5ab41",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonbSetArrayPathRequiresIntegerRepro#0001",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonbSetArrayPathRequiresIntegerRepro",
+      "ordinal": 1,
+      "scriptName": "jsonb_set array path elements must be integers",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonbsetarraypathrequiresintegerrepro-0001-select-jsonb_set-{-a-:[1",
+      "suggestedId": "json-correctness-repro-test-testjsonbsetarraypathrequiresintegerrepro-0001-select-jsonb_set-{-a-:[1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22P02",
+      "errorSeverity": "ERROR",
+      "query": "SELECT jsonb_set('{\"a\":[1,2,3]}'::jsonb,\n\t\t\t\t\t\t'{a,not_an_int}', '\"new_value\"'::jsonb);",
+      "querySha256": "06c58e6e59e5051277aea487ce5970f8040a8892baa63fe620a1d75c81b57f1e",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonbInsertRejectsScalarTargetRepro#0001",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonbInsertRejectsScalarTargetRepro",
+      "ordinal": 1,
+      "scriptName": "jsonb_insert rejects scalar targets",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonbinsertrejectsscalartargetrepro-0001-select-jsonb_insert-a-::jsonb-{a}",
+      "suggestedId": "json-correctness-repro-test-testjsonbinsertrejectsscalartargetrepro-0001-select-jsonb_insert-a-::jsonb-{a}",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "SELECT jsonb_insert('\"a\"'::jsonb, '{a}', '\"b\"'::jsonb);",
+      "querySha256": "92bcf3a9e419674779dc4b08c1b9bab64c1352db3a4c2686d6bbcb6cf5375276",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonbInsertRejectsExistingObjectKeyRepro#0001",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonbInsertRejectsExistingObjectKeyRepro",
+      "ordinal": 1,
+      "scriptName": "jsonb_insert rejects existing object keys",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonbinsertrejectsexistingobjectkeyrepro-0001-select-jsonb_insert-{-a-:1}",
+      "suggestedId": "json-correctness-repro-test-testjsonbinsertrejectsexistingobjectkeyrepro-0001-select-jsonb_insert-{-a-:1}",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "SELECT jsonb_insert('{\"a\":1}'::jsonb, '{a}', '2'::jsonb);",
+      "querySha256": "95afd1390f603f52ad8f5abb10dc2115064c44411549a37bfb05270f4b49003d",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonbExtractPathNullElementReturnsNullGuard#0001",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonbExtractPathNullElementReturnsNullGuard",
+      "ordinal": 1,
+      "scriptName": "jsonb path extraction null path element returns null",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonbextractpathnullelementreturnsnullguard-0001-select-{-a-:{-b",
+      "suggestedId": "json-correctness-repro-test-testjsonbextractpathnullelementreturnsnullguard-0001-select-{-a-:{-b",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT '{\"a\":{\"b\":{\"c\":\"foo\"}}}'::jsonb #> ARRAY['a', NULL]::text[],\n\t\t\t\t\t\t'{\"a\":{\"b\":{\"c\":\"foo\"}}}'::jsonb #>> ARRAY['a', NULL]::text[];",
+      "querySha256": "575e7c315fed0418f1f2f83593194b52a608cbb03c51a419d97f59b7296cffc7",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonbSubscriptUpdatePersistsNestedDocumentRepro#0001",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonbSubscriptUpdatePersistsNestedDocumentRepro",
+      "ordinal": 1,
+      "scriptName": "jsonb subscript reads and updates stored document",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonbsubscriptupdatepersistsnesteddocumentrepro-0001-select-doc[-a-][-b",
+      "suggestedId": "json-correctness-repro-test-testjsonbsubscriptupdatepersistsnesteddocumentrepro-0001-select-doc[-a-][-b",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT doc['a']['b']::text FROM jsonb_subscript_update_items;",
+      "querySha256": "90a0802495ec2fa97efb8a334d247fd40b2c6236d95521386ce6c17a94182dc3",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonbSubscriptUpdatePersistsNestedDocumentRepro#0002",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonbSubscriptUpdatePersistsNestedDocumentRepro",
+      "ordinal": 2,
+      "scriptName": "jsonb subscript reads and updates stored document",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonbsubscriptupdatepersistsnesteddocumentrepro-0002-select-doc::text-from-jsonb_subscript_update_items",
+      "suggestedId": "json-correctness-repro-test-testjsonbsubscriptupdatepersistsnesteddocumentrepro-0002-select-doc::text-from-jsonb_subscript_update_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT doc::text FROM jsonb_subscript_update_items;",
+      "querySha256": "7b9b4e497869c26f967d101f2f483a866e7fb92eac1944e0e5d23e6192be2e75",
+      "expectedRows": [
+        [
+          {
+            "value": "{\"a\": {\"b\": 2}, \"keep\": true}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonbDeleteOperatorPersistsStoredDocumentRepro#0001",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonbDeleteOperatorPersistsStoredDocumentRepro",
+      "ordinal": 1,
+      "scriptName": "jsonb delete operator updates stored document",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonbdeleteoperatorpersistsstoreddocumentrepro-0001-select-doc::text-from-jsonb_delete_operator_items",
+      "suggestedId": "json-correctness-repro-test-testjsonbdeleteoperatorpersistsstoreddocumentrepro-0001-select-doc::text-from-jsonb_delete_operator_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT doc::text FROM jsonb_delete_operator_items;",
+      "querySha256": "a484b6b488d1c7eba2d71d28dc91470bf6ce180e49681acf3e706005af716bb0",
+      "expectedRows": [
+        [
+          {
+            "value": "{\"keep\": true}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonbInsertPersistsNestedArrayUpdateGuard#0001",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonbInsertPersistsNestedArrayUpdateGuard",
+      "ordinal": 1,
+      "scriptName": "jsonb_insert updates nested arrays",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonbinsertpersistsnestedarrayupdateguard-0001-select-id-doc::text-from-jsonb_insert_update_items",
+      "suggestedId": "json-correctness-repro-test-testjsonbinsertpersistsnestedarrayupdateguard-0001-select-id-doc::text-from-jsonb_insert_update_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, doc::text\n\t\t\t\t\t\tFROM jsonb_insert_update_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "b87224616509fb25a0f4343c5a61a5c5a78f31e40480f141795deb3977ff64aa",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "{\"a\": [1, 2, 3], \"keep\": true}"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "{\"a\": [1, 3, 2], \"keep\": true}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/json_correctness_repro_test.go:TestJsonbSetLaxDeleteKeyPersistsStoredDocumentRepro#0001",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonbSetLaxDeleteKeyPersistsStoredDocumentRepro",
+      "ordinal": 1,
+      "scriptName": "jsonb_set_lax delete_key updates stored document",
+      "oracle": "postgres",
+      "postgresId": "json-correctness-repro-test-testjsonbsetlaxdeletekeypersistsstoreddocumentrepro-0001-select-doc::text-from-jsonb_set_lax_delete_key_items",
+      "suggestedId": "json-correctness-repro-test-testjsonbsetlaxdeletekeypersistsstoreddocumentrepro-0001-select-doc::text-from-jsonb_set_lax_delete_key_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT doc::text FROM jsonb_set_lax_delete_key_items;",
+      "querySha256": "d60f47794d1f1fb3f6cbf1e4bdeff9a60862f6b71d5d2467916e9d30c5ccd7d5",
+      "expectedRows": [
+        [
+          {
+            "value": "{\"keep\": true}"
           }
         ]
       ],

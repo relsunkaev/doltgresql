@@ -33,10 +33,7 @@ func TestUpdate(t *testing.T) {
 					Query: "UPDATE t1 SET b = 5 WHERE a = 2",
 				},
 				{
-					Query: "SELECT * FROM t1 where a =  2",
-					Expected: []sql.Row{
-						{2, 5},
-					},
+					Query: "SELECT * FROM t1 where a =  2", PostgresOracle: ScriptTestPostgresOracle{ID: "update-test-testupdate-0001-select-*-from-t1-where"},
 				},
 			},
 		},
@@ -102,12 +99,10 @@ func TestUpdate(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "UPDATE t SET pk = pk+1, c1 = '42' RETURNING c1, pk, pk * 2;",
-					Expected: []sql.Row{{"42", 2, 4}},
+					Query: "UPDATE t SET pk = pk+1, c1 = '42' RETURNING c1, pk, pk * 2;", PostgresOracle: ScriptTestPostgresOracle{ID: "update-test-testupdate-0006-update-t-set-pk-="},
 				},
 				{
-					Query:    "UPDATE t SET c1 = '43' RETURNING *;",
-					Expected: []sql.Row{{2, "43"}},
+					Query: "UPDATE t SET c1 = '43' RETURNING *;", PostgresOracle: ScriptTestPostgresOracle{ID: "update-test-testupdate-0007-update-t-set-c1-="},
 				},
 			},
 		},
@@ -121,11 +116,7 @@ func TestUpdate(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "UPDATE employees e SET salary = salary + d.bonus FROM departments d WHERE e.department_id = d.id RETURNING e.id, e.name, e.salary;",
-					Expected: []sql.Row{
-						{1, "Alice", 55000},
-						{2, "Bob", 63000},
-					},
+					Query: "UPDATE employees e SET salary = salary + d.bonus FROM departments d WHERE e.department_id = d.id RETURNING e.id, e.name, e.salary;", PostgresOracle: ScriptTestPostgresOracle{ID: "update-test-testupdate-0008-update-employees-e-set-salary"},
 				},
 			},
 		},
@@ -145,10 +136,7 @@ func TestUpdate(t *testing.T) {
 			WHERE employees.department_id = dept_bonus.id AND employees.name = 'Alice';`,
 				},
 				{
-					Query: "SELECT salary FROM employees WHERE name = 'Alice';",
-					Expected: []sql.Row{
-						{55000},
-					},
+					Query: "SELECT salary FROM employees WHERE name = 'Alice';", PostgresOracle: ScriptTestPostgresOracle{ID: "update-test-testupdate-0009-select-salary-from-employees-where"},
 				},
 			},
 		},
@@ -165,11 +153,7 @@ func TestUpdate(t *testing.T) {
 					Query: "UPDATE products p SET price = price - c.discount FROM categories c WHERE p.category_id = c.id;",
 				},
 				{
-					Query: "SELECT id, name, price FROM products ORDER BY id;",
-					Expected: []sql.Row{
-						{1, "Laptop", 900},
-						{2, "Phone", 750},
-					},
+					Query: "SELECT id, name, price FROM products ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "update-test-testupdate-0010-select-id-name-price-from"},
 				},
 			},
 		},
@@ -188,11 +172,11 @@ func TestUpdate(t *testing.T) {
 					Query: "UPDATE books b SET price = price + a.royalty - p.markup FROM authors a, publishers p WHERE b.author_id = a.id AND b.publisher_id = p.id;",
 				},
 				{
-					Query: "SELECT id, title, price FROM books ORDER BY id;",
-					Expected: []sql.Row{
-						{1, "Book A", 95},  // 100 + 10 - 15
-						{2, "Book B", 115}, // 120 + 20 - 25
-					},
+					Query: "SELECT id, title, price FROM books ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "update-test-testupdate-0011-select-id-title-price-from"},
+
+					// 100 + 10 - 15
+					// 120 + 20 - 25
+
 				},
 			},
 		},
@@ -218,11 +202,11 @@ func TestUpdate(t *testing.T) {
 			`,
 				},
 				{
-					Query: "SELECT id, total FROM orders ORDER BY id;",
-					Expected: []sql.Row{
-						{1, 105}, // 100 + 10 - 5
-						{2, 230}, // 200 + 40 - 10
-					},
+					Query: "SELECT id, total FROM orders ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "update-test-testupdate-0012-select-id-total-from-orders"},
+
+					// 100 + 10 - 5
+					// 200 + 40 - 10
+
 				},
 			},
 		},
@@ -250,11 +234,11 @@ func TestUpdate(t *testing.T) {
 			`,
 				},
 				{
-					Query: "SELECT id, total_cost FROM rentals ORDER BY id;",
-					Expected: []sql.Row{
-						{1, 270}, // 300 + 20 - 50
-						{2, 360}, // 400 + 40 - 80
-					},
+					Query: "SELECT id, total_cost FROM rentals ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "update-test-testupdate-0013-select-id-total_cost-from-rentals"},
+
+					// 300 + 20 - 50
+					// 400 + 40 - 80
+
 				},
 			},
 		},
@@ -288,11 +272,7 @@ func TestUpdate(t *testing.T) {
 					// TODO: Triggers do not currently work for UPDATE ... FROM, because updatableJoinTable
 					//       doesn't implement sql.DatabaseSchemaTable
 					Skip:  true,
-					Query: "SELECT * FROM salary_log;",
-					Expected: []sql.Row{
-						{1, 50000, 51000},
-						{2, 45000, 45500},
-					},
+					Query: "SELECT * FROM salary_log;", PostgresOracle: ScriptTestPostgresOracle{ID: "update-test-testupdate-0014-select-*-from-salary_log"},
 				},
 			},
 		},

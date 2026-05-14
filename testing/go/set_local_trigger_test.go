@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestSetLocalReadFromTrigger is the audit-context workload harness
@@ -55,8 +53,7 @@ func TestSetLocalReadFromTrigger(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `BEGIN;`,
-					Expected: []sql.Row{},
+					Query: `BEGIN;`, PostgresOracle: ScriptTestPostgresOracle{ID: "set-local-trigger-test-testsetlocalreadfromtrigger-0001-begin"},
 				},
 				{
 					// SET LOCAL the actor for this transaction only.
@@ -64,29 +61,24 @@ func TestSetLocalReadFromTrigger(t *testing.T) {
 					SkipResultsCheck: true,
 				},
 				{
-					Query:    `INSERT INTO accounts VALUES (1, 100);`,
-					Expected: []sql.Row{},
+					Query: `INSERT INTO accounts VALUES (1, 100);`, PostgresOracle: ScriptTestPostgresOracle{ID: "set-local-trigger-test-testsetlocalreadfromtrigger-0002-insert-into-accounts-values-1"},
 				},
 				{
 					// Inside the txn the trigger has already fired and
 					// the audit row reflects the SET LOCAL value.
-					Query:    `SELECT actor FROM audit_log WHERE account_id = 1;`,
-					Expected: []sql.Row{{"alice"}},
+					Query: `SELECT actor FROM audit_log WHERE account_id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "set-local-trigger-test-testsetlocalreadfromtrigger-0003-select-actor-from-audit_log-where"},
 				},
 				{
-					Query:    `COMMIT;`,
-					Expected: []sql.Row{},
+					Query: `COMMIT;`, PostgresOracle: ScriptTestPostgresOracle{ID: "set-local-trigger-test-testsetlocalreadfromtrigger-0004-commit"},
 				},
 				{
 					// After COMMIT, audit row persists with the right
 					// actor and the SET LOCAL value is gone from the
 					// session.
-					Query:    `SELECT actor FROM audit_log WHERE account_id = 1;`,
-					Expected: []sql.Row{{"alice"}},
+					Query: `SELECT actor FROM audit_log WHERE account_id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "set-local-trigger-test-testsetlocalreadfromtrigger-0005-select-actor-from-audit_log-where"},
 				},
 				{
-					Query:    `SELECT current_setting('app.actor', true);`,
-					Expected: []sql.Row{{nil}},
+					Query: `SELECT current_setting('app.actor', true);`, PostgresOracle: ScriptTestPostgresOracle{ID: "set-local-trigger-test-testsetlocalreadfromtrigger-0006-select-current_setting-app.actor-true"},
 				},
 			},
 		},
@@ -107,24 +99,23 @@ func TestSetLocalReadFromTrigger(t *testing.T) {
                  FOR EACH ROW EXECUTE FUNCTION audit_actor_fn();`,
 			},
 			Assertions: []ScriptTestAssertion{
-				{Query: `BEGIN;`, Expected: []sql.Row{}},
-				{
+				{Query: `BEGIN;`, PostgresOracle: ScriptTestPostgresOracle{
+
 					// set_config returns the new value — not skipped.
-					Query:    `SELECT set_config('app.actor', 'bob', true);`,
-					Expected: []sql.Row{{"bob"}},
+					ID: "set-local-trigger-test-testsetlocalreadfromtrigger-0007-begin"}},
+				{
+
+					Query: `SELECT set_config('app.actor', 'bob', true);`, PostgresOracle: ScriptTestPostgresOracle{ID: "set-local-trigger-test-testsetlocalreadfromtrigger-0008-select-set_config-app.actor-bob-true"},
 				},
 				{
-					Query:    `INSERT INTO accounts VALUES (2, 250);`,
-					Expected: []sql.Row{},
+					Query: `INSERT INTO accounts VALUES (2, 250);`, PostgresOracle: ScriptTestPostgresOracle{ID: "set-local-trigger-test-testsetlocalreadfromtrigger-0009-insert-into-accounts-values-2"},
 				},
 				{
-					Query:    `SELECT actor FROM audit_log WHERE account_id = 2;`,
-					Expected: []sql.Row{{"bob"}},
+					Query: `SELECT actor FROM audit_log WHERE account_id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "set-local-trigger-test-testsetlocalreadfromtrigger-0010-select-actor-from-audit_log-where"},
 				},
-				{Query: `COMMIT;`, Expected: []sql.Row{}},
+				{Query: `COMMIT;`, PostgresOracle: ScriptTestPostgresOracle{ID: "set-local-trigger-test-testsetlocalreadfromtrigger-0011-commit"}},
 				{
-					Query:    `SELECT current_setting('app.actor', true);`,
-					Expected: []sql.Row{{nil}},
+					Query: `SELECT current_setting('app.actor', true);`, PostgresOracle: ScriptTestPostgresOracle{ID: "set-local-trigger-test-testsetlocalreadfromtrigger-0012-select-current_setting-app.actor-true"},
 				},
 			},
 		},
@@ -145,30 +136,29 @@ func TestSetLocalReadFromTrigger(t *testing.T) {
                  FOR EACH ROW EXECUTE FUNCTION audit_actor_fn();`,
 			},
 			Assertions: []ScriptTestAssertion{
-				{Query: `BEGIN;`, Expected: []sql.Row{}},
+				{Query: `BEGIN;`, PostgresOracle: ScriptTestPostgresOracle{ID: "set-local-trigger-test-testsetlocalreadfromtrigger-0013-begin"}},
 				{
 					Query:            `SET LOCAL app.actor = 'carol';`,
 					SkipResultsCheck: true,
 				},
 				{
-					Query:    `INSERT INTO accounts VALUES (3, 17);`,
-					Expected: []sql.Row{},
+					Query: `INSERT INTO accounts VALUES (3, 17);`, PostgresOracle: ScriptTestPostgresOracle{ID: "set-local-trigger-test-testsetlocalreadfromtrigger-0014-insert-into-accounts-values-3"},
 				},
 				{
-					Query:    `SELECT actor FROM audit_log WHERE account_id = 3;`,
-					Expected: []sql.Row{{"carol"}},
+					Query: `SELECT actor FROM audit_log WHERE account_id = 3;`, PostgresOracle: ScriptTestPostgresOracle{ID: "set-local-trigger-test-testsetlocalreadfromtrigger-0015-select-actor-from-audit_log-where"},
 				},
-				{Query: `ROLLBACK;`, Expected: []sql.Row{}},
-				{
+				{Query: `ROLLBACK;`, PostgresOracle: ScriptTestPostgresOracle{
+
 					// The audit row was rolled back along with the
 					// account row, so it must be gone.
-					Query:    `SELECT actor FROM audit_log WHERE account_id = 3;`,
-					Expected: []sql.Row{},
+					ID: "set-local-trigger-test-testsetlocalreadfromtrigger-0016-rollback"}},
+				{
+
+					Query: `SELECT actor FROM audit_log WHERE account_id = 3;`, PostgresOracle: ScriptTestPostgresOracle{ID: "set-local-trigger-test-testsetlocalreadfromtrigger-0017-select-actor-from-audit_log-where"},
 				},
 				{
 					// And the SET LOCAL value is reverted.
-					Query:    `SELECT current_setting('app.actor', true);`,
-					Expected: []sql.Row{{nil}},
+					Query: `SELECT current_setting('app.actor', true);`, PostgresOracle: ScriptTestPostgresOracle{ID: "set-local-trigger-test-testsetlocalreadfromtrigger-0018-select-current_setting-app.actor-true"},
 				},
 			},
 		},
@@ -197,14 +187,12 @@ func TestSetLocalReadFromTrigger(t *testing.T) {
 				{
 					// Outside the transaction, the trigger sees the
 					// session-scope actor.
-					Query:    `INSERT INTO accounts VALUES (10, 1);`,
-					Expected: []sql.Row{},
+					Query: `INSERT INTO accounts VALUES (10, 1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "set-local-trigger-test-testsetlocalreadfromtrigger-0019-insert-into-accounts-values-10"},
 				},
 				{
-					Query:    `SELECT actor FROM audit_log WHERE account_id = 10;`,
-					Expected: []sql.Row{{"service-account"}},
+					Query: `SELECT actor FROM audit_log WHERE account_id = 10;`, PostgresOracle: ScriptTestPostgresOracle{ID: "set-local-trigger-test-testsetlocalreadfromtrigger-0020-select-actor-from-audit_log-where"},
 				},
-				{Query: `BEGIN;`, Expected: []sql.Row{}},
+				{Query: `BEGIN;`, PostgresOracle: ScriptTestPostgresOracle{ID: "set-local-trigger-test-testsetlocalreadfromtrigger-0021-begin"}},
 				{
 					Query:            `SET LOCAL app.actor = 'on-call';`,
 					SkipResultsCheck: true,
@@ -212,22 +200,21 @@ func TestSetLocalReadFromTrigger(t *testing.T) {
 				{
 					// Inside the transaction the trigger uses the
 					// SET LOCAL override.
-					Query:    `INSERT INTO accounts VALUES (11, 1);`,
-					Expected: []sql.Row{},
+					Query: `INSERT INTO accounts VALUES (11, 1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "set-local-trigger-test-testsetlocalreadfromtrigger-0022-insert-into-accounts-values-11"},
 				},
 				{
-					Query:    `SELECT actor FROM audit_log WHERE account_id = 11;`,
-					Expected: []sql.Row{{"on-call"}},
+					Query: `SELECT actor FROM audit_log WHERE account_id = 11;`, PostgresOracle: ScriptTestPostgresOracle{ID: "set-local-trigger-test-testsetlocalreadfromtrigger-0023-select-actor-from-audit_log-where"},
 				},
-				{Query: `COMMIT;`, Expected: []sql.Row{}},
-				{
+				{Query: `COMMIT;`, PostgresOracle: ScriptTestPostgresOracle{
+
 					// After COMMIT, the session-scope actor is back.
-					Query:    `INSERT INTO accounts VALUES (12, 1);`,
-					Expected: []sql.Row{},
+					ID: "set-local-trigger-test-testsetlocalreadfromtrigger-0024-commit"}},
+				{
+
+					Query: `INSERT INTO accounts VALUES (12, 1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "set-local-trigger-test-testsetlocalreadfromtrigger-0025-insert-into-accounts-values-12"},
 				},
 				{
-					Query:    `SELECT actor FROM audit_log WHERE account_id = 12;`,
-					Expected: []sql.Row{{"service-account"}},
+					Query: `SELECT actor FROM audit_log WHERE account_id = 12;`, PostgresOracle: ScriptTestPostgresOracle{ID: "set-local-trigger-test-testsetlocalreadfromtrigger-0026-select-actor-from-audit_log-where"},
 				},
 			},
 		},

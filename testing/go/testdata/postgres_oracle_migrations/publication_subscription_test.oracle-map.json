@@ -1,5 +1,5 @@
 {
-  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map publication_subscription_test.go --oracle-test-name TestElectricInspectorArrayAlias,TestPublicationDDLAndCatalogs,TestReplicaIdentityDDLAndCatalogs --oracle-script-name electric inspector array alias,publication table lists accept repeated and omitted table keywords,replica identity ddl and catalogs",
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map publication_subscription_test.go --oracle-test-name TestElectricInspectorArrayAlias --force-postgres-oracle",
   "sourceFile": "testing/go/publication_subscription_test.go",
   "defaultOracle": "internal",
   "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
@@ -13,6 +13,253 @@
     "ExpectedNotices"
   ],
   "assertions": [
+    {
+      "key": "testing/go/publication_subscription_test.go:TestElectricInspectorArrayAlias#0001",
+      "source": "testing/go/publication_subscription_test.go:TestElectricInspectorArrayAlias",
+      "ordinal": 1,
+      "scriptName": "electric inspector array alias",
+      "oracle": "postgres",
+      "postgresId": "publication-subscription-test-testelectricinspectorarrayalias-0001-select-array[pn.nspname-pc.relname]-parent-from",
+      "suggestedId": "publication-subscription-test-testelectricinspectorarrayalias-0001-select-array[pn.nspname-pc.relname]-parent-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ARRAY[pn.nspname, pc.relname] parent FROM pg_catalog.pg_class pc JOIN pg_catalog.pg_namespace pn ON pn.oid = pc.relnamespace WHERE pc.relname = 'electric_alias_items' AND pn.nspname = 'electric_alias';",
+      "querySha256": "1500f91b7c2da165042138e62b4dfb8e6e21684114bccbd676e033b7425caedc",
+      "expectedRows": [
+        [
+          {
+            "value": "{electric_alias,electric_alias_items}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_subscription_test.go:TestPublicationDDLAndCatalogs#0001",
+      "source": "testing/go/publication_subscription_test.go:TestPublicationDDLAndCatalogs",
+      "ordinal": 1,
+      "scriptName": "publication ddl and catalogs",
+      "oracle": "internal",
+      "suggestedId": "publication-subscription-test-testpublicationddlandcatalogs-0001-create-publication-dg_bad_db_qual_pub-for-table",
+      "expectedKind": "error",
+      "query": "CREATE PUBLICATION dg_bad_db_qual_pub FOR TABLE postgres.public.pub_items;",
+      "querySha256": "f62883f57a3d3432ddf2de6d12680f1eb783d2f4b17958dab36cc9caf8e23726",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_subscription_test.go:TestPublicationDDLAndCatalogs#0002",
+      "source": "testing/go/publication_subscription_test.go:TestPublicationDDLAndCatalogs",
+      "ordinal": 2,
+      "scriptName": "publication ddl and catalogs",
+      "oracle": "postgres",
+      "postgresId": "publication-subscription-test-testpublicationddlandcatalogs-0002-select-pubname-puballtables-pubinsert-pubupdate",
+      "suggestedId": "publication-subscription-test-testpublicationddlandcatalogs-0002-select-pubname-puballtables-pubinsert-pubupdate",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pubname, puballtables, pubinsert, pubupdate, pubdelete, pubtruncate, pubviaroot FROM pg_catalog.pg_publication WHERE pubname = 'dg_pub';",
+      "querySha256": "c55d2b3c4fe302ec84e72527cee24435058b40b07a60c5b5d800a5b8bb2626f5",
+      "expectedRows": [
+        [
+          {
+            "value": "dg_pub"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_subscription_test.go:TestPublicationDDLAndCatalogs#0003",
+      "source": "testing/go/publication_subscription_test.go:TestPublicationDDLAndCatalogs",
+      "ordinal": 3,
+      "scriptName": "publication ddl and catalogs",
+      "oracle": "postgres",
+      "postgresId": "publication-subscription-test-testpublicationddlandcatalogs-0003-select-pg_get_userbyid-p.pubowner-=-current_role",
+      "suggestedId": "publication-subscription-test-testpublicationddlandcatalogs-0003-select-pg_get_userbyid-p.pubowner-=-current_role",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT\n\t\t\t\t\t\t  pg_get_userbyid(p.pubowner) = current_role AS can_alter_publication,\n\t\t\t\t\t\t  pubinsert AND pubupdate AND pubdelete AND pubtruncate AS publishes_all_operations,\n\t\t\t\t\t\t  CASE WHEN current_setting('server_version_num')::int >= 180000\n\t\t\t\t\t\t      THEN (to_jsonb(p) ->> 'pubgencols') = 's'\n\t\t\t\t\t\t      ELSE FALSE\n\t\t\t\t\t\t  END AS publishes_generated_columns\n\t\t\t\t\t\tFROM pg_publication AS p WHERE pubname = 'dg_pub';",
+      "querySha256": "cbc18a17b567d5e1c3a75f59e35ba5e598f6920848b1989d858ba63657b9e855",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_subscription_test.go:TestPublicationDDLAndCatalogs#0004",
+      "source": "testing/go/publication_subscription_test.go:TestPublicationDDLAndCatalogs",
+      "ordinal": 4,
+      "scriptName": "publication ddl and catalogs",
+      "oracle": "postgres",
+      "postgresId": "publication-subscription-test-testpublicationddlandcatalogs-0004-select-pubname-schemaname-tablename-array_to_string",
+      "suggestedId": "publication-subscription-test-testpublicationddlandcatalogs-0004-select-pubname-schemaname-tablename-array_to_string",
+      "compare": "structural",
+      "columnModes": [
+        "structural",
+        "schema"
+      ],
+      "expectedKind": "rows",
+      "query": "SELECT pubname, schemaname, tablename, array_to_string(attnames, ','), rowfilter IS NOT NULL FROM pg_catalog.pg_publication_tables WHERE pubname = 'dg_pub';",
+      "querySha256": "17c8067c62abac2a65a43550d43927e573f88515fe77bb382ff3c30e6d7f0bd7",
+      "expectedRows": [
+        [
+          {
+            "value": "dg_pub"
+          },
+          {
+            "value": "{{schema}}"
+          },
+          {
+            "value": "pub_items"
+          },
+          {
+            "value": "tenant_id,label"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_subscription_test.go:TestPublicationDDLAndCatalogs#0005",
+      "source": "testing/go/publication_subscription_test.go:TestPublicationDDLAndCatalogs",
+      "ordinal": 5,
+      "scriptName": "publication ddl and catalogs",
+      "oracle": "postgres",
+      "postgresId": "publication-subscription-test-testpublicationddlandcatalogs-0005-select-p.pubname-c.relname-array_to_string-pr.prattrs",
+      "suggestedId": "publication-subscription-test-testpublicationddlandcatalogs-0005-select-p.pubname-c.relname-array_to_string-pr.prattrs",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT p.pubname, c.relname, array_to_string(pr.prattrs, ',') FROM pg_catalog.pg_publication_rel pr JOIN pg_catalog.pg_publication p ON p.oid = pr.prpubid JOIN pg_catalog.pg_class c ON c.oid = pr.prrelid WHERE p.pubname = 'dg_pub';",
+      "querySha256": "2b4825f97c2c822735a7e434a71569b33bdbc994e406e8065e3eb7c712280099",
+      "expectedRows": [
+        [
+          {
+            "value": "dg_pub"
+          },
+          {
+            "value": "pub_items"
+          },
+          {
+            "value": "1,2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_subscription_test.go:TestPublicationDDLAndCatalogs#0006",
+      "source": "testing/go/publication_subscription_test.go:TestPublicationDDLAndCatalogs",
+      "ordinal": 6,
+      "scriptName": "publication ddl and catalogs",
+      "oracle": "internal",
+      "suggestedId": "publication-subscription-test-testpublicationddlandcatalogs-0006-select-schemaname-tablename-from-pg_catalog.pg_publication_tables",
+      "expectedKind": "rows",
+      "query": "SELECT schemaname, tablename FROM pg_catalog.pg_publication_tables WHERE pubname = 'dg_pub' ORDER BY schemaname, tablename;",
+      "querySha256": "e7e588686c122ca60bdceebe41e0c0d6e07a5806ff4c275057875078d6367e08",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_subscription_test.go:TestPublicationDDLAndCatalogs#0007",
+      "source": "testing/go/publication_subscription_test.go:TestPublicationDDLAndCatalogs",
+      "ordinal": 7,
+      "scriptName": "publication ddl and catalogs",
+      "oracle": "internal",
+      "suggestedId": "publication-subscription-test-testpublicationddlandcatalogs-0007-select-p.pubname-n.nspname-from-pg_catalog.pg_publication_namespace",
+      "expectedKind": "rows",
+      "query": "SELECT p.pubname, n.nspname FROM pg_catalog.pg_publication_namespace pn JOIN pg_catalog.pg_publication p ON p.oid = pn.pnpubid JOIN pg_catalog.pg_namespace n ON n.oid = pn.pnnspid WHERE p.pubname = 'dg_pub';",
+      "querySha256": "53a301d93307758d34a878291d1b90f29a915650de1a635bc48565f282efc411",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_subscription_test.go:TestPublicationDDLAndCatalogs#0008",
+      "source": "testing/go/publication_subscription_test.go:TestPublicationDDLAndCatalogs",
+      "ordinal": 8,
+      "scriptName": "publication ddl and catalogs",
+      "oracle": "internal",
+      "suggestedId": "publication-subscription-test-testpublicationddlandcatalogs-0008-select-pubinsert-pubupdate-pubdelete-pubtruncate",
+      "expectedKind": "rows",
+      "query": "SELECT pubinsert, pubupdate, pubdelete, pubtruncate, pubviaroot FROM pg_catalog.pg_publication WHERE pubname = 'dg_pub';",
+      "querySha256": "ce023cac43b5906ad19562019e8f3935d51bebfc7da0aa34b5623a2d2a00fecf",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_subscription_test.go:TestPublicationDDLAndCatalogs#0009",
+      "source": "testing/go/publication_subscription_test.go:TestPublicationDDLAndCatalogs",
+      "ordinal": 9,
+      "scriptName": "publication ddl and catalogs",
+      "oracle": "internal",
+      "suggestedId": "publication-subscription-test-testpublicationddlandcatalogs-0009-select-schemaname-tablename-from-pg_catalog.pg_publication_tables",
+      "expectedKind": "rows",
+      "query": "SELECT schemaname, tablename FROM pg_catalog.pg_publication_tables WHERE pubname = 'dg_pub';",
+      "querySha256": "873579d00e942119884a95779084f227d1044be469713eccb3c31fc03444a5aa",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_subscription_test.go:TestPublicationDDLAndCatalogs#0010",
+      "source": "testing/go/publication_subscription_test.go:TestPublicationDDLAndCatalogs",
+      "ordinal": 10,
+      "scriptName": "publication ddl and catalogs",
+      "oracle": "internal",
+      "suggestedId": "publication-subscription-test-testpublicationddlandcatalogs-0010-select-pubname-from-pg_catalog.pg_publication-where",
+      "expectedKind": "rows",
+      "query": "SELECT pubname FROM pg_catalog.pg_publication WHERE pubname = 'dg_pub_renamed';",
+      "querySha256": "638c08e73761b23176026beb223891d6ed3e526ca987b130f3c4090919dba34b",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_subscription_test.go:TestPublicationDDLAndCatalogs#0011",
+      "source": "testing/go/publication_subscription_test.go:TestPublicationDDLAndCatalogs",
+      "ordinal": 11,
+      "scriptName": "publication ddl and catalogs",
+      "oracle": "internal",
+      "suggestedId": "publication-subscription-test-testpublicationddlandcatalogs-0011-select-count-*-from-pg_catalog.pg_publication",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) FROM pg_catalog.pg_publication WHERE pubname = 'dg_pub_renamed';",
+      "querySha256": "20bd6c246049866fa25f0a7272e1070d9337159b3470f0677290b3a30c5e36ac",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
     {
       "key": "testing/go/publication_subscription_test.go:TestPublicationDDLAndCatalogs#0012",
       "source": "testing/go/publication_subscription_test.go:TestPublicationDDLAndCatalogs",
@@ -210,25 +457,316 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/publication_subscription_test.go:TestElectricInspectorArrayAlias#0001",
-      "source": "testing/go/publication_subscription_test.go:TestElectricInspectorArrayAlias",
+      "key": "testing/go/publication_subscription_test.go:TestSubscriptionDDLAndCatalogs#0001",
+      "source": "testing/go/publication_subscription_test.go:TestSubscriptionDDLAndCatalogs",
       "ordinal": 1,
-      "scriptName": "electric inspector array alias",
+      "scriptName": "subscription ddl and catalogs",
       "oracle": "postgres",
-      "postgresId": "publication-subscription-test-testelectricinspectorarrayalias-0001-select-array[pn.nspname-pc.relname]-parent-from",
-      "suggestedId": "publication-subscription-test-testelectricinspectorarrayalias-0001-select-array[pn.nspname-pc.relname]-parent-from",
+      "postgresId": "publication-subscription-test-testsubscriptionddlandcatalogs-0001-create-subscription-dg_bad_sub-connection-host=127.0.0.1",
+      "suggestedId": "publication-subscription-test-testsubscriptionddlandcatalogs-0001-create-subscription-dg_bad_sub-connection-host=127.0.0.1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "08P01",
+      "errorSeverity": "ERROR",
+      "query": "CREATE SUBSCRIPTION dg_bad_sub CONNECTION 'host=127.0.0.1 dbname=postgres' PUBLICATION dg_pub;",
+      "querySha256": "cf2b9cc51fbba15ceb649a5624cc3ef230220e2500fdcfb04d3fc4fb526a2890",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_subscription_test.go:TestSubscriptionDDLAndCatalogs#0002",
+      "source": "testing/go/publication_subscription_test.go:TestSubscriptionDDLAndCatalogs",
+      "ordinal": 2,
+      "scriptName": "subscription ddl and catalogs",
+      "oracle": "postgres",
+      "postgresId": "publication-subscription-test-testsubscriptionddlandcatalogs-0002-create-subscription-dg_bad_slot_sub-connection-host=127.0.0.1",
+      "suggestedId": "publication-subscription-test-testsubscriptionddlandcatalogs-0002-create-subscription-dg_bad_slot_sub-connection-host=127.0.0.1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "CREATE SUBSCRIPTION dg_bad_slot_sub CONNECTION 'host=127.0.0.1 dbname=postgres' PUBLICATION dg_pub WITH (connect = false, enabled = false, create_slot = true);",
+      "querySha256": "cc20273d070ab593aa92fd0928221119ef0984eee53a8e58668a55d7d8ef39f4",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_subscription_test.go:TestSubscriptionDDLAndCatalogs#0003",
+      "source": "testing/go/publication_subscription_test.go:TestSubscriptionDDLAndCatalogs",
+      "ordinal": 3,
+      "scriptName": "subscription ddl and catalogs",
+      "oracle": "postgres",
+      "postgresId": "publication-subscription-test-testsubscriptionddlandcatalogs-0003-create-subscription-dg_bad_enabled_sub-connection-host=127.0.0.1",
+      "suggestedId": "publication-subscription-test-testsubscriptionddlandcatalogs-0003-create-subscription-dg_bad_enabled_sub-connection-host=127.0.0.1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "CREATE SUBSCRIPTION dg_bad_enabled_sub CONNECTION 'host=127.0.0.1 dbname=postgres' PUBLICATION dg_pub WITH (connect = false, enabled = true, create_slot = false);",
+      "querySha256": "5b2406f43c8bc498344a2a4329b722328496b26310609c828deda435b0502591",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_subscription_test.go:TestSubscriptionDDLAndCatalogs#0004",
+      "source": "testing/go/publication_subscription_test.go:TestSubscriptionDDLAndCatalogs",
+      "ordinal": 4,
+      "scriptName": "subscription ddl and catalogs",
+      "oracle": "postgres",
+      "postgresId": "publication-subscription-test-testsubscriptionddlandcatalogs-0004-create-subscription-dg_bad_copy_sub-connection-host=127.0.0.1",
+      "suggestedId": "publication-subscription-test-testsubscriptionddlandcatalogs-0004-create-subscription-dg_bad_copy_sub-connection-host=127.0.0.1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "CREATE SUBSCRIPTION dg_bad_copy_sub CONNECTION 'host=127.0.0.1 dbname=postgres' PUBLICATION dg_pub WITH (connect = false, enabled = false, create_slot = false, copy_data = true);",
+      "querySha256": "9efee2ba67ba57e5d6468a5332a01648e319297c2e325c7ed28743ce38c9a12a",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_subscription_test.go:TestSubscriptionDDLAndCatalogs#0005",
+      "source": "testing/go/publication_subscription_test.go:TestSubscriptionDDLAndCatalogs",
+      "ordinal": 5,
+      "scriptName": "subscription ddl and catalogs",
+      "oracle": "postgres",
+      "postgresId": "publication-subscription-test-testsubscriptionddlandcatalogs-0005-select-subname-subenabled-subbinary-substream",
+      "suggestedId": "publication-subscription-test-testsubscriptionddlandcatalogs-0005-select-subname-subenabled-subbinary-substream",
       "compare": "structural",
       "expectedKind": "rows",
-      "query": "SELECT ARRAY[pn.nspname, pc.relname] parent FROM pg_catalog.pg_class pc JOIN pg_catalog.pg_namespace pn ON pn.oid = pc.relnamespace WHERE pc.relname = 'electric_alias_items' AND pn.nspname = 'electric_alias';",
-      "querySha256": "1500f91b7c2da165042138e62b4dfb8e6e21684114bccbd676e033b7425caedc",
+      "query": "SELECT subname, subenabled, subbinary, substream, subtwophasestate, subdisableonerr, subslotname IS NULL, subsynccommit, array_to_string(subpublications, ','), subskiplsn::text FROM pg_catalog.pg_subscription WHERE subname = 'dg_sub';",
+      "querySha256": "dee0f258ffa7482ee650151ea65132404b4aa4eafdba4c53b17e2f9022374aaa",
       "expectedRows": [
         [
           {
-            "value": "{electric_alias,electric_alias_items}"
+            "value": "dg_sub"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "d"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "remote_apply"
+          },
+          {
+            "value": "dg_pub"
+          },
+          {
+            "value": "0/0"
           }
         ]
       ],
       "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_subscription_test.go:TestSubscriptionDDLAndCatalogs#0006",
+      "source": "testing/go/publication_subscription_test.go:TestSubscriptionDDLAndCatalogs",
+      "ordinal": 6,
+      "scriptName": "subscription ddl and catalogs",
+      "oracle": "postgres",
+      "postgresId": "publication-subscription-test-testsubscriptionddlandcatalogs-0006-select-count-*-from-pg_catalog.pg_subscription_rel",
+      "suggestedId": "publication-subscription-test-testsubscriptionddlandcatalogs-0006-select-count-*-from-pg_catalog.pg_subscription_rel",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) FROM pg_catalog.pg_subscription_rel;",
+      "querySha256": "6f21f4998d4b3876525cb1e327b71f47548494830a171c431d2a909d3b1e980a",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_subscription_test.go:TestSubscriptionDDLAndCatalogs#0007",
+      "source": "testing/go/publication_subscription_test.go:TestSubscriptionDDLAndCatalogs",
+      "ordinal": 7,
+      "scriptName": "subscription ddl and catalogs",
+      "oracle": "postgres",
+      "postgresId": "publication-subscription-test-testsubscriptionddlandcatalogs-0007-select-array_to_string-subpublications-from-pg_catalog.pg_subscription",
+      "suggestedId": "publication-subscription-test-testsubscriptionddlandcatalogs-0007-select-array_to_string-subpublications-from-pg_catalog.pg_subscription",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT array_to_string(subpublications, ',') FROM pg_catalog.pg_subscription WHERE subname = 'dg_sub';",
+      "querySha256": "4daa34a67c8fa1b3fbfd33dd307995117126fc4610095824174096ffe66c3acc",
+      "expectedRows": [
+        [
+          {
+            "value": "dg_pub,dg_pub2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_subscription_test.go:TestSubscriptionDDLAndCatalogs#0008",
+      "source": "testing/go/publication_subscription_test.go:TestSubscriptionDDLAndCatalogs",
+      "ordinal": 8,
+      "scriptName": "subscription ddl and catalogs",
+      "oracle": "postgres",
+      "postgresId": "publication-subscription-test-testsubscriptionddlandcatalogs-0008-alter-subscription-dg_sub-enable",
+      "suggestedId": "publication-subscription-test-testsubscriptionddlandcatalogs-0008-alter-subscription-dg_sub-enable",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "55000",
+      "errorSeverity": "ERROR",
+      "query": "ALTER SUBSCRIPTION dg_sub ENABLE;",
+      "querySha256": "9d10a02596d115b5d42e0efa6d381294da9b1d21dad2386e79be167a7da5ea0f",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_subscription_test.go:TestSubscriptionDDLAndCatalogs#0009",
+      "source": "testing/go/publication_subscription_test.go:TestSubscriptionDDLAndCatalogs",
+      "ordinal": 9,
+      "scriptName": "subscription ddl and catalogs",
+      "oracle": "postgres",
+      "postgresId": "publication-subscription-test-testsubscriptionddlandcatalogs-0009-select-subenabled-subskiplsn::text-array_to_string-subpublications",
+      "suggestedId": "publication-subscription-test-testsubscriptionddlandcatalogs-0009-select-subenabled-subskiplsn::text-array_to_string-subpublications",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT subenabled, subskiplsn::text, array_to_string(subpublications, ',') FROM pg_catalog.pg_subscription WHERE subname = 'dg_sub';",
+      "querySha256": "5a6c399878264a1602adabd57ab639460cb94b2244db357c6d7c17634a766445",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          },
+          {
+            "value": "0/16"
+          },
+          {
+            "value": "dg_pub2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_subscription_test.go:TestSubscriptionDDLAndCatalogs#0010",
+      "source": "testing/go/publication_subscription_test.go:TestSubscriptionDDLAndCatalogs",
+      "ordinal": 10,
+      "scriptName": "subscription ddl and catalogs",
+      "oracle": "postgres",
+      "postgresId": "publication-subscription-test-testsubscriptionddlandcatalogs-0010-alter-subscription-dg_sub-refresh-publication",
+      "suggestedId": "publication-subscription-test-testsubscriptionddlandcatalogs-0010-alter-subscription-dg_sub-refresh-publication",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "55000",
+      "errorSeverity": "ERROR",
+      "query": "ALTER SUBSCRIPTION dg_sub REFRESH PUBLICATION WITH (copy_data = false);",
+      "querySha256": "df593e8473d56e8145292495d49d33469fdb10c649f688f36e5745f2ea138f5b",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_subscription_test.go:TestSubscriptionDDLAndCatalogs#0011",
+      "source": "testing/go/publication_subscription_test.go:TestSubscriptionDDLAndCatalogs",
+      "ordinal": 11,
+      "scriptName": "subscription ddl and catalogs",
+      "oracle": "postgres",
+      "postgresId": "publication-subscription-test-testsubscriptionddlandcatalogs-0011-select-subenabled-subslotname-from-pg_catalog.pg_subscription",
+      "suggestedId": "publication-subscription-test-testsubscriptionddlandcatalogs-0011-select-subenabled-subslotname-from-pg_catalog.pg_subscription",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT subenabled, subslotname FROM pg_catalog.pg_subscription WHERE subname = 'dg_enabled_metadata_sub';",
+      "querySha256": "53736a5e4b3f0d71f0831b6bbe63d7c7570a1655cec98908d8c6ccb2e8997a8e",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "dg_enabled_metadata_sub"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_subscription_test.go:TestSubscriptionDDLAndCatalogs#0012",
+      "source": "testing/go/publication_subscription_test.go:TestSubscriptionDDLAndCatalogs",
+      "ordinal": 12,
+      "scriptName": "subscription ddl and catalogs",
+      "oracle": "internal",
+      "suggestedId": "publication-subscription-test-testsubscriptionddlandcatalogs-0012-select-count-*-from-pg_catalog.pg_subscription_rel",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) FROM pg_catalog.pg_subscription_rel;",
+      "querySha256": "6f21f4998d4b3876525cb1e327b71f47548494830a171c431d2a909d3b1e980a",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_subscription_test.go:TestSubscriptionDDLAndCatalogs#0013",
+      "source": "testing/go/publication_subscription_test.go:TestSubscriptionDDLAndCatalogs",
+      "ordinal": 13,
+      "scriptName": "subscription ddl and catalogs",
+      "oracle": "internal",
+      "suggestedId": "publication-subscription-test-testsubscriptionddlandcatalogs-0013-select-count-*-from-pg_catalog.pg_stat_subscription",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) FROM pg_catalog.pg_stat_subscription;",
+      "querySha256": "8bdd9142a6ca6bf6177fd9a8200b2ce3a02d09934b366f4b61a34071b1bedbec",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_subscription_test.go:TestSubscriptionDDLAndCatalogs#0014",
+      "source": "testing/go/publication_subscription_test.go:TestSubscriptionDDLAndCatalogs",
+      "ordinal": 14,
+      "scriptName": "subscription ddl and catalogs",
+      "oracle": "internal",
+      "suggestedId": "publication-subscription-test-testsubscriptionddlandcatalogs-0014-alter-subscription-dg_enabled_metadata_sub-refresh-publication",
+      "expectedKind": "error",
+      "query": "ALTER SUBSCRIPTION dg_enabled_metadata_sub REFRESH PUBLICATION WITH (copy_data = false);",
+      "querySha256": "28062d6f26725f63cc073ebe3d4e69bbc99291e83cbb2d2b422e926ccd63e691",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_subscription_test.go:TestSubscriptionDDLAndCatalogs#0015",
+      "source": "testing/go/publication_subscription_test.go:TestSubscriptionDDLAndCatalogs",
+      "ordinal": 15,
+      "scriptName": "subscription ddl and catalogs",
+      "oracle": "internal",
+      "suggestedId": "publication-subscription-test-testsubscriptionddlandcatalogs-0015-select-subname-apply_error_count-sync_error_count-stats_reset",
+      "expectedKind": "rows",
+      "query": "SELECT subname, apply_error_count, sync_error_count, stats_reset IS NULL FROM pg_catalog.pg_stat_subscription_stats WHERE subname = 'dg_sub_renamed';",
+      "querySha256": "c6469a8db227d2c29a14aafec92d9ad49f14e5ca8f4eaca2751127ff92d14a2f",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_subscription_test.go:TestSubscriptionDDLAndCatalogs#0016",
+      "source": "testing/go/publication_subscription_test.go:TestSubscriptionDDLAndCatalogs",
+      "ordinal": 16,
+      "scriptName": "subscription ddl and catalogs",
+      "oracle": "internal",
+      "suggestedId": "publication-subscription-test-testsubscriptionddlandcatalogs-0016-select-count-*-from-pg_catalog.pg_subscription",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) FROM pg_catalog.pg_subscription WHERE subname = 'dg_sub_renamed';",
+      "querySha256": "ad3f69ab9ae7cd838ad8127a6a7c80d91d277a0f770c73cda5ec437a6a4ba480",
+      "needsCleanup": true,
       "cleanupProvided": false
     }
   ]

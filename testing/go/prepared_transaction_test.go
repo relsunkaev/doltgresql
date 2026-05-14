@@ -110,23 +110,24 @@ func TestPreparedTransactions(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       "PREPARE TRANSACTION 'dg_no_transaction';",
-					ExpectedErr: "can only be used in transaction blocks",
+					Query: "PREPARE TRANSACTION 'dg_no_transaction';", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-transaction-test-testpreparedtransactions-0008-prepare-transaction-dg_no_transaction"},
 				},
 				{
-					Query:       "COMMIT PREPARED 'dg_missing';",
-					ExpectedErr: "does not exist",
+					Query: "COMMIT PREPARED 'dg_missing';", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-transaction-test-testpreparedtransactions-0009-commit-prepared-dg_missing", Compare: "sqlstate"},
 				},
 				{
-					Query:       "ROLLBACK PREPARED 'dg_missing';",
-					ExpectedErr: "does not exist",
+					Query: "ROLLBACK PREPARED 'dg_missing';", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-transaction-test-testpreparedtransactions-0010-rollback-prepared-dg_missing", Compare: "sqlstate"},
 				},
 				{
 					Query: "BEGIN;",
 				},
 				{
-					Query:       "COMMIT PREPARED 'dg_missing';",
-					ExpectedErr: "cannot run inside a transaction block",
+					Query: "COMMIT PREPARED 'dg_missing';", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-transaction-test-testpreparedtransactions-0011-commit-prepared-dg_missing",
+
+						// TestCommitPreparedRequiresTransactionOwnerRepro reproduces a security bug:
+						// Doltgres lets a role commit a prepared transaction that was prepared by a
+						// different role.
+						Compare: "sqlstate"},
 				},
 				{
 					Query: "ROLLBACK;",
@@ -136,9 +137,6 @@ func TestPreparedTransactions(t *testing.T) {
 	})
 }
 
-// TestCommitPreparedRequiresTransactionOwnerRepro reproduces a security bug:
-// Doltgres lets a role commit a prepared transaction that was prepared by a
-// different role.
 func TestCommitPreparedRequiresTransactionOwnerRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{

@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestAlterTableRenamePreservesTablePrivilegesRepro reproduces an ACL
@@ -41,9 +39,9 @@ func TestAlterTableRenamePreservesTablePrivilegesRepro(t *testing.T) {
 				{
 					Query: `SELECT id, label
 						FROM rename_priv_items;`,
-					Expected: []sql.Row{{1, "visible after rename"}},
+
 					Username: `rename_priv_reader`,
-					Password: `reader`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{ID: "table-rename-privilege-repro-test-testaltertablerenamepreservestableprivilegesrepro-0001-select-id-label-from-rename_priv_items"},
 				},
 				{
 					Query: `ALTER TABLE rename_priv_items
@@ -52,9 +50,9 @@ func TestAlterTableRenamePreservesTablePrivilegesRepro(t *testing.T) {
 				{
 					Query: `SELECT id, label
 						FROM rename_priv_items_renamed;`,
-					Expected: []sql.Row{{1, "visible after rename"}},
+
 					Username: `rename_priv_reader`,
-					Password: `reader`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{ID: "table-rename-privilege-repro-test-testaltertablerenamepreservestableprivilegesrepro-0002-select-id-label-from-rename_priv_items_renamed"},
 				},
 			},
 		},

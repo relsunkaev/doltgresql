@@ -27,41 +27,28 @@ func TestDomain(t *testing.T) {
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CREATE DOMAIN year AS integer CONSTRAINT not_null_c NOT NULL CONSTRAINT null_c  NULL;`,
-					ExpectedErr: `conflicting NULL/NOT NULL constraints`,
+					Query: `CREATE DOMAIN year AS integer CONSTRAINT not_null_c NOT NULL CONSTRAINT null_c  NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0001-create-domain-year-as-integer", Compare: "sqlstate"},
 				},
 				{
-					Query:       `CREATE DOMAIN year AS integer NULL NOT NULL;`,
-					ExpectedErr: `conflicting NULL/NOT NULL constraints`,
+					Query: `CREATE DOMAIN year AS integer NULL NOT NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0002-create-domain-year-as-integer", Compare: "sqlstate"},
 				},
 				{
-					Query:    `CREATE DOMAIN year AS integer DEFAULT 1999 NOT NULL CONSTRAINT year_check CHECK (((VALUE >= 1901) AND (VALUE <= 2155)));`,
-					Expected: []sql.Row{},
+					Query: `CREATE DOMAIN year AS integer DEFAULT 1999 NOT NULL CONSTRAINT year_check CHECK (((VALUE >= 1901) AND (VALUE <= 2155)));`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0003-create-domain-year-as-integer"},
 				},
 				{
-					Query:       `CREATE DOMAIN year AS integer CONSTRAINT year_check CHECK (((VALUE >= 1901) AND (VALUE <= 2155)));`,
-					ExpectedErr: `type "year" already exists`,
+					Query: `CREATE DOMAIN year AS integer CONSTRAINT year_check CHECK (((VALUE >= 1901) AND (VALUE <= 2155)));`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0004-create-domain-year-as-integer", Compare: "sqlstate"},
 				},
 				{
-					Query:    `CREATE DOMAIN year_with_check AS integer CONSTRAINT year_check CHECK (((VALUE >= 1901) AND (VALUE <= 2155)));`,
-					Expected: []sql.Row{},
+					Query: `CREATE DOMAIN year_with_check AS integer CONSTRAINT year_check CHECK (((VALUE >= 1901) AND (VALUE <= 2155)));`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0005-create-domain-year_with_check-as-integer"},
 				},
 				{
-					Query:    `CREATE DOMAIN year_with_two_checks AS integer CONSTRAINT year_check_min CHECK (VALUE >= 1901) CONSTRAINT year_check_max CHECK (VALUE <= 2155);`,
-					Expected: []sql.Row{},
+					Query: `CREATE DOMAIN year_with_two_checks AS integer CONSTRAINT year_check_min CHECK (VALUE >= 1901) CONSTRAINT year_check_max CHECK (VALUE <= 2155);`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0006-create-domain-year_with_two_checks-as-integer"},
 				},
 				{
-					Query:       `CREATE TABLE test_table (id int primary key, v non_existing_domain);`,
-					ExpectedErr: `type "non_existing_domain" does not exist`,
+					Query: `CREATE TABLE test_table (id int primary key, v non_existing_domain);`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0007-create-table-test_table-id-int", Compare: "sqlstate"},
 				},
 				{
-					Query: `SELECT conname, contype, conrelid, contypid from pg_constraint WHERE conname IN ('year_check', 'year_check_min', 'year_check_max') ORDER BY conname;`,
-					Expected: []sql.Row{
-						{"year_check", "c", 0, 2637102637},
-						{"year_check", "c", 0, 1287570634},
-						{"year_check_max", "c", 0, 2938087575},
-						{"year_check_min", "c", 0, 2938087575},
-					},
+					Query: `SELECT conname, contype, conrelid, contypid from pg_constraint WHERE conname IN ('year_check', 'year_check_min', 'year_check_max') ORDER BY conname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0008-select-conname-contype-conrelid-contypid"},
 				},
 			},
 		},
@@ -73,46 +60,32 @@ func TestDomain(t *testing.T) {
 					Query: `CREATE DOMAIN d1 AS integer CONSTRAINT check1 CHECK (VALUE > 100) CONSTRAINT check2 CHECK (VALUE < 200);`,
 				},
 				{
-					Query: `SELECT conname, contype, conrelid, contypid from pg_constraint WHERE conname IN ('check1', 'check2') ORDER BY conname;`,
-					Expected: []sql.Row{
-						{"check1", "c", 0, 2005192443},
-						{"check2", "c", 0, 2005192443},
-					},
+					Query: `SELECT conname, contype, conrelid, contypid from pg_constraint WHERE conname IN ('check1', 'check2') ORDER BY conname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0009-select-conname-contype-conrelid-contypid"},
 				},
 				{
 					Query: "create table t1 (pk int primary key, v d1);",
 				},
 				{
-					Query:       "insert into t1 values (1, 50);",
-					ExpectedErr: "constraint \"check1\"",
+					Query: "insert into t1 values (1, 50);", PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0010-insert-into-t1-values-1", Compare: "sqlstate"},
 				},
 				{
 					Query: "insert into t1 values (2, 150);",
 				},
 				{
-					Query:       "insert into t1 values (3, 250);",
-					ExpectedErr: "constraint \"check2\"",
+					Query: "insert into t1 values (3, 250);", PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0011-insert-into-t1-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: "CREATE DOMAIN d2 AS integer CHECK (VALUE > 300) CHECK (VALUE < 400);",
 				},
 				{
-					Query: `SELECT conname, contype, conrelid, contypid from pg_constraint WHERE conname IN ('d2_check', 'd2_check1') ORDER BY conname;`,
-					Expected: []sql.Row{
-						{"d2_check", "c", 0, 1691630863},
-						{"d2_check1", "c", 0, 1691630863},
-					},
+					Query: `SELECT conname, contype, conrelid, contypid from pg_constraint WHERE conname IN ('d2_check', 'd2_check1') ORDER BY conname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0012-select-conname-contype-conrelid-contypid"},
 				},
 				{
 					Query: "CREATE DOMAIN d3 AS integer CONSTRAINT d3_check1 CHECK (VALUE > 300) CHECK (VALUE < 400);",
 				},
 				{
 					// TODO: this is slightly different behavior from Postgres, but the important thing is two different names are generated
-					Query: `SELECT conname, contype, conrelid, contypid from pg_constraint WHERE conname IN ('d3_check1', 'd3_check') ORDER BY conname;`,
-					Expected: []sql.Row{
-						{"d3_check", "c", 0, 2529148428},
-						{"d3_check1", "c", 0, 2529148428},
-					},
+					Query: `SELECT conname, contype, conrelid, contypid from pg_constraint WHERE conname IN ('d3_check1', 'd3_check') ORDER BY conname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0013-select-conname-contype-conrelid-contypid"},
 				},
 			},
 		},
@@ -123,20 +96,16 @@ func TestDomain(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `CREATE TABLE table_with_domain (pk int primary key, y year);`,
-					Expected: []sql.Row{},
+					Query: `CREATE TABLE table_with_domain (pk int primary key, y year);`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0014-create-table-table_with_domain-pk-int"},
 				},
 				{
-					Query:    `INSERT INTO table_with_domain VALUES (1, 1999)`,
-					Expected: []sql.Row{},
+					Query: `INSERT INTO table_with_domain VALUES (1, 1999)`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0015-insert-into-table_with_domain-values-1"},
 				},
 				{
-					Query:       `INSERT INTO table_with_domain VALUES (2, 1899)`,
-					ExpectedErr: `constraint "year_check"`,
+					Query: `INSERT INTO table_with_domain VALUES (2, 1899)`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0016-insert-into-table_with_domain-values-2", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT * FROM table_with_domain`,
-					Expected: []sql.Row{{1, 1999}},
+					Query: `SELECT * FROM table_with_domain`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0017-select-*-from-table_with_domain"},
 				},
 			},
 		},
@@ -149,12 +118,10 @@ func TestDomain(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `INSERT INTO table_with_domain_with_default(pk) VALUES (2)`,
-					Expected: []sql.Row{},
+					Query: `INSERT INTO table_with_domain_with_default(pk) VALUES (2)`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0018-insert-into-table_with_domain_with_default-pk-values"},
 				},
 				{
-					Query:    `SELECT * FROM table_with_domain_with_default`,
-					Expected: []sql.Row{{1, 1999}, {2, 2000}},
+					Query: `SELECT * FROM table_with_domain_with_default`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0019-select-*-from-table_with_domain_with_default"},
 				},
 			},
 		},
@@ -167,16 +134,13 @@ func TestDomain(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `INSERT INTO tbl_not_null VALUES (2, null)`,
-					ExpectedErr: `domain year does not allow null values`,
+					Query: `INSERT INTO tbl_not_null VALUES (2, null)`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0020-insert-into-tbl_not_null-values-2", Compare: "sqlstate"},
 				},
 				{
-					Query:       `INSERT INTO tbl_not_null(pk) VALUES (2)`,
-					ExpectedErr: `null value in column "y" violates not-null constraint`,
+					Query: `INSERT INTO tbl_not_null(pk) VALUES (2)`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0021-insert-into-tbl_not_null-pk-values", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT * FROM tbl_not_null`,
-					Expected: []sql.Row{{1, 1999}},
+					Query: `SELECT * FROM tbl_not_null`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0022-select-*-from-tbl_not_null"},
 				},
 			},
 		},
@@ -189,20 +153,16 @@ func TestDomain(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `UPDATE test_table SET y = 1902 WHERE pk = 1;`,
-					Expected: []sql.Row{},
+					Query: `UPDATE test_table SET y = 1902 WHERE pk = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0023-update-test_table-set-y-="},
 				},
 				{
-					Query:       `UPDATE test_table SET y = 1900 WHERE pk = 1;`,
-					ExpectedErr: `constraint "year_check_min"`,
+					Query: `UPDATE test_table SET y = 1900 WHERE pk = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0024-update-test_table-set-y-=", Compare: "sqlstate"},
 				},
 				{
-					Query:       `UPDATE test_table SET y = null WHERE pk = 1;`,
-					ExpectedErr: `domain year does not allow null values`,
+					Query: `UPDATE test_table SET y = null WHERE pk = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0025-update-test_table-set-y-=", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT * FROM test_table`,
-					Expected: []sql.Row{{1, 1902}, {2, 2000}},
+					Query: `SELECT * FROM test_table`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0026-select-*-from-test_table"},
 				},
 			},
 		},
@@ -215,20 +175,16 @@ func TestDomain(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `INSERT INTO non_empty_string_t VALUES (2, 'Jane', 'Doe')`,
-					Expected: []sql.Row{},
+					Query: `INSERT INTO non_empty_string_t VALUES (2, 'Jane', 'Doe')`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0027-insert-into-non_empty_string_t-values-2"},
 				},
 				{
-					Query:       `UPDATE non_empty_string_t SET last_name = '' WHERE first_name = 'Jane'`,
-					ExpectedErr: `Check constraint "name_check" violated`,
+					Query: `UPDATE non_empty_string_t SET last_name = '' WHERE first_name = 'Jane'`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0028-update-non_empty_string_t-set-last_name-=", Compare: "sqlstate"},
 				},
 				{
-					Query:    `UPDATE non_empty_string_t SET last_name = NULL WHERE first_name = 'Jane'`,
-					Expected: []sql.Row{},
+					Query: `UPDATE non_empty_string_t SET last_name = NULL WHERE first_name = 'Jane'`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0029-update-non_empty_string_t-set-last_name-="},
 				},
 				{
-					Query:    `SELECT * FROM non_empty_string_t`,
-					Expected: []sql.Row{{1, "John", "Doe"}, {2, "Jane", nil}},
+					Query: `SELECT * FROM non_empty_string_t`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0030-select-*-from-non_empty_string_t"},
 				},
 			},
 		},
@@ -240,20 +196,16 @@ func TestDomain(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP DOMAIN year;`,
-					ExpectedErr: `cannot drop type year because other objects depend on it`,
+					Query: `DROP DOMAIN year;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0031-drop-domain-year", Compare: "sqlstate"},
 				},
 				{
-					Query:    `DROP TABLE table_with_domain;`,
-					Expected: []sql.Row{},
+					Query: `DROP TABLE table_with_domain;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0032-drop-table-table_with_domain"},
 				},
 				{
-					Query:    `DROP DOMAIN year;`,
-					Expected: []sql.Row{},
+					Query: `DROP DOMAIN year;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0033-drop-domain-year"},
 				},
 				{
-					Query:    `DROP DOMAIN IF EXISTS year;`,
-					Expected: []sql.Row{},
+					Query: `DROP DOMAIN IF EXISTS year;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0034-drop-domain-if-exists-year"},
 				},
 				{
 					Query:    `DROP DOMAIN IF EXISTS postgres.public.year;`,
@@ -280,42 +232,34 @@ func TestDomain(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT 1903::year_not_null;`,
-					Expected: []sql.Row{{1903}},
+					Query: `SELECT 1903::year_not_null;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0038-select-1903::year_not_null"},
 				},
 				{
-					Query:    `SELECT 1903::year_not_null::text;`,
-					Expected: []sql.Row{{"1903"}},
+					Query: `SELECT 1903::year_not_null::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0039-select-1903::year_not_null::text"},
 				},
 				{
-					Query:       `SELECT 1900::year_not_null;`,
-					ExpectedErr: `value for domain year_not_null violates check constraint "year_check"`,
+					Query: `SELECT 1900::year_not_null;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0040-select-1900::year_not_null", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SELECT NULL::year_not_null;`,
-					ExpectedErr: `domain year_not_null does not allow null values`,
+					Query: `SELECT NULL::year_not_null;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0041-select-null::year_not_null", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT year::year_not_null from test_table order by year;`,
-					Expected: []sql.Row{{2000}, {2024}},
+					Query: `SELECT year::year_not_null from test_table order by year;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0042-select-year::year_not_null-from-test_table-order"},
 				},
 				{
 					Query: `INSERT INTO test_table VALUES (null);`,
 				},
 				{
-					Query:       `SELECT year::year_not_null from test_table;`,
-					ExpectedErr: `domain year_not_null does not allow null values`,
+					Query: `SELECT year::year_not_null from test_table;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0043-select-year::year_not_null-from-test_table", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT id::year_not_null from my_table order by id;`,
-					Expected: []sql.Row{{2000}, {2002}},
+					Query: `SELECT id::year_not_null from my_table order by id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0044-select-id::year_not_null-from-my_table-order"},
 				},
 				{
 					Query: `INSERT INTO my_table VALUES (2156);`,
 				},
 				{
-					Query:       `SELECT id::year_not_null from my_table;`,
-					ExpectedErr: `value for domain year_not_null violates check constraint "year_check"`,
+					Query: `SELECT id::year_not_null from my_table;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0045-select-id::year_not_null-from-my_table", Compare: "sqlstate"},
 				},
 			},
 		},

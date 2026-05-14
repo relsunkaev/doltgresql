@@ -1,0 +1,393 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map pgdog_compat_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/pgdog_compat_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary#0001",
+      "source": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary",
+      "ordinal": 1,
+      "scriptName": "PgDog supported primary shard boundary",
+      "oracle": "internal",
+      "suggestedId": "pgdog-compat-test-testpgdogcompatibilityboundary-0001-select-label-from-pgdog_items-where",
+      "expectedKind": "rows",
+      "query": "SELECT label FROM pgdog_items WHERE tenant_id = 1;",
+      "querySha256": "1103503626e7bc9d07deaf1ce728fb236b60da8fd4c023067e7710a489a23fa3",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary#0002",
+      "source": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary",
+      "ordinal": 2,
+      "scriptName": "PgDog supported primary shard boundary",
+      "oracle": "internal",
+      "suggestedId": "pgdog-compat-test-testpgdogcompatibilityboundary-0002-select-count-*-from-pg_replication_slots",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) FROM pg_replication_slots;",
+      "querySha256": "18b7e1b6d532e99691e09b1d9a5452a6fb21dfe31d5f09a07ce3a8098fb88f2c",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary#0003",
+      "source": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary",
+      "ordinal": 3,
+      "scriptName": "PgDog supported primary shard boundary",
+      "oracle": "internal",
+      "suggestedId": "pgdog-compat-test-testpgdogcompatibilityboundary-0003-select-count-*-from-pg_stat_replication",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) FROM pg_stat_replication;",
+      "querySha256": "176cdeef803add47cdc5ba4dfc88ad4dda12e3ddda281c1ae7387daacdf5a59c",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary#0004",
+      "source": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary",
+      "ordinal": 4,
+      "scriptName": "PgDog supported primary shard boundary",
+      "oracle": "internal",
+      "suggestedId": "pgdog-compat-test-testpgdogcompatibilityboundary-0004-select-count-*-from-pg_publication",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) FROM pg_publication;",
+      "querySha256": "ad66cd14598c030490f639a0002cfc0bd6ec4f69f464e281978ffeb8d2eae3e7",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary#0005",
+      "source": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary",
+      "ordinal": 5,
+      "scriptName": "PgDog supported primary shard boundary",
+      "oracle": "internal",
+      "suggestedId": "pgdog-compat-test-testpgdogcompatibilityboundary-0005-select-pg_is_in_recovery",
+      "expectedKind": "rows",
+      "query": "SELECT pg_is_in_recovery();",
+      "querySha256": "5fb71473b57db3b6d63c95f418928e443dcb586c6829d10fe6bce56c538c8a60",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary#0006",
+      "source": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary",
+      "ordinal": 6,
+      "scriptName": "PgDog supported primary shard boundary",
+      "oracle": "internal",
+      "suggestedId": "pgdog-compat-test-testpgdogcompatibilityboundary-0006-select-label-from-pgdog_vectors-where",
+      "expectedKind": "rows",
+      "query": "SELECT label FROM pgdog_vectors WHERE tenant_id = '[1,0]'::vector;",
+      "querySha256": "9a312d28a08744b3d9cba3fd73550bff877a0f8867b3d2b539e2207299d22a71",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary#0007",
+      "source": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary",
+      "ordinal": 7,
+      "scriptName": "PgDog prepared transaction lifecycle",
+      "oracle": "internal",
+      "suggestedId": "pgdog-compat-test-testpgdogcompatibilityboundary-0007-select-gid-from-pg_catalog.pg_prepared_xacts-where",
+      "expectedKind": "rows",
+      "query": "SELECT gid FROM pg_catalog.pg_prepared_xacts WHERE gid = 'dg_pgdog';",
+      "querySha256": "c4ce739fb8f9aa8eae773fcef6f441e0b5ba3286b527e5333c1db5300d44a196",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary#0008",
+      "source": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary",
+      "ordinal": 8,
+      "scriptName": "PgDog prepared transaction lifecycle",
+      "oracle": "internal",
+      "suggestedId": "pgdog-compat-test-testpgdogcompatibilityboundary-0008-select-label-from-pgdog_items-where",
+      "expectedKind": "rows",
+      "query": "SELECT label FROM pgdog_items WHERE tenant_id = 10;",
+      "querySha256": "eb52f6e249ee6badbba82f0b32b7d483c082b5d6c21905acc536b9510f4ecf7c",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary#0009",
+      "source": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary",
+      "ordinal": 9,
+      "scriptName": "PgDog logical replication metadata probes",
+      "oracle": "postgres",
+      "postgresId": "pgdog-compat-test-testpgdogcompatibilityboundary-0009-select-pubname-from-pg_catalog.pg_publication-where",
+      "suggestedId": "pgdog-compat-test-testpgdogcompatibilityboundary-0009-select-pubname-from-pg_catalog.pg_publication-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pubname FROM pg_catalog.pg_publication WHERE pubname = 'dg_pgdog_pub';",
+      "querySha256": "3816777311e1f75eacc92264939293684d5ac1221d48c9d351403d3e7c546dbc",
+      "expectedRows": [
+        [
+          {
+            "value": "dg_pgdog_pub"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary#0010",
+      "source": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary",
+      "ordinal": 10,
+      "scriptName": "PgDog logical replication metadata probes",
+      "oracle": "postgres",
+      "postgresId": "pgdog-compat-test-testpgdogcompatibilityboundary-0010-select-subname-subenabled-subslotname-is",
+      "suggestedId": "pgdog-compat-test-testpgdogcompatibilityboundary-0010-select-subname-subenabled-subslotname-is",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT subname, subenabled, subslotname IS NULL, array_to_string(subpublications, ',') FROM pg_catalog.pg_subscription WHERE subname = 'dg_pgdog_sub';",
+      "querySha256": "96d68f9a9f06b191d131bb5aee894a01aa3b484099bb3adb8d9e253b8ae43eb4",
+      "expectedRows": [
+        [
+          {
+            "value": "dg_pgdog_sub"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "dg_pgdog_pub"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary#0011",
+      "source": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary",
+      "ordinal": 11,
+      "scriptName": "PgDog logical replication metadata probes",
+      "oracle": "postgres",
+      "postgresId": "pgdog-compat-test-testpgdogcompatibilityboundary-0011-create-subscription-dg_pgdog_bad_sub-connection-host=127.0.0.1",
+      "suggestedId": "pgdog-compat-test-testpgdogcompatibilityboundary-0011-create-subscription-dg_pgdog_bad_sub-connection-host=127.0.0.1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "08P01",
+      "errorSeverity": "ERROR",
+      "query": "CREATE SUBSCRIPTION dg_pgdog_bad_sub CONNECTION 'host=127.0.0.1 dbname=postgres' PUBLICATION dg_pgdog_pub;",
+      "querySha256": "43ffebb8ddb2b6924867f50ea59b0c3f73444035fbe9ce471d132fe726b950fe",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary#0012",
+      "source": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary",
+      "ordinal": 12,
+      "scriptName": "PgDog logical replication metadata probes",
+      "oracle": "postgres",
+      "postgresId": "pgdog-compat-test-testpgdogcompatibilityboundary-0012-execute-dg_pgdog_stmt-41",
+      "suggestedId": "pgdog-compat-test-testpgdogcompatibilityboundary-0012-execute-dg_pgdog_stmt-41",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "EXECUTE dg_pgdog_stmt(41);",
+      "querySha256": "605b1f5f66c6fe4be5e3c4ba75c8cf4e9c1a1b80a6d35cb237f53c241f456d74",
+      "expectedRows": [
+        [
+          {
+            "value": "42"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary#0013",
+      "source": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary",
+      "ordinal": 13,
+      "scriptName": "PgDog logical replication metadata probes",
+      "oracle": "internal",
+      "suggestedId": "pgdog-compat-test-testpgdogcompatibilityboundary-0013-select-name-from_sql-from-pg_catalog.pg_prepared_statements",
+      "expectedKind": "rows",
+      "query": "SELECT name, from_sql FROM pg_catalog.pg_prepared_statements WHERE name = 'dg_pgdog_stmt';",
+      "querySha256": "52c9b835d274be3a4ef2c0ef2f07e2e4e9ae6b3255042f51e46805db5bd5e802",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary#0014",
+      "source": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary",
+      "ordinal": 14,
+      "scriptName": "PgDog logical replication metadata probes",
+      "oracle": "internal",
+      "suggestedId": "pgdog-compat-test-testpgdogcompatibilityboundary-0014-select-pg_current_wal_lsn",
+      "expectedKind": "rows",
+      "query": "SELECT pg_current_wal_lsn();",
+      "querySha256": "6b9aae060de9a88a9401a2fe69444850cccb79852fee59eca90fe55559565f97",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary#0015",
+      "source": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary",
+      "ordinal": 15,
+      "scriptName": "PgDog logical replication metadata probes",
+      "oracle": "internal",
+      "suggestedId": "pgdog-compat-test-testpgdogcompatibilityboundary-0015-select-pg_wal_lsn_diff-0/1-::pg_lsn-0/0",
+      "expectedKind": "rows",
+      "query": "SELECT pg_wal_lsn_diff('0/1'::pg_lsn, '0/0'::pg_lsn);",
+      "querySha256": "2757bb1d4d164bc664dce7c7fc9afc33dc3b266aaf2e83ce4dc0e48c3398cc28",
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary#0016",
+      "source": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary",
+      "ordinal": 16,
+      "scriptName": "PgDog schema split catalog and qualified DML",
+      "oracle": "postgres",
+      "postgresId": "pgdog-compat-test-testpgdogcompatibilityboundary-0016-select-label-from-shared.accounts-where",
+      "suggestedId": "pgdog-compat-test-testpgdogcompatibilityboundary-0016-select-label-from-shared.accounts-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT label FROM shared.accounts WHERE id = 1;",
+      "querySha256": "5276c465159187dbb98476b5b702a6ac28a97e6bca66f743f00b418b1b0b8f9a",
+      "expectedRows": [
+        [
+          {
+            "value": "shared-one"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary#0017",
+      "source": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary",
+      "ordinal": 17,
+      "scriptName": "PgDog schema split catalog and qualified DML",
+      "oracle": "postgres",
+      "postgresId": "pgdog-compat-test-testpgdogcompatibilityboundary-0017-select-status-amount-from-customer.orders",
+      "suggestedId": "pgdog-compat-test-testpgdogcompatibilityboundary-0017-select-status-amount-from-customer.orders",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT status, amount FROM customer.orders WHERE customer_id = 42 AND order_id = 1;",
+      "querySha256": "2858cc8850450d800ea6c108404e3cc31254372c2cdc40284c2f39214f653879",
+      "expectedRows": [
+        [
+          {
+            "value": "updated"
+          },
+          {
+            "value": "421"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary#0018",
+      "source": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary",
+      "ordinal": 18,
+      "scriptName": "PgDog schema split catalog and qualified DML",
+      "oracle": "postgres",
+      "postgresId": "pgdog-compat-test-testpgdogcompatibilityboundary-0018-select-table_schema-table_name-from-information_schema.tables",
+      "suggestedId": "pgdog-compat-test-testpgdogcompatibilityboundary-0018-select-table_schema-table_name-from-information_schema.tables",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT table_schema, table_name\nFROM information_schema.tables\nWHERE table_schema IN ('shared', 'customer')\nORDER BY table_schema, table_name;",
+      "querySha256": "c9e5fa1da334a5f8c3f00f4d06b5d4824387400c542f4c779405464455629eb9",
+      "expectedRows": [
+        [
+          {
+            "value": "customer"
+          },
+          {
+            "value": "orders"
+          }
+        ],
+        [
+          {
+            "value": "shared"
+          },
+          {
+            "value": "accounts"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary#0019",
+      "source": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary",
+      "ordinal": 19,
+      "scriptName": "PgDog schema split catalog and qualified DML",
+      "oracle": "postgres",
+      "postgresId": "pgdog-compat-test-testpgdogcompatibilityboundary-0019-select-n.nspname-c.relname-from-pg_catalog.pg_class",
+      "suggestedId": "pgdog-compat-test-testpgdogcompatibilityboundary-0019-select-n.nspname-c.relname-from-pg_catalog.pg_class",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT n.nspname, c.relname\nFROM pg_catalog.pg_class c\nJOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\nWHERE n.nspname IN ('shared', 'customer') AND c.relkind = 'r' AND c.relname NOT LIKE 'dolt_%'\nORDER BY n.nspname, c.relname;",
+      "querySha256": "e87929f2844ca3385618baafd472ee32f2f20cecd45c0e43a19ff9aabee30363",
+      "expectedRows": [
+        [
+          {
+            "value": "customer"
+          },
+          {
+            "value": "orders"
+          }
+        ],
+        [
+          {
+            "value": "shared"
+          },
+          {
+            "value": "accounts"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary#0020",
+      "source": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary",
+      "ordinal": 20,
+      "scriptName": "PgDog schema split catalog and qualified DML",
+      "oracle": "postgres",
+      "postgresId": "pgdog-compat-test-testpgdogcompatibilityboundary-0020-select-customer.orders-::regclass::text-shared.accounts-::regclass::text",
+      "suggestedId": "pgdog-compat-test-testpgdogcompatibilityboundary-0020-select-customer.orders-::regclass::text-shared.accounts-::regclass::text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 'customer.orders'::regclass::text, 'shared.accounts'::regclass::text;",
+      "querySha256": "1d112f5ab99dc570d33a1b25126facd6880caf423c94dec61414ff2b0c3af6be",
+      "expectedRows": [
+        [
+          {
+            "value": "customer.orders"
+          },
+          {
+            "value": "shared.accounts"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

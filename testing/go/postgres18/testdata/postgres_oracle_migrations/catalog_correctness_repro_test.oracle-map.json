@@ -1,0 +1,61 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map catalog_correctness_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres18/catalog_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/postgres18/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres18/catalog_correctness_repro_test.go:TestPostgres18PgAiosCatalogShapeRepro#0001",
+      "source": "testing/go/postgres18/catalog_correctness_repro_test.go:TestPostgres18PgAiosCatalogShapeRepro",
+      "ordinal": 1,
+      "scriptName": "pg_aios exposes PostgreSQL 18 columns",
+      "oracle": "postgres",
+      "postgresId": "postgres18/catalog-correctness-repro-test-testpostgres18pgaioscatalogshaperepro-0001-select-count-*-=-15",
+      "suggestedId": "postgres18/catalog-correctness-repro-test-testpostgres18pgaioscatalogshaperepro-0001-select-count-*-=-15",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) = 15\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute\n\t\t\t\t\t\tWHERE attrelid = 'pg_catalog.pg_aios'::regclass\n\t\t\t\t\t\t\tAND NOT attisdropped\n\t\t\t\t\t\t\tAND attname IN (\n\t\t\t\t\t\t\t\t'pid', 'io_id', 'io_generation', 'state', 'operation',\n\t\t\t\t\t\t\t\t'off', 'length', 'target', 'handle_data_len', 'raw_result',\n\t\t\t\t\t\t\t\t'result', 'target_desc', 'f_sync', 'f_localmem', 'f_buffered'\n\t\t\t\t\t\t\t);",
+      "querySha256": "e0e8afe1c07883c85771c665054d5059af98889c59ef6e80304c78f27618312a",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres18/catalog_correctness_repro_test.go:TestPostgres18PgAiosCatalogShapeRepro#0002",
+      "source": "testing/go/postgres18/catalog_correctness_repro_test.go:TestPostgres18PgAiosCatalogShapeRepro",
+      "ordinal": 2,
+      "scriptName": "pg_aios exposes PostgreSQL 18 columns",
+      "oracle": "postgres",
+      "postgresId": "postgres18/catalog-correctness-repro-test-testpostgres18pgaioscatalogshaperepro-0002-select-count-*->=-0",
+      "suggestedId": "postgres18/catalog-correctness-repro-test-testpostgres18pgaioscatalogshaperepro-0002-select-count-*->=-0",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) >= 0\n\t\t\t\t\t\tFROM pg_catalog.pg_aios;",
+      "querySha256": "256d9c6f9fcab4260977ed03339f9c3444fae093b3cd73206ececc96db3a54b2",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

@@ -1,0 +1,499 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map set_local_trigger_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/set_local_trigger_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0001",
+      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "ordinal": 1,
+      "scriptName": "trigger reads current_setting set via SET LOCAL within the same transaction",
+      "oracle": "postgres",
+      "postgresId": "set-local-trigger-test-testsetlocalreadfromtrigger-0001-begin",
+      "suggestedId": "set-local-trigger-test-testsetlocalreadfromtrigger-0001-begin",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "BEGIN;",
+      "querySha256": "09d5c7e4829721a8d33975034ec970f527d10fe2957088aecdd74a4bfde43190",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0002",
+      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "ordinal": 2,
+      "scriptName": "trigger reads current_setting set via SET LOCAL within the same transaction",
+      "oracle": "postgres",
+      "postgresId": "set-local-trigger-test-testsetlocalreadfromtrigger-0002-insert-into-accounts-values-1",
+      "suggestedId": "set-local-trigger-test-testsetlocalreadfromtrigger-0002-insert-into-accounts-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO accounts VALUES (1, 100);",
+      "querySha256": "cec322728607b21e62c79ae7b0e84d757a8c22fd7af774d96a4d6e2b0fbc53bc",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0003",
+      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "ordinal": 3,
+      "scriptName": "trigger reads current_setting set via SET LOCAL within the same transaction",
+      "oracle": "postgres",
+      "postgresId": "set-local-trigger-test-testsetlocalreadfromtrigger-0003-select-actor-from-audit_log-where",
+      "suggestedId": "set-local-trigger-test-testsetlocalreadfromtrigger-0003-select-actor-from-audit_log-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT actor FROM audit_log WHERE account_id = 1;",
+      "querySha256": "e41f2b977cc8b67990c85485e01ab88f11d8ce2d833822225fb63fabf83da28e",
+      "expectedRows": [
+        [
+          {
+            "value": "alice"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0004",
+      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "ordinal": 4,
+      "scriptName": "trigger reads current_setting set via SET LOCAL within the same transaction",
+      "oracle": "postgres",
+      "postgresId": "set-local-trigger-test-testsetlocalreadfromtrigger-0004-commit",
+      "suggestedId": "set-local-trigger-test-testsetlocalreadfromtrigger-0004-commit",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "COMMIT;",
+      "querySha256": "2db35aa37c4005aa96055e900adc9bfbbd70d106820fefcb83216b7cc3f95422",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0005",
+      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "ordinal": 5,
+      "scriptName": "trigger reads current_setting set via SET LOCAL within the same transaction",
+      "oracle": "postgres",
+      "postgresId": "set-local-trigger-test-testsetlocalreadfromtrigger-0005-select-actor-from-audit_log-where",
+      "suggestedId": "set-local-trigger-test-testsetlocalreadfromtrigger-0005-select-actor-from-audit_log-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT actor FROM audit_log WHERE account_id = 1;",
+      "querySha256": "e41f2b977cc8b67990c85485e01ab88f11d8ce2d833822225fb63fabf83da28e",
+      "expectedRows": [
+        [
+          {
+            "value": "alice"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0006",
+      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "ordinal": 6,
+      "scriptName": "trigger reads current_setting set via SET LOCAL within the same transaction",
+      "oracle": "postgres",
+      "postgresId": "set-local-trigger-test-testsetlocalreadfromtrigger-0006-select-current_setting-app.actor-true",
+      "suggestedId": "set-local-trigger-test-testsetlocalreadfromtrigger-0006-select-current_setting-app.actor-true",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT current_setting('app.actor', true);",
+      "querySha256": "45a5f744bc75317e398834b18be09d3c53958247bfe6a71d5367b95691f7a15a",
+      "expectedRows": [
+        [
+          {
+            "value": ""
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0007",
+      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "ordinal": 7,
+      "scriptName": "trigger reads value set via set_config(name, value, true)",
+      "oracle": "postgres",
+      "postgresId": "set-local-trigger-test-testsetlocalreadfromtrigger-0007-begin",
+      "suggestedId": "set-local-trigger-test-testsetlocalreadfromtrigger-0007-begin",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "BEGIN;",
+      "querySha256": "09d5c7e4829721a8d33975034ec970f527d10fe2957088aecdd74a4bfde43190",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0008",
+      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "ordinal": 8,
+      "scriptName": "trigger reads value set via set_config(name, value, true)",
+      "oracle": "postgres",
+      "postgresId": "set-local-trigger-test-testsetlocalreadfromtrigger-0008-select-set_config-app.actor-bob-true",
+      "suggestedId": "set-local-trigger-test-testsetlocalreadfromtrigger-0008-select-set_config-app.actor-bob-true",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT set_config('app.actor', 'bob', true);",
+      "querySha256": "6b35667c6e7953dbfe06a4e487267f3adf3b841752493e0279a90aceda346a2f",
+      "expectedRows": [
+        [
+          {
+            "value": "bob"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0009",
+      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "ordinal": 9,
+      "scriptName": "trigger reads value set via set_config(name, value, true)",
+      "oracle": "postgres",
+      "postgresId": "set-local-trigger-test-testsetlocalreadfromtrigger-0009-insert-into-accounts-values-2",
+      "suggestedId": "set-local-trigger-test-testsetlocalreadfromtrigger-0009-insert-into-accounts-values-2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO accounts VALUES (2, 250);",
+      "querySha256": "30464cfdb49108cd31647ea0a1958903020567026d0e2a17ce8825128bd87df8",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0010",
+      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "ordinal": 10,
+      "scriptName": "trigger reads value set via set_config(name, value, true)",
+      "oracle": "postgres",
+      "postgresId": "set-local-trigger-test-testsetlocalreadfromtrigger-0010-select-actor-from-audit_log-where",
+      "suggestedId": "set-local-trigger-test-testsetlocalreadfromtrigger-0010-select-actor-from-audit_log-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT actor FROM audit_log WHERE account_id = 2;",
+      "querySha256": "09f8765b3e1115f2fefb8c2e0698a12a7cb1e6302d0e8ed1376c7de0e9e9a2a7",
+      "expectedRows": [
+        [
+          {
+            "value": "bob"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0011",
+      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "ordinal": 11,
+      "scriptName": "trigger reads value set via set_config(name, value, true)",
+      "oracle": "postgres",
+      "postgresId": "set-local-trigger-test-testsetlocalreadfromtrigger-0011-commit",
+      "suggestedId": "set-local-trigger-test-testsetlocalreadfromtrigger-0011-commit",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "COMMIT;",
+      "querySha256": "2db35aa37c4005aa96055e900adc9bfbbd70d106820fefcb83216b7cc3f95422",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0012",
+      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "ordinal": 12,
+      "scriptName": "trigger reads value set via set_config(name, value, true)",
+      "oracle": "postgres",
+      "postgresId": "set-local-trigger-test-testsetlocalreadfromtrigger-0012-select-current_setting-app.actor-true",
+      "suggestedId": "set-local-trigger-test-testsetlocalreadfromtrigger-0012-select-current_setting-app.actor-true",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT current_setting('app.actor', true);",
+      "querySha256": "45a5f744bc75317e398834b18be09d3c53958247bfe6a71d5367b95691f7a15a",
+      "expectedRows": [
+        [
+          {
+            "value": ""
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0013",
+      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "ordinal": 13,
+      "scriptName": "rollback discards the trigger-written audit row and reverts the GUC",
+      "oracle": "postgres",
+      "postgresId": "set-local-trigger-test-testsetlocalreadfromtrigger-0013-begin",
+      "suggestedId": "set-local-trigger-test-testsetlocalreadfromtrigger-0013-begin",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "BEGIN;",
+      "querySha256": "09d5c7e4829721a8d33975034ec970f527d10fe2957088aecdd74a4bfde43190",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0014",
+      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "ordinal": 14,
+      "scriptName": "rollback discards the trigger-written audit row and reverts the GUC",
+      "oracle": "postgres",
+      "postgresId": "set-local-trigger-test-testsetlocalreadfromtrigger-0014-insert-into-accounts-values-3",
+      "suggestedId": "set-local-trigger-test-testsetlocalreadfromtrigger-0014-insert-into-accounts-values-3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO accounts VALUES (3, 17);",
+      "querySha256": "94ce26f0830b2219842fb85a79fb9a0e21ceb9412f96a4a92fdae05c1b80d300",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0015",
+      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "ordinal": 15,
+      "scriptName": "rollback discards the trigger-written audit row and reverts the GUC",
+      "oracle": "postgres",
+      "postgresId": "set-local-trigger-test-testsetlocalreadfromtrigger-0015-select-actor-from-audit_log-where",
+      "suggestedId": "set-local-trigger-test-testsetlocalreadfromtrigger-0015-select-actor-from-audit_log-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT actor FROM audit_log WHERE account_id = 3;",
+      "querySha256": "94ccccce9e610a69416117abb8833d4fa9183f839845a63b38806d703ede6039",
+      "expectedRows": [
+        [
+          {
+            "value": "carol"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0016",
+      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "ordinal": 16,
+      "scriptName": "rollback discards the trigger-written audit row and reverts the GUC",
+      "oracle": "postgres",
+      "postgresId": "set-local-trigger-test-testsetlocalreadfromtrigger-0016-rollback",
+      "suggestedId": "set-local-trigger-test-testsetlocalreadfromtrigger-0016-rollback",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ROLLBACK;",
+      "querySha256": "9be868b5fc7744c6a5fa794bedc41fd4f93c13f4ccbc84805546b17682d2505c",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0017",
+      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "ordinal": 17,
+      "scriptName": "rollback discards the trigger-written audit row and reverts the GUC",
+      "oracle": "postgres",
+      "postgresId": "set-local-trigger-test-testsetlocalreadfromtrigger-0017-select-actor-from-audit_log-where",
+      "suggestedId": "set-local-trigger-test-testsetlocalreadfromtrigger-0017-select-actor-from-audit_log-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT actor FROM audit_log WHERE account_id = 3;",
+      "querySha256": "94ccccce9e610a69416117abb8833d4fa9183f839845a63b38806d703ede6039",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0018",
+      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "ordinal": 18,
+      "scriptName": "rollback discards the trigger-written audit row and reverts the GUC",
+      "oracle": "postgres",
+      "postgresId": "set-local-trigger-test-testsetlocalreadfromtrigger-0018-select-current_setting-app.actor-true",
+      "suggestedId": "set-local-trigger-test-testsetlocalreadfromtrigger-0018-select-current_setting-app.actor-true",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT current_setting('app.actor', true);",
+      "querySha256": "45a5f744bc75317e398834b18be09d3c53958247bfe6a71d5367b95691f7a15a",
+      "expectedRows": [
+        [
+          {
+            "value": ""
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0019",
+      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "ordinal": 19,
+      "scriptName": "SET LOCAL inside a transaction restores the session-scope actor on COMMIT",
+      "oracle": "postgres",
+      "postgresId": "set-local-trigger-test-testsetlocalreadfromtrigger-0019-insert-into-accounts-values-10",
+      "suggestedId": "set-local-trigger-test-testsetlocalreadfromtrigger-0019-insert-into-accounts-values-10",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO accounts VALUES (10, 1);",
+      "querySha256": "37ab7a45eb141ce1d4b4223fcf56addbb5aa9b9d473ebe95115266cf971b690f",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0020",
+      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "ordinal": 20,
+      "scriptName": "SET LOCAL inside a transaction restores the session-scope actor on COMMIT",
+      "oracle": "postgres",
+      "postgresId": "set-local-trigger-test-testsetlocalreadfromtrigger-0020-select-actor-from-audit_log-where",
+      "suggestedId": "set-local-trigger-test-testsetlocalreadfromtrigger-0020-select-actor-from-audit_log-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT actor FROM audit_log WHERE account_id = 10;",
+      "querySha256": "51385432c129826c69dd43b64bd0310ca95e1d3dd33786b12ae82a5bcb977d40",
+      "expectedRows": [
+        [
+          {
+            "value": "service-account"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0021",
+      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "ordinal": 21,
+      "scriptName": "SET LOCAL inside a transaction restores the session-scope actor on COMMIT",
+      "oracle": "postgres",
+      "postgresId": "set-local-trigger-test-testsetlocalreadfromtrigger-0021-begin",
+      "suggestedId": "set-local-trigger-test-testsetlocalreadfromtrigger-0021-begin",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "BEGIN;",
+      "querySha256": "09d5c7e4829721a8d33975034ec970f527d10fe2957088aecdd74a4bfde43190",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0022",
+      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "ordinal": 22,
+      "scriptName": "SET LOCAL inside a transaction restores the session-scope actor on COMMIT",
+      "oracle": "postgres",
+      "postgresId": "set-local-trigger-test-testsetlocalreadfromtrigger-0022-insert-into-accounts-values-11",
+      "suggestedId": "set-local-trigger-test-testsetlocalreadfromtrigger-0022-insert-into-accounts-values-11",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO accounts VALUES (11, 1);",
+      "querySha256": "b19a62e49d04fddd56bb469150997fa76fba6e103e80918628dfeee28f837c08",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0023",
+      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "ordinal": 23,
+      "scriptName": "SET LOCAL inside a transaction restores the session-scope actor on COMMIT",
+      "oracle": "postgres",
+      "postgresId": "set-local-trigger-test-testsetlocalreadfromtrigger-0023-select-actor-from-audit_log-where",
+      "suggestedId": "set-local-trigger-test-testsetlocalreadfromtrigger-0023-select-actor-from-audit_log-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT actor FROM audit_log WHERE account_id = 11;",
+      "querySha256": "6707da24c95bdc36ececd755849965dc27594eee3def2809092eb1f0e62a1ff1",
+      "expectedRows": [
+        [
+          {
+            "value": "on-call"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0024",
+      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "ordinal": 24,
+      "scriptName": "SET LOCAL inside a transaction restores the session-scope actor on COMMIT",
+      "oracle": "postgres",
+      "postgresId": "set-local-trigger-test-testsetlocalreadfromtrigger-0024-commit",
+      "suggestedId": "set-local-trigger-test-testsetlocalreadfromtrigger-0024-commit",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "COMMIT;",
+      "querySha256": "2db35aa37c4005aa96055e900adc9bfbbd70d106820fefcb83216b7cc3f95422",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0025",
+      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "ordinal": 25,
+      "scriptName": "SET LOCAL inside a transaction restores the session-scope actor on COMMIT",
+      "oracle": "postgres",
+      "postgresId": "set-local-trigger-test-testsetlocalreadfromtrigger-0025-insert-into-accounts-values-12",
+      "suggestedId": "set-local-trigger-test-testsetlocalreadfromtrigger-0025-insert-into-accounts-values-12",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO accounts VALUES (12, 1);",
+      "querySha256": "02821d7b4dbb72368f6a440a48e19fd83b9faa798839214a368138a35706bad8",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger#0026",
+      "source": "testing/go/set_local_trigger_test.go:TestSetLocalReadFromTrigger",
+      "ordinal": 26,
+      "scriptName": "SET LOCAL inside a transaction restores the session-scope actor on COMMIT",
+      "oracle": "postgres",
+      "postgresId": "set-local-trigger-test-testsetlocalreadfromtrigger-0026-select-actor-from-audit_log-where",
+      "suggestedId": "set-local-trigger-test-testsetlocalreadfromtrigger-0026-select-actor-from-audit_log-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT actor FROM audit_log WHERE account_id = 12;",
+      "querySha256": "90a762b5921765e71c451613cecf3aa094d44fd293e187af51dc7af99e196b4c",
+      "expectedRows": [
+        [
+          {
+            "value": "service-account"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

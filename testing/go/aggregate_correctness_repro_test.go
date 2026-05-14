@@ -154,12 +154,12 @@ func TestDropAggregateRemovesUserAggregateRepro(t *testing.T) {
 					Query: `DROP AGGREGATE drop_custom_sum(INT);`,
 				},
 				{
-					Query: `SELECT drop_custom_sum(v) FROM drop_custom_sum_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "aggregate-correctness-repro-test-testdropaggregateremovesuseraggregaterepro-0001-select-drop_custom_sum-v-from-drop_custom_sum_items",
+					Query: `SELECT drop_custom_sum(v) FROM drop_custom_sum_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "aggregate-correctness-repro-test-testdropaggregateremovesuseraggregaterepro-0001-select-drop_custom_sum-v-from-drop_custom_sum_items", Compare: "sqlstate"},
 
-						// TestAlterAggregateRenameRepro reproduces a PostgreSQL compatibility gap:
-						// ALTER AGGREGATE can rename a user-defined aggregate while preserving its
-						// implementation.
-						Compare: "sqlstate"},
+					// TestAlterAggregateRenameRepro reproduces a PostgreSQL compatibility gap:
+					// ALTER AGGREGATE can rename a user-defined aggregate while preserving its
+					// implementation.
+
 				},
 			},
 		},
@@ -333,12 +333,12 @@ func TestGroupByNonKeyRejectsUngroupedColumnsRepro(t *testing.T) {
 				{
 					Query: `SELECT id, label
 						FROM group_by_nonkey_items
-						GROUP BY label;`, PostgresOracle: ScriptTestPostgresOracle{ID: "aggregate-correctness-repro-test-testgroupbynonkeyrejectsungroupedcolumnsrepro-0001-select-id-label-from-group_by_nonkey_items",
+						GROUP BY label;`, PostgresOracle: ScriptTestPostgresOracle{ID: "aggregate-correctness-repro-test-testgroupbynonkeyrejectsungroupedcolumnsrepro-0001-select-id-label-from-group_by_nonkey_items", Compare: "sqlstate"},
 
-						// TestGroupByPrimaryKeyThroughJoinAllowsDependentColumnsRepro guards
-						// PostgreSQL functional-dependency grouping through joins: grouping by the
-						// left table's primary key permits selecting other columns from that table.
-						Compare: "sqlstate"},
+					// TestGroupByPrimaryKeyThroughJoinAllowsDependentColumnsRepro guards
+					// PostgreSQL functional-dependency grouping through joins: grouping by the
+					// left table's primary key permits selecting other columns from that table.
+
 				},
 			},
 		},

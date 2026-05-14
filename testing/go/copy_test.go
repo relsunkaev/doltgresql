@@ -47,12 +47,7 @@ func TestCopy(t *testing.T) {
 					CopyFromStdInFile: "tab-load-with-header.sql",
 				},
 				{
-					Query: "SELECT * FROM test_info order by 1;",
-					Expected: []sql.Row{
-						{4, "string for 4", 1},
-						{5, "string for 5", 0},
-						{6, "string for 6", 0},
-					},
+					Query: "SELECT * FROM test_info order by 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "copy-test-testcopy-0001-select-*-from-test_info-order"},
 				},
 			},
 		},
@@ -69,12 +64,7 @@ func TestCopy(t *testing.T) {
 					CopyFromStdInFile: "tab-load-with-header.sql",
 				},
 				{
-					Query: "SELECT * FROM test_info order by 1;",
-					Expected: []sql.Row{
-						{4, "string for 4", 1},
-						{5, "string for 5", 0},
-						{6, "string for 6", 0},
-					},
+					Query: "SELECT * FROM test_info order by 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "copy-test-testcopy-0002-select-*-from-test_info-order"},
 				},
 			},
 		},
@@ -94,12 +84,7 @@ func TestCopy(t *testing.T) {
 					CopyFromStdInFile: "tab-load-with-quoted-column-names.sql",
 				},
 				{
-					Query: `SELECT "Id", "Code", "Capital", "Name" FROM regions ORDER BY "Id";`,
-					Expected: []sql.Row{
-						{1, "01", "97105", "Guadeloupe"},
-						{2, "02", "97209", "Martinique"},
-						{3, "03", "97302", "Guyane"},
-					},
+					Query: `SELECT "Id", "Code", "Capital", "Name" FROM regions ORDER BY "Id";`, PostgresOracle: ScriptTestPostgresOracle{ID: "copy-test-testcopy-0003-select-id-code-capital-name"},
 				},
 			},
 		},
@@ -114,12 +99,7 @@ func TestCopy(t *testing.T) {
 					CopyFromStdInFile: "tab-load-with-timestamp-col.sql",
 				},
 				{
-					Query: "select * from tbl1 order by pk;",
-					Expected: []sql.Row{
-						{"2020-12-19 19:00:00", "2021-04-04 20:00:00"},
-						{"2020-12-19 21:36:32.188", "2020-12-19 19:00:00"},
-						{"2021-04-04 20:00:00", "2020-12-19 21:36:32.188"},
-					},
+					Query: "select * from tbl1 order by pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "copy-test-testcopy-0004-select-*-from-tbl1-order"},
 				},
 			},
 		},
@@ -134,18 +114,10 @@ func TestCopy(t *testing.T) {
 					CopyFromStdInFile: "csv-load-basic-cases.sql",
 				},
 				{
-					Query: "select * from tbl1 where pk = 6 order by pk;",
-					Expected: []sql.Row{
-						{6, `foo
-\\.
-bar`, "baz"},
-					},
+					Query: "select * from tbl1 where pk = 6 order by pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "copy-test-testcopy-0005-select-*-from-tbl1-where"},
 				},
 				{
-					Query: "select * from tbl1 where pk = 9;",
-					Expected: []sql.Row{
-						{9, nil, "''"},
-					},
+					Query: "select * from tbl1 where pk = 9;", PostgresOracle: ScriptTestPostgresOracle{ID: "copy-test-testcopy-0006-select-*-from-tbl1-where"},
 				},
 			},
 		},
@@ -160,12 +132,7 @@ bar`, "baz"},
 					CopyFromStdInFile: "csv-load-with-header.sql",
 				},
 				{
-					Query: "select * from tbl1 where pk = 6 order by pk;",
-					Expected: []sql.Row{
-						{6, `foo
-\\.
-bar`, "baz"},
-					},
+					Query: "select * from tbl1 where pk = 6 order by pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "copy-test-testcopy-0007-select-*-from-tbl1-where"},
 				},
 			},
 		},
@@ -180,18 +147,10 @@ bar`, "baz"},
 					CopyFromStdInFile: "csv-load-basic-cases.sql",
 				},
 				{
-					Query: "select * from tbl1 where pk = 6 order by pk;",
-					Expected: []sql.Row{
-						{6, `foo
-\\.
-bar`, "baz", 16},
-					},
+					Query: "select * from tbl1 where pk = 6 order by pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "copy-test-testcopy-0008-select-*-from-tbl1-where"},
 				},
 				{
-					Query: "select * from tbl1 where pk = 9;",
-					Expected: []sql.Row{
-						{9, nil, "''", 19},
-					},
+					Query: "select * from tbl1 where pk = 9;", PostgresOracle: ScriptTestPostgresOracle{ID: "copy-test-testcopy-0009-select-*-from-tbl1-where"},
 				},
 			},
 		},
@@ -206,10 +165,7 @@ bar`, "baz", 16},
 					CopyFromStdInFile: "csv-load-multi-chunk.sql",
 				},
 				{
-					Query: "select * from tbl1 where pk = 99 order by pk;",
-					Expected: []sql.Row{
-						{99, "foo", "barbazbashbarbazbashbarbazbashbarbazbashbarbazbashbarbazbashbarbazbashbarbazbashbarbazbashbarbazbashbarbazbash"},
-					},
+					Query: "select * from tbl1 where pk = 99 order by pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "copy-test-testcopy-0010-select-*-from-tbl1-where"},
 				},
 			},
 		},
@@ -226,12 +182,7 @@ bar`, "baz", 16},
 					CopyFromStdInFile: "psv-load.sql",
 				},
 				{
-					Query: "SELECT * FROM test_info order by 1;",
-					Expected: []sql.Row{
-						{4, "string for 4", 1},
-						{5, "string for 5", 0},
-						{6, "string for 6", 0},
-					},
+					Query: "SELECT * FROM test_info order by 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "copy-test-testcopy-0011-select-*-from-test_info-order"},
 				},
 			},
 		},
@@ -246,18 +197,10 @@ bar`, "baz", 16},
 					SkipResultsCheck: true,
 				},
 				{
-					Query: "select * from tbl1 where pk = 6 order by pk;",
-					Expected: []sql.Row{
-						{6, `foo
-\\.
-bar`, "baz"},
-					},
+					Query: "select * from tbl1 where pk = 6 order by pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "copy-test-testcopy-0012-select-*-from-tbl1-where"},
 				},
 				{
-					Query: "select * from tbl1 where pk = 9;",
-					Expected: []sql.Row{
-						{9, nil, "''"},
-					},
+					Query: "select * from tbl1 where pk = 9;", PostgresOracle: ScriptTestPostgresOracle{ID: "copy-test-testcopy-0013-select-*-from-tbl1-where"},
 				},
 			},
 		},
@@ -272,18 +215,10 @@ bar`, "baz"},
 					SkipResultsCheck: true,
 				},
 				{
-					Query: "select * from tbl1 where pk = 6 order by pk;",
-					Expected: []sql.Row{
-						{6, `foo
-\\.
-bar`, "baz"},
-					},
+					Query: "select * from tbl1 where pk = 6 order by pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "copy-test-testcopy-0014-select-*-from-tbl1-where"},
 				},
 				{
-					Query: "select * from tbl1 where pk = 9;",
-					Expected: []sql.Row{
-						{9, nil, "''"},
-					},
+					Query: "select * from tbl1 where pk = 9;", PostgresOracle: ScriptTestPostgresOracle{ID: "copy-test-testcopy-0015-select-*-from-tbl1-where"},
 				},
 			},
 		},
@@ -299,12 +234,7 @@ bar`, "baz"},
 					Query: fmt.Sprintf("COPY test_info FROM '%s' WITH (HEADER)", filepath.Join(absTestDataDir, "tab-load-with-header.sql")),
 				},
 				{
-					Query: "SELECT * FROM test_info order by 1;",
-					Expected: []sql.Row{
-						{4, "string for 4", 1},
-						{5, "string for 5", 0},
-						{6, "string for 6", 0},
-					},
+					Query: "SELECT * FROM test_info order by 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "copy-test-testcopy-0016-select-*-from-test_info-order"},
 				},
 			},
 		},
@@ -392,24 +322,21 @@ bar`, "baz"},
 					ExpectedErr: "record on line 2: wrong number of fields",
 				},
 				{
-					Query:    "select count(*) from tbl1;",
-					Expected: []sql.Row{{0}},
+					Query: "select count(*) from tbl1;", PostgresOracle: ScriptTestPostgresOracle{ID: "copy-test-testcopy-0024-select-count-*-from-tbl1"},
 				},
 				{
 					Query:       fmt.Sprintf("COPY tbl1 (pk, c1, c2) FROM '%s' (FORMAT CSV)", filepath.Join(absTestDataDir, "too-many-columns.sql")),
 					ExpectedErr: "record on line 6: wrong number of fields",
 				},
 				{
-					Query:    "select count(*) from tbl1;",
-					Expected: []sql.Row{{0}},
+					Query: "select count(*) from tbl1;", PostgresOracle: ScriptTestPostgresOracle{ID: "copy-test-testcopy-0026-select-count-*-from-tbl1"},
 				},
 				{
 					Query:       fmt.Sprintf("COPY tbl1 (pk, c1, c2) FROM '%s' (FORMAT CSV)", filepath.Join(absTestDataDir, "wrong-types.sql")),
 					ExpectedErr: "invalid input syntax for type int4",
 				},
 				{
-					Query:    "select count(*) from tbl1;",
-					Expected: []sql.Row{{0}},
+					Query: "select count(*) from tbl1;", PostgresOracle: ScriptTestPostgresOracle{ID: "copy-test-testcopy-0028-select-count-*-from-tbl1"},
 				},
 			},
 		},

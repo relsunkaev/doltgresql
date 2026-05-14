@@ -47,13 +47,7 @@ func TestStatementTriggerChecklistGuard(t *testing.T) {
 					Query: `DELETE FROM target WHERE id = 999;`,
 				},
 				{
-					Query: `SELECT entry FROM audit ORDER BY seq;`,
-					Expected: []sql.Row{
-						{"BEFORE:STATEMENT:UPDATE"},
-						{"AFTER:STATEMENT:UPDATE"},
-						{"BEFORE:STATEMENT:DELETE"},
-						{"AFTER:STATEMENT:DELETE"},
-					},
+					Query: `SELECT entry FROM audit ORDER BY seq;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-checklist-guard-test-teststatementtriggerchecklistguard-0001-select-entry-from-audit-order"},
 				},
 			},
 		},
@@ -81,8 +75,7 @@ func TestStatementTriggerChecklistGuard(t *testing.T) {
 					Query: `INSERT INTO target VALUES (1, 10), (2, 20);`,
 				},
 				{
-					Query:    `SELECT seen_count, seen_sum FROM audit;`,
-					Expected: []sql.Row{{int64(2), int64(30)}},
+					Query: `SELECT seen_count, seen_sum FROM audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-checklist-guard-test-teststatementtriggerchecklistguard-0002-select-seen_count-seen_sum-from-audit"},
 				},
 				{
 					Query:    `SELECT marker FROM new_rows;`,
@@ -110,8 +103,7 @@ func TestStatementTriggerChecklistGuard(t *testing.T) {
 					Query: `INSERT INTO target VALUES (1, 10);`,
 				},
 				{
-					Query:       `SELECT count(*) FROM new_rows;`,
-					ExpectedErr: "table not found",
+					Query: `SELECT count(*) FROM new_rows;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-checklist-guard-test-teststatementtriggerchecklistguard-0004-select-count-*-from-new_rows"},
 				},
 			},
 		},
@@ -135,29 +127,25 @@ func TestTransitionTableValidationChecklistGuard(t *testing.T) {
 					Query: `CREATE TRIGGER multi_event_transition
 						AFTER INSERT OR UPDATE ON target
 						REFERENCING NEW TABLE AS new_rows
-						FOR EACH STATEMENT EXECUTE FUNCTION audit_fn();`,
-					ExpectedErr: "transition tables cannot be specified for triggers with more than one event",
+						FOR EACH STATEMENT EXECUTE FUNCTION audit_fn();`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-checklist-guard-test-testtransitiontablevalidationchecklistguard-0001-create-trigger-multi_event_transition-after-insert", Compare: "sqlstate"},
 				},
 				{
 					Query: `CREATE TRIGGER insert_old_transition
 						AFTER INSERT ON target
 						REFERENCING OLD TABLE AS old_rows
-						FOR EACH STATEMENT EXECUTE FUNCTION audit_fn();`,
-					ExpectedErr: "OLD TABLE can only be specified for UPDATE or DELETE triggers",
+						FOR EACH STATEMENT EXECUTE FUNCTION audit_fn();`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-checklist-guard-test-testtransitiontablevalidationchecklistguard-0002-create-trigger-insert_old_transition-after-insert", Compare: "sqlstate"},
 				},
 				{
 					Query: `CREATE TRIGGER delete_new_transition
 						AFTER DELETE ON target
 						REFERENCING NEW TABLE AS new_rows
-						FOR EACH STATEMENT EXECUTE FUNCTION audit_fn();`,
-					ExpectedErr: "NEW TABLE can only be specified for INSERT or UPDATE triggers",
+						FOR EACH STATEMENT EXECUTE FUNCTION audit_fn();`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-checklist-guard-test-testtransitiontablevalidationchecklistguard-0003-create-trigger-delete_new_transition-after-delete", Compare: "sqlstate"},
 				},
 				{
 					Query: `CREATE TRIGGER duplicate_name_transition
 						AFTER UPDATE ON target
 						REFERENCING OLD TABLE AS changed_rows NEW TABLE AS changed_rows
-						FOR EACH STATEMENT EXECUTE FUNCTION audit_fn();`,
-					ExpectedErr: "OLD TABLE and NEW TABLE transition names must be distinct",
+						FOR EACH STATEMENT EXECUTE FUNCTION audit_fn();`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-checklist-guard-test-testtransitiontablevalidationchecklistguard-0004-create-trigger-duplicate_name_transition-after-update", Compare: "sqlstate"},
 				},
 			},
 		},

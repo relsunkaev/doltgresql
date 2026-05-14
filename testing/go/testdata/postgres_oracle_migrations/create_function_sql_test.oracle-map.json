@@ -1,0 +1,952 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map create_function_sql_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/create_function_sql_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0001",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 1,
+      "scriptName": "unnamed parameter",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0001-create-function-alt_func1-int-returns",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0001-create-function-alt_func1-int-returns",
+      "compare": "sqlstate",
+      "expectedKind": "rows",
+      "sqlstate": "42723",
+      "errorSeverity": "ERROR",
+      "query": "CREATE FUNCTION alt_func1(int) RETURNS int LANGUAGE sql AS 'SELECT $1 + 1';",
+      "querySha256": "5242571d26672193a1d084534fd4b18a23454b8b50dc58f7044dd27b99485f82",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0002",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 2,
+      "scriptName": "unnamed parameter",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0002-select-alt_func1-3",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0002-select-alt_func1-3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT alt_func1(3);",
+      "querySha256": "7f233002f081f4c0e3fa5fbb2b7f5116faeacc3ae3dd9571b23fc06f8b0d5ce9",
+      "expectedRows": [
+        [
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0003",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 3,
+      "scriptName": "named parameter",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0003-create-function-alt_func1-x-int",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0003-create-function-alt_func1-x-int",
+      "compare": "sqlstate",
+      "expectedKind": "rows",
+      "sqlstate": "42723",
+      "errorSeverity": "ERROR",
+      "query": "CREATE FUNCTION alt_func1(x int) RETURNS int LANGUAGE sql AS 'SELECT x + 1';",
+      "querySha256": "013d5355722fdce72f62ddbdf722e6af85cc780d02489b51b33e07e22f21bd78",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0004",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 4,
+      "scriptName": "named parameter",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0004-select-alt_func1-3",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0004-select-alt_func1-3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT alt_func1(3);",
+      "querySha256": "7f233002f081f4c0e3fa5fbb2b7f5116faeacc3ae3dd9571b23fc06f8b0d5ce9",
+      "expectedRows": [
+        [
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0005",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 5,
+      "scriptName": "named parameter",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0005-create-function-sub_numbers-x-int",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0005-create-function-sub_numbers-x-int",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE FUNCTION sub_numbers(x int, y int) RETURNS int LANGUAGE sql AS 'SELECT y - x';",
+      "querySha256": "7196a9500fa5b41e31c7837f0b47496b12ceb96a2f613e42c635f80ae39095a2",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0006",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 6,
+      "scriptName": "named parameter",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0006-select-sub_numbers-1-2",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0006-select-sub_numbers-1-2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT sub_numbers(1, 2);",
+      "querySha256": "fceb3b8d6d0c9cf1aacbfa4279881a020456c469aeadd5d46a1e5b73560f6801",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0007",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 7,
+      "scriptName": "unknown functions",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0007-create-function-get_grade_description-score-int",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0007-create-function-get_grade_description-score-int",
+      "compare": "sqlstate",
+      "expectedKind": "rows",
+      "sqlstate": "42723",
+      "errorSeverity": "ERROR",
+      "query": "CREATE FUNCTION get_grade_description(score INT)\n\t\t\t\t\t\t\tRETURNS TEXT\n\t\t\t\t\t\t\tLANGUAGE SQL\n\t\t\t\t\t\t\tAS $$\n\t\t\t\t\t\t\t\tSELECT\n\t\t\t\t\t\t\t\t\tCASE\n\t\t\t\t\t\t\t\t\t\tWHEN score >= 90 THEN 'Excellent'\n\t\t\t\t\t\t\t\t\t\tWHEN score >= 75 THEN 'Good'\n\t\t\t\t\t\t\t\t\t\tWHEN score >= 50 THEN 'Average'\n\t\t\t\t\t\t\t\t\tELSE 'Fail'\n\t\t\t\t\t\t\t\t\tEND;\n\t\t\t\t\t\t\t$$;",
+      "querySha256": "14bdbcc20390763952d5622b07fbd3d54d4a9630a368d4d91bbdc88d84009146",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0008",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 8,
+      "scriptName": "unknown functions",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0008-select-get_grade_description-92",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0008-select-get_grade_description-92",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT get_grade_description(92);",
+      "querySha256": "65aac64e397bc5bba7bc2d0aa3b90ff0c95051845ca9d8b16f565545c2e5ec51",
+      "expectedRows": [
+        [
+          {
+            "value": "Excellent"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0009",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 9,
+      "scriptName": "unknown functions",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0009-select-get_grade_description-65",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0009-select-get_grade_description-65",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT get_grade_description(65);",
+      "querySha256": "01983b18485e38292f27dc8051da95f5d6236636e4cf7f790b39c5d55626c578",
+      "expectedRows": [
+        [
+          {
+            "value": "Average"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0010",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 10,
+      "scriptName": "nested functions",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0010-create-function-calculate_double_sum-x-int",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0010-create-function-calculate_double_sum-x-int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42723",
+      "errorSeverity": "ERROR",
+      "query": "CREATE FUNCTION calculate_double_sum(x INT, y INT)\n\t\t\t\t\t\t\tRETURNS INT\n\t\t\t\t\t\t\tLANGUAGE SQL\n\t\t\t\t\t\t\tAS $$\n\t\t\t\t\t\t\t\tSELECT add_numbers(x, y) * 2;\n\t\t\t\t\t\t\t$$;",
+      "querySha256": "ec466f9e330e515d398aeba68b982404e069776aeb3317574ae635799b2d3f3a",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0011",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 11,
+      "scriptName": "nested functions",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0011-create-function-add_numbers-int-int",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0011-create-function-add_numbers-int-int",
+      "compare": "sqlstate",
+      "expectedKind": "rows",
+      "sqlstate": "42723",
+      "errorSeverity": "ERROR",
+      "query": "CREATE FUNCTION add_numbers(int, int) RETURNS int LANGUAGE sql AS 'SELECT $1 + $2';",
+      "querySha256": "53ed334f83483dba6a5723bba6dc6da2c288292e69249ab3e347f5d9d1568e07",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0012",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 12,
+      "scriptName": "nested functions",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0012-create-function-calculate_double_sum-x-int",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0012-create-function-calculate_double_sum-x-int",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE FUNCTION calculate_double_sum(x INT, y INT)\n\t\t\t\t\t\t\tRETURNS INT\n\t\t\t\t\t\t\tLANGUAGE SQL\n\t\t\t\t\t\t\tAS $$\n\t\t\t\t\t\t\t\tSELECT add_numbers(x, y) * 2;\n\t\t\t\t\t\t\t$$;",
+      "querySha256": "ec466f9e330e515d398aeba68b982404e069776aeb3317574ae635799b2d3f3a",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0013",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 13,
+      "scriptName": "nested functions",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0013-select-calculate_double_sum-1-2",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0013-select-calculate_double_sum-1-2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT calculate_double_sum(1, 2);",
+      "querySha256": "e40360b7f78657c8e908cc0a12e92f51c6bbe95897583bf73541dc7e1b950017",
+      "expectedRows": [
+        [
+          {
+            "value": "6"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0014",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 14,
+      "scriptName": "function returning multiple rows",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0014-create-function-gen-a-int",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0014-create-function-gen-a-int",
+      "compare": "sqlstate",
+      "expectedKind": "rows",
+      "sqlstate": "42723",
+      "errorSeverity": "ERROR",
+      "query": "CREATE FUNCTION gen(a int) RETURNS SETOF INT LANGUAGE SQL AS $$ SELECT generate_series(1, a) $$ STABLE;",
+      "querySha256": "140a682c5c5e4d26f800c95846e1be17e761dffe9107b2f505f932e1a7020a79",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0015",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 15,
+      "scriptName": "function returning multiple rows",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0015-select-*-from-gen-3",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0015-select-*-from-gen-3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM gen(3);",
+      "querySha256": "27f04e6a68247a91788ea2126ff839be33a2209a5846bc81d0b432ee47c89e0d",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0016",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 16,
+      "scriptName": "function with create or replace view",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0016-create-function-public.sp_build_view_bathymetry_layer-returns-void",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0016-create-function-public.sp_build_view_bathymetry_layer-returns-void",
+      "compare": "sqlstate",
+      "expectedKind": "rows",
+      "sqlstate": "42723",
+      "errorSeverity": "ERROR",
+      "query": "CREATE FUNCTION public.sp_build_view_bathymetry_layer() RETURNS void\n\t\t\t\t\t\t\tLANGUAGE sql\n\t\t\t\t\t\t\tAS $$\n\t\t\t\t\t\t\t\tCREATE OR REPLACE VIEW public.view_bathymetry_layer AS\n\t\t\t\t\t\t\t\tSELECT 1;\n\t\t\t\t\t\t\t$$;",
+      "querySha256": "6dae411f479b57a3833778d6a1d921c28ed58fa627ccc4c863400510d897b620",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0017",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 17,
+      "scriptName": "function with create or replace view",
+      "oracle": "internal",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0017-select-public.sp_build_view_bathymetry_layer",
+      "expectedKind": "rows",
+      "query": "SELECT public.sp_build_view_bathymetry_layer()",
+      "querySha256": "ef2d01af2011ca27c30885fb3585c1dba26fe58776346a0006ebc3b5257d5c63",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0018",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 18,
+      "scriptName": "function with create or replace view",
+      "oracle": "internal",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0018-select-*-from-view_bathymetry_layer",
+      "expectedKind": "rows",
+      "query": "SELECT * from view_bathymetry_layer",
+      "querySha256": "fef3f234ae5263225e8c00fc8b52c7f6dd18ce02d4e0cb7635c0b377a46063ed",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0019",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 19,
+      "scriptName": "function with create or replace view",
+      "oracle": "internal",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0019-select-public.sp_build_view_bathymetry_layer",
+      "expectedKind": "rows",
+      "query": "SELECT public.sp_build_view_bathymetry_layer()",
+      "querySha256": "ef2d01af2011ca27c30885fb3585c1dba26fe58776346a0006ebc3b5257d5c63",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0020",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 20,
+      "scriptName": "function with create or replace view",
+      "oracle": "internal",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0020-select-*-from-view_bathymetry_layer",
+      "expectedKind": "rows",
+      "query": "SELECT * from view_bathymetry_layer",
+      "querySha256": "fef3f234ae5263225e8c00fc8b52c7f6dd18ce02d4e0cb7635c0b377a46063ed",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0021",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 21,
+      "scriptName": "function with update ... returning",
+      "oracle": "internal",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0021-create-function-public.tax_job_take-arg_worker-text",
+      "expectedKind": "rows",
+      "query": "CREATE FUNCTION public.tax_job_take(arg_worker text) RETURNS SETOF public.tax_job\n\t\t\t\t\t\t\t\tLANGUAGE sql\n\t\t\t\t\t\t\t\tAS '\n\t\t\t\t\t\t\t\tUPDATE\n\t\t\t\t\t\t\t\t\ttax_job\n\t\t\t\t\t\t\t\tSET\n\t\t\t\t\t\t\t\t\tstate = ''busy'',\n\t\t\t\t\t\t\t\t\tworker = arg_worker\n\t\t\t\t\t\t\t\tWHERE\n\t\t\t\t\t\t\t\t\tstate = ''sched''\n\t\t\t\t\t\t\t\t\tAND scheduled <= CURRENT_TIMESTAMP\n\t\t\t\t\t\t\t\tRETURNING\n\t\t\t\t\t\t\t\t\t*;\n\t\t\t\t\t\t\t';",
+      "querySha256": "991d16e9fc577deb8117892282b7b45ffd2236a8490184e45f6c44d6b5b02d37",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0022",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 22,
+      "scriptName": "function with update ... returning",
+      "oracle": "internal",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0022-select-public.tax_job_take-worker",
+      "expectedKind": "rows",
+      "query": "SELECT public.tax_job_take('worker')",
+      "querySha256": "6fcf403929b50baedd1ab2ca7d952f002478435378af70c625cd92caddccf94d",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0023",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 23,
+      "scriptName": "function with update ... returning",
+      "oracle": "internal",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0023-select-public.tax_job_take-worker",
+      "expectedKind": "rows",
+      "query": "SELECT public.tax_job_take('worker')",
+      "querySha256": "6fcf403929b50baedd1ab2ca7d952f002478435378af70c625cd92caddccf94d",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0024",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 24,
+      "scriptName": "function with delete",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0024-create-function-d-w-text",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0024-create-function-d-w-text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE FUNCTION d(w text) RETURNS bigint\n\t\t\t\t\t\t\t\tLANGUAGE sql\n\t\t\t\t\t\t\t\tAS '\n\t\t\t\t\t\t\t\tDELETE FROM test\n\t\t\t\t\t\t\t\tWHERE\n\t\t\t\t\t\t\t\t\tstate = w\n\t\t\t\t\t\t\t\tRETURNING\n\t\t\t\t\t\t\t\t\tid;\n\t\t\t\t\t\t\t';",
+      "querySha256": "65f9ce587bf9c83c6e27c6d8ec31e2d104ab15babe66b3f000da122b76790bb4",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0025",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 25,
+      "scriptName": "function with delete",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0025-select-*-from-test",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0025-select-*-from-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test;",
+      "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "sched"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "busy"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0026",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 26,
+      "scriptName": "function with delete",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0026-select-d-sched",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0026-select-d-sched",
+      "compare": "sqlstate",
+      "expectedKind": "rows",
+      "sqlstate": "55000",
+      "errorSeverity": "ERROR",
+      "query": "SELECT d('sched');",
+      "querySha256": "c3ade1e80d48cead1673b789c60121bbde56807cae7c6cdf7772e0abd2f9a0ab",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0027",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 27,
+      "scriptName": "function with delete",
+      "oracle": "internal",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0027-select-*-from-test",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test;",
+      "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0028",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 28,
+      "scriptName": "multiple statements in function",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0028-create-function-drop_views-returns-void",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0028-create-function-drop_views-returns-void",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE FUNCTION drop_views() RETURNS void\n\t\t\t\t\t\t\t\tLANGUAGE sql\n\t\t\t\t\t\t\t\tAS $$\n\t\t\t\t\t\t\tDROP VIEW test1;\n\t\t\t\t\t\t\tDROP VIEW test2;\n\t\t\t\t\t\t\t$$;",
+      "querySha256": "63ba96b27bdaed0a28bb40266c01aa7ebda783f4e8003a8a1ff7a15ad50da2f2",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0029",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 29,
+      "scriptName": "multiple statements in function",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0029-select-*-from-test1",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0029-select-*-from-test1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test1",
+      "querySha256": "a9db975ebc840f7208e02e4c3607179f20de92a9da8b4cbce690b3c7ce97f2ed",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0030",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 30,
+      "scriptName": "multiple statements in function",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0030-select-*-from-test2",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0030-select-*-from-test2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test2",
+      "querySha256": "365177c59fc48b853f9397902dd7ffc60987645a23dc51c32ac0e93b57b254f3",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0031",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 31,
+      "scriptName": "multiple statements in function",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0031-select-drop_views",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0031-select-drop_views",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT drop_views();",
+      "querySha256": "0fbf039f08163290b24a358111c483d3afe96d65c5c5a7464aafa22c0a4ce3fa",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0032",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 32,
+      "scriptName": "multiple statements in function",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0032-select-*-from-test1",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0032-select-*-from-test1",
+      "compare": "structural",
+      "expectedKind": "error",
+      "query": "SELECT * FROM test1",
+      "querySha256": "a9db975ebc840f7208e02e4c3607179f20de92a9da8b4cbce690b3c7ce97f2ed",
+      "expectedRows": [
+        [
+          {
+            "value": "-32768"
+          },
+          {
+            "value": "0"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0033",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 33,
+      "scriptName": "multiple statements in function",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0033-select-*-from-test2",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0033-select-*-from-test2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
+      "query": "SELECT * FROM test2",
+      "querySha256": "365177c59fc48b853f9397902dd7ffc60987645a23dc51c32ac0e93b57b254f3",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0034",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 34,
+      "scriptName": "function with default expression in parameter",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0034-create-or-replace-function-dfunc",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0034-create-or-replace-function-dfunc",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE OR REPLACE FUNCTION dfunc(e int, d text, f int default 100)\n\t\t\t\t\t\t\t RETURNS int LANGUAGE SQL\n\t\t\t\t\t\t\tAS $$\n\t\t\t\t\t\t\t\tINSERT INTO cp_test VALUES(e+f, d);\n\t\t\t\t\t\t\t\tSELECT a FROM cp_test WHERE b = d;\n\t\t\t\t\t\t\t$$;",
+      "querySha256": "6097adb7ed51559625e8cc9445b46d3598c829fad7220ecae1a45674963d87ea",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0035",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 35,
+      "scriptName": "function with default expression in parameter",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0035-create-or-replace-function-dfunc",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0035-create-or-replace-function-dfunc",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE OR REPLACE FUNCTION dfunc(e int, f int default 100)\n\t\t\t\t\t\t\t RETURNS int LANGUAGE SQL\n\t\t\t\t\t\t\tAS $$\n\t\t\t\t\t\t\t\tINSERT INTO cp_test VALUES(e+f, 'seconddfunc');\n\t\t\t\t\t\t\t\tSELECT a FROM cp_test WHERE b = 'seconddfunc';\n\t\t\t\t\t\t\t$$;",
+      "querySha256": "ed127cef100d83d2e1c0601b3500f019f1f0785a883dee616b03035424cc5a62",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0036",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 36,
+      "scriptName": "function with default expression in parameter",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0036-select-*-from-dfunc-10",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0036-select-*-from-dfunc-10",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM dfunc(10, 'Hello', 20);",
+      "querySha256": "d2976dc8564545b54065a0fd4f2b33a1c653ca9eeba79bbce1ddacfc873fa1af",
+      "expectedRows": [
+        [
+          {
+            "value": "30"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0037",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 37,
+      "scriptName": "function with default expression in parameter",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0037-select-*-from-cp_test",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0037-select-*-from-cp_test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM cp_test",
+      "querySha256": "74c99766e796620292ee2d0f5a9e8d5801b0559eb4781f092c815c3215698f48",
+      "expectedRows": [
+        [
+          {
+            "value": "30"
+          },
+          {
+            "value": "Hello"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0038",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 38,
+      "scriptName": "function with default expression in parameter",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0038-select-*-from-dfunc-50",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0038-select-*-from-dfunc-50",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM dfunc(50, 'Bye');",
+      "querySha256": "e2cf0a4d915145b35a4f0bf2580f06f1f04b125b75b04a5280ef06bb945efac7",
+      "expectedRows": [
+        [
+          {
+            "value": "150"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0039",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 39,
+      "scriptName": "function with default expression in parameter",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0039-select-*-from-cp_test",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0039-select-*-from-cp_test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM cp_test",
+      "querySha256": "74c99766e796620292ee2d0f5a9e8d5801b0559eb4781f092c815c3215698f48",
+      "expectedRows": [
+        [
+          {
+            "value": "30"
+          },
+          {
+            "value": "Hello"
+          }
+        ],
+        [
+          {
+            "value": "150"
+          },
+          {
+            "value": "Bye"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0040",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 40,
+      "scriptName": "function with default expression in parameter",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0040-select-dfunc-2-after",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0040-select-dfunc-2-after",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT dfunc(2, 'After');",
+      "querySha256": "0180513ed0a5dbd89b55710bbbd53f60daec32aea5ccedff4fd046430cddc058",
+      "expectedRows": [
+        [
+          {
+            "value": "102"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0041",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 41,
+      "scriptName": "function with default expression in parameter",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0041-select-*-from-cp_test",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0041-select-*-from-cp_test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM cp_test",
+      "querySha256": "74c99766e796620292ee2d0f5a9e8d5801b0559eb4781f092c815c3215698f48",
+      "expectedRows": [
+        [
+          {
+            "value": "30"
+          },
+          {
+            "value": "Hello"
+          }
+        ],
+        [
+          {
+            "value": "150"
+          },
+          {
+            "value": "Bye"
+          }
+        ],
+        [
+          {
+            "value": "102"
+          },
+          {
+            "value": "After"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0042",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 42,
+      "scriptName": "function with default expression in parameter",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0042-create-or-replace-function-dfunc",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0042-create-or-replace-function-dfunc",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE OR REPLACE FUNCTION dfunc(e int, f text default '100')\n\t\t\t\t\t\t\t RETURNS int LANGUAGE SQL\n\t\t\t\t\t\t\tAS $$\n\t\t\t\t\t\t\t\tINSERT INTO cp_test VALUES(e, f);\n\t\t\t\t\t\t\t\tSELECT a FROM cp_test WHERE b = f;\n\t\t\t\t\t\t\t$$;",
+      "querySha256": "c24d8581839e44610468a2579bcb79fde88f4b8f11b9b6a7a0b1c3a16f3cdbeb",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0043",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 43,
+      "scriptName": "function with default expression in parameter",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0043-select-dfunc-50",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0043-select-dfunc-50",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42725",
+      "errorSeverity": "ERROR",
+      "query": "SELECT dfunc(50);",
+      "querySha256": "053bcb584aff64c1b86a48b3273088f006b1c399f6f2df47dd810dc35ee2a2e6",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0044",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 44,
+      "scriptName": "use sql statements in BEGIN ATOMIC ... END in sql_body",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0044-create-function-match_default-returns-jsonb",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0044-create-function-match_default-returns-jsonb",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE FUNCTION match_default() RETURNS jsonb\n            LANGUAGE sql\n            BEGIN ATOMIC \n\t\t\t\tSELECT jsonb_build_object('k', 6, 'm', 2048, 'include_original', true, 'tokenizer', json_build_object('kind', 'ngram', 'token_length', 3), 'token_filters', json_build_array(json_build_object('kind', 'downcase'))) AS jsonb_build_object; \n\t\t\tEND;",
+      "querySha256": "20fc9f5c4023e86c04bc09c77517d3edfda76ad2ad44e4d601496a8531502f8b",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0045",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 45,
+      "scriptName": "use sql statements in BEGIN ATOMIC ... END in sql_body",
+      "oracle": "internal",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0045-select-public.match_default",
+      "expectedKind": "rows",
+      "query": "SELECT public.match_default();",
+      "querySha256": "05c44467c44eea278bee63542590dbc591b96db3ef928cca2f8d95278593aafe",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0046",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 46,
+      "scriptName": "use sql statements in BEGIN ATOMIC ... END in sql_body",
+      "oracle": "internal",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0046-create-function-select1-returns-int",
+      "expectedKind": "rows",
+      "query": "CREATE FUNCTION select1() RETURNS int\n            LANGUAGE sql\n            BEGIN ATOMIC \n\t\t\t\tSELECT 1; \n\t\t\tEND;",
+      "querySha256": "8f898a1a999145e72ed982287dcf75f94fec0594a962611b6463ec6cd58e707f",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0047",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 47,
+      "scriptName": "use sql statements in BEGIN ATOMIC ... END in sql_body",
+      "oracle": "internal",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0047-select-select1",
+      "expectedKind": "rows",
+      "query": "SELECT select1();",
+      "querySha256": "f9e62a924f78ebc6b8d12db42654bfb863caea21347ed1658c2aad69f90bd57a",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0048",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 48,
+      "scriptName": "use RETURN in BEGIN ATOMIC ... END in sql_body",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0048-create-function-return1-returns-text",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0048-create-function-return1-returns-text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE FUNCTION return1() RETURNS text\n            LANGUAGE sql\n            BEGIN ATOMIC \n\t\t\t\tRETURN 1::text || 'one'; \n\t\t\tEND;",
+      "querySha256": "e1be9d0fde025660137b237bc00903cd80f1e7cc90a9fc11be9e7f11c8fc049c",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0049",
+      "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
+      "ordinal": 49,
+      "scriptName": "use RETURN in BEGIN ATOMIC ... END in sql_body",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0049-select-return1",
+      "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0049-select-return1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT return1();",
+      "querySha256": "3137da25718bced7f93049fdd1222a9b4e70777913c63339298303f3fb2fd6bf",
+      "expectedRows": [
+        [
+          {
+            "value": "1one"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

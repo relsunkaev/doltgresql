@@ -47,8 +47,7 @@ func TestCreateFunctionLanguagePlpgsql(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "SELECT interpreted_alias('123');",
-					Expected: []sql.Row{{"123"}},
+					Query: "SELECT interpreted_alias('123');", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0001-select-interpreted_alias-123"},
 				},
 			},
 		},
@@ -73,28 +72,16 @@ END;
 $$ LANGUAGE plpgsql;`},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT interpreted_assignment('Hello');",
-					Expected: []sql.Row{
-						{"Initial: Hello - Greeting"},
-					},
+					Query: "SELECT interpreted_assignment('Hello');", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0002-select-interpreted_assignment-hello"},
 				},
 				{
-					Query: "SELECT interpreted_assignment('Bye');",
-					Expected: []sql.Row{
-						{"Initial: Bye - Farewell"},
-					},
+					Query: "SELECT interpreted_assignment('Bye');", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0003-select-interpreted_assignment-bye"},
 				},
 				{
-					Query: "SELECT interpreted_assignment('abc');",
-					Expected: []sql.Row{
-						{"Initial: abc - Else"},
-					},
+					Query: "SELECT interpreted_assignment('abc');", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0004-select-interpreted_assignment-abc"},
 				},
 				{
-					Query: "SELECT interpreted_assignment('something');",
-					Expected: []sql.Row{
-						{"Initial: something - Over 5"},
-					},
+					Query: "SELECT interpreted_assignment('something');", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0005-select-interpreted_assignment-something"},
 				},
 			},
 		},
@@ -118,16 +105,13 @@ END;
 $$ LANGUAGE plpgsql;`},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "SELECT interpreted_case(1);",
-					Expected: []sql.Row{{"one or two"}},
+					Query: "SELECT interpreted_case(1);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0006-select-interpreted_case-1"},
 				},
 				{
-					Query:    "SELECT interpreted_case(2);",
-					Expected: []sql.Row{{"one or two"}},
+					Query: "SELECT interpreted_case(2);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0007-select-interpreted_case-2"},
 				},
 				{
-					Query:    "SELECT interpreted_case(0);",
-					Expected: []sql.Row{{"other value than one or two"}},
+					Query: "SELECT interpreted_case(0);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0008-select-interpreted_case-0"},
 				},
 			},
 		},
@@ -151,16 +135,13 @@ END;
 $$ LANGUAGE plpgsql;`},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "SELECT interpreted_case(1);",
-					Expected: []sql.Row{{"one or two"}},
+					Query: "SELECT interpreted_case(1);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0009-select-interpreted_case-1"},
 				},
 				{
-					Query:    "SELECT interpreted_case(2);",
-					Expected: []sql.Row{{"one or two"}},
+					Query: "SELECT interpreted_case(2);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0010-select-interpreted_case-2"},
 				},
 				{
-					Query:       "SELECT interpreted_case(0);",
-					ExpectedErr: "case not found",
+					Query: "SELECT interpreted_case(0);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0011-select-interpreted_case-0", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -188,24 +169,19 @@ END;
 $$ LANGUAGE plpgsql;`},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "SELECT interpreted_case(0);",
-					Expected: []sql.Row{{"value is between zero and ten"}},
+					Query: "SELECT interpreted_case(0);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0012-select-interpreted_case-0"},
 				},
 				{
-					Query:    "SELECT interpreted_case(1);",
-					Expected: []sql.Row{{"value is between zero and ten"}},
+					Query: "SELECT interpreted_case(1);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0013-select-interpreted_case-1"},
 				},
 				{
-					Query:    "SELECT interpreted_case(10);",
-					Expected: []sql.Row{{"value is between zero and ten"}},
+					Query: "SELECT interpreted_case(10);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0014-select-interpreted_case-10"},
 				},
 				{
-					Query:    "SELECT interpreted_case(11);",
-					Expected: []sql.Row{{"value is between eleven and twenty"}},
+					Query: "SELECT interpreted_case(11);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0015-select-interpreted_case-11"},
 				},
 				{
-					Query:    "SELECT interpreted_case(21);",
-					Expected: []sql.Row{{"value is out of bounds"}},
+					Query: "SELECT interpreted_case(21);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0016-select-interpreted_case-21"},
 				},
 			},
 		},
@@ -234,24 +210,19 @@ END;
 $$ LANGUAGE plpgsql;`},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "SELECT interpreted_case(0);",
-					Expected: []sql.Row{{"value is between zero and ten"}},
+					Query: "SELECT interpreted_case(0);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0017-select-interpreted_case-0"},
 				},
 				{
-					Query:    "SELECT interpreted_case(1);",
-					Expected: []sql.Row{{"value is between zero and ten"}},
+					Query: "SELECT interpreted_case(1);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0018-select-interpreted_case-1"},
 				},
 				{
-					Query:    "SELECT interpreted_case(10);",
-					Expected: []sql.Row{{"value is between zero and ten"}},
+					Query: "SELECT interpreted_case(10);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0019-select-interpreted_case-10"},
 				},
 				{
-					Query:    "SELECT interpreted_case(11);",
-					Expected: []sql.Row{{"value is between eleven and twenty"}},
+					Query: "SELECT interpreted_case(11);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0020-select-interpreted_case-11"},
 				},
 				{
-					Query:       "SELECT interpreted_case(21);",
-					ExpectedErr: "case not found",
+					Query: "SELECT interpreted_case(21);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0021-select-interpreted_case-21", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -272,8 +243,7 @@ END;
 $$ LANGUAGE plpgsql;`},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "SELECT interpreted_continue();",
-					Expected: []sql.Row{{4}},
+					Query: "SELECT interpreted_continue();", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0022-select-interpreted_continue"},
 				},
 			},
 		},
@@ -295,8 +265,7 @@ END;
 $$ LANGUAGE plpgsql;`},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "SELECT interpreted_continue_label();",
-					Expected: []sql.Row{{6}},
+					Query: "SELECT interpreted_continue_label();", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0023-select-interpreted_continue_label"},
 				},
 			},
 		},
@@ -317,8 +286,7 @@ END;
 $$ LANGUAGE plpgsql;`},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "SELECT interpreted_exit();",
-					Expected: []sql.Row{{8}},
+					Query: "SELECT interpreted_exit();", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0024-select-interpreted_exit", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -337,8 +305,7 @@ END;
 $$ LANGUAGE plpgsql;`},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "SELECT interpreted_exit_when();",
-					Expected: []sql.Row{{9}},
+					Query: "SELECT interpreted_exit_when();", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0025-select-interpreted_exit_when", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -358,8 +325,7 @@ END;
 $$ LANGUAGE plpgsql;`},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "SELECT interpreted_loop();",
-					Expected: []sql.Row{{10}},
+					Query: "SELECT interpreted_loop();", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0026-select-interpreted_loop", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -381,8 +347,7 @@ END;
 $$ LANGUAGE plpgsql;`},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "SELECT interpreted_loop_label();",
-					Expected: []sql.Row{{12}},
+					Query: "SELECT interpreted_loop_label();", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0027-select-interpreted_loop_label", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -397,16 +362,15 @@ END;
 $$ LANGUAGE plpgsql;`},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "SELECT nextval('test_sequence');",
-					Expected: []sql.Row{{1}},
+					Query: "SELECT nextval('test_sequence');", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0028-select-nextval-test_sequence"},
 				},
 				{
-					Query:    "SELECT interpreted_perform();",
-					Expected: []sql.Row{{nil}}, // TODO: Postgres returns a value that's not null, but also not a value?
+					Query: "SELECT interpreted_perform();", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0029-select-interpreted_perform"},
+					// TODO: Postgres returns a value that's not null, but also not a value?
+
 				},
 				{
-					Query:    "SELECT nextval('test_sequence');",
-					Expected: []sql.Row{{3}},
+					Query: "SELECT nextval('test_sequence');", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0030-select-nextval-test_sequence"},
 				},
 			},
 		},
@@ -428,18 +392,10 @@ $$ LANGUAGE plpgsql;`},
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT func2();",
-					Expected: []sql.Row{
-						{"(1,username,t)"},
-						{"(2,another,f)"},
-					},
+					Query: "SELECT func2();", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0031-select-func2"},
 				},
 				{
-					Query: "SELECT func2(), func2();",
-					Expected: []sql.Row{
-						{"(1,username,t)", "(1,username,t)"},
-						{"(2,another,f)", "(2,another,f)"},
-					},
+					Query: "SELECT func2(), func2();", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0032-select-func2-func2"},
 				},
 			},
 		},
@@ -458,12 +414,10 @@ $$ LANGUAGE plpgsql;`},
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "SELECT func2();",
-					Expected: []sql.Row{},
+					Query: "SELECT func2();", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0033-select-func2"},
 				},
 				{
-					Query:    "SELECT func2(), func2();",
-					Expected: []sql.Row{},
+					Query: "SELECT func2(), func2();", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0034-select-func2-func2"},
 				},
 			},
 		},
@@ -486,18 +440,10 @@ $$ LANGUAGE plpgsql;`},
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT func2();",
-					Expected: []sql.Row{
-						{"(1,username,t)"},
-						{"(2,another,f)"},
-					},
+					Query: "SELECT func2();", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0035-select-func2"},
 				},
 				{
-					Query: "SELECT func2(), func2();",
-					Expected: []sql.Row{
-						{"(1,username,t)", "(1,username,t)"},
-						{"(2,another,f)", "(2,another,f)"},
-					},
+					Query: "SELECT func2(), func2();", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0036-select-func2-func2"},
 				},
 			},
 		},
@@ -519,18 +465,10 @@ $$ LANGUAGE plpgsql;`},
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT func3(111);",
-					Expected: []sql.Row{
-						{"(111,username,t)"},
-						{"(111,another,f)"},
-					},
+					Query: "SELECT func3(111);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0037-select-func3-111"},
 				},
 				{
-					Query: "SELECT func3(111), func3(222);",
-					Expected: []sql.Row{
-						{"(111,username,t)", "(222,username,t)"},
-						{"(111,another,f)", "(222,another,f)"},
-					},
+					Query: "SELECT func3(111), func3(222);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0038-select-func3-111-func3-222"},
 				},
 			},
 		},
@@ -548,18 +486,10 @@ $$ LANGUAGE plpgsql;`},
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT func2();",
-					Expected: []sql.Row{
-						{"(1,username,t)"},
-						{"(2,another,f)"},
-					},
+					Query: "SELECT func2();", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0039-select-func2"},
 				},
 				{
-					Query: "SELECT func2(), func2();",
-					Expected: []sql.Row{
-						{"(1,username,t)", "(1,username,t)"},
-						{"(2,another,f)", "(2,another,f)"},
-					},
+					Query: "SELECT func2(), func2();", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0040-select-func2-func2"},
 				},
 			},
 		},
@@ -577,18 +507,10 @@ $$ LANGUAGE plpgsql;`},
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT func2();",
-					Expected: []sql.Row{
-						{"(username1)"},
-						{"(username2)"},
-					},
+					Query: "SELECT func2();", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0041-select-func2"},
 				},
 				{
-					Query: "SELECT func2(), func2();",
-					Expected: []sql.Row{
-						{"(username1)", "(username1)"},
-						{"(username2)", "(username2)"},
-					},
+					Query: "SELECT func2(), func2();", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0042-select-func2-func2"},
 				},
 			},
 		},
@@ -610,18 +532,10 @@ $$ LANGUAGE plpgsql;`},
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT func2();",
-					Expected: []sql.Row{
-						{"(1,username1)"},
-						{"(2,username2)"},
-					},
+					Query: "SELECT func2();", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0043-select-func2"},
 				},
 				{
-					Query: "SELECT func2(), func2();",
-					Expected: []sql.Row{
-						{"(1,username1)", "(1,username1)"},
-						{"(2,username2)", "(2,username2)"},
-					},
+					Query: "SELECT func2(), func2();", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0044-select-func2-func2"},
 				},
 			},
 		},
@@ -686,11 +600,24 @@ $$ LANGUAGE plpgsql;`},
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT func2(1);",
-					Expected: []sql.Row{
-						{"(1,John,100)"},
-						{"(2,Jane,10)"},
-					},
+					Query: `SELECT COUNT(*) FROM (
+						SELECT c.id, c.name, SUM(o.amount) AS total_spent
+						FROM customers c
+						JOIN orders o ON o.customer_id = c.id
+						GROUP BY c.id, c.name
+					) q;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0047-select-count-*-from-select"},
+				},
+				{
+					Query: `SELECT COUNT(*) FROM (
+						SELECT c.id, c.name, SUM(o.amount) AS total_spent
+						FROM customers c
+						JOIN orders o ON o.customer_id = c.id
+						GROUP BY c.id, c.name
+						HAVING SUM(o.amount) >= 1
+					) q;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0048-select-count-*-from-select"},
+				},
+				{
+					Query: "SELECT func2(1);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0049-select-func2-1", Compare: "sqlstate"},
 				},
 				{
 					Query: "SELECT func2(11);",
@@ -721,10 +648,7 @@ $$ LANGUAGE plpgsql;`},
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT func3((222,'passedin',false)::user_summary);",
-					Expected: []sql.Row{
-						{"(222,passedin,f)"},
-					},
+					Query: "SELECT func3((222,'passedin',false)::user_summary);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0052-select-func3-222-passedin-false"},
 				},
 			},
 		},
@@ -754,12 +678,10 @@ $$ LANGUAGE plpgsql;`},
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       "SELECT interpreted_raise1('123');",
-					ExpectedErr: "RAISE option already specified: MESSAGE",
+					Query: "SELECT interpreted_raise1('123');", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0053-select-interpreted_raise1-123", Compare: "sqlstate"},
 				},
 				{
-					Query:       "SELECT interpreted_raise2('123');",
-					ExpectedErr: "foo % bar 2",
+					Query: "SELECT interpreted_raise2('123');", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0054-select-interpreted_raise2-123", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -784,28 +706,16 @@ END;
 $$ LANGUAGE plpgsql;`},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT interpreted_select_into(1);",
-					Expected: []sql.Row{
-						{"abc"},
-					},
+					Query: "SELECT interpreted_select_into(1);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0055-select-interpreted_select_into-1"},
 				},
 				{
-					Query: "SELECT interpreted_select_into(2);",
-					Expected: []sql.Row{
-						{"def"},
-					},
+					Query: "SELECT interpreted_select_into(2);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0056-select-interpreted_select_into-2"},
 				},
 				{
-					Query: "SELECT interpreted_select_into(3);",
-					Expected: []sql.Row{
-						{"ghi"},
-					},
+					Query: "SELECT interpreted_select_into(3);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0057-select-interpreted_select_into-3"},
 				},
 				{
-					Query: "SELECT interpreted_select_into(4);",
-					Expected: []sql.Row{
-						{"out of bounds"},
-					},
+					Query: "SELECT interpreted_select_into(4);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0058-select-interpreted_select_into-4"},
 				},
 			},
 		},
@@ -827,8 +737,7 @@ END;
 $$ LANGUAGE plpgsql;`},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "SELECT interpreted_while(42);",
-					Expected: []sql.Row{{58}},
+					Query: "SELECT interpreted_while(42);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0059-select-interpreted_while-42"},
 				},
 			},
 		},
@@ -852,8 +761,7 @@ END;
 $$ LANGUAGE plpgsql;`},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "SELECT interpreted_while_label(42);",
-					Expected: []sql.Row{{52}},
+					Query: "SELECT interpreted_while_label(42);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0060-select-interpreted_while_label-42"},
 				},
 			},
 		},
@@ -874,12 +782,10 @@ END;
 $$ LANGUAGE plpgsql;`},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "SELECT interpreted_null(42);",
-					Expected: []sql.Row{{"Yes"}},
+					Query: "SELECT interpreted_null(42);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0061-select-interpreted_null-42"},
 				},
 				{
-					Query:    "SELECT interpreted_null(43);",
-					Expected: []sql.Row{{"No"}},
+					Query: "SELECT interpreted_null(43);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0062-select-interpreted_null-43"},
 				},
 			},
 		},
@@ -903,8 +809,7 @@ $$ LANGUAGE plpgsql;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "SELECT test1('Hello');",
-					Expected: []sql.Row{{"inputHellovar1"}},
+					Query: "SELECT test1('Hello');", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0063-select-test1-hello"},
 				},
 			},
 		},
@@ -936,28 +841,16 @@ END;
 $$ LANGUAGE plpgsql;`},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT interpreted_overload('abc');",
-					Expected: []sql.Row{
-						{"abc"},
-					},
+					Query: "SELECT interpreted_overload('abc');", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0064-select-interpreted_overload-abc"},
 				},
 				{
-					Query: "SELECT interpreted_overload('abcd');",
-					Expected: []sql.Row{
-						{"abcd_long"},
-					},
+					Query: "SELECT interpreted_overload('abcd');", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0065-select-interpreted_overload-abcd"},
 				},
 				{
-					Query: "SELECT interpreted_overload(3);",
-					Expected: []sql.Row{
-						{3},
-					},
+					Query: "SELECT interpreted_overload(3);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0066-select-interpreted_overload-3"},
 				},
 				{
-					Query: "SELECT interpreted_overload(4);",
-					Expected: []sql.Row{
-						{-4},
-					},
+					Query: "SELECT interpreted_overload(4);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0067-select-interpreted_overload-4"},
 				},
 			},
 		},
@@ -969,12 +862,10 @@ $$ LANGUAGE plpgsql;`},
 BEGIN
 	RETURN input || '_extra';
 END;
-$$ LANGUAGE plpgsql;`,
-					Expected: []sql.Row{},
+$$ LANGUAGE plpgsql;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0068-create-function-interpreted_as_of-input-text", Compare: "sqlstate"},
 				},
 				{
-					Query:    "SELECT interpreted_as_of('abcd');",
-					Expected: []sql.Row{{"abcd_extra"}},
+					Query: "SELECT interpreted_as_of('abcd');", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0069-select-interpreted_as_of-abcd"},
 				},
 				{
 					Query:    `SELECT dolt_add('.');`,
@@ -1030,16 +921,13 @@ $$ LANGUAGE plpgsql;`,
 BEGIN
 	RETURN input || '_extra';
 END;
-$$ LANGUAGE plpgsql;`,
-					Expected: []sql.Row{},
+$$ LANGUAGE plpgsql;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0079-create-function-interpreted_merging-input-text"},
 				},
 				{
-					Query:    "SELECT interpreted_merging('abcd');",
-					Expected: []sql.Row{{"abcd_extra"}},
+					Query: "SELECT interpreted_merging('abcd');", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0080-select-interpreted_merging-abcd"},
 				},
 				{
-					Query:       "SELECT interpreted_merging(55);",
-					ExpectedErr: "does not exist",
+					Query: "SELECT interpreted_merging(55);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0081-select-interpreted_merging-55", Compare: "sqlstate"},
 				},
 				{
 					Query:    `SELECT dolt_add('.');`,
@@ -1134,15 +1022,10 @@ $$ LANGUAGE plpgsql;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "INSERT INTO test VALUES (insertion_text()), (insertion_text());",
-					Expected: []sql.Row{},
+					Query: "INSERT INTO test VALUES (insertion_text()), (insertion_text());", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0100-insert-into-test-values-insertion_text"},
 				},
 				{
-					Query: "SELECT * FROM test;",
-					Expected: []sql.Row{
-						{"example"},
-						{"example"},
-					},
+					Query: "SELECT * FROM test;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0101-select-*-from-test"},
 				},
 			},
 		},
@@ -1214,8 +1097,7 @@ $$;`,
 					Expected: []sql.Row{},
 				},
 				{
-					Query:    `CREATE TRIGGER trig_name BEFORE INSERT OR UPDATE ON public.table_name FOR EACH ROW EXECUTE FUNCTION public.fn_name();`,
-					Expected: []sql.Row{},
+					Query: `CREATE TRIGGER trig_name BEFORE INSERT OR UPDATE ON public.table_name FOR EACH ROW EXECUTE FUNCTION public.fn_name();`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0106-create-trigger-trig_name-before-insert"},
 				},
 				{
 					Query:    "INSERT INTO public.table_name VALUES ('2025-01-02', '2025-02-02');",
@@ -1247,31 +1129,18 @@ $$;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT total(t) FROM test AS t;`,
-					Expected: []sql.Row{
-						{7.5},
-						{6.0},
-					},
+					Query: `SELECT total(t) FROM test AS t;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0111-select-total-t-from-test"},
 				},
 				{
-					Query: `SELECT priceHike(t, 10.0) FROM test AS t;`,
-					Expected: []sql.Row{
-						{"(1,apple,3,12.5)"},
-						{"(2,banana,5,11.2)"},
-					},
+					Query: `SELECT priceHike(t, 10.0) FROM test AS t;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0112-select-pricehike-t-10.0-from"},
 				},
 				{
-					Query: `SELECT priceHike(ROW(3, 'orange', 1, 1.8)::test, 100.0);`,
-					Expected: []sql.Row{
-						{"(3,orange,1,101.8)"},
-					},
+					Query: `SELECT priceHike(ROW(3, 'orange', 1, 1.8)::test, 100.0);`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0113-select-pricehike-row-3-orange"},
 				},
 				{
 					Query: `SELECT singleReturn();`,
-					Skip:  true, // TODO: better PL/pgSQL internal support for non-trigger composite types
-					Expected: []sql.Row{
-						{"(1,apple,3,2.5)"},
-					},
+					Skip:  true, PostgresOracle: // TODO: better PL/pgSQL internal support for non-trigger composite types
+					ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0114-select-singlereturn"},
 				},
 			},
 		},
@@ -1282,19 +1151,13 @@ $$;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `CREATE TABLE t2 (v1 INT4 PRIMARY KEY, v2 t1 NOT NULL);`,
-					Expected: []sql.Row{},
+					Query: `CREATE TABLE t2 (v1 INT4 PRIMARY KEY, v2 t1 NOT NULL);`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0115-create-table-t2-v1-int4"},
 				},
 				{
-					Query:    `INSERT INTO t2 VALUES (1, ROW(0, 'hello')::t1), (2, ROW(10, 'world')::t1);`,
-					Expected: []sql.Row{},
+					Query: `INSERT INTO t2 VALUES (1, ROW(0, 'hello')::t1), (2, ROW(10, 'world')::t1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0116-insert-into-t2-values-1"},
 				},
 				{
-					Query: `SELECT * FROM t2 ORDER BY v1;`,
-					Expected: []sql.Row{
-						{1, "(0,hello)"},
-						{2, "(10,world)"},
-					},
+					Query: `SELECT * FROM t2 ORDER BY v1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0117-select-*-from-t2-order"},
 				},
 			},
 		},
@@ -1449,8 +1312,7 @@ $$;`,
 					Query: "set search_path to 'public'",
 				},
 				{
-					Query:    "SELECT public.ambienttempdetail_insertupdate(101, 25.5, 15);",
-					Expected: []sql.Row{{101}},
+					Query: "SELECT public.ambienttempdetail_insertupdate(101, 25.5, 15);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0121-select-public.ambienttempdetail_insertupdate-101-25.5-15", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1458,8 +1320,7 @@ $$;`,
 			Name: "create function on non-existent table that does not exist yet with 'check_function_bodies'",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SHOW check_function_bodies;`,
-					Expected: []sql.Row{{1}},
+					Query: `SHOW check_function_bodies;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0122-show-check_function_bodies"},
 				},
 				{
 					Query: `CREATE FUNCTION public.film_in_stock(p_film_id integer, p_store_id integer, OUT p_film_count integer) RETURNS SETOF integer
@@ -1474,8 +1335,7 @@ $_$;`,
 					ExpectedErr: `table not found`,
 				},
 				{
-					Query:    "SET check_function_bodies = false;",
-					Expected: []sql.Row{},
+					Query: "SET check_function_bodies = false;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0124-set-check_function_bodies-=-false"},
 				},
 				{
 					Query: `CREATE FUNCTION public.film_in_stock(p_film_id integer, p_store_id integer, OUT p_film_count integer) RETURNS SETOF integer
@@ -1505,12 +1365,10 @@ $_$;`,
 			Name: "DECLARE variable with default value of literal value or parameter reference",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `CREATE OR REPLACE FUNCTION d() RETURNS TEXT[] AS $$ DECLARE chars TEXT[] := '{A,B,C,D,E,F,G,H}'; BEGIN RETURN chars; END; $$ LANGUAGE plpgsql;`,
-					Expected: []sql.Row{},
+					Query: `CREATE OR REPLACE FUNCTION d() RETURNS TEXT[] AS $$ DECLARE chars TEXT[] := '{A,B,C,D,E,F,G,H}'; BEGIN RETURN chars; END; $$ LANGUAGE plpgsql;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0127-create-or-replace-function-d"},
 				},
 				{
-					Query:    "SELECT d();",
-					Expected: []sql.Row{{"{A,B,C,D,E,F,G,H}"}},
+					Query: "SELECT d();", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0128-select-d"},
 				},
 				{
 					Query: `CREATE OR REPLACE FUNCTION
@@ -1525,8 +1383,7 @@ end
 $$;`,
 				},
 				{
-					Query:    "SELECT mylt2('a', 'B', 1) as f;",
-					Expected: []sql.Row{{"f"}},
+					Query: "SELECT mylt2('a', 'B', 1) as f;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0129-select-mylt2-a-b-1"},
 				},
 			},
 		},
@@ -1546,12 +1403,10 @@ FOR i IN 1..3 LOOP
 END LOOP;
 RETURN result;
 END;
-$$ LANGUAGE plpgsql;`,
-					Expected: []sql.Row{},
+$$ LANGUAGE plpgsql;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0130-create-or-replace-function-code"},
 				},
 				{
-					Query:    "SELECT code();",
-					Expected: []sql.Row{{"BCD"}},
+					Query: "SELECT code();", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0131-select-code"},
 				},
 			},
 		},
@@ -1581,21 +1436,13 @@ $$ LANGUAGE plpgsql;`,
         
            DELETE FROM decks WHERE id = p_id;
         END;
-        $$;`,
-					Expected: []sql.Row{},
+        $$;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0132-create-function-delete_deck_tree-p_id-bigint"},
 				},
 				{
-					Query: "SELECT * from decks;",
-					Expected: []sql.Row{
-						{1, "name1", 2},
-						{2, "name2", 4},
-						{5, "name3", 1},
-						{7, "name4", 9},
-					},
+					Query: "SELECT * from decks;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0133-select-*-from-decks"},
 				},
 				{
-					Query:    "SELECT delete_deck_tree(1);",
-					Expected: []sql.Row{{nil}},
+					Query: "SELECT delete_deck_tree(1);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0134-select-delete_deck_tree-1", Compare: "sqlstate"},
 				},
 				{
 					Query: "SELECT * from decks;",
@@ -1620,12 +1467,10 @@ BEGIN
 	INSERT INTO test VALUES (3, 'w') returning * INTO ti, tt; 
 	RETURN ti; 
 END; 
-$$ LANGUAGE plpgsql;`,
-					Expected: []sql.Row{},
+$$ LANGUAGE plpgsql;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0136-create-function-return_table-returns-int"},
 				},
 				{
-					Query:    "select return_table();",
-					Expected: []sql.Row{{3}},
+					Query: "select return_table();", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0137-select-return_table"},
 				},
 			},
 		},
@@ -1645,16 +1490,13 @@ BEGIN
     RETURN NULL;
   END IF;
   RETURN ret;
-END; $$ LANGUAGE plpgsql;`,
-					Expected: []sql.Row{},
+END; $$ LANGUAGE plpgsql;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0138-create-function-func1-returns-int4"},
 				},
 				{
-					Query:    "SELECT func1() IS DISTINCT FROM func1() as DISTINCT_RESULT;",
-					Expected: []sql.Row{{"t"}},
+					Query: "SELECT func1() IS DISTINCT FROM func1() as DISTINCT_RESULT;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0139-select-func1-is-distinct-from"},
 				},
 				{
-					Query:    "SELECT * FROM test;",
-					Expected: []sql.Row{{1}, {2}},
+					Query: "SELECT * FROM test;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0140-select-*-from-test"},
 				},
 			},
 		},

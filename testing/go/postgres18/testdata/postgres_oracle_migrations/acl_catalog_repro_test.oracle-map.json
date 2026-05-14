@@ -1,0 +1,39 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map acl_catalog_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres18/acl_catalog_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/postgres18/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres18/acl_catalog_repro_test.go:TestHasLargeObjectPrivilegeHelperRepro#0001",
+      "source": "testing/go/postgres18/acl_catalog_repro_test.go:TestHasLargeObjectPrivilegeHelperRepro",
+      "ordinal": 1,
+      "scriptName": "has_largeobject_privilege helper is registered",
+      "oracle": "postgres",
+      "postgresId": "postgres18/acl-catalog-repro-test-testhaslargeobjectprivilegehelperrepro-0001-select-count-*->=-1",
+      "suggestedId": "postgres18/acl-catalog-repro-test-testhaslargeobjectprivilegehelperrepro-0001-select-count-*->=-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) >= 1\n\t\t\t\t\t\tFROM pg_catalog.pg_proc\n\t\t\t\t\t\tWHERE proname = 'has_largeobject_privilege';",
+      "querySha256": "a024ea2daa1a2f353eb28f3688858680d05b4c080a716bca3b4c8b9129723a67",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

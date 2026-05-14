@@ -91,18 +91,20 @@ func TestInformationSchemaSchemataHidesUngrantableSchemasRepro(t *testing.T) {
 					Query: `SELECT schema_name
 						FROM information_schema.schemata
 						WHERE schema_name = 'info_schema_private_schema';`,
-					Expected: []sql.Row{},
+
 					Username: `info_schema_schema_viewer`,
-					Password: `pw`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestInformationSchemaViewsHidesUngrantableViewsRepro reproduces an
+						// information_schema compatibility bug: ordinary users should be able to query
+						// information_schema.views, with rows filtered by object privileges.
+						ID: "information-schema-visibility-repro-test-testinformationschemaschematahidesungrantableschemasrepro-0001-select-schema_name-from-information_schema.schemata-where"},
 				},
 			},
 		},
 	})
 }
 
-// TestInformationSchemaViewsHidesUngrantableViewsRepro reproduces an
-// information_schema compatibility bug: ordinary users should be able to query
-// information_schema.views, with rows filtered by object privileges.
 func TestInformationSchemaViewsHidesUngrantableViewsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -157,19 +159,21 @@ func TestInformationSchemaTriggersHidesUngrantableTriggersRepro(t *testing.T) {
 						FROM information_schema.triggers
 						WHERE event_object_schema = 'public'
 							AND event_object_table = 'info_schema_trigger_private';`,
-					Expected: []sql.Row{},
+
 					Username: `info_schema_trigger_viewer`,
-					Password: `pw`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestInformationSchemaTablePrivilegesHidesUngrantableTablesRepro reproduces
+						// an information_schema compatibility bug: ordinary users should be able to
+						// query information_schema.table_privileges, with rows filtered by privileges
+						// they hold or granted.
+						ID: "information-schema-visibility-repro-test-testinformationschematriggershidesungrantabletriggersrepro-0001-select-trigger_name-from-information_schema.triggers-where"},
 				},
 			},
 		},
 	})
 }
 
-// TestInformationSchemaTablePrivilegesHidesUngrantableTablesRepro reproduces
-// an information_schema compatibility bug: ordinary users should be able to
-// query information_schema.table_privileges, with rows filtered by privileges
-// they hold or granted.
 func TestInformationSchemaTablePrivilegesHidesUngrantableTablesRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -283,9 +287,9 @@ func TestInformationSchemaRoutinePrivilegesReflectsFunctionGrantRepro(t *testing
 							AND routine_name = 'info_schema_routine_grant_target'
 							AND grantee = current_user
 						ORDER BY routine_name, privilege_type;`,
-					Expected: []sql.Row{{"info_schema_routine_grant_target", "EXECUTE"}},
+
 					Username: `info_schema_routine_grantee`,
-					Password: `pw`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{ID: "information-schema-visibility-repro-test-testinformationschemaroutineprivilegesreflectsfunctiongrantrepro-0001-select-routine_name-privilege_type-from-information_schema.routine_privileges"},
 				},
 			},
 		},

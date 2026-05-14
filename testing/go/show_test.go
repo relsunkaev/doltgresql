@@ -29,11 +29,7 @@ func TestDescribe(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `EXPLAIN t1`,
-					Expected: []sql.Row{
-						{"id", "integer", "NO", "PRI", interface{}(nil), ""},
-						{"name", "text", "YES", "", interface{}(nil), ""},
-					},
+					Query: `EXPLAIN t1`, PostgresOracle: ScriptTestPostgresOracle{ID: "show-test-testdescribe-0001-explain-t1", Compare: "sqlstate", ColumnModes: []string{"explain"}},
 				},
 				{
 					Query: `DESCRIBE t1`,
@@ -112,11 +108,7 @@ func TestDescribe(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `DESC schema2.t2`,
-					Expected: []sql.Row{
-						{"c", "integer", "NO", "PRI", interface{}(nil), ""},
-						{"d", "text", "YES", "", interface{}(nil), ""},
-					},
+					Query: `DESC schema2.t2`, PostgresOracle: ScriptTestPostgresOracle{ID: "show-test-testdescribe-0009-desc-schema2.t2", Compare: "sqlstate"},
 				},
 				{
 					Query: `DESC postgres.schema2.t2`,
@@ -168,11 +160,7 @@ func TestShowTables(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SHOW TABLES`,
-					Expected: []sql.Row{
-						{"t1"},
-						{"t2"},
-					},
+					Query: `SHOW TABLES`, PostgresOracle: ScriptTestPostgresOracle{ID: "show-test-testshowtables-0001-show-tables", Compare: "sqlstate"},
 				},
 				{
 					Query: `SHOW TABLES from public`,
@@ -310,14 +298,7 @@ func TestShowCreateTable(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SHOW CREATE TABLE t1`,
-					Expected: []sql.Row{
-						{"t1", `CREATE TABLE "t1" (
-  "a" integer NOT NULL,
-  "name" text,
-  PRIMARY KEY ("a")
-)`},
-					},
+					Query: `SHOW CREATE TABLE t1`, PostgresOracle: ScriptTestPostgresOracle{ID: "show-test-testshowcreatetable-0001-show-create-table-t1", Compare: "sqlstate"},
 				},
 				{
 					Skip:  true, // TODO: printing string format of functions should not show parenthesis for constants
@@ -361,12 +342,7 @@ func TestShowIndexes(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SHOW indexes FROM t1`,
-					Expected: []sql.Row{
-						{"t1", 0, "PRIMARY", 1, "a", nil, 0, nil, nil, "", "BTREE", "", "", "YES", nil},
-						{"t1", 1, "idx_name", 1, "name", nil, 0, nil, nil, "YES", "BTREE", "", "", "YES", nil},
-						{"t1", 1, "idx_value", 1, "value", nil, 0, nil, nil, "YES", "BTREE", "", "", "YES", nil},
-					},
+					Query: `SHOW indexes FROM t1`, PostgresOracle: ScriptTestPostgresOracle{ID: "show-test-testshowindexes-0001-show-indexes-from-t1", Compare: "sqlstate"},
 				},
 				{
 					Query:       `SHOW indexes FROM dne`,
@@ -389,13 +365,7 @@ func TestShowDatabasesAndSchemas(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SHOW databases`,
-					Expected: []sql.Row{
-						{"db1"},
-						{"db2"},
-						{"information_schema"},
-						{"postgres"},
-					},
+					Query: `SHOW databases`, PostgresOracle: ScriptTestPostgresOracle{ID: "show-test-testshowdatabasesandschemas-0001-show-databases", Compare: "sqlstate"},
 				},
 				{
 					Query: `show SCHEMAS`,

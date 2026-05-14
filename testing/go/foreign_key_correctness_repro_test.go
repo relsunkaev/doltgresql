@@ -35,17 +35,18 @@ func TestForeignKeyRejectsFloatReferencingIntegerRepro(t *testing.T) {
 				{
 					Query: `ALTER TABLE fk_type_child
 						ADD CONSTRAINT fk_type_child_parent_id_fkey
-						FOREIGN KEY (parent_id) REFERENCES fk_type_parent(id);`,
-					ExpectedErr: `incompatible types`,
+						FOREIGN KEY (parent_id) REFERENCES fk_type_parent(id);`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyrejectsfloatreferencingintegerrepro-0001-alter-table-fk_type_child-add-constraint",
+
+						// TestTypmodForeignKeyUsesCoercedValuesRepro reproduces a referential
+						// integrity bug: PostgreSQL applies typmod coercion before checking foreign
+						// keys, so child values that coerce to the parent key are valid.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestTypmodForeignKeyUsesCoercedValuesRepro reproduces a referential
-// integrity bug: PostgreSQL applies typmod coercion before checking foreign
-// keys, so child values that coerce to the parent key are valid.
 func TestTypmodForeignKeyUsesCoercedValuesRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -70,8 +71,7 @@ func TestTypmodForeignKeyUsesCoercedValuesRepro(t *testing.T) {
 					Query: `SELECT c.id, c.ts::text, p.ts::text
 						FROM timestamp_typmod_fk_child c
 						JOIN timestamp_typmod_fk_parent p ON c.ts = p.ts
-						ORDER BY c.id;`,
-					Expected: []sql.Row{{1, "2021-09-15 21:43:57", "2021-09-15 21:43:57"}},
+						ORDER BY c.id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testtypmodforeignkeyusescoercedvaluesrepro-0001-select-c.id-c.ts::text-p.ts::text-from"},
 				},
 			},
 		},
@@ -96,8 +96,7 @@ func TestTypmodForeignKeyUsesCoercedValuesRepro(t *testing.T) {
 					Query: `SELECT c.id, c.amount::text, p.amount::text
 						FROM numeric_domain_fk_child c
 						JOIN numeric_domain_fk_parent p ON c.amount = p.amount
-						ORDER BY c.id;`,
-					Expected: []sql.Row{{1, "1.23", "1.23"}},
+						ORDER BY c.id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testtypmodforeignkeyusescoercedvaluesrepro-0002-select-c.id-c.amount::text-p.amount::text-from"},
 				},
 			},
 		},
@@ -122,8 +121,7 @@ func TestTypmodForeignKeyUsesCoercedValuesRepro(t *testing.T) {
 					Query: `SELECT c.id, c.label, length(c.label), p.label
 							FROM varchar_domain_fk_child c
 							JOIN varchar_domain_fk_parent p ON c.label = p.label
-							ORDER BY c.id;`,
-					Expected: []sql.Row{{1, "abc", 3, "abc"}},
+							ORDER BY c.id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testtypmodforeignkeyusescoercedvaluesrepro-0003-select-c.id-c.label-length-c.label"},
 				},
 			},
 		},
@@ -159,8 +157,7 @@ func TestCompositeForeignKeyMatchFullRepro(t *testing.T) {
 					Query: `SELECT confmatchtype, pg_get_constraintdef(oid) LIKE '%MATCH FULL%'
 						FROM pg_constraint
 						WHERE conrelid = 'match_full_child'::regclass
-							AND contype = 'f';`,
-					Expected: []sql.Row{{"f", true}},
+							AND contype = 'f';`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testcompositeforeignkeymatchfullrepro-0001-select-confmatchtype-pg_get_constraintdef-oid-like"},
 				},
 				{
 					Query: `INSERT INTO match_full_child VALUES (1, 1, 1);`,
@@ -169,21 +166,15 @@ func TestCompositeForeignKeyMatchFullRepro(t *testing.T) {
 					Query: `INSERT INTO match_full_child VALUES (2, NULL, NULL);`,
 				},
 				{
-					Query:       `INSERT INTO match_full_child VALUES (3, 1, NULL);`,
-					ExpectedErr: `MATCH FULL`,
+					Query: `INSERT INTO match_full_child VALUES (3, 1, NULL);`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testcompositeforeignkeymatchfullrepro-0002-insert-into-match_full_child-values-3", Compare: "sqlstate"},
 				},
 				{
-					Query:       `INSERT INTO match_full_child VALUES (4, 2, 2);`,
-					ExpectedErr: `Foreign key violation`,
+					Query: `INSERT INTO match_full_child VALUES (4, 2, 2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testcompositeforeignkeymatchfullrepro-0003-insert-into-match_full_child-values-4", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, parent_id1, parent_id2
 						FROM match_full_child
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, 1, 1},
-						{2, nil, nil},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testcompositeforeignkeymatchfullrepro-0004-select-id-parent_id1-parent_id2-from"},
 				},
 			},
 		},
@@ -221,19 +212,12 @@ func TestCompositeForeignKeyMatchSimpleAllowsPartialNullsRepro(t *testing.T) {
 						(4, NULL, NULL);`,
 				},
 				{
-					Query:       `INSERT INTO match_simple_child VALUES (5, 2, 2);`,
-					ExpectedErr: `Foreign key violation`,
+					Query: `INSERT INTO match_simple_child VALUES (5, 2, 2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testcompositeforeignkeymatchsimpleallowspartialnullsrepro-0001-insert-into-match_simple_child-values-5", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, parent_id1, parent_id2
 						FROM match_simple_child
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, 1, 1},
-						{2, 1, nil},
-						{3, nil, 1},
-						{4, nil, nil},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testcompositeforeignkeymatchsimpleallowspartialnullsrepro-0002-select-id-parent_id1-parent_id2-from"},
 				},
 			},
 		},
@@ -271,8 +255,7 @@ func TestForeignKeyOnDeleteSetNullColumnListRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT child_id, tenant_id, parent_id
-						FROM fk_set_null_column_child;`,
-					Expected: []sql.Row{{100, 1, nil}},
+						FROM fk_set_null_column_child;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyondeletesetnullcolumnlistrepro-0001-select-child_id-tenant_id-parent_id-from"},
 				},
 			},
 		},
@@ -350,8 +333,7 @@ func TestForeignKeyOnDeleteSetDefaultColumnListRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT child_id, tenant_id, parent_id
-						FROM fk_delete_set_default_column_child;`,
-					Expected: []sql.Row{{100, 1, 0}},
+						FROM fk_delete_set_default_column_child;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyondeletesetdefaultcolumnlistrepro-0001-select-child_id-tenant_id-parent_id-from"},
 				},
 			},
 		},
@@ -420,21 +402,21 @@ func TestForeignKeyOnDeleteSetNullValidatesCheckConstraintRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DELETE FROM fk_delete_null_check_parent WHERE id = 1;`,
-					ExpectedErr: `Check constraint`,
+					Query: `DELETE FROM fk_delete_null_check_parent WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyondeletesetnullvalidatescheckconstraintrepro-0001-delete-from-fk_delete_null_check_parent-where-id",
+
+						// TestForeignKeyDomainColumnReferencesBaseTypeRepro reproduces a schema
+						// correctness bug: PostgreSQL allows a domain-typed child foreign-key column to
+						// reference a parent key of the domain's base type.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT id, parent_id FROM fk_delete_null_check_child;`,
-					Expected: []sql.Row{{1, 1}},
+					Query: `SELECT id, parent_id FROM fk_delete_null_check_child;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyondeletesetnullvalidatescheckconstraintrepro-0002-select-id-parent_id-from-fk_delete_null_check_child"},
 				},
 			},
 		},
 	})
 }
 
-// TestForeignKeyDomainColumnReferencesBaseTypeRepro reproduces a schema
-// correctness bug: PostgreSQL allows a domain-typed child foreign-key column to
-// reference a parent key of the domain's base type.
 func TestForeignKeyDomainColumnReferencesBaseTypeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -458,8 +440,7 @@ func TestForeignKeyDomainColumnReferencesBaseTypeRepro(t *testing.T) {
 					Query: `INSERT INTO domain_fk_base_child VALUES (1, 1);`,
 				},
 				{
-					Query:    `SELECT id, parent_id FROM domain_fk_base_child;`,
-					Expected: []sql.Row{{1, 1}},
+					Query: `SELECT id, parent_id FROM domain_fk_base_child;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeydomaincolumnreferencesbasetyperepro-0001-select-id-parent_id-from-domain_fk_base_child"},
 				},
 			},
 		},
@@ -488,21 +469,21 @@ func TestForeignKeyOnUpdateSetNullValidatesCheckConstraintRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `UPDATE fk_update_null_check_parent SET id = 2 WHERE id = 1;`,
-					ExpectedErr: `Check constraint`,
+					Query: `UPDATE fk_update_null_check_parent SET id = 2 WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyonupdatesetnullvalidatescheckconstraintrepro-0001-update-fk_update_null_check_parent-set-id-=",
+
+						// TestForeignKeyOnDeleteSetDefaultValidatesDefaultRepro reproduces a data
+						// consistency bug: ON DELETE SET DEFAULT must reject the parent delete if the
+						// default value would leave the child row without a matching parent.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT id, parent_id FROM fk_update_null_check_child;`,
-					Expected: []sql.Row{{1, 1}},
+					Query: `SELECT id, parent_id FROM fk_update_null_check_child;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyonupdatesetnullvalidatescheckconstraintrepro-0002-select-id-parent_id-from-fk_update_null_check_child"},
 				},
 			},
 		},
 	})
 }
 
-// TestForeignKeyOnDeleteSetDefaultValidatesDefaultRepro reproduces a data
-// consistency bug: ON DELETE SET DEFAULT must reject the parent delete if the
-// default value would leave the child row without a matching parent.
 func TestForeignKeyOnDeleteSetDefaultValidatesDefaultRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -521,21 +502,21 @@ func TestForeignKeyOnDeleteSetDefaultValidatesDefaultRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DELETE FROM fk_delete_default_parent WHERE id = 1;`,
-					ExpectedErr: `Foreign key violation`,
+					Query: `DELETE FROM fk_delete_default_parent WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyondeletesetdefaultvalidatesdefaultrepro-0001-delete-from-fk_delete_default_parent-where-id", Compare:
+
+					// TestForeignKeyOnUpdateSetDefaultValidatesDefaultRepro reproduces a data
+					// consistency bug: ON UPDATE SET DEFAULT must reject the parent key update if
+					// the default value would leave the child row without a matching parent.
+					"sqlstate"},
 				},
 				{
-					Query:    `SELECT id, parent_id FROM fk_delete_default_child;`,
-					Expected: []sql.Row{{1, 1}},
+					Query: `SELECT id, parent_id FROM fk_delete_default_child;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyondeletesetdefaultvalidatesdefaultrepro-0002-select-id-parent_id-from-fk_delete_default_child"},
 				},
 			},
 		},
 	})
 }
 
-// TestForeignKeyOnUpdateSetDefaultValidatesDefaultRepro reproduces a data
-// consistency bug: ON UPDATE SET DEFAULT must reject the parent key update if
-// the default value would leave the child row without a matching parent.
 func TestForeignKeyOnUpdateSetDefaultValidatesDefaultRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -554,21 +535,21 @@ func TestForeignKeyOnUpdateSetDefaultValidatesDefaultRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `UPDATE fk_update_default_parent SET id = 2 WHERE id = 1;`,
-					ExpectedErr: `Foreign key violation`,
+					Query: `UPDATE fk_update_default_parent SET id = 2 WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyonupdatesetdefaultvalidatesdefaultrepro-0001-update-fk_update_default_parent-set-id-=", Compare:
+
+					// TestForeignKeyOnDeleteSetDefaultValidatesCheckConstraintRepro reproduces a
+					// data consistency bug: referential ON DELETE SET DEFAULT rewrites must still
+					// validate child-table CHECK constraints.
+					"sqlstate"},
 				},
 				{
-					Query:    `SELECT id, parent_id FROM fk_update_default_child;`,
-					Expected: []sql.Row{{1, 1}},
+					Query: `SELECT id, parent_id FROM fk_update_default_child;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyonupdatesetdefaultvalidatesdefaultrepro-0002-select-id-parent_id-from-fk_update_default_child"},
 				},
 			},
 		},
 	})
 }
 
-// TestForeignKeyOnDeleteSetDefaultValidatesCheckConstraintRepro reproduces a
-// data consistency bug: referential ON DELETE SET DEFAULT rewrites must still
-// validate child-table CHECK constraints.
 func TestForeignKeyOnDeleteSetDefaultValidatesCheckConstraintRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -589,21 +570,21 @@ func TestForeignKeyOnDeleteSetDefaultValidatesCheckConstraintRepro(t *testing.T)
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DELETE FROM fk_delete_default_check_parent WHERE id = 1;`,
-					ExpectedErr: `Check constraint`,
+					Query: `DELETE FROM fk_delete_default_check_parent WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyondeletesetdefaultvalidatescheckconstraintrepro-0001-delete-from-fk_delete_default_check_parent-where-id",
+
+						// TestForeignKeyOnUpdateSetDefaultValidatesCheckConstraintRepro reproduces a
+						// data consistency bug: referential ON UPDATE SET DEFAULT rewrites must still
+						// validate child-table CHECK constraints.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT id, parent_id FROM fk_delete_default_check_child;`,
-					Expected: []sql.Row{{1, 1}},
+					Query: `SELECT id, parent_id FROM fk_delete_default_check_child;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyondeletesetdefaultvalidatescheckconstraintrepro-0002-select-id-parent_id-from-fk_delete_default_check_child"},
 				},
 			},
 		},
 	})
 }
 
-// TestForeignKeyOnUpdateSetDefaultValidatesCheckConstraintRepro reproduces a
-// data consistency bug: referential ON UPDATE SET DEFAULT rewrites must still
-// validate child-table CHECK constraints.
 func TestForeignKeyOnUpdateSetDefaultValidatesCheckConstraintRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -624,21 +605,21 @@ func TestForeignKeyOnUpdateSetDefaultValidatesCheckConstraintRepro(t *testing.T)
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `UPDATE fk_update_default_check_parent SET id = 2 WHERE id = 1;`,
-					ExpectedErr: `Check constraint`,
+					Query: `UPDATE fk_update_default_check_parent SET id = 2 WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyonupdatesetdefaultvalidatescheckconstraintrepro-0001-update-fk_update_default_check_parent-set-id-=",
+
+						// TestForeignKeyOnDeleteSetDefaultValidatesUniqueConstraintRepro reproduces a
+						// data consistency bug: referential ON DELETE SET DEFAULT rewrites must still
+						// validate child-table UNIQUE constraints.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT id, parent_id FROM fk_update_default_check_child;`,
-					Expected: []sql.Row{{1, 1}},
+					Query: `SELECT id, parent_id FROM fk_update_default_check_child;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyonupdatesetdefaultvalidatescheckconstraintrepro-0002-select-id-parent_id-from-fk_update_default_check_child"},
 				},
 			},
 		},
 	})
 }
 
-// TestForeignKeyOnDeleteSetDefaultValidatesUniqueConstraintRepro reproduces a
-// data consistency bug: referential ON DELETE SET DEFAULT rewrites must still
-// validate child-table UNIQUE constraints.
 func TestForeignKeyOnDeleteSetDefaultValidatesUniqueConstraintRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -658,20 +639,17 @@ func TestForeignKeyOnDeleteSetDefaultValidatesUniqueConstraintRepro(t *testing.T
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DELETE FROM fk_delete_default_unique_parent WHERE id IN (1, 2);`,
-					ExpectedErr: `duplicate`,
+					Query: `DELETE FROM fk_delete_default_unique_parent WHERE id IN (1, 2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyondeletesetdefaultvalidatesuniqueconstraintrepro-0001-delete-from-fk_delete_default_unique_parent-where-id", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, parent_id
 						FROM fk_delete_default_unique_child
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, 1}, {2, 2}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyondeletesetdefaultvalidatesuniqueconstraintrepro-0002-select-id-parent_id-from-fk_delete_default_unique_child"},
 				},
 				{
 					Query: `SELECT id
 						FROM fk_delete_default_unique_parent
-						ORDER BY id;`,
-					Expected: []sql.Row{{0}, {1}, {2}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyondeletesetdefaultvalidatesuniqueconstraintrepro-0003-select-id-from-fk_delete_default_unique_parent-order"},
 				},
 			},
 		},
@@ -700,20 +678,17 @@ func TestForeignKeyOnUpdateSetDefaultValidatesUniqueConstraintRepro(t *testing.T
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `UPDATE fk_update_default_unique_parent SET id = id + 10 WHERE id IN (1, 2);`,
-					ExpectedErr: `duplicate`,
+					Query: `UPDATE fk_update_default_unique_parent SET id = id + 10 WHERE id IN (1, 2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyonupdatesetdefaultvalidatesuniqueconstraintrepro-0001-update-fk_update_default_unique_parent-set-id-=", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, parent_id
 						FROM fk_update_default_unique_child
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, 1}, {2, 2}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyonupdatesetdefaultvalidatesuniqueconstraintrepro-0002-select-id-parent_id-from-fk_update_default_unique_child"},
 				},
 				{
 					Query: `SELECT id
 						FROM fk_update_default_unique_parent
-						ORDER BY id;`,
-					Expected: []sql.Row{{0}, {1}, {2}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyonupdatesetdefaultvalidatesuniqueconstraintrepro-0003-select-id-from-fk_update_default_unique_parent-order"},
 				},
 			},
 		},
@@ -742,21 +717,21 @@ func TestForeignKeyOnUpdateCascadeValidatesCheckConstraintRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `UPDATE fk_update_cascade_check_parent SET id = 11 WHERE id = 1;`,
-					ExpectedErr: `Check constraint`,
+					Query: `UPDATE fk_update_cascade_check_parent SET id = 11 WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyonupdatecascadevalidatescheckconstraintrepro-0001-update-fk_update_cascade_check_parent-set-id-=",
+
+						// TestForeignKeyOnDeleteCascadeValidatesGrandchildRestrictRepro verifies that
+						// referential ON DELETE CASCADE child deletes still enforce foreign keys that
+						// reference the child table.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT id, parent_id FROM fk_update_cascade_check_child;`,
-					Expected: []sql.Row{{1, 1}},
+					Query: `SELECT id, parent_id FROM fk_update_cascade_check_child;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyonupdatecascadevalidatescheckconstraintrepro-0002-select-id-parent_id-from-fk_update_cascade_check_child"},
 				},
 			},
 		},
 	})
 }
 
-// TestForeignKeyOnDeleteCascadeValidatesGrandchildRestrictRepro verifies that
-// referential ON DELETE CASCADE child deletes still enforce foreign keys that
-// reference the child table.
 func TestForeignKeyOnDeleteCascadeValidatesGrandchildRestrictRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -780,20 +755,16 @@ func TestForeignKeyOnDeleteCascadeValidatesGrandchildRestrictRepro(t *testing.T)
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DELETE FROM fk_delete_cascade_restrict_parent WHERE id = 1;`,
-					ExpectedErr: `Foreign key`,
+					Query: `DELETE FROM fk_delete_cascade_restrict_parent WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyondeletecascadevalidatesgrandchildrestrictrepro-0001-delete-from-fk_delete_cascade_restrict_parent-where-id", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT id FROM fk_delete_cascade_restrict_parent;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT id FROM fk_delete_cascade_restrict_parent;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyondeletecascadevalidatesgrandchildrestrictrepro-0002-select-id-from-fk_delete_cascade_restrict_parent"},
 				},
 				{
-					Query:    `SELECT id, parent_id FROM fk_delete_cascade_restrict_child;`,
-					Expected: []sql.Row{{10, 1}},
+					Query: `SELECT id, parent_id FROM fk_delete_cascade_restrict_child;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyondeletecascadevalidatesgrandchildrestrictrepro-0003-select-id-parent_id-from-fk_delete_cascade_restrict_child"},
 				},
 				{
-					Query:    `SELECT id, child_id FROM fk_delete_cascade_restrict_grandchild;`,
-					Expected: []sql.Row{{100, 10}},
+					Query: `SELECT id, child_id FROM fk_delete_cascade_restrict_grandchild;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyondeletecascadevalidatesgrandchildrestrictrepro-0004-select-id-child_id-from-fk_delete_cascade_restrict_grandchild"},
 				},
 			},
 		},
@@ -830,16 +801,13 @@ func TestForeignKeyOnUpdateCascadePropagatesGrandchildCascadeRepro(t *testing.T)
 					Query: `UPDATE fk_update_cascade_grand_parent SET id = 2 WHERE id = 1;`,
 				},
 				{
-					Query:    `SELECT id FROM fk_update_cascade_grand_parent;`,
-					Expected: []sql.Row{{2}},
+					Query: `SELECT id FROM fk_update_cascade_grand_parent;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyonupdatecascadepropagatesgrandchildcascaderepro-0001-select-id-from-fk_update_cascade_grand_parent"},
 				},
 				{
-					Query:    `SELECT id, parent_id FROM fk_update_cascade_grand_child;`,
-					Expected: []sql.Row{{10, 2}},
+					Query: `SELECT id, parent_id FROM fk_update_cascade_grand_child;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyonupdatecascadepropagatesgrandchildcascaderepro-0002-select-id-parent_id-from-fk_update_cascade_grand_child"},
 				},
 				{
-					Query:    `SELECT id, child_parent_id FROM fk_update_cascade_grand_grandchild;`,
-					Expected: []sql.Row{{100, 2}},
+					Query: `SELECT id, child_parent_id FROM fk_update_cascade_grand_grandchild;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyonupdatecascadepropagatesgrandchildcascaderepro-0003-select-id-child_parent_id-from-fk_update_cascade_grand_grandchild"},
 				},
 			},
 		},
@@ -872,20 +840,16 @@ func TestForeignKeyOnUpdateCascadeValidatesGrandchildRestrictRepro(t *testing.T)
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `UPDATE fk_update_cascade_restrict_parent SET id = 2 WHERE id = 1;`,
-					ExpectedErr: `Foreign key`,
+					Query: `UPDATE fk_update_cascade_restrict_parent SET id = 2 WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyonupdatecascadevalidatesgrandchildrestrictrepro-0001-update-fk_update_cascade_restrict_parent-set-id-=", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT id FROM fk_update_cascade_restrict_parent;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT id FROM fk_update_cascade_restrict_parent;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyonupdatecascadevalidatesgrandchildrestrictrepro-0002-select-id-from-fk_update_cascade_restrict_parent"},
 				},
 				{
-					Query:    `SELECT id, parent_id FROM fk_update_cascade_restrict_child;`,
-					Expected: []sql.Row{{10, 1}},
+					Query: `SELECT id, parent_id FROM fk_update_cascade_restrict_child;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyonupdatecascadevalidatesgrandchildrestrictrepro-0003-select-id-parent_id-from-fk_update_cascade_restrict_child"},
 				},
 				{
-					Query:    `SELECT id, child_parent_id FROM fk_update_cascade_restrict_grandchild;`,
-					Expected: []sql.Row{{100, 1}},
+					Query: `SELECT id, child_parent_id FROM fk_update_cascade_restrict_grandchild;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyonupdatecascadevalidatesgrandchildrestrictrepro-0004-select-id-child_parent_id-from-fk_update_cascade_restrict_grandchild"},
 				},
 			},
 		},
@@ -917,8 +881,7 @@ func TestForeignKeyOnDeleteSetNullRecomputesGeneratedColumnsRepro(t *testing.T) 
 					Query: `DELETE FROM fk_delete_null_generated_parent WHERE id = 1;`,
 				},
 				{
-					Query:    `SELECT id, parent_id, parent_marker FROM fk_delete_null_generated_child;`,
-					Expected: []sql.Row{{1, nil, nil}},
+					Query: `SELECT id, parent_id, parent_marker FROM fk_delete_null_generated_child;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyondeletesetnullrecomputesgeneratedcolumnsrepro-0001-select-id-parent_id-parent_marker-from"},
 				},
 			},
 		},
@@ -950,8 +913,7 @@ func TestForeignKeyOnUpdateSetNullRecomputesGeneratedColumnsRepro(t *testing.T) 
 					Query: `UPDATE fk_update_null_generated_parent SET id = 2 WHERE id = 1;`,
 				},
 				{
-					Query:    `SELECT id, parent_id, parent_marker FROM fk_update_null_generated_child;`,
-					Expected: []sql.Row{{1, nil, nil}},
+					Query: `SELECT id, parent_id, parent_marker FROM fk_update_null_generated_child;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyonupdatesetnullrecomputesgeneratedcolumnsrepro-0001-select-id-parent_id-parent_marker-from"},
 				},
 			},
 		},
@@ -983,8 +945,7 @@ func TestForeignKeyOnDeleteSetDefaultRecomputesGeneratedColumnsRepro(t *testing.
 					Query: `DELETE FROM fk_delete_default_generated_parent WHERE id = 1;`,
 				},
 				{
-					Query:    `SELECT id, parent_id, parent_marker FROM fk_delete_default_generated_child;`,
-					Expected: []sql.Row{{1, 0, 10}},
+					Query: `SELECT id, parent_id, parent_marker FROM fk_delete_default_generated_child;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyondeletesetdefaultrecomputesgeneratedcolumnsrepro-0001-select-id-parent_id-parent_marker-from"},
 				},
 			},
 		},
@@ -1016,8 +977,7 @@ func TestForeignKeyOnUpdateSetDefaultRecomputesGeneratedColumnsRepro(t *testing.
 					Query: `UPDATE fk_update_default_generated_parent SET id = 2 WHERE id = 1;`,
 				},
 				{
-					Query:    `SELECT id, parent_id, parent_marker FROM fk_update_default_generated_child;`,
-					Expected: []sql.Row{{1, 0, 10}},
+					Query: `SELECT id, parent_id, parent_marker FROM fk_update_default_generated_child;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyonupdatesetdefaultrecomputesgeneratedcolumnsrepro-0001-select-id-parent_id-parent_marker-from"},
 				},
 			},
 		},
@@ -1049,8 +1009,7 @@ func TestForeignKeyOnUpdateCascadeRecomputesGeneratedColumnsRepro(t *testing.T) 
 					Query: `UPDATE fk_update_cascade_generated_parent SET id = 3 WHERE id = 1;`,
 				},
 				{
-					Query:    `SELECT id, parent_id, parent_marker FROM fk_update_cascade_generated_child;`,
-					Expected: []sql.Row{{1, 3, 13}},
+					Query: `SELECT id, parent_id, parent_marker FROM fk_update_cascade_generated_child;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyonupdatecascaderecomputesgeneratedcolumnsrepro-0001-select-id-parent_id-parent_marker-from"},
 				},
 			},
 		},
@@ -1097,12 +1056,10 @@ func TestForeignKeyOnUpdateCascadeFiresChildUpdateTriggersRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT child_id, old_parent_id, new_parent_id
-						FROM fk_update_cascade_trigger_audit;`,
-					Expected: []sql.Row{{1, 1, 3}},
+						FROM fk_update_cascade_trigger_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyonupdatecascadefireschildupdatetriggersrepro-0001-select-child_id-old_parent_id-new_parent_id-from"},
 				},
 				{
-					Query:    `SELECT id, parent_id FROM fk_update_cascade_trigger_child;`,
-					Expected: []sql.Row{{1, 3}},
+					Query: `SELECT id, parent_id FROM fk_update_cascade_trigger_child;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyonupdatecascadefireschildupdatetriggersrepro-0002-select-id-parent_id-from-fk_update_cascade_trigger_child"},
 				},
 			},
 		},
@@ -1148,12 +1105,10 @@ func TestForeignKeyOnDeleteCascadeFiresChildDeleteTriggersRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT child_id, old_parent_id
-						FROM fk_delete_cascade_trigger_audit;`,
-					Expected: []sql.Row{{1, 1}},
+						FROM fk_delete_cascade_trigger_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyondeletecascadefireschilddeletetriggersrepro-0001-select-child_id-old_parent_id-from-fk_delete_cascade_trigger_audit"},
 				},
 				{
-					Query:    `SELECT id, parent_id FROM fk_delete_cascade_trigger_child;`,
-					Expected: []sql.Row{},
+					Query: `SELECT id, parent_id FROM fk_delete_cascade_trigger_child;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyondeletecascadefireschilddeletetriggersrepro-0002-select-id-parent_id-from-fk_delete_cascade_trigger_child"},
 				},
 			},
 		},
@@ -1200,12 +1155,10 @@ func TestForeignKeyOnDeleteSetNullFiresChildUpdateTriggersRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT child_id, old_parent_id, new_parent_id
-						FROM fk_delete_null_trigger_audit;`,
-					Expected: []sql.Row{{1, 1, nil}},
+						FROM fk_delete_null_trigger_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyondeletesetnullfireschildupdatetriggersrepro-0001-select-child_id-old_parent_id-new_parent_id-from"},
 				},
 				{
-					Query:    `SELECT id, parent_id FROM fk_delete_null_trigger_child;`,
-					Expected: []sql.Row{{1, nil}},
+					Query: `SELECT id, parent_id FROM fk_delete_null_trigger_child;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyondeletesetnullfireschildupdatetriggersrepro-0002-select-id-parent_id-from-fk_delete_null_trigger_child"},
 				},
 			},
 		},
@@ -1252,12 +1205,10 @@ func TestForeignKeyOnDeleteSetDefaultFiresChildUpdateTriggersRepro(t *testing.T)
 				},
 				{
 					Query: `SELECT child_id, old_parent_id, new_parent_id
-						FROM fk_delete_default_trigger_audit;`,
-					Expected: []sql.Row{{1, 1, 0}},
+						FROM fk_delete_default_trigger_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyondeletesetdefaultfireschildupdatetriggersrepro-0001-select-child_id-old_parent_id-new_parent_id-from"},
 				},
 				{
-					Query:    `SELECT id, parent_id FROM fk_delete_default_trigger_child;`,
-					Expected: []sql.Row{{1, 0}},
+					Query: `SELECT id, parent_id FROM fk_delete_default_trigger_child;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyondeletesetdefaultfireschildupdatetriggersrepro-0002-select-id-parent_id-from-fk_delete_default_trigger_child"},
 				},
 			},
 		},
@@ -1304,12 +1255,10 @@ func TestForeignKeyOnUpdateSetDefaultFiresChildUpdateTriggersRepro(t *testing.T)
 				},
 				{
 					Query: `SELECT child_id, old_parent_id, new_parent_id
-						FROM fk_update_default_trigger_audit;`,
-					Expected: []sql.Row{{1, 1, 0}},
+						FROM fk_update_default_trigger_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyonupdatesetdefaultfireschildupdatetriggersrepro-0001-select-child_id-old_parent_id-new_parent_id-from"},
 				},
 				{
-					Query:    `SELECT id, parent_id FROM fk_update_default_trigger_child;`,
-					Expected: []sql.Row{{1, 0}},
+					Query: `SELECT id, parent_id FROM fk_update_default_trigger_child;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testforeignkeyonupdatesetdefaultfireschildupdatetriggersrepro-0002-select-id-parent_id-from-fk_update_default_trigger_child"},
 				},
 			},
 		},
@@ -1331,17 +1280,18 @@ func TestDropReferencedTableRequiresCascadeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP TABLE fk_drop_parent;`,
-					ExpectedErr: `referenced in foreign key`,
+					Query: `DROP TABLE fk_drop_parent;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testdropreferencedtablerequirescascaderepro-0001-drop-table-fk_drop_parent",
+
+						// TestDropReferencedTableCascadeDropsForeignKeyRepro reproduces a dependency
+						// correctness bug: PostgreSQL's CASCADE option drops dependent foreign-key
+						// constraints while preserving the referencing table.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropReferencedTableCascadeDropsForeignKeyRepro reproduces a dependency
-// correctness bug: PostgreSQL's CASCADE option drops dependent foreign-key
-// constraints while preserving the referencing table.
 func TestDropReferencedTableCascadeDropsForeignKeyRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1365,8 +1315,7 @@ func TestDropReferencedTableCascadeDropsForeignKeyRepro(t *testing.T) {
 							count(*) = 0
 						FROM pg_catalog.pg_constraint
 						WHERE conrelid = 'fk_drop_cascade_child'::regclass
-							AND contype = 'f';`,
-					Expected: []sql.Row{{"t", "t", "t"}},
+							AND contype = 'f';`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testdropreferencedtablecascadedropsforeignkeyrepro-0001-select-to_regclass-fk_drop_cascade_parent-is-null"},
 				},
 				{
 					Query: `INSERT INTO fk_drop_cascade_child VALUES (2, 2);`,
@@ -1374,8 +1323,7 @@ func TestDropReferencedTableCascadeDropsForeignKeyRepro(t *testing.T) {
 				{
 					Query: `SELECT id, parent_id
 						FROM fk_drop_cascade_child
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, 1}, {2, 2}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testdropreferencedtablecascadedropsforeignkeyrepro-0002-select-id-parent_id-from-fk_drop_cascade_child"},
 				},
 			},
 		},
@@ -1398,17 +1346,18 @@ func TestDropReferencedColumnRequiresCascadeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER TABLE fk_drop_column_parent DROP COLUMN id;`,
-					ExpectedErr: `depends on`,
+					Query: `ALTER TABLE fk_drop_column_parent DROP COLUMN id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testdropreferencedcolumnrequirescascaderepro-0001-alter-table-fk_drop_column_parent-drop-column",
+
+						// TestDropReferencedPrimaryKeyConstraintRequiresCascadeRepro reproduces a
+						// dependency correctness bug: Doltgres lets ALTER TABLE DROP CONSTRAINT remove
+						// a primary-key constraint that is still referenced by a foreign key.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropReferencedPrimaryKeyConstraintRequiresCascadeRepro reproduces a
-// dependency correctness bug: Doltgres lets ALTER TABLE DROP CONSTRAINT remove
-// a primary-key constraint that is still referenced by a foreign key.
 func TestDropReferencedPrimaryKeyConstraintRequiresCascadeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1422,17 +1371,18 @@ func TestDropReferencedPrimaryKeyConstraintRequiresCascadeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER TABLE fk_drop_constraint_parent DROP CONSTRAINT fk_drop_constraint_parent_pkey;`,
-					ExpectedErr: `foreign key`,
+					Query: `ALTER TABLE fk_drop_constraint_parent DROP CONSTRAINT fk_drop_constraint_parent_pkey;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testdropreferencedprimarykeyconstraintrequirescascaderepro-0001-alter-table-fk_drop_constraint_parent-drop-constraint",
+
+						// TestDropReferencedPrimaryKeyConstraintCascadeDropsForeignKeyRepro reproduces
+						// a dependency correctness bug: PostgreSQL's CASCADE option drops dependent
+						// foreign-key constraints when a referenced primary key is dropped.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropReferencedPrimaryKeyConstraintCascadeDropsForeignKeyRepro reproduces
-// a dependency correctness bug: PostgreSQL's CASCADE option drops dependent
-// foreign-key constraints when a referenced primary key is dropped.
 func TestDropReferencedPrimaryKeyConstraintCascadeDropsForeignKeyRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1455,8 +1405,7 @@ func TestDropReferencedPrimaryKeyConstraintCascadeDropsForeignKeyRepro(t *testin
 					Query: `SELECT count(*) = 0
 						FROM pg_catalog.pg_constraint
 						WHERE conrelid = 'fk_drop_constraint_cascade_child'::regclass
-							AND contype = 'f';`,
-					Expected: []sql.Row{{"t"}},
+							AND contype = 'f';`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testdropreferencedprimarykeyconstraintcascadedropsforeignkeyrepro-0001-select-count-*-=-0"},
 				},
 				{
 					Query: `INSERT INTO fk_drop_constraint_cascade_child VALUES (2, 2);`,
@@ -1464,8 +1413,7 @@ func TestDropReferencedPrimaryKeyConstraintCascadeDropsForeignKeyRepro(t *testin
 				{
 					Query: `SELECT id, parent_id
 						FROM fk_drop_constraint_cascade_child
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, 1}, {2, 2}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testdropreferencedprimarykeyconstraintcascadedropsforeignkeyrepro-0002-select-id-parent_id-from-fk_drop_constraint_cascade_child"},
 				},
 			},
 		},
@@ -1490,17 +1438,18 @@ func TestDropReferencedUniqueConstraintRequiresCascadeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER TABLE fk_drop_unique_parent DROP CONSTRAINT fk_drop_unique_parent_code_key;`,
-					ExpectedErr: `foreign key`,
+					Query: `ALTER TABLE fk_drop_unique_parent DROP CONSTRAINT fk_drop_unique_parent_code_key;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testdropreferenceduniqueconstraintrequirescascaderepro-0001-alter-table-fk_drop_unique_parent-drop-constraint",
+
+						// TestDropReferencedUniqueConstraintCascadeDropsForeignKeyRepro reproduces a
+						// dependency correctness bug: PostgreSQL's CASCADE option drops dependent
+						// foreign-key constraints when a referenced unique constraint is dropped.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropReferencedUniqueConstraintCascadeDropsForeignKeyRepro reproduces a
-// dependency correctness bug: PostgreSQL's CASCADE option drops dependent
-// foreign-key constraints when a referenced unique constraint is dropped.
 func TestDropReferencedUniqueConstraintCascadeDropsForeignKeyRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1524,8 +1473,7 @@ func TestDropReferencedUniqueConstraintCascadeDropsForeignKeyRepro(t *testing.T)
 					Query: `SELECT count(*) = 0
 						FROM pg_catalog.pg_constraint
 						WHERE conrelid = 'fk_drop_unique_cascade_child'::regclass
-							AND contype = 'f';`,
-					Expected: []sql.Row{{"t"}},
+							AND contype = 'f';`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testdropreferenceduniqueconstraintcascadedropsforeignkeyrepro-0001-select-count-*-=-0"},
 				},
 				{
 					Query: `INSERT INTO fk_drop_unique_cascade_child VALUES (1, 999);`,
@@ -1553,17 +1501,18 @@ func TestDropReferencedUniqueIndexRequiresCascadeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP INDEX fk_drop_index_parent_code_key;`,
-					ExpectedErr: `constraint`,
+					Query: `DROP INDEX fk_drop_index_parent_code_key;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testdropreferenceduniqueindexrequirescascaderepro-0001-drop-index-fk_drop_index_parent_code_key",
+
+						// TestDropReferencedStandaloneUniqueIndexRequiresCascadeRepro reproduces a
+						// dependency correctness bug: PostgreSQL refuses to drop a standalone unique
+						// index that a foreign-key constraint depends on unless CASCADE is specified.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropReferencedStandaloneUniqueIndexRequiresCascadeRepro reproduces a
-// dependency correctness bug: PostgreSQL refuses to drop a standalone unique
-// index that a foreign-key constraint depends on unless CASCADE is specified.
 func TestDropReferencedStandaloneUniqueIndexRequiresCascadeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1583,8 +1532,7 @@ func TestDropReferencedStandaloneUniqueIndexRequiresCascadeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP INDEX fk_drop_index_restrict_parent_code_idx;`,
-					ExpectedErr: `depends on`,
+					Query: `DROP INDEX fk_drop_index_restrict_parent_code_idx;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testdropreferencedstandaloneuniqueindexrequirescascaderepro-0001-drop-index-fk_drop_index_restrict_parent_code_idx", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT to_regclass('fk_drop_index_restrict_parent_code_idx') IS NOT NULL,
@@ -1593,21 +1541,21 @@ func TestDropReferencedStandaloneUniqueIndexRequiresCascadeRepro(t *testing.T) {
 							FROM pg_constraint
 							WHERE conrelid = 'fk_drop_index_restrict_child'::regclass
 							  AND contype = 'f'
-						);`,
-					Expected: []sql.Row{{"t", "t"}},
+						);`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testdropreferencedstandaloneuniqueindexrequirescascaderepro-0002-select-to_regclass-fk_drop_index_restrict_parent_code_idx-is-not"},
 				},
 				{
-					Query:       `INSERT INTO fk_drop_index_restrict_parent VALUES (2, 7);`,
-					ExpectedErr: `duplicate`,
+					Query: `INSERT INTO fk_drop_index_restrict_parent VALUES (2, 7);`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testdropreferencedstandaloneuniqueindexrequirescascaderepro-0003-insert-into-fk_drop_index_restrict_parent-values-2",
+
+						// TestDropReferencedUniqueIndexCascadeDropsForeignKeyRepro reproduces a
+						// dependency correctness bug: PostgreSQL DROP INDEX ... CASCADE on a referenced
+						// standalone unique index removes dependent foreign-key constraints.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropReferencedUniqueIndexCascadeDropsForeignKeyRepro reproduces a
-// dependency correctness bug: PostgreSQL DROP INDEX ... CASCADE on a referenced
-// standalone unique index removes dependent foreign-key constraints.
 func TestDropReferencedUniqueIndexCascadeDropsForeignKeyRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1635,8 +1583,7 @@ func TestDropReferencedUniqueIndexCascadeDropsForeignKeyRepro(t *testing.T) {
 							FROM pg_constraint
 							WHERE conrelid = 'fk_drop_index_cascade_child'::regclass
 							  AND contype = 'f'
-						);`,
-					Expected: []sql.Row{{"t", "t"}},
+						);`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testdropreferenceduniqueindexcascadedropsforeignkeyrepro-0001-select-to_regclass-fk_drop_index_cascade_parent_code_idx-is-null"},
 				},
 				{
 					Query: `INSERT INTO fk_drop_index_cascade_child VALUES (1, 999);`,
@@ -1669,8 +1616,7 @@ func TestDropForeignKeyConstraintWithExplicitSchemaRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `INSERT INTO explicit_fk_child.child_items VALUES (2, 2);`,
-					ExpectedErr: `Foreign key violation`,
+					Query: `INSERT INTO explicit_fk_child.child_items VALUES (2, 2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testdropforeignkeyconstraintwithexplicitschemarepro-0001-insert-into-explicit_fk_child.child_items-values-2", Compare: "sqlstate"},
 				},
 				{
 					Query: `ALTER TABLE explicit_fk_child.child_items
@@ -1682,11 +1628,7 @@ func TestDropForeignKeyConstraintWithExplicitSchemaRepro(t *testing.T) {
 				{
 					Query: `SELECT id, parent_id
 						FROM explicit_fk_child.child_items
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, 1},
-						{2, 2},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testdropforeignkeyconstraintwithexplicitschemarepro-0002-select-id-parent_id-from-explicit_fk_child.child_items"},
 				},
 			},
 		},
@@ -1710,17 +1652,18 @@ func TestTruncateReferencedTableRequiresCascadeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `TRUNCATE fk_truncate_parent;`,
-					ExpectedErr: `foreign key`,
+					Query: `TRUNCATE fk_truncate_parent;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testtruncatereferencedtablerequirescascaderepro-0001-truncate-fk_truncate_parent",
+
+						// TestTruncateReferencedTableCascadeTruncatesChildrenRepro guards TRUNCATE
+						// dependency enforcement: PostgreSQL's CASCADE option truncates dependent
+						// referencing tables as part of the same operation.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestTruncateReferencedTableCascadeTruncatesChildrenRepro guards TRUNCATE
-// dependency enforcement: PostgreSQL's CASCADE option truncates dependent
-// referencing tables as part of the same operation.
 func TestTruncateReferencedTableCascadeTruncatesChildrenRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1741,8 +1684,7 @@ func TestTruncateReferencedTableCascadeTruncatesChildrenRepro(t *testing.T) {
 				{
 					Query: `SELECT
 							(SELECT count(*) FROM fk_truncate_cascade_parent),
-							(SELECT count(*) FROM fk_truncate_cascade_child);`,
-					Expected: []sql.Row{{0, 0}},
+							(SELECT count(*) FROM fk_truncate_cascade_child);`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testtruncatereferencedtablecascadetruncateschildrenrepro-0001-select-select-count-*-from"},
 				},
 			},
 		},
@@ -1764,16 +1706,17 @@ func TestAlterReferencedColumnTypeRequiresCascadeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER TABLE fk_alter_parent ALTER COLUMN id TYPE TEXT;`,
-					ExpectedErr: `foreign key`,
+					Query: `ALTER TABLE fk_alter_parent ALTER COLUMN id TYPE TEXT;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testalterreferencedcolumntyperequirescascaderepro-0001-alter-table-fk_alter_parent-alter-column",
+
+						// TestAlterReferencingColumnTypeRequiresCascadeRepro guards type-change
+						// dependency enforcement for foreign-key referencing columns.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterReferencingColumnTypeRequiresCascadeRepro guards type-change
-// dependency enforcement for foreign-key referencing columns.
 func TestAlterReferencingColumnTypeRequiresCascadeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1787,16 +1730,17 @@ func TestAlterReferencingColumnTypeRequiresCascadeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER TABLE fk_alter_child_child ALTER COLUMN parent_id TYPE TEXT;`,
-					ExpectedErr: `used in key specification`,
+					Query: `ALTER TABLE fk_alter_child_child ALTER COLUMN parent_id TYPE TEXT;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testalterreferencingcolumntyperequirescascaderepro-0001-alter-table-fk_alter_child_child-alter-column",
+
+						// TestRenameReferencedTableKeepsForeignKeyUsableRepro guards foreign-key
+						// dependency rewrites when the referenced table is renamed.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestRenameReferencedTableKeepsForeignKeyUsableRepro guards foreign-key
-// dependency rewrites when the referenced table is renamed.
 func TestRenameReferencedTableKeepsForeignKeyUsableRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1817,14 +1761,12 @@ func TestRenameReferencedTableKeepsForeignKeyUsableRepro(t *testing.T) {
 					Query: `INSERT INTO fk_rename_child VALUES (1, 1);`,
 				},
 				{
-					Query:       `INSERT INTO fk_rename_child VALUES (2, 2);`,
-					ExpectedErr: `Foreign key violation`,
+					Query: `INSERT INTO fk_rename_child VALUES (2, 2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testrenamereferencedtablekeepsforeignkeyusablerepro-0001-insert-into-fk_rename_child-values-2", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, parent_id
 						FROM fk_rename_child
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, 1}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testrenamereferencedtablekeepsforeignkeyusablerepro-0002-select-id-parent_id-from-fk_rename_child"},
 				},
 			},
 		},
@@ -1853,14 +1795,12 @@ func TestRenameReferencedColumnKeepsForeignKeyUsableRepro(t *testing.T) {
 					Query: `INSERT INTO fk_rename_column_child VALUES (1, 1);`,
 				},
 				{
-					Query:       `INSERT INTO fk_rename_column_child VALUES (2, 2);`,
-					ExpectedErr: `Foreign key violation`,
+					Query: `INSERT INTO fk_rename_column_child VALUES (2, 2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testrenamereferencedcolumnkeepsforeignkeyusablerepro-0001-insert-into-fk_rename_column_child-values-2", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, parent_id
 						FROM fk_rename_column_child
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, 1}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-key-correctness-repro-test-testrenamereferencedcolumnkeepsforeignkeyusablerepro-0002-select-id-parent_id-from-fk_rename_column_child"},
 				},
 			},
 		},

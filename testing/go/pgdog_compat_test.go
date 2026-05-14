@@ -105,32 +105,22 @@ func TestPgDogCompatibilityBoundary(t *testing.T) {
 					Query: "CREATE PUBLICATION dg_pgdog_pub FOR TABLE pgdog_items;",
 				},
 				{
-					Query: "SELECT pubname FROM pg_catalog.pg_publication WHERE pubname = 'dg_pgdog_pub';",
-					Expected: []sql.Row{
-						{"dg_pgdog_pub"},
-					},
+					Query: "SELECT pubname FROM pg_catalog.pg_publication WHERE pubname = 'dg_pgdog_pub';", PostgresOracle: ScriptTestPostgresOracle{ID: "pgdog-compat-test-testpgdogcompatibilityboundary-0009-select-pubname-from-pg_catalog.pg_publication-where"},
 				},
 				{
 					Query: "CREATE SUBSCRIPTION dg_pgdog_sub CONNECTION 'host=127.0.0.1 dbname=postgres' PUBLICATION dg_pgdog_pub WITH (connect=false, enabled=false, create_slot=false, slot_name=NONE);",
 				},
 				{
-					Query: "SELECT subname, subenabled, subslotname IS NULL, array_to_string(subpublications, ',') FROM pg_catalog.pg_subscription WHERE subname = 'dg_pgdog_sub';",
-					Expected: []sql.Row{
-						{"dg_pgdog_sub", "f", "t", "dg_pgdog_pub"},
-					},
+					Query: "SELECT subname, subenabled, subslotname IS NULL, array_to_string(subpublications, ',') FROM pg_catalog.pg_subscription WHERE subname = 'dg_pgdog_sub';", PostgresOracle: ScriptTestPostgresOracle{ID: "pgdog-compat-test-testpgdogcompatibilityboundary-0010-select-subname-subenabled-subslotname-is"},
 				},
 				{
-					Query:       "CREATE SUBSCRIPTION dg_pgdog_bad_sub CONNECTION 'host=127.0.0.1 dbname=postgres' PUBLICATION dg_pgdog_pub;",
-					ExpectedErr: "connect=false",
+					Query: "CREATE SUBSCRIPTION dg_pgdog_bad_sub CONNECTION 'host=127.0.0.1 dbname=postgres' PUBLICATION dg_pgdog_pub;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgdog-compat-test-testpgdogcompatibilityboundary-0011-create-subscription-dg_pgdog_bad_sub-connection-host=127.0.0.1", Compare: "sqlstate"},
 				},
 				{
 					Query: "PREPARE dg_pgdog_stmt(int) AS SELECT $1::int + 1;",
 				},
 				{
-					Query: "EXECUTE dg_pgdog_stmt(41);",
-					Expected: []sql.Row{
-						{42},
-					},
+					Query: "EXECUTE dg_pgdog_stmt(41);", PostgresOracle: ScriptTestPostgresOracle{ID: "pgdog-compat-test-testpgdogcompatibilityboundary-0012-execute-dg_pgdog_stmt-41"},
 				},
 				{
 					Query: "SELECT name, from_sql FROM pg_catalog.pg_prepared_statements WHERE name = 'dg_pgdog_stmt';",
@@ -281,46 +271,29 @@ SELECT DISTINCT
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT label FROM shared.accounts WHERE id = 1;",
-					Expected: []sql.Row{
-						{"shared-one"},
-					},
+					Query: "SELECT label FROM shared.accounts WHERE id = 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgdog-compat-test-testpgdogcompatibilityboundary-0016-select-label-from-shared.accounts-where"},
 				},
 				{
 					Query: "UPDATE customer.orders SET status = 'updated', amount = amount + 1 WHERE customer_id = 42 AND order_id = 1;",
 				},
 				{
-					Query: "SELECT status, amount FROM customer.orders WHERE customer_id = 42 AND order_id = 1;",
-					Expected: []sql.Row{
-						{"updated", 421},
-					},
+					Query: "SELECT status, amount FROM customer.orders WHERE customer_id = 42 AND order_id = 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgdog-compat-test-testpgdogcompatibilityboundary-0017-select-status-amount-from-customer.orders"},
 				},
 				{
 					Query: `SELECT table_schema, table_name
 FROM information_schema.tables
 WHERE table_schema IN ('shared', 'customer')
-ORDER BY table_schema, table_name;`,
-					Expected: []sql.Row{
-						{"customer", "orders"},
-						{"shared", "accounts"},
-					},
+ORDER BY table_schema, table_name;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgdog-compat-test-testpgdogcompatibilityboundary-0018-select-table_schema-table_name-from-information_schema.tables"},
 				},
 				{
 					Query: `SELECT n.nspname, c.relname
 FROM pg_catalog.pg_class c
 JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
 WHERE n.nspname IN ('shared', 'customer') AND c.relkind = 'r' AND c.relname NOT LIKE 'dolt_%'
-ORDER BY n.nspname, c.relname;`,
-					Expected: []sql.Row{
-						{"customer", "orders"},
-						{"shared", "accounts"},
-					},
+ORDER BY n.nspname, c.relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgdog-compat-test-testpgdogcompatibilityboundary-0019-select-n.nspname-c.relname-from-pg_catalog.pg_class"},
 				},
 				{
-					Query: "SELECT 'customer.orders'::regclass::text, 'shared.accounts'::regclass::text;",
-					Expected: []sql.Row{
-						{"customer.orders", "shared.accounts"},
-					},
+					Query: "SELECT 'customer.orders'::regclass::text, 'shared.accounts'::regclass::text;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgdog-compat-test-testpgdogcompatibilityboundary-0020-select-customer.orders-::regclass::text-shared.accounts-::regclass::text"},
 				},
 			},
 		},

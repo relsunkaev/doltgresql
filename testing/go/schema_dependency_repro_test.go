@@ -41,8 +41,7 @@ func TestCreateSchemaExecutesContainedTableRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT id, label
-						FROM inline_schema_repro.inline_items;`,
-					Expected: []sql.Row{{1, "ok"}},
+						FROM inline_schema_repro.inline_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "schema-dependency-repro-test-testcreateschemaexecutescontainedtablerepro-0001-select-id-label-from-inline_schema_repro.inline_items"},
 				},
 			},
 		},
@@ -61,16 +60,17 @@ func TestDropSchemaContainingTableRequiresCascadeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP SCHEMA schema_with_table;`,
-					ExpectedErr: `because other objects depend on it`,
+					Query: `DROP SCHEMA schema_with_table;`, PostgresOracle: ScriptTestPostgresOracle{ID: "schema-dependency-repro-test-testdropschemacontainingtablerequirescascaderepro-0001-drop-schema-schema_with_table",
+
+						// TestDropSchemaContainingViewRequiresCascadeRepro guards non-empty schema
+						// dependency enforcement for views.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropSchemaContainingViewRequiresCascadeRepro guards non-empty schema
-// dependency enforcement for views.
 func TestDropSchemaContainingViewRequiresCascadeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -83,16 +83,17 @@ func TestDropSchemaContainingViewRequiresCascadeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP SCHEMA schema_with_view;`,
-					ExpectedErr: `because other objects depend on it`,
+					Query: `DROP SCHEMA schema_with_view;`, PostgresOracle: ScriptTestPostgresOracle{ID: "schema-dependency-repro-test-testdropschemacontainingviewrequirescascaderepro-0001-drop-schema-schema_with_view",
+
+						// TestDropSchemaContainingMaterializedViewRequiresCascadeRepro guards non-empty
+						// schema dependency enforcement for materialized views.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropSchemaContainingMaterializedViewRequiresCascadeRepro guards non-empty
-// schema dependency enforcement for materialized views.
 func TestDropSchemaContainingMaterializedViewRequiresCascadeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -106,16 +107,17 @@ func TestDropSchemaContainingMaterializedViewRequiresCascadeRepro(t *testing.T) 
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP SCHEMA schema_with_matview;`,
-					ExpectedErr: `because other objects depend on it`,
+					Query: `DROP SCHEMA schema_with_matview;`, PostgresOracle: ScriptTestPostgresOracle{ID: "schema-dependency-repro-test-testdropschemacontainingmaterializedviewrequirescascaderepro-0001-drop-schema-schema_with_matview",
+
+						// TestDropSchemaCascadeDropsContainedRelationsRepro reproduces a schema
+						// dependency bug: PostgreSQL DROP SCHEMA CASCADE removes contained objects.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropSchemaCascadeDropsContainedRelationsRepro reproduces a schema
-// dependency bug: PostgreSQL DROP SCHEMA CASCADE removes contained objects.
 func TestDropSchemaCascadeDropsContainedRelationsRepro(t *testing.T) {
 	ctx, conn, controller := CreateServer(t, "postgres")
 	t.Cleanup(func() {
@@ -161,12 +163,10 @@ func TestAlterTableQualifiedRenameStaysInSchemaRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT id, note
-						FROM rename_schema.renamed_table;`,
-					Expected: []sql.Row{{1, "kept"}},
+						FROM rename_schema.renamed_table;`, PostgresOracle: ScriptTestPostgresOracle{ID: "schema-dependency-repro-test-testaltertablequalifiedrenamestaysinschemarepro-0001-select-id-note-from-rename_schema.renamed_table"},
 				},
 				{
-					Query:       `SELECT id, note FROM rename_schema.source_table;`,
-					ExpectedErr: `not found`,
+					Query: `SELECT id, note FROM rename_schema.source_table;`, PostgresOracle: ScriptTestPostgresOracle{ID: "schema-dependency-repro-test-testaltertablequalifiedrenamestaysinschemarepro-0002-select-id-note-from-rename_schema.source_table", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -197,17 +197,18 @@ func TestAlterTableQualifiedRenamePreservesForeignKeysRepro(t *testing.T) {
 					Query: `INSERT INTO rename_fk_schema.child_table VALUES (11, 1);`,
 				},
 				{
-					Query:       `INSERT INTO rename_fk_schema.child_table VALUES (12, 99);`,
-					ExpectedErr: `Foreign key violation`,
+					Query: `INSERT INTO rename_fk_schema.child_table VALUES (12, 99);`, PostgresOracle: ScriptTestPostgresOracle{ID: "schema-dependency-repro-test-testaltertablequalifiedrenamepreservesforeignkeysrepro-0001-insert-into-rename_fk_schema.child_table-values-12",
+
+						// TestAlterSchemaRenameRepro reproduces a schema DDL correctness bug:
+						// PostgreSQL supports ALTER SCHEMA ... RENAME TO and keeps contained objects
+						// accessible through the new schema name.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterSchemaRenameRepro reproduces a schema DDL correctness bug:
-// PostgreSQL supports ALTER SCHEMA ... RENAME TO and keeps contained objects
-// accessible through the new schema name.
 func TestAlterSchemaRenameRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -250,13 +251,11 @@ func TestAlterSchemaRenameRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `ALTER SCHEMA rename_namespace_collision_old
-						RENAME TO rename_namespace_collision_new;`,
-					ExpectedErr: `schema exists`,
+						RENAME TO rename_namespace_collision_new;`, PostgresOracle: ScriptTestPostgresOracle{ID: "schema-dependency-repro-test-testalterschemarenamerepro-0003-alter-schema-rename_namespace_collision_old-rename-to", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, label
-						FROM rename_namespace_collision_old.items;`,
-					Expected: []sql.Row{{1, "kept"}},
+						FROM rename_namespace_collision_old.items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "schema-dependency-repro-test-testalterschemarenamerepro-0004-select-id-label-from-rename_namespace_collision_old.items"},
 				},
 			},
 		},
@@ -284,8 +283,7 @@ func TestAlterTableSetSchemaMovesRelationRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT id, label
-						FROM move_target_schema.alter_set_schema_items;`,
-					Expected: []sql.Row{{1, "moved"}},
+						FROM move_target_schema.alter_set_schema_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "schema-dependency-repro-test-testaltertablesetschemamovesrelationrepro-0001-select-id-label-from"},
 				},
 				{
 					Query:       `SELECT id, label FROM public.alter_set_schema_items;`,
@@ -319,8 +317,7 @@ func TestAlterViewSetSchemaMovesViewRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT id, label
-						FROM move_view_target_schema.alter_view_set_schema_reader;`,
-					Expected: []sql.Row{{1, "visible"}},
+						FROM move_view_target_schema.alter_view_set_schema_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "schema-dependency-repro-test-testalterviewsetschemamovesviewrepro-0001-select-id-label-from"},
 				},
 				{
 					Query:       `SELECT id, label FROM public.alter_view_set_schema_reader;`,
@@ -355,8 +352,7 @@ func TestAlterMaterializedViewSetSchemaMovesViewRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT id, label
-						FROM move_matview_target_schema.alter_matview_set_schema_reader;`,
-					Expected: []sql.Row{{1, "materialized"}},
+						FROM move_matview_target_schema.alter_matview_set_schema_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "schema-dependency-repro-test-testaltermaterializedviewsetschemamovesviewrepro-0001-select-id-label-from"},
 				},
 				{
 					Query:       `SELECT id, label FROM public.alter_matview_set_schema_reader;`,
@@ -383,8 +379,7 @@ func TestAlterSequenceSetSchemaMovesSequenceRepro(t *testing.T) {
 					Query: `ALTER SEQUENCE alter_sequence_set_schema_seq SET SCHEMA move_sequence_target_schema;`,
 				},
 				{
-					Query:    `SELECT nextval('move_sequence_target_schema.alter_sequence_set_schema_seq');`,
-					Expected: []sql.Row{{int64(10)}},
+					Query: `SELECT nextval('move_sequence_target_schema.alter_sequence_set_schema_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "schema-dependency-repro-test-testaltersequencesetschemamovessequencerepro-0001-select-nextval"},
 				},
 				{
 					Query:       `SELECT nextval('public.alter_sequence_set_schema_seq');`,
@@ -415,8 +410,7 @@ func TestAlterFunctionSetSchemaMovesFunctionRepro(t *testing.T) {
 						SET SCHEMA move_function_target_schema;`,
 				},
 				{
-					Query:    `SELECT move_function_target_schema.alter_function_set_schema_value();`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT move_function_target_schema.alter_function_set_schema_value();`, PostgresOracle: ScriptTestPostgresOracle{ID: "schema-dependency-repro-test-testalterfunctionsetschemamovesfunctionrepro-0001-select"},
 				},
 				{
 					Query:       `SELECT public.alter_function_set_schema_value();`,
@@ -452,8 +446,7 @@ func TestAlterProcedureSetSchemaMovesProcedureRepro(t *testing.T) {
 					Query: `CALL move_procedure_target_schema.alter_procedure_set_schema_log();`,
 				},
 				{
-					Query:    `SELECT COUNT(*) FROM alter_procedure_set_schema_audit;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT COUNT(*) FROM alter_procedure_set_schema_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "schema-dependency-repro-test-testalterproceduresetschemamovesprocedurerepro-0001-select-count-*-from-alter_procedure_set_schema_audit"},
 				},
 				{
 					Query:       `CALL public.alter_procedure_set_schema_log();`,
@@ -484,8 +477,7 @@ func TestAlterRoutineSetSchemaMovesFunctionRepro(t *testing.T) {
 						SET SCHEMA move_routine_target_schema;`,
 				},
 				{
-					Query:    `SELECT move_routine_target_schema.alter_routine_set_schema_value();`,
-					Expected: []sql.Row{{11}},
+					Query: `SELECT move_routine_target_schema.alter_routine_set_schema_value();`, PostgresOracle: ScriptTestPostgresOracle{ID: "schema-dependency-repro-test-testalterroutinesetschemamovesfunctionrepro-0001-select"},
 				},
 				{
 					Query:       `SELECT public.alter_routine_set_schema_value();`,
@@ -512,8 +504,7 @@ func TestAlterTypeSetSchemaMovesEnumRepro(t *testing.T) {
 					Query: `ALTER TYPE alter_type_set_schema_enum SET SCHEMA move_type_target_schema;`,
 				},
 				{
-					Query:    `SELECT 'one'::move_type_target_schema.alter_type_set_schema_enum::text;`,
-					Expected: []sql.Row{{"one"}},
+					Query: `SELECT 'one'::move_type_target_schema.alter_type_set_schema_enum::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "schema-dependency-repro-test-testaltertypesetschemamovesenumrepro-0001-select-one"},
 				},
 				{
 					Query:       `SELECT 'one'::public.alter_type_set_schema_enum::text;`,
@@ -541,8 +532,7 @@ func TestAlterDomainSetSchemaMovesDomainRepro(t *testing.T) {
 					Query: `ALTER DOMAIN alter_domain_set_schema_positive SET SCHEMA move_domain_target_schema;`,
 				},
 				{
-					Query:    `SELECT 5::move_domain_target_schema.alter_domain_set_schema_positive;`,
-					Expected: []sql.Row{{5}},
+					Query: `SELECT 5::move_domain_target_schema.alter_domain_set_schema_positive;`, PostgresOracle: ScriptTestPostgresOracle{ID: "schema-dependency-repro-test-testalterdomainsetschemamovesdomainrepro-0001-select"},
 				},
 				{
 					Query:       `SELECT 5::public.alter_domain_set_schema_positive;`,

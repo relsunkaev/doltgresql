@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestAlterViewRenamePreservesSelectPrivilegeRepro reproduces an ACL
@@ -44,9 +42,9 @@ func TestAlterViewRenamePreservesSelectPrivilegeRepro(t *testing.T) {
 				{
 					Query: `SELECT id, label
 						FROM rename_view_target;`,
-					Expected: []sql.Row{{1, "visible after rename"}},
+
 					Username: `rename_view_reader`,
-					Password: `reader`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-rename-privilege-repro-test-testalterviewrenamepreservesselectprivilegerepro-0001-select-id-label-from-rename_view_target"},
 				},
 				{
 					Query: `ALTER TABLE rename_view_target
@@ -55,9 +53,9 @@ func TestAlterViewRenamePreservesSelectPrivilegeRepro(t *testing.T) {
 				{
 					Query: `SELECT id, label
 						FROM rename_view_target_new;`,
-					Expected: []sql.Row{{1, "visible after rename"}},
+
 					Username: `rename_view_reader`,
-					Password: `reader`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-rename-privilege-repro-test-testalterviewrenamepreservesselectprivilegerepro-0002-select-id-label-from-rename_view_target_new"},
 				},
 			},
 		},

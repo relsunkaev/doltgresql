@@ -18,7 +18,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/stretchr/testify/require"
 )
 
@@ -40,8 +39,11 @@ func TestSetTransactionReadOnlyPreventsWritesRepro(t *testing.T) {
 					Query: `SET TRANSACTION READ ONLY;`,
 				},
 				{
-					Query:       `INSERT INTO read_only_target VALUES (1);`,
-					ExpectedErr: `read-only transaction`,
+					Query: `INSERT INTO read_only_target VALUES (1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-mode-repro-test-testsettransactionreadonlypreventswritesrepro-0001-insert-into-read_only_target-values-1",
+
+						// TestStartTransactionReadOnlyPreventsWritesRepro guards that START
+						// TRANSACTION READ ONLY prevents ordinary table writes.
+						Compare: "sqlstate"},
 				},
 				{
 					Query: `ROLLBACK;`,
@@ -51,8 +53,6 @@ func TestSetTransactionReadOnlyPreventsWritesRepro(t *testing.T) {
 	})
 }
 
-// TestStartTransactionReadOnlyPreventsWritesRepro guards that START
-// TRANSACTION READ ONLY prevents ordinary table writes.
 func TestStartTransactionReadOnlyPreventsWritesRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -65,8 +65,12 @@ func TestStartTransactionReadOnlyPreventsWritesRepro(t *testing.T) {
 					Query: `START TRANSACTION READ ONLY;`,
 				},
 				{
-					Query:       `INSERT INTO start_read_only_target VALUES (1);`,
-					ExpectedErr: `READ ONLY transaction`,
+					Query: `INSERT INTO start_read_only_target VALUES (1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-mode-repro-test-teststarttransactionreadonlypreventswritesrepro-0001-insert-into-start_read_only_target-values-1",
+
+						// TestSetTransactionReadWriteAfterQueryRejectedRepro reproduces a transaction
+						// mode bug: PostgreSQL rejects switching a read-only transaction back to
+						// read-write after any query has already run in the transaction.
+						Compare: "sqlstate"},
 				},
 				{
 					Query: `ROLLBACK;`,
@@ -76,9 +80,6 @@ func TestStartTransactionReadOnlyPreventsWritesRepro(t *testing.T) {
 	})
 }
 
-// TestSetTransactionReadWriteAfterQueryRejectedRepro reproduces a transaction
-// mode bug: PostgreSQL rejects switching a read-only transaction back to
-// read-write after any query has already run in the transaction.
 func TestSetTransactionReadWriteAfterQueryRejectedRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -88,12 +89,15 @@ func TestSetTransactionReadWriteAfterQueryRejectedRepro(t *testing.T) {
 					Query: `START TRANSACTION READ ONLY;`,
 				},
 				{
-					Query:    `SELECT 1;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-mode-repro-test-testsettransactionreadwriteafterqueryrejectedrepro-0001-select-1"},
 				},
 				{
-					Query:       `SET TRANSACTION READ WRITE;`,
-					ExpectedErr: `transaction read-write mode must be set before any query`,
+					Query: `SET TRANSACTION READ WRITE;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-mode-repro-test-testsettransactionreadwriteafterqueryrejectedrepro-0002-set-transaction-read-write",
+
+						// TestSetTransactionDeferrableAfterQueryRejectedRepro reproduces a transaction
+						// mode bug: PostgreSQL rejects changing DEFERRABLE mode after any query has
+						// already run in the transaction.
+						Compare: "sqlstate"},
 				},
 				{
 					Query: `ROLLBACK;`,
@@ -103,9 +107,6 @@ func TestSetTransactionReadWriteAfterQueryRejectedRepro(t *testing.T) {
 	})
 }
 
-// TestSetTransactionDeferrableAfterQueryRejectedRepro reproduces a transaction
-// mode bug: PostgreSQL rejects changing DEFERRABLE mode after any query has
-// already run in the transaction.
 func TestSetTransactionDeferrableAfterQueryRejectedRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -115,12 +116,10 @@ func TestSetTransactionDeferrableAfterQueryRejectedRepro(t *testing.T) {
 					Query: `BEGIN ISOLATION LEVEL SERIALIZABLE;`,
 				},
 				{
-					Query:    `SELECT 1;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-mode-repro-test-testsettransactiondeferrableafterqueryrejectedrepro-0001-select-1"},
 				},
 				{
-					Query:       `SET TRANSACTION DEFERRABLE;`,
-					ExpectedErr: `SET TRANSACTION [NOT] DEFERRABLE must be called before any query`,
+					Query: `SET TRANSACTION DEFERRABLE;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-mode-repro-test-testsettransactiondeferrableafterqueryrejectedrepro-0002-set-transaction-deferrable", Compare: "sqlstate"},
 				},
 				{
 					Query: `ROLLBACK;`,
@@ -134,12 +133,14 @@ func TestSetTransactionDeferrableAfterQueryRejectedRepro(t *testing.T) {
 					Query: `BEGIN ISOLATION LEVEL SERIALIZABLE;`,
 				},
 				{
-					Query:    `SELECT 1;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-mode-repro-test-testsettransactiondeferrableafterqueryrejectedrepro-0003-select-1"},
 				},
 				{
-					Query:       `SET TRANSACTION NOT DEFERRABLE;`,
-					ExpectedErr: `SET TRANSACTION [NOT] DEFERRABLE must be called before any query`,
+					Query: `SET TRANSACTION NOT DEFERRABLE;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-mode-repro-test-testsettransactiondeferrableafterqueryrejectedrepro-0004-set-transaction-not-deferrable",
+
+						// TestStartTransactionReadOnlyRejectsUpdateRepro guards that START
+						// TRANSACTION READ ONLY prevents persistent UPDATE writes.
+						Compare: "sqlstate"},
 				},
 				{
 					Query: `ROLLBACK;`,
@@ -149,8 +150,6 @@ func TestSetTransactionDeferrableAfterQueryRejectedRepro(t *testing.T) {
 	})
 }
 
-// TestStartTransactionReadOnlyRejectsUpdateRepro guards that START
-// TRANSACTION READ ONLY prevents persistent UPDATE writes.
 func TestStartTransactionReadOnlyRejectsUpdateRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -164,15 +163,13 @@ func TestStartTransactionReadOnlyRejectsUpdateRepro(t *testing.T) {
 					Query: `START TRANSACTION READ ONLY;`,
 				},
 				{
-					Query:       `UPDATE read_only_update_target SET label = 'after' WHERE id = 1;`,
-					ExpectedErr: `READ ONLY transaction`,
+					Query: `UPDATE read_only_update_target SET label = 'after' WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-mode-repro-test-teststarttransactionreadonlyrejectsupdaterepro-0001-update-read_only_update_target-set-label-=", Compare: "sqlstate"},
 				},
 				{
 					Query: `ROLLBACK;`,
 				},
 				{
-					Query:    `SELECT * FROM read_only_update_target;`,
-					Expected: []sql.Row{{1, "before"}},
+					Query: `SELECT * FROM read_only_update_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-mode-repro-test-teststarttransactionreadonlyrejectsupdaterepro-0002-select-*-from-read_only_update_target"},
 				},
 			},
 		},
@@ -194,15 +191,13 @@ func TestStartTransactionReadOnlyRejectsDeleteRepro(t *testing.T) {
 					Query: `START TRANSACTION READ ONLY;`,
 				},
 				{
-					Query:       `DELETE FROM read_only_delete_target WHERE id = 1;`,
-					ExpectedErr: `READ ONLY transaction`,
+					Query: `DELETE FROM read_only_delete_target WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-mode-repro-test-teststarttransactionreadonlyrejectsdeleterepro-0001-delete-from-read_only_delete_target-where-id", Compare: "sqlstate"},
 				},
 				{
 					Query: `ROLLBACK;`,
 				},
 				{
-					Query:    `SELECT * FROM read_only_delete_target;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT * FROM read_only_delete_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-mode-repro-test-teststarttransactionreadonlyrejectsdeleterepro-0002-select-*-from-read_only_delete_target"},
 				},
 			},
 		},
@@ -225,15 +220,13 @@ func TestStartTransactionReadOnlyRejectsTruncateRepro(t *testing.T) {
 					Query: `START TRANSACTION READ ONLY;`,
 				},
 				{
-					Query:       `TRUNCATE read_only_truncate_target;`,
-					ExpectedErr: `READ ONLY transaction`,
+					Query: `TRUNCATE read_only_truncate_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-mode-repro-test-teststarttransactionreadonlyrejectstruncaterepro-0001-truncate-read_only_truncate_target", Compare: "sqlstate"},
 				},
 				{
 					Query: `ROLLBACK;`,
 				},
 				{
-					Query:    `SELECT id FROM read_only_truncate_target ORDER BY id;`,
-					Expected: []sql.Row{{1}, {2}},
+					Query: `SELECT id FROM read_only_truncate_target ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-mode-repro-test-teststarttransactionreadonlyrejectstruncaterepro-0002-select-id-from-read_only_truncate_target-order"},
 				},
 			},
 		},
@@ -251,23 +244,23 @@ func TestStartTransactionReadOnlyRejectsCreateTableRepro(t *testing.T) {
 					Query: `START TRANSACTION READ ONLY;`,
 				},
 				{
-					Query:       `CREATE TABLE read_only_create_table (id INT PRIMARY KEY);`,
-					ExpectedErr: `READ ONLY transaction`,
+					Query: `CREATE TABLE read_only_create_table (id INT PRIMARY KEY);`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-mode-repro-test-teststarttransactionreadonlyrejectscreatetablerepro-0001-create-table-read_only_create_table-id-int", Compare: "sqlstate"},
 				},
 				{
 					Query: `COMMIT;`,
 				},
 				{
-					Query:       `SELECT * FROM read_only_create_table;`,
-					ExpectedErr: `table not found`,
+					Query: `SELECT * FROM read_only_create_table;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-mode-repro-test-teststarttransactionreadonlyrejectscreatetablerepro-0002-select-*-from-read_only_create_table",
+
+						// TestStartTransactionReadOnlyRejectsAlterTableRepro reproduces a read-only
+						// transaction safety bug: persistent ALTER TABLE is allowed and committed.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestStartTransactionReadOnlyRejectsAlterTableRepro reproduces a read-only
-// transaction safety bug: persistent ALTER TABLE is allowed and committed.
 func TestStartTransactionReadOnlyRejectsAlterTableRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -281,23 +274,23 @@ func TestStartTransactionReadOnlyRejectsAlterTableRepro(t *testing.T) {
 					Query: `START TRANSACTION READ ONLY;`,
 				},
 				{
-					Query:       `ALTER TABLE read_only_alter_table ADD COLUMN label TEXT;`,
-					ExpectedErr: `READ ONLY transaction`,
+					Query: `ALTER TABLE read_only_alter_table ADD COLUMN label TEXT;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-mode-repro-test-teststarttransactionreadonlyrejectsaltertablerepro-0001-alter-table-read_only_alter_table-add-column", Compare: "sqlstate"},
 				},
 				{
 					Query: `COMMIT;`,
 				},
 				{
-					Query:       `SELECT label FROM read_only_alter_table;`,
-					ExpectedErr: `column`,
+					Query: `SELECT label FROM read_only_alter_table;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-mode-repro-test-teststarttransactionreadonlyrejectsaltertablerepro-0002-select-label-from-read_only_alter_table",
+
+						// TestStartTransactionReadOnlyRejectsDropTableRepro reproduces a read-only
+						// transaction safety bug: persistent DROP TABLE is allowed and committed.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestStartTransactionReadOnlyRejectsDropTableRepro reproduces a read-only
-// transaction safety bug: persistent DROP TABLE is allowed and committed.
 func TestStartTransactionReadOnlyRejectsDropTableRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -311,15 +304,13 @@ func TestStartTransactionReadOnlyRejectsDropTableRepro(t *testing.T) {
 					Query: `START TRANSACTION READ ONLY;`,
 				},
 				{
-					Query:       `DROP TABLE read_only_drop_table;`,
-					ExpectedErr: `READ ONLY transaction`,
+					Query: `DROP TABLE read_only_drop_table;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-mode-repro-test-teststarttransactionreadonlyrejectsdroptablerepro-0001-drop-table-read_only_drop_table", Compare: "sqlstate"},
 				},
 				{
 					Query: `COMMIT;`,
 				},
 				{
-					Query:    `SELECT * FROM read_only_drop_table;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT * FROM read_only_drop_table;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-mode-repro-test-teststarttransactionreadonlyrejectsdroptablerepro-0002-select-*-from-read_only_drop_table"},
 				},
 			},
 		},
@@ -340,8 +331,7 @@ func TestStartTransactionReadOnlyRejectsCreateIndexRepro(t *testing.T) {
 					Query: `START TRANSACTION READ ONLY;`,
 				},
 				{
-					Query:       `CREATE INDEX read_only_create_index_items_label_idx ON read_only_create_index_items (label);`,
-					ExpectedErr: `READ ONLY transaction`,
+					Query: `CREATE INDEX read_only_create_index_items_label_idx ON read_only_create_index_items (label);`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-mode-repro-test-teststarttransactionreadonlyrejectscreateindexrepro-0001-create-index-read_only_create_index_items_label_idx-on-read_only_create_index_items", Compare: "sqlstate"},
 				},
 				{
 					Query: `COMMIT;`,
@@ -350,8 +340,7 @@ func TestStartTransactionReadOnlyRejectsCreateIndexRepro(t *testing.T) {
 					Query: `SELECT indexname
 						FROM pg_indexes
 						WHERE tablename = 'read_only_create_index_items'
-							AND indexname = 'read_only_create_index_items_label_idx';`,
-					Expected: []sql.Row{},
+							AND indexname = 'read_only_create_index_items_label_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-mode-repro-test-teststarttransactionreadonlyrejectscreateindexrepro-0002-select-indexname-from-pg_indexes-where"},
 				},
 			},
 		},
@@ -373,8 +362,7 @@ func TestStartTransactionReadOnlyRejectsDropIndexRepro(t *testing.T) {
 					Query: `START TRANSACTION READ ONLY;`,
 				},
 				{
-					Query:       `DROP INDEX read_only_drop_index_items_label_idx;`,
-					ExpectedErr: `READ ONLY transaction`,
+					Query: `DROP INDEX read_only_drop_index_items_label_idx;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-mode-repro-test-teststarttransactionreadonlyrejectsdropindexrepro-0001-drop-index-read_only_drop_index_items_label_idx", Compare: "sqlstate"},
 				},
 				{
 					Query: `COMMIT;`,
@@ -383,8 +371,7 @@ func TestStartTransactionReadOnlyRejectsDropIndexRepro(t *testing.T) {
 					Query: `SELECT indexname
 						FROM pg_indexes
 						WHERE tablename = 'read_only_drop_index_items'
-							AND indexname = 'read_only_drop_index_items_label_idx';`,
-					Expected: []sql.Row{{"read_only_drop_index_items_label_idx"}},
+							AND indexname = 'read_only_drop_index_items_label_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-mode-repro-test-teststarttransactionreadonlyrejectsdropindexrepro-0002-select-indexname-from-pg_indexes-where"},
 				},
 			},
 		},
@@ -403,23 +390,23 @@ func TestStartTransactionReadOnlyRejectsCreateSequenceRepro(t *testing.T) {
 					Query: `START TRANSACTION READ ONLY;`,
 				},
 				{
-					Query:       `CREATE SEQUENCE read_only_create_sequence_seq;`,
-					ExpectedErr: `READ ONLY transaction`,
+					Query: `CREATE SEQUENCE read_only_create_sequence_seq;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-mode-repro-test-teststarttransactionreadonlyrejectscreatesequencerepro-0001-create-sequence-read_only_create_sequence_seq", Compare: "sqlstate"},
 				},
 				{
 					Query: `COMMIT;`,
 				},
 				{
-					Query:       `SELECT nextval('read_only_create_sequence_seq');`,
-					ExpectedErr: `does not exist`,
+					Query: `SELECT nextval('read_only_create_sequence_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-mode-repro-test-teststarttransactionreadonlyrejectscreatesequencerepro-0002-select-nextval-read_only_create_sequence_seq",
+
+						// TestStartTransactionReadOnlyRejectsDropSequenceRepro reproduces a read-only
+						// transaction safety bug: persistent DROP SEQUENCE is allowed and committed.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestStartTransactionReadOnlyRejectsDropSequenceRepro reproduces a read-only
-// transaction safety bug: persistent DROP SEQUENCE is allowed and committed.
 func TestStartTransactionReadOnlyRejectsDropSequenceRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -432,15 +419,13 @@ func TestStartTransactionReadOnlyRejectsDropSequenceRepro(t *testing.T) {
 					Query: `START TRANSACTION READ ONLY;`,
 				},
 				{
-					Query:       `DROP SEQUENCE read_only_drop_sequence_seq;`,
-					ExpectedErr: `READ ONLY transaction`,
+					Query: `DROP SEQUENCE read_only_drop_sequence_seq;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-mode-repro-test-teststarttransactionreadonlyrejectsdropsequencerepro-0001-drop-sequence-read_only_drop_sequence_seq", Compare: "sqlstate"},
 				},
 				{
 					Query: `COMMIT;`,
 				},
 				{
-					Query:    `SELECT nextval('read_only_drop_sequence_seq');`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT nextval('read_only_drop_sequence_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-mode-repro-test-teststarttransactionreadonlyrejectsdropsequencerepro-0002-select-nextval-read_only_drop_sequence_seq"},
 				},
 			},
 		},
@@ -464,8 +449,12 @@ func TestDefaultTransactionReadOnlyPreventsWritesRepro(t *testing.T) {
 					Query: `BEGIN;`,
 				},
 				{
-					Query:       `INSERT INTO default_read_only_target VALUES (1);`,
-					ExpectedErr: `READ ONLY transaction`,
+					Query: `INSERT INTO default_read_only_target VALUES (1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-mode-repro-test-testdefaulttransactionreadonlypreventswritesrepro-0001-insert-into-default_read_only_target-values-1",
+
+						// TestBeginReadWriteOverridesDefaultReadOnlyGuard guards PostgreSQL's
+						// transaction mode precedence: an explicit READ WRITE mode on BEGIN overrides
+						// default_transaction_read_only for that transaction.
+						Compare: "sqlstate"},
 				},
 				{
 					Query: `ROLLBACK;`,
@@ -478,9 +467,6 @@ func TestDefaultTransactionReadOnlyPreventsWritesRepro(t *testing.T) {
 	})
 }
 
-// TestBeginReadWriteOverridesDefaultReadOnlyGuard guards PostgreSQL's
-// transaction mode precedence: an explicit READ WRITE mode on BEGIN overrides
-// default_transaction_read_only for that transaction.
 func TestBeginReadWriteOverridesDefaultReadOnlyGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -502,8 +488,7 @@ func TestBeginReadWriteOverridesDefaultReadOnlyGuard(t *testing.T) {
 					Query: `COMMIT;`,
 				},
 				{
-					Query:    `SELECT id FROM begin_read_write_default_target;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT id FROM begin_read_write_default_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-mode-repro-test-testbeginreadwriteoverridesdefaultreadonlyguard-0001-select-id-from-begin_read_write_default_target"},
 				},
 				{
 					Query: `RESET default_transaction_read_only;`,
@@ -557,8 +542,11 @@ func TestReadOnlyTransactionRejectsPersistentSequenceNextvalRepro(t *testing.T) 
 					Query: `START TRANSACTION READ ONLY;`,
 				},
 				{
-					Query:       `SELECT nextval('read_only_persistent_seq');`,
-					ExpectedErr: `read-only transaction`,
+					Query: `SELECT nextval('read_only_persistent_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-mode-repro-test-testreadonlytransactionrejectspersistentsequencenextvalrepro-0001-select-nextval-read_only_persistent_seq",
+
+						// TestReadOnlyTransactionRejectsPersistentSequenceSetvalRepro reproduces a
+						// read-only transaction safety bug for persistent sequence state changes.
+						Compare: "sqlstate"},
 				},
 				{
 					Query: `ROLLBACK;`,
@@ -568,8 +556,6 @@ func TestReadOnlyTransactionRejectsPersistentSequenceNextvalRepro(t *testing.T) 
 	})
 }
 
-// TestReadOnlyTransactionRejectsPersistentSequenceSetvalRepro reproduces a
-// read-only transaction safety bug for persistent sequence state changes.
 func TestReadOnlyTransactionRejectsPersistentSequenceSetvalRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -582,8 +568,12 @@ func TestReadOnlyTransactionRejectsPersistentSequenceSetvalRepro(t *testing.T) {
 					Query: `START TRANSACTION READ ONLY;`,
 				},
 				{
-					Query:       `SELECT setval('read_only_setval_seq', 50);`,
-					ExpectedErr: `read-only transaction`,
+					Query: `SELECT setval('read_only_setval_seq', 50);`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-mode-repro-test-testreadonlytransactionrejectspersistentsequencesetvalrepro-0001-select-setval-read_only_setval_seq-50",
+
+						// TestReadOnlyTransactionAllowsTemporaryTableWritesGuard guards PostgreSQL's
+						// read-only transaction boundary: writes to temporary tables are allowed because
+						// they do not mutate persistent state.
+						Compare: "sqlstate"},
 				},
 				{
 					Query: `ROLLBACK;`,
@@ -593,9 +583,6 @@ func TestReadOnlyTransactionRejectsPersistentSequenceSetvalRepro(t *testing.T) {
 	})
 }
 
-// TestReadOnlyTransactionAllowsTemporaryTableWritesGuard guards PostgreSQL's
-// read-only transaction boundary: writes to temporary tables are allowed because
-// they do not mutate persistent state.
 func TestReadOnlyTransactionAllowsTemporaryTableWritesGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -614,8 +601,7 @@ func TestReadOnlyTransactionAllowsTemporaryTableWritesGuard(t *testing.T) {
 					Query: `INSERT INTO read_only_temp_target VALUES (1, 'temporary write');`,
 				},
 				{
-					Query:    `SELECT id, label FROM read_only_temp_target;`,
-					Expected: []sql.Row{{1, "temporary write"}},
+					Query: `SELECT id, label FROM read_only_temp_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-mode-repro-test-testreadonlytransactionallowstemporarytablewritesguard-0001-select-id-label-from-read_only_temp_target"},
 				},
 				{
 					Query: `COMMIT;`,

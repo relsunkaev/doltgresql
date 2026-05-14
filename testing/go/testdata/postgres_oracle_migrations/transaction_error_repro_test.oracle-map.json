@@ -1,0 +1,99 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map transaction_error_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/transaction_error_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/transaction_error_repro_test.go:TestTransactionErrorRollsBackTransactionOnCommitRepro#0001",
+      "source": "testing/go/transaction_error_repro_test.go:TestTransactionErrorRollsBackTransactionOnCommitRepro",
+      "ordinal": 1,
+      "scriptName": "transaction error rolls back on commit",
+      "oracle": "postgres",
+      "postgresId": "transaction-error-repro-test-testtransactionerrorrollsbacktransactiononcommitrepro-0001-insert-into-transaction_error_items-values-1",
+      "suggestedId": "transaction-error-repro-test-testtransactionerrorrollsbacktransactiononcommitrepro-0001-insert-into-transaction_error_items-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO transaction_error_items VALUES (1, 'duplicate');",
+      "querySha256": "5959f31f39935c9341faa928c6c37bff5c7b6eb1c391653bb0c3d78cee79d00d",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_error_repro_test.go:TestTransactionErrorRollsBackTransactionOnCommitRepro#0002",
+      "source": "testing/go/transaction_error_repro_test.go:TestTransactionErrorRollsBackTransactionOnCommitRepro",
+      "ordinal": 2,
+      "scriptName": "transaction error rolls back on commit",
+      "oracle": "internal",
+      "suggestedId": "transaction-error-repro-test-testtransactionerrorrollsbacktransactiononcommitrepro-0002-insert-into-transaction_error_items-values-2",
+      "expectedKind": "error",
+      "query": "INSERT INTO transaction_error_items VALUES (2, 'after error');",
+      "querySha256": "c5dff7cf8ee63036d2e8d2b29f1a7c0b62d1f7697f8a1afe34ccaf4223f1e4cf",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_error_repro_test.go:TestTransactionErrorRollsBackTransactionOnCommitRepro#0003",
+      "source": "testing/go/transaction_error_repro_test.go:TestTransactionErrorRollsBackTransactionOnCommitRepro",
+      "ordinal": 3,
+      "scriptName": "transaction error rolls back on commit",
+      "oracle": "internal",
+      "suggestedId": "transaction-error-repro-test-testtransactionerrorrollsbacktransactiononcommitrepro-0003-select-*-from-transaction_error_items-order",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM transaction_error_items ORDER BY id;",
+      "querySha256": "50c1d3d17e6a13cf3dee65444ce82b5b144c06c9ff081458e8139fce04f57f01",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_error_repro_test.go:TestSavepointErrorRequiresRollbackToSavepointRepro#0001",
+      "source": "testing/go/transaction_error_repro_test.go:TestSavepointErrorRequiresRollbackToSavepointRepro",
+      "ordinal": 1,
+      "scriptName": "savepoint error requires rollback to savepoint",
+      "oracle": "internal",
+      "suggestedId": "transaction-error-repro-test-testsavepointerrorrequiresrollbacktosavepointrepro-0001-insert-into-savepoint_error_items-values-1",
+      "expectedKind": "error",
+      "query": "INSERT INTO savepoint_error_items VALUES (1, 'duplicate');",
+      "querySha256": "07c55b1bcaf0997c559cb90f01532dd0142194d30dc0aeee045ebc72d876e19a",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_error_repro_test.go:TestSavepointErrorRequiresRollbackToSavepointRepro#0002",
+      "source": "testing/go/transaction_error_repro_test.go:TestSavepointErrorRequiresRollbackToSavepointRepro",
+      "ordinal": 2,
+      "scriptName": "savepoint error requires rollback to savepoint",
+      "oracle": "internal",
+      "suggestedId": "transaction-error-repro-test-testsavepointerrorrequiresrollbacktosavepointrepro-0002-insert-into-savepoint_error_items-values-2",
+      "expectedKind": "error",
+      "query": "INSERT INTO savepoint_error_items VALUES (2, 'before rollback to savepoint');",
+      "querySha256": "d0dc6d0bf8198c68bb32cb28827d9d88d76fd0bf56fd4e85d1bcc52e80b4c51a",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_error_repro_test.go:TestSavepointErrorRequiresRollbackToSavepointRepro#0003",
+      "source": "testing/go/transaction_error_repro_test.go:TestSavepointErrorRequiresRollbackToSavepointRepro",
+      "ordinal": 3,
+      "scriptName": "savepoint error requires rollback to savepoint",
+      "oracle": "internal",
+      "suggestedId": "transaction-error-repro-test-testsavepointerrorrequiresrollbacktosavepointrepro-0003-select-id-label-from-savepoint_error_items",
+      "expectedKind": "rows",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM savepoint_error_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "bc624cf5ea961b9feca06c42e4838feda382591e4c61b35d3dd25a5dd83b321d",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    }
+  ]
+}

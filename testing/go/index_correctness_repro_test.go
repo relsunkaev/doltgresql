@@ -40,8 +40,7 @@ func TestCreateIndexConcurrentlyRejectsTransactionBlockRepro(t *testing.T) {
 				},
 				{
 					Query: `CREATE INDEX CONCURRENTLY concurrent_index_tx_items_label_idx
-						ON concurrent_index_tx_items (label);`,
-					ExpectedErr: `cannot run inside a transaction block`,
+						ON concurrent_index_tx_items (label);`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testcreateindexconcurrentlyrejectstransactionblockrepro-0001-create-index-concurrently-concurrent_index_tx_items_label_idx-on", Compare: "sqlstate"},
 				},
 				{
 					Query:            `ROLLBACK;`,

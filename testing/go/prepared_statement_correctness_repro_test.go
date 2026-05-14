@@ -39,8 +39,7 @@ func TestCreateTableAsExecutePreparedStatementRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT id::TEXT, label
-						FROM prepared_ctas_items;`,
-					Expected: []sql.Row{{"7", "seven"}},
+						FROM prepared_ctas_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-correctness-repro-test-testcreatetableasexecutepreparedstatementrepro-0001-select-id::text-label-from-prepared_ctas_items"},
 				},
 			},
 		},
@@ -109,8 +108,7 @@ func TestPreparedStatementAcceptsUserDefinedParameterTypeRepro(t *testing.T) {
 						SELECT $1::TEXT;`,
 				},
 				{
-					Query:    `EXECUTE prepared_enum_plan('ok');`,
-					Expected: []sql.Row{{"ok"}},
+					Query: `EXECUTE prepared_enum_plan('ok');`, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-correctness-repro-test-testpreparedstatementacceptsuserdefinedparametertyperepro-0001-execute-prepared_enum_plan-ok"},
 				},
 				{
 					Query: `SELECT parameter_types::TEXT
@@ -135,8 +133,7 @@ func TestPreparedStatementsResultTypesColumnRepro(t *testing.T) {
 						FROM pg_catalog.pg_attribute
 						WHERE attrelid = 'pg_catalog.pg_prepared_statements'::regclass
 							AND attname = 'result_types'
-							AND NOT attisdropped;`,
-					Expected: []sql.Row{{"regtype[]"}},
+							AND NOT attisdropped;`, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-correctness-repro-test-testpreparedstatementsresulttypescolumnrepro-0001-select-atttypid::regtype::text-from-pg_catalog.pg_attribute-where"},
 				},
 			},
 		},

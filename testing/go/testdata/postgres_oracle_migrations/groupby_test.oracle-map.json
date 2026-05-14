@@ -1,0 +1,315 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map groupby_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/groupby_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/groupby_test.go:TestGroupBy#0001",
+      "source": "testing/go/groupby_test.go:TestGroupBy",
+      "ordinal": 1,
+      "scriptName": "Basic order by/group by cases",
+      "oracle": "postgres",
+      "postgresId": "groupby-test-testgroupby-0001-select-team-as-f-from",
+      "suggestedId": "groupby-test-testgroupby-0001-select-team-as-f-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select team as f from members order by id, f",
+      "querySha256": "d34788233bfb7bbdaaeec10df2f0488632a468b58f1634362817daca6be6496a",
+      "expectedRows": [
+        [
+          {
+            "value": "red"
+          }
+        ],
+        [
+          {
+            "value": "red"
+          }
+        ],
+        [
+          {
+            "value": "orange"
+          }
+        ],
+        [
+          {
+            "value": "orange"
+          }
+        ],
+        [
+          {
+            "value": "orange"
+          }
+        ],
+        [
+          {
+            "value": "purple"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/groupby_test.go:TestGroupBy#0002",
+      "source": "testing/go/groupby_test.go:TestGroupBy",
+      "ordinal": 2,
+      "scriptName": "Basic order by/group by cases",
+      "oracle": "postgres",
+      "postgresId": "groupby-test-testgroupby-0002-select-team-count-*-from",
+      "suggestedId": "groupby-test-testgroupby-0002-select-team-count-*-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT team, COUNT(*) FROM members GROUP BY team ORDER BY 2",
+      "querySha256": "c7db560a32faa73615ff282e0a055a5a5f598224b97488b0d71449c914e51af5",
+      "expectedRows": [
+        [
+          {
+            "value": "purple"
+          },
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "red"
+          },
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "orange"
+          },
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/groupby_test.go:TestGroupBy#0003",
+      "source": "testing/go/groupby_test.go:TestGroupBy",
+      "ordinal": 3,
+      "scriptName": "Basic order by/group by cases",
+      "oracle": "postgres",
+      "postgresId": "groupby-test-testgroupby-0003-select-team-count-*-from",
+      "suggestedId": "groupby-test-testgroupby-0003-select-team-count-*-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT team, COUNT(*) FROM members GROUP BY 1 ORDER BY 2",
+      "querySha256": "8c9d8a1859f6dad6f7417e002333533c37499ed59916cf4df96dc506dae1a2b9",
+      "expectedRows": [
+        [
+          {
+            "value": "purple"
+          },
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "red"
+          },
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "orange"
+          },
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/groupby_test.go:TestGroupBy#0004",
+      "source": "testing/go/groupby_test.go:TestGroupBy",
+      "ordinal": 4,
+      "scriptName": "Basic order by/group by cases",
+      "oracle": "postgres",
+      "postgresId": "groupby-test-testgroupby-0004-select-team-count-*-from",
+      "suggestedId": "groupby-test-testgroupby-0004-select-team-count-*-from",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42703",
+      "errorSeverity": "ERROR",
+      "query": "SELECT team, COUNT(*) FROM members GROUP BY team ORDER BY columndoesnotexist",
+      "querySha256": "5396d0a290147ce83c870fef7ae19fd4cc61519dc869e67f54b65981d966a9de",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/groupby_test.go:TestGroupBy#0005",
+      "source": "testing/go/groupby_test.go:TestGroupBy",
+      "ordinal": 5,
+      "scriptName": "Basic order by/group by cases",
+      "oracle": "postgres",
+      "postgresId": "groupby-test-testgroupby-0005-select-distinct-t1.id-as-id",
+      "suggestedId": "groupby-test-testgroupby-0005-select-distinct-t1.id-as-id",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT DISTINCT t1.id as id FROM members AS t1 JOIN members AS t2 ON t1.id = t2.id WHERE t2.id > 0 ORDER BY t1.id",
+      "querySha256": "3fccf26e20321b50c07180fb95cabeabe1ae5867b0a405193cc35d9188807415",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          }
+        ],
+        [
+          {
+            "value": "5"
+          }
+        ],
+        [
+          {
+            "value": "6"
+          }
+        ],
+        [
+          {
+            "value": "7"
+          }
+        ],
+        [
+          {
+            "value": "8"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/groupby_test.go:TestGroupBy#0006",
+      "source": "testing/go/groupby_test.go:TestGroupBy",
+      "ordinal": 6,
+      "scriptName": "Basic order by/group by cases",
+      "oracle": "postgres",
+      "postgresId": "groupby-test-testgroupby-0006-select-id-as-alias1-select",
+      "suggestedId": "groupby-test-testgroupby-0006-select-id-as-alias1-select",
+      "compare": "sqlstate",
+      "expectedKind": "rows",
+      "sqlstate": "42703",
+      "errorSeverity": "ERROR",
+      "query": "SELECT id as alias1, (SELECT alias1+1 group by alias1 having alias1 > 0) FROM members where id < 6;",
+      "querySha256": "0cec69058f3214d6ff76e6a17b0d92164292fc85981991cfe00298c1071777fe",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/groupby_test.go:TestGroupBy#0007",
+      "source": "testing/go/groupby_test.go:TestGroupBy",
+      "ordinal": 7,
+      "scriptName": "Basic order by/group by cases",
+      "oracle": "internal",
+      "suggestedId": "groupby-test-testgroupby-0007-select-id-select-upper-team",
+      "expectedKind": "rows",
+      "query": "SELECT id, (SELECT UPPER(team) having id > 3) as upper_team FROM members where id < 6;",
+      "querySha256": "a5678418a5e2de0ab83006b4ee99b1eefcf93d4518205c2689321a6f439bc465",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/groupby_test.go:TestGroupBy#0008",
+      "source": "testing/go/groupby_test.go:TestGroupBy",
+      "ordinal": 8,
+      "scriptName": "Basic order by/group by cases",
+      "oracle": "internal",
+      "suggestedId": "groupby-test-testgroupby-0008-select-id-select-1-as",
+      "expectedKind": "rows",
+      "query": "SELECT id, (SELECT -1 as id having id < 10) as upper_team FROM members where id < 6;",
+      "querySha256": "3d2ad41d1adae3fd55fa988c4ad40b7ea75e69440e10777dcf351fa4e6088a48",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/groupby_test.go:TestGroupBy#0009",
+      "source": "testing/go/groupby_test.go:TestGroupBy",
+      "ordinal": 9,
+      "scriptName": "Postgres aggregate subquery in grouped select",
+      "oracle": "postgres",
+      "postgresId": "groupby-test-testgroupby-0009-select-schema_name-table_name-json_object_agg-distinct",
+      "suggestedId": "groupby-test-testgroupby-0009-select-schema_name-table_name-json_object_agg-distinct",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT\n\t\t\t\t\t\tschema_name,\n\t\t\t\t\t\ttable_name,\n\t\t\t\t\t\tjson_object_agg(DISTINCT col, key_pos ORDER BY key_pos)\n\t\t\t\t\tFROM published_columns\n\t\t\t\t\tGROUP BY schema_name, table_name;",
+      "querySha256": "626906c8e3dfd0e6aa24c0905211bef35dced7429ce26b75ab6050ce88d07eb1",
+      "expectedRows": [
+        [
+          {
+            "value": "public"
+          },
+          {
+            "value": "items"
+          },
+          {
+            "value": "{\"id\":1,\"label\":null}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/groupby_test.go:TestGroupBy#0010",
+      "source": "testing/go/groupby_test.go:TestGroupBy",
+      "ordinal": 10,
+      "scriptName": "Postgres aggregate subquery in grouped select",
+      "oracle": "postgres",
+      "postgresId": "groupby-test-testgroupby-0010-select-schema_name-table_name-array_to_string-array",
+      "suggestedId": "groupby-test-testgroupby-0010-select-schema_name-table_name-array_to_string-array",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT\n\t\t\t\t\t\tschema_name,\n\t\t\t\t\t\ttable_name,\n\t\t\t\t\t\tarray_to_string(ARRAY(\n\t\t\t\t\t\t\tSELECT json_object_keys(\n\t\t\t\t\t\t\t\tjson_strip_nulls(\n\t\t\t\t\t\t\t\t\tjson_object_agg(DISTINCT col, key_pos ORDER BY key_pos)\n\t\t\t\t\t\t\t\t)\n\t\t\t\t\t\t\t)\n\t\t\t\t\t\t), ',') AS primary_key\n\t\t\t\t\tFROM published_columns\n\t\t\t\t\tGROUP BY schema_name, table_name;",
+      "querySha256": "f9355a2f99e204eade9eeb92f369d12c300fd556ac28e880904b380cb2bf72f8",
+      "expectedRows": [
+        [
+          {
+            "value": "public"
+          },
+          {
+            "value": "items"
+          },
+          {
+            "value": "id"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

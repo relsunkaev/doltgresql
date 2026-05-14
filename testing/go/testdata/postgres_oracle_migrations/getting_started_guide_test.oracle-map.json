@@ -1,0 +1,532 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map getting_started_guide_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/getting_started_guide_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide#0001",
+      "source": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide",
+      "ordinal": 1,
+      "scriptName": "Doltgres Getting Started Guide",
+      "oracle": "internal",
+      "suggestedId": "getting-started-guide-test-testgettingstartedguide-0001-select-*-from-dolt.status",
+      "expectedKind": "rows",
+      "query": "select * from dolt.status;",
+      "querySha256": "f83f3748ee99ceeb1f538583d0bf5562b3f893a2d2104355daf36e83a4a0a833",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide#0002",
+      "source": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide",
+      "ordinal": 2,
+      "scriptName": "Doltgres Getting Started Guide",
+      "oracle": "internal",
+      "suggestedId": "getting-started-guide-test-testgettingstartedguide-0002-select-dolt_add-teams-employees-employees_teams",
+      "expectedKind": "rows",
+      "query": "select dolt_add('teams', 'employees', 'employees_teams');",
+      "querySha256": "ff65b42814518a0ad5083ea1454d5d398605b678ebf9f191a43a512517bdd1ea",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide#0003",
+      "source": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide",
+      "ordinal": 3,
+      "scriptName": "Doltgres Getting Started Guide",
+      "oracle": "internal",
+      "suggestedId": "getting-started-guide-test-testgettingstartedguide-0003-select-*-from-dolt.status",
+      "expectedKind": "rows",
+      "query": "select * from dolt.status;",
+      "querySha256": "f83f3748ee99ceeb1f538583d0bf5562b3f893a2d2104355daf36e83a4a0a833",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide#0004",
+      "source": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide",
+      "ordinal": 4,
+      "scriptName": "Doltgres Getting Started Guide",
+      "oracle": "internal",
+      "suggestedId": "getting-started-guide-test-testgettingstartedguide-0004-select-length-dolt_commit-m-created",
+      "expectedKind": "rows",
+      "query": "select length(dolt_commit('-m', 'Created initial schema')::text);",
+      "querySha256": "40f672628cfcdb86b8d6a1b355ec1df754c6b9014e4867a5a3a0801e6cdc682b",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide#0005",
+      "source": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide",
+      "ordinal": 5,
+      "scriptName": "Doltgres Getting Started Guide",
+      "oracle": "internal",
+      "suggestedId": "getting-started-guide-test-testgettingstartedguide-0005-select-dolt_reset-hard",
+      "expectedKind": "rows",
+      "query": "select dolt_reset('--hard');",
+      "querySha256": "fdda225a14dbff6def535cc768b1bb3815da071961fcb78e90b9ccaa995aa3f3",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide#0006",
+      "source": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide",
+      "ordinal": 6,
+      "scriptName": "Doltgres Getting Started Guide",
+      "oracle": "internal",
+      "suggestedId": "getting-started-guide-test-testgettingstartedguide-0006-select-*-from-dolt.status",
+      "expectedKind": "rows",
+      "query": "select * from dolt.status;",
+      "querySha256": "f83f3748ee99ceeb1f538583d0bf5562b3f893a2d2104355daf36e83a4a0a833",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide#0007",
+      "source": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide",
+      "ordinal": 7,
+      "scriptName": "Doltgres Getting Started Guide",
+      "oracle": "internal",
+      "suggestedId": "getting-started-guide-test-testgettingstartedguide-0007-select-count-*-from-dolt.log",
+      "expectedKind": "rows",
+      "query": "select count(*) from dolt.log;",
+      "querySha256": "1c75237f21fc0813c245d4a44d2a9e01f66d342ad21df07aa5342cf88d5a00b4",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide#0008",
+      "source": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide",
+      "ordinal": 8,
+      "scriptName": "Doltgres Getting Started Guide",
+      "oracle": "internal",
+      "suggestedId": "getting-started-guide-test-testgettingstartedguide-0008-insert-into-employees-values-0",
+      "expectedKind": "rows",
+      "query": "insert into employees values (0, 'Sehn', 'Tim'), (1, 'Hendriks', 'Brian'), (2, 'Son','Aaron'), (3, 'Fitzgerald', 'Brian');",
+      "querySha256": "bb5886bb53a60814977a7c372f41dcde466952383ed126ee3ae9493ab6042ee2",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide#0009",
+      "source": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide",
+      "ordinal": 9,
+      "scriptName": "Doltgres Getting Started Guide",
+      "oracle": "internal",
+      "suggestedId": "getting-started-guide-test-testgettingstartedguide-0009-insert-into-teams-values-0",
+      "expectedKind": "rows",
+      "query": "insert into teams values (0, 'Engineering'), (1, 'Sales');",
+      "querySha256": "b27b7993070c545e8badf29d7c41c43a6c30c7bfdbe014aefbf17153c7ede049",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide#0010",
+      "source": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide",
+      "ordinal": 10,
+      "scriptName": "Doltgres Getting Started Guide",
+      "oracle": "internal",
+      "suggestedId": "getting-started-guide-test-testgettingstartedguide-0010-insert-into-employees_teams-employee_id-team_id",
+      "expectedKind": "rows",
+      "query": "insert into employees_teams(employee_id, team_id) values (0,0), (1,0), (2,0), (0,1), (3,1);",
+      "querySha256": "2d51b7493166bd7d84a00f9615c0a1be6d51dc7dcb82523e0d620977b155c9ba",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide#0011",
+      "source": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide",
+      "ordinal": 11,
+      "scriptName": "Doltgres Getting Started Guide",
+      "oracle": "internal",
+      "suggestedId": "getting-started-guide-test-testgettingstartedguide-0011-select-first_name-last_name-team_name-from",
+      "expectedKind": "rows",
+      "query": "select first_name, last_name, team_name from employees\n\t\t\t\t\t\t\tjoin employees_teams on (employees.id=employees_teams.employee_id)\n\t\t\t\t\t\t\tjoin teams on (teams.id=employees_teams.team_id)\n\t\t\t\t\t\t\twhere team_name='Engineering';",
+      "querySha256": "8db4b9158a7b743a22b7f6bbcfa63b1df96e4b02efd779763e80091d1565a728",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide#0012",
+      "source": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide",
+      "ordinal": 12,
+      "scriptName": "Doltgres Getting Started Guide",
+      "oracle": "internal",
+      "suggestedId": "getting-started-guide-test-testgettingstartedguide-0012-select-*-from-employees_teams-where",
+      "expectedKind": "rows",
+      "query": "select * from employees_teams where employee_id='0' and team_id='1';",
+      "querySha256": "4bb8a79a2f79ada6aaa1ba744ebf24705f28664a0ade6ab1243a3bcf60dc28fb",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide#0013",
+      "source": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide",
+      "ordinal": 13,
+      "scriptName": "Doltgres Getting Started Guide",
+      "oracle": "internal",
+      "suggestedId": "getting-started-guide-test-testgettingstartedguide-0013-select-*-from-dolt.status-order",
+      "expectedKind": "rows",
+      "query": "select * from dolt.status order by table_name;",
+      "querySha256": "b24dad2ade3a28bfbd0f393b4759d9a5cb0a52387d889cfeffc67f79ded0c3f0",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide#0014",
+      "source": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide",
+      "ordinal": 14,
+      "scriptName": "Doltgres Getting Started Guide",
+      "oracle": "internal",
+      "suggestedId": "getting-started-guide-test-testgettingstartedguide-0014-select-to_last_name-to_first_name-to_id-to_commit",
+      "expectedKind": "rows",
+      "query": "select to_last_name, to_first_name, to_id, to_commit, from_last_name, from_first_name, from_id, diff_type from dolt_diff_employees;",
+      "querySha256": "96383ce662e31cb4209b80244eec708b84c577b0bd1ec62ea368bef92225ba7a",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide#0015",
+      "source": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide",
+      "ordinal": 15,
+      "scriptName": "Doltgres Getting Started Guide",
+      "oracle": "internal",
+      "suggestedId": "getting-started-guide-test-testgettingstartedguide-0015-select-length-dolt_commit-am-populated",
+      "expectedKind": "rows",
+      "query": "select length(dolt_commit('-am', 'Populated tables with data')::text);",
+      "querySha256": "f4d6a79669c1bb055c1a6e61edc9ba05b8cea5398c844d9e8febd16f7eb755c1",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide#0016",
+      "source": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide",
+      "ordinal": 16,
+      "scriptName": "Doltgres Getting Started Guide",
+      "oracle": "internal",
+      "suggestedId": "getting-started-guide-test-testgettingstartedguide-0016-select-*-from-dolt.status-order",
+      "expectedKind": "rows",
+      "query": "select * from dolt.status order by table_name;",
+      "querySha256": "b24dad2ade3a28bfbd0f393b4759d9a5cb0a52387d889cfeffc67f79ded0c3f0",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide#0017",
+      "source": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide",
+      "ordinal": 17,
+      "scriptName": "Doltgres Getting Started Guide",
+      "oracle": "internal",
+      "suggestedId": "getting-started-guide-test-testgettingstartedguide-0017-select-message-from-dolt.log",
+      "expectedKind": "rows",
+      "query": "select message from dolt.log;",
+      "querySha256": "6e5b8c9988d4195d65c1e5f6fd2b537c1984ee07348a721f48083c3d7911e408",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide#0018",
+      "source": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide",
+      "ordinal": 18,
+      "scriptName": "Doltgres Getting Started Guide",
+      "oracle": "internal",
+      "suggestedId": "getting-started-guide-test-testgettingstartedguide-0018-select-table_name-message-data_change-schema_change",
+      "expectedKind": "rows",
+      "query": "select table_name, message, data_change, schema_change from dolt.diff order by date desc, table_name;",
+      "querySha256": "6ba530d902c91b0cb2e2772243107aff5194e22f8bc5bb635696e64c34aef399",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide#0019",
+      "source": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide",
+      "ordinal": 19,
+      "scriptName": "Doltgres Getting Started Guide",
+      "oracle": "internal",
+      "suggestedId": "getting-started-guide-test-testgettingstartedguide-0019-drop-table-employees_teams",
+      "expectedKind": "rows",
+      "query": "drop table employees_teams;",
+      "querySha256": "10ceefe9516848113530f8eb935c4bcb22ba8b6b0570b65633f0170434490cdb",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide#0020",
+      "source": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide",
+      "ordinal": 20,
+      "scriptName": "Doltgres Getting Started Guide",
+      "oracle": "internal",
+      "suggestedId": "getting-started-guide-test-testgettingstartedguide-0020-select-count-*-from-employees_teams",
+      "expectedKind": "error",
+      "query": "select count(*) from employees_teams;",
+      "querySha256": "6740ff4517693b6f36300e0ee8a09fd9c643221a2de2777988cb80ce1ebdd716",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide#0021",
+      "source": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide",
+      "ordinal": 21,
+      "scriptName": "Doltgres Getting Started Guide",
+      "oracle": "internal",
+      "suggestedId": "getting-started-guide-test-testgettingstartedguide-0021-select-dolt_reset-hard",
+      "expectedKind": "rows",
+      "query": "select dolt_reset('--hard');",
+      "querySha256": "fdda225a14dbff6def535cc768b1bb3815da071961fcb78e90b9ccaa995aa3f3",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide#0022",
+      "source": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide",
+      "ordinal": 22,
+      "scriptName": "Doltgres Getting Started Guide",
+      "oracle": "internal",
+      "suggestedId": "getting-started-guide-test-testgettingstartedguide-0022-select-count-*-from-employees_teams",
+      "expectedKind": "rows",
+      "query": "select count(*) from employees_teams;",
+      "querySha256": "6740ff4517693b6f36300e0ee8a09fd9c643221a2de2777988cb80ce1ebdd716",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide#0023",
+      "source": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide",
+      "ordinal": 23,
+      "scriptName": "Doltgres Getting Started Guide",
+      "oracle": "internal",
+      "suggestedId": "getting-started-guide-test-testgettingstartedguide-0023-select-dolt_checkout-b-modifications",
+      "expectedKind": "rows",
+      "query": "select dolt_checkout('-b','modifications');",
+      "querySha256": "69df9f3ef995147bd9131dc11587403a51edb14f7b389eec26c81980a7cd866d",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide#0024",
+      "source": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide",
+      "ordinal": 24,
+      "scriptName": "Doltgres Getting Started Guide",
+      "oracle": "internal",
+      "suggestedId": "getting-started-guide-test-testgettingstartedguide-0024-update-employees-set-first_name=-timothy",
+      "expectedKind": "rows",
+      "query": "update employees SET first_name='Timothy' where first_name='Tim';",
+      "querySha256": "28e0c6642c1d2149c3b84b1779fdade974d0d7c25c04e0f592d68cb79ec44237",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide#0025",
+      "source": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide",
+      "ordinal": 25,
+      "scriptName": "Doltgres Getting Started Guide",
+      "oracle": "internal",
+      "suggestedId": "getting-started-guide-test-testgettingstartedguide-0025-insert-into-employees-id-first_name",
+      "expectedKind": "rows",
+      "query": "insert INTO employees (id, first_name, last_name) values (4,'Daylon', 'Wilkins');",
+      "querySha256": "1a84d0964d350bad773171b969e4dfae142e7361ac98fb70606bc8436ed95dc6",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide#0026",
+      "source": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide",
+      "ordinal": 26,
+      "scriptName": "Doltgres Getting Started Guide",
+      "oracle": "internal",
+      "suggestedId": "getting-started-guide-test-testgettingstartedguide-0026-insert-into-employees_teams-team_id-employee_id",
+      "expectedKind": "rows",
+      "query": "insert into employees_teams(team_id, employee_id) values (0,4);",
+      "querySha256": "c2be37b90be4e787c9023370cb8b86c35418e65bd8cb596abadb55d9cb32e593",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide#0027",
+      "source": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide",
+      "ordinal": 27,
+      "scriptName": "Doltgres Getting Started Guide",
+      "oracle": "internal",
+      "suggestedId": "getting-started-guide-test-testgettingstartedguide-0027-delete-from-employees_teams-where-employee_id=0",
+      "expectedKind": "rows",
+      "query": "delete from employees_teams where employee_id=0 and team_id=1;",
+      "querySha256": "be2b43522195aad081711ae4890647076e0a616df457e24c8069e7b2bc9151fc",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide#0028",
+      "source": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide",
+      "ordinal": 28,
+      "scriptName": "Doltgres Getting Started Guide",
+      "oracle": "internal",
+      "suggestedId": "getting-started-guide-test-testgettingstartedguide-0028-select-length-dolt_commit-am-modifications",
+      "expectedKind": "rows",
+      "query": "select length(dolt_commit('-am', 'Modifications on a branch')::text);",
+      "querySha256": "eeeb8e5b987610a65563f77fe8dba2643fae09d807cb1c6f7e0f1aca2d00a264",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide#0029",
+      "source": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide",
+      "ordinal": 29,
+      "scriptName": "Doltgres Getting Started Guide",
+      "oracle": "internal",
+      "suggestedId": "getting-started-guide-test-testgettingstartedguide-0029-select-dolt_checkout-main",
+      "expectedKind": "rows",
+      "query": "select dolt_checkout('main');",
+      "querySha256": "19cc80e88b89143c45380591d38f972e1a5c678f3d176246e6b90d87fbc66c5d",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide#0030",
+      "source": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide",
+      "ordinal": 30,
+      "scriptName": "Doltgres Getting Started Guide",
+      "oracle": "internal",
+      "suggestedId": "getting-started-guide-test-testgettingstartedguide-0030-select-name-latest_commit_message-from-dolt.branches",
+      "expectedKind": "rows",
+      "query": "select name, latest_commit_message from dolt.branches;",
+      "querySha256": "36d5520281db5592e13b29adb2048af71c35a2b63a5555417cf203dbd5bf34c5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide#0031",
+      "source": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide",
+      "ordinal": 31,
+      "scriptName": "Doltgres Getting Started Guide",
+      "oracle": "internal",
+      "suggestedId": "getting-started-guide-test-testgettingstartedguide-0031-select-active_branch",
+      "expectedKind": "rows",
+      "query": "select active_branch();",
+      "querySha256": "0c4c3160c26b663ed9cf341289f9243be1ffa87697a75837de334e6ae335f2c7",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide#0032",
+      "source": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide",
+      "ordinal": 32,
+      "scriptName": "Doltgres Getting Started Guide",
+      "oracle": "internal",
+      "suggestedId": "getting-started-guide-test-testgettingstartedguide-0032-select-*-from-employees",
+      "expectedKind": "rows",
+      "query": "select * from employees;",
+      "querySha256": "0452d7335b83a024f849ae195bd27d44925dad1c336da11d6cda143b1293bf1f",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide#0033",
+      "source": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide",
+      "ordinal": 33,
+      "scriptName": "Doltgres Getting Started Guide",
+      "oracle": "internal",
+      "suggestedId": "getting-started-guide-test-testgettingstartedguide-0033-select-*-from-employees-as",
+      "expectedKind": "rows",
+      "query": "select * from employees as of 'modifications';",
+      "querySha256": "f971f4023fc7869bbb1aa2d4b3968b57f4c0e7433048e689536fcebb25c3f979",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide#0034",
+      "source": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide",
+      "ordinal": 34,
+      "scriptName": "Doltgres Getting Started Guide",
+      "oracle": "internal",
+      "suggestedId": "getting-started-guide-test-testgettingstartedguide-0034-select-to_id-to_last_name-to_first_name-to_commit",
+      "expectedKind": "rows",
+      "query": "select to_id, to_last_name, to_first_name, to_commit, \n\t\t\t\t\t\t\tfrom_id, from_last_name, from_first_name, from_commit, diff_type\n\t\t\t\t\t\t\tfrom dolt_diff('main', 'modifications', 'employees');",
+      "querySha256": "97da35808ace3cd3975768ca7cd9fd7bbe95523a76650a0cee9a4e5ff8e54ee3",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide#0035",
+      "source": "testing/go/getting_started_guide_test.go:TestGettingStartedGuide",
+      "ordinal": 35,
+      "scriptName": "Doltgres Getting Started Guide",
+      "oracle": "internal",
+      "suggestedId": "getting-started-guide-test-testgettingstartedguide-0035-select-dolt_checkout-b-schema_changes",
+      "expectedKind": "rows",
+      "query": "select dolt_checkout('-b', 'schema_changes');",
+      "querySha256": "754e6be698c61a09769c7eeeb30f3585968a6ebd4dda622aeb62dfcd67bf7b69",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    }
+  ]
+}

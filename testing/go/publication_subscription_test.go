@@ -39,10 +39,7 @@ func TestPublicationDDLAndCatalogs(t *testing.T) {
 					Query: "CREATE PUBLICATION dg_pub FOR TABLE pub_items (tenant_id, label) WHERE (tenant_id > 0) WITH (publish = 'insert, update', publish_via_partition_root = true);",
 				},
 				{
-					Query: "SELECT pubname, puballtables, pubinsert, pubupdate, pubdelete, pubtruncate, pubviaroot FROM pg_catalog.pg_publication WHERE pubname = 'dg_pub';",
-					Expected: []sql.Row{
-						{"dg_pub", "f", "t", "t", "f", "f", "t"},
-					},
+					Query: "SELECT pubname, puballtables, pubinsert, pubupdate, pubdelete, pubtruncate, pubviaroot FROM pg_catalog.pg_publication WHERE pubname = 'dg_pub';", PostgresOracle: ScriptTestPostgresOracle{ID: "publication-subscription-test-testpublicationddlandcatalogs-0002-select-pubname-puballtables-pubinsert-pubupdate"},
 				},
 				{
 					Query: `SELECT
@@ -52,22 +49,13 @@ func TestPublicationDDLAndCatalogs(t *testing.T) {
 						      THEN (to_jsonb(p) ->> 'pubgencols') = 's'
 						      ELSE FALSE
 						  END AS publishes_generated_columns
-						FROM pg_publication AS p WHERE pubname = 'dg_pub';`,
-					Expected: []sql.Row{
-						{"t", "f", "f"},
-					},
+						FROM pg_publication AS p WHERE pubname = 'dg_pub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-subscription-test-testpublicationddlandcatalogs-0003-select-pg_get_userbyid-p.pubowner-=-current_role"},
 				},
 				{
-					Query: "SELECT pubname, schemaname, tablename, array_to_string(attnames, ','), rowfilter IS NOT NULL FROM pg_catalog.pg_publication_tables WHERE pubname = 'dg_pub';",
-					Expected: []sql.Row{
-						{"dg_pub", "public", "pub_items", "tenant_id,label", "t"},
-					},
+					Query: "SELECT pubname, schemaname, tablename, array_to_string(attnames, ','), rowfilter IS NOT NULL FROM pg_catalog.pg_publication_tables WHERE pubname = 'dg_pub';", PostgresOracle: ScriptTestPostgresOracle{ID: "publication-subscription-test-testpublicationddlandcatalogs-0004-select-pubname-schemaname-tablename-array_to_string", ColumnModes: []string{"structural", "schema"}},
 				},
 				{
-					Query: "SELECT p.pubname, c.relname, array_to_string(pr.prattrs, ',') FROM pg_catalog.pg_publication_rel pr JOIN pg_catalog.pg_publication p ON p.oid = pr.prpubid JOIN pg_catalog.pg_class c ON c.oid = pr.prrelid WHERE p.pubname = 'dg_pub';",
-					Expected: []sql.Row{
-						{"dg_pub", "pub_items", "1,2"},
-					},
+					Query: "SELECT p.pubname, c.relname, array_to_string(pr.prattrs, ',') FROM pg_catalog.pg_publication_rel pr JOIN pg_catalog.pg_publication p ON p.oid = pr.prpubid JOIN pg_catalog.pg_class c ON c.oid = pr.prrelid WHERE p.pubname = 'dg_pub';", PostgresOracle: ScriptTestPostgresOracle{ID: "publication-subscription-test-testpublicationddlandcatalogs-0005-select-p.pubname-c.relname-array_to_string-pr.prattrs"},
 				},
 				{
 					Query: "ALTER PUBLICATION dg_pub ADD TABLE pub_more;",
@@ -228,64 +216,46 @@ func TestSubscriptionDDLAndCatalogs(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       "CREATE SUBSCRIPTION dg_bad_sub CONNECTION 'host=127.0.0.1 dbname=postgres' PUBLICATION dg_pub;",
-					ExpectedErr: "connect=false",
+					Query: "CREATE SUBSCRIPTION dg_bad_sub CONNECTION 'host=127.0.0.1 dbname=postgres' PUBLICATION dg_pub;", PostgresOracle: ScriptTestPostgresOracle{ID: "publication-subscription-test-testsubscriptionddlandcatalogs-0001-create-subscription-dg_bad_sub-connection-host=127.0.0.1", Compare: "sqlstate"},
 				},
 				{
-					Query:       "CREATE SUBSCRIPTION dg_bad_slot_sub CONNECTION 'host=127.0.0.1 dbname=postgres' PUBLICATION dg_pub WITH (connect = false, enabled = false, create_slot = true);",
-					ExpectedErr: "connect = false and create_slot = true are mutually exclusive options",
+					Query: "CREATE SUBSCRIPTION dg_bad_slot_sub CONNECTION 'host=127.0.0.1 dbname=postgres' PUBLICATION dg_pub WITH (connect = false, enabled = false, create_slot = true);", PostgresOracle: ScriptTestPostgresOracle{ID: "publication-subscription-test-testsubscriptionddlandcatalogs-0002-create-subscription-dg_bad_slot_sub-connection-host=127.0.0.1", Compare: "sqlstate"},
 				},
 				{
-					Query:       "CREATE SUBSCRIPTION dg_bad_enabled_sub CONNECTION 'host=127.0.0.1 dbname=postgres' PUBLICATION dg_pub WITH (connect = false, enabled = true, create_slot = false);",
-					ExpectedErr: "connect = false and enabled = true are mutually exclusive options",
+					Query: "CREATE SUBSCRIPTION dg_bad_enabled_sub CONNECTION 'host=127.0.0.1 dbname=postgres' PUBLICATION dg_pub WITH (connect = false, enabled = true, create_slot = false);", PostgresOracle: ScriptTestPostgresOracle{ID: "publication-subscription-test-testsubscriptionddlandcatalogs-0003-create-subscription-dg_bad_enabled_sub-connection-host=127.0.0.1", Compare: "sqlstate"},
 				},
 				{
-					Query:       "CREATE SUBSCRIPTION dg_bad_copy_sub CONNECTION 'host=127.0.0.1 dbname=postgres' PUBLICATION dg_pub WITH (connect = false, enabled = false, create_slot = false, copy_data = true);",
-					ExpectedErr: "connect = false and copy_data = true are mutually exclusive options",
+					Query: "CREATE SUBSCRIPTION dg_bad_copy_sub CONNECTION 'host=127.0.0.1 dbname=postgres' PUBLICATION dg_pub WITH (connect = false, enabled = false, create_slot = false, copy_data = true);", PostgresOracle: ScriptTestPostgresOracle{ID: "publication-subscription-test-testsubscriptionddlandcatalogs-0004-create-subscription-dg_bad_copy_sub-connection-host=127.0.0.1", Compare: "sqlstate"},
 				},
 				{
 					Query: "CREATE SUBSCRIPTION dg_sub CONNECTION 'host=127.0.0.1 dbname=postgres' PUBLICATION dg_pub WITH (connect = false, enabled = false, slot_name = NONE, create_slot = false, binary = true, streaming = true, two_phase = false, disable_on_error = true, synchronous_commit = 'remote_apply');",
 				},
 				{
-					Query: "SELECT subname, subenabled, subbinary, substream, subtwophasestate, subdisableonerr, subslotname IS NULL, subsynccommit, array_to_string(subpublications, ','), subskiplsn::text FROM pg_catalog.pg_subscription WHERE subname = 'dg_sub';",
-					Expected: []sql.Row{
-						{"dg_sub", "f", "t", "t", "d", "t", "t", "remote_apply", "dg_pub", "0/0"},
-					},
+					Query: "SELECT subname, subenabled, subbinary, substream, subtwophasestate, subdisableonerr, subslotname IS NULL, subsynccommit, array_to_string(subpublications, ','), subskiplsn::text FROM pg_catalog.pg_subscription WHERE subname = 'dg_sub';", PostgresOracle: ScriptTestPostgresOracle{ID: "publication-subscription-test-testsubscriptionddlandcatalogs-0005-select-subname-subenabled-subbinary-substream"},
 				},
 				{
-					Query: "SELECT count(*) FROM pg_catalog.pg_subscription_rel;",
-					Expected: []sql.Row{
-						{0},
-					},
+					Query: "SELECT count(*) FROM pg_catalog.pg_subscription_rel;", PostgresOracle: ScriptTestPostgresOracle{ID: "publication-subscription-test-testsubscriptionddlandcatalogs-0006-select-count-*-from-pg_catalog.pg_subscription_rel"},
 				},
 				{
 					Query: "ALTER SUBSCRIPTION dg_sub ADD PUBLICATION dg_pub2 WITH (copy_data = false, refresh = false);",
 				},
 				{
-					Query: "SELECT array_to_string(subpublications, ',') FROM pg_catalog.pg_subscription WHERE subname = 'dg_sub';",
-					Expected: []sql.Row{
-						{"dg_pub,dg_pub2"},
-					},
+					Query: "SELECT array_to_string(subpublications, ',') FROM pg_catalog.pg_subscription WHERE subname = 'dg_sub';", PostgresOracle: ScriptTestPostgresOracle{ID: "publication-subscription-test-testsubscriptionddlandcatalogs-0007-select-array_to_string-subpublications-from-pg_catalog.pg_subscription"},
 				},
 				{
 					Query: "ALTER SUBSCRIPTION dg_sub SET PUBLICATION dg_pub2 WITH (refresh = false);",
 				},
 				{
-					Query:       "ALTER SUBSCRIPTION dg_sub ENABLE;",
-					ExpectedErr: "cannot enable subscription that does not have a slot name",
+					Query: "ALTER SUBSCRIPTION dg_sub ENABLE;", PostgresOracle: ScriptTestPostgresOracle{ID: "publication-subscription-test-testsubscriptionddlandcatalogs-0008-alter-subscription-dg_sub-enable", Compare: "sqlstate"},
 				},
 				{
 					Query: "ALTER SUBSCRIPTION dg_sub SKIP (lsn = '0/16');",
 				},
 				{
-					Query: "SELECT subenabled, subskiplsn::text, array_to_string(subpublications, ',') FROM pg_catalog.pg_subscription WHERE subname = 'dg_sub';",
-					Expected: []sql.Row{
-						{"f", "0/16", "dg_pub2"},
-					},
+					Query: "SELECT subenabled, subskiplsn::text, array_to_string(subpublications, ',') FROM pg_catalog.pg_subscription WHERE subname = 'dg_sub';", PostgresOracle: ScriptTestPostgresOracle{ID: "publication-subscription-test-testsubscriptionddlandcatalogs-0009-select-subenabled-subskiplsn::text-array_to_string-subpublications"},
 				},
 				{
-					Query:       "ALTER SUBSCRIPTION dg_sub REFRESH PUBLICATION WITH (copy_data = false);",
-					ExpectedErr: "ALTER SUBSCRIPTION ... REFRESH is not allowed for disabled subscriptions",
+					Query: "ALTER SUBSCRIPTION dg_sub REFRESH PUBLICATION WITH (copy_data = false);", PostgresOracle: ScriptTestPostgresOracle{ID: "publication-subscription-test-testsubscriptionddlandcatalogs-0010-alter-subscription-dg_sub-refresh-publication", Compare: "sqlstate"},
 				},
 				{
 					Query: "ALTER SUBSCRIPTION dg_sub DISABLE;",
@@ -297,10 +267,7 @@ func TestSubscriptionDDLAndCatalogs(t *testing.T) {
 					Query: "ALTER SUBSCRIPTION dg_enabled_metadata_sub ENABLE;",
 				},
 				{
-					Query: "SELECT subenabled, subslotname FROM pg_catalog.pg_subscription WHERE subname = 'dg_enabled_metadata_sub';",
-					Expected: []sql.Row{
-						{"t", "dg_enabled_metadata_sub"},
-					},
+					Query: "SELECT subenabled, subslotname FROM pg_catalog.pg_subscription WHERE subname = 'dg_enabled_metadata_sub';", PostgresOracle: ScriptTestPostgresOracle{ID: "publication-subscription-test-testsubscriptionddlandcatalogs-0011-select-subenabled-subslotname-from-pg_catalog.pg_subscription"},
 				},
 				{
 					Query: "SELECT count(*) FROM pg_catalog.pg_subscription_rel;",

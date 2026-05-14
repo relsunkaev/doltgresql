@@ -38,15 +38,17 @@ func TestRollbackDropsTempTableCreatedInTransactionRepro(t *testing.T) {
 					Query: `INSERT INTO rollback_temp_table VALUES (1);`,
 				},
 				{
-					Query:    `SELECT * FROM rollback_temp_table;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT * FROM rollback_temp_table;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackdropstemptablecreatedintransactionrepro-0001-select-*-from-rollback_temp_table"},
 				},
 				{
 					Query: `ROLLBACK;`,
 				},
 				{
-					Query:       `SELECT * FROM rollback_temp_table;`,
-					ExpectedErr: `table not found`,
+					Query: `SELECT * FROM rollback_temp_table;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackdropstemptablecreatedintransactionrepro-0002-select-*-from-rollback_temp_table",
+
+						// TestRollbackDropsTableCreatedInTransactionRepro guards that ordinary table
+						// creation is rolled back with the surrounding transaction.
+						Compare: "sqlstate"},
 				},
 				{
 					Query: `CREATE TEMPORARY TABLE rollback_temp_table (b INT);`,
@@ -56,8 +58,6 @@ func TestRollbackDropsTempTableCreatedInTransactionRepro(t *testing.T) {
 	})
 }
 
-// TestRollbackDropsTableCreatedInTransactionRepro guards that ordinary table
-// creation is rolled back with the surrounding transaction.
 func TestRollbackDropsTableCreatedInTransactionRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -73,15 +73,17 @@ func TestRollbackDropsTableCreatedInTransactionRepro(t *testing.T) {
 					Query: `INSERT INTO rollback_regular_table VALUES (1);`,
 				},
 				{
-					Query:    `SELECT * FROM rollback_regular_table;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT * FROM rollback_regular_table;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackdropstablecreatedintransactionrepro-0001-select-*-from-rollback_regular_table"},
 				},
 				{
 					Query: `ROLLBACK;`,
 				},
 				{
-					Query:       `SELECT * FROM rollback_regular_table;`,
-					ExpectedErr: `table not found`,
+					Query: `SELECT * FROM rollback_regular_table;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackdropstablecreatedintransactionrepro-0002-select-*-from-rollback_regular_table",
+
+						// TestRollbackRevertsAlterTableAddColumnRepro guards that ALTER TABLE ADD
+						// COLUMN is rolled back with the surrounding transaction.
+						Compare: "sqlstate"},
 				},
 				{
 					Query: `CREATE TABLE rollback_regular_table (b INT);`,
@@ -91,8 +93,6 @@ func TestRollbackDropsTableCreatedInTransactionRepro(t *testing.T) {
 	})
 }
 
-// TestRollbackRevertsAlterTableAddColumnRepro guards that ALTER TABLE ADD
-// COLUMN is rolled back with the surrounding transaction.
 func TestRollbackRevertsAlterTableAddColumnRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -112,15 +112,17 @@ func TestRollbackRevertsAlterTableAddColumnRepro(t *testing.T) {
 					Query: `UPDATE rollback_alter_table SET v = 10 WHERE id = 1;`,
 				},
 				{
-					Query:    `SELECT id, v FROM rollback_alter_table;`,
-					Expected: []sql.Row{{1, 10}},
+					Query: `SELECT id, v FROM rollback_alter_table;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrevertsaltertableaddcolumnrepro-0001-select-id-v-from-rollback_alter_table"},
 				},
 				{
 					Query: `ROLLBACK;`,
 				},
 				{
-					Query:       `SELECT v FROM rollback_alter_table;`,
-					ExpectedErr: `column`,
+					Query: `SELECT v FROM rollback_alter_table;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrevertsaltertableaddcolumnrepro-0002-select-v-from-rollback_alter_table",
+
+						// TestRollbackRestoresDroppedColumnRepro guards that ALTER TABLE DROP COLUMN
+						// is rolled back with the surrounding transaction, including stored values.
+						Compare: "sqlstate"},
 				},
 				{
 					Query: `ALTER TABLE rollback_alter_table ADD COLUMN v TEXT;`,
@@ -130,8 +132,6 @@ func TestRollbackRevertsAlterTableAddColumnRepro(t *testing.T) {
 	})
 }
 
-// TestRollbackRestoresDroppedColumnRepro guards that ALTER TABLE DROP COLUMN
-// is rolled back with the surrounding transaction, including stored values.
 func TestRollbackRestoresDroppedColumnRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -151,15 +151,13 @@ func TestRollbackRestoresDroppedColumnRepro(t *testing.T) {
 					Query: `ALTER TABLE rollback_drop_column_items DROP COLUMN label;`,
 				},
 				{
-					Query:       `SELECT label FROM rollback_drop_column_items;`,
-					ExpectedErr: `column`,
+					Query: `SELECT label FROM rollback_drop_column_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresdroppedcolumnrepro-0001-select-label-from-rollback_drop_column_items", Compare: "sqlstate"},
 				},
 				{
 					Query: `ROLLBACK;`,
 				},
 				{
-					Query:    `SELECT id, label FROM rollback_drop_column_items;`,
-					Expected: []sql.Row{{1, "before"}},
+					Query: `SELECT id, label FROM rollback_drop_column_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresdroppedcolumnrepro-0002-select-id-label-from-rollback_drop_column_items"},
 				},
 			},
 		},
@@ -187,31 +185,29 @@ func TestRollbackRestoresRenamedTableRepro(t *testing.T) {
 					Query: `ALTER TABLE rollback_rename_table_old RENAME TO rollback_rename_table_new;`,
 				},
 				{
-					Query:    `SELECT id, label FROM rollback_rename_table_new;`,
-					Expected: []sql.Row{{1, "before"}},
+					Query: `SELECT id, label FROM rollback_rename_table_new;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresrenamedtablerepro-0001-select-id-label-from-rollback_rename_table_new"},
 				},
 				{
-					Query:       `SELECT id, label FROM rollback_rename_table_old;`,
-					ExpectedErr: `table not found`,
+					Query: `SELECT id, label FROM rollback_rename_table_old;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresrenamedtablerepro-0002-select-id-label-from-rollback_rename_table_old", Compare: "sqlstate"},
 				},
 				{
 					Query: `ROLLBACK;`,
 				},
 				{
-					Query:    `SELECT id, label FROM rollback_rename_table_old;`,
-					Expected: []sql.Row{{1, "before"}},
+					Query: `SELECT id, label FROM rollback_rename_table_old;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresrenamedtablerepro-0003-select-id-label-from-rollback_rename_table_old"},
 				},
 				{
-					Query:       `SELECT id, label FROM rollback_rename_table_new;`,
-					ExpectedErr: `table not found`,
+					Query: `SELECT id, label FROM rollback_rename_table_new;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresrenamedtablerepro-0004-select-id-label-from-rollback_rename_table_new",
+
+						// TestRollbackRestoresRenamedColumnRepro guards that ALTER TABLE RENAME COLUMN
+						// is rolled back with the surrounding transaction.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestRollbackRestoresRenamedColumnRepro guards that ALTER TABLE RENAME COLUMN
-// is rolled back with the surrounding transaction.
 func TestRollbackRestoresRenamedColumnRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -231,31 +227,29 @@ func TestRollbackRestoresRenamedColumnRepro(t *testing.T) {
 					Query: `ALTER TABLE rollback_rename_column_items RENAME COLUMN old_label TO new_label;`,
 				},
 				{
-					Query:    `SELECT id, new_label FROM rollback_rename_column_items;`,
-					Expected: []sql.Row{{1, "before"}},
+					Query: `SELECT id, new_label FROM rollback_rename_column_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresrenamedcolumnrepro-0001-select-id-new_label-from-rollback_rename_column_items"},
 				},
 				{
-					Query:       `SELECT old_label FROM rollback_rename_column_items;`,
-					ExpectedErr: `column`,
+					Query: `SELECT old_label FROM rollback_rename_column_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresrenamedcolumnrepro-0002-select-old_label-from-rollback_rename_column_items", Compare: "sqlstate"},
 				},
 				{
 					Query: `ROLLBACK;`,
 				},
 				{
-					Query:    `SELECT id, old_label FROM rollback_rename_column_items;`,
-					Expected: []sql.Row{{1, "before"}},
+					Query: `SELECT id, old_label FROM rollback_rename_column_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresrenamedcolumnrepro-0003-select-id-old_label-from-rollback_rename_column_items"},
 				},
 				{
-					Query:       `SELECT new_label FROM rollback_rename_column_items;`,
-					ExpectedErr: `column`,
+					Query: `SELECT new_label FROM rollback_rename_column_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresrenamedcolumnrepro-0004-select-new_label-from-rollback_rename_column_items",
+
+						// TestRollbackRevertsAddedCheckConstraintRepro guards that ALTER TABLE ADD
+						// CONSTRAINT is rolled back with the surrounding transaction.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestRollbackRevertsAddedCheckConstraintRepro guards that ALTER TABLE ADD
-// CONSTRAINT is rolled back with the surrounding transaction.
 func TestRollbackRevertsAddedCheckConstraintRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -275,8 +269,7 @@ func TestRollbackRevertsAddedCheckConstraintRepro(t *testing.T) {
 						ADD CONSTRAINT rollback_add_check_positive CHECK (amount > 0);`,
 				},
 				{
-					Query:       `INSERT INTO rollback_add_check_items VALUES (1, -1);`,
-					ExpectedErr: `Check constraint`,
+					Query: `INSERT INTO rollback_add_check_items VALUES (1, -1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrevertsaddedcheckconstraintrepro-0001-insert-into-rollback_add_check_items-values-1", Compare: "sqlstate"},
 				},
 				{
 					Query: `ROLLBACK;`,
@@ -285,8 +278,7 @@ func TestRollbackRevertsAddedCheckConstraintRepro(t *testing.T) {
 					Query: `INSERT INTO rollback_add_check_items VALUES (1, -1);`,
 				},
 				{
-					Query:    `SELECT id, amount FROM rollback_add_check_items;`,
-					Expected: []sql.Row{{1, -1}},
+					Query: `SELECT id, amount FROM rollback_add_check_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrevertsaddedcheckconstraintrepro-0002-select-id-amount-from-rollback_add_check_items"},
 				},
 			},
 		},
@@ -320,12 +312,10 @@ func TestRollbackRestoresDroppedCheckConstraintRepro(t *testing.T) {
 					Query: `ROLLBACK;`,
 				},
 				{
-					Query:       `INSERT INTO rollback_drop_check_items VALUES (2, -2);`,
-					ExpectedErr: `Check constraint`,
+					Query: `INSERT INTO rollback_drop_check_items VALUES (2, -2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresdroppedcheckconstraintrepro-0001-insert-into-rollback_drop_check_items-values-2", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT COUNT(*) FROM rollback_drop_check_items;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT COUNT(*) FROM rollback_drop_check_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresdroppedcheckconstraintrepro-0002-select-count-*-from-rollback_drop_check_items"},
 				},
 			},
 		},
@@ -354,8 +344,7 @@ func TestRollbackRevertsAddedUniqueConstraintGuard(t *testing.T) {
 						ADD CONSTRAINT rollback_add_unique_code_key UNIQUE (code);`,
 				},
 				{
-					Query:       `INSERT INTO rollback_add_unique_items VALUES (2, 10);`,
-					ExpectedErr: `duplicate`,
+					Query: `INSERT INTO rollback_add_unique_items VALUES (2, 10);`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrevertsaddeduniqueconstraintguard-0001-insert-into-rollback_add_unique_items-values-2", Compare: "sqlstate"},
 				},
 				{
 					Query: `ROLLBACK;`,
@@ -366,11 +355,7 @@ func TestRollbackRevertsAddedUniqueConstraintGuard(t *testing.T) {
 				{
 					Query: `SELECT id, code
 						FROM rollback_add_unique_items
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, 10},
-						{2, 10},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrevertsaddeduniqueconstraintguard-0002-select-id-code-from-rollback_add_unique_items"},
 				},
 			},
 		},
@@ -405,14 +390,12 @@ func TestRollbackRestoresDroppedUniqueConstraintGuard(t *testing.T) {
 					Query: `ROLLBACK;`,
 				},
 				{
-					Query:       `INSERT INTO rollback_drop_unique_items VALUES (3, 10);`,
-					ExpectedErr: `duplicate`,
+					Query: `INSERT INTO rollback_drop_unique_items VALUES (3, 10);`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresdroppeduniqueconstraintguard-0001-insert-into-rollback_drop_unique_items-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, code
 						FROM rollback_drop_unique_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, 10}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresdroppeduniqueconstraintguard-0002-select-id-code-from-rollback_drop_unique_items"},
 				},
 			},
 		},
@@ -445,8 +428,7 @@ func TestRollbackRevertsAddedForeignKeyConstraintGuard(t *testing.T) {
 						FOREIGN KEY (parent_id) REFERENCES rollback_add_fk_parents(id);`,
 				},
 				{
-					Query:       `INSERT INTO rollback_add_fk_children VALUES (1, 999);`,
-					ExpectedErr: `Foreign key`,
+					Query: `INSERT INTO rollback_add_fk_children VALUES (1, 999);`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrevertsaddedforeignkeyconstraintguard-0001-insert-into-rollback_add_fk_children-values-1", Compare: "sqlstate"},
 				},
 				{
 					Query: `ROLLBACK;`,
@@ -455,8 +437,7 @@ func TestRollbackRevertsAddedForeignKeyConstraintGuard(t *testing.T) {
 					Query: `INSERT INTO rollback_add_fk_children VALUES (1, 999);`,
 				},
 				{
-					Query:    `SELECT id, parent_id FROM rollback_add_fk_children;`,
-					Expected: []sql.Row{{1, 999}},
+					Query: `SELECT id, parent_id FROM rollback_add_fk_children;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrevertsaddedforeignkeyconstraintguard-0002-select-id-parent_id-from-rollback_add_fk_children"},
 				},
 			},
 		},
@@ -494,20 +475,20 @@ func TestRollbackRestoresDroppedForeignKeyConstraintGuard(t *testing.T) {
 					Query: `ROLLBACK;`,
 				},
 				{
-					Query:       `INSERT INTO rollback_drop_fk_children VALUES (2, 999);`,
-					ExpectedErr: `Foreign key`,
+					Query: `INSERT INTO rollback_drop_fk_children VALUES (2, 999);`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresdroppedforeignkeyconstraintguard-0001-insert-into-rollback_drop_fk_children-values-2",
+
+						// TestRollbackDropsIndexCreatedInTransactionRepro guards that CREATE INDEX is
+						// rolled back with the surrounding transaction.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT COUNT(*) FROM rollback_drop_fk_children;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT COUNT(*) FROM rollback_drop_fk_children;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresdroppedforeignkeyconstraintguard-0002-select-count-*-from-rollback_drop_fk_children"},
 				},
 			},
 		},
 	})
 }
 
-// TestRollbackDropsIndexCreatedInTransactionRepro guards that CREATE INDEX is
-// rolled back with the surrounding transaction.
 func TestRollbackDropsIndexCreatedInTransactionRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -527,8 +508,7 @@ func TestRollbackDropsIndexCreatedInTransactionRepro(t *testing.T) {
 					Query: `SELECT indexname
 						FROM pg_indexes
 						WHERE tablename = 'rollback_create_index_items'
-							AND indexname = 'rollback_create_index_items_v_idx';`,
-					Expected: []sql.Row{{"rollback_create_index_items_v_idx"}},
+							AND indexname = 'rollback_create_index_items_v_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackdropsindexcreatedintransactionrepro-0001-select-indexname-from-pg_indexes-where"},
 				},
 				{
 					Query: `ROLLBACK;`,
@@ -537,8 +517,7 @@ func TestRollbackDropsIndexCreatedInTransactionRepro(t *testing.T) {
 					Query: `SELECT indexname
 						FROM pg_indexes
 						WHERE tablename = 'rollback_create_index_items'
-							AND indexname = 'rollback_create_index_items_v_idx';`,
-					Expected: []sql.Row{},
+							AND indexname = 'rollback_create_index_items_v_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackdropsindexcreatedintransactionrepro-0002-select-indexname-from-pg_indexes-where"},
 				},
 				{
 					Query: `CREATE INDEX rollback_create_index_items_v_idx
@@ -563,15 +542,17 @@ func TestRollbackDropsSequenceCreatedInTransactionRepro(t *testing.T) {
 					Query: `CREATE SEQUENCE rollback_create_sequence_seq;`,
 				},
 				{
-					Query:    `SELECT nextval('rollback_create_sequence_seq');`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT nextval('rollback_create_sequence_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackdropssequencecreatedintransactionrepro-0001-select-nextval-rollback_create_sequence_seq"},
 				},
 				{
 					Query: `ROLLBACK;`,
 				},
 				{
-					Query:       `SELECT nextval('rollback_create_sequence_seq');`,
-					ExpectedErr: `does not exist`,
+					Query: `SELECT nextval('rollback_create_sequence_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackdropssequencecreatedintransactionrepro-0002-select-nextval-rollback_create_sequence_seq",
+
+						// TestRollbackRestoresDroppedIndexRepro guards that DROP INDEX is rolled back
+						// with the surrounding transaction.
+						Compare: "sqlstate"},
 				},
 				{
 					Query: `CREATE SEQUENCE rollback_create_sequence_seq;`,
@@ -581,8 +562,6 @@ func TestRollbackDropsSequenceCreatedInTransactionRepro(t *testing.T) {
 	})
 }
 
-// TestRollbackRestoresDroppedIndexRepro guards that DROP INDEX is rolled back
-// with the surrounding transaction.
 func TestRollbackRestoresDroppedIndexRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -602,8 +581,7 @@ func TestRollbackRestoresDroppedIndexRepro(t *testing.T) {
 					Query: `SELECT indexname
 						FROM pg_indexes
 						WHERE tablename = 'rollback_drop_index_items'
-							AND indexname = 'rollback_drop_index_items_v_idx';`,
-					Expected: []sql.Row{},
+							AND indexname = 'rollback_drop_index_items_v_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresdroppedindexrepro-0001-select-indexname-from-pg_indexes-where"},
 				},
 				{
 					Query: `ROLLBACK;`,
@@ -612,8 +590,7 @@ func TestRollbackRestoresDroppedIndexRepro(t *testing.T) {
 					Query: `SELECT indexname
 						FROM pg_indexes
 						WHERE tablename = 'rollback_drop_index_items'
-							AND indexname = 'rollback_drop_index_items_v_idx';`,
-					Expected: []sql.Row{{"rollback_drop_index_items_v_idx"}},
+							AND indexname = 'rollback_drop_index_items_v_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresdroppedindexrepro-0002-select-indexname-from-pg_indexes-where"},
 				},
 			},
 		},
@@ -643,8 +620,7 @@ func TestRollbackRestoresTruncatedRowsRepro(t *testing.T) {
 					Query: `TRUNCATE rollback_truncate_items;`,
 				},
 				{
-					Query:    `SELECT COUNT(*) FROM rollback_truncate_items;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT COUNT(*) FROM rollback_truncate_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestorestruncatedrowsrepro-0001-select-count-*-from-rollback_truncate_items"},
 				},
 				{
 					Query: `ROLLBACK;`,
@@ -652,11 +628,7 @@ func TestRollbackRestoresTruncatedRowsRepro(t *testing.T) {
 				{
 					Query: `SELECT id, label
 						FROM rollback_truncate_items
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, "one"},
-						{2, "two"},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestorestruncatedrowsrepro-0002-select-id-label-from-rollback_truncate_items"},
 				},
 			},
 		},
@@ -680,15 +652,13 @@ func TestRollbackRestoresDroppedSequenceRepro(t *testing.T) {
 					Query: `DROP SEQUENCE rollback_drop_sequence_seq;`,
 				},
 				{
-					Query:       `SELECT nextval('rollback_drop_sequence_seq');`,
-					ExpectedErr: `does not exist`,
+					Query: `SELECT nextval('rollback_drop_sequence_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresdroppedsequencerepro-0001-select-nextval-rollback_drop_sequence_seq", Compare: "sqlstate"},
 				},
 				{
 					Query: `ROLLBACK;`,
 				},
 				{
-					Query:    `SELECT nextval('rollback_drop_sequence_seq');`,
-					Expected: []sql.Row{{5}},
+					Query: `SELECT nextval('rollback_drop_sequence_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresdroppedsequencerepro-0002-select-nextval-rollback_drop_sequence_seq"},
 				},
 			},
 		},
@@ -722,8 +692,7 @@ func TestRollbackRestoresAlterSequenceOwnedByDependencyRepro(t *testing.T) {
 					Query: `DROP TABLE rollback_sequence_owned_items;`,
 				},
 				{
-					Query:    `SELECT nextval('rollback_sequence_owned_seq');`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT nextval('rollback_sequence_owned_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresaltersequenceownedbydependencyrepro-0001-select-nextval-rollback_sequence_owned_seq"},
 				},
 			},
 		},
@@ -758,16 +727,17 @@ func TestRollbackRestoresAlterSequenceOwnedByNoneDependencyGuard(t *testing.T) {
 					Query: `DROP TABLE rollback_sequence_owned_none_items;`,
 				},
 				{
-					Query:       `SELECT nextval('rollback_sequence_owned_none_seq');`,
-					ExpectedErr: `does not exist`,
+					Query: `SELECT nextval('rollback_sequence_owned_none_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresaltersequenceownedbynonedependencyguard-0001-select-nextval-rollback_sequence_owned_none_seq",
+
+						// TestRollbackDropsFunctionCreatedInTransactionGuard keeps coverage for
+						// rolling back CREATE FUNCTION with the surrounding transaction.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestRollbackDropsFunctionCreatedInTransactionGuard keeps coverage for
-// rolling back CREATE FUNCTION with the surrounding transaction.
 func TestRollbackDropsFunctionCreatedInTransactionGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -781,15 +751,13 @@ func TestRollbackDropsFunctionCreatedInTransactionGuard(t *testing.T) {
 						RETURNS INT LANGUAGE SQL AS $$ SELECT 7 $$;`,
 				},
 				{
-					Query:    `SELECT rollback_create_function_value();`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT rollback_create_function_value();`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackdropsfunctioncreatedintransactionguard-0001-select-rollback_create_function_value"},
 				},
 				{
 					Query: `ROLLBACK;`,
 				},
 				{
-					Query:       `SELECT rollback_create_function_value();`,
-					ExpectedErr: `not found`,
+					Query: `SELECT rollback_create_function_value();`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackdropsfunctioncreatedintransactionguard-0002-select-rollback_create_function_value", Compare: "sqlstate"},
 				},
 				{
 					Query: `CREATE FUNCTION rollback_create_function_value()
@@ -818,15 +786,13 @@ func TestRollbackRestoresDroppedFunctionGuard(t *testing.T) {
 					Query: `DROP FUNCTION rollback_drop_function_value();`,
 				},
 				{
-					Query:       `SELECT rollback_drop_function_value();`,
-					ExpectedErr: `not found`,
+					Query: `SELECT rollback_drop_function_value();`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresdroppedfunctionguard-0001-select-rollback_drop_function_value", Compare: "sqlstate"},
 				},
 				{
 					Query: `ROLLBACK;`,
 				},
 				{
-					Query:    `SELECT rollback_drop_function_value();`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT rollback_drop_function_value();`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresdroppedfunctionguard-0002-select-rollback_drop_function_value"},
 				},
 			},
 		},
@@ -855,8 +821,7 @@ func TestRollbackDropsProcedureCreatedInTransactionGuard(t *testing.T) {
 					Query: `ROLLBACK;`,
 				},
 				{
-					Query:       `CALL rollback_create_procedure_value();`,
-					ExpectedErr: `does not exist`,
+					Query: `CALL rollback_create_procedure_value();`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackdropsprocedurecreatedintransactionguard-0001-call-rollback_create_procedure_value", Compare: "sqlstate"},
 				},
 				{
 					Query: `CREATE PROCEDURE rollback_create_procedure_value()
@@ -890,8 +855,7 @@ func TestRollbackRestoresDroppedProcedureRepro(t *testing.T) {
 					Query: `DROP PROCEDURE rollback_drop_procedure_value();`,
 				},
 				{
-					Query:       `CALL rollback_drop_procedure_value();`,
-					ExpectedErr: `does not exist`,
+					Query: `CALL rollback_drop_procedure_value();`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresdroppedprocedurerepro-0001-call-rollback_drop_procedure_value", Compare: "sqlstate"},
 				},
 				{
 					Query: `ROLLBACK;`,
@@ -900,8 +864,7 @@ func TestRollbackRestoresDroppedProcedureRepro(t *testing.T) {
 					Query: `CALL rollback_drop_procedure_value();`,
 				},
 				{
-					Query:    `SELECT value FROM rollback_drop_procedure_audit;`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT value FROM rollback_drop_procedure_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresdroppedprocedurerepro-0002-select-value-from-rollback_drop_procedure_audit"},
 				},
 			},
 		},
@@ -921,8 +884,7 @@ func TestRollbackRestoresReplacedFunctionDefinitionRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT rollback_replace_function_value();`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT rollback_replace_function_value();`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresreplacedfunctiondefinitionrepro-0001-select-rollback_replace_function_value"},
 				},
 				{
 					Query: `BEGIN;`,
@@ -932,15 +894,13 @@ func TestRollbackRestoresReplacedFunctionDefinitionRepro(t *testing.T) {
 						RETURNS INT LANGUAGE SQL AS $$ SELECT 8 $$;`,
 				},
 				{
-					Query:    `SELECT rollback_replace_function_value();`,
-					Expected: []sql.Row{{8}},
+					Query: `SELECT rollback_replace_function_value();`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresreplacedfunctiondefinitionrepro-0002-select-rollback_replace_function_value"},
 				},
 				{
 					Query: `ROLLBACK;`,
 				},
 				{
-					Query:    `SELECT rollback_replace_function_value();`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT rollback_replace_function_value();`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresreplacedfunctiondefinitionrepro-0003-select-rollback_replace_function_value"},
 				},
 			},
 		},
@@ -975,8 +935,7 @@ func TestRollbackRestoresReplacedProcedureDefinitionRepro(t *testing.T) {
 					Query: `CALL rollback_replace_procedure_value();`,
 				},
 				{
-					Query:    `SELECT value FROM rollback_replace_procedure_audit;`,
-					Expected: []sql.Row{{8}},
+					Query: `SELECT value FROM rollback_replace_procedure_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresreplacedproceduredefinitionrepro-0001-select-value-from-rollback_replace_procedure_audit"},
 				},
 				{
 					Query: `ROLLBACK;`,
@@ -985,8 +944,7 @@ func TestRollbackRestoresReplacedProcedureDefinitionRepro(t *testing.T) {
 					Query: `CALL rollback_replace_procedure_value();`,
 				},
 				{
-					Query:    `SELECT value FROM rollback_replace_procedure_audit;`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT value FROM rollback_replace_procedure_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresreplacedproceduredefinitionrepro-0002-select-value-from-rollback_replace_procedure_audit"},
 				},
 			},
 		},
@@ -1006,8 +964,7 @@ func TestRollbackRestoresReplacedViewDefinitionRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT id FROM rollback_replace_view_reader;`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT id FROM rollback_replace_view_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresreplacedviewdefinitionrepro-0001-select-id-from-rollback_replace_view_reader"},
 				},
 				{
 					Query: `BEGIN;`,
@@ -1017,15 +974,13 @@ func TestRollbackRestoresReplacedViewDefinitionRepro(t *testing.T) {
 						SELECT 8 AS id;`,
 				},
 				{
-					Query:    `SELECT id FROM rollback_replace_view_reader;`,
-					Expected: []sql.Row{{8}},
+					Query: `SELECT id FROM rollback_replace_view_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresreplacedviewdefinitionrepro-0002-select-id-from-rollback_replace_view_reader"},
 				},
 				{
 					Query: `ROLLBACK;`,
 				},
 				{
-					Query:    `SELECT id FROM rollback_replace_view_reader;`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT id FROM rollback_replace_view_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresreplacedviewdefinitionrepro-0003-select-id-from-rollback_replace_view_reader"},
 				},
 			},
 		},
@@ -1047,15 +1002,17 @@ func TestRollbackDropsViewCreatedInTransactionGuard(t *testing.T) {
 						SELECT 7 AS id;`,
 				},
 				{
-					Query:    `SELECT id FROM rollback_create_view_reader;`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT id FROM rollback_create_view_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackdropsviewcreatedintransactionguard-0001-select-id-from-rollback_create_view_reader"},
 				},
 				{
 					Query: `ROLLBACK;`,
 				},
 				{
-					Query:       `SELECT id FROM rollback_create_view_reader;`,
-					ExpectedErr: `not found`,
+					Query: `SELECT id FROM rollback_create_view_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackdropsviewcreatedintransactionguard-0002-select-id-from-rollback_create_view_reader",
+
+						// TestRollbackRestoresDroppedViewGuard keeps coverage for rolling back DROP
+						// VIEW with the surrounding transaction.
+						Compare: "sqlstate"},
 				},
 				{
 					Query: `CREATE VIEW rollback_create_view_reader AS
@@ -1066,8 +1023,6 @@ func TestRollbackDropsViewCreatedInTransactionGuard(t *testing.T) {
 	})
 }
 
-// TestRollbackRestoresDroppedViewGuard keeps coverage for rolling back DROP
-// VIEW with the surrounding transaction.
 func TestRollbackRestoresDroppedViewGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1084,15 +1039,13 @@ func TestRollbackRestoresDroppedViewGuard(t *testing.T) {
 					Query: `DROP VIEW rollback_drop_view_reader;`,
 				},
 				{
-					Query:       `SELECT id FROM rollback_drop_view_reader;`,
-					ExpectedErr: `not found`,
+					Query: `SELECT id FROM rollback_drop_view_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresdroppedviewguard-0001-select-id-from-rollback_drop_view_reader", Compare: "sqlstate"},
 				},
 				{
 					Query: `ROLLBACK;`,
 				},
 				{
-					Query:    `SELECT id FROM rollback_drop_view_reader;`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT id FROM rollback_drop_view_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresdroppedviewguard-0002-select-id-from-rollback_drop_view_reader"},
 				},
 			},
 		},
@@ -1120,23 +1073,23 @@ func TestRollbackDropsMaterializedViewCreatedInTransactionGuard(t *testing.T) {
 						SELECT id FROM rollback_create_matview_source;`,
 				},
 				{
-					Query:    `SELECT id FROM rollback_create_matview_reader;`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT id FROM rollback_create_matview_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackdropsmaterializedviewcreatedintransactionguard-0001-select-id-from-rollback_create_matview_reader"},
 				},
 				{
 					Query: `ROLLBACK;`,
 				},
 				{
-					Query:       `SELECT id FROM rollback_create_matview_reader;`,
-					ExpectedErr: `not found`,
+					Query: `SELECT id FROM rollback_create_matview_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackdropsmaterializedviewcreatedintransactionguard-0002-select-id-from-rollback_create_matview_reader",
+
+						// TestRollbackRestoresDroppedMaterializedViewGuard keeps coverage for rolling
+						// back DROP MATERIALIZED VIEW with the surrounding transaction.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestRollbackRestoresDroppedMaterializedViewGuard keeps coverage for rolling
-// back DROP MATERIALIZED VIEW with the surrounding transaction.
 func TestRollbackRestoresDroppedMaterializedViewGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1157,15 +1110,13 @@ func TestRollbackRestoresDroppedMaterializedViewGuard(t *testing.T) {
 					Query: `DROP MATERIALIZED VIEW rollback_drop_matview_reader;`,
 				},
 				{
-					Query:       `SELECT id FROM rollback_drop_matview_reader;`,
-					ExpectedErr: `not found`,
+					Query: `SELECT id FROM rollback_drop_matview_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresdroppedmaterializedviewguard-0001-select-id-from-rollback_drop_matview_reader", Compare: "sqlstate"},
 				},
 				{
 					Query: `ROLLBACK;`,
 				},
 				{
-					Query:    `SELECT id FROM rollback_drop_matview_reader;`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT id FROM rollback_drop_matview_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresdroppedmaterializedviewguard-0002-select-id-from-rollback_drop_matview_reader"},
 				},
 			},
 		},
@@ -1189,8 +1140,7 @@ func TestRollbackRestoresRefreshedMaterializedViewGuard(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT id FROM rollback_refresh_matview_reader;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT id FROM rollback_refresh_matview_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresrefreshedmaterializedviewguard-0001-select-id-from-rollback_refresh_matview_reader"},
 				},
 				{
 					Query: `BEGIN;`,
@@ -1200,15 +1150,13 @@ func TestRollbackRestoresRefreshedMaterializedViewGuard(t *testing.T) {
 				},
 				{
 					Query: `SELECT id FROM rollback_refresh_matview_reader
-						ORDER BY id;`,
-					Expected: []sql.Row{{1}, {2}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresrefreshedmaterializedviewguard-0002-select-id-from-rollback_refresh_matview_reader-order"},
 				},
 				{
 					Query: `ROLLBACK;`,
 				},
 				{
-					Query:    `SELECT id FROM rollback_refresh_matview_reader;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT id FROM rollback_refresh_matview_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresrefreshedmaterializedviewguard-0003-select-id-from-rollback_refresh_matview_reader"},
 				},
 			},
 		},
@@ -1238,32 +1186,30 @@ func TestRollbackRestoresRenamedMaterializedViewGuard(t *testing.T) {
 						RENAME TO rollback_rename_matview_new;`,
 				},
 				{
-					Query:    `SELECT id FROM rollback_rename_matview_new;`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT id FROM rollback_rename_matview_new;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresrenamedmaterializedviewguard-0001-select-id-from-rollback_rename_matview_new"},
 				},
 				{
-					Query:       `SELECT id FROM rollback_rename_matview_old;`,
-					ExpectedErr: `not found`,
+					Query: `SELECT id FROM rollback_rename_matview_old;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresrenamedmaterializedviewguard-0002-select-id-from-rollback_rename_matview_old", Compare: "sqlstate"},
 				},
 				{
 					Query: `ROLLBACK;`,
 				},
 				{
-					Query:    `SELECT id FROM rollback_rename_matview_old;`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT id FROM rollback_rename_matview_old;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresrenamedmaterializedviewguard-0003-select-id-from-rollback_rename_matview_old"},
 				},
 				{
-					Query:       `SELECT id FROM rollback_rename_matview_new;`,
-					ExpectedErr: `not found`,
+					Query: `SELECT id FROM rollback_rename_matview_new;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresrenamedmaterializedviewguard-0004-select-id-from-rollback_rename_matview_new",
+
+						// TestRollbackRestoresRenamedMaterializedViewColumnGuard keeps coverage for
+						// rolling back ALTER MATERIALIZED VIEW RENAME COLUMN with the surrounding
+						// transaction.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestRollbackRestoresRenamedMaterializedViewColumnGuard keeps coverage for
-// rolling back ALTER MATERIALIZED VIEW RENAME COLUMN with the surrounding
-// transaction.
 func TestRollbackRestoresRenamedMaterializedViewColumnGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1286,31 +1232,29 @@ func TestRollbackRestoresRenamedMaterializedViewColumnGuard(t *testing.T) {
 						RENAME COLUMN label TO renamed_label;`,
 				},
 				{
-					Query:    `SELECT id, renamed_label FROM rollback_rename_matview_column_reader;`,
-					Expected: []sql.Row{{1, "before"}},
+					Query: `SELECT id, renamed_label FROM rollback_rename_matview_column_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresrenamedmaterializedviewcolumnguard-0001-select-id-renamed_label-from-rollback_rename_matview_column_reader"},
 				},
 				{
-					Query:       `SELECT label FROM rollback_rename_matview_column_reader;`,
-					ExpectedErr: `column`,
+					Query: `SELECT label FROM rollback_rename_matview_column_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresrenamedmaterializedviewcolumnguard-0002-select-label-from-rollback_rename_matview_column_reader", Compare: "sqlstate"},
 				},
 				{
 					Query: `ROLLBACK;`,
 				},
 				{
-					Query:    `SELECT id, label FROM rollback_rename_matview_column_reader;`,
-					Expected: []sql.Row{{1, "before"}},
+					Query: `SELECT id, label FROM rollback_rename_matview_column_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresrenamedmaterializedviewcolumnguard-0003-select-id-label-from-rollback_rename_matview_column_reader"},
 				},
 				{
-					Query:       `SELECT renamed_label FROM rollback_rename_matview_column_reader;`,
-					ExpectedErr: `column`,
+					Query: `SELECT renamed_label FROM rollback_rename_matview_column_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresrenamedmaterializedviewcolumnguard-0004-select-renamed_label-from-rollback_rename_matview_column_reader",
+
+						// TestRollbackDropsTriggerCreatedInTransactionGuard keeps coverage for
+						// rolling back CREATE TRIGGER with the surrounding transaction.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestRollbackDropsTriggerCreatedInTransactionGuard keeps coverage for
-// rolling back CREATE TRIGGER with the surrounding transaction.
 func TestRollbackDropsTriggerCreatedInTransactionGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1338,23 +1282,19 @@ func TestRollbackDropsTriggerCreatedInTransactionGuard(t *testing.T) {
 						FOR EACH ROW EXECUTE FUNCTION rollback_create_trigger_func();`,
 				},
 				{
-					Query:    `INSERT INTO rollback_create_trigger_items VALUES (1, 'plain');`,
-					Expected: []sql.Row{},
+					Query: `INSERT INTO rollback_create_trigger_items VALUES (1, 'plain');`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackdropstriggercreatedintransactionguard-0001-insert-into-rollback_create_trigger_items-values-1"},
 				},
 				{
-					Query:    `SELECT label FROM rollback_create_trigger_items WHERE id = 1;`,
-					Expected: []sql.Row{{"triggered"}},
+					Query: `SELECT label FROM rollback_create_trigger_items WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackdropstriggercreatedintransactionguard-0002-select-label-from-rollback_create_trigger_items-where"},
 				},
 				{
 					Query: `ROLLBACK;`,
 				},
 				{
-					Query:    `INSERT INTO rollback_create_trigger_items VALUES (2, 'plain');`,
-					Expected: []sql.Row{},
+					Query: `INSERT INTO rollback_create_trigger_items VALUES (2, 'plain');`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackdropstriggercreatedintransactionguard-0003-insert-into-rollback_create_trigger_items-values-2"},
 				},
 				{
-					Query:    `SELECT label FROM rollback_create_trigger_items WHERE id = 2;`,
-					Expected: []sql.Row{{"plain"}},
+					Query: `SELECT label FROM rollback_create_trigger_items WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackdropstriggercreatedintransactionguard-0004-select-label-from-rollback_create_trigger_items-where"},
 				},
 			},
 		},
@@ -1391,23 +1331,19 @@ func TestRollbackRestoresDroppedTriggerGuard(t *testing.T) {
 					Query: `DROP TRIGGER rollback_drop_trigger ON rollback_drop_trigger_items;`,
 				},
 				{
-					Query:    `INSERT INTO rollback_drop_trigger_items VALUES (1, 'plain');`,
-					Expected: []sql.Row{},
+					Query: `INSERT INTO rollback_drop_trigger_items VALUES (1, 'plain');`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresdroppedtriggerguard-0001-insert-into-rollback_drop_trigger_items-values-1"},
 				},
 				{
-					Query:    `SELECT label FROM rollback_drop_trigger_items WHERE id = 1;`,
-					Expected: []sql.Row{{"plain"}},
+					Query: `SELECT label FROM rollback_drop_trigger_items WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresdroppedtriggerguard-0002-select-label-from-rollback_drop_trigger_items-where"},
 				},
 				{
 					Query: `ROLLBACK;`,
 				},
 				{
-					Query:    `INSERT INTO rollback_drop_trigger_items VALUES (2, 'plain');`,
-					Expected: []sql.Row{},
+					Query: `INSERT INTO rollback_drop_trigger_items VALUES (2, 'plain');`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresdroppedtriggerguard-0003-insert-into-rollback_drop_trigger_items-values-2"},
 				},
 				{
-					Query:    `SELECT label FROM rollback_drop_trigger_items WHERE id = 2;`,
-					Expected: []sql.Row{{"triggered"}},
+					Query: `SELECT label FROM rollback_drop_trigger_items WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresdroppedtriggerguard-0004-select-label-from-rollback_drop_trigger_items-where"},
 				},
 			},
 		},
@@ -1456,8 +1392,7 @@ func TestRollbackRestoresReplacedTriggerDefinitionGuard(t *testing.T) {
 					Query: `INSERT INTO rollback_replace_trigger_items VALUES (1, 'plain');`,
 				},
 				{
-					Query:    `SELECT label FROM rollback_replace_trigger_items WHERE id = 1;`,
-					Expected: []sql.Row{{"eight"}},
+					Query: `SELECT label FROM rollback_replace_trigger_items WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresreplacedtriggerdefinitionguard-0001-select-label-from-rollback_replace_trigger_items-where"},
 				},
 				{
 					Query: `ROLLBACK;`,
@@ -1466,8 +1401,7 @@ func TestRollbackRestoresReplacedTriggerDefinitionGuard(t *testing.T) {
 					Query: `INSERT INTO rollback_replace_trigger_items VALUES (1, 'plain');`,
 				},
 				{
-					Query:    `SELECT label FROM rollback_replace_trigger_items WHERE id = 1;`,
-					Expected: []sql.Row{{"seven"}},
+					Query: `SELECT label FROM rollback_replace_trigger_items WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresreplacedtriggerdefinitionguard-0002-select-label-from-rollback_replace_trigger_items-where"},
 				},
 			},
 		},
@@ -1492,15 +1426,13 @@ func TestRollbackRestoresDroppedTableRepro(t *testing.T) {
 					Query: `DROP TABLE rollback_drop_table;`,
 				},
 				{
-					Query:       `SELECT * FROM rollback_drop_table;`,
-					ExpectedErr: `table not found`,
+					Query: `SELECT * FROM rollback_drop_table;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresdroppedtablerepro-0001-select-*-from-rollback_drop_table", Compare: "sqlstate"},
 				},
 				{
 					Query: `ROLLBACK;`,
 				},
 				{
-					Query:    `SELECT * FROM rollback_drop_table;`,
-					Expected: []sql.Row{{1, "before"}},
+					Query: `SELECT * FROM rollback_drop_table;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresdroppedtablerepro-0002-select-*-from-rollback_drop_table"},
 				},
 			},
 		},
@@ -1527,8 +1459,7 @@ func TestRollbackToSavepointDropsTableCreatedAfterSavepointRepro(t *testing.T) {
 					Query: `INSERT INTO savepoint_create_table VALUES (1);`,
 				},
 				{
-					Query:    `SELECT * FROM savepoint_create_table;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT * FROM savepoint_create_table;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointdropstablecreatedaftersavepointrepro-0001-select-*-from-savepoint_create_table"},
 				},
 				{
 					Query: `ROLLBACK TO SAVEPOINT ddl_sp;`,
@@ -1537,8 +1468,11 @@ func TestRollbackToSavepointDropsTableCreatedAfterSavepointRepro(t *testing.T) {
 					Query: `COMMIT;`,
 				},
 				{
-					Query:       `SELECT * FROM savepoint_create_table;`,
-					ExpectedErr: `table not found`,
+					Query: `SELECT * FROM savepoint_create_table;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointdropstablecreatedaftersavepointrepro-0002-select-*-from-savepoint_create_table",
+
+						// TestRollbackToSavepointRevertsAlterTableAddColumnRepro guards that ALTER
+						// TABLE ADD COLUMN is rolled back to a savepoint.
+						Compare: "sqlstate"},
 				},
 				{
 					Query: `CREATE TABLE savepoint_create_table (b INT);`,
@@ -1548,8 +1482,6 @@ func TestRollbackToSavepointDropsTableCreatedAfterSavepointRepro(t *testing.T) {
 	})
 }
 
-// TestRollbackToSavepointRevertsAlterTableAddColumnRepro guards that ALTER
-// TABLE ADD COLUMN is rolled back to a savepoint.
 func TestRollbackToSavepointRevertsAlterTableAddColumnRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1572,8 +1504,7 @@ func TestRollbackToSavepointRevertsAlterTableAddColumnRepro(t *testing.T) {
 					Query: `UPDATE savepoint_alter_table SET v = 10 WHERE id = 1;`,
 				},
 				{
-					Query:    `SELECT id, v FROM savepoint_alter_table;`,
-					Expected: []sql.Row{{1, 10}},
+					Query: `SELECT id, v FROM savepoint_alter_table;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrevertsaltertableaddcolumnrepro-0001-select-id-v-from-savepoint_alter_table"},
 				},
 				{
 					Query: `ROLLBACK TO SAVEPOINT ddl_sp;`,
@@ -1582,8 +1513,11 @@ func TestRollbackToSavepointRevertsAlterTableAddColumnRepro(t *testing.T) {
 					Query: `COMMIT;`,
 				},
 				{
-					Query:       `SELECT v FROM savepoint_alter_table;`,
-					ExpectedErr: `column`,
+					Query: `SELECT v FROM savepoint_alter_table;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrevertsaltertableaddcolumnrepro-0002-select-v-from-savepoint_alter_table",
+
+						// TestRollbackToSavepointRestoresDroppedColumnRepro guards that ALTER TABLE
+						// DROP COLUMN is rolled back to a savepoint, including stored values.
+						Compare: "sqlstate"},
 				},
 				{
 					Query: `ALTER TABLE savepoint_alter_table ADD COLUMN v TEXT;`,
@@ -1593,8 +1527,6 @@ func TestRollbackToSavepointRevertsAlterTableAddColumnRepro(t *testing.T) {
 	})
 }
 
-// TestRollbackToSavepointRestoresDroppedColumnRepro guards that ALTER TABLE
-// DROP COLUMN is rolled back to a savepoint, including stored values.
 func TestRollbackToSavepointRestoresDroppedColumnRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1617,8 +1549,7 @@ func TestRollbackToSavepointRestoresDroppedColumnRepro(t *testing.T) {
 					Query: `ALTER TABLE savepoint_drop_column_items DROP COLUMN label;`,
 				},
 				{
-					Query:       `SELECT label FROM savepoint_drop_column_items;`,
-					ExpectedErr: `column`,
+					Query: `SELECT label FROM savepoint_drop_column_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedcolumnrepro-0001-select-label-from-savepoint_drop_column_items", Compare: "sqlstate"},
 				},
 				{
 					Query: `ROLLBACK TO SAVEPOINT ddl_sp;`,
@@ -1627,8 +1558,7 @@ func TestRollbackToSavepointRestoresDroppedColumnRepro(t *testing.T) {
 					Query: `COMMIT;`,
 				},
 				{
-					Query:    `SELECT id, label FROM savepoint_drop_column_items;`,
-					Expected: []sql.Row{{1, "before"}},
+					Query: `SELECT id, label FROM savepoint_drop_column_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedcolumnrepro-0002-select-id-label-from-savepoint_drop_column_items"},
 				},
 			},
 		},
@@ -1659,12 +1589,10 @@ func TestRollbackToSavepointRestoresRenamedTableRepro(t *testing.T) {
 					Query: `ALTER TABLE savepoint_rename_table_old RENAME TO savepoint_rename_table_new;`,
 				},
 				{
-					Query:    `SELECT id, label FROM savepoint_rename_table_new;`,
-					Expected: []sql.Row{{1, "before"}},
+					Query: `SELECT id, label FROM savepoint_rename_table_new;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedtablerepro-0001-select-id-label-from-savepoint_rename_table_new"},
 				},
 				{
-					Query:       `SELECT id, label FROM savepoint_rename_table_old;`,
-					ExpectedErr: `table not found`,
+					Query: `SELECT id, label FROM savepoint_rename_table_old;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedtablerepro-0002-select-id-label-from-savepoint_rename_table_old", Compare: "sqlstate"},
 				},
 				{
 					Query: `ROLLBACK TO SAVEPOINT ddl_sp;`,
@@ -1673,20 +1601,20 @@ func TestRollbackToSavepointRestoresRenamedTableRepro(t *testing.T) {
 					Query: `COMMIT;`,
 				},
 				{
-					Query:    `SELECT id, label FROM savepoint_rename_table_old;`,
-					Expected: []sql.Row{{1, "before"}},
+					Query: `SELECT id, label FROM savepoint_rename_table_old;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedtablerepro-0003-select-id-label-from-savepoint_rename_table_old"},
 				},
 				{
-					Query:       `SELECT id, label FROM savepoint_rename_table_new;`,
-					ExpectedErr: `table not found`,
+					Query: `SELECT id, label FROM savepoint_rename_table_new;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedtablerepro-0004-select-id-label-from-savepoint_rename_table_new",
+
+						// TestRollbackToSavepointRestoresRenamedColumnRepro guards that ALTER TABLE
+						// RENAME COLUMN is rolled back to a savepoint.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestRollbackToSavepointRestoresRenamedColumnRepro guards that ALTER TABLE
-// RENAME COLUMN is rolled back to a savepoint.
 func TestRollbackToSavepointRestoresRenamedColumnRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1709,12 +1637,10 @@ func TestRollbackToSavepointRestoresRenamedColumnRepro(t *testing.T) {
 					Query: `ALTER TABLE savepoint_rename_column_items RENAME COLUMN old_label TO new_label;`,
 				},
 				{
-					Query:    `SELECT id, new_label FROM savepoint_rename_column_items;`,
-					Expected: []sql.Row{{1, "before"}},
+					Query: `SELECT id, new_label FROM savepoint_rename_column_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedcolumnrepro-0001-select-id-new_label-from-savepoint_rename_column_items"},
 				},
 				{
-					Query:       `SELECT old_label FROM savepoint_rename_column_items;`,
-					ExpectedErr: `column`,
+					Query: `SELECT old_label FROM savepoint_rename_column_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedcolumnrepro-0002-select-old_label-from-savepoint_rename_column_items", Compare: "sqlstate"},
 				},
 				{
 					Query: `ROLLBACK TO SAVEPOINT ddl_sp;`,
@@ -1723,20 +1649,20 @@ func TestRollbackToSavepointRestoresRenamedColumnRepro(t *testing.T) {
 					Query: `COMMIT;`,
 				},
 				{
-					Query:    `SELECT id, old_label FROM savepoint_rename_column_items;`,
-					Expected: []sql.Row{{1, "before"}},
+					Query: `SELECT id, old_label FROM savepoint_rename_column_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedcolumnrepro-0003-select-id-old_label-from-savepoint_rename_column_items"},
 				},
 				{
-					Query:       `SELECT new_label FROM savepoint_rename_column_items;`,
-					ExpectedErr: `column`,
+					Query: `SELECT new_label FROM savepoint_rename_column_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedcolumnrepro-0004-select-new_label-from-savepoint_rename_column_items",
+
+						// TestRollbackToSavepointRevertsAddedCheckConstraintRepro guards that ALTER
+						// TABLE ADD CONSTRAINT is rolled back to a savepoint.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestRollbackToSavepointRevertsAddedCheckConstraintRepro guards that ALTER
-// TABLE ADD CONSTRAINT is rolled back to a savepoint.
 func TestRollbackToSavepointRevertsAddedCheckConstraintRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1759,8 +1685,7 @@ func TestRollbackToSavepointRevertsAddedCheckConstraintRepro(t *testing.T) {
 						ADD CONSTRAINT savepoint_add_check_positive CHECK (amount > 0);`,
 				},
 				{
-					Query:       `INSERT INTO savepoint_add_check_items VALUES (1, -1);`,
-					ExpectedErr: `Check constraint`,
+					Query: `INSERT INTO savepoint_add_check_items VALUES (1, -1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrevertsaddedcheckconstraintrepro-0001-insert-into-savepoint_add_check_items-values-1", Compare: "sqlstate"},
 				},
 				{
 					Query: `ROLLBACK TO SAVEPOINT ddl_sp;`,
@@ -1772,8 +1697,7 @@ func TestRollbackToSavepointRevertsAddedCheckConstraintRepro(t *testing.T) {
 					Query: `INSERT INTO savepoint_add_check_items VALUES (1, -1);`,
 				},
 				{
-					Query:    `SELECT id, amount FROM savepoint_add_check_items;`,
-					Expected: []sql.Row{{1, -1}},
+					Query: `SELECT id, amount FROM savepoint_add_check_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrevertsaddedcheckconstraintrepro-0002-select-id-amount-from-savepoint_add_check_items"},
 				},
 			},
 		},
@@ -1813,20 +1737,20 @@ func TestRollbackToSavepointRestoresDroppedCheckConstraintRepro(t *testing.T) {
 					Query: `COMMIT;`,
 				},
 				{
-					Query:       `INSERT INTO savepoint_drop_check_items VALUES (2, -2);`,
-					ExpectedErr: `Check constraint`,
+					Query: `INSERT INTO savepoint_drop_check_items VALUES (2, -2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedcheckconstraintrepro-0001-insert-into-savepoint_drop_check_items-values-2",
+
+						// TestRollbackToSavepointRevertsAddedUniqueConstraintGuard keeps coverage for
+						// rolling back ALTER TABLE ADD CONSTRAINT UNIQUE to a savepoint.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT COUNT(*) FROM savepoint_drop_check_items;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT COUNT(*) FROM savepoint_drop_check_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedcheckconstraintrepro-0002-select-count-*-from-savepoint_drop_check_items"},
 				},
 			},
 		},
 	})
 }
 
-// TestRollbackToSavepointRevertsAddedUniqueConstraintGuard keeps coverage for
-// rolling back ALTER TABLE ADD CONSTRAINT UNIQUE to a savepoint.
 func TestRollbackToSavepointRevertsAddedUniqueConstraintGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1850,8 +1774,7 @@ func TestRollbackToSavepointRevertsAddedUniqueConstraintGuard(t *testing.T) {
 						ADD CONSTRAINT savepoint_add_unique_code_key UNIQUE (code);`,
 				},
 				{
-					Query:       `INSERT INTO savepoint_add_unique_items VALUES (2, 10);`,
-					ExpectedErr: `duplicate`,
+					Query: `INSERT INTO savepoint_add_unique_items VALUES (2, 10);`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrevertsaddeduniqueconstraintguard-0001-insert-into-savepoint_add_unique_items-values-2", Compare: "sqlstate"},
 				},
 				{
 					Query: `ROLLBACK TO SAVEPOINT ddl_sp;`,
@@ -1865,11 +1788,7 @@ func TestRollbackToSavepointRevertsAddedUniqueConstraintGuard(t *testing.T) {
 				{
 					Query: `SELECT id, code
 						FROM savepoint_add_unique_items
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, 10},
-						{2, 10},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrevertsaddeduniqueconstraintguard-0002-select-id-code-from-savepoint_add_unique_items"},
 				},
 			},
 		},
@@ -1911,14 +1830,12 @@ func TestRollbackToSavepointRestoresDroppedUniqueConstraintGuard(t *testing.T) {
 					Query: `COMMIT;`,
 				},
 				{
-					Query:       `INSERT INTO savepoint_drop_unique_items VALUES (3, 10);`,
-					ExpectedErr: `duplicate`,
+					Query: `INSERT INTO savepoint_drop_unique_items VALUES (3, 10);`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppeduniqueconstraintguard-0001-insert-into-savepoint_drop_unique_items-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, code
 						FROM savepoint_drop_unique_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, 10}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppeduniqueconstraintguard-0002-select-id-code-from-savepoint_drop_unique_items"},
 				},
 			},
 		},
@@ -1954,8 +1871,7 @@ func TestRollbackToSavepointRevertsAddedForeignKeyConstraintGuard(t *testing.T) 
 						FOREIGN KEY (parent_id) REFERENCES savepoint_add_fk_parents(id);`,
 				},
 				{
-					Query:       `INSERT INTO savepoint_add_fk_children VALUES (1, 999);`,
-					ExpectedErr: `Foreign key`,
+					Query: `INSERT INTO savepoint_add_fk_children VALUES (1, 999);`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrevertsaddedforeignkeyconstraintguard-0001-insert-into-savepoint_add_fk_children-values-1", Compare: "sqlstate"},
 				},
 				{
 					Query: `ROLLBACK TO SAVEPOINT ddl_sp;`,
@@ -1967,8 +1883,7 @@ func TestRollbackToSavepointRevertsAddedForeignKeyConstraintGuard(t *testing.T) 
 					Query: `INSERT INTO savepoint_add_fk_children VALUES (1, 999);`,
 				},
 				{
-					Query:    `SELECT id, parent_id FROM savepoint_add_fk_children;`,
-					Expected: []sql.Row{{1, 999}},
+					Query: `SELECT id, parent_id FROM savepoint_add_fk_children;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrevertsaddedforeignkeyconstraintguard-0002-select-id-parent_id-from-savepoint_add_fk_children"},
 				},
 			},
 		},
@@ -2013,20 +1928,20 @@ func TestRollbackToSavepointRestoresDroppedForeignKeyConstraintGuard(t *testing.
 					Query: `COMMIT;`,
 				},
 				{
-					Query:       `INSERT INTO savepoint_drop_fk_children VALUES (2, 999);`,
-					ExpectedErr: `Foreign key`,
+					Query: `INSERT INTO savepoint_drop_fk_children VALUES (2, 999);`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedforeignkeyconstraintguard-0001-insert-into-savepoint_drop_fk_children-values-2",
+
+						// TestRollbackToSavepointRestoresDroppedTableRepro guards that DROP TABLE is
+						// rolled back to a savepoint.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT COUNT(*) FROM savepoint_drop_fk_children;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT COUNT(*) FROM savepoint_drop_fk_children;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedforeignkeyconstraintguard-0002-select-count-*-from-savepoint_drop_fk_children"},
 				},
 			},
 		},
 	})
 }
 
-// TestRollbackToSavepointRestoresDroppedTableRepro guards that DROP TABLE is
-// rolled back to a savepoint.
 func TestRollbackToSavepointRestoresDroppedTableRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -2046,8 +1961,7 @@ func TestRollbackToSavepointRestoresDroppedTableRepro(t *testing.T) {
 					Query: `DROP TABLE savepoint_drop_table;`,
 				},
 				{
-					Query:       `SELECT * FROM savepoint_drop_table;`,
-					ExpectedErr: `table not found`,
+					Query: `SELECT * FROM savepoint_drop_table;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedtablerepro-0001-select-*-from-savepoint_drop_table", Compare: "sqlstate"},
 				},
 				{
 					Query: `ROLLBACK TO SAVEPOINT ddl_sp;`,
@@ -2056,8 +1970,7 @@ func TestRollbackToSavepointRestoresDroppedTableRepro(t *testing.T) {
 					Query: `COMMIT;`,
 				},
 				{
-					Query:    `SELECT * FROM savepoint_drop_table;`,
-					Expected: []sql.Row{{1, "before"}},
+					Query: `SELECT * FROM savepoint_drop_table;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedtablerepro-0002-select-*-from-savepoint_drop_table"},
 				},
 			},
 		},
@@ -2088,8 +2001,7 @@ func TestRollbackToSavepointDropsIndexCreatedAfterSavepointRepro(t *testing.T) {
 					Query: `SELECT indexname
 						FROM pg_indexes
 						WHERE tablename = 'savepoint_create_index_items'
-							AND indexname = 'savepoint_create_index_items_v_idx';`,
-					Expected: []sql.Row{{"savepoint_create_index_items_v_idx"}},
+							AND indexname = 'savepoint_create_index_items_v_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointdropsindexcreatedaftersavepointrepro-0001-select-indexname-from-pg_indexes-where"},
 				},
 				{
 					Query: `ROLLBACK TO SAVEPOINT ddl_sp;`,
@@ -2101,8 +2013,7 @@ func TestRollbackToSavepointDropsIndexCreatedAfterSavepointRepro(t *testing.T) {
 					Query: `SELECT indexname
 						FROM pg_indexes
 						WHERE tablename = 'savepoint_create_index_items'
-							AND indexname = 'savepoint_create_index_items_v_idx';`,
-					Expected: []sql.Row{},
+							AND indexname = 'savepoint_create_index_items_v_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointdropsindexcreatedaftersavepointrepro-0002-select-indexname-from-pg_indexes-where"},
 				},
 				{
 					Query: `CREATE INDEX savepoint_create_index_items_v_idx
@@ -2137,8 +2048,7 @@ func TestRollbackToSavepointRestoresDroppedIndexRepro(t *testing.T) {
 					Query: `SELECT indexname
 						FROM pg_indexes
 						WHERE tablename = 'savepoint_drop_index_items'
-							AND indexname = 'savepoint_drop_index_items_v_idx';`,
-					Expected: []sql.Row{},
+							AND indexname = 'savepoint_drop_index_items_v_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedindexrepro-0001-select-indexname-from-pg_indexes-where"},
 				},
 				{
 					Query: `ROLLBACK TO SAVEPOINT ddl_sp;`,
@@ -2150,8 +2060,7 @@ func TestRollbackToSavepointRestoresDroppedIndexRepro(t *testing.T) {
 					Query: `SELECT indexname
 						FROM pg_indexes
 						WHERE tablename = 'savepoint_drop_index_items'
-							AND indexname = 'savepoint_drop_index_items_v_idx';`,
-					Expected: []sql.Row{{"savepoint_drop_index_items_v_idx"}},
+							AND indexname = 'savepoint_drop_index_items_v_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedindexrepro-0002-select-indexname-from-pg_indexes-where"},
 				},
 			},
 		},
@@ -2175,8 +2084,7 @@ func TestRollbackToSavepointDropsSequenceCreatedAfterSavepointRepro(t *testing.T
 					Query: `CREATE SEQUENCE savepoint_create_sequence_seq;`,
 				},
 				{
-					Query:    `SELECT nextval('savepoint_create_sequence_seq');`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT nextval('savepoint_create_sequence_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointdropssequencecreatedaftersavepointrepro-0001-select-nextval-savepoint_create_sequence_seq"},
 				},
 				{
 					Query: `ROLLBACK TO SAVEPOINT ddl_sp;`,
@@ -2185,8 +2093,11 @@ func TestRollbackToSavepointDropsSequenceCreatedAfterSavepointRepro(t *testing.T
 					Query: `COMMIT;`,
 				},
 				{
-					Query:       `SELECT nextval('savepoint_create_sequence_seq');`,
-					ExpectedErr: `does not exist`,
+					Query: `SELECT nextval('savepoint_create_sequence_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointdropssequencecreatedaftersavepointrepro-0002-select-nextval-savepoint_create_sequence_seq",
+
+						// TestRollbackToSavepointRestoresDroppedSequenceRepro guards that DROP
+						// SEQUENCE is rolled back to a savepoint.
+						Compare: "sqlstate"},
 				},
 				{
 					Query: `CREATE SEQUENCE savepoint_create_sequence_seq;`,
@@ -2196,8 +2107,6 @@ func TestRollbackToSavepointDropsSequenceCreatedAfterSavepointRepro(t *testing.T
 	})
 }
 
-// TestRollbackToSavepointRestoresDroppedSequenceRepro guards that DROP
-// SEQUENCE is rolled back to a savepoint.
 func TestRollbackToSavepointRestoresDroppedSequenceRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -2216,8 +2125,7 @@ func TestRollbackToSavepointRestoresDroppedSequenceRepro(t *testing.T) {
 					Query: `DROP SEQUENCE savepoint_drop_sequence_seq;`,
 				},
 				{
-					Query:       `SELECT nextval('savepoint_drop_sequence_seq');`,
-					ExpectedErr: `does not exist`,
+					Query: `SELECT nextval('savepoint_drop_sequence_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedsequencerepro-0001-select-nextval-savepoint_drop_sequence_seq", Compare: "sqlstate"},
 				},
 				{
 					Query: `ROLLBACK TO SAVEPOINT ddl_sp;`,
@@ -2226,8 +2134,7 @@ func TestRollbackToSavepointRestoresDroppedSequenceRepro(t *testing.T) {
 					Query: `COMMIT;`,
 				},
 				{
-					Query:    `SELECT nextval('savepoint_drop_sequence_seq');`,
-					Expected: []sql.Row{{5}},
+					Query: `SELECT nextval('savepoint_drop_sequence_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedsequencerepro-0002-select-nextval-savepoint_drop_sequence_seq"},
 				},
 			},
 		},
@@ -2267,8 +2174,7 @@ func TestRollbackToSavepointRestoresAlterSequenceOwnedByDependencyRepro(t *testi
 					Query: `DROP TABLE savepoint_sequence_owned_items;`,
 				},
 				{
-					Query:    `SELECT nextval('savepoint_sequence_owned_seq');`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT nextval('savepoint_sequence_owned_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresaltersequenceownedbydependencyrepro-0001-select-nextval-savepoint_sequence_owned_seq"},
 				},
 			},
 		},
@@ -2309,17 +2215,18 @@ func TestRollbackToSavepointRestoresAlterSequenceOwnedByNoneDependencyGuard(t *t
 					Query: `DROP TABLE savepoint_sequence_owned_none_items;`,
 				},
 				{
-					Query:       `SELECT nextval('savepoint_sequence_owned_none_seq');`,
-					ExpectedErr: `does not exist`,
+					Query: `SELECT nextval('savepoint_sequence_owned_none_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresaltersequenceownedbynonedependencyguard-0001-select-nextval-savepoint_sequence_owned_none_seq",
+
+						// TestRollbackToSavepointRestoresReplacedFunctionDefinitionRepro reproduces a
+						// transaction persistence bug: rolling back CREATE OR REPLACE FUNCTION to a
+						// savepoint should restore the prior function body.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestRollbackToSavepointRestoresReplacedFunctionDefinitionRepro reproduces a
-// transaction persistence bug: rolling back CREATE OR REPLACE FUNCTION to a
-// savepoint should restore the prior function body.
 func TestRollbackToSavepointRestoresReplacedFunctionDefinitionRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -2340,8 +2247,7 @@ func TestRollbackToSavepointRestoresReplacedFunctionDefinitionRepro(t *testing.T
 						RETURNS INT LANGUAGE SQL AS $$ SELECT 8 $$;`,
 				},
 				{
-					Query:    `SELECT savepoint_replace_function_value();`,
-					Expected: []sql.Row{{8}},
+					Query: `SELECT savepoint_replace_function_value();`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresreplacedfunctiondefinitionrepro-0001-select-savepoint_replace_function_value"},
 				},
 				{
 					Query: `ROLLBACK TO SAVEPOINT ddl_sp;`,
@@ -2350,8 +2256,7 @@ func TestRollbackToSavepointRestoresReplacedFunctionDefinitionRepro(t *testing.T
 					Query: `COMMIT;`,
 				},
 				{
-					Query:    `SELECT savepoint_replace_function_value();`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT savepoint_replace_function_value();`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresreplacedfunctiondefinitionrepro-0002-select-savepoint_replace_function_value"},
 				},
 			},
 		},
@@ -2390,8 +2295,7 @@ func TestRollbackToSavepointRestoresReplacedProcedureDefinitionRepro(t *testing.
 					Query: `CALL savepoint_replace_procedure_value();`,
 				},
 				{
-					Query:    `SELECT value FROM savepoint_replace_procedure_audit;`,
-					Expected: []sql.Row{{8}},
+					Query: `SELECT value FROM savepoint_replace_procedure_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresreplacedproceduredefinitionrepro-0001-select-value-from-savepoint_replace_procedure_audit"},
 				},
 				{
 					Query: `ROLLBACK TO SAVEPOINT ddl_sp;`,
@@ -2403,8 +2307,7 @@ func TestRollbackToSavepointRestoresReplacedProcedureDefinitionRepro(t *testing.
 					Query: `CALL savepoint_replace_procedure_value();`,
 				},
 				{
-					Query:    `SELECT value FROM savepoint_replace_procedure_audit;`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT value FROM savepoint_replace_procedure_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresreplacedproceduredefinitionrepro-0002-select-value-from-savepoint_replace_procedure_audit"},
 				},
 			},
 		},
@@ -2434,8 +2337,7 @@ func TestRollbackToSavepointRestoresReplacedViewDefinitionRepro(t *testing.T) {
 						SELECT 8 AS id;`,
 				},
 				{
-					Query:    `SELECT id FROM savepoint_replace_view_reader;`,
-					Expected: []sql.Row{{8}},
+					Query: `SELECT id FROM savepoint_replace_view_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresreplacedviewdefinitionrepro-0001-select-id-from-savepoint_replace_view_reader"},
 				},
 				{
 					Query: `ROLLBACK TO SAVEPOINT ddl_sp;`,
@@ -2444,8 +2346,7 @@ func TestRollbackToSavepointRestoresReplacedViewDefinitionRepro(t *testing.T) {
 					Query: `COMMIT;`,
 				},
 				{
-					Query:    `SELECT id FROM savepoint_replace_view_reader;`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT id FROM savepoint_replace_view_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresreplacedviewdefinitionrepro-0002-select-id-from-savepoint_replace_view_reader"},
 				},
 			},
 		},
@@ -2498,8 +2399,7 @@ func TestRollbackToSavepointRestoresReplacedTriggerDefinitionRepro(t *testing.T)
 					Query: `INSERT INTO savepoint_replace_trigger_items VALUES (1, 'plain');`,
 				},
 				{
-					Query:    `SELECT label FROM savepoint_replace_trigger_items WHERE id = 1;`,
-					Expected: []sql.Row{{"eight"}},
+					Query: `SELECT label FROM savepoint_replace_trigger_items WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresreplacedtriggerdefinitionrepro-0001-select-label-from-savepoint_replace_trigger_items-where"},
 				},
 				{
 					Query: `ROLLBACK TO SAVEPOINT ddl_sp;`,
@@ -2511,8 +2411,7 @@ func TestRollbackToSavepointRestoresReplacedTriggerDefinitionRepro(t *testing.T)
 					Query: `INSERT INTO savepoint_replace_trigger_items VALUES (1, 'plain');`,
 				},
 				{
-					Query:    `SELECT label FROM savepoint_replace_trigger_items WHERE id = 1;`,
-					Expected: []sql.Row{{"seven"}},
+					Query: `SELECT label FROM savepoint_replace_trigger_items WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresreplacedtriggerdefinitionrepro-0002-select-label-from-savepoint_replace_trigger_items-where"},
 				},
 			},
 		},
@@ -2546,8 +2445,7 @@ func TestRollbackToSavepointRestoresRefreshedMaterializedViewGuard(t *testing.T)
 				},
 				{
 					Query: `SELECT id FROM savepoint_refresh_matview_reader
-						ORDER BY id;`,
-					Expected: []sql.Row{{1}, {2}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresrefreshedmaterializedviewguard-0001-select-id-from-savepoint_refresh_matview_reader-order"},
 				},
 				{
 					Query: `ROLLBACK TO SAVEPOINT ddl_sp;`,
@@ -2556,8 +2454,7 @@ func TestRollbackToSavepointRestoresRefreshedMaterializedViewGuard(t *testing.T)
 					Query: `COMMIT;`,
 				},
 				{
-					Query:    `SELECT id FROM savepoint_refresh_matview_reader;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT id FROM savepoint_refresh_matview_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresrefreshedmaterializedviewguard-0002-select-id-from-savepoint_refresh_matview_reader"},
 				},
 			},
 		},
@@ -2590,8 +2487,7 @@ func TestRollbackToSavepointRestoresRenamedMaterializedViewGuard(t *testing.T) {
 						RENAME TO savepoint_rename_matview_new;`,
 				},
 				{
-					Query:    `SELECT id FROM savepoint_rename_matview_new;`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT id FROM savepoint_rename_matview_new;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedmaterializedviewguard-0001-select-id-from-savepoint_rename_matview_new"},
 				},
 				{
 					Query: `ROLLBACK TO SAVEPOINT ddl_sp;`,
@@ -2600,21 +2496,21 @@ func TestRollbackToSavepointRestoresRenamedMaterializedViewGuard(t *testing.T) {
 					Query: `COMMIT;`,
 				},
 				{
-					Query:    `SELECT id FROM savepoint_rename_matview_old;`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT id FROM savepoint_rename_matview_old;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedmaterializedviewguard-0002-select-id-from-savepoint_rename_matview_old"},
 				},
 				{
-					Query:       `SELECT id FROM savepoint_rename_matview_new;`,
-					ExpectedErr: `not found`,
+					Query: `SELECT id FROM savepoint_rename_matview_new;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedmaterializedviewguard-0003-select-id-from-savepoint_rename_matview_new",
+
+						// TestRollbackToSavepointRestoresRenamedMaterializedViewColumnGuard keeps
+						// coverage for rolling back ALTER MATERIALIZED VIEW RENAME COLUMN to a
+						// savepoint.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestRollbackToSavepointRestoresRenamedMaterializedViewColumnGuard keeps
-// coverage for rolling back ALTER MATERIALIZED VIEW RENAME COLUMN to a
-// savepoint.
 func TestRollbackToSavepointRestoresRenamedMaterializedViewColumnGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -2640,8 +2536,7 @@ func TestRollbackToSavepointRestoresRenamedMaterializedViewColumnGuard(t *testin
 						RENAME COLUMN label TO renamed_label;`,
 				},
 				{
-					Query:    `SELECT id, renamed_label FROM savepoint_rename_matview_column_reader;`,
-					Expected: []sql.Row{{1, "before"}},
+					Query: `SELECT id, renamed_label FROM savepoint_rename_matview_column_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedmaterializedviewcolumnguard-0001-select-id-renamed_label-from-savepoint_rename_matview_column_reader"},
 				},
 				{
 					Query: `ROLLBACK TO SAVEPOINT ddl_sp;`,
@@ -2650,20 +2545,20 @@ func TestRollbackToSavepointRestoresRenamedMaterializedViewColumnGuard(t *testin
 					Query: `COMMIT;`,
 				},
 				{
-					Query:    `SELECT id, label FROM savepoint_rename_matview_column_reader;`,
-					Expected: []sql.Row{{1, "before"}},
+					Query: `SELECT id, label FROM savepoint_rename_matview_column_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedmaterializedviewcolumnguard-0002-select-id-label-from-savepoint_rename_matview_column_reader"},
 				},
 				{
-					Query:       `SELECT renamed_label FROM savepoint_rename_matview_column_reader;`,
-					ExpectedErr: `column`,
+					Query: `SELECT renamed_label FROM savepoint_rename_matview_column_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresrenamedmaterializedviewcolumnguard-0003-select-renamed_label-from-savepoint_rename_matview_column_reader",
+
+						// TestRollbackToSavepointRestoresTruncatedRowsRepro guards that TRUNCATE is
+						// rolled back to a savepoint.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestRollbackToSavepointRestoresTruncatedRowsRepro guards that TRUNCATE is
-// rolled back to a savepoint.
 func TestRollbackToSavepointRestoresTruncatedRowsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -2688,8 +2583,7 @@ func TestRollbackToSavepointRestoresTruncatedRowsRepro(t *testing.T) {
 					Query: `TRUNCATE savepoint_truncate_items;`,
 				},
 				{
-					Query:    `SELECT COUNT(*) FROM savepoint_truncate_items;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT COUNT(*) FROM savepoint_truncate_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestorestruncatedrowsrepro-0001-select-count-*-from-savepoint_truncate_items"},
 				},
 				{
 					Query: `ROLLBACK TO SAVEPOINT ddl_sp;`,
@@ -2700,11 +2594,7 @@ func TestRollbackToSavepointRestoresTruncatedRowsRepro(t *testing.T) {
 				{
 					Query: `SELECT id, label
 						FROM savepoint_truncate_items
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, "one"},
-						{2, "two"},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestorestruncatedrowsrepro-0002-select-id-label-from-savepoint_truncate_items"},
 				},
 			},
 		},
@@ -2727,8 +2617,7 @@ func TestRollbackDropsSchemaCreatedInTransactionGuard(t *testing.T) {
 				{
 					Query: `SELECT COUNT(*)
 						FROM information_schema.schemata
-						WHERE schema_name = 'rollback_create_schema';`,
-					Expected: []sql.Row{{int64(1)}},
+						WHERE schema_name = 'rollback_create_schema';`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackdropsschemacreatedintransactionguard-0001-select-count-*-from-information_schema.schemata"},
 				},
 				{
 					Query: `ROLLBACK;`,
@@ -2736,8 +2625,7 @@ func TestRollbackDropsSchemaCreatedInTransactionGuard(t *testing.T) {
 				{
 					Query: `SELECT COUNT(*)
 						FROM information_schema.schemata
-						WHERE schema_name = 'rollback_create_schema';`,
-					Expected: []sql.Row{{int64(0)}},
+						WHERE schema_name = 'rollback_create_schema';`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackdropsschemacreatedintransactionguard-0002-select-count-*-from-information_schema.schemata"},
 				},
 				{
 					Query: `CREATE SCHEMA rollback_create_schema;`,
@@ -2766,8 +2654,7 @@ func TestRollbackRestoresDroppedSchemaGuard(t *testing.T) {
 				{
 					Query: `SELECT COUNT(*)
 						FROM information_schema.schemata
-						WHERE schema_name = 'rollback_drop_schema';`,
-					Expected: []sql.Row{{int64(0)}},
+						WHERE schema_name = 'rollback_drop_schema';`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresdroppedschemaguard-0001-select-count-*-from-information_schema.schemata"},
 				},
 				{
 					Query: `ROLLBACK;`,
@@ -2775,8 +2662,7 @@ func TestRollbackRestoresDroppedSchemaGuard(t *testing.T) {
 				{
 					Query: `SELECT COUNT(*)
 						FROM information_schema.schemata
-						WHERE schema_name = 'rollback_drop_schema';`,
-					Expected: []sql.Row{{int64(1)}},
+						WHERE schema_name = 'rollback_drop_schema';`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbackrestoresdroppedschemaguard-0002-select-count-*-from-information_schema.schemata"},
 				},
 			},
 		},
@@ -2802,8 +2688,7 @@ func TestRollbackToSavepointDropsSchemaCreatedAfterSavepointGuard(t *testing.T) 
 				{
 					Query: `SELECT COUNT(*)
 						FROM information_schema.schemata
-						WHERE schema_name = 'savepoint_create_schema';`,
-					Expected: []sql.Row{{int64(1)}},
+						WHERE schema_name = 'savepoint_create_schema';`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointdropsschemacreatedaftersavepointguard-0001-select-count-*-from-information_schema.schemata"},
 				},
 				{
 					Query: `ROLLBACK TO SAVEPOINT ddl_sp;`,
@@ -2814,8 +2699,7 @@ func TestRollbackToSavepointDropsSchemaCreatedAfterSavepointGuard(t *testing.T) 
 				{
 					Query: `SELECT COUNT(*)
 						FROM information_schema.schemata
-						WHERE schema_name = 'savepoint_create_schema';`,
-					Expected: []sql.Row{{int64(0)}},
+						WHERE schema_name = 'savepoint_create_schema';`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointdropsschemacreatedaftersavepointguard-0002-select-count-*-from-information_schema.schemata"},
 				},
 				{
 					Query: `CREATE SCHEMA savepoint_create_schema;`,
@@ -2847,8 +2731,7 @@ func TestRollbackToSavepointRestoresDroppedSchemaGuard(t *testing.T) {
 				{
 					Query: `SELECT COUNT(*)
 						FROM information_schema.schemata
-						WHERE schema_name = 'savepoint_drop_schema';`,
-					Expected: []sql.Row{{int64(0)}},
+						WHERE schema_name = 'savepoint_drop_schema';`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedschemaguard-0001-select-count-*-from-information_schema.schemata"},
 				},
 				{
 					Query: `ROLLBACK TO SAVEPOINT ddl_sp;`,
@@ -2859,8 +2742,7 @@ func TestRollbackToSavepointRestoresDroppedSchemaGuard(t *testing.T) {
 				{
 					Query: `SELECT COUNT(*)
 						FROM information_schema.schemata
-						WHERE schema_name = 'savepoint_drop_schema';`,
-					Expected: []sql.Row{{int64(1)}},
+						WHERE schema_name = 'savepoint_drop_schema';`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testrollbacktosavepointrestoresdroppedschemaguard-0002-select-count-*-from-information_schema.schemata"},
 				},
 			},
 		},
@@ -2917,17 +2799,18 @@ func TestCreateDatabaseInsideTransactionRejectedRepro(t *testing.T) {
 					Query: `BEGIN;`,
 				},
 				{
-					Query:       `CREATE DATABASE tx_create_database_repro;`,
-					ExpectedErr: `cannot run inside a transaction block`,
+					Query: `CREATE DATABASE tx_create_database_repro;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testcreatedatabaseinsidetransactionrejectedrepro-0001-create-database-tx_create_database_repro",
+
+						// TestDropDatabaseInsideTransactionRejectedRepro reproduces a transaction
+						// boundary correctness bug: PostgreSQL rejects DROP DATABASE inside an explicit
+						// transaction block.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropDatabaseInsideTransactionRejectedRepro reproduces a transaction
-// boundary correctness bug: PostgreSQL rejects DROP DATABASE inside an explicit
-// transaction block.
 func TestDropDatabaseInsideTransactionRejectedRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -2940,8 +2823,7 @@ func TestDropDatabaseInsideTransactionRejectedRepro(t *testing.T) {
 					Query: `BEGIN;`,
 				},
 				{
-					Query:       `DROP DATABASE tx_drop_database_repro;`,
-					ExpectedErr: `cannot run inside a transaction block`,
+					Query: `DROP DATABASE tx_drop_database_repro;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-repro-test-testdropdatabaseinsidetransactionrejectedrepro-0001-drop-database-tx_drop_database_repro", Compare: "sqlstate"},
 				},
 			},
 		},

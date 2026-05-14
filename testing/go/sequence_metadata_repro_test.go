@@ -34,17 +34,18 @@ func TestCreateSequencePopulatesPgSequencesRepro(t *testing.T) {
 				{
 					Query: `SELECT schemaname, sequencename
 						FROM pg_catalog.pg_sequences
-						WHERE sequencename = 'sequence_catalog_target';`,
-					Expected: []sql.Row{{"public", "sequence_catalog_target"}},
+						WHERE sequencename = 'sequence_catalog_target';`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-metadata-repro-test-testcreatesequencepopulatespgsequencesrepro-0001-select-schemaname-sequencename-from-pg_catalog.pg_sequences",
+
+						// TestCreateSequencePopulatesPgStatioSequenceViewsRepro reproduces a catalog
+						// persistence bug: PostgreSQL exposes created sequences through sequence I/O
+						// stats views.
+						ColumnModes: []string{"schema"}},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateSequencePopulatesPgStatioSequenceViewsRepro reproduces a catalog
-// persistence bug: PostgreSQL exposes created sequences through sequence I/O
-// stats views.
 func TestCreateSequencePopulatesPgStatioSequenceViewsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -87,8 +88,7 @@ func TestCreateTemporarySequenceRepro(t *testing.T) {
 					Query: `CREATE TEMPORARY SEQUENCE temp_sequence_target;`,
 				},
 				{
-					Query:    `SELECT nextval('temp_sequence_target');`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT nextval('temp_sequence_target');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-metadata-repro-test-testcreatetemporarysequencerepro-0001-select-nextval-temp_sequence_target"},
 				},
 			},
 		},
@@ -107,16 +107,13 @@ func TestSequenceRelationTracksIsCalledRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT last_value, is_called FROM sequence_is_called_target;`,
-					Expected: []sql.Row{{int64(10), false}},
+					Query: `SELECT last_value, is_called FROM sequence_is_called_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-metadata-repro-test-testsequencerelationtracksiscalledrepro-0001-select-last_value-is_called-from-sequence_is_called_target"},
 				},
 				{
-					Query:    `SELECT nextval('sequence_is_called_target');`,
-					Expected: []sql.Row{{int64(10)}},
+					Query: `SELECT nextval('sequence_is_called_target');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-metadata-repro-test-testsequencerelationtracksiscalledrepro-0002-select-nextval-sequence_is_called_target"},
 				},
 				{
-					Query:    `SELECT last_value, is_called FROM sequence_is_called_target;`,
-					Expected: []sql.Row{{int64(10), true}},
+					Query: `SELECT last_value, is_called FROM sequence_is_called_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-metadata-repro-test-testsequencerelationtracksiscalledrepro-0003-select-last_value-is_called-from-sequence_is_called_target"},
 				},
 			},
 		},

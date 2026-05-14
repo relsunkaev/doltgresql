@@ -34,19 +34,13 @@ func TestCreateProcedureLanguagePlpgsql(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "CALL example(1);",
-					Expected: []sql.Row{},
+					Query: "CALL example(1);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0001-call-example-1"},
 				},
 				{
-					Query:    "CALL example('2');",
-					Expected: []sql.Row{},
+					Query: "CALL example('2');", PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0002-call-example-2"},
 				},
 				{
-					Query: "SELECT * FROM test;",
-					Expected: []sql.Row{
-						{1},
-						{2},
-					},
+					Query: "SELECT * FROM test;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0003-select-*-from-test"},
 				},
 			},
 		},
@@ -72,12 +66,10 @@ $$ LANGUAGE plpgsql;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "CALL interpreted_while_label(42);",
-					Expected: []sql.Row{},
+					Query: "CALL interpreted_while_label(42);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0004-call-interpreted_while_label-42"},
 				},
 				{
-					Query:    "SELECT * FROM test;",
-					Expected: []sql.Row{{52}},
+					Query: "SELECT * FROM test;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0005-select-*-from-test"},
 				},
 			},
 		},
@@ -111,29 +103,19 @@ END;
 $$ LANGUAGE plpgsql;`},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "CALL interpreted_overload('abc');",
-					Expected: []sql.Row{},
+					Query: "CALL interpreted_overload('abc');", PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0006-call-interpreted_overload-abc"},
 				},
 				{
-					Query:    "CALL interpreted_overload('abcd');",
-					Expected: []sql.Row{},
+					Query: "CALL interpreted_overload('abcd');", PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0007-call-interpreted_overload-abcd"},
 				},
 				{
-					Query:    "CALL interpreted_overload(3);",
-					Expected: []sql.Row{},
+					Query: "CALL interpreted_overload(3);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0008-call-interpreted_overload-3"},
 				},
 				{
-					Query:    "CALL interpreted_overload(4);",
-					Expected: []sql.Row{},
+					Query: "CALL interpreted_overload(4);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0009-call-interpreted_overload-4"},
 				},
 				{
-					Query: "SELECT * FROM test;",
-					Expected: []sql.Row{
-						{"abc"},
-						{"abcd_long"},
-						{"3"},
-						{"-4"},
-					},
+					Query: "SELECT * FROM test;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0010-select-*-from-test"},
 				},
 			},
 		},
@@ -149,12 +131,10 @@ BEGIN
 	DELETE FROM test WHERE v1 = 1;
 	INSERT INTO test VALUES (1, input + 100);
 END;
-$$ LANGUAGE plpgsql;`,
-					Expected: []sql.Row{},
+$$ LANGUAGE plpgsql;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0011-create-procedure-interpreted_branch-input-int4"},
 				},
 				{
-					Query:    "CALL interpreted_branch(4);",
-					Expected: []sql.Row{},
+					Query: "CALL interpreted_branch(4);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0012-call-interpreted_branch-4", Compare: "sqlstate"},
 				},
 				{
 					Query:    "SELECT * FROM test;",
@@ -232,12 +212,10 @@ BEGIN
 	DELETE FROM test WHERE v1 = 2;
 	INSERT INTO test VALUES (2, input::int4 + 100);
 END;
-$$ LANGUAGE plpgsql;`,
-					Expected: []sql.Row{},
+$$ LANGUAGE plpgsql;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0027-create-procedure-interpreted_merging-input-text"},
 				},
 				{
-					Query:    "CALL interpreted_merging('12');",
-					Expected: []sql.Row{},
+					Query: "CALL interpreted_merging('12');", PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0028-call-interpreted_merging-12", Compare: "sqlstate"},
 				},
 				{
 					Query:    "SELECT * FROM test;",
@@ -432,12 +410,10 @@ end
 $$;`,
 				},
 				{
-					Query:    "CALL m('a', 'B', 1);",
-					Expected: []sql.Row{},
+					Query: "CALL m('a', 'B', 1);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0065-call-m-a-b-1"},
 				},
 				{
-					Query:    "SELECT * FROM t",
-					Expected: []sql.Row{{1, "aB"}},
+					Query: "SELECT * FROM t", PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0066-select-*-from-t"},
 				},
 			},
 		},
@@ -471,16 +447,13 @@ $$;`,
         $$;`,
 				},
 				{
-					Query:    "CALL check_and_add(1, 'hi');",
-					Expected: []sql.Row{},
+					Query: "CALL check_and_add(1, 'hi');", PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0067-call-check_and_add-1-hi"},
 				},
 				{
-					Query:    "CALL check_and_add(3, 'hellooo');",
-					Expected: []sql.Row{},
+					Query: "CALL check_and_add(3, 'hellooo');", PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0068-call-check_and_add-3-hellooo"},
 				},
 				{
-					Query:    "SELECT * FROM tbl",
-					Expected: []sql.Row{{1, "hi is too short"}, {3, "hellooo"}},
+					Query: "SELECT * FROM tbl", PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0069-select-*-from-tbl"},
 				},
 			},
 		},

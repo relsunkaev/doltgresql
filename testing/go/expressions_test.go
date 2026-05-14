@@ -36,67 +36,49 @@ func TestIn(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM test WHERE id IN (2, 3, 4, 5);`,
-					Expected: []sql.Row{{int32(3)}, {int32(2)}},
+					Query: `SELECT * FROM test WHERE id IN (2, 3, 4, 5);`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testin-0001-select-*-from-test-where"},
 				},
 				{
-					Query:    `SELECT * FROM test WHERE id IN (4, 3, 2, 1, 0);`,
-					Expected: []sql.Row{{int32(1)}, {int32(3)}, {int32(2)}},
+					Query: `SELECT * FROM test WHERE id IN (4, 3, 2, 1, 0);`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testin-0002-select-*-from-test-where"},
 				},
 				{
-					Query:    `SELECT * FROM test2 WHERE test_id IN (SELECT * FROM test WHERE id = 2);`,
-					Expected: []sql.Row{{int32(3), int32(2), "baz"}},
+					Query: `SELECT * FROM test2 WHERE test_id IN (SELECT * FROM test WHERE id = 2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testin-0003-select-*-from-test2-where"},
 				},
 				{
-					Query: `SELECT * FROM test2 WHERE test_id IN(SELECT * FROM test WHERE id > 0);`,
-					Expected: []sql.Row{
-						{int32(1), int32(1), "foo"},
-						{int32(3), int32(2), "baz"},
-					},
+					Query: `SELECT * FROM test2 WHERE test_id IN(SELECT * FROM test WHERE id > 0);`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testin-0004-select-*-from-test2-where"},
 				},
 				{
-					Query:    `SELECT 4 IN (null, 1, 2, 3);`,
-					Expected: []sql.Row{{nil}},
+					Query: `SELECT 4 IN (null, 1, 2, 3);`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testin-0005-select-4-in-null-1"},
 				},
 				{
-					Query:    `SELECT 4 IN (null, 1, 2, 3, 4);`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT 4 IN (null, 1, 2, 3, 4);`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testin-0006-select-4-in-null-1"},
 				},
 				{
-					Query:    `SELECT NULL IN (null, 1, 2, 3);`,
-					Expected: []sql.Row{{nil}},
+					Query: `SELECT NULL IN (null, 1, 2, 3);`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testin-0007-select-null-in-null-1"},
 				},
 				{
-					Query:    `SELECT 4 IN (1, 2, 3, null::int4);`,
-					Expected: []sql.Row{{nil}},
+					Query: `SELECT 4 IN (1, 2, 3, null::int4);`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testin-0008-select-4-in-1-2"},
 				},
 				{
-					Query:    `SELECT 4 IN (1, 2, 3);`,
-					Expected: []sql.Row{{"f"}},
+					Query: `SELECT 4 IN (1, 2, 3);`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testin-0009-select-4-in-1-2"},
 				},
 				{
-					Query:    `SELECT 4 IN (1, 2, 3, 4);`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT 4 IN (1, 2, 3, 4);`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testin-0010-select-4-in-1-2"},
 				},
 				{
-					Query:    `SELECT concat('a', 'b') in ('a', 'b', 'ab');`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT concat('a', 'b') in ('a', 'b', 'ab');`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testin-0011-select-concat-a-b-in"},
 				},
 				{
-					Query:    `SELECT concat('a', 'b') in ('a', 'b');`,
-					Expected: []sql.Row{{"f"}},
+					Query: `SELECT concat('a', 'b') in ('a', 'b');`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testin-0012-select-concat-a-b-in"},
 				},
 				{
-					Query:    `SELECT concat('a', 'b') in ('a', NULL, 'b');`,
-					Expected: []sql.Row{{nil}},
+					Query: `SELECT concat('a', 'b') in ('a', NULL, 'b');`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testin-0013-select-concat-a-b-in"},
 				},
 				{
-					Query:    `SELECT concat('a', NULL) in ('a', 'b', 'ab');`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT concat('a', NULL) in ('a', 'b', 'ab');`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testin-0014-select-concat-a-null-in"},
 				},
 				{
-					Query:    `SELECT concat('a', NULL) in ('a', NULL);`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT concat('a', NULL) in ('a', NULL);`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testin-0015-select-concat-a-null-in"},
 				},
 			},
 		},
@@ -111,38 +93,28 @@ func TestIn(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM test WHERE id NOT IN (2, 3, 4, 5);`,
-					Expected: []sql.Row{{int32(1)}},
+					Query: `SELECT * FROM test WHERE id NOT IN (2, 3, 4, 5);`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testin-0016-select-*-from-test-where"},
 				},
 				{
-					Query:    `SELECT * FROM test2 WHERE test_id NOT IN (SELECT * FROM test WHERE id = 2);`,
-					Expected: []sql.Row{{int32(1), int32(1), "foo"}, {int32(2), int32(10), "bar"}},
+					Query: `SELECT * FROM test2 WHERE test_id NOT IN (SELECT * FROM test WHERE id = 2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testin-0017-select-*-from-test2-where"},
 				},
 				{
-					Query: `SELECT * FROM test2 WHERE test_id NOT IN (SELECT * FROM test WHERE id > 0);`,
-					Expected: []sql.Row{
-						{int32(2), int32(10), "bar"},
-					},
+					Query: `SELECT * FROM test2 WHERE test_id NOT IN (SELECT * FROM test WHERE id > 0);`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testin-0018-select-*-from-test2-where"},
 				},
 				{
-					Query:    `SELECT 4 NOT IN (null, 1, 2, 3);`,
-					Expected: []sql.Row{{nil}},
+					Query: `SELECT 4 NOT IN (null, 1, 2, 3);`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testin-0019-select-4-not-in-null"},
 				},
 				{
-					Query:    `SELECT NULL NOT IN (null, 1, 2, 3);`,
-					Expected: []sql.Row{{nil}},
+					Query: `SELECT NULL NOT IN (null, 1, 2, 3);`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testin-0020-select-null-not-in-null"},
 				},
 				{
-					Query:    `SELECT 4 NOT IN (1, 2, 3);`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT 4 NOT IN (1, 2, 3);`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testin-0021-select-4-not-in-1"},
 				},
 				{
-					Query:    `SELECT 4 NOT IN (1, 2, 3, 4);`,
-					Expected: []sql.Row{{"f"}},
+					Query: `SELECT 4 NOT IN (1, 2, 3, 4);`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testin-0022-select-4-not-in-1"},
 				},
 				{
-					Query:    `SELECT concat('a', 'b') NOT in ('a', 'b');`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT concat('a', 'b') NOT in ('a', 'b');`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testin-0023-select-concat-a-b-not"},
 				},
 			},
 		},
@@ -286,24 +258,19 @@ func TestBinaryLogic(t *testing.T) {
 			Name: "AND",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT 1 = 1 AND 2 = 2;`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT 1 = 1 AND 2 = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testbinarylogic-0001-select-1-=-1-and"},
 				},
 				{
-					Query:    `SELECT (1 = 1 AND 2 = 2) AND (false);`,
-					Expected: []sql.Row{{"f"}},
+					Query: `SELECT (1 = 1 AND 2 = 2) AND (false);`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testbinarylogic-0002-select-1-=-1-and"},
 				},
 				{
-					Query:    `SELECT (1 > 1 AND 2 = 2);`,
-					Expected: []sql.Row{{"f"}},
+					Query: `SELECT (1 > 1 AND 2 = 2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testbinarylogic-0003-select-1->-1-and"},
 				},
 				{
-					Query:    `SELECT (1 = 1 AND 2 = 2) AND (false);`,
-					Expected: []sql.Row{{"f"}},
+					Query: `SELECT (1 = 1 AND 2 = 2) AND (false);`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testbinarylogic-0004-select-1-=-1-and"},
 				},
 				{
-					Query:    `SELECT (1 = 1 AND 2 = 2) AND (true);`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT (1 = 1 AND 2 = 2) AND (true);`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testbinarylogic-0005-select-1-=-1-and"},
 				},
 			},
 		},
@@ -311,28 +278,22 @@ func TestBinaryLogic(t *testing.T) {
 			Name: "OR",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT 1 = 1 OR 2 = 2;`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT 1 = 1 OR 2 = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testbinarylogic-0006-select-1-=-1-or"},
 				},
 				{
-					Query:    `SELECT (1 = 1 AND 2 = 2) OR (false);`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT (1 = 1 AND 2 = 2) OR (false);`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testbinarylogic-0007-select-1-=-1-and"},
 				},
 				{
-					Query:    `SELECT (1 > 1 OR 2 = 2);`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT (1 > 1 OR 2 = 2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testbinarylogic-0008-select-1->-1-or"},
 				},
 				{
-					Query:    `SELECT (1 > 1 OR 2 > 2);`,
-					Expected: []sql.Row{{"f"}},
+					Query: `SELECT (1 > 1 OR 2 > 2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testbinarylogic-0009-select-1->-1-or"},
 				},
 				{
-					Query:    `SELECT (1 > 1 OR 2 > 2) OR (true);`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT (1 > 1 OR 2 > 2) OR (true);`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testbinarylogic-0010-select-1->-1-or"},
 				},
 				{
-					Query:    `SELECT (1 = 1 AND 2 = 2) OR (true);`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT (1 = 1 AND 2 = 2) OR (true);`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testbinarylogic-0011-select-1-=-1-and"},
 				},
 			},
 		},
@@ -340,36 +301,28 @@ func TestBinaryLogic(t *testing.T) {
 			Name: "IS DISTINCT FROM",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT 1 IS DISTINCT FROM 2;`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT 1 IS DISTINCT FROM 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testbinarylogic-0012-select-1-is-distinct-from"},
 				},
 				{
-					Query:    `SELECT 2 IS DISTINCT FROM 2;`,
-					Expected: []sql.Row{{"f"}},
+					Query: `SELECT 2 IS DISTINCT FROM 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testbinarylogic-0013-select-2-is-distinct-from"},
 				},
 				{
-					Query:    `SELECT null IS DISTINCT FROM 2;`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT null IS DISTINCT FROM 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testbinarylogic-0014-select-null-is-distinct-from"},
 				},
 				{
-					Query:    `SELECT null IS DISTINCT FROM null;`,
-					Expected: []sql.Row{{"f"}},
+					Query: `SELECT null IS DISTINCT FROM null;`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testbinarylogic-0015-select-null-is-distinct-from"},
 				},
 				{
-					Query:    `SELECT 2 IS DISTINCT FROM null;`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT 2 IS DISTINCT FROM null;`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testbinarylogic-0016-select-2-is-distinct-from"},
 				},
 				{
-					Query:    `SELECT 2 IS DISTINCT FROM 2.5;`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT 2 IS DISTINCT FROM 2.5;`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testbinarylogic-0017-select-2-is-distinct-from"},
 				},
 				{
-					Query:    `SELECT 2 IS DISTINCT FROM '2';`,
-					Expected: []sql.Row{{"f"}},
+					Query: `SELECT 2 IS DISTINCT FROM '2';`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testbinarylogic-0018-select-2-is-distinct-from"},
 				},
 				{
-					Query:       `SELECT 2 IS DISTINCT FROM 'a';`,
-					ExpectedErr: `invalid input syntax for type int4: "a"`,
+					Query: `SELECT 2 IS DISTINCT FROM 'a';`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testbinarylogic-0019-select-2-is-distinct-from", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -377,53 +330,46 @@ func TestBinaryLogic(t *testing.T) {
 			Name: "IS NOT DISTINCT FROM",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT 1 IS NOT DISTINCT FROM 2;`,
-					Expected: []sql.Row{{"f"}},
+					Query: `SELECT 1 IS NOT DISTINCT FROM 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testbinarylogic-0020-select-1-is-not-distinct"},
 				},
 				{
-					Query:    `SELECT 2 IS NOT DISTINCT FROM 2;`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT 2 IS NOT DISTINCT FROM 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testbinarylogic-0021-select-2-is-not-distinct"},
 				},
 				{
-					Query:    `SELECT null IS NOT DISTINCT FROM 2;`,
-					Expected: []sql.Row{{"f"}},
+					Query: `SELECT null IS NOT DISTINCT FROM 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testbinarylogic-0022-select-null-is-not-distinct"},
 				},
 				{
-					Query:    `SELECT null IS NOT DISTINCT FROM null;`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT null IS NOT DISTINCT FROM null;`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testbinarylogic-0023-select-null-is-not-distinct"},
 				},
 				{
-					Query:    `SELECT 2 IS NOT DISTINCT FROM null;`,
-					Expected: []sql.Row{{"f"}},
+					Query: `SELECT 2 IS NOT DISTINCT FROM null;`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testbinarylogic-0024-select-2-is-not-distinct"},
 				},
 				{
-					Query:    `SELECT 2 IS NOT DISTINCT FROM 2.5;`,
-					Expected: []sql.Row{{"f"}},
+					Query: `SELECT 2 IS NOT DISTINCT FROM 2.5;`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testbinarylogic-0025-select-2-is-not-distinct"},
 				},
 				{
-					Query:    `SELECT 2 IS NOT DISTINCT FROM '2';`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT 2 IS NOT DISTINCT FROM '2';`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testbinarylogic-0026-select-2-is-not-distinct"},
 				},
 				{
-					Query:       `SELECT 2 IS NOT DISTINCT FROM 'a';`,
-					ExpectedErr: `invalid input syntax for type int4: "a"`,
+					Query: `SELECT 2 IS NOT DISTINCT FROM 'a';`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testbinarylogic-0027-select-2-is-not-distinct",
+
+						// Note that our parser is more forgiving of array subscripts than the actual Postgres parser.
+						// We can handle this: SELECT ARRAY[1, 2, 3][1]
+						// But postgres requires: SELECT (ARRAY[1, 2, 3])[1]
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// Note that our parser is more forgiving of array subscripts than the actual Postgres parser.
-// We can handle this: SELECT ARRAY[1, 2, 3][1]
-// But postgres requires: SELECT (ARRAY[1, 2, 3])[1]
 func TestSubscript(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "array literal",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT ARRAY[1, 2, 3][1];`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT ARRAY[1, 2, 3][1];`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testsubscript-0001-select-array[1-2-3][1]", Compare: "sqlstate"},
 				},
 				{
 					Query:    `SELECT (ARRAY[1, 2, 3])[3];`,
@@ -471,8 +417,7 @@ func TestSubscript(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT arr[2] FROM test order by 1;`,
-					Expected: []sql.Row{{2}, {5}},
+					Query: `SELECT arr[2] FROM test order by 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testsubscript-0011-select-arr[2]-from-test-order"},
 				},
 			},
 		},
@@ -484,8 +429,7 @@ func TestSubscript(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT (array(select id from test order by 1))[2]`,
-					Expected: []sql.Row{{2}},
+					Query: `SELECT (array(select id from test order by 1))[2]`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testsubscript-0012-select-array-select-id-from"},
 				},
 			},
 		},
@@ -493,20 +437,16 @@ func TestSubscript(t *testing.T) {
 			Name: "name raw array subscript",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT ('_abc'::name)[0];`,
-					Expected: []sql.Row{{"_"}},
+					Query: `SELECT ('_abc'::name)[0];`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testsubscript-0013-select-abc-::name-[0]"},
 				},
 				{
-					Query:    `SELECT ('_abc'::name)[1];`,
-					Expected: []sql.Row{{"a"}},
+					Query: `SELECT ('_abc'::name)[1];`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testsubscript-0014-select-abc-::name-[1]"},
 				},
 				{
-					Query:    `SELECT ('_abc'::name)[4];`,
-					Expected: []sql.Row{{nil}},
+					Query: `SELECT ('_abc'::name)[4];`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testsubscript-0015-select-abc-::name-[4]"},
 				},
 				{
-					Query:    `SELECT ('_abc'::name)[0] = '_'::"char";`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT ('_abc'::name)[0] = '_'::"char";`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testsubscript-0016-select-abc-::name-[0]-="},
 				},
 			},
 		},
@@ -514,12 +454,10 @@ func TestSubscript(t *testing.T) {
 			Name: "vector array subscript lower bound",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT ('1 2 3'::int2vector)[0]::text, ('1 2 3'::int2vector)[1]::text, ('11 12 13'::oidvector)[0]::text;`,
-					Expected: []sql.Row{{"1", "2", "11"}},
+					Query: `SELECT ('1 2 3'::int2vector)[0]::text, ('1 2 3'::int2vector)[1]::text, ('11 12 13'::oidvector)[0]::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testsubscript-0017-select-1-2-3-::int2vector"},
 				},
 				{
-					Query:    `SELECT (('1 2 3'::int2vector)::int2[])[0]::text, array_to_string((('1 2 3'::int2vector)::int2[])[:1], ',');`,
-					Expected: []sql.Row{{"1", "1,2"}},
+					Query: `SELECT (('1 2 3'::int2vector)::int2[])[0]::text, array_to_string((('1 2 3'::int2vector)::int2[])[:1], ',');`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testsubscript-0018-select-1-2-3-::int2vector"},
 				},
 			},
 		},
@@ -532,17 +470,14 @@ func TestAnyAllComparisons(t *testing.T) {
 			Name: "ANY and ALL array comparison semantics",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT 1 = ANY(ARRAY[]::int[]), 1 = ANY(ARRAY[NULL, 1]::int[]), 2 = ANY(ARRAY[NULL, 1]::int[]) IS NULL;`,
-					Expected: []sql.Row{{"f", "t", "t"}},
+					Query: `SELECT 1 = ANY(ARRAY[]::int[]), 1 = ANY(ARRAY[NULL, 1]::int[]), 2 = ANY(ARRAY[NULL, 1]::int[]) IS NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testanyallcomparisons-0001-select-1-=-any-array[]::int[]"},
 				},
 				{
-					Query:    `SELECT false = ALL(ARRAY[false, false]), false = ALL(ARRAY[false, true]), false = ALL(ARRAY[]::bool[]), false = ALL(ARRAY[false, NULL]::bool[]) IS NULL;`,
-					Expected: []sql.Row{{"t", "f", "t", "t"}},
+					Query: `SELECT false = ALL(ARRAY[false, false]), false = ALL(ARRAY[false, true]), false = ALL(ARRAY[]::bool[]), false = ALL(ARRAY[false, NULL]::bool[]) IS NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testanyallcomparisons-0002-select-false-=-all-array[false"},
 				},
 				{
 					Query: `WITH indexed(generated) AS (VALUES (ARRAY[false, false]::bool[]))
-SELECT false = ALL(indexed.generated) FROM indexed;`,
-					Expected: []sql.Row{{"t"}},
+SELECT false = ALL(indexed.generated) FROM indexed;`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testanyallcomparisons-0003-with-indexed-generated-as-values"},
 				},
 			},
 		},

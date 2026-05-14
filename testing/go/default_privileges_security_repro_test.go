@@ -49,10 +49,10 @@ func TestAlterDefaultPrivilegesForRoleRequiresOwnershipRepro(t *testing.T) {
 					Query: `INSERT INTO default_priv_hijack_private VALUES (1, 'private');`,
 				},
 				{
-					Query:       `SELECT id, secret FROM default_priv_hijack_private;`,
-					ExpectedErr: `permission denied`,
-					Username:    `default_priv_hijacker`,
-					Password:    `pw`,
+					Query: `SELECT id, secret FROM default_priv_hijack_private;`,
+
+					Username: `default_priv_hijacker`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{ID: "default-privileges-security-repro-test-testalterdefaultprivilegesforrolerequiresownershiprepro-0002-select-id-secret-from-default_priv_hijack_private", Compare: "sqlstate"},
 				},
 			},
 		},

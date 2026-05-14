@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestPgDatabaseOwnerRoleExistsRepro reproduces a PostgreSQL 15 catalog and
@@ -31,8 +29,7 @@ func TestPgDatabaseOwnerRoleExistsRepro(t *testing.T) {
 				{
 					Query: `SELECT rolname, rolcanlogin, rolsuper
 						FROM pg_catalog.pg_roles
-						WHERE rolname = 'pg_database_owner';`,
-					Expected: []sql.Row{{"pg_database_owner", "f", "f"}},
+						WHERE rolname = 'pg_database_owner';`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-catalog-repro-test-testpgdatabaseownerroleexistsrepro-0001-select-rolname-rolcanlogin-rolsuper-from"},
 				},
 			},
 		},
@@ -50,8 +47,7 @@ func TestPublicSchemaOwnedByPgDatabaseOwnerRepro(t *testing.T) {
 				{
 					Query: `SELECT pg_get_userbyid(nspowner)
 						FROM pg_catalog.pg_namespace
-						WHERE nspname = 'public';`,
-					Expected: []sql.Row{{"pg_database_owner"}},
+						WHERE nspname = 'public';`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-catalog-repro-test-testpublicschemaownedbypgdatabaseownerrepro-0001-select-pg_get_userbyid-nspowner-from-pg_catalog.pg_namespace"},
 				},
 			},
 		},
@@ -74,12 +70,7 @@ func TestServerFilePredefinedRolesExistRepro(t *testing.T) {
 							'pg_write_server_files',
 							'pg_execute_server_program'
 						)
-						ORDER BY rolname;`,
-					Expected: []sql.Row{
-						{"pg_execute_server_program", "f", "f"},
-						{"pg_read_server_files", "f", "f"},
-						{"pg_write_server_files", "f", "f"},
-					},
+						ORDER BY rolname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-catalog-repro-test-testserverfilepredefinedrolesexistrepro-0001-select-rolname-rolcanlogin-rolsuper-from"},
 				},
 			},
 		},
@@ -106,16 +97,7 @@ func TestDataAndMonitoringPredefinedRolesExistRepro(t *testing.T) {
 							'pg_stat_scan_tables',
 							'pg_signal_backend'
 						)
-						ORDER BY rolname;`,
-					Expected: []sql.Row{
-						{"pg_monitor", "f", "f"},
-						{"pg_read_all_data", "f", "f"},
-						{"pg_read_all_settings", "f", "f"},
-						{"pg_read_all_stats", "f", "f"},
-						{"pg_signal_backend", "f", "f"},
-						{"pg_stat_scan_tables", "f", "f"},
-						{"pg_write_all_data", "f", "f"},
-					},
+						ORDER BY rolname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-catalog-repro-test-testdataandmonitoringpredefinedrolesexistrepro-0001-select-rolname-rolcanlogin-rolsuper-from"},
 				},
 			},
 		},
@@ -134,12 +116,7 @@ func TestPgMonitorInheritsMonitoringRolesRepro(t *testing.T) {
 					Query: `SELECT pg_get_userbyid(roleid), pg_get_userbyid(member)
 						FROM pg_catalog.pg_auth_members
 						WHERE pg_get_userbyid(member) = 'pg_monitor'
-						ORDER BY pg_get_userbyid(roleid);`,
-					Expected: []sql.Row{
-						{"pg_read_all_settings", "pg_monitor"},
-						{"pg_read_all_stats", "pg_monitor"},
-						{"pg_stat_scan_tables", "pg_monitor"},
-					},
+						ORDER BY pg_get_userbyid(roleid);`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-catalog-repro-test-testpgmonitorinheritsmonitoringrolesrepro-0001-select-pg_get_userbyid-roleid-pg_get_userbyid-member"},
 				},
 			},
 		},
@@ -167,18 +144,20 @@ func TestPgReadAllDataRoleAllowsTableReadsRepro(t *testing.T) {
 				{
 					Query: `SELECT id, secret
 						FROM read_all_data_private;`,
-					Expected: []sql.Row{{1, "visible through predefined role"}},
+
 					Username: `read_all_data_user`,
-					Password: `pw`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestPgWriteAllDataRoleAllowsTableWritesRepro reproduces a predefined-role
+						// privilege bug: membership in pg_write_all_data should allow writing tables
+						// without per-table INSERT grants.
+						ID: "role-catalog-repro-test-testpgreadalldataroleallowstablereadsrepro-0001-select-id-secret-from-read_all_data_private"},
 				},
 			},
 		},
 	})
 }
 
-// TestPgWriteAllDataRoleAllowsTableWritesRepro reproduces a predefined-role
-// privilege bug: membership in pg_write_all_data should allow writing tables
-// without per-table INSERT grants.
 func TestPgWriteAllDataRoleAllowsTableWritesRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -219,11 +198,7 @@ func TestMaintenancePredefinedRolesExistRepro(t *testing.T) {
 							'pg_maintain',
 							'pg_signal_autovacuum_worker'
 						)
-						ORDER BY rolname;`,
-					Expected: []sql.Row{
-						{"pg_maintain", "f", "f"},
-						{"pg_signal_autovacuum_worker", "f", "f"},
-					},
+						ORDER BY rolname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-catalog-repro-test-testmaintenancepredefinedrolesexistrepro-0001-select-rolname-rolcanlogin-rolsuper-from"},
 				},
 			},
 		},
@@ -241,8 +216,7 @@ func TestCheckpointPredefinedRoleExistsRepro(t *testing.T) {
 				{
 					Query: `SELECT rolname, rolcanlogin, rolsuper
 						FROM pg_catalog.pg_roles
-						WHERE rolname = 'pg_checkpoint';`,
-					Expected: []sql.Row{{"pg_checkpoint", "f", "f"}},
+						WHERE rolname = 'pg_checkpoint';`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-catalog-repro-test-testcheckpointpredefinedroleexistsrepro-0001-select-rolname-rolcanlogin-rolsuper-from"},
 				},
 			},
 		},
@@ -260,8 +234,7 @@ func TestCreateSubscriptionPredefinedRoleExistsRepro(t *testing.T) {
 				{
 					Query: `SELECT rolname, rolcanlogin, rolsuper
 						FROM pg_catalog.pg_roles
-						WHERE rolname = 'pg_create_subscription';`,
-					Expected: []sql.Row{{"pg_create_subscription", "f", "f"}},
+						WHERE rolname = 'pg_create_subscription';`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-catalog-repro-test-testcreatesubscriptionpredefinedroleexistsrepro-0001-select-rolname-rolcanlogin-rolsuper-from"},
 				},
 			},
 		},
@@ -279,8 +252,7 @@ func TestUseReservedConnectionsPredefinedRoleExistsRepro(t *testing.T) {
 				{
 					Query: `SELECT rolname, rolcanlogin, rolsuper
 						FROM pg_catalog.pg_roles
-						WHERE rolname = 'pg_use_reserved_connections';`,
-					Expected: []sql.Row{{"pg_use_reserved_connections", "f", "f"}},
+						WHERE rolname = 'pg_use_reserved_connections';`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-catalog-repro-test-testusereservedconnectionspredefinedroleexistsrepro-0001-select-rolname-rolcanlogin-rolsuper-from"},
 				},
 			},
 		},
@@ -300,8 +272,7 @@ func TestCreateUserPopulatesPgShadowRepro(t *testing.T) {
 				{
 					Query: `SELECT usename, usesuper, usecreatedb
 						FROM pg_catalog.pg_shadow
-						WHERE usename = 'shadow_catalog_user';`,
-					Expected: []sql.Row{{"shadow_catalog_user", "f", "f"}},
+						WHERE usename = 'shadow_catalog_user';`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-catalog-repro-test-testcreateuserpopulatespgshadowrepro-0001-select-usename-usesuper-usecreatedb-from"},
 				},
 			},
 		},
@@ -322,8 +293,7 @@ func TestCreateUserPopulatesPgAuthidPasswordRepro(t *testing.T) {
 				{
 					Query: `SELECT rolname, rolpassword IS NOT NULL
 						FROM pg_catalog.pg_authid
-						WHERE rolname = 'authid_password_user';`,
-					Expected: []sql.Row{{"authid_password_user", "t"}},
+						WHERE rolname = 'authid_password_user';`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-catalog-repro-test-testcreateuserpopulatespgauthidpasswordrepro-0001-select-rolname-rolpassword-is-not"},
 				},
 			},
 		},
@@ -344,8 +314,7 @@ func TestCreateUserPopulatesPgUserPasswordMaskRepro(t *testing.T) {
 				{
 					Query: `SELECT usename, passwd
 						FROM pg_catalog.pg_user
-						WHERE usename = 'pguser_password_user';`,
-					Expected: []sql.Row{{"pguser_password_user", "********"}},
+						WHERE usename = 'pguser_password_user';`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-catalog-repro-test-testcreateuserpopulatespguserpasswordmaskrepro-0001-select-usename-passwd-from-pg_catalog.pg_user"},
 				},
 			},
 		},
@@ -363,15 +332,13 @@ func TestQuotedRoleNamesAreCaseSensitive(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `CREATE ROLE caserole LOGIN PASSWORD 'folded';`,
-					Expected: []sql.Row{},
+					Query: `CREATE ROLE caserole LOGIN PASSWORD 'folded';`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-catalog-repro-test-testquotedrolenamesarecasesensitive-0001-create-role-caserole-login-password"},
 				},
 				{
 					Query: `SELECT rolname
 						FROM pg_catalog.pg_roles
 						WHERE rolname IN ('CaseRole', 'caserole')
-						ORDER BY rolname;`,
-					Expected: []sql.Row{{"CaseRole"}, {"caserole"}},
+						ORDER BY rolname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-catalog-repro-test-testquotedrolenamesarecasesensitive-0002-select-rolname-from-pg_catalog.pg_roles-where"},
 				},
 			},
 		},
@@ -389,10 +356,10 @@ func TestPgAuthidRequiresCatalogPrivilegeGuard(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT rolname FROM pg_catalog.pg_authid LIMIT 1;`,
-					ExpectedErr: `permission denied for table pg_authid`,
-					Username:    `authid_reader`,
-					Password:    `pw`,
+					Query: `SELECT rolname FROM pg_catalog.pg_authid LIMIT 1;`,
+
+					Username: `authid_reader`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-catalog-repro-test-testpgauthidrequirescatalogprivilegeguard-0001-select-rolname-from-pg_catalog.pg_authid-limit", Compare: "sqlstate"},
 				},
 			},
 		},

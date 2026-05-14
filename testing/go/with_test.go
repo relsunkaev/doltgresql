@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 func TestWithStatements(t *testing.T) {
@@ -33,47 +31,22 @@ var WithStatementTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "with cte as (select 1) select * from cte;",
-				Expected: []sql.Row{
-					{1},
-				},
+				Query: "with cte as (select 1) select * from cte;", PostgresOracle: ScriptTestPostgresOracle{ID: "with-test-testwithstatements-0001-with-cte-as-select-1"},
 			},
 			{
-				Query: "with cte as (select 1, 2, 3 union select 4, 5, 6) select * from cte;",
-				Expected: []sql.Row{
-					{1, 2, 3},
-					{4, 5, 6},
-				},
+				Query: "with cte as (select 1, 2, 3 union select 4, 5, 6) select * from cte;", PostgresOracle: ScriptTestPostgresOracle{ID: "with-test-testwithstatements-0002-with-cte-as-select-1"},
 			},
 			{
-				Query: "with cte as (values (1)) select * from cte;",
-				Expected: []sql.Row{
-					{1},
-				},
+				Query: "with cte as (values (1)) select * from cte;", PostgresOracle: ScriptTestPostgresOracle{ID: "with-test-testwithstatements-0003-with-cte-as-values-1"},
 			},
 			{
-				Query: "with cte as (values (1, 2, 3) union values (4, 5, 6)) select * from cte;",
-				Expected: []sql.Row{
-					{1, 2, 3},
-					{4, 5, 6},
-				},
+				Query: "with cte as (values (1, 2, 3) union values (4, 5, 6)) select * from cte;", PostgresOracle: ScriptTestPostgresOracle{ID: "with-test-testwithstatements-0004-with-cte-as-values-1"},
 			},
 			{
-				Query: "with cte as (select 1, 2, 3 union values (4, 5, 6)) select * from cte;",
-				Expected: []sql.Row{
-					{1, 2, 3},
-					{4, 5, 6},
-				},
+				Query: "with cte as (select 1, 2, 3 union values (4, 5, 6)) select * from cte;", PostgresOracle: ScriptTestPostgresOracle{ID: "with-test-testwithstatements-0005-with-cte-as-select-1"},
 			},
 			{
-				Query: "with recursive cte(x) as (select 1 union all select x + 1 from cte) select * from cte limit 5;",
-				Expected: []sql.Row{
-					{1},
-					{2},
-					{3},
-					{4},
-					{5},
-				},
+				Query: "with recursive cte(x) as (select 1 union all select x + 1 from cte) select * from cte limit 5;", PostgresOracle: ScriptTestPostgresOracle{ID: "with-test-testwithstatements-0006-with-recursive-cte-x-as"},
 			},
 		},
 	},

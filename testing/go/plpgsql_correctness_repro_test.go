@@ -43,21 +43,21 @@ func TestPlpgsqlCaseWithoutElseRaisesCaseNotFoundRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT plpgsql_case_without_else(1);`,
-					Expected: []sql.Row{{"one"}},
+					Query: `SELECT plpgsql_case_without_else(1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlcasewithoutelseraisescasenotfoundrepro-0001-select-plpgsql_case_without_else-1"},
 				},
 				{
-					Query:       `SELECT plpgsql_case_without_else(2);`,
-					ExpectedErr: `case not found`,
+					Query: `SELECT plpgsql_case_without_else(2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlcasewithoutelseraisescasenotfoundrepro-0002-select-plpgsql_case_without_else-2",
+
+						// TestPlpgsqlRaiseRejectsDuplicateMessageOptionRepro reproduces a PL/pgSQL
+						// correctness bug: a RAISE statement cannot specify the MESSAGE option both via
+						// the format string and the USING clause.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestPlpgsqlRaiseRejectsDuplicateMessageOptionRepro reproduces a PL/pgSQL
-// correctness bug: a RAISE statement cannot specify the MESSAGE option both via
-// the format string and the USING clause.
 func TestPlpgsqlRaiseRejectsDuplicateMessageOptionRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -72,17 +72,18 @@ func TestPlpgsqlRaiseRejectsDuplicateMessageOptionRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT plpgsql_raise_duplicate_message();`,
-					ExpectedErr: `RAISE option already specified: MESSAGE`,
+					Query: `SELECT plpgsql_raise_duplicate_message();`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlraiserejectsduplicatemessageoptionrepro-0001-select-plpgsql_raise_duplicate_message",
+
+						// TestPlpgsqlRaiseRejectsDuplicateDetailOptionRepro reproduces a PL/pgSQL
+						// correctness bug: a RAISE statement cannot specify the same USING option more
+						// than once.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestPlpgsqlRaiseRejectsDuplicateDetailOptionRepro reproduces a PL/pgSQL
-// correctness bug: a RAISE statement cannot specify the same USING option more
-// than once.
 func TestPlpgsqlRaiseRejectsDuplicateDetailOptionRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -97,17 +98,18 @@ func TestPlpgsqlRaiseRejectsDuplicateDetailOptionRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT plpgsql_raise_duplicate_detail();`,
-					ExpectedErr: `RAISE option already specified: DETAIL`,
+					Query: `SELECT plpgsql_raise_duplicate_detail();`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlraiserejectsduplicatedetailoptionrepro-0001-select-plpgsql_raise_duplicate_detail",
+
+						// TestPlpgsqlExceptionDiagnosticsRollbackRepro reproduces a PL/pgSQL
+						// compatibility gap: exception blocks can catch errors, inspect stacked
+						// diagnostics, and roll back only the failed block's side effects.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestPlpgsqlExceptionDiagnosticsRollbackRepro reproduces a PL/pgSQL
-// compatibility gap: exception blocks can catch errors, inspect stacked
-// diagnostics, and roll back only the failed block's side effects.
 func TestPlpgsqlExceptionDiagnosticsRollbackRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -136,12 +138,10 @@ func TestPlpgsqlExceptionDiagnosticsRollbackRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT plpgsql_exception_diag();`,
-					Expected: []sql.Row{{"22012:broken thing"}},
+					Query: `SELECT plpgsql_exception_diag();`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlexceptiondiagnosticsrollbackrepro-0001-select-plpgsql_exception_diag"},
 				},
 				{
-					Query:    `SELECT id FROM plpgsql_exception_diag_items ORDER BY id;`,
-					Expected: []sql.Row{{2}},
+					Query: `SELECT id FROM plpgsql_exception_diag_items ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlexceptiondiagnosticsrollbackrepro-0002-select-id-from-plpgsql_exception_diag_items-order"},
 				},
 			},
 		},
@@ -167,8 +167,7 @@ func TestPlpgsqlExceptionSqlstateSqlerrmVariablesRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT plpgsql_exception_sqlstate_sqlerrm();`,
-					Expected: []sql.Row{{"22012:special failure"}},
+					Query: `SELECT plpgsql_exception_sqlstate_sqlerrm();`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlexceptionsqlstatesqlerrmvariablesrepro-0001-select-plpgsql_exception_sqlstate_sqlerrm"},
 				},
 			},
 		},
@@ -201,8 +200,7 @@ func TestPlpgsqlBareRaiseRethrowsCurrentExceptionRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT plpgsql_bare_raise_rethrow();`,
-					Expected: []sql.Row{{"reraised failure"}},
+					Query: `SELECT plpgsql_bare_raise_rethrow();`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlbareraiserethrowscurrentexceptionrepro-0001-select-plpgsql_bare_raise_rethrow"},
 				},
 			},
 		},
@@ -233,8 +231,7 @@ func TestPlpgsqlDynamicExecuteDoesNotChangeFoundRepro(t *testing.T) {
 					$$;`,
 				},
 				{
-					Query:    `SELECT found_value FROM plpgsql_execute_found_seen WHERE marker = 'execute_into';`,
-					Expected: []sql.Row{{"true"}},
+					Query: `SELECT found_value FROM plpgsql_execute_found_seen WHERE marker = 'execute_into';`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqldynamicexecutedoesnotchangefoundrepro-0001-select-found_value-from-plpgsql_execute_found_seen-where"},
 				},
 			},
 		},
@@ -266,8 +263,7 @@ func TestPlpgsqlDynamicExecuteDoesNotChangeFoundRepro(t *testing.T) {
 					$$;`,
 				},
 				{
-					Query:    `SELECT found_value, affected FROM plpgsql_execute_dml_found_seen WHERE marker = 'execute_dml';`,
-					Expected: []sql.Row{{"true", 0}},
+					Query: `SELECT found_value, affected FROM plpgsql_execute_dml_found_seen WHERE marker = 'execute_dml';`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqldynamicexecutedoesnotchangefoundrepro-0002-select-found_value-affected-from-plpgsql_execute_dml_found_seen"},
 				},
 			},
 		},
@@ -294,8 +290,7 @@ func TestPlpgsqlDynamicExecuteIntoRecordRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT plpgsql_execute_into_record();`,
-					Expected: []sql.Row{{"10:dynamic"}},
+					Query: `SELECT plpgsql_execute_into_record();`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqldynamicexecuteintorecordrepro-0001-select-plpgsql_execute_into_record"},
 				},
 			},
 		},
@@ -319,16 +314,17 @@ func TestPlpgsqlNonVoidFunctionRequiresReturnValueRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT plpgsql_missing_return_value();`,
-					ExpectedErr: `control reached end of function without RETURN`,
+					Query: `SELECT plpgsql_missing_return_value();`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlnonvoidfunctionrequiresreturnvaluerepro-0001-select-plpgsql_missing_return_value",
+
+						// TestPlpgsqlReturnStatementValidationRepro reproduces PL/pgSQL compatibility
+						// gaps: RETURN syntax is validated against the function's declared result type.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestPlpgsqlReturnStatementValidationRepro reproduces PL/pgSQL compatibility
-// gaps: RETURN syntax is validated against the function's declared result type.
 func TestPlpgsqlReturnStatementValidationRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -340,8 +336,7 @@ func TestPlpgsqlReturnStatementValidationRepro(t *testing.T) {
 						BEGIN
 							RETURN;
 						END;
-						$$ LANGUAGE plpgsql;`,
-					ExpectedErr: `RETURN`,
+						$$ LANGUAGE plpgsql;`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlreturnstatementvalidationrepro-0001-create-function-plpgsql_nonvoid_bare_return-returns-int", Compare: "sqlstate"},
 				},
 				{
 					Query: `CREATE FUNCTION plpgsql_void_return_expression()
@@ -349,17 +344,18 @@ func TestPlpgsqlReturnStatementValidationRepro(t *testing.T) {
 						BEGIN
 							RETURN 5;
 						END;
-						$$ LANGUAGE plpgsql;`,
-					ExpectedErr: `RETURN`,
+						$$ LANGUAGE plpgsql;`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlreturnstatementvalidationrepro-0002-create-function-plpgsql_void_return_expression-returns-void",
+
+						// TestPlpgsqlSelectIntoStrictCardinalityRepro reproduces a PL/pgSQL
+						// compatibility gap: SELECT ... INTO STRICT must require exactly one row,
+						// returning the row when present and raising errors for zero or multiple rows.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestPlpgsqlSelectIntoStrictCardinalityRepro reproduces a PL/pgSQL
-// compatibility gap: SELECT ... INTO STRICT must require exactly one row,
-// returning the row when present and raising errors for zero or multiple rows.
 func TestPlpgsqlSelectIntoStrictCardinalityRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -397,25 +393,24 @@ func TestPlpgsqlSelectIntoStrictCardinalityRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT plpgsql_strict_label(1);`,
-					Expected: []sql.Row{{"one"}},
+					Query: `SELECT plpgsql_strict_label(1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlselectintostrictcardinalityrepro-0001-select-plpgsql_strict_label-1"},
 				},
 				{
-					Query:       `SELECT plpgsql_strict_label(999);`,
-					ExpectedErr: `query returned no rows`,
+					Query: `SELECT plpgsql_strict_label(999);`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlselectintostrictcardinalityrepro-0002-select-plpgsql_strict_label-999", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SELECT plpgsql_strict_any_label();`,
-					ExpectedErr: `query returned more than one row`,
+					Query: `SELECT plpgsql_strict_any_label();`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlselectintostrictcardinalityrepro-0003-select-plpgsql_strict_any_label",
+
+						// TestPlpgsqlAliasVariablesResolveRepro reproduces a PL/pgSQL correctness bug:
+						// ALIAS variables should be assignable names for local variables and function
+						// arguments.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestPlpgsqlAliasVariablesResolveRepro reproduces a PL/pgSQL correctness bug:
-// ALIAS variables should be assignable names for local variables and function
-// arguments.
 func TestPlpgsqlAliasVariablesResolveRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -436,8 +431,7 @@ func TestPlpgsqlAliasVariablesResolveRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT plpgsql_alias_echo('aliased value');`,
-					Expected: []sql.Row{{"aliased value"}},
+					Query: `SELECT plpgsql_alias_echo('aliased value');`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlaliasvariablesresolverepro-0001-select-plpgsql_alias_echo-aliased-value"},
 				},
 			},
 		},
@@ -475,8 +469,7 @@ func TestPlpgsqlReturnsTableCompositeVariableRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT plpgsql_composite_single_return()::text;`,
-					Expected: []sql.Row{{"(1,apple,3,2.5)"}},
+					Query: `SELECT plpgsql_composite_single_return()::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlreturnstablecompositevariablerepro-0001-select-plpgsql_composite_single_return-::text"},
 				},
 			},
 		},
@@ -511,8 +504,7 @@ func TestPlpgsqlTableStarCompositeArgumentRepro(t *testing.T) {
 				{
 					Query: `SELECT plpgsql_table_star_total(item.*)
 						FROM plpgsql_table_star_items AS item
-						ORDER BY item.id;`,
-					Expected: []sql.Row{{7.5}, {6.0}},
+						ORDER BY item.id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqltablestarcompositeargumentrepro-0001-select-plpgsql_table_star_total-item.*-from-plpgsql_table_star_items"},
 				},
 			},
 		},
@@ -537,8 +529,7 @@ func TestPlpgsqlReturnNextSetofScalarRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM plpgsql_return_next_scalar(7);`,
-					Expected: []sql.Row{{7}, {8}},
+					Query: `SELECT * FROM plpgsql_return_next_scalar(7);`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlreturnnextsetofscalarrepro-0001-select-*-from-plpgsql_return_next_scalar-7"},
 				},
 			},
 		},
@@ -574,8 +565,7 @@ func TestPlpgsqlReturnNextRecordVariableRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT id, label FROM plpgsql_return_next_record_rows();`,
-					Expected: []sql.Row{{1, "one"}, {2, "two"}},
+					Query: `SELECT id, label FROM plpgsql_return_next_record_rows();`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlreturnnextrecordvariablerepro-0001-select-id-label-from-plpgsql_return_next_record_rows"},
 				},
 			},
 		},
@@ -599,8 +589,7 @@ func TestPlpgsqlReturnQueryExecuteRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM plpgsql_return_query_execute();`,
-					Expected: []sql.Row{{10}, {20}, {40}, {50}},
+					Query: `SELECT * FROM plpgsql_return_query_execute();`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlreturnqueryexecuterepro-0001-select-*-from-plpgsql_return_query_execute"},
 				},
 			},
 		},
@@ -632,12 +621,10 @@ func TestPlpgsqlForQueryLoopUpdatesFoundRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT plpgsql_for_query_found(true);`,
-					Expected: []sql.Row{{"true"}},
+					Query: `SELECT plpgsql_for_query_found(true);`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlforqueryloopupdatesfoundrepro-0001-select-plpgsql_for_query_found-true"},
 				},
 				{
-					Query:    `SELECT plpgsql_for_query_found(false);`,
-					Expected: []sql.Row{{"false"}},
+					Query: `SELECT plpgsql_for_query_found(false);`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlforqueryloopupdatesfoundrepro-0002-select-plpgsql_for_query_found-false"},
 				},
 			},
 		},
@@ -667,12 +654,10 @@ func TestPlpgsqlForIntegerLoopUpdatesFoundRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT plpgsql_for_integer_found(1, 2);`,
-					Expected: []sql.Row{{"true"}},
+					Query: `SELECT plpgsql_for_integer_found(1, 2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlforintegerloopupdatesfoundrepro-0001-select-plpgsql_for_integer_found-1-2"},
 				},
 				{
-					Query:    `SELECT plpgsql_for_integer_found(2, 1);`,
-					Expected: []sql.Row{{"false"}},
+					Query: `SELECT plpgsql_for_integer_found(2, 1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlforintegerloopupdatesfoundrepro-0002-select-plpgsql_for_integer_found-2-1"},
 				},
 			},
 		},
@@ -701,8 +686,7 @@ func TestPlpgsqlForInExecuteLoopRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT plpgsql_for_execute_sum();`,
-					Expected: []sql.Row{{6}},
+					Query: `SELECT plpgsql_for_execute_sum();`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlforinexecutelooprepro-0001-select-plpgsql_for_execute_sum"},
 				},
 			},
 		},
@@ -731,12 +715,10 @@ func TestPlpgsqlDmlReturningIntoRejectsMultipleRowsRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT plpgsql_returning_multi();`,
-					ExpectedErr: `query returned more than one row`,
+					Query: `SELECT plpgsql_returning_multi();`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqldmlreturningintorejectsmultiplerowsrepro-0001-select-plpgsql_returning_multi", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT COUNT(*) FROM plpgsql_returning_multi_items;`,
-					Expected: []sql.Row{{0}},
+					Query: `SELECT COUNT(*) FROM plpgsql_returning_multi_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqldmlreturningintorejectsmultiplerowsrepro-0002-select-count-*-from-plpgsql_returning_multi_items"},
 				},
 			},
 		},
@@ -772,12 +754,10 @@ func TestPlpgsqlUpdateReturningIntoRejectsMultipleRowsRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT plpgsql_update_returning_multi();`,
-					ExpectedErr: `query returned more than one row`,
+					Query: `SELECT plpgsql_update_returning_multi();`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlupdatereturningintorejectsmultiplerowsrepro-0001-select-plpgsql_update_returning_multi", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT COUNT(*) FROM plpgsql_update_returning_multi_items WHERE touched;`,
-					Expected: []sql.Row{{0}},
+					Query: `SELECT COUNT(*) FROM plpgsql_update_returning_multi_items WHERE touched;`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlupdatereturningintorejectsmultiplerowsrepro-0002-select-count-*-from-plpgsql_update_returning_multi_items"},
 				},
 			},
 		},
@@ -807,12 +787,10 @@ func TestPlpgsqlDeleteReturningIntoRejectsMultipleRowsRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT plpgsql_delete_returning_multi();`,
-					ExpectedErr: `query returned more than one row`,
+					Query: `SELECT plpgsql_delete_returning_multi();`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqldeletereturningintorejectsmultiplerowsrepro-0001-select-plpgsql_delete_returning_multi", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT COUNT(*) FROM plpgsql_delete_returning_multi_items;`,
-					Expected: []sql.Row{{2}},
+					Query: `SELECT COUNT(*) FROM plpgsql_delete_returning_multi_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqldeletereturningintorejectsmultiplerowsrepro-0002-select-count-*-from-plpgsql_delete_returning_multi_items"},
 				},
 			},
 		},
@@ -841,12 +819,10 @@ func TestPlpgsqlProcedureCommitPersistsPriorWorkRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CALL plpgsql_proc_commit_then_fail();`,
-					ExpectedErr: `fail after commit`,
+					Query: `CALL plpgsql_proc_commit_then_fail();`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlprocedurecommitpersistspriorworkrepro-0001-call-plpgsql_proc_commit_then_fail", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT id FROM plpgsql_proc_commit_items ORDER BY id;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT id FROM plpgsql_proc_commit_items ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlprocedurecommitpersistspriorworkrepro-0002-select-id-from-plpgsql_proc_commit_items-order"},
 				},
 			},
 		},
@@ -877,8 +853,7 @@ func TestPlpgsqlProcedureRollbackDiscardsPriorWorkRepro(t *testing.T) {
 					Query: `CALL plpgsql_proc_rollback_then_insert();`,
 				},
 				{
-					Query:    `SELECT id FROM plpgsql_proc_rollback_items ORDER BY id;`,
-					Expected: []sql.Row{{2}},
+					Query: `SELECT id FROM plpgsql_proc_rollback_items ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlprocedurerollbackdiscardspriorworkrepro-0001-select-id-from-plpgsql_proc_rollback_items-order"},
 				},
 			},
 		},
@@ -907,8 +882,7 @@ func TestPlpgsqlForeachArrayLoopRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT plpgsql_foreach_array_sum(ARRAY[1, 2, 3, 4]);`,
-					Expected: []sql.Row{{10}},
+					Query: `SELECT plpgsql_foreach_array_sum(ARRAY[1, 2, 3, 4]);`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlforeacharraylooprepro-0001-select-plpgsql_foreach_array_sum-array[1-2-3"},
 				},
 			},
 		},
@@ -941,8 +915,7 @@ func TestPlpgsqlForeachSliceArrayLoopRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT plpgsql_foreach_slice_sum(ARRAY[[1, 2], [3, 4]]);`,
-					Expected: []sql.Row{{10}},
+					Query: `SELECT plpgsql_foreach_slice_sum(ARRAY[[1, 2], [3, 4]]);`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlforeachslicearraylooprepro-0001-select-plpgsql_foreach_slice_sum-array[[1-2]-[3"},
 				},
 			},
 		},
@@ -972,8 +945,7 @@ func TestPlpgsqlColumnTypeDeclarationRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT plpgsql_column_type_echo('sample');`,
-					Expected: []sql.Row{{"sample"}},
+					Query: `SELECT plpgsql_column_type_echo('sample');`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlcolumntypedeclarationrepro-0001-select-plpgsql_column_type_echo-sample"},
 				},
 			},
 		},
@@ -1006,8 +978,7 @@ func TestPlpgsqlRowTypeDeclarationRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT plpgsql_rowtype_label(1);`,
-					Expected: []sql.Row{{"first"}},
+					Query: `SELECT plpgsql_rowtype_label(1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlrowtypedeclarationrepro-0001-select-plpgsql_rowtype_label-1"},
 				},
 			},
 		},
@@ -1036,16 +1007,17 @@ func TestPlpgsqlDomainVariableAssignmentChecksConstraintRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT plpgsql_domain_assignment_bad();`,
-					ExpectedErr: `violates check constraint`,
+					Query: `SELECT plpgsql_domain_assignment_bad();`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqldomainvariableassignmentchecksconstraintrepro-0001-select-plpgsql_domain_assignment_bad",
+
+						// TestPlpgsqlNotNullVariableRejectsNullAssignmentRepro reproduces a PL/pgSQL
+						// data-integrity bug: variables declared NOT NULL must reject NULL assignment.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestPlpgsqlNotNullVariableRejectsNullAssignmentRepro reproduces a PL/pgSQL
-// data-integrity bug: variables declared NOT NULL must reject NULL assignment.
 func TestPlpgsqlNotNullVariableRejectsNullAssignmentRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1063,16 +1035,17 @@ func TestPlpgsqlNotNullVariableRejectsNullAssignmentRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT plpgsql_not_null_assignment();`,
-					ExpectedErr: `null value cannot be assigned`,
+					Query: `SELECT plpgsql_not_null_assignment();`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlnotnullvariablerejectsnullassignmentrepro-0001-select-plpgsql_not_null_assignment",
+
+						// TestPlpgsqlAssertStatementRepro reproduces a PL/pgSQL compatibility gap:
+						// ASSERT should raise an exception when its condition is false.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestPlpgsqlAssertStatementRepro reproduces a PL/pgSQL compatibility gap:
-// ASSERT should raise an exception when its condition is false.
 func TestPlpgsqlAssertStatementRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1088,20 +1061,20 @@ func TestPlpgsqlAssertStatementRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT plpgsql_assert_positive(5);`,
-					Expected: []sql.Row{{5}},
+					Query: `SELECT plpgsql_assert_positive(5);`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlassertstatementrepro-0001-select-plpgsql_assert_positive-5"},
 				},
 				{
-					Query:       `SELECT plpgsql_assert_positive(0);`,
-					ExpectedErr: `input must be positive`,
+					Query: `SELECT plpgsql_assert_positive(0);`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlassertstatementrepro-0002-select-plpgsql_assert_positive-0",
+
+						// TestPlpgsqlExplicitCursorFetchLoopRepro reproduces a PL/pgSQL compatibility
+						// gap: explicit cursor variables should support OPEN, FETCH, and CLOSE.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestPlpgsqlExplicitCursorFetchLoopRepro reproduces a PL/pgSQL compatibility
-// gap: explicit cursor variables should support OPEN, FETCH, and CLOSE.
 func TestPlpgsqlExplicitCursorFetchLoopRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1128,8 +1101,7 @@ func TestPlpgsqlExplicitCursorFetchLoopRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT plpgsql_cursor_fetch_sum();`,
-					Expected: []sql.Row{{6}},
+					Query: `SELECT plpgsql_cursor_fetch_sum();`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlexplicitcursorfetchlooprepro-0001-select-plpgsql_cursor_fetch_sum"},
 				},
 			},
 		},
@@ -1168,8 +1140,7 @@ func TestPlpgsqlCursorParametersRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT plpgsql_cursor_param_sum(2, 3);`,
-					Expected: []sql.Row{{5}},
+					Query: `SELECT plpgsql_cursor_param_sum(2, 3);`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlcursorparametersrepro-0001-select-plpgsql_cursor_param_sum-2-3"},
 				},
 			},
 		},
@@ -1201,8 +1172,7 @@ func TestPlpgsqlFunctionReturnsRefcursorRepro(t *testing.T) {
 					SkipResultsCheck: true,
 				},
 				{
-					Query:    `SELECT plpgsql_open_refcursor('plpgsql_item_cursor');`,
-					Expected: []sql.Row{{"plpgsql_item_cursor"}},
+					Query: `SELECT plpgsql_open_refcursor('plpgsql_item_cursor');`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlfunctionreturnsrefcursorrepro-0001-select-plpgsql_open_refcursor-plpgsql_item_cursor"},
 				},
 				{
 					Query:    `FETCH ALL FROM plpgsql_item_cursor;`,

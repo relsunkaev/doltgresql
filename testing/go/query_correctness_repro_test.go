@@ -30,17 +30,11 @@ func TestValuesQuotedCaseDistinctAggregateColumnsRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT SUM("Val"), SUM("val")
-						FROM (VALUES(1, 10), (2.5, 20)) v("Val", "val");`,
-					Expected: []sql.Row{
-						{Numeric("3.5"), int64(30)},
-					},
+						FROM (VALUES(1, 10), (2.5, 20)) v("Val", "val");`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testvaluesquotedcasedistinctaggregatecolumnsrepro-0001-select-sum-val-sum-val"},
 				},
 				{
 					Query: `SELECT SUM(v."Val"), SUM(v."val")
-						FROM (VALUES(1, 10), (2.5, 20)) v("Val", "val");`,
-					Expected: []sql.Row{
-						{Numeric("3.5"), int64(30)},
-					},
+						FROM (VALUES(1, 10), (2.5, 20)) v("Val", "val");`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testvaluesquotedcasedistinctaggregatecolumnsrepro-0002-select-sum-v.-val-sum"},
 				},
 			},
 		},
@@ -58,11 +52,7 @@ func TestWholeRowReferenceAllowsDuplicateFieldNamesRepro(t *testing.T) {
 				{
 					Query: `SELECT r::text,
 						row_to_json(r)::text
-						FROM (SELECT 1 AS a, 2 AS a) AS r;`,
-					Expected: []sql.Row{{
-						`(1,2)`,
-						`{"a":1,"a":2}`,
-					}},
+						FROM (SELECT 1 AS a, 2 AS a) AS r;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testwholerowreferenceallowsduplicatefieldnamesrepro-0001-select-r::text-row_to_json-r-::text"},
 				},
 			},
 		},
@@ -78,8 +68,7 @@ func TestNumericPowerFractionalExponentRepro(t *testing.T) {
 			Name: "numeric power supports fractional exponents",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT power(2::numeric, 0.5::numeric)::float8;`,
-					Expected: []sql.Row{{1.4142135623730951}},
+					Query: `SELECT power(2::numeric, 0.5::numeric)::float8;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testnumericpowerfractionalexponentrepro-0001-select-power-2::numeric-0.5::numeric-::float8"},
 				},
 			},
 		},
@@ -95,12 +84,10 @@ func TestSqrtNumericMatchesPostgresPrecisionRepro(t *testing.T) {
 			Name: "numeric sqrt preserves PostgreSQL precision",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT sqrt(2::numeric)::text;`,
-					Expected: []sql.Row{{"1.414213562373095"}},
+					Query: `SELECT sqrt(2::numeric)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testsqrtnumericmatchespostgresprecisionrepro-0001-select-sqrt-2::numeric-::text"},
 				},
 				{
-					Query:    `SELECT sqrt(10000000000000000000000000000000000000000000000000000000000000000::numeric)::text;`,
-					Expected: []sql.Row{{"100000000000000000000000000000000"}},
+					Query: `SELECT sqrt(10000000000000000000000000000000000000000000000000000000000000000::numeric)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testsqrtnumericmatchespostgresprecisionrepro-0002-select-sqrt-::text"},
 				},
 			},
 		},
@@ -116,16 +103,13 @@ func TestNumericLogarithmsPreserveSmallDeltasRepro(t *testing.T) {
 			Name: "numeric logarithms preserve small deltas",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT ln(1.0000000000000000000001::numeric)::text;`,
-					Expected: []sql.Row{{"0.00000000000000000000010000000000000000"}},
+					Query: `SELECT ln(1.0000000000000000000001::numeric)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testnumericlogarithmspreservesmalldeltasrepro-0001-select-ln-1.0000000000000000000001::numeric-::text"},
 				},
 				{
-					Query:    `SELECT log(1.0000000000000000000001::numeric)::text;`,
-					Expected: []sql.Row{{"0.00000000000000000000004342944819032518"}},
+					Query: `SELECT log(1.0000000000000000000001::numeric)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testnumericlogarithmspreservesmalldeltasrepro-0002-select-log-1.0000000000000000000001::numeric-::text"},
 				},
 				{
-					Query:    `SELECT log(1.0000000000000000000001::numeric, 1.0000000000000000000003::numeric)::text;`,
-					Expected: []sql.Row{{"2.9999999999999999999997"}},
+					Query: `SELECT log(1.0000000000000000000001::numeric, 1.0000000000000000000003::numeric)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testnumericlogarithmspreservesmalldeltasrepro-0003-select-log-1.0000000000000000000001::numeric-1.0000000000000000000003::numeric-::text"},
 				},
 			},
 		},
@@ -141,12 +125,10 @@ func TestWidthBucketReversedBoundsUnderflowGuard(t *testing.T) {
 			Name: "width_bucket reversed bounds underflow",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT width_bucket((-1)::float8, 10::float8, 0::float8, 5)::text;`,
-					Expected: []sql.Row{{"6"}},
+					Query: `SELECT width_bucket((-1)::float8, 10::float8, 0::float8, 5)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testwidthbucketreversedboundsunderflowguard-0001-select-width_bucket-1-::float8-10::float8"},
 				},
 				{
-					Query:    `SELECT width_bucket((-1)::numeric, 10::numeric, 0::numeric, 5)::text;`,
-					Expected: []sql.Row{{"6"}},
+					Query: `SELECT width_bucket((-1)::numeric, 10::numeric, 0::numeric, 5)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testwidthbucketreversedboundsunderflowguard-0002-select-width_bucket-1-::numeric-10::numeric"},
 				},
 			},
 		},
@@ -169,8 +151,7 @@ func TestCaseExpressionShortCircuitsRepro(t *testing.T) {
 							WHEN id = 1 THEN 42
 							ELSE 1 / (id - id)
 						END
-						FROM case_short_circuit_items;`,
-					Expected: []sql.Row{{42}},
+						FROM case_short_circuit_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testcaseexpressionshortcircuitsrepro-0001-select-case-when-id-="},
 				},
 			},
 		},
@@ -190,8 +171,7 @@ func TestCoalesceShortCircuitsRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT COALESCE(value, 1 / (id - id))
-						FROM coalesce_short_circuit_items;`,
-					Expected: []sql.Row{{7}},
+						FROM coalesce_short_circuit_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testcoalesceshortcircuitsrepro-0001-select-coalesce-value-1-/"},
 				},
 			},
 		},
@@ -206,8 +186,7 @@ func TestNumericToIntegerCastRoundsRepro(t *testing.T) {
 			Name: "numeric to int4 casts round instead of truncate",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT 37.89::int4, (-37.89)::int4;`,
-					Expected: []sql.Row{{int32(38), int32(-38)}},
+					Query: `SELECT 37.89::int4, (-37.89)::int4;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testnumerictointegercastroundsrepro-0001-select-37.89::int4-37.89-::int4"},
 				},
 			},
 		},
@@ -222,8 +201,7 @@ func TestArrayToStringUsesRoundedIntegerCastsRepro(t *testing.T) {
 			Name: "array element integer casts round numeric inputs",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT array_to_string(ARRAY[37.89::int4, 1.2::int4], '_');`,
-					Expected: []sql.Row{{"38_1"}},
+					Query: `SELECT array_to_string(ARRAY[37.89::int4, 1.2::int4], '_');`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testarraytostringusesroundedintegercastsrepro-0001-select-array_to_string-array[37.89::int4-1.2::int4]"},
 				},
 			},
 		},
@@ -239,16 +217,10 @@ func TestByteaArrayCastToTextUsesPostgresEscapingRepro(t *testing.T) {
 			Name: "bytea array cast to text array uses PostgreSQL escaping",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT '{"\x68656c6c6f", "\x776f726c64", "\x6578616d706c65"}'::bytea[]::text[];`,
-					Expected: []sql.Row{
-						{`{"\\x7836383635366336633666","\\x7837373666373236633634","\\x783635373836313664373036633635"}`},
-					},
+					Query: `SELECT '{"\x68656c6c6f", "\x776f726c64", "\x6578616d706c65"}'::bytea[]::text[];`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testbyteaarraycasttotextusespostgresescapingrepro-0001-select-{-\\x68656c6c6f-\\x776f726c64-\\x6578616d706c65"},
 				},
 				{
-					Query: `SELECT '{"\\x68656c6c6f", "\\x776f726c64", "\\x6578616d706c65"}'::bytea[]::text[];`,
-					Expected: []sql.Row{
-						{`{"\\x68656c6c6f","\\x776f726c64","\\x6578616d706c65"}`},
-					},
+					Query: `SELECT '{"\\x68656c6c6f", "\\x776f726c64", "\\x6578616d706c65"}'::bytea[]::text[];`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testbyteaarraycasttotextusespostgresescapingrepro-0002-select-{-\\\\x68656c6c6f-\\\\x776f726c64-\\\\x6578616d706c65"},
 				},
 			},
 		},
@@ -273,8 +245,7 @@ func TestArrayAggOverArrayColumnReturnsHigherDimensionalArrayRepro(t *testing.T)
 				{
 					Query: `SELECT array_agg(vals)
 						FROM array_agg_array_items
-						ORDER BY min(id);`,
-					Expected: []sql.Row{{"{{1,2},{3,4},{5,6}}"}},
+						ORDER BY min(id);`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testarrayaggoverarraycolumnreturnshigherdimensionalarrayrepro-0001-select-array_agg-vals-from-array_agg_array_items"},
 				},
 			},
 		},
@@ -296,15 +267,13 @@ func TestIntegerPrimaryKeyComparedToFractionalFloatRepro(t *testing.T) {
 					Query: `SELECT i
 						FROM int_float_predicate_items
 						WHERE i > 0.1 OR i >= 0.1
-						ORDER BY i;`,
-					Expected: []sql.Row{{int32(1)}},
+						ORDER BY i;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testintegerprimarykeycomparedtofractionalfloatrepro-0001-select-i-from-int_float_predicate_items-where"},
 				},
 				{
 					Query: `SELECT i
 						FROM int_float_predicate_items
 						WHERE i < 0.1
-						ORDER BY i;`,
-					Expected: []sql.Row{{int32(-1)}, {int32(0)}},
+						ORDER BY i;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testintegerprimarykeycomparedtofractionalfloatrepro-0002-select-i-from-int_float_predicate_items-where"},
 				},
 			},
 		},
@@ -325,8 +294,7 @@ func TestFloatInListMatchesExplicitFloatCastRepro(t *testing.T) {
 				{
 					Query: `SELECT COUNT(*)
 						FROM float_in_list_items
-						WHERE f IN (NULL, CAST(0.8 AS FLOAT));`,
-					Expected: []sql.Row{{1}},
+						WHERE f IN (NULL, CAST(0.8 AS FLOAT));`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testfloatinlistmatchesexplicitfloatcastrepro-0001-select-count-*-from-float_in_list_items"},
 				},
 			},
 		},
@@ -345,8 +313,7 @@ func TestIntersectAllPreservesDuplicateCountsRepro(t *testing.T) {
 					Query: `SELECT x FROM (VALUES (1), (1), (2), (3)) AS lhs(x)
 						INTERSECT ALL
 						SELECT x FROM (VALUES (1), (1), (1), (3), (4)) AS rhs(x)
-						ORDER BY x;`,
-					Expected: []sql.Row{{1}, {1}, {3}},
+						ORDER BY x;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testintersectallpreservesduplicatecountsrepro-0001-select-x-from-values-1"},
 				},
 			},
 		},
@@ -365,8 +332,7 @@ func TestExceptAllPreservesDuplicateCountsRepro(t *testing.T) {
 					Query: `SELECT x FROM (VALUES (1), (1), (1), (2), (3)) AS lhs(x)
 						EXCEPT ALL
 						SELECT x FROM (VALUES (1), (3), (4)) AS rhs(x)
-						ORDER BY x;`,
-					Expected: []sql.Row{{1}, {1}, {2}},
+						ORDER BY x;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testexceptallpreservesduplicatecountsrepro-0001-select-x-from-values-1"},
 				},
 			},
 		},
@@ -385,8 +351,7 @@ func TestInSubqueryReturnsBooleanForEmptyResultRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT 1 IN (SELECT x + y FROM in_subquery_left, in_subquery_right);`,
-					Expected: []sql.Row{{"f"}},
+					Query: `SELECT 1 IN (SELECT x + y FROM in_subquery_left, in_subquery_right);`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testinsubqueryreturnsbooleanforemptyresultrepro-0001-select-1-in-select-x"},
 				},
 			},
 		},
@@ -402,16 +367,17 @@ func TestAnySubqueryRejectsMultipleColumnsRepro(t *testing.T) {
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT 1 = ANY (SELECT 1, 2);`,
-					ExpectedErr: `subquery has too many columns`,
+					Query: `SELECT 1 = ANY (SELECT 1, 2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testanysubqueryrejectsmultiplecolumnsrepro-0001-select-1-=-any-select",
+
+						// TestAllSubqueryRejectsMultipleColumnsRepro guards PostgreSQL scalar ALL
+						// semantics: the subquery must return exactly one column.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAllSubqueryRejectsMultipleColumnsRepro guards PostgreSQL scalar ALL
-// semantics: the subquery must return exactly one column.
 func TestAllSubqueryRejectsMultipleColumnsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -419,16 +385,17 @@ func TestAllSubqueryRejectsMultipleColumnsRepro(t *testing.T) {
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT 1 = ALL (SELECT 1, 2);`,
-					ExpectedErr: `subquery has too many columns`,
+					Query: `SELECT 1 = ALL (SELECT 1, 2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testallsubqueryrejectsmultiplecolumnsrepro-0001-select-1-=-all-select",
+
+						// TestInSubqueryRejectsMultipleColumnsRepro guards PostgreSQL scalar IN
+						// semantics: the subquery must return exactly one column.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestInSubqueryRejectsMultipleColumnsRepro guards PostgreSQL scalar IN
-// semantics: the subquery must return exactly one column.
 func TestInSubqueryRejectsMultipleColumnsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -436,29 +403,28 @@ func TestInSubqueryRejectsMultipleColumnsRepro(t *testing.T) {
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT 1 IN (SELECT 1, 2);`,
-					ExpectedErr: `subquery has too many columns`,
+					Query: `SELECT 1 IN (SELECT 1, 2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testinsubqueryrejectsmultiplecolumnsrepro-0001-select-1-in-select-1",
+
+						// TestRowInSubqueryAcceptsMultipleColumnsRepro reproduces a query correctness
+						// bug: a PostgreSQL row constructor on the left may compare with a subquery
+						// that returns the same number of columns.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestRowInSubqueryAcceptsMultipleColumnsRepro reproduces a query correctness
-// bug: a PostgreSQL row constructor on the left may compare with a subquery
-// that returns the same number of columns.
 func TestRowInSubqueryAcceptsMultipleColumnsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "row IN subquery accepts matching multiple columns",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT ROW(1, 2) IN (SELECT 1, 2);`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT ROW(1, 2) IN (SELECT 1, 2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testrowinsubqueryacceptsmultiplecolumnsrepro-0001-select-row-1-2-in"},
 				},
 				{
-					Query:    `SELECT ROW(1, 3) IN (SELECT 1, 2);`,
-					Expected: []sql.Row{{"f"}},
+					Query: `SELECT ROW(1, 3) IN (SELECT 1, 2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testrowinsubqueryacceptsmultiplecolumnsrepro-0002-select-row-1-3-in"},
 				},
 			},
 		},
@@ -486,8 +452,7 @@ func TestRowConstructorExpandsTableAliasStarRepro(t *testing.T) {
 				{
 					Query: `SELECT ROW(p.*, 99)::text
 						FROM row_alias_users p
-						ORDER BY name;`,
-					Expected: []sql.Row{{`(jason,SEA,42,99)`}, {`(max,SFO,31,99)`}},
+						ORDER BY name;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testrowconstructorexpandstablealiasstarrepro-0001-select-row-p.*-99-::text"},
 				},
 			},
 		},
@@ -515,8 +480,7 @@ func TestTableAliasCompositeFieldSelectionGuard(t *testing.T) {
 				{
 					Query: `SELECT (p).location
 						FROM row_field_users p
-						ORDER BY name;`,
-					Expected: []sql.Row{{"SEA"}, {"SFO"}},
+						ORDER BY name;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testtablealiascompositefieldselectionguard-0001-select-p-.location-from-row_field_users"},
 				},
 			},
 		},
@@ -533,16 +497,13 @@ func TestInSubqueryCrossTypeEqualityRepro(t *testing.T) {
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT 1::int8 IN (SELECT 1::numeric);`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT 1::int8 IN (SELECT 1::numeric);`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testinsubquerycrosstypeequalityrepro-0001-select-1::int8-in-select-1::numeric"},
 				},
 				{
-					Query:    `SELECT 1::numeric IN (SELECT 1::int8);`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT 1::numeric IN (SELECT 1::int8);`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testinsubquerycrosstypeequalityrepro-0002-select-1::numeric-in-select-1::int8"},
 				},
 				{
-					Query:    `SELECT 1::int4 IN (SELECT 1.0::float8);`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT 1::int4 IN (SELECT 1.0::float8);`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testinsubquerycrosstypeequalityrepro-0003-select-1::int4-in-select-1.0::float8"},
 				},
 			},
 		},
@@ -574,8 +535,7 @@ func TestScalarSubqueryEqualityGuard(t *testing.T) {
 						(SELECT label FROM scalar_subquery_equality_items WHERE id = 2) =
 							(SELECT label FROM scalar_subquery_equality_items WHERE id = 3),
 						(SELECT label FROM scalar_subquery_equality_items WHERE id = 1) =
-							(SELECT label FROM scalar_subquery_equality_items WHERE id = 2);`,
-					Expected: []sql.Row{{"t", "t", "f"}},
+							(SELECT label FROM scalar_subquery_equality_items WHERE id = 2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testscalarsubqueryequalityguard-0001-select-select-id-from-scalar_subquery_equality_items"},
 				},
 			},
 		},
@@ -598,12 +558,10 @@ func TestScalarSubqueryRejectsMultipleRowsInDmlRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `INSERT INTO scalar_subquery_insert_target
-						VALUES (1, (SELECT value FROM scalar_subquery_insert_source ORDER BY value));`,
-					ExpectedErr: `more than 1 row`,
+						VALUES (1, (SELECT value FROM scalar_subquery_insert_source ORDER BY value));`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testscalarsubqueryrejectsmultiplerowsindmlrepro-0001-insert-into-scalar_subquery_insert_target-values-1", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM scalar_subquery_insert_target;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM scalar_subquery_insert_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testscalarsubqueryrejectsmultiplerowsindmlrepro-0002-select-count-*-from-scalar_subquery_insert_target"},
 				},
 			},
 		},
@@ -621,12 +579,10 @@ func TestScalarSubqueryRejectsMultipleRowsInDmlRepro(t *testing.T) {
 						SET value = (
 							SELECT value FROM scalar_subquery_update_source ORDER BY value
 						)
-						WHERE id = 1;`,
-					ExpectedErr: `more than 1 row`,
+						WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testscalarsubqueryrejectsmultiplerowsindmlrepro-0003-update-scalar_subquery_update_target-set-value-=", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT value FROM scalar_subquery_update_target WHERE id = 1;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT value FROM scalar_subquery_update_target WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testscalarsubqueryrejectsmultiplerowsindmlrepro-0004-select-value-from-scalar_subquery_update_target-where"},
 				},
 			},
 		},
@@ -642,12 +598,10 @@ func TestRowIsNotDistinctFromHandlesNullsRepro(t *testing.T) {
 			Name: "row IS NOT DISTINCT FROM handles NULL fields",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT ROW(1, NULL) IS NOT DISTINCT FROM ROW(1, NULL);`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT ROW(1, NULL) IS NOT DISTINCT FROM ROW(1, NULL);`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testrowisnotdistinctfromhandlesnullsrepro-0001-select-row-1-null-is"},
 				},
 				{
-					Query:    `SELECT ROW(NULL, 4) IS DISTINCT FROM ROW(NULL, 4);`,
-					Expected: []sql.Row{{"f"}},
+					Query: `SELECT ROW(NULL, 4) IS DISTINCT FROM ROW(NULL, 4);`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testrowisnotdistinctfromhandlesnullsrepro-0002-select-row-null-4-is"},
 				},
 			},
 		},
@@ -663,16 +617,13 @@ func TestRowValueComparisonsUseLexicographicSemanticsRepro(t *testing.T) {
 			Name: "row value comparisons use lexicographic semantics",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT ROW(1, 2) < ROW(1, 3);`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT ROW(1, 2) < ROW(1, 3);`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testrowvaluecomparisonsuselexicographicsemanticsrepro-0001-select-row-1-2-<"},
 				},
 				{
-					Query:    `SELECT ROW(2, 1) > ROW(1, 999);`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT ROW(2, 1) > ROW(1, 999);`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testrowvaluecomparisonsuselexicographicsemanticsrepro-0002-select-row-2-1->"},
 				},
 				{
-					Query:    `SELECT ROW(1, 2) <= ROW(1, 2);`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT ROW(1, 2) <= ROW(1, 2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testrowvaluecomparisonsuselexicographicsemanticsrepro-0003-select-row-1-2-<="},
 				},
 			},
 		},
@@ -688,20 +639,16 @@ func TestRowValueComparisonsHandleNullsRepro(t *testing.T) {
 			Name: "row value comparisons handle NULL fields",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT ROW(1, 2) < ROW(1, NULL);`,
-					Expected: []sql.Row{{nil}},
+					Query: `SELECT ROW(1, 2) < ROW(1, NULL);`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testrowvaluecomparisonshandlenullsrepro-0001-select-row-1-2-<"},
 				},
 				{
-					Query:    `SELECT ROW(1, 2, 3) < ROW(1, 3, NULL);`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT ROW(1, 2, 3) < ROW(1, 3, NULL);`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testrowvaluecomparisonshandlenullsrepro-0002-select-row-1-2-3"},
 				},
 				{
-					Query:    `SELECT ROW(1, 2, 3) = ROW(1, NULL, 4);`,
-					Expected: []sql.Row{{"f"}},
+					Query: `SELECT ROW(1, 2, 3) = ROW(1, NULL, 4);`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testrowvaluecomparisonshandlenullsrepro-0003-select-row-1-2-3"},
 				},
 				{
-					Query:    `SELECT ROW(1, 2, 3) <> ROW(1, NULL, 4);`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT ROW(1, 2, 3) <> ROW(1, NULL, 4);`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testrowvaluecomparisonshandlenullsrepro-0004-select-row-1-2-3"},
 				},
 			},
 		},
@@ -723,22 +670,12 @@ func TestOrderByUsesPostgresNullOrderingRepro(t *testing.T) {
 				{
 					Query: `SELECT id, v
 						FROM order_by_null_items
-						ORDER BY v ASC;`,
-					Expected: []sql.Row{
-						{1, 10},
-						{3, 20},
-						{2, nil},
-					},
+						ORDER BY v ASC;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testorderbyusespostgresnullorderingrepro-0001-select-id-v-from-order_by_null_items"},
 				},
 				{
 					Query: `SELECT id, v
 						FROM order_by_null_items
-						ORDER BY v DESC;`,
-					Expected: []sql.Row{
-						{2, nil},
-						{3, 20},
-						{1, 10},
-					},
+						ORDER BY v DESC;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testorderbyusespostgresnullorderingrepro-0002-select-id-v-from-order_by_null_items"},
 				},
 			},
 		},
@@ -756,14 +693,12 @@ func TestOrderByUsingOperatorRepro(t *testing.T) {
 				{
 					Query: `SELECT v
 						FROM (VALUES (1), (3), (2), (NULL)) AS t(v)
-						ORDER BY v USING > NULLS LAST;`,
-					Expected: []sql.Row{{3}, {2}, {1}, {nil}},
+						ORDER BY v USING > NULLS LAST;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testorderbyusingoperatorrepro-0001-select-v-from-values-1"},
 				},
 				{
 					Query: `SELECT v
 						FROM (VALUES (1), (3), (2), (NULL)) AS t(v)
-						ORDER BY v USING < NULLS FIRST;`,
-					Expected: []sql.Row{{nil}, {1}, {2}, {3}},
+						ORDER BY v USING < NULLS FIRST;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testorderbyusingoperatorrepro-0002-select-v-from-values-1"},
 				},
 			},
 		},
@@ -839,12 +774,10 @@ func TestBooleanInPredicateWithIndexedBooleanColumnRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM bool_in_scan_items WHERE b IN (false);`,
-					Expected: []sql.Row{{"f"}},
+					Query: `SELECT * FROM bool_in_scan_items WHERE b IN (false);`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testbooleaninpredicatewithindexedbooleancolumnrepro-0001-select-*-from-bool_in_scan_items-where"},
 				},
 				{
-					Query:    `SELECT * FROM bool_in_index_items WHERE b IN (false);`,
-					Expected: []sql.Row{{"f"}},
+					Query: `SELECT * FROM bool_in_index_items WHERE b IN (false);`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testbooleaninpredicatewithindexedbooleancolumnrepro-0002-select-*-from-bool_in_index_items-where"},
 				},
 			},
 		},
@@ -873,17 +806,18 @@ func TestDistinctOnRequiresMatchingLeadingOrderByRepro(t *testing.T) {
 				{
 					Query: `SELECT DISTINCT ON (account_id) account_id, id
 						FROM distinct_on_order_items
-						ORDER BY created_at DESC;`,
-					ExpectedErr: `SELECT DISTINCT ON expressions must match initial ORDER BY expressions`,
+						ORDER BY created_at DESC;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testdistinctonrequiresmatchingleadingorderbyrepro-0001-select-distinct-on-account_id-account_id",
+
+						// TestFetchFirstWithTiesIncludesPeerRowsRepro reproduces a query correctness
+						// gap: FETCH FIRST ... WITH TIES should include rows tied with the last row in
+						// the limited ordered prefix.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestFetchFirstWithTiesIncludesPeerRowsRepro reproduces a query correctness
-// gap: FETCH FIRST ... WITH TIES should include rows tied with the last row in
-// the limited ordered prefix.
 func TestFetchFirstWithTiesIncludesPeerRowsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -904,36 +838,28 @@ func TestFetchFirstWithTiesIncludesPeerRowsRepro(t *testing.T) {
 					Query: `SELECT id, score
 						FROM fetch_ties_items
 						ORDER BY score
-						FETCH FIRST 2 ROWS WITH TIES;`,
-					Expected: []sql.Row{
-						{1, 10},
-						{2, 20},
-						{3, 20},
-					},
+						FETCH FIRST 2 ROWS WITH TIES;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testfetchfirstwithtiesincludespeerrowsrepro-0001-select-id-score-from-fetch_ties_items"},
 				},
 				{
 					Query: `SELECT id, score
 						FROM fetch_ties_items
 						ORDER BY score
 						OFFSET 1 ROW
-						FETCH FIRST 1 ROW WITH TIES;`,
-					Expected: []sql.Row{
-						{2, 20},
-						{3, 20},
-					},
+						FETCH FIRST 1 ROW WITH TIES;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testfetchfirstwithtiesincludespeerrowsrepro-0002-select-id-score-from-fetch_ties_items"},
 				},
 				{
-					Query:       `SELECT id FROM fetch_ties_items FETCH FIRST 1 ROW WITH TIES;`,
-					ExpectedErr: "WITH TIES cannot be specified without ORDER BY",
+					Query: `SELECT id FROM fetch_ties_items FETCH FIRST 1 ROW WITH TIES;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testfetchfirstwithtiesincludespeerrowsrepro-0003-select-id-from-fetch_ties_items-fetch",
+
+						// TestTableSampleSystemHundredReturnsAllRowsRepro reproduces a query
+						// correctness gap: PostgreSQL supports TABLESAMPLE, and SYSTEM (100) should
+						// return every row in the sampled relation.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestTableSampleSystemHundredReturnsAllRowsRepro reproduces a query
-// correctness gap: PostgreSQL supports TABLESAMPLE, and SYSTEM (100) should
-// return every row in the sampled relation.
 func TestTableSampleSystemHundredReturnsAllRowsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -949,8 +875,7 @@ func TestTableSampleSystemHundredReturnsAllRowsRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT count(*) FROM tablesample_items TABLESAMPLE SYSTEM (100);`,
-					Expected: []sql.Row{{int64(2)}},
+					Query: `SELECT count(*) FROM tablesample_items TABLESAMPLE SYSTEM (100);`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testtablesamplesystemhundredreturnsallrowsrepro-0001-select-count-*-from-tablesample_items"},
 				},
 			},
 		},
@@ -972,8 +897,7 @@ func TestRecursiveCteSearchClauseRepro(t *testing.T) {
 							FROM (VALUES (2, 1), (3, 1)) AS child(id, parent_id)
 							JOIN tree ON child.parent_id = tree.id
 						) SEARCH BREADTH FIRST BY id SET bfs_order
-						SELECT id FROM tree ORDER BY bfs_order;`,
-					Expected: []sql.Row{{1}, {2}, {3}},
+						SELECT id FROM tree ORDER BY bfs_order;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testrecursivectesearchclauserepro-0001-with-recursive-tree-id-parent_id"},
 				},
 			},
 		},
@@ -994,8 +918,7 @@ func TestRecursiveCteCycleClauseRepro(t *testing.T) {
 							UNION ALL
 							SELECT n + 1 FROM nums WHERE n < 3
 						) CYCLE n SET is_cycle USING path
-						SELECT n, is_cycle FROM nums ORDER BY n;`,
-					Expected: []sql.Row{{1, false}, {2, false}, {3, false}},
+						SELECT n, is_cycle FROM nums ORDER BY n;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testrecursivectecycleclauserepro-0001-with-recursive-nums-n-as"},
 				},
 			},
 		},
@@ -1018,8 +941,7 @@ func TestSelectCanProjectTableoidRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT tableoid::regclass::text, id
-						FROM select_tableoid_items;`,
-					Expected: []sql.Row{{"select_tableoid_items", 1}},
+						FROM select_tableoid_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testselectcanprojecttableoidrepro-0001-select-tableoid::regclass::text-id-from-select_tableoid_items"},
 				},
 			},
 		},
@@ -1039,12 +961,7 @@ func TestRowsFromMultipleSetReturningFunctionsRepro(t *testing.T) {
 						FROM ROWS FROM (
 							generate_series(1, 2),
 							unnest(ARRAY['a','b','c'])
-						) AS t(n, label);`,
-					Expected: []sql.Row{
-						{1, "a"},
-						{2, "b"},
-						{nil, "c"},
-					},
+						) AS t(n, label);`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testrowsfrommultiplesetreturningfunctionsrepro-0001-select-*-from-rows-from"},
 				},
 			},
 		},
@@ -1064,12 +981,7 @@ func TestUnnestMultipleArraysPadsShorterInputsRepro(t *testing.T) {
 						FROM unnest(
 							ARRAY[10, 20],
 							ARRAY['foo', 'bar', 'baz']
-						) AS u(n, label);`,
-					Expected: []sql.Row{
-						{int32(10), "foo"},
-						{int32(20), "bar"},
-						{nil, "baz"},
-					},
+						) AS u(n, label);`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testunnestmultiplearrayspadsshorterinputsrepro-0001-select-*-from-unnest-array[10"},
 				},
 			},
 		},
@@ -1085,12 +997,7 @@ func TestGenerateSeriesWithOrdinalityRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT v, ord
-						FROM generate_series(4, 8, 2) WITH ORDINALITY AS g(v, ord);`,
-					Expected: []sql.Row{
-						{int64(4), int64(1)},
-						{int64(6), int64(2)},
-						{int64(8), int64(3)},
-					},
+						FROM generate_series(4, 8, 2) WITH ORDINALITY AS g(v, ord);`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testgenerateserieswithordinalityrepro-0001-select-v-ord-from-generate_series"},
 				},
 			},
 		},
@@ -1111,13 +1018,7 @@ func TestGenerateSeriesTimestampUnknownStepGuard(t *testing.T) {
 							'2008-03-02 12:00'::timestamp,
 							'2008-03-01 00:00'::timestamp,
 							'-10 hours'
-						);`,
-					Expected: []sql.Row{
-						{"2008-03-02 12:00:00"},
-						{"2008-03-02 02:00:00"},
-						{"2008-03-01 16:00:00"},
-						{"2008-03-01 06:00:00"},
-					},
+						);`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testgenerateseriestimestampunknownstepguard-0001-select-*-from-generate_series-2008-03-02"},
 				},
 			},
 		},
@@ -1139,12 +1040,7 @@ func TestWindowFrameExcludeCurrentRowRepro(t *testing.T) {
 							EXCLUDE CURRENT ROW
 						)
 						FROM items
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, 50},
-						{2, 40},
-						{3, 30},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testwindowframeexcludecurrentrowrepro-0001-with-items-id-v-as"},
 				},
 			},
 		},
@@ -1166,13 +1062,7 @@ func TestWindowFrameGroupsRepro(t *testing.T) {
 							GROUPS BETWEEN 1 PRECEDING AND CURRENT ROW
 						)
 						FROM items
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, 10},
-						{2, 30},
-						{3, 50},
-						{4, 70},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testwindowframegroupsrepro-0001-with-items-id-v-as"},
 				},
 			},
 		},
@@ -1197,13 +1087,7 @@ func TestWindowFrameExcludeGroupRepro(t *testing.T) {
 							EXCLUDE GROUP
 						)
 						FROM items
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, 9},
-						{2, 5},
-						{3, 5},
-						{4, 6},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testwindowframeexcludegrouprepro-0001-with-items-id-score-v"},
 				},
 			},
 		},
@@ -1228,13 +1112,7 @@ func TestWindowFrameExcludeTiesRepro(t *testing.T) {
 							EXCLUDE TIES
 						)
 						FROM items
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, 10},
-						{2, 7},
-						{3, 8},
-						{4, 10},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testwindowframeexcludetiesrepro-0001-with-items-id-score-v"},
 				},
 			},
 		},
@@ -1266,13 +1144,7 @@ func TestWindowFrameRangeOffsetRepro(t *testing.T) {
 							RANGE BETWEEN 1 PRECEDING AND CURRENT ROW
 						)
 						FROM window_range_items
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, 10},
-						{2, 30},
-						{4, 40},
-						{5, 90},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testwindowframerangeoffsetrepro-0001-select-id-sum-v-over"},
 				},
 			},
 		},
@@ -1292,13 +1164,7 @@ func TestCumeDistWindowFunctionRepro(t *testing.T) {
 						)
 						SELECT id, cume_dist() OVER (ORDER BY score)
 						FROM scores
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, 0.25},
-						{2, 0.75},
-						{3, 0.75},
-						{4, 1.0},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testcumedistwindowfunctionrepro-0001-with-scores-id-score-as"},
 				},
 			},
 		},
@@ -1319,12 +1185,7 @@ func TestNthValueWindowFunctionRepro(t *testing.T) {
 							ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
 						)
 						FROM items
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, 20},
-						{2, 20},
-						{3, 20},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testnthvaluewindowfunctionrepro-0001-with-items-id-v-as"},
 				},
 			},
 		},
@@ -1353,13 +1214,7 @@ func TestWindowAggregateFilterReturnsNullForEmptyFrameRepro(t *testing.T) {
 							ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
 						)
 						FROM items
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, 10},
-						{2, 10},
-						{3, 40},
-						{4, nil},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testwindowaggregatefilterreturnsnullforemptyframerepro-0001-with-items-id-grp-v"},
 				},
 			},
 		},
@@ -1387,12 +1242,7 @@ func TestAvgWindowAggregateFilterReturnsNullForEmptyFrameRepro(t *testing.T) {
 							ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
 						)
 						FROM items
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, Numeric("10.0000000000000000")},
-						{2, Numeric("10.0000000000000000")},
-						{3, nil},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testavgwindowaggregatefilterreturnsnullforemptyframerepro-0001-with-items-id-grp-v"},
 				},
 			},
 		},
@@ -1426,12 +1276,7 @@ func TestBooleanAggregatesCanBeWindowFunctionsRepro(t *testing.T) {
 								ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
 							)
 						FROM items
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, "t", "t"},
-						{2, "t", "f"},
-						{3, "f", "f"},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testbooleanaggregatescanbewindowfunctionsrepro-0001-with-items-id-grp-paid"},
 				},
 			},
 		},
@@ -1459,12 +1304,7 @@ func TestArrayAggCanBeWindowFunctionRepro(t *testing.T) {
 								ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
 							)
 						FROM items
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, "{x}"},
-						{2, "{x,y}"},
-						{3, "{z}"},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testarrayaggcanbewindowfunctionrepro-0001-with-items-id-grp-label"},
 				},
 			},
 		},
@@ -1494,13 +1334,7 @@ func TestLagLeadConstantOffsetAndDefaultRepro(t *testing.T) {
 							lag(v, 2, 0) OVER (ORDER BY id),
 							lead(v, 2, 99) OVER (ORDER BY id)
 						FROM lag_lead_constant_items
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, 0, 30},
-						{2, 0, 40},
-						{3, 10, 99},
-						{4, 20, 99},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testlagleadconstantoffsetanddefaultrepro-0001-select-id-lag-v-2"},
 				},
 			},
 		},
@@ -1531,13 +1365,7 @@ func TestLagLeadDynamicOffsetRepro(t *testing.T) {
 							lag(v, off, -1) OVER (ORDER BY id),
 							lead(v, off, -2) OVER (ORDER BY id)
 						FROM lag_lead_dynamic_items
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, -1, 20},
-						{2, -1, 40},
-						{3, 20, 40},
-						{4, 20, -2},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testlagleaddynamicoffsetrepro-0001-select-id-lag-v-off"},
 				},
 			},
 		},
@@ -1566,13 +1394,7 @@ func TestNtileDynamicBucketCountRepro(t *testing.T) {
 				{
 					Query: `SELECT id, ntile(buckets) OVER (ORDER BY id)
 						FROM ntile_dynamic_items
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, int32(1)},
-						{2, int32(1)},
-						{3, int32(2)},
-						{4, int32(2)},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testntiledynamicbucketcountrepro-0001-select-id-ntile-buckets-over"},
 				},
 			},
 		},
@@ -1605,8 +1427,7 @@ func TestCompositeStarArgumentToFunctionRepro(t *testing.T) {
 				{
 					Query: `SELECT composite_star_score(composite_star_items.*)
 						FROM composite_star_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{4}, {7}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testcompositestarargumenttofunctionrepro-0001-select-composite_star_score-composite_star_items.*-from-composite_star_items"},
 				},
 			},
 		},
@@ -1649,8 +1470,7 @@ func TestSubstringForCountSyntaxRepro(t *testing.T) {
 			Name: "substring for count syntax",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT substring('hello' for 3);`,
-					Expected: []sql.Row{{"hel"}},
+					Query: `SELECT substring('hello' for 3);`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testsubstringforcountsyntaxrepro-0001-select-substring-hello-for-3"},
 				},
 			},
 		},
@@ -1666,12 +1486,10 @@ func TestSubstringSimilarEscapeSyntaxRepro(t *testing.T) {
 			Name: "substring similar escape syntax",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT substring('hello.' similar 'hello#.' escape '#');`,
-					Expected: []sql.Row{{"hello."}},
+					Query: `SELECT substring('hello.' similar 'hello#.' escape '#');`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testsubstringsimilarescapesyntaxrepro-0001-select-substring-hello.-similar-hello#."},
 				},
 				{
-					Query:    `SELECT substring('Thomas' similar '%#"o_a#"_' escape '#');`,
-					Expected: []sql.Row{{"oma"}},
+					Query: `SELECT substring('Thomas' similar '%#"o_a#"_' escape '#');`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testsubstringsimilarescapesyntaxrepro-0002-select-substring-thomas-similar-%#"},
 				},
 			},
 		},
@@ -1687,12 +1505,10 @@ func TestRegexpMatchesSupportedFlagsRepro(t *testing.T) {
 			Name: "regexp_matches supports PostgreSQL regex flags",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT regexp_matches('ab', 'a b', 'x');`,
-					Expected: []sql.Row{{"{ab}"}},
+					Query: `SELECT regexp_matches('ab', 'a b', 'x');`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testregexpmatchessupportedflagsrepro-0001-select-regexp_matches-ab-a-b"},
 				},
 				{
-					Query:    `SELECT regexp_matches(E'a\nb', '^b', 'n');`,
-					Expected: []sql.Row{{"{b}"}},
+					Query: `SELECT regexp_matches(E'a\nb', '^b', 'n');`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testregexpmatchessupportedflagsrepro-0002-select-regexp_matches-e-a\\nb-^b"},
 				},
 			},
 		},
@@ -1709,8 +1525,7 @@ func TestRegexpReplaceReplacesMatchesRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT regexp_replace('foobarbaz', 'b..', 'X'),
-							regexp_replace('foobarbaz', 'b..', 'X', 'g');`,
-					Expected: []sql.Row{{"fooXbaz", "fooXX"}},
+							regexp_replace('foobarbaz', 'b..', 'X', 'g');`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testregexpreplacereplacesmatchesrepro-0001-select-regexp_replace-foobarbaz-b..-x"},
 				},
 			},
 		},
@@ -1726,8 +1541,7 @@ func TestRegexpSplitToArraySplitsTextRepro(t *testing.T) {
 			Name: "regexp_split_to_array splits text",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT regexp_split_to_array('a,b,c', ',');`,
-					Expected: []sql.Row{{"{a,b,c}"}},
+					Query: `SELECT regexp_split_to_array('a,b,c', ',');`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testregexpsplittoarraysplitstextrepro-0001-select-regexp_split_to_array-a-b-c"},
 				},
 			},
 		},
@@ -1742,8 +1556,7 @@ func TestRegexpLikeReturnsBooleanRepro(t *testing.T) {
 			Name: "regexp_like returns boolean",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT regexp_like('abc', '^a');`,
-					Expected: []sql.Row{{true}},
+					Query: `SELECT regexp_like('abc', '^a');`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testregexplikereturnsbooleanrepro-0001-select-regexp_like-abc-^a"},
 				},
 			},
 		},
@@ -1758,8 +1571,7 @@ func TestRegexpCountCountsMatchesRepro(t *testing.T) {
 			Name: "regexp_count counts matches",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT regexp_count('abcabc', 'a');`,
-					Expected: []sql.Row{{int32(2)}},
+					Query: `SELECT regexp_count('abcabc', 'a');`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testregexpcountcountsmatchesrepro-0001-select-regexp_count-abcabc-a"},
 				},
 			},
 		},
@@ -1774,8 +1586,7 @@ func TestRegexpSubstrReturnsMatchGuard(t *testing.T) {
 			Name: "regexp_substr returns match",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT regexp_substr('abcabc', 'b.');`,
-					Expected: []sql.Row{{"bc"}},
+					Query: `SELECT regexp_substr('abcabc', 'b.');`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testregexpsubstrreturnsmatchguard-0001-select-regexp_substr-abcabc-b."},
 				},
 			},
 		},
@@ -1790,8 +1601,7 @@ func TestRegexpInstrReturnsPositionGuard(t *testing.T) {
 			Name: "regexp_instr returns position",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT regexp_instr('abcabc', 'b.');`,
-					Expected: []sql.Row{{int32(2)}},
+					Query: `SELECT regexp_instr('abcabc', 'b.');`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testregexpinstrreturnspositionguard-0001-select-regexp_instr-abcabc-b."},
 				},
 			},
 		},
@@ -1808,8 +1618,7 @@ func TestConcatWsSkipsNullsRepro(t *testing.T) {
 				{
 					Query: `SELECT concat_ws(',', 10, 20, NULL, 30),
 							concat_ws('', 10, 20, NULL, 30),
-							concat_ws(NULL, 10, 20) IS NULL;`,
-					Expected: []sql.Row{{"10,20,30", "102030", true}},
+							concat_ws(NULL, 10, 20) IS NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testconcatwsskipsnullsrepro-0001-select-concat_ws-10-20-null"},
 				},
 			},
 		},
@@ -1824,8 +1633,7 @@ func TestFormatDynamicWidthRepro(t *testing.T) {
 			Name: "format dynamic width arguments",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT format('%*s|%*s', 5, 'x', -5, 'y');`,
-					Expected: []sql.Row{{"    x|y    "}},
+					Query: `SELECT format('%*s|%*s', 5, 'x', -5, 'y');`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testformatdynamicwidthrepro-0001-select-format-%*s|%*s-5-x"},
 				},
 			},
 		},
@@ -1843,8 +1651,7 @@ func TestParseIdentSplitsQualifiedNamesRepro(t *testing.T) {
 				{
 					Query: `SELECT parse_ident('Schemax.Tabley')::text[],
 							parse_ident('"SchemaX"."TableY"')::text[],
-							parse_ident('foo.boo[]', false)::text[];`,
-					Expected: []sql.Row{{"{schemax,tabley}", "{SchemaX,TableY}", "{foo,boo}"}},
+							parse_ident('foo.boo[]', false)::text[];`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testparseidentsplitsqualifiednamesrepro-0001-select-parse_ident-schemax.tabley-::text[]-parse_ident"},
 				},
 			},
 		},
@@ -1861,12 +1668,7 @@ func TestStringToTableSplitsRowsRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT v, v IS NULL
-						FROM string_to_table('1|2|3', '|') AS g(v);`,
-					Expected: []sql.Row{
-						{"1", false},
-						{"2", false},
-						{"3", false},
-					},
+						FROM string_to_table('1|2|3', '|') AS g(v);`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-teststringtotablesplitsrowsrepro-0001-select-v-v-is-null"},
 				},
 			},
 		},
@@ -1883,8 +1685,7 @@ func TestFunctionNamedArgumentNotationRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT make_date(year => 2026, month => 5, day => 10)::text,
-							make_date(2026, day => 10, month => 5)::text;`,
-					Expected: []sql.Row{{"2026-05-10", "2026-05-10"}},
+							make_date(2026, day => 10, month => 5)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testfunctionnamedargumentnotationrepro-0001-select-make_date-year-=>-2026"},
 				},
 			},
 		},
@@ -1901,9 +1702,7 @@ func TestCurrentCatalogColumnNameRepro(t *testing.T) {
 			Database: "test",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:            `SELECT current_catalog;`,
-					ExpectedColNames: []string{"current_catalog"},
-					Expected:         []sql.Row{{"test"}},
+					Query: `SELECT current_catalog;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testcurrentcatalogcolumnnamerepro-0001-select-current_catalog"},
 				},
 			},
 		},
@@ -1918,9 +1717,7 @@ func TestCurrentSchemaColumnNameRepro(t *testing.T) {
 			Name: "current_schema column name",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:            `SELECT current_schema();`,
-					ExpectedColNames: []string{"current_schema"},
-					Expected:         []sql.Row{{"public"}},
+					Query: `SELECT current_schema();`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testcurrentschemacolumnnamerepro-0001-select-current_schema"},
 				},
 			},
 		},
@@ -1936,8 +1733,7 @@ func TestCurrentDatabaseFromFunctionGuard(t *testing.T) {
 			Database: "test",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM current_database();`,
-					Expected: []sql.Row{{"test"}},
+					Query: `SELECT * FROM current_database();`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testcurrentdatabasefromfunctionguard-0001-select-*-from-current_database"},
 				},
 			},
 		},
@@ -1953,8 +1749,7 @@ func TestCurrentCatalogFromExpressionGuard(t *testing.T) {
 			Database: "test",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM current_catalog;`,
-					Expected: []sql.Row{{"test"}},
+					Query: `SELECT * FROM current_catalog;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testcurrentcatalogfromexpressionguard-0001-select-*-from-current_catalog"},
 				},
 			},
 		},
@@ -1969,8 +1764,7 @@ func TestCurrentSchemaFromFunctionGuard(t *testing.T) {
 			Name: "current_schema function in FROM",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM current_schema();`,
-					Expected: []sql.Row{{"public"}},
+					Query: `SELECT * FROM current_schema();`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testcurrentschemafromfunctionguard-0001-select-*-from-current_schema"},
 				},
 			},
 		},
@@ -1988,8 +1782,7 @@ func TestXmlWellFormedFunctionsRepro(t *testing.T) {
 					Query: `SELECT xml_is_well_formed('<a/>'),
 							xml_is_well_formed('<a>'),
 							xml_is_well_formed_document('<a/>'),
-							xml_is_well_formed_content('plain text');`,
-					Expected: []sql.Row{{true, false, true, true}},
+							xml_is_well_formed_content('plain text');`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testxmlwellformedfunctionsrepro-0001-select-xml_is_well_formed-<a/>-xml_is_well_formed-<a>"},
 				},
 			},
 		},

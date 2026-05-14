@@ -1,0 +1,2022 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map foreign_key_correctness_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/foreign_key_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyRejectsFloatReferencingIntegerRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyRejectsFloatReferencingIntegerRepro",
+      "ordinal": 1,
+      "scriptName": "foreign key rejects float child against integer parent",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyrejectsfloatreferencingintegerrepro-0001-alter-table-fk_type_child-add-constraint",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyrejectsfloatreferencingintegerrepro-0001-alter-table-fk_type_child-add-constraint",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42804",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE fk_type_child\n\t\t\t\t\t\tADD CONSTRAINT fk_type_child_parent_id_fkey\n\t\t\t\t\t\tFOREIGN KEY (parent_id) REFERENCES fk_type_parent(id);",
+      "querySha256": "c251369fc94b46f79c90e853ce3b9f7cc0221d3892439833c69c0adec14ff556",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestTypmodForeignKeyUsesCoercedValuesRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestTypmodForeignKeyUsesCoercedValuesRepro",
+      "ordinal": 1,
+      "scriptName": "timestamp typmod foreign key uses rounded values",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testtypmodforeignkeyusescoercedvaluesrepro-0001-select-c.id-c.ts::text-p.ts::text-from",
+      "suggestedId": "foreign-key-correctness-repro-test-testtypmodforeignkeyusescoercedvaluesrepro-0001-select-c.id-c.ts::text-p.ts::text-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT c.id, c.ts::text, p.ts::text\n\t\t\t\t\t\tFROM timestamp_typmod_fk_child c\n\t\t\t\t\t\tJOIN timestamp_typmod_fk_parent p ON c.ts = p.ts\n\t\t\t\t\t\tORDER BY c.id;",
+      "querySha256": "78dfac323785573e3d2c643cd90285322162be0733029a338333e370e05892af",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2021-09-15 21:43:57"
+          },
+          {
+            "value": "2021-09-15 21:43:57"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestTypmodForeignKeyUsesCoercedValuesRepro#0002",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestTypmodForeignKeyUsesCoercedValuesRepro",
+      "ordinal": 2,
+      "scriptName": "domain typmod foreign key uses coerced values",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testtypmodforeignkeyusescoercedvaluesrepro-0002-select-c.id-c.amount::text-p.amount::text-from",
+      "suggestedId": "foreign-key-correctness-repro-test-testtypmodforeignkeyusescoercedvaluesrepro-0002-select-c.id-c.amount::text-p.amount::text-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT c.id, c.amount::text, p.amount::text\n\t\t\t\t\t\tFROM numeric_domain_fk_child c\n\t\t\t\t\t\tJOIN numeric_domain_fk_parent p ON c.amount = p.amount\n\t\t\t\t\t\tORDER BY c.id;",
+      "querySha256": "0b210edfd9a2908d3e75e98bbc9c4d82c3e66a4a94921af224c67455f879f434",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1.23"
+          },
+          {
+            "value": "1.23"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestTypmodForeignKeyUsesCoercedValuesRepro#0003",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestTypmodForeignKeyUsesCoercedValuesRepro",
+      "ordinal": 3,
+      "scriptName": "text domain typmod foreign key uses coerced values",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testtypmodforeignkeyusescoercedvaluesrepro-0003-select-c.id-c.label-length-c.label",
+      "suggestedId": "foreign-key-correctness-repro-test-testtypmodforeignkeyusescoercedvaluesrepro-0003-select-c.id-c.label-length-c.label",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT c.id, c.label, length(c.label), p.label\n\t\t\t\t\t\t\tFROM varchar_domain_fk_child c\n\t\t\t\t\t\t\tJOIN varchar_domain_fk_parent p ON c.label = p.label\n\t\t\t\t\t\t\tORDER BY c.id;",
+      "querySha256": "ba088541941240ac3f0c4e6435264b7b819b5d2a417236e7b15a5790ad5da3f7",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "abc"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "abc"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestCompositeForeignKeyMatchFullRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestCompositeForeignKeyMatchFullRepro",
+      "ordinal": 1,
+      "scriptName": "composite foreign key MATCH FULL enforces full-null rule",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testcompositeforeignkeymatchfullrepro-0001-select-confmatchtype-pg_get_constraintdef-oid-like",
+      "suggestedId": "foreign-key-correctness-repro-test-testcompositeforeignkeymatchfullrepro-0001-select-confmatchtype-pg_get_constraintdef-oid-like",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT confmatchtype, pg_get_constraintdef(oid) LIKE '%MATCH FULL%'\n\t\t\t\t\t\tFROM pg_constraint\n\t\t\t\t\t\tWHERE conrelid = 'match_full_child'::regclass\n\t\t\t\t\t\t\tAND contype = 'f';",
+      "querySha256": "dad833c2964395bdfdeadde293d9491f25d28c592a88fd194ebcf2b6a7e0554e",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestCompositeForeignKeyMatchFullRepro#0002",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestCompositeForeignKeyMatchFullRepro",
+      "ordinal": 2,
+      "scriptName": "composite foreign key MATCH FULL enforces full-null rule",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testcompositeforeignkeymatchfullrepro-0002-insert-into-match_full_child-values-3",
+      "suggestedId": "foreign-key-correctness-repro-test-testcompositeforeignkeymatchfullrepro-0002-insert-into-match_full_child-values-3",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23503",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO match_full_child VALUES (3, 1, NULL);",
+      "querySha256": "072151f97aeffd24e8d8d56d8eb061554af1e9e8852110fcee6bd1607966710a",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestCompositeForeignKeyMatchFullRepro#0003",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestCompositeForeignKeyMatchFullRepro",
+      "ordinal": 3,
+      "scriptName": "composite foreign key MATCH FULL enforces full-null rule",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testcompositeforeignkeymatchfullrepro-0003-insert-into-match_full_child-values-4",
+      "suggestedId": "foreign-key-correctness-repro-test-testcompositeforeignkeymatchfullrepro-0003-insert-into-match_full_child-values-4",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23503",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO match_full_child VALUES (4, 2, 2);",
+      "querySha256": "d8fb3b2f3ad10729bc931cc82fe462c5491bf0e83e92bb56be87f9e91fce73b5",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestCompositeForeignKeyMatchFullRepro#0004",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestCompositeForeignKeyMatchFullRepro",
+      "ordinal": 4,
+      "scriptName": "composite foreign key MATCH FULL enforces full-null rule",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testcompositeforeignkeymatchfullrepro-0004-select-id-parent_id1-parent_id2-from",
+      "suggestedId": "foreign-key-correctness-repro-test-testcompositeforeignkeymatchfullrepro-0004-select-id-parent_id1-parent_id2-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, parent_id1, parent_id2\n\t\t\t\t\t\tFROM match_full_child\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "14c799c656bd0baa9de4115047bba7e44a4b60fc2db3796554cbbbd77ff9bdb4",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestCompositeForeignKeyMatchSimpleAllowsPartialNullsRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestCompositeForeignKeyMatchSimpleAllowsPartialNullsRepro",
+      "ordinal": 1,
+      "scriptName": "composite foreign key MATCH SIMPLE allows partial nulls",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testcompositeforeignkeymatchsimpleallowspartialnullsrepro-0001-insert-into-match_simple_child-values-5",
+      "suggestedId": "foreign-key-correctness-repro-test-testcompositeforeignkeymatchsimpleallowspartialnullsrepro-0001-insert-into-match_simple_child-values-5",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23503",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO match_simple_child VALUES (5, 2, 2);",
+      "querySha256": "1448d2ea766c99726f3a76d38dd2857271a9377d108f21d28df69b9b98cc5384",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestCompositeForeignKeyMatchSimpleAllowsPartialNullsRepro#0002",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestCompositeForeignKeyMatchSimpleAllowsPartialNullsRepro",
+      "ordinal": 2,
+      "scriptName": "composite foreign key MATCH SIMPLE allows partial nulls",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testcompositeforeignkeymatchsimpleallowspartialnullsrepro-0002-select-id-parent_id1-parent_id2-from",
+      "suggestedId": "foreign-key-correctness-repro-test-testcompositeforeignkeymatchsimpleallowspartialnullsrepro-0002-select-id-parent_id1-parent_id2-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, parent_id1, parent_id2\n\t\t\t\t\t\tFROM match_simple_child\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "f4b98abcde374362ecf2d12915f83a08973eafaa73b5bfe015fcdcc37f3abb0f",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "null": true
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "null": true
+          },
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteSetNullColumnListRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteSetNullColumnListRepro",
+      "ordinal": 1,
+      "scriptName": "ON DELETE SET NULL column list preserves tenant key",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyondeletesetnullcolumnlistrepro-0001-select-child_id-tenant_id-parent_id-from",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyondeletesetnullcolumnlistrepro-0001-select-child_id-tenant_id-parent_id-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT child_id, tenant_id, parent_id\n\t\t\t\t\t\tFROM fk_set_null_column_child;",
+      "querySha256": "155690dc0e359aa78f30cf26d214ad7da4ee5824afdf40d3e33a04317d83b310",
+      "expectedRows": [
+        [
+          {
+            "value": "100"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateSetNullColumnListRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateSetNullColumnListRepro",
+      "ordinal": 1,
+      "scriptName": "ON UPDATE SET NULL column list preserves tenant key",
+      "oracle": "internal",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyonupdatesetnullcolumnlistrepro-0001-select-child_id-tenant_id-parent_id-from",
+      "expectedKind": "rows",
+      "query": "SELECT child_id, tenant_id, parent_id\n\t\t\t\t\t\tFROM fk_update_set_null_column_child;",
+      "querySha256": "de417f56997ce90069f1635c379b19e2d7d8f3b311ba9f5f39eb2cd5a5fa71da",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteSetDefaultColumnListRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteSetDefaultColumnListRepro",
+      "ordinal": 1,
+      "scriptName": "ON DELETE SET DEFAULT column list preserves tenant key",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyondeletesetdefaultcolumnlistrepro-0001-select-child_id-tenant_id-parent_id-from",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyondeletesetdefaultcolumnlistrepro-0001-select-child_id-tenant_id-parent_id-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT child_id, tenant_id, parent_id\n\t\t\t\t\t\tFROM fk_delete_set_default_column_child;",
+      "querySha256": "cd6022582745bad2ac04b984511000b2aa4d623a347e97cddf3f4f6c42b7d613",
+      "expectedRows": [
+        [
+          {
+            "value": "100"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateSetDefaultColumnListRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateSetDefaultColumnListRepro",
+      "ordinal": 1,
+      "scriptName": "ON UPDATE SET DEFAULT column list preserves tenant key",
+      "oracle": "internal",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyonupdatesetdefaultcolumnlistrepro-0001-select-child_id-tenant_id-parent_id-from",
+      "expectedKind": "rows",
+      "query": "SELECT child_id, tenant_id, parent_id\n\t\t\t\t\t\tFROM fk_update_set_default_column_child;",
+      "querySha256": "38b4835fb1b97c1ca114eac599989e40febe9504cbe3901226ad3c8e706196de",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteSetNullValidatesCheckConstraintRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteSetNullValidatesCheckConstraintRepro",
+      "ordinal": 1,
+      "scriptName": "ON DELETE SET NULL validates child CHECK constraints",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyondeletesetnullvalidatescheckconstraintrepro-0001-delete-from-fk_delete_null_check_parent-where-id",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyondeletesetnullvalidatescheckconstraintrepro-0001-delete-from-fk_delete_null_check_parent-where-id",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "DELETE FROM fk_delete_null_check_parent WHERE id = 1;",
+      "querySha256": "0f9233dbf0743174c3966d766fbe2c995bfdd834eb196e3b429c8a1ddb8537db",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteSetNullValidatesCheckConstraintRepro#0002",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteSetNullValidatesCheckConstraintRepro",
+      "ordinal": 2,
+      "scriptName": "ON DELETE SET NULL validates child CHECK constraints",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyondeletesetnullvalidatescheckconstraintrepro-0002-select-id-parent_id-from-fk_delete_null_check_child",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyondeletesetnullvalidatescheckconstraintrepro-0002-select-id-parent_id-from-fk_delete_null_check_child",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, parent_id FROM fk_delete_null_check_child;",
+      "querySha256": "5ac50db04a426e3aaf7dc2ed57796d6101cb18f0a7dae2ed2773686c22aa765b",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyDomainColumnReferencesBaseTypeRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyDomainColumnReferencesBaseTypeRepro",
+      "ordinal": 1,
+      "scriptName": "domain foreign key column references base type key",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeydomaincolumnreferencesbasetyperepro-0001-select-id-parent_id-from-domain_fk_base_child",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeydomaincolumnreferencesbasetyperepro-0001-select-id-parent_id-from-domain_fk_base_child",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, parent_id FROM domain_fk_base_child;",
+      "querySha256": "7c543f3821a63da8d2e4654f353a8cc415b1979f4992481f8918a3bbe3f1d063",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateSetNullValidatesCheckConstraintRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateSetNullValidatesCheckConstraintRepro",
+      "ordinal": 1,
+      "scriptName": "ON UPDATE SET NULL validates child CHECK constraints",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyonupdatesetnullvalidatescheckconstraintrepro-0001-update-fk_update_null_check_parent-set-id-=",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyonupdatesetnullvalidatescheckconstraintrepro-0001-update-fk_update_null_check_parent-set-id-=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "UPDATE fk_update_null_check_parent SET id = 2 WHERE id = 1;",
+      "querySha256": "036d61118ad5bc79a24f807044a1c5e19538c959c3933b5d52f9a19c81bb2582",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateSetNullValidatesCheckConstraintRepro#0002",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateSetNullValidatesCheckConstraintRepro",
+      "ordinal": 2,
+      "scriptName": "ON UPDATE SET NULL validates child CHECK constraints",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyonupdatesetnullvalidatescheckconstraintrepro-0002-select-id-parent_id-from-fk_update_null_check_child",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyonupdatesetnullvalidatescheckconstraintrepro-0002-select-id-parent_id-from-fk_update_null_check_child",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, parent_id FROM fk_update_null_check_child;",
+      "querySha256": "11d59c1c2b4914d12ea3a54b3cd288c6be659af84f7d788ca5ec19adbc182456",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteSetDefaultValidatesDefaultRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteSetDefaultValidatesDefaultRepro",
+      "ordinal": 1,
+      "scriptName": "ON DELETE SET DEFAULT validates default value",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyondeletesetdefaultvalidatesdefaultrepro-0001-delete-from-fk_delete_default_parent-where-id",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyondeletesetdefaultvalidatesdefaultrepro-0001-delete-from-fk_delete_default_parent-where-id",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23503",
+      "errorSeverity": "ERROR",
+      "query": "DELETE FROM fk_delete_default_parent WHERE id = 1;",
+      "querySha256": "bb7693de7026b3fb9c31f6a291874537431d20d0971f5094b99aff49727e2c97",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteSetDefaultValidatesDefaultRepro#0002",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteSetDefaultValidatesDefaultRepro",
+      "ordinal": 2,
+      "scriptName": "ON DELETE SET DEFAULT validates default value",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyondeletesetdefaultvalidatesdefaultrepro-0002-select-id-parent_id-from-fk_delete_default_child",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyondeletesetdefaultvalidatesdefaultrepro-0002-select-id-parent_id-from-fk_delete_default_child",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, parent_id FROM fk_delete_default_child;",
+      "querySha256": "f9af023bc22b0e5d436005a44d5a8dc093064bac5ebc5bf3867591f72646af9e",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateSetDefaultValidatesDefaultRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateSetDefaultValidatesDefaultRepro",
+      "ordinal": 1,
+      "scriptName": "ON UPDATE SET DEFAULT validates default value",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyonupdatesetdefaultvalidatesdefaultrepro-0001-update-fk_update_default_parent-set-id-=",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyonupdatesetdefaultvalidatesdefaultrepro-0001-update-fk_update_default_parent-set-id-=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23503",
+      "errorSeverity": "ERROR",
+      "query": "UPDATE fk_update_default_parent SET id = 2 WHERE id = 1;",
+      "querySha256": "a00e8f6b4a2e4023eeac40923346bc3a76db3efcca2ffabb7b8c1191ce7e4d62",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateSetDefaultValidatesDefaultRepro#0002",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateSetDefaultValidatesDefaultRepro",
+      "ordinal": 2,
+      "scriptName": "ON UPDATE SET DEFAULT validates default value",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyonupdatesetdefaultvalidatesdefaultrepro-0002-select-id-parent_id-from-fk_update_default_child",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyonupdatesetdefaultvalidatesdefaultrepro-0002-select-id-parent_id-from-fk_update_default_child",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, parent_id FROM fk_update_default_child;",
+      "querySha256": "4a551577e04213bde10c1e1f0a9206a8547cd5dbb6115ab2af32f547d09d7c78",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteSetDefaultValidatesCheckConstraintRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteSetDefaultValidatesCheckConstraintRepro",
+      "ordinal": 1,
+      "scriptName": "ON DELETE SET DEFAULT validates child CHECK constraints",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyondeletesetdefaultvalidatescheckconstraintrepro-0001-delete-from-fk_delete_default_check_parent-where-id",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyondeletesetdefaultvalidatescheckconstraintrepro-0001-delete-from-fk_delete_default_check_parent-where-id",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "DELETE FROM fk_delete_default_check_parent WHERE id = 1;",
+      "querySha256": "b4a666ec9c30ea4006993dc68a5559e5262b13cedb40c7ffc562144383803a72",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteSetDefaultValidatesCheckConstraintRepro#0002",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteSetDefaultValidatesCheckConstraintRepro",
+      "ordinal": 2,
+      "scriptName": "ON DELETE SET DEFAULT validates child CHECK constraints",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyondeletesetdefaultvalidatescheckconstraintrepro-0002-select-id-parent_id-from-fk_delete_default_check_child",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyondeletesetdefaultvalidatescheckconstraintrepro-0002-select-id-parent_id-from-fk_delete_default_check_child",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, parent_id FROM fk_delete_default_check_child;",
+      "querySha256": "d9bf3e987d594bf128722774d49e6ff9eda72e687eb46634adb11ef6ce624881",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateSetDefaultValidatesCheckConstraintRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateSetDefaultValidatesCheckConstraintRepro",
+      "ordinal": 1,
+      "scriptName": "ON UPDATE SET DEFAULT validates child CHECK constraints",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyonupdatesetdefaultvalidatescheckconstraintrepro-0001-update-fk_update_default_check_parent-set-id-=",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyonupdatesetdefaultvalidatescheckconstraintrepro-0001-update-fk_update_default_check_parent-set-id-=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "UPDATE fk_update_default_check_parent SET id = 2 WHERE id = 1;",
+      "querySha256": "5c4f3170e46616037862af547605a85d331c8b2fe43849f91de82c7eea91e6cf",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateSetDefaultValidatesCheckConstraintRepro#0002",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateSetDefaultValidatesCheckConstraintRepro",
+      "ordinal": 2,
+      "scriptName": "ON UPDATE SET DEFAULT validates child CHECK constraints",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyonupdatesetdefaultvalidatescheckconstraintrepro-0002-select-id-parent_id-from-fk_update_default_check_child",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyonupdatesetdefaultvalidatescheckconstraintrepro-0002-select-id-parent_id-from-fk_update_default_check_child",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, parent_id FROM fk_update_default_check_child;",
+      "querySha256": "dfbd6d594228a892db14839cec56a407bc30ee27b01b2cc93889adfd5890ac4a",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteSetDefaultValidatesUniqueConstraintRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteSetDefaultValidatesUniqueConstraintRepro",
+      "ordinal": 1,
+      "scriptName": "ON DELETE SET DEFAULT validates child UNIQUE constraints",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyondeletesetdefaultvalidatesuniqueconstraintrepro-0001-delete-from-fk_delete_default_unique_parent-where-id",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyondeletesetdefaultvalidatesuniqueconstraintrepro-0001-delete-from-fk_delete_default_unique_parent-where-id",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "DELETE FROM fk_delete_default_unique_parent WHERE id IN (1, 2);",
+      "querySha256": "0289301fd89ac71cb18be20b89014f70dde05e3527bbf877cc470dc4383a28de",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteSetDefaultValidatesUniqueConstraintRepro#0002",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteSetDefaultValidatesUniqueConstraintRepro",
+      "ordinal": 2,
+      "scriptName": "ON DELETE SET DEFAULT validates child UNIQUE constraints",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyondeletesetdefaultvalidatesuniqueconstraintrepro-0002-select-id-parent_id-from-fk_delete_default_unique_child",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyondeletesetdefaultvalidatesuniqueconstraintrepro-0002-select-id-parent_id-from-fk_delete_default_unique_child",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, parent_id\n\t\t\t\t\t\tFROM fk_delete_default_unique_child\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "73dcf4bf057ca40426b3090b0dd60798628ca2c76f42d2b7100db5a5bed03e99",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteSetDefaultValidatesUniqueConstraintRepro#0003",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteSetDefaultValidatesUniqueConstraintRepro",
+      "ordinal": 3,
+      "scriptName": "ON DELETE SET DEFAULT validates child UNIQUE constraints",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyondeletesetdefaultvalidatesuniqueconstraintrepro-0003-select-id-from-fk_delete_default_unique_parent-order",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyondeletesetdefaultvalidatesuniqueconstraintrepro-0003-select-id-from-fk_delete_default_unique_parent-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id\n\t\t\t\t\t\tFROM fk_delete_default_unique_parent\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "f195fd75e3907b55efe8d2238c1eedb0ebac39c98abd9d87b64395c172e152d4",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ],
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateSetDefaultValidatesUniqueConstraintRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateSetDefaultValidatesUniqueConstraintRepro",
+      "ordinal": 1,
+      "scriptName": "ON UPDATE SET DEFAULT validates child UNIQUE constraints",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyonupdatesetdefaultvalidatesuniqueconstraintrepro-0001-update-fk_update_default_unique_parent-set-id-=",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyonupdatesetdefaultvalidatesuniqueconstraintrepro-0001-update-fk_update_default_unique_parent-set-id-=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "UPDATE fk_update_default_unique_parent SET id = id + 10 WHERE id IN (1, 2);",
+      "querySha256": "90f270e415ccac3c82aea0f5277cae6300d9f3dba993db9d9d47ce3192db2961",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateSetDefaultValidatesUniqueConstraintRepro#0002",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateSetDefaultValidatesUniqueConstraintRepro",
+      "ordinal": 2,
+      "scriptName": "ON UPDATE SET DEFAULT validates child UNIQUE constraints",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyonupdatesetdefaultvalidatesuniqueconstraintrepro-0002-select-id-parent_id-from-fk_update_default_unique_child",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyonupdatesetdefaultvalidatesuniqueconstraintrepro-0002-select-id-parent_id-from-fk_update_default_unique_child",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, parent_id\n\t\t\t\t\t\tFROM fk_update_default_unique_child\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "ad17eada326f315b24f8d248b657a3f003f21ec3984b861fdd6ca72e7fbcd23f",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateSetDefaultValidatesUniqueConstraintRepro#0003",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateSetDefaultValidatesUniqueConstraintRepro",
+      "ordinal": 3,
+      "scriptName": "ON UPDATE SET DEFAULT validates child UNIQUE constraints",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyonupdatesetdefaultvalidatesuniqueconstraintrepro-0003-select-id-from-fk_update_default_unique_parent-order",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyonupdatesetdefaultvalidatesuniqueconstraintrepro-0003-select-id-from-fk_update_default_unique_parent-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id\n\t\t\t\t\t\tFROM fk_update_default_unique_parent\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "00a2ca82824744e5494644d6f9d0d8e56a6a264f02050200d487d5d9efe4f6f5",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ],
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateCascadeValidatesCheckConstraintRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateCascadeValidatesCheckConstraintRepro",
+      "ordinal": 1,
+      "scriptName": "ON UPDATE CASCADE validates child CHECK constraints",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyonupdatecascadevalidatescheckconstraintrepro-0001-update-fk_update_cascade_check_parent-set-id-=",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyonupdatecascadevalidatescheckconstraintrepro-0001-update-fk_update_cascade_check_parent-set-id-=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "UPDATE fk_update_cascade_check_parent SET id = 11 WHERE id = 1;",
+      "querySha256": "ab9d2f62507fb4a7ca99a72592f3099e0ac264c826e08ead1ff5aa93a2fbf2f7",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateCascadeValidatesCheckConstraintRepro#0002",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateCascadeValidatesCheckConstraintRepro",
+      "ordinal": 2,
+      "scriptName": "ON UPDATE CASCADE validates child CHECK constraints",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyonupdatecascadevalidatescheckconstraintrepro-0002-select-id-parent_id-from-fk_update_cascade_check_child",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyonupdatecascadevalidatescheckconstraintrepro-0002-select-id-parent_id-from-fk_update_cascade_check_child",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, parent_id FROM fk_update_cascade_check_child;",
+      "querySha256": "3fd9b0e837885f93c0f5c7f2cd15a9d1cb0c18ac8185a3b43972b8b0052a5f44",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteCascadeValidatesGrandchildRestrictRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteCascadeValidatesGrandchildRestrictRepro",
+      "ordinal": 1,
+      "scriptName": "ON DELETE CASCADE validates grandchild foreign keys",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyondeletecascadevalidatesgrandchildrestrictrepro-0001-delete-from-fk_delete_cascade_restrict_parent-where-id",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyondeletecascadevalidatesgrandchildrestrictrepro-0001-delete-from-fk_delete_cascade_restrict_parent-where-id",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23503",
+      "errorSeverity": "ERROR",
+      "query": "DELETE FROM fk_delete_cascade_restrict_parent WHERE id = 1;",
+      "querySha256": "8e315e3466c7aacac0f1b7fe9a12fdac2158b16212bb4c32d3d5097b61ab0c9b",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteCascadeValidatesGrandchildRestrictRepro#0002",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteCascadeValidatesGrandchildRestrictRepro",
+      "ordinal": 2,
+      "scriptName": "ON DELETE CASCADE validates grandchild foreign keys",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyondeletecascadevalidatesgrandchildrestrictrepro-0002-select-id-from-fk_delete_cascade_restrict_parent",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyondeletecascadevalidatesgrandchildrestrictrepro-0002-select-id-from-fk_delete_cascade_restrict_parent",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM fk_delete_cascade_restrict_parent;",
+      "querySha256": "43d9239d30b6c192306fbb05cc8065085dc2a2921c1f83554488b4f85f1b7c80",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteCascadeValidatesGrandchildRestrictRepro#0003",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteCascadeValidatesGrandchildRestrictRepro",
+      "ordinal": 3,
+      "scriptName": "ON DELETE CASCADE validates grandchild foreign keys",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyondeletecascadevalidatesgrandchildrestrictrepro-0003-select-id-parent_id-from-fk_delete_cascade_restrict_child",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyondeletecascadevalidatesgrandchildrestrictrepro-0003-select-id-parent_id-from-fk_delete_cascade_restrict_child",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, parent_id FROM fk_delete_cascade_restrict_child;",
+      "querySha256": "0a17f4db34c8c59034240f68330b1e3ceed5b222b2660979e45032af68974fd7",
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          },
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteCascadeValidatesGrandchildRestrictRepro#0004",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteCascadeValidatesGrandchildRestrictRepro",
+      "ordinal": 4,
+      "scriptName": "ON DELETE CASCADE validates grandchild foreign keys",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyondeletecascadevalidatesgrandchildrestrictrepro-0004-select-id-child_id-from-fk_delete_cascade_restrict_grandchild",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyondeletecascadevalidatesgrandchildrestrictrepro-0004-select-id-child_id-from-fk_delete_cascade_restrict_grandchild",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, child_id FROM fk_delete_cascade_restrict_grandchild;",
+      "querySha256": "c674e9ddbc078a79cf5e3d4aaef603c5fd1658e727a94a30573f9f57f4b2f082",
+      "expectedRows": [
+        [
+          {
+            "value": "100"
+          },
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateCascadePropagatesGrandchildCascadeRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateCascadePropagatesGrandchildCascadeRepro",
+      "ordinal": 1,
+      "scriptName": "ON UPDATE CASCADE propagates to grandchild foreign keys",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyonupdatecascadepropagatesgrandchildcascaderepro-0001-select-id-from-fk_update_cascade_grand_parent",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyonupdatecascadepropagatesgrandchildcascaderepro-0001-select-id-from-fk_update_cascade_grand_parent",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM fk_update_cascade_grand_parent;",
+      "querySha256": "ab4fe772de7c089cf3b678b77ced7931ea82172ab2b2a839c35bce9cabc00974",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateCascadePropagatesGrandchildCascadeRepro#0002",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateCascadePropagatesGrandchildCascadeRepro",
+      "ordinal": 2,
+      "scriptName": "ON UPDATE CASCADE propagates to grandchild foreign keys",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyonupdatecascadepropagatesgrandchildcascaderepro-0002-select-id-parent_id-from-fk_update_cascade_grand_child",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyonupdatecascadepropagatesgrandchildcascaderepro-0002-select-id-parent_id-from-fk_update_cascade_grand_child",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, parent_id FROM fk_update_cascade_grand_child;",
+      "querySha256": "556de6d331857a7eb2b3a688228c2e8595e3f3561ff1827fa30aa2bb807c40b1",
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          },
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateCascadePropagatesGrandchildCascadeRepro#0003",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateCascadePropagatesGrandchildCascadeRepro",
+      "ordinal": 3,
+      "scriptName": "ON UPDATE CASCADE propagates to grandchild foreign keys",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyonupdatecascadepropagatesgrandchildcascaderepro-0003-select-id-child_parent_id-from-fk_update_cascade_grand_grandchild",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyonupdatecascadepropagatesgrandchildcascaderepro-0003-select-id-child_parent_id-from-fk_update_cascade_grand_grandchild",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, child_parent_id FROM fk_update_cascade_grand_grandchild;",
+      "querySha256": "689cf09de345bce82b40eef1e1a4b4cfc29bec14875090837b652e4714ed8442",
+      "expectedRows": [
+        [
+          {
+            "value": "100"
+          },
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateCascadeValidatesGrandchildRestrictRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateCascadeValidatesGrandchildRestrictRepro",
+      "ordinal": 1,
+      "scriptName": "ON UPDATE CASCADE validates grandchild restrict foreign keys",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyonupdatecascadevalidatesgrandchildrestrictrepro-0001-update-fk_update_cascade_restrict_parent-set-id-=",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyonupdatecascadevalidatesgrandchildrestrictrepro-0001-update-fk_update_cascade_restrict_parent-set-id-=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23503",
+      "errorSeverity": "ERROR",
+      "query": "UPDATE fk_update_cascade_restrict_parent SET id = 2 WHERE id = 1;",
+      "querySha256": "e0ecf343a7b47177ee744a5e698054cc679e134849f4511875fcc7ea8145f4ab",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateCascadeValidatesGrandchildRestrictRepro#0002",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateCascadeValidatesGrandchildRestrictRepro",
+      "ordinal": 2,
+      "scriptName": "ON UPDATE CASCADE validates grandchild restrict foreign keys",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyonupdatecascadevalidatesgrandchildrestrictrepro-0002-select-id-from-fk_update_cascade_restrict_parent",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyonupdatecascadevalidatesgrandchildrestrictrepro-0002-select-id-from-fk_update_cascade_restrict_parent",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM fk_update_cascade_restrict_parent;",
+      "querySha256": "7d8651754254d0c057709c98c3bc52e394c2eeed22c7ad4ae89689c851f21278",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateCascadeValidatesGrandchildRestrictRepro#0003",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateCascadeValidatesGrandchildRestrictRepro",
+      "ordinal": 3,
+      "scriptName": "ON UPDATE CASCADE validates grandchild restrict foreign keys",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyonupdatecascadevalidatesgrandchildrestrictrepro-0003-select-id-parent_id-from-fk_update_cascade_restrict_child",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyonupdatecascadevalidatesgrandchildrestrictrepro-0003-select-id-parent_id-from-fk_update_cascade_restrict_child",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, parent_id FROM fk_update_cascade_restrict_child;",
+      "querySha256": "d91b2763d48f3a22d4c5c68716acc3d84d6ae3a7d5f6f8476e3578fde62e97fc",
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          },
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateCascadeValidatesGrandchildRestrictRepro#0004",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateCascadeValidatesGrandchildRestrictRepro",
+      "ordinal": 4,
+      "scriptName": "ON UPDATE CASCADE validates grandchild restrict foreign keys",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyonupdatecascadevalidatesgrandchildrestrictrepro-0004-select-id-child_parent_id-from-fk_update_cascade_restrict_grandchild",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyonupdatecascadevalidatesgrandchildrestrictrepro-0004-select-id-child_parent_id-from-fk_update_cascade_restrict_grandchild",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, child_parent_id FROM fk_update_cascade_restrict_grandchild;",
+      "querySha256": "4272bdde7c5d5c825a03f21540c020d8b0f2d1092c2793b61f9fd0104b4ac2e4",
+      "expectedRows": [
+        [
+          {
+            "value": "100"
+          },
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteSetNullRecomputesGeneratedColumnsRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteSetNullRecomputesGeneratedColumnsRepro",
+      "ordinal": 1,
+      "scriptName": "ON DELETE SET NULL recomputes generated columns",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyondeletesetnullrecomputesgeneratedcolumnsrepro-0001-select-id-parent_id-parent_marker-from",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyondeletesetnullrecomputesgeneratedcolumnsrepro-0001-select-id-parent_id-parent_marker-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, parent_id, parent_marker FROM fk_delete_null_generated_child;",
+      "querySha256": "fb37e8ff118cf9bf8ea0b519116fdbdc9ddbd0dd7e7fd41e46762765fba49030",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateSetNullRecomputesGeneratedColumnsRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateSetNullRecomputesGeneratedColumnsRepro",
+      "ordinal": 1,
+      "scriptName": "ON UPDATE SET NULL recomputes generated columns",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyonupdatesetnullrecomputesgeneratedcolumnsrepro-0001-select-id-parent_id-parent_marker-from",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyonupdatesetnullrecomputesgeneratedcolumnsrepro-0001-select-id-parent_id-parent_marker-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, parent_id, parent_marker FROM fk_update_null_generated_child;",
+      "querySha256": "491d9398362bf4c81f5e2b5ff23fab1ce29e8e965444c3ce35765d973897c78f",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteSetDefaultRecomputesGeneratedColumnsRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteSetDefaultRecomputesGeneratedColumnsRepro",
+      "ordinal": 1,
+      "scriptName": "ON DELETE SET DEFAULT recomputes generated columns",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyondeletesetdefaultrecomputesgeneratedcolumnsrepro-0001-select-id-parent_id-parent_marker-from",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyondeletesetdefaultrecomputesgeneratedcolumnsrepro-0001-select-id-parent_id-parent_marker-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, parent_id, parent_marker FROM fk_delete_default_generated_child;",
+      "querySha256": "2a303a272a15f6c92a453aeb0441ce324b5146179fab4cf4882ff7efa0ece13b",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "0"
+          },
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateSetDefaultRecomputesGeneratedColumnsRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateSetDefaultRecomputesGeneratedColumnsRepro",
+      "ordinal": 1,
+      "scriptName": "ON UPDATE SET DEFAULT recomputes generated columns",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyonupdatesetdefaultrecomputesgeneratedcolumnsrepro-0001-select-id-parent_id-parent_marker-from",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyonupdatesetdefaultrecomputesgeneratedcolumnsrepro-0001-select-id-parent_id-parent_marker-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, parent_id, parent_marker FROM fk_update_default_generated_child;",
+      "querySha256": "6fac0fb9a994877bca8d0773efa693c28917f602f60ffccce7a7ac06effe5fa2",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "0"
+          },
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateCascadeRecomputesGeneratedColumnsRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateCascadeRecomputesGeneratedColumnsRepro",
+      "ordinal": 1,
+      "scriptName": "ON UPDATE CASCADE recomputes generated columns",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyonupdatecascaderecomputesgeneratedcolumnsrepro-0001-select-id-parent_id-parent_marker-from",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyonupdatecascaderecomputesgeneratedcolumnsrepro-0001-select-id-parent_id-parent_marker-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, parent_id, parent_marker FROM fk_update_cascade_generated_child;",
+      "querySha256": "3a5c81cb89cb5140f3ac10a23c3c803a341a8a1c2f632c27087245d88a5528db",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "13"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateCascadeFiresChildUpdateTriggersRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateCascadeFiresChildUpdateTriggersRepro",
+      "ordinal": 1,
+      "scriptName": "ON UPDATE CASCADE fires child UPDATE triggers",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyonupdatecascadefireschildupdatetriggersrepro-0001-select-child_id-old_parent_id-new_parent_id-from",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyonupdatecascadefireschildupdatetriggersrepro-0001-select-child_id-old_parent_id-new_parent_id-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT child_id, old_parent_id, new_parent_id\n\t\t\t\t\t\tFROM fk_update_cascade_trigger_audit;",
+      "querySha256": "143f6a95959966eac3770a8862acf3d004995314d2d29aa35ab22ff533b80f4a",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateCascadeFiresChildUpdateTriggersRepro#0002",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateCascadeFiresChildUpdateTriggersRepro",
+      "ordinal": 2,
+      "scriptName": "ON UPDATE CASCADE fires child UPDATE triggers",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyonupdatecascadefireschildupdatetriggersrepro-0002-select-id-parent_id-from-fk_update_cascade_trigger_child",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyonupdatecascadefireschildupdatetriggersrepro-0002-select-id-parent_id-from-fk_update_cascade_trigger_child",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, parent_id FROM fk_update_cascade_trigger_child;",
+      "querySha256": "dff2b9de32bec88dffbfcfea288acb1b4b7b8d312937642cbf41c4103138dfde",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteCascadeFiresChildDeleteTriggersRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteCascadeFiresChildDeleteTriggersRepro",
+      "ordinal": 1,
+      "scriptName": "ON DELETE CASCADE fires child DELETE triggers",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyondeletecascadefireschilddeletetriggersrepro-0001-select-child_id-old_parent_id-from-fk_delete_cascade_trigger_audit",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyondeletecascadefireschilddeletetriggersrepro-0001-select-child_id-old_parent_id-from-fk_delete_cascade_trigger_audit",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT child_id, old_parent_id\n\t\t\t\t\t\tFROM fk_delete_cascade_trigger_audit;",
+      "querySha256": "3b0eb7be7297007697e5ae3c64b0314b9afc1ff8d8c0feb56eb8ff93b1bf122f",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteCascadeFiresChildDeleteTriggersRepro#0002",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteCascadeFiresChildDeleteTriggersRepro",
+      "ordinal": 2,
+      "scriptName": "ON DELETE CASCADE fires child DELETE triggers",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyondeletecascadefireschilddeletetriggersrepro-0002-select-id-parent_id-from-fk_delete_cascade_trigger_child",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyondeletecascadefireschilddeletetriggersrepro-0002-select-id-parent_id-from-fk_delete_cascade_trigger_child",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, parent_id FROM fk_delete_cascade_trigger_child;",
+      "querySha256": "def66341f7226cd2368c4376de9f6299ceec0bb4d9d9bdcc6d1a795d4bf1d3fd",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteSetNullFiresChildUpdateTriggersRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteSetNullFiresChildUpdateTriggersRepro",
+      "ordinal": 1,
+      "scriptName": "ON DELETE SET NULL fires child UPDATE triggers",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyondeletesetnullfireschildupdatetriggersrepro-0001-select-child_id-old_parent_id-new_parent_id-from",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyondeletesetnullfireschildupdatetriggersrepro-0001-select-child_id-old_parent_id-new_parent_id-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT child_id, old_parent_id, new_parent_id\n\t\t\t\t\t\tFROM fk_delete_null_trigger_audit;",
+      "querySha256": "05fd2163f0303e77f78e55a66261d1af071cec97c71e6c80794a4cc98ae521b0",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteSetNullFiresChildUpdateTriggersRepro#0002",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteSetNullFiresChildUpdateTriggersRepro",
+      "ordinal": 2,
+      "scriptName": "ON DELETE SET NULL fires child UPDATE triggers",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyondeletesetnullfireschildupdatetriggersrepro-0002-select-id-parent_id-from-fk_delete_null_trigger_child",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyondeletesetnullfireschildupdatetriggersrepro-0002-select-id-parent_id-from-fk_delete_null_trigger_child",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, parent_id FROM fk_delete_null_trigger_child;",
+      "querySha256": "e5709176cb7cd2dc305b9717643467643d29708cd0ae9366b81da8712116d687",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteSetDefaultFiresChildUpdateTriggersRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteSetDefaultFiresChildUpdateTriggersRepro",
+      "ordinal": 1,
+      "scriptName": "ON DELETE SET DEFAULT fires child UPDATE triggers",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyondeletesetdefaultfireschildupdatetriggersrepro-0001-select-child_id-old_parent_id-new_parent_id-from",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyondeletesetdefaultfireschildupdatetriggersrepro-0001-select-child_id-old_parent_id-new_parent_id-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT child_id, old_parent_id, new_parent_id\n\t\t\t\t\t\tFROM fk_delete_default_trigger_audit;",
+      "querySha256": "ce81239bc08aa56697b3af9523abdc21fe68008697c39e7f778730b0020e01f2",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteSetDefaultFiresChildUpdateTriggersRepro#0002",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnDeleteSetDefaultFiresChildUpdateTriggersRepro",
+      "ordinal": 2,
+      "scriptName": "ON DELETE SET DEFAULT fires child UPDATE triggers",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyondeletesetdefaultfireschildupdatetriggersrepro-0002-select-id-parent_id-from-fk_delete_default_trigger_child",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyondeletesetdefaultfireschildupdatetriggersrepro-0002-select-id-parent_id-from-fk_delete_default_trigger_child",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, parent_id FROM fk_delete_default_trigger_child;",
+      "querySha256": "c321fc7f51c1c6f1287b6221ce5be29707538d7565ab070f28dfc30806ff77b2",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateSetDefaultFiresChildUpdateTriggersRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateSetDefaultFiresChildUpdateTriggersRepro",
+      "ordinal": 1,
+      "scriptName": "ON UPDATE SET DEFAULT fires child UPDATE triggers",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyonupdatesetdefaultfireschildupdatetriggersrepro-0001-select-child_id-old_parent_id-new_parent_id-from",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyonupdatesetdefaultfireschildupdatetriggersrepro-0001-select-child_id-old_parent_id-new_parent_id-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT child_id, old_parent_id, new_parent_id\n\t\t\t\t\t\tFROM fk_update_default_trigger_audit;",
+      "querySha256": "1ce71af542dd43610a3b8784a6e979e941291723eec9490e65bc51d833729074",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateSetDefaultFiresChildUpdateTriggersRepro#0002",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestForeignKeyOnUpdateSetDefaultFiresChildUpdateTriggersRepro",
+      "ordinal": 2,
+      "scriptName": "ON UPDATE SET DEFAULT fires child UPDATE triggers",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testforeignkeyonupdatesetdefaultfireschildupdatetriggersrepro-0002-select-id-parent_id-from-fk_update_default_trigger_child",
+      "suggestedId": "foreign-key-correctness-repro-test-testforeignkeyonupdatesetdefaultfireschildupdatetriggersrepro-0002-select-id-parent_id-from-fk_update_default_trigger_child",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, parent_id FROM fk_update_default_trigger_child;",
+      "querySha256": "2269da6b0991966e05ff3eece050fef55cdc91daef6b452c442e70aad2a23aa7",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestDropReferencedTableRequiresCascadeRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestDropReferencedTableRequiresCascadeRepro",
+      "ordinal": 1,
+      "scriptName": "DROP TABLE rejects referenced tables",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testdropreferencedtablerequirescascaderepro-0001-drop-table-fk_drop_parent",
+      "suggestedId": "foreign-key-correctness-repro-test-testdropreferencedtablerequirescascaderepro-0001-drop-table-fk_drop_parent",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "2BP01",
+      "errorSeverity": "ERROR",
+      "query": "DROP TABLE fk_drop_parent;",
+      "querySha256": "d9cf3e14aafd215cb7688531014ae4ee42327cf8509ac31c77e70a1a4ac9004a",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestDropReferencedTableCascadeDropsForeignKeyRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestDropReferencedTableCascadeDropsForeignKeyRepro",
+      "ordinal": 1,
+      "scriptName": "DROP TABLE CASCADE drops dependent foreign keys",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testdropreferencedtablecascadedropsforeignkeyrepro-0001-select-to_regclass-fk_drop_cascade_parent-is-null",
+      "suggestedId": "foreign-key-correctness-repro-test-testdropreferencedtablecascadedropsforeignkeyrepro-0001-select-to_regclass-fk_drop_cascade_parent-is-null",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT to_regclass('fk_drop_cascade_parent') IS NULL,\n\t\t\t\t\t\t\tto_regclass('fk_drop_cascade_child') IS NOT NULL,\n\t\t\t\t\t\t\tcount(*) = 0\n\t\t\t\t\t\tFROM pg_catalog.pg_constraint\n\t\t\t\t\t\tWHERE conrelid = 'fk_drop_cascade_child'::regclass\n\t\t\t\t\t\t\tAND contype = 'f';",
+      "querySha256": "a52c92be4e84f23dac36304796bbed443b341d114a579a5c19dfb2771698e931",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestDropReferencedTableCascadeDropsForeignKeyRepro#0002",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestDropReferencedTableCascadeDropsForeignKeyRepro",
+      "ordinal": 2,
+      "scriptName": "DROP TABLE CASCADE drops dependent foreign keys",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testdropreferencedtablecascadedropsforeignkeyrepro-0002-select-id-parent_id-from-fk_drop_cascade_child",
+      "suggestedId": "foreign-key-correctness-repro-test-testdropreferencedtablecascadedropsforeignkeyrepro-0002-select-id-parent_id-from-fk_drop_cascade_child",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, parent_id\n\t\t\t\t\t\tFROM fk_drop_cascade_child\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "a1b000ae09f974fcb5466b29a188d4557d210cf3f0bb860a232057d580da2b88",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestDropReferencedColumnRequiresCascadeRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestDropReferencedColumnRequiresCascadeRepro",
+      "ordinal": 1,
+      "scriptName": "DROP COLUMN rejects referenced key columns",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testdropreferencedcolumnrequirescascaderepro-0001-alter-table-fk_drop_column_parent-drop-column",
+      "suggestedId": "foreign-key-correctness-repro-test-testdropreferencedcolumnrequirescascaderepro-0001-alter-table-fk_drop_column_parent-drop-column",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "2BP01",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE fk_drop_column_parent DROP COLUMN id;",
+      "querySha256": "db05271aa3db2c958295ac12b282477e83e213f24b81fbef4051e4201fbe80d3",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestDropReferencedPrimaryKeyConstraintRequiresCascadeRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestDropReferencedPrimaryKeyConstraintRequiresCascadeRepro",
+      "ordinal": 1,
+      "scriptName": "DROP CONSTRAINT rejects referenced primary keys",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testdropreferencedprimarykeyconstraintrequirescascaderepro-0001-alter-table-fk_drop_constraint_parent-drop-constraint",
+      "suggestedId": "foreign-key-correctness-repro-test-testdropreferencedprimarykeyconstraintrequirescascaderepro-0001-alter-table-fk_drop_constraint_parent-drop-constraint",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "2BP01",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE fk_drop_constraint_parent DROP CONSTRAINT fk_drop_constraint_parent_pkey;",
+      "querySha256": "75c4b51c759314d99b01f9db0b3b6aad7c5d97f1a52365f75ea86b0501d990b9",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestDropReferencedPrimaryKeyConstraintCascadeDropsForeignKeyRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestDropReferencedPrimaryKeyConstraintCascadeDropsForeignKeyRepro",
+      "ordinal": 1,
+      "scriptName": "DROP CONSTRAINT CASCADE drops dependent foreign keys",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testdropreferencedprimarykeyconstraintcascadedropsforeignkeyrepro-0001-select-count-*-=-0",
+      "suggestedId": "foreign-key-correctness-repro-test-testdropreferencedprimarykeyconstraintcascadedropsforeignkeyrepro-0001-select-count-*-=-0",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) = 0\n\t\t\t\t\t\tFROM pg_catalog.pg_constraint\n\t\t\t\t\t\tWHERE conrelid = 'fk_drop_constraint_cascade_child'::regclass\n\t\t\t\t\t\t\tAND contype = 'f';",
+      "querySha256": "1d3568db5956e824e99a1c39a53b10b9c302f19bd2e787b387530912cbbdeb17",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestDropReferencedPrimaryKeyConstraintCascadeDropsForeignKeyRepro#0002",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestDropReferencedPrimaryKeyConstraintCascadeDropsForeignKeyRepro",
+      "ordinal": 2,
+      "scriptName": "DROP CONSTRAINT CASCADE drops dependent foreign keys",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testdropreferencedprimarykeyconstraintcascadedropsforeignkeyrepro-0002-select-id-parent_id-from-fk_drop_constraint_cascade_child",
+      "suggestedId": "foreign-key-correctness-repro-test-testdropreferencedprimarykeyconstraintcascadedropsforeignkeyrepro-0002-select-id-parent_id-from-fk_drop_constraint_cascade_child",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, parent_id\n\t\t\t\t\t\tFROM fk_drop_constraint_cascade_child\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "ce78d918dc42424f67f3860c59874c6e60148c7f41f1e9ce6c62e8f7e6b7b16d",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestDropReferencedUniqueConstraintRequiresCascadeRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestDropReferencedUniqueConstraintRequiresCascadeRepro",
+      "ordinal": 1,
+      "scriptName": "DROP CONSTRAINT rejects referenced unique keys",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testdropreferenceduniqueconstraintrequirescascaderepro-0001-alter-table-fk_drop_unique_parent-drop-constraint",
+      "suggestedId": "foreign-key-correctness-repro-test-testdropreferenceduniqueconstraintrequirescascaderepro-0001-alter-table-fk_drop_unique_parent-drop-constraint",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "2BP01",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE fk_drop_unique_parent DROP CONSTRAINT fk_drop_unique_parent_code_key;",
+      "querySha256": "a29e1fa72cf06d233db7585dca127022c6900a23398de739a3d8fa2d4c4647f5",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestDropReferencedUniqueConstraintCascadeDropsForeignKeyRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestDropReferencedUniqueConstraintCascadeDropsForeignKeyRepro",
+      "ordinal": 1,
+      "scriptName": "DROP unique CONSTRAINT CASCADE drops dependent foreign keys",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testdropreferenceduniqueconstraintcascadedropsforeignkeyrepro-0001-select-count-*-=-0",
+      "suggestedId": "foreign-key-correctness-repro-test-testdropreferenceduniqueconstraintcascadedropsforeignkeyrepro-0001-select-count-*-=-0",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) = 0\n\t\t\t\t\t\tFROM pg_catalog.pg_constraint\n\t\t\t\t\t\tWHERE conrelid = 'fk_drop_unique_cascade_child'::regclass\n\t\t\t\t\t\t\tAND contype = 'f';",
+      "querySha256": "f4a68e3ac05f67bb3d0c22bdda00aab8932a977526194d8b8194826c92964172",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestDropReferencedUniqueIndexRequiresCascadeRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestDropReferencedUniqueIndexRequiresCascadeRepro",
+      "ordinal": 1,
+      "scriptName": "DROP INDEX rejects referenced unique indexes",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testdropreferenceduniqueindexrequirescascaderepro-0001-drop-index-fk_drop_index_parent_code_key",
+      "suggestedId": "foreign-key-correctness-repro-test-testdropreferenceduniqueindexrequirescascaderepro-0001-drop-index-fk_drop_index_parent_code_key",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "2BP01",
+      "errorSeverity": "ERROR",
+      "query": "DROP INDEX fk_drop_index_parent_code_key;",
+      "querySha256": "da731a34905255c3a68cf0fb8998a2b306ae585a8db6e23c8e849d2beb5b90f3",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestDropReferencedStandaloneUniqueIndexRequiresCascadeRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestDropReferencedStandaloneUniqueIndexRequiresCascadeRepro",
+      "ordinal": 1,
+      "scriptName": "DROP INDEX rejects referenced standalone unique indexes",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testdropreferencedstandaloneuniqueindexrequirescascaderepro-0001-drop-index-fk_drop_index_restrict_parent_code_idx",
+      "suggestedId": "foreign-key-correctness-repro-test-testdropreferencedstandaloneuniqueindexrequirescascaderepro-0001-drop-index-fk_drop_index_restrict_parent_code_idx",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "2BP01",
+      "errorSeverity": "ERROR",
+      "query": "DROP INDEX fk_drop_index_restrict_parent_code_idx;",
+      "querySha256": "f7f275df550f29d5ba24c4ff6817c380c2bcd533edd188df02baf8a704a15c3c",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestDropReferencedStandaloneUniqueIndexRequiresCascadeRepro#0002",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestDropReferencedStandaloneUniqueIndexRequiresCascadeRepro",
+      "ordinal": 2,
+      "scriptName": "DROP INDEX rejects referenced standalone unique indexes",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testdropreferencedstandaloneuniqueindexrequirescascaderepro-0002-select-to_regclass-fk_drop_index_restrict_parent_code_idx-is-not",
+      "suggestedId": "foreign-key-correctness-repro-test-testdropreferencedstandaloneuniqueindexrequirescascaderepro-0002-select-to_regclass-fk_drop_index_restrict_parent_code_idx-is-not",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT to_regclass('fk_drop_index_restrict_parent_code_idx') IS NOT NULL,\n\t\t\t\t\t\tEXISTS (\n\t\t\t\t\t\t\tSELECT 1\n\t\t\t\t\t\t\tFROM pg_constraint\n\t\t\t\t\t\t\tWHERE conrelid = 'fk_drop_index_restrict_child'::regclass\n\t\t\t\t\t\t\t  AND contype = 'f'\n\t\t\t\t\t\t);",
+      "querySha256": "0dfe64a7c4df4dd620fb1346c21b09e5c8bf800f358b8d2e6a05befd976478ef",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestDropReferencedStandaloneUniqueIndexRequiresCascadeRepro#0003",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestDropReferencedStandaloneUniqueIndexRequiresCascadeRepro",
+      "ordinal": 3,
+      "scriptName": "DROP INDEX rejects referenced standalone unique indexes",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testdropreferencedstandaloneuniqueindexrequirescascaderepro-0003-insert-into-fk_drop_index_restrict_parent-values-2",
+      "suggestedId": "foreign-key-correctness-repro-test-testdropreferencedstandaloneuniqueindexrequirescascaderepro-0003-insert-into-fk_drop_index_restrict_parent-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO fk_drop_index_restrict_parent VALUES (2, 7);",
+      "querySha256": "0639638fc15592774a7092d02cf19342dd599c4e4e66c2b83dfb941f2c7411bb",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestDropReferencedUniqueIndexCascadeDropsForeignKeyRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestDropReferencedUniqueIndexCascadeDropsForeignKeyRepro",
+      "ordinal": 1,
+      "scriptName": "DROP INDEX CASCADE drops dependent foreign keys",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testdropreferenceduniqueindexcascadedropsforeignkeyrepro-0001-select-to_regclass-fk_drop_index_cascade_parent_code_idx-is-null",
+      "suggestedId": "foreign-key-correctness-repro-test-testdropreferenceduniqueindexcascadedropsforeignkeyrepro-0001-select-to_regclass-fk_drop_index_cascade_parent_code_idx-is-null",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT to_regclass('fk_drop_index_cascade_parent_code_idx') IS NULL,\n\t\t\t\t\t\tNOT EXISTS (\n\t\t\t\t\t\t\tSELECT 1\n\t\t\t\t\t\t\tFROM pg_constraint\n\t\t\t\t\t\t\tWHERE conrelid = 'fk_drop_index_cascade_child'::regclass\n\t\t\t\t\t\t\t  AND contype = 'f'\n\t\t\t\t\t\t);",
+      "querySha256": "b73a051a82a3c8f898cee420c078aead94e7b8966d104ea2049494fbb74afce7",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestDropForeignKeyConstraintWithExplicitSchemaRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestDropForeignKeyConstraintWithExplicitSchemaRepro",
+      "ordinal": 1,
+      "scriptName": "DROP CONSTRAINT resolves explicitly schema-qualified child table",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testdropforeignkeyconstraintwithexplicitschemarepro-0001-insert-into-explicit_fk_child.child_items-values-2",
+      "suggestedId": "foreign-key-correctness-repro-test-testdropforeignkeyconstraintwithexplicitschemarepro-0001-insert-into-explicit_fk_child.child_items-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23503",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO explicit_fk_child.child_items VALUES (2, 2);",
+      "querySha256": "6f9300db274fc15da16a93b5c8479ad921434fe84a7209349fccf792d37a5a55",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestDropForeignKeyConstraintWithExplicitSchemaRepro#0002",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestDropForeignKeyConstraintWithExplicitSchemaRepro",
+      "ordinal": 2,
+      "scriptName": "DROP CONSTRAINT resolves explicitly schema-qualified child table",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testdropforeignkeyconstraintwithexplicitschemarepro-0002-select-id-parent_id-from-explicit_fk_child.child_items",
+      "suggestedId": "foreign-key-correctness-repro-test-testdropforeignkeyconstraintwithexplicitschemarepro-0002-select-id-parent_id-from-explicit_fk_child.child_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, parent_id\n\t\t\t\t\t\tFROM explicit_fk_child.child_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "ccb0bed7ff737b6feb34f1366447823d93a475663efd37efac95c8384b001413",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestTruncateReferencedTableRequiresCascadeRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestTruncateReferencedTableRequiresCascadeRepro",
+      "ordinal": 1,
+      "scriptName": "TRUNCATE rejects referenced tables",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testtruncatereferencedtablerequirescascaderepro-0001-truncate-fk_truncate_parent",
+      "suggestedId": "foreign-key-correctness-repro-test-testtruncatereferencedtablerequirescascaderepro-0001-truncate-fk_truncate_parent",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "0A000",
+      "errorSeverity": "ERROR",
+      "query": "TRUNCATE fk_truncate_parent;",
+      "querySha256": "d0d0190fe3f72707aa5942fe95cf795ec1d0aa72d6d9bfb4b9e3f21b9d51fab2",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestTruncateReferencedTableCascadeTruncatesChildrenRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestTruncateReferencedTableCascadeTruncatesChildrenRepro",
+      "ordinal": 1,
+      "scriptName": "TRUNCATE CASCADE truncates referencing tables",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testtruncatereferencedtablecascadetruncateschildrenrepro-0001-select-select-count-*-from",
+      "suggestedId": "foreign-key-correctness-repro-test-testtruncatereferencedtablecascadetruncateschildrenrepro-0001-select-select-count-*-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT\n\t\t\t\t\t\t\t(SELECT count(*) FROM fk_truncate_cascade_parent),\n\t\t\t\t\t\t\t(SELECT count(*) FROM fk_truncate_cascade_child);",
+      "querySha256": "0e839cbb50a0e1e50895ecd3d8ffecb8f49e9f0f5807ffb8469509d488b38ad8",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          },
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestAlterReferencedColumnTypeRequiresCascadeRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestAlterReferencedColumnTypeRequiresCascadeRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER COLUMN TYPE rejects referenced key columns",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testalterreferencedcolumntyperequirescascaderepro-0001-alter-table-fk_alter_parent-alter-column",
+      "suggestedId": "foreign-key-correctness-repro-test-testalterreferencedcolumntyperequirescascaderepro-0001-alter-table-fk_alter_parent-alter-column",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42804",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE fk_alter_parent ALTER COLUMN id TYPE TEXT;",
+      "querySha256": "dea22d60f3608c9846d3f13299522a6c8f149023874844754ceb9b201dea443f",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestAlterReferencingColumnTypeRequiresCascadeRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestAlterReferencingColumnTypeRequiresCascadeRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER COLUMN TYPE rejects referencing columns",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testalterreferencingcolumntyperequirescascaderepro-0001-alter-table-fk_alter_child_child-alter-column",
+      "suggestedId": "foreign-key-correctness-repro-test-testalterreferencingcolumntyperequirescascaderepro-0001-alter-table-fk_alter_child_child-alter-column",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42804",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE fk_alter_child_child ALTER COLUMN parent_id TYPE TEXT;",
+      "querySha256": "8c5c13e8ec73c1e582299a292d2afa2782ced97afeb02fe53082dd7b99569bf2",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestRenameReferencedTableKeepsForeignKeyUsableRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestRenameReferencedTableKeepsForeignKeyUsableRepro",
+      "ordinal": 1,
+      "scriptName": "RENAME TABLE preserves foreign key enforcement",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testrenamereferencedtablekeepsforeignkeyusablerepro-0001-insert-into-fk_rename_child-values-2",
+      "suggestedId": "foreign-key-correctness-repro-test-testrenamereferencedtablekeepsforeignkeyusablerepro-0001-insert-into-fk_rename_child-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23503",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO fk_rename_child VALUES (2, 2);",
+      "querySha256": "2e6f135b46d390905369a24a2582984ec045de66cb5ebb40242ec1e7c639dfdd",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestRenameReferencedTableKeepsForeignKeyUsableRepro#0002",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestRenameReferencedTableKeepsForeignKeyUsableRepro",
+      "ordinal": 2,
+      "scriptName": "RENAME TABLE preserves foreign key enforcement",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testrenamereferencedtablekeepsforeignkeyusablerepro-0002-select-id-parent_id-from-fk_rename_child",
+      "suggestedId": "foreign-key-correctness-repro-test-testrenamereferencedtablekeepsforeignkeyusablerepro-0002-select-id-parent_id-from-fk_rename_child",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, parent_id\n\t\t\t\t\t\tFROM fk_rename_child\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "6296c0b50a19fbdfb3e78cf218375394da2ac53e8816f693d96c3fb6799f546e",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestRenameReferencedColumnKeepsForeignKeyUsableRepro#0001",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestRenameReferencedColumnKeepsForeignKeyUsableRepro",
+      "ordinal": 1,
+      "scriptName": "RENAME COLUMN preserves foreign key enforcement",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testrenamereferencedcolumnkeepsforeignkeyusablerepro-0001-insert-into-fk_rename_column_child-values-2",
+      "suggestedId": "foreign-key-correctness-repro-test-testrenamereferencedcolumnkeepsforeignkeyusablerepro-0001-insert-into-fk_rename_column_child-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23503",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO fk_rename_column_child VALUES (2, 2);",
+      "querySha256": "67dbff776b438ccd3e901ef9b8ab401906650b65cbcbfadbfd8b1a28a26f8c54",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/foreign_key_correctness_repro_test.go:TestRenameReferencedColumnKeepsForeignKeyUsableRepro#0002",
+      "source": "testing/go/foreign_key_correctness_repro_test.go:TestRenameReferencedColumnKeepsForeignKeyUsableRepro",
+      "ordinal": 2,
+      "scriptName": "RENAME COLUMN preserves foreign key enforcement",
+      "oracle": "postgres",
+      "postgresId": "foreign-key-correctness-repro-test-testrenamereferencedcolumnkeepsforeignkeyusablerepro-0002-select-id-parent_id-from-fk_rename_column_child",
+      "suggestedId": "foreign-key-correctness-repro-test-testrenamereferencedcolumnkeepsforeignkeyusablerepro-0002-select-id-parent_id-from-fk_rename_column_child",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, parent_id\n\t\t\t\t\t\tFROM fk_rename_column_child\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "5f6c93600043fe1ae2f87c919119fe77d54acdbca7f3313569f458080b58e7fe",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

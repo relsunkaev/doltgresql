@@ -64,8 +64,7 @@ func TestUpdateAssignmentsUseOriginalRowValuesRepro(t *testing.T) {
 					Query: `UPDATE update_assignment_items SET a = b, b = a WHERE id = 1;`,
 				},
 				{
-					Query:    `SELECT a, b FROM update_assignment_items WHERE id = 1;`,
-					Expected: []sql.Row{{20, 10}},
+					Query: `SELECT a, b FROM update_assignment_items WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "update-correctness-repro-test-testupdateassignmentsuseoriginalrowvaluesrepro-0001-select-a-b-from-update_assignment_items"},
 				},
 			},
 		},
@@ -98,11 +97,7 @@ func TestUpdateMultiAssignmentFromSubqueryRepro(t *testing.T) {
 						WHERE t.id = 1;`,
 				},
 				{
-					Query: `SELECT id, a, b FROM update_multi_assignment_items ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, 20, 10},
-						{2, 30, 40},
-					},
+					Query: `SELECT id, a, b FROM update_multi_assignment_items ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "update-correctness-repro-test-testupdatemultiassignmentfromsubqueryrepro-0001-select-id-a-b-from"},
 				},
 			},
 		},
@@ -136,8 +131,7 @@ func TestUpdateMultiAssignmentEmptySubquerySetsNullsRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT id, a, b
-						FROM update_multi_assignment_empty_items;`,
-					Expected: []sql.Row{{1, nil, nil}},
+						FROM update_multi_assignment_empty_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "update-correctness-repro-test-testupdatemultiassignmentemptysubquerysetsnullsrepro-0001-select-id-a-b-from"},
 				},
 			},
 		},
@@ -163,14 +157,12 @@ func TestUpdateMultiAssignmentRejectsDuplicateColumnsRepro(t *testing.T) {
 				{
 					Query: `UPDATE update_duplicate_assignment_items
 						SET (a, a) = (1, 2)
-						WHERE id = 1;`,
-					ExpectedErr: `multiple assignments to same column`,
+						WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "update-correctness-repro-test-testupdatemultiassignmentrejectsduplicatecolumnsrepro-0001-update-update_duplicate_assignment_items-set-a-a", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT a, b
 						FROM update_duplicate_assignment_items
-						WHERE id = 1;`,
-					Expected: []sql.Row{{10, 20}},
+						WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "update-correctness-repro-test-testupdatemultiassignmentrejectsduplicatecolumnsrepro-0002-select-a-b-from-update_duplicate_assignment_items"},
 				},
 			},
 		},
@@ -196,14 +188,12 @@ func TestUpdateScalarAssignmentRejectsDuplicateColumnsRepro(t *testing.T) {
 				{
 					Query: `UPDATE update_duplicate_scalar_items
 						SET a = 1, a = 2
-						WHERE id = 1;`,
-					ExpectedErr: `multiple assignments to same column`,
+						WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "update-correctness-repro-test-testupdatescalarassignmentrejectsduplicatecolumnsrepro-0001-update-update_duplicate_scalar_items-set-a-=", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT a, b
 						FROM update_duplicate_scalar_items
-						WHERE id = 1;`,
-					Expected: []sql.Row{{10, 20}},
+						WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "update-correctness-repro-test-testupdatescalarassignmentrejectsduplicatecolumnsrepro-0002-select-a-b-from-update_duplicate_scalar_items"},
 				},
 			},
 		},
@@ -235,12 +225,7 @@ func TestUpdateSelfReferentialSubqueryUsesStatementSnapshotGuard(t *testing.T) {
 				{
 					Query: `SELECT id, amount
 						FROM update_self_subquery_items
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, 30},
-						{2, 30},
-						{3, 30},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "update-correctness-repro-test-testupdateselfreferentialsubqueryusesstatementsnapshotguard-0001-select-id-amount-from-update_self_subquery_items"},
 				},
 			},
 		},
@@ -297,14 +282,12 @@ func TestOnConflictUpdateRejectsDuplicateTargetColumnsRepro(t *testing.T) {
 					Query: `INSERT INTO on_conflict_duplicate_assignment_items
 						VALUES (1, 30, 40)
 						ON CONFLICT (id) DO UPDATE
-						SET a = 1, a = 2;`,
-					ExpectedErr: `multiple assignments to same column`,
+						SET a = 1, a = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "update-correctness-repro-test-testonconflictupdaterejectsduplicatetargetcolumnsrepro-0001-insert-into-on_conflict_duplicate_assignment_items-values-1", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT a, b
 						FROM on_conflict_duplicate_assignment_items
-						WHERE id = 1;`,
-					Expected: []sql.Row{{10, 20}},
+						WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "update-correctness-repro-test-testonconflictupdaterejectsduplicatetargetcolumnsrepro-0002-select-a-b-from-on_conflict_duplicate_assignment_items"},
 				},
 			},
 		},
@@ -337,8 +320,7 @@ func TestOnConflictUpdateFunctionArgumentCanReferenceExcludedRepro(t *testing.T)
 						SET label = add_excluded_suffix(EXCLUDED.label);`,
 				},
 				{
-					Query:    `SELECT id, label FROM on_conflict_excluded_function_items;`,
-					Expected: []sql.Row{{1, "new-fn"}},
+					Query: `SELECT id, label FROM on_conflict_excluded_function_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "update-correctness-repro-test-testonconflictupdatefunctionargumentcanreferenceexcludedrepro-0001-select-id-label-from-on_conflict_excluded_function_items"},
 				},
 			},
 		},
@@ -377,8 +359,7 @@ func TestOnConflictUpdateMultiAssignmentFromSubqueryRepro(t *testing.T) {
 						);`,
 				},
 				{
-					Query:    `SELECT a, b FROM on_conflict_multi_assignment_items WHERE id = 1;`,
-					Expected: []sql.Row{{100, 200}},
+					Query: `SELECT a, b FROM on_conflict_multi_assignment_items WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "update-correctness-repro-test-testonconflictupdatemultiassignmentfromsubqueryrepro-0001-select-a-b-from-on_conflict_multi_assignment_items"},
 				},
 			},
 		},
@@ -404,12 +385,10 @@ func TestOnConflictUpdateRejectsDuplicateTargetRowsRepro(t *testing.T) {
 					Query: `INSERT INTO on_conflict_duplicate_items VALUES
 							(1, 'first'),
 							(1, 'second')
-						ON CONFLICT (id) DO UPDATE SET v = EXCLUDED.v;`,
-					ExpectedErr: `ON CONFLICT DO UPDATE command cannot affect row a second time`,
+						ON CONFLICT (id) DO UPDATE SET v = EXCLUDED.v;`, PostgresOracle: ScriptTestPostgresOracle{ID: "update-correctness-repro-test-testonconflictupdaterejectsduplicatetargetrowsrepro-0001-insert-into-on_conflict_duplicate_items-values-1", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT v FROM on_conflict_duplicate_items WHERE id = 1;`,
-					Expected: []sql.Row{{"original"}},
+					Query: `SELECT v FROM on_conflict_duplicate_items WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "update-correctness-repro-test-testonconflictupdaterejectsduplicatetargetrowsrepro-0002-select-v-from-on_conflict_duplicate_items-where"},
 				},
 			},
 		},
@@ -432,12 +411,10 @@ func TestOnConflictUpdateEnforcesCheckConstraintsGuard(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `INSERT INTO on_conflict_check_items VALUES (1, 2)
-						ON CONFLICT (id) DO UPDATE SET amount = -1;`,
-					ExpectedErr: `on_conflict_amount_positive`,
+						ON CONFLICT (id) DO UPDATE SET amount = -1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "update-correctness-repro-test-testonconflictupdateenforcescheckconstraintsguard-0001-insert-into-on_conflict_check_items-values-1", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT id, amount FROM on_conflict_check_items;`,
-					Expected: []sql.Row{{1, 1}},
+					Query: `SELECT id, amount FROM on_conflict_check_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "update-correctness-repro-test-testonconflictupdateenforcescheckconstraintsguard-0002-select-id-amount-from-on_conflict_check_items"},
 				},
 			},
 		},
@@ -469,11 +446,7 @@ func TestUpdateFromReturningSourceColumnsGuard(t *testing.T) {
 						SET salary = salary + d.bonus
 						FROM update_returning_departments AS d
 						WHERE e.department_id = d.id
-						RETURNING e.id, e.salary, d.bonus;`,
-					Expected: []sql.Row{
-						{1, 51000, 1000},
-						{2, 45500, 500},
-					},
+						RETURNING e.id, e.salary, d.bonus;`, PostgresOracle: ScriptTestPostgresOracle{ID: "update-correctness-repro-test-testupdatefromreturningsourcecolumnsguard-0001-update-update_returning_employees-as-e-set"},
 				},
 			},
 		},
@@ -499,12 +472,10 @@ func TestOnConflictUpdateWhereFalseReturningSkipsRowsGuard(t *testing.T) {
 					Query: `INSERT INTO on_conflict_where_false_returning_items VALUES (1, 'new')
 						ON CONFLICT (id) DO UPDATE SET v = EXCLUDED.v
 						WHERE false
-						RETURNING id, v;`,
-					Expected: []sql.Row{},
+						RETURNING id, v;`, PostgresOracle: ScriptTestPostgresOracle{ID: "update-correctness-repro-test-testonconflictupdatewherefalsereturningskipsrowsguard-0001-insert-into-on_conflict_where_false_returning_items-values-1"},
 				},
 				{
-					Query:    `SELECT id, v FROM on_conflict_where_false_returning_items;`,
-					Expected: []sql.Row{{1, "old"}},
+					Query: `SELECT id, v FROM on_conflict_where_false_returning_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "update-correctness-repro-test-testonconflictupdatewherefalsereturningskipsrowsguard-0002-select-id-v-from-on_conflict_where_false_returning_items"},
 				},
 			},
 		},
@@ -531,12 +502,10 @@ func TestOnConflictUpdateNoopReturningIncludesRowsGuard(t *testing.T) {
 					Query: `INSERT INTO on_conflict_noop_returning_items VALUES (1, 'new')
 						ON CONFLICT (id) DO UPDATE SET v = on_conflict_noop_returning_items.v
 						WHERE true
-						RETURNING id, v;`,
-					Expected: []sql.Row{{1, "old"}},
+						RETURNING id, v;`, PostgresOracle: ScriptTestPostgresOracle{ID: "update-correctness-repro-test-testonconflictupdatenoopreturningincludesrowsguard-0001-insert-into-on_conflict_noop_returning_items-values-1"},
 				},
 				{
-					Query:    `SELECT id, v FROM on_conflict_noop_returning_items;`,
-					Expected: []sql.Row{{1, "old"}},
+					Query: `SELECT id, v FROM on_conflict_noop_returning_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "update-correctness-repro-test-testonconflictupdatenoopreturningincludesrowsguard-0002-select-id-v-from-on_conflict_noop_returning_items"},
 				},
 			},
 		},
@@ -566,16 +535,13 @@ func TestOnConflictUpdateWhereVolatilePredicateEvaluatesOnceRepro(t *testing.T) 
 						SET a = EXCLUDED.a,
 							b = EXCLUDED.b
 						WHERE nextval('on_conflict_where_volatile_seq') = 1
-						RETURNING id, a, b;`,
-					Expected: []sql.Row{{1, 10, 20}},
+						RETURNING id, a, b;`, PostgresOracle: ScriptTestPostgresOracle{ID: "update-correctness-repro-test-testonconflictupdatewherevolatilepredicateevaluatesoncerepro-0001-insert-into-on_conflict_where_volatile_items-values-1"},
 				},
 				{
-					Query:    `SELECT id, a, b FROM on_conflict_where_volatile_items;`,
-					Expected: []sql.Row{{1, 10, 20}},
+					Query: `SELECT id, a, b FROM on_conflict_where_volatile_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "update-correctness-repro-test-testonconflictupdatewherevolatilepredicateevaluatesoncerepro-0002-select-id-a-b-from"},
 				},
 				{
-					Query:    `SELECT nextval('on_conflict_where_volatile_seq');`,
-					Expected: []sql.Row{{int64(2)}},
+					Query: `SELECT nextval('on_conflict_where_volatile_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "update-correctness-repro-test-testonconflictupdatewherevolatilepredicateevaluatesoncerepro-0003-select-nextval-on_conflict_where_volatile_seq"},
 				},
 			},
 		},
@@ -600,17 +566,18 @@ func TestOnConflictReturningCannotReferenceExcludedGuard(t *testing.T) {
 				{
 					Query: `INSERT INTO on_conflict_returning_excluded_items VALUES (1, 'new')
 						ON CONFLICT (id) DO UPDATE SET v = EXCLUDED.v
-						RETURNING EXCLUDED.v;`,
-					ExpectedErr: `excluded`,
+						RETURNING EXCLUDED.v;`, PostgresOracle: ScriptTestPostgresOracle{ID: "update-correctness-repro-test-testonconflictreturningcannotreferenceexcludedguard-0001-insert-into-on_conflict_returning_excluded_items-values-1",
+
+						// TestUpdateFromDuplicateSourceRowsUpdatesTargetOnceRepro reproduces an UPDATE
+						// consistency bug: PostgreSQL updates a target row at most once even if the
+						// UPDATE FROM join produces multiple matching source rows.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestUpdateFromDuplicateSourceRowsUpdatesTargetOnceRepro reproduces an UPDATE
-// consistency bug: PostgreSQL updates a target row at most once even if the
-// UPDATE FROM join produces multiple matching source rows.
 func TestUpdateFromDuplicateSourceRowsUpdatesTargetOnceRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -633,13 +600,11 @@ func TestUpdateFromDuplicateSourceRowsUpdatesTargetOnceRepro(t *testing.T) {
 						SET amount = amount + 1
 						FROM update_from_duplicate_source_rows AS s
 						WHERE t.id = s.id
-						RETURNING t.id, t.amount;`,
-					Expected: []sql.Row{{1, 11}},
+						RETURNING t.id, t.amount;`, PostgresOracle: ScriptTestPostgresOracle{ID: "update-correctness-repro-test-testupdatefromduplicatesourcerowsupdatestargetoncerepro-0001-update-update_from_duplicate_source_target-as-t-set"},
 				},
 				{
 					Query: `SELECT id, amount
-						FROM update_from_duplicate_source_target;`,
-					Expected: []sql.Row{{1, 11}},
+						FROM update_from_duplicate_source_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "update-correctness-repro-test-testupdatefromduplicatesourcerowsupdatestargetoncerepro-0002-select-id-amount-from-update_from_duplicate_source_target"},
 				},
 			},
 		},

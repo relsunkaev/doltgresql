@@ -1,0 +1,338 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map non_json_builtin_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/non_json_builtin_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/non_json_builtin_repro_test.go:TestIntegerBaseFormattingBuiltinsRepro#0001",
+      "source": "testing/go/non_json_builtin_repro_test.go:TestIntegerBaseFormattingBuiltinsRepro",
+      "ordinal": 1,
+      "scriptName": "to_bin and to_oct format integers",
+      "oracle": "postgres",
+      "postgresId": "non-json-builtin-repro-test-testintegerbaseformattingbuiltinsrepro-0001-select-to_bin-10",
+      "suggestedId": "non-json-builtin-repro-test-testintegerbaseformattingbuiltinsrepro-0001-select-to_bin-10",
+      "compare": "sqlstate",
+      "expectedKind": "rows",
+      "sqlstate": "42883",
+      "errorSeverity": "ERROR",
+      "query": "SELECT to_bin(10);",
+      "querySha256": "065fb19af2767c316a567fd3d78536169f1d930c07ea79e4ca4a12fa8e573715",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/non_json_builtin_repro_test.go:TestIntegerBaseFormattingBuiltinsRepro#0002",
+      "source": "testing/go/non_json_builtin_repro_test.go:TestIntegerBaseFormattingBuiltinsRepro",
+      "ordinal": 2,
+      "scriptName": "to_bin and to_oct format integers",
+      "oracle": "internal",
+      "suggestedId": "non-json-builtin-repro-test-testintegerbaseformattingbuiltinsrepro-0002-select-to_oct-10",
+      "expectedKind": "rows",
+      "query": "SELECT to_oct(10);",
+      "querySha256": "afd11b82666ff4ea85aa29435d14413b78644b45000c7b9017374ca41e4dcd1a",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/non_json_builtin_repro_test.go:TestUuidExtractionBuiltinsRepro#0001",
+      "source": "testing/go/non_json_builtin_repro_test.go:TestUuidExtractionBuiltinsRepro",
+      "ordinal": 1,
+      "scriptName": "uuid_extract_version and uuid_extract_timestamp inspect UUIDs",
+      "oracle": "postgres",
+      "postgresId": "non-json-builtin-repro-test-testuuidextractionbuiltinsrepro-0001-select-uuid_extract_version-41db1265-8bc1-4ab3-992f-885799a4af1d-::uuid-::text",
+      "suggestedId": "non-json-builtin-repro-test-testuuidextractionbuiltinsrepro-0001-select-uuid_extract_version-41db1265-8bc1-4ab3-992f-885799a4af1d-::uuid-::text",
+      "compare": "sqlstate",
+      "expectedKind": "rows",
+      "sqlstate": "42883",
+      "errorSeverity": "ERROR",
+      "query": "SELECT uuid_extract_version('41db1265-8bc1-4ab3-992f-885799a4af1d'::uuid)::text;",
+      "querySha256": "ccf722855d80887a48d032ec9f6e20f6cdc9483bc6ab21d24d41c7aaa0279009",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/non_json_builtin_repro_test.go:TestUuidExtractionBuiltinsRepro#0002",
+      "source": "testing/go/non_json_builtin_repro_test.go:TestUuidExtractionBuiltinsRepro",
+      "ordinal": 2,
+      "scriptName": "uuid_extract_version and uuid_extract_timestamp inspect UUIDs",
+      "oracle": "internal",
+      "suggestedId": "non-json-builtin-repro-test-testuuidextractionbuiltinsrepro-0002-select-uuid_extract_timestamp-41db1265-8bc1-4ab3-992f-885799a4af1d-::uuid-is",
+      "expectedKind": "rows",
+      "query": "SELECT uuid_extract_timestamp('41db1265-8bc1-4ab3-992f-885799a4af1d'::uuid) IS NULL;",
+      "querySha256": "3aeafe8488f8c7de90a4365140b58179ef721c4812439787fc35bb927fd7e66c",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/non_json_builtin_repro_test.go:TestTypeMetadataBuiltinsRepro#0001",
+      "source": "testing/go/non_json_builtin_repro_test.go:TestTypeMetadataBuiltinsRepro",
+      "ordinal": 1,
+      "scriptName": "pg_basetype and to_regtypemod expose type metadata",
+      "oracle": "postgres",
+      "postgresId": "non-json-builtin-repro-test-testtypemetadatabuiltinsrepro-0001-select-pg_basetype-non_json_builtin_domain-::regtype-::text",
+      "suggestedId": "non-json-builtin-repro-test-testtypemetadatabuiltinsrepro-0001-select-pg_basetype-non_json_builtin_domain-::regtype-::text",
+      "compare": "sqlstate",
+      "expectedKind": "rows",
+      "sqlstate": "42883",
+      "errorSeverity": "ERROR",
+      "query": "SELECT pg_basetype('non_json_builtin_domain'::regtype)::text;",
+      "querySha256": "6fc774f045138fa892e7ba452858ef577a5251de71a7fe0dbf40539558ac9c97",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/non_json_builtin_repro_test.go:TestTypeMetadataBuiltinsRepro#0002",
+      "source": "testing/go/non_json_builtin_repro_test.go:TestTypeMetadataBuiltinsRepro",
+      "ordinal": 2,
+      "scriptName": "pg_basetype and to_regtypemod expose type metadata",
+      "oracle": "internal",
+      "suggestedId": "non-json-builtin-repro-test-testtypemetadatabuiltinsrepro-0002-select-format_type-to_regtype-varchar-32",
+      "expectedKind": "rows",
+      "query": "SELECT format_type(to_regtype('varchar(32)'), to_regtypemod('varchar(32)'));",
+      "querySha256": "2f5e8fe6301be6d7be923735eb6385ac89bc8b57cb6b3cfb7ab5a73ccf31e7b1",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/non_json_builtin_repro_test.go:TestUnicodeInformationBuiltinsRepro#0001",
+      "source": "testing/go/non_json_builtin_repro_test.go:TestUnicodeInformationBuiltinsRepro",
+      "ordinal": 1,
+      "scriptName": "unicode_assigned and unicode_version report Unicode metadata",
+      "oracle": "postgres",
+      "postgresId": "non-json-builtin-repro-test-testunicodeinformationbuiltinsrepro-0001-select-unicode_assigned-abc",
+      "suggestedId": "non-json-builtin-repro-test-testunicodeinformationbuiltinsrepro-0001-select-unicode_assigned-abc",
+      "compare": "sqlstate",
+      "expectedKind": "rows",
+      "sqlstate": "42883",
+      "errorSeverity": "ERROR",
+      "query": "SELECT unicode_assigned('abc');",
+      "querySha256": "94faff9050ddbf5cbddad7219d9fd87f29ed2931904b183f3889c94b2e225a2b",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/non_json_builtin_repro_test.go:TestUnicodeInformationBuiltinsRepro#0002",
+      "source": "testing/go/non_json_builtin_repro_test.go:TestUnicodeInformationBuiltinsRepro",
+      "ordinal": 2,
+      "scriptName": "unicode_assigned and unicode_version report Unicode metadata",
+      "oracle": "internal",
+      "suggestedId": "non-json-builtin-repro-test-testunicodeinformationbuiltinsrepro-0002-select-unicode_version-is-not-null",
+      "expectedKind": "rows",
+      "query": "SELECT unicode_version() IS NOT NULL;",
+      "querySha256": "309326246704cad43f9fc6da0a1a9549065d6d457d4a785b7858a4058e4f8cbc",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/non_json_builtin_repro_test.go:TestPostgres16InputValidationBuiltinsRepro#0001",
+      "source": "testing/go/non_json_builtin_repro_test.go:TestPostgres16InputValidationBuiltinsRepro",
+      "ordinal": 1,
+      "scriptName": "pg_input_is_valid and pg_input_error_info report soft input errors",
+      "oracle": "postgres",
+      "postgresId": "non-json-builtin-repro-test-testpostgres16inputvalidationbuiltinsrepro-0001-select-pg_input_is_valid-42-integer-pg_input_is_valid",
+      "suggestedId": "non-json-builtin-repro-test-testpostgres16inputvalidationbuiltinsrepro-0001-select-pg_input_is_valid-42-integer-pg_input_is_valid",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_input_is_valid('42', 'integer'), pg_input_is_valid('42000000000', 'integer');",
+      "querySha256": "939965448aaed1da9853fa2c7ecb9baf772a20a9cae2e1fa15e60f7275f0ee3e",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/non_json_builtin_repro_test.go:TestPostgres16InputValidationBuiltinsRepro#0002",
+      "source": "testing/go/non_json_builtin_repro_test.go:TestPostgres16InputValidationBuiltinsRepro",
+      "ordinal": 2,
+      "scriptName": "pg_input_is_valid and pg_input_error_info report soft input errors",
+      "oracle": "postgres",
+      "postgresId": "non-json-builtin-repro-test-testpostgres16inputvalidationbuiltinsrepro-0002-select-pg_input_error_info-42000000000-integer-.sql_error_code",
+      "suggestedId": "non-json-builtin-repro-test-testpostgres16inputvalidationbuiltinsrepro-0002-select-pg_input_error_info-42000000000-integer-.sql_error_code",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT (pg_input_error_info('42000000000', 'integer')).sql_error_code;",
+      "querySha256": "dc5d5c5cac99243e03a87add4d7b36bbab1cf8ba9203d9160173b93349c4ca76",
+      "expectedRows": [
+        [
+          {
+            "value": "22003"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/non_json_builtin_repro_test.go:TestPostgres16ArrayRandomBuiltinsRepro#0001",
+      "source": "testing/go/non_json_builtin_repro_test.go:TestPostgres16ArrayRandomBuiltinsRepro",
+      "ordinal": 1,
+      "scriptName": "array_sample and array_shuffle preserve requested cardinality",
+      "oracle": "postgres",
+      "postgresId": "non-json-builtin-repro-test-testpostgres16arrayrandombuiltinsrepro-0001-select-array_length-array_sample-array[1-2",
+      "suggestedId": "non-json-builtin-repro-test-testpostgres16arrayrandombuiltinsrepro-0001-select-array_length-array_sample-array[1-2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT array_length(array_sample(ARRAY[1,2,3,4], 2), 1);",
+      "querySha256": "1c9cc3f5f0c547c72fb05fbd352dbb90d85f1708ffef608ede1c3a6d22d8ce34",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/non_json_builtin_repro_test.go:TestPostgres16ArrayRandomBuiltinsRepro#0002",
+      "source": "testing/go/non_json_builtin_repro_test.go:TestPostgres16ArrayRandomBuiltinsRepro",
+      "ordinal": 2,
+      "scriptName": "array_sample and array_shuffle preserve requested cardinality",
+      "oracle": "postgres",
+      "postgresId": "non-json-builtin-repro-test-testpostgres16arrayrandombuiltinsrepro-0002-select-array_length-array_shuffle-array[1-2",
+      "suggestedId": "non-json-builtin-repro-test-testpostgres16arrayrandombuiltinsrepro-0002-select-array_length-array_shuffle-array[1-2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT array_length(array_shuffle(ARRAY[1,2,3,4]), 1);",
+      "querySha256": "c0258a026fff4687f694174bf64048afda6ac7ef91f795c8555a1f0cf5859305",
+      "expectedRows": [
+        [
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/non_json_builtin_repro_test.go:TestPostgres16DateAndRandomBuiltinsRepro#0001",
+      "source": "testing/go/non_json_builtin_repro_test.go:TestPostgres16DateAndRandomBuiltinsRepro",
+      "ordinal": 1,
+      "scriptName": "date_add, date_subtract, and random_normal evaluate",
+      "oracle": "postgres",
+      "postgresId": "non-json-builtin-repro-test-testpostgres16dateandrandombuiltinsrepro-0001-select-date_add-2024-01-01-00:00:00+00-::timestamptz",
+      "suggestedId": "non-json-builtin-repro-test-testpostgres16dateandrandombuiltinsrepro-0001-select-date_add-2024-01-01-00:00:00+00-::timestamptz",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT date_add(\n\t\t\t\t\t\t'2024-01-01 00:00:00+00'::timestamptz,\n\t\t\t\t\t\t'1 day'::interval,\n\t\t\t\t\t\t'UTC') = '2024-01-02 00:00:00+00'::timestamptz;",
+      "querySha256": "9f22648f06c90f9469056abfd00b54e14b3f9cacc90d11cd444bb23d4c203654",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/non_json_builtin_repro_test.go:TestPostgres16DateAndRandomBuiltinsRepro#0002",
+      "source": "testing/go/non_json_builtin_repro_test.go:TestPostgres16DateAndRandomBuiltinsRepro",
+      "ordinal": 2,
+      "scriptName": "date_add, date_subtract, and random_normal evaluate",
+      "oracle": "postgres",
+      "postgresId": "non-json-builtin-repro-test-testpostgres16dateandrandombuiltinsrepro-0002-select-date_subtract-2024-01-02-00:00:00+00-::timestamptz",
+      "suggestedId": "non-json-builtin-repro-test-testpostgres16dateandrandombuiltinsrepro-0002-select-date_subtract-2024-01-02-00:00:00+00-::timestamptz",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT date_subtract(\n\t\t\t\t\t\t'2024-01-02 00:00:00+00'::timestamptz,\n\t\t\t\t\t\t'1 day'::interval,\n\t\t\t\t\t\t'UTC') = '2024-01-01 00:00:00+00'::timestamptz;",
+      "querySha256": "bccb60acbf9e74921dde52c670b879c8411a823ee372a801fac87074a407e1e2",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/non_json_builtin_repro_test.go:TestPostgres16DateAndRandomBuiltinsRepro#0003",
+      "source": "testing/go/non_json_builtin_repro_test.go:TestPostgres16DateAndRandomBuiltinsRepro",
+      "ordinal": 3,
+      "scriptName": "date_add, date_subtract, and random_normal evaluate",
+      "oracle": "postgres",
+      "postgresId": "non-json-builtin-repro-test-testpostgres16dateandrandombuiltinsrepro-0003-select-random_normal-0.0-1.0-is",
+      "suggestedId": "non-json-builtin-repro-test-testpostgres16dateandrandombuiltinsrepro-0003-select-random_normal-0.0-1.0-is",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT random_normal(0.0, 1.0) IS NOT NULL;",
+      "querySha256": "985d1f5c881b41345349035da32f574f0af7c2ac43cbc178de065ffd43fbe97b",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/non_json_builtin_repro_test.go:TestPostgres16AnyValueAndSystemUserRepro#0001",
+      "source": "testing/go/non_json_builtin_repro_test.go:TestPostgres16AnyValueAndSystemUserRepro",
+      "ordinal": 1,
+      "scriptName": "ANY_VALUE and SYSTEM_USER evaluate",
+      "oracle": "postgres",
+      "postgresId": "non-json-builtin-repro-test-testpostgres16anyvalueandsystemuserrepro-0001-select-any_value-v-from-values",
+      "suggestedId": "non-json-builtin-repro-test-testpostgres16anyvalueandsystemuserrepro-0001-select-any_value-v-from-values",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT any_value(v) FROM (VALUES (NULL::text), ('picked')) AS t(v);",
+      "querySha256": "f2f7c714b6f7ae8d81dca02c29ae68d6600b326262ea36393a3937c43b9b8678",
+      "expectedRows": [
+        [
+          {
+            "value": "picked"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/non_json_builtin_repro_test.go:TestPostgres16AnyValueAndSystemUserRepro#0002",
+      "source": "testing/go/non_json_builtin_repro_test.go:TestPostgres16AnyValueAndSystemUserRepro",
+      "ordinal": 2,
+      "scriptName": "ANY_VALUE and SYSTEM_USER evaluate",
+      "oracle": "postgres",
+      "postgresId": "non-json-builtin-repro-test-testpostgres16anyvalueandsystemuserrepro-0002-select-system_user-is-not-null",
+      "suggestedId": "non-json-builtin-repro-test-testpostgres16anyvalueandsystemuserrepro-0002-select-system_user-is-not-null",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT system_user IS NOT NULL;",
+      "querySha256": "f1d9ce410da6e62551e8c1de8969f5f7750eef97db489efbf958cacd61054617",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map view_rebuild_workload_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/view_rebuild_workload_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/view_rebuild_workload_test.go:TestRealWorldViewRebuildPath#0001",
+      "source": "testing/go/view_rebuild_workload_test.go:TestRealWorldViewRebuildPath",
+      "ordinal": 1,
+      "scriptName": "real-world analytical view rebuild workload",
+      "oracle": "internal",
+      "suggestedId": "view-rebuild-workload-test-testrealworldviewrebuildpath-0001-select-email-tag-event_type-status",
+      "expectedKind": "rows",
+      "query": "SELECT email, tag, event_type, status, rn::text, tag_count::text\nFROM account_event_summary\nORDER BY email, rn;",
+      "querySha256": "d0b90b308bdd59b82f561b5602c5b85fcce65a4c167690b1d9da7f52c9873f51",
+      "nonLiteral": [
+        "SetUpScript"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_rebuild_workload_test.go:TestRealWorldViewRebuildPath#0002",
+      "source": "testing/go/view_rebuild_workload_test.go:TestRealWorldViewRebuildPath",
+      "ordinal": 2,
+      "scriptName": "real-world analytical view rebuild workload",
+      "oracle": "internal",
+      "suggestedId": "view-rebuild-workload-test-testrealworldviewrebuildpath-0002",
+      "expectedKind": "rows",
+      "nonLiteral": [
+        "Query",
+        "SetUpScript"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_rebuild_workload_test.go:TestRealWorldViewRebuildPath#0003",
+      "source": "testing/go/view_rebuild_workload_test.go:TestRealWorldViewRebuildPath",
+      "ordinal": 3,
+      "scriptName": "real-world analytical view rebuild workload",
+      "oracle": "internal",
+      "suggestedId": "view-rebuild-workload-test-testrealworldviewrebuildpath-0003-select-email-tag-event_type-status",
+      "expectedKind": "rows",
+      "query": "SELECT email, tag, event_type, status, rn::text, tag_count::text\nFROM account_event_summary\nORDER BY email, rn;",
+      "querySha256": "d0b90b308bdd59b82f561b5602c5b85fcce65a4c167690b1d9da7f52c9873f51",
+      "nonLiteral": [
+        "SetUpScript"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    }
+  ]
+}

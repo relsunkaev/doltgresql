@@ -1,0 +1,43 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map available_extensions_probe_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/available_extensions_probe_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/available_extensions_probe_test.go:TestAvailableExtensionsProbe#0001",
+      "source": "testing/go/available_extensions_probe_test.go:TestAvailableExtensionsProbe",
+      "ordinal": 1,
+      "scriptName": "supported extension metadata is visible",
+      "oracle": "internal",
+      "suggestedId": "available-extensions-probe-test-testavailableextensionsprobe-0001-select-name-default_version-installed_version-from",
+      "expectedKind": "rows",
+      "query": "SELECT name, default_version, installed_version\n\t\t\t\t\t\tFROM pg_catalog.pg_available_extensions\n\t\t\t\t\t\tWHERE name IN ('btree_gist', 'citext', 'hstore', 'pgcrypto', 'plpgsql', 'uuid-ossp', 'vector')\n\t\t\t\t\t\tORDER BY name;",
+      "querySha256": "8eba03a7f8d54937b91c735b92d0d993ecab5f71db5b957b4f4c58f92f9e893d",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/available_extensions_probe_test.go:TestAvailableExtensionsProbe#0002",
+      "source": "testing/go/available_extensions_probe_test.go:TestAvailableExtensionsProbe",
+      "ordinal": 2,
+      "scriptName": "supported extension metadata is visible",
+      "oracle": "internal",
+      "suggestedId": "available-extensions-probe-test-testavailableextensionsprobe-0002-select-name-version-installed-relocatable",
+      "expectedKind": "rows",
+      "query": "SELECT name, version, installed, relocatable, schema\n\t\t\t\t\t\tFROM pg_catalog.pg_available_extension_versions\n\t\t\t\t\t\tWHERE name IN ('btree_gist', 'citext', 'hstore', 'pgcrypto', 'plpgsql', 'uuid-ossp', 'vector')\n\t\t\t\t\t\tORDER BY name;",
+      "querySha256": "29cc48786f8172ce2fd8975592da01829750bda00e294b9083d61e3e835995bc",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    }
+  ]
+}

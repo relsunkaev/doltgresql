@@ -165,26 +165,28 @@ func TestRevokeGrantedByRequiresCurrentUserRepro(t *testing.T) {
 					Query: `REVOKE SELECT ON revoke_by_group_items
 						FROM revoke_by_grantee
 						GRANTED BY revoke_by_group;`,
-					ExpectedErr: `grantor must be current user`,
-					Username:    `revoke_by_member`,
-					Password:    `member`,
+
+					Username: `revoke_by_member`,
+					Password: `member`, PostgresOracle: ScriptTestPostgresOracle{ID: "grant-revoke-correctness-repro-test-testrevokegrantedbyrequirescurrentuserrepro-0001-revoke-select-on-revoke_by_group_items-from", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id
 						FROM revoke_by_group_items;`,
-					Expected: []sql.Row{{11}},
+
 					Username: `revoke_by_grantee`,
-					Password: `grantee`,
+					Password: `grantee`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestRevokeSchemaGrantedByOnlyRemovesNamedGrantorRepro reproduces an ACL
+						// persistence bug: REVOKE ... GRANTED BY should remove only the schema ACL
+						// entry from the named grantor when another grantor also granted the same
+						// privilege.
+						ID: "grant-revoke-correctness-repro-test-testrevokegrantedbyrequirescurrentuserrepro-0002-select-id-from-revoke_by_group_items"},
 				},
 			},
 		},
 	})
 }
 
-// TestRevokeSchemaGrantedByOnlyRemovesNamedGrantorRepro reproduces an ACL
-// persistence bug: REVOKE ... GRANTED BY should remove only the schema ACL
-// entry from the named grantor when another grantor also granted the same
-// privilege.
 func TestRevokeSchemaGrantedByOnlyRemovesNamedGrantorRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -374,19 +376,21 @@ func TestRevokeGrantOptionCascadeRemovesDependentTableGrantRepro(t *testing.T) {
 					Password: `grantor`,
 				},
 				{
-					Query:       `SELECT id FROM cascade_items;`,
-					ExpectedErr: `permission denied`,
-					Username:    `cascade_leaf`,
-					Password:    `leaf`,
+					Query: `SELECT id FROM cascade_items;`,
+
+					Username: `cascade_leaf`,
+					Password: `leaf`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestRevokeCascadeRemovesDependentTableGrantRepro reproduces an ACL
+						// persistence bug: REVOKE ... CASCADE should remove dependent grants made
+						// through the revoked privilege.
+						ID: "grant-revoke-correctness-repro-test-testrevokegrantoptioncascaderemovesdependenttablegrantrepro-0001-select-id-from-cascade_items"},
 				},
 			},
 		},
 	})
 }
 
-// TestRevokeCascadeRemovesDependentTableGrantRepro reproduces an ACL
-// persistence bug: REVOKE ... CASCADE should remove dependent grants made
-// through the revoked privilege.
 func TestRevokeCascadeRemovesDependentTableGrantRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -423,25 +427,27 @@ func TestRevokeCascadeRemovesDependentTableGrantRepro(t *testing.T) {
 					Password: `grantor`,
 				},
 				{
-					Query:       `SELECT id FROM full_cascade_items;`,
-					ExpectedErr: `permission denied`,
-					Username:    `full_cascade_middle`,
-					Password:    `middle`,
+					Query: `SELECT id FROM full_cascade_items;`,
+
+					Username: `full_cascade_middle`,
+					Password: `middle`, PostgresOracle: ScriptTestPostgresOracle{ID: "grant-revoke-correctness-repro-test-testrevokecascaderemovesdependenttablegrantrepro-0001-select-id-from-full_cascade_items", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SELECT id FROM full_cascade_items;`,
-					ExpectedErr: `permission denied`,
-					Username:    `full_cascade_leaf`,
-					Password:    `leaf`,
+					Query: `SELECT id FROM full_cascade_items;`,
+
+					Username: `full_cascade_leaf`,
+					Password: `leaf`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestRevokeRestrictRejectsDependentTableGrantRepro reproduces an ACL
+						// dependency bug: REVOKE ... RESTRICT should reject revoking a privilege that
+						// has dependent grants.
+						ID: "grant-revoke-correctness-repro-test-testrevokecascaderemovesdependenttablegrantrepro-0002-select-id-from-full_cascade_items"},
 				},
 			},
 		},
 	})
 }
 
-// TestRevokeRestrictRejectsDependentTableGrantRepro reproduces an ACL
-// dependency bug: REVOKE ... RESTRICT should reject revoking a privilege that
-// has dependent grants.
 func TestRevokeRestrictRejectsDependentTableGrantRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -474,30 +480,32 @@ func TestRevokeRestrictRejectsDependentTableGrantRepro(t *testing.T) {
 				{
 					Query: `REVOKE SELECT ON restrict_items
 						FROM restrict_middle RESTRICT;`,
-					ExpectedErr: `dependent privileges exist`,
-					Username:    `restrict_grantor`,
-					Password:    `grantor`,
+
+					Username: `restrict_grantor`,
+					Password: `grantor`, PostgresOracle: ScriptTestPostgresOracle{ID: "grant-revoke-correctness-repro-test-testrevokerestrictrejectsdependenttablegrantrepro-0001-revoke-select-on-restrict_items-from"},
 				},
 				{
-					Query:    `SELECT id FROM restrict_items;`,
-					Expected: []sql.Row{{17}},
+					Query: `SELECT id FROM restrict_items;`,
+
 					Username: `restrict_middle`,
-					Password: `middle`,
+					Password: `middle`, PostgresOracle: ScriptTestPostgresOracle{ID: "grant-revoke-correctness-repro-test-testrevokerestrictrejectsdependenttablegrantrepro-0002-select-id-from-restrict_items"},
 				},
 				{
-					Query:    `SELECT id FROM restrict_items;`,
-					Expected: []sql.Row{{17}},
+					Query: `SELECT id FROM restrict_items;`,
+
 					Username: `restrict_leaf`,
-					Password: `leaf`,
+					Password: `leaf`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestRevokeGrantOptionRestrictRejectsDependentTableGrantRepro reproduces an
+						// ACL dependency bug: REVOKE GRANT OPTION ... RESTRICT should reject revoking a
+						// grant option that has dependent grants.
+						ID: "grant-revoke-correctness-repro-test-testrevokerestrictrejectsdependenttablegrantrepro-0003-select-id-from-restrict_items"},
 				},
 			},
 		},
 	})
 }
 
-// TestRevokeGrantOptionRestrictRejectsDependentTableGrantRepro reproduces an
-// ACL dependency bug: REVOKE GRANT OPTION ... RESTRICT should reject revoking a
-// grant option that has dependent grants.
 func TestRevokeGrantOptionRestrictRejectsDependentTableGrantRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -531,9 +539,9 @@ func TestRevokeGrantOptionRestrictRejectsDependentTableGrantRepro(t *testing.T) 
 				{
 					Query: `REVOKE GRANT OPTION FOR SELECT ON restrict_option_items
 						FROM restrict_option_middle RESTRICT;`,
-					ExpectedErr: `dependent privileges exist`,
-					Username:    `restrict_option_grantor`,
-					Password:    `grantor`,
+
+					Username: `restrict_option_grantor`,
+					Password: `grantor`, PostgresOracle: ScriptTestPostgresOracle{ID: "grant-revoke-correctness-repro-test-testrevokegrantoptionrestrictrejectsdependenttablegrantrepro-0001-revoke-grant-option-for-select"},
 				},
 				{
 					Query: `GRANT SELECT ON restrict_option_items
@@ -542,10 +550,10 @@ func TestRevokeGrantOptionRestrictRejectsDependentTableGrantRepro(t *testing.T) 
 					Password: `middle`,
 				},
 				{
-					Query:    `SELECT id FROM restrict_option_items;`,
-					Expected: []sql.Row{{19}},
+					Query: `SELECT id FROM restrict_option_items;`,
+
 					Username: `restrict_option_delegate`,
-					Password: `delegate`,
+					Password: `delegate`, PostgresOracle: ScriptTestPostgresOracle{ID: "grant-revoke-correctness-repro-test-testrevokegrantoptionrestrictrejectsdependenttablegrantrepro-0002-select-id-from-restrict_option_items"},
 				},
 			},
 		},

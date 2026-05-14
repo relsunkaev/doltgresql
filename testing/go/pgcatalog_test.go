@@ -12,20 +12,22 @@ func TestPgAggregate(t *testing.T) {
 			Name: "pg_aggregate",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT count(*) > 0 FROM "pg_catalog"."pg_aggregate";`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT count(*) > 0 FROM "pg_catalog"."pg_aggregate";`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgaggregate-0001-select-count-*->-0"},
 				},
 				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_aggregate";`,
-					ExpectedErr: "not",
+					Query: `SELECT * FROM "PG_catalog"."pg_aggregate";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgaggregate-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_aggregate";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_aggregate";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgaggregate-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT count(*) > 0 FROM PG_catalog.pg_AGGREGATE;",
-					Expected: []sql.Row{{"t"}},
+				{
+					Query: "SELECT count(*) > 0 FROM PG_catalog.pg_AGGREGATE;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgaggregate-0004-select-count-*->-0"},
 				},
 			},
 		},
@@ -38,28 +40,22 @@ func TestPgAm(t *testing.T) {
 			Name: "pg_am",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_am";`,
-					Expected: []sql.Row{
-						{2, "heap", "heap_tableam_handler", "t"},
-						{403, "btree", "bthandler", "i"},
-						{405, "hash", "hashhandler", "i"},
-						{783, "gist", "gisthandler", "i"},
-						{2742, "gin", "ginhandler", "i"},
-						{4000, "spgist", "spghandler", "i"},
-						{3580, "brin", "brinhandler", "i"},
-					},
+					Query: `SELECT * FROM "pg_catalog"."pg_am";`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgam-0001-select-*-from-pg_catalog-."},
 				},
 				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_am";`,
-					ExpectedErr: "not",
+					Query: `SELECT * FROM "PG_catalog"."pg_am";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgam-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_am";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_am";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgam-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT amname FROM PG_catalog.pg_AM ORDER BY amname;",
-					Expected: []sql.Row{{"brin"}, {"btree"}, {"gin"}, {"gist"}, {"hash"}, {"heap"}, {"spgist"}},
+				{
+					Query: "SELECT amname FROM PG_catalog.pg_AM ORDER BY amname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgam-0004-select-amname-from-pg_catalog.pg_am-order"},
 				},
 			},
 		},
@@ -78,30 +74,7 @@ JOIN "pg_catalog"."pg_opfamily" opf ON opf.oid = amop.amopfamily
 JOIN "pg_catalog"."pg_am" am ON am.oid = amop.amopmethod
 WHERE am.amname = 'btree'
 GROUP BY opf.opfname
-ORDER BY opf.opfname;`,
-					Expected: []sql.Row{
-						{"bit_ops", 5},
-						{"bool_ops", 5},
-						{"bpchar_ops", 5},
-						{"bpchar_pattern_ops", 5},
-						{"bytea_ops", 5},
-						{"char_ops", 5},
-						{"datetime_ops", 45},
-						{"float_ops", 20},
-						{"integer_ops", 45},
-						{"interval_ops", 5},
-						{"jsonb_ops", 5},
-						{"numeric_ops", 5},
-						{"oid_ops", 5},
-						{"oidvector_ops", 5},
-						{"pg_lsn_ops", 5},
-						{"text_ops", 20},
-						{"text_pattern_ops", 5},
-						{"time_ops", 5},
-						{"timetz_ops", 5},
-						{"uuid_ops", 5},
-						{"varbit_ops", 5},
-					},
+ORDER BY opf.opfname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgamop-0001-select-opf.opfname-count-*-from"},
 				},
 				{
 					Query: `SELECT lt.typname, rt.typname, COUNT(*)
@@ -111,18 +84,7 @@ JOIN "pg_catalog"."pg_type" lt ON lt.oid = amop.amoplefttype
 JOIN "pg_catalog"."pg_type" rt ON rt.oid = amop.amoprighttype
 WHERE opf.opfname = 'datetime_ops'
 GROUP BY lt.typname, rt.typname
-ORDER BY lt.typname, rt.typname;`,
-					Expected: []sql.Row{
-						{"date", "date", 5},
-						{"date", "timestamp", 5},
-						{"date", "timestamptz", 5},
-						{"timestamp", "date", 5},
-						{"timestamp", "timestamp", 5},
-						{"timestamp", "timestamptz", 5},
-						{"timestamptz", "date", 5},
-						{"timestamptz", "timestamp", 5},
-						{"timestamptz", "timestamptz", 5},
-					},
+ORDER BY lt.typname, rt.typname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgamop-0002-select-lt.typname-rt.typname-count-*"},
 				},
 				{
 					Query: `SELECT lt.typname, rt.typname, COUNT(*)
@@ -132,18 +94,7 @@ JOIN "pg_catalog"."pg_type" lt ON lt.oid = amop.amoplefttype
 JOIN "pg_catalog"."pg_type" rt ON rt.oid = amop.amoprighttype
 WHERE opf.opfname = 'integer_ops'
 GROUP BY lt.typname, rt.typname
-ORDER BY lt.typname, rt.typname;`,
-					Expected: []sql.Row{
-						{"int2", "int2", 5},
-						{"int2", "int4", 5},
-						{"int2", "int8", 5},
-						{"int4", "int2", 5},
-						{"int4", "int4", 5},
-						{"int4", "int8", 5},
-						{"int8", "int2", 5},
-						{"int8", "int4", 5},
-						{"int8", "int8", 5},
-					},
+ORDER BY lt.typname, rt.typname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgamop-0003-select-lt.typname-rt.typname-count-*"},
 				},
 				{
 					Query: `SELECT lt.typname, rt.typname, COUNT(*)
@@ -153,13 +104,7 @@ JOIN "pg_catalog"."pg_type" lt ON lt.oid = amop.amoplefttype
 JOIN "pg_catalog"."pg_type" rt ON rt.oid = amop.amoprighttype
 WHERE opf.opfname = 'float_ops'
 GROUP BY lt.typname, rt.typname
-ORDER BY lt.typname, rt.typname;`,
-					Expected: []sql.Row{
-						{"float4", "float4", 5},
-						{"float4", "float8", 5},
-						{"float8", "float4", 5},
-						{"float8", "float8", 5},
-					},
+ORDER BY lt.typname, rt.typname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgamop-0004-select-lt.typname-rt.typname-count-*"},
 				},
 				{
 					Query: `SELECT lt.typname, rt.typname, COUNT(*)
@@ -169,13 +114,7 @@ JOIN "pg_catalog"."pg_type" lt ON lt.oid = amop.amoplefttype
 JOIN "pg_catalog"."pg_type" rt ON rt.oid = amop.amoprighttype
 WHERE opf.opfname = 'text_ops'
 GROUP BY lt.typname, rt.typname
-ORDER BY lt.typname, rt.typname;`,
-					Expected: []sql.Row{
-						{"name", "name", 5},
-						{"name", "text", 5},
-						{"text", "name", 5},
-						{"text", "text", 5},
-					},
+ORDER BY lt.typname, rt.typname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgamop-0005-select-lt.typname-rt.typname-count-*"},
 				},
 				{
 					Query: `SELECT opf.opfname, lt.typname, rt.typname, amop.amopstrategy, opr.oprname, opr.oprcode
@@ -185,34 +124,7 @@ JOIN "pg_catalog"."pg_type" lt ON lt.oid = amop.amoplefttype
 JOIN "pg_catalog"."pg_type" rt ON rt.oid = amop.amoprighttype
 JOIN "pg_catalog"."pg_operator" opr ON opr.oid = amop.amopopr
 WHERE opf.opfname IN ('bytea_ops', 'interval_ops', 'oid_ops', 'time_ops', 'timetz_ops')
-ORDER BY opf.opfname, amop.amopstrategy;`,
-					Expected: []sql.Row{
-						{"bytea_ops", "bytea", "bytea", 1, "<", "bytealt"},
-						{"bytea_ops", "bytea", "bytea", 2, "<=", "byteale"},
-						{"bytea_ops", "bytea", "bytea", 3, "=", "byteaeq"},
-						{"bytea_ops", "bytea", "bytea", 4, ">=", "byteage"},
-						{"bytea_ops", "bytea", "bytea", 5, ">", "byteagt"},
-						{"interval_ops", "interval", "interval", 1, "<", "interval_lt"},
-						{"interval_ops", "interval", "interval", 2, "<=", "interval_le"},
-						{"interval_ops", "interval", "interval", 3, "=", "interval_eq"},
-						{"interval_ops", "interval", "interval", 4, ">=", "interval_ge"},
-						{"interval_ops", "interval", "interval", 5, ">", "interval_gt"},
-						{"oid_ops", "oid", "oid", 1, "<", "oidlt"},
-						{"oid_ops", "oid", "oid", 2, "<=", "oidle"},
-						{"oid_ops", "oid", "oid", 3, "=", "oideq"},
-						{"oid_ops", "oid", "oid", 4, ">=", "oidge"},
-						{"oid_ops", "oid", "oid", 5, ">", "oidgt"},
-						{"time_ops", "time", "time", 1, "<", "time_lt"},
-						{"time_ops", "time", "time", 2, "<=", "time_le"},
-						{"time_ops", "time", "time", 3, "=", "time_eq"},
-						{"time_ops", "time", "time", 4, ">=", "time_ge"},
-						{"time_ops", "time", "time", 5, ">", "time_gt"},
-						{"timetz_ops", "timetz", "timetz", 1, "<", "timetz_lt"},
-						{"timetz_ops", "timetz", "timetz", 2, "<=", "timetz_le"},
-						{"timetz_ops", "timetz", "timetz", 3, "=", "timetz_eq"},
-						{"timetz_ops", "timetz", "timetz", 4, ">=", "timetz_ge"},
-						{"timetz_ops", "timetz", "timetz", 5, ">", "timetz_gt"},
-					},
+ORDER BY opf.opfname, amop.amopstrategy;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgamop-0006-select-opf.opfname-lt.typname-rt.typname-amop.amopstrategy"},
 				},
 				{
 					Query: `SELECT opf.opfname, lt.typname, rt.typname, amop.amopstrategy, opr.oprname, opr.oprcode
@@ -222,34 +134,7 @@ JOIN "pg_catalog"."pg_type" lt ON lt.oid = amop.amoplefttype
 JOIN "pg_catalog"."pg_type" rt ON rt.oid = amop.amoprighttype
 JOIN "pg_catalog"."pg_operator" opr ON opr.oid = amop.amopopr
 WHERE opf.opfname IN ('bit_ops', 'char_ops', 'oidvector_ops', 'pg_lsn_ops', 'varbit_ops')
-ORDER BY opf.opfname, amop.amopstrategy;`,
-					Expected: []sql.Row{
-						{"bit_ops", "bit", "bit", 1, "<", "bitlt"},
-						{"bit_ops", "bit", "bit", 2, "<=", "bitle"},
-						{"bit_ops", "bit", "bit", 3, "=", "biteq"},
-						{"bit_ops", "bit", "bit", 4, ">=", "bitge"},
-						{"bit_ops", "bit", "bit", 5, ">", "bitgt"},
-						{"char_ops", "char", "char", 1, "<", "charlt"},
-						{"char_ops", "char", "char", 2, "<=", "charle"},
-						{"char_ops", "char", "char", 3, "=", "chareq"},
-						{"char_ops", "char", "char", 4, ">=", "charge"},
-						{"char_ops", "char", "char", 5, ">", "chargt"},
-						{"oidvector_ops", "oidvector", "oidvector", 1, "<", "oidvectorlt"},
-						{"oidvector_ops", "oidvector", "oidvector", 2, "<=", "oidvectorle"},
-						{"oidvector_ops", "oidvector", "oidvector", 3, "=", "oidvectoreq"},
-						{"oidvector_ops", "oidvector", "oidvector", 4, ">=", "oidvectorge"},
-						{"oidvector_ops", "oidvector", "oidvector", 5, ">", "oidvectorgt"},
-						{"pg_lsn_ops", "pg_lsn", "pg_lsn", 1, "<", "pg_lsn_lt"},
-						{"pg_lsn_ops", "pg_lsn", "pg_lsn", 2, "<=", "pg_lsn_le"},
-						{"pg_lsn_ops", "pg_lsn", "pg_lsn", 3, "=", "pg_lsn_eq"},
-						{"pg_lsn_ops", "pg_lsn", "pg_lsn", 4, ">=", "pg_lsn_ge"},
-						{"pg_lsn_ops", "pg_lsn", "pg_lsn", 5, ">", "pg_lsn_gt"},
-						{"varbit_ops", "varbit", "varbit", 1, "<", "varbitlt"},
-						{"varbit_ops", "varbit", "varbit", 2, "<=", "varbitle"},
-						{"varbit_ops", "varbit", "varbit", 3, "=", "varbiteq"},
-						{"varbit_ops", "varbit", "varbit", 4, ">=", "varbitge"},
-						{"varbit_ops", "varbit", "varbit", 5, ">", "varbitgt"},
-					},
+ORDER BY opf.opfname, amop.amopstrategy;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgamop-0007-select-opf.opfname-lt.typname-rt.typname-amop.amopstrategy"},
 				},
 				{
 					Query: `SELECT am.amname, opf.opfname, amop.amopstrategy, opr.oprname
@@ -258,31 +143,22 @@ JOIN "pg_catalog"."pg_opfamily" opf ON opf.oid = amop.amopfamily
 JOIN "pg_catalog"."pg_am" am ON am.oid = amop.amopmethod
 JOIN "pg_catalog"."pg_operator" opr ON opr.oid = amop.amopopr
 WHERE opf.opfname LIKE 'jsonb%'
-ORDER BY am.amname, opf.opfname, amop.amopstrategy;`,
-					Expected: []sql.Row{
-						{"btree", "jsonb_ops", 1, "<"},
-						{"btree", "jsonb_ops", 2, "<="},
-						{"btree", "jsonb_ops", 3, "="},
-						{"btree", "jsonb_ops", 4, ">="},
-						{"btree", "jsonb_ops", 5, ">"},
-						{"gin", "jsonb_ops", 7, "@>"},
-						{"gin", "jsonb_ops", 9, "?"},
-						{"gin", "jsonb_ops", 10, "?|"},
-						{"gin", "jsonb_ops", 11, "?&"},
-						{"gin", "jsonb_path_ops", 7, "@>"},
-					},
+ORDER BY am.amname, opf.opfname, amop.amopstrategy;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgamop-0008-select-am.amname-opf.opfname-amop.amopstrategy-opr.oprname"},
 				},
 				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_amop";`,
-					ExpectedErr: "not",
+					Query: `SELECT * FROM "PG_catalog"."pg_amop";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgamop-0009-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_amop";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_amop";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgamop-0010-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT COUNT(*) FROM PG_catalog.pg_AMOP;",
-					Expected: []sql.Row{{220}},
+				{
+					Query: "SELECT COUNT(*) FROM PG_catalog.pg_AMOP;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgamop-0011-select-count-*-from-pg_catalog.pg_amop"},
 				},
 			},
 		},
@@ -301,30 +177,7 @@ JOIN "pg_catalog"."pg_opfamily" opf ON opf.oid = amproc.amprocfamily
 JOIN "pg_catalog"."pg_am" am ON am.oid = opf.opfmethod
 WHERE am.amname = 'btree'
 GROUP BY opf.opfname
-ORDER BY opf.opfname;`,
-					Expected: []sql.Row{
-						{"bit_ops", 2},
-						{"bool_ops", 2},
-						{"bpchar_ops", 3},
-						{"bpchar_pattern_ops", 3},
-						{"bytea_ops", 3},
-						{"char_ops", 2},
-						{"datetime_ops", 18},
-						{"float_ops", 8},
-						{"integer_ops", 22},
-						{"interval_ops", 2},
-						{"jsonb_ops", 1},
-						{"numeric_ops", 3},
-						{"oid_ops", 3},
-						{"oidvector_ops", 2},
-						{"pg_lsn_ops", 2},
-						{"text_ops", 8},
-						{"text_pattern_ops", 3},
-						{"time_ops", 3},
-						{"timetz_ops", 3},
-						{"uuid_ops", 3},
-						{"varbit_ops", 2},
-					},
+ORDER BY opf.opfname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgamproc-0001-select-opf.opfname-count-*-from"},
 				},
 				{
 					Query: `SELECT lt.typname, rt.typname, amproc.amprocnum, amproc.amproc
@@ -333,27 +186,7 @@ JOIN "pg_catalog"."pg_opfamily" opf ON opf.oid = amproc.amprocfamily
 JOIN "pg_catalog"."pg_type" lt ON lt.oid = amproc.amproclefttype
 JOIN "pg_catalog"."pg_type" rt ON rt.oid = amproc.amprocrighttype
 WHERE opf.opfname = 'datetime_ops'
-ORDER BY lt.typname, rt.typname, amproc.amprocnum;`,
-					Expected: []sql.Row{
-						{"date", "date", 1, "date_cmp"},
-						{"date", "date", 2, "date_sortsupport"},
-						{"date", "date", 4, "btequalimage"},
-						{"date", "interval", 3, "pg_catalog.in_range"},
-						{"date", "timestamp", 1, "date_cmp_timestamp"},
-						{"date", "timestamptz", 1, "date_cmp_timestamptz"},
-						{"timestamp", "date", 1, "timestamp_cmp_date"},
-						{"timestamp", "interval", 3, "pg_catalog.in_range"},
-						{"timestamp", "timestamp", 1, "timestamp_cmp"},
-						{"timestamp", "timestamp", 2, "timestamp_sortsupport"},
-						{"timestamp", "timestamp", 4, "btequalimage"},
-						{"timestamp", "timestamptz", 1, "timestamp_cmp_timestamptz"},
-						{"timestamptz", "date", 1, "timestamptz_cmp_date"},
-						{"timestamptz", "interval", 3, "pg_catalog.in_range"},
-						{"timestamptz", "timestamp", 1, "timestamptz_cmp_timestamp"},
-						{"timestamptz", "timestamptz", 1, "timestamptz_cmp"},
-						{"timestamptz", "timestamptz", 2, "timestamp_sortsupport"},
-						{"timestamptz", "timestamptz", 4, "btequalimage"},
-					},
+ORDER BY lt.typname, rt.typname, amproc.amprocnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgamproc-0002-select-lt.typname-rt.typname-amproc.amprocnum-amproc.amproc"},
 				},
 				{
 					Query: `SELECT opf.opfname, lt.typname, rt.typname, amproc.amprocnum, amproc.amproc
@@ -362,20 +195,7 @@ JOIN "pg_catalog"."pg_opfamily" opf ON opf.oid = amproc.amprocfamily
 JOIN "pg_catalog"."pg_type" lt ON lt.oid = amproc.amproclefttype
 JOIN "pg_catalog"."pg_type" rt ON rt.oid = amproc.amprocrighttype
 WHERE opf.opfname IN ('bool_ops', 'bpchar_ops', 'numeric_ops', 'uuid_ops')
-ORDER BY opf.opfname, lt.typname, rt.typname, amproc.amprocnum;`,
-					Expected: []sql.Row{
-						{"bool_ops", "bool", "bool", 1, "btboolcmp"},
-						{"bool_ops", "bool", "bool", 4, "btequalimage"},
-						{"bpchar_ops", "bpchar", "bpchar", 1, "bpcharcmp"},
-						{"bpchar_ops", "bpchar", "bpchar", 2, "bpchar_sortsupport"},
-						{"bpchar_ops", "bpchar", "bpchar", 4, "btvarstrequalimage"},
-						{"numeric_ops", "numeric", "numeric", 1, "numeric_cmp"},
-						{"numeric_ops", "numeric", "numeric", 2, "numeric_sortsupport"},
-						{"numeric_ops", "numeric", "numeric", 3, "pg_catalog.in_range"},
-						{"uuid_ops", "uuid", "uuid", 1, "uuid_cmp"},
-						{"uuid_ops", "uuid", "uuid", 2, "uuid_sortsupport"},
-						{"uuid_ops", "uuid", "uuid", 4, "btequalimage"},
-					},
+ORDER BY opf.opfname, lt.typname, rt.typname, amproc.amprocnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgamproc-0003-select-opf.opfname-lt.typname-rt.typname-amproc.amprocnum"},
 				},
 				{
 					Query: `SELECT lt.typname, rt.typname, amproc.amprocnum, amproc.amproc
@@ -384,31 +204,7 @@ JOIN "pg_catalog"."pg_opfamily" opf ON opf.oid = amproc.amprocfamily
 JOIN "pg_catalog"."pg_type" lt ON lt.oid = amproc.amproclefttype
 JOIN "pg_catalog"."pg_type" rt ON rt.oid = amproc.amprocrighttype
 WHERE opf.opfname = 'integer_ops'
-ORDER BY lt.typname, rt.typname, amproc.amprocnum;`,
-					Expected: []sql.Row{
-						{"int2", "int2", 1, "btint2cmp"},
-						{"int2", "int2", 2, "btint2sortsupport"},
-						{"int2", "int2", 3, "pg_catalog.in_range"},
-						{"int2", "int2", 4, "btequalimage"},
-						{"int2", "int4", 1, "btint24cmp"},
-						{"int2", "int4", 3, "pg_catalog.in_range"},
-						{"int2", "int8", 1, "btint28cmp"},
-						{"int2", "int8", 3, "pg_catalog.in_range"},
-						{"int4", "int2", 1, "btint42cmp"},
-						{"int4", "int2", 3, "pg_catalog.in_range"},
-						{"int4", "int4", 1, "btint4cmp"},
-						{"int4", "int4", 2, "btint4sortsupport"},
-						{"int4", "int4", 3, "pg_catalog.in_range"},
-						{"int4", "int4", 4, "btequalimage"},
-						{"int4", "int8", 1, "btint48cmp"},
-						{"int4", "int8", 3, "pg_catalog.in_range"},
-						{"int8", "int2", 1, "btint82cmp"},
-						{"int8", "int4", 1, "btint84cmp"},
-						{"int8", "int8", 1, "btint8cmp"},
-						{"int8", "int8", 2, "btint8sortsupport"},
-						{"int8", "int8", 3, "pg_catalog.in_range"},
-						{"int8", "int8", 4, "btequalimage"},
-					},
+ORDER BY lt.typname, rt.typname, amproc.amprocnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgamproc-0004-select-lt.typname-rt.typname-amproc.amprocnum-amproc.amproc"},
 				},
 				{
 					Query: `SELECT lt.typname, rt.typname, amproc.amprocnum, amproc.amproc
@@ -417,17 +213,7 @@ JOIN "pg_catalog"."pg_opfamily" opf ON opf.oid = amproc.amprocfamily
 JOIN "pg_catalog"."pg_type" lt ON lt.oid = amproc.amproclefttype
 JOIN "pg_catalog"."pg_type" rt ON rt.oid = amproc.amprocrighttype
 WHERE opf.opfname = 'float_ops'
-ORDER BY lt.typname, rt.typname, amproc.amprocnum;`,
-					Expected: []sql.Row{
-						{"float4", "float4", 1, "btfloat4cmp"},
-						{"float4", "float4", 2, "btfloat4sortsupport"},
-						{"float4", "float8", 1, "btfloat48cmp"},
-						{"float4", "float8", 3, "pg_catalog.in_range"},
-						{"float8", "float4", 1, "btfloat84cmp"},
-						{"float8", "float8", 1, "btfloat8cmp"},
-						{"float8", "float8", 2, "btfloat8sortsupport"},
-						{"float8", "float8", 3, "pg_catalog.in_range"},
-					},
+ORDER BY lt.typname, rt.typname, amproc.amprocnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgamproc-0005-select-lt.typname-rt.typname-amproc.amprocnum-amproc.amproc"},
 				},
 				{
 					Query: `SELECT lt.typname, rt.typname, amproc.amprocnum, amproc.amproc
@@ -436,17 +222,7 @@ JOIN "pg_catalog"."pg_opfamily" opf ON opf.oid = amproc.amprocfamily
 JOIN "pg_catalog"."pg_type" lt ON lt.oid = amproc.amproclefttype
 JOIN "pg_catalog"."pg_type" rt ON rt.oid = amproc.amprocrighttype
 WHERE opf.opfname = 'text_ops'
-ORDER BY lt.typname, rt.typname, amproc.amprocnum;`,
-					Expected: []sql.Row{
-						{"name", "name", 1, "btnamecmp"},
-						{"name", "name", 2, "btnamesortsupport"},
-						{"name", "name", 4, "btvarstrequalimage"},
-						{"name", "text", 1, "btnametextcmp"},
-						{"text", "name", 1, "bttextnamecmp"},
-						{"text", "text", 1, "bttextcmp"},
-						{"text", "text", 2, "bttextsortsupport"},
-						{"text", "text", 4, "btvarstrequalimage"},
-					},
+ORDER BY lt.typname, rt.typname, amproc.amprocnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgamproc-0006-select-lt.typname-rt.typname-amproc.amprocnum-amproc.amproc"},
 				},
 				{
 					Query: `SELECT opf.opfname, lt.typname, rt.typname, amproc.amprocnum, amproc.amproc
@@ -455,23 +231,7 @@ JOIN "pg_catalog"."pg_opfamily" opf ON opf.oid = amproc.amprocfamily
 JOIN "pg_catalog"."pg_type" lt ON lt.oid = amproc.amproclefttype
 JOIN "pg_catalog"."pg_type" rt ON rt.oid = amproc.amprocrighttype
 WHERE opf.opfname IN ('bytea_ops', 'interval_ops', 'oid_ops', 'time_ops', 'timetz_ops')
-ORDER BY opf.opfname, lt.typname, rt.typname, amproc.amprocnum;`,
-					Expected: []sql.Row{
-						{"bytea_ops", "bytea", "bytea", 1, "byteacmp"},
-						{"bytea_ops", "bytea", "bytea", 2, "bytea_sortsupport"},
-						{"bytea_ops", "bytea", "bytea", 4, "btequalimage"},
-						{"interval_ops", "interval", "interval", 1, "interval_cmp"},
-						{"interval_ops", "interval", "interval", 3, "pg_catalog.in_range"},
-						{"oid_ops", "oid", "oid", 1, "btoidcmp"},
-						{"oid_ops", "oid", "oid", 2, "btoidsortsupport"},
-						{"oid_ops", "oid", "oid", 4, "btequalimage"},
-						{"time_ops", "time", "interval", 3, "pg_catalog.in_range"},
-						{"time_ops", "time", "time", 1, "time_cmp"},
-						{"time_ops", "time", "time", 4, "btequalimage"},
-						{"timetz_ops", "timetz", "interval", 3, "pg_catalog.in_range"},
-						{"timetz_ops", "timetz", "timetz", 1, "timetz_cmp"},
-						{"timetz_ops", "timetz", "timetz", 4, "btequalimage"},
-					},
+ORDER BY opf.opfname, lt.typname, rt.typname, amproc.amprocnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgamproc-0007-select-opf.opfname-lt.typname-rt.typname-amproc.amprocnum"},
 				},
 				{
 					Query: `SELECT opf.opfname, lt.typname, rt.typname, amproc.amprocnum, amproc.amproc
@@ -480,19 +240,7 @@ JOIN "pg_catalog"."pg_opfamily" opf ON opf.oid = amproc.amprocfamily
 JOIN "pg_catalog"."pg_type" lt ON lt.oid = amproc.amproclefttype
 JOIN "pg_catalog"."pg_type" rt ON rt.oid = amproc.amprocrighttype
 WHERE opf.opfname IN ('bit_ops', 'char_ops', 'oidvector_ops', 'pg_lsn_ops', 'varbit_ops')
-ORDER BY opf.opfname, lt.typname, rt.typname, amproc.amprocnum;`,
-					Expected: []sql.Row{
-						{"bit_ops", "bit", "bit", 1, "bitcmp"},
-						{"bit_ops", "bit", "bit", 4, "btequalimage"},
-						{"char_ops", "char", "char", 1, "btcharcmp"},
-						{"char_ops", "char", "char", 4, "btequalimage"},
-						{"oidvector_ops", "oidvector", "oidvector", 1, "btoidvectorcmp"},
-						{"oidvector_ops", "oidvector", "oidvector", 4, "btequalimage"},
-						{"pg_lsn_ops", "pg_lsn", "pg_lsn", 1, "pg_lsn_cmp"},
-						{"pg_lsn_ops", "pg_lsn", "pg_lsn", 4, "btequalimage"},
-						{"varbit_ops", "varbit", "varbit", 1, "varbitcmp"},
-						{"varbit_ops", "varbit", "varbit", 4, "btequalimage"},
-					},
+ORDER BY opf.opfname, lt.typname, rt.typname, amproc.amprocnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgamproc-0008-select-opf.opfname-lt.typname-rt.typname-amproc.amprocnum"},
 				},
 				{
 					Query: `SELECT am.amname, opf.opfname, amproc.amprocnum, amproc.amproc
@@ -500,32 +248,22 @@ FROM "pg_catalog"."pg_amproc" amproc
 JOIN "pg_catalog"."pg_opfamily" opf ON opf.oid = amproc.amprocfamily
 JOIN "pg_catalog"."pg_am" am ON am.oid = opf.opfmethod
 WHERE opf.opfname LIKE 'jsonb%'
-ORDER BY am.amname, opf.opfname, amproc.amprocnum;`,
-					Expected: []sql.Row{
-						{"btree", "jsonb_ops", 1, "jsonb_cmp"},
-						{"gin", "jsonb_ops", 1, "gin_compare_jsonb"},
-						{"gin", "jsonb_ops", 2, "gin_extract_jsonb"},
-						{"gin", "jsonb_ops", 3, "gin_extract_jsonb_query"},
-						{"gin", "jsonb_ops", 4, "gin_consistent_jsonb"},
-						{"gin", "jsonb_ops", 6, "gin_triconsistent_jsonb"},
-						{"gin", "jsonb_path_ops", 1, "btint4cmp"},
-						{"gin", "jsonb_path_ops", 2, "gin_extract_jsonb_path"},
-						{"gin", "jsonb_path_ops", 3, "gin_extract_jsonb_query_path"},
-						{"gin", "jsonb_path_ops", 4, "gin_consistent_jsonb_path"},
-						{"gin", "jsonb_path_ops", 6, "gin_triconsistent_jsonb_path"},
-					},
+ORDER BY am.amname, opf.opfname, amproc.amprocnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgamproc-0009-select-am.amname-opf.opfname-amproc.amprocnum-amproc.amproc"},
 				},
 				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_amproc";`,
-					ExpectedErr: "not",
+					Query: `SELECT * FROM "PG_catalog"."pg_amproc";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgamproc-0010-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_amproc";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_amproc";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgamproc-0011-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT COUNT(*) FROM PG_catalog.pg_AMPROC;",
-					Expected: []sql.Row{{108}},
+				{
+					Query: "SELECT COUNT(*) FROM PG_catalog.pg_AMPROC;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgamproc-0012-select-count-*-from-pg_catalog.pg_amproc"},
 				},
 			},
 		},
@@ -548,44 +286,36 @@ func TestPgAttribute(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_attribute" WHERE attname='pk' AND attrelid='testschema.test'::regclass;`,
-					Expected: []sql.Row{{2502341994, "pk", 23, 0, 1, -1, -1, 0, "f", "i", "p", "", "t", "f", "f", "", "", "f", "t", 0, -1, 0, nil, nil, nil, nil}},
+					Query: `SELECT * FROM "pg_catalog"."pg_attribute" WHERE attname='pk' AND attrelid='testschema.test'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgattribute-0001-select-*-from-pg_catalog-."},
 				},
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_attribute" WHERE attname='v1' AND attrelid='testschema.test'::regclass;`,
-					Expected: []sql.Row{{2502341994, "v1", 25, 0, 2, -1, -1, 0, "f", "i", "p", "", "f", "t", "f", "", "", "f", "t", 0, -1, 100, nil, nil, nil, nil}},
+					Query: `SELECT * FROM "pg_catalog"."pg_attribute" WHERE attname='v1' AND attrelid='testschema.test'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgattribute-0002-select-*-from-pg_catalog-."},
 				},
 				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_attribute";`,
-					ExpectedErr: "not",
+					Query: `SELECT * FROM "PG_catalog"."pg_attribute";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgattribute-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_attribute";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_attribute";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgattribute-0004-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query: "SELECT attname FROM PG_catalog.pg_ATTRIBUTE ORDER BY attname LIMIT 3;",
-					Expected: []sql.Row{
-						{"ACTION_CONDITION"},
-						{"ACTION_ORDER"},
-						{"ACTION_ORIENTATION"},
-					},
+				{
+					Query: "SELECT attname FROM PG_catalog.pg_ATTRIBUTE ORDER BY attname LIMIT 3;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgattribute-0005-select-attname-from-pg_catalog.pg_attribute-order"},
 				},
 				{
 					Query: `SELECT attname FROM "pg_catalog"."pg_attribute" a
     JOIN "pg_catalog"."pg_class" c ON a.attrelid = c.oid
-               WHERE c.relname = 'test';`,
-					Expected: []sql.Row{
-						{"pk"},
-						{"v1"},
-					},
+               WHERE c.relname = 'test';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgattribute-0006-select-attname-from-pg_catalog-."},
 				},
 				{
 					Query: `SELECT count(*) FROM pg_attribute as a1
 				WHERE a1.attrelid = 0 OR a1.atttypid = 0 OR a1.attnum = 0 OR
 				a1.attcacheoff != -1 OR a1.attinhcount < 0 OR
-    		(a1.attinhcount = 0 AND NOT a1.attislocal);`,
-					Expected: []sql.Row{{0}},
+				(a1.attinhcount = 0 AND NOT a1.attislocal);`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgattribute-0007-select-count-*-from-pg_attribute"},
 				},
 				{
 					Query: `SELECT "con"."conname" AS "constraint_name", 
@@ -629,10 +359,7 @@ func TestPgAttribute(t *testing.T) {
 					INNER JOIN "pg_namespace" "ns" ON "cl"."relnamespace" = "ns"."oid"
 					INNER JOIN "pg_constraint" "con1" ON "con1"."conrelid" = "cl"."oid"
 					WHERE "con1"."contype" = 'f'
-					AND (("ns"."nspname" = 'testschema' AND "cl"."relname" = 'test2')) ) "con" order by 1`,
-					Expected: []sql.Row{
-						{"test2_pktesting_fkey", "testschema", "test2", "NO ACTION", "NO ACTION", "f", "INITIALLY IMMEDIATE", 2, 1},
-					},
+					AND (("ns"."nspname" = 'testschema' AND "cl"."relname" = 'test2')) ) "con" order by 1`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgattribute-0008-select-con-.-conname-as"},
 				},
 				{
 					Query: `SELECT "con"."conname" AS "constraint_name", 
@@ -683,10 +410,7 @@ FROM
     INNER JOIN "pg_class" "cl" ON "cl"."oid" = "con"."confrelid"  AND "cl"."relispartition" = 'f'
     INNER JOIN "pg_namespace" "ns" ON "cl"."relnamespace" = "ns"."oid" 
     INNER JOIN "pg_attribute" "att2" ON "att2"."attrelid" = "con"."conrelid" AND "att2"."attnum" = "con"."parent"
-order by 1,2;`,
-					Expected: []sql.Row{
-						{"test2_pktesting_fkey", "testschema", "test2", "pktesting", "testschema", "test", "pk", "NO ACTION", "NO ACTION", "f", "INITIALLY IMMEDIATE"},
-					},
+order by 1,2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgattribute-0009-select-con-.-conname-as"},
 				},
 			},
 		},
@@ -708,24 +432,22 @@ func TestPgAttrdef(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_attrdef" WHERE adrelid='testschema.test'::regclass;`,
-					Expected: []sql.Row{
-						{597021512, 2502341994, 2, "'hey'", uint32(2604)},
-					},
+					Query: `SELECT * FROM "pg_catalog"."pg_attrdef" WHERE adrelid='testschema.test'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgattrdef-0001-select-*-from-pg_catalog-."},
 				},
 				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_attrdef";`,
-					ExpectedErr: "not",
+					Query: `SELECT * FROM "PG_catalog"."pg_attrdef";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgattrdef-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_attrdef";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_attrdef";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgattrdef-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query: "SELECT oid FROM PG_catalog.pg_ATTRDEF ORDER BY oid;",
-					Expected: []sql.Row{
-						{597021512},
-					},
+				{
+					Query: "SELECT oid FROM PG_catalog.pg_ATTRDEF ORDER BY oid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgattrdef-0004-select-oid-from-pg_catalog.pg_attrdef-order"},
 				},
 			},
 		},
@@ -738,20 +460,25 @@ func TestPgAuthMembers(t *testing.T) {
 			Name: "pg_auth_members",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_auth_members";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_auth_members";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgauthmembers-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_auth_members";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_auth_members";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgauthmembers-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_auth_members";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_auth_members";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgauthmembers-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT member FROM PG_catalog.pg_AUTH_MEMBERS ORDER BY member;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT member FROM PG_catalog.pg_AUTH_MEMBERS ORDER BY member;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgauthmembers-0004-select-member-from-pg_catalog.pg_auth_members-order"},
 				},
 			},
 		},
@@ -764,26 +491,22 @@ func TestPgAuthid(t *testing.T) {
 			Name: "pg_authid",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT oid, rolname, rolsuper, rolcanlogin FROM "pg_catalog"."pg_authid" ORDER BY rolname;`,
-					Expected: []sql.Row{
-						{3676603549, "postgres", "t", "t"},
-						{1214005198, "public", "f", "f"},
-					},
+					Query: `SELECT oid, rolname, rolsuper, rolcanlogin FROM "pg_catalog"."pg_authid" ORDER BY rolname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgauthid-0001-select-oid-rolname-rolsuper-rolcanlogin"},
 				},
 				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_authid";`,
-					ExpectedErr: "not",
+					Query: `SELECT * FROM "PG_catalog"."pg_authid";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgauthid-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_authid";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_authid";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgauthid-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query: "SELECT rolname FROM PG_catalog.pg_AUTHID ORDER BY rolname;",
-					Expected: []sql.Row{
-						{"postgres"},
-						{"public"},
-					},
+				{
+					Query: "SELECT rolname FROM PG_catalog.pg_AUTHID ORDER BY rolname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgauthid-0004-select-rolname-from-pg_catalog.pg_authid-order"},
 				},
 			},
 		},
@@ -796,20 +519,25 @@ func TestPgAvailableExtensionVersions(t *testing.T) {
 			Name: "pg_available_extension_versions",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_available_extension_versions" WHERE false;`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_available_extension_versions" WHERE false;`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgavailableextensionversions-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_available_extension_versions";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_available_extension_versions";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgavailableextensionversions-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_available_extension_versions";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_available_extension_versions";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgavailableextensionversions-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT name FROM PG_catalog.pg_AVAILABLE_EXTENSION_VERSIONS WHERE name = 'citext';",
-					Expected: []sql.Row{{"citext"}},
+				{
+					Query: "SELECT name FROM PG_catalog.pg_AVAILABLE_EXTENSION_VERSIONS WHERE name = 'citext';", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgavailableextensionversions-0004-select-name-from-where-name"},
 				},
 			},
 		},
@@ -822,20 +550,25 @@ func TestPgAvailableExtensions(t *testing.T) {
 			Name: "pg_available_extensions",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_available_extensions" WHERE false;`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_available_extensions" WHERE false;`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgavailableextensions-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_available_extensions";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_available_extensions";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgavailableextensions-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_available_extensions";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_available_extensions";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgavailableextensions-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT name FROM PG_catalog.pg_AVAILABLE_EXTENSIONS WHERE name = 'citext';",
-					Expected: []sql.Row{{"citext"}},
+				{
+					Query: "SELECT name FROM PG_catalog.pg_AVAILABLE_EXTENSIONS WHERE name = 'citext';", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgavailableextensions-0004-select-name-from-pg_catalog.pg_available_extensions-where"},
 				},
 			},
 		},
@@ -848,20 +581,25 @@ func TestPgBackendMemoryContexts(t *testing.T) {
 			Name: "pg_backend_memory_contexts",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_backend_memory_contexts";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_backend_memory_contexts";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgbackendmemorycontexts-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_backend_memory_contexts";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_backend_memory_contexts";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgbackendmemorycontexts-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_backend_memory_contexts";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_backend_memory_contexts";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgbackendmemorycontexts-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT name FROM PG_catalog.pg_BACKEND_MEMORY_CONTEXTS ORDER BY name;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT name FROM PG_catalog.pg_BACKEND_MEMORY_CONTEXTS ORDER BY name;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgbackendmemorycontexts-0004-select-name-from-pg_catalog.pg_backend_memory_contexts-order"},
 				},
 			},
 		},
@@ -874,20 +612,25 @@ func TestPgCast(t *testing.T) {
 			Name: "pg_cast",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_cast";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_cast";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgcast-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_cast";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_cast";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgcast-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_cast";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_cast";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgcast-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT oid FROM PG_catalog.pg_CAST ORDER BY oid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT oid FROM PG_catalog.pg_CAST ORDER BY oid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgcast-0004-select-oid-from-pg_catalog.pg_cast-order"},
 				},
 			},
 		},
@@ -911,67 +654,42 @@ func TestPgClass(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				// Table
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_class" WHERE relname='testing' order by 1;`,
-					Expected: []sql.Row{
-						{3120782595, "testing", 2638679668, 1465967728, 0, 0, 2, 0, 0, 0, float32(0), 0, 0, "t", "f", "p", "r", 0, 0, "f", "f", "f", "f", "f", "t", "d", "f", 0, 0, 0, nil, nil, nil},
-					},
+					Query: `SELECT * FROM "pg_catalog"."pg_class" WHERE relname='testing' order by 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclass-0001-select-*-from-pg_catalog-."},
 				},
 				// Index
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_class" WHERE relname='testing_pkey';`,
-					Expected: []sql.Row{
-						{1067629180, "testing_pkey", 2638679668, 0, 0, 0, 403, 0, 0, 0, float32(0), 0, 0, "f", "f", "p", "i", 0, 0, "f", "f", "f", "f", "f", "t", "d", "f", 0, 0, 0, nil, nil, nil},
-					},
+					Query: `SELECT * FROM "pg_catalog"."pg_class" WHERE relname='testing_pkey';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclass-0002-select-*-from-pg_catalog-."},
 				},
 				// View
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_class" WHERE relname='testview';`,
-					Expected: []sql.Row{
-						{887295443, "testview", 2638679668, 1465967728, 0, 0, 0, 0, 0, 0, float32(0), 0, 0, "f", "f", "p", "v", 0, 0, "f", "f", "f", "f", "f", "t", "d", "f", 0, 0, 0, nil, nil, nil},
-					},
+					Query: `SELECT * FROM "pg_catalog"."pg_class" WHERE relname='testview';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclass-0003-select-*-from-pg_catalog-."},
 				},
 				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_class";`,
-					ExpectedErr: "not",
-				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_class";`,
-					ExpectedErr: "not",
-				},
-				{ // Different cases but non-quoted, so it works
-					Query: "SELECT relname FROM PG_catalog.pg_CLASS where relnamespace not in (select oid from pg_namespace where nspname = 'dolt') ORDER BY relname ASC LIMIT 3;",
-					Expected: []sql.Row{
-						{"administrable_role_authorizations"},
-						{"applicable_roles"},
-						{"character_sets"},
-					},
+					Query: `SELECT * FROM "PG_catalog"."pg_class";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgclass-0004-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT relname from pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid  WHERE n.nspname = 'testschema' and left(relname, 5) <> 'dolt_' ORDER BY relname;",
-					Expected: []sql.Row{
-						{"testing"},
-						{"testing_pkey"},
-						{"testing_v1_key"},
-						{"testview"},
-					},
+					Query: `SELECT * FROM "pg_catalog"."PG_class";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgclass-0005-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT relname from pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid  WHERE n.nspname = 'pg_catalog' LIMIT 3;",
-					Expected: []sql.Row{
-						{"pg_aggregate"},
-						{"pg_am"},
-						{"pg_amop"},
-					},
+					Query: "SELECT relname FROM PG_catalog.pg_CLASS where relnamespace not in (select oid from pg_namespace where nspname = 'dolt') ORDER BY relname ASC LIMIT 3;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclass-0006-select-relname-from-pg_catalog.pg_class-where"},
 				},
 				{
-					Query: `SELECT relname FROM "pg_class" WHERE relname='testing';`,
-					Expected: []sql.Row{
-						{"testing"},
-					},
+					Query: "SELECT relname from pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid  WHERE n.nspname = 'testschema' and left(relname, 5) <> 'dolt_' ORDER BY relname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclass-0007-select-relname-from-pg_catalog.pg_class-c"},
 				},
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_class" WHERE oid=1234`,
-					Expected: []sql.Row{},
+					Query: "SELECT relname from pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid  WHERE n.nspname = 'pg_catalog' LIMIT 3;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclass-0008-select-relname-from-pg_catalog.pg_class-c"},
+				},
+				{
+					Query: `SELECT relname FROM "pg_class" WHERE relname='testing';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclass-0009-select-relname-from-pg_class-where"},
+				},
+				{
+					Query: `SELECT * FROM "pg_catalog"."pg_class" WHERE oid=1234`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclass-0010-select-*-from-pg_catalog-."},
 				},
 			},
 		},
@@ -987,26 +705,16 @@ func TestPgClass(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT * FROM "pg_catalog"."pg_class" WHERE oid='testing'::regclass;`,
-					ExpectedErr: "does not exist",
+					Query: `SELECT * FROM "pg_catalog"."pg_class" WHERE oid='testing'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclass-0011-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_class" WHERE oid='testschema.testing'::regclass;`,
-					Expected: []sql.Row{
-						{3120782595, "testing", 2638679668, 1465967728, 0, 0, 2, 0, 0, 0, float32(0), 0, 0, "t", "f", "p", "r", 0, 0, "f", "f", "f", "f", "f", "t", "d", "f", 0, 0, 0, nil, nil, nil},
-					},
+					Query: `SELECT * FROM "pg_catalog"."pg_class" WHERE oid='testschema.testing'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclass-0012-select-*-from-pg_catalog-."},
 				},
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_class" WHERE oid='testschema.testing_pkey'::regclass;`,
-					Expected: []sql.Row{
-						{1067629180, "testing_pkey", 2638679668, 0, 0, 0, 403, 0, 0, 0, float32(0), 0, 0, "f", "f", "p", "i", 0, 0, "f", "f", "f", "f", "f", "t", "d", "f", 0, 0, 0, nil, nil, nil},
-					},
+					Query: `SELECT * FROM "pg_catalog"."pg_class" WHERE oid='testschema.testing_pkey'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclass-0013-select-*-from-pg_catalog-."},
 				},
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_class" WHERE oid='testschema.testview'::regclass;`,
-					Expected: []sql.Row{
-						{887295443, "testview", 2638679668, 1465967728, 0, 0, 0, 0, 0, 0, float32(0), 0, 0, "f", "f", "p", "v", 0, 0, "f", "f", "f", "f", "f", "t", "d", "f", 0, 0, 0, nil, nil, nil},
-					},
+					Query: `SELECT * FROM "pg_catalog"."pg_class" WHERE oid='testschema.testview'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclass-0014-select-*-from-pg_catalog-."},
 				},
 			},
 		},
@@ -1023,8 +731,7 @@ func TestPgClass(t *testing.T) {
 JOIN pg_class t ON t.oid = i.indrelid 
 JOIN pg_class ix ON ix.oid = i.indexrelid 
 JOIN pg_namespace n ON t.relnamespace = n.oid 
-JOIN pg_am AS am ON ix.relam = am.oid WHERE t.relname = 'foo' AND n.nspname = 'public';`,
-					Expected: []sql.Row{{"foo_pkey", "BTREE"}, {"foo_b_idx", "BTREE"}, {"foo_b_a_idx", "BTREE"}},
+JOIN pg_am AS am ON ix.relam = am.oid WHERE t.relname = 'foo' AND n.nspname = 'public';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclass-0015-select-ix.relname-as-index_name-upper"},
 				},
 			},
 		},
@@ -1039,26 +746,22 @@ func TestPgCollation(t *testing.T) {
 				{
 					Query: `SELECT oid, collname, collnamespace, collprovider, collisdeterministic, collencoding
 FROM "pg_catalog"."pg_collation"
-ORDER BY oid;`,
-					Expected: []sql.Row{
-						{100, "default", 11, "d", "t", -1},
-						{950, "C", 11, "c", "t", -1},
-						{951, "POSIX", 11, "c", "t", -1},
-						{12340, "ucs_basic", 11, "c", "t", -1},
-						{12341, "und-x-icu", 11, "i", "t", -1},
-					},
+ORDER BY oid;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgcollation-0001-select-oid-collname-collnamespace-collprovider"},
 				},
 				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_collation";`,
-					ExpectedErr: "not",
+					Query: `SELECT * FROM "PG_catalog"."pg_collation";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgcollation-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_collation";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_collation";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgcollation-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT collname FROM PG_catalog.pg_COLLATION ORDER BY collname;",
-					Expected: []sql.Row{{"C"}, {"POSIX"}, {"default"}, {"ucs_basic"}, {"und-x-icu"}},
+				{
+					Query: "SELECT collname FROM PG_catalog.pg_COLLATION ORDER BY collname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgcollation-0004-select-collname-from-pg_catalog.pg_collation-order"},
 				},
 			},
 		},
@@ -1071,20 +774,22 @@ func TestPgConfig(t *testing.T) {
 			Name: "pg_config",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT name FROM "pg_catalog"."pg_config" WHERE name = 'BINDIR';`,
-					Expected: []sql.Row{{"BINDIR"}},
+					Query: `SELECT name FROM "pg_catalog"."pg_config" WHERE name = 'BINDIR';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconfig-0001-select-name-from-pg_catalog-."},
 				},
 				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_config";`,
-					ExpectedErr: "not",
+					Query: `SELECT * FROM "PG_catalog"."pg_config";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgconfig-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_config";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_config";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgconfig-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT name FROM PG_catalog.pg_CONFIG ORDER BY name;",
-					Expected: []sql.Row{{"BINDIR"}},
+				{
+					Query: "SELECT name FROM PG_catalog.pg_CONFIG ORDER BY name;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconfig-0004-select-name-from-pg_catalog.pg_config-order"},
 				},
 			},
 		},
@@ -1102,40 +807,25 @@ func TestPgConstraint(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_constraint" WHERE conrelid='testing2'::regclass OR conrelid='testing'::regclass order by 1`,
-					Expected: []sql.Row{
-						{1719906648, "testing2_pktesting_fkey", 2200, "f", "f", "f", "t", 2694106299, 0, 3757635986, 0, 2147906242, "a", "a", "s", "t", 0, "t", "{2}", "{1}", nil, nil, nil, nil, nil, nil, uint32(2606)},
-						{2068729390, "testing2_pkey", 2200, "p", "f", "f", "t", 2694106299, 0, 2068729390, 0, 0, "", "", "", "t", 0, "t", "{1}", nil, nil, nil, nil, nil, nil, nil, uint32(2606)},
-						{2652383090, "testing_v1_key", 2200, "u", "f", "f", "t", 2147906242, 0, 2652383090, 0, 0, "", "", "", "t", 0, "t", "{2}", nil, nil, nil, nil, nil, nil, nil, uint32(2606)},
-						{3259318326, "v1_check", 2200, "c", "f", "f", "t", 2694106299, 0, 0, 0, 0, "", "", "", "t", 0, "t", nil, nil, nil, nil, nil, nil, nil, nil, uint32(2606)},
-						{3757635986, "testing_pkey", 2200, "p", "f", "f", "t", 2147906242, 0, 3757635986, 0, 0, "", "", "", "t", 0, "t", "{1}", nil, nil, nil, nil, nil, nil, nil, uint32(2606)},
-					},
+					Query: `SELECT * FROM "pg_catalog"."pg_constraint" WHERE conrelid='testing2'::regclass OR conrelid='testing'::regclass order by 1`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraint-0001-select-*-from-pg_catalog-."},
 				},
 				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_constraint";`,
-					ExpectedErr: "not",
-				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_constraint";`,
-					ExpectedErr: "not",
-				},
-				{ // Different cases but non-quoted, so it works
-					Query: "SELECT conname FROM PG_catalog.pg_CONSTRAINT ORDER BY conname;",
-					Expected: []sql.Row{
-						{"testing2_pkey"},
-						{"testing2_pktesting_fkey"},
-						{"testing_pkey"},
-						{"testing_v1_key"},
-						{"v1_check"},
-					},
+					Query: `SELECT * FROM "PG_catalog"."pg_constraint";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgconstraint-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT co.oid, co.conname, co.conrelid, cl.relname FROM pg_catalog.pg_constraint co JOIN pg_catalog.pg_class cl ON co.conrelid = cl.oid WHERE cl.relname = 'testing2';",
-					Expected: []sql.Row{
-						{2068729390, "testing2_pkey", 2694106299, "testing2"},
-						{1719906648, "testing2_pktesting_fkey", 2694106299, "testing2"},
-						{3259318326, "v1_check", 2694106299, "testing2"},
-					},
+					Query: `SELECT * FROM "pg_catalog"."PG_constraint";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgconstraint-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
+				},
+				{
+					Query: "SELECT conname FROM PG_catalog.pg_CONSTRAINT ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraint-0004-select-conname-from-pg_catalog.pg_constraint-order"},
+				},
+				{
+					Query: "SELECT co.oid, co.conname, co.conrelid, cl.relname FROM pg_catalog.pg_constraint co JOIN pg_catalog.pg_class cl ON co.conrelid = cl.oid WHERE cl.relname = 'testing2';", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraint-0005-select-co.oid-co.conname-co.conrelid-cl.relname"},
 				},
 			},
 		},
@@ -1154,46 +844,19 @@ func TestPgConstraintIndexes(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT oid, conname FROM pg_catalog.pg_constraint WHERE oid = 2068729390;",
-					Expected: []sql.Row{
-						{2068729390, "testing2_pkey"},
-					},
+					Query: "SELECT oid, conname FROM pg_catalog.pg_constraint WHERE oid = 2068729390;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0001-select-oid-conname-from-pg_catalog.pg_constraint"},
 				},
 				{
-					Query: "explain SELECT oid, conname FROM pg_catalog.pg_constraint WHERE oid = 2068729390 order by 1",
-					Expected: []sql.Row{
-						{"Project"},
-						{" ├─ columns: [pg_constraint.oid, pg_constraint.conname]"},
-						{" └─ Sort(pg_constraint.oid ASC)"},
-						{"     └─ Filter"},
-						{"         ├─ pg_constraint.oid = 2068729390"},
-						{"         └─ IndexedTableAccess(pg_constraint)"},
-						{"             ├─ index: [pg_constraint.oid]"},
-						{"             └─ filters: [{[{Index:[\"public\",\"testing2\",\"PRIMARY\"]}, {Index:[\"public\",\"testing2\",\"PRIMARY\"]}]}]"},
-					},
+					Query: "explain SELECT oid, conname FROM pg_catalog.pg_constraint WHERE oid = 2068729390 order by 1", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0002-explain-select-oid-conname-from", ColumnModes: []string{"explain"}},
 				},
 				{
-					Query: "SELECT oid, conname FROM pg_catalog.pg_constraint WHERE conrelid = 2694106299 ORDER BY conname;",
-					Expected: []sql.Row{
-						{2068729390, "testing2_pkey"},
-						{1719906648, "testing2_pktesting_fkey"},
-						{3259318326, "v1_check"},
-					},
+					Query: "SELECT oid, conname FROM pg_catalog.pg_constraint WHERE conrelid = 2694106299 ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0003-select-oid-conname-from-pg_catalog.pg_constraint"},
 				},
 				{
-					Query: "SELECT oid, conname FROM pg_catalog.pg_constraint WHERE conname = 'testing_pkey' AND connamespace = 2200;",
-					Expected: []sql.Row{
-						{3757635986, "testing_pkey"},
-					},
+					Query: "SELECT oid, conname FROM pg_catalog.pg_constraint WHERE conname = 'testing_pkey' AND connamespace = 2200;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0004-select-oid-conname-from-pg_catalog.pg_constraint"},
 				},
 				{
-					Query: "SELECT oid, conname FROM pg_catalog.pg_constraint WHERE conname >= 'testing' AND conname < 'testingz' ORDER BY conname;",
-					Expected: []sql.Row{
-						{2068729390, "testing2_pkey"},
-						{1719906648, "testing2_pktesting_fkey"},
-						{3757635986, "testing_pkey"},
-						{2652383090, "testing_v1_key"},
-					},
+					Query: "SELECT oid, conname FROM pg_catalog.pg_constraint WHERE conname >= 'testing' AND conname < 'testingz' ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0005-select-oid-conname-from-pg_catalog.pg_constraint"},
 				},
 			},
 		},
@@ -1211,233 +874,81 @@ func TestPgConstraintIndexes(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				// Primary key index tests (pg_constraint_oid_index)
 				{
-					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE oid = (SELECT oid FROM pg_catalog.pg_constraint WHERE conname = 'test_table1_pkey' LIMIT 1);",
-					Expected: []sql.Row{
-						{"test_table1_pkey"},
-					},
+					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE oid = (SELECT oid FROM pg_catalog.pg_constraint WHERE conname = 'test_table1_pkey' LIMIT 1);", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0006-select-conname-from-pg_catalog.pg_constraint-where"},
 				},
 				{
-					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE oid IN (SELECT oid FROM pg_catalog.pg_constraint WHERE conname LIKE '%_pkey' ORDER BY conname LIMIT 3);",
-					Expected: []sql.Row{
-						{"test_table1_pkey"},
-						{"test_table2_pkey"},
-						{"test_table3_pkey"},
-					},
+					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE oid IN (SELECT oid FROM pg_catalog.pg_constraint WHERE conname LIKE '%_pkey' ORDER BY conname LIMIT 3);", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0007-select-conname-from-pg_catalog.pg_constraint-where"},
 				},
 				// conname + connamespace index tests (pg_constraint_conname_nsp_index)
 				{
-					Query: "SELECT conname, connamespace FROM pg_catalog.pg_constraint WHERE conname = 'test_table1_pkey' AND connamespace = 2200;",
-					Expected: []sql.Row{
-						{"test_table1_pkey", uint32(2200)},
-					},
+					Query: "SELECT conname, connamespace FROM pg_catalog.pg_constraint WHERE conname = 'test_table1_pkey' AND connamespace = 2200;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0008-select-conname-connamespace-from-pg_catalog.pg_constraint"},
 				},
 				{
-					Query: "explain SELECT conname, connamespace FROM pg_catalog.pg_constraint WHERE conname = 'test_table1_pkey' AND connamespace = 2200 order by 1",
-					Expected: []sql.Row{
-						{"Project"},
-						{" ├─ columns: [pg_constraint.conname, pg_constraint.connamespace]"},
-						{" └─ Sort(pg_constraint.conname ASC)"},
-						{"     └─ Filter"},
-						{"         ├─ (pg_constraint.conname = 'test_table1_pkey' AND pg_constraint.connamespace = 2200)"},
-						{"         └─ IndexedTableAccess(pg_constraint)"},
-						{"             ├─ index: [pg_constraint.conname,pg_constraint.connamespace]"},
-						{"             └─ filters: [{[test_table1_pkey, test_table1_pkey], [{Namespace:[\"public\"]}, {Namespace:[\"public\"]}]}]"},
-					},
+					Query: "explain SELECT conname, connamespace FROM pg_catalog.pg_constraint WHERE conname = 'test_table1_pkey' AND connamespace = 2200 order by 1", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0009-explain-select-conname-connamespace-from", ColumnModes: []string{"explain"}},
 				},
 				{
-					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conname IN ('test_table1_pkey', 'test_table2_pkey', 'name_check') AND connamespace = 2200 ORDER BY conname;",
-					Expected: []sql.Row{
-						{"name_check"},
-						{"test_table1_pkey"},
-						{"test_table2_pkey"},
-					},
+					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conname IN ('test_table1_pkey', 'test_table2_pkey', 'name_check') AND connamespace = 2200 ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0010-select-conname-from-pg_catalog.pg_constraint-where"},
 				},
 				{
-					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conname >= 'name_' AND conname < 'name_z' AND connamespace = 2200 ORDER BY conname;",
-					Expected: []sql.Row{
-						{"name_check"},
-					},
+					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conname >= 'name_' AND conname < 'name_z' AND connamespace = 2200 ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0011-select-conname-from-pg_catalog.pg_constraint-where"},
 				},
 				// conrelid + contypid + conname index tests (pg_constraint_conrelid_contypid_conname_index)
 				{
-					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid = 3645786842 AND contypid = 0 ORDER BY conname;",
-					Expected: []sql.Row{
-						{"test_table1_pkey"},
-						{"test_table1_val1_key"},
-						{"val2_check"},
-					},
+					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid = 3645786842 AND contypid = 0 ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0012-select-conname-from-pg_catalog.pg_constraint-where"},
 				},
 				{
-					Query: "explain SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid = 3645786842 AND contypid = 0 ORDER BY conname;",
-					Expected: []sql.Row{
-						{"Project"},
-						{" ├─ columns: [pg_constraint.conname]"},
-						{" └─ Sort(pg_constraint.conname ASC)"},
-						{"     └─ Filter"},
-						{"         ├─ (pg_constraint.conrelid = 3645786842 AND pg_constraint.contypid = 0)"},
-						{"         └─ IndexedTableAccess(pg_constraint)"},
-						{"             ├─ index: [pg_constraint.conrelid,pg_constraint.contypid,pg_constraint.conname]"},
-						{"             └─ filters: [{[{Table:[\"public\",\"test_table1\"]}, {Table:[\"public\",\"test_table1\"]}], [{OID:[\"0\"]}, {OID:[\"0\"]}], [NULL, ∞)}]"},
-					},
+					Query: "explain SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid = 3645786842 AND contypid = 0 ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0013-explain-select-conname-from-pg_catalog.pg_constraint", ColumnModes: []string{"explain"}},
 				},
 				{
-					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid = (SELECT oid FROM pg_catalog.pg_class WHERE relname = 'test_table1') AND contypid = 0 ORDER BY conname;",
-					Expected: []sql.Row{
-						{"test_table1_pkey"},
-						{"test_table1_val1_key"},
-						{"val2_check"},
-					},
+					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid = (SELECT oid FROM pg_catalog.pg_class WHERE relname = 'test_table1') AND contypid = 0 ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0014-select-conname-from-pg_catalog.pg_constraint-where"},
 				},
 				{
-					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid IN (SELECT oid FROM pg_catalog.pg_class WHERE relname IN ('test_table1', 'test_table2')) AND contypid = 0 ORDER BY conname;",
-					Expected: []sql.Row{
-						{"name_check"},
-						{"test_table1_pkey"},
-						{"test_table1_val1_key"},
-						{"test_table2_fk_col_fkey"},
-						{"test_table2_name_key"},
-						{"test_table2_pkey"},
-						{"val2_check"},
-					},
+					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid IN (SELECT oid FROM pg_catalog.pg_class WHERE relname IN ('test_table1', 'test_table2')) AND contypid = 0 ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0015-select-conname-from-pg_catalog.pg_constraint-where"},
 				},
 				{
-					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid = (SELECT oid FROM pg_catalog.pg_class WHERE relname = 'test_table2') AND contypid = 0 AND conname = 'name_check';",
-					Expected: []sql.Row{
-						{"name_check"},
-					},
+					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid = (SELECT oid FROM pg_catalog.pg_class WHERE relname = 'test_table2') AND contypid = 0 AND conname = 'name_check';", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0016-select-conname-from-pg_catalog.pg_constraint-where"},
 				},
 
 				// contypid index tests (pg_constraint_contypid_index)
 				{
-					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE contypid = (SELECT oid FROM pg_catalog.pg_type WHERE typname = 'test_domain') ORDER BY conname;",
-					Expected: []sql.Row{
-						{"test_domain_check"},
-					},
+					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE contypid = (SELECT oid FROM pg_catalog.pg_type WHERE typname = 'test_domain') ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0017-select-conname-from-pg_catalog.pg_constraint-where"},
 				},
 				{
-					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE contypid = 1309307140 ORDER BY conname;",
-					Expected: []sql.Row{
-						{"test_domain_check"},
-					},
+					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE contypid = 1309307140 ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0018-select-conname-from-pg_catalog.pg_constraint-where"},
 				},
 				{
-					Query: "explain SELECT conname FROM pg_catalog.pg_constraint WHERE contypid = 1309307140 ORDER BY conname;",
-					Expected: []sql.Row{
-						{"Project"},
-						{" ├─ columns: [pg_constraint.conname]"},
-						{" └─ Sort(pg_constraint.conname ASC)"},
-						{"     └─ Filter"},
-						{"         ├─ pg_constraint.contypid = 1309307140"},
-						{"         └─ IndexedTableAccess(pg_constraint)"},
-						{"             ├─ index: [pg_constraint.contypid]"},
-						{"             └─ filters: [{[{Type:[\"public\",\"test_domain\"]}, {Type:[\"public\",\"test_domain\"]}]}]"},
-					},
+					Query: "explain SELECT conname FROM pg_catalog.pg_constraint WHERE contypid = 1309307140 ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0019-explain-select-conname-from-pg_catalog.pg_constraint", ColumnModes: []string{"explain"}},
 				},
 				{
-					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE contypid IN (SELECT oid FROM pg_catalog.pg_type WHERE typname LIKE 'test_domain%') ORDER BY conname;",
-					Expected: []sql.Row{
-						{"test_domain2_check"},
-						{"test_domain_check"},
-					},
+					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE contypid IN (SELECT oid FROM pg_catalog.pg_type WHERE typname LIKE 'test_domain%') ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0020-select-conname-from-pg_catalog.pg_constraint-where"},
 				},
 				{
-					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE contypid > 0 ORDER BY conname;",
-					Expected: []sql.Row{
-						{"test_domain2_check"},
-						{"test_domain_check"},
-					},
+					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE contypid > 0 ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0021-select-conname-from-pg_catalog.pg_constraint-where"},
 				},
 				{
-					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid >= (SELECT MIN(oid) FROM pg_catalog.pg_class WHERE relname LIKE 'test_%') AND conrelid <= (SELECT MAX(oid) FROM pg_catalog.pg_class WHERE relname LIKE 'test_%') AND contypid = 0 ORDER BY conname;",
-					Expected: []sql.Row{
-						{"name_check"},
-						{"test_table1_pkey"},
-						{"test_table1_val1_key"},
-						{"test_table2_fk_col_fkey"},
-						{"test_table2_name_key"},
-						{"test_table2_pkey"},
-						{"test_table3_pkey"},
-						{"val2_check"},
-					},
+					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid >= (SELECT MIN(oid) FROM pg_catalog.pg_class WHERE relname LIKE 'test_%') AND conrelid <= (SELECT MAX(oid) FROM pg_catalog.pg_class WHERE relname LIKE 'test_%') AND contypid = 0 ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0022-select-conname-from-pg_catalog.pg_constraint-where"},
 				},
 				{
-					Query: "explain SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid >= (SELECT MIN(oid) FROM pg_catalog.pg_class WHERE relname LIKE 'test_%') AND conrelid <= (SELECT MAX(oid) FROM pg_catalog.pg_class WHERE relname LIKE 'test_%') AND contypid = 0 ORDER BY conname;",
-					Expected: []sql.Row{
-						{"Project"},
-						{" ├─ columns: [pg_constraint.conname]"},
-						{" └─ Sort(pg_constraint.conname ASC)"},
-						{"     └─ Filter"},
-						{"         ├─ ((pg_constraint.conrelid >= Subquery((select  min(oid) from pg_class where relname like 'test_%')) AND pg_constraint.conrelid <= Subquery((select min max(oid) from pg_class where relname like 'test_%'))) AND pg_constraint.contypid = 0)"},
-						{"         └─ IndexedTableAccess(pg_constraint)"},
-						{"             ├─ index: [pg_constraint.contypid]"},
-						{"             └─ filters: [{[{OID:[\"0\"]}, {OID:[\"0\"]}]}]"},
-					},
+					Query: "explain SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid >= (SELECT MIN(oid) FROM pg_catalog.pg_class WHERE relname LIKE 'test_%') AND conrelid <= (SELECT MAX(oid) FROM pg_catalog.pg_class WHERE relname LIKE 'test_%') AND contypid = 0 ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0023-explain-select-conname-from-pg_catalog.pg_constraint", ColumnModes: []string{"explain"}},
 				},
 				// Prefix match on 3-column index
 				{
-					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid = (SELECT oid FROM pg_catalog.pg_class WHERE relname = 'test_table1') ORDER BY conname;",
-					Expected: []sql.Row{
-						{"test_table1_pkey"},
-						{"test_table1_val1_key"},
-						{"val2_check"},
-					},
+					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid = (SELECT oid FROM pg_catalog.pg_class WHERE relname = 'test_table1') ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0024-select-conname-from-pg_catalog.pg_constraint-where"},
 				},
 				{
-					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid = 3645786842 ORDER BY conname;",
-					Expected: []sql.Row{
-						{"test_table1_pkey"},
-						{"test_table1_val1_key"},
-						{"val2_check"},
-					},
+					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid = 3645786842 ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0025-select-conname-from-pg_catalog.pg_constraint-where"},
 				},
 				{
-					Query: "explain SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid = 3645786842 ORDER BY conname;",
-					Expected: []sql.Row{
-						{"Project"},
-						{" ├─ columns: [pg_constraint.conname]"},
-						{" └─ Sort(pg_constraint.conname ASC)"},
-						{"     └─ Filter"},
-						{"         ├─ pg_constraint.conrelid = 3645786842"},
-						{"         └─ IndexedTableAccess(pg_constraint)"},
-						{"             ├─ index: [pg_constraint.conrelid,pg_constraint.contypid,pg_constraint.conname]"},
-						{"             └─ filters: [{[{Table:[\"public\",\"test_table1\"]}, {Table:[\"public\",\"test_table1\"]}], [NULL, ∞), [NULL, ∞)}]"},
-					},
+					Query: "explain SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid = 3645786842 ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0026-explain-select-conname-from-pg_catalog.pg_constraint", ColumnModes: []string{"explain"}},
 				},
 				{
-					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE (conname LIKE '%_pkey' OR conname LIKE '%_key') AND connamespace = 2200 ORDER BY conname;",
-					Expected: []sql.Row{
-						{"test_table1_pkey"},
-						{"test_table1_val1_key"},
-						{"test_table2_fk_col_fkey"},
-						{"test_table2_name_key"},
-						{"test_table2_pkey"},
-						{"test_table3_pkey"},
-					},
+					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE (conname LIKE '%_pkey' OR conname LIKE '%_key') AND connamespace = 2200 ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0027-select-conname-from-pg_catalog.pg_constraint-where"},
 				},
 				{
-					Query: "EXPLAIN SELECT conname FROM pg_catalog.pg_constraint WHERE conname = 'test_table1_pkey' AND connamespace = 2200;",
-					Expected: []sql.Row{
-						{"Project"},
-						{" ├─ columns: [pg_constraint.conname]"},
-						{" └─ Filter"},
-						{"     ├─ (pg_constraint.conname = 'test_table1_pkey' AND pg_constraint.connamespace = 2200)"},
-						{"     └─ IndexedTableAccess(pg_constraint)"},
-						{"         ├─ index: [pg_constraint.conname,pg_constraint.connamespace]"},
-						{"         └─ filters: [{[test_table1_pkey, test_table1_pkey], [{Namespace:[\"public\"]}, {Namespace:[\"public\"]}]}]"},
-					},
+					Query: "EXPLAIN SELECT conname FROM pg_catalog.pg_constraint WHERE conname = 'test_table1_pkey' AND connamespace = 2200;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0028-explain-select-conname-from-pg_catalog.pg_constraint", ColumnModes: []string{"explain"}},
 				},
 				{
-					Query: "EXPLAIN SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid = 3645786842 AND contypid > 0 order by 1;",
-					Expected: []sql.Row{
-						{"Project"},
-						{" ├─ columns: [pg_constraint.conname]"},
-						{" └─ Sort(pg_constraint.conname ASC)"},
-						{"     └─ Filter"},
-						{"         ├─ (pg_constraint.conrelid = 3645786842 AND pg_constraint.contypid > 0)"},
-						{"         └─ IndexedTableAccess(pg_constraint)"},
-						{"             ├─ index: [pg_constraint.conrelid,pg_constraint.contypid,pg_constraint.conname]"},
-						{"             └─ filters: [{[{Table:[\"public\",\"test_table1\"]}, {Table:[\"public\",\"test_table1\"]}], ({OID:[\"0\"]}, ∞), [NULL, ∞)}]"},
-					},
+					Query: "EXPLAIN SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid = 3645786842 AND contypid > 0 order by 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconstraintindexes-0029-explain-select-conname-from-pg_catalog.pg_constraint", ColumnModes: []string{"explain"}},
 				},
 			},
 		},
@@ -1471,20 +982,22 @@ func TestPgConversion(t *testing.T) {
 			Name: "pg_conversion",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT conname FROM "pg_catalog"."pg_conversion" WHERE conname = 'utf8_to_iso_8859_1';`,
-					Expected: []sql.Row{{"utf8_to_iso_8859_1"}},
+					Query: `SELECT conname FROM "pg_catalog"."pg_conversion" WHERE conname = 'utf8_to_iso_8859_1';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconversion-0001-select-conname-from-pg_catalog-."},
 				},
 				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_conversion";`,
-					ExpectedErr: "not",
+					Query: `SELECT * FROM "PG_catalog"."pg_conversion";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgconversion-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_conversion";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_conversion";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgconversion-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT conname FROM PG_catalog.pg_CONVERSION ORDER BY conname;",
-					Expected: []sql.Row{{"utf8_to_iso_8859_1"}},
+				{
+					Query: "SELECT conname FROM PG_catalog.pg_CONVERSION ORDER BY conname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgconversion-0004-select-conname-from-pg_catalog.pg_conversion-order"},
 				},
 			},
 		},
@@ -1497,20 +1010,25 @@ func TestPgCursors(t *testing.T) {
 			Name: "pg_cursors",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_cursors";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_cursors";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgcursors-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_cursors";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_cursors";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgcursors-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_cursors";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_cursors";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgcursors-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT name FROM PG_catalog.pg_CURSORS ORDER BY name;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT name FROM PG_catalog.pg_CURSORS ORDER BY name;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgcursors-0004-select-name-from-pg_catalog.pg_cursors-order"},
 				},
 			},
 		},
@@ -1527,39 +1045,28 @@ func TestPgDatabase(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT datname FROM "pg_catalog"."pg_database";`,
-					Expected: []sql.Row{
-						{"postgres"},
-						{"test"},
-					},
+					Query: `SELECT datname FROM "pg_catalog"."pg_database";`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgdatabase-0001-select-datname-from-pg_catalog-."},
 				},
 				{
-					Query: `SELECT oid, datname FROM "pg_catalog"."pg_database" ORDER BY datname DESC;`,
-					Expected: []sql.Row{
-						{258611842, "test"},
-						{5, "postgres"},
-					},
+					Query: `SELECT oid, datname FROM "pg_catalog"."pg_database" ORDER BY datname DESC;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgdatabase-0002-select-oid-datname-from-pg_catalog"},
 				},
 				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_database";`,
-					ExpectedErr: "not",
-				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_database";`,
-					ExpectedErr: "not",
-				},
-				{ // Different cases but non-quoted, so it works
-					Query: "SELECT oid, datname FROM PG_catalog.pg_DATABASE ORDER BY datname ASC;",
-					Expected: []sql.Row{
-						{5, "postgres"},
-						{258611842, "test"},
-					},
+					Query: `SELECT * FROM "PG_catalog"."pg_database";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgdatabase-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT * FROM pg_catalog.pg_database WHERE datname='test';",
-					Expected: []sql.Row{
-						{258611842, "test", 0, 6, "i", "f", "t", -1, 0, 0, 0, "", "", nil, "", nil, nil},
-					},
+					Query: `SELECT * FROM "pg_catalog"."PG_database";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgdatabase-0004-select-*-from-pg_catalog-.", Compare: "sqlstate"},
+				},
+				{
+					Query: "SELECT oid, datname FROM PG_catalog.pg_DATABASE ORDER BY datname ASC;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgdatabase-0005-select-oid-datname-from-pg_catalog.pg_database"},
+				},
+				{
+					Query: "SELECT * FROM pg_catalog.pg_database WHERE datname='test';", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgdatabase-0006-select-*-from-pg_catalog.pg_database-where"},
 				},
 			},
 		},
@@ -1572,20 +1079,25 @@ func TestPgDbRoleSetting(t *testing.T) {
 			Name: "pg_db_role_setting",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_db_role_setting";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_db_role_setting";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgdbrolesetting-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_db_role_setting";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_db_role_setting";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgdbrolesetting-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_db_role_setting";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_db_role_setting";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgdbrolesetting-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT setdatabase FROM PG_catalog.pg_DB_ROLE_SETTING ORDER BY setdatabase;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT setdatabase FROM PG_catalog.pg_DB_ROLE_SETTING ORDER BY setdatabase;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgdbrolesetting-0004-select-setdatabase-from-pg_catalog.pg_db_role_setting-order"},
 				},
 			},
 		},
@@ -1598,20 +1110,25 @@ func TestPgDefaultAcl(t *testing.T) {
 			Name: "pg_default_acl",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_default_acl";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_default_acl";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgdefaultacl-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_default_acl";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_default_acl";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgdefaultacl-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_default_acl";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_default_acl";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgdefaultacl-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT oid FROM PG_catalog.pg_DEFAULT_ACL ORDER BY oid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT oid FROM PG_catalog.pg_DEFAULT_ACL ORDER BY oid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgdefaultacl-0004-select-oid-from-pg_catalog.pg_default_acl-order"},
 				},
 			},
 		},
@@ -1624,20 +1141,25 @@ func TestPgDepend(t *testing.T) {
 			Name: "pg_depend",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_depend";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_depend";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgdepend-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_depend";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_depend";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgdepend-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_depend";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_depend";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgdepend-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT classid FROM PG_catalog.pg_DEPEND ORDER BY classid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT classid FROM PG_catalog.pg_DEPEND ORDER BY classid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgdepend-0004-select-classid-from-pg_catalog.pg_depend-order"},
 				},
 				{
 					Query: `SELECT classid, objid, refclassid, refobjid, deptype
@@ -1657,8 +1179,7 @@ func TestPgDepend(t *testing.T) {
 							AND classid = 'pg_amproc'::pg_catalog.regclass
 							AND objid = p.oid
 							AND NOT (refclassid = 'pg_opfamily'::pg_catalog.regclass AND amprocfamily = refobjid)
-						ORDER BY 1,2;`,
-					Expected: []sql.Row{},
+						ORDER BY 1,2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgdepend-0005-select-classid-objid-refclassid-refobjid"},
 				},
 			},
 		},
@@ -1671,20 +1192,25 @@ func TestPgDescription(t *testing.T) {
 			Name: "pg_description",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_description";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_description";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgdescription-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_description";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_description";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgdescription-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_description";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_description";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgdescription-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT objoid FROM PG_catalog.pg_DESCRIPTION ORDER BY objoid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT objoid FROM PG_catalog.pg_DESCRIPTION ORDER BY objoid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgdescription-0004-select-objoid-from-pg_catalog.pg_description-order"},
 				},
 			},
 		},
@@ -1697,20 +1223,25 @@ func TestPgEnum(t *testing.T) {
 			Name: "pg_enum",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_enum";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_enum";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgenum-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_enum";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_enum";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgenum-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_enum";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_enum";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgenum-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT enumlabel FROM PG_catalog.pg_ENUM ORDER BY enumlabel;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT enumlabel FROM PG_catalog.pg_ENUM ORDER BY enumlabel;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgenum-0004-select-enumlabel-from-pg_catalog.pg_enum-order"},
 				},
 			},
 		},
@@ -1723,20 +1254,25 @@ func TestPgEventTrigger(t *testing.T) {
 			Name: "pg_event_trigger",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_event_trigger";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_event_trigger";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgeventtrigger-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_event_trigger";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_event_trigger";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgeventtrigger-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_event_trigger";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_event_trigger";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgeventtrigger-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT evtname FROM PG_catalog.pg_EVENT_TRIGGER ORDER BY evtname;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT evtname FROM PG_catalog.pg_EVENT_TRIGGER ORDER BY evtname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgeventtrigger-0004-select-evtname-from-pg_catalog.pg_event_trigger-order"},
 				},
 			},
 		},
@@ -1749,20 +1285,25 @@ func TestPgExtension(t *testing.T) {
 			Name: "pg_extension",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_extension";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_extension";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgextension-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_extension";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_extension";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgextension-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_extension";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_extension";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgextension-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT extname FROM PG_catalog.pg_EXTENSION ORDER BY extname;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT extname FROM PG_catalog.pg_EXTENSION ORDER BY extname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgextension-0004-select-extname-from-pg_catalog.pg_extension-order"},
 				},
 			},
 		},
@@ -1775,20 +1316,25 @@ func TestPgFileSettings(t *testing.T) {
 			Name: "pg_file_settings",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_file_settings";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_file_settings";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgfilesettings-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_file_settings";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_file_settings";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgfilesettings-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_file_settings";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_file_settings";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgfilesettings-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT name FROM PG_catalog.pg_FILE_SETTINGS ORDER BY name;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT name FROM PG_catalog.pg_FILE_SETTINGS ORDER BY name;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgfilesettings-0004-select-name-from-pg_catalog.pg_file_settings-order"},
 				},
 			},
 		},
@@ -1801,20 +1347,25 @@ func TestPgForeignDataWrapper(t *testing.T) {
 			Name: "pg_foreign_data_wrapper",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_foreign_data_wrapper";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_foreign_data_wrapper";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgforeigndatawrapper-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_foreign_data_wrapper";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_foreign_data_wrapper";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgforeigndatawrapper-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_foreign_data_wrapper";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_foreign_data_wrapper";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgforeigndatawrapper-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT fdwname FROM PG_catalog.pg_FOREIGN_DATA_WRAPPER ORDER BY fdwname;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT fdwname FROM PG_catalog.pg_FOREIGN_DATA_WRAPPER ORDER BY fdwname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgforeigndatawrapper-0004-select-fdwname-from-pg_catalog.pg_foreign_data_wrapper-order"},
 				},
 			},
 		},
@@ -1827,20 +1378,25 @@ func TestPgForeignServer(t *testing.T) {
 			Name: "pg_foreign_server",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_foreign_server";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_foreign_server";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgforeignserver-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_foreign_server";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_foreign_server";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgforeignserver-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_foreign_server";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_foreign_server";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgforeignserver-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT srvname FROM PG_catalog.pg_FOREIGN_SERVER ORDER BY srvname;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT srvname FROM PG_catalog.pg_FOREIGN_SERVER ORDER BY srvname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgforeignserver-0004-select-srvname-from-pg_catalog.pg_foreign_server-order"},
 				},
 			},
 		},
@@ -1853,20 +1409,25 @@ func TestPgForeignTable(t *testing.T) {
 			Name: "pg_foreign_table",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_foreign_table";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_foreign_table";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgforeigntable-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_foreign_table";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_foreign_table";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgforeigntable-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_foreign_table";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_foreign_table";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgforeigntable-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT ftrelid FROM PG_catalog.pg_FOREIGN_TABLE ORDER BY ftrelid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT ftrelid FROM PG_catalog.pg_FOREIGN_TABLE ORDER BY ftrelid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgforeigntable-0004-select-ftrelid-from-pg_catalog.pg_foreign_table-order"},
 				},
 			},
 		},
@@ -1879,20 +1440,25 @@ func TestPgGroup(t *testing.T) {
 			Name: "pg_group",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_group";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_group";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpggroup-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_group";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_group";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpggroup-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_group";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_group";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpggroup-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT groname FROM PG_catalog.pg_GROUP ORDER BY groname;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT groname FROM PG_catalog.pg_GROUP ORDER BY groname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpggroup-0004-select-groname-from-pg_catalog.pg_group-order"},
 				},
 			},
 		},
@@ -1905,20 +1471,25 @@ func TestPgHbaFileRules(t *testing.T) {
 			Name: "pg_hba_file_rules",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_hba_file_rules";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_hba_file_rules";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpghbafilerules-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_hba_file_rules";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_hba_file_rules";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpghbafilerules-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_hba_file_rules";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_hba_file_rules";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpghbafilerules-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT line_number FROM PG_catalog.pg_HBA_FILE_RULES ORDER BY line_number;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT line_number FROM PG_catalog.pg_HBA_FILE_RULES ORDER BY line_number;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpghbafilerules-0004-select-line_number-from-pg_catalog.pg_hba_file_rules-order"},
 				},
 			},
 		},
@@ -1931,20 +1502,25 @@ func TestPgIdentFileMappings(t *testing.T) {
 			Name: "pg_ident_file_mappings",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_ident_file_mappings";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_ident_file_mappings";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgidentfilemappings-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_ident_file_mappings";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_ident_file_mappings";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgidentfilemappings-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_ident_file_mappings";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_ident_file_mappings";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgidentfilemappings-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT line_number FROM PG_catalog.pg_IDENT_FILE_MAPPINGS ORDER BY line_number;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT line_number FROM PG_catalog.pg_IDENT_FILE_MAPPINGS ORDER BY line_number;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgidentfilemappings-0004-select-line_number-from-pg_catalog.pg_ident_file_mappings-order"},
 				},
 			},
 		},
@@ -1967,22 +1543,21 @@ func TestPgIndex(t *testing.T) {
 						JOIN pg_index i ON c.oid = i.indexrelid
 						JOIN pg_namespace n ON c.relnamespace = n.oid
 						WHERE n.nspname = 'testschema' and left(c.relname, 5) <> 'dolt_'
-						ORDER BY 1;`,
-					Expected: []sql.Row{
-						{1067629180, 3120782595, 1, 1, "t", "f", "t", "f", "t", "f", "t", "f", "t", "t", "f", "1", "0", opClassOidVector("int4_ops"), "0", nil, nil},
-						{2070175302, 3120782595, 1, 1, "t", "f", "f", "f", "t", "f", "t", "f", "t", "t", "f", "2", "0", opClassOidVector("int4_ops"), "0", nil, nil},
-						{3185790121, 1784425749, 2, 2, "t", "f", "t", "f", "t", "f", "t", "f", "t", "t", "f", "1 2", "0 0", opClassOidVector("int4_ops", "int4_ops"), "0 0", nil, nil},
-					},
+						ORDER BY 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgindex-0001-select-i.*-from-pg_class-c"},
 				},
 				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_index";`,
-					ExpectedErr: "not",
+					Query: `SELECT * FROM "PG_catalog"."pg_index";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgindex-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_index";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_index";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgindex-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
+				{
 					Query: "SELECT i.indexrelid from pg_class c " +
 						"JOIN PG_catalog.pg_INDEX i ON c.oid = i.indexrelid " +
 						"JOIN pg_namespace n ON c.relnamespace = n.oid " +
@@ -2003,8 +1578,7 @@ func TestPgIndex(t *testing.T) {
 					},
 				},
 				{
-					Query:    "SELECT unnest(indoption) FROM pg_index LIMIT 1;",
-					Expected: []sql.Row{{0}},
+					Query: "SELECT unnest(indoption) FROM pg_index LIMIT 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgindex-0006-select-unnest-indoption-from-pg_index"},
 				},
 				{
 					Query: `SELECT c.relname, a.attname, array_position(i.indkey, a.attnum::int2)
@@ -2012,11 +1586,7 @@ func TestPgIndex(t *testing.T) {
 						JOIN pg_catalog.pg_index i ON i.indrelid = c.oid
 						JOIN pg_catalog.pg_attribute a ON a.attrelid = c.oid
 						WHERE c.relname = 'testing2' AND i.indisprimary AND a.attname IN ('pk', 'v1')
-						ORDER BY a.attnum;`,
-					Expected: []sql.Row{
-						{"testing2", "pk", 1},
-						{"testing2", "v1", 2},
-					},
+						ORDER BY a.attnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgindex-0007-select-c.relname-a.attname-array_position-i.indkey"},
 				},
 			},
 		},
@@ -2036,48 +1606,39 @@ func TestPgIndexes(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_indexes" where schemaname = 'testschema';`,
-					Expected: []sql.Row{
-						{"testschema", "testing", "testing_pkey", nil, "CREATE UNIQUE INDEX testing_pkey ON testschema.testing USING btree (pk)"},
-						{"testschema", "testing", "testing_v1_key", nil, "CREATE UNIQUE INDEX testing_v1_key ON testschema.testing USING btree (v1)"},
-						{"testschema", "testing2", "testing2_pkey", nil, "CREATE UNIQUE INDEX testing2_pkey ON testschema.testing2 USING btree (pk, v1)"},
-						{"testschema", "testing2", "my_index", nil, "CREATE INDEX my_index ON testschema.testing2 USING btree (v1)"},
-					},
+					Query: `SELECT * FROM "pg_catalog"."pg_indexes" where schemaname = 'testschema';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgindexes-0001-select-*-from-pg_catalog-."},
 				},
 				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_indexes";`,
-					ExpectedErr: "not",
+					Query: `SELECT * FROM "PG_catalog"."pg_indexes";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgindexes-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_indexes";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_indexes";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgindexes-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT indexname FROM PG_catalog.pg_INDEXES where schemaname='testschema' ORDER BY indexname;",
-					Expected: []sql.Row{{"my_index"}, {"testing2_pkey"}, {"testing_pkey"}, {"testing_v1_key"}},
+				{
+					Query: "SELECT indexname FROM PG_catalog.pg_INDEXES where schemaname='testschema' ORDER BY indexname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgindexes-0004-select-indexname-from-pg_catalog.pg_indexes-where"},
 				},
 				{
 					// Workload pattern: ORM/migration tools test for index
 					// existence with EXISTS before issuing conditional DDL.
 					Query: `SELECT EXISTS (SELECT 1 FROM pg_catalog.pg_indexes
-                                        WHERE schemaname = 'testschema' AND indexname = 'my_index');`,
-					Expected: []sql.Row{{"t"}},
+                                        WHERE schemaname = 'testschema' AND indexname = 'my_index');`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgindexes-0005-select-exists-select-1-from"},
 				},
 				{
 					// And the same pattern returning false for a missing index.
 					Query: `SELECT EXISTS (SELECT 1 FROM pg_catalog.pg_indexes
-                                        WHERE schemaname = 'testschema' AND indexname = 'not_yet');`,
-					Expected: []sql.Row{{"f"}},
+                                        WHERE schemaname = 'testschema' AND indexname = 'not_yet');`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgindexes-0006-select-exists-select-1-from"},
 				},
 				{
 					// drizzle-kit-style: filter to a specific table and read indexdef.
 					Query: `SELECT indexname, indexdef FROM pg_catalog.pg_indexes
                             WHERE schemaname = 'testschema' AND tablename = 'testing'
-                            ORDER BY indexname;`,
-					Expected: []sql.Row{
-						{"testing_pkey", "CREATE UNIQUE INDEX testing_pkey ON testschema.testing USING btree (pk)"},
-						{"testing_v1_key", "CREATE UNIQUE INDEX testing_v1_key ON testschema.testing USING btree (v1)"},
-					},
+                            ORDER BY indexname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgindexes-0007-select-indexname-indexdef-from-pg_catalog.pg_indexes"},
 				},
 				{
 					// Simulate the conditional DDL pattern: only issue
@@ -2086,22 +1647,19 @@ func TestPgIndexes(t *testing.T) {
 					// tool consults; the second invocation is a no-op
 					// because the index now exists.
 					Query: `SELECT count(*) FROM pg_catalog.pg_indexes
-                            WHERE schemaname = 'testschema' AND indexname = 'my_index';`,
-					Expected: []sql.Row{{int64(1)}},
+                            WHERE schemaname = 'testschema' AND indexname = 'my_index';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgindexes-0008-select-count-*-from-pg_catalog.pg_indexes"},
 				},
 				{
 					// Coverage of CREATE INDEX IF NOT EXISTS. The first
 					// invocation was already in setup; the second must
 					// be a no-op even though the index already exists.
-					Query:    `CREATE INDEX IF NOT EXISTS my_index ON testschema.testing2(v1);`,
-					Expected: []sql.Row{},
+					Query: `CREATE INDEX IF NOT EXISTS my_index ON testschema.testing2(v1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgindexes-0009-create-index-if-not-exists"},
 				},
 				{
 					// After the no-op CREATE INDEX IF NOT EXISTS the view
 					// should still report exactly one matching index.
 					Query: `SELECT count(*) FROM pg_catalog.pg_indexes
-                            WHERE schemaname = 'testschema' AND indexname = 'my_index';`,
-					Expected: []sql.Row{{int64(1)}},
+                            WHERE schemaname = 'testschema' AND indexname = 'my_index';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgindexes-0010-select-count-*-from-pg_catalog.pg_indexes"},
 				},
 				{
 					// Joined query against pg_class — admin tools commonly
@@ -2111,8 +1669,7 @@ func TestPgIndexes(t *testing.T) {
                             FROM pg_catalog.pg_indexes idx
                             JOIN pg_catalog.pg_class c ON c.relname = idx.indexname
                             WHERE idx.schemaname = 'testschema'
-                              AND idx.indexname = 'my_index';`,
-					Expected: []sql.Row{{"my_index", "my_index"}},
+                              AND idx.indexname = 'my_index';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgindexes-0011-select-idx.indexname-c.relname-from-pg_catalog.pg_indexes"},
 				},
 			},
 		},
@@ -2125,20 +1682,25 @@ func TestPgInherits(t *testing.T) {
 			Name: "pg_inherits",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_inherits";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_inherits";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpginherits-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_inherits";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_inherits";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpginherits-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_inherits";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_inherits";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpginherits-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT inhrelid FROM PG_catalog.pg_INHERITS ORDER BY inhrelid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT inhrelid FROM PG_catalog.pg_INHERITS ORDER BY inhrelid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpginherits-0004-select-inhrelid-from-pg_catalog.pg_inherits-order"},
 				},
 			},
 		},
@@ -2151,20 +1713,22 @@ func TestPgInitPrivs(t *testing.T) {
 			Name: "pg_init_privs",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT count(*) > 0 FROM "pg_catalog"."pg_init_privs";`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT count(*) > 0 FROM "pg_catalog"."pg_init_privs";`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpginitprivs-0001-select-count-*->-0"},
 				},
 				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_init_privs";`,
-					ExpectedErr: "not",
+					Query: `SELECT * FROM "PG_catalog"."pg_init_privs";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpginitprivs-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_init_privs";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_init_privs";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpginitprivs-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT count(*) > 0 FROM PG_catalog.pg_INIT_PRIVS;",
-					Expected: []sql.Row{{"t"}},
+				{
+					Query: "SELECT count(*) > 0 FROM PG_catalog.pg_INIT_PRIVS;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpginitprivs-0004-select-count-*->-0"},
 				},
 			},
 		},
@@ -2177,20 +1741,25 @@ func TestPgLanguage(t *testing.T) {
 			Name: "pg_language",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_language";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_language";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpglanguage-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_language";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_language";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpglanguage-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_language";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_language";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpglanguage-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT lanname FROM PG_catalog.pg_LANGUAGE ORDER BY lanname;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT lanname FROM PG_catalog.pg_LANGUAGE ORDER BY lanname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpglanguage-0004-select-lanname-from-pg_catalog.pg_language-order"},
 				},
 			},
 		},
@@ -2203,20 +1772,25 @@ func TestPgLargeobject(t *testing.T) {
 			Name: "pg_largeobject",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_largeobject";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_largeobject";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpglargeobject-0001-select-*-from-pg_catalog-.", ColumnModes: []string{"structural", "structural", "bytea"}},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_largeobject";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_largeobject";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpglargeobject-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_largeobject";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_largeobject";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpglargeobject-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT loid FROM PG_catalog.pg_LARGEOBJECT ORDER BY loid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT loid FROM PG_catalog.pg_LARGEOBJECT ORDER BY loid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpglargeobject-0004-select-loid-from-pg_catalog.pg_largeobject-order"},
 				},
 			},
 		},
@@ -2229,20 +1803,25 @@ func TestPgLargeobjectMetadata(t *testing.T) {
 			Name: "pg_largeobject_metadata",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_largeobject_metadata";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_largeobject_metadata";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpglargeobjectmetadata-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_largeobject_metadata";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_largeobject_metadata";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpglargeobjectmetadata-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_largeobject_metadata";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_largeobject_metadata";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpglargeobjectmetadata-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT oid FROM PG_catalog.pg_LARGEOBJECT_METADATA ORDER BY oid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT oid FROM PG_catalog.pg_LARGEOBJECT_METADATA ORDER BY oid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpglargeobjectmetadata-0004-select-oid-from-pg_catalog.pg_largeobject_metadata-order"},
 				},
 			},
 		},
@@ -2255,20 +1834,25 @@ func TestPgLocks(t *testing.T) {
 			Name: "pg_locks",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_locks";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_locks";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpglocks-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_locks";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_locks";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpglocks-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_locks";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_locks";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpglocks-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT objid FROM PG_catalog.pg_LOCKS ORDER BY objid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT objid FROM PG_catalog.pg_LOCKS ORDER BY objid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpglocks-0004-select-objid-from-pg_catalog.pg_locks-order"},
 				},
 			},
 		},
@@ -2281,20 +1865,25 @@ func TestPgMatviews(t *testing.T) {
 			Name: "pg_matviews",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_matviews";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_matviews";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgmatviews-0001-select-*-from-pg_catalog-.", ColumnModes: []string{"schema", "structural", "structural", "structural", "structural",
+
+						// Different cases and quoted, so it fails
+						"structural", "schema"}},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_matviews";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_matviews";`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgmatviews-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_matviews";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_matviews";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgmatviews-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT matviewname FROM PG_catalog.pg_MATVIEWS ORDER BY matviewname;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT matviewname FROM PG_catalog.pg_MATVIEWS ORDER BY matviewname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgmatviews-0004-select-matviewname-from-pg_catalog.pg_matviews-order"},
 				},
 			},
 		},
@@ -2307,68 +1896,39 @@ func TestPgNamespace(t *testing.T) {
 			Name: "pg_namespace",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_namespace" ORDER BY nspname;`,
-					Expected: []sql.Row{
-						{1882653564, "dolt", 0, nil},
-						{13183, "information_schema", 0, nil},
-						{11, "pg_catalog", 0, nil},
-						{2200, "public", 0, nil},
-					},
+					Query: `SELECT * FROM "pg_catalog"."pg_namespace" ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespace-0001-select-*-from-pg_catalog-.", ColumnModes: []string{"structural", "schema"}},
 				},
 				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_namespace";`,
-					ExpectedErr: "not",
-				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_namespace";`,
-					ExpectedErr: "not",
-				},
-				{ // Different cases but non-quoted, so it works
-					Query: "SELECT nspname FROM PG_catalog.pg_NAMESPACE ORDER BY nspname;",
-					Expected: []sql.Row{
-						{"dolt"},
-						{"information_schema"},
-						{"pg_catalog"},
-						{"public"},
-					},
+					Query: `SELECT * FROM "PG_catalog"."pg_namespace";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgnamespace-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query:    "CREATE SCHEMA testschema;",
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."PG_namespace";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgnamespace-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_namespace" ORDER BY nspname;`,
-					Expected: []sql.Row{
-						{1882653564, "dolt", 0, nil},
-						{13183, "information_schema", 0, nil},
-						{11, "pg_catalog", 0, nil},
-						{2200, "public", 0, nil},
-						{2638679668, "testschema", 0, nil},
-					},
+					Query: "SELECT nspname FROM PG_catalog.pg_NAMESPACE ORDER BY nspname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespace-0004-select-nspname-from-pg_catalog.pg_namespace-order", ColumnModes: []string{"schema"}},
+				},
+				{
+					Query: "CREATE SCHEMA testschema;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespace-0005-create-schema-testschema"},
+				},
+				{
+					Query: `SELECT * FROM "pg_catalog"."pg_namespace" ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespace-0006-select-*-from-pg_catalog-.", ColumnModes: []string{"structural", "schema"}},
 				},
 				// Test index lookups - first let's see what the actual OID values are
 				{
-					Query: `SELECT oid, nspname FROM "pg_catalog"."pg_namespace" ORDER BY nspname;`,
-					Expected: []sql.Row{
-						{1882653564, "dolt"},
-						{13183, "information_schema"},
-						{11, "pg_catalog"},
-						{2200, "public"},
-						{2638679668, "testschema"},
-					},
+					Query: `SELECT oid, nspname FROM "pg_catalog"."pg_namespace" ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespace-0007-select-oid-nspname-from-pg_catalog", ColumnModes: []string{"structural", "schema"}},
 				},
 				// Test simple index lookups
 				{
-					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE oid = 11;`,
-					Expected: []sql.Row{
-						{"pg_catalog"},
-					},
+					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE oid = 11;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespace-0008-select-nspname-from-pg_catalog-."},
 				},
 				{
-					Query: `SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname = 'public';`,
-					Expected: []sql.Row{
-						{2200},
-					},
+					Query: `SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname = 'public';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespace-0009-select-oid-from-pg_catalog-."},
 				},
 			},
 		},
@@ -2382,345 +1942,153 @@ func TestPgNamespaceIndexLookups(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				// Setup: Create additional schemas for more comprehensive testing
 				{
-					Query:    "CREATE SCHEMA testschema1;",
-					Expected: []sql.Row{},
+					Query: "CREATE SCHEMA testschema1;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0001-create-schema-testschema1"},
 				},
 				{
-					Query:    "CREATE SCHEMA testschema2;",
-					Expected: []sql.Row{},
+					Query: "CREATE SCHEMA testschema2;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0002-create-schema-testschema2"},
 				},
 				{
-					Query:    "CREATE SCHEMA testschema3;",
-					Expected: []sql.Row{},
+					Query: "CREATE SCHEMA testschema3;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0003-create-schema-testschema3"},
 				},
 				{
-					Query:    "CREATE SCHEMA z_schema;", // For testing alphabetical ordering
-					Expected: []sql.Row{},
+					Query: "CREATE SCHEMA z_schema;", PostgresOracle: // For testing alphabetical ordering
+					ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0004-create-schema-z_schema"},
 				},
 				{
-					Query:    "CREATE SCHEMA a_schema;", // For testing alphabetical ordering
-					Expected: []sql.Row{},
+					Query: "CREATE SCHEMA a_schema;", PostgresOracle: // For testing alphabetical ordering
+					ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0005-create-schema-a_schema"},
 				},
 
 				// Test OID index lookups - exact matches
 				{
-					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE oid = 11;`,
-					Expected: []sql.Row{
-						{"pg_catalog"},
-					},
+					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE oid = 11;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0006-select-nspname-from-pg_catalog-."},
 				},
 				{
-					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE oid = 2200;`,
-					Expected: []sql.Row{
-						{"public"},
-					},
+					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE oid = 2200;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0007-select-nspname-from-pg_catalog-."},
 				},
 				{
-					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE oid = 13183;`,
-					Expected: []sql.Row{
-						{"information_schema"},
-					},
+					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE oid = 13183;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0008-select-nspname-from-pg_catalog-."},
 				},
 				{
-					Query: "Explain SELECT nspname FROM pg_namespace WHERE oid = 2200 order by 1",
-					Expected: []sql.Row{
-						{"Project"},
-						{" ├─ columns: [pg_namespace.nspname]"},
-						{" └─ Sort(pg_namespace.nspname ASC)"},
-						{"     └─ Filter"},
-						{"         ├─ pg_namespace.oid = 2200"},
-						{"         └─ IndexedTableAccess(pg_namespace)"},
-						{"             ├─ index: [pg_namespace.oid]"},
-						{"             └─ filters: [{[{Namespace:[\"public\"]}, {Namespace:[\"public\"]}]}]"},
-					},
+					Query: "Explain SELECT nspname FROM pg_namespace WHERE oid = 2200 order by 1", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0009-explain-select-nspname-from-pg_namespace", ColumnModes: []string{"explain"}},
 				},
 
 				// Test OID index lookups - range conditions
 				{
-					Query: `SELECT oid, nspname FROM "pg_catalog"."pg_namespace" WHERE oid >= 11 AND oid < 2200 ORDER BY oid;`,
-					Expected: []sql.Row{
-						{11, "pg_catalog"},
-					},
+					Query: `SELECT oid, nspname FROM "pg_catalog"."pg_namespace" WHERE oid >= 11 AND oid < 2200 ORDER BY oid;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0010-select-oid-nspname-from-pg_catalog"},
 				},
 				{
-					Query: `SELECT oid, nspname FROM "pg_catalog"."pg_namespace" WHERE oid > 11 AND oid <= 2200 ORDER BY oid;`,
-					Expected: []sql.Row{
-						{2200, "public"},
-					},
+					Query: `SELECT oid, nspname FROM "pg_catalog"."pg_namespace" WHERE oid > 11 AND oid <= 2200 ORDER BY oid;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0011-select-oid-nspname-from-pg_catalog"},
 				},
 				{
-					Query: `explain SELECT oid, nspname FROM "pg_catalog"."pg_namespace" WHERE oid > 11 AND oid <= 2200 ORDER BY oid;`,
-					Expected: []sql.Row{
-						{"Project"},
-						{" ├─ columns: [pg_namespace.oid, pg_namespace.nspname]"},
-						{" └─ Sort(pg_namespace.oid ASC)"},
-						{"     └─ Filter"},
-						{"         ├─ (pg_namespace.oid > 11 AND pg_namespace.oid <= 2200)"},
-						{"         └─ IndexedTableAccess(pg_namespace)"},
-						{"             ├─ index: [pg_namespace.oid]"},
-						{"             └─ filters: [{({Namespace:[\"pg_catalog\"]}, {Namespace:[\"public\"]}]}]"},
-					},
+					Query: `explain SELECT oid, nspname FROM "pg_catalog"."pg_namespace" WHERE oid > 11 AND oid <= 2200 ORDER BY oid;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0012-explain-select-oid-nspname-from", ColumnModes: []string{"explain"}},
 				},
 				{
-					Query: `SELECT oid, nspname FROM "pg_catalog"."pg_namespace" WHERE oid BETWEEN 11 AND 13183 ORDER BY oid;`,
-					Expected: []sql.Row{
-						{11, "pg_catalog"},
-						{2200, "public"},
-						{13183, "information_schema"},
-					},
+					Query: `SELECT oid, nspname FROM "pg_catalog"."pg_namespace" WHERE oid BETWEEN 11 AND 13183 ORDER BY oid;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0013-select-oid-nspname-from-pg_catalog"},
 				},
 				{
-					Query: `SELECT oid, nspname FROM "pg_catalog"."pg_namespace" WHERE oid > 10000 order by 1 LIMIT 3;`,
-					Expected: []sql.Row{
-						{13183, "information_schema"},
-						{72038971, "testschema2"},
-						{109330821, "z_schema"},
-					},
+					Query: `SELECT oid, nspname FROM "pg_catalog"."pg_namespace" WHERE oid > 10000 order by 1 LIMIT 3;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0014-select-oid-nspname-from-pg_catalog"},
 				},
 				{
-					Query: `SELECT oid, nspname FROM "pg_catalog"."pg_namespace" WHERE oid < 10000 ORDER BY oid;`,
-					Expected: []sql.Row{
-						{11, "pg_catalog"},
-						{2200, "public"},
-					},
+					Query: `SELECT oid, nspname FROM "pg_catalog"."pg_namespace" WHERE oid < 10000 ORDER BY oid;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0015-select-oid-nspname-from-pg_catalog"},
 				},
 				{
-					Query: `SELECT oid, nspname FROM "pg_catalog"."pg_namespace" WHERE oid <= 13183 ORDER BY oid;`,
-					Expected: []sql.Row{
-						{11, "pg_catalog"},
-						{2200, "public"},
-						{13183, "information_schema"},
-					},
+					Query: `SELECT oid, nspname FROM "pg_catalog"."pg_namespace" WHERE oid <= 13183 ORDER BY oid;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0016-select-oid-nspname-from-pg_catalog"},
 				},
 				{
-					Query:    `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE oid = 999999;`,
-					Expected: []sql.Row{},
+					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE oid = 999999;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0017-select-nspname-from-pg_catalog-."},
 				},
 				{
-					Query:    `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE oid < 5;`,
-					Expected: []sql.Row{},
+					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE oid < 5;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0018-select-nspname-from-pg_catalog-."},
 				},
 				{
-					Query: `SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname = 'public';`,
-					Expected: []sql.Row{
-						{2200},
-					},
+					Query: `SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname = 'public';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0019-select-oid-from-pg_catalog-."},
 				},
 				{
-					Query: `SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname = 'pg_catalog';`,
-					Expected: []sql.Row{
-						{11},
-					},
+					Query: `SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname = 'pg_catalog';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0020-select-oid-from-pg_catalog-."},
 				},
 				{
-					Query: `explain SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname = 'pg_catalog' order by 1;`,
-					Expected: []sql.Row{
-						{"Project"},
-						{" ├─ columns: [pg_namespace.oid]"},
-						{" └─ Sort(pg_namespace.oid ASC)"},
-						{"     └─ Filter"},
-						{"         ├─ pg_namespace.nspname = 'pg_catalog'"},
-						{"         └─ IndexedTableAccess(pg_namespace)"},
-						{"             ├─ index: [pg_namespace.nspname]"},
-						{"             └─ filters: [{[pg_catalog, pg_catalog]}]"},
-					},
+					Query: `explain SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname = 'pg_catalog' order by 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0021-explain-select-oid-from-pg_catalog", ColumnModes: []string{"explain"}},
 				},
 				{
-					Query: `SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname = 'information_schema';`,
-					Expected: []sql.Row{
-						{13183},
-					},
+					Query: `SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname = 'information_schema';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0022-select-oid-from-pg_catalog-."},
 				},
 				{
-					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE nspname >= 'a' AND nspname < 'p' ORDER BY nspname;`,
-					Expected: []sql.Row{
-						{"a_schema"},
-						{"dolt"},
-						{"information_schema"},
-					},
+					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE nspname >= 'a' AND nspname < 'p' ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0023-select-nspname-from-pg_catalog-.", ColumnModes: []string{"schema"}},
 				},
 				{
-					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE nspname > 'a' AND nspname <= 'public' ORDER BY nspname;`,
-					Expected: []sql.Row{
-						{"a_schema"},
-						{"dolt"},
-						{"information_schema"},
-						{"pg_catalog"},
-						{"public"},
-					},
+					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE nspname > 'a' AND nspname <= 'public' ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0024-select-nspname-from-pg_catalog-.", ColumnModes: []string{"schema"}},
 				},
 				{
-					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE nspname BETWEEN 'p' AND 't' ORDER BY nspname;`,
-					Expected: []sql.Row{
-						{"pg_catalog"},
-						{"public"},
-					},
+					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE nspname BETWEEN 'p' AND 't' ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0025-select-nspname-from-pg_catalog-."},
 				},
 				{
-					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE nspname > 'p' ORDER BY nspname;`,
-					Expected: []sql.Row{
-						{"pg_catalog"},
-						{"public"},
-						{"testschema1"},
-						{"testschema2"},
-						{"testschema3"},
-						{"z_schema"},
-					},
+					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE nspname > 'p' ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0026-select-nspname-from-pg_catalog-."},
 				},
 				{
-					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE nspname >= 'test' ORDER BY nspname;`,
-					Expected: []sql.Row{
-						{"testschema1"},
-						{"testschema2"},
-						{"testschema3"},
-						{"z_schema"},
-					},
+					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE nspname >= 'test' ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0027-select-nspname-from-pg_catalog-."},
 				},
 				{
-					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE nspname < 'p' ORDER BY nspname;`,
-					Expected: []sql.Row{
-						{"a_schema"},
-						{"dolt"},
-						{"information_schema"},
-					},
+					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE nspname < 'p' ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0028-select-nspname-from-pg_catalog-.", ColumnModes: []string{"schema"}},
 				},
 				{
-					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE nspname <= 'information_schema' ORDER BY nspname;`,
-					Expected: []sql.Row{
-						{"a_schema"},
-						{"dolt"},
-						{"information_schema"},
-					},
+					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE nspname <= 'information_schema' ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0029-select-nspname-from-pg_catalog-.",
+
+						// Test name index lookups - no matches
+						ColumnModes: []string{"schema"}},
 				},
 
-				// Test name index lookups - no matches
 				{
-					Query:    `SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname = 'nonexistent';`,
-					Expected: []sql.Row{},
+					Query: `SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname = 'nonexistent';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0030-select-oid-from-pg_catalog-."},
 				},
 				{
-					Query:    `SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname > 'zzz';`,
-					Expected: []sql.Row{},
+					Query: `SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname > 'zzz';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0031-select-oid-from-pg_catalog-."},
 				},
 				{
-					Query:    `SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname < 'a';`,
-					Expected: []sql.Row{},
+					Query: `SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname < 'a';`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Test case sensitivity in name lookups
+					"pgcatalog-test-testpgnamespaceindexlookups-0032-select-oid-from-pg_catalog-."},
 				},
 
-				// Test case sensitivity in name lookups
 				{
-					Query:    `SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname = 'PUBLIC';`,
-					Expected: []sql.Row{},
+					Query: `SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname = 'PUBLIC';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0033-select-oid-from-pg_catalog-."},
 				},
 				{
-					Query:    `SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname = 'Public';`,
-					Expected: []sql.Row{},
+					Query: `SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname = 'Public';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0034-select-oid-from-pg_catalog-."},
 				},
 				{
-					Query: `SELECT oid, nspname FROM "pg_catalog"."pg_namespace" WHERE oid >= 11 AND nspname >= 'p' ORDER BY oid;`,
-					Expected: []sql.Row{
-						{11, "pg_catalog"},
-						{2200, "public"},
-						{72038971, "testschema2"},
-						{109330821, "z_schema"},
-						{387697103, "testschema1"},
-						{4129339704, "testschema3"},
-					},
+					Query: `SELECT oid, nspname FROM "pg_catalog"."pg_namespace" WHERE oid >= 11 AND nspname >= 'p' ORDER BY oid;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0035-select-oid-nspname-from-pg_catalog"},
 				},
 				{
-					Query: `SELECT oid, nspname FROM "pg_catalog"."pg_namespace" WHERE oid < 20000 AND nspname < 't' ORDER BY nspname;`,
-					Expected: []sql.Row{
-						{13183, "information_schema"},
-						{11, "pg_catalog"},
-						{2200, "public"},
-					},
+					Query: `SELECT oid, nspname FROM "pg_catalog"."pg_namespace" WHERE oid < 20000 AND nspname < 't' ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0036-select-oid-nspname-from-pg_catalog"},
 				},
 				{
-					Query:    `SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname = '';`,
-					Expected: []sql.Row{},
+					Query: `SELECT oid FROM "pg_catalog"."pg_namespace" WHERE nspname = '';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0037-select-oid-from-pg_catalog-."},
 				},
 				{
-					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE nspname >= '' ORDER BY nspname;`,
-					Expected: []sql.Row{
-						{"a_schema"},
-						{"dolt"},
-						{"information_schema"},
-						{"pg_catalog"},
-						{"public"},
-						{"testschema1"},
-						{"testschema2"},
-						{"testschema3"},
-						{"z_schema"},
-					},
+					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE nspname >= '' ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0038-select-nspname-from-pg_catalog-.", ColumnModes: []string{"schema"}},
 				},
 				{
-					Query: `SELECT oid, nspname FROM "pg_catalog"."pg_namespace" WHERE oid > 10 ORDER BY oid LIMIT 3;`,
-					Expected: []sql.Row{
-						{11, "pg_catalog"},
-						{2200, "public"},
-						{13183, "information_schema"},
-					},
+					Query: `SELECT oid, nspname FROM "pg_catalog"."pg_namespace" WHERE oid > 10 ORDER BY oid LIMIT 3;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0039-select-oid-nspname-from-pg_catalog"},
 				},
 				{
-					Query: `SELECT oid, nspname FROM "pg_catalog"."pg_namespace" WHERE nspname >= 't' ORDER BY nspname;`,
-					Expected: []sql.Row{
-						{387697103, "testschema1"},
-						{72038971, "testschema2"},
-						{4129339704, "testschema3"},
-						{109330821, "z_schema"},
-					},
+					Query: `SELECT oid, nspname FROM "pg_catalog"."pg_namespace" WHERE nspname >= 't' ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0040-select-oid-nspname-from-pg_catalog"},
 				},
 				{
-					Query: `SELECT DISTINCT nspname FROM "pg_catalog"."pg_namespace" WHERE oid > 10000 ORDER BY nspname;`,
-					Expected: []sql.Row{
-						{"a_schema"},
-						{"dolt"},
-						{"information_schema"},
-						{"testschema1"},
-						{"testschema2"},
-						{"testschema3"},
-						{"z_schema"},
-					},
+					Query: `SELECT DISTINCT nspname FROM "pg_catalog"."pg_namespace" WHERE oid > 10000 ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0041-select-distinct-nspname-from-pg_catalog", ColumnModes: []string{"schema"}},
 				},
 				{
-					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE oid IN (11, 2200) ORDER BY nspname;`,
-					Expected: []sql.Row{
-						{"pg_catalog"},
-						{"public"},
-					},
+					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE oid IN (11, 2200) ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0042-select-nspname-from-pg_catalog-."},
 				},
 				{
-					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE nspname IN ('public', 'pg_catalog') ORDER BY nspname;`,
-					Expected: []sql.Row{
-						{"pg_catalog"},
-						{"public"},
-					},
+					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE nspname IN ('public', 'pg_catalog') ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0043-select-nspname-from-pg_catalog-."},
 				},
 				{
-					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE oid != 11 ORDER BY nspname;`,
-					Expected: []sql.Row{
-						{"a_schema"},
-						{"dolt"},
-						{"information_schema"},
-						{"public"},
-						{"testschema1"},
-						{"testschema2"},
-						{"testschema3"},
-						{"z_schema"},
-					},
+					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE oid != 11 ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0044-select-nspname-from-pg_catalog-.", ColumnModes: []string{"schema"}},
 				},
 				{
-					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE nspname != 'public' ORDER BY nspname;`,
-					Expected: []sql.Row{
-						{"a_schema"},
-						{"dolt"},
-						{"information_schema"},
-						{"pg_catalog"},
-						{"testschema1"},
-						{"testschema2"},
-						{"testschema3"},
-						{"z_schema"},
-					},
+					Query: `SELECT nspname FROM "pg_catalog"."pg_namespace" WHERE nspname != 'public' ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgnamespaceindexlookups-0045-select-nspname-from-pg_catalog-.", ColumnModes: []string{"schema"}},
 				},
 			},
 		},
@@ -2740,12 +2108,7 @@ JOIN "pg_catalog"."pg_am" am ON am.oid = opc.opcmethod
 JOIN "pg_catalog"."pg_type" typ ON typ.oid = opc.opcintype
 WHERE am.amname = 'btree'
 	AND opc.opcname IN ('name_ops', 'text_ops', 'varchar_ops')
-ORDER BY opc.opcname;`,
-					Expected: []sql.Row{
-						{"name_ops", "text_ops", "name", "t", typeOid("cstring")},
-						{"text_ops", "text_ops", "text", "t", 0},
-						{"varchar_ops", "text_ops", "text", "t", 0},
-					},
+ORDER BY opc.opcname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgopclass-0001-select-opc.opcname-opf.opfname-typ.typname-opc.opcdefault"},
 				},
 				{
 					Query: `SELECT opc.opcname, opf.opfname, typ.typname, opc.opcdefault, opc.opckeytype
@@ -2755,12 +2118,7 @@ JOIN "pg_catalog"."pg_am" am ON am.oid = opc.opcmethod
 JOIN "pg_catalog"."pg_type" typ ON typ.oid = opc.opcintype
 WHERE am.amname = 'btree'
 	AND opc.opcname IN ('text_pattern_ops', 'varchar_pattern_ops', 'bpchar_pattern_ops')
-ORDER BY opc.opcname;`,
-					Expected: []sql.Row{
-						{"bpchar_pattern_ops", "bpchar_pattern_ops", "bpchar", "f", 0},
-						{"text_pattern_ops", "text_pattern_ops", "text", "f", 0},
-						{"varchar_pattern_ops", "text_pattern_ops", "text", "f", 0},
-					},
+ORDER BY opc.opcname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgopclass-0002-select-opc.opcname-opf.opfname-typ.typname-opc.opcdefault"},
 				},
 				{
 					Query: `SELECT opc.opcname, opf.opfname, typ.typname, opc.opcdefault, opc.opckeytype
@@ -2770,14 +2128,7 @@ JOIN "pg_catalog"."pg_am" am ON am.oid = opc.opcmethod
 JOIN "pg_catalog"."pg_type" typ ON typ.oid = opc.opcintype
 WHERE am.amname = 'btree'
 	AND opc.opcname IN ('bytea_ops', 'interval_ops', 'oid_ops', 'time_ops', 'timetz_ops')
-ORDER BY opc.opcname;`,
-					Expected: []sql.Row{
-						{"bytea_ops", "bytea_ops", "bytea", "t", 0},
-						{"interval_ops", "interval_ops", "interval", "t", 0},
-						{"oid_ops", "oid_ops", "oid", "t", 0},
-						{"time_ops", "time_ops", "time", "t", 0},
-						{"timetz_ops", "timetz_ops", "timetz", "t", 0},
-					},
+ORDER BY opc.opcname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgopclass-0003-select-opc.opcname-opf.opfname-typ.typname-opc.opcdefault"},
 				},
 				{
 					Query: `SELECT opc.opcname, opf.opfname, typ.typname, opc.opcdefault, opc.opckeytype
@@ -2787,14 +2138,7 @@ JOIN "pg_catalog"."pg_am" am ON am.oid = opc.opcmethod
 JOIN "pg_catalog"."pg_type" typ ON typ.oid = opc.opcintype
 WHERE am.amname = 'btree'
 	AND opc.opcname IN ('bit_ops', 'char_ops', 'oidvector_ops', 'pg_lsn_ops', 'varbit_ops')
-ORDER BY opc.opcname;`,
-					Expected: []sql.Row{
-						{"bit_ops", "bit_ops", "bit", "t", 0},
-						{"char_ops", "char_ops", "char", "t", 0},
-						{"oidvector_ops", "oidvector_ops", "oidvector", "t", 0},
-						{"pg_lsn_ops", "pg_lsn_ops", "pg_lsn", "t", 0},
-						{"varbit_ops", "varbit_ops", "varbit", "t", 0},
-					},
+ORDER BY opc.opcname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgopclass-0004-select-opc.opcname-opf.opfname-typ.typname-opc.opcdefault"},
 				},
 				{
 					Query: `SELECT opc.opcname, am.amname, opc.opcdefault, inputtyp.typname, COALESCE(keytyp.typname, ''), opc.opckeytype
@@ -2803,56 +2147,22 @@ JOIN "pg_catalog"."pg_am" am ON am.oid = opc.opcmethod
 JOIN "pg_catalog"."pg_type" inputtyp ON inputtyp.oid = opc.opcintype
 LEFT JOIN "pg_catalog"."pg_type" keytyp ON keytyp.oid = opc.opckeytype
 WHERE opc.opcname LIKE 'jsonb_%'
-ORDER BY opc.opcname, am.amname;`,
-					Expected: []sql.Row{
-						{"jsonb_ops", "btree", "t", "jsonb", "", 0},
-						{"jsonb_ops", "gin", "t", "jsonb", "text", typeOid("text")},
-						{"jsonb_path_ops", "gin", "f", "jsonb", "int4", typeOid("int4")},
-					},
+ORDER BY opc.opcname, am.amname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgopclass-0005-select-opc.opcname-am.amname-opc.opcdefault-inputtyp.typname"},
 				},
 				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_opclass";`,
-					ExpectedErr: "not",
+					Query: `SELECT * FROM "PG_catalog"."pg_opclass";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgopclass-0006-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_opclass";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_opclass";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgopclass-0007-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query: "SELECT opcname FROM PG_catalog.pg_OPCLASS ORDER BY opcname;",
-					Expected: []sql.Row{
-						{"bit_ops"},
-						{"bool_ops"},
-						{"bpchar_ops"},
-						{"bpchar_pattern_ops"},
-						{"bytea_ops"},
-						{"char_ops"},
-						{"date_ops"},
-						{"float4_ops"},
-						{"float8_ops"},
-						{"int2_ops"},
-						{"int4_ops"},
-						{"int8_ops"},
-						{"interval_ops"},
-						{"jsonb_ops"},
-						{"jsonb_ops"},
-						{"jsonb_path_ops"},
-						{"name_ops"},
-						{"numeric_ops"},
-						{"oid_ops"},
-						{"oidvector_ops"},
-						{"pg_lsn_ops"},
-						{"text_ops"},
-						{"text_pattern_ops"},
-						{"time_ops"},
-						{"timestamp_ops"},
-						{"timestamptz_ops"},
-						{"timetz_ops"},
-						{"uuid_ops"},
-						{"varbit_ops"},
-						{"varchar_ops"},
-						{"varchar_pattern_ops"},
-					},
+				{
+					Query: "SELECT opcname FROM PG_catalog.pg_OPCLASS ORDER BY opcname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgopclass-0008-select-opcname-from-pg_catalog.pg_opclass-order"},
 				},
 			},
 		},
@@ -2878,14 +2188,7 @@ ORDER BY CASE o.oprname
 	WHEN '=' THEN 3
 	WHEN '>=' THEN 4
 	WHEN '>' THEN 5
-END;`,
-					Expected: []sql.Row{
-						{"<", "int4", "int4"},
-						{"<=", "int4", "int4"},
-						{"=", "int4", "int4"},
-						{">=", "int4", "int4"},
-						{">", "int4", "int4"},
-					},
+END;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgoperator-0001-select-o.oprname-lt.typname-rt.typname-from"},
 				},
 				{
 					Query: `SELECT o.oprname, lt.typname, rt.typname
@@ -2899,14 +2202,7 @@ ORDER BY CASE o.oprname
 	WHEN '?' THEN 3
 	WHEN '?|' THEN 4
 	WHEN '?&' THEN 5
-END;`,
-					Expected: []sql.Row{
-						{"@>", "jsonb", "jsonb"},
-						{"<@", "jsonb", "jsonb"},
-						{"?", "jsonb", "text"},
-						{"?|", "jsonb", "_text"},
-						{"?&", "jsonb", "_text"},
-					},
+END;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgoperator-0002-select-o.oprname-lt.typname-rt.typname-from"},
 				},
 				{
 					Query: `SELECT lt.typname, COUNT(*)
@@ -2917,33 +2213,7 @@ WHERE lt.oid = rt.oid
 	AND o.oprname IN ('<', '<=', '=', '>=', '>')
 	AND lt.typname IN ('bit', 'bool', 'bpchar', 'bytea', 'char', 'date', 'float4', 'float8', 'int2', 'int4', 'int8', 'interval', 'name', 'numeric', 'oid', 'oidvector', 'pg_lsn', 'text', 'time', 'timestamp', 'timestamptz', 'timetz', 'uuid', 'varbit')
 GROUP BY lt.typname
-ORDER BY lt.typname;`,
-					Expected: []sql.Row{
-						{"bit", 5},
-						{"bool", 5},
-						{"bpchar", 5},
-						{"bytea", 5},
-						{"char", 5},
-						{"date", 5},
-						{"float4", 5},
-						{"float8", 5},
-						{"int2", 5},
-						{"int4", 5},
-						{"int8", 5},
-						{"interval", 5},
-						{"name", 5},
-						{"numeric", 5},
-						{"oid", 5},
-						{"oidvector", 5},
-						{"pg_lsn", 5},
-						{"text", 5},
-						{"time", 5},
-						{"timestamp", 5},
-						{"timestamptz", 5},
-						{"timetz", 5},
-						{"uuid", 5},
-						{"varbit", 5},
-					},
+ORDER BY lt.typname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgoperator-0003-select-lt.typname-count-*-from"},
 				},
 				{
 					Query: `SELECT lt.typname, rt.typname, COUNT(*)
@@ -2954,13 +2224,7 @@ WHERE lt.typname IN ('name', 'text', 'varchar')
 	AND rt.typname IN ('name', 'text', 'varchar')
 	AND o.oprname IN ('<', '<=', '=', '>=', '>')
 GROUP BY lt.typname, rt.typname
-ORDER BY lt.typname, rt.typname;`,
-					Expected: []sql.Row{
-						{"name", "name", 5},
-						{"name", "text", 5},
-						{"text", "name", 5},
-						{"text", "text", 5},
-					},
+ORDER BY lt.typname, rt.typname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgoperator-0004-select-lt.typname-rt.typname-count-*"},
 				},
 				{
 					Query: `SELECT lt.typname, rt.typname, COUNT(*)
@@ -2972,15 +2236,7 @@ WHERE lt.typname IN ('date', 'timestamp', 'timestamptz')
 	AND lt.oid <> rt.oid
 	AND o.oprname IN ('<', '<=', '=', '>=', '>')
 GROUP BY lt.typname, rt.typname
-ORDER BY lt.typname, rt.typname;`,
-					Expected: []sql.Row{
-						{"date", "timestamp", 5},
-						{"date", "timestamptz", 5},
-						{"timestamp", "date", 5},
-						{"timestamp", "timestamptz", 5},
-						{"timestamptz", "date", 5},
-						{"timestamptz", "timestamp", 5},
-					},
+ORDER BY lt.typname, rt.typname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgoperator-0005-select-lt.typname-rt.typname-count-*"},
 				},
 				{
 					Query: `SELECT o.oprname, com.oprname, clt.typname, crt.typname
@@ -2999,14 +2255,7 @@ ORDER BY CASE o.oprname
 	WHEN '=' THEN 3
 	WHEN '>=' THEN 4
 	WHEN '>' THEN 5
-END;`,
-					Expected: []sql.Row{
-						{"<", ">", "timestamptz", "date"},
-						{"<=", ">=", "timestamptz", "date"},
-						{"=", "=", "timestamptz", "date"},
-						{">=", "<=", "timestamptz", "date"},
-						{">", "<", "timestamptz", "date"},
-					},
+END;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgoperator-0006-select-o.oprname-com.oprname-clt.typname-crt.typname"},
 				},
 				{
 					Query: `SELECT lt.typname, rt.typname, COUNT(*)
@@ -3018,15 +2267,7 @@ WHERE lt.typname IN ('int2', 'int4', 'int8')
 	AND lt.oid <> rt.oid
 	AND o.oprname IN ('<', '<=', '=', '>=', '>')
 GROUP BY lt.typname, rt.typname
-ORDER BY lt.typname, rt.typname;`,
-					Expected: []sql.Row{
-						{"int2", "int4", 5},
-						{"int2", "int8", 5},
-						{"int4", "int2", 5},
-						{"int4", "int8", 5},
-						{"int8", "int2", 5},
-						{"int8", "int4", 5},
-					},
+ORDER BY lt.typname, rt.typname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgoperator-0007-select-lt.typname-rt.typname-count-*"},
 				},
 				{
 					Query: `SELECT o.oprname, com.oprname, clt.typname, crt.typname
@@ -3045,14 +2286,7 @@ ORDER BY CASE o.oprname
 	WHEN '=' THEN 3
 	WHEN '>=' THEN 4
 	WHEN '>' THEN 5
-END;`,
-					Expected: []sql.Row{
-						{"<", ">", "int8", "int2"},
-						{"<=", ">=", "int8", "int2"},
-						{"=", "=", "int8", "int2"},
-						{">=", "<=", "int8", "int2"},
-						{">", "<", "int8", "int2"},
-					},
+END;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgoperator-0008-select-o.oprname-com.oprname-clt.typname-crt.typname"},
 				},
 				{
 					Query: `SELECT lt.typname, rt.typname, COUNT(*)
@@ -3064,11 +2298,7 @@ WHERE lt.typname IN ('float4', 'float8')
 	AND lt.oid <> rt.oid
 	AND o.oprname IN ('<', '<=', '=', '>=', '>')
 GROUP BY lt.typname, rt.typname
-ORDER BY lt.typname, rt.typname;`,
-					Expected: []sql.Row{
-						{"float4", "float8", 5},
-						{"float8", "float4", 5},
-					},
+ORDER BY lt.typname, rt.typname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgoperator-0009-select-lt.typname-rt.typname-count-*"},
 				},
 				{
 					Query: `SELECT o.oprname, com.oprname, clt.typname, crt.typname
@@ -3087,14 +2317,7 @@ ORDER BY CASE o.oprname
 	WHEN '=' THEN 3
 	WHEN '>=' THEN 4
 	WHEN '>' THEN 5
-END;`,
-					Expected: []sql.Row{
-						{"<", ">", "float8", "float4"},
-						{"<=", ">=", "float8", "float4"},
-						{"=", "=", "float8", "float4"},
-						{">=", "<=", "float8", "float4"},
-						{">", "<", "float8", "float4"},
-					},
+END;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgoperator-0010-select-o.oprname-com.oprname-clt.typname-crt.typname"},
 				},
 				{
 					Query: `SELECT o.oprname, lt.typname, rt.typname
@@ -3108,29 +2331,22 @@ ORDER BY lt.typname, CASE o.oprname
 	WHEN '~<=~' THEN 2
 	WHEN '~>=~' THEN 3
 	WHEN '~>~' THEN 4
-END;`,
-					Expected: []sql.Row{
-						{"~<~", "bpchar", "bpchar"},
-						{"~<=~", "bpchar", "bpchar"},
-						{"~>=~", "bpchar", "bpchar"},
-						{"~>~", "bpchar", "bpchar"},
-						{"~<~", "text", "text"},
-						{"~<=~", "text", "text"},
-						{"~>=~", "text", "text"},
-						{"~>~", "text", "text"},
-					},
+END;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgoperator-0011-select-o.oprname-lt.typname-rt.typname-from"},
 				},
 				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_operator";`,
-					ExpectedErr: "not",
+					Query: `SELECT * FROM "PG_catalog"."pg_operator";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgoperator-0012-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_operator";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_operator";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgoperator-0013-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT COUNT(*) FROM PG_catalog.pg_OPERATOR;",
-					Expected: []sql.Row{{218}},
+				{
+					Query: "SELECT COUNT(*) FROM PG_catalog.pg_OPERATOR;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgoperator-0014-select-count-*-from-pg_catalog.pg_operator"},
 				},
 			},
 		},
@@ -3146,68 +2362,22 @@ func TestPgOpfamily(t *testing.T) {
 					Query: `SELECT opf.opfname, am.amname
 FROM "pg_catalog"."pg_opfamily" opf
 JOIN "pg_catalog"."pg_am" am ON am.oid = opf.opfmethod
-ORDER BY opf.opfname, am.amname;`,
-					Expected: []sql.Row{
-						{"bit_ops", "btree"},
-						{"bool_ops", "btree"},
-						{"bpchar_ops", "btree"},
-						{"bpchar_pattern_ops", "btree"},
-						{"bytea_ops", "btree"},
-						{"char_ops", "btree"},
-						{"datetime_ops", "btree"},
-						{"float_ops", "btree"},
-						{"integer_ops", "btree"},
-						{"interval_ops", "btree"},
-						{"jsonb_ops", "btree"},
-						{"jsonb_ops", "gin"},
-						{"jsonb_path_ops", "gin"},
-						{"numeric_ops", "btree"},
-						{"oid_ops", "btree"},
-						{"oidvector_ops", "btree"},
-						{"pg_lsn_ops", "btree"},
-						{"text_ops", "btree"},
-						{"text_pattern_ops", "btree"},
-						{"time_ops", "btree"},
-						{"timetz_ops", "btree"},
-						{"uuid_ops", "btree"},
-						{"varbit_ops", "btree"},
-					},
+ORDER BY opf.opfname, am.amname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgopfamily-0001-select-opf.opfname-am.amname-from-pg_catalog"},
 				},
 				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_opfamily";`,
-					ExpectedErr: "not",
+					Query: `SELECT * FROM "PG_catalog"."pg_opfamily";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgopfamily-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_opfamily";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_opfamily";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgopfamily-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query: "SELECT opfname FROM PG_catalog.pg_OPFAMILY ORDER BY opfname;",
-					Expected: []sql.Row{
-						{"bit_ops"},
-						{"bool_ops"},
-						{"bpchar_ops"},
-						{"bpchar_pattern_ops"},
-						{"bytea_ops"},
-						{"char_ops"},
-						{"datetime_ops"},
-						{"float_ops"},
-						{"integer_ops"},
-						{"interval_ops"},
-						{"jsonb_ops"},
-						{"jsonb_ops"},
-						{"jsonb_path_ops"},
-						{"numeric_ops"},
-						{"oid_ops"},
-						{"oidvector_ops"},
-						{"pg_lsn_ops"},
-						{"text_ops"},
-						{"text_pattern_ops"},
-						{"time_ops"},
-						{"timetz_ops"},
-						{"uuid_ops"},
-						{"varbit_ops"},
-					},
+				{
+					Query: "SELECT opfname FROM PG_catalog.pg_OPFAMILY ORDER BY opfname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgopfamily-0004-select-opfname-from-pg_catalog.pg_opfamily-order"},
 				},
 			},
 		},
@@ -3220,20 +2390,25 @@ func TestPgParameterAcl(t *testing.T) {
 			Name: "pg_parameter_acl",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_parameter_acl";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_parameter_acl";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgparameteracl-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_parameter_acl";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_parameter_acl";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgparameteracl-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_parameter_acl";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_parameter_acl";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgparameteracl-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT parname FROM PG_catalog.pg_PARAMETER_ACL ORDER BY parname;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT parname FROM PG_catalog.pg_PARAMETER_ACL ORDER BY parname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgparameteracl-0004-select-parname-from-pg_catalog.pg_parameter_acl-order"},
 				},
 			},
 		},
@@ -3246,20 +2421,25 @@ func TestPgPartitionedTable(t *testing.T) {
 			Name: "pg_partitioned_table",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_partitioned_table";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_partitioned_table";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgpartitionedtable-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_partitioned_table";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_partitioned_table";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgpartitionedtable-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_partitioned_table";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_partitioned_table";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgpartitionedtable-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT partrelid FROM PG_catalog.pg_PARTITIONED_TABLE ORDER BY partrelid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT partrelid FROM PG_catalog.pg_PARTITIONED_TABLE ORDER BY partrelid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgpartitionedtable-0004-select-partrelid-from-pg_catalog.pg_partitioned_table-order"},
 				},
 			},
 		},
@@ -3272,20 +2452,25 @@ func TestPgPolicies(t *testing.T) {
 			Name: "pg_policies",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_policies";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_policies";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgpolicies-0001-select-*-from-pg_catalog-.", ColumnModes: []string{"schema"}},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_policies";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_policies";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgpolicies-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_policies";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_policies";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgpolicies-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT policyname FROM PG_catalog.pg_POLICIES ORDER BY policyname;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT policyname FROM PG_catalog.pg_POLICIES ORDER BY policyname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgpolicies-0004-select-policyname-from-pg_catalog.pg_policies-order"},
 				},
 			},
 		},
@@ -3298,20 +2483,25 @@ func TestPgPolicy(t *testing.T) {
 			Name: "pg_policy",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_policy";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_policy";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgpolicy-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_policy";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_policy";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgpolicy-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_policy";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_policy";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgpolicy-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT polname FROM PG_catalog.pg_POLICY ORDER BY polname;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT polname FROM PG_catalog.pg_POLICY ORDER BY polname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgpolicy-0004-select-polname-from-pg_catalog.pg_policy-order"},
 				},
 			},
 		},
@@ -3324,20 +2514,25 @@ func TestPgPreparedStatements(t *testing.T) {
 			Name: "pg_prepared_statements",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_prepared_statements";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_prepared_statements";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgpreparedstatements-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_prepared_statements";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_prepared_statements";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgpreparedstatements-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_prepared_statements";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_prepared_statements";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgpreparedstatements-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT name FROM PG_catalog.pg_PREPARED_STATEMENTS ORDER BY name;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT name FROM PG_catalog.pg_PREPARED_STATEMENTS ORDER BY name;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgpreparedstatements-0004-select-name-from-pg_catalog.pg_prepared_statements-order"},
 				},
 			},
 		},
@@ -3350,20 +2545,25 @@ func TestPgPreparedXacts(t *testing.T) {
 			Name: "pg_prepared_xacts",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_prepared_xacts";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_prepared_xacts";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgpreparedxacts-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_prepared_xacts";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_prepared_xacts";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgpreparedxacts-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_prepared_xacts";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_prepared_xacts";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgpreparedxacts-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT gid FROM PG_catalog.pg_PREPARED_XACTS ORDER BY gid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT gid FROM PG_catalog.pg_PREPARED_XACTS ORDER BY gid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgpreparedxacts-0004-select-gid-from-pg_catalog.pg_prepared_xacts-order"},
 				},
 			},
 		},
@@ -3376,14 +2576,15 @@ func TestPgProc(t *testing.T) {
 			Name: "pg_proc",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT count(*) > 0 FROM "pg_catalog"."pg_proc";`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT count(*) > 0 FROM "pg_catalog"."pg_proc";`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgproc-0001-select-count-*->-0"},
 				},
 				{ // Schema lookup is case-insensitive for pg_catalog handlers.
-					Query:    `SELECT count(*) > 0 FROM "PG_catalog"."pg_proc";`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT count(*) > 0 FROM "PG_catalog"."pg_proc";`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgproc-0002-select-count-*->-0",
+
+						// Different cases and quoted, so it fails
+						Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
+				{
 					Query:       `SELECT * FROM "pg_catalog"."PG_proc";`,
 					ExpectedErr: "not",
 				},
@@ -3402,20 +2603,25 @@ func TestPgPublication(t *testing.T) {
 			Name: "pg_publication",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_publication";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_publication";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgpublication-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_publication";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_publication";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgpublication-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_publication";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_publication";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgpublication-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT pubname FROM PG_catalog.pg_PUBLICATION ORDER BY pubname;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT pubname FROM PG_catalog.pg_PUBLICATION ORDER BY pubname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgpublication-0004-select-pubname-from-pg_catalog.pg_publication-order"},
 				},
 			},
 		},
@@ -3428,20 +2634,25 @@ func TestPgPublicationNamespace(t *testing.T) {
 			Name: "pg_publication_namespace",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_publication_namespace";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_publication_namespace";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgpublicationnamespace-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_publication_namespace";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_publication_namespace";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgpublicationnamespace-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_publication_namespace";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_publication_namespace";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgpublicationnamespace-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT oid FROM PG_catalog.pg_PUBLICATION_NAMESPACE ORDER BY oid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT oid FROM PG_catalog.pg_PUBLICATION_NAMESPACE ORDER BY oid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgpublicationnamespace-0004-select-oid-from-pg_catalog.pg_publication_namespace-order"},
 				},
 			},
 		},
@@ -3454,20 +2665,25 @@ func TestPgPublicationRel(t *testing.T) {
 			Name: "pg_publication_rel",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_publication_rel";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_publication_rel";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgpublicationrel-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_publication_rel";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_publication_rel";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgpublicationrel-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_publication_rel";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_publication_rel";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgpublicationrel-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT oid FROM PG_catalog.pg_PUBLICATION_REL ORDER BY oid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT oid FROM PG_catalog.pg_PUBLICATION_REL ORDER BY oid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgpublicationrel-0004-select-oid-from-pg_catalog.pg_publication_rel-order"},
 				},
 			},
 		},
@@ -3480,20 +2696,25 @@ func TestPgPublicationTables(t *testing.T) {
 			Name: "pg_publication_tables",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_publication_tables";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_publication_tables";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgpublicationtables-0001-select-*-from-pg_catalog-.", ColumnModes: []string{"structural", "schema"}},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_publication_tables";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_publication_tables";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgpublicationtables-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_publication_tables";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_publication_tables";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgpublicationtables-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT pubname FROM PG_catalog.pg_PUBLICATION_TABLES ORDER BY pubname;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT pubname FROM PG_catalog.pg_PUBLICATION_TABLES ORDER BY pubname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgpublicationtables-0004-select-pubname-from-pg_catalog.pg_publication_tables-order"},
 				},
 			},
 		},
@@ -3506,20 +2727,25 @@ func TestPgRange(t *testing.T) {
 			Name: "pg_range",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_range";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_range";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgrange-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_range";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_range";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgrange-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_range";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_range";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgrange-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT rngtypid FROM PG_catalog.pg_RANGE ORDER BY rngtypid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT rngtypid FROM PG_catalog.pg_RANGE ORDER BY rngtypid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgrange-0004-select-rngtypid-from-pg_catalog.pg_range-order"},
 				},
 			},
 		},
@@ -3532,20 +2758,25 @@ func TestPgReplicationOrigin(t *testing.T) {
 			Name: "pg_replication_origin",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_replication_origin";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_replication_origin";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgreplicationorigin-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_replication_origin";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_replication_origin";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgreplicationorigin-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_replication_origin";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_replication_origin";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgreplicationorigin-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT roname FROM PG_catalog.pg_REPLICATION_ORIGIN ORDER BY roname;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT roname FROM PG_catalog.pg_REPLICATION_ORIGIN ORDER BY roname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgreplicationorigin-0004-select-roname-from-pg_catalog.pg_replication_origin-order"},
 				},
 			},
 		},
@@ -3558,20 +2789,25 @@ func TestPgReplicationOriginStatus(t *testing.T) {
 			Name: "pg_replication_origin_status",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_replication_origin_status";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_replication_origin_status";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgreplicationoriginstatus-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_replication_origin_status";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_replication_origin_status";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgreplicationoriginstatus-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_replication_origin_status";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_replication_origin_status";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgreplicationoriginstatus-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT local_id FROM PG_catalog.pg_REPLICATION_ORIGIN_STATUS ORDER BY local_id;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT local_id FROM PG_catalog.pg_REPLICATION_ORIGIN_STATUS ORDER BY local_id;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgreplicationoriginstatus-0004-select-local_id-from-pg_catalog.pg_replication_origin_status-order"},
 				},
 			},
 		},
@@ -3584,20 +2820,25 @@ func TestPgReplicationSlots(t *testing.T) {
 			Name: "pg_replication_slot",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_replication_slots";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_replication_slots";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgreplicationslots-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_replication_slots";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_replication_slots";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgreplicationslots-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_replication_slots";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_replication_slots";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgreplicationslots-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT slot_name FROM PG_catalog.pg_REPLICATION_SLOTS ORDER BY slot_name;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT slot_name FROM PG_catalog.pg_REPLICATION_SLOTS ORDER BY slot_name;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgreplicationslots-0004-select-slot_name-from-pg_catalog.pg_replication_slots-order"},
 				},
 			},
 		},
@@ -3610,20 +2851,25 @@ func TestPgRewrite(t *testing.T) {
 			Name: "pg_rewrite",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_rewrite";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_rewrite";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgrewrite-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_rewrite";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_rewrite";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgrewrite-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_rewrite";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_rewrite";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgrewrite-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT oid FROM PG_catalog.pg_REWRITE ORDER BY oid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT oid FROM PG_catalog.pg_REWRITE ORDER BY oid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgrewrite-0004-select-oid-from-pg_catalog.pg_rewrite-order"},
 				},
 			},
 		},
@@ -3636,26 +2882,22 @@ func TestPgRoles(t *testing.T) {
 			Name: "pg_roles",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT oid, rolname, rolcanlogin FROM "pg_catalog"."pg_roles" ORDER BY rolname;`,
-					Expected: []sql.Row{
-						{3676603549, "postgres", "t"},
-						{1214005198, "public", "f"},
-					},
+					Query: `SELECT oid, rolname, rolcanlogin FROM "pg_catalog"."pg_roles" ORDER BY rolname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgroles-0001-select-oid-rolname-rolcanlogin-from"},
 				},
 				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_roles";`,
-					ExpectedErr: "not",
+					Query: `SELECT * FROM "PG_catalog"."pg_roles";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgroles-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_roles";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_roles";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgroles-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query: "SELECT rolname FROM PG_catalog.pg_ROLES ORDER BY rolname;",
-					Expected: []sql.Row{
-						{"postgres"},
-						{"public"},
-					},
+				{
+					Query: "SELECT rolname FROM PG_catalog.pg_ROLES ORDER BY rolname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgroles-0004-select-rolname-from-pg_catalog.pg_roles-order"},
 				},
 			},
 		},
@@ -3668,20 +2910,25 @@ func TestPgRules(t *testing.T) {
 			Name: "pg_rules",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_rules";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_rules";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgrules-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_rules";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_rules";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgrules-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_rules";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_rules";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgrules-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT rulename FROM PG_catalog.pg_RULES ORDER BY rulename;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT rulename FROM PG_catalog.pg_RULES ORDER BY rulename;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgrules-0004-select-rulename-from-pg_catalog.pg_rules-order"},
 				},
 			},
 		},
@@ -3694,20 +2941,25 @@ func TestPgSeclabel(t *testing.T) {
 			Name: "pg_seclabel",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_seclabel";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_seclabel";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgseclabel-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_seclabel";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_seclabel";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgseclabel-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_seclabel";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_seclabel";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgseclabel-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT objoid FROM PG_catalog.pg_SECLABEL ORDER BY objoid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT objoid FROM PG_catalog.pg_SECLABEL ORDER BY objoid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgseclabel-0004-select-objoid-from-pg_catalog.pg_seclabel-order"},
 				},
 			},
 		},
@@ -3720,20 +2972,25 @@ func TestPgSeclabels(t *testing.T) {
 			Name: "pg_seclabels",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_seclabels";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_seclabels";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgseclabels-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_seclabels";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_seclabels";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgseclabels-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_seclabels";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_seclabels";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgseclabels-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT objoid FROM PG_catalog.pg_SECLABELS ORDER BY objoid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT objoid FROM PG_catalog.pg_SECLABELS ORDER BY objoid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgseclabels-0004-select-objoid-from-pg_catalog.pg_seclabels-order"},
 				},
 			},
 		},
@@ -3746,20 +3003,25 @@ func TestPgSequences(t *testing.T) {
 			Name: "pg_sequences",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_sequences";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_sequences";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgsequences-0001-select-*-from-pg_catalog-.", ColumnModes: []string{"schema"}},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_sequences";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_sequences";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgsequences-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_sequences";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_sequences";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgsequences-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT sequencename FROM PG_catalog.pg_SEQUENCES ORDER BY sequencename;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT sequencename FROM PG_catalog.pg_SEQUENCES ORDER BY sequencename;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgsequences-0004-select-sequencename-from-pg_catalog.pg_sequences-order"},
 				},
 			},
 		},
@@ -3773,26 +3035,22 @@ func TestPgSettings(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT name, setting FROM "pg_catalog"."pg_settings"
-						WHERE name IN ('server_version_num', 'wal_sender_timeout') ORDER BY name;`,
-					Expected: []sql.Row{
-						{"server_version_num", "150017"},
-						{"wal_sender_timeout", "60000"},
-					},
+						WHERE name IN ('server_version_num', 'wal_sender_timeout') ORDER BY name;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgsettings-0001-select-name-setting-from-pg_catalog"},
 				},
 				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_settings";`,
-					ExpectedErr: "not",
+					Query: `SELECT * FROM "PG_catalog"."pg_settings";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgsettings-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_settings";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_settings";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgsettings-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query: "SELECT name FROM PG_catalog.pg_SETTINGS ORDER BY name;",
-					Expected: []sql.Row{
-						{"server_version_num"},
-						{"wal_sender_timeout"},
-					},
+				{
+					Query: "SELECT name FROM PG_catalog.pg_SETTINGS ORDER BY name;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgsettings-0004-select-name-from-pg_catalog.pg_settings-order"},
 				},
 			},
 		},
@@ -3805,20 +3063,25 @@ func TestPgShadow(t *testing.T) {
 			Name: "pg_shadow",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_shadow";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_shadow";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgshadow-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_shadow";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_shadow";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgshadow-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_shadow";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_shadow";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgshadow-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT usename FROM PG_catalog.pg_SHADOW ORDER BY usename;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT usename FROM PG_catalog.pg_SHADOW ORDER BY usename;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgshadow-0004-select-usename-from-pg_catalog.pg_shadow-order"},
 				},
 			},
 		},
@@ -3831,20 +3094,25 @@ func TestPgShdepend(t *testing.T) {
 			Name: "pg_shdepend",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_shdepend";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_shdepend";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgshdepend-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_shdepend";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_shdepend";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgshdepend-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_shdepend";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_shdepend";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgshdepend-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT dbid FROM PG_catalog.pg_SHDEPEND ORDER BY dbid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT dbid FROM PG_catalog.pg_SHDEPEND ORDER BY dbid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgshdepend-0004-select-dbid-from-pg_catalog.pg_shdepend-order"},
 				},
 			},
 		},
@@ -3857,20 +3125,25 @@ func TestPgShdescription(t *testing.T) {
 			Name: "pg_shdescription",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_shdescription";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_shdescription";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgshdescription-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_shdescription";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_shdescription";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgshdescription-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_shdescription";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_shdescription";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgshdescription-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT objoid FROM PG_catalog.pg_SHDESCRIPTION ORDER BY objoid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT objoid FROM PG_catalog.pg_SHDESCRIPTION ORDER BY objoid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgshdescription-0004-select-objoid-from-pg_catalog.pg_shdescription-order"},
 				},
 			},
 		},
@@ -3883,20 +3156,25 @@ func TestPgShmemAllocations(t *testing.T) {
 			Name: "pg_shmem_allocations",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_shmem_allocations";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_shmem_allocations";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgshmemallocations-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_shmem_allocations";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_shmem_allocations";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgshmemallocations-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_shmem_allocations";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_shmem_allocations";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgshmemallocations-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT name FROM PG_catalog.pg_SHMEM_ALLOCATIONS ORDER BY name;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT name FROM PG_catalog.pg_SHMEM_ALLOCATIONS ORDER BY name;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgshmemallocations-0004-select-name-from-pg_catalog.pg_shmem_allocations-order"},
 				},
 			},
 		},
@@ -3909,20 +3187,25 @@ func TestPgShseclabel(t *testing.T) {
 			Name: "pg_shseclabel",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_shseclabel";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_shseclabel";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgshseclabel-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_shseclabel";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_shseclabel";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgshseclabel-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_shseclabel";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_shseclabel";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgshseclabel-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT objoid FROM PG_catalog.pg_SHSECLABEL ORDER BY objoid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT objoid FROM PG_catalog.pg_SHSECLABEL ORDER BY objoid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgshseclabel-0004-select-objoid-from-pg_catalog.pg_shseclabel-order"},
 				},
 			},
 		},
@@ -3935,20 +3218,25 @@ func TestPgStatActivity(t *testing.T) {
 			Name: "pg_stat_activity",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_stat_activity";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_stat_activity";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgstatactivity-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_stat_activity";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_stat_activity";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatactivity-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_stat_activity";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_stat_activity";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatactivity-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT datname FROM PG_catalog.pg_STAT_ACTIVITY ORDER BY datname;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT datname FROM PG_catalog.pg_STAT_ACTIVITY ORDER BY datname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatactivity-0004-select-datname-from-pg_catalog.pg_stat_activity-order"},
 				},
 			},
 		},
@@ -3964,28 +3252,24 @@ func TestPgStatAllIndexes(t *testing.T) {
 					Query: `SELECT schemaname, relname, indexrelname, idx_scan, last_idx_scan, idx_tup_read, idx_tup_fetch
 FROM "pg_catalog"."pg_stat_all_indexes"
 WHERE schemaname = 'pg_catalog' AND relname = 'pg_class'
-ORDER BY indexrelname;`,
-					Expected: []sql.Row{
-						{"pg_catalog", "pg_class", "pg_class_oid_index", int64(0), nil, int64(0), int64(0)},
-						{"pg_catalog", "pg_class", "pg_class_relname_nsp_index", int64(0), nil, int64(0), int64(0)},
-					},
+ORDER BY indexrelname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatallindexes-0001-select-schemaname-relname-indexrelname-idx_scan"},
 				},
 				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_stat_all_indexes";`,
-					ExpectedErr: "not",
+					Query: `SELECT * FROM "PG_catalog"."pg_stat_all_indexes";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatallindexes-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_stat_all_indexes";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_stat_all_indexes";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatallindexes-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
+				{
 					Query: `SELECT indexrelname FROM PG_catalog.pg_STAT_ALL_INDEXES
 WHERE schemaname = 'pg_catalog' AND relname = 'pg_class'
-ORDER BY indexrelname;`,
-					Expected: []sql.Row{
-						{"pg_class_oid_index"},
-						{"pg_class_relname_nsp_index"},
-					},
+ORDER BY indexrelname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatallindexes-0004-select-indexrelname-from-pg_catalog.pg_stat_all_indexes-where"},
 				},
 			},
 		},
@@ -3998,20 +3282,25 @@ func TestPgStatAllTables(t *testing.T) {
 			Name: "pg_stat_all_tables",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_stat_all_tables";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_stat_all_tables";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgstatalltables-0001-select-*-from-pg_catalog-.", ColumnModes: []string{"structural", "schema"}},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_stat_all_tables";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_stat_all_tables";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatalltables-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_stat_all_tables";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_stat_all_tables";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatalltables-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT relname FROM PG_catalog.pg_STAT_ALL_TABLES ORDER BY relname;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT relname FROM PG_catalog.pg_STAT_ALL_TABLES ORDER BY relname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatalltables-0004-select-relname-from-pg_catalog.pg_stat_all_tables-order"},
 				},
 			},
 		},
@@ -4024,20 +3313,25 @@ func TestPgStatArchiver(t *testing.T) {
 			Name: "pg_stat_archiver",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_stat_archiver";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_stat_archiver";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgstatarchiver-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_stat_archiver";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_stat_archiver";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatarchiver-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_stat_archiver";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_stat_archiver";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatarchiver-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT archived_count FROM PG_catalog.pg_STAT_ARCHIVER ORDER BY archived_count;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT archived_count FROM PG_catalog.pg_STAT_ARCHIVER ORDER BY archived_count;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatarchiver-0004-select-archived_count-from-pg_catalog.pg_stat_archiver-order"},
 				},
 			},
 		},
@@ -4050,20 +3344,25 @@ func TestPgStatBgwriter(t *testing.T) {
 			Name: "pg_stat_bgwriter",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_stat_bgwriter";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_stat_bgwriter";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgstatbgwriter-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_stat_bgwriter";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_stat_bgwriter";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatbgwriter-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_stat_bgwriter";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_stat_bgwriter";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatbgwriter-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT checkpoints_timed FROM PG_catalog.pg_STAT_BGWRITER ORDER BY checkpoints_timed;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT checkpoints_timed FROM PG_catalog.pg_STAT_BGWRITER ORDER BY checkpoints_timed;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatbgwriter-0004-select-checkpoints_timed-from-pg_catalog.pg_stat_bgwriter-order"},
 				},
 			},
 		},
@@ -4076,26 +3375,22 @@ func TestPgStatDatabase(t *testing.T) {
 			Name: "pg_stat_database",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_stat_database";`,
-					Expected: []sql.Row{{nil, "postgres",
-						int64(1), int64(0), int64(0), int64(0), int64(0),
-						int64(0), int64(0), int64(0), int64(0), int64(0),
-						int64(0), int64(0), int64(0), int64(0), int64(0),
-						nil, float64(0), float64(0), float64(0), float64(0),
-						float64(0), int64(1), int64(0), int64(0), int64(0),
-						nil}},
+					Query: `SELECT * FROM "pg_catalog"."pg_stat_database";`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatdatabase-0001-select-*-from-pg_catalog-."},
 				},
 				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_stat_database";`,
-					ExpectedErr: "not",
+					Query: `SELECT * FROM "PG_catalog"."pg_stat_database";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatdatabase-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_stat_database";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_stat_database";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatdatabase-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT datname FROM PG_catalog.pg_STAT_DATABASE ORDER BY datname;",
-					Expected: []sql.Row{{"postgres"}},
+				{
+					Query: "SELECT datname FROM PG_catalog.pg_STAT_DATABASE ORDER BY datname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatdatabase-0004-select-datname-from-pg_catalog.pg_stat_database-order"},
 				},
 			},
 		},
@@ -4108,23 +3403,22 @@ func TestPgStatDatabaseConflicts(t *testing.T) {
 			Name: "pg_stat_database_conflicts",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_stat_database_conflicts";`,
-					Expected: []sql.Row{{
-						nil, "postgres",
-						int64(0), int64(0), int64(0), int64(0), int64(0), int64(0),
-					}},
+					Query: `SELECT * FROM "pg_catalog"."pg_stat_database_conflicts";`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatdatabaseconflicts-0001-select-*-from-pg_catalog-."},
 				},
 				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_stat_database_conflicts";`,
-					ExpectedErr: "not",
+					Query: `SELECT * FROM "PG_catalog"."pg_stat_database_conflicts";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatdatabaseconflicts-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_stat_database_conflicts";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_stat_database_conflicts";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatdatabaseconflicts-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT datname FROM PG_catalog.pg_STAT_DATABASE_CONFLICTS ORDER BY datname;",
-					Expected: []sql.Row{{"postgres"}},
+				{
+					Query: "SELECT datname FROM PG_catalog.pg_STAT_DATABASE_CONFLICTS ORDER BY datname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatdatabaseconflicts-0004-select-datname-from-pg_catalog.pg_stat_database_conflicts-order"},
 				},
 			},
 		},
@@ -4137,20 +3431,25 @@ func TestPgStatGssapi(t *testing.T) {
 			Name: "pg_stat_gssapi",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_stat_gssapi";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_stat_gssapi";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgstatgssapi-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_stat_gssapi";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_stat_gssapi";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatgssapi-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_stat_gssapi";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_stat_gssapi";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatgssapi-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT pid FROM PG_catalog.pg_STAT_GSSAPI ORDER BY pid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT pid FROM PG_catalog.pg_STAT_GSSAPI ORDER BY pid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatgssapi-0004-select-pid-from-pg_catalog.pg_stat_gssapi-order"},
 				},
 			},
 		},
@@ -4163,20 +3462,25 @@ func TestPgStatProgressAnalyze(t *testing.T) {
 			Name: "pg_stat_progress_analyze",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_stat_progress_analyze";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_stat_progress_analyze";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgstatprogressanalyze-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_stat_progress_analyze";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_stat_progress_analyze";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatprogressanalyze-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_stat_progress_analyze";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_stat_progress_analyze";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatprogressanalyze-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT datname FROM PG_catalog.pg_STAT_PROGRESS_ANALYZE ORDER BY datname;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT datname FROM PG_catalog.pg_STAT_PROGRESS_ANALYZE ORDER BY datname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatprogressanalyze-0004-select-datname-from-pg_catalog.pg_stat_progress_analyze-order"},
 				},
 			},
 		},
@@ -4189,20 +3493,25 @@ func TestPgStatProgressBasebackup(t *testing.T) {
 			Name: "pg_stat_progress_basebackup",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_stat_progress_basebackup";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_stat_progress_basebackup";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgstatprogressbasebackup-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_stat_progress_basebackup";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_stat_progress_basebackup";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatprogressbasebackup-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_stat_progress_basebackup";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_stat_progress_basebackup";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatprogressbasebackup-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT pid FROM PG_catalog.pg_STAT_PROGRESS_BASEBACKUP ORDER BY pid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT pid FROM PG_catalog.pg_STAT_PROGRESS_BASEBACKUP ORDER BY pid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatprogressbasebackup-0004-select-pid-from-pg_catalog.pg_stat_progress_basebackup-order"},
 				},
 			},
 		},
@@ -4215,20 +3524,25 @@ func TestPgStatProgressCluster(t *testing.T) {
 			Name: "pg_stat_progress_cluster",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_stat_progress_cluster";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_stat_progress_cluster";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgstatprogresscluster-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_stat_progress_cluster";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_stat_progress_cluster";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatprogresscluster-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_stat_progress_cluster";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_stat_progress_cluster";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatprogresscluster-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT pid FROM PG_catalog.pg_STAT_PROGRESS_CLUSTER ORDER BY pid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT pid FROM PG_catalog.pg_STAT_PROGRESS_CLUSTER ORDER BY pid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatprogresscluster-0004-select-pid-from-pg_catalog.pg_stat_progress_cluster-order"},
 				},
 			},
 		},
@@ -4241,20 +3555,25 @@ func TestPgStatProgressCopy(t *testing.T) {
 			Name: "pg_stat_progress_copy",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_stat_progress_copy";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_stat_progress_copy";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgstatprogresscopy-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_stat_progress_copy";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_stat_progress_copy";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatprogresscopy-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_stat_progress_copy";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_stat_progress_copy";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatprogresscopy-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT pid FROM PG_catalog.pg_STAT_PROGRESS_COPY ORDER BY pid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT pid FROM PG_catalog.pg_STAT_PROGRESS_COPY ORDER BY pid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatprogresscopy-0004-select-pid-from-pg_catalog.pg_stat_progress_copy-order"},
 				},
 			},
 		},
@@ -4267,20 +3586,25 @@ func TestPgStatProgressCreateIndex(t *testing.T) {
 			Name: "pg_stat_progress_create_index",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_stat_progress_create_index";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_stat_progress_create_index";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgstatprogresscreateindex-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_stat_progress_create_index";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_stat_progress_create_index";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatprogresscreateindex-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_stat_progress_create_index";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_stat_progress_create_index";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatprogresscreateindex-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT pid FROM PG_catalog.pg_STAT_PROGRESS_CREATE_INDEX ORDER BY pid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT pid FROM PG_catalog.pg_STAT_PROGRESS_CREATE_INDEX ORDER BY pid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatprogresscreateindex-0004-select-pid-from-pg_catalog.pg_stat_progress_create_index-order"},
 				},
 			},
 		},
@@ -4293,20 +3617,25 @@ func TestPgStatProgressVacuum(t *testing.T) {
 			Name: "pg_stat_progress_vacuum",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_stat_progress_vacuum";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_stat_progress_vacuum";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgstatprogressvacuum-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_stat_progress_vacuum";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_stat_progress_vacuum";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatprogressvacuum-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_stat_progress_vacuum";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_stat_progress_vacuum";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatprogressvacuum-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT pid FROM PG_catalog.pg_STAT_PROGRESS_VACUUM ORDER BY pid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT pid FROM PG_catalog.pg_STAT_PROGRESS_VACUUM ORDER BY pid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatprogressvacuum-0004-select-pid-from-pg_catalog.pg_stat_progress_vacuum-order"},
 				},
 			},
 		},
@@ -4319,20 +3648,25 @@ func TestPgStatRecoveryPrefetch(t *testing.T) {
 			Name: "pg_stat_recovery_prefetch",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_stat_recovery_prefetch";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_stat_recovery_prefetch";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgstatrecoveryprefetch-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_stat_recovery_prefetch";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_stat_recovery_prefetch";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatrecoveryprefetch-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_stat_recovery_prefetch";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_stat_recovery_prefetch";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatrecoveryprefetch-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT hit FROM PG_catalog.pg_STAT_RECOVERY_PREFETCH ORDER BY hit;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT hit FROM PG_catalog.pg_STAT_RECOVERY_PREFETCH ORDER BY hit;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatrecoveryprefetch-0004-select-hit-from-pg_catalog.pg_stat_recovery_prefetch-order"},
 				},
 			},
 		},
@@ -4345,20 +3679,25 @@ func TestPgStatReplication(t *testing.T) {
 			Name: "pg_stat_replication",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_stat_replication";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_stat_replication";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgstatreplication-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_stat_replication";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_stat_replication";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatreplication-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_stat_replication";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_stat_replication";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatreplication-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT pid FROM PG_catalog.pg_STAT_REPLICATION ORDER BY pid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT pid FROM PG_catalog.pg_STAT_REPLICATION ORDER BY pid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatreplication-0004-select-pid-from-pg_catalog.pg_stat_replication-order"},
 				},
 			},
 		},
@@ -4371,20 +3710,25 @@ func TestPgStatReplicationSlots(t *testing.T) {
 			Name: "pg_stat_replication_slots",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_stat_replication_slots";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_stat_replication_slots";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgstatreplicationslots-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_stat_replication_slots";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_stat_replication_slots";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatreplicationslots-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_stat_replication_slots";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_stat_replication_slots";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatreplicationslots-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT slot_name FROM PG_catalog.pg_STAT_REPLICATION_SLOTS ORDER BY slot_name;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT slot_name FROM PG_catalog.pg_STAT_REPLICATION_SLOTS ORDER BY slot_name;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatreplicationslots-0004-select-slot_name-from-pg_catalog.pg_stat_replication_slots-order"},
 				},
 			},
 		},
@@ -4397,20 +3741,25 @@ func TestPgStatSlru(t *testing.T) {
 			Name: "pg_stat_slru",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_stat_slru";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_stat_slru";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgstatslru-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_stat_slru";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_stat_slru";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatslru-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_stat_slru";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_stat_slru";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatslru-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT name FROM PG_catalog.pg_STAT_SLRU ORDER BY name;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT name FROM PG_catalog.pg_STAT_SLRU ORDER BY name;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatslru-0004-select-name-from-pg_catalog.pg_stat_slru-order"},
 				},
 			},
 		},
@@ -4423,20 +3772,25 @@ func TestPgStatSsl(t *testing.T) {
 			Name: "pg_stat_ssl",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_stat_ssl";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_stat_ssl";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgstatssl-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_stat_ssl";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_stat_ssl";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatssl-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_stat_ssl";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_stat_ssl";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatssl-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT pid FROM PG_catalog.pg_STAT_SSL ORDER BY pid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT pid FROM PG_catalog.pg_STAT_SSL ORDER BY pid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatssl-0004-select-pid-from-pg_catalog.pg_stat_ssl-order"},
 				},
 			},
 		},
@@ -4449,20 +3803,25 @@ func TestPgStatSubscription(t *testing.T) {
 			Name: "pg_stat_subscription",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_stat_subscription";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_stat_subscription";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgstatsubscription-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_stat_subscription";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_stat_subscription";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatsubscription-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_stat_subscription";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_stat_subscription";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatsubscription-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT subid FROM PG_catalog.pg_STAT_SUBSCRIPTION ORDER BY subid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT subid FROM PG_catalog.pg_STAT_SUBSCRIPTION ORDER BY subid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatsubscription-0004-select-subid-from-pg_catalog.pg_stat_subscription-order"},
 				},
 			},
 		},
@@ -4475,20 +3834,25 @@ func TestPgStatSubscriptionStats(t *testing.T) {
 			Name: "pg_stat_subscription_stats",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_stat_subscription_stats";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_stat_subscription_stats";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgstatsubscriptionstats-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_stat_subscription_stats";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_stat_subscription_stats";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatsubscriptionstats-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_stat_subscription_stats";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_stat_subscription_stats";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatsubscriptionstats-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT subid FROM PG_catalog.pg_STAT_SUBSCRIPTION_STATS ORDER BY subid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT subid FROM PG_catalog.pg_STAT_SUBSCRIPTION_STATS ORDER BY subid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatsubscriptionstats-0004-select-subid-from-pg_catalog.pg_stat_subscription_stats-order"},
 				},
 			},
 		},
@@ -4504,28 +3868,24 @@ func TestPgStatSysIndexes(t *testing.T) {
 					Query: `SELECT schemaname, relname, indexrelname, idx_scan, last_idx_scan, idx_tup_read, idx_tup_fetch
 FROM "pg_catalog"."pg_stat_sys_indexes"
 WHERE schemaname = 'pg_catalog' AND relname = 'pg_class'
-ORDER BY indexrelname;`,
-					Expected: []sql.Row{
-						{"pg_catalog", "pg_class", "pg_class_oid_index", int64(0), nil, int64(0), int64(0)},
-						{"pg_catalog", "pg_class", "pg_class_relname_nsp_index", int64(0), nil, int64(0), int64(0)},
-					},
+ORDER BY indexrelname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatsysindexes-0001-select-schemaname-relname-indexrelname-idx_scan"},
 				},
 				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_stat_sys_indexes";`,
-					ExpectedErr: "not",
+					Query: `SELECT * FROM "PG_catalog"."pg_stat_sys_indexes";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatsysindexes-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_stat_sys_indexes";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_stat_sys_indexes";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatsysindexes-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
+				{
 					Query: `SELECT indexrelname FROM PG_catalog.pg_STAT_SYS_INDEXES
 WHERE schemaname = 'pg_catalog' AND relname = 'pg_class'
-ORDER BY indexrelname;`,
-					Expected: []sql.Row{
-						{"pg_class_oid_index"},
-						{"pg_class_relname_nsp_index"},
-					},
+ORDER BY indexrelname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatsysindexes-0004-select-indexrelname-from-pg_catalog.pg_stat_sys_indexes-where"},
 				},
 			},
 		},
@@ -4538,20 +3898,25 @@ func TestPgStatSysTables(t *testing.T) {
 			Name: "pg_stat_sys_tables",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_stat_sys_tables";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_stat_sys_tables";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgstatsystables-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_stat_sys_tables";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_stat_sys_tables";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatsystables-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_stat_sys_tables";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_stat_sys_tables";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatsystables-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT relid FROM PG_catalog.pg_STAT_SYS_TABLES ORDER BY relid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT relid FROM PG_catalog.pg_STAT_SYS_TABLES ORDER BY relid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatsystables-0004-select-relid-from-pg_catalog.pg_stat_sys_tables-order"},
 				},
 			},
 		},
@@ -4564,20 +3929,25 @@ func TestPgStatUserFunctions(t *testing.T) {
 			Name: "pg_stat_user_functions",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_stat_user_functions";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_stat_user_functions";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgstatuserfunctions-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_stat_user_functions";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_stat_user_functions";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatuserfunctions-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_stat_user_functions";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_stat_user_functions";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatuserfunctions-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT funcid FROM PG_catalog.pg_STAT_USER_FUNCTIONS ORDER BY funcid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT funcid FROM PG_catalog.pg_STAT_USER_FUNCTIONS ORDER BY funcid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatuserfunctions-0004-select-funcid-from-pg_catalog.pg_stat_user_functions-order"},
 				},
 			},
 		},
@@ -4590,20 +3960,25 @@ func TestPgStatUserIndexes(t *testing.T) {
 			Name: "pg_stat_user_indexes",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_stat_user_indexes";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_stat_user_indexes";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgstatuserindexes-0001-select-*-from-pg_catalog-.", ColumnModes: []string{"structural", "structural", "schema"}},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_stat_user_indexes";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_stat_user_indexes";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatuserindexes-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_stat_user_indexes";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_stat_user_indexes";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatuserindexes-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT relid FROM PG_catalog.pg_STAT_USER_INDEXES ORDER BY relid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT relid FROM PG_catalog.pg_STAT_USER_INDEXES ORDER BY relid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatuserindexes-0004-select-relid-from-pg_catalog.pg_stat_user_indexes-order"},
 				},
 			},
 		},
@@ -4616,20 +3991,25 @@ func TestPgStatUserTables(t *testing.T) {
 			Name: "pg_stat_user_tables",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_stat_user_tables";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_stat_user_tables";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgstatusertables-0001-select-*-from-pg_catalog-.", ColumnModes: []string{"structural", "schema"}},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_stat_user_tables";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_stat_user_tables";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatusertables-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_stat_user_tables";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_stat_user_tables";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatusertables-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT relid FROM PG_catalog.pg_STAT_USER_TABLES ORDER BY relid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT relid FROM PG_catalog.pg_STAT_USER_TABLES ORDER BY relid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatusertables-0004-select-relid-from-pg_catalog.pg_stat_user_tables-order"},
 				},
 			},
 		},
@@ -4642,20 +4022,25 @@ func TestPgStatWal(t *testing.T) {
 			Name: "pg_stat_wal",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_stat_wal";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_stat_wal";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgstatwal-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_stat_wal";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_stat_wal";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatwal-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_stat_wal";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_stat_wal";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatwal-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT wal_records FROM PG_catalog.pg_STAT_WAL ORDER BY wal_records;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT wal_records FROM PG_catalog.pg_STAT_WAL ORDER BY wal_records;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatwal-0004-select-wal_records-from-pg_catalog.pg_stat_wal-order"},
 				},
 			},
 		},
@@ -4668,20 +4053,25 @@ func TestPgStatWalReceiver(t *testing.T) {
 			Name: "pg_stat_wal_receiver",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_stat_wal_receiver";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_stat_wal_receiver";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgstatwalreceiver-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_stat_wal_receiver";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_stat_wal_receiver";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatwalreceiver-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_stat_wal_receiver";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_stat_wal_receiver";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatwalreceiver-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT pid FROM PG_catalog.pg_STAT_WAL_RECEIVER ORDER BY pid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT pid FROM PG_catalog.pg_STAT_WAL_RECEIVER ORDER BY pid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatwalreceiver-0004-select-pid-from-pg_catalog.pg_stat_wal_receiver-order"},
 				},
 			},
 		},
@@ -4694,20 +4084,25 @@ func TestPgStatXactAllTables(t *testing.T) {
 			Name: "pg_stat_xact_all_tables",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_stat_xact_all_tables";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_stat_xact_all_tables";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgstatxactalltables-0001-select-*-from-pg_catalog-.", ColumnModes: []string{"structural", "schema"}},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_stat_xact_all_tables";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_stat_xact_all_tables";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatxactalltables-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_stat_xact_all_tables";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_stat_xact_all_tables";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatxactalltables-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT relid FROM PG_catalog.pg_STAT_XACT_ALL_TABLES ORDER BY relid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT relid FROM PG_catalog.pg_STAT_XACT_ALL_TABLES ORDER BY relid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatxactalltables-0004-select-relid-from-pg_catalog.pg_stat_xact_all_tables-order"},
 				},
 			},
 		},
@@ -4720,20 +4115,25 @@ func TestPgStatXactSysTables(t *testing.T) {
 			Name: "pg_stat_xact_sys_tables",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_stat_xact_sys_tables";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_stat_xact_sys_tables";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgstatxactsystables-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_stat_xact_sys_tables";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_stat_xact_sys_tables";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatxactsystables-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_stat_xact_sys_tables";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_stat_xact_sys_tables";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatxactsystables-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT relid FROM PG_catalog.pg_STAT_XACT_SYS_TABLES ORDER BY relid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT relid FROM PG_catalog.pg_STAT_XACT_SYS_TABLES ORDER BY relid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatxactsystables-0004-select-relid-from-pg_catalog.pg_stat_xact_sys_tables-order"},
 				},
 			},
 		},
@@ -4746,20 +4146,25 @@ func TestPgStatXactUserFunctions(t *testing.T) {
 			Name: "pg_stat_xact_user_functions",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_stat_xact_user_functions";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_stat_xact_user_functions";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgstatxactuserfunctions-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_stat_xact_user_functions";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_stat_xact_user_functions";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatxactuserfunctions-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_stat_xact_user_functions";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_stat_xact_user_functions";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatxactuserfunctions-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT funcid FROM PG_catalog.pg_STAT_XACT_USER_FUNCTIONS ORDER BY funcid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT funcid FROM PG_catalog.pg_STAT_XACT_USER_FUNCTIONS ORDER BY funcid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatxactuserfunctions-0004-select-funcid-from-pg_catalog.pg_stat_xact_user_functions-order"},
 				},
 			},
 		},
@@ -4772,20 +4177,25 @@ func TestPgStatXactUserTables(t *testing.T) {
 			Name: "pg_stat_xact_user_tables",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_stat_xact_user_tables";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_stat_xact_user_tables";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgstatxactusertables-0001-select-*-from-pg_catalog-.", ColumnModes: []string{"structural", "schema"}},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_stat_xact_user_tables";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_stat_xact_user_tables";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatxactusertables-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_stat_xact_user_tables";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_stat_xact_user_tables";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatxactusertables-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT relid FROM PG_catalog.pg_STAT_XACT_USER_TABLES ORDER BY relid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT relid FROM PG_catalog.pg_STAT_XACT_USER_TABLES ORDER BY relid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatxactusertables-0004-select-relid-from-pg_catalog.pg_stat_xact_user_tables-order"},
 				},
 			},
 		},
@@ -4801,28 +4211,24 @@ func TestPgStatioAllIndexes(t *testing.T) {
 					Query: `SELECT schemaname, relname, indexrelname, idx_blks_read, idx_blks_hit
 FROM "pg_catalog"."pg_statio_all_indexes"
 WHERE schemaname = 'pg_catalog' AND relname = 'pg_class'
-ORDER BY indexrelname;`,
-					Expected: []sql.Row{
-						{"pg_catalog", "pg_class", "pg_class_oid_index", int64(0), int64(0)},
-						{"pg_catalog", "pg_class", "pg_class_relname_nsp_index", int64(0), int64(0)},
-					},
+ORDER BY indexrelname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatioallindexes-0001-select-schemaname-relname-indexrelname-idx_blks_read"},
 				},
 				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_statio_all_indexes";`,
-					ExpectedErr: "not",
+					Query: `SELECT * FROM "PG_catalog"."pg_statio_all_indexes";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatioallindexes-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_statio_all_indexes";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_statio_all_indexes";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatioallindexes-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
+				{
 					Query: `SELECT indexrelname FROM PG_catalog.pg_STATIO_ALL_INDEXES
 WHERE schemaname = 'pg_catalog' AND relname = 'pg_class'
-ORDER BY indexrelname;`,
-					Expected: []sql.Row{
-						{"pg_class_oid_index"},
-						{"pg_class_relname_nsp_index"},
-					},
+ORDER BY indexrelname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatioallindexes-0004-select-indexrelname-from-pg_catalog.pg_statio_all_indexes-where"},
 				},
 			},
 		},
@@ -4835,20 +4241,25 @@ func TestPgStatioAllSequences(t *testing.T) {
 			Name: "pg_statio_all_sequences",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_statio_all_sequences";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_statio_all_sequences";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgstatioallsequences-0001-select-*-from-pg_catalog-.", ColumnModes: []string{"structural", "schema"}},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_statio_all_sequences";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_statio_all_sequences";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatioallsequences-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_statio_all_sequences";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_statio_all_sequences";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatioallsequences-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT relid FROM PG_catalog.pg_STATIO_ALL_SEQUENCES ORDER BY relid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT relid FROM PG_catalog.pg_STATIO_ALL_SEQUENCES ORDER BY relid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatioallsequences-0004-select-relid-from-pg_catalog.pg_statio_all_sequences-order"},
 				},
 			},
 		},
@@ -4861,20 +4272,25 @@ func TestPgStatioAllTables(t *testing.T) {
 			Name: "pg_statio_all_tables",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_statio_all_tables";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_statio_all_tables";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgstatioalltables-0001-select-*-from-pg_catalog-.", ColumnModes: []string{"structural", "schema"}},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_statio_all_tables";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_statio_all_tables";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatioalltables-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_statio_all_tables";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_statio_all_tables";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatioalltables-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT relid FROM PG_catalog.pg_STATIO_ALL_TABLES ORDER BY relid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT relid FROM PG_catalog.pg_STATIO_ALL_TABLES ORDER BY relid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatioalltables-0004-select-relid-from-pg_catalog.pg_statio_all_tables-order"},
 				},
 			},
 		},
@@ -4890,28 +4306,24 @@ func TestPgStatioSysIndexes(t *testing.T) {
 					Query: `SELECT schemaname, relname, indexrelname, idx_blks_read, idx_blks_hit
 FROM "pg_catalog"."pg_statio_sys_indexes"
 WHERE schemaname = 'pg_catalog' AND relname = 'pg_class'
-ORDER BY indexrelname;`,
-					Expected: []sql.Row{
-						{"pg_catalog", "pg_class", "pg_class_oid_index", int64(0), int64(0)},
-						{"pg_catalog", "pg_class", "pg_class_relname_nsp_index", int64(0), int64(0)},
-					},
+ORDER BY indexrelname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatiosysindexes-0001-select-schemaname-relname-indexrelname-idx_blks_read"},
 				},
 				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_statio_sys_indexes";`,
-					ExpectedErr: "not",
+					Query: `SELECT * FROM "PG_catalog"."pg_statio_sys_indexes";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatiosysindexes-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_statio_sys_indexes";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_statio_sys_indexes";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatiosysindexes-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
+				{
 					Query: `SELECT indexrelname FROM PG_catalog.pg_STATIO_SYS_INDEXES
 WHERE schemaname = 'pg_catalog' AND relname = 'pg_class'
-ORDER BY indexrelname;`,
-					Expected: []sql.Row{
-						{"pg_class_oid_index"},
-						{"pg_class_relname_nsp_index"},
-					},
+ORDER BY indexrelname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatiosysindexes-0004-select-indexrelname-from-pg_catalog.pg_statio_sys_indexes-where"},
 				},
 			},
 		},
@@ -4924,20 +4336,25 @@ func TestPgStatioSysSequences(t *testing.T) {
 			Name: "pg_statio_sys_sequences",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_statio_sys_sequences";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_statio_sys_sequences";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgstatiosyssequences-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_statio_sys_sequences";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_statio_sys_sequences";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatiosyssequences-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_statio_sys_sequences";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_statio_sys_sequences";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatiosyssequences-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT relid FROM PG_catalog.pg_STATIO_SYS_SEQUENCES ORDER BY relid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT relid FROM PG_catalog.pg_STATIO_SYS_SEQUENCES ORDER BY relid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatiosyssequences-0004-select-relid-from-pg_catalog.pg_statio_sys_sequences-order"},
 				},
 			},
 		},
@@ -4950,20 +4367,25 @@ func TestPgStatioSysTables(t *testing.T) {
 			Name: "pg_statio_sys_tables",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_statio_sys_tables";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_statio_sys_tables";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgstatiosystables-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_statio_sys_tables";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_statio_sys_tables";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatiosystables-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_statio_sys_tables";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_statio_sys_tables";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatiosystables-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT relid FROM PG_catalog.pg_STATIO_SYS_TABLES ORDER BY relid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT relid FROM PG_catalog.pg_STATIO_SYS_TABLES ORDER BY relid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatiosystables-0004-select-relid-from-pg_catalog.pg_statio_sys_tables-order"},
 				},
 			},
 		},
@@ -4976,20 +4398,25 @@ func TestPgStatioUserIndexes(t *testing.T) {
 			Name: "pg_statio_user_indexes",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_statio_user_indexes";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_statio_user_indexes";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgstatiouserindexes-0001-select-*-from-pg_catalog-.", ColumnModes: []string{"structural", "structural", "schema"}},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_statio_user_indexes";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_statio_user_indexes";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatiouserindexes-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_statio_user_indexes";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_statio_user_indexes";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatiouserindexes-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT relid FROM PG_catalog.pg_STATIO_USER_INDEXES ORDER BY relid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT relid FROM PG_catalog.pg_STATIO_USER_INDEXES ORDER BY relid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatiouserindexes-0004-select-relid-from-pg_catalog.pg_statio_user_indexes-order"},
 				},
 			},
 		},
@@ -5002,20 +4429,25 @@ func TestPgStatioUserSequences(t *testing.T) {
 			Name: "pg_statio_user_sequences",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_statio_user_sequences";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_statio_user_sequences";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgstatiousersequences-0001-select-*-from-pg_catalog-.", ColumnModes: []string{"structural", "schema"}},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_statio_user_sequences";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_statio_user_sequences";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatiousersequences-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_statio_user_sequences";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_statio_user_sequences";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatiousersequences-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT relid FROM PG_catalog.pg_STATIO_USER_SEQUENCES ORDER BY relid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT relid FROM PG_catalog.pg_STATIO_USER_SEQUENCES ORDER BY relid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatiousersequences-0004-select-relid-from-pg_catalog.pg_statio_user_sequences-order"},
 				},
 			},
 		},
@@ -5028,20 +4460,25 @@ func TestPgStatioUserTables(t *testing.T) {
 			Name: "pg_statio_user_tables",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_statio_user_tables";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_statio_user_tables";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgstatiousertables-0001-select-*-from-pg_catalog-.", ColumnModes: []string{"structural", "schema"}},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_statio_user_tables";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_statio_user_tables";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatiousertables-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_statio_user_tables";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_statio_user_tables";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatiousertables-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT relid FROM PG_catalog.pg_STATIO_USER_TABLES ORDER BY relid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT relid FROM PG_catalog.pg_STATIO_USER_TABLES ORDER BY relid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatiousertables-0004-select-relid-from-pg_catalog.pg_statio_user_tables-order"},
 				},
 			},
 		},
@@ -5054,20 +4491,25 @@ func TestPgStatistic(t *testing.T) {
 			Name: "pg_statistic",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_statistic";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_statistic";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgstatistic-0001-select-*-from-pg_catalog-.", ColumnModes: []string{"structural", "structural", "structural", "structural", "structural",
+
+						// Different cases and quoted, so it fails
+						"structural", "structural", "structural", "structural", "structural", "structural", "structural", "structural", "structural", "structural", "structural",
+
+						// Different cases but non-quoted, so it works
+						"structural", "structural", "structural", "structural", "structural", "structural", "structural", "structural", "structural", "structural", "schema"}},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_statistic";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_statistic";`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatistic-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_statistic";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_statistic";`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatistic-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT starelid FROM PG_catalog.pg_STATISTIC ORDER BY starelid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT starelid FROM PG_catalog.pg_STATISTIC ORDER BY starelid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatistic-0004-select-starelid-from-pg_catalog.pg_statistic-order"},
 				},
 			},
 		},
@@ -5080,20 +4522,25 @@ func TestPgStatisticExt(t *testing.T) {
 			Name: "pg_statistic_ext",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_statistic_ext";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_statistic_ext";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgstatisticext-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_statistic_ext";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_statistic_ext";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatisticext-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_statistic_ext";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_statistic_ext";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatisticext-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT stxname FROM PG_catalog.pg_STATISTIC_EXT ORDER BY stxname;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT stxname FROM PG_catalog.pg_STATISTIC_EXT ORDER BY stxname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatisticext-0004-select-stxname-from-pg_catalog.pg_statistic_ext-order"},
 				},
 			},
 		},
@@ -5106,20 +4553,25 @@ func TestPgStatisticExtData(t *testing.T) {
 			Name: "pg_statistic_ext_data",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_statistic_ext_data";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_statistic_ext_data";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgstatisticextdata-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_statistic_ext_data";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_statistic_ext_data";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatisticextdata-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_statistic_ext_data";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_statistic_ext_data";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatisticextdata-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT stxoid FROM PG_catalog.pg_STATISTIC_EXT_DATA ORDER BY stxoid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT stxoid FROM PG_catalog.pg_STATISTIC_EXT_DATA ORDER BY stxoid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatisticextdata-0004-select-stxoid-from-pg_catalog.pg_statistic_ext_data-order"},
 				},
 			},
 		},
@@ -5132,20 +4584,25 @@ func TestPgStats(t *testing.T) {
 			Name: "pg_stats",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_stats";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_stats";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgstats-0001-select-*-from-pg_catalog-.", ColumnModes: []string{"structural", "structural", "structural", "structural", "structural",
+
+						// Different cases and quoted, so it fails
+						"structural", "structural", "structural", "structural", "schema"}},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_stats";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_stats";`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstats-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_stats";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_stats";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstats-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT attname FROM PG_catalog.pg_STATS ORDER BY attname;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT attname FROM PG_catalog.pg_STATS ORDER BY attname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstats-0004-select-attname-from-pg_catalog.pg_stats-order"},
 				},
 			},
 		},
@@ -5158,20 +4615,25 @@ func TestPgStatsExt(t *testing.T) {
 			Name: "pg_stats_ext",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_stats_ext";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_stats_ext";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgstatsext-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_stats_ext";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_stats_ext";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatsext-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_stats_ext";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_stats_ext";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatsext-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT statistics_name FROM PG_catalog.pg_STATS_EXT ORDER BY statistics_name;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT statistics_name FROM PG_catalog.pg_STATS_EXT ORDER BY statistics_name;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatsext-0004-select-statistics_name-from-pg_catalog.pg_stats_ext-order"},
 				},
 			},
 		},
@@ -5184,20 +4646,25 @@ func TestPgStatsExtExprs(t *testing.T) {
 			Name: "pg_stats_ext_exprs",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_stats_ext_exprs";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_stats_ext_exprs";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgstatsextexprs-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_stats_ext_exprs";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_stats_ext_exprs";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgstatsextexprs-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_stats_ext_exprs";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_stats_ext_exprs";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgstatsextexprs-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT statistics_name FROM PG_catalog.pg_STATS_EXT_EXPRS ORDER BY statistics_name;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT statistics_name FROM PG_catalog.pg_STATS_EXT_EXPRS ORDER BY statistics_name;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatsextexprs-0004-select-statistics_name-from-pg_catalog.pg_stats_ext_exprs-order"},
 				},
 			},
 		},
@@ -5210,20 +4677,25 @@ func TestPgSubscription(t *testing.T) {
 			Name: "pg_subscription",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_subscription";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_subscription";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgsubscription-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_subscription";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_subscription";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgsubscription-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_subscription";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_subscription";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgsubscription-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT subname FROM PG_catalog.pg_SUBSCRIPTION ORDER BY subname;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT subname FROM PG_catalog.pg_SUBSCRIPTION ORDER BY subname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgsubscription-0004-select-subname-from-pg_catalog.pg_subscription-order"},
 				},
 			},
 		},
@@ -5236,20 +4708,25 @@ func TestPgSubscriptionRel(t *testing.T) {
 			Name: "pg_subscription_rel",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_subscription_rel";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_subscription_rel";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgsubscriptionrel-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_subscription_rel";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_subscription_rel";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgsubscriptionrel-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_subscription_rel";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_subscription_rel";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgsubscriptionrel-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT srsubid FROM PG_catalog.pg_SUBSCRIPTION_REL ORDER BY srsubid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT srsubid FROM PG_catalog.pg_SUBSCRIPTION_REL ORDER BY srsubid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgsubscriptionrel-0004-select-srsubid-from-pg_catalog.pg_subscription_rel-order"},
 				},
 			},
 		},
@@ -5273,35 +4750,28 @@ func TestPgTables(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_tables" WHERE tablename='testing' order by 1;`,
-					Expected: []sql.Row{{"testschema", "testing", "postgres", nil, "t", "f", "f", "f"}},
+					Query: `SELECT * FROM "pg_catalog"."pg_tables" WHERE tablename='testing' order by 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtables-0001-select-*-from-pg_catalog-."},
 				},
 				{
-					Query:    `SELECT count(*) FROM "pg_catalog"."pg_tables" WHERE schemaname='pg_catalog';`,
-					Expected: []sql.Row{{139}},
+					Query: `SELECT count(*) FROM "pg_catalog"."pg_tables" WHERE schemaname='pg_catalog';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtables-0002-select-count-*-from-pg_catalog"},
 				},
 				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_tables";`,
-					ExpectedErr: "not",
-				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_tables";`,
-					ExpectedErr: "not",
-				},
-				{ // Different cases but non-quoted, so it works
-					Query: "SELECT schemaname, tablename FROM PG_catalog.pg_TABLES WHERE schemaname not in ('information_schema', 'dolt', 'public') ORDER BY tablename DESC LIMIT 3;",
-					Expected: []sql.Row{
-						{"testschema", "testing"},
-						{"pg_catalog", "pg_views"},
-						{"pg_catalog", "pg_user_mappings"},
-					},
+					Query: `SELECT * FROM "PG_catalog"."pg_tables";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgtables-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT schemaname, tablename FROM PG_catalog.pg_TABLES WHERE schemaname  ='public' ORDER BY tablename;",
-					Expected: []sql.Row{
-						{"public", "t1"},
-						{"public", "t2"},
-					},
+					Query: `SELECT * FROM "pg_catalog"."PG_tables";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgtables-0004-select-*-from-pg_catalog-.", Compare: "sqlstate"},
+				},
+				{
+					Query: "SELECT schemaname, tablename FROM PG_catalog.pg_TABLES WHERE schemaname not in ('information_schema', 'dolt', 'public') ORDER BY tablename DESC LIMIT 3;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtables-0005-select-schemaname-tablename-from-pg_catalog.pg_tables", ColumnModes: []string{"schema"}},
+				},
+				{
+					Query: "SELECT schemaname, tablename FROM PG_catalog.pg_TABLES WHERE schemaname  ='public' ORDER BY tablename;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtables-0006-select-schemaname-tablename-from-pg_catalog.pg_tables"},
 				},
 			},
 		},
@@ -5314,20 +4784,25 @@ func TestPgTablespace(t *testing.T) {
 			Name: "pg_tablespace",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_tablespace";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_tablespace";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgtablespace-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_tablespace";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_tablespace";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgtablespace-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_tablespace";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_tablespace";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgtablespace-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT spcname FROM PG_catalog.pg_TABLESPACE ORDER BY spcname;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT spcname FROM PG_catalog.pg_TABLESPACE ORDER BY spcname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtablespace-0004-select-spcname-from-pg_catalog.pg_tablespace-order"},
 				},
 			},
 		},
@@ -5340,20 +4815,25 @@ func TestPgTimezoneAbbrevs(t *testing.T) {
 			Name: "pg_timezone_abbrevs",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_timezone_abbrevs";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_timezone_abbrevs";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgtimezoneabbrevs-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_timezone_abbrevs";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_timezone_abbrevs";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgtimezoneabbrevs-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_timezone_abbrevs";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_timezone_abbrevs";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgtimezoneabbrevs-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT abbrev FROM PG_catalog.pg_TIMEZONE_ABBREVS ORDER BY abbrev;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT abbrev FROM PG_catalog.pg_TIMEZONE_ABBREVS ORDER BY abbrev;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtimezoneabbrevs-0004-select-abbrev-from-pg_catalog.pg_timezone_abbrevs-order"},
 				},
 			},
 		},
@@ -5366,20 +4846,25 @@ func TestPgPgTimezoneNames(t *testing.T) {
 			Name: "pg_timezone_names",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_timezone_names";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_timezone_names";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgpgtimezonenames-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_timezone_names";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_timezone_names";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgpgtimezonenames-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_timezone_names";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_timezone_names";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgpgtimezonenames-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT name FROM PG_catalog.pg_TIMEZONE_NAMES ORDER BY name;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT name FROM PG_catalog.pg_TIMEZONE_NAMES ORDER BY name;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgpgtimezonenames-0004-select-name-from-pg_catalog.pg_timezone_names-order"},
 				},
 			},
 		},
@@ -5392,20 +4877,25 @@ func TestPgTransform(t *testing.T) {
 			Name: "pg_transform",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_transform";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_transform";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgtransform-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_transform";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_transform";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgtransform-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_transform";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_transform";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgtransform-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT oid FROM PG_catalog.pg_TRANSFORM ORDER BY oid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT oid FROM PG_catalog.pg_TRANSFORM ORDER BY oid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtransform-0004-select-oid-from-pg_catalog.pg_transform-order"},
 				},
 			},
 		},
@@ -5418,20 +4908,25 @@ func TestPgTrigger(t *testing.T) {
 			Name: "pg_trigger",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_trigger";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_trigger";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgtrigger-0001-select-*-from-pg_catalog-.", ColumnModes: []string{"structural", "structural", "structural", "structural", "structural",
+
+						// Different cases and quoted, so it fails
+						"structural", "structural", "structural", "structural", "structural", "structural", "structural", "structural", "structural", "structural", "bytea"}},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_trigger";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_trigger";`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtrigger-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_trigger";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_trigger";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgtrigger-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT tgname FROM PG_catalog.pg_TRIGGER ORDER BY tgname;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT tgname FROM PG_catalog.pg_TRIGGER ORDER BY tgname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtrigger-0004-select-tgname-from-pg_catalog.pg_trigger-order"},
 				},
 			},
 		},
@@ -5444,20 +4939,25 @@ func TestPgTsConfig(t *testing.T) {
 			Name: "pg_ts_config",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_ts_config";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_ts_config";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgtsconfig-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_ts_config";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_ts_config";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgtsconfig-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_ts_config";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_ts_config";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgtsconfig-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT cfgname FROM PG_catalog.pg_TS_CONFIG ORDER BY cfgname;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT cfgname FROM PG_catalog.pg_TS_CONFIG ORDER BY cfgname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtsconfig-0004-select-cfgname-from-pg_catalog.pg_ts_config-order"},
 				},
 			},
 		},
@@ -5470,20 +4970,25 @@ func TestPgTsConfigMap(t *testing.T) {
 			Name: "pg_ts_config_map",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_ts_config_map";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_ts_config_map";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgtsconfigmap-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_ts_config_map";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_ts_config_map";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgtsconfigmap-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_ts_config_map";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_ts_config_map";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgtsconfigmap-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT mapcfg FROM PG_catalog.pg_TS_CONFIG_MAP ORDER BY mapcfg;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT mapcfg FROM PG_catalog.pg_TS_CONFIG_MAP ORDER BY mapcfg;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtsconfigmap-0004-select-mapcfg-from-pg_catalog.pg_ts_config_map-order"},
 				},
 			},
 		},
@@ -5496,20 +5001,25 @@ func TestPgTsDict(t *testing.T) {
 			Name: "pg_ts_dict",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_ts_dict";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_ts_dict";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgtsdict-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_ts_dict";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_ts_dict";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgtsdict-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_ts_dict";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_ts_dict";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgtsdict-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT dictname FROM PG_catalog.pg_TS_DICT ORDER BY dictname;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT dictname FROM PG_catalog.pg_TS_DICT ORDER BY dictname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtsdict-0004-select-dictname-from-pg_catalog.pg_ts_dict-order"},
 				},
 			},
 		},
@@ -5522,20 +5032,25 @@ func TestPgTsParser(t *testing.T) {
 			Name: "pg_ts_parser",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_ts_parser";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_ts_parser";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgtsparser-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_ts_parser";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_ts_parser";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgtsparser-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_ts_parser";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_ts_parser";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgtsparser-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT prsname FROM PG_catalog.pg_TS_PARSER ORDER BY prsname;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT prsname FROM PG_catalog.pg_TS_PARSER ORDER BY prsname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtsparser-0004-select-prsname-from-pg_catalog.pg_ts_parser-order"},
 				},
 			},
 		},
@@ -5548,20 +5063,25 @@ func TestPgTsTemplate(t *testing.T) {
 			Name: "pg_ts_template",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_ts_template";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_ts_template";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgtstemplate-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_ts_template";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_ts_template";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgtstemplate-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_ts_template";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_ts_template";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgtstemplate-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT tmplname FROM PG_catalog.pg_TS_TEMPLATE ORDER BY tmplname;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT tmplname FROM PG_catalog.pg_TS_TEMPLATE ORDER BY tmplname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtstemplate-0004-select-tmplname-from-pg_catalog.pg_ts_template-order"},
 				},
 			},
 		},
@@ -5575,40 +5095,33 @@ func TestPgType(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT oid, typname, typnamespace, typowner, typsubscript, typinput, typoutput, typreceive, typsend, typmodin, typmodout, typanalyze, tableoid
-						FROM "pg_catalog"."pg_type" WHERE typname = 'float8' order by 1;`,
-					Expected: []sql.Row{{701, "float8", 11, 3676603549, "", "float8in", "float8out", "float8recv", "float8send", "", "", "", 1247}},
+						FROM "pg_catalog"."pg_type" WHERE typname = 'float8' order by 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtype-0001-select-oid-typname-typnamespace-typowner"},
 				},
 				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_type";`,
-					ExpectedErr: "not",
+					Query: `SELECT * FROM "PG_catalog"."pg_type";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgtype-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_type";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_type";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgtype-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query: "SELECT typname FROM PG_catalog.pg_TYPE WHERE typname LIKE '%char' ORDER BY typname;",
-					Expected: []sql.Row{
-						{"_bpchar"},
-						{"_char"},
-						{"_varchar"},
-						{"bpchar"},
-						{"char"},
-						{"varchar"},
-					},
+				{
+					Query: "SELECT typname FROM PG_catalog.pg_TYPE WHERE typname LIKE '%char' ORDER BY typname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtype-0004-select-typname-from-pg_catalog.pg_type-where"},
 				},
 				{
 					Query: `SELECT t1.oid, t1.typname as basetype, t2.typname as arraytype, t2.typsubscript
 					FROM   pg_type t1 LEFT JOIN pg_type t2 ON (t1.typarray = t2.oid)
-					WHERE  t1.typarray <> 0 AND (t2.oid IS NULL OR t2.typsubscript::regproc <> 'array_subscript_handler'::regproc);`,
-					Expected: []sql.Row{},
+					WHERE  t1.typarray <> 0 AND (t2.oid IS NULL OR t2.typsubscript::regproc <> 'array_subscript_handler'::regproc);`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtype-0005-select-t1.oid-t1.typname-as-basetype"},
 				},
 				{
 					Skip: true, // TODO: ERROR: function internal_binary_operator_func_<>(text, regproc) does not exist
 					Query: `SELECT t1.oid, t1.typname as basetype, t2.typname as arraytype, t2.typsubscript
 					FROM   pg_type t1 LEFT JOIN pg_type t2 ON (t1.typarray = t2.oid)
-					WHERE  t1.typarray <> 0 AND (t2.oid IS NULL OR t2.typsubscript <> 'array_subscript_handler'::regproc);`,
-					Expected: []sql.Row{},
+					WHERE  t1.typarray <> 0 AND (t2.oid IS NULL OR t2.typsubscript <> 'array_subscript_handler'::regproc);`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtype-0006-select-t1.oid-t1.typname-as-basetype"},
 				},
 			},
 		},
@@ -5617,82 +5130,65 @@ func TestPgType(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT oid, typname, typnamespace, typowner, typsubscript, typinput, typoutput, typreceive, typsend, typmodin, typmodout, typanalyze, tableoid
-						FROM "pg_catalog"."pg_type" WHERE oid='float8'::regtype;`,
-					Expected: []sql.Row{{701, "float8", 11, 3676603549, "", "float8in", "float8out", "float8recv", "float8send", "", "", "", 1247}},
+						FROM "pg_catalog"."pg_type" WHERE oid='float8'::regtype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtype-0007-select-oid-typname-typnamespace-typowner"},
 				},
 				{
-					Query:    `SELECT oid, typname FROM "pg_catalog"."pg_type" WHERE oid='double precision'::regtype;`,
-					Expected: []sql.Row{{701, "float8"}},
+					Query: `SELECT oid, typname FROM "pg_catalog"."pg_type" WHERE oid='double precision'::regtype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtype-0008-select-oid-typname-from-pg_catalog"},
 				},
 				{
-					Query:    `SELECT oid, typname FROM "pg_catalog"."pg_type" WHERE oid='DOUBLE PRECISION'::regtype;`,
-					Expected: []sql.Row{{701, "float8"}},
+					Query: `SELECT oid, typname FROM "pg_catalog"."pg_type" WHERE oid='DOUBLE PRECISION'::regtype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtype-0009-select-oid-typname-from-pg_catalog"},
 				},
 				{
-					Query:    `SELECT oid, typname FROM "pg_catalog"."pg_type" WHERE oid='pg_catalog.float8'::regtype;`,
-					Expected: []sql.Row{{701, "float8"}},
+					Query: `SELECT oid, typname FROM "pg_catalog"."pg_type" WHERE oid='pg_catalog.float8'::regtype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtype-0010-select-oid-typname-from-pg_catalog"},
 				},
 				{
 					Query:       `SELECT oid, typname FROM "pg_catalog"."pg_type" WHERE oid='public.float8'::regtype;`,
 					ExpectedErr: `type "public.float8" does not exist`,
 				},
 				{
-					Query:    `SELECT oid, typname FROM "pg_catalog"."pg_type" WHERE oid='VARCHAR'::regtype;`,
-					Expected: []sql.Row{{1043, "varchar"}},
+					Query: `SELECT oid, typname FROM "pg_catalog"."pg_type" WHERE oid='VARCHAR'::regtype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtype-0012-select-oid-typname-from-pg_catalog"},
 				},
 				{
-					Query:    `SELECT oid, typname FROM "pg_catalog"."pg_type" WHERE oid='1043'::regtype;`,
-					Expected: []sql.Row{{1043, "varchar"}},
+					Query: `SELECT oid, typname FROM "pg_catalog"."pg_type" WHERE oid='1043'::regtype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtype-0013-select-oid-typname-from-pg_catalog"},
 				},
 				{
-					Query:    `SELECT oid, typname FROM "pg_catalog"."pg_type" WHERE oid='VARCHAR(10)'::regtype;`,
-					Expected: []sql.Row{{1043, "varchar"}},
+					Query: `SELECT oid, typname FROM "pg_catalog"."pg_type" WHERE oid='VARCHAR(10)'::regtype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtype-0014-select-oid-typname-from-pg_catalog"},
 				},
 				{
-					Query:    `SELECT oid, typname FROM "pg_catalog"."pg_type" WHERE oid='character varying'::regtype;`,
-					Expected: []sql.Row{{1043, "varchar"}},
+					Query: `SELECT oid, typname FROM "pg_catalog"."pg_type" WHERE oid='character varying'::regtype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtype-0015-select-oid-typname-from-pg_catalog"},
 				},
 				{
-					Query:    `SELECT oid, typname FROM "pg_catalog"."pg_type" WHERE oid='timestamptz'::regtype;`,
-					Expected: []sql.Row{{1184, "timestamptz"}},
+					Query: `SELECT oid, typname FROM "pg_catalog"."pg_type" WHERE oid='timestamptz'::regtype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtype-0016-select-oid-typname-from-pg_catalog"},
 				},
 				{
-					Query:    `SELECT oid, typname FROM "pg_catalog"."pg_type" WHERE oid='timestamp with time zone'::regtype;`,
-					Expected: []sql.Row{{1184, "timestamptz"}},
+					Query: `SELECT oid, typname FROM "pg_catalog"."pg_type" WHERE oid='timestamp with time zone'::regtype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtype-0017-select-oid-typname-from-pg_catalog"},
 				},
 				{
-					Query:    `SELECT oid, typname FROM "pg_catalog"."pg_type" WHERE oid='regtype'::regtype;`,
-					Expected: []sql.Row{{2206, "regtype"}},
+					Query: `SELECT oid, typname FROM "pg_catalog"."pg_type" WHERE oid='regtype'::regtype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtype-0018-select-oid-typname-from-pg_catalog"},
 				},
 				{
 					Query: `SELECT oid, typname, typnamespace, typowner, typsubscript, typelem, typarray, typinput, typoutput, typreceive, typsend, typmodin, typmodout, typanalyze, tableoid
-						FROM "pg_catalog"."pg_type" WHERE oid='integer[]'::regtype;`,
-					Expected: []sql.Row{{1007, "_int4", 11, 3676603549, "array_subscript_handler", 23, 0, "array_in", "array_out", "array_recv", "array_send", "", "", "array_typanalyze", 1247}},
+						FROM "pg_catalog"."pg_type" WHERE oid='integer[]'::regtype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtype-0019-select-oid-typname-typnamespace-typowner"},
 				},
 				{
 					Query: `SELECT oid, typname, typnamespace, typowner, typsubscript, typelem, typarray, typinput, typoutput, typreceive, typsend, typmodin, typmodout, typanalyze, tableoid
-						FROM "pg_catalog"."pg_type" WHERE oid='anyarray'::regtype;`,
-					Expected: []sql.Row{{2277, "anyarray", 11, 3676603549, "", 0, 0, "anyarray_in", "anyarray_out", "anyarray_recv", "anyarray_send", "", "", "", 1247}},
+						FROM "pg_catalog"."pg_type" WHERE oid='anyarray'::regtype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtype-0020-select-oid-typname-typnamespace-typowner"},
 				},
 				{
 					Query: `SELECT oid, typname, typnamespace, typowner, typsubscript, typelem, typarray, typinput, typoutput, typreceive, typsend, typmodin, typmodout, typanalyze, tableoid
-						FROM "pg_catalog"."pg_type" WHERE oid='anyelement'::regtype;`,
-					Expected: []sql.Row{{2283, "anyelement", 11, 3676603549, "", 0, 0, "anyelement_in", "anyelement_out", "", "", "", "", "", 1247}},
+						FROM "pg_catalog"."pg_type" WHERE oid='anyelement'::regtype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtype-0021-select-oid-typname-typnamespace-typowner"},
 				},
 				{
 					Query: `SELECT oid, typname, typnamespace, typowner, typsubscript, typelem, typarray, typinput, typoutput, typreceive, typsend, typmodin, typmodout, typanalyze, tableoid
-						FROM "pg_catalog"."pg_type" WHERE oid='json'::regtype;`,
-					Expected: []sql.Row{{114, "json", 11, 3676603549, "", 0, 199, "json_in", "json_out", "json_recv", "json_send", "", "", "", 1247}},
+						FROM "pg_catalog"."pg_type" WHERE oid='json'::regtype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtype-0022-select-oid-typname-typnamespace-typowner"},
 				},
 				{
 					Query: `SELECT oid, typname, typnamespace, typowner, typsubscript, typelem, typarray, typinput, typoutput, typreceive, typsend, typmodin, typmodout, typanalyze, tableoid
-						FROM "pg_catalog"."pg_type" WHERE oid='char'::regtype;`,
-					Expected: []sql.Row{{1042, "bpchar", 11, 3676603549, "", 0, 1014, "bpcharin", "bpcharout", "bpcharrecv", "bpcharsend", "bpchartypmodin", "bpchartypmodout", "", 1247}},
+						FROM "pg_catalog"."pg_type" WHERE oid='char'::regtype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtype-0023-select-oid-typname-typnamespace-typowner"},
 				},
 				{
 					Query: `SELECT oid, typname, typnamespace, typowner, typsubscript, typelem, typarray, typinput, typoutput, typreceive, typsend, typmodin, typmodout, typanalyze, tableoid
-						FROM "pg_catalog"."pg_type" WHERE oid='"char"'::regtype;`,
-					Expected: []sql.Row{{18, "char", 11, 3676603549, "", 0, 1002, "charin", "charout", "charrecv", "charsend", "", "", "", 1247}},
+						FROM "pg_catalog"."pg_type" WHERE oid='"char"'::regtype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtype-0024-select-oid-typname-typnamespace-typowner"},
 				},
 			},
 		},
@@ -5705,23 +5201,19 @@ func TestPgType(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT oid, typname, typnamespace, typowner, typtype, typcategory, typsubscript, typelem, typarray, typinput, typoutput, typreceive, typsend, typmodin, typmodout, typanalyze, typbasetype, tableoid
-						FROM "pg_catalog"."pg_type" WHERE typname = 'domain_type' order by 1;`,
-					Expected: []sql.Row{{2382076519, "domain_type", 2200, 3676603549, "d", "N", "", 0, 1297970968, "domain_in", "int4out", "domain_recv", "int4send", "", "", "", 23, 1247}},
+						FROM "pg_catalog"."pg_type" WHERE typname = 'domain_type' order by 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtype-0025-select-oid-typname-typnamespace-typowner"},
 				},
 				{
 					Query: `SELECT oid, typname, typnamespace, typowner, typtype, typcategory, typsubscript, typelem, typarray, typinput, typoutput, typreceive, typsend, typmodin, typmodout, typanalyze, typbasetype, tableoid
-						FROM "pg_catalog"."pg_type" WHERE typname = '_domain_type' order by 1;`,
-					Expected: []sql.Row{{1297970968, "_domain_type", 2200, 3676603549, "b", "A", "array_subscript_handler", 2382076519, 0, "array_in", "array_out", "array_recv", "array_send", "", "", "array_typanalyze", 0, 1247}},
+						FROM "pg_catalog"."pg_type" WHERE typname = '_domain_type' order by 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtype-0026-select-oid-typname-typnamespace-typowner"},
 				},
 				{
 					Query: `SELECT oid, typname, typnamespace, typowner, typtype, typcategory, typsubscript, typelem, typarray, typinput, typoutput, typreceive, typsend, typmodin, typmodout, typanalyze, typbasetype, tableoid
-						FROM "pg_catalog"."pg_type" WHERE typname = 'enum_type' order by 1;`,
-					Expected: []sql.Row{{2310414518, "enum_type", 2200, 3676603549, "e", "E", "", 0, 4245115549, "enum_in", "enum_out", "enum_recv", "enum_send", "", "", "", 0, 1247}},
+						FROM "pg_catalog"."pg_type" WHERE typname = 'enum_type' order by 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtype-0027-select-oid-typname-typnamespace-typowner"},
 				},
 				{
 					Query: `SELECT oid, typname, typnamespace, typowner, typtype, typcategory, typsubscript, typelem, typarray, typinput, typoutput, typreceive, typsend, typmodin, typmodout, typanalyze, typbasetype, tableoid
-						FROM "pg_catalog"."pg_type" WHERE typname = '_enum_type' order by 1;`,
-					Expected: []sql.Row{{4245115549, "_enum_type", 2200, 3676603549, "b", "A", "array_subscript_handler", 2310414518, 0, "array_in", "array_out", "array_recv", "array_send", "", "", "array_typanalyze", 0, 1247}},
+						FROM "pg_catalog"."pg_type" WHERE typname = '_enum_type' order by 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtype-0028-select-oid-typname-typnamespace-typowner"},
 				},
 			},
 		},
@@ -5734,24 +5226,22 @@ func TestPgUser(t *testing.T) {
 			Name: "pg_user",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT usesysid, usename, usesuper FROM "pg_catalog"."pg_user" ORDER BY usename;`,
-					Expected: []sql.Row{
-						{3676603549, "postgres", "t"},
-					},
+					Query: `SELECT usesysid, usename, usesuper FROM "pg_catalog"."pg_user" ORDER BY usename;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpguser-0001-select-usesysid-usename-usesuper-from"},
 				},
 				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_user";`,
-					ExpectedErr: "not",
+					Query: `SELECT * FROM "PG_catalog"."pg_user";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpguser-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_user";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_user";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpguser-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query: "SELECT usename FROM PG_catalog.pg_USER ORDER BY usename;",
-					Expected: []sql.Row{
-						{"postgres"},
-					},
+				{
+					Query: "SELECT usename FROM PG_catalog.pg_USER ORDER BY usename;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpguser-0004-select-usename-from-pg_catalog.pg_user-order"},
 				},
 			},
 		},
@@ -5764,20 +5254,25 @@ func TestPgUserMapping(t *testing.T) {
 			Name: "pg_user_mapping",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_user_mapping";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_user_mapping";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgusermapping-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_user_mapping";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_user_mapping";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgusermapping-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_user_mapping";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_user_mapping";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgusermapping-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT umuser FROM PG_catalog.pg_USER_MAPPING ORDER BY umuser;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT umuser FROM PG_catalog.pg_USER_MAPPING ORDER BY umuser;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgusermapping-0004-select-umuser-from-pg_catalog.pg_user_mapping-order"},
 				},
 			},
 		},
@@ -5790,20 +5285,25 @@ func TestPgUserMappings(t *testing.T) {
 			Name: "pg_user_mappings",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_user_mappings";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_user_mappings";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"pgcatalog-test-testpgusermappings-0001-select-*-from-pg_catalog-."},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_user_mappings";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "PG_catalog"."pg_user_mappings";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgusermappings-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_user_mappings";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_user_mappings";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgusermappings-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT umid FROM PG_catalog.pg_USER_MAPPINGS ORDER BY umid;",
-					Expected: []sql.Row{},
+				{
+					Query: "SELECT umid FROM PG_catalog.pg_USER_MAPPINGS ORDER BY umid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgusermappings-0004-select-umid-from-pg_catalog.pg_user_mappings-order"},
 				},
 			},
 		},
@@ -5823,20 +5323,22 @@ func TestPgViews(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_views" WHERE viewname='testview';`,
-					Expected: []sql.Row{{"testschema", "testview", "", "SELECT * FROM testing LIMIT 1"}},
+					Query: `SELECT * FROM "pg_catalog"."pg_views" WHERE viewname='testview';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgviews-0001-select-*-from-pg_catalog-."},
 				},
 				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_views";`,
-					ExpectedErr: "not",
+					Query: `SELECT * FROM "PG_catalog"."pg_views";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "pgcatalog-test-testpgviews-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_views";`,
-					ExpectedErr: "not",
+				{
+					Query: `SELECT * FROM "pg_catalog"."PG_views";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgviews-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT viewname FROM PG_catalog.pg_VIEWS ORDER BY viewname;",
-					Expected: []sql.Row{{"testview"}, {"testview2"}},
+				{
+					Query: "SELECT viewname FROM PG_catalog.pg_VIEWS ORDER BY viewname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgviews-0004-select-viewname-from-pg_catalog.pg_views-order"},
 				},
 			},
 		},
@@ -5859,188 +5361,101 @@ func TestPgClassIndexes(t *testing.T) {
 					Query: `SELECT c.oid
 FROM pg_catalog.pg_class c 
 WHERE c.relname = 't2' and c.relnamespace = 2200 -- public
-ORDER BY 1;`,
-					Expected: []sql.Row{
-						{1496157034},
-					},
+ORDER BY 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclassindexes-0001-select-c.oid-from-pg_catalog.pg_class-c"},
 				},
 				{
 					Query: `SELECT c.relname
 FROM pg_catalog.pg_class c 
 WHERE c.relname > 't' AND c.relname < 't2' AND c.relnamespace = 2200 -- public
 AND relkind = 'r'
-ORDER BY 1;`,
-					Expected: []sql.Row{
-						{"t1"},
-					},
+ORDER BY 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclassindexes-0002-select-c.relname-from-pg_catalog.pg_class-c"},
 				},
 				{
 					Query: `SELECT c.relname
 FROM pg_catalog.pg_class c 
 WHERE c.relname >= 't1' AND c.relname <= 't2' AND c.relnamespace = 2200 -- public
 AND relkind = 'r'
-ORDER BY 1;`,
-					Expected: []sql.Row{
-						{"t1"},
-						{"t2"},
-					},
+ORDER BY 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclassindexes-0003-select-c.relname-from-pg_catalog.pg_class-c"},
 				},
 				{
 					Query: `SELECT c.relname
 FROM pg_catalog.pg_class c 
 WHERE c.relname >= 't1' AND c.relname < 't2' AND c.relnamespace = 2200 -- public
 AND relkind = 'r'
-ORDER BY 1;`,
-					Expected: []sql.Row{
-						{"t1"},
-					},
+ORDER BY 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclassindexes-0004-select-c.relname-from-pg_catalog.pg_class-c"},
 				},
 				{
 					Query: `SELECT c.relname
 FROM pg_catalog.pg_class c 
 WHERE c.relname > 't1' AND c.relname <= 't2' AND c.relnamespace = 2200 -- public
 AND relkind = 'r'
-ORDER BY 1;`,
-					Expected: []sql.Row{
-						{"t2"},
-					},
+ORDER BY 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclassindexes-0005-select-c.relname-from-pg_catalog.pg_class-c"},
 				},
 				{
 					Query: `SELECT c.relname
 FROM pg_catalog.pg_class c 
 WHERE c.relname > 't1' AND c.relname <= 't2' AND c.relnamespace > 2199 AND c.relnamespace < 2201 -- public
 AND relkind = 'r'
-ORDER BY 1;`,
-					Expected: []sql.Row{
-						{"t2"},
-					},
+ORDER BY 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclassindexes-0006-select-c.relname-from-pg_catalog.pg_class-c"},
 				},
 				{
 					Query: `SELECT c.relname
 FROM pg_catalog.pg_class c 
 WHERE c.oid = 1496157034
-ORDER BY 1;`,
-					Expected: []sql.Row{
-						{"t2"},
-					},
+ORDER BY 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclassindexes-0007-select-c.relname-from-pg_catalog.pg_class-c"},
 				},
 				{
 					Query: `SELECT c.relname
 FROM pg_catalog.pg_class c 
 WHERE c.oid = '1496157034'
-ORDER BY 1;`,
-					Expected: []sql.Row{
-						{"t2"},
-					},
+ORDER BY 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclassindexes-0008-select-c.relname-from-pg_catalog.pg_class-c"},
 				},
 				{
 					Query: `SELECT c.relname
 FROM pg_catalog.pg_class c 
 WHERE c.oid IN (1496157034, 1496157035) 
-ORDER BY 1;`,
-					Expected: []sql.Row{
-						{"t2"},
-					},
+ORDER BY 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclassindexes-0009-select-c.relname-from-pg_catalog.pg_class-c"},
 				},
 				{
 					Query: `SELECT c.relname
 FROM pg_catalog.pg_class c 
 WHERE c.oid > 1496157033 AND c.oid < 1496157035
-ORDER BY 1;`,
-					Expected: []sql.Row{
-						{"t2"},
-					},
+ORDER BY 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclassindexes-0010-select-c.relname-from-pg_catalog.pg_class-c"},
 				},
 				{
 					// This is to make sure a full range scan works (we don't support a full range scan on the index yet)
-					Query:    `SELECT relname from pg_catalog.pg_class order by oid limit 1;`,
-					Expected: []sql.Row{sql.Row{"pg_publication_namespace"}},
+					Query: `SELECT relname from pg_catalog.pg_class order by oid limit 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclassindexes-0011-select-relname-from-pg_catalog.pg_class-order"},
 				},
 				{
 					Query: `EXPLAIN SELECT c.oid
 FROM pg_catalog.pg_class c 
 WHERE c.relname = 't2' and c.relnamespace = 2200
-ORDER BY 1;`,
-					Expected: []sql.Row{
-						{"Project"},
-						{" ├─ columns: [c.oid]"},
-						{" └─ Sort(c.oid ASC)"},
-						{"     └─ Filter"},
-						{"         ├─ (c.relname = 't2' AND c.relnamespace = 2200)"},
-						{"         └─ TableAlias(c)"},
-						{"             └─ IndexedTableAccess(pg_class)"},
-						{"                 ├─ index: [pg_class.relname,pg_class.relnamespace]"},
-						{"                 └─ filters: [{[t2, t2], [{Namespace:[\"public\"]}, {Namespace:[\"public\"]}]}]"},
-					},
+ORDER BY 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclassindexes-0012-explain-select-c.oid-from-pg_catalog.pg_class", ColumnModes: []string{"explain"}},
 				},
 				{
 					Query: `EXPLAIN SELECT c.relname
 FROM pg_catalog.pg_class c
 WHERE c.relname > 't' AND c.relname < 't2' AND c.relnamespace = 2200 -- public
 AND relkind = 'r'
-ORDER BY 1;`,
-					Expected: []sql.Row{
-						{"Project"},
-						{" ├─ columns: [c.relname]"},
-						{" └─ Sort(c.relname ASC)"},
-						{"     └─ Filter"},
-						{"         ├─ (((c.relname > 't' AND c.relname < 't2') AND c.relnamespace = 2200) AND c.relkind = 'r')"},
-						{"         └─ TableAlias(c)"},
-						{"             └─ IndexedTableAccess(pg_class)"},
-						{"                 ├─ index: [pg_class.relname,pg_class.relnamespace]"},
-						{"                 └─ filters: [{(t, t2), [{Namespace:[\"public\"]}, {Namespace:[\"public\"]}]}]"},
-					},
+ORDER BY 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclassindexes-0013-explain-select-c.relname-from-pg_catalog.pg_class", ColumnModes: []string{"explain"}},
 				},
 				{
 					Query: `EXPLAIN SELECT c.relname
 FROM pg_catalog.pg_class c 
 WHERE c.oid = 1496157034
-ORDER BY 1;`,
-					Expected: []sql.Row{
-						{"Project"},
-						{" ├─ columns: [c.relname]"},
-						{" └─ Sort(c.relname ASC)"},
-						{"     └─ Filter"},
-						{"         ├─ c.oid = 1496157034"},
-						{"         └─ TableAlias(c)"},
-						{"             └─ IndexedTableAccess(pg_class)"},
-						{"                 ├─ index: [pg_class.oid]"},
-						{"                 └─ filters: [{[{Table:[\"public\",\"t2\"]}, {Table:[\"public\",\"t2\"]}]}]"},
-					},
+ORDER BY 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclassindexes-0014-explain-select-c.relname-from-pg_catalog.pg_class", ColumnModes: []string{"explain"}},
 				},
 				{
 					Query: `EXPLAIN SELECT c.relname
 FROM pg_catalog.pg_class c 
 WHERE c.oid > 1496157033 AND c.oid < 1496157035
-ORDER BY 1;`,
-					Expected: []sql.Row{
-						{"Project"},
-						{" ├─ columns: [c.relname]"},
-						{" └─ Sort(c.relname ASC)"},
-						{"     └─ Filter"},
-						{"         ├─ (c.oid > 1496157033 AND c.oid < 1496157035)"},
-						{"         └─ TableAlias(c)"},
-						{"             └─ IndexedTableAccess(pg_class)"},
-						{"                 ├─ index: [pg_class.oid]"},
-						{"                 └─ filters: [{({OID:[\"1496157033\"]}, {OID:[\"1496157035\"]})}]"},
-					},
+ORDER BY 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclassindexes-0015-explain-select-c.relname-from-pg_catalog.pg_class", ColumnModes: []string{"explain"}},
 				},
 				{
 					Query: `EXPLAIN SELECT c.relname
 FROM pg_catalog.pg_class c 
 WHERE c.oid IN (1496157034, 1496157035) 
-ORDER BY 1;`,
-					Expected: []sql.Row{
-						{"Project"},
-						{" ├─ columns: [c.relname]"},
-						{" └─ Sort(c.relname ASC)"},
-						{"     └─ Filter"},
-						{"         ├─ c.oid IN (1496157034, 1496157035)"},
-						{"         └─ TableAlias(c)"},
-						{"             └─ IndexedTableAccess(pg_class)"},
-						{"                 ├─ index: [pg_class.oid]"},
-						{"                 └─ filters: [{[{Table:[\"public\",\"t2\"]}, {Table:[\"public\",\"t2\"]}]}, {[{OID:[\"1496157035\"]}, {OID:[\"1496157035\"]}]}]"},
-					},
+ORDER BY 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclassindexes-0016-explain-select-c.relname-from-pg_catalog.pg_class", ColumnModes: []string{"explain"}},
 				},
 			},
 		},
@@ -6056,11 +5471,7 @@ FROM pg_catalog.pg_class c
 WHERE c.relkind = 'r' AND a.attnum > 0 
   AND NOT a.attisdropped
   AND c.relname = 't2'
-ORDER BY 1,2;`,
-					Expected: []sql.Row{
-						{"t2", "c"},
-						{"t2", "d"},
-					},
+ORDER BY 1,2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclassindexes-0017-select-c.relname-a.attname-from-pg_catalog.pg_class"},
 				},
 				{
 					Query: `EXPLAIN SELECT c.relname, a.attname 
@@ -6070,21 +5481,7 @@ FROM pg_catalog.pg_class c
 WHERE c.relkind = 'r' AND a.attnum > 0 
   AND NOT a.attisdropped
   AND c.relname = 't2'
-ORDER BY 1,2;`,
-					Expected: []sql.Row{
-						{"Project"},
-						{" ├─ columns: [c.relname, a.attname]"},
-						{" └─ Sort(c.relname ASC, a.attname ASC)"},
-						{"     └─ LookupJoin"},
-						{"         ├─ (((c.relkind = 'r' AND a.attnum > 0) AND (NOT(a.attisdropped))) AND c.relname = 't2')"},
-						{"         ├─ TableAlias(a)"},
-						{"         │   └─ Table"},
-						{"         │       └─ name: pg_attribute"},
-						{"         └─ TableAlias(c)"},
-						{"             └─ IndexedTableAccess(pg_class)"},
-						{"                 ├─ index: [pg_class.oid]"},
-						{"                 └─ keys: a.attrelid"},
-					},
+ORDER BY 1,2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclassindexes-0018-explain-select-c.relname-a.attname-from", ColumnModes: []string{"explain"}},
 				},
 			},
 		},
@@ -6126,60 +5523,23 @@ ORDER BY "Schema", "Name"`,
 					Query: `select relname, nspname FROM pg_catalog.pg_class c 
 join pg_catalog.pg_namespace n on c.relnamespace = n.oid
 where c.relname = 't' and c.relkind = 'r'
-order by 1,2`,
-					Expected: []sql.Row{
-						{"t", "s1"},
-						{"t", "s2"},
-						{"t", "s3"},
-					},
+order by 1,2`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclassindexes-0019-select-relname-nspname-from-pg_catalog.pg_class", ColumnModes: []string{"structural", "schema"}},
 				},
 				{
 					Query: `select relname, relnamespace FROM pg_catalog.pg_class c 
 where c.relname = 't' and c.relkind = 'r'
-order by 1,2`,
-					Expected: []sql.Row{
-						{"t", 1634633383},
-						{"t", 1916695891},
-						{"t", 2153117264},
-					},
+order by 1,2`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclassindexes-0020-select-relname-relnamespace-from-pg_catalog.pg_class"},
 				},
 				{
 					Query: `explain select relname, nspname FROM pg_catalog.pg_class c 
 join pg_catalog.pg_namespace n on c.relnamespace = n.oid
 where c.relname = 't' and c.relkind = 'r'
-order by 1,2`,
-					Expected: []sql.Row{
-						{"Project"},
-						{" ├─ columns: [c.relname, n.nspname]"},
-						{" └─ Sort(c.relname ASC, n.nspname ASC)"},
-						{"     └─ LookupJoin"},
-						{"         ├─ Filter"},
-						{"         │   ├─ (c.relname = 't' AND c.relkind = 'r')"},
-						{"         │   └─ TableAlias(c)"},
-						{"         │       └─ IndexedTableAccess(pg_class)"},
-						{"         │           ├─ index: [pg_class.relname,pg_class.relnamespace]"},
-						{"         │           └─ filters: [{[t, t], [NULL, ∞)}]"},
-						{"         └─ TableAlias(n)"},
-						{"             └─ IndexedTableAccess(pg_namespace)"},
-						{"                 ├─ index: [pg_namespace.oid]"},
-						{"                 └─ keys: c.relnamespace"},
-					},
+order by 1,2`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclassindexes-0021-explain-select-relname-nspname-from", ColumnModes: []string{"explain"}},
 				},
 				{
 					Query: `explain select relname, relnamespace FROM pg_catalog.pg_class c
 where c.relname = 't' and c.relkind = 'r'
-order by 1,2`,
-					Expected: []sql.Row{
-						{"Project"},
-						{" ├─ columns: [c.relname, c.relnamespace]"},
-						{" └─ Sort(c.relname ASC, c.relnamespace ASC)"},
-						{"     └─ Filter"},
-						{"         ├─ (c.relname = 't' AND c.relkind = 'r')"},
-						{"         └─ TableAlias(c)"},
-						{"             └─ IndexedTableAccess(pg_class)"},
-						{"                 ├─ index: [pg_class.relname,pg_class.relnamespace]"},
-						{"                 └─ filters: [{[t, t], [NULL, ∞)}]"},
-					},
+order by 1,2`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclassindexes-0022-explain-select-relname-relnamespace-from", ColumnModes: []string{"explain"}},
 				},
 			},
 		},
@@ -6214,103 +5574,45 @@ func TestPgIndexIndexes(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT * FROM pg_catalog.pg_index i 
-WHERE i.indrelid = 1496157034 order by 1`,
-					Expected: []sql.Row{
-						{3992679530, 1496157034, 1, 1, "t", "f", "t", "f", "t", "f", "t", "f", "t", "t", "f", "1", "0", opClassOidVector("int4_ops"), "0", nil, nil},
-						{4052612617, 1496157034, 1, 1, "f", "f", "f", "f", "f", "f", "t", "f", "t", "t", "f", "2", "0", opClassOidVector("int4_ops"), "0", nil, nil},
-					},
+WHERE i.indrelid = 1496157034 order by 1`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgindexindexes-0001-select-*-from-pg_catalog.pg_index-i"},
 				},
 				{
 					Query: `SELECT c.relname, c2.relname FROM pg_catalog.pg_index i
          join pg_class c on i.indrelid = c.oid
          join pg_class c2 on i.indexrelid = c2.oid
-WHERE c.relname = 't2' order by 1,2`,
-					Expected: []sql.Row{
-						{"t2", "t2_d_idx"},
-						{"t2", "t2_pkey"},
-					},
+WHERE c.relname = 't2' order by 1,2`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgindexindexes-0002-select-c.relname-c2.relname-from-pg_catalog.pg_index"},
 				},
 				{
 					Query: `SELECT i.indrelid FROM pg_catalog.pg_index i 
 WHERE i.indexrelid = (SELECT c.oid FROM pg_catalog.pg_class c WHERE c.relname = 't2_pkey')
-ORDER BY 1;`,
-					Expected: []sql.Row{
-						{1496157034},
-					},
+ORDER BY 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgindexindexes-0003-select-i.indrelid-from-pg_catalog.pg_index-i"},
 				},
 				{
 					Query: `SELECT count(*) FROM pg_catalog.pg_index i 
-WHERE i.indrelid = 1496157034`,
-					Expected: []sql.Row{
-						{2},
-					},
+WHERE i.indrelid = 1496157034`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgindexindexes-0004-select-count-*-from-pg_catalog.pg_index"},
 				},
 				{
 					Query: `SELECT i.indisprimary FROM pg_catalog.pg_index i 
 WHERE i.indrelid = 1496157034 AND i.indisprimary = true
-ORDER BY 1;`,
-					Expected: []sql.Row{
-						{"t"},
-					},
+ORDER BY 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgindexindexes-0005-select-i.indisprimary-from-pg_catalog.pg_index-i"},
 				},
 				{
 					Query: `SELECT COUNT(*) FROM pg_catalog.pg_index i 
-WHERE i.indrelid IN (1496157033, 1496157034)`,
-					Expected: []sql.Row{
-						{2},
-					},
+WHERE i.indrelid IN (1496157033, 1496157034)`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgindexindexes-0006-select-count-*-from-pg_catalog.pg_index"},
 				},
 				{
 					// TODO: this uses an index but the plan doesn't show it because of prepared statements
 					Query: `EXPLAIN SELECT i.indrelid FROM pg_catalog.pg_index i 
 WHERE i.indexrelid = (SELECT c.oid FROM pg_catalog.pg_class c WHERE c.relname = 't1_pkey')
-ORDER BY 1;`,
-					Expected: []sql.Row{
-						{"Project"},
-						{" ├─ columns: [i.indrelid]"},
-						{" └─ Sort(i.indrelid ASC)"},
-						{"     └─ Filter"},
-						{"         ├─ i.indexrelid = Subquery((select  c.oid from pg_class as c where ? = ?))"},
-						{"         └─ TableAlias(i)"},
-						{"             └─ Table"},
-						{"                 └─ name: pg_index"},
-					},
+ORDER BY 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgindexindexes-0007-explain-select-i.indrelid-from-pg_catalog.pg_index", ColumnModes: []string{"explain"}},
 				},
 				{
 					Query: `EXPLAIN SELECT COUNT(*) FROM pg_catalog.pg_index i 
-WHERE i.indrelid = 1496157034 ORDER BY 1`,
-					Expected: []sql.Row{
-						{"Project"},
-						{" ├─ columns: [count(1) as count]"},
-						{" └─ Sort(count(1) as count ASC)"},
-						{"     └─ GroupBy"},
-						{"         ├─ select: COUNT(1)"},
-						{"         ├─ group: "},
-						{"         └─ Filter"},
-						{"             ├─ i.indrelid = 1496157034"},
-						{"             └─ TableAlias(i)"},
-						{"                 └─ IndexedTableAccess(pg_index)"},
-						{"                     ├─ index: [pg_index.indrelid]"},
-						{"                     └─ filters: [{[{Table:[\"public\",\"t2\"]}, {Table:[\"public\",\"t2\"]}]}]"},
-					},
+WHERE i.indrelid = 1496157034 ORDER BY 1`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgindexindexes-0008-explain-select-count-*-from", ColumnModes: []string{"explain"}},
 				},
 				{
 					Query: `EXPLAIN SELECT COUNT(*) FROM pg_catalog.pg_index i 
-WHERE i.indrelid IN (1496157033, 1496157034) ORDER BY 1`,
-					Expected: []sql.Row{
-						{"Project"},
-						{" ├─ columns: [count(1) as count]"},
-						{" └─ Sort(count(1) as count ASC)"},
-						{"     └─ GroupBy"},
-						{"         ├─ select: COUNT(1)"},
-						{"         ├─ group: "},
-						{"         └─ Filter"},
-						{"             ├─ i.indrelid IN (1496157033, 1496157034)"},
-						{"             └─ TableAlias(i)"},
-						{"                 └─ IndexedTableAccess(pg_index)"},
-						{"                     ├─ index: [pg_index.indrelid]"},
-						{"                     └─ filters: [{[{OID:[\"1496157033\"]}, {OID:[\"1496157033\"]}]}, {[{Table:[\"public\",\"t2\"]}, {Table:[\"public\",\"t2\"]}]}]"},
-					},
+WHERE i.indrelid IN (1496157033, 1496157034) ORDER BY 1`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgindexindexes-0009-explain-select-count-*-from", ColumnModes: []string{"explain"}},
 				},
 			},
 		},
@@ -6323,64 +5625,29 @@ func TestPgTypeIndexes(t *testing.T) {
 			Name: "pg_type_oid_index",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT typname FROM pg_catalog.pg_type WHERE oid = 23 ORDER BY 1;`,
-					Expected: []sql.Row{{"int4"}},
+					Query: `SELECT typname FROM pg_catalog.pg_type WHERE oid = 23 ORDER BY 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtypeindexes-0001-select-typname-from-pg_catalog.pg_type-where"},
 				},
 				{
-					Query:    `SELECT typname FROM pg_catalog.pg_type WHERE oid = '23' ORDER BY 1;`,
-					Expected: []sql.Row{{"int4"}},
+					Query: `SELECT typname FROM pg_catalog.pg_type WHERE oid = '23' ORDER BY 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtypeindexes-0002-select-typname-from-pg_catalog.pg_type-where"},
 				},
 				{
-					Query:    `SELECT typname FROM pg_catalog.pg_type WHERE oid > 22 AND oid < 25 ORDER BY typname;`,
-					Expected: []sql.Row{{"int4"}, {"regproc"}},
+					Query: `SELECT typname FROM pg_catalog.pg_type WHERE oid > 22 AND oid < 25 ORDER BY typname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtypeindexes-0003-select-typname-from-pg_catalog.pg_type-where"},
 				},
 				{
-					Query:    `SELECT typname FROM pg_catalog.pg_type WHERE oid IN (23, 25) ORDER BY typname;`,
-					Expected: []sql.Row{{"int4"}, {"text"}},
+					Query: `SELECT typname FROM pg_catalog.pg_type WHERE oid IN (23, 25) ORDER BY typname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtypeindexes-0004-select-typname-from-pg_catalog.pg_type-where"},
 				},
 				{
 					// Full scan still works without index filter
-					Query:    `SELECT typname FROM pg_catalog.pg_type ORDER BY oid LIMIT 1;`,
-					Expected: []sql.Row{{"bool"}},
+					Query: `SELECT typname FROM pg_catalog.pg_type ORDER BY oid LIMIT 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtypeindexes-0005-select-typname-from-pg_catalog.pg_type-order"},
 				},
 				{
-					Query: `EXPLAIN SELECT typname FROM pg_catalog.pg_type WHERE oid = 23 ORDER BY 1;`,
-					Expected: []sql.Row{
-						{"Project"},
-						{" ├─ columns: [pg_type.typname]"},
-						{" └─ Sort(pg_type.typname ASC)"},
-						{"     └─ Filter"},
-						{"         ├─ pg_type.oid = 23"},
-						{"         └─ IndexedTableAccess(pg_type)"},
-						{"             ├─ index: [pg_type.oid]"},
-						{"             └─ filters: [{[{Type:[\"pg_catalog\",\"int4\"]}, {Type:[\"pg_catalog\",\"int4\"]}]}]"},
-					},
+					Query: `EXPLAIN SELECT typname FROM pg_catalog.pg_type WHERE oid = 23 ORDER BY 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtypeindexes-0006-explain-select-typname-from-pg_catalog.pg_type", ColumnModes: []string{"explain"}},
 				},
 				{
-					Query: `EXPLAIN SELECT typname FROM pg_catalog.pg_type WHERE oid > 22 AND oid < 25 ORDER BY 1;`,
-					Expected: []sql.Row{
-						{"Project"},
-						{" ├─ columns: [pg_type.typname]"},
-						{" └─ Sort(pg_type.typname ASC)"},
-						{"     └─ Filter"},
-						{"         ├─ (pg_type.oid > 22 AND pg_type.oid < 25)"},
-						{"         └─ IndexedTableAccess(pg_type)"},
-						{"             ├─ index: [pg_type.oid]"},
-						{"             └─ filters: [{({Type:[\"pg_catalog\",\"int2vector\"]}, {Type:[\"pg_catalog\",\"text\"]})}]"},
-					},
+					Query: `EXPLAIN SELECT typname FROM pg_catalog.pg_type WHERE oid > 22 AND oid < 25 ORDER BY 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtypeindexes-0007-explain-select-typname-from-pg_catalog.pg_type", ColumnModes: []string{"explain"}},
 				},
 				{
-					Query: `EXPLAIN SELECT typname FROM pg_catalog.pg_type WHERE oid IN (23, 25) ORDER BY typname;`,
-					Expected: []sql.Row{
-						{"Project"},
-						{" ├─ columns: [pg_type.typname]"},
-						{" └─ Sort(pg_type.typname ASC)"},
-						{"     └─ Filter"},
-						{"         ├─ pg_type.oid IN (23, 25)"},
-						{"         └─ IndexedTableAccess(pg_type)"},
-						{"             ├─ index: [pg_type.oid]"},
-						{"             └─ filters: [{[{Type:[\"pg_catalog\",\"int4\"]}, {Type:[\"pg_catalog\",\"int4\"]}]}, {[{Type:[\"pg_catalog\",\"text\"]}, {Type:[\"pg_catalog\",\"text\"]}]}]"},
-					},
+					Query: `EXPLAIN SELECT typname FROM pg_catalog.pg_type WHERE oid IN (23, 25) ORDER BY typname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtypeindexes-0008-explain-select-typname-from-pg_catalog.pg_type", ColumnModes: []string{"explain"}},
 				},
 			},
 		},
@@ -6388,50 +5655,25 @@ func TestPgTypeIndexes(t *testing.T) {
 			Name: "pg_type_typname_nsp_index",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT oid FROM pg_catalog.pg_type WHERE typname = 'int4' AND typnamespace = 11 ORDER BY 1;`,
-					Expected: []sql.Row{{23}},
+					Query: `SELECT oid FROM pg_catalog.pg_type WHERE typname = 'int4' AND typnamespace = 11 ORDER BY 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtypeindexes-0009-select-oid-from-pg_catalog.pg_type-where"},
 				},
 				{
-					Query:    `SELECT typname FROM pg_catalog.pg_type WHERE typname > 'int2' AND typname < 'int8' AND typnamespace = 11 ORDER BY 1;`,
-					Expected: []sql.Row{{"int2vector"}, {"int4"}},
+					Query: `SELECT typname FROM pg_catalog.pg_type WHERE typname > 'int2' AND typname < 'int8' AND typnamespace = 11 ORDER BY 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtypeindexes-0010-select-typname-from-pg_catalog.pg_type-where"},
 				},
 				{
-					Query:    `SELECT typname FROM pg_catalog.pg_type WHERE typname >= 'int2' AND typname <= 'int4' AND typnamespace = 11 ORDER BY 1;`,
-					Expected: []sql.Row{{"int2"}, {"int2vector"}, {"int4"}},
+					Query: `SELECT typname FROM pg_catalog.pg_type WHERE typname >= 'int2' AND typname <= 'int4' AND typnamespace = 11 ORDER BY 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtypeindexes-0011-select-typname-from-pg_catalog.pg_type-where"},
 				},
 				{
-					Query:    `SELECT typname FROM pg_catalog.pg_type WHERE typname > 'int2' AND typname <= 'int4' AND typnamespace = 11 ORDER BY 1;`,
-					Expected: []sql.Row{{"int2vector"}, {"int4"}},
+					Query: `SELECT typname FROM pg_catalog.pg_type WHERE typname > 'int2' AND typname <= 'int4' AND typnamespace = 11 ORDER BY 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtypeindexes-0012-select-typname-from-pg_catalog.pg_type-where"},
 				},
 				{
-					Query:    `SELECT typname FROM pg_catalog.pg_type WHERE typname >= 'int4' AND typname <= 'int4' AND typnamespace = 11 ORDER BY 1;`,
-					Expected: []sql.Row{{"int4"}},
+					Query: `SELECT typname FROM pg_catalog.pg_type WHERE typname >= 'int4' AND typname <= 'int4' AND typnamespace = 11 ORDER BY 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtypeindexes-0013-select-typname-from-pg_catalog.pg_type-where"},
 				},
 				{
-					Query: `EXPLAIN SELECT oid FROM pg_catalog.pg_type WHERE typname = 'int4' AND typnamespace = 11 ORDER BY 1;`,
-					Expected: []sql.Row{
-						{"Project"},
-						{" ├─ columns: [pg_type.oid]"},
-						{" └─ Sort(pg_type.oid ASC)"},
-						{"     └─ Filter"},
-						{"         ├─ (pg_type.typname = 'int4' AND pg_type.typnamespace = 11)"},
-						{"         └─ IndexedTableAccess(pg_type)"},
-						{"             ├─ index: [pg_type.typname,pg_type.typnamespace]"},
-						{"             └─ filters: [{[int4, int4], [{Namespace:[\"pg_catalog\"]}, {Namespace:[\"pg_catalog\"]}]}]"},
-					},
+					Query: `EXPLAIN SELECT oid FROM pg_catalog.pg_type WHERE typname = 'int4' AND typnamespace = 11 ORDER BY 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtypeindexes-0014-explain-select-oid-from-pg_catalog.pg_type", ColumnModes: []string{"explain"}},
 				},
 				{
-					Query: `EXPLAIN SELECT typname FROM pg_catalog.pg_type WHERE typname > 'int2' AND typname < 'int8' AND typnamespace = 11 ORDER BY 1;`,
-					Expected: []sql.Row{
-						{"Project"},
-						{" ├─ columns: [pg_type.typname]"},
-						{" └─ Sort(pg_type.typname ASC)"},
-						{"     └─ Filter"},
-						{"         ├─ ((pg_type.typname > 'int2' AND pg_type.typname < 'int8') AND pg_type.typnamespace = 11)"},
-						{"         └─ IndexedTableAccess(pg_type)"},
-						{"             ├─ index: [pg_type.typname,pg_type.typnamespace]"},
-						{"             └─ filters: [{(int2, int8), [{Namespace:[\"pg_catalog\"]}, {Namespace:[\"pg_catalog\"]}]}]"},
-					},
+					Query: `EXPLAIN SELECT typname FROM pg_catalog.pg_type WHERE typname > 'int2' AND typname < 'int8' AND typnamespace = 11 ORDER BY 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtypeindexes-0015-explain-select-typname-from-pg_catalog.pg_type", ColumnModes: []string{"explain"}},
 				},
 			},
 		},
@@ -6443,31 +5685,14 @@ func TestPgTypeIndexes(t *testing.T) {
   FROM pg_catalog.pg_type t
   JOIN pg_catalog.pg_namespace n ON t.typnamespace = n.oid
   WHERE t.typname = 'int4'
-  ORDER BY 1;`,
-					Expected: []sql.Row{{"int4", "pg_catalog"}},
+  ORDER BY 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtypeindexes-0016-select-t.typname-n.nspname-from-pg_catalog.pg_type"},
 				},
 				{
 					Query: `EXPLAIN SELECT t.typname, n.nspname
 								FROM pg_catalog.pg_type t
 								JOIN pg_catalog.pg_namespace n ON t.typnamespace = n.oid
 					   			WHERE t.typname = 'int4'
-								ORDER BY 1;`,
-					Expected: []sql.Row{
-						{"Project"},
-						{" ├─ columns: [t.typname, n.nspname]"},
-						{" └─ Sort(t.typname ASC)"},
-						{"     └─ LookupJoin"},
-						{"         ├─ Filter"},
-						{"         │   ├─ t.typname = 'int4'"},
-						{"         │   └─ TableAlias(t)"},
-						{"         │       └─ IndexedTableAccess(pg_type)"},
-						{"         │           ├─ index: [pg_type.typname,pg_type.typnamespace]"},
-						{"         │           └─ filters: [{[int4, int4], [NULL, ∞)}]"},
-						{"         └─ TableAlias(n)"},
-						{"             └─ IndexedTableAccess(pg_namespace)"},
-						{"                 ├─ index: [pg_namespace.oid]"},
-						{"                 └─ keys: t.typnamespace"},
-					},
+								ORDER BY 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgtypeindexes-0017-explain-select-t.typname-n.nspname-from", ColumnModes: []string{"explain"}},
 				},
 			},
 		},
@@ -7379,33 +6604,21 @@ func TestPgAttributeIndexes(t *testing.T) {
 					Query: `SELECT a.attname, a.attnum FROM pg_catalog.pg_attribute a
 							JOIN pg_catalog.pg_class c ON a.attrelid = c.oid 
 							WHERE c.relname = 'test_table'
-							ORDER BY a.attnum;`,
-					Expected: []sql.Row{
-						{"id", int16(1)},
-						{"name", int16(2)},
-						{"description", int16(3)},
-						{"created_at", int16(4)},
-					},
+							ORDER BY a.attnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgattributeindexes-0001-select-a.attname-a.attnum-from-pg_catalog.pg_attribute"},
 				},
 				{
 					// Test unique index on attrelid + attname (using string values for boolean fields)
 					Query: `SELECT a.attnum, a.attnotnull, a.atthasdef FROM pg_catalog.pg_attribute a
 							JOIN pg_catalog.pg_class c ON a.attrelid = c.oid
 							WHERE c.relname = 'test_table' 
-							AND a.attname = 'name';`,
-					Expected: []sql.Row{
-						{int16(2), "t", "f"},
-					},
+							AND a.attname = 'name';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgattributeindexes-0002-select-a.attnum-a.attnotnull-a.atthasdef-from"},
 				},
 				{
 					// Test another unique index lookup
 					Query: `SELECT a.attnum FROM pg_catalog.pg_attribute a
 							JOIN pg_catalog.pg_class c ON a.attrelid = c.oid
 							WHERE c.relname = 'another_table' 
-							AND a.attname = 'pk';`,
-					Expected: []sql.Row{
-						{int16(1)},
-					},
+							AND a.attname = 'pk';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgattributeindexes-0003-select-a.attnum-from-pg_catalog.pg_attribute-a"},
 				},
 				{
 					// Test range lookup on attrelid index
@@ -7413,10 +6626,7 @@ func TestPgAttributeIndexes(t *testing.T) {
 							WHERE a.attrelid IN (
 								SELECT oid FROM pg_catalog.pg_class 
 								WHERE relname IN ('test_table', 'another_table')
-							);`,
-					Expected: []sql.Row{
-						{6},
-					},
+							);`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgattributeindexes-0004-select-count-*-from-pg_catalog.pg_attribute"},
 				},
 				{
 					// Test JOIN using the indexes
@@ -7424,15 +6634,7 @@ func TestPgAttributeIndexes(t *testing.T) {
 							FROM pg_catalog.pg_class c 
 							JOIN pg_catalog.pg_attribute a ON c.oid = a.attrelid 
 							WHERE c.relname IN ('test_table', 'another_table') 
-							ORDER BY c.relname, a.attnum;`,
-					Expected: []sql.Row{
-						{"another_table", "pk", int16(1)},
-						{"another_table", "value", int16(2)},
-						{"test_table", "id", int16(1)},
-						{"test_table", "name", int16(2)},
-						{"test_table", "description", int16(3)},
-						{"test_table", "created_at", int16(4)},
-					},
+							ORDER BY c.relname, a.attnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgattributeindexes-0005-select-c.relname-a.attname-a.attnum-from"},
 				},
 			},
 		},

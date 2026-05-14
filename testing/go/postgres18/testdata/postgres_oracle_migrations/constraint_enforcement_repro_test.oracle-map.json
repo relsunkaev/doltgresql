@@ -1,0 +1,127 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map constraint_enforcement_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres18/constraint_enforcement_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/postgres18/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres18/constraint_enforcement_repro_test.go:TestPostgres18CheckConstraintNotEnforcedRepro#0001",
+      "source": "testing/go/postgres18/constraint_enforcement_repro_test.go:TestPostgres18CheckConstraintNotEnforcedRepro",
+      "ordinal": 1,
+      "scriptName": "table CHECK NOT ENFORCED allows violating rows",
+      "oracle": "postgres",
+      "postgresId": "postgres18/constraint-enforcement-repro-test-testpostgres18checkconstraintnotenforcedrepro-0001-select-qty-from-check_not_enforced_items-where",
+      "suggestedId": "postgres18/constraint-enforcement-repro-test-testpostgres18checkconstraintnotenforcedrepro-0001-select-qty-from-check_not_enforced_items-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT qty FROM check_not_enforced_items WHERE id = 1;",
+      "querySha256": "fe9f6234894495f5d701a2591f2e4c7043d65db2ba3f23932267e247b402824e",
+      "expectedRows": [
+        [
+          {
+            "value": "-5"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres18/constraint_enforcement_repro_test.go:TestPostgres18CheckConstraintNotEnforcedRepro#0002",
+      "source": "testing/go/postgres18/constraint_enforcement_repro_test.go:TestPostgres18CheckConstraintNotEnforcedRepro",
+      "ordinal": 2,
+      "scriptName": "table CHECK NOT ENFORCED allows violating rows",
+      "oracle": "postgres",
+      "postgresId": "postgres18/constraint-enforcement-repro-test-testpostgres18checkconstraintnotenforcedrepro-0002-select-pg_get_constraintdef-oid-from-pg_constraint",
+      "suggestedId": "postgres18/constraint-enforcement-repro-test-testpostgres18checkconstraintnotenforcedrepro-0002-select-pg_get_constraintdef-oid-from-pg_constraint",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conname = 'qty_positive';",
+      "querySha256": "4a2567d5fd8fe6d50d39666a21bdc36fd4ddfa1db291ae9fc903a949e08398d4",
+      "expectedRows": [
+        [
+          {
+            "value": "CHECK ((qty > 0)) NOT ENFORCED"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres18/constraint_enforcement_repro_test.go:TestPostgres18CheckConstraintNotEnforcedRepro#0003",
+      "source": "testing/go/postgres18/constraint_enforcement_repro_test.go:TestPostgres18CheckConstraintNotEnforcedRepro",
+      "ordinal": 3,
+      "scriptName": "NOT ENFORCED check does not disable enforced checks",
+      "oracle": "postgres",
+      "postgresId": "postgres18/constraint-enforcement-repro-test-testpostgres18checkconstraintnotenforcedrepro-0003-insert-into-mixed_check_enforcement_items-values-2",
+      "suggestedId": "postgres18/constraint-enforcement-repro-test-testpostgres18checkconstraintnotenforcedrepro-0003-insert-into-mixed_check_enforcement_items-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO mixed_check_enforcement_items VALUES (2, -20);",
+      "querySha256": "02cf53f261ff6e516528d47bb486a90a445c8b8c79d0fa7b8948e23ef5f64065",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres18/constraint_enforcement_repro_test.go:TestPostgres18CheckConstraintNotEnforcedRepro#0004",
+      "source": "testing/go/postgres18/constraint_enforcement_repro_test.go:TestPostgres18CheckConstraintNotEnforcedRepro",
+      "ordinal": 4,
+      "scriptName": "ALTER TABLE ADD CHECK NOT ENFORCED allows violating rows",
+      "oracle": "postgres",
+      "postgresId": "postgres18/constraint-enforcement-repro-test-testpostgres18checkconstraintnotenforcedrepro-0004-select-qty-from-alter_check_not_enforced_items-order",
+      "suggestedId": "postgres18/constraint-enforcement-repro-test-testpostgres18checkconstraintnotenforcedrepro-0004-select-qty-from-alter_check_not_enforced_items-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT qty FROM alter_check_not_enforced_items ORDER BY id;",
+      "querySha256": "c6fa3100e61d81a1725eb7efddeb8c596e05e706b687ce73c85d9254efaf1595",
+      "expectedRows": [
+        [
+          {
+            "value": "-5"
+          }
+        ],
+        [
+          {
+            "value": "-10"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres18/constraint_enforcement_repro_test.go:TestPostgres18CheckConstraintNotEnforcedRepro#0005",
+      "source": "testing/go/postgres18/constraint_enforcement_repro_test.go:TestPostgres18CheckConstraintNotEnforcedRepro",
+      "ordinal": 5,
+      "scriptName": "ALTER TABLE ADD CHECK NOT ENFORCED allows violating rows",
+      "oracle": "postgres",
+      "postgresId": "postgres18/constraint-enforcement-repro-test-testpostgres18checkconstraintnotenforcedrepro-0005-select-pg_get_constraintdef-oid-from-pg_constraint",
+      "suggestedId": "postgres18/constraint-enforcement-repro-test-testpostgres18checkconstraintnotenforcedrepro-0005-select-pg_get_constraintdef-oid-from-pg_constraint",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conname = 'alter_qty_positive';",
+      "querySha256": "7d4566ecb0af6b2c9ed272da7feb87d32e4a8d40a9601b587e32a14a5fccd94f",
+      "expectedRows": [
+        [
+          {
+            "value": "CHECK ((qty > 0)) NOT ENFORCED"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

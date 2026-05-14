@@ -1,0 +1,951 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map issues_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/issues_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0001",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 1,
+      "scriptName": "Issue #25",
+      "oracle": "internal",
+      "suggestedId": "issues-test-testissues-0001-select-dolt_add-.",
+      "expectedKind": "error",
+      "query": "select dolt_add(\".\");",
+      "querySha256": "64d893dc079d19c51d8d4ba1d5c0fa16e98c75ccca6578bf4df1e37905b463b1",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0002",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 2,
+      "scriptName": "Issue #25",
+      "oracle": "internal",
+      "suggestedId": "issues-test-testissues-0002-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "select dolt_add('.');",
+      "querySha256": "2317c2c783a8caa8ebac3379a0746a0b93146bf2426ca449b593c11e3d952717",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0003",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 3,
+      "scriptName": "Issue #25",
+      "oracle": "internal",
+      "suggestedId": "issues-test-testissues-0003-select-dolt_commit-m-look-ma",
+      "expectedKind": "error",
+      "query": "select dolt_commit(\"-m\", \"look ma\");",
+      "querySha256": "88239f7d95e16b2f99eb779a51c5bc9b91a3292269d1caaf42c218c8ed37e3ba",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0004",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 4,
+      "scriptName": "Issue #25",
+      "oracle": "internal",
+      "suggestedId": "issues-test-testissues-0004-select-length-dolt_commit-m-look",
+      "expectedKind": "rows",
+      "query": "select length(dolt_commit('-m', 'look ma')::text);",
+      "querySha256": "14400f9d2f157d997e30fdfbf68d9428c0a3df4637f92e438c47777a54d46b60",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0005",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 5,
+      "scriptName": "Issue #25",
+      "oracle": "internal",
+      "suggestedId": "issues-test-testissues-0005-select-dolt_branch-br1",
+      "expectedKind": "error",
+      "query": "select dolt_branch(\"br1\");",
+      "querySha256": "7dccb9783e5202150257c90f21ebb7eb993700b2f8264bbfe27a4d1185021ad2",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0006",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 6,
+      "scriptName": "Issue #25",
+      "oracle": "internal",
+      "suggestedId": "issues-test-testissues-0006-select-dolt_branch-br1",
+      "expectedKind": "rows",
+      "query": "select dolt_branch('br1');",
+      "querySha256": "ddb1a847ff2e1d873125e7758072a1ff2d8d83691fb49bfeff1851309c4a3b7a",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0007",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 7,
+      "scriptName": "Issue #2030",
+      "oracle": "internal",
+      "suggestedId": "issues-test-testissues-0007-select-entities-.-project_id-entities",
+      "expectedKind": "rows",
+      "query": "select\n  \"entities\".\"project_id\",\n  \"entities\".\"id\",\n  \"entities\".\"name\",\n  \"entities\".\"default_sub_entity_id\",\n  \"entities_defaultSubEntity\".\"data\" as \"defaultSubEntity\"\nfrom \"entities\" \"entities\"\nleft join lateral (\n  select json_build_array(\n           \"entities_defaultSubEntity\".\"project_id\",\n           \"entities_defaultSubEntity\".\"entity_id\",\n           \"entities_defaultSubEntity\".\"id\",\n           \"entities_defaultSubEntity\".\"name\"\n         ) as \"data\"\n  from (\n    select * from \"sub_entities\" \"entities_defaultSubEntity\"\n    where \"entities_defaultSubEntity\".\"id\" = \"entities\".\"default_sub_entity_id\"\n    limit $1\n  ) \"entities_defaultSubEntity\"\n) \"entities_defaultSubEntity\" on true\nwhere (\"entities\".\"project_id\" = $2 and \"entities\".\"id\" = $3)\nlimit $4",
+      "querySha256": "759b64d24c265596b615b729c0f9b3c0defab3c1dc41dbf735647fb9fe8aeb18",
+      "nonLiteral": [
+        "BindVars"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0008",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 8,
+      "scriptName": "Issue #2030",
+      "oracle": "postgres",
+      "postgresId": "issues-test-testissues-0008-select-entities-.-project_id-entities",
+      "suggestedId": "issues-test-testissues-0008-select-entities-.-project_id-entities",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select\n  \"entities\".\"project_id\",\n  \"entities\".\"id\",\n  \"entities\".\"name\",\n  \"entities\".\"default_sub_entity_id\",\n  \"entities_defaultSubEntity\".\"data\" as \"defaultSubEntity\"\nfrom \"entities\" \"entities\"\nleft join lateral (\n  select json_build_array(\n           \"entities_defaultSubEntity\".\"project_id\",\n           \"entities_defaultSubEntity\".\"entity_id\",\n           \"entities_defaultSubEntity\".\"id\",\n           \"entities_defaultSubEntity\".\"name\"\n         ) as \"data\"\n  from (\n    select * from \"sub_entities\" \"entities_defaultSubEntity\"\n    where \"entities_defaultSubEntity\".\"id\" = \"entities\".\"default_sub_entity_id\"\n    limit 1\n  ) \"entities_defaultSubEntity\"\n) \"entities_defaultSubEntity\" on true\nwhere (\"entities\".\"project_id\" = 'projectA' and \"entities\".\"id\" = 'entityA')\nlimit 1",
+      "querySha256": "8aa94959c0d1e673930041f011b90805e5253c57aad3a630a6a3c5420036e349",
+      "expectedRows": [
+        [
+          {
+            "value": "projectA"
+          },
+          {
+            "value": "entityA"
+          },
+          {
+            "value": "Entity A"
+          },
+          {
+            "value": "subA1"
+          },
+          {
+            "value": "[\"projectA\",\"entityA\",\"subA1\",\"Sub-Entity A1\"]"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0009",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 9,
+      "scriptName": "Issue #2049",
+      "oracle": "internal",
+      "suggestedId": "issues-test-testissues-0009-select-*-from-jsonb_test",
+      "expectedKind": "rawRows",
+      "query": "SELECT * FROM jsonb_test;",
+      "querySha256": "1a2272ba8824eb84136a7a74ab8e7c5b831e1b95b9681c5529997cdf0e6acbe9",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0010",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 10,
+      "scriptName": "Issue #2197 Part 1",
+      "oracle": "postgres",
+      "postgresId": "issues-test-testissues-0010-insert-into-t2-t1-values",
+      "suggestedId": "issues-test-testissues-0010-insert-into-t2-t1-values",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO t2(t1) VALUES (ROW(1, 'abc'));",
+      "querySha256": "395c8023405d27bae4ffec8d829c43384801c5ae505ef444eb4d9096fa6e75ed",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0011",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 11,
+      "scriptName": "Issue #2197 Part 1",
+      "oracle": "postgres",
+      "postgresId": "issues-test-testissues-0011-select-*-from-t2",
+      "suggestedId": "issues-test-testissues-0011-select-*-from-t2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM t2;",
+      "querySha256": "4cca2c8c0018c1898b41584c73e1a45f20b923e803a8639f5977973176d7ba92",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "(1,abc)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0012",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 12,
+      "scriptName": "Issue #2197 Part 1",
+      "oracle": "postgres",
+      "postgresId": "issues-test-testissues-0012-insert-into-t2-t1-values",
+      "suggestedId": "issues-test-testissues-0012-insert-into-t2-t1-values",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22P02",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO t2(t1) VALUES (ROW('a', 'def'));",
+      "querySha256": "921df33453181041e23dbe06f4f1176ce09045cb4ded22316650854768d686f7",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0013",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 13,
+      "scriptName": "Issue #2197 Part 1",
+      "oracle": "postgres",
+      "postgresId": "issues-test-testissues-0013-insert-into-t2-t1-values",
+      "suggestedId": "issues-test-testissues-0013-insert-into-t2-t1-values",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42846",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO t2(t1) VALUES (ROW(true, 'def'));",
+      "querySha256": "c268b3d7dfb366de6ba6debd662af90402001a423357e55bbd51de51153385a7",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0014",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 14,
+      "scriptName": "Issue #2197 Part 1",
+      "oracle": "postgres",
+      "postgresId": "issues-test-testissues-0014-insert-into-t2-t1-values",
+      "suggestedId": "issues-test-testissues-0014-insert-into-t2-t1-values",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42846",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO t2(t1) VALUES (ROW(2, 'def', 'ghi'));",
+      "querySha256": "dcd61ae76d7fc7b100416d75792608166f3198607b5cb8f079a867eb41d3ac3a",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0015",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 15,
+      "scriptName": "Issue #2197 Part 1",
+      "oracle": "postgres",
+      "postgresId": "issues-test-testissues-0015-insert-into-t2-t1-values",
+      "suggestedId": "issues-test-testissues-0015-insert-into-t2-t1-values",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42846",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO t2(t1) VALUES (ROW(2));",
+      "querySha256": "f90e6c39c465719852c06623f05710c16d86558c29414dfb7cddf5293c3cdf7b",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0016",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 16,
+      "scriptName": "Issue #2197 Part 2",
+      "oracle": "postgres",
+      "postgresId": "issues-test-testissues-0016-select-*-from-t2",
+      "suggestedId": "issues-test-testissues-0016-select-*-from-t2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM t2;",
+      "querySha256": "4cca2c8c0018c1898b41584c73e1a45f20b923e803a8639f5977973176d7ba92",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "(1,abc)"
+          },
+          {
+            "null": true
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "null": true
+          },
+          {
+            "value": "(1,abc)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0017",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 17,
+      "scriptName": "Issue #2197 Part 2",
+      "oracle": "postgres",
+      "postgresId": "issues-test-testissues-0017-alter-table-t1a-add-column",
+      "suggestedId": "issues-test-testissues-0017-alter-table-t1a-add-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE t1a ADD COLUMN c VARCHAR(10);",
+      "querySha256": "61af78d0361da067d616ca6142b52a323a1306b3783e031f953169079178f249",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0018",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 18,
+      "scriptName": "Issue #2197 Part 2",
+      "oracle": "postgres",
+      "postgresId": "issues-test-testissues-0018-alter-table-t1b-add-column",
+      "suggestedId": "issues-test-testissues-0018-alter-table-t1b-add-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE t1b ADD COLUMN c VARCHAR(10) NOT NULL;",
+      "querySha256": "d8654116329aec08d0d352f245969b3c973cdbb8dcac77f834ebd7ce884a121c",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0019",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 19,
+      "scriptName": "Issue #2197 Part 2",
+      "oracle": "postgres",
+      "postgresId": "issues-test-testissues-0019-select-*-from-t2-order",
+      "suggestedId": "issues-test-testissues-0019-select-*-from-t2-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM t2 ORDER BY id;",
+      "querySha256": "d915460033806e8cdf0fcd02845ec255ca4f6d5d57aca184ef1375ce5a422d5c",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "(1,abc,)"
+          },
+          {
+            "null": true
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "null": true
+          },
+          {
+            "value": "(1,abc,)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0020",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 20,
+      "scriptName": "Issue #2197 Part 2",
+      "oracle": "postgres",
+      "postgresId": "issues-test-testissues-0020-alter-table-t1a-drop-column",
+      "suggestedId": "issues-test-testissues-0020-alter-table-t1a-drop-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE t1a DROP COLUMN b;",
+      "querySha256": "257f4ea12a57936c461c8ac8b2f8742ad418dc3f88ad284848c71f5a77d33de5",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0021",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 21,
+      "scriptName": "Issue #2197 Part 2",
+      "oracle": "postgres",
+      "postgresId": "issues-test-testissues-0021-alter-table-t1b-drop-column",
+      "suggestedId": "issues-test-testissues-0021-alter-table-t1b-drop-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE t1b DROP COLUMN b;",
+      "querySha256": "d2b18437624d9248a9b78fe4f0fcd43a10ab237ec42e89fab8f8e6506c265d3d",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0022",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 22,
+      "scriptName": "Issue #2197 Part 2",
+      "oracle": "postgres",
+      "postgresId": "issues-test-testissues-0022-select-*-from-t2-order",
+      "suggestedId": "issues-test-testissues-0022-select-*-from-t2-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM t2 ORDER BY id;",
+      "querySha256": "d915460033806e8cdf0fcd02845ec255ca4f6d5d57aca184ef1375ce5a422d5c",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "(1,)"
+          },
+          {
+            "null": true
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "null": true
+          },
+          {
+            "value": "(1,)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0023",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 23,
+      "scriptName": "Issue #2197 Part 2",
+      "oracle": "postgres",
+      "postgresId": "issues-test-testissues-0023-insert-into-t1a-values-2",
+      "suggestedId": "issues-test-testissues-0023-insert-into-t1a-values-2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO t1a VALUES (2, 'def');",
+      "querySha256": "16abe15bd661fc33afd3436e8ee7b29ab9d742237b393731c762f53124156b7d",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0024",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 24,
+      "scriptName": "Issue #2197 Part 2",
+      "oracle": "postgres",
+      "postgresId": "issues-test-testissues-0024-insert-into-t1b-values-3",
+      "suggestedId": "issues-test-testissues-0024-insert-into-t1b-values-3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO t1b VALUES (3, 'xyzzy');",
+      "querySha256": "b1b3aa2ff52e1bbf7c0db597ca000e539a2e6288288405249f458bea77bec164",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0025",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 25,
+      "scriptName": "Issue #2197 Part 2",
+      "oracle": "postgres",
+      "postgresId": "issues-test-testissues-0025-insert-into-t2-t1a-select",
+      "suggestedId": "issues-test-testissues-0025-insert-into-t2-t1a-select",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO t2 (t1a) SELECT ROW(a,c)::t1a FROM t1a;",
+      "querySha256": "c116f28ae4b669f8c8b06328c08be0ef018e1876549efa908708f02bb3be49e5",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0026",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 26,
+      "scriptName": "Issue #2197 Part 2",
+      "oracle": "postgres",
+      "postgresId": "issues-test-testissues-0026-insert-into-t2-t1b-select",
+      "suggestedId": "issues-test-testissues-0026-insert-into-t2-t1b-select",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO t2 (t1b) SELECT ROW(a,c)::t1b FROM t1b;",
+      "querySha256": "bf229f562b6a0b8c0043b2fa6dc4008fd64b7212ad6d7a33ea1db264bcbc43cd",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0027",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 27,
+      "scriptName": "Issue #2197 Part 2",
+      "oracle": "postgres",
+      "postgresId": "issues-test-testissues-0027-select-*-from-t2-order",
+      "suggestedId": "issues-test-testissues-0027-select-*-from-t2-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM t2 ORDER BY id;",
+      "querySha256": "d915460033806e8cdf0fcd02845ec255ca4f6d5d57aca184ef1375ce5a422d5c",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "(1,)"
+          },
+          {
+            "null": true
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "null": true
+          },
+          {
+            "value": "(1,)"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "(2,def)"
+          },
+          {
+            "null": true
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "null": true
+          },
+          {
+            "value": "(3,xyzzy)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0028",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 28,
+      "scriptName": "Issue #2197 Part 2",
+      "oracle": "postgres",
+      "postgresId": "issues-test-testissues-0028-select-t1a-.@1-t1b-.@2",
+      "suggestedId": "issues-test-testissues-0028-select-t1a-.@1-t1b-.@2",
+      "compare": "sqlstate",
+      "expectedKind": "rows",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "SELECT ((t1a).@1), ((t1b).@2) FROM t2 ORDER BY id;",
+      "querySha256": "053c6ddf73187a90abc425e18c769898a204d03b4a932f91e0d66ad9bfbaa6e5",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0029",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 29,
+      "scriptName": "Issue #2197 Part 2",
+      "oracle": "internal",
+      "suggestedId": "issues-test-testissues-0029-update-t2-set-t1a=row-t1a",
+      "expectedKind": "rows",
+      "query": "UPDATE t2 SET t1a=ROW((t1a).a+100, (t1a).c)::t1a WHERE length(t1a::text) > 0;",
+      "querySha256": "ac05a51ffcbba35b362e5940ac7823b7369f22a248b62585076751a08cf61dbd",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0030",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 30,
+      "scriptName": "Issue #2197 Part 2",
+      "oracle": "internal",
+      "suggestedId": "issues-test-testissues-0030-update-t2-set-t1b=row-t1b",
+      "expectedKind": "rows",
+      "query": "UPDATE t2 SET t1b=ROW((t1b).@1+100, (t1b).@2)::t1b WHERE length(t1b::text) > 0;",
+      "querySha256": "e296757f4302485aa284b6ed928d2cbc58e38b1f87aa0f3a8da59a19e355cb21",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0031",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 31,
+      "scriptName": "Issue #2197 Part 2",
+      "oracle": "internal",
+      "suggestedId": "issues-test-testissues-0031-select-*-from-t2-order",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM t2 ORDER BY id;",
+      "querySha256": "d915460033806e8cdf0fcd02845ec255ca4f6d5d57aca184ef1375ce5a422d5c",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0032",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 32,
+      "scriptName": "Issue #2197 Part 2",
+      "oracle": "internal",
+      "suggestedId": "issues-test-testissues-0032-select-id-.a-from-t2",
+      "expectedKind": "error",
+      "query": "SELECT (id).a FROM t2;",
+      "querySha256": "97fc150ca55a7c379a957c98996ce7b840cd381105fd2e2d8d1a9c35850d8329",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0033",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 33,
+      "scriptName": "Issue #2197 Part 2",
+      "oracle": "internal",
+      "suggestedId": "issues-test-testissues-0033-select-t1a-.g-from-t2",
+      "expectedKind": "error",
+      "query": "SELECT (t1a).g FROM t2;",
+      "querySha256": "31746d20abbc1a9351d544521a97cf1d2c79a754066361a53c3a6c1387c26a56",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0034",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 34,
+      "scriptName": "Issue #2197 Part 2",
+      "oracle": "internal",
+      "suggestedId": "issues-test-testissues-0034-select-t1a-.@0-from-t2",
+      "expectedKind": "error",
+      "query": "SELECT (t1a).@0 FROM t2;",
+      "querySha256": "5138d495d344674bf5cf02e89c13955d3f6a46a010896aabfbf5175c00474a8c",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0035",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 35,
+      "scriptName": "Issue #2197 Part 2",
+      "oracle": "internal",
+      "suggestedId": "issues-test-testissues-0035-select-t1a-.@3-from-t2",
+      "expectedKind": "error",
+      "query": "SELECT (t1a).@3 FROM t2;",
+      "querySha256": "c648e996953c498629b208db9021c6b7ba71f028ab565da4932f38db01e0075a",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0036",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 36,
+      "scriptName": "Issue #2197 Part 2",
+      "oracle": "internal",
+      "suggestedId": "issues-test-testissues-0036-alter-table-t1a-add-column",
+      "expectedKind": "error",
+      "query": "ALTER TABLE t1a ADD COLUMN d VARCHAR(10) DEFAULT 'abc';",
+      "querySha256": "4978702d2b607022c45eeb8745260ef9e8fab3a2b52d348ead034cf2b5d7337e",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0037",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 37,
+      "scriptName": "Issue #2197 Part 2",
+      "oracle": "internal",
+      "suggestedId": "issues-test-testissues-0037-alter-table-t1a-add-column",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE t1a ADD COLUMN d VARCHAR(10);",
+      "querySha256": "06303ff21e5a97c029928bf793557ba4cb33e345d6d98d933740d9657c0f67e5",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0038",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 38,
+      "scriptName": "Issue #2197 Part 2",
+      "oracle": "internal",
+      "suggestedId": "issues-test-testissues-0038-alter-table-t1a-drop-column",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE t1a DROP COLUMN c;",
+      "querySha256": "a7ee13943fd1a6aefcfaddfeb8e3733afdd9a5e82e6ef9482d8db6cb3e04276b",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0039",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 39,
+      "scriptName": "Issue #2197 Part 2",
+      "oracle": "internal",
+      "suggestedId": "issues-test-testissues-0039-select-*-from-t2-order",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM t2 ORDER BY id;",
+      "querySha256": "d915460033806e8cdf0fcd02845ec255ca4f6d5d57aca184ef1375ce5a422d5c",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0040",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 40,
+      "scriptName": "Issue #2299",
+      "oracle": "postgres",
+      "postgresId": "issues-test-testissues-0040-create-table-users-id-uuid",
+      "suggestedId": "issues-test-testissues-0040-create-table-users-id-uuid",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE TABLE users (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), role team_role NOT NULL DEFAULT 'member');",
+      "querySha256": "c67e175fa4b5ae2d5f0fbc7a0c36ebe21c5c6a3dce08bd5c733bed64bcd77007",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0041",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 41,
+      "scriptName": "Issue #2299",
+      "oracle": "postgres",
+      "postgresId": "issues-test-testissues-0041-insert-into-users-role-values",
+      "suggestedId": "issues-test-testissues-0041-insert-into-users-role-values",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO users (role) VALUES (DEFAULT);",
+      "querySha256": "1fb2ba2a0a70032cb9d42c2fc90cf6e57d2295d05783e2e53241bc92b0effd48",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0042",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 42,
+      "scriptName": "Issue #2299",
+      "oracle": "postgres",
+      "postgresId": "issues-test-testissues-0042-select-role-from-users",
+      "suggestedId": "issues-test-testissues-0042-select-role-from-users",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT role FROM users;",
+      "querySha256": "64d114ac191d4530df54929cea759a5159ddfc4dc24cce2793f2040ecd0231b1",
+      "expectedRows": [
+        [
+          {
+            "value": "member"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0043",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 43,
+      "scriptName": "Issue #2307",
+      "oracle": "postgres",
+      "postgresId": "issues-test-testissues-0043-select-exists-select-1-from",
+      "suggestedId": "issues-test-testissues-0043-select-exists-select-1-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_tables WHERE tablename = 'test');",
+      "querySha256": "0193430a8099f900c4e1016c93f8ca66576184269c0759edab0a24329f31b2fa",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0044",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 44,
+      "scriptName": "Issue #2307",
+      "oracle": "postgres",
+      "postgresId": "issues-test-testissues-0044-select-not-exists-select-1",
+      "suggestedId": "issues-test-testissues-0044-select-not-exists-select-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT NOT EXISTS(SELECT 1 FROM pg_catalog.pg_tables WHERE tablename = 'test');",
+      "querySha256": "ab2f78df455842f3d955f55e72344adddb6bacd6c82b0ab65ea1c450268b6357",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0045",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 45,
+      "scriptName": "Issue #2548",
+      "oracle": "postgres",
+      "postgresId": "issues-test-testissues-0045-set-timezone-=-utc-01:00",
+      "suggestedId": "issues-test-testissues-0045-set-timezone-=-utc-01:00",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SET TimeZone = 'UTC-01:00';",
+      "querySha256": "b077bb1a2b8ea1631de1971bed53628f77e97bb5c6c1df0c412d20b2ab199ec7",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0046",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 46,
+      "scriptName": "Issue #2548",
+      "oracle": "postgres",
+      "postgresId": "issues-test-testissues-0046-insert-into-test-values-1",
+      "suggestedId": "issues-test-testissues-0046-insert-into-test-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO test VALUES (1, '2026-04-15 10:11:12');",
+      "querySha256": "db7fb840e3f7347bc219cd6f3fd7a24d8c38d7a4add53238b71e0a21a49b01fd",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0047",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 47,
+      "scriptName": "Issue #2548",
+      "oracle": "postgres",
+      "postgresId": "issues-test-testissues-0047-set-timezone-=-utc-03:00",
+      "suggestedId": "issues-test-testissues-0047-set-timezone-=-utc-03:00",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SET TimeZone = 'UTC-03:00';",
+      "querySha256": "614497b1ad01f583cc727a40a35c0ff5c9fa461215d1e19202669eb485d52c0b",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0048",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 48,
+      "scriptName": "Issue #2548",
+      "oracle": "postgres",
+      "postgresId": "issues-test-testissues-0048-insert-into-test-values-2",
+      "suggestedId": "issues-test-testissues-0048-insert-into-test-values-2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO test VALUES (2, '2026-04-15 10:11:12');",
+      "querySha256": "e5039b6fa1ce4c4355dcdb9f2b37f9df923070f3eece3ea77e5c228e33001d8f",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0049",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 49,
+      "scriptName": "Issue #2548",
+      "oracle": "postgres",
+      "postgresId": "issues-test-testissues-0049-select-select-v1-from-test",
+      "suggestedId": "issues-test-testissues-0049-select-select-v1-from-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT (SELECT v1 FROM test WHERE pk = 2) - (SELECT v1 FROM test WHERE pk = 1);",
+      "querySha256": "696cbb34ff15ce3d3965dfa35c14b94414320433b26082978cda55caca59a2a6",
+      "expectedRows": [
+        [
+          {
+            "value": "{-7200000000 0 0 true}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/issues_test.go:TestIssues#0050",
+      "source": "testing/go/issues_test.go:TestIssues",
+      "ordinal": 50,
+      "scriptName": "Issue #2604",
+      "oracle": "internal",
+      "suggestedId": "issues-test-testissues-0050-select-length-dolt_merge-main-::text",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_merge('main')::text) = 57;",
+      "querySha256": "646e230fe86e2b9873360dc4404fc5dc719957d1aed52cee27c845be32cbf1ce",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    }
+  ]
+}

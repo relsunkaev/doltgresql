@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestDynamicViewRebuild pins the CREATE OR REPLACE VIEW rebuild path
@@ -35,20 +33,17 @@ func TestDynamicViewRebuild(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT id, amount FROM paid_orders ORDER BY id;`,
-					Expected: []sql.Row{{int32(1), int32(100)}, {int32(3), int32(200)}},
+					Query: `SELECT id, amount FROM paid_orders ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-rebuild-test-testdynamicviewrebuild-0001-select-id-amount-from-paid_orders"},
 				},
 				{
 					// Rebuild the view body — same projection shape,
 					// different filter. This is the common rebuild
 					// flow when application logic changes the
 					// definition.
-					Query:    `CREATE OR REPLACE VIEW paid_orders AS SELECT id, amount FROM orders WHERE amount >= 100;`,
-					Expected: []sql.Row{},
+					Query: `CREATE OR REPLACE VIEW paid_orders AS SELECT id, amount FROM orders WHERE amount >= 100;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-rebuild-test-testdynamicviewrebuild-0002-create-or-replace-view-paid_orders"},
 				},
 				{
-					Query:    `SELECT id, amount FROM paid_orders ORDER BY id;`,
-					Expected: []sql.Row{{int32(1), int32(100)}, {int32(3), int32(200)}},
+					Query: `SELECT id, amount FROM paid_orders ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-rebuild-test-testdynamicviewrebuild-0003-select-id-amount-from-paid_orders"},
 				},
 			},
 		},
@@ -61,16 +56,13 @@ func TestDynamicViewRebuild(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `DROP VIEW v_old;`,
-					Expected: []sql.Row{},
+					Query: `DROP VIEW v_old;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-rebuild-test-testdynamicviewrebuild-0004-drop-view-v_old"},
 				},
 				{
-					Query:    `CREATE VIEW v_old AS SELECT id, v * 2 AS doubled FROM t;`,
-					Expected: []sql.Row{},
+					Query: `CREATE VIEW v_old AS SELECT id, v * 2 AS doubled FROM t;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-rebuild-test-testdynamicviewrebuild-0005-create-view-v_old-as-select"},
 				},
 				{
-					Query:    `SELECT id, doubled FROM v_old ORDER BY id;`,
-					Expected: []sql.Row{{int32(1), int32(20)}, {int32(2), int32(40)}},
+					Query: `SELECT id, doubled FROM v_old ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-rebuild-test-testdynamicviewrebuild-0006-select-id-doubled-from-v_old"},
 				},
 			},
 		},
@@ -84,18 +76,15 @@ func TestDynamicViewRebuild(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT total FROM us_sales_total;`,
-					Expected: []sql.Row{{"150"}},
+					Query: `SELECT total FROM us_sales_total;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-rebuild-test-testdynamicviewrebuild-0007-select-total-from-us_sales_total"},
 				},
 				{
 					// Replace the underlying view; dependent view
 					// should reflect the new shape on next read.
-					Query:    `CREATE OR REPLACE VIEW us_sales AS SELECT id, amount FROM sales WHERE region IN ('us', 'eu');`,
-					Expected: []sql.Row{},
+					Query: `CREATE OR REPLACE VIEW us_sales AS SELECT id, amount FROM sales WHERE region IN ('us', 'eu');`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-rebuild-test-testdynamicviewrebuild-0008-create-or-replace-view-us_sales"},
 				},
 				{
-					Query:    `SELECT total FROM us_sales_total;`,
-					Expected: []sql.Row{{"350"}},
+					Query: `SELECT total FROM us_sales_total;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-rebuild-test-testdynamicviewrebuild-0009-select-total-from-us_sales_total"},
 				},
 			},
 		},
@@ -113,12 +102,7 @@ func TestDynamicViewRebuild(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT id, status FROM account_status ORDER BY id;`,
-					Expected: []sql.Row{
-						{int32(1), "low"},
-						{int32(2), "unknown"},
-						{int32(3), "ok"},
-					},
+					Query: `SELECT id, status FROM account_status ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-rebuild-test-testdynamicviewrebuild-0010-select-id-status-from-account_status"},
 				},
 				{
 					Query: `CREATE OR REPLACE VIEW account_status AS
@@ -126,16 +110,10 @@ func TestDynamicViewRebuild(t *testing.T) {
 							CASE WHEN balance IS NULL THEN COALESCE('missing', 'unknown')
 							     WHEN balance < 100 THEN COALESCE('small', 'low')
 							     ELSE COALESCE('healthy', 'ok') END AS status
-						FROM accounts;`,
-					Expected: []sql.Row{},
+						FROM accounts;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-rebuild-test-testdynamicviewrebuild-0011-create-or-replace-view-account_status"},
 				},
 				{
-					Query: `SELECT id, status FROM account_status ORDER BY id;`,
-					Expected: []sql.Row{
-						{int32(1), "small"},
-						{int32(2), "missing"},
-						{int32(3), "healthy"},
-					},
+					Query: `SELECT id, status FROM account_status ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-rebuild-test-testdynamicviewrebuild-0012-select-id-status-from-account_status"},
 				},
 			},
 		},

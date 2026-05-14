@@ -43,24 +43,26 @@ func TestColumnSelectGrantAllowsGrantedColumnsRepro(t *testing.T) {
 				{
 					Query: `SELECT id, public_value
 						FROM column_select_allowed_private;`,
-					Expected: []sql.Row{{1, "public"}},
+
 					Username: `column_select_allowed_user`,
-					Password: `column`,
+					Password: `column`, PostgresOracle: ScriptTestPostgresOracle{ID: "column-privilege-repro-test-testcolumnselectgrantallowsgrantedcolumnsrepro-0001-select-id-public_value-from-column_select_allowed_private"},
 				},
 				{
-					Query:       `SELECT private_value FROM column_select_allowed_private;`,
-					ExpectedErr: `permission denied`,
-					Username:    `column_select_allowed_user`,
-					Password:    `column`,
+					Query: `SELECT private_value FROM column_select_allowed_private;`,
+
+					Username: `column_select_allowed_user`,
+					Password: `column`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestColumnInsertGrantDoesNotAllowOtherColumnsGuard covers column-level INSERT
+						// authorization: a grant on one set of columns must not allow writes to other
+						// columns on the same table.
+						ID: "column-privilege-repro-test-testcolumnselectgrantallowsgrantedcolumnsrepro-0002-select-private_value-from-column_select_allowed_private", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestColumnInsertGrantDoesNotAllowOtherColumnsGuard covers column-level INSERT
-// authorization: a grant on one set of columns must not allow writes to other
-// columns on the same table.
 func TestColumnInsertGrantDoesNotAllowOtherColumnsGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -81,22 +83,23 @@ func TestColumnInsertGrantDoesNotAllowOtherColumnsGuard(t *testing.T) {
 					Query: `INSERT INTO column_insert_private
 						(id, public_value, private_value)
 						VALUES (1, 'public', 'private');`,
-					ExpectedErr: `permission denied`,
-					Username:    `column_insert_user`,
-					Password:    `column`,
+
+					Username: `column_insert_user`,
+					Password: `column`, PostgresOracle: ScriptTestPostgresOracle{ID: "column-privilege-repro-test-testcolumninsertgrantdoesnotallowothercolumnsguard-0001-insert-into-column_insert_private-id-public_value",
+
+						// TestColumnInsertGrantAllowsGrantedColumnsRepro reproduces an authorization
+						// correctness bug: PostgreSQL column-level INSERT privileges allow inserting
+						// exactly the granted columns.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT COUNT(*) FROM column_insert_private;`,
-					Expected: []sql.Row{{0}},
+					Query: `SELECT COUNT(*) FROM column_insert_private;`, PostgresOracle: ScriptTestPostgresOracle{ID: "column-privilege-repro-test-testcolumninsertgrantdoesnotallowothercolumnsguard-0002-select-count-*-from-column_insert_private"},
 				},
 			},
 		},
 	})
 }
 
-// TestColumnInsertGrantAllowsGrantedColumnsRepro reproduces an authorization
-// correctness bug: PostgreSQL column-level INSERT privileges allow inserting
-// exactly the granted columns.
 func TestColumnInsertGrantAllowsGrantedColumnsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -122,8 +125,7 @@ func TestColumnInsertGrantAllowsGrantedColumnsRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT id, public_value, private_value
-						FROM column_insert_allowed_private;`,
-					Expected: []sql.Row{{1, "public", nil}},
+						FROM column_insert_allowed_private;`, PostgresOracle: ScriptTestPostgresOracle{ID: "column-privilege-repro-test-testcolumninsertgrantallowsgrantedcolumnsrepro-0001-select-id-public_value-private_value-from"},
 				},
 			},
 		},
@@ -153,18 +155,20 @@ func TestCteSelectUsesUnderlyingTablePrivilegesRepro(t *testing.T) {
 							SELECT id, label FROM cte_select_private
 						)
 						SELECT id, label FROM visible_items ORDER BY id;`,
-					Expected: []sql.Row{{1, "visible"}, {2, "also visible"}},
+
 					Username: `cte_select_user`,
-					Password: `column`,
+					Password: `column`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCreateTableAsAllowsGrantedSourceColumnsRepro reproduces an authorization
+						// correctness bug: CREATE TABLE AS should be able to read source columns
+						// covered by column-level SELECT grants.
+						ID: "column-privilege-repro-test-testcteselectusesunderlyingtableprivilegesrepro-0001-with-visible_items-as-select-id"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateTableAsAllowsGrantedSourceColumnsRepro reproduces an authorization
-// correctness bug: CREATE TABLE AS should be able to read source columns
-// covered by column-level SELECT grants.
 func TestCreateTableAsAllowsGrantedSourceColumnsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -189,19 +193,21 @@ func TestCreateTableAsAllowsGrantedSourceColumnsRepro(t *testing.T) {
 					Password: `column`,
 				},
 				{
-					Query:    `SELECT id, public_value FROM ctas_column_copy;`,
-					Expected: []sql.Row{{1, "public"}},
+					Query: `SELECT id, public_value FROM ctas_column_copy;`,
+
 					Username: `ctas_column_user`,
-					Password: `column`,
+					Password: `column`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCreateTableAsRejectsUngrantedSourceColumnsGuard covers CTAS source-column
+						// authorization: creating a table from a query cannot read columns for which
+						// the role lacks SELECT privilege.
+						ID: "column-privilege-repro-test-testcreatetableasallowsgrantedsourcecolumnsrepro-0001-select-id-public_value-from-ctas_column_copy", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateTableAsRejectsUngrantedSourceColumnsGuard covers CTAS source-column
-// authorization: creating a table from a query cannot read columns for which
-// the role lacks SELECT privilege.
 func TestCreateTableAsRejectsUngrantedSourceColumnsGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -222,9 +228,14 @@ func TestCreateTableAsRejectsUngrantedSourceColumnsGuard(t *testing.T) {
 				{
 					Query: `CREATE TABLE ctas_column_denied_copy AS
 						SELECT id, private_value FROM ctas_column_denied_private;`,
-					ExpectedErr: `permission denied`,
-					Username:    `ctas_column_denied_user`,
-					Password:    `column`,
+
+					Username: `ctas_column_denied_user`,
+					Password: `column`, PostgresOracle: ScriptTestPostgresOracle{ID: "column-privilege-repro-test-testcreatetableasrejectsungrantedsourcecolumnsguard-0001-create-table-ctas_column_denied_copy-as-select",
+
+						// TestCreateViewAllowsGrantedSourceColumnsRepro reproduces an authorization
+						// correctness bug: CREATE VIEW should be able to read source columns covered by
+						// column-level SELECT grants.
+						Compare: "sqlstate"},
 				},
 				{
 					Query:    `SELECT to_regclass('public.ctas_column_denied_copy')::text;`,
@@ -235,9 +246,6 @@ func TestCreateTableAsRejectsUngrantedSourceColumnsGuard(t *testing.T) {
 	})
 }
 
-// TestCreateViewAllowsGrantedSourceColumnsRepro reproduces an authorization
-// correctness bug: CREATE VIEW should be able to read source columns covered by
-// column-level SELECT grants.
 func TestCreateViewAllowsGrantedSourceColumnsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -262,8 +270,7 @@ func TestCreateViewAllowsGrantedSourceColumnsRepro(t *testing.T) {
 					Password: `column`,
 				},
 				{
-					Query:    `SELECT id, public_value FROM view_column_reader;`,
-					Expected: []sql.Row{{1, "public"}},
+					Query: `SELECT id, public_value FROM view_column_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "column-privilege-repro-test-testcreateviewallowsgrantedsourcecolumnsrepro-0001-select-id-public_value-from-view_column_reader"},
 				},
 			},
 		},
@@ -297,8 +304,7 @@ func TestCreateMaterializedViewAllowsGrantedSourceColumnsRepro(t *testing.T) {
 					Password: `column`,
 				},
 				{
-					Query:    `SELECT id, public_value FROM mv_column_reader;`,
-					Expected: []sql.Row{{1, "public"}},
+					Query: `SELECT id, public_value FROM mv_column_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "column-privilege-repro-test-testcreatematerializedviewallowsgrantedsourcecolumnsrepro-0001-select-id-public_value-from-mv_column_reader"},
 				},
 			},
 		},
@@ -328,21 +334,22 @@ func TestColumnInsertReturningRequiresSelectPrivilegeGuard(t *testing.T) {
 						(id, public_value, private_value)
 						VALUES (1, 'public', 'private')
 						RETURNING private_value;`,
-					ExpectedErr: `permission denied`,
-					Username:    `column_insert_returning_user`,
-					Password:    `column`,
+
+					Username: `column_insert_returning_user`,
+					Password: `column`, PostgresOracle: ScriptTestPostgresOracle{ID: "column-privilege-repro-test-testcolumninsertreturningrequiresselectprivilegeguard-0001-insert-into-column_insert_returning_private-id-public_value",
+
+						// TestInsertSelectRequiresSelectOnSourceTableRepro guards that INSERT ...
+						// SELECT cannot read a source table for which the role lacks SELECT privilege.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT COUNT(*) FROM column_insert_returning_private;`,
-					Expected: []sql.Row{{0}},
+					Query: `SELECT COUNT(*) FROM column_insert_returning_private;`, PostgresOracle: ScriptTestPostgresOracle{ID: "column-privilege-repro-test-testcolumninsertreturningrequiresselectprivilegeguard-0002-select-count-*-from-column_insert_returning_private"},
 				},
 			},
 		},
 	})
 }
 
-// TestInsertSelectRequiresSelectOnSourceTableRepro guards that INSERT ...
-// SELECT cannot read a source table for which the role lacks SELECT privilege.
 func TestInsertSelectRequiresSelectOnSourceTableRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -366,22 +373,23 @@ func TestInsertSelectRequiresSelectOnSourceTableRepro(t *testing.T) {
 				{
 					Query: `INSERT INTO insert_select_target_private (id, public_value)
 						SELECT id, private_value FROM insert_select_source_private;`,
-					ExpectedErr: `permission denied`,
-					Username:    `insert_select_source_user`,
-					Password:    `column`,
+
+					Username: `insert_select_source_user`,
+					Password: `column`, PostgresOracle: ScriptTestPostgresOracle{ID: "column-privilege-repro-test-testinsertselectrequiresselectonsourcetablerepro-0001-insert-into-insert_select_target_private-id-public_value",
+
+						// TestColumnUpdateGrantDoesNotAllowOtherColumnsRepro guards column-level
+						// UPDATE authorization: a grant on one column must not allow updates to other
+						// columns on the same table.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT COUNT(*) FROM insert_select_target_private;`,
-					Expected: []sql.Row{{0}},
+					Query: `SELECT COUNT(*) FROM insert_select_target_private;`, PostgresOracle: ScriptTestPostgresOracle{ID: "column-privilege-repro-test-testinsertselectrequiresselectonsourcetablerepro-0002-select-count-*-from-insert_select_target_private"},
 				},
 			},
 		},
 	})
 }
 
-// TestColumnUpdateGrantDoesNotAllowOtherColumnsRepro guards column-level
-// UPDATE authorization: a grant on one column must not allow updates to other
-// columns on the same table.
 func TestColumnUpdateGrantDoesNotAllowOtherColumnsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -400,23 +408,24 @@ func TestColumnUpdateGrantDoesNotAllowOtherColumnsRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `UPDATE column_update_private SET private_value = 'changed' WHERE id = 1;`,
-					ExpectedErr: `permission denied`,
-					Username:    `column_update_user`,
-					Password:    `column`,
+					Query: `UPDATE column_update_private SET private_value = 'changed' WHERE id = 1;`,
+
+					Username: `column_update_user`,
+					Password: `column`, PostgresOracle: ScriptTestPostgresOracle{ID: "column-privilege-repro-test-testcolumnupdategrantdoesnotallowothercolumnsrepro-0001-update-column_update_private-set-private_value-=",
+
+						// TestColumnUpdateGrantAllowsGrantedColumnsRepro reproduces an authorization
+						// correctness bug: PostgreSQL column-level UPDATE privileges allow updating
+						// exactly the granted columns.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT id, public_value, private_value FROM column_update_private;`,
-					Expected: []sql.Row{{1, "public", "private"}},
+					Query: `SELECT id, public_value, private_value FROM column_update_private;`, PostgresOracle: ScriptTestPostgresOracle{ID: "column-privilege-repro-test-testcolumnupdategrantdoesnotallowothercolumnsrepro-0002-select-id-public_value-private_value-from"},
 				},
 			},
 		},
 	})
 }
 
-// TestColumnUpdateGrantAllowsGrantedColumnsRepro reproduces an authorization
-// correctness bug: PostgreSQL column-level UPDATE privileges allow updating
-// exactly the granted columns.
 func TestColumnUpdateGrantAllowsGrantedColumnsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -443,8 +452,7 @@ func TestColumnUpdateGrantAllowsGrantedColumnsRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT id, public_value, private_value
-						FROM column_update_allowed_private;`,
-					Expected: []sql.Row{{1, "changed", "private"}},
+						FROM column_update_allowed_private;`, PostgresOracle: ScriptTestPostgresOracle{ID: "column-privilege-repro-test-testcolumnupdategrantallowsgrantedcolumnsrepro-0001-select-id-public_value-private_value-from"},
 				},
 			},
 		},
@@ -471,22 +479,23 @@ func TestColumnUpdateGrantRequiresSelectForSourceColumnsRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `UPDATE column_update_source_private SET public_value = private_value WHERE id = 1;`,
-					ExpectedErr: `permission denied`,
-					Username:    `column_update_source_user`,
-					Password:    `column`,
+					Query: `UPDATE column_update_source_private SET public_value = private_value WHERE id = 1;`,
+
+					Username: `column_update_source_user`,
+					Password: `column`, PostgresOracle: ScriptTestPostgresOracle{ID: "column-privilege-repro-test-testcolumnupdategrantrequiresselectforsourcecolumnsrepro-0001-update-column_update_source_private-set-public_value-=",
+
+						// TestColumnUpdateRequiresSelectForWhereColumnsRepro guards that UPDATE
+						// predicates cannot read columns for which the role lacks SELECT privilege.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT id, public_value, private_value FROM column_update_source_private;`,
-					Expected: []sql.Row{{1, "public", "private"}},
+					Query: `SELECT id, public_value, private_value FROM column_update_source_private;`, PostgresOracle: ScriptTestPostgresOracle{ID: "column-privilege-repro-test-testcolumnupdategrantrequiresselectforsourcecolumnsrepro-0002-select-id-public_value-private_value-from"},
 				},
 			},
 		},
 	})
 }
 
-// TestColumnUpdateRequiresSelectForWhereColumnsRepro guards that UPDATE
-// predicates cannot read columns for which the role lacks SELECT privilege.
 func TestColumnUpdateRequiresSelectForWhereColumnsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -508,21 +517,22 @@ func TestColumnUpdateRequiresSelectForWhereColumnsRepro(t *testing.T) {
 					Query: `UPDATE column_update_where_private
 						SET public_value = 'changed'
 						WHERE private_value = 'private';`,
-					ExpectedErr: `permission denied`,
-					Username:    `column_update_where_user`,
-					Password:    `column`,
+
+					Username: `column_update_where_user`,
+					Password: `column`, PostgresOracle: ScriptTestPostgresOracle{ID: "column-privilege-repro-test-testcolumnupdaterequiresselectforwherecolumnsrepro-0001-update-column_update_where_private-set-public_value-=",
+
+						// TestUpdateFromRequiresSelectOnSourceTableRepro guards that UPDATE ... FROM
+						// cannot read a source table for which the role lacks SELECT privilege.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT id, public_value, private_value FROM column_update_where_private;`,
-					Expected: []sql.Row{{1, "public", "private"}},
+					Query: `SELECT id, public_value, private_value FROM column_update_where_private;`, PostgresOracle: ScriptTestPostgresOracle{ID: "column-privilege-repro-test-testcolumnupdaterequiresselectforwherecolumnsrepro-0002-select-id-public_value-private_value-from"},
 				},
 			},
 		},
 	})
 }
 
-// TestUpdateFromRequiresSelectOnSourceTableRepro guards that UPDATE ... FROM
-// cannot read a source table for which the role lacks SELECT privilege.
 func TestUpdateFromRequiresSelectOnSourceTableRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -549,22 +559,23 @@ func TestUpdateFromRequiresSelectOnSourceTableRepro(t *testing.T) {
 						SET public_value = s.private_value
 						FROM update_from_source_private AS s
 						WHERE t.id = s.id;`,
-					ExpectedErr: `permission denied`,
-					Username:    `update_from_source_user`,
-					Password:    `column`,
+
+					Username: `update_from_source_user`,
+					Password: `column`, PostgresOracle: ScriptTestPostgresOracle{ID: "column-privilege-repro-test-testupdatefromrequiresselectonsourcetablerepro-0001-update-update_from_target_private-as-t-set",
+
+						// TestColumnOnConflictUpdateRequiresSelectForSourceColumnsRepro guards that
+						// ON CONFLICT DO UPDATE expressions cannot read columns for which the role
+						// lacks SELECT privilege.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT id, public_value FROM update_from_target_private;`,
-					Expected: []sql.Row{{1, "public"}},
+					Query: `SELECT id, public_value FROM update_from_target_private;`, PostgresOracle: ScriptTestPostgresOracle{ID: "column-privilege-repro-test-testupdatefromrequiresselectonsourcetablerepro-0002-select-id-public_value-from-update_from_target_private"},
 				},
 			},
 		},
 	})
 }
 
-// TestColumnOnConflictUpdateRequiresSelectForSourceColumnsRepro guards that
-// ON CONFLICT DO UPDATE expressions cannot read columns for which the role
-// lacks SELECT privilege.
 func TestColumnOnConflictUpdateRequiresSelectForSourceColumnsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -587,22 +598,23 @@ func TestColumnOnConflictUpdateRequiresSelectForSourceColumnsRepro(t *testing.T)
 						VALUES (1, 'ignored')
 						ON CONFLICT (id) DO UPDATE
 						SET public_value = column_upsert_source_private.private_value;`,
-					ExpectedErr: `permission denied`,
-					Username:    `column_upsert_source_user`,
-					Password:    `column`,
+
+					Username: `column_upsert_source_user`,
+					Password: `column`, PostgresOracle: ScriptTestPostgresOracle{ID: "column-privilege-repro-test-testcolumnonconflictupdaterequiresselectforsourcecolumnsrepro-0001-insert-into-column_upsert_source_private-id-public_value",
+
+						// TestColumnOnConflictUpdateRequiresSelectForWhereColumnsRepro guards that ON
+						// CONFLICT DO UPDATE predicates cannot read columns for which the role lacks
+						// SELECT privilege.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT id, public_value, private_value FROM column_upsert_source_private;`,
-					Expected: []sql.Row{{1, "public", "private"}},
+					Query: `SELECT id, public_value, private_value FROM column_upsert_source_private;`, PostgresOracle: ScriptTestPostgresOracle{ID: "column-privilege-repro-test-testcolumnonconflictupdaterequiresselectforsourcecolumnsrepro-0002-select-id-public_value-private_value-from"},
 				},
 			},
 		},
 	})
 }
 
-// TestColumnOnConflictUpdateRequiresSelectForWhereColumnsRepro guards that ON
-// CONFLICT DO UPDATE predicates cannot read columns for which the role lacks
-// SELECT privilege.
 func TestColumnOnConflictUpdateRequiresSelectForWhereColumnsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -626,22 +638,23 @@ func TestColumnOnConflictUpdateRequiresSelectForWhereColumnsRepro(t *testing.T) 
 						ON CONFLICT (id) DO UPDATE
 						SET public_value = EXCLUDED.public_value
 						WHERE column_upsert_where_private.private_value = 'private';`,
-					ExpectedErr: `permission denied`,
-					Username:    `column_upsert_where_user`,
-					Password:    `column`,
+
+					Username: `column_upsert_where_user`,
+					Password: `column`, PostgresOracle: ScriptTestPostgresOracle{ID: "column-privilege-repro-test-testcolumnonconflictupdaterequiresselectforwherecolumnsrepro-0001-insert-into-column_upsert_where_private-id-public_value",
+
+						// TestColumnOnConflictUpdateRequiresUpdatePrivilegeRepro guards that ON
+						// CONFLICT DO UPDATE cannot update target columns unless the role has UPDATE
+						// privilege on those columns.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT id, public_value, private_value FROM column_upsert_where_private;`,
-					Expected: []sql.Row{{1, "public", "private"}},
+					Query: `SELECT id, public_value, private_value FROM column_upsert_where_private;`, PostgresOracle: ScriptTestPostgresOracle{ID: "column-privilege-repro-test-testcolumnonconflictupdaterequiresselectforwherecolumnsrepro-0002-select-id-public_value-private_value-from"},
 				},
 			},
 		},
 	})
 }
 
-// TestColumnOnConflictUpdateRequiresUpdatePrivilegeRepro guards that ON
-// CONFLICT DO UPDATE cannot update target columns unless the role has UPDATE
-// privilege on those columns.
 func TestColumnOnConflictUpdateRequiresUpdatePrivilegeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -663,21 +676,22 @@ func TestColumnOnConflictUpdateRequiresUpdatePrivilegeRepro(t *testing.T) {
 						VALUES (1, 'changed')
 						ON CONFLICT (id) DO UPDATE
 						SET public_value = EXCLUDED.public_value;`,
-					ExpectedErr: `permission denied`,
-					Username:    `column_upsert_update_user`,
-					Password:    `column`,
+
+					Username: `column_upsert_update_user`,
+					Password: `column`, PostgresOracle: ScriptTestPostgresOracle{ID: "column-privilege-repro-test-testcolumnonconflictupdaterequiresupdateprivilegerepro-0001-insert-into-column_upsert_update_private-id-public_value",
+
+						// TestColumnDeleteRequiresSelectForWhereColumnsRepro guards that DELETE
+						// predicates cannot read columns for which the role lacks SELECT privilege.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT id, public_value FROM column_upsert_update_private;`,
-					Expected: []sql.Row{{1, "original"}},
+					Query: `SELECT id, public_value FROM column_upsert_update_private;`, PostgresOracle: ScriptTestPostgresOracle{ID: "column-privilege-repro-test-testcolumnonconflictupdaterequiresupdateprivilegerepro-0002-select-id-public_value-from-column_upsert_update_private"},
 				},
 			},
 		},
 	})
 }
 
-// TestColumnDeleteRequiresSelectForWhereColumnsRepro guards that DELETE
-// predicates cannot read columns for which the role lacks SELECT privilege.
 func TestColumnDeleteRequiresSelectForWhereColumnsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -698,22 +712,23 @@ func TestColumnDeleteRequiresSelectForWhereColumnsRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DELETE FROM column_delete_where_private WHERE private_value = 'private';`,
-					ExpectedErr: `permission denied`,
-					Username:    `column_delete_where_user`,
-					Password:    `column`,
+					Query: `DELETE FROM column_delete_where_private WHERE private_value = 'private';`,
+
+					Username: `column_delete_where_user`,
+					Password: `column`, PostgresOracle: ScriptTestPostgresOracle{ID: "column-privilege-repro-test-testcolumndeleterequiresselectforwherecolumnsrepro-0001-delete-from-column_delete_where_private-where-private_value",
+
+						// TestColumnDeleteReturningRequiresSelectPrivilegeRepro guards that DELETE
+						// RETURNING cannot expose columns for which the role lacks SELECT privilege.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT id, public_value, private_value FROM column_delete_where_private;`,
-					Expected: []sql.Row{{1, "public", "private"}},
+					Query: `SELECT id, public_value, private_value FROM column_delete_where_private;`, PostgresOracle: ScriptTestPostgresOracle{ID: "column-privilege-repro-test-testcolumndeleterequiresselectforwherecolumnsrepro-0002-select-id-public_value-private_value-from"},
 				},
 			},
 		},
 	})
 }
 
-// TestColumnDeleteReturningRequiresSelectPrivilegeRepro guards that DELETE
-// RETURNING cannot expose columns for which the role lacks SELECT privilege.
 func TestColumnDeleteReturningRequiresSelectPrivilegeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -737,21 +752,22 @@ func TestColumnDeleteReturningRequiresSelectPrivilegeRepro(t *testing.T) {
 					Query: `DELETE FROM column_delete_returning_private
 						WHERE id = 1
 						RETURNING private_value;`,
-					ExpectedErr: `permission denied`,
-					Username:    `column_delete_returning_user`,
-					Password:    `column`,
+
+					Username: `column_delete_returning_user`,
+					Password: `column`, PostgresOracle: ScriptTestPostgresOracle{ID: "column-privilege-repro-test-testcolumndeletereturningrequiresselectprivilegerepro-0001-delete-from-column_delete_returning_private-where-id", Compare:
+
+					// TestColumnUpdateReturningRequiresSelectPrivilegeGuard guards that UPDATE
+					// RETURNING cannot expose columns for which the role lacks SELECT privilege.
+					"sqlstate"},
 				},
 				{
-					Query:    `SELECT id, public_value, private_value FROM column_delete_returning_private;`,
-					Expected: []sql.Row{{1, "public", "private"}},
+					Query: `SELECT id, public_value, private_value FROM column_delete_returning_private;`, PostgresOracle: ScriptTestPostgresOracle{ID: "column-privilege-repro-test-testcolumndeletereturningrequiresselectprivilegerepro-0002-select-id-public_value-private_value-from"},
 				},
 			},
 		},
 	})
 }
 
-// TestColumnUpdateReturningRequiresSelectPrivilegeGuard guards that UPDATE
-// RETURNING cannot expose columns for which the role lacks SELECT privilege.
 func TestColumnUpdateReturningRequiresSelectPrivilegeGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -774,13 +790,12 @@ func TestColumnUpdateReturningRequiresSelectPrivilegeGuard(t *testing.T) {
 						SET public_value = 'changed'
 						WHERE id = 1
 						RETURNING private_value;`,
-					ExpectedErr: `permission denied`,
-					Username:    `column_update_returning_user`,
-					Password:    `column`,
+
+					Username: `column_update_returning_user`,
+					Password: `column`, PostgresOracle: ScriptTestPostgresOracle{ID: "column-privilege-repro-test-testcolumnupdatereturningrequiresselectprivilegeguard-0001-update-column_update_returning_private-set-public_value-=", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT id, public_value, private_value FROM column_update_returning_private;`,
-					Expected: []sql.Row{{1, "public", "private"}},
+					Query: `SELECT id, public_value, private_value FROM column_update_returning_private;`, PostgresOracle: ScriptTestPostgresOracle{ID: "column-privilege-repro-test-testcolumnupdatereturningrequiresselectprivilegeguard-0002-select-id-public_value-private_value-from"},
 				},
 			},
 		},

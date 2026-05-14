@@ -39,8 +39,7 @@ func TestInheritedTableRowsVisibleThroughParentRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT id, label FROM inherit_parent_scan;`,
-					Expected: []sql.Row{{1, "child"}},
+					Query: `SELECT id, label FROM inherit_parent_scan;`, PostgresOracle: ScriptTestPostgresOracle{ID: "inheritance-correctness-repro-test-testinheritedtablerowsvisiblethroughparentrepro-0001-select-id-label-from-inherit_parent_scan"},
 				},
 			},
 		},
@@ -134,12 +133,10 @@ func TestTruncateInheritedParentTruncatesChildRowsRepro(t *testing.T) {
 					Query: `TRUNCATE inherit_parent_truncate;`,
 				},
 				{
-					Query:    `SELECT count(*) FROM ONLY inherit_parent_truncate;`,
-					Expected: []sql.Row{{0}},
+					Query: `SELECT count(*) FROM ONLY inherit_parent_truncate;`, PostgresOracle: ScriptTestPostgresOracle{ID: "inheritance-correctness-repro-test-testtruncateinheritedparenttruncateschildrowsrepro-0001-select-count-*-from-only"},
 				},
 				{
-					Query:    `SELECT count(*) FROM inherit_child_truncate;`,
-					Expected: []sql.Row{{0}},
+					Query: `SELECT count(*) FROM inherit_child_truncate;`, PostgresOracle: ScriptTestPostgresOracle{ID: "inheritance-correctness-repro-test-testtruncateinheritedparenttruncateschildrowsrepro-0002-select-count-*-from-inherit_child_truncate"},
 				},
 			},
 		},
@@ -164,16 +161,17 @@ func TestInheritedGeneratedColumnRejectsDefaultOverrideRepro(t *testing.T) {
 					Query: `CREATE TABLE inherit_generated_default_child (
 						x INT,
 						b INT DEFAULT 10
-					) INHERITS (inherit_generated_parent);`,
-					ExpectedErr: `inherits from generated column but specifies default`,
+					) INHERITS (inherit_generated_parent);`, PostgresOracle: ScriptTestPostgresOracle{ID: "inheritance-correctness-repro-test-testinheritedgeneratedcolumnrejectsdefaultoverriderepro-0001-create-table-inherit_generated_default_child-x-int",
+
+						// TestInheritedGeneratedColumnRejectsIdentityOverrideRepro guards that a child
+						// table cannot merge an inherited generated column with identity generation.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestInheritedGeneratedColumnRejectsIdentityOverrideRepro guards that a child
-// table cannot merge an inherited generated column with identity generation.
 func TestInheritedGeneratedColumnRejectsIdentityOverrideRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -189,17 +187,18 @@ func TestInheritedGeneratedColumnRejectsIdentityOverrideRepro(t *testing.T) {
 					Query: `CREATE TABLE inherit_generated_identity_child (
 						x INT,
 						b INT GENERATED ALWAYS AS IDENTITY
-					) INHERITS (inherit_generated_identity_parent);`,
-					ExpectedErr: `inherits from generated column but specifies identity`,
+					) INHERITS (inherit_generated_identity_parent);`, PostgresOracle: ScriptTestPostgresOracle{ID: "inheritance-correctness-repro-test-testinheritedgeneratedcolumnrejectsidentityoverriderepro-0001-create-table-inherit_generated_identity_child-x-int",
+
+						// TestAlterInheritedParentAddColumnPropagatesToChildRepro reproduces an
+						// inheritance schema persistence bug: PostgreSQL propagates columns added to a
+						// parent table to inherited child tables.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterInheritedParentAddColumnPropagatesToChildRepro reproduces an
-// inheritance schema persistence bug: PostgreSQL propagates columns added to a
-// parent table to inherited child tables.
 func TestAlterInheritedParentAddColumnPropagatesToChildRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -221,8 +220,7 @@ func TestAlterInheritedParentAddColumnPropagatesToChildRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT id, label, marker, extra
-						FROM inherit_child_add_column;`,
-					Expected: []sql.Row{{1, "child", "added", "extra"}},
+						FROM inherit_child_add_column;`, PostgresOracle: ScriptTestPostgresOracle{ID: "inheritance-correctness-repro-test-testalterinheritedparentaddcolumnpropagatestochildrepro-0001-select-id-label-marker-extra"},
 				},
 			},
 		},
@@ -253,8 +251,7 @@ func TestAlterInheritedParentRenameColumnPropagatesToChildRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT id, title, extra
-						FROM inherit_child_rename_column;`,
-					Expected: []sql.Row{{1, "child", "extra"}},
+						FROM inherit_child_rename_column;`, PostgresOracle: ScriptTestPostgresOracle{ID: "inheritance-correctness-repro-test-testalterinheritedparentrenamecolumnpropagatestochildrepro-0001-select-id-title-extra-from"},
 				},
 			},
 		},
@@ -319,8 +316,7 @@ func TestAlterInheritedParentColumnTypePropagatesToChildRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT amount::TEXT, pg_typeof(amount)::TEXT, extra
-						FROM inherit_child_type;`,
-					Expected: []sql.Row{{"42", "bigint", "extra"}},
+						FROM inherit_child_type;`, PostgresOracle: ScriptTestPostgresOracle{ID: "inheritance-correctness-repro-test-testalterinheritedparentcolumntypepropagatestochildrepro-0001-select-amount::text-pg_typeof-amount-::text"},
 				},
 			},
 		},
@@ -347,12 +343,10 @@ func TestAlterInheritedParentAddCheckPropagatesToChildRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `INSERT INTO inherit_child_add_check VALUES (-1, 'bad', 'extra');`,
-					ExpectedErr: `inherit_parent_add_check_positive`,
+					Query: `INSERT INTO inherit_child_add_check VALUES (-1, 'bad', 'extra');`, PostgresOracle: ScriptTestPostgresOracle{ID: "inheritance-correctness-repro-test-testalterinheritedparentaddcheckpropagatestochildrepro-0001-insert-into-inherit_child_add_check-values-1", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM inherit_child_add_check;`,
-					Expected: []sql.Row{{0}},
+					Query: `SELECT count(*) FROM inherit_child_add_check;`, PostgresOracle: ScriptTestPostgresOracle{ID: "inheritance-correctness-repro-test-testalterinheritedparentaddcheckpropagatestochildrepro-0002-select-count-*-from-inherit_child_add_check"},
 				},
 			},
 		},
@@ -376,15 +370,13 @@ func TestAlterInheritedParentAddCheckNoInheritStaysLocalRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `INSERT INTO inherit_parent_add_check_no_inherit VALUES (-1, 'bad parent');`,
-					ExpectedErr: `inherit_parent_add_check_no_inherit_positive`,
+					Query: `INSERT INTO inherit_parent_add_check_no_inherit VALUES (-1, 'bad parent');`, PostgresOracle: ScriptTestPostgresOracle{ID: "inheritance-correctness-repro-test-testalterinheritedparentaddchecknoinheritstayslocalrepro-0001-insert-into-inherit_parent_add_check_no_inherit-values-1", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO inherit_child_add_check_no_inherit VALUES (-1, 'allowed child', 'extra');`,
 				},
 				{
-					Query:    `SELECT count(*) FROM inherit_child_add_check_no_inherit;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT count(*) FROM inherit_child_add_check_no_inherit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "inheritance-correctness-repro-test-testalterinheritedparentaddchecknoinheritstayslocalrepro-0002-select-count-*-from-inherit_child_add_check_no_inherit"},
 				},
 			},
 		},
@@ -411,21 +403,21 @@ func TestAlterInheritedParentSetNotNullPropagatesToChildRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `INSERT INTO inherit_child_set_not_null VALUES (1, NULL, 'extra');`,
-					ExpectedErr: `non-nullable`,
+					Query: `INSERT INTO inherit_child_set_not_null VALUES (1, NULL, 'extra');`, PostgresOracle: ScriptTestPostgresOracle{ID: "inheritance-correctness-repro-test-testalterinheritedparentsetnotnullpropagatestochildrepro-0001-insert-into-inherit_child_set_not_null-values-1",
+
+						// TestAlterInheritedParentAddCheckValidatesExistingChildRowsRepro reproduces a
+						// data integrity bug: adding an inherited parent CHECK constraint must validate
+						// existing child rows before accepting the new constraint.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM inherit_child_set_not_null;`,
-					Expected: []sql.Row{{0}},
+					Query: `SELECT count(*) FROM inherit_child_set_not_null;`, PostgresOracle: ScriptTestPostgresOracle{ID: "inheritance-correctness-repro-test-testalterinheritedparentsetnotnullpropagatestochildrepro-0002-select-count-*-from-inherit_child_set_not_null"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterInheritedParentAddCheckValidatesExistingChildRowsRepro reproduces a
-// data integrity bug: adding an inherited parent CHECK constraint must validate
-// existing child rows before accepting the new constraint.
 func TestAlterInheritedParentAddCheckValidatesExistingChildRowsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -443,14 +435,12 @@ func TestAlterInheritedParentAddCheckValidatesExistingChildRowsRepro(t *testing.
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `ALTER TABLE inherit_parent_existing_check
-						ADD CONSTRAINT inherit_parent_existing_positive CHECK (id > 0);`,
-					ExpectedErr: `is violated by some row`,
+						ADD CONSTRAINT inherit_parent_existing_positive CHECK (id > 0);`, PostgresOracle: ScriptTestPostgresOracle{ID: "inheritance-correctness-repro-test-testalterinheritedparentaddcheckvalidatesexistingchildrowsrepro-0001-alter-table-inherit_parent_existing_check-add-constraint", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT count(*)
 						FROM pg_catalog.pg_constraint
-						WHERE conname = 'inherit_parent_existing_positive';`,
-					Expected: []sql.Row{{0}},
+						WHERE conname = 'inherit_parent_existing_positive';`, PostgresOracle: ScriptTestPostgresOracle{ID: "inheritance-correctness-repro-test-testalterinheritedparentaddcheckvalidatesexistingchildrowsrepro-0002-select-count-*-from-pg_catalog.pg_constraint"},
 				},
 				{
 					Query: `INSERT INTO inherit_child_existing_check
@@ -481,17 +471,18 @@ func TestAlterInheritedParentSetNotNullValidatesExistingChildRowsRepro(t *testin
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `ALTER TABLE inherit_parent_existing_not_null
-						ALTER COLUMN label SET NOT NULL;`,
-					ExpectedErr: `contains null values`,
+						ALTER COLUMN label SET NOT NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "inheritance-correctness-repro-test-testalterinheritedparentsetnotnullvalidatesexistingchildrowsrepro-0001-alter-table-inherit_parent_existing_not_null-alter-column",
+
+						// TestDropInheritedParentRequiresCascadeRepro reproduces an inheritance
+						// dependency bug: a parent table cannot be dropped with the default RESTRICT
+						// behavior while an inherited child still depends on it.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropInheritedParentRequiresCascadeRepro reproduces an inheritance
-// dependency bug: a parent table cannot be dropped with the default RESTRICT
-// behavior while an inherited child still depends on it.
 func TestDropInheritedParentRequiresCascadeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -506,13 +497,11 @@ func TestDropInheritedParentRequiresCascadeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP TABLE inherit_parent_drop_restrict;`,
-					ExpectedErr: `depends on table inherit_parent_drop_restrict`,
+					Query: `DROP TABLE inherit_parent_drop_restrict;`, PostgresOracle: ScriptTestPostgresOracle{ID: "inheritance-correctness-repro-test-testdropinheritedparentrequirescascaderepro-0001-drop-table-inherit_parent_drop_restrict", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT to_regclass('inherit_parent_drop_restrict') IS NOT NULL,
-							to_regclass('inherit_child_drop_restrict') IS NOT NULL;`,
-					Expected: []sql.Row{{"t", "t"}},
+							to_regclass('inherit_child_drop_restrict') IS NOT NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "inheritance-correctness-repro-test-testdropinheritedparentrequirescascaderepro-0002-select-to_regclass-inherit_parent_drop_restrict-is-not"},
 				},
 			},
 		},
@@ -540,8 +529,7 @@ func TestDropInheritedParentCascadeDropsChildRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT to_regclass('inherit_parent_drop_cascade') IS NULL,
-							to_regclass('inherit_child_drop_cascade') IS NULL;`,
-					Expected: []sql.Row{{"t", "t"}},
+							to_regclass('inherit_child_drop_cascade') IS NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "inheritance-correctness-repro-test-testdropinheritedparentcascadedropschildrepro-0001-select-to_regclass-inherit_parent_drop_cascade-is-null"},
 				},
 			},
 		},
@@ -570,8 +558,7 @@ func TestDropInheritedParentCascadeDropsGrandchildGuard(t *testing.T) {
 				{
 					Query: `SELECT to_regclass('inherit_parent_drop_cascade_deep') IS NULL,
 							to_regclass('inherit_child_drop_cascade_deep') IS NULL,
-							to_regclass('inherit_grandchild_drop_cascade_deep') IS NULL;`,
-					Expected: []sql.Row{{"t", "t", "t"}},
+							to_regclass('inherit_grandchild_drop_cascade_deep') IS NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "inheritance-correctness-repro-test-testdropinheritedparentcascadedropsgrandchildguard-0001-select-to_regclass-inherit_parent_drop_cascade_deep-is-null"},
 				},
 			},
 		},
@@ -600,8 +587,7 @@ func TestInheritedChildUsesParentDefaultsGuard(t *testing.T) {
 				},
 				{
 					Query: `SELECT id, label, extra
-						FROM inherit_child_default;`,
-					Expected: []sql.Row{{7, "parent-default", "extra"}},
+						FROM inherit_child_default;`, PostgresOracle: ScriptTestPostgresOracle{ID: "inheritance-correctness-repro-test-testinheritedchildusesparentdefaultsguard-0001-select-id-label-extra-from"},
 				},
 			},
 		},
@@ -633,8 +619,7 @@ func TestAlterInheritedParentSetDefaultPropagatesToChildRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT id, label, extra
-						FROM inherit_child_set_default;`,
-					Expected: []sql.Row{{1, "new-default", "extra"}},
+						FROM inherit_child_set_default;`, PostgresOracle: ScriptTestPostgresOracle{ID: "inheritance-correctness-repro-test-testalterinheritedparentsetdefaultpropagatestochildrepro-0001-select-id-label-extra-from"},
 				},
 			},
 		},
@@ -668,8 +653,7 @@ func TestAlterInheritedParentSetDefaultPropagatesToGrandchildGuard(t *testing.T)
 				},
 				{
 					Query: `SELECT id, label, child_extra, grandchild_extra
-						FROM inherit_grandchild_set_default;`,
-					Expected: []sql.Row{{1, "grandparent-default", "child", "grandchild"}},
+						FROM inherit_grandchild_set_default;`, PostgresOracle: ScriptTestPostgresOracle{ID: "inheritance-correctness-repro-test-testalterinheritedparentsetdefaultpropagatestograndchildguard-0001-select-id-label-child_extra-grandchild_extra"},
 				},
 			},
 		},
@@ -701,8 +685,7 @@ func TestAlterInheritedParentDropDefaultPropagatesToChildRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT id, label, extra
-						FROM inherit_child_drop_default;`,
-					Expected: []sql.Row{{1, nil, "extra"}},
+						FROM inherit_child_drop_default;`, PostgresOracle: ScriptTestPostgresOracle{ID: "inheritance-correctness-repro-test-testalterinheritedparentdropdefaultpropagatestochildrepro-0001-select-id-label-extra-from"},
 				},
 			},
 		},
@@ -734,8 +717,7 @@ func TestAlterInheritedParentDropNotNullPropagatesToChildRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT id, label, extra
-						FROM inherit_child_drop_not_null;`,
-					Expected: []sql.Row{{1, nil, "extra"}},
+						FROM inherit_child_drop_not_null;`, PostgresOracle: ScriptTestPostgresOracle{ID: "inheritance-correctness-repro-test-testalterinheritedparentdropnotnullpropagatestochildrepro-0001-select-id-label-extra-from"},
 				},
 			},
 		},
@@ -766,16 +748,14 @@ func TestAlterTableInheritAttachesChildRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT id, label
-						FROM inherit_parent_attach;`,
-					Expected: []sql.Row{{1, "child"}},
+						FROM inherit_parent_attach;`, PostgresOracle: ScriptTestPostgresOracle{ID: "inheritance-correctness-repro-test-testaltertableinheritattacheschildrepro-0001-select-id-label-from-inherit_parent_attach"},
 				},
 				{
 					Query: `SELECT child.relname, parent.relname
 						FROM pg_catalog.pg_inherits inh
 						JOIN pg_catalog.pg_class child ON child.oid = inh.inhrelid
 						JOIN pg_catalog.pg_class parent ON parent.oid = inh.inhparent
-						WHERE child.relname = 'inherit_child_attach';`,
-					Expected: []sql.Row{{"inherit_child_attach", "inherit_parent_attach"}},
+						WHERE child.relname = 'inherit_child_attach';`, PostgresOracle: ScriptTestPostgresOracle{ID: "inheritance-correctness-repro-test-testaltertableinheritattacheschildrepro-0002-select-child.relname-parent.relname-from-pg_catalog.pg_inherits"},
 				},
 			},
 		},
@@ -807,8 +787,7 @@ func TestAlterTableNoInheritDetachesChildRepro(t *testing.T) {
 					Query: `SELECT count(*)
 						FROM pg_catalog.pg_inherits inh
 						JOIN pg_catalog.pg_class child ON child.oid = inh.inhrelid
-						WHERE child.relname = 'inherit_child_detach';`,
-					Expected: []sql.Row{{0}},
+						WHERE child.relname = 'inherit_child_detach';`, PostgresOracle: ScriptTestPostgresOracle{ID: "inheritance-correctness-repro-test-testaltertablenoinheritdetacheschildrepro-0001-select-count-*-from-pg_catalog.pg_inherits"},
 				},
 			},
 		},
@@ -832,20 +811,20 @@ func TestInheritedChildEnforcesParentCheckConstraintGuard(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `INSERT INTO inherit_child_check VALUES (-1, 'bad', 'extra');`,
-					ExpectedErr: `Check constraint`,
+					Query: `INSERT INTO inherit_child_check VALUES (-1, 'bad', 'extra');`, PostgresOracle: ScriptTestPostgresOracle{ID: "inheritance-correctness-repro-test-testinheritedchildenforcesparentcheckconstraintguard-0001-insert-into-inherit_child_check-values-1",
+
+						// TestInheritedChildEnforcesParentNotNullConstraintGuard guards that inherited
+						// child tables enforce NOT NULL constraints inherited from the parent table.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM inherit_child_check;`,
-					Expected: []sql.Row{{0}},
+					Query: `SELECT count(*) FROM inherit_child_check;`, PostgresOracle: ScriptTestPostgresOracle{ID: "inheritance-correctness-repro-test-testinheritedchildenforcesparentcheckconstraintguard-0002-select-count-*-from-inherit_child_check"},
 				},
 			},
 		},
 	})
 }
 
-// TestInheritedChildEnforcesParentNotNullConstraintGuard guards that inherited
-// child tables enforce NOT NULL constraints inherited from the parent table.
 func TestInheritedChildEnforcesParentNotNullConstraintGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -861,21 +840,21 @@ func TestInheritedChildEnforcesParentNotNullConstraintGuard(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `INSERT INTO inherit_child_not_null VALUES (1, NULL, 'extra');`,
-					ExpectedErr: `non-nullable`,
+					Query: `INSERT INTO inherit_child_not_null VALUES (1, NULL, 'extra');`, PostgresOracle: ScriptTestPostgresOracle{ID: "inheritance-correctness-repro-test-testinheritedchildenforcesparentnotnullconstraintguard-0001-insert-into-inherit_child_not_null-values-1",
+
+						// TestCreateTableInheritsPersistsPgInheritsMetadataRepro reproduces a catalog
+						// persistence bug: CREATE TABLE ... INHERITS should record the parent/child
+						// relationship in pg_inherits.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM inherit_child_not_null;`,
-					Expected: []sql.Row{{0}},
+					Query: `SELECT count(*) FROM inherit_child_not_null;`, PostgresOracle: ScriptTestPostgresOracle{ID: "inheritance-correctness-repro-test-testinheritedchildenforcesparentnotnullconstraintguard-0002-select-count-*-from-inherit_child_not_null"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateTableInheritsPersistsPgInheritsMetadataRepro reproduces a catalog
-// persistence bug: CREATE TABLE ... INHERITS should record the parent/child
-// relationship in pg_inherits.
 func TestCreateTableInheritsPersistsPgInheritsMetadataRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -895,8 +874,7 @@ func TestCreateTableInheritsPersistsPgInheritsMetadataRepro(t *testing.T) {
 						FROM pg_catalog.pg_inherits inh
 						JOIN pg_catalog.pg_class child ON child.oid = inh.inhrelid
 						JOIN pg_catalog.pg_class parent ON parent.oid = inh.inhparent
-						WHERE child.relname = 'inherit_child_catalog';`,
-					Expected: []sql.Row{{"inherit_child_catalog", "inherit_parent_catalog"}},
+						WHERE child.relname = 'inherit_child_catalog';`, PostgresOracle: ScriptTestPostgresOracle{ID: "inheritance-correctness-repro-test-testcreatetableinheritspersistspginheritsmetadatarepro-0001-select-child.relname-parent.relname-from-pg_catalog.pg_inherits"},
 				},
 			},
 		},

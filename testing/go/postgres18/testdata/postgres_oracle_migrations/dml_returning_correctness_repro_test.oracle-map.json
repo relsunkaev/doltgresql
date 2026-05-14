@@ -1,0 +1,92 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map dml_returning_correctness_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres18/dml_returning_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/postgres18/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres18/dml_returning_correctness_repro_test.go:TestPostgres18InsertDeleteReturningOldNewAliasesRepro#0001",
+      "source": "testing/go/postgres18/dml_returning_correctness_repro_test.go:TestPostgres18InsertDeleteReturningOldNewAliasesRepro",
+      "ordinal": 1,
+      "scriptName": "INSERT and DELETE RETURNING expose old and new row aliases",
+      "oracle": "postgres",
+      "postgresId": "postgres18/dml-returning-correctness-repro-test-testpostgres18insertdeletereturningoldnewaliasesrepro-0001-insert-into-returning_insert_delete_old_new_items-values-2",
+      "suggestedId": "postgres18/dml-returning-correctness-repro-test-testpostgres18insertdeletereturningoldnewaliasesrepro-0001-insert-into-returning_insert_delete_old_new_items-values-2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO returning_insert_delete_old_new_items VALUES (2, 20)\n\t\t\t\t\t\tRETURNING old.v IS NULL, new.v;",
+      "querySha256": "5d27afd0f27abb2b9d23369205981298a251dba9e4966288d5b4828c9fcd0d2a",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "20"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres18/dml_returning_correctness_repro_test.go:TestPostgres18InsertDeleteReturningOldNewAliasesRepro#0002",
+      "source": "testing/go/postgres18/dml_returning_correctness_repro_test.go:TestPostgres18InsertDeleteReturningOldNewAliasesRepro",
+      "ordinal": 2,
+      "scriptName": "INSERT and DELETE RETURNING expose old and new row aliases",
+      "oracle": "postgres",
+      "postgresId": "postgres18/dml-returning-correctness-repro-test-testpostgres18insertdeletereturningoldnewaliasesrepro-0002-delete-from-returning_insert_delete_old_new_items-where-id",
+      "suggestedId": "postgres18/dml-returning-correctness-repro-test-testpostgres18insertdeletereturningoldnewaliasesrepro-0002-delete-from-returning_insert_delete_old_new_items-where-id",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "DELETE FROM returning_insert_delete_old_new_items\n\t\t\t\t\t\tWHERE id = 1\n\t\t\t\t\t\tRETURNING old.v, new.v IS NULL;",
+      "querySha256": "fce070423377556e98adcd4566e87e143b6970223a628a5f2b4baca4ef805dd0",
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres18/dml_returning_correctness_repro_test.go:TestPostgres18UpdateReturningOldNewAliasesRepro#0001",
+      "source": "testing/go/postgres18/dml_returning_correctness_repro_test.go:TestPostgres18UpdateReturningOldNewAliasesRepro",
+      "ordinal": 1,
+      "scriptName": "UPDATE RETURNING exposes old and new row aliases",
+      "oracle": "postgres",
+      "postgresId": "postgres18/dml-returning-correctness-repro-test-testpostgres18updatereturningoldnewaliasesrepro-0001-update-returning_old_new_items-set-v-=",
+      "suggestedId": "postgres18/dml-returning-correctness-repro-test-testpostgres18updatereturningoldnewaliasesrepro-0001-update-returning_old_new_items-set-v-=",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "UPDATE returning_old_new_items\n\t\t\t\t\t\tSET v = v + 5\n\t\t\t\t\t\tWHERE id = 1\n\t\t\t\t\t\tRETURNING old.v, new.v;",
+      "querySha256": "c5dcd1eec5820bfb4f381249bf3b1a55d2c8442bb75c564ffd983530b1770c67",
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          },
+          {
+            "value": "15"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

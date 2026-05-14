@@ -1,0 +1,2146 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map publication_correctness_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/publication_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPgRelationIsPublishableClassifiesRelationsRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPgRelationIsPublishableClassifiesRelationsRepro",
+      "ordinal": 1,
+      "scriptName": "pg_relation_is_publishable classifies publication-eligible relations",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpgrelationispublishableclassifiesrelationsrepro-0001-select-pg_relation_is_publishable-publishable_regular_items-::regclass-pg_relation_is_publishable",
+      "suggestedId": "publication-correctness-repro-test-testpgrelationispublishableclassifiesrelationsrepro-0001-select-pg_relation_is_publishable-publishable_regular_items-::regclass-pg_relation_is_publishable",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT\n\t\t\t\t\t\t\tpg_relation_is_publishable('publishable_regular_items'::regclass),\n\t\t\t\t\t\t\tpg_relation_is_publishable('publishable_view_items'::regclass);",
+      "querySha256": "20373342cd4ad1f7cef3ed997305eeba1cc8a1751f65766d74bd5702e37d35cf",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestDropPublicationMissingNameIsAtomic#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestDropPublicationMissingNameIsAtomic",
+      "ordinal": 1,
+      "scriptName": "DROP PUBLICATION missing name preserves existing publications",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testdroppublicationmissingnameisatomic-0001-drop-publication-publication_partial_drop_pub-publication_missing_drop_pub",
+      "suggestedId": "publication-correctness-repro-test-testdroppublicationmissingnameisatomic-0001-drop-publication-publication_partial_drop_pub-publication_missing_drop_pub",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42704",
+      "errorSeverity": "ERROR",
+      "query": "DROP PUBLICATION publication_partial_drop_pub, publication_missing_drop_pub;",
+      "querySha256": "75ca3a5f0bde7174d5404bfbb09030d6916bf454534cf0a9442d29fbfce1a7ac",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestDropPublicationMissingNameIsAtomic#0002",
+      "source": "testing/go/publication_correctness_repro_test.go:TestDropPublicationMissingNameIsAtomic",
+      "ordinal": 2,
+      "scriptName": "DROP PUBLICATION missing name preserves existing publications",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testdroppublicationmissingnameisatomic-0002-select-count-*-from-pg_catalog.pg_publication",
+      "suggestedId": "publication-correctness-repro-test-testdroppublicationmissingnameisatomic-0002-select-count-*-from-pg_catalog.pg_publication",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication\n\t\t\t\t\t\tWHERE pubname = 'publication_partial_drop_pub';",
+      "querySha256": "9d51fc17655fa2c67c9ab83be3dad00a7ba809f7c699943dea42b300bcc07bda",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationColumnListRejectsDuplicateColumnsRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationColumnListRejectsDuplicateColumnsRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE PUBLICATION rejects duplicate column list entries",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationcolumnlistrejectsduplicatecolumnsrepro-0001-create-publication-publication_duplicate_columns_create_pub-for-table",
+      "suggestedId": "publication-correctness-repro-test-testpublicationcolumnlistrejectsduplicatecolumnsrepro-0001-create-publication-publication_duplicate_columns_create_pub-for-table",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42710",
+      "errorSeverity": "ERROR",
+      "query": "CREATE PUBLICATION publication_duplicate_columns_create_pub\n\t\t\t\t\t\tFOR TABLE publication_duplicate_columns (id, id);",
+      "querySha256": "231b35bec0ba59a2b0c58d7d2be96f54c19bc487e17f4531f3cafd667419970b",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationAddTableColumnListRejectsDuplicateColumnsRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationAddTableColumnListRejectsDuplicateColumnsRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER PUBLICATION ADD TABLE rejects duplicate column list entries",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationaddtablecolumnlistrejectsduplicatecolumnsrepro-0001-alter-publication-publication_duplicate_add_columns_pub-add-table",
+      "suggestedId": "publication-correctness-repro-test-testpublicationaddtablecolumnlistrejectsduplicatecolumnsrepro-0001-alter-publication-publication_duplicate_add_columns_pub-add-table",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42710",
+      "errorSeverity": "ERROR",
+      "query": "ALTER PUBLICATION publication_duplicate_add_columns_pub\n\t\t\t\t\t\tADD TABLE publication_duplicate_add_columns (id, id);",
+      "querySha256": "0bc96db06561d5574719272c5597c6a82efb3e310644f10161b7fe7bb90dddf9",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationAddTableColumnListRejectsDuplicateColumnsRepro#0002",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationAddTableColumnListRejectsDuplicateColumnsRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER PUBLICATION ADD TABLE rejects duplicate column list entries",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationaddtablecolumnlistrejectsduplicatecolumnsrepro-0002-select-count-*-from-pg_catalog.pg_publication_rel",
+      "suggestedId": "publication-correctness-repro-test-testpublicationaddtablecolumnlistrejectsduplicatecolumnsrepro-0002-select-count-*-from-pg_catalog.pg_publication_rel",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication_rel pr\n\t\t\t\t\t\tJOIN pg_catalog.pg_publication p ON p.oid = pr.prpubid\n\t\t\t\t\t\tWHERE p.pubname = 'publication_duplicate_add_columns_pub';",
+      "querySha256": "ab97b69a4155f28867957917402609772389f683bf73b0e584d62d5649f0e65b",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationSetTableColumnListRejectsDuplicateColumnsRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationSetTableColumnListRejectsDuplicateColumnsRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER PUBLICATION SET TABLE rejects duplicate column list entries",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationsettablecolumnlistrejectsduplicatecolumnsrepro-0001-alter-publication-publication_duplicate_set_columns_pub-set-table",
+      "suggestedId": "publication-correctness-repro-test-testpublicationsettablecolumnlistrejectsduplicatecolumnsrepro-0001-alter-publication-publication_duplicate_set_columns_pub-set-table",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42710",
+      "errorSeverity": "ERROR",
+      "query": "ALTER PUBLICATION publication_duplicate_set_columns_pub\n\t\t\t\t\t\tSET TABLE publication_duplicate_set_columns (id, id);",
+      "querySha256": "4dc6fb5358284245910810984b0d550a9c322b25fbb7bdd596984a61933f6bd3",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationSetTableColumnListRejectsDuplicateColumnsRepro#0002",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationSetTableColumnListRejectsDuplicateColumnsRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER PUBLICATION SET TABLE rejects duplicate column list entries",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationsettablecolumnlistrejectsduplicatecolumnsrepro-0002-select-count-*-from-pg_catalog.pg_publication_rel",
+      "suggestedId": "publication-correctness-repro-test-testpublicationsettablecolumnlistrejectsduplicatecolumnsrepro-0002-select-count-*-from-pg_catalog.pg_publication_rel",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication_rel pr\n\t\t\t\t\t\tJOIN pg_catalog.pg_publication p ON p.oid = pr.prpubid\n\t\t\t\t\t\tWHERE p.pubname = 'publication_duplicate_set_columns_pub';",
+      "querySha256": "76433056911fd70bb33f083b2cf07eec446bedf7d83065ca5b97531e55836697",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationAllowsDuplicatePlainTablesRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationAllowsDuplicatePlainTablesRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE PUBLICATION accepts duplicate plain table entries",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationallowsduplicateplaintablesrepro-0001-select-count-*-from-pg_catalog.pg_publication_rel",
+      "suggestedId": "publication-correctness-repro-test-testpublicationallowsduplicateplaintablesrepro-0001-select-count-*-from-pg_catalog.pg_publication_rel",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication_rel pr\n\t\t\t\t\t\tJOIN pg_catalog.pg_publication p ON p.oid = pr.prpubid\n\t\t\t\t\t\tWHERE p.pubname = 'publication_duplicate_plain_pub';",
+      "querySha256": "b31a93f389fe80b82581f39cc2ab61de74e3807dfc9dceb3a9c549c03a7d13a8",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationAddDuplicatePlainTablesRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationAddDuplicatePlainTablesRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER PUBLICATION ADD TABLE accepts duplicate plain table entries",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationaddduplicateplaintablesrepro-0001-select-count-*-from-pg_catalog.pg_publication_rel",
+      "suggestedId": "publication-correctness-repro-test-testpublicationaddduplicateplaintablesrepro-0001-select-count-*-from-pg_catalog.pg_publication_rel",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication_rel pr\n\t\t\t\t\t\tJOIN pg_catalog.pg_publication p ON p.oid = pr.prpubid\n\t\t\t\t\t\tWHERE p.pubname = 'publication_duplicate_add_plain_pub';",
+      "querySha256": "f06da4255977ce4130a0a04208f098df129cf4f3e5ba84c43c3e0eff0f49f84b",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationSetDuplicatePlainTablesRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationSetDuplicatePlainTablesRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER PUBLICATION SET TABLE accepts duplicate plain table entries",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationsetduplicateplaintablesrepro-0001-select-count-*-from-pg_catalog.pg_publication_rel",
+      "suggestedId": "publication-correctness-repro-test-testpublicationsetduplicateplaintablesrepro-0001-select-count-*-from-pg_catalog.pg_publication_rel",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication_rel pr\n\t\t\t\t\t\tJOIN pg_catalog.pg_publication p ON p.oid = pr.prpubid\n\t\t\t\t\t\tWHERE p.pubname = 'publication_duplicate_set_plain_pub';",
+      "querySha256": "762a0fe9b405d6ceb25ebe970ee504db5d9d652a7fc591134358e05348bd8711",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationCreateRejectsDuplicatePublishOptionRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationCreateRejectsDuplicatePublishOptionRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE PUBLICATION rejects duplicate publish options",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationcreaterejectsduplicatepublishoptionrepro-0001-create-publication-publication_duplicate_publish_option_pub-with-publish",
+      "suggestedId": "publication-correctness-repro-test-testpublicationcreaterejectsduplicatepublishoptionrepro-0001-create-publication-publication_duplicate_publish_option_pub-with-publish",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "CREATE PUBLICATION publication_duplicate_publish_option_pub\n\t\t\t\t\t\tWITH (publish = 'insert', publish = 'update');",
+      "querySha256": "4e730ff238952e9b18b5f1d98b855eb2a70026a01014a4549e8a4b16bea1d417",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationCreateRejectsDuplicatePublishOptionRepro#0002",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationCreateRejectsDuplicatePublishOptionRepro",
+      "ordinal": 2,
+      "scriptName": "CREATE PUBLICATION rejects duplicate publish options",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationcreaterejectsduplicatepublishoptionrepro-0002-select-count-*-from-pg_catalog.pg_publication",
+      "suggestedId": "publication-correctness-repro-test-testpublicationcreaterejectsduplicatepublishoptionrepro-0002-select-count-*-from-pg_catalog.pg_publication",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication\n\t\t\t\t\t\tWHERE pubname = 'publication_duplicate_publish_option_pub';",
+      "querySha256": "61a4b09c963665508cb3b8b623682d490ebfb373b72aadae4fb4f8b765abef83",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationCreateRejectsDuplicatePublishViaRootOptionRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationCreateRejectsDuplicatePublishViaRootOptionRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE PUBLICATION rejects duplicate publish_via_partition_root options",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationcreaterejectsduplicatepublishviarootoptionrepro-0001-create-publication-with-publish_via_partition_root-=",
+      "suggestedId": "publication-correctness-repro-test-testpublicationcreaterejectsduplicatepublishviarootoptionrepro-0001-create-publication-with-publish_via_partition_root-=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "CREATE PUBLICATION publication_duplicate_via_root_option_pub\n\t\t\t\t\t\tWITH (publish_via_partition_root = true,\n\t\t\t\t\t\t\tpublish_via_partition_root = false);",
+      "querySha256": "f629edd5b5512b9fd3b669560e4db76c4b066c70919ec1c01003337396e65c14",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationCreateRejectsDuplicatePublishViaRootOptionRepro#0002",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationCreateRejectsDuplicatePublishViaRootOptionRepro",
+      "ordinal": 2,
+      "scriptName": "CREATE PUBLICATION rejects duplicate publish_via_partition_root options",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationcreaterejectsduplicatepublishviarootoptionrepro-0002-select-count-*-from-pg_catalog.pg_publication",
+      "suggestedId": "publication-correctness-repro-test-testpublicationcreaterejectsduplicatepublishviarootoptionrepro-0002-select-count-*-from-pg_catalog.pg_publication",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication\n\t\t\t\t\t\tWHERE pubname = 'publication_duplicate_via_root_option_pub';",
+      "querySha256": "7713acaec67ed4d96d564cc4313d95d1db9f940aa27571d853a81626a5025b13",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationAlterRejectsDuplicatePublishOptionRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationAlterRejectsDuplicatePublishOptionRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER PUBLICATION rejects duplicate publish options",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationalterrejectsduplicatepublishoptionrepro-0001-alter-publication-set-publish-=",
+      "suggestedId": "publication-correctness-repro-test-testpublicationalterrejectsduplicatepublishoptionrepro-0001-alter-publication-set-publish-=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "ALTER PUBLICATION publication_alter_duplicate_publish_option_pub\n\t\t\t\t\t\tSET (publish = 'insert', publish = 'update');",
+      "querySha256": "bc84ed96a30b8c481e6d56c9848f7242e95cf3bf327d9a68ebda5cef061d981d",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationAlterRejectsDuplicatePublishOptionRepro#0002",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationAlterRejectsDuplicatePublishOptionRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER PUBLICATION rejects duplicate publish options",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationalterrejectsduplicatepublishoptionrepro-0002-select-pubinsert-pubupdate-pubdelete-pubtruncate",
+      "suggestedId": "publication-correctness-repro-test-testpublicationalterrejectsduplicatepublishoptionrepro-0002-select-pubinsert-pubupdate-pubdelete-pubtruncate",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pubinsert, pubupdate, pubdelete, pubtruncate\n\t\t\t\t\t\tFROM pg_catalog.pg_publication\n\t\t\t\t\t\tWHERE pubname = 'publication_alter_duplicate_publish_option_pub';",
+      "querySha256": "0de0266f6b73265bd009d51199da28924b889a2d2e4d99d710c0ebc8ce734bd9",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationAlterRejectsDuplicatePublishViaRootOptionRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationAlterRejectsDuplicatePublishViaRootOptionRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER PUBLICATION rejects duplicate publish_via_partition_root options",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationalterrejectsduplicatepublishviarootoptionrepro-0001-alter-publication-set-publish_via_partition_root-=",
+      "suggestedId": "publication-correctness-repro-test-testpublicationalterrejectsduplicatepublishviarootoptionrepro-0001-alter-publication-set-publish_via_partition_root-=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "ALTER PUBLICATION publication_alter_duplicate_via_root_option_pub\n\t\t\t\t\t\tSET (publish_via_partition_root = true,\n\t\t\t\t\t\t\tpublish_via_partition_root = false);",
+      "querySha256": "5f5bb1091021365fe1b8f3f10530da0f444391463a8dd7492a62e0c341ca400c",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationAllowsEmptyPublishOptionRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationAllowsEmptyPublishOptionRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE PUBLICATION accepts empty publish option",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationallowsemptypublishoptionrepro-0001-select-pubinsert-pubupdate-pubdelete-pubtruncate",
+      "suggestedId": "publication-correctness-repro-test-testpublicationallowsemptypublishoptionrepro-0001-select-pubinsert-pubupdate-pubdelete-pubtruncate",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pubinsert, pubupdate, pubdelete, pubtruncate\n\t\t\t\t\t\tFROM pg_catalog.pg_publication\n\t\t\t\t\t\tWHERE pubname = 'publication_empty_publish_option_pub';",
+      "querySha256": "d6914a72c8a56cd3167a8b79bc92e1953b47172944a285a7b183b97f2589711d",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationCreateSchemaCurrentSchemaResolvesSearchPathRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationCreateSchemaCurrentSchemaResolvesSearchPathRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE PUBLICATION resolves CURRENT_SCHEMA in schema lists",
+      "oracle": "internal",
+      "suggestedId": "publication-correctness-repro-test-testpublicationcreateschemacurrentschemaresolvessearchpathrepro-0001-select-p.pubname-n.nspname-from-pg_catalog.pg_publication_namespace",
+      "expectedKind": "rows",
+      "query": "SELECT p.pubname, n.nspname\n\t\t\t\t\t\tFROM pg_catalog.pg_publication_namespace pn\n\t\t\t\t\t\tJOIN pg_catalog.pg_publication p ON p.oid = pn.pnpubid\n\t\t\t\t\t\tJOIN pg_catalog.pg_namespace n ON n.oid = pn.pnnspid\n\t\t\t\t\t\tWHERE p.pubname = 'publication_current_schema_create_pub';",
+      "querySha256": "83c64493cb17f5cb9bd8a2e4c3fca9e60b22a40aec79951165a9fd27c2818a5f",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationAddSchemaCurrentSchemaResolvesSearchPathRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationAddSchemaCurrentSchemaResolvesSearchPathRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER PUBLICATION ADD SCHEMA resolves CURRENT_SCHEMA",
+      "oracle": "internal",
+      "suggestedId": "publication-correctness-repro-test-testpublicationaddschemacurrentschemaresolvessearchpathrepro-0001-select-p.pubname-n.nspname-from-pg_catalog.pg_publication_namespace",
+      "expectedKind": "rows",
+      "query": "SELECT p.pubname, n.nspname\n\t\t\t\t\t\tFROM pg_catalog.pg_publication_namespace pn\n\t\t\t\t\t\tJOIN pg_catalog.pg_publication p ON p.oid = pn.pnpubid\n\t\t\t\t\t\tJOIN pg_catalog.pg_namespace n ON n.oid = pn.pnnspid\n\t\t\t\t\t\tWHERE p.pubname = 'publication_current_schema_add_pub';",
+      "querySha256": "05a83b786f3c3cc068f72a74a556785aab26038a1278eba08b8eab876d9c90b8",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationSetSchemaCurrentSchemaResolvesSearchPathRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationSetSchemaCurrentSchemaResolvesSearchPathRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER PUBLICATION SET SCHEMA resolves CURRENT_SCHEMA",
+      "oracle": "internal",
+      "suggestedId": "publication-correctness-repro-test-testpublicationsetschemacurrentschemaresolvessearchpathrepro-0001-select-p.pubname-n.nspname-from-pg_catalog.pg_publication_namespace",
+      "expectedKind": "rows",
+      "query": "SELECT p.pubname, n.nspname\n\t\t\t\t\t\tFROM pg_catalog.pg_publication_namespace pn\n\t\t\t\t\t\tJOIN pg_catalog.pg_publication p ON p.oid = pn.pnpubid\n\t\t\t\t\t\tJOIN pg_catalog.pg_namespace n ON n.oid = pn.pnnspid\n\t\t\t\t\t\tWHERE p.pubname = 'publication_current_schema_set_pub';",
+      "querySha256": "a694ea33650ba8b0950e743a9cee0d79039887b188e90c4d758bcb59b3e91ba9",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationDropSchemaCurrentSchemaResolvesSearchPathRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationDropSchemaCurrentSchemaResolvesSearchPathRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER PUBLICATION DROP SCHEMA resolves CURRENT_SCHEMA",
+      "oracle": "internal",
+      "suggestedId": "publication-correctness-repro-test-testpublicationdropschemacurrentschemaresolvessearchpathrepro-0001-select-count-*-from-pg_catalog.pg_publication_namespace",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication_namespace pn\n\t\t\t\t\t\tJOIN pg_catalog.pg_publication p ON p.oid = pn.pnpubid\n\t\t\t\t\t\tWHERE p.pubname = 'publication_current_schema_drop_pub';",
+      "querySha256": "a802cfeb35489faf35652692f380574d67ba0e01a10e357d2956ad54a229ed07",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationCreateDuplicateSchemasNormalizes#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationCreateDuplicateSchemasNormalizes",
+      "ordinal": 1,
+      "scriptName": "CREATE PUBLICATION normalizes duplicate schemas",
+      "oracle": "internal",
+      "suggestedId": "publication-correctness-repro-test-testpublicationcreateduplicateschemasnormalizes-0001-select-count-*-from-pg_catalog.pg_publication_namespace",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication_namespace pn\n\t\t\t\t\t\tJOIN pg_catalog.pg_publication p ON p.oid = pn.pnpubid\n\t\t\t\t\t\tWHERE p.pubname = 'publication_duplicate_schema_create_pub';",
+      "querySha256": "936742e76009922e481f132b4ab9f65fd90fb22218120e7795825f44ad8b43f2",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationSetDuplicateSchemasNormalizes#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationSetDuplicateSchemasNormalizes",
+      "ordinal": 1,
+      "scriptName": "ALTER PUBLICATION SET SCHEMA normalizes duplicate schemas",
+      "oracle": "internal",
+      "suggestedId": "publication-correctness-repro-test-testpublicationsetduplicateschemasnormalizes-0001-select-count-*-from-pg_catalog.pg_publication_namespace",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication_namespace pn\n\t\t\t\t\t\tJOIN pg_catalog.pg_publication p ON p.oid = pn.pnpubid\n\t\t\t\t\t\tWHERE p.pubname = 'publication_duplicate_schema_set_pub';",
+      "querySha256": "f9c174a73e29b884c96fbdbcf2de114b5fb970c9c89fd5b13fddb5c2eb9ad788",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationAddExistingSchemaRejectsDuplicate#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationAddExistingSchemaRejectsDuplicate",
+      "ordinal": 1,
+      "scriptName": "ALTER PUBLICATION ADD SCHEMA rejects existing schema membership",
+      "oracle": "internal",
+      "suggestedId": "publication-correctness-repro-test-testpublicationaddexistingschemarejectsduplicate-0001-alter-publication-publication_duplicate_schema_add_pub-add-tables",
+      "expectedKind": "error",
+      "query": "ALTER PUBLICATION publication_duplicate_schema_add_pub\n\t\t\t\t\t\tADD TABLES IN SCHEMA publication_duplicate_schema_add;",
+      "querySha256": "e2c84f084de35385d060c9446453fe4aea2e30420d96782be9650fd64434f14f",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationAddExistingSchemaRejectsDuplicate#0002",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationAddExistingSchemaRejectsDuplicate",
+      "ordinal": 2,
+      "scriptName": "ALTER PUBLICATION ADD SCHEMA rejects existing schema membership",
+      "oracle": "internal",
+      "suggestedId": "publication-correctness-repro-test-testpublicationaddexistingschemarejectsduplicate-0002-select-count-*-from-pg_catalog.pg_publication_namespace",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication_namespace pn\n\t\t\t\t\t\tJOIN pg_catalog.pg_publication p ON p.oid = pn.pnpubid\n\t\t\t\t\t\tWHERE p.pubname = 'publication_duplicate_schema_add_pub';",
+      "querySha256": "425199f835324c8d74f01a7b3787a24b344c54d23bd16c4ee109d5248f141116",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationCreateRejectsColumnListWithSchemaRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationCreateRejectsColumnListWithSchemaRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE PUBLICATION rejects column list with schema publication",
+      "oracle": "internal",
+      "suggestedId": "publication-correctness-repro-test-testpublicationcreaterejectscolumnlistwithschemarepro-0001-create-publication-publication_column_schema_create_pub-for-tables",
+      "expectedKind": "error",
+      "query": "CREATE PUBLICATION publication_column_schema_create_pub\n\t\t\t\t\t\tFOR TABLES IN SCHEMA publication_column_schema_create,\n\t\t\t\t\t\t\tTABLE publication_column_schema_create.items (id);",
+      "querySha256": "e408dbef46ba31d6127b09e49fdfb424466ef8cb6b8a5248c30f24ed924a546c",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationCreateRejectsColumnListWithSchemaRepro#0002",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationCreateRejectsColumnListWithSchemaRepro",
+      "ordinal": 2,
+      "scriptName": "CREATE PUBLICATION rejects column list with schema publication",
+      "oracle": "internal",
+      "suggestedId": "publication-correctness-repro-test-testpublicationcreaterejectscolumnlistwithschemarepro-0002-select-count-*-from-pg_catalog.pg_publication",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication\n\t\t\t\t\t\tWHERE pubname = 'publication_column_schema_create_pub';",
+      "querySha256": "f0690fcfce19b832322bab635edfd2bbc22a181b2e6951b755e71a2f89a27c83",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationAddTableRejectsColumnListWithSchemaPublicationRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationAddTableRejectsColumnListWithSchemaPublicationRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER PUBLICATION ADD TABLE rejects column list with existing schema",
+      "oracle": "internal",
+      "suggestedId": "publication-correctness-repro-test-testpublicationaddtablerejectscolumnlistwithschemapublicationrepro-0001-alter-publication-publication_column_schema_add_table_pub-add-table",
+      "expectedKind": "error",
+      "query": "ALTER PUBLICATION publication_column_schema_add_table_pub\n\t\t\t\t\t\tADD TABLE publication_column_schema_add_table.items (id);",
+      "querySha256": "0be070a5d39cc5c48219710140fbf0504eda4a874cefaca9f0e05ee9d9eee269",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationAddTableRejectsColumnListWithSchemaPublicationRepro#0002",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationAddTableRejectsColumnListWithSchemaPublicationRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER PUBLICATION ADD TABLE rejects column list with existing schema",
+      "oracle": "internal",
+      "suggestedId": "publication-correctness-repro-test-testpublicationaddtablerejectscolumnlistwithschemapublicationrepro-0002-select-count-*-from-pg_catalog.pg_publication_rel",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication_rel pr\n\t\t\t\t\t\tJOIN pg_catalog.pg_publication p ON p.oid = pr.prpubid\n\t\t\t\t\t\tWHERE p.pubname = 'publication_column_schema_add_table_pub';",
+      "querySha256": "a93db35690e67b1230b30125636e60f3e4d90496a2d7ed477cc52884f11a46ac",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationAddTableRejectsColumnListWithSchemaPublicationRepro#0003",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationAddTableRejectsColumnListWithSchemaPublicationRepro",
+      "ordinal": 3,
+      "scriptName": "ALTER PUBLICATION ADD TABLE rejects column list with existing schema",
+      "oracle": "internal",
+      "suggestedId": "publication-correctness-repro-test-testpublicationaddtablerejectscolumnlistwithschemapublicationrepro-0003-select-count-*-from-pg_catalog.pg_publication_namespace",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication_namespace pn\n\t\t\t\t\t\tJOIN pg_catalog.pg_publication p ON p.oid = pn.pnpubid\n\t\t\t\t\t\tWHERE p.pubname = 'publication_column_schema_add_table_pub';",
+      "querySha256": "7ffcc8bf58ab8353d8f0ad85fc9eefde8ae68081d798222301f0c88e7fb85a93",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationAddSchemaRejectsExistingColumnListRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationAddSchemaRejectsExistingColumnListRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER PUBLICATION ADD SCHEMA rejects existing column list",
+      "oracle": "internal",
+      "suggestedId": "publication-correctness-repro-test-testpublicationaddschemarejectsexistingcolumnlistrepro-0001-alter-publication-publication_column_schema_add_schema_pub-add-tables",
+      "expectedKind": "error",
+      "query": "ALTER PUBLICATION publication_column_schema_add_schema_pub\n\t\t\t\t\t\tADD TABLES IN SCHEMA publication_column_schema_add_schema;",
+      "querySha256": "27e9fe7202bd9ab139b587c143be7933d077d174c121c50f5f0949ae0b23dcab",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationAddSchemaRejectsExistingColumnListRepro#0002",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationAddSchemaRejectsExistingColumnListRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER PUBLICATION ADD SCHEMA rejects existing column list",
+      "oracle": "internal",
+      "suggestedId": "publication-correctness-repro-test-testpublicationaddschemarejectsexistingcolumnlistrepro-0002-select-count-*-from-pg_catalog.pg_publication_rel",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication_rel pr\n\t\t\t\t\t\tJOIN pg_catalog.pg_publication p ON p.oid = pr.prpubid\n\t\t\t\t\t\tWHERE p.pubname = 'publication_column_schema_add_schema_pub';",
+      "querySha256": "c6cdcb101517ce62fa9a76c5810aca94b68e24e039129153ff2eb68ca8ad0861",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationAddSchemaRejectsExistingColumnListRepro#0003",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationAddSchemaRejectsExistingColumnListRepro",
+      "ordinal": 3,
+      "scriptName": "ALTER PUBLICATION ADD SCHEMA rejects existing column list",
+      "oracle": "internal",
+      "suggestedId": "publication-correctness-repro-test-testpublicationaddschemarejectsexistingcolumnlistrepro-0003-select-count-*-from-pg_catalog.pg_publication_namespace",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication_namespace pn\n\t\t\t\t\t\tJOIN pg_catalog.pg_publication p ON p.oid = pn.pnpubid\n\t\t\t\t\t\tWHERE p.pubname = 'publication_column_schema_add_schema_pub';",
+      "querySha256": "c973d469aa77758dea949e522344b87e3be43bf25380823f490e4659401970c1",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationSetRejectsColumnListWithSchemaRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationSetRejectsColumnListWithSchemaRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER PUBLICATION SET rejects column list with schema",
+      "oracle": "internal",
+      "suggestedId": "publication-correctness-repro-test-testpublicationsetrejectscolumnlistwithschemarepro-0001-alter-publication-publication_column_schema_set_pub-set-tables",
+      "expectedKind": "error",
+      "query": "ALTER PUBLICATION publication_column_schema_set_pub\n\t\t\t\t\t\tSET TABLES IN SCHEMA publication_column_schema_set,\n\t\t\t\t\t\t\tTABLE publication_column_schema_set.items (id);",
+      "querySha256": "42d018cacbf648e403bcc1b32dc430428bc059c4e3d7e3925739865abec3a52d",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationSetRejectsColumnListWithSchemaRepro#0002",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationSetRejectsColumnListWithSchemaRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER PUBLICATION SET rejects column list with schema",
+      "oracle": "internal",
+      "suggestedId": "publication-correctness-repro-test-testpublicationsetrejectscolumnlistwithschemarepro-0002-select-count-*-from-pg_catalog.pg_publication_rel",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication_rel pr\n\t\t\t\t\t\tJOIN pg_catalog.pg_publication p ON p.oid = pr.prpubid\n\t\t\t\t\t\tWHERE p.pubname = 'publication_column_schema_set_pub';",
+      "querySha256": "36023f59a31528c213b3f7ff1c1c1bb5a51dc712d6556756df6215f4dde27d06",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationSetRejectsColumnListWithSchemaRepro#0003",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationSetRejectsColumnListWithSchemaRepro",
+      "ordinal": 3,
+      "scriptName": "ALTER PUBLICATION SET rejects column list with schema",
+      "oracle": "internal",
+      "suggestedId": "publication-correctness-repro-test-testpublicationsetrejectscolumnlistwithschemarepro-0003-select-count-*-from-pg_catalog.pg_publication_namespace",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication_namespace pn\n\t\t\t\t\t\tJOIN pg_catalog.pg_publication p ON p.oid = pn.pnpubid\n\t\t\t\t\t\tWHERE p.pubname = 'publication_column_schema_set_pub';",
+      "querySha256": "2a409a5fa5304d5f1c798d1c6ec0f1d093209723d3eab0c4b562c57326c605cf",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationColumnListRespectsQuotedColumnCaseRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationColumnListRespectsQuotedColumnCaseRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE PUBLICATION column list respects quoted column case",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationcolumnlistrespectsquotedcolumncaserepro-0001-create-publication-publication_case_column_pub-for-table",
+      "suggestedId": "publication-correctness-repro-test-testpublicationcolumnlistrespectsquotedcolumncaserepro-0001-create-publication-publication_case_column_pub-for-table",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42703",
+      "errorSeverity": "ERROR",
+      "query": "CREATE PUBLICATION publication_case_column_pub\n\t\t\t\t\t\tFOR TABLE publication_case_column_items (casecolumn);",
+      "querySha256": "d14db86f28993c558784e450404735b42186f5945b929c53faa834291def8998",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationSetTableColumnListRespectsQuotedColumnCaseRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationSetTableColumnListRespectsQuotedColumnCaseRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER PUBLICATION SET TABLE column list respects quoted column case",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationsettablecolumnlistrespectsquotedcolumncaserepro-0001-alter-publication-publication_case_column_set_pub-set-table",
+      "suggestedId": "publication-correctness-repro-test-testpublicationsettablecolumnlistrespectsquotedcolumncaserepro-0001-alter-publication-publication_case_column_set_pub-set-table",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42703",
+      "errorSeverity": "ERROR",
+      "query": "ALTER PUBLICATION publication_case_column_set_pub\n\t\t\t\t\t\tSET TABLE publication_case_column_set_items (casecolumn);",
+      "querySha256": "69f953bb4561f1da77b4ab1a00dcb25592c35ebb1b536da116d99def2420cdf3",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationSetTableColumnListRespectsQuotedColumnCaseRepro#0002",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationSetTableColumnListRespectsQuotedColumnCaseRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER PUBLICATION SET TABLE column list respects quoted column case",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationsettablecolumnlistrespectsquotedcolumncaserepro-0002-select-count-*-from-pg_catalog.pg_publication_rel",
+      "suggestedId": "publication-correctness-repro-test-testpublicationsettablecolumnlistrespectsquotedcolumncaserepro-0002-select-count-*-from-pg_catalog.pg_publication_rel",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication_rel pr\n\t\t\t\t\t\tJOIN pg_catalog.pg_publication p ON p.oid = pr.prpubid\n\t\t\t\t\t\tWHERE p.pubname = 'publication_case_column_set_pub';",
+      "querySha256": "5eaa4b6f2b19177233812c54a08d5fb3492cf5b3b57151964d18b34f102bc5d5",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationColumnListRejectsGeneratedColumnsRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationColumnListRejectsGeneratedColumnsRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE PUBLICATION rejects generated columns in column lists",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationcolumnlistrejectsgeneratedcolumnsrepro-0001-create-publication-publication_generated_column_pub-for-table",
+      "suggestedId": "publication-correctness-repro-test-testpublicationcolumnlistrejectsgeneratedcolumnsrepro-0001-create-publication-publication_generated_column_pub-for-table",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P10",
+      "errorSeverity": "ERROR",
+      "query": "CREATE PUBLICATION publication_generated_column_pub\n\t\t\t\t\t\tFOR TABLE publication_generated_column_items (id, generated_value);",
+      "querySha256": "8d99a7abea9bf0d576eadb1f738780816a0b79924df34b619475ee86e7912427",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationColumnListRejectsGeneratedColumnsRepro#0002",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationColumnListRejectsGeneratedColumnsRepro",
+      "ordinal": 2,
+      "scriptName": "CREATE PUBLICATION rejects generated columns in column lists",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationcolumnlistrejectsgeneratedcolumnsrepro-0002-select-count-*-from-pg_catalog.pg_publication",
+      "suggestedId": "publication-correctness-repro-test-testpublicationcolumnlistrejectsgeneratedcolumnsrepro-0002-select-count-*-from-pg_catalog.pg_publication",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication\n\t\t\t\t\t\tWHERE pubname = 'publication_generated_column_pub';",
+      "querySha256": "ce6321fdff1577a10b9b995c006ce5723f88b8cef73640706116c7aae132545d",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationRejectsSystemSchemaRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationRejectsSystemSchemaRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE PUBLICATION rejects pg_catalog schema",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationrejectssystemschemarepro-0001-create-publication-publication_pg_catalog_schema_pub-for-tables",
+      "suggestedId": "publication-correctness-repro-test-testpublicationrejectssystemschemarepro-0001-create-publication-publication_pg_catalog_schema_pub-for-tables",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "CREATE PUBLICATION publication_pg_catalog_schema_pub\n\t\t\t\t\t\tFOR TABLES IN SCHEMA pg_catalog;",
+      "querySha256": "eab52d333c705efa759fb60721b411480ec760af75fa5ed8040522c2ad5e90cc",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationAddSchemaRejectsSystemSchemaRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationAddSchemaRejectsSystemSchemaRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER PUBLICATION ADD TABLES IN SCHEMA rejects pg_catalog",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationaddschemarejectssystemschemarepro-0001-alter-publication-publication_pg_catalog_schema_add_pub-add-tables",
+      "suggestedId": "publication-correctness-repro-test-testpublicationaddschemarejectssystemschemarepro-0001-alter-publication-publication_pg_catalog_schema_add_pub-add-tables",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "ALTER PUBLICATION publication_pg_catalog_schema_add_pub\n\t\t\t\t\t\tADD TABLES IN SCHEMA pg_catalog;",
+      "querySha256": "84f6737d3cfcef880db26cdaa1f056d7c0adbd3c51cfb1645f189a1d77ea5caa",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationAddSchemaRejectsSystemSchemaRepro#0002",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationAddSchemaRejectsSystemSchemaRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER PUBLICATION ADD TABLES IN SCHEMA rejects pg_catalog",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationaddschemarejectssystemschemarepro-0002-select-count-*-from-pg_catalog.pg_publication_namespace",
+      "suggestedId": "publication-correctness-repro-test-testpublicationaddschemarejectssystemschemarepro-0002-select-count-*-from-pg_catalog.pg_publication_namespace",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication_namespace pn\n\t\t\t\t\t\tJOIN pg_catalog.pg_publication p ON p.oid = pn.pnpubid\n\t\t\t\t\t\tWHERE p.pubname = 'publication_pg_catalog_schema_add_pub';",
+      "querySha256": "2af37499ab2478c8e2e259fcb4e44056f635533d789cf4210beede44e60141c1",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationSetSchemaRejectsSystemSchemaRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationSetSchemaRejectsSystemSchemaRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER PUBLICATION SET TABLES IN SCHEMA rejects pg_catalog",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationsetschemarejectssystemschemarepro-0001-alter-publication-publication_pg_catalog_schema_set_pub-set-tables",
+      "suggestedId": "publication-correctness-repro-test-testpublicationsetschemarejectssystemschemarepro-0001-alter-publication-publication_pg_catalog_schema_set_pub-set-tables",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "ALTER PUBLICATION publication_pg_catalog_schema_set_pub\n\t\t\t\t\t\tSET TABLES IN SCHEMA pg_catalog;",
+      "querySha256": "53457821fbb9d87fe62c4c5238ddeeb172fe9678d11e076bedbb9659d2b00520",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationSetSchemaRejectsSystemSchemaRepro#0002",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationSetSchemaRejectsSystemSchemaRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER PUBLICATION SET TABLES IN SCHEMA rejects pg_catalog",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationsetschemarejectssystemschemarepro-0002-select-count-*-from-pg_catalog.pg_publication_namespace",
+      "suggestedId": "publication-correctness-repro-test-testpublicationsetschemarejectssystemschemarepro-0002-select-count-*-from-pg_catalog.pg_publication_namespace",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication_namespace pn\n\t\t\t\t\t\tJOIN pg_catalog.pg_publication p ON p.oid = pn.pnpubid\n\t\t\t\t\t\tWHERE p.pubname = 'publication_pg_catalog_schema_set_pub';",
+      "querySha256": "0d366da7d4cff9dbc0dab3efe77c42c13b9388ddb5760a03f535604271d93f14",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationRejectsSystemTableRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationRejectsSystemTableRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE PUBLICATION rejects pg_catalog table",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationrejectssystemtablerepro-0001-create-publication-publication_pg_catalog_table_pub-for-table",
+      "suggestedId": "publication-correctness-repro-test-testpublicationrejectssystemtablerepro-0001-create-publication-publication_pg_catalog_table_pub-for-table",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "CREATE PUBLICATION publication_pg_catalog_table_pub\n\t\t\t\t\t\tFOR TABLE pg_catalog.pg_class;",
+      "querySha256": "9625912a60b1b08935394333b41c87d11d718404535920912ac8e6abdfc701b8",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationAddTableRejectsSystemTableRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationAddTableRejectsSystemTableRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER PUBLICATION ADD TABLE rejects pg_catalog table",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationaddtablerejectssystemtablerepro-0001-alter-publication-publication_pg_catalog_table_add_pub-add-table",
+      "suggestedId": "publication-correctness-repro-test-testpublicationaddtablerejectssystemtablerepro-0001-alter-publication-publication_pg_catalog_table_add_pub-add-table",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "ALTER PUBLICATION publication_pg_catalog_table_add_pub\n\t\t\t\t\t\tADD TABLE pg_catalog.pg_class;",
+      "querySha256": "2e3f9a6b8f06623c9e50b5305df65e2e27147d72f672f7fe066cdba88de9ccd7",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationAddTableRejectsSystemTableRepro#0002",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationAddTableRejectsSystemTableRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER PUBLICATION ADD TABLE rejects pg_catalog table",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationaddtablerejectssystemtablerepro-0002-select-count-*-from-pg_catalog.pg_publication_rel",
+      "suggestedId": "publication-correctness-repro-test-testpublicationaddtablerejectssystemtablerepro-0002-select-count-*-from-pg_catalog.pg_publication_rel",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication_rel pr\n\t\t\t\t\t\tJOIN pg_catalog.pg_publication p ON p.oid = pr.prpubid\n\t\t\t\t\t\tWHERE p.pubname = 'publication_pg_catalog_table_add_pub';",
+      "querySha256": "a8eb45bc752e0664530b992391204acbfbed844c60d864574efb9462373838a6",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationSetTableRejectsSystemTableRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationSetTableRejectsSystemTableRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER PUBLICATION SET TABLE rejects pg_catalog table",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationsettablerejectssystemtablerepro-0001-alter-publication-publication_pg_catalog_table_set_pub-set-table",
+      "suggestedId": "publication-correctness-repro-test-testpublicationsettablerejectssystemtablerepro-0001-alter-publication-publication_pg_catalog_table_set_pub-set-table",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "ALTER PUBLICATION publication_pg_catalog_table_set_pub\n\t\t\t\t\t\tSET TABLE pg_catalog.pg_class;",
+      "querySha256": "c4c3c25aa4b570b0e9addea1e0df2b18e8c34ad8e2a46331d408d18f6e1e47a8",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationSetTableRejectsSystemTableRepro#0002",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationSetTableRejectsSystemTableRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER PUBLICATION SET TABLE rejects pg_catalog table",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationsettablerejectssystemtablerepro-0002-select-count-*-from-pg_catalog.pg_publication_rel",
+      "suggestedId": "publication-correctness-repro-test-testpublicationsettablerejectssystemtablerepro-0002-select-count-*-from-pg_catalog.pg_publication_rel",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication_rel pr\n\t\t\t\t\t\tJOIN pg_catalog.pg_publication p ON p.oid = pr.prpubid\n\t\t\t\t\t\tWHERE p.pubname = 'publication_pg_catalog_table_set_pub';",
+      "querySha256": "accca91b3bf672d027d525d71ec18adf197701da9cb438cf18b7a33a024d5ac7",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationAllTablesRejectsAddTableRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationAllTablesRejectsAddTableRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER PUBLICATION ADD TABLE rejects FOR ALL TABLES publications",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationalltablesrejectsaddtablerepro-0001-alter-publication-publication_all_add_pub-add-table",
+      "suggestedId": "publication-correctness-repro-test-testpublicationalltablesrejectsaddtablerepro-0001-alter-publication-publication_all_add_pub-add-table",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "55000",
+      "errorSeverity": "ERROR",
+      "query": "ALTER PUBLICATION publication_all_add_pub\n\t\t\t\t\t\tADD TABLE publication_all_add_items;",
+      "querySha256": "ba65e8156b397ceafa1a10eecfd85dbf70927a716dc1909a64fb5514594396fa",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationAllTablesRejectsAddTableRepro#0002",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationAllTablesRejectsAddTableRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER PUBLICATION ADD TABLE rejects FOR ALL TABLES publications",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationalltablesrejectsaddtablerepro-0002-select-puballtables-from-pg_catalog.pg_publication-where",
+      "suggestedId": "publication-correctness-repro-test-testpublicationalltablesrejectsaddtablerepro-0002-select-puballtables-from-pg_catalog.pg_publication-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT puballtables\n\t\t\t\t\t\tFROM pg_catalog.pg_publication\n\t\t\t\t\t\tWHERE pubname = 'publication_all_add_pub';",
+      "querySha256": "ffabe03ad369440a62894b13532f0440c19656633a8fd8414374f49d423f1e97",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationAllTablesRejectsAddTableRepro#0003",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationAllTablesRejectsAddTableRepro",
+      "ordinal": 3,
+      "scriptName": "ALTER PUBLICATION ADD TABLE rejects FOR ALL TABLES publications",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationalltablesrejectsaddtablerepro-0003-select-count-*-from-pg_catalog.pg_publication_rel",
+      "suggestedId": "publication-correctness-repro-test-testpublicationalltablesrejectsaddtablerepro-0003-select-count-*-from-pg_catalog.pg_publication_rel",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication_rel pr\n\t\t\t\t\t\tJOIN pg_catalog.pg_publication p ON p.oid = pr.prpubid\n\t\t\t\t\t\tWHERE p.pubname = 'publication_all_add_pub';",
+      "querySha256": "c77bcacd8b36fda8399d02507f5c5205c99e2e7a7c75f2b0499582e9b779fedd",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationAllTablesRejectsSetTableRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationAllTablesRejectsSetTableRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER PUBLICATION SET TABLE rejects FOR ALL TABLES publications",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationalltablesrejectssettablerepro-0001-alter-publication-publication_all_set_pub-set-table",
+      "suggestedId": "publication-correctness-repro-test-testpublicationalltablesrejectssettablerepro-0001-alter-publication-publication_all_set_pub-set-table",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "55000",
+      "errorSeverity": "ERROR",
+      "query": "ALTER PUBLICATION publication_all_set_pub\n\t\t\t\t\t\tSET TABLE publication_all_set_items;",
+      "querySha256": "0c910104fc2ea1fb802db37a2adbff02f732ff42cf85c7fa9ba6210868bf7bfe",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationAllTablesRejectsSetTableRepro#0002",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationAllTablesRejectsSetTableRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER PUBLICATION SET TABLE rejects FOR ALL TABLES publications",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationalltablesrejectssettablerepro-0002-select-puballtables-from-pg_catalog.pg_publication-where",
+      "suggestedId": "publication-correctness-repro-test-testpublicationalltablesrejectssettablerepro-0002-select-puballtables-from-pg_catalog.pg_publication-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT puballtables\n\t\t\t\t\t\tFROM pg_catalog.pg_publication\n\t\t\t\t\t\tWHERE pubname = 'publication_all_set_pub';",
+      "querySha256": "0a4985e8fbbc8e057c8a28c90e72b54583aa1906628b5cc9dcd41b9f148666ab",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationAllTablesRejectsSetTableRepro#0003",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationAllTablesRejectsSetTableRepro",
+      "ordinal": 3,
+      "scriptName": "ALTER PUBLICATION SET TABLE rejects FOR ALL TABLES publications",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationalltablesrejectssettablerepro-0003-select-count-*-from-pg_catalog.pg_publication_rel",
+      "suggestedId": "publication-correctness-repro-test-testpublicationalltablesrejectssettablerepro-0003-select-count-*-from-pg_catalog.pg_publication_rel",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication_rel pr\n\t\t\t\t\t\tJOIN pg_catalog.pg_publication p ON p.oid = pr.prpubid\n\t\t\t\t\t\tWHERE p.pubname = 'publication_all_set_pub';",
+      "querySha256": "6f3f07ba686304cc74e88fa77afb88f981c43dcc0046f7cb5076a042f730a7e4",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationAllTablesRejectsAddSchemaRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationAllTablesRejectsAddSchemaRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER PUBLICATION ADD SCHEMA rejects FOR ALL TABLES publications",
+      "oracle": "internal",
+      "suggestedId": "publication-correctness-repro-test-testpublicationalltablesrejectsaddschemarepro-0001-alter-publication-publication_all_add_schema_pub-add-tables",
+      "expectedKind": "error",
+      "query": "ALTER PUBLICATION publication_all_add_schema_pub\n\t\t\t\t\t\tADD TABLES IN SCHEMA publication_all_add_schema;",
+      "querySha256": "9c674495e2f494a4a714ed8de718fb488c24797a000103cbd1b645332ee7f5bb",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationAllTablesRejectsAddSchemaRepro#0002",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationAllTablesRejectsAddSchemaRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER PUBLICATION ADD SCHEMA rejects FOR ALL TABLES publications",
+      "oracle": "internal",
+      "suggestedId": "publication-correctness-repro-test-testpublicationalltablesrejectsaddschemarepro-0002-select-puballtables-from-pg_catalog.pg_publication-where",
+      "expectedKind": "rows",
+      "query": "SELECT puballtables\n\t\t\t\t\t\tFROM pg_catalog.pg_publication\n\t\t\t\t\t\tWHERE pubname = 'publication_all_add_schema_pub';",
+      "querySha256": "df0abdcfb5197a8d8185d9641639c2b5567c3da1cdd97ebccf40afb8ac1e1cdd",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationAllTablesRejectsAddSchemaRepro#0003",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationAllTablesRejectsAddSchemaRepro",
+      "ordinal": 3,
+      "scriptName": "ALTER PUBLICATION ADD SCHEMA rejects FOR ALL TABLES publications",
+      "oracle": "internal",
+      "suggestedId": "publication-correctness-repro-test-testpublicationalltablesrejectsaddschemarepro-0003-select-count-*-from-pg_catalog.pg_publication_namespace",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication_namespace pn\n\t\t\t\t\t\tJOIN pg_catalog.pg_publication p ON p.oid = pn.pnpubid\n\t\t\t\t\t\tWHERE p.pubname = 'publication_all_add_schema_pub';",
+      "querySha256": "b90ff0785d1de47d031cd2b73495f0d711702737e3b53b346186828c20505eaf",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationAllTablesRejectsSetSchemaRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationAllTablesRejectsSetSchemaRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER PUBLICATION SET SCHEMA rejects FOR ALL TABLES publications",
+      "oracle": "internal",
+      "suggestedId": "publication-correctness-repro-test-testpublicationalltablesrejectssetschemarepro-0001-alter-publication-publication_all_set_schema_pub-set-tables",
+      "expectedKind": "error",
+      "query": "ALTER PUBLICATION publication_all_set_schema_pub\n\t\t\t\t\t\tSET TABLES IN SCHEMA publication_all_set_schema;",
+      "querySha256": "2c1236c400dfc41807fc9e70057ac51f36fe4df672040498ab950a0af5020b2b",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationAllTablesRejectsSetSchemaRepro#0002",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationAllTablesRejectsSetSchemaRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER PUBLICATION SET SCHEMA rejects FOR ALL TABLES publications",
+      "oracle": "internal",
+      "suggestedId": "publication-correctness-repro-test-testpublicationalltablesrejectssetschemarepro-0002-select-puballtables-from-pg_catalog.pg_publication-where",
+      "expectedKind": "rows",
+      "query": "SELECT puballtables\n\t\t\t\t\t\tFROM pg_catalog.pg_publication\n\t\t\t\t\t\tWHERE pubname = 'publication_all_set_schema_pub';",
+      "querySha256": "5d2d96ddd84c74079466e1fd9297301364af9d3a45496eb0c2475aba4a5c97d9",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationAllTablesRejectsSetSchemaRepro#0003",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationAllTablesRejectsSetSchemaRepro",
+      "ordinal": 3,
+      "scriptName": "ALTER PUBLICATION SET SCHEMA rejects FOR ALL TABLES publications",
+      "oracle": "internal",
+      "suggestedId": "publication-correctness-repro-test-testpublicationalltablesrejectssetschemarepro-0003-select-count-*-from-pg_catalog.pg_publication_namespace",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication_namespace pn\n\t\t\t\t\t\tJOIN pg_catalog.pg_publication p ON p.oid = pn.pnpubid\n\t\t\t\t\t\tWHERE p.pubname = 'publication_all_set_schema_pub';",
+      "querySha256": "1876fbf5ce9c665583a8db284f64cca1c7ade24c97dd83ec326fad213e0b4d45",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationDropTableRejectsWhereClauseRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationDropTableRejectsWhereClauseRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER PUBLICATION DROP TABLE rejects WHERE clauses",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationdroptablerejectswhereclauserepro-0001-alter-publication-publication_drop_where_pub-drop-table",
+      "suggestedId": "publication-correctness-repro-test-testpublicationdroptablerejectswhereclauserepro-0001-alter-publication-publication_drop_where_pub-drop-table",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "ALTER PUBLICATION publication_drop_where_pub\n\t\t\t\t\t\tDROP TABLE publication_drop_where_items\n\t\t\t\t\t\tWHERE (id = 1);",
+      "querySha256": "9c790d391ccbe379528a66f7c5a4b73da5ed26fb092d36d80e0f0b5360aa90f7",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationDropTableRejectsWhereClauseRepro#0002",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationDropTableRejectsWhereClauseRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER PUBLICATION DROP TABLE rejects WHERE clauses",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationdroptablerejectswhereclauserepro-0002-select-count-*-from-pg_catalog.pg_publication_rel",
+      "suggestedId": "publication-correctness-repro-test-testpublicationdroptablerejectswhereclauserepro-0002-select-count-*-from-pg_catalog.pg_publication_rel",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication_rel pr\n\t\t\t\t\t\tJOIN pg_catalog.pg_publication p ON p.oid = pr.prpubid\n\t\t\t\t\t\tWHERE p.pubname = 'publication_drop_where_pub';",
+      "querySha256": "8da677b3b8325a1cd499511831a386d3101c7957e20a0ca2bfee11cb110813f8",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationColumnListRequiresReplicaIdentityForUpdatesRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationColumnListRequiresReplicaIdentityForUpdatesRepro",
+      "ordinal": 1,
+      "scriptName": "publication column list must include replica identity for updates",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationcolumnlistrequiresreplicaidentityforupdatesrepro-0001-create-publication-publication_update_columns-for-table",
+      "suggestedId": "publication-correctness-repro-test-testpublicationcolumnlistrequiresreplicaidentityforupdatesrepro-0001-create-publication-publication_update_columns-for-table",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42710",
+      "errorSeverity": "ERROR",
+      "query": "CREATE PUBLICATION publication_update_columns\n\t\t\t\t\t\tFOR TABLE publication_identity_columns (label)\n\t\t\t\t\t\tWITH (publish = 'update');",
+      "querySha256": "b50dce41d4f61b96a9903246c36c3563a023a3526bced60fa91c52968ccc6456",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationColumnListRequiresReplicaIdentityIndexForUpdatesRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationColumnListRequiresReplicaIdentityIndexForUpdatesRepro",
+      "ordinal": 1,
+      "scriptName": "publication column list must include replica identity index for updates",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationcolumnlistrequiresreplicaidentityindexforupdatesrepro-0001-create-publication-for-table-publication_identity_index_columns",
+      "suggestedId": "publication-correctness-repro-test-testpublicationcolumnlistrequiresreplicaidentityindexforupdatesrepro-0001-create-publication-for-table-publication_identity_index_columns",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42710",
+      "errorSeverity": "ERROR",
+      "query": "CREATE PUBLICATION publication_identity_index_update_columns\n\t\t\t\t\t\tFOR TABLE publication_identity_index_columns (label)\n\t\t\t\t\t\tWITH (publish = 'update');",
+      "querySha256": "37b7e0120d60ce446eafa0c7bb5ac97bf12da09b2ec0389b25a3103c03209f99",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationMembershipSurvivesTableRenameRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationMembershipSurvivesTableRenameRepro",
+      "ordinal": 1,
+      "scriptName": "publication membership survives table rename",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationmembershipsurvivestablerenamerepro-0001-select-pubname-schemaname-tablename-array_to_string",
+      "suggestedId": "publication-correctness-repro-test-testpublicationmembershipsurvivestablerenamerepro-0001-select-pubname-schemaname-tablename-array_to_string",
+      "compare": "structural",
+      "columnModes": [
+        "structural",
+        "schema"
+      ],
+      "expectedKind": "rows",
+      "query": "SELECT pubname, schemaname, tablename, array_to_string(attnames, ',')\n\t\t\t\t\t\tFROM pg_catalog.pg_publication_tables\n\t\t\t\t\t\tWHERE pubname = 'publication_rename_pub';",
+      "querySha256": "836c39ca42255c9f827d580c57c0fe3ebbd6719826293b8115991c5b1f288b62",
+      "expectedRows": [
+        [
+          {
+            "value": "publication_rename_pub"
+          },
+          {
+            "value": "{{schema}}"
+          },
+          {
+            "value": "publication_rename_new"
+          },
+          {
+            "value": "id,label"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationMembershipClearedWhenTableDroppedRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationMembershipClearedWhenTableDroppedRepro",
+      "ordinal": 1,
+      "scriptName": "publication membership is cleared when table is dropped",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationmembershipclearedwhentabledroppedrepro-0001-select-count-*-from-pg_catalog.pg_publication_tables",
+      "suggestedId": "publication-correctness-repro-test-testpublicationmembershipclearedwhentabledroppedrepro-0001-select-count-*-from-pg_catalog.pg_publication_tables",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication_tables\n\t\t\t\t\t\tWHERE pubname = 'publication_drop_pub';",
+      "querySha256": "661699c544715312d35bbe8e2001fa166865980693de5efd5ca724e63fb6e037",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationMembershipClearedWhenTableDroppedRepro#0002",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationMembershipClearedWhenTableDroppedRepro",
+      "ordinal": 2,
+      "scriptName": "publication membership is cleared when table is dropped",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationmembershipclearedwhentabledroppedrepro-0002-select-count-*-from-pg_catalog.pg_publication_rel",
+      "suggestedId": "publication-correctness-repro-test-testpublicationmembershipclearedwhentabledroppedrepro-0002-select-count-*-from-pg_catalog.pg_publication_rel",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication_rel pr\n\t\t\t\t\t\tJOIN pg_catalog.pg_publication p ON p.oid = pr.prpubid\n\t\t\t\t\t\tWHERE p.pubname = 'publication_drop_pub';",
+      "querySha256": "b3252ca89555357374c5a88bf0fc89d1e0a7e7e6a6bf53195b279543872fba74",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationSchemaMembershipClearedWhenSchemaDroppedRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationSchemaMembershipClearedWhenSchemaDroppedRepro",
+      "ordinal": 1,
+      "scriptName": "publication schema membership is cleared when schema is dropped",
+      "oracle": "internal",
+      "suggestedId": "publication-correctness-repro-test-testpublicationschemamembershipclearedwhenschemadroppedrepro-0001-select-count-*-from-pg_catalog.pg_publication_namespace",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication_namespace pn\n\t\t\t\t\t\tJOIN pg_catalog.pg_publication p ON p.oid = pn.pnpubid\n\t\t\t\t\t\tWHERE p.pubname = 'publication_empty_schema_drop_pub';",
+      "querySha256": "b75152c7fc30ec6bc878508e081fe8116e868eff0c6d01fb781f3b6e560bcc70",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationSchemaMembershipClearedWhenSchemaDroppedRepro#0002",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationSchemaMembershipClearedWhenSchemaDroppedRepro",
+      "ordinal": 2,
+      "scriptName": "publication schema membership is cleared when schema is dropped",
+      "oracle": "internal",
+      "suggestedId": "publication-correctness-repro-test-testpublicationschemamembershipclearedwhenschemadroppedrepro-0002-select-count-*-from-pg_catalog.pg_publication_tables",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication_tables\n\t\t\t\t\t\tWHERE pubname = 'publication_empty_schema_drop_pub';",
+      "querySha256": "0eefc9a18ede027b2e5a6844dc6e310614c0f6e3348502b18b3fe4ead61d8998",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationColumnListSurvivesColumnRenameRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationColumnListSurvivesColumnRenameRepro",
+      "ordinal": 1,
+      "scriptName": "publication column list survives column rename",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationcolumnlistsurvivescolumnrenamerepro-0001-select-pubname-schemaname-tablename-array_to_string",
+      "suggestedId": "publication-correctness-repro-test-testpublicationcolumnlistsurvivescolumnrenamerepro-0001-select-pubname-schemaname-tablename-array_to_string",
+      "compare": "structural",
+      "columnModes": [
+        "structural",
+        "schema"
+      ],
+      "expectedKind": "rows",
+      "query": "SELECT pubname, schemaname, tablename, array_to_string(attnames, ',')\n\t\t\t\t\t\tFROM pg_catalog.pg_publication_tables\n\t\t\t\t\t\tWHERE pubname = 'publication_column_rename_pub';",
+      "querySha256": "5c3e381cfc02c59058aaad2f1ea0ae45438ae2760a200eeddc5eb664ff067aea",
+      "expectedRows": [
+        [
+          {
+            "value": "publication_column_rename_pub"
+          },
+          {
+            "value": "{{schema}}"
+          },
+          {
+            "value": "publication_column_rename_items"
+          },
+          {
+            "value": "id,new_label"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationColumnListSurvivesColumnRenameRepro#0002",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationColumnListSurvivesColumnRenameRepro",
+      "ordinal": 2,
+      "scriptName": "publication column list survives column rename",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationcolumnlistsurvivescolumnrenamerepro-0002-select-p.pubname-c.relname-array_to_string-pr.prattrs",
+      "suggestedId": "publication-correctness-repro-test-testpublicationcolumnlistsurvivescolumnrenamerepro-0002-select-p.pubname-c.relname-array_to_string-pr.prattrs",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT p.pubname, c.relname, array_to_string(pr.prattrs, ',')\n\t\t\t\t\t\tFROM pg_catalog.pg_publication_rel pr\n\t\t\t\t\t\tJOIN pg_catalog.pg_publication p ON p.oid = pr.prpubid\n\t\t\t\t\t\tJOIN pg_catalog.pg_class c ON c.oid = pr.prrelid\n\t\t\t\t\t\tWHERE p.pubname = 'publication_column_rename_pub';",
+      "querySha256": "5c1448fd04add64cfa34994b555d7682bb18c856ae6a4923dec4862f35b3dc44",
+      "expectedRows": [
+        [
+          {
+            "value": "publication_column_rename_pub"
+          },
+          {
+            "value": "publication_column_rename_items"
+          },
+          {
+            "value": "1,2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestDropColumnUsedByPublicationColumnListRequiresCascadeRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestDropColumnUsedByPublicationColumnListRequiresCascadeRepro",
+      "ordinal": 1,
+      "scriptName": "DROP COLUMN rejects publication column-list dependencies",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testdropcolumnusedbypublicationcolumnlistrequirescascaderepro-0001-alter-table-publication_drop_column_items-drop-column",
+      "suggestedId": "publication-correctness-repro-test-testdropcolumnusedbypublicationcolumnlistrequirescascaderepro-0001-alter-table-publication_drop_column_items-drop-column",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "2BP01",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE publication_drop_column_items\n\t\t\t\t\t\tDROP COLUMN label;",
+      "querySha256": "28106d853571f6ef4bf397a764b329aa6edf5f9861a3ba96511f8860f2f53703",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestDropColumnUsedByPublicationColumnListRequiresCascadeRepro#0002",
+      "source": "testing/go/publication_correctness_repro_test.go:TestDropColumnUsedByPublicationColumnListRequiresCascadeRepro",
+      "ordinal": 2,
+      "scriptName": "DROP COLUMN rejects publication column-list dependencies",
+      "oracle": "internal",
+      "suggestedId": "publication-correctness-repro-test-testdropcolumnusedbypublicationcolumnlistrequirescascaderepro-0002-select-count-*-from-information_schema.columns",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM information_schema.columns\n\t\t\t\t\t\tWHERE table_schema = 'public'\n\t\t\t\t\t\t  AND table_name = 'publication_drop_column_items'\n\t\t\t\t\t\t  AND column_name = 'label';",
+      "querySha256": "ae185d8561d005f1d013e81f6df57757bc1968e270f3797ddeb661d801aae371",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestDropColumnUsedByPublicationColumnListRequiresCascadeRepro#0003",
+      "source": "testing/go/publication_correctness_repro_test.go:TestDropColumnUsedByPublicationColumnListRequiresCascadeRepro",
+      "ordinal": 3,
+      "scriptName": "DROP COLUMN rejects publication column-list dependencies",
+      "oracle": "internal",
+      "suggestedId": "publication-correctness-repro-test-testdropcolumnusedbypublicationcolumnlistrequirescascaderepro-0003-select-pubname-schemaname-tablename-array_to_string",
+      "expectedKind": "rows",
+      "query": "SELECT pubname, schemaname, tablename, array_to_string(attnames, ',')\n\t\t\t\t\t\tFROM pg_catalog.pg_publication_tables\n\t\t\t\t\t\tWHERE pubname = 'publication_drop_column_pub';",
+      "querySha256": "8aa3903c4d57d4ed2db40da692746ad618a47e18ce88b99aecec8a72a4a50af8",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestDropColumnUsedByPublicationRowFilterRequiresCascadeRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestDropColumnUsedByPublicationRowFilterRequiresCascadeRepro",
+      "ordinal": 1,
+      "scriptName": "DROP COLUMN rejects publication row-filter dependencies",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testdropcolumnusedbypublicationrowfilterrequirescascaderepro-0001-alter-table-publication_filter_drop_items-drop-column",
+      "suggestedId": "publication-correctness-repro-test-testdropcolumnusedbypublicationrowfilterrequirescascaderepro-0001-alter-table-publication_filter_drop_items-drop-column",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "2BP01",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE publication_filter_drop_items\n\t\t\t\t\t\tDROP COLUMN visible;",
+      "querySha256": "a2e7ebaacf5f0a2e7bc7f2047ba4d521dcaf073298f7c55d4bd52f646929d0fd",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestDropColumnUsedByPublicationRowFilterRequiresCascadeRepro#0002",
+      "source": "testing/go/publication_correctness_repro_test.go:TestDropColumnUsedByPublicationRowFilterRequiresCascadeRepro",
+      "ordinal": 2,
+      "scriptName": "DROP COLUMN rejects publication row-filter dependencies",
+      "oracle": "internal",
+      "suggestedId": "publication-correctness-repro-test-testdropcolumnusedbypublicationrowfilterrequirescascaderepro-0002-select-count-*-from-information_schema.columns",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM information_schema.columns\n\t\t\t\t\t\tWHERE table_schema = 'public'\n\t\t\t\t\t\t  AND table_name = 'publication_filter_drop_items'\n\t\t\t\t\t\t  AND column_name = 'visible';",
+      "querySha256": "7f1005ceaef27c1d2c2743f6f0a35042e3b904c9d16beab8fe56ec0d076f4b72",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationRowFilterSurvivesColumnRenameRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationRowFilterSurvivesColumnRenameRepro",
+      "ordinal": 1,
+      "scriptName": "publication row filter survives column rename",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationrowfiltersurvivescolumnrenamerepro-0001-select-pubname-schemaname-tablename-replace",
+      "suggestedId": "publication-correctness-repro-test-testpublicationrowfiltersurvivescolumnrenamerepro-0001-select-pubname-schemaname-tablename-replace",
+      "compare": "structural",
+      "columnModes": [
+        "structural",
+        "schema"
+      ],
+      "expectedKind": "rows",
+      "query": "SELECT pubname, schemaname, tablename,\n\t\t\t\t\t\t\treplace(replace(rowfilter, '(', ''), ')', '')\n\t\t\t\t\t\tFROM pg_catalog.pg_publication_tables\n\t\t\t\t\t\tWHERE pubname = 'publication_filter_rename_pub';",
+      "querySha256": "382353dfebd7f1642ccc5ff42703d45457e75a2f146959aee19c8a5bab51c8bf",
+      "expectedRows": [
+        [
+          {
+            "value": "publication_filter_rename_pub"
+          },
+          {
+            "value": "{{schema}}"
+          },
+          {
+            "value": "publication_filter_rename_items"
+          },
+          {
+            "value": "is_visible"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationRowFilterRejectsUnknownColumnRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationRowFilterRejectsUnknownColumnRepro",
+      "ordinal": 1,
+      "scriptName": "publication row filter rejects unknown columns",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationrowfilterrejectsunknowncolumnrepro-0001-create-publication-publication_filter_missing_col_pub-for-table",
+      "suggestedId": "publication-correctness-repro-test-testpublicationrowfilterrejectsunknowncolumnrepro-0001-create-publication-publication_filter_missing_col_pub-for-table",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42703",
+      "errorSeverity": "ERROR",
+      "query": "CREATE PUBLICATION publication_filter_missing_col_pub\n\t\t\t\t\t\tFOR TABLE publication_filter_missing_col_items\n\t\t\t\t\t\tWHERE (missing_col);",
+      "querySha256": "9a6cadb235fc3aa8ffdddbe843a0ab79c427de6ca987f83e18a922eee6bb136f",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationRowFilterRejectsUnknownColumnRepro#0002",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationRowFilterRejectsUnknownColumnRepro",
+      "ordinal": 2,
+      "scriptName": "publication row filter rejects unknown columns",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationrowfilterrejectsunknowncolumnrepro-0002-select-count-*-from-pg_catalog.pg_publication",
+      "suggestedId": "publication-correctness-repro-test-testpublicationrowfilterrejectsunknowncolumnrepro-0002-select-count-*-from-pg_catalog.pg_publication",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication\n\t\t\t\t\t\tWHERE pubname = 'publication_filter_missing_col_pub';",
+      "querySha256": "7e8236d80c7bc4dd4bcd285ca38fc8bb82539db74786bc652832d3d3856cfe96",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationRowFilterRespectsQuotedColumnCaseRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationRowFilterRespectsQuotedColumnCaseRepro",
+      "ordinal": 1,
+      "scriptName": "publication row filter respects quoted column case",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationrowfilterrespectsquotedcolumncaserepro-0001-create-publication-publication_filter_case_column_pub-for-table",
+      "suggestedId": "publication-correctness-repro-test-testpublicationrowfilterrespectsquotedcolumncaserepro-0001-create-publication-publication_filter_case_column_pub-for-table",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42703",
+      "errorSeverity": "ERROR",
+      "query": "CREATE PUBLICATION publication_filter_case_column_pub\n\t\t\t\t\t\tFOR TABLE publication_filter_case_column_items\n\t\t\t\t\t\tWHERE (casecolumn = 'visible');",
+      "querySha256": "69915032dd8a64fabcf858fae9dcd0ab5028e28a333e2a3a1e799da7724695c9",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationRowFilterRespectsQuotedColumnCaseRepro#0002",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationRowFilterRespectsQuotedColumnCaseRepro",
+      "ordinal": 2,
+      "scriptName": "publication row filter respects quoted column case",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationrowfilterrespectsquotedcolumncaserepro-0002-select-count-*-from-pg_catalog.pg_publication",
+      "suggestedId": "publication-correctness-repro-test-testpublicationrowfilterrespectsquotedcolumncaserepro-0002-select-count-*-from-pg_catalog.pg_publication",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication\n\t\t\t\t\t\tWHERE pubname = 'publication_filter_case_column_pub';",
+      "querySha256": "6b8e05f76ccc472125ccd753e9755c19649e8e47075bde2230279a72f770d102",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationAddTableRowFilterRejectsUnknownColumnRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationAddTableRowFilterRejectsUnknownColumnRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER PUBLICATION ADD TABLE row filter rejects unknown columns",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationaddtablerowfilterrejectsunknowncolumnrepro-0001-alter-publication-publication_filter_add_missing_pub-add-table",
+      "suggestedId": "publication-correctness-repro-test-testpublicationaddtablerowfilterrejectsunknowncolumnrepro-0001-alter-publication-publication_filter_add_missing_pub-add-table",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42703",
+      "errorSeverity": "ERROR",
+      "query": "ALTER PUBLICATION publication_filter_add_missing_pub\n\t\t\t\t\t\tADD TABLE publication_filter_add_missing_items\n\t\t\t\t\t\tWHERE (missing_col);",
+      "querySha256": "53929141e42695f78193b310c44a6787c9496cf1912e06f3cea56b8834d94851",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationAddTableRowFilterRejectsUnknownColumnRepro#0002",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationAddTableRowFilterRejectsUnknownColumnRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER PUBLICATION ADD TABLE row filter rejects unknown columns",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationaddtablerowfilterrejectsunknowncolumnrepro-0002-select-count-*-from-pg_catalog.pg_publication_rel",
+      "suggestedId": "publication-correctness-repro-test-testpublicationaddtablerowfilterrejectsunknowncolumnrepro-0002-select-count-*-from-pg_catalog.pg_publication_rel",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication_rel pr\n\t\t\t\t\t\tJOIN pg_catalog.pg_publication p ON p.oid = pr.prpubid\n\t\t\t\t\t\tWHERE p.pubname = 'publication_filter_add_missing_pub';",
+      "querySha256": "6c4adbd11b91e1db3974561fa13160f094ae08d82aa9ed6aea95369d6f31b6b5",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationSetTableRowFilterRejectsUnknownColumnRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationSetTableRowFilterRejectsUnknownColumnRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER PUBLICATION SET TABLE row filter rejects unknown columns",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationsettablerowfilterrejectsunknowncolumnrepro-0001-alter-publication-publication_filter_set_missing_pub-set-table",
+      "suggestedId": "publication-correctness-repro-test-testpublicationsettablerowfilterrejectsunknowncolumnrepro-0001-alter-publication-publication_filter_set_missing_pub-set-table",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42703",
+      "errorSeverity": "ERROR",
+      "query": "ALTER PUBLICATION publication_filter_set_missing_pub\n\t\t\t\t\t\tSET TABLE publication_filter_set_missing_items\n\t\t\t\t\t\tWHERE (missing_col);",
+      "querySha256": "526d15e617c85baf6e0b548e04e9dfcd28758c0ddb46a25835818baa41cb7701",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationSetTableRowFilterRejectsUnknownColumnRepro#0002",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationSetTableRowFilterRejectsUnknownColumnRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER PUBLICATION SET TABLE row filter rejects unknown columns",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationsettablerowfilterrejectsunknowncolumnrepro-0002-select-count-*-from-pg_catalog.pg_publication_rel",
+      "suggestedId": "publication-correctness-repro-test-testpublicationsettablerowfilterrejectsunknowncolumnrepro-0002-select-count-*-from-pg_catalog.pg_publication_rel",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication_rel pr\n\t\t\t\t\t\tJOIN pg_catalog.pg_publication p ON p.oid = pr.prpubid\n\t\t\t\t\t\tWHERE p.pubname = 'publication_filter_set_missing_pub';",
+      "querySha256": "87f1b480b44faf1f535cb4c6eeb56fbdab6e2f2deb12f106b3b146eaf28af8ff",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationRowFilterRejectsVolatileFunctionRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationRowFilterRejectsVolatileFunctionRepro",
+      "ordinal": 1,
+      "scriptName": "publication row filter rejects volatile functions",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationrowfilterrejectsvolatilefunctionrepro-0001-create-publication-publication_filter_volatile_pub-for-table",
+      "suggestedId": "publication-correctness-repro-test-testpublicationrowfilterrejectsvolatilefunctionrepro-0001-create-publication-publication_filter_volatile_pub-for-table",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "0A000",
+      "errorSeverity": "ERROR",
+      "query": "CREATE PUBLICATION publication_filter_volatile_pub\n\t\t\t\t\t\tFOR TABLE publication_filter_volatile_items\n\t\t\t\t\t\tWHERE (random() > 0.5);",
+      "querySha256": "c7813c59933efae6e061db7c03f61561ceb9c750c84674d0b795a66e2a942e79",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationRowFilterRejectsVolatileFunctionRepro#0002",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationRowFilterRejectsVolatileFunctionRepro",
+      "ordinal": 2,
+      "scriptName": "publication row filter rejects volatile functions",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationrowfilterrejectsvolatilefunctionrepro-0002-select-count-*-from-pg_catalog.pg_publication",
+      "suggestedId": "publication-correctness-repro-test-testpublicationrowfilterrejectsvolatilefunctionrepro-0002-select-count-*-from-pg_catalog.pg_publication",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication\n\t\t\t\t\t\tWHERE pubname = 'publication_filter_volatile_pub';",
+      "querySha256": "49adecb46d97bcfc492b5f43d32e00e6e2778e21eb78f0d0d09d37c7bf1c68e6",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationRowFilterRejectsSubqueryRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationRowFilterRejectsSubqueryRepro",
+      "ordinal": 1,
+      "scriptName": "publication row filter rejects subqueries",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationrowfilterrejectssubqueryrepro-0001-create-publication-publication_filter_subquery_pub-for-table",
+      "suggestedId": "publication-correctness-repro-test-testpublicationrowfilterrejectssubqueryrepro-0001-create-publication-publication_filter_subquery_pub-for-table",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "0A000",
+      "errorSeverity": "ERROR",
+      "query": "CREATE PUBLICATION publication_filter_subquery_pub\n\t\t\t\t\t\tFOR TABLE publication_filter_subquery_items\n\t\t\t\t\t\tWHERE (id IN (SELECT id FROM publication_filter_subquery_items));",
+      "querySha256": "6aeb9f8b1b1ce78427857aa97d4eedd96f6de2572dfc640c3df07815ea55b1a7",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationRowFilterRejectsSubqueryRepro#0002",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationRowFilterRejectsSubqueryRepro",
+      "ordinal": 2,
+      "scriptName": "publication row filter rejects subqueries",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationrowfilterrejectssubqueryrepro-0002-select-count-*-from-pg_catalog.pg_publication",
+      "suggestedId": "publication-correctness-repro-test-testpublicationrowfilterrejectssubqueryrepro-0002-select-count-*-from-pg_catalog.pg_publication",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication\n\t\t\t\t\t\tWHERE pubname = 'publication_filter_subquery_pub';",
+      "querySha256": "a6abffae8384afe7d478aa84eb3cd33b9752ca0140163f155b151ea6f02c9c86",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationRowFilterRejectsAggregateRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationRowFilterRejectsAggregateRepro",
+      "ordinal": 1,
+      "scriptName": "publication row filter rejects aggregate functions",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationrowfilterrejectsaggregaterepro-0001-create-publication-publication_filter_aggregate_pub-for-table",
+      "suggestedId": "publication-correctness-repro-test-testpublicationrowfilterrejectsaggregaterepro-0001-create-publication-publication_filter_aggregate_pub-for-table",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42803",
+      "errorSeverity": "ERROR",
+      "query": "CREATE PUBLICATION publication_filter_aggregate_pub\n\t\t\t\t\t\tFOR TABLE publication_filter_aggregate_items\n\t\t\t\t\t\tWHERE (count(*) > 0);",
+      "querySha256": "ea40fee817146ac6e94994f862837ac76bd6e25c3c3cb6b042f5cfbdef0a5b99",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationRowFilterRejectsAggregateRepro#0002",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationRowFilterRejectsAggregateRepro",
+      "ordinal": 2,
+      "scriptName": "publication row filter rejects aggregate functions",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationrowfilterrejectsaggregaterepro-0002-select-count-*-from-pg_catalog.pg_publication",
+      "suggestedId": "publication-correctness-repro-test-testpublicationrowfilterrejectsaggregaterepro-0002-select-count-*-from-pg_catalog.pg_publication",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication\n\t\t\t\t\t\tWHERE pubname = 'publication_filter_aggregate_pub';",
+      "querySha256": "f45235ae62031a29081ddcb2894fa17d266358ddf5c422a6a8e7a5dd19af260c",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationRowFilterRejectsWindowFunctionRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationRowFilterRejectsWindowFunctionRepro",
+      "ordinal": 1,
+      "scriptName": "publication row filter rejects window functions",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationrowfilterrejectswindowfunctionrepro-0001-create-publication-publication_filter_window_pub-for-table",
+      "suggestedId": "publication-correctness-repro-test-testpublicationrowfilterrejectswindowfunctionrepro-0001-create-publication-publication_filter_window_pub-for-table",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P20",
+      "errorSeverity": "ERROR",
+      "query": "CREATE PUBLICATION publication_filter_window_pub\n\t\t\t\t\t\tFOR TABLE publication_filter_window_items\n\t\t\t\t\t\tWHERE (row_number() OVER () = 1);",
+      "querySha256": "e6008d1864b26a7562aa728b9dcf37c77a46a7e809494f2a892781ab511da77f",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationRowFilterRejectsWindowFunctionRepro#0002",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationRowFilterRejectsWindowFunctionRepro",
+      "ordinal": 2,
+      "scriptName": "publication row filter rejects window functions",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationrowfilterrejectswindowfunctionrepro-0002-select-count-*-from-pg_catalog.pg_publication",
+      "suggestedId": "publication-correctness-repro-test-testpublicationrowfilterrejectswindowfunctionrepro-0002-select-count-*-from-pg_catalog.pg_publication",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication\n\t\t\t\t\t\tWHERE pubname = 'publication_filter_window_pub';",
+      "querySha256": "afb52c1795dcc28b1cb4d7683336686736bff270a37ab671b4845c279fd49fff",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationRowFilterRejectsNonBooleanExpressionRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationRowFilterRejectsNonBooleanExpressionRepro",
+      "ordinal": 1,
+      "scriptName": "publication row filter rejects non-boolean expressions",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationrowfilterrejectsnonbooleanexpressionrepro-0001-create-publication-publication_filter_non_boolean_pub-for-table",
+      "suggestedId": "publication-correctness-repro-test-testpublicationrowfilterrejectsnonbooleanexpressionrepro-0001-create-publication-publication_filter_non_boolean_pub-for-table",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42804",
+      "errorSeverity": "ERROR",
+      "query": "CREATE PUBLICATION publication_filter_non_boolean_pub\n\t\t\t\t\t\tFOR TABLE publication_filter_non_boolean_items\n\t\t\t\t\t\tWHERE (1234);",
+      "querySha256": "63d0e568191933d5050dac48d98bdbe26924d328857775bc413fc215c967e47c",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationRowFilterRejectsNonBooleanExpressionRepro#0002",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationRowFilterRejectsNonBooleanExpressionRepro",
+      "ordinal": 2,
+      "scriptName": "publication row filter rejects non-boolean expressions",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationrowfilterrejectsnonbooleanexpressionrepro-0002-select-count-*-from-pg_catalog.pg_publication",
+      "suggestedId": "publication-correctness-repro-test-testpublicationrowfilterrejectsnonbooleanexpressionrepro-0002-select-count-*-from-pg_catalog.pg_publication",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication\n\t\t\t\t\t\tWHERE pubname = 'publication_filter_non_boolean_pub';",
+      "querySha256": "50b04ecaf40ca9a61ceef11a56d106613a85bc01dca5c9389a07425654b598aa",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationRowFilterRejectsSystemColumnRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationRowFilterRejectsSystemColumnRepro",
+      "ordinal": 1,
+      "scriptName": "publication row filter rejects system columns",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationrowfilterrejectssystemcolumnrepro-0001-create-publication-publication_filter_system_column_pub-for-table",
+      "suggestedId": "publication-correctness-repro-test-testpublicationrowfilterrejectssystemcolumnrepro-0001-create-publication-publication_filter_system_column_pub-for-table",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "0A000",
+      "errorSeverity": "ERROR",
+      "query": "CREATE PUBLICATION publication_filter_system_column_pub\n\t\t\t\t\t\tFOR TABLE publication_filter_system_column_items\n\t\t\t\t\t\tWHERE ('(0,1)'::tid = ctid);",
+      "querySha256": "fa3cb4a74e2de194ce3ae089d7914fe9f213428a05a65601518223ce1b94762e",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationRowFilterRejectsSystemColumnRepro#0002",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationRowFilterRejectsSystemColumnRepro",
+      "ordinal": 2,
+      "scriptName": "publication row filter rejects system columns",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationrowfilterrejectssystemcolumnrepro-0002-select-count-*-from-pg_catalog.pg_publication",
+      "suggestedId": "publication-correctness-repro-test-testpublicationrowfilterrejectssystemcolumnrepro-0002-select-count-*-from-pg_catalog.pg_publication",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_publication\n\t\t\t\t\t\tWHERE pubname = 'publication_filter_system_column_pub';",
+      "querySha256": "797cafdec04170541f7959f88a335295edfdd0253bb8aa6ce5724ea1a762edfa",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestReplicaIdentityRejectsDeferrableUniqueIndexRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestReplicaIdentityRejectsDeferrableUniqueIndexRepro",
+      "ordinal": 1,
+      "scriptName": "replica identity rejects deferrable unique indexes",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testreplicaidentityrejectsdeferrableuniqueindexrepro-0001-alter-table-replica_identity_deferrable_items-replica-identity",
+      "suggestedId": "publication-correctness-repro-test-testreplicaidentityrejectsdeferrableuniqueindexrepro-0001-alter-table-replica_identity_deferrable_items-replica-identity",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "0A000",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE replica_identity_deferrable_items\n\t\t\t\t\t\tREPLICA IDENTITY USING INDEX replica_identity_deferrable_items_code_key;",
+      "querySha256": "cd74d105e888cf0ba3288e40281f2611742d6b943dfe6e4050e0e8aa39ef4778",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestReplicaIdentityRejectsDeferrableUniqueIndexRepro#0002",
+      "source": "testing/go/publication_correctness_repro_test.go:TestReplicaIdentityRejectsDeferrableUniqueIndexRepro",
+      "ordinal": 2,
+      "scriptName": "replica identity rejects deferrable unique indexes",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testreplicaidentityrejectsdeferrableuniqueindexrepro-0002-select-relreplident-from-pg_catalog.pg_class-where",
+      "suggestedId": "publication-correctness-repro-test-testreplicaidentityrejectsdeferrableuniqueindexrepro-0002-select-relreplident-from-pg_catalog.pg_class-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT relreplident\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE relname = 'replica_identity_deferrable_items';",
+      "querySha256": "e0e75835bee3987711caa9edc13a27c98a72979d368b639c253e32a4fb1c7adb",
+      "expectedRows": [
+        [
+          {
+            "value": "d"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestReplicaIdentityRejectsDeferrableUniqueIndexRepro#0003",
+      "source": "testing/go/publication_correctness_repro_test.go:TestReplicaIdentityRejectsDeferrableUniqueIndexRepro",
+      "ordinal": 3,
+      "scriptName": "replica identity rejects deferrable unique indexes",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testreplicaidentityrejectsdeferrableuniqueindexrepro-0003-select-count-*-from-pg_catalog.pg_index",
+      "suggestedId": "publication-correctness-repro-test-testreplicaidentityrejectsdeferrableuniqueindexrepro-0003-select-count-*-from-pg_catalog.pg_index",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_index i\n\t\t\t\t\t\tJOIN pg_catalog.pg_class c ON c.oid = i.indrelid\n\t\t\t\t\t\tWHERE c.relname = 'replica_identity_deferrable_items'\n\t\t\t\t\t\t  AND i.indisreplident;",
+      "querySha256": "c5e8b64a3b3b33951f6cd89a16804ca491b198e2272457a6f4ebb02c40645fad",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestReplicaIdentityIndexColumnDropNotNullRejectedRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestReplicaIdentityIndexColumnDropNotNullRejectedRepro",
+      "ordinal": 1,
+      "scriptName": "replica identity index columns must remain not null",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testreplicaidentityindexcolumndropnotnullrejectedrepro-0001-alter-table-replica_identity_not_null_items-alter-column",
+      "suggestedId": "publication-correctness-repro-test-testreplicaidentityindexcolumndropnotnullrejectedrepro-0001-alter-table-replica_identity_not_null_items-alter-column",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P16",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE replica_identity_not_null_items\n\t\t\t\t\t\tALTER COLUMN code DROP NOT NULL;",
+      "querySha256": "a745a2412b642cb3fbb09bdec5216ee54d6d10e2d2f84616b9866bea4aeb0213",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestReplicaIdentityIndexColumnDropNotNullRejectedRepro#0002",
+      "source": "testing/go/publication_correctness_repro_test.go:TestReplicaIdentityIndexColumnDropNotNullRejectedRepro",
+      "ordinal": 2,
+      "scriptName": "replica identity index columns must remain not null",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testreplicaidentityindexcolumndropnotnullrejectedrepro-0002-select-a.attnotnull-c.relreplident-i.indisreplident-from",
+      "suggestedId": "publication-correctness-repro-test-testreplicaidentityindexcolumndropnotnullrejectedrepro-0002-select-a.attnotnull-c.relreplident-i.indisreplident-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT a.attnotnull, c.relreplident, i.indisreplident\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute a\n\t\t\t\t\t\tJOIN pg_catalog.pg_class c ON c.oid = a.attrelid\n\t\t\t\t\t\tJOIN pg_catalog.pg_index i ON i.indrelid = c.oid\n\t\t\t\t\t\tJOIN pg_catalog.pg_class ic ON ic.oid = i.indexrelid\n\t\t\t\t\t\tWHERE c.relname = 'replica_identity_not_null_items'\n\t\t\t\t\t\t  AND a.attname = 'code'\n\t\t\t\t\t\t  AND ic.relname = 'replica_identity_not_null_items_code_idx';",
+      "querySha256": "454bf053e7e448bcef8fcb4dfc9077ca97316a6b334f5f1adbbbf2f01ef2e931",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "i"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestReplicaIdentityUsingIndexSurvivesTableRenameRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestReplicaIdentityUsingIndexSurvivesTableRenameRepro",
+      "ordinal": 1,
+      "scriptName": "replica identity using index survives table rename",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testreplicaidentityusingindexsurvivestablerenamerepro-0001-select-c.relreplident-count-*-filter",
+      "suggestedId": "publication-correctness-repro-test-testreplicaidentityusingindexsurvivestablerenamerepro-0001-select-c.relreplident-count-*-filter",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT c.relreplident, count(*) FILTER (WHERE i.indisreplident)\n\t\t\t\t\t\tFROM pg_catalog.pg_class c\n\t\t\t\t\t\tJOIN pg_catalog.pg_index i ON i.indrelid = c.oid\n\t\t\t\t\t\tWHERE c.relname = 'replica_identity_rename_new'\n\t\t\t\t\t\tGROUP BY c.relreplident;",
+      "querySha256": "0ebe2dffade4784bf0a989262f43ee05ad4894eb9c73c545e7c971d8a62fc7ce",
+      "expectedRows": [
+        [
+          {
+            "value": "i"
+          },
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestReplicaIdentityClearedWhenTableDroppedRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestReplicaIdentityClearedWhenTableDroppedRepro",
+      "ordinal": 1,
+      "scriptName": "replica identity is cleared when table is dropped",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testreplicaidentityclearedwhentabledroppedrepro-0001-select-relreplident-from-pg_catalog.pg_class-where",
+      "suggestedId": "publication-correctness-repro-test-testreplicaidentityclearedwhentabledroppedrepro-0001-select-relreplident-from-pg_catalog.pg_class-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT relreplident\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE relname = 'replica_identity_recreate_items';",
+      "querySha256": "8c57c37ad93d95d6deb0bd5e2046b801e47b417cd166847e7ed5922adfb2eddb",
+      "expectedRows": [
+        [
+          {
+            "value": "d"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestReplicaIdentityUsingIndexSurvivesIndexRenameRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestReplicaIdentityUsingIndexSurvivesIndexRenameRepro",
+      "ordinal": 1,
+      "scriptName": "replica identity using index survives index rename",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testreplicaidentityusingindexsurvivesindexrenamerepro-0001-select-c.relreplident-ic.relname-i.indisreplident-from",
+      "suggestedId": "publication-correctness-repro-test-testreplicaidentityusingindexsurvivesindexrenamerepro-0001-select-c.relreplident-ic.relname-i.indisreplident-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT c.relreplident, ic.relname, i.indisreplident\n\t\t\t\t\t\tFROM pg_catalog.pg_class c\n\t\t\t\t\t\tJOIN pg_catalog.pg_index i ON i.indrelid = c.oid\n\t\t\t\t\t\tJOIN pg_catalog.pg_class ic ON ic.oid = i.indexrelid\n\t\t\t\t\t\tWHERE c.relname = 'replica_identity_index_rename_items'\n\t\t\t\t\t\t  AND ic.relname = 'replica_identity_index_rename_new_idx';",
+      "querySha256": "be226f8f17a76c017cc4d7589d3c73fe8a18c59d3d94d8dbe1eaf517a03cfff2",
+      "expectedRows": [
+        [
+          {
+            "value": "i"
+          },
+          {
+            "value": "replica_identity_index_rename_new_idx"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationDeleteRequiresReplicaIdentityRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationDeleteRequiresReplicaIdentityRepro",
+      "ordinal": 1,
+      "scriptName": "DELETE requires replica identity when publication publishes deletes",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationdeleterequiresreplicaidentityrepro-0001-delete-from-publication_delete_identity-where-id",
+      "suggestedId": "publication-correctness-repro-test-testpublicationdeleterequiresreplicaidentityrepro-0001-delete-from-publication_delete_identity-where-id",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "55000",
+      "errorSeverity": "ERROR",
+      "query": "DELETE FROM publication_delete_identity WHERE id = 1;",
+      "querySha256": "179e4435748eb4754fd31b47e3faade7ab5acd308879ea853858fc707b952431",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationDeleteRequiresReplicaIdentityRepro#0002",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationDeleteRequiresReplicaIdentityRepro",
+      "ordinal": 2,
+      "scriptName": "DELETE requires replica identity when publication publishes deletes",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationdeleterequiresreplicaidentityrepro-0002-select-count-*-from-publication_delete_identity",
+      "suggestedId": "publication-correctness-repro-test-testpublicationdeleterequiresreplicaidentityrepro-0002-select-count-*-from-publication_delete_identity",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) FROM publication_delete_identity;",
+      "querySha256": "90858da21591c817e4f0d94e48960ebe3dd0e6c5ab3ce420b58b19f0996b552d",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationUpdateRequiresReplicaIdentityRepro#0001",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationUpdateRequiresReplicaIdentityRepro",
+      "ordinal": 1,
+      "scriptName": "UPDATE requires replica identity when publication publishes updates",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationupdaterequiresreplicaidentityrepro-0001-update-publication_update_identity-set-label-=",
+      "suggestedId": "publication-correctness-repro-test-testpublicationupdaterequiresreplicaidentityrepro-0001-update-publication_update_identity-set-label-=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "55000",
+      "errorSeverity": "ERROR",
+      "query": "UPDATE publication_update_identity SET label = 'after-update' WHERE id = 1;",
+      "querySha256": "2fa14066a18080db4334264906ebf7e39d7e5144278d95047487e88b2f40257f",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_correctness_repro_test.go:TestPublicationUpdateRequiresReplicaIdentityRepro#0002",
+      "source": "testing/go/publication_correctness_repro_test.go:TestPublicationUpdateRequiresReplicaIdentityRepro",
+      "ordinal": 2,
+      "scriptName": "UPDATE requires replica identity when publication publishes updates",
+      "oracle": "postgres",
+      "postgresId": "publication-correctness-repro-test-testpublicationupdaterequiresreplicaidentityrepro-0002-select-label-from-publication_update_identity-where",
+      "suggestedId": "publication-correctness-repro-test-testpublicationupdaterequiresreplicaidentityrepro-0002-select-label-from-publication_update_identity-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT label FROM publication_update_identity WHERE id = 1;",
+      "querySha256": "4014f71d69f571ba494b151f8394bb9eb489d9137a8a8bab9bd5019c6aee6701",
+      "expectedRows": [
+        [
+          {
+            "value": "before-update"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

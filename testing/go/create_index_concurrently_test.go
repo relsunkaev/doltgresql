@@ -50,18 +50,11 @@ func TestCreateIndexConcurrently(t *testing.T) {
 					Query: "CREATE INDEX CONCURRENTLY t_v_idx ON t (v);",
 				},
 				{
-					Query: `SELECT indexname FROM pg_catalog.pg_indexes WHERE tablename = 't' ORDER BY indexname;`,
-					Expected: []sql.Row{
-						{"t_pkey"},
-						{"t_v_idx"},
-					},
+					Query: `SELECT indexname FROM pg_catalog.pg_indexes WHERE tablename = 't' ORDER BY indexname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-index-concurrently-test-testcreateindexconcurrently-0001-select-indexname-from-pg_catalog.pg_indexes-where"},
 				},
 				{
 					// Index actually backs lookups, not just metadata.
-					Query: "SELECT id FROM t WHERE v = 20;",
-					Expected: []sql.Row{
-						{2},
-					},
+					Query: "SELECT id FROM t WHERE v = 20;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-index-concurrently-test-testcreateindexconcurrently-0002-select-id-from-t-where"},
 				},
 			},
 		},
@@ -76,8 +69,7 @@ func TestCreateIndexConcurrently(t *testing.T) {
 					Query: "CREATE UNIQUE INDEX CONCURRENTLY u_code_uq ON u (code);",
 				},
 				{
-					Query:       "INSERT INTO u VALUES (3, 'a');",
-					ExpectedErr: "duplicate",
+					Query: "INSERT INTO u VALUES (3, 'a');", PostgresOracle: ScriptTestPostgresOracle{ID: "create-index-concurrently-test-testcreateindexconcurrently-0003-insert-into-u-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: "INSERT INTO u VALUES (3, 'c');",
@@ -99,8 +91,7 @@ func TestCreateIndexConcurrently(t *testing.T) {
 				},
 				{
 					// Without IF NOT EXISTS the second CREATE errors.
-					Query:       "CREATE INDEX CONCURRENTLY if_not_exists_idx ON if_not_exists_t (v);",
-					ExpectedErr: "Duplicate key name",
+					Query: "CREATE INDEX CONCURRENTLY if_not_exists_idx ON if_not_exists_t (v);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-index-concurrently-test-testcreateindexconcurrently-0004-create-index-concurrently-if_not_exists_idx-on", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -115,10 +106,7 @@ func TestCreateIndexConcurrently(t *testing.T) {
 					Query: "CREATE INDEX CONCURRENTLY multi_idx ON multi_t (a, b);",
 				},
 				{
-					Query: "SELECT id FROM multi_t WHERE a = 10 AND b = 100;",
-					Expected: []sql.Row{
-						{1},
-					},
+					Query: "SELECT id FROM multi_t WHERE a = 10 AND b = 100;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-index-concurrently-test-testcreateindexconcurrently-0005-select-id-from-multi_t-where"},
 				},
 			},
 		},
@@ -139,28 +127,17 @@ func TestCreateIndexConcurrently(t *testing.T) {
 					Query: `SELECT indexname, indexdef
 						FROM pg_catalog.pg_indexes
 						WHERE tablename = 'meta_t' AND indexname LIKE 'meta_t_%_idx'
-						ORDER BY indexname;`,
-					Expected: []sql.Row{
-						{"meta_t_active_idx", "CREATE INDEX meta_t_active_idx ON public.meta_t USING btree (tenant_id) WHERE active"},
-						{"meta_t_tenant_cover_idx", "CREATE INDEX meta_t_tenant_cover_idx ON public.meta_t USING btree (tenant_id) INCLUDE (amount)"},
-					},
+						ORDER BY indexname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-index-concurrently-test-testcreateindexconcurrently-0006-select-indexname-indexdef-from-pg_catalog.pg_indexes", ColumnModes: []string{"structural", "schema"}},
 				},
 				{
 					Query: `SELECT c.relname, i.indisready, i.indisvalid
 						FROM pg_catalog.pg_index i
 						JOIN pg_catalog.pg_class c ON i.indexrelid = c.oid
 						WHERE c.relname IN ('meta_t_tenant_cover_idx', 'meta_t_active_idx')
-						ORDER BY c.relname;`,
-					Expected: []sql.Row{
-						{"meta_t_active_idx", "t", "t"},
-						{"meta_t_tenant_cover_idx", "t", "t"},
-					},
+						ORDER BY c.relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-index-concurrently-test-testcreateindexconcurrently-0007-select-c.relname-i.indisready-i.indisvalid-from"},
 				},
 				{
-					Query: "SELECT id FROM meta_t WHERE tenant_id = 10 AND active ORDER BY id;",
-					Expected: []sql.Row{
-						{1},
-					},
+					Query: "SELECT id FROM meta_t WHERE tenant_id = 10 AND active ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-index-concurrently-test-testcreateindexconcurrently-0008-select-id-from-meta_t-where"},
 				},
 			},
 		},
@@ -177,23 +154,16 @@ func TestCreateIndexConcurrently(t *testing.T) {
 				{
 					Query: `SELECT indexdef
 						FROM pg_catalog.pg_indexes
-						WHERE tablename = 'partial_unique_concurrent_t' AND indexname = 'puc_tenant_active_idx';`,
-					Expected: []sql.Row{
-						{"CREATE UNIQUE INDEX puc_tenant_active_idx ON public.partial_unique_concurrent_t USING btree (tenant_id) WHERE active"},
-					},
+						WHERE tablename = 'partial_unique_concurrent_t' AND indexname = 'puc_tenant_active_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-index-concurrently-test-testcreateindexconcurrently-0009-select-indexdef-from-pg_catalog.pg_indexes-where", ColumnModes: []string{"schema"}},
 				},
 				{
 					Query: `SELECT i.indisready, i.indisvalid
 						FROM pg_catalog.pg_index i
 						JOIN pg_catalog.pg_class c ON i.indexrelid = c.oid
-						WHERE c.relname = 'puc_tenant_active_idx';`,
-					Expected: []sql.Row{
-						{"t", "t"},
-					},
+						WHERE c.relname = 'puc_tenant_active_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-index-concurrently-test-testcreateindexconcurrently-0010-select-i.indisready-i.indisvalid-from-pg_catalog.pg_index"},
 				},
 				{
-					Query:       "INSERT INTO partial_unique_concurrent_t VALUES (3, 10, true);",
-					ExpectedErr: "duplicate",
+					Query: "INSERT INTO partial_unique_concurrent_t VALUES (3, 10, true);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-index-concurrently-test-testcreateindexconcurrently-0011-insert-into-partial_unique_concurrent_t-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: "INSERT INTO partial_unique_concurrent_t VALUES (3, 10, false);",
@@ -213,25 +183,16 @@ func TestCreateIndexConcurrently(t *testing.T) {
 				{
 					Query: `SELECT indexdef
 						FROM pg_catalog.pg_indexes
-						WHERE tablename = 'expr_concurrent_t' AND indexname = 'expr_concurrent_lower_email_idx';`,
-					Expected: []sql.Row{
-						{"CREATE INDEX expr_concurrent_lower_email_idx ON public.expr_concurrent_t USING btree (lower(email))"},
-					},
+						WHERE tablename = 'expr_concurrent_t' AND indexname = 'expr_concurrent_lower_email_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-index-concurrently-test-testcreateindexconcurrently-0012-select-indexdef-from-pg_catalog.pg_indexes-where", ColumnModes: []string{"schema"}},
 				},
 				{
 					Query: `SELECT i.indisready, i.indisvalid
 						FROM pg_catalog.pg_index i
 						JOIN pg_catalog.pg_class c ON i.indexrelid = c.oid
-						WHERE c.relname = 'expr_concurrent_lower_email_idx';`,
-					Expected: []sql.Row{
-						{"t", "t"},
-					},
+						WHERE c.relname = 'expr_concurrent_lower_email_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-index-concurrently-test-testcreateindexconcurrently-0013-select-i.indisready-i.indisvalid-from-pg_catalog.pg_index"},
 				},
 				{
-					Query: "SELECT id FROM expr_concurrent_t WHERE lower(email) = 'bob@x';",
-					Expected: []sql.Row{
-						{2},
-					},
+					Query: "SELECT id FROM expr_concurrent_t WHERE lower(email) = 'bob@x';", PostgresOracle: ScriptTestPostgresOracle{ID: "create-index-concurrently-test-testcreateindexconcurrently-0014-select-id-from-expr_concurrent_t-where"},
 				},
 			},
 		},
@@ -248,23 +209,16 @@ func TestCreateIndexConcurrently(t *testing.T) {
 				{
 					Query: `SELECT indexdef
 						FROM pg_catalog.pg_indexes
-						WHERE tablename = 'unique_expr_concurrent_t' AND indexname = 'unique_expr_concurrent_lower_email_idx';`,
-					Expected: []sql.Row{
-						{"CREATE UNIQUE INDEX unique_expr_concurrent_lower_email_idx ON public.unique_expr_concurrent_t USING btree (lower(email))"},
-					},
+						WHERE tablename = 'unique_expr_concurrent_t' AND indexname = 'unique_expr_concurrent_lower_email_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-index-concurrently-test-testcreateindexconcurrently-0015-select-indexdef-from-pg_catalog.pg_indexes-where", ColumnModes: []string{"schema"}},
 				},
 				{
 					Query: `SELECT i.indisready, i.indisvalid
 						FROM pg_catalog.pg_index i
 						JOIN pg_catalog.pg_class c ON i.indexrelid = c.oid
-						WHERE c.relname = 'unique_expr_concurrent_lower_email_idx';`,
-					Expected: []sql.Row{
-						{"t", "t"},
-					},
+						WHERE c.relname = 'unique_expr_concurrent_lower_email_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-index-concurrently-test-testcreateindexconcurrently-0016-select-i.indisready-i.indisvalid-from-pg_catalog.pg_index"},
 				},
 				{
-					Query:       "INSERT INTO unique_expr_concurrent_t VALUES (3, 'ALICE@x');",
-					ExpectedErr: "duplicate",
+					Query: "INSERT INTO unique_expr_concurrent_t VALUES (3, 'ALICE@x');", PostgresOracle: ScriptTestPostgresOracle{ID: "create-index-concurrently-test-testcreateindexconcurrently-0017-insert-into-unique_expr_concurrent_t-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: "INSERT INTO unique_expr_concurrent_t VALUES (3, 'carol@x');",
@@ -279,14 +233,10 @@ func TestCreateIndexConcurrently(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       "CREATE UNIQUE INDEX CONCURRENTLY unique_expr_dup_lower_email_idx ON unique_expr_dup_t ((lower(email)));",
-					ExpectedErr: "duplicate",
+					Query: "CREATE UNIQUE INDEX CONCURRENTLY unique_expr_dup_lower_email_idx ON unique_expr_dup_t ((lower(email)));", PostgresOracle: ScriptTestPostgresOracle{ID: "create-index-concurrently-test-testcreateindexconcurrently-0018-create-unique-index-concurrently-unique_expr_dup_lower_email_idx", Compare: "sqlstate"},
 				},
 				{
-					Query: `SELECT COUNT(*) FROM pg_catalog.pg_indexes WHERE indexname = 'unique_expr_dup_lower_email_idx';`,
-					Expected: []sql.Row{
-						{0},
-					},
+					Query: `SELECT COUNT(*) FROM pg_catalog.pg_indexes WHERE indexname = 'unique_expr_dup_lower_email_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-index-concurrently-test-testcreateindexconcurrently-0019-select-count-*-from-pg_catalog.pg_indexes"},
 				},
 			},
 		},
@@ -303,25 +253,16 @@ func TestCreateIndexConcurrently(t *testing.T) {
 				{
 					Query: `SELECT indexdef
 						FROM pg_catalog.pg_indexes
-						WHERE tablename = 'gin_t' AND indexname = 'gin_t_doc_idx';`,
-					Expected: []sql.Row{
-						{"CREATE INDEX gin_t_doc_idx ON public.gin_t USING gin (doc jsonb_path_ops)"},
-					},
+						WHERE tablename = 'gin_t' AND indexname = 'gin_t_doc_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-index-concurrently-test-testcreateindexconcurrently-0020-select-indexdef-from-pg_catalog.pg_indexes-where", ColumnModes: []string{"schema"}},
 				},
 				{
 					Query: `SELECT i.indisready, i.indisvalid
 						FROM pg_catalog.pg_index i
 						JOIN pg_catalog.pg_class c ON i.indexrelid = c.oid
-						WHERE c.relname = 'gin_t_doc_idx';`,
-					Expected: []sql.Row{
-						{"t", "t"},
-					},
+						WHERE c.relname = 'gin_t_doc_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-index-concurrently-test-testcreateindexconcurrently-0021-select-i.indisready-i.indisvalid-from-pg_catalog.pg_index"},
 				},
 				{
-					Query: `SELECT id FROM gin_t WHERE doc @> '{"kind":"click"}' ORDER BY id;`,
-					Expected: []sql.Row{
-						{1},
-					},
+					Query: `SELECT id FROM gin_t WHERE doc @> '{"kind":"click"}' ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-index-concurrently-test-testcreateindexconcurrently-0022-select-id-from-gin_t-where"},
 				},
 			},
 		},
@@ -361,18 +302,17 @@ func TestCreateIndexConcurrently(t *testing.T) {
 					Query: "DROP INDEX CONCURRENTLY drop_t_idx;",
 				},
 				{
-					Query: `SELECT COUNT(*) FROM pg_catalog.pg_indexes WHERE indexname = 'drop_t_idx';`,
-					Expected: []sql.Row{
-						{0},
-					},
+					Query: `SELECT COUNT(*) FROM pg_catalog.pg_indexes WHERE indexname = 'drop_t_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-index-concurrently-test-testcreateindexconcurrently-0026-select-count-*-from-pg_catalog.pg_indexes"},
 				},
 				{
 					// Missing index without IF EXISTS still errors.
-					Query:       "DROP INDEX CONCURRENTLY drop_t_idx;",
-					ExpectedErr: "was not found",
+					Query: "DROP INDEX CONCURRENTLY drop_t_idx;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-index-concurrently-test-testcreateindexconcurrently-0027-drop-index-concurrently-drop_t_idx",
+
+						// IF EXISTS suppresses the error.
+						Compare: "sqlstate"},
 				},
 				{
-					// IF EXISTS suppresses the error.
+
 					Query: "DROP INDEX CONCURRENTLY IF EXISTS drop_t_idx;",
 				},
 			},
@@ -391,10 +331,7 @@ func TestCreateIndexConcurrently(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT i.indisready, i.indisvalid FROM pg_catalog.pg_index i JOIN pg_catalog.pg_class c ON i.indexrelid = c.oid WHERE c.relname = 'state_t_v_idx';`,
-					Expected: []sql.Row{
-						{"t", "t"},
-					},
+					Query: `SELECT i.indisready, i.indisvalid FROM pg_catalog.pg_index i JOIN pg_catalog.pg_class c ON i.indexrelid = c.oid WHERE c.relname = 'state_t_v_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-index-concurrently-test-testcreateindexconcurrently-0028-select-i.indisready-i.indisvalid-from-pg_catalog.pg_index"},
 				},
 			},
 		},
@@ -414,14 +351,10 @@ func TestCreateIndexConcurrently(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       "CREATE UNIQUE INDEX CONCURRENTLY dup_t_idx ON dup_t (code);",
-					ExpectedErr: "duplicate",
+					Query: "CREATE UNIQUE INDEX CONCURRENTLY dup_t_idx ON dup_t (code);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-index-concurrently-test-testcreateindexconcurrently-0029-create-unique-index-concurrently-dup_t_idx", Compare: "sqlstate"},
 				},
 				{
-					Query: `SELECT COUNT(*) FROM pg_catalog.pg_indexes WHERE indexname = 'dup_t_idx';`,
-					Expected: []sql.Row{
-						{0},
-					},
+					Query: `SELECT COUNT(*) FROM pg_catalog.pg_indexes WHERE indexname = 'dup_t_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-index-concurrently-test-testcreateindexconcurrently-0030-select-count-*-from-pg_catalog.pg_indexes"},
 				},
 			},
 		},
@@ -441,10 +374,7 @@ func TestCreateIndexConcurrently(t *testing.T) {
 				},
 				{
 					// Index still works after both reindexes.
-					Query: "SELECT id FROM rt WHERE v = 10;",
-					Expected: []sql.Row{
-						{1},
-					},
+					Query: "SELECT id FROM rt WHERE v = 10;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-index-concurrently-test-testcreateindexconcurrently-0031-select-id-from-rt-where"},
 				},
 			},
 		},

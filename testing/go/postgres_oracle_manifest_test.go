@@ -234,6 +234,98 @@ func TestPostgresOraclePromotedMapSkipsBindVars(t *testing.T) {
 	}
 }
 
+func TestPostgresOraclePromotedMapSkipsDoltSpecificQueries(t *testing.T) {
+	outPath := filepath.Join(t.TempDir(), "dolt_functions_test.oracle-map.json")
+	cmd := exec.Command("go", "run", "gen_postgres_oracle_manifest.go",
+		"--promote-oracle-map", "dolt_functions_test.go",
+		"--oracle-test-name", "TestDoltAdd",
+		"--oracle-script-name", "Add all using dot",
+		"--promote-oracle-map-output", outPath)
+	output, err := cmd.CombinedOutput()
+	require.NoError(t, err, string(output))
+
+	data, err := os.ReadFile(outPath)
+	require.NoError(t, err)
+	var generated struct {
+		Assertions []struct {
+			Oracle     string   `json:"oracle"`
+			Query      string   `json:"query"`
+			NonLiteral []string `json:"nonLiteral"`
+		} `json:"assertions"`
+	}
+	require.NoError(t, json.Unmarshal(data, &generated))
+	require.Len(t, generated.Assertions, 3)
+	for _, assertion := range generated.Assertions {
+		require.Equal(t, "internal", assertion.Oracle)
+		require.Contains(t, assertion.NonLiteral, "DoltSpecific")
+		require.True(t, strings.Contains(strings.ToLower(assertion.Query), "dolt_"))
+	}
+}
+
+func TestPostgresOraclePromotedMapKeepsDoltNameFilters(t *testing.T) {
+	outPath := filepath.Join(t.TempDir(), "functions_test.oracle-map.json")
+	cmd := exec.Command("go", "run", "gen_postgres_oracle_manifest.go",
+		"--promote-oracle-map", "functions_test.go",
+		"--oracle-script-name", "pg_table_is_visible",
+		"--promote-oracle-map-output", outPath)
+	output, err := cmd.CombinedOutput()
+	require.NoError(t, err, string(output))
+
+	data, err := os.ReadFile(outPath)
+	require.NoError(t, err)
+	var generated struct {
+		Assertions []struct {
+			Oracle     string   `json:"oracle"`
+			Query      string   `json:"query"`
+			NonLiteral []string `json:"nonLiteral"`
+		} `json:"assertions"`
+	}
+	require.NoError(t, json.Unmarshal(data, &generated))
+	foundFilter := false
+	for _, assertion := range generated.Assertions {
+		if !strings.Contains(assertion.Query, "left(relname, 5) <> 'dolt_'") {
+			continue
+		}
+		foundFilter = true
+		require.Equal(t, "postgres", assertion.Oracle)
+		require.NotContains(t, assertion.NonLiteral, "DoltSpecific")
+	}
+	require.True(t, foundFilter)
+}
+
+func TestPostgresOraclePromotedMapSkipsPriorNonLiteralSetup(t *testing.T) {
+	outPath := filepath.Join(t.TempDir(), "domain_correctness_repro_test.oracle-map.json")
+	cmd := exec.Command("go", "run", "gen_postgres_oracle_manifest.go",
+		"--promote-oracle-map", "domain_correctness_repro_test.go",
+		"--oracle-test-name", "TestDomainTypmodCopyFromUsesCoercedValueRepro,TestDomainTypmodBindVarsUseCoercedValueRepro",
+		"--promote-oracle-map-output", outPath)
+	output, err := cmd.CombinedOutput()
+	require.NoError(t, err, string(output))
+
+	data, err := os.ReadFile(outPath)
+	require.NoError(t, err)
+	var generated struct {
+		Assertions []struct {
+			Source     string   `json:"source"`
+			Oracle     string   `json:"oracle"`
+			NonLiteral []string `json:"nonLiteral"`
+		} `json:"assertions"`
+	}
+	require.NoError(t, json.Unmarshal(data, &generated))
+	require.Len(t, generated.Assertions, 2)
+	for _, assertion := range generated.Assertions {
+		require.Equal(t, "internal", assertion.Oracle)
+		switch assertion.Source {
+		case "testing/go/domain_correctness_repro_test.go:TestDomainTypmodCopyFromUsesCoercedValueRepro":
+			require.Contains(t, assertion.NonLiteral, "PriorCopyFromStdInFile")
+		case "testing/go/domain_correctness_repro_test.go:TestDomainTypmodBindVarsUseCoercedValueRepro":
+			require.Contains(t, assertion.NonLiteral, "PriorBindVars")
+		default:
+			require.Failf(t, "unexpected assertion source", "%s", assertion.Source)
+		}
+	}
+}
+
 func TestPostgresOraclePromotedMapSupportsTestNameFilter(t *testing.T) {
 	outPath := filepath.Join(t.TempDir(), "publication_subscription_test.oracle-map.json")
 	cmd := exec.Command("go", "run", "gen_postgres_oracle_manifest.go",
@@ -294,6 +386,42 @@ func TestPostgresOraclePromotedMapSupportsScriptNameFilter(t *testing.T) {
 	for _, assertion := range generated.Assertions {
 		require.Equal(t, "testing/go/publication_subscription_test.go:TestPublicationDDLAndCatalogs", assertion.Source)
 		require.Equal(t, "publication table lists accept repeated and omitted table keywords", assertion.ScriptName)
+		require.Equal(t, "postgres", assertion.Oracle)
+	}
+}
+
+func TestPostgresOraclePromotedMapSupportsPackageScriptTestVariables(t *testing.T) {
+	outPath := filepath.Join(t.TempDir(), "set_test.oracle-map.json")
+	cmd := exec.Command("go", "run", "gen_postgres_oracle_manifest.go",
+		"--promote-oracle-map", "set_test.go",
+		"--oracle-test-name", "TestSetStatements",
+		"--oracle-script-name", "special case for NAMES",
+		"--promote-oracle-map-output", outPath)
+	output, err := cmd.CombinedOutput()
+	require.NoError(t, err, string(output))
+
+	data, err := os.ReadFile(outPath)
+	require.NoError(t, err)
+	var generated struct {
+		GeneratedBy string `json:"generatedBy"`
+		SourceFile  string `json:"sourceFile"`
+		Assertions  []struct {
+			Source     string `json:"source"`
+			ScriptName string `json:"scriptName"`
+			Ordinal    int    `json:"ordinal"`
+			Oracle     string `json:"oracle"`
+			Query      string `json:"query"`
+		} `json:"assertions"`
+	}
+	require.NoError(t, json.Unmarshal(data, &generated))
+	require.Equal(t, "go run gen_postgres_oracle_manifest.go --promote-oracle-map set_test.go --oracle-test-name TestSetStatements --oracle-script-name special case for NAMES", generated.GeneratedBy)
+	require.Equal(t, "testing/go/set_test.go", generated.SourceFile)
+	require.Len(t, generated.Assertions, 6)
+	require.Equal(t, 23, generated.Assertions[0].Ordinal)
+	require.Equal(t, "SHOW client_encoding", generated.Assertions[0].Query)
+	for _, assertion := range generated.Assertions {
+		require.Equal(t, "testing/go/set_test.go:TestSetStatements", assertion.Source)
+		require.Equal(t, "special case for NAMES", assertion.ScriptName)
 		require.Equal(t, "postgres", assertion.Oracle)
 	}
 }
@@ -365,12 +493,14 @@ func TestPostgresOracleManifestInventory(t *testing.T) {
 	manifest := loadPostgresOracleManifest(t)
 	validatePostgresOracleManifest(t, manifest)
 	inventory := scanScriptTestExpectationInventory(t, manifest.Inventory.AssertionFields)
+	postgresEntries := postgresOracleEntries(manifest)
 
 	require.Greater(t, inventory.TestFunctions, 250)
-	require.Greater(t, inventory.ExpectationLiterals, 10000)
+	require.Less(t, inventory.ExpectationLiterals, len(postgresEntries))
+	require.Greater(t, len(postgresEntries), 9000)
 	require.Equal(t, manifest.DefaultOracle, manifest.Inventory.AssertionsDefaultOracle)
 	require.Equal(t, "entries where oracle == postgres", manifest.Inventory.PostgresOverrides)
-	require.NotEmpty(t, postgresOracleEntries(manifest))
+	require.NotEmpty(t, postgresEntries)
 }
 
 func TestPostgresOracleManifest(t *testing.T) {
@@ -621,6 +751,8 @@ func runOracleStatements(t testing.TB, ctx context.Context, conn *pgx.Conn, vari
 func resetOracleSession(t testing.TB, ctx context.Context, conn *pgx.Conn) {
 	t.Helper()
 	_, err := conn.Exec(ctx, "RESET ROLE")
+	require.NoError(t, err)
+	_, err = conn.Exec(ctx, "RESET ALL")
 	require.NoError(t, err)
 	_, err = conn.Exec(ctx, "RESET search_path")
 	require.NoError(t, err)

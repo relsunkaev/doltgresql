@@ -1,0 +1,1550 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map constraint_correctness_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/constraint_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestPgGetConstraintdefCheckOmitsConstraintNameRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestPgGetConstraintdefCheckOmitsConstraintNameRepro",
+      "ordinal": 1,
+      "scriptName": "pg_get_constraintdef omits CHECK constraint name",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testpggetconstraintdefcheckomitsconstraintnamerepro-0001-select-pg_get_constraintdef-oid-from-pg_catalog.pg_constraint",
+      "suggestedId": "constraint-correctness-repro-test-testpggetconstraintdefcheckomitsconstraintnamerepro-0001-select-pg_get_constraintdef-oid-from-pg_catalog.pg_constraint",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_get_constraintdef(oid)\n\t\t\t\t\t\tFROM pg_catalog.pg_constraint\n\t\t\t\t\t\tWHERE conrelid = 'constraintdef_check_items'::regclass\n\t\t\t\t\t\t\tAND conname = 'amount_positive';",
+      "querySha256": "bbcdb8c77683239b236c5c1367a4e13d8a1238ce9a93d9d7f0830a2b7f060c69",
+      "expectedRows": [
+        [
+          {
+            "value": "CHECK ((amount > 0))"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestPgGetConstraintdefForeignKeyActionsRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestPgGetConstraintdefForeignKeyActionsRepro",
+      "ordinal": 1,
+      "scriptName": "pg_get_constraintdef preserves foreign key actions",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testpggetconstraintdefforeignkeyactionsrepro-0001-select-pg_get_constraintdef-oid-from-pg_catalog.pg_constraint",
+      "suggestedId": "constraint-correctness-repro-test-testpggetconstraintdefforeignkeyactionsrepro-0001-select-pg_get_constraintdef-oid-from-pg_catalog.pg_constraint",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_get_constraintdef(oid)\n\t\t\t\t\t\tFROM pg_catalog.pg_constraint\n\t\t\t\t\t\tWHERE conrelid = 'constraintdef_fk_child'::regclass\n\t\t\t\t\t\t\tAND conname = 'constraintdef_fk_child_parent_fkey';",
+      "querySha256": "b39d4bbdb87e5a26276d6db7bf4cc99945d4e99ea63469133ae60c4b56de9e18",
+      "expectedRows": [
+        [
+          {
+            "value": "FOREIGN KEY (parent_id) REFERENCES constraintdef_fk_parent(id) ON UPDATE CASCADE ON DELETE SET NULL"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestPgGetConstraintdefQuotesColumnNamesRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestPgGetConstraintdefQuotesColumnNamesRepro",
+      "ordinal": 1,
+      "scriptName": "pg_get_constraintdef quotes constrained column names",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testpggetconstraintdefquotescolumnnamesrepro-0001-select-pg_get_constraintdef-oid-from-pg_catalog.pg_constraint",
+      "suggestedId": "constraint-correctness-repro-test-testpggetconstraintdefquotescolumnnamesrepro-0001-select-pg_get_constraintdef-oid-from-pg_catalog.pg_constraint",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_get_constraintdef(oid)\n\t\t\t\t\t\tFROM pg_catalog.pg_constraint\n\t\t\t\t\t\tWHERE conrelid = 'constraintdef_quote_items'::regclass\n\t\t\t\t\t\t\tAND conname = 'constraintdef_quote_items_pkey';",
+      "querySha256": "1d3058e5ee9f376a30aef6e20787e40079d41af3ba053485b21c656d6f5f0e78",
+      "expectedRows": [
+        [
+          {
+            "value": "PRIMARY KEY (\"CaseColumn\")"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestUniqueConstraintIncludeColumnsRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestUniqueConstraintIncludeColumnsRepro",
+      "ordinal": 1,
+      "scriptName": "UNIQUE constraint INCLUDE columns are accepted",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testuniqueconstraintincludecolumnsrepro-0001-select-indexdef-from-pg_catalog.pg_indexes-where",
+      "suggestedId": "constraint-correctness-repro-test-testuniqueconstraintincludecolumnsrepro-0001-select-indexdef-from-pg_catalog.pg_indexes-where",
+      "compare": "structural",
+      "columnModes": [
+        "schema"
+      ],
+      "expectedKind": "rows",
+      "query": "SELECT indexdef\n\t\t\t\t\t\tFROM pg_catalog.pg_indexes\n\t\t\t\t\t\tWHERE tablename = 'unique_constraint_include_items'\n\t\t\t\t\t\t\tAND indexname <> 'unique_constraint_include_items_pkey';",
+      "querySha256": "146e8f9ee6255ca91af665771aeb03266bb2c66cdc5d3733885289d7d4d91545",
+      "expectedRows": [
+        [
+          {
+            "value": "CREATE UNIQUE INDEX unique_constraint_include_items_code_label_key ON {{schema}}.unique_constraint_include_items USING btree (code) INCLUDE (label)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestUniqueConstraintStorageParamsRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestUniqueConstraintStorageParamsRepro",
+      "ordinal": 1,
+      "scriptName": "UNIQUE constraint storage parameters are accepted",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testuniqueconstraintstorageparamsrepro-0001-select-indexdef-from-pg_catalog.pg_indexes-where",
+      "suggestedId": "constraint-correctness-repro-test-testuniqueconstraintstorageparamsrepro-0001-select-indexdef-from-pg_catalog.pg_indexes-where",
+      "compare": "structural",
+      "columnModes": [
+        "schema"
+      ],
+      "expectedKind": "rows",
+      "query": "SELECT indexdef\n\t\t\t\t\t\tFROM pg_catalog.pg_indexes\n\t\t\t\t\t\tWHERE tablename = 'unique_constraint_storage_items'\n\t\t\t\t\t\t\tAND indexname <> 'unique_constraint_storage_items_pkey';",
+      "querySha256": "1418180f5efabd2c2ed769345af4ffc78ff9109a4d25c4573bc9b8d0489d56fa",
+      "expectedRows": [
+        [
+          {
+            "value": "CREATE UNIQUE INDEX unique_constraint_storage_items_code_key ON {{schema}}.unique_constraint_storage_items USING btree (code) WITH (fillfactor='70')"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestUniqueConstraintDefaultTablespaceRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestUniqueConstraintDefaultTablespaceRepro",
+      "ordinal": 1,
+      "scriptName": "UNIQUE constraint default index tablespace is accepted",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testuniqueconstraintdefaulttablespacerepro-0001-select-code-from-unique_constraint_tablespace_items",
+      "suggestedId": "constraint-correctness-repro-test-testuniqueconstraintdefaulttablespacerepro-0001-select-code-from-unique_constraint_tablespace_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT code FROM unique_constraint_tablespace_items;",
+      "querySha256": "64d8e46b9cc6a0c18fbec96b5becb3b610e15949f870df56a9db657b2cf54f8f",
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestPrimaryKeyConstraintIncludeColumnsRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestPrimaryKeyConstraintIncludeColumnsRepro",
+      "ordinal": 1,
+      "scriptName": "PRIMARY KEY constraint INCLUDE columns are accepted",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testprimarykeyconstraintincludecolumnsrepro-0001-select-indexdef-from-pg_catalog.pg_indexes-where",
+      "suggestedId": "constraint-correctness-repro-test-testprimarykeyconstraintincludecolumnsrepro-0001-select-indexdef-from-pg_catalog.pg_indexes-where",
+      "compare": "structural",
+      "columnModes": [
+        "schema"
+      ],
+      "expectedKind": "rows",
+      "query": "SELECT indexdef\n\t\t\t\t\t\tFROM pg_catalog.pg_indexes\n\t\t\t\t\t\tWHERE tablename = 'primary_key_constraint_include_items';",
+      "querySha256": "4cae5a184986b81d7dd4aef29e19449724e413001bb46282d5580be209dcbbbf",
+      "expectedRows": [
+        [
+          {
+            "value": "CREATE UNIQUE INDEX primary_key_constraint_include_items_pkey ON {{schema}}.primary_key_constraint_include_items USING btree (id) INCLUDE (label)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestPrimaryKeyConstraintStorageParamsRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestPrimaryKeyConstraintStorageParamsRepro",
+      "ordinal": 1,
+      "scriptName": "PRIMARY KEY constraint storage parameters are accepted",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testprimarykeyconstraintstorageparamsrepro-0001-select-indexdef-from-pg_catalog.pg_indexes-where",
+      "suggestedId": "constraint-correctness-repro-test-testprimarykeyconstraintstorageparamsrepro-0001-select-indexdef-from-pg_catalog.pg_indexes-where",
+      "compare": "structural",
+      "columnModes": [
+        "schema"
+      ],
+      "expectedKind": "rows",
+      "query": "SELECT indexdef\n\t\t\t\t\t\tFROM pg_catalog.pg_indexes\n\t\t\t\t\t\tWHERE tablename = 'primary_key_constraint_storage_items';",
+      "querySha256": "e441d56646687e217bf5fb9b09f11d74661d0a65cbd2700ef61b8828ed52bd07",
+      "expectedRows": [
+        [
+          {
+            "value": "CREATE UNIQUE INDEX primary_key_constraint_storage_items_pkey ON {{schema}}.primary_key_constraint_storage_items USING btree (id) WITH (fillfactor='70')"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestPrimaryKeyConstraintDefaultTablespaceRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestPrimaryKeyConstraintDefaultTablespaceRepro",
+      "ordinal": 1,
+      "scriptName": "PRIMARY KEY constraint default index tablespace is accepted",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testprimarykeyconstraintdefaulttablespacerepro-0001-select-id-from-primary_key_constraint_tablespace_items",
+      "suggestedId": "constraint-correctness-repro-test-testprimarykeyconstraintdefaulttablespacerepro-0001-select-id-from-primary_key_constraint_tablespace_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM primary_key_constraint_tablespace_items;",
+      "querySha256": "6295f2ec6f661742c94a5195d60773f123678245dcf5d9e4ea4f4068bd688856",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestTypedTableUniqueConstraintIncludeColumnsRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestTypedTableUniqueConstraintIncludeColumnsRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLE OF UNIQUE constraint INCLUDE columns are accepted",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testtypedtableuniqueconstraintincludecolumnsrepro-0001-select-indexdef-from-pg_catalog.pg_indexes-where",
+      "suggestedId": "constraint-correctness-repro-test-testtypedtableuniqueconstraintincludecolumnsrepro-0001-select-indexdef-from-pg_catalog.pg_indexes-where",
+      "compare": "structural",
+      "columnModes": [
+        "schema"
+      ],
+      "expectedKind": "rows",
+      "query": "SELECT indexdef\n\t\t\t\t\t\tFROM pg_catalog.pg_indexes\n\t\t\t\t\t\tWHERE tablename = 'typed_unique_include_items';",
+      "querySha256": "db5a4143379eb4caadbe3e630339f232a62cadb4deb55adb7d8aa86bd9064937",
+      "expectedRows": [
+        [
+          {
+            "value": "CREATE UNIQUE INDEX typed_unique_include_items_code_id_key ON {{schema}}.typed_unique_include_items USING btree (code) INCLUDE (id)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestTypedTablePrimaryKeyConstraintIncludeColumnsRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestTypedTablePrimaryKeyConstraintIncludeColumnsRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLE OF PRIMARY KEY constraint INCLUDE columns are accepted",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testtypedtableprimarykeyconstraintincludecolumnsrepro-0001-select-indexdef-from-pg_catalog.pg_indexes-where",
+      "suggestedId": "constraint-correctness-repro-test-testtypedtableprimarykeyconstraintincludecolumnsrepro-0001-select-indexdef-from-pg_catalog.pg_indexes-where",
+      "compare": "structural",
+      "columnModes": [
+        "schema"
+      ],
+      "expectedKind": "rows",
+      "query": "SELECT indexdef\n\t\t\t\t\t\tFROM pg_catalog.pg_indexes\n\t\t\t\t\t\tWHERE tablename = 'typed_primary_key_include_items';",
+      "querySha256": "521fb9f3dc73b5d64debb27b5f03932a012c58742a52e9c33c067f9679189d3c",
+      "expectedRows": [
+        [
+          {
+            "value": "CREATE UNIQUE INDEX typed_primary_key_include_items_pkey ON {{schema}}.typed_primary_key_include_items USING btree (id) INCLUDE (label)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestTypedTableUniqueConstraintStorageParamsRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestTypedTableUniqueConstraintStorageParamsRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLE OF UNIQUE constraint storage parameters are accepted",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testtypedtableuniqueconstraintstorageparamsrepro-0001-select-indexdef-from-pg_catalog.pg_indexes-where",
+      "suggestedId": "constraint-correctness-repro-test-testtypedtableuniqueconstraintstorageparamsrepro-0001-select-indexdef-from-pg_catalog.pg_indexes-where",
+      "compare": "structural",
+      "columnModes": [
+        "schema"
+      ],
+      "expectedKind": "rows",
+      "query": "SELECT indexdef\n\t\t\t\t\t\tFROM pg_catalog.pg_indexes\n\t\t\t\t\t\tWHERE tablename = 'typed_unique_storage_items';",
+      "querySha256": "52454c993465f55b1335c04dfaaa93648efc20e2231a70b87e3e1ebe73bb0afc",
+      "expectedRows": [
+        [
+          {
+            "value": "CREATE UNIQUE INDEX typed_unique_storage_items_code_key ON {{schema}}.typed_unique_storage_items USING btree (code) WITH (fillfactor='70')"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestTypedTablePrimaryKeyConstraintStorageParamsRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestTypedTablePrimaryKeyConstraintStorageParamsRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLE OF PRIMARY KEY constraint storage parameters are accepted",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testtypedtableprimarykeyconstraintstorageparamsrepro-0001-select-indexdef-from-pg_catalog.pg_indexes-where",
+      "suggestedId": "constraint-correctness-repro-test-testtypedtableprimarykeyconstraintstorageparamsrepro-0001-select-indexdef-from-pg_catalog.pg_indexes-where",
+      "compare": "structural",
+      "columnModes": [
+        "schema"
+      ],
+      "expectedKind": "rows",
+      "query": "SELECT indexdef\n\t\t\t\t\t\tFROM pg_catalog.pg_indexes\n\t\t\t\t\t\tWHERE tablename = 'typed_primary_key_storage_items';",
+      "querySha256": "e78e4d2c6f46c3d5929a0ca850cac6f3e9053d8db21b18451482e486c16c1bc0",
+      "expectedRows": [
+        [
+          {
+            "value": "CREATE UNIQUE INDEX typed_primary_key_storage_items_pkey ON {{schema}}.typed_primary_key_storage_items USING btree (id) WITH (fillfactor='70')"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestTypedTableUniqueConstraintDefaultTablespaceRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestTypedTableUniqueConstraintDefaultTablespaceRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLE OF UNIQUE constraint default index tablespace is accepted",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testtypedtableuniqueconstraintdefaulttablespacerepro-0001-select-code-from-typed_unique_tablespace_items",
+      "suggestedId": "constraint-correctness-repro-test-testtypedtableuniqueconstraintdefaulttablespacerepro-0001-select-code-from-typed_unique_tablespace_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT code FROM typed_unique_tablespace_items;",
+      "querySha256": "2a6bfb98d49f633911adf27b77ca25e563fb4c721a551f2b510d6fd782f9e4f0",
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestTypedTablePrimaryKeyConstraintDefaultTablespaceRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestTypedTablePrimaryKeyConstraintDefaultTablespaceRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLE OF PRIMARY KEY constraint default index tablespace is accepted",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testtypedtableprimarykeyconstraintdefaulttablespacerepro-0001-select-id-from-typed_primary_key_tablespace_items",
+      "suggestedId": "constraint-correctness-repro-test-testtypedtableprimarykeyconstraintdefaulttablespacerepro-0001-select-id-from-typed_primary_key_tablespace_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM typed_primary_key_tablespace_items;",
+      "querySha256": "16956a1149b4e08feed7e52dcc328a18b5e843aabe6172c4e3fd628d1cf4b81c",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestDeferrableUniqueConstraintCanBeFixedBeforeCommitRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestDeferrableUniqueConstraintCanBeFixedBeforeCommitRepro",
+      "ordinal": 1,
+      "scriptName": "deferrable unique violation can be repaired before commit",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testdeferrableuniqueconstraintcanbefixedbeforecommitrepro-0001-select-id-code-from-deferred_unique_items",
+      "suggestedId": "constraint-correctness-repro-test-testdeferrableuniqueconstraintcanbefixedbeforecommitrepro-0001-select-id-code-from-deferred_unique_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, code FROM deferred_unique_items ORDER BY id;",
+      "querySha256": "4e70b7c40dda8873711ec9195e19b577a84c667db27f573c8cda2a1c54a96127",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "10"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "20"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestDeferrablePrimaryKeyConstraintCanBeFixedBeforeCommitRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestDeferrablePrimaryKeyConstraintCanBeFixedBeforeCommitRepro",
+      "ordinal": 1,
+      "scriptName": "deferrable primary key violation can be repaired before commit",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testdeferrableprimarykeyconstraintcanbefixedbeforecommitrepro-0001-select-id-label-from-deferred_primary_key_items",
+      "suggestedId": "constraint-correctness-repro-test-testdeferrableprimarykeyconstraintcanbefixedbeforecommitrepro-0001-select-id-label-from-deferred_primary_key_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM deferred_primary_key_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "5c1b4084b1363a9f25c6c3550930dc6c46957314a40c6360d6819345474775f7",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "first"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "second"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestSetConstraintsDefersUniqueConstraintRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestSetConstraintsDefersUniqueConstraintRepro",
+      "ordinal": 1,
+      "scriptName": "SET CONSTRAINTS defers unique validation",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testsetconstraintsdefersuniqueconstraintrepro-0001-select-id-code-from-set_constraints_unique_items",
+      "suggestedId": "constraint-correctness-repro-test-testsetconstraintsdefersuniqueconstraintrepro-0001-select-id-code-from-set_constraints_unique_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, code FROM set_constraints_unique_items ORDER BY id;",
+      "querySha256": "c9e003c25178f3666f6a68675e9aa5648405752626f8a7c138d98b8705d6ede1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "10"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "20"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestDeferrableUniqueConstraintViolationCheckedAtCommitRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestDeferrableUniqueConstraintViolationCheckedAtCommitRepro",
+      "ordinal": 1,
+      "scriptName": "deferrable unique violation is checked at commit",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testdeferrableuniqueconstraintviolationcheckedatcommitrepro-0001-commit",
+      "suggestedId": "constraint-correctness-repro-test-testdeferrableuniqueconstraintviolationcheckedatcommitrepro-0001-commit",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "COMMIT;",
+      "querySha256": "2db35aa37c4005aa96055e900adc9bfbbd70d106820fefcb83216b7cc3f95422",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestSetConstraintsImmediateChecksDeferredUniqueConstraintRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestSetConstraintsImmediateChecksDeferredUniqueConstraintRepro",
+      "ordinal": 1,
+      "scriptName": "SET CONSTRAINTS IMMEDIATE checks deferred unique violations",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testsetconstraintsimmediatechecksdeferreduniqueconstraintrepro-0001-set-constraints-all-immediate",
+      "suggestedId": "constraint-correctness-repro-test-testsetconstraintsimmediatechecksdeferreduniqueconstraintrepro-0001-set-constraints-all-immediate",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "SET CONSTRAINTS ALL IMMEDIATE;",
+      "querySha256": "ba9bd7a1dc576127a8132d0fbada1e9242c2b2b8441f29a131eed0537bbbdfc8",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestDeferrableForeignKeyCanBeFixedBeforeCommitRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestDeferrableForeignKeyCanBeFixedBeforeCommitRepro",
+      "ordinal": 1,
+      "scriptName": "deferrable foreign key violation can be repaired before commit",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testdeferrableforeignkeycanbefixedbeforecommitrepro-0001-select-id-parent_id-from-deferred_fk_children",
+      "suggestedId": "constraint-correctness-repro-test-testdeferrableforeignkeycanbefixedbeforecommitrepro-0001-select-id-parent_id-from-deferred_fk_children",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, parent_id FROM deferred_fk_children;",
+      "querySha256": "86b400ed281a27a367df2623c18606a182ca2f4c19a7d0399a0c5010efb703de",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "42"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestSetConstraintsImmediateChecksDeferredForeignKeyRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestSetConstraintsImmediateChecksDeferredForeignKeyRepro",
+      "ordinal": 1,
+      "scriptName": "SET CONSTRAINTS IMMEDIATE checks deferred foreign key violations",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testsetconstraintsimmediatechecksdeferredforeignkeyrepro-0001-set-constraints-all-immediate",
+      "suggestedId": "constraint-correctness-repro-test-testsetconstraintsimmediatechecksdeferredforeignkeyrepro-0001-set-constraints-all-immediate",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23503",
+      "errorSeverity": "ERROR",
+      "query": "SET CONSTRAINTS ALL IMMEDIATE;",
+      "querySha256": "ba9bd7a1dc576127a8132d0fbada1e9242c2b2b8441f29a131eed0537bbbdfc8",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestSetConstraintsDefersInitiallyImmediateForeignKeyRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestSetConstraintsDefersInitiallyImmediateForeignKeyRepro",
+      "ordinal": 1,
+      "scriptName": "SET CONSTRAINTS DEFERRED defers initially immediate foreign key",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testsetconstraintsdefersinitiallyimmediateforeignkeyrepro-0001-select-id-parent_id-from-deferred_immediate_fk_children",
+      "suggestedId": "constraint-correctness-repro-test-testsetconstraintsdefersinitiallyimmediateforeignkeyrepro-0001-select-id-parent_id-from-deferred_immediate_fk_children",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, parent_id FROM deferred_immediate_fk_children;",
+      "querySha256": "076f72ed8c4240e99a50ef7b3f75a6cd64e1d55f6f39b8f08aa6fce4f63e63cf",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "42"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestRollbackToSavepointClearsDeferredForeignKeyViolationRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestRollbackToSavepointClearsDeferredForeignKeyViolationRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK TO SAVEPOINT clears deferred foreign key violation",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testrollbacktosavepointclearsdeferredforeignkeyviolationrepro-0001-select-count-*-from-deferred_savepoint_fk_children",
+      "suggestedId": "constraint-correctness-repro-test-testrollbacktosavepointclearsdeferredforeignkeyviolationrepro-0001-select-count-*-from-deferred_savepoint_fk_children",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM deferred_savepoint_fk_children;",
+      "querySha256": "baa6d4e27313d1780c466f1d37f9e1be299a4629bef9d71f6c07abbd568f6c30",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestAlterForeignKeyConstraintDeferrabilityRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestAlterForeignKeyConstraintDeferrabilityRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER CONSTRAINT changes foreign key deferrability",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testalterforeignkeyconstraintdeferrabilityrepro-0001-select-id-parent_id-from-alter_fk_deferrability_children",
+      "suggestedId": "constraint-correctness-repro-test-testalterforeignkeyconstraintdeferrabilityrepro-0001-select-id-parent_id-from-alter_fk_deferrability_children",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, parent_id FROM alter_fk_deferrability_children;",
+      "querySha256": "7cc1fda7232c215afe37556b6c73be0f2789de7ad8548d74cb26d7f7e89cd083",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "42"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestDeferredForeignKeyParentDeleteCanBeRepairedBeforeCommitRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestDeferredForeignKeyParentDeleteCanBeRepairedBeforeCommitRepro",
+      "ordinal": 1,
+      "scriptName": "deferred foreign key parent delete can be repaired before commit",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testdeferredforeignkeyparentdeletecanberepairedbeforecommitrepro-0001-select-count-*-from-deferred_delete_fk_parents",
+      "suggestedId": "constraint-correctness-repro-test-testdeferredforeignkeyparentdeletecanberepairedbeforecommitrepro-0001-select-count-*-from-deferred_delete_fk_parents",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM deferred_delete_fk_parents;",
+      "querySha256": "0b79fd0fc82400b43288bb270d2b76753733040092eb4af15f2a902863f1d09d",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestDeferredForeignKeyParentDeleteCanBeRepairedBeforeCommitRepro#0002",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestDeferredForeignKeyParentDeleteCanBeRepairedBeforeCommitRepro",
+      "ordinal": 2,
+      "scriptName": "deferred foreign key parent delete can be repaired before commit",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testdeferredforeignkeyparentdeletecanberepairedbeforecommitrepro-0002-select-count-*-from-deferred_delete_fk_children",
+      "suggestedId": "constraint-correctness-repro-test-testdeferredforeignkeyparentdeletecanberepairedbeforecommitrepro-0002-select-count-*-from-deferred_delete_fk_children",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM deferred_delete_fk_children;",
+      "querySha256": "eb66d4c30eefe19d08886c988030827f09bdd51c28d0f38ab47221256a1a6429",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestDeferredForeignKeyParentUpdateCanBeRepairedBeforeCommitRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestDeferredForeignKeyParentUpdateCanBeRepairedBeforeCommitRepro",
+      "ordinal": 1,
+      "scriptName": "deferred foreign key parent update can be repaired before commit",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testdeferredforeignkeyparentupdatecanberepairedbeforecommitrepro-0001-select-id-from-deferred_update_fk_parents",
+      "suggestedId": "constraint-correctness-repro-test-testdeferredforeignkeyparentupdatecanberepairedbeforecommitrepro-0001-select-id-from-deferred_update_fk_parents",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM deferred_update_fk_parents;",
+      "querySha256": "8a60184d327a3617bfff65adf88b60596af4589af3ffe7054ee3b19e3badf2e7",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestDeferredForeignKeyParentUpdateCanBeRepairedBeforeCommitRepro#0002",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestDeferredForeignKeyParentUpdateCanBeRepairedBeforeCommitRepro",
+      "ordinal": 2,
+      "scriptName": "deferred foreign key parent update can be repaired before commit",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testdeferredforeignkeyparentupdatecanberepairedbeforecommitrepro-0002-select-parent_id-from-deferred_update_fk_children",
+      "suggestedId": "constraint-correctness-repro-test-testdeferredforeignkeyparentupdatecanberepairedbeforecommitrepro-0002-select-parent_id-from-deferred_update_fk_children",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT parent_id FROM deferred_update_fk_children;",
+      "querySha256": "5dca7572128427785badb4aebe446b4e452da1b0018db1d8b4553153037c05d3",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestAddCheckConstraintValidatesExistingRowsRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestAddCheckConstraintValidatesExistingRowsRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER TABLE ADD CHECK validates existing rows",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testaddcheckconstraintvalidatesexistingrowsrepro-0001-alter-table-check_existing_items-add-constraint",
+      "suggestedId": "constraint-correctness-repro-test-testaddcheckconstraintvalidatesexistingrowsrepro-0001-alter-table-check_existing_items-add-constraint",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE check_existing_items\n\t\t\t\t\t\tADD CONSTRAINT amount_positive CHECK (amount > 0);",
+      "querySha256": "400ddee9593b85a86a6d2623dfad558fcbc44d1a2a5089bb6972a802f089a86d",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestAddForeignKeyConstraintValidatesExistingRowsRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestAddForeignKeyConstraintValidatesExistingRowsRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER TABLE ADD FOREIGN KEY validates existing rows",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testaddforeignkeyconstraintvalidatesexistingrowsrepro-0001-alter-table-fk_existing_children-add-constraint",
+      "suggestedId": "constraint-correctness-repro-test-testaddforeignkeyconstraintvalidatesexistingrowsrepro-0001-alter-table-fk_existing_children-add-constraint",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23503",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE fk_existing_children\n\t\t\t\t\t\tADD CONSTRAINT fk_existing_parent_fk\n\t\t\t\t\t\tFOREIGN KEY (parent_id) REFERENCES fk_existing_parents(id);",
+      "querySha256": "3304487a7a4f647ac85deb4fc07454bf1ea73a7755a5ef77fe18ca5949ae9cdd",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestAddUniqueConstraintValidatesExistingRowsRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestAddUniqueConstraintValidatesExistingRowsRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER TABLE ADD UNIQUE validates existing rows",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testadduniqueconstraintvalidatesexistingrowsrepro-0001-alter-table-unique_existing_items-add-constraint",
+      "suggestedId": "constraint-correctness-repro-test-testadduniqueconstraintvalidatesexistingrowsrepro-0001-alter-table-unique_existing_items-add-constraint",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE unique_existing_items\n\t\t\t\t\t\tADD CONSTRAINT unique_existing_code_key UNIQUE (code);",
+      "querySha256": "eacf18865bea634e1da1da5a01b62b2733096d8ed91b37a7acd2ccb39359844b",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestUniqueConstraintNullsNotDistinctRejectsDuplicateNullsRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestUniqueConstraintNullsNotDistinctRejectsDuplicateNullsRepro",
+      "ordinal": 1,
+      "scriptName": "unique constraint NULLS NOT DISTINCT rejects duplicate NULLs",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testuniqueconstraintnullsnotdistinctrejectsduplicatenullsrepro-0001-insert-into-values-2-null",
+      "suggestedId": "constraint-correctness-repro-test-testuniqueconstraintnullsnotdistinctrejectsduplicatenullsrepro-0001-insert-into-values-2-null",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO unique_constraint_nulls_not_distinct_items VALUES (2, NULL);",
+      "querySha256": "302bebae3f9558ed619129f9a5574f115f6b67f9c41d29483db317b3d0da572e",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestUniqueConstraintNullsNotDistinctRejectsDuplicateNullsRepro#0002",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestUniqueConstraintNullsNotDistinctRejectsDuplicateNullsRepro",
+      "ordinal": 2,
+      "scriptName": "unique constraint NULLS NOT DISTINCT rejects duplicate NULLs",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testuniqueconstraintnullsnotdistinctrejectsduplicatenullsrepro-0002-select-id-code-from-order",
+      "suggestedId": "constraint-correctness-repro-test-testuniqueconstraintnullsnotdistinctrejectsduplicatenullsrepro-0002-select-id-code-from-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, code\n\t\t\t\t\t\tFROM unique_constraint_nulls_not_distinct_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "862732acbeb15739e0f5c3da72d30a608d7feb93e3a867fd53742777dcc2ae7d",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestAddUniqueConstraintNullsNotDistinctRejectsExistingDuplicateNullsRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestAddUniqueConstraintNullsNotDistinctRejectsExistingDuplicateNullsRepro",
+      "ordinal": 1,
+      "scriptName": "ADD CONSTRAINT UNIQUE NULLS NOT DISTINCT rejects existing duplicate NULLs",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testadduniqueconstraintnullsnotdistinctrejectsexistingduplicatenullsrepro-0001-alter-table-add_nulls_not_distinct_existing_items-add-constraint",
+      "suggestedId": "constraint-correctness-repro-test-testadduniqueconstraintnullsnotdistinctrejectsexistingduplicatenullsrepro-0001-alter-table-add_nulls_not_distinct_existing_items-add-constraint",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE add_nulls_not_distinct_existing_items\n\t\t\t\t\t\tADD CONSTRAINT add_nulls_not_distinct_existing_code_key\n\t\t\t\t\t\tUNIQUE NULLS NOT DISTINCT (code);",
+      "querySha256": "b508e128511044000a6ec267fd343210d0810e53600618e250407f4dfe11f115",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestAddUniqueConstraintNullsNotDistinctRejectsExistingDuplicateNullsRepro#0002",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestAddUniqueConstraintNullsNotDistinctRejectsExistingDuplicateNullsRepro",
+      "ordinal": 2,
+      "scriptName": "ADD CONSTRAINT UNIQUE NULLS NOT DISTINCT rejects existing duplicate NULLs",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testadduniqueconstraintnullsnotdistinctrejectsexistingduplicatenullsrepro-0002-select-count-*-from-information_schema.table_constraints",
+      "suggestedId": "constraint-correctness-repro-test-testadduniqueconstraintnullsnotdistinctrejectsexistingduplicatenullsrepro-0002-select-count-*-from-information_schema.table_constraints",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM information_schema.table_constraints\n\t\t\t\t\t\tWHERE table_name = 'add_nulls_not_distinct_existing_items'\n\t\t\t\t\t\t\tAND constraint_name = 'add_nulls_not_distinct_existing_code_key';",
+      "querySha256": "05583494e8a0214133da3fe017a31d86abe5bc14dd7c7cb704fe6dc0401e6f35",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestAddPrimaryKeyRejectsExistingNullsGuard#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestAddPrimaryKeyRejectsExistingNullsGuard",
+      "ordinal": 1,
+      "scriptName": "ADD PRIMARY KEY rejects existing NULLs",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testaddprimarykeyrejectsexistingnullsguard-0001-alter-table-add_primary_key_existing_null_items-add-constraint",
+      "suggestedId": "constraint-correctness-repro-test-testaddprimarykeyrejectsexistingnullsguard-0001-alter-table-add_primary_key_existing_null_items-add-constraint",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23502",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE add_primary_key_existing_null_items\n\t\t\t\t\t\tADD CONSTRAINT add_primary_key_existing_null_items_pkey\n\t\t\t\t\t\tPRIMARY KEY (id);",
+      "querySha256": "3cee2be83bb011315687ad96e44299308743cf57b09310cf84abbec72ccfbd79",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestAddPrimaryKeyRejectsExistingNullsGuard#0002",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestAddPrimaryKeyRejectsExistingNullsGuard",
+      "ordinal": 2,
+      "scriptName": "ADD PRIMARY KEY rejects existing NULLs",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testaddprimarykeyrejectsexistingnullsguard-0002-select-count-*-from-information_schema.table_constraints",
+      "suggestedId": "constraint-correctness-repro-test-testaddprimarykeyrejectsexistingnullsguard-0002-select-count-*-from-information_schema.table_constraints",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM information_schema.table_constraints\n\t\t\t\t\t\tWHERE table_name = 'add_primary_key_existing_null_items'\n\t\t\t\t\t\t\tAND constraint_type = 'PRIMARY KEY';",
+      "querySha256": "51d4ab8e20a8deb7a3eff8b8d137c9ee7196c06ba215a5db418ca68043b5eedc",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestAddPrimaryKeyRejectsExistingDuplicatesRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestAddPrimaryKeyRejectsExistingDuplicatesRepro",
+      "ordinal": 1,
+      "scriptName": "ADD PRIMARY KEY rejects existing duplicates",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testaddprimarykeyrejectsexistingduplicatesrepro-0001-alter-table-add_primary_key_existing_duplicate_items-add-constraint",
+      "suggestedId": "constraint-correctness-repro-test-testaddprimarykeyrejectsexistingduplicatesrepro-0001-alter-table-add_primary_key_existing_duplicate_items-add-constraint",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE add_primary_key_existing_duplicate_items\n\t\t\t\t\t\tADD CONSTRAINT add_primary_key_existing_duplicate_items_pkey\n\t\t\t\t\t\tPRIMARY KEY (id);",
+      "querySha256": "ee714c6c86708e5632f07953d0e876475dd0f4b5f1c4aa67b9c5b10ae12cb458",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestAddPrimaryKeyRejectsExistingDuplicatesRepro#0002",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestAddPrimaryKeyRejectsExistingDuplicatesRepro",
+      "ordinal": 2,
+      "scriptName": "ADD PRIMARY KEY rejects existing duplicates",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testaddprimarykeyrejectsexistingduplicatesrepro-0002-select-count-*-from-information_schema.table_constraints",
+      "suggestedId": "constraint-correctness-repro-test-testaddprimarykeyrejectsexistingduplicatesrepro-0002-select-count-*-from-information_schema.table_constraints",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM information_schema.table_constraints\n\t\t\t\t\t\tWHERE table_name = 'add_primary_key_existing_duplicate_items'\n\t\t\t\t\t\t\tAND constraint_type = 'PRIMARY KEY';",
+      "querySha256": "1754254566168272d41bcb8e54059893e7eb12fc281a230718b58ee2184df719",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestAddUniqueColumnWithDuplicateDefaultValidatesExistingRowsGuard#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestAddUniqueColumnWithDuplicateDefaultValidatesExistingRowsGuard",
+      "ordinal": 1,
+      "scriptName": "ALTER TABLE ADD COLUMN UNIQUE validates duplicate defaults",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testadduniquecolumnwithduplicatedefaultvalidatesexistingrowsguard-0001-alter-table-add_unique_default_existing_items-add-column",
+      "suggestedId": "constraint-correctness-repro-test-testadduniquecolumnwithduplicatedefaultvalidatesexistingrowsguard-0001-alter-table-add_unique_default_existing_items-add-column",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE add_unique_default_existing_items\n\t\t\t\t\t\tADD COLUMN code INT UNIQUE DEFAULT 7;",
+      "querySha256": "ca82a09ed51f3cb5b01a90cce1a718bc7fc2c61db945f47a7520b47a645ead23",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestAddUniqueColumnWithDuplicateDefaultValidatesExistingRowsGuard#0002",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestAddUniqueColumnWithDuplicateDefaultValidatesExistingRowsGuard",
+      "ordinal": 2,
+      "scriptName": "ALTER TABLE ADD COLUMN UNIQUE validates duplicate defaults",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testadduniquecolumnwithduplicatedefaultvalidatesexistingrowsguard-0002-select-id-from-add_unique_default_existing_items-order",
+      "suggestedId": "constraint-correctness-repro-test-testadduniquecolumnwithduplicatedefaultvalidatesexistingrowsguard-0002-select-id-from-add_unique_default_existing_items-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id\n\t\t\t\t\t\tFROM add_unique_default_existing_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "48fc0bbdeeb5f278e6688a83cbd5f44d3f140b5017c3527687312c98a8bb01e9",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestAlterColumnSetNotNullValidatesExistingRowsRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestAlterColumnSetNotNullValidatesExistingRowsRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER COLUMN SET NOT NULL validates existing rows",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testaltercolumnsetnotnullvalidatesexistingrowsrepro-0001-alter-table-set_not_null_existing_items-alter-column",
+      "suggestedId": "constraint-correctness-repro-test-testaltercolumnsetnotnullvalidatesexistingrowsrepro-0001-alter-table-set_not_null_existing_items-alter-column",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23502",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE set_not_null_existing_items\n\t\t\t\t\t\tALTER COLUMN required_value SET NOT NULL;",
+      "querySha256": "18b727d9a1122a64b7b2358930b8cb95b9610c6579c5b9072b92ab166d9f37e2",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestAddColumnCheckConstraintValidatesBackfilledRowsRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestAddColumnCheckConstraintValidatesBackfilledRowsRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER TABLE ADD COLUMN validates backfilled CHECK values",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testaddcolumncheckconstraintvalidatesbackfilledrowsrepro-0001-alter-table-add_check_column_existing_items-add-column",
+      "suggestedId": "constraint-correctness-repro-test-testaddcolumncheckconstraintvalidatesbackfilledrowsrepro-0001-alter-table-add_check_column_existing_items-add-column",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE add_check_column_existing_items\n\t\t\t\t\t\tADD COLUMN amount INT DEFAULT -1 CHECK (amount > 0);",
+      "querySha256": "f85ea439d06d6900c02a43b5bbb6bb9b7e507b7b46bae03442b6c32f1ce08a05",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestAddColumnForeignKeyValidatesBackfilledDefaultGuard#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestAddColumnForeignKeyValidatesBackfilledDefaultGuard",
+      "ordinal": 1,
+      "scriptName": "ALTER TABLE ADD COLUMN validates backfilled foreign keys",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testaddcolumnforeignkeyvalidatesbackfilleddefaultguard-0001-alter-table-add_fk_column_default_children-add-column",
+      "suggestedId": "constraint-correctness-repro-test-testaddcolumnforeignkeyvalidatesbackfilleddefaultguard-0001-alter-table-add_fk_column_default_children-add-column",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23503",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE add_fk_column_default_children\n\t\t\t\t\t\tADD COLUMN parent_id INT DEFAULT 42\n\t\t\t\t\t\tREFERENCES add_fk_column_default_parents(id);",
+      "querySha256": "3c7333c7684b3a95dc9c8a52c068afc2833d3fb6312267e53fbf65899e15ca80",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestAddColumnForeignKeyValidatesBackfilledDefaultGuard#0002",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestAddColumnForeignKeyValidatesBackfilledDefaultGuard",
+      "ordinal": 2,
+      "scriptName": "ALTER TABLE ADD COLUMN validates backfilled foreign keys",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testaddcolumnforeignkeyvalidatesbackfilleddefaultguard-0002-select-count-*-from-information_schema.columns",
+      "suggestedId": "constraint-correctness-repro-test-testaddcolumnforeignkeyvalidatesbackfilleddefaultguard-0002-select-count-*-from-information_schema.columns",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM information_schema.columns\n\t\t\t\t\t\tWHERE table_name = 'add_fk_column_default_children'\n\t\t\t\t\t\t\tAND column_name = 'parent_id';",
+      "querySha256": "08e528ccd418c27a1c68c6ef343360a4faea3a9861b6454f39ff17e3fca24d3c",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestCheckConstraintsRejectNonScalarExpressionsRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestCheckConstraintsRejectNonScalarExpressionsRepro",
+      "ordinal": 1,
+      "scriptName": "CHECK rejects subquery expressions",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testcheckconstraintsrejectnonscalarexpressionsrepro-0001-create-table-check_subquery_items-id-int",
+      "suggestedId": "constraint-correctness-repro-test-testcheckconstraintsrejectnonscalarexpressionsrepro-0001-create-table-check_subquery_items-id-int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "0A000",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TABLE check_subquery_items (\n\t\t\t\t\t\tid INT CHECK (id > (SELECT 0))\n\t\t\t\t\t);",
+      "querySha256": "a99c8d16beaa49667cec316b46ec22d8fbd4f0faedb7dffd5a2e4c55c5f36858",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestCheckConstraintsRejectNonScalarExpressionsRepro#0002",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestCheckConstraintsRejectNonScalarExpressionsRepro",
+      "ordinal": 2,
+      "scriptName": "CHECK rejects aggregate expressions",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testcheckconstraintsrejectnonscalarexpressionsrepro-0002-create-table-check_aggregate_items-id-int",
+      "suggestedId": "constraint-correctness-repro-test-testcheckconstraintsrejectnonscalarexpressionsrepro-0002-create-table-check_aggregate_items-id-int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42803",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TABLE check_aggregate_items (\n\t\t\t\t\t\tid INT CHECK (avg(id) > 0)\n\t\t\t\t\t);",
+      "querySha256": "6db03b716b331738ccb36badae302b885cbf4237f09756f2c4873c989ed52cf5",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestCheckConstraintsRejectNonScalarExpressionsRepro#0003",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestCheckConstraintsRejectNonScalarExpressionsRepro",
+      "ordinal": 3,
+      "scriptName": "CHECK rejects window expressions",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testcheckconstraintsrejectnonscalarexpressionsrepro-0003-create-table-check_window_items-id-int",
+      "suggestedId": "constraint-correctness-repro-test-testcheckconstraintsrejectnonscalarexpressionsrepro-0003-create-table-check_window_items-id-int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P20",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TABLE check_window_items (\n\t\t\t\t\t\tid INT CHECK (row_number() OVER () > 0)\n\t\t\t\t\t);",
+      "querySha256": "3592a8fe8b9c3392e92bdf06e1dcf98c5275d9b3c4111c775f452347e437986f",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestCheckConstraintsRejectNonScalarExpressionsRepro#0004",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestCheckConstraintsRejectNonScalarExpressionsRepro",
+      "ordinal": 4,
+      "scriptName": "CHECK rejects set-returning expressions",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testcheckconstraintsrejectnonscalarexpressionsrepro-0004-create-table-check_srf_items-id-int",
+      "suggestedId": "constraint-correctness-repro-test-testcheckconstraintsrejectnonscalarexpressionsrepro-0004-create-table-check_srf_items-id-int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "0A000",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TABLE check_srf_items (\n\t\t\t\t\t\tid INT CHECK (generate_series(1, 2) > 0)\n\t\t\t\t\t);",
+      "querySha256": "adf733d448acfa16334925083d0cef3743bc579f19c6b6198205dfcf42dac683",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestCheckConstraintsRejectNonScalarExpressionsRepro#0005",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestCheckConstraintsRejectNonScalarExpressionsRepro",
+      "ordinal": 5,
+      "scriptName": "ALTER TABLE ADD CHECK rejects set-returning expressions",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testcheckconstraintsrejectnonscalarexpressionsrepro-0005-alter-table-alter_check_srf_items-add-constraint",
+      "suggestedId": "constraint-correctness-repro-test-testcheckconstraintsrejectnonscalarexpressionsrepro-0005-alter-table-alter_check_srf_items-add-constraint",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "0A000",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE alter_check_srf_items\n\t\t\t\t\t\tADD CONSTRAINT alter_check_srf_check CHECK (generate_series(1, 2) > 0);",
+      "querySha256": "dad13acc083d23974845e42af922ff686249e9d3c2f212fcfa7000e6c240fd07",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestMultipleColumnCheckConstraintsAreEnforcedRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestMultipleColumnCheckConstraintsAreEnforcedRepro",
+      "ordinal": 1,
+      "scriptName": "multiple column check constraints are enforced",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testmultiplecolumncheckconstraintsareenforcedrepro-0001-insert-into-multi_check_items-values-2",
+      "suggestedId": "constraint-correctness-repro-test-testmultiplecolumncheckconstraintsareenforcedrepro-0001-insert-into-multi_check_items-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO multi_check_items VALUES (2, 200);",
+      "querySha256": "e792f6c79431899d5c468f1bba71e0a2696ec21e98220bda9e44f39dd31afd4f",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestMultipleColumnCheckConstraintsAreEnforcedRepro#0002",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestMultipleColumnCheckConstraintsAreEnforcedRepro",
+      "ordinal": 2,
+      "scriptName": "multiple column check constraints are enforced",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testmultiplecolumncheckconstraintsareenforcedrepro-0002-insert-into-multi_check_items-values-3",
+      "suggestedId": "constraint-correctness-repro-test-testmultiplecolumncheckconstraintsareenforcedrepro-0002-insert-into-multi_check_items-values-3",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO multi_check_items VALUES (3, 5);",
+      "querySha256": "56953a438418e1ef5c704bc3f64e0863016374b32dbdff4b351c187d306a02e3",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestMultipleColumnCheckConstraintsAreEnforcedRepro#0003",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestMultipleColumnCheckConstraintsAreEnforcedRepro",
+      "ordinal": 3,
+      "scriptName": "multiple column check constraints are enforced",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testmultiplecolumncheckconstraintsareenforcedrepro-0003-select-id-amount-from-multi_check_items",
+      "suggestedId": "constraint-correctness-repro-test-testmultiplecolumncheckconstraintsareenforcedrepro-0003-select-id-amount-from-multi_check_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, amount FROM multi_check_items;",
+      "querySha256": "79a9d9ad910f925bda25a006a969286f353cf267b99c5c30be78ffed511580e9",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "20"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestCreateTableCheckConstraintNoInheritGuard#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestCreateTableCheckConstraintNoInheritGuard",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLE accepts CHECK constraint NO INHERIT",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testcreatetablecheckconstraintnoinheritguard-0001-select-conname-connoinherit-from-pg_catalog.pg_constraint",
+      "suggestedId": "constraint-correctness-repro-test-testcreatetablecheckconstraintnoinheritguard-0001-select-conname-connoinherit-from-pg_catalog.pg_constraint",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT conname, connoinherit\n\t\t\t\t\t\tFROM pg_catalog.pg_constraint\n\t\t\t\t\t\tWHERE conname = 'check_no_inherit_positive';",
+      "querySha256": "c63e5262d4d48c6ea0952362aff8229c120ff6c564ac20d28e9d2f1f0e7d1e93",
+      "expectedRows": [
+        [
+          {
+            "value": "check_no_inherit_positive"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestCreateTableCheckConstraintNoInheritGuard#0002",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestCreateTableCheckConstraintNoInheritGuard",
+      "ordinal": 2,
+      "scriptName": "CREATE TABLE accepts CHECK constraint NO INHERIT",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testcreatetablecheckconstraintnoinheritguard-0002-insert-into-check_no_inherit_items-values-1",
+      "suggestedId": "constraint-correctness-repro-test-testcreatetablecheckconstraintnoinheritguard-0002-insert-into-check_no_inherit_items-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO check_no_inherit_items VALUES (-1);",
+      "querySha256": "a4b75d241a57633ac47f2467271244bdb5a87202b504c011ab81943878aee073",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestAlterTableAddCheckConstraintNoInheritRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestAlterTableAddCheckConstraintNoInheritRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER TABLE ADD CONSTRAINT accepts CHECK constraint NO INHERIT",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testaltertableaddcheckconstraintnoinheritrepro-0001-select-conname-connoinherit-from-pg_catalog.pg_constraint",
+      "suggestedId": "constraint-correctness-repro-test-testaltertableaddcheckconstraintnoinheritrepro-0001-select-conname-connoinherit-from-pg_catalog.pg_constraint",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT conname, connoinherit\n\t\t\t\t\t\tFROM pg_catalog.pg_constraint\n\t\t\t\t\t\tWHERE conname = 'alter_check_no_inherit_positive';",
+      "querySha256": "a11b2eda15f74a0e9588b62cc2970ed581ca4857d3b0639e78f82fb4e4a0b812",
+      "expectedRows": [
+        [
+          {
+            "value": "alter_check_no_inherit_positive"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestAlterTableAddCheckConstraintNoInheritRepro#0002",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestAlterTableAddCheckConstraintNoInheritRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER TABLE ADD CONSTRAINT accepts CHECK constraint NO INHERIT",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testaltertableaddcheckconstraintnoinheritrepro-0002-insert-into-alter_check_no_inherit_items-values-1",
+      "suggestedId": "constraint-correctness-repro-test-testaltertableaddcheckconstraintnoinheritrepro-0002-insert-into-alter_check_no_inherit_items-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO alter_check_no_inherit_items VALUES (-1);",
+      "querySha256": "e5a19c89f85570d2d4a1b3e03716b456f8f240d56976e63e0b8536c963f95d66",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestTypedTableCheckConstraintNoInheritRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestTypedTableCheckConstraintNoInheritRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLE OF accepts CHECK constraint NO INHERIT",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testtypedtablecheckconstraintnoinheritrepro-0001-select-conname-connoinherit-from-pg_catalog.pg_constraint",
+      "suggestedId": "constraint-correctness-repro-test-testtypedtablecheckconstraintnoinheritrepro-0001-select-conname-connoinherit-from-pg_catalog.pg_constraint",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT conname, connoinherit\n\t\t\t\t\t\tFROM pg_catalog.pg_constraint\n\t\t\t\t\t\tWHERE conname = 'typed_check_no_inherit_positive';",
+      "querySha256": "da3e2b29cf4413e79f7b2a09a61362d6e44b2198da1e100aaec1420aad75ed71",
+      "expectedRows": [
+        [
+          {
+            "value": "typed_check_no_inherit_positive"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestTypedTableCheckConstraintNoInheritRepro#0002",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestTypedTableCheckConstraintNoInheritRepro",
+      "ordinal": 2,
+      "scriptName": "CREATE TABLE OF accepts CHECK constraint NO INHERIT",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testtypedtablecheckconstraintnoinheritrepro-0002-insert-into-typed_check_no_inherit_items-values-1",
+      "suggestedId": "constraint-correctness-repro-test-testtypedtablecheckconstraintnoinheritrepro-0002-insert-into-typed_check_no_inherit_items-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO typed_check_no_inherit_items VALUES (-1, 'bad');",
+      "querySha256": "6f5596f42c2817043acee2094ed07e9e4147258b0fe6e97f1c44276c8187abc0",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestNotValidCheckConstraintEnforcesNewRowsRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestNotValidCheckConstraintEnforcesNewRowsRepro",
+      "ordinal": 1,
+      "scriptName": "NOT VALID check constraint enforces new rows",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testnotvalidcheckconstraintenforcesnewrowsrepro-0001-insert-into-not_valid_check_items-values-2",
+      "suggestedId": "constraint-correctness-repro-test-testnotvalidcheckconstraintenforcesnewrowsrepro-0001-insert-into-not_valid_check_items-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO not_valid_check_items VALUES (2, -2);",
+      "querySha256": "8278d7f579c7a123e14538f6f75ace227d1a6d1fabab21a46c0ae0c1cb4aaec8",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestNotValidCheckConstraintEnforcesNewRowsRepro#0002",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestNotValidCheckConstraintEnforcesNewRowsRepro",
+      "ordinal": 2,
+      "scriptName": "NOT VALID check constraint enforces new rows",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testnotvalidcheckconstraintenforcesnewrowsrepro-0002-alter-table-not_valid_check_items-validate-constraint",
+      "suggestedId": "constraint-correctness-repro-test-testnotvalidcheckconstraintenforcesnewrowsrepro-0002-alter-table-not_valid_check_items-validate-constraint",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE not_valid_check_items VALIDATE CONSTRAINT amount_positive;",
+      "querySha256": "0c77aaf10acc67d5aa1a6907f9679f66a9f575a8fb933cd9e1f543dc1575fa72",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestNotValidCheckConstraintEnforcesNewRowsRepro#0003",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestNotValidCheckConstraintEnforcesNewRowsRepro",
+      "ordinal": 3,
+      "scriptName": "NOT VALID check constraint enforces new rows",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testnotvalidcheckconstraintenforcesnewrowsrepro-0003-select-id-amount-from-not_valid_check_items",
+      "suggestedId": "constraint-correctness-repro-test-testnotvalidcheckconstraintenforcesnewrowsrepro-0003-select-id-amount-from-not_valid_check_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, amount\n\t\t\t\t\t\tFROM not_valid_check_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "544eef486cc7e84e88a1547f6990947af61188176657557130bee0c2da3cacbb",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestNotValidForeignKeyConstraintEnforcesNewRowsRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestNotValidForeignKeyConstraintEnforcesNewRowsRepro",
+      "ordinal": 1,
+      "scriptName": "NOT VALID foreign key enforces new rows",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testnotvalidforeignkeyconstraintenforcesnewrowsrepro-0001-insert-into-not_valid_fk_children-values-2",
+      "suggestedId": "constraint-correctness-repro-test-testnotvalidforeignkeyconstraintenforcesnewrowsrepro-0001-insert-into-not_valid_fk_children-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23503",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO not_valid_fk_children VALUES (2, 43);",
+      "querySha256": "f011d426c4f0ec91989fefe0c1a2b693f5a5fb1c07f8e49e59699c2dacf48167",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestNotValidForeignKeyConstraintEnforcesNewRowsRepro#0002",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestNotValidForeignKeyConstraintEnforcesNewRowsRepro",
+      "ordinal": 2,
+      "scriptName": "NOT VALID foreign key enforces new rows",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testnotvalidforeignkeyconstraintenforcesnewrowsrepro-0002-alter-table-not_valid_fk_children-validate-constraint",
+      "suggestedId": "constraint-correctness-repro-test-testnotvalidforeignkeyconstraintenforcesnewrowsrepro-0002-alter-table-not_valid_fk_children-validate-constraint",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23503",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE not_valid_fk_children\n\t\t\t\t\t\tVALIDATE CONSTRAINT not_valid_fk_children_parent_fk;",
+      "querySha256": "79a5efb24c64a09a12012c8ee6ecdb8a64fb9fd6ba992a06a2399003eb1370ba",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestNotValidForeignKeyConstraintEnforcesNewRowsRepro#0003",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestNotValidForeignKeyConstraintEnforcesNewRowsRepro",
+      "ordinal": 3,
+      "scriptName": "NOT VALID foreign key enforces new rows",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testnotvalidforeignkeyconstraintenforcesnewrowsrepro-0003-select-id-parent_id-from-not_valid_fk_children",
+      "suggestedId": "constraint-correctness-repro-test-testnotvalidforeignkeyconstraintenforcesnewrowsrepro-0003-select-id-parent_id-from-not_valid_fk_children",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, parent_id\n\t\t\t\t\t\tFROM not_valid_fk_children\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "9483bcb32dd4eaee10a6034424fa6c2a9bb6a03bf6c7249ac0390b3df5f5edab",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "42"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "42"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestSetConstraintsRejectsNonDeferrableConstraintRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestSetConstraintsRejectsNonDeferrableConstraintRepro",
+      "ordinal": 1,
+      "scriptName": "SET CONSTRAINTS rejects non-deferrable constraint",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testsetconstraintsrejectsnondeferrableconstraintrepro-0001-set-constraints-set_constraints_nondeferrable_code_key-deferred",
+      "suggestedId": "constraint-correctness-repro-test-testsetconstraintsrejectsnondeferrableconstraintrepro-0001-set-constraints-set_constraints_nondeferrable_code_key-deferred",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42809",
+      "errorSeverity": "ERROR",
+      "query": "SET CONSTRAINTS set_constraints_nondeferrable_code_key DEFERRED;",
+      "querySha256": "da2fb6ffb068f1919222d0cefa5b6ab60d9c98b73fcf605dc86b174e19214e1b",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestSetConstraintsRejectsNonDeferrableForeignKeyRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestSetConstraintsRejectsNonDeferrableForeignKeyRepro",
+      "ordinal": 1,
+      "scriptName": "SET CONSTRAINTS rejects non-deferrable foreign key",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testsetconstraintsrejectsnondeferrableforeignkeyrepro-0001-set-constraints-set_constraints_nondeferrable_fk-deferred",
+      "suggestedId": "constraint-correctness-repro-test-testsetconstraintsrejectsnondeferrableforeignkeyrepro-0001-set-constraints-set_constraints_nondeferrable_fk-deferred",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42809",
+      "errorSeverity": "ERROR",
+      "query": "SET CONSTRAINTS set_constraints_nondeferrable_fk DEFERRED;",
+      "querySha256": "e167d349f087bd6b4f240e5692ed6aa92ed713c00deb3999c5305e106bca968a",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestSetConstraintsRejectsMissingConstraintRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestSetConstraintsRejectsMissingConstraintRepro",
+      "ordinal": 1,
+      "scriptName": "SET CONSTRAINTS rejects missing constraint",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testsetconstraintsrejectsmissingconstraintrepro-0001-set-constraints-set_constraints_missing_name-deferred",
+      "suggestedId": "constraint-correctness-repro-test-testsetconstraintsrejectsmissingconstraintrepro-0001-set-constraints-set_constraints_missing_name-deferred",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42704",
+      "errorSeverity": "ERROR",
+      "query": "SET CONSTRAINTS set_constraints_missing_name DEFERRED;",
+      "querySha256": "389c3726f7d82d8d7053ed64367354d4d693ac1a0ff8de887776673bc761bfe8",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestExclusionConstraintRejectsConflictingRowsRepro#0001",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestExclusionConstraintRejectsConflictingRowsRepro",
+      "ordinal": 1,
+      "scriptName": "EXCLUDE constraint rejects conflicting scalar values",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testexclusionconstraintrejectsconflictingrowsrepro-0001-insert-into-exclusion_items-values-2",
+      "suggestedId": "constraint-correctness-repro-test-testexclusionconstraintrejectsconflictingrowsrepro-0001-insert-into-exclusion_items-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23P01",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO exclusion_items VALUES (2, 10);",
+      "querySha256": "de26b5ddbba81ec69e04de3e8e16dd38748dd688a7d8ab5e070785129e6d2d99",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/constraint_correctness_repro_test.go:TestExclusionConstraintRejectsConflictingRowsRepro#0002",
+      "source": "testing/go/constraint_correctness_repro_test.go:TestExclusionConstraintRejectsConflictingRowsRepro",
+      "ordinal": 2,
+      "scriptName": "EXCLUDE constraint rejects conflicting scalar values",
+      "oracle": "postgres",
+      "postgresId": "constraint-correctness-repro-test-testexclusionconstraintrejectsconflictingrowsrepro-0002-select-id-resource_id-from-exclusion_items",
+      "suggestedId": "constraint-correctness-repro-test-testexclusionconstraintrejectsconflictingrowsrepro-0002-select-id-resource_id-from-exclusion_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, resource_id\n\t\t\t\t\t\tFROM exclusion_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "c09a73549e094cd64d6d14b276dd318c0a2bb781f22d129957af3391f300aab7",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "10"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "11"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

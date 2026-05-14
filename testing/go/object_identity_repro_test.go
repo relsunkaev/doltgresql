@@ -47,8 +47,7 @@ SELECT (pg_catalog.pg_describe_object(
 	'pg_class'::regclass,
 	'object_describe_items'::regclass,
 	0
-) LIKE '%object_describe_items%')::TEXT;`,
-					Expected: []sql.Row{{"true"}},
+) LIKE '%object_describe_items%')::TEXT;`, PostgresOracle: ScriptTestPostgresOracle{ID: "object-identity-repro-test-testpgdescribeobjecttablerepro-0001-select-pg_catalog.pg_describe_object-pg_class-::regclass-object_describe_items"},
 				},
 			},
 		},

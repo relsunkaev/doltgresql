@@ -1,0 +1,749 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map routine_option_correctness_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/routine_option_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/routine_option_correctness_repro_test.go:TestFunctionDefinitionsRejectInvalidPlannerOptionsRepro#0001",
+      "source": "testing/go/routine_option_correctness_repro_test.go:TestFunctionDefinitionsRejectInvalidPlannerOptionsRepro",
+      "ordinal": 1,
+      "scriptName": "function definitions reject invalid planner options",
+      "oracle": "postgres",
+      "postgresId": "routine-option-correctness-repro-test-testfunctiondefinitionsrejectinvalidplanneroptionsrepro-0001-create-function-routine_scalar_rows_option-returns-int",
+      "suggestedId": "routine-option-correctness-repro-test-testfunctiondefinitionsrejectinvalidplanneroptionsrepro-0001-create-function-routine_scalar_rows_option-returns-int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "CREATE FUNCTION routine_scalar_rows_option()\n\t\t\t\t\t\tRETURNS INT\n\t\t\t\t\t\tLANGUAGE SQL\n\t\t\t\t\t\tROWS 10\n\t\t\t\t\t\tAS $$ SELECT 1 $$;",
+      "querySha256": "6f3083b485298eba892303d18cb33bbcded03d00054a245c16bfaceb2fcde477",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/routine_option_correctness_repro_test.go:TestFunctionDefinitionsRejectInvalidPlannerOptionsRepro#0002",
+      "source": "testing/go/routine_option_correctness_repro_test.go:TestFunctionDefinitionsRejectInvalidPlannerOptionsRepro",
+      "ordinal": 2,
+      "scriptName": "function definitions reject invalid planner options",
+      "oracle": "postgres",
+      "postgresId": "routine-option-correctness-repro-test-testfunctiondefinitionsrejectinvalidplanneroptionsrepro-0002-create-function-routine_zero_rows_option-returns-setof",
+      "suggestedId": "routine-option-correctness-repro-test-testfunctiondefinitionsrejectinvalidplanneroptionsrepro-0002-create-function-routine_zero_rows_option-returns-setof",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "CREATE FUNCTION routine_zero_rows_option()\n\t\t\t\t\t\tRETURNS SETOF INT\n\t\t\t\t\t\tLANGUAGE SQL\n\t\t\t\t\t\tROWS 0\n\t\t\t\t\t\tAS $$ SELECT 1 $$;",
+      "querySha256": "151331e3c57e2e3b61e256141b898cd765ff52b7cf7be1c37f357908cf7a009c",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/routine_option_correctness_repro_test.go:TestFunctionDefinitionsRejectInvalidPlannerOptionsRepro#0003",
+      "source": "testing/go/routine_option_correctness_repro_test.go:TestFunctionDefinitionsRejectInvalidPlannerOptionsRepro",
+      "ordinal": 3,
+      "scriptName": "function definitions reject invalid planner options",
+      "oracle": "postgres",
+      "postgresId": "routine-option-correctness-repro-test-testfunctiondefinitionsrejectinvalidplanneroptionsrepro-0003-create-function-routine_zero_cost_option-returns-int",
+      "suggestedId": "routine-option-correctness-repro-test-testfunctiondefinitionsrejectinvalidplanneroptionsrepro-0003-create-function-routine_zero_cost_option-returns-int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "CREATE FUNCTION routine_zero_cost_option()\n\t\t\t\t\t\tRETURNS INT\n\t\t\t\t\t\tLANGUAGE SQL\n\t\t\t\t\t\tCOST 0\n\t\t\t\t\t\tAS $$ SELECT 1 $$;",
+      "querySha256": "8d53683e45f98e7b28f6df22ebb4b708f7f766e21cdbd4d2cd6d0712a5d65aad",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/routine_option_correctness_repro_test.go:TestFunctionDefinitionsRejectInvalidPlannerOptionsRepro#0004",
+      "source": "testing/go/routine_option_correctness_repro_test.go:TestFunctionDefinitionsRejectInvalidPlannerOptionsRepro",
+      "ordinal": 4,
+      "scriptName": "function definitions reject invalid planner options",
+      "oracle": "postgres",
+      "postgresId": "routine-option-correctness-repro-test-testfunctiondefinitionsrejectinvalidplanneroptionsrepro-0004-create-function-routine_negative_cost_option-returns-int",
+      "suggestedId": "routine-option-correctness-repro-test-testfunctiondefinitionsrejectinvalidplanneroptionsrepro-0004-create-function-routine_negative_cost_option-returns-int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "CREATE FUNCTION routine_negative_cost_option()\n\t\t\t\t\t\tRETURNS INT\n\t\t\t\t\t\tLANGUAGE SQL\n\t\t\t\t\t\tCOST -1\n\t\t\t\t\t\tAS $$ SELECT 1 $$;",
+      "querySha256": "e87d647bcc502c646c2cc91119499c6666cfc39a4ac3e171581429eacfe79770",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/routine_option_correctness_repro_test.go:TestCreateFunctionNullInputOptionsGuard#0001",
+      "source": "testing/go/routine_option_correctness_repro_test.go:TestCreateFunctionNullInputOptionsGuard",
+      "ordinal": 1,
+      "scriptName": "CREATE FUNCTION null-input options control strict execution",
+      "oracle": "postgres",
+      "postgresId": "routine-option-correctness-repro-test-testcreatefunctionnullinputoptionsguard-0001-select-strict_null_input_value-null::int-is-null",
+      "suggestedId": "routine-option-correctness-repro-test-testcreatefunctionnullinputoptionsguard-0001-select-strict_null_input_value-null::int-is-null",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT strict_null_input_value(NULL::INT) IS NULL;",
+      "querySha256": "551dd67ec8a40fdb9f86a111f78fb73b0b09d1927c262af9325362b01791f026",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/routine_option_correctness_repro_test.go:TestCreateFunctionNullInputOptionsGuard#0002",
+      "source": "testing/go/routine_option_correctness_repro_test.go:TestCreateFunctionNullInputOptionsGuard",
+      "ordinal": 2,
+      "scriptName": "CREATE FUNCTION null-input options control strict execution",
+      "oracle": "postgres",
+      "postgresId": "routine-option-correctness-repro-test-testcreatefunctionnullinputoptionsguard-0002-select-called_null_input_value-null::int",
+      "suggestedId": "routine-option-correctness-repro-test-testcreatefunctionnullinputoptionsguard-0002-select-called_null_input_value-null::int",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT called_null_input_value(NULL::INT);",
+      "querySha256": "e9d0886afe1431592525c69f451e84230bd5abcc8c78108b715e81b224db2b3f",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/routine_option_correctness_repro_test.go:TestCreateOrReplaceFunctionNullInputOptionsGuard#0001",
+      "source": "testing/go/routine_option_correctness_repro_test.go:TestCreateOrReplaceFunctionNullInputOptionsGuard",
+      "ordinal": 1,
+      "scriptName": "CREATE OR REPLACE FUNCTION updates null-input behavior",
+      "oracle": "postgres",
+      "postgresId": "routine-option-correctness-repro-test-testcreateorreplacefunctionnullinputoptionsguard-0001-select-replace_strict_option_value-null::int",
+      "suggestedId": "routine-option-correctness-repro-test-testcreateorreplacefunctionnullinputoptionsguard-0001-select-replace_strict_option_value-null::int",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT replace_strict_option_value(NULL::INT);",
+      "querySha256": "8ac1c409380fceacacf9b63ec1d092adf2d4792c68ca9850b953415b69dcd598",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/routine_option_correctness_repro_test.go:TestCreateOrReplaceFunctionNullInputOptionsGuard#0002",
+      "source": "testing/go/routine_option_correctness_repro_test.go:TestCreateOrReplaceFunctionNullInputOptionsGuard",
+      "ordinal": 2,
+      "scriptName": "CREATE OR REPLACE FUNCTION updates null-input behavior",
+      "oracle": "postgres",
+      "postgresId": "routine-option-correctness-repro-test-testcreateorreplacefunctionnullinputoptionsguard-0002-create-or-replace-function-replace_strict_option_value",
+      "suggestedId": "routine-option-correctness-repro-test-testcreateorreplacefunctionnullinputoptionsguard-0002-create-or-replace-function-replace_strict_option_value",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE OR REPLACE FUNCTION replace_strict_option_value(input INT)\n\t\t\t\t\t\tRETURNS INT\n\t\t\t\t\t\tLANGUAGE SQL\n\t\t\t\t\t\tSTRICT\n\t\t\t\t\t\tAS $$ SELECT 7 $$;",
+      "querySha256": "a90eb6bd0f0903280ad35a4a07ba4b64ce81db70dfb3b21cb6a1f219695c2349",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/routine_option_correctness_repro_test.go:TestCreateOrReplaceFunctionNullInputOptionsGuard#0003",
+      "source": "testing/go/routine_option_correctness_repro_test.go:TestCreateOrReplaceFunctionNullInputOptionsGuard",
+      "ordinal": 3,
+      "scriptName": "CREATE OR REPLACE FUNCTION updates null-input behavior",
+      "oracle": "postgres",
+      "postgresId": "routine-option-correctness-repro-test-testcreateorreplacefunctionnullinputoptionsguard-0003-select-replace_strict_option_value-null::int-is-null",
+      "suggestedId": "routine-option-correctness-repro-test-testcreateorreplacefunctionnullinputoptionsguard-0003-select-replace_strict_option_value-null::int-is-null",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT replace_strict_option_value(NULL::INT) IS NULL;",
+      "querySha256": "5f5e70058c7850c976f7531ff8c70dd4c38a1bdb03838ff1285812ddc573f089",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/routine_option_correctness_repro_test.go:TestCreateFunctionSecurityDefinerCatalogRepro#0001",
+      "source": "testing/go/routine_option_correctness_repro_test.go:TestCreateFunctionSecurityDefinerCatalogRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE FUNCTION security option persists in pg_proc",
+      "oracle": "postgres",
+      "postgresId": "routine-option-correctness-repro-test-testcreatefunctionsecuritydefinercatalogrepro-0001-select-proname-prosecdef-from-pg_catalog.pg_proc",
+      "suggestedId": "routine-option-correctness-repro-test-testcreatefunctionsecuritydefinercatalogrepro-0001-select-proname-prosecdef-from-pg_catalog.pg_proc",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT proname, prosecdef\n\t\t\t\t\t\tFROM pg_catalog.pg_proc\n\t\t\t\t\t\tWHERE proname IN (\n\t\t\t\t\t\t\t'catalog_security_definer_value',\n\t\t\t\t\t\t\t'catalog_security_invoker_value'\n\t\t\t\t\t\t)\n\t\t\t\t\t\tORDER BY proname;",
+      "querySha256": "655e2bf32ef7079d0f6d2780108577a7792ab653e80c64ca4f012b341b6a553f",
+      "expectedRows": [
+        [
+          {
+            "value": "catalog_security_definer_value"
+          },
+          {
+            "value": "t"
+          }
+        ],
+        [
+          {
+            "value": "catalog_security_invoker_value"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/routine_option_correctness_repro_test.go:TestCreateProcedureSecurityDefinerCatalogRepro#0001",
+      "source": "testing/go/routine_option_correctness_repro_test.go:TestCreateProcedureSecurityDefinerCatalogRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE PROCEDURE security option persists in pg_proc",
+      "oracle": "postgres",
+      "postgresId": "routine-option-correctness-repro-test-testcreateproceduresecuritydefinercatalogrepro-0001-select-proname-prosecdef-from-pg_catalog.pg_proc",
+      "suggestedId": "routine-option-correctness-repro-test-testcreateproceduresecuritydefinercatalogrepro-0001-select-proname-prosecdef-from-pg_catalog.pg_proc",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT proname, prosecdef\n\t\t\t\t\t\tFROM pg_catalog.pg_proc\n\t\t\t\t\t\tWHERE proname IN (\n\t\t\t\t\t\t\t'catalog_security_definer_proc',\n\t\t\t\t\t\t\t'catalog_security_invoker_proc'\n\t\t\t\t\t\t)\n\t\t\t\t\t\tORDER BY proname;",
+      "querySha256": "ef92567379121d9e7c1a86f4b931df29ec645de2238967ebb7a05b09af689c0e",
+      "expectedRows": [
+        [
+          {
+            "value": "catalog_security_definer_proc"
+          },
+          {
+            "value": "t"
+          }
+        ],
+        [
+          {
+            "value": "catalog_security_invoker_proc"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/routine_option_correctness_repro_test.go:TestCreateFunctionOutArgumentCatalogRepro#0001",
+      "source": "testing/go/routine_option_correctness_repro_test.go:TestCreateFunctionOutArgumentCatalogRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE FUNCTION OUT arguments populate pg_proc metadata",
+      "oracle": "postgres",
+      "postgresId": "routine-option-correctness-repro-test-testcreatefunctionoutargumentcatalogrepro-0001-select-pronargs::text-array_to_string-proargmodes-array_to_string",
+      "suggestedId": "routine-option-correctness-repro-test-testcreatefunctionoutargumentcatalogrepro-0001-select-pronargs::text-array_to_string-proargmodes-array_to_string",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT\n\t\t\t\t\t\t\tpronargs::text,\n\t\t\t\t\t\t\tarray_to_string(proargmodes, ','),\n\t\t\t\t\t\t\tarray_to_string(proargnames, ',')\n\t\t\t\t\t\tFROM pg_catalog.pg_proc\n\t\t\t\t\t\tWHERE proname = 'catalog_out_argument_value';",
+      "querySha256": "5ed8124c316d95879f4719dee4bffc50a68bb2e39118d9ae7ac12a191f121a95",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "i,o,o"
+          },
+          {
+            "value": "input_value,doubled,tripled"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/routine_option_correctness_repro_test.go:TestCreateProcedureOutArgumentCatalogRepro#0001",
+      "source": "testing/go/routine_option_correctness_repro_test.go:TestCreateProcedureOutArgumentCatalogRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE PROCEDURE OUT arguments populate pg_proc metadata",
+      "oracle": "postgres",
+      "postgresId": "routine-option-correctness-repro-test-testcreateprocedureoutargumentcatalogrepro-0001-select-pronargs::text-array_to_string-proargmodes-array_to_string",
+      "suggestedId": "routine-option-correctness-repro-test-testcreateprocedureoutargumentcatalogrepro-0001-select-pronargs::text-array_to_string-proargmodes-array_to_string",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT\n\t\t\t\t\t\t\tpronargs::text,\n\t\t\t\t\t\t\tarray_to_string(proargmodes, ','),\n\t\t\t\t\t\t\tarray_to_string(proargnames, ',')\n\t\t\t\t\t\tFROM pg_catalog.pg_proc\n\t\t\t\t\t\tWHERE proname = 'catalog_out_argument_proc';",
+      "querySha256": "cdc35578465d600a8e633615ba75c241c4de5180508a04ee2d042644323c9484",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "i,o"
+          },
+          {
+            "value": "input_value,doubled"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/routine_option_correctness_repro_test.go:TestCreateFunctionVolatilityCatalogRepro#0001",
+      "source": "testing/go/routine_option_correctness_repro_test.go:TestCreateFunctionVolatilityCatalogRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE FUNCTION volatility option persists in pg_proc",
+      "oracle": "postgres",
+      "postgresId": "routine-option-correctness-repro-test-testcreatefunctionvolatilitycatalogrepro-0001-select-proname-provolatile-from-pg_catalog.pg_proc",
+      "suggestedId": "routine-option-correctness-repro-test-testcreatefunctionvolatilitycatalogrepro-0001-select-proname-provolatile-from-pg_catalog.pg_proc",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT proname, provolatile\n\t\t\t\t\t\tFROM pg_catalog.pg_proc\n\t\t\t\t\t\tWHERE proname IN (\n\t\t\t\t\t\t\t'catalog_volatile_default_value',\n\t\t\t\t\t\t\t'catalog_immutable_value',\n\t\t\t\t\t\t\t'catalog_stable_value'\n\t\t\t\t\t\t)\n\t\t\t\t\t\tORDER BY proname;",
+      "querySha256": "2f347020d4ff84fc468cb9ae3955b89141182ac0a0626b916d1ed34f71d51d34",
+      "expectedRows": [
+        [
+          {
+            "value": "catalog_immutable_value"
+          },
+          {
+            "value": "i"
+          }
+        ],
+        [
+          {
+            "value": "catalog_stable_value"
+          },
+          {
+            "value": "s"
+          }
+        ],
+        [
+          {
+            "value": "catalog_volatile_default_value"
+          },
+          {
+            "value": "v"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/routine_option_correctness_repro_test.go:TestCreateFunctionLeakproofCatalogRepro#0001",
+      "source": "testing/go/routine_option_correctness_repro_test.go:TestCreateFunctionLeakproofCatalogRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE FUNCTION leakproof option persists in pg_proc",
+      "oracle": "postgres",
+      "postgresId": "routine-option-correctness-repro-test-testcreatefunctionleakproofcatalogrepro-0001-select-proname-proleakproof-from-pg_catalog.pg_proc",
+      "suggestedId": "routine-option-correctness-repro-test-testcreatefunctionleakproofcatalogrepro-0001-select-proname-proleakproof-from-pg_catalog.pg_proc",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT proname, proleakproof\n\t\t\t\t\t\tFROM pg_catalog.pg_proc\n\t\t\t\t\t\tWHERE proname IN (\n\t\t\t\t\t\t\t'catalog_not_leakproof_value',\n\t\t\t\t\t\t\t'catalog_leakproof_value'\n\t\t\t\t\t\t)\n\t\t\t\t\t\tORDER BY proname;",
+      "querySha256": "100b4e9cefec5acaa242d056380247fd04de74f2ba2c1fed67bb90a8976583a2",
+      "expectedRows": [
+        [
+          {
+            "value": "catalog_leakproof_value"
+          },
+          {
+            "value": "t"
+          }
+        ],
+        [
+          {
+            "value": "catalog_not_leakproof_value"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/routine_option_correctness_repro_test.go:TestCreateFunctionParallelCatalogRepro#0001",
+      "source": "testing/go/routine_option_correctness_repro_test.go:TestCreateFunctionParallelCatalogRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE FUNCTION parallel option persists in pg_proc",
+      "oracle": "postgres",
+      "postgresId": "routine-option-correctness-repro-test-testcreatefunctionparallelcatalogrepro-0001-select-proname-proparallel-from-pg_catalog.pg_proc",
+      "suggestedId": "routine-option-correctness-repro-test-testcreatefunctionparallelcatalogrepro-0001-select-proname-proparallel-from-pg_catalog.pg_proc",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT proname, proparallel\n\t\t\t\t\t\tFROM pg_catalog.pg_proc\n\t\t\t\t\t\tWHERE proname IN (\n\t\t\t\t\t\t\t'catalog_parallel_default_value',\n\t\t\t\t\t\t\t'catalog_parallel_safe_value',\n\t\t\t\t\t\t\t'catalog_parallel_restricted_value'\n\t\t\t\t\t\t)\n\t\t\t\t\t\tORDER BY proname;",
+      "querySha256": "e98fd36827d67acf69ccae96bf9b53177755fad2cfb4ac13cd22b7ed51326423",
+      "expectedRows": [
+        [
+          {
+            "value": "catalog_parallel_default_value"
+          },
+          {
+            "value": "u"
+          }
+        ],
+        [
+          {
+            "value": "catalog_parallel_restricted_value"
+          },
+          {
+            "value": "r"
+          }
+        ],
+        [
+          {
+            "value": "catalog_parallel_safe_value"
+          },
+          {
+            "value": "s"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/routine_option_correctness_repro_test.go:TestCreateFunctionCostRowsCatalogRepro#0001",
+      "source": "testing/go/routine_option_correctness_repro_test.go:TestCreateFunctionCostRowsCatalogRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE FUNCTION cost and rows options persist in pg_proc",
+      "oracle": "postgres",
+      "postgresId": "routine-option-correctness-repro-test-testcreatefunctioncostrowscatalogrepro-0001-select-proname-procost::text-prorows::text-from",
+      "suggestedId": "routine-option-correctness-repro-test-testcreatefunctioncostrowscatalogrepro-0001-select-proname-procost::text-prorows::text-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT proname, procost::text, prorows::text\n\t\t\t\t\t\tFROM pg_catalog.pg_proc\n\t\t\t\t\t\tWHERE proname IN (\n\t\t\t\t\t\t\t'catalog_scalar_cost_value',\n\t\t\t\t\t\t\t'catalog_setof_cost_rows_value'\n\t\t\t\t\t\t)\n\t\t\t\t\t\tORDER BY proname;",
+      "querySha256": "40b13d72c12643cc30b107243c44c8d4cc0070eaac5c2e81313f3622824b4975",
+      "expectedRows": [
+        [
+          {
+            "value": "catalog_scalar_cost_value"
+          },
+          {
+            "value": "7"
+          },
+          {
+            "value": "0"
+          }
+        ],
+        [
+          {
+            "value": "catalog_setof_cost_rows_value"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionVolatilityOptionRepro#0001",
+      "source": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionVolatilityOptionRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER FUNCTION volatility changes pg_proc",
+      "oracle": "postgres",
+      "postgresId": "routine-option-correctness-repro-test-testalterfunctionvolatilityoptionrepro-0001-alter-function-alter_catalog_volatility_value-immutable",
+      "suggestedId": "routine-option-correctness-repro-test-testalterfunctionvolatilityoptionrepro-0001-alter-function-alter_catalog_volatility_value-immutable",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER FUNCTION alter_catalog_volatility_value() IMMUTABLE;",
+      "querySha256": "f4064ee33a4f2485812bcfa7b74be34a0a5ed083084e17cd0cdcc7e29467b0ed",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionVolatilityOptionRepro#0002",
+      "source": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionVolatilityOptionRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER FUNCTION volatility changes pg_proc",
+      "oracle": "postgres",
+      "postgresId": "routine-option-correctness-repro-test-testalterfunctionvolatilityoptionrepro-0002-select-provolatile-from-pg_catalog.pg_proc-where",
+      "suggestedId": "routine-option-correctness-repro-test-testalterfunctionvolatilityoptionrepro-0002-select-provolatile-from-pg_catalog.pg_proc-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT provolatile\n\t\t\t\t\t\tFROM pg_catalog.pg_proc\n\t\t\t\t\t\tWHERE proname = 'alter_catalog_volatility_value';",
+      "querySha256": "4c89eef9460cdaa36eef0568f3edcd017a5f4ddffe52bc8b8ea5111f4a388e6f",
+      "expectedRows": [
+        [
+          {
+            "value": "i"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionSecurityDefinerOptionRepro#0001",
+      "source": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionSecurityDefinerOptionRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER FUNCTION security option changes pg_proc",
+      "oracle": "postgres",
+      "postgresId": "routine-option-correctness-repro-test-testalterfunctionsecuritydefineroptionrepro-0001-alter-function-alter_catalog_security_value-security-definer",
+      "suggestedId": "routine-option-correctness-repro-test-testalterfunctionsecuritydefineroptionrepro-0001-alter-function-alter_catalog_security_value-security-definer",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER FUNCTION alter_catalog_security_value() SECURITY DEFINER;",
+      "querySha256": "2632e988514767edf52b51222eee499ebf5371e460295988892317c775ac1bab",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionSecurityDefinerOptionRepro#0002",
+      "source": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionSecurityDefinerOptionRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER FUNCTION security option changes pg_proc",
+      "oracle": "postgres",
+      "postgresId": "routine-option-correctness-repro-test-testalterfunctionsecuritydefineroptionrepro-0002-select-prosecdef-from-pg_catalog.pg_proc-where",
+      "suggestedId": "routine-option-correctness-repro-test-testalterfunctionsecuritydefineroptionrepro-0002-select-prosecdef-from-pg_catalog.pg_proc-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT prosecdef\n\t\t\t\t\t\tFROM pg_catalog.pg_proc\n\t\t\t\t\t\tWHERE proname = 'alter_catalog_security_value';",
+      "querySha256": "c8fa9a94d1e7a1d6fc99ce6684003d9b5559f1f4fc825439412179e69585a001",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionLeakproofOptionRepro#0001",
+      "source": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionLeakproofOptionRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER FUNCTION leakproof option changes pg_proc",
+      "oracle": "postgres",
+      "postgresId": "routine-option-correctness-repro-test-testalterfunctionleakproofoptionrepro-0001-alter-function-alter_catalog_leakproof_value-leakproof",
+      "suggestedId": "routine-option-correctness-repro-test-testalterfunctionleakproofoptionrepro-0001-alter-function-alter_catalog_leakproof_value-leakproof",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER FUNCTION alter_catalog_leakproof_value() LEAKPROOF;",
+      "querySha256": "5eb4c232bcc96110209ca844789aa63c106baf8114a82551f5e1a4f930b6d39c",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionLeakproofOptionRepro#0002",
+      "source": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionLeakproofOptionRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER FUNCTION leakproof option changes pg_proc",
+      "oracle": "postgres",
+      "postgresId": "routine-option-correctness-repro-test-testalterfunctionleakproofoptionrepro-0002-select-proleakproof-from-pg_catalog.pg_proc-where",
+      "suggestedId": "routine-option-correctness-repro-test-testalterfunctionleakproofoptionrepro-0002-select-proleakproof-from-pg_catalog.pg_proc-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT proleakproof\n\t\t\t\t\t\tFROM pg_catalog.pg_proc\n\t\t\t\t\t\tWHERE proname = 'alter_catalog_leakproof_value';",
+      "querySha256": "20e5f152b07f7e60c7a34e45f12f36bfe8f020e69e433ee5d99e00ffe000f264",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionCostRowsOptionRepro#0001",
+      "source": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionCostRowsOptionRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER FUNCTION cost and rows options change pg_proc",
+      "oracle": "postgres",
+      "postgresId": "routine-option-correctness-repro-test-testalterfunctioncostrowsoptionrepro-0001-alter-function-alter_catalog_cost_rows_value-cost-9",
+      "suggestedId": "routine-option-correctness-repro-test-testalterfunctioncostrowsoptionrepro-0001-alter-function-alter_catalog_cost_rows_value-cost-9",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER FUNCTION alter_catalog_cost_rows_value() COST 9 ROWS 11;",
+      "querySha256": "43543d4df94bbcd6857678eac258df52efb1888a09d0fbafe44a98cea811c21c",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionCostRowsOptionRepro#0002",
+      "source": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionCostRowsOptionRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER FUNCTION cost and rows options change pg_proc",
+      "oracle": "postgres",
+      "postgresId": "routine-option-correctness-repro-test-testalterfunctioncostrowsoptionrepro-0002-select-procost::text-prorows::text-from-pg_catalog.pg_proc",
+      "suggestedId": "routine-option-correctness-repro-test-testalterfunctioncostrowsoptionrepro-0002-select-procost::text-prorows::text-from-pg_catalog.pg_proc",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT procost::text, prorows::text\n\t\t\t\t\t\tFROM pg_catalog.pg_proc\n\t\t\t\t\t\tWHERE proname = 'alter_catalog_cost_rows_value';",
+      "querySha256": "7763af60e6015afda9ac01475eaeb8aed339a20b7f1697725f223751f07ff460",
+      "expectedRows": [
+        [
+          {
+            "value": "9"
+          },
+          {
+            "value": "11"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionSetConfigOptionRepro#0001",
+      "source": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionSetConfigOptionRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER FUNCTION SET updates pg_proc proconfig",
+      "oracle": "postgres",
+      "postgresId": "routine-option-correctness-repro-test-testalterfunctionsetconfigoptionrepro-0001-select-array_to_string-proconfig-from-pg_catalog.pg_proc",
+      "suggestedId": "routine-option-correctness-repro-test-testalterfunctionsetconfigoptionrepro-0001-select-array_to_string-proconfig-from-pg_catalog.pg_proc",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT array_to_string(proconfig, ',')\n\t\t\t\t\t\tFROM pg_catalog.pg_proc\n\t\t\t\t\t\tWHERE proname = 'alter_config_option_value';",
+      "querySha256": "bef5fed079c6aaf53fab82f2acf8eb1229d9fb8006d4138041520c19c45a7d89",
+      "expectedRows": [
+        [
+          {
+            "value": "work_mem=64kB"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/routine_option_correctness_repro_test.go:TestAlterProcedureSetConfigOptionRepro#0001",
+      "source": "testing/go/routine_option_correctness_repro_test.go:TestAlterProcedureSetConfigOptionRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER PROCEDURE SET updates pg_proc proconfig",
+      "oracle": "postgres",
+      "postgresId": "routine-option-correctness-repro-test-testalterproceduresetconfigoptionrepro-0001-select-array_to_string-proconfig-from-pg_catalog.pg_proc",
+      "suggestedId": "routine-option-correctness-repro-test-testalterproceduresetconfigoptionrepro-0001-select-array_to_string-proconfig-from-pg_catalog.pg_proc",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT array_to_string(proconfig, ',')\n\t\t\t\t\t\tFROM pg_catalog.pg_proc\n\t\t\t\t\t\tWHERE proname = 'alter_config_option_proc';",
+      "querySha256": "6eff97c56c8de297cb853d8ab47eb871a7601e58de63e7394832cb7af22d0bb0",
+      "expectedRows": [
+        [
+          {
+            "value": "work_mem=64kB"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/routine_option_correctness_repro_test.go:TestCreateProcedurePgProcCatalogRowRepro#0001",
+      "source": "testing/go/routine_option_correctness_repro_test.go:TestCreateProcedurePgProcCatalogRowRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE PROCEDURE creates pg_proc row",
+      "oracle": "postgres",
+      "postgresId": "routine-option-correctness-repro-test-testcreateprocedurepgproccatalogrowrepro-0001-select-proname-prokind-from-pg_catalog.pg_proc",
+      "suggestedId": "routine-option-correctness-repro-test-testcreateprocedurepgproccatalogrowrepro-0001-select-proname-prokind-from-pg_catalog.pg_proc",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT proname, prokind\n\t\t\t\t\t\tFROM pg_catalog.pg_proc\n\t\t\t\t\t\tWHERE proname = 'catalog_proc_row_value';",
+      "querySha256": "fc2bf5390c89a0dcc26ca07a06c043313e0df43f6748d0f388a31589f9b05d3d",
+      "expectedRows": [
+        [
+          {
+            "value": "catalog_proc_row_value"
+          },
+          {
+            "value": "p"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionNullInputOptionRepro#0001",
+      "source": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionNullInputOptionRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER FUNCTION STRICT changes null-input behavior",
+      "oracle": "postgres",
+      "postgresId": "routine-option-correctness-repro-test-testalterfunctionnullinputoptionrepro-0001-select-alter_strict_null_input_value-null::int",
+      "suggestedId": "routine-option-correctness-repro-test-testalterfunctionnullinputoptionrepro-0001-select-alter_strict_null_input_value-null::int",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT alter_strict_null_input_value(NULL::INT);",
+      "querySha256": "66280b60f897e633f3d2e93ff2e533f31626b7a4df81ac45b6fc09a986d699d2",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionNullInputOptionRepro#0002",
+      "source": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionNullInputOptionRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER FUNCTION STRICT changes null-input behavior",
+      "oracle": "postgres",
+      "postgresId": "routine-option-correctness-repro-test-testalterfunctionnullinputoptionrepro-0002-alter-function-alter_strict_null_input_value-int-strict",
+      "suggestedId": "routine-option-correctness-repro-test-testalterfunctionnullinputoptionrepro-0002-alter-function-alter_strict_null_input_value-int-strict",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER FUNCTION alter_strict_null_input_value(INT) STRICT;",
+      "querySha256": "de3a36cf2f9c4bfbf7f53a558d707aee528427aeaa73abf6931afe23a69fc9f4",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionNullInputOptionRepro#0003",
+      "source": "testing/go/routine_option_correctness_repro_test.go:TestAlterFunctionNullInputOptionRepro",
+      "ordinal": 3,
+      "scriptName": "ALTER FUNCTION STRICT changes null-input behavior",
+      "oracle": "postgres",
+      "postgresId": "routine-option-correctness-repro-test-testalterfunctionnullinputoptionrepro-0003-select-alter_strict_null_input_value-null::int-is-null",
+      "suggestedId": "routine-option-correctness-repro-test-testalterfunctionnullinputoptionrepro-0003-select-alter_strict_null_input_value-null::int-is-null",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT alter_strict_null_input_value(NULL::INT) IS NULL;",
+      "querySha256": "ab0e080697e5db039db8ad83b42f859d7666c3e10bb7b5d5cda410db582dd7ff",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

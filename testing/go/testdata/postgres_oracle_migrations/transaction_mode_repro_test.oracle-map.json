@@ -1,0 +1,648 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map transaction_mode_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/transaction_mode_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/transaction_mode_repro_test.go:TestSetTransactionReadOnlyPreventsWritesRepro#0001",
+      "source": "testing/go/transaction_mode_repro_test.go:TestSetTransactionReadOnlyPreventsWritesRepro",
+      "ordinal": 1,
+      "scriptName": "SET TRANSACTION READ ONLY prevents writes",
+      "oracle": "postgres",
+      "postgresId": "transaction-mode-repro-test-testsettransactionreadonlypreventswritesrepro-0001-insert-into-read_only_target-values-1",
+      "suggestedId": "transaction-mode-repro-test-testsettransactionreadonlypreventswritesrepro-0001-insert-into-read_only_target-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "25006",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO read_only_target VALUES (1);",
+      "querySha256": "c3f9008be73ec4ffbe4d9b2f47b0ebf3599208d789c2ebe7ee7fc822fb8ba3e1",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyPreventsWritesRepro#0001",
+      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyPreventsWritesRepro",
+      "ordinal": 1,
+      "scriptName": "START TRANSACTION READ ONLY prevents writes",
+      "oracle": "postgres",
+      "postgresId": "transaction-mode-repro-test-teststarttransactionreadonlypreventswritesrepro-0001-insert-into-start_read_only_target-values-1",
+      "suggestedId": "transaction-mode-repro-test-teststarttransactionreadonlypreventswritesrepro-0001-insert-into-start_read_only_target-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "25006",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO start_read_only_target VALUES (1);",
+      "querySha256": "ea916a462f5fe5468ce0050c13234fc7356130c34c4dbc6faad992a607e453b5",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_mode_repro_test.go:TestSetTransactionReadWriteAfterQueryRejectedRepro#0001",
+      "source": "testing/go/transaction_mode_repro_test.go:TestSetTransactionReadWriteAfterQueryRejectedRepro",
+      "ordinal": 1,
+      "scriptName": "SET TRANSACTION READ WRITE rejects after query",
+      "oracle": "postgres",
+      "postgresId": "transaction-mode-repro-test-testsettransactionreadwriteafterqueryrejectedrepro-0001-select-1",
+      "suggestedId": "transaction-mode-repro-test-testsettransactionreadwriteafterqueryrejectedrepro-0001-select-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 1;",
+      "querySha256": "17db4fd369edb9244b9f91d9aeed145c3d04ad8ba6e95d06247f07a63527d11a",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_mode_repro_test.go:TestSetTransactionReadWriteAfterQueryRejectedRepro#0002",
+      "source": "testing/go/transaction_mode_repro_test.go:TestSetTransactionReadWriteAfterQueryRejectedRepro",
+      "ordinal": 2,
+      "scriptName": "SET TRANSACTION READ WRITE rejects after query",
+      "oracle": "postgres",
+      "postgresId": "transaction-mode-repro-test-testsettransactionreadwriteafterqueryrejectedrepro-0002-set-transaction-read-write",
+      "suggestedId": "transaction-mode-repro-test-testsettransactionreadwriteafterqueryrejectedrepro-0002-set-transaction-read-write",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "25001",
+      "errorSeverity": "ERROR",
+      "query": "SET TRANSACTION READ WRITE;",
+      "querySha256": "11ed039122f229907e5a2c37982a5bec3d04566f0cf3e91f342f9e4aa13c6ea8",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_mode_repro_test.go:TestSetTransactionDeferrableAfterQueryRejectedRepro#0001",
+      "source": "testing/go/transaction_mode_repro_test.go:TestSetTransactionDeferrableAfterQueryRejectedRepro",
+      "ordinal": 1,
+      "scriptName": "SET TRANSACTION DEFERRABLE rejects after query",
+      "oracle": "postgres",
+      "postgresId": "transaction-mode-repro-test-testsettransactiondeferrableafterqueryrejectedrepro-0001-select-1",
+      "suggestedId": "transaction-mode-repro-test-testsettransactiondeferrableafterqueryrejectedrepro-0001-select-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 1;",
+      "querySha256": "17db4fd369edb9244b9f91d9aeed145c3d04ad8ba6e95d06247f07a63527d11a",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_mode_repro_test.go:TestSetTransactionDeferrableAfterQueryRejectedRepro#0002",
+      "source": "testing/go/transaction_mode_repro_test.go:TestSetTransactionDeferrableAfterQueryRejectedRepro",
+      "ordinal": 2,
+      "scriptName": "SET TRANSACTION DEFERRABLE rejects after query",
+      "oracle": "postgres",
+      "postgresId": "transaction-mode-repro-test-testsettransactiondeferrableafterqueryrejectedrepro-0002-set-transaction-deferrable",
+      "suggestedId": "transaction-mode-repro-test-testsettransactiondeferrableafterqueryrejectedrepro-0002-set-transaction-deferrable",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "25001",
+      "errorSeverity": "ERROR",
+      "query": "SET TRANSACTION DEFERRABLE;",
+      "querySha256": "a8f44d385425d0d067c119c904ab2e1ab8b74cb80bf494b6c1f3a6fe23700c40",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_mode_repro_test.go:TestSetTransactionDeferrableAfterQueryRejectedRepro#0003",
+      "source": "testing/go/transaction_mode_repro_test.go:TestSetTransactionDeferrableAfterQueryRejectedRepro",
+      "ordinal": 3,
+      "scriptName": "SET TRANSACTION NOT DEFERRABLE rejects after query",
+      "oracle": "postgres",
+      "postgresId": "transaction-mode-repro-test-testsettransactiondeferrableafterqueryrejectedrepro-0003-select-1",
+      "suggestedId": "transaction-mode-repro-test-testsettransactiondeferrableafterqueryrejectedrepro-0003-select-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 1;",
+      "querySha256": "17db4fd369edb9244b9f91d9aeed145c3d04ad8ba6e95d06247f07a63527d11a",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_mode_repro_test.go:TestSetTransactionDeferrableAfterQueryRejectedRepro#0004",
+      "source": "testing/go/transaction_mode_repro_test.go:TestSetTransactionDeferrableAfterQueryRejectedRepro",
+      "ordinal": 4,
+      "scriptName": "SET TRANSACTION NOT DEFERRABLE rejects after query",
+      "oracle": "postgres",
+      "postgresId": "transaction-mode-repro-test-testsettransactiondeferrableafterqueryrejectedrepro-0004-set-transaction-not-deferrable",
+      "suggestedId": "transaction-mode-repro-test-testsettransactiondeferrableafterqueryrejectedrepro-0004-set-transaction-not-deferrable",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "25001",
+      "errorSeverity": "ERROR",
+      "query": "SET TRANSACTION NOT DEFERRABLE;",
+      "querySha256": "a43975c95973900111527021514f4d89434e04530992ccfbd994dd8e799e7fbc",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsUpdateRepro#0001",
+      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsUpdateRepro",
+      "ordinal": 1,
+      "scriptName": "START TRANSACTION READ ONLY rejects UPDATE",
+      "oracle": "postgres",
+      "postgresId": "transaction-mode-repro-test-teststarttransactionreadonlyrejectsupdaterepro-0001-update-read_only_update_target-set-label-=",
+      "suggestedId": "transaction-mode-repro-test-teststarttransactionreadonlyrejectsupdaterepro-0001-update-read_only_update_target-set-label-=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "25006",
+      "errorSeverity": "ERROR",
+      "query": "UPDATE read_only_update_target SET label = 'after' WHERE id = 1;",
+      "querySha256": "9b20860e5a9252816c2678b8d8555f5636aaafc00a4c79a1331907b6addc7ea4",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsUpdateRepro#0002",
+      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsUpdateRepro",
+      "ordinal": 2,
+      "scriptName": "START TRANSACTION READ ONLY rejects UPDATE",
+      "oracle": "postgres",
+      "postgresId": "transaction-mode-repro-test-teststarttransactionreadonlyrejectsupdaterepro-0002-select-*-from-read_only_update_target",
+      "suggestedId": "transaction-mode-repro-test-teststarttransactionreadonlyrejectsupdaterepro-0002-select-*-from-read_only_update_target",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM read_only_update_target;",
+      "querySha256": "4e7c17a80ba0a8f5ca25f86132e62e424295329e799e9542dd4db98ce78eca18",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "before"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDeleteRepro#0001",
+      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDeleteRepro",
+      "ordinal": 1,
+      "scriptName": "START TRANSACTION READ ONLY rejects DELETE",
+      "oracle": "postgres",
+      "postgresId": "transaction-mode-repro-test-teststarttransactionreadonlyrejectsdeleterepro-0001-delete-from-read_only_delete_target-where-id",
+      "suggestedId": "transaction-mode-repro-test-teststarttransactionreadonlyrejectsdeleterepro-0001-delete-from-read_only_delete_target-where-id",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "25006",
+      "errorSeverity": "ERROR",
+      "query": "DELETE FROM read_only_delete_target WHERE id = 1;",
+      "querySha256": "cd05723866d0bc06a8b0f4b13e0d1c43e59b41847bfcd58af24129292a950eb6",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDeleteRepro#0002",
+      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDeleteRepro",
+      "ordinal": 2,
+      "scriptName": "START TRANSACTION READ ONLY rejects DELETE",
+      "oracle": "postgres",
+      "postgresId": "transaction-mode-repro-test-teststarttransactionreadonlyrejectsdeleterepro-0002-select-*-from-read_only_delete_target",
+      "suggestedId": "transaction-mode-repro-test-teststarttransactionreadonlyrejectsdeleterepro-0002-select-*-from-read_only_delete_target",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM read_only_delete_target;",
+      "querySha256": "4ea3517d9ced0fe5568981cd37c4355a7c8a62505127d86d48d68b68e9e9f03f",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsTruncateRepro#0001",
+      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsTruncateRepro",
+      "ordinal": 1,
+      "scriptName": "START TRANSACTION READ ONLY rejects TRUNCATE",
+      "oracle": "postgres",
+      "postgresId": "transaction-mode-repro-test-teststarttransactionreadonlyrejectstruncaterepro-0001-truncate-read_only_truncate_target",
+      "suggestedId": "transaction-mode-repro-test-teststarttransactionreadonlyrejectstruncaterepro-0001-truncate-read_only_truncate_target",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "25006",
+      "errorSeverity": "ERROR",
+      "query": "TRUNCATE read_only_truncate_target;",
+      "querySha256": "0e855aa3333270134915d6c131861ac1a3fc0a44fc60b494ca017291601b7bf7",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsTruncateRepro#0002",
+      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsTruncateRepro",
+      "ordinal": 2,
+      "scriptName": "START TRANSACTION READ ONLY rejects TRUNCATE",
+      "oracle": "postgres",
+      "postgresId": "transaction-mode-repro-test-teststarttransactionreadonlyrejectstruncaterepro-0002-select-id-from-read_only_truncate_target-order",
+      "suggestedId": "transaction-mode-repro-test-teststarttransactionreadonlyrejectstruncaterepro-0002-select-id-from-read_only_truncate_target-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM read_only_truncate_target ORDER BY id;",
+      "querySha256": "9de83f2f3453a937ea9c4a9cb1d44a8d4165f83e4f4fe3921e847e236f50df1c",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsCreateTableRepro#0001",
+      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsCreateTableRepro",
+      "ordinal": 1,
+      "scriptName": "START TRANSACTION READ ONLY rejects CREATE TABLE",
+      "oracle": "postgres",
+      "postgresId": "transaction-mode-repro-test-teststarttransactionreadonlyrejectscreatetablerepro-0001-create-table-read_only_create_table-id-int",
+      "suggestedId": "transaction-mode-repro-test-teststarttransactionreadonlyrejectscreatetablerepro-0001-create-table-read_only_create_table-id-int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "25006",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TABLE read_only_create_table (id INT PRIMARY KEY);",
+      "querySha256": "763290c91fca24b4cd66d7ddba16de3c88a2fc51f7dfa41451ceaf457080a745",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsCreateTableRepro#0002",
+      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsCreateTableRepro",
+      "ordinal": 2,
+      "scriptName": "START TRANSACTION READ ONLY rejects CREATE TABLE",
+      "oracle": "postgres",
+      "postgresId": "transaction-mode-repro-test-teststarttransactionreadonlyrejectscreatetablerepro-0002-select-*-from-read_only_create_table",
+      "suggestedId": "transaction-mode-repro-test-teststarttransactionreadonlyrejectscreatetablerepro-0002-select-*-from-read_only_create_table",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
+      "query": "SELECT * FROM read_only_create_table;",
+      "querySha256": "57243f57e4926e0aa0e7fd8043bf0ad7f232163917577bb29b8ab175a3d2eb59",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsAlterTableRepro#0001",
+      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsAlterTableRepro",
+      "ordinal": 1,
+      "scriptName": "START TRANSACTION READ ONLY rejects ALTER TABLE",
+      "oracle": "postgres",
+      "postgresId": "transaction-mode-repro-test-teststarttransactionreadonlyrejectsaltertablerepro-0001-alter-table-read_only_alter_table-add-column",
+      "suggestedId": "transaction-mode-repro-test-teststarttransactionreadonlyrejectsaltertablerepro-0001-alter-table-read_only_alter_table-add-column",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "25006",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE read_only_alter_table ADD COLUMN label TEXT;",
+      "querySha256": "f3014e0562c9473ada044338c9548f19ed5f77ce4a44725c903bd75ef021a106",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsAlterTableRepro#0002",
+      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsAlterTableRepro",
+      "ordinal": 2,
+      "scriptName": "START TRANSACTION READ ONLY rejects ALTER TABLE",
+      "oracle": "postgres",
+      "postgresId": "transaction-mode-repro-test-teststarttransactionreadonlyrejectsaltertablerepro-0002-select-label-from-read_only_alter_table",
+      "suggestedId": "transaction-mode-repro-test-teststarttransactionreadonlyrejectsaltertablerepro-0002-select-label-from-read_only_alter_table",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42703",
+      "errorSeverity": "ERROR",
+      "query": "SELECT label FROM read_only_alter_table;",
+      "querySha256": "f8443af6cae9793c5add45c0580dbf58e014f3e4f5576ed21ef8a63fe5eb620e",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDropTableRepro#0001",
+      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDropTableRepro",
+      "ordinal": 1,
+      "scriptName": "START TRANSACTION READ ONLY rejects DROP TABLE",
+      "oracle": "postgres",
+      "postgresId": "transaction-mode-repro-test-teststarttransactionreadonlyrejectsdroptablerepro-0001-drop-table-read_only_drop_table",
+      "suggestedId": "transaction-mode-repro-test-teststarttransactionreadonlyrejectsdroptablerepro-0001-drop-table-read_only_drop_table",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "25006",
+      "errorSeverity": "ERROR",
+      "query": "DROP TABLE read_only_drop_table;",
+      "querySha256": "58a99b8bb5c2ec57ab205684ba7b7bc11e8ec3f874a0dc66325e646fc5fd6841",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDropTableRepro#0002",
+      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDropTableRepro",
+      "ordinal": 2,
+      "scriptName": "START TRANSACTION READ ONLY rejects DROP TABLE",
+      "oracle": "postgres",
+      "postgresId": "transaction-mode-repro-test-teststarttransactionreadonlyrejectsdroptablerepro-0002-select-*-from-read_only_drop_table",
+      "suggestedId": "transaction-mode-repro-test-teststarttransactionreadonlyrejectsdroptablerepro-0002-select-*-from-read_only_drop_table",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM read_only_drop_table;",
+      "querySha256": "c3a05ef784ea08c617b25abdaadec20a0a441c58b4f7f20ecc2f03b58c684d48",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsCreateIndexRepro#0001",
+      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsCreateIndexRepro",
+      "ordinal": 1,
+      "scriptName": "START TRANSACTION READ ONLY rejects CREATE INDEX",
+      "oracle": "postgres",
+      "postgresId": "transaction-mode-repro-test-teststarttransactionreadonlyrejectscreateindexrepro-0001-create-index-read_only_create_index_items_label_idx-on-read_only_create_index_items",
+      "suggestedId": "transaction-mode-repro-test-teststarttransactionreadonlyrejectscreateindexrepro-0001-create-index-read_only_create_index_items_label_idx-on-read_only_create_index_items",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "25006",
+      "errorSeverity": "ERROR",
+      "query": "CREATE INDEX read_only_create_index_items_label_idx ON read_only_create_index_items (label);",
+      "querySha256": "86d49eff881f32baea4465250c12fe1089d4069d43ec6e6faf6c71acd7bb93b5",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsCreateIndexRepro#0002",
+      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsCreateIndexRepro",
+      "ordinal": 2,
+      "scriptName": "START TRANSACTION READ ONLY rejects CREATE INDEX",
+      "oracle": "postgres",
+      "postgresId": "transaction-mode-repro-test-teststarttransactionreadonlyrejectscreateindexrepro-0002-select-indexname-from-pg_indexes-where",
+      "suggestedId": "transaction-mode-repro-test-teststarttransactionreadonlyrejectscreateindexrepro-0002-select-indexname-from-pg_indexes-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT indexname\n\t\t\t\t\t\tFROM pg_indexes\n\t\t\t\t\t\tWHERE tablename = 'read_only_create_index_items'\n\t\t\t\t\t\t\tAND indexname = 'read_only_create_index_items_label_idx';",
+      "querySha256": "ae1132ed2f6d58dc2a4fe85458ed24b8175b92d70270abb148e8a7fb2365d7b8",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDropIndexRepro#0001",
+      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDropIndexRepro",
+      "ordinal": 1,
+      "scriptName": "START TRANSACTION READ ONLY rejects DROP INDEX",
+      "oracle": "postgres",
+      "postgresId": "transaction-mode-repro-test-teststarttransactionreadonlyrejectsdropindexrepro-0001-drop-index-read_only_drop_index_items_label_idx",
+      "suggestedId": "transaction-mode-repro-test-teststarttransactionreadonlyrejectsdropindexrepro-0001-drop-index-read_only_drop_index_items_label_idx",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "25006",
+      "errorSeverity": "ERROR",
+      "query": "DROP INDEX read_only_drop_index_items_label_idx;",
+      "querySha256": "cddc85ef860d1af662102647b0a440fb660810e9376d18f57179776a17dddef9",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDropIndexRepro#0002",
+      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDropIndexRepro",
+      "ordinal": 2,
+      "scriptName": "START TRANSACTION READ ONLY rejects DROP INDEX",
+      "oracle": "postgres",
+      "postgresId": "transaction-mode-repro-test-teststarttransactionreadonlyrejectsdropindexrepro-0002-select-indexname-from-pg_indexes-where",
+      "suggestedId": "transaction-mode-repro-test-teststarttransactionreadonlyrejectsdropindexrepro-0002-select-indexname-from-pg_indexes-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT indexname\n\t\t\t\t\t\tFROM pg_indexes\n\t\t\t\t\t\tWHERE tablename = 'read_only_drop_index_items'\n\t\t\t\t\t\t\tAND indexname = 'read_only_drop_index_items_label_idx';",
+      "querySha256": "4c25ee12e69bb4fa7d1c7f675100cac6b58e2756fab25582bb2da337d4bee690",
+      "expectedRows": [
+        [
+          {
+            "value": "read_only_drop_index_items_label_idx"
+          }
+        ],
+        [
+          {
+            "value": "read_only_drop_index_items_label_idx"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsCreateSequenceRepro#0001",
+      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsCreateSequenceRepro",
+      "ordinal": 1,
+      "scriptName": "START TRANSACTION READ ONLY rejects CREATE SEQUENCE",
+      "oracle": "postgres",
+      "postgresId": "transaction-mode-repro-test-teststarttransactionreadonlyrejectscreatesequencerepro-0001-create-sequence-read_only_create_sequence_seq",
+      "suggestedId": "transaction-mode-repro-test-teststarttransactionreadonlyrejectscreatesequencerepro-0001-create-sequence-read_only_create_sequence_seq",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "25006",
+      "errorSeverity": "ERROR",
+      "query": "CREATE SEQUENCE read_only_create_sequence_seq;",
+      "querySha256": "50fe4124d10597777e08900bc3e80f974d8abaaf2792cce7e654173586fa9c93",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsCreateSequenceRepro#0002",
+      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsCreateSequenceRepro",
+      "ordinal": 2,
+      "scriptName": "START TRANSACTION READ ONLY rejects CREATE SEQUENCE",
+      "oracle": "postgres",
+      "postgresId": "transaction-mode-repro-test-teststarttransactionreadonlyrejectscreatesequencerepro-0002-select-nextval-read_only_create_sequence_seq",
+      "suggestedId": "transaction-mode-repro-test-teststarttransactionreadonlyrejectscreatesequencerepro-0002-select-nextval-read_only_create_sequence_seq",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
+      "query": "SELECT nextval('read_only_create_sequence_seq');",
+      "querySha256": "69a5e9761aa5f41d037f766f0382ff588e97c336d38ae03a19b0e51331ef6a9a",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDropSequenceRepro#0001",
+      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDropSequenceRepro",
+      "ordinal": 1,
+      "scriptName": "START TRANSACTION READ ONLY rejects DROP SEQUENCE",
+      "oracle": "postgres",
+      "postgresId": "transaction-mode-repro-test-teststarttransactionreadonlyrejectsdropsequencerepro-0001-drop-sequence-read_only_drop_sequence_seq",
+      "suggestedId": "transaction-mode-repro-test-teststarttransactionreadonlyrejectsdropsequencerepro-0001-drop-sequence-read_only_drop_sequence_seq",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "25006",
+      "errorSeverity": "ERROR",
+      "query": "DROP SEQUENCE read_only_drop_sequence_seq;",
+      "querySha256": "c5ae0f16b8c98c67bbbd9e5d6e959acaa4ce86f91f1941d14f365e690dc0ab95",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDropSequenceRepro#0002",
+      "source": "testing/go/transaction_mode_repro_test.go:TestStartTransactionReadOnlyRejectsDropSequenceRepro",
+      "ordinal": 2,
+      "scriptName": "START TRANSACTION READ ONLY rejects DROP SEQUENCE",
+      "oracle": "postgres",
+      "postgresId": "transaction-mode-repro-test-teststarttransactionreadonlyrejectsdropsequencerepro-0002-select-nextval-read_only_drop_sequence_seq",
+      "suggestedId": "transaction-mode-repro-test-teststarttransactionreadonlyrejectsdropsequencerepro-0002-select-nextval-read_only_drop_sequence_seq",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('read_only_drop_sequence_seq');",
+      "querySha256": "2bc239679dabea3df80730cd51e9b3f082d1c741d799b1f887355766bb1051e1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_mode_repro_test.go:TestDefaultTransactionReadOnlyPreventsWritesRepro#0001",
+      "source": "testing/go/transaction_mode_repro_test.go:TestDefaultTransactionReadOnlyPreventsWritesRepro",
+      "ordinal": 1,
+      "scriptName": "default_transaction_read_only prevents writes",
+      "oracle": "postgres",
+      "postgresId": "transaction-mode-repro-test-testdefaulttransactionreadonlypreventswritesrepro-0001-insert-into-default_read_only_target-values-1",
+      "suggestedId": "transaction-mode-repro-test-testdefaulttransactionreadonlypreventswritesrepro-0001-insert-into-default_read_only_target-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "25006",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO default_read_only_target VALUES (1);",
+      "querySha256": "ef9381e452f5963c44a0312e87cd7feb224cd233071b43348951bf49b4db5fe3",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_mode_repro_test.go:TestBeginReadWriteOverridesDefaultReadOnlyGuard#0001",
+      "source": "testing/go/transaction_mode_repro_test.go:TestBeginReadWriteOverridesDefaultReadOnlyGuard",
+      "ordinal": 1,
+      "scriptName": "BEGIN READ WRITE overrides default_transaction_read_only",
+      "oracle": "postgres",
+      "postgresId": "transaction-mode-repro-test-testbeginreadwriteoverridesdefaultreadonlyguard-0001-select-id-from-begin_read_write_default_target",
+      "suggestedId": "transaction-mode-repro-test-testbeginreadwriteoverridesdefaultreadonlyguard-0001-select-id-from-begin_read_write_default_target",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM begin_read_write_default_target;",
+      "querySha256": "6318d0cfa459ba22184234d541c51d63565725cf608e7b6ecfbfab916c25d2c0",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_mode_repro_test.go:TestReadOnlyTransactionRejectsPersistentSequenceNextvalRepro#0001",
+      "source": "testing/go/transaction_mode_repro_test.go:TestReadOnlyTransactionRejectsPersistentSequenceNextvalRepro",
+      "ordinal": 1,
+      "scriptName": "read-only transaction rejects persistent sequence nextval",
+      "oracle": "postgres",
+      "postgresId": "transaction-mode-repro-test-testreadonlytransactionrejectspersistentsequencenextvalrepro-0001-select-nextval-read_only_persistent_seq",
+      "suggestedId": "transaction-mode-repro-test-testreadonlytransactionrejectspersistentsequencenextvalrepro-0001-select-nextval-read_only_persistent_seq",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "25006",
+      "errorSeverity": "ERROR",
+      "query": "SELECT nextval('read_only_persistent_seq');",
+      "querySha256": "ad5aa16de549bac6e4a3c5cf201cfbeecbae2a6510bfe778a03452baf6cb2f8c",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_mode_repro_test.go:TestReadOnlyTransactionRejectsPersistentSequenceSetvalRepro#0001",
+      "source": "testing/go/transaction_mode_repro_test.go:TestReadOnlyTransactionRejectsPersistentSequenceSetvalRepro",
+      "ordinal": 1,
+      "scriptName": "read-only transaction rejects persistent sequence setval",
+      "oracle": "postgres",
+      "postgresId": "transaction-mode-repro-test-testreadonlytransactionrejectspersistentsequencesetvalrepro-0001-select-setval-read_only_setval_seq-50",
+      "suggestedId": "transaction-mode-repro-test-testreadonlytransactionrejectspersistentsequencesetvalrepro-0001-select-setval-read_only_setval_seq-50",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "25006",
+      "errorSeverity": "ERROR",
+      "query": "SELECT setval('read_only_setval_seq', 50);",
+      "querySha256": "75b790bcd351ae27de4879620990547e231f23d09cb0e1bdb18914446cbd363b",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_mode_repro_test.go:TestReadOnlyTransactionAllowsTemporaryTableWritesGuard#0001",
+      "source": "testing/go/transaction_mode_repro_test.go:TestReadOnlyTransactionAllowsTemporaryTableWritesGuard",
+      "ordinal": 1,
+      "scriptName": "read-only transaction allows temporary table writes",
+      "oracle": "postgres",
+      "postgresId": "transaction-mode-repro-test-testreadonlytransactionallowstemporarytablewritesguard-0001-select-id-label-from-read_only_temp_target",
+      "suggestedId": "transaction-mode-repro-test-testreadonlytransactionallowstemporarytablewritesguard-0001-select-id-label-from-read_only_temp_target",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label FROM read_only_temp_target;",
+      "querySha256": "43e3e9923e727d214fea88caa27b79efea84460814cdc4ee9e5e8929078f60ab",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "temporary write"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

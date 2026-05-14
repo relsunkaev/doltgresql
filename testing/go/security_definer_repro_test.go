@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestSecurityDefinerFunctionUsesOwnerPrivilegesRepro reproduces a security
@@ -40,19 +38,21 @@ func TestSecurityDefinerFunctionUsesOwnerPrivilegesRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT definer_secret();`,
-					Expected: []sql.Row{{"alpha"}},
+					Query: `SELECT definer_secret();`,
+
 					Username: `definer_reader`,
-					Password: `reader`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestSecurityDefinerProcedureUsesOwnerPrivilegesRepro reproduces the same
+						// security semantics bug for CALL: accepted SECURITY DEFINER procedures still
+						// execute SQL statements with the caller's table privileges.
+						ID: "security-definer-repro-test-testsecuritydefinerfunctionusesownerprivilegesrepro-0001-select-definer_secret"},
 				},
 			},
 		},
 	})
 }
 
-// TestSecurityDefinerProcedureUsesOwnerPrivilegesRepro reproduces the same
-// security semantics bug for CALL: accepted SECURITY DEFINER procedures still
-// execute SQL statements with the caller's table privileges.
 func TestSecurityDefinerProcedureUsesOwnerPrivilegesRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -69,14 +69,13 @@ func TestSecurityDefinerProcedureUsesOwnerPrivilegesRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `CALL definer_proc_insert();`,
-					Expected: []sql.Row{},
+					Query: `CALL definer_proc_insert();`,
+
 					Username: `definer_proc_caller`,
-					Password: `caller`,
+					Password: `caller`, PostgresOracle: ScriptTestPostgresOracle{ID: "security-definer-repro-test-testsecuritydefinerprocedureusesownerprivilegesrepro-0001-call-definer_proc_insert"},
 				},
 				{
-					Query:    `SELECT id, secret FROM definer_proc_private ORDER BY id;`,
-					Expected: []sql.Row{{int32(1), "alpha"}},
+					Query: `SELECT id, secret FROM definer_proc_private ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "security-definer-repro-test-testsecuritydefinerprocedureusesownerprivilegesrepro-0002-select-id-secret-from-definer_proc_private"},
 				},
 			},
 		},

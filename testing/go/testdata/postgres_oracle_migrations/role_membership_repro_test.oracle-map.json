@@ -1,0 +1,721 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map role_membership_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/role_membership_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/role_membership_repro_test.go:TestGrantRoleRejectsCircularMembershipRepro#0001",
+      "source": "testing/go/role_membership_repro_test.go:TestGrantRoleRejectsCircularMembershipRepro",
+      "ordinal": 1,
+      "scriptName": "GRANT role rejects circular membership",
+      "oracle": "postgres",
+      "postgresId": "role-membership-repro-test-testgrantrolerejectscircularmembershiprepro-0001-grant-circular_role_b-to-circular_role_a",
+      "suggestedId": "role-membership-repro-test-testgrantrolerejectscircularmembershiprepro-0001-grant-circular_role_b-to-circular_role_a",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "0LP01",
+      "errorSeverity": "ERROR",
+      "query": "GRANT circular_role_b TO circular_role_a;",
+      "querySha256": "b7505daa30e412148320ce8d194c586cb1bd2f6a2a58cdf4bd4530a6a4590bc3",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/role_membership_repro_test.go:TestGrantSuperuserRoleDoesNotTripCircularMembershipRepro#0001",
+      "source": "testing/go/role_membership_repro_test.go:TestGrantSuperuserRoleDoesNotTripCircularMembershipRepro",
+      "ordinal": 1,
+      "scriptName": "GRANT superuser role does not trip circular membership guard",
+      "oracle": "postgres",
+      "postgresId": "role-membership-repro-test-testgrantsuperuserroledoesnottripcircularmembershiprepro-0001-select-pg_get_userbyid-roleid-pg_get_userbyid-member",
+      "suggestedId": "role-membership-repro-test-testgrantsuperuserroledoesnottripcircularmembershiprepro-0001-select-pg_get_userbyid-roleid-pg_get_userbyid-member",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_get_userbyid(roleid), pg_get_userbyid(member)\n\t\t\t\t\t\tFROM pg_catalog.pg_auth_members\n\t\t\t\t\t\tWHERE pg_get_userbyid(roleid) = 'postgres'\n\t\t\t\t\t\t\tAND pg_get_userbyid(member) = 'grant_superuser_member';",
+      "querySha256": "bcc1f088dac3cc79647107c1035cac345e2ef8bd84b8ee5c765aed7ffdcdca52",
+      "expectedRows": [
+        [
+          {
+            "value": "postgres"
+          },
+          {
+            "value": "grant_superuser_member"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/role_membership_repro_test.go:TestGrantRoleRejectsSelfMembershipRepro#0001",
+      "source": "testing/go/role_membership_repro_test.go:TestGrantRoleRejectsSelfMembershipRepro",
+      "ordinal": 1,
+      "scriptName": "GRANT role rejects self membership",
+      "oracle": "postgres",
+      "postgresId": "role-membership-repro-test-testgrantrolerejectsselfmembershiprepro-0001-grant-self_member_role-to-self_member_role",
+      "suggestedId": "role-membership-repro-test-testgrantrolerejectsselfmembershiprepro-0001-grant-self_member_role-to-self_member_role",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "0LP01",
+      "errorSeverity": "ERROR",
+      "query": "GRANT self_member_role TO self_member_role;",
+      "querySha256": "b2f642a5018dd8ac8b62d482a78d4f30bc668b792abe1628e1f5da61e350d6ba",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/role_membership_repro_test.go:TestGrantRolePopulatesPgAuthMembersRepro#0001",
+      "source": "testing/go/role_membership_repro_test.go:TestGrantRolePopulatesPgAuthMembersRepro",
+      "ordinal": 1,
+      "scriptName": "GRANT role populates pg_auth_members",
+      "oracle": "postgres",
+      "postgresId": "role-membership-repro-test-testgrantrolepopulatespgauthmembersrepro-0001-select-pg_get_userbyid-roleid-pg_get_userbyid-member",
+      "suggestedId": "role-membership-repro-test-testgrantrolepopulatespgauthmembersrepro-0001-select-pg_get_userbyid-roleid-pg_get_userbyid-member",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_get_userbyid(roleid), pg_get_userbyid(member), admin_option\n\t\t\t\t\t\tFROM pg_catalog.pg_auth_members\n\t\t\t\t\t\tWHERE pg_get_userbyid(roleid) = 'catalog_parent_role'\n\t\t\t\t\t\t\tAND pg_get_userbyid(member) = 'catalog_child_role';",
+      "querySha256": "4f7b475b791dad7ad64021be3192a1847c3df5f4cc83b21093c453bf2f7ac3d4",
+      "expectedRows": [
+        [
+          {
+            "value": "catalog_parent_role"
+          },
+          {
+            "value": "catalog_child_role"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/role_membership_repro_test.go:TestGrantRolePopulatesPgGroupRepro#0001",
+      "source": "testing/go/role_membership_repro_test.go:TestGrantRolePopulatesPgGroupRepro",
+      "ordinal": 1,
+      "scriptName": "GRANT role populates pg_group",
+      "oracle": "postgres",
+      "postgresId": "role-membership-repro-test-testgrantrolepopulatespggrouprepro-0001-select-groname-grolist-is-not",
+      "suggestedId": "role-membership-repro-test-testgrantrolepopulatespggrouprepro-0001-select-groname-grolist-is-not",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT groname, grolist IS NOT NULL\n\t\t\t\t\t\tFROM pg_catalog.pg_group\n\t\t\t\t\t\tWHERE groname = 'group_catalog_role';",
+      "querySha256": "9faa579d63b909092b3098acf221cf51ebcdce4a8bcd74079f974d9943d273e1",
+      "expectedRows": [
+        [
+          {
+            "value": "group_catalog_role"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/role_membership_repro_test.go:TestCreateRoleInRoleGrantsMembershipRepro#0001",
+      "source": "testing/go/role_membership_repro_test.go:TestCreateRoleInRoleGrantsMembershipRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE ROLE IN ROLE grants membership",
+      "oracle": "postgres",
+      "postgresId": "role-membership-repro-test-testcreateroleinrolegrantsmembershiprepro-0001-select-pg_has_role-create_in_role_member-create_in_role_parent-member",
+      "suggestedId": "role-membership-repro-test-testcreateroleinrolegrantsmembershiprepro-0001-select-pg_has_role-create_in_role_member-create_in_role_parent-member",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_has_role(\n\t\t\t\t\t\t\t'create_in_role_member',\n\t\t\t\t\t\t\t'create_in_role_parent',\n\t\t\t\t\t\t\t'member'\n\t\t\t\t\t\t);",
+      "querySha256": "0202c1054e8d025b0b6196eda62b91e94c4a540f26f9ff15135d5b05f15027ea",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/role_membership_repro_test.go:TestCreateRoleRoleOptionAddsMembersRepro#0001",
+      "source": "testing/go/role_membership_repro_test.go:TestCreateRoleRoleOptionAddsMembersRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE ROLE ROLE option adds members",
+      "oracle": "postgres",
+      "postgresId": "role-membership-repro-test-testcreateroleroleoptionaddsmembersrepro-0001-select-pg_has_role-create_role_option_member-create_role_option_group-member",
+      "suggestedId": "role-membership-repro-test-testcreateroleroleoptionaddsmembersrepro-0001-select-pg_has_role-create_role_option_member-create_role_option_group-member",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_has_role(\n\t\t\t\t\t\t\t'create_role_option_member',\n\t\t\t\t\t\t\t'create_role_option_group',\n\t\t\t\t\t\t\t'member'\n\t\t\t\t\t\t);",
+      "querySha256": "3eb06175b44e2d9bfbef88e3de6beb96e45582de8efc21422be13d5e1b7b6e37",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/role_membership_repro_test.go:TestCreateRoleAdminOptionGrantsAdminMembershipRepro#0001",
+      "source": "testing/go/role_membership_repro_test.go:TestCreateRoleAdminOptionGrantsAdminMembershipRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE ROLE ADMIN option grants delegable membership",
+      "oracle": "postgres",
+      "postgresId": "role-membership-repro-test-testcreateroleadminoptiongrantsadminmembershiprepro-0001-select-pg_has_role-create_admin_option_target-create_admin_option_group-member",
+      "suggestedId": "role-membership-repro-test-testcreateroleadminoptiongrantsadminmembershiprepro-0001-select-pg_has_role-create_admin_option_target-create_admin_option_group-member",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_has_role(\n\t\t\t\t\t\t\t'create_admin_option_target',\n\t\t\t\t\t\t\t'create_admin_option_group',\n\t\t\t\t\t\t\t'member'\n\t\t\t\t\t\t);",
+      "querySha256": "aa86bed7df689b0f95d74e7d20009b967026d94752d25533515e9bb98fe8c1ce",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/role_membership_repro_test.go:TestGrantRoleRequiresAdminOptionGuard#0001",
+      "source": "testing/go/role_membership_repro_test.go:TestGrantRoleRequiresAdminOptionGuard",
+      "ordinal": 1,
+      "scriptName": "GRANT role requires admin option",
+      "oracle": "postgres",
+      "postgresId": "role-membership-repro-test-testgrantrolerequiresadminoptionguard-0001-grant-delegated_role-to-delegated_target",
+      "suggestedId": "role-membership-repro-test-testgrantrolerequiresadminoptionguard-0001-grant-delegated_role-to-delegated_target",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "delegated_member",
+      "query": "GRANT delegated_role TO delegated_target;",
+      "querySha256": "3404c517835ba7d39629a72384238c389798b6553ba5625f423f2c85d5e50b2b",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/role_membership_repro_test.go:TestRevokeRoleOnlyRemovesNamedGrantorMembershipRepro#0001",
+      "source": "testing/go/role_membership_repro_test.go:TestRevokeRoleOnlyRemovesNamedGrantorMembershipRepro",
+      "ordinal": 1,
+      "scriptName": "REVOKE role keeps other grantors' memberships",
+      "oracle": "postgres",
+      "postgresId": "role-membership-repro-test-testrevokeroleonlyremovesnamedgrantormembershiprepro-0001-select-pg_has_role-role_multi_member-oid-member",
+      "suggestedId": "role-membership-repro-test-testrevokeroleonlyremovesnamedgrantormembershiprepro-0001-select-pg_has_role-role_multi_member-oid-member",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_has_role(\n\t\t\t\t\t\t\t'role_multi_member',\n\t\t\t\t\t\t\toid,\n\t\t\t\t\t\t\t'member'\n\t\t\t\t\t\t)\n\t\t\t\t\t\tFROM pg_catalog.pg_roles\n\t\t\t\t\t\tWHERE rolname = 'role_multi_group';",
+      "querySha256": "2f8dec350a32932bcd74c7d1976705f24dce734b99a6016c0facbbfe8b451067",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/role_membership_repro_test.go:TestRevokeAdminOptionOnlyRemovesNamedGrantorMembershipRepro#0001",
+      "source": "testing/go/role_membership_repro_test.go:TestRevokeAdminOptionOnlyRemovesNamedGrantorMembershipRepro",
+      "ordinal": 1,
+      "scriptName": "REVOKE ADMIN OPTION keeps other grantors' memberships",
+      "oracle": "postgres",
+      "postgresId": "role-membership-repro-test-testrevokeadminoptiononlyremovesnamedgrantormembershiprepro-0001-select-pg_has_role-role_multi_option_delegate-oid-member",
+      "suggestedId": "role-membership-repro-test-testrevokeadminoptiononlyremovesnamedgrantormembershiprepro-0001-select-pg_has_role-role_multi_option_delegate-oid-member",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_has_role(\n\t\t\t\t\t\t\t'role_multi_option_delegate',\n\t\t\t\t\t\t\toid,\n\t\t\t\t\t\t\t'member'\n\t\t\t\t\t\t)\n\t\t\t\t\t\tFROM pg_catalog.pg_roles\n\t\t\t\t\t\tWHERE rolname = 'role_multi_option_group';",
+      "querySha256": "fead497c773ae196be676def439b5ee4e88b0511dd0025eb8ffe88aa66b97394",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/role_membership_repro_test.go:TestRevokeAdminOptionRestrictRejectsDependentRoleGrantRepro#0001",
+      "source": "testing/go/role_membership_repro_test.go:TestRevokeAdminOptionRestrictRejectsDependentRoleGrantRepro",
+      "ordinal": 1,
+      "scriptName": "REVOKE ADMIN OPTION RESTRICT rejects dependent role grant",
+      "oracle": "postgres",
+      "postgresId": "role-membership-repro-test-testrevokeadminoptionrestrictrejectsdependentrolegrantrepro-0001-revoke-admin-option-for-revoke_role_restrict_group",
+      "suggestedId": "role-membership-repro-test-testrevokeadminoptionrestrictrejectsdependentrolegrantrepro-0001-revoke-admin-option-for-revoke_role_restrict_group",
+      "compare": "structural",
+      "expectedKind": "error",
+      "username": "revoke_role_restrict_admin",
+      "query": "REVOKE ADMIN OPTION FOR revoke_role_restrict_group\n\t\t\t\t\t\tFROM revoke_role_restrict_middle RESTRICT;",
+      "querySha256": "9ccab3ccb68335a1548645d98ab2334ff447286b67f8d0f9bf7349a4f9092e12",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/role_membership_repro_test.go:TestRevokeAdminOptionRestrictRejectsDependentRoleGrantRepro#0002",
+      "source": "testing/go/role_membership_repro_test.go:TestRevokeAdminOptionRestrictRejectsDependentRoleGrantRepro",
+      "ordinal": 2,
+      "scriptName": "REVOKE ADMIN OPTION RESTRICT rejects dependent role grant",
+      "oracle": "postgres",
+      "postgresId": "role-membership-repro-test-testrevokeadminoptionrestrictrejectsdependentrolegrantrepro-0002-select-pg_has_role-revoke_role_restrict_delegate-oid-member",
+      "suggestedId": "role-membership-repro-test-testrevokeadminoptionrestrictrejectsdependentrolegrantrepro-0002-select-pg_has_role-revoke_role_restrict_delegate-oid-member",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_has_role(\n\t\t\t\t\t\t\t'revoke_role_restrict_delegate',\n\t\t\t\t\t\t\toid,\n\t\t\t\t\t\t\t'member'\n\t\t\t\t\t\t)\n\t\t\t\t\t\tFROM pg_catalog.pg_roles\n\t\t\t\t\t\tWHERE rolname = 'revoke_role_restrict_group';",
+      "querySha256": "070116613728c233a9e3d52e8df3b4eb52b07dd3b4a4e89373e3b922fc631f94",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/role_membership_repro_test.go:TestRevokeAdminOptionCascadeRemovesDependentRoleGrantRepro#0001",
+      "source": "testing/go/role_membership_repro_test.go:TestRevokeAdminOptionCascadeRemovesDependentRoleGrantRepro",
+      "ordinal": 1,
+      "scriptName": "REVOKE ADMIN OPTION CASCADE removes dependent role grant",
+      "oracle": "postgres",
+      "postgresId": "role-membership-repro-test-testrevokeadminoptioncascaderemovesdependentrolegrantrepro-0001-select-pg_has_role-revoke_role_cascade_leaf-oid-member",
+      "suggestedId": "role-membership-repro-test-testrevokeadminoptioncascaderemovesdependentrolegrantrepro-0001-select-pg_has_role-revoke_role_cascade_leaf-oid-member",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_has_role(\n\t\t\t\t\t\t\t'revoke_role_cascade_leaf',\n\t\t\t\t\t\t\toid,\n\t\t\t\t\t\t\t'member'\n\t\t\t\t\t\t)\n\t\t\t\t\t\tFROM pg_catalog.pg_roles\n\t\t\t\t\t\tWHERE rolname = 'revoke_role_cascade_group';",
+      "querySha256": "ccb2c18f3a02862c8a693352ea450914a3a3d264595cbbc249a23b706d114a71",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/role_membership_repro_test.go:TestRevokeAdminOptionCascadeRemovesDependentRoleGrantRepro#0002",
+      "source": "testing/go/role_membership_repro_test.go:TestRevokeAdminOptionCascadeRemovesDependentRoleGrantRepro",
+      "ordinal": 2,
+      "scriptName": "REVOKE ADMIN OPTION CASCADE removes dependent role grant",
+      "oracle": "postgres",
+      "postgresId": "role-membership-repro-test-testrevokeadminoptioncascaderemovesdependentrolegrantrepro-0002-select-pg_has_role-revoke_role_cascade_middle-oid-member",
+      "suggestedId": "role-membership-repro-test-testrevokeadminoptioncascaderemovesdependentrolegrantrepro-0002-select-pg_has_role-revoke_role_cascade_middle-oid-member",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_has_role(\n\t\t\t\t\t\t\t'revoke_role_cascade_middle',\n\t\t\t\t\t\t\toid,\n\t\t\t\t\t\t\t'member'\n\t\t\t\t\t\t)\n\t\t\t\t\t\tFROM pg_catalog.pg_roles\n\t\t\t\t\t\tWHERE rolname = 'revoke_role_cascade_group';",
+      "querySha256": "9a968d06c9554cb2784046fcb9b361ceeb0b16cdd538c5c761ab4203796fdf87",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/role_membership_repro_test.go:TestRevokeAdminOptionCascadeRemovesDependentRoleGrantRepro#0003",
+      "source": "testing/go/role_membership_repro_test.go:TestRevokeAdminOptionCascadeRemovesDependentRoleGrantRepro",
+      "ordinal": 3,
+      "scriptName": "REVOKE ADMIN OPTION CASCADE removes dependent role grant",
+      "oracle": "postgres",
+      "postgresId": "role-membership-repro-test-testrevokeadminoptioncascaderemovesdependentrolegrantrepro-0003-grant-revoke_role_cascade_group-to-revoke_role_cascade_delegate",
+      "suggestedId": "role-membership-repro-test-testrevokeadminoptioncascaderemovesdependentrolegrantrepro-0003-grant-revoke_role_cascade_group-to-revoke_role_cascade_delegate",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "revoke_role_cascade_middle",
+      "query": "GRANT revoke_role_cascade_group\n\t\t\t\t\t\tTO revoke_role_cascade_delegate;",
+      "querySha256": "49cb1be697d3eebb41c61d37e173c2d0f03ba5d6825db0bebbb310376acbcae0",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/role_membership_repro_test.go:TestRevokeRoleRestrictRejectsDependentRoleGrantRepro#0001",
+      "source": "testing/go/role_membership_repro_test.go:TestRevokeRoleRestrictRejectsDependentRoleGrantRepro",
+      "ordinal": 1,
+      "scriptName": "REVOKE role RESTRICT rejects dependent role grant",
+      "oracle": "postgres",
+      "postgresId": "role-membership-repro-test-testrevokerolerestrictrejectsdependentrolegrantrepro-0001-revoke-revoke_role_full_restrict_group-from-revoke_role_full_restrict_middle-restrict",
+      "suggestedId": "role-membership-repro-test-testrevokerolerestrictrejectsdependentrolegrantrepro-0001-revoke-revoke_role_full_restrict_group-from-revoke_role_full_restrict_middle-restrict",
+      "compare": "structural",
+      "expectedKind": "error",
+      "username": "revoke_role_full_restrict_admin",
+      "query": "REVOKE revoke_role_full_restrict_group\n\t\t\t\t\t\tFROM revoke_role_full_restrict_middle RESTRICT;",
+      "querySha256": "54ee126509d7c289e4ddb8da6d45dbb435d0180278586188a7ddceb6ce293d24",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/role_membership_repro_test.go:TestRevokeRoleRestrictRejectsDependentRoleGrantRepro#0002",
+      "source": "testing/go/role_membership_repro_test.go:TestRevokeRoleRestrictRejectsDependentRoleGrantRepro",
+      "ordinal": 2,
+      "scriptName": "REVOKE role RESTRICT rejects dependent role grant",
+      "oracle": "postgres",
+      "postgresId": "role-membership-repro-test-testrevokerolerestrictrejectsdependentrolegrantrepro-0002-select-pg_has_role-revoke_role_full_restrict_middle-oid-member",
+      "suggestedId": "role-membership-repro-test-testrevokerolerestrictrejectsdependentrolegrantrepro-0002-select-pg_has_role-revoke_role_full_restrict_middle-oid-member",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_has_role(\n\t\t\t\t\t\t\t'revoke_role_full_restrict_middle',\n\t\t\t\t\t\t\toid,\n\t\t\t\t\t\t\t'member'\n\t\t\t\t\t\t)\n\t\t\t\t\t\tFROM pg_catalog.pg_roles\n\t\t\t\t\t\tWHERE rolname = 'revoke_role_full_restrict_group';",
+      "querySha256": "2b4585f08f1977415e233a512364433d490006fb484398b172830cb4edb4b3ae",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/role_membership_repro_test.go:TestRevokeRoleRestrictRejectsDependentRoleGrantRepro#0003",
+      "source": "testing/go/role_membership_repro_test.go:TestRevokeRoleRestrictRejectsDependentRoleGrantRepro",
+      "ordinal": 3,
+      "scriptName": "REVOKE role RESTRICT rejects dependent role grant",
+      "oracle": "postgres",
+      "postgresId": "role-membership-repro-test-testrevokerolerestrictrejectsdependentrolegrantrepro-0003-select-pg_has_role-revoke_role_full_restrict_delegate-oid-member",
+      "suggestedId": "role-membership-repro-test-testrevokerolerestrictrejectsdependentrolegrantrepro-0003-select-pg_has_role-revoke_role_full_restrict_delegate-oid-member",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_has_role(\n\t\t\t\t\t\t\t'revoke_role_full_restrict_delegate',\n\t\t\t\t\t\t\toid,\n\t\t\t\t\t\t\t'member'\n\t\t\t\t\t\t)\n\t\t\t\t\t\tFROM pg_catalog.pg_roles\n\t\t\t\t\t\tWHERE rolname = 'revoke_role_full_restrict_group';",
+      "querySha256": "112e43908110b660ea18cfa3a355fa4eda760bdb567909367f6fe3de49f831ec",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/role_membership_repro_test.go:TestRevokeRoleCascadeRemovesDependentRoleGrantRepro#0001",
+      "source": "testing/go/role_membership_repro_test.go:TestRevokeRoleCascadeRemovesDependentRoleGrantRepro",
+      "ordinal": 1,
+      "scriptName": "REVOKE role CASCADE removes dependent role grant",
+      "oracle": "postgres",
+      "postgresId": "role-membership-repro-test-testrevokerolecascaderemovesdependentrolegrantrepro-0001-select-pg_has_role-revoke_role_full_cascade_middle-oid-member",
+      "suggestedId": "role-membership-repro-test-testrevokerolecascaderemovesdependentrolegrantrepro-0001-select-pg_has_role-revoke_role_full_cascade_middle-oid-member",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_has_role(\n\t\t\t\t\t\t\t'revoke_role_full_cascade_middle',\n\t\t\t\t\t\t\toid,\n\t\t\t\t\t\t\t'member'\n\t\t\t\t\t\t)\n\t\t\t\t\t\tFROM pg_catalog.pg_roles\n\t\t\t\t\t\tWHERE rolname = 'revoke_role_full_cascade_group';",
+      "querySha256": "851a35250cbe6b0e8646ceaf3064ae38dfce3f076b2275eb3d8e0d244e1aa7be",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/role_membership_repro_test.go:TestRevokeRoleCascadeRemovesDependentRoleGrantRepro#0002",
+      "source": "testing/go/role_membership_repro_test.go:TestRevokeRoleCascadeRemovesDependentRoleGrantRepro",
+      "ordinal": 2,
+      "scriptName": "REVOKE role CASCADE removes dependent role grant",
+      "oracle": "postgres",
+      "postgresId": "role-membership-repro-test-testrevokerolecascaderemovesdependentrolegrantrepro-0002-select-pg_has_role-revoke_role_full_cascade_leaf-oid-member",
+      "suggestedId": "role-membership-repro-test-testrevokerolecascaderemovesdependentrolegrantrepro-0002-select-pg_has_role-revoke_role_full_cascade_leaf-oid-member",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_has_role(\n\t\t\t\t\t\t\t'revoke_role_full_cascade_leaf',\n\t\t\t\t\t\t\toid,\n\t\t\t\t\t\t\t'member'\n\t\t\t\t\t\t)\n\t\t\t\t\t\tFROM pg_catalog.pg_roles\n\t\t\t\t\t\tWHERE rolname = 'revoke_role_full_cascade_group';",
+      "querySha256": "bed2caef6cdf95746f6d826dd7e1224ec10d04ea89195e1047327741029865b3",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/role_membership_repro_test.go:TestRevokeRoleCascadeRemovesDependentRoleGrantRepro#0003",
+      "source": "testing/go/role_membership_repro_test.go:TestRevokeRoleCascadeRemovesDependentRoleGrantRepro",
+      "ordinal": 3,
+      "scriptName": "REVOKE role CASCADE removes dependent role grant",
+      "oracle": "postgres",
+      "postgresId": "role-membership-repro-test-testrevokerolecascaderemovesdependentrolegrantrepro-0003-grant-revoke_role_full_cascade_group-to-revoke_role_full_cascade_delegate",
+      "suggestedId": "role-membership-repro-test-testrevokerolecascaderemovesdependentrolegrantrepro-0003-grant-revoke_role_full_cascade_group-to-revoke_role_full_cascade_delegate",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "revoke_role_full_cascade_middle",
+      "query": "GRANT revoke_role_full_cascade_group\n\t\t\t\t\t\tTO revoke_role_full_cascade_delegate;",
+      "querySha256": "5d74f5f28aaaa684fe679aaffc2dbf29ebc29655cbcc04266a602c7cc3458e21",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/role_membership_repro_test.go:TestInheritedRolePrivilegesApplyGuard#0001",
+      "source": "testing/go/role_membership_repro_test.go:TestInheritedRolePrivilegesApplyGuard",
+      "ordinal": 1,
+      "scriptName": "inherited role privileges apply by default",
+      "oracle": "postgres",
+      "postgresId": "role-membership-repro-test-testinheritedroleprivilegesapplyguard-0001-select-id-secret-from-inherited_role_private_items",
+      "suggestedId": "role-membership-repro-test-testinheritedroleprivilegesapplyguard-0001-select-id-secret-from-inherited_role_private_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "inherited_role_user",
+      "query": "SELECT id, secret\n\t\t\t\t\t\tFROM inherited_role_private_items;",
+      "querySha256": "473ed3d060a88dce6ced7761483f35dc3d7f9e41ae5164f6bae6b7a6c09ae7b8",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "visible through inherited role"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/role_membership_repro_test.go:TestGrantRoleWithInheritFalseDoesNotApplyPrivilegesRepro#0001",
+      "source": "testing/go/role_membership_repro_test.go:TestGrantRoleWithInheritFalseDoesNotApplyPrivilegesRepro",
+      "ordinal": 1,
+      "scriptName": "GRANT role WITH INHERIT FALSE blocks inherited privileges",
+      "oracle": "postgres",
+      "postgresId": "role-membership-repro-test-testgrantrolewithinheritfalsedoesnotapplyprivilegesrepro-0001-select-id-secret-from-grant_inherit_false_private_items",
+      "suggestedId": "role-membership-repro-test-testgrantrolewithinheritfalsedoesnotapplyprivilegesrepro-0001-select-id-secret-from-grant_inherit_false_private_items",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "grant_inherit_false_user",
+      "query": "SELECT id, secret\n\t\t\t\t\t\tFROM grant_inherit_false_private_items;",
+      "querySha256": "9903a372a25fa052dedabf62bf8f34b65cc5b2aaa9c454a98e3b9eb40f0a99e3",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/role_membership_repro_test.go:TestGrantRoleWithInheritFalsePopulatesPgAuthMembersRepro#0001",
+      "source": "testing/go/role_membership_repro_test.go:TestGrantRoleWithInheritFalsePopulatesPgAuthMembersRepro",
+      "ordinal": 1,
+      "scriptName": "GRANT role WITH INHERIT FALSE records membership options",
+      "oracle": "postgres",
+      "postgresId": "role-membership-repro-test-testgrantrolewithinheritfalsepopulatespgauthmembersrepro-0001-select-inherit_option-set_option-from-pg_catalog.pg_auth_members",
+      "suggestedId": "role-membership-repro-test-testgrantrolewithinheritfalsepopulatespgauthmembersrepro-0001-select-inherit_option-set_option-from-pg_catalog.pg_auth_members",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT inherit_option, set_option\n\t\t\t\t\t\tFROM pg_catalog.pg_auth_members\n\t\t\t\t\t\tWHERE pg_get_userbyid(roleid) = 'grant_option_catalog_parent'\n\t\t\t\t\t\t\tAND pg_get_userbyid(member) = 'grant_option_catalog_child';",
+      "querySha256": "38c663c4ca43577a93cbac61ed5b6ddc4d6d9a7bf9ae8d4d512be53b49f9d662",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/role_membership_repro_test.go:TestGrantRoleWithSetFalsePopulatesPgAuthMembersRepro#0001",
+      "source": "testing/go/role_membership_repro_test.go:TestGrantRoleWithSetFalsePopulatesPgAuthMembersRepro",
+      "ordinal": 1,
+      "scriptName": "GRANT role WITH SET FALSE records membership options",
+      "oracle": "postgres",
+      "postgresId": "role-membership-repro-test-testgrantrolewithsetfalsepopulatespgauthmembersrepro-0001-select-inherit_option-set_option-from-pg_catalog.pg_auth_members",
+      "suggestedId": "role-membership-repro-test-testgrantrolewithsetfalsepopulatespgauthmembersrepro-0001-select-inherit_option-set_option-from-pg_catalog.pg_auth_members",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT inherit_option, set_option\n\t\t\t\t\t\tFROM pg_catalog.pg_auth_members\n\t\t\t\t\t\tWHERE pg_get_userbyid(roleid) = 'grant_set_option_catalog_parent'\n\t\t\t\t\t\t\tAND pg_get_userbyid(member) = 'grant_set_option_catalog_child';",
+      "querySha256": "a2bcd6b3ea937bdcfc8bbde72bbc556992c9ef30d7589f4a59a1e46e11a9625a",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/role_membership_repro_test.go:TestNoInheritRolePrivilegesDoNotApplyGuard#0001",
+      "source": "testing/go/role_membership_repro_test.go:TestNoInheritRolePrivilegesDoNotApplyGuard",
+      "ordinal": 1,
+      "scriptName": "NOINHERIT role privileges do not apply by default",
+      "oracle": "postgres",
+      "postgresId": "role-membership-repro-test-testnoinheritroleprivilegesdonotapplyguard-0001-select-id-secret-from-noinherit_role_private_items",
+      "suggestedId": "role-membership-repro-test-testnoinheritroleprivilegesdonotapplyguard-0001-select-id-secret-from-noinherit_role_private_items",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "noinherit_role_user",
+      "query": "SELECT id, secret\n\t\t\t\t\t\tFROM noinherit_role_private_items;",
+      "querySha256": "e88c7aa5bbdb131d33ada1911da4a06e048031c9f921496bca1550c7374fff70",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/role_membership_repro_test.go:TestPgHasRoleSupportsRoleNameArgumentsRepro#0001",
+      "source": "testing/go/role_membership_repro_test.go:TestPgHasRoleSupportsRoleNameArgumentsRepro",
+      "ordinal": 1,
+      "scriptName": "pg_has_role supports role-name arguments",
+      "oracle": "postgres",
+      "postgresId": "role-membership-repro-test-testpghasrolesupportsrolenameargumentsrepro-0001-select-pg_has_role-has_role_catalog_member-has_role_catalog_group-member",
+      "suggestedId": "role-membership-repro-test-testpghasrolesupportsrolenameargumentsrepro-0001-select-pg_has_role-has_role_catalog_member-has_role_catalog_group-member",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_has_role(\n\t\t\t\t\t\t\t'has_role_catalog_member',\n\t\t\t\t\t\t\t'has_role_catalog_group',\n\t\t\t\t\t\t\t'member'\n\t\t\t\t\t\t);",
+      "querySha256": "067692969190558a338a3181fe6e601afcfcd843e25fb1bae51c2c61517ba05f",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/role_membership_repro_test.go:TestPgHasRoleSupportsRoleNameArgumentsRepro#0002",
+      "source": "testing/go/role_membership_repro_test.go:TestPgHasRoleSupportsRoleNameArgumentsRepro",
+      "ordinal": 2,
+      "scriptName": "pg_has_role supports role-name arguments",
+      "oracle": "postgres",
+      "postgresId": "role-membership-repro-test-testpghasrolesupportsrolenameargumentsrepro-0002-select-pg_has_role-has_role_catalog_member-::regrole-has_role_catalog_group",
+      "suggestedId": "role-membership-repro-test-testpghasrolesupportsrolenameargumentsrepro-0002-select-pg_has_role-has_role_catalog_member-::regrole-has_role_catalog_group",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_has_role(\n\t\t\t\t\t\t\t'has_role_catalog_member'::regrole,\n\t\t\t\t\t\t\t'has_role_catalog_group'::regrole,\n\t\t\t\t\t\t\t'member'\n\t\t\t\t\t\t);",
+      "querySha256": "d6459c66b8893bb1446be3250a27463e715147a436b723390a6da5dcb75d3168",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/role_membership_repro_test.go:TestPgHasRoleSupportsRoleNameArgumentsRepro#0003",
+      "source": "testing/go/role_membership_repro_test.go:TestPgHasRoleSupportsRoleNameArgumentsRepro",
+      "ordinal": 3,
+      "scriptName": "pg_has_role supports role-name arguments",
+      "oracle": "postgres",
+      "postgresId": "role-membership-repro-test-testpghasrolesupportsrolenameargumentsrepro-0003-select-pg_has_role-has_role_catalog_group-member",
+      "suggestedId": "role-membership-repro-test-testpghasrolesupportsrolenameargumentsrepro-0003-select-pg_has_role-has_role_catalog_group-member",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_has_role('has_role_catalog_group', 'member');",
+      "querySha256": "613ed01ac86df8ede9d5c2df7d3968c152da8dbc5f18c8edfcc476bf85a6964b",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/role_membership_repro_test.go:TestPgHasRoleUsageHonorsIntermediateNoInheritRepro#0001",
+      "source": "testing/go/role_membership_repro_test.go:TestPgHasRoleUsageHonorsIntermediateNoInheritRepro",
+      "ordinal": 1,
+      "scriptName": "pg_has_role usage honors intermediate NOINHERIT roles",
+      "oracle": "postgres",
+      "postgresId": "role-membership-repro-test-testpghasroleusagehonorsintermediatenoinheritrepro-0001-select-pg_has_role-usage_chain_leaf-oid-member",
+      "suggestedId": "role-membership-repro-test-testpghasroleusagehonorsintermediatenoinheritrepro-0001-select-pg_has_role-usage_chain_leaf-oid-member",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_has_role('usage_chain_leaf', oid, 'member')\n\t\t\t\t\t\tFROM pg_catalog.pg_roles\n\t\t\t\t\t\tWHERE rolname = 'usage_chain_top';",
+      "querySha256": "b26e983e16e162f7a3bc359cbe6ddddccdc5b8c3d835f671c4880a951f643718",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/role_membership_repro_test.go:TestPgHasRoleUsageHonorsIntermediateNoInheritRepro#0002",
+      "source": "testing/go/role_membership_repro_test.go:TestPgHasRoleUsageHonorsIntermediateNoInheritRepro",
+      "ordinal": 2,
+      "scriptName": "pg_has_role usage honors intermediate NOINHERIT roles",
+      "oracle": "postgres",
+      "postgresId": "role-membership-repro-test-testpghasroleusagehonorsintermediatenoinheritrepro-0002-select-pg_has_role-usage_chain_leaf-oid-usage",
+      "suggestedId": "role-membership-repro-test-testpghasroleusagehonorsintermediatenoinheritrepro-0002-select-pg_has_role-usage_chain_leaf-oid-usage",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_has_role('usage_chain_leaf', oid, 'usage')\n\t\t\t\t\t\tFROM pg_catalog.pg_roles\n\t\t\t\t\t\tWHERE rolname = 'usage_chain_top';",
+      "querySha256": "cbe2d1402b4c3b24525ad2c0341ee5288c3f63ff97718859b8e7250935aa1e71",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/role_membership_repro_test.go:TestSetRoleUsesGrantedRolePrivilegesRepro#0001",
+      "source": "testing/go/role_membership_repro_test.go:TestSetRoleUsesGrantedRolePrivilegesRepro",
+      "ordinal": 1,
+      "scriptName": "SET ROLE uses granted role privileges",
+      "oracle": "postgres",
+      "postgresId": "role-membership-repro-test-testsetroleusesgrantedroleprivilegesrepro-0001-select-id-secret-from-set_role_private_items",
+      "suggestedId": "role-membership-repro-test-testsetroleusesgrantedroleprivilegesrepro-0001-select-id-secret-from-set_role_private_items",
+      "compare": "sqlstate",
+      "expectedKind": "rows",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "set_role_switcher",
+      "query": "SELECT id, secret\n\t\t\t\t\t\tFROM set_role_private_items;",
+      "querySha256": "b668e0bf994b247efff5cb54e4cc3698989e859b0980c828672344f53a87aa3b",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

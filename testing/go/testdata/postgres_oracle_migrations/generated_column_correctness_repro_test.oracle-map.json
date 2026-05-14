@@ -1,0 +1,813 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map generated_column_correctness_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/generated_column_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsVolatileFunctionsRepro#0001",
+      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsVolatileFunctionsRepro",
+      "ordinal": 1,
+      "scriptName": "generated columns reject volatile expressions",
+      "oracle": "postgres",
+      "postgresId": "generated-column-correctness-repro-test-testgeneratedcolumnrejectsvolatilefunctionsrepro-0001-create-table-generated_volatile_items-id-int",
+      "suggestedId": "generated-column-correctness-repro-test-testgeneratedcolumnrejectsvolatilefunctionsrepro-0001-create-table-generated_volatile_items-id-int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P17",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TABLE generated_volatile_items (\n\t\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\t\trandom_value DOUBLE PRECISION GENERATED ALWAYS AS (random()) STORED\n\t\t\t\t\t);",
+      "querySha256": "549d4c386b8e4c9abbd67623c6a607be04417d5bd245ad4cb38abb5be52c2b60",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsSelfReferenceRepro#0001",
+      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsSelfReferenceRepro",
+      "ordinal": 1,
+      "scriptName": "generated columns reject self references",
+      "oracle": "postgres",
+      "postgresId": "generated-column-correctness-repro-test-testgeneratedcolumnrejectsselfreferencerepro-0001-create-table-generated_self_ref_items-id-int",
+      "suggestedId": "generated-column-correctness-repro-test-testgeneratedcolumnrejectsselfreferencerepro-0001-create-table-generated_self_ref_items-id-int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P17",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TABLE generated_self_ref_items (\n\t\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\t\tdoubled INT GENERATED ALWAYS AS (doubled * 2) STORED\n\t\t\t\t\t);",
+      "querySha256": "e16d6cdc49e6a62ea7ff71f6c2fac20cd8d91a3b341ee92ee5626fa6a4ac2b8c",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsGeneratedColumnReferenceRepro#0001",
+      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsGeneratedColumnReferenceRepro",
+      "ordinal": 1,
+      "scriptName": "generated columns reject references to generated columns",
+      "oracle": "postgres",
+      "postgresId": "generated-column-correctness-repro-test-testgeneratedcolumnrejectsgeneratedcolumnreferencerepro-0001-create-table-generated_generated_ref_items-id-int",
+      "suggestedId": "generated-column-correctness-repro-test-testgeneratedcolumnrejectsgeneratedcolumnreferencerepro-0001-create-table-generated_generated_ref_items-id-int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P17",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TABLE generated_generated_ref_items (\n\t\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\t\tbase_value INT,\n\t\t\t\t\t\tdoubled INT GENERATED ALWAYS AS (base_value * 2) STORED,\n\t\t\t\t\t\tquadrupled INT GENERATED ALWAYS AS (doubled * 2) STORED\n\t\t\t\t\t);",
+      "querySha256": "e16975be453ffb55652f930d45f18f21ef038ceb9760af8d00bb5abb34247b0b",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsMalformedReferencesRepro#0001",
+      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsMalformedReferencesRepro",
+      "ordinal": 1,
+      "scriptName": "generated columns reject duplicate generation clauses",
+      "oracle": "postgres",
+      "postgresId": "generated-column-correctness-repro-test-testgeneratedcolumnrejectsmalformedreferencesrepro-0001-create-table-generated_duplicate_clause_items-id-int",
+      "suggestedId": "generated-column-correctness-repro-test-testgeneratedcolumnrejectsmalformedreferencesrepro-0001-create-table-generated_duplicate_clause_items-id-int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TABLE generated_duplicate_clause_items (\n\t\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\t\tdoubled INT GENERATED ALWAYS AS (id * 2) STORED GENERATED ALWAYS AS (id * 3) STORED\n\t\t\t\t\t);",
+      "querySha256": "0956c016caaf34d79e9a1686eec336d766d8828411281fb73e6985541fc18058",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsMalformedReferencesRepro#0002",
+      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsMalformedReferencesRepro",
+      "ordinal": 2,
+      "scriptName": "generated columns reject missing column references",
+      "oracle": "postgres",
+      "postgresId": "generated-column-correctness-repro-test-testgeneratedcolumnrejectsmalformedreferencesrepro-0002-create-table-generated_missing_ref_items-id-int",
+      "suggestedId": "generated-column-correctness-repro-test-testgeneratedcolumnrejectsmalformedreferencesrepro-0002-create-table-generated_missing_ref_items-id-int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42703",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TABLE generated_missing_ref_items (\n\t\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\t\tdoubled INT GENERATED ALWAYS AS (missing_value * 2) STORED\n\t\t\t\t\t);",
+      "querySha256": "292d520222ea92eb12173bd4aa68b5aeb58a52da071277e9a1b405ebc7639a9c",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsMalformedReferencesRepro#0003",
+      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsMalformedReferencesRepro",
+      "ordinal": 3,
+      "scriptName": "generated columns reject whole-row references",
+      "oracle": "postgres",
+      "postgresId": "generated-column-correctness-repro-test-testgeneratedcolumnrejectsmalformedreferencesrepro-0003-create-table-generated_whole_row_items-id-int",
+      "suggestedId": "generated-column-correctness-repro-test-testgeneratedcolumnrejectsmalformedreferencesrepro-0003-create-table-generated_whole_row_items-id-int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P17",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TABLE generated_whole_row_items (\n\t\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\t\tnull_count INT GENERATED ALWAYS AS (num_nulls(generated_whole_row_items)) STORED\n\t\t\t\t\t);",
+      "querySha256": "722a4959bae2b3a87552aa5dfa3c8797c2cbf1cfcbc3bedaf4fa35ba73e7b85c",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsAggregateExpressionsRepro#0001",
+      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsAggregateExpressionsRepro",
+      "ordinal": 1,
+      "scriptName": "generated columns reject aggregate expressions",
+      "oracle": "postgres",
+      "postgresId": "generated-column-correctness-repro-test-testgeneratedcolumnrejectsaggregateexpressionsrepro-0001-create-table-generated_aggregate_items-id-int",
+      "suggestedId": "generated-column-correctness-repro-test-testgeneratedcolumnrejectsaggregateexpressionsrepro-0001-create-table-generated_aggregate_items-id-int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42803",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TABLE generated_aggregate_items (\n\t\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\t\taggregate_value INT GENERATED ALWAYS AS (avg(id)) STORED\n\t\t\t\t\t);",
+      "querySha256": "086f9fcb78b9c9224b5b4183b0dd7ea5de346273e90926e7323c6621c1836d4d",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsWindowExpressionsRepro#0001",
+      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsWindowExpressionsRepro",
+      "ordinal": 1,
+      "scriptName": "generated columns reject window expressions",
+      "oracle": "postgres",
+      "postgresId": "generated-column-correctness-repro-test-testgeneratedcolumnrejectswindowexpressionsrepro-0001-create-table-generated_window_items-id-int",
+      "suggestedId": "generated-column-correctness-repro-test-testgeneratedcolumnrejectswindowexpressionsrepro-0001-create-table-generated_window_items-id-int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P20",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TABLE generated_window_items (\n\t\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\t\tranked INT GENERATED ALWAYS AS (row_number() OVER (ORDER BY id)) STORED\n\t\t\t\t\t);",
+      "querySha256": "19fe6c2e94acb5b26bc6abf9a3541ce8495af2d5e295f328dde3c3a02cda5abc",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsSetReturningExpressionsRepro#0001",
+      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsSetReturningExpressionsRepro",
+      "ordinal": 1,
+      "scriptName": "generated columns reject set-returning expressions",
+      "oracle": "postgres",
+      "postgresId": "generated-column-correctness-repro-test-testgeneratedcolumnrejectssetreturningexpressionsrepro-0001-create-table-generated_srf_items-id-int",
+      "suggestedId": "generated-column-correctness-repro-test-testgeneratedcolumnrejectssetreturningexpressionsrepro-0001-create-table-generated_srf_items-id-int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "0A000",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TABLE generated_srf_items (\n\t\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\t\tfrom_series INT GENERATED ALWAYS AS (generate_series(1, id)) STORED\n\t\t\t\t\t);",
+      "querySha256": "84b3ea34982ab1c5cd66d8b2f20edf0ce4e4ec11c3056ccfaefdba965f0e188f",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsSubqueryExpressionsRepro#0001",
+      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsSubqueryExpressionsRepro",
+      "ordinal": 1,
+      "scriptName": "generated columns reject subquery expressions",
+      "oracle": "postgres",
+      "postgresId": "generated-column-correctness-repro-test-testgeneratedcolumnrejectssubqueryexpressionsrepro-0001-create-table-generated_subquery_items-id-int",
+      "suggestedId": "generated-column-correctness-repro-test-testgeneratedcolumnrejectssubqueryexpressionsrepro-0001-create-table-generated_subquery_items-id-int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "0A000",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TABLE generated_subquery_items (\n\t\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\t\tfrom_subquery INT GENERATED ALWAYS AS ((SELECT id)) STORED\n\t\t\t\t\t);",
+      "querySha256": "7bec4b08554ca26e09ca4a5ba17aedff018a176a77b657987ccf8ebefcd20950",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsSystemColumnReferencesRepro#0001",
+      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsSystemColumnReferencesRepro",
+      "ordinal": 1,
+      "scriptName": "generated columns reject unsupported system columns",
+      "oracle": "postgres",
+      "postgresId": "generated-column-correctness-repro-test-testgeneratedcolumnrejectssystemcolumnreferencesrepro-0001-create-table-generated_system_column_items-id-int",
+      "suggestedId": "generated-column-correctness-repro-test-testgeneratedcolumnrejectssystemcolumnreferencesrepro-0001-create-table-generated_system_column_items-id-int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P10",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TABLE generated_system_column_items (\n\t\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\t\txid_seen BOOL GENERATED ALWAYS AS (xmin <> 37) STORED\n\t\t\t\t\t);",
+      "querySha256": "7f41ff36112d331e9f19eec1f81a9379416474a57d147a54cdf31160dac48189",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnAllowsTableoidReferenceRepro#0001",
+      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnAllowsTableoidReferenceRepro",
+      "ordinal": 1,
+      "scriptName": "generated columns allow tableoid references",
+      "oracle": "postgres",
+      "postgresId": "generated-column-correctness-repro-test-testgeneratedcolumnallowstableoidreferencerepro-0001-select-id-is_self-rel::text-from",
+      "suggestedId": "generated-column-correctness-repro-test-testgeneratedcolumnallowstableoidreferencerepro-0001-select-id-is_self-rel::text-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, is_self, rel::text\n\t\t\t\t\t\tFROM generated_tableoid_items;",
+      "querySha256": "628f7d7a4db8a291e622cf4aaf9ac9935eb974b925b72098df390691af0c4289",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "generated_tableoid_items"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsConflictingGenerationClausesRepro#0001",
+      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsConflictingGenerationClausesRepro",
+      "ordinal": 1,
+      "scriptName": "generated columns reject regular defaults",
+      "oracle": "postgres",
+      "postgresId": "generated-column-correctness-repro-test-testgeneratedcolumnrejectsconflictinggenerationclausesrepro-0001-create-table-generated_conflicting_default_items-id-int",
+      "suggestedId": "generated-column-correctness-repro-test-testgeneratedcolumnrejectsconflictinggenerationclausesrepro-0001-create-table-generated_conflicting_default_items-id-int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TABLE generated_conflicting_default_items (\n\t\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\t\tdoubled INT DEFAULT 5 GENERATED ALWAYS AS (id * 2) STORED\n\t\t\t\t\t);",
+      "querySha256": "ebd155bf9a398f65863851cdbf96b469c4d7fdcf98520f5e29e4e3cf7a7758ab",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsConflictingGenerationClausesRepro#0002",
+      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsConflictingGenerationClausesRepro",
+      "ordinal": 2,
+      "scriptName": "generated columns reject identity generation",
+      "oracle": "postgres",
+      "postgresId": "generated-column-correctness-repro-test-testgeneratedcolumnrejectsconflictinggenerationclausesrepro-0002-create-table-generated_conflicting_identity_items-id-int",
+      "suggestedId": "generated-column-correctness-repro-test-testgeneratedcolumnrejectsconflictinggenerationclausesrepro-0002-create-table-generated_conflicting_identity_items-id-int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TABLE generated_conflicting_identity_items (\n\t\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\t\tdoubled INT GENERATED ALWAYS AS IDENTITY GENERATED ALWAYS AS (id * 2) STORED\n\t\t\t\t\t);",
+      "querySha256": "d8e5653ec3cd03ab09bd337bdef8f776820b9a7c791d15fc7bece482efc9ae8d",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsConflictingGenerationClausesRepro#0003",
+      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsConflictingGenerationClausesRepro",
+      "ordinal": 3,
+      "scriptName": "stored generated columns require GENERATED ALWAYS",
+      "oracle": "postgres",
+      "postgresId": "generated-column-correctness-repro-test-testgeneratedcolumnrejectsconflictinggenerationclausesrepro-0003-create-table-generated_by_default_expression_items-id-int",
+      "suggestedId": "generated-column-correctness-repro-test-testgeneratedcolumnrejectsconflictinggenerationclausesrepro-0003-create-table-generated_by_default_expression_items-id-int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TABLE generated_by_default_expression_items (\n\t\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\t\tdoubled INT GENERATED BY DEFAULT AS (id * 2) STORED\n\t\t\t\t\t);",
+      "querySha256": "a44d5e32c03d19c81ffb34d53dd833a082342b099c15ff529e64473091011fd1",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsExplicitInsertGuard#0001",
+      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsExplicitInsertGuard",
+      "ordinal": 1,
+      "scriptName": "generated columns reject explicit insert values",
+      "oracle": "postgres",
+      "postgresId": "generated-column-correctness-repro-test-testgeneratedcolumnrejectsexplicitinsertguard-0001-insert-into-generated_insert_items-id-base_value",
+      "suggestedId": "generated-column-correctness-repro-test-testgeneratedcolumnrejectsexplicitinsertguard-0001-insert-into-generated_insert_items-id-base_value",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "428C9",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO generated_insert_items (id, base_value, doubled)\n\t\t\t\t\t\tVALUES (1, 5, 999);",
+      "querySha256": "eeb291384b7c100556812eb9fbd94baa6e9cb55af912e35592f4e54722d61e64",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsExplicitUpdateGuard#0001",
+      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsExplicitUpdateGuard",
+      "ordinal": 1,
+      "scriptName": "generated columns reject explicit update values",
+      "oracle": "postgres",
+      "postgresId": "generated-column-correctness-repro-test-testgeneratedcolumnrejectsexplicitupdateguard-0001-update-generated_update_items-set-doubled-=",
+      "suggestedId": "generated-column-correctness-repro-test-testgeneratedcolumnrejectsexplicitupdateguard-0001-update-generated_update_items-set-doubled-=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "428C9",
+      "errorSeverity": "ERROR",
+      "query": "UPDATE generated_update_items SET doubled = 999 WHERE id = 1;",
+      "querySha256": "c9c63a81d9ec165cb03d6f2504c7fdca160a3d278f783297ae4ce66ce2095324",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnAcceptsDefaultKeywordGuard#0001",
+      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnAcceptsDefaultKeywordGuard",
+      "ordinal": 1,
+      "scriptName": "generated columns accept DEFAULT keyword",
+      "oracle": "postgres",
+      "postgresId": "generated-column-correctness-repro-test-testgeneratedcolumnacceptsdefaultkeywordguard-0001-select-base_value-doubled-from-generated_default_items",
+      "suggestedId": "generated-column-correctness-repro-test-testgeneratedcolumnacceptsdefaultkeywordguard-0001-select-base_value-doubled-from-generated_default_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT base_value, doubled FROM generated_default_items;",
+      "querySha256": "822ce8ef0b6a490660c1c3ce9f0285907dd805e939f4ec2c3f3bb1ec9c26a4b5",
+      "expectedRows": [
+        [
+          {
+            "value": "8"
+          },
+          {
+            "value": "16"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnAddedToExistingRowsBackfillsValuesGuard#0001",
+      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnAddedToExistingRowsBackfillsValuesGuard",
+      "ordinal": 1,
+      "scriptName": "ALTER TABLE ADD generated column backfills existing rows",
+      "oracle": "postgres",
+      "postgresId": "generated-column-correctness-repro-test-testgeneratedcolumnaddedtoexistingrowsbackfillsvaluesguard-0001-select-id-base_value-doubled-from",
+      "suggestedId": "generated-column-correctness-repro-test-testgeneratedcolumnaddedtoexistingrowsbackfillsvaluesguard-0001-select-id-base_value-doubled-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, base_value, doubled\n\t\t\t\t\t\tFROM generated_add_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "58e6185add44664eb2c19dd452aa8994d225f10eaf3cb26861b8b28ac111910e",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "5"
+          },
+          {
+            "value": "10"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "7"
+          },
+          {
+            "value": "14"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnCheckConstraintUsesGeneratedValueGuard#0001",
+      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnCheckConstraintUsesGeneratedValueGuard",
+      "ordinal": 1,
+      "scriptName": "CHECK constraints validate generated column values",
+      "oracle": "postgres",
+      "postgresId": "generated-column-correctness-repro-test-testgeneratedcolumncheckconstraintusesgeneratedvalueguard-0001-insert-into-generated_check_items-id-base_value",
+      "suggestedId": "generated-column-correctness-repro-test-testgeneratedcolumncheckconstraintusesgeneratedvalueguard-0001-insert-into-generated_check_items-id-base_value",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO generated_check_items (id, base_value) VALUES (1, 30);",
+      "querySha256": "a3a8cb925e15bfeae5ece8bfa5ee8b3ea354a647c25ec759ed956f4821b55d55",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnUniqueConstraintUsesGeneratedValueGuard#0001",
+      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnUniqueConstraintUsesGeneratedValueGuard",
+      "ordinal": 1,
+      "scriptName": "UNIQUE constraints validate generated column values",
+      "oracle": "postgres",
+      "postgresId": "generated-column-correctness-repro-test-testgeneratedcolumnuniqueconstraintusesgeneratedvalueguard-0001-insert-into-generated_unique_items-id-base_value",
+      "suggestedId": "generated-column-correctness-repro-test-testgeneratedcolumnuniqueconstraintusesgeneratedvalueguard-0001-insert-into-generated_unique_items-id-base_value",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO generated_unique_items (id, base_value) VALUES (2, 5);",
+      "querySha256": "6ba41a8ad9c3632e145ffd70089962c8b59fedb0b4778007ee2d729d163a6db0",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnUniqueConstraintUsesUpdatedGeneratedValueGuard#0001",
+      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnUniqueConstraintUsesUpdatedGeneratedValueGuard",
+      "ordinal": 1,
+      "scriptName": "UNIQUE constraints validate updated generated column values",
+      "oracle": "postgres",
+      "postgresId": "generated-column-correctness-repro-test-testgeneratedcolumnuniqueconstraintusesupdatedgeneratedvalueguard-0001-update-generated_unique_update_items-set-base_value-=",
+      "suggestedId": "generated-column-correctness-repro-test-testgeneratedcolumnuniqueconstraintusesupdatedgeneratedvalueguard-0001-update-generated_unique_update_items-set-base_value-=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "UPDATE generated_unique_update_items SET base_value = 5 WHERE id = 2;",
+      "querySha256": "19d3cf51f1b80395bb31c61106796b10d16b926d8cd28317b8a9b7aaa521ec0c",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnUniqueConstraintUsesUpdatedGeneratedValueGuard#0002",
+      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnUniqueConstraintUsesUpdatedGeneratedValueGuard",
+      "ordinal": 2,
+      "scriptName": "UNIQUE constraints validate updated generated column values",
+      "oracle": "postgres",
+      "postgresId": "generated-column-correctness-repro-test-testgeneratedcolumnuniqueconstraintusesupdatedgeneratedvalueguard-0002-select-id-base_value-doubled-from",
+      "suggestedId": "generated-column-correctness-repro-test-testgeneratedcolumnuniqueconstraintusesupdatedgeneratedvalueguard-0002-select-id-base_value-doubled-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, base_value, doubled\n\t\t\t\t\t\tFROM generated_unique_update_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "52fc94e84fe756502a820eec911e5005b6277733a8ee3667c2ee65232c43da41",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "5"
+          },
+          {
+            "value": "10"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "7"
+          },
+          {
+            "value": "14"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnCheckConstraintUsesUpdatedGeneratedValueGuard#0001",
+      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnCheckConstraintUsesUpdatedGeneratedValueGuard",
+      "ordinal": 1,
+      "scriptName": "CHECK constraints validate updated generated column values",
+      "oracle": "postgres",
+      "postgresId": "generated-column-correctness-repro-test-testgeneratedcolumncheckconstraintusesupdatedgeneratedvalueguard-0001-update-generated_check_update_items-set-base_value-=",
+      "suggestedId": "generated-column-correctness-repro-test-testgeneratedcolumncheckconstraintusesupdatedgeneratedvalueguard-0001-update-generated_check_update_items-set-base_value-=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "UPDATE generated_check_update_items SET base_value = 30 WHERE id = 1;",
+      "querySha256": "62837993d902a6da75fc3b1167086f1e903788ed6ab7b3953bfa1e57db067a33",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnCheckConstraintUsesUpdatedGeneratedValueGuard#0002",
+      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnCheckConstraintUsesUpdatedGeneratedValueGuard",
+      "ordinal": 2,
+      "scriptName": "CHECK constraints validate updated generated column values",
+      "oracle": "postgres",
+      "postgresId": "generated-column-correctness-repro-test-testgeneratedcolumncheckconstraintusesupdatedgeneratedvalueguard-0002-select-id-base_value-doubled-from",
+      "suggestedId": "generated-column-correctness-repro-test-testgeneratedcolumncheckconstraintusesupdatedgeneratedvalueguard-0002-select-id-base_value-doubled-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, base_value, doubled FROM generated_check_update_items;",
+      "querySha256": "95cd211f3964ced991a30c22879505d772c6d4a7aeac1230daa97628e9449811",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "10"
+          },
+          {
+            "value": "20"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnNotNullConstraintUsesGeneratedValueGuard#0001",
+      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnNotNullConstraintUsesGeneratedValueGuard",
+      "ordinal": 1,
+      "scriptName": "NOT NULL constraints validate generated column values",
+      "oracle": "postgres",
+      "postgresId": "generated-column-correctness-repro-test-testgeneratedcolumnnotnullconstraintusesgeneratedvalueguard-0001-insert-into-generated_not_null_items-id-base_value",
+      "suggestedId": "generated-column-correctness-repro-test-testgeneratedcolumnnotnullconstraintusesgeneratedvalueguard-0001-insert-into-generated_not_null_items-id-base_value",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23502",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO generated_not_null_items (id, base_value) VALUES (2, 0);",
+      "querySha256": "584388ab8557a674bcc5e672413d6c91580a8fcb10f05e6b5460764c741e9abf",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnNotNullConstraintUsesGeneratedValueGuard#0002",
+      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnNotNullConstraintUsesGeneratedValueGuard",
+      "ordinal": 2,
+      "scriptName": "NOT NULL constraints validate generated column values",
+      "oracle": "postgres",
+      "postgresId": "generated-column-correctness-repro-test-testgeneratedcolumnnotnullconstraintusesgeneratedvalueguard-0002-select-id-base_value-nonzero-from",
+      "suggestedId": "generated-column-correctness-repro-test-testgeneratedcolumnnotnullconstraintusesgeneratedvalueguard-0002-select-id-base_value-nonzero-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, base_value, nonzero FROM generated_not_null_items;",
+      "querySha256": "e7c2e461655c8aa44f453dd8a6f6c3f80588ab37893accbea9578bad5486b70a",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "5"
+          },
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRecomputesAfterBaseUpdateGuard#0001",
+      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRecomputesAfterBaseUpdateGuard",
+      "ordinal": 1,
+      "scriptName": "generated column recomputes after base column update",
+      "oracle": "postgres",
+      "postgresId": "generated-column-correctness-repro-test-testgeneratedcolumnrecomputesafterbaseupdateguard-0001-select-base_value-doubled-from-generated_update_recompute_items",
+      "suggestedId": "generated-column-correctness-repro-test-testgeneratedcolumnrecomputesafterbaseupdateguard-0001-select-base_value-doubled-from-generated_update_recompute_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT base_value, doubled FROM generated_update_recompute_items;",
+      "querySha256": "af4220ce7da5e7ad5a6b9429c15a32899a45e8570b8da78ca428eb36229522c6",
+      "expectedRows": [
+        [
+          {
+            "value": "5"
+          },
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRecomputesAfterUpdateFromGuard#0001",
+      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRecomputesAfterUpdateFromGuard",
+      "ordinal": 1,
+      "scriptName": "generated column recomputes after UPDATE FROM",
+      "oracle": "postgres",
+      "postgresId": "generated-column-correctness-repro-test-testgeneratedcolumnrecomputesafterupdatefromguard-0001-select-id-base_value-doubled-from",
+      "suggestedId": "generated-column-correctness-repro-test-testgeneratedcolumnrecomputesafterupdatefromguard-0001-select-id-base_value-doubled-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, base_value, doubled\n\t\t\t\t\t\tFROM generated_update_from_recompute_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "4ee84d00d7bdcb72310621df451650aab19082ece6c2e3449978132c72be6bfc",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "5"
+          },
+          {
+            "value": "10"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "7"
+          },
+          {
+            "value": "14"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRecomputesAfterOnConflictUpdateGuard#0001",
+      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRecomputesAfterOnConflictUpdateGuard",
+      "ordinal": 1,
+      "scriptName": "generated column recomputes after ON CONFLICT DO UPDATE",
+      "oracle": "postgres",
+      "postgresId": "generated-column-correctness-repro-test-testgeneratedcolumnrecomputesafteronconflictupdateguard-0001-select-id-base_value-doubled-from",
+      "suggestedId": "generated-column-correctness-repro-test-testgeneratedcolumnrecomputesafteronconflictupdateguard-0001-select-id-base_value-doubled-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, base_value, doubled\n\t\t\t\t\t\tFROM generated_on_conflict_recompute_items;",
+      "querySha256": "dd9da1f29fe3c6de19f94eff6a62b40b47bab128b69961abf1dc7a57882937e4",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "5"
+          },
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/generated_column_correctness_repro_test.go:TestBeforeTriggerGeneratedColumnAssignmentIsIgnoredRepro#0001",
+      "source": "testing/go/generated_column_correctness_repro_test.go:TestBeforeTriggerGeneratedColumnAssignmentIsIgnoredRepro",
+      "ordinal": 1,
+      "scriptName": "BEFORE trigger generated column assignment is ignored",
+      "oracle": "postgres",
+      "postgresId": "generated-column-correctness-repro-test-testbeforetriggergeneratedcolumnassignmentisignoredrepro-0001-select-base_value-doubled-from-generated_trigger_assignment_items",
+      "suggestedId": "generated-column-correctness-repro-test-testbeforetriggergeneratedcolumnassignmentisignoredrepro-0001-select-base_value-doubled-from-generated_trigger_assignment_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT base_value, doubled FROM generated_trigger_assignment_items;",
+      "querySha256": "19eea531004b60ea1caacdbab379026a9aa1bee9c83d5ac0e72e88e21e56647a",
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          },
+          {
+            "value": "20"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/generated_column_correctness_repro_test.go:TestBeforeTriggerWhenCannotReferenceNewGeneratedColumnRepro#0001",
+      "source": "testing/go/generated_column_correctness_repro_test.go:TestBeforeTriggerWhenCannotReferenceNewGeneratedColumnRepro",
+      "ordinal": 1,
+      "scriptName": "BEFORE trigger WHEN cannot reference NEW generated column",
+      "oracle": "postgres",
+      "postgresId": "generated-column-correctness-repro-test-testbeforetriggerwhencannotreferencenewgeneratedcolumnrepro-0001-create-trigger-generated_trigger_when_before_insert-before-insert",
+      "suggestedId": "generated-column-correctness-repro-test-testbeforetriggerwhencannotreferencenewgeneratedcolumnrepro-0001-create-trigger-generated_trigger_when_before_insert-before-insert",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P17",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TRIGGER generated_trigger_when_before_insert\n\t\t\t\t\t\tBEFORE INSERT ON generated_trigger_when_items\n\t\t\t\t\t\tFOR EACH ROW\n\t\t\t\t\t\tWHEN (NEW.doubled > 10)\n\t\t\t\t\t\tEXECUTE FUNCTION noop_generated_trigger_when();",
+      "querySha256": "dfb384766268a89b2e5b094613938616079ca22a4e20de806a741164cf3084de",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/generated_column_correctness_repro_test.go:TestUpdateOfGeneratedColumnFiresForBaseColumnChangeRepro#0001",
+      "source": "testing/go/generated_column_correctness_repro_test.go:TestUpdateOfGeneratedColumnFiresForBaseColumnChangeRepro",
+      "ordinal": 1,
+      "scriptName": "UPDATE OF generated column fires for base column change",
+      "oracle": "postgres",
+      "postgresId": "generated-column-correctness-repro-test-testupdateofgeneratedcolumnfiresforbasecolumnchangerepro-0001-select-id-old_doubled-new_doubled-from",
+      "suggestedId": "generated-column-correctness-repro-test-testupdateofgeneratedcolumnfiresforbasecolumnchangerepro-0001-select-id-old_doubled-new_doubled-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, old_doubled, new_doubled FROM generated_update_of_audit;",
+      "querySha256": "20dea604135bc9c7b725e4328de2ad7907eb3ed94f841b0c5ab0e9acf61fae91",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "6"
+          },
+          {
+            "value": "8"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/generated_column_correctness_repro_test.go:TestRenameColumnUsedByGeneratedColumnKeepsGeneratedColumnUsableGuard#0001",
+      "source": "testing/go/generated_column_correctness_repro_test.go:TestRenameColumnUsedByGeneratedColumnKeepsGeneratedColumnUsableGuard",
+      "ordinal": 1,
+      "scriptName": "RENAME COLUMN rewrites generated-column dependencies",
+      "oracle": "postgres",
+      "postgresId": "generated-column-correctness-repro-test-testrenamecolumnusedbygeneratedcolumnkeepsgeneratedcolumnusableguard-0001-select-id-amount-doubled-from",
+      "suggestedId": "generated-column-correctness-repro-test-testrenamecolumnusedbygeneratedcolumnkeepsgeneratedcolumnusableguard-0001-select-id-amount-doubled-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, amount, doubled\n\t\t\t\t\t\tFROM generated_column_rename_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "5a16fa3c5c66c8b36119206dab67941ef0e85de929259d1c5418ddb7d8bb763f",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "5"
+          },
+          {
+            "value": "10"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "7"
+          },
+          {
+            "value": "14"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/generated_column_correctness_repro_test.go:TestDropColumnUsedByGeneratedColumnRequiresCascadeRepro#0001",
+      "source": "testing/go/generated_column_correctness_repro_test.go:TestDropColumnUsedByGeneratedColumnRequiresCascadeRepro",
+      "ordinal": 1,
+      "scriptName": "DROP COLUMN rejects generated-column dependencies",
+      "oracle": "postgres",
+      "postgresId": "generated-column-correctness-repro-test-testdropcolumnusedbygeneratedcolumnrequirescascaderepro-0001-alter-table-generated_column_dependency_items-drop-column",
+      "suggestedId": "generated-column-correctness-repro-test-testdropcolumnusedbygeneratedcolumnrequirescascaderepro-0001-alter-table-generated_column_dependency_items-drop-column",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "2BP01",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE generated_column_dependency_items DROP COLUMN base_value;",
+      "querySha256": "7de636a17a126aaa21d9d0483e31b5b7fc0d144b81d7aed0da8ebedfbdc2ed80",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsOnUpdateCascadeReferenceRepro#0001",
+      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsOnUpdateCascadeReferenceRepro",
+      "ordinal": 1,
+      "scriptName": "generated columns reject ON UPDATE CASCADE references",
+      "oracle": "postgres",
+      "postgresId": "generated-column-correctness-repro-test-testgeneratedcolumnrejectsonupdatecascadereferencerepro-0001-create-table-generated_fk_update_child-id-int",
+      "suggestedId": "generated-column-correctness-repro-test-testgeneratedcolumnrejectsonupdatecascadereferencerepro-0001-create-table-generated_fk_update_child-id-int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TABLE generated_fk_update_child (\n\t\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\t\tparent_id INT GENERATED ALWAYS AS (id * 2) STORED\n\t\t\t\t\t\t\tREFERENCES generated_fk_parent(id) ON UPDATE CASCADE\n\t\t\t\t\t);",
+      "querySha256": "e2aa4793d7183ada0e06a48d5f6c7167ab94d29ab614e535547529c479ce00fb",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsOnDeleteSetNullReferenceRepro#0001",
+      "source": "testing/go/generated_column_correctness_repro_test.go:TestGeneratedColumnRejectsOnDeleteSetNullReferenceRepro",
+      "ordinal": 1,
+      "scriptName": "generated columns reject ON DELETE SET NULL references",
+      "oracle": "postgres",
+      "postgresId": "generated-column-correctness-repro-test-testgeneratedcolumnrejectsondeletesetnullreferencerepro-0001-create-table-generated_fk_delete_child-id-int",
+      "suggestedId": "generated-column-correctness-repro-test-testgeneratedcolumnrejectsondeletesetnullreferencerepro-0001-create-table-generated_fk_delete_child-id-int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TABLE generated_fk_delete_child (\n\t\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\t\tparent_id INT GENERATED ALWAYS AS (id * 2) STORED\n\t\t\t\t\t\t\tREFERENCES generated_fk_delete_parent(id) ON DELETE SET NULL\n\t\t\t\t\t);",
+      "querySha256": "e5aa4d7d747c5d59cc683d52eee504de658b59c45bf19aea03d6363fe94dddb0",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

@@ -39,11 +39,7 @@ func TestPgClassReloftypeForOrdinaryTables(t *testing.T) {
 					Query: `SELECT relname, reloftype
 FROM pg_catalog.pg_class
 WHERE relname IN ('plain_t', 'with_unique')
-ORDER BY relname;`,
-					Expected: []sql.Row{
-						{"plain_t", uint32(0)},
-						{"with_unique", uint32(0)},
-					},
+ORDER BY relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testpgclassreloftypeforordinarytables-0001-select-relname-reloftype-from-pg_catalog.pg_class"},
 				},
 			},
 		},
@@ -62,29 +58,19 @@ func TestTypedTableFromCompositeType(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT id, name, active FROM typed_people;`,
-					Expected: []sql.Row{
-						{int32(1), "Ada", "t"},
-					},
+					Query: `SELECT id, name, active FROM typed_people;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0001-select-id-name-active-from"},
 				},
 				{
 					Query: `SELECT c.reloftype = t.oid
 FROM pg_catalog.pg_class c
 JOIN pg_catalog.pg_type t ON t.typname = 'typed_person'
-WHERE c.relname = 'typed_people';`,
-					Expected: []sql.Row{
-						{"t"},
-					},
+WHERE c.relname = 'typed_people';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0002-select-c.reloftype-=-t.oid-from"},
 				},
 				{
 					Query: `SELECT table_name, is_typed, user_defined_type_catalog, user_defined_type_schema, user_defined_type_name
 FROM information_schema.tables
 WHERE table_name IN ('plain_t', 'typed_people')
-ORDER BY table_name;`,
-					Expected: []sql.Row{
-						{"plain_t", "NO", nil, nil, nil},
-						{"typed_people", "YES", "postgres", "public", "typed_person"},
-					},
+ORDER BY table_name;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0003-select-table_name-is_typed-user_defined_type_catalog-user_defined_type_schema", ColumnModes: []string{"structural", "structural", "structural", "schema"}},
 				},
 			},
 		},
@@ -95,12 +81,10 @@ ORDER BY table_name;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CREATE TABLE typed_missing OF missing_type;`,
-					ExpectedErr: `type "missing_type" does not exist`,
+					Query: `CREATE TABLE typed_missing OF missing_type;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0004-create-table-typed_missing-of-missing_type", Compare: "sqlstate"},
 				},
 				{
-					Query:       `CREATE TABLE typed_mood OF mood_enum;`,
-					ExpectedErr: `type "mood_enum" is not a composite type`,
+					Query: `CREATE TABLE typed_mood OF mood_enum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0005-create-table-typed_mood-of-mood_enum", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -114,18 +98,12 @@ ORDER BY table_name;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT street, zip FROM app.addresses;`,
-					Expected: []sql.Row{
-						{"Main", int32(85001)},
-					},
+					Query: `SELECT street, zip FROM app.addresses;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0006-select-street-zip-from-app.addresses"},
 				},
 				{
 					Query: `SELECT table_schema, table_name, is_typed, user_defined_type_catalog, user_defined_type_schema, user_defined_type_name
 FROM information_schema.tables
-WHERE table_schema = 'app' AND table_name = 'addresses';`,
-					Expected: []sql.Row{
-						{"app", "addresses", "YES", "postgres", "app", "typed_address"},
-					},
+WHERE table_schema = 'app' AND table_name = 'addresses';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0007-select-table_schema-table_name-is_typed-user_defined_type_catalog"},
 				},
 			},
 		},
@@ -136,22 +114,16 @@ WHERE table_schema = 'app' AND table_name = 'addresses';`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `CREATE TEMP TABLE typed_scratch_rows OF typed_scratch;`,
-					Expected: []sql.Row{},
+					Query: `CREATE TEMP TABLE typed_scratch_rows OF typed_scratch;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0008-create-temp-table-typed_scratch_rows-of"},
 				},
 				{
-					Query:    `INSERT INTO typed_scratch_rows VALUES (1, 'temp row');`,
-					Expected: []sql.Row{},
+					Query: `INSERT INTO typed_scratch_rows VALUES (1, 'temp row');`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0009-insert-into-typed_scratch_rows-values-1"},
 				},
 				{
-					Query: `SELECT id, note FROM typed_scratch_rows;`,
-					Expected: []sql.Row{
-						{int32(1), "temp row"},
-					},
+					Query: `SELECT id, note FROM typed_scratch_rows;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0010-select-id-note-from-typed_scratch_rows"},
 				},
 				{
-					Query:    `CREATE TEMP TABLE IF NOT EXISTS typed_scratch_rows OF missing_type;`,
-					Expected: []sql.Row{},
+					Query: `CREATE TEMP TABLE IF NOT EXISTS typed_scratch_rows OF missing_type;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0011-create-temp-table-if-not"},
 				},
 			},
 		},
@@ -167,33 +139,21 @@ WHERE table_schema = 'app' AND table_name = 'addresses';`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT id, code, note FROM typed_tasks;`,
-					Expected: []sql.Row{
-						{int32(1), "A", nil},
-					},
+					Query: `SELECT id, code, note FROM typed_tasks;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0012-select-id-code-note-from"},
 				},
 				{
 					Query: `SELECT column_name, is_nullable
 FROM information_schema.columns
 WHERE table_name = 'typed_tasks' AND column_name IN ('id', 'code', 'note')
-ORDER BY ordinal_position;`,
-					Expected: []sql.Row{
-						{"id", "NO"},
-						{"code", "NO"},
-						{"note", "YES"},
-					},
+ORDER BY ordinal_position;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0013-select-column_name-is_nullable-from-information_schema.columns"},
 				},
 				{
 					Query: `SELECT constraint_name, constraint_type
 FROM information_schema.table_constraints
-WHERE table_name = 'typed_tasks' AND constraint_type = 'PRIMARY KEY';`,
-					Expected: []sql.Row{
-						{"typed_tasks_pkey", "PRIMARY KEY"},
-					},
+WHERE table_name = 'typed_tasks' AND constraint_type = 'PRIMARY KEY';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0014-select-constraint_name-constraint_type-from-information_schema.table_constraints"},
 				},
 				{
-					Query:       `INSERT INTO typed_tasks (id, code) VALUES (2, NULL);`,
-					ExpectedErr: `non-nullable`,
+					Query: `INSERT INTO typed_tasks (id, code) VALUES (2, NULL);`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0015-insert-into-typed_tasks-id-code", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -212,32 +172,22 @@ WHERE table_name = 'typed_tasks' AND constraint_type = 'PRIMARY KEY';`,
 					Query: `INSERT INTO typed_unique_tasks VALUES (2, 'B', 'second');`,
 				},
 				{
-					Query:       `INSERT INTO typed_unique_tasks VALUES (3, 'A', 'third');`,
-					ExpectedErr: `duplicate unique key`,
+					Query: `INSERT INTO typed_unique_tasks VALUES (3, 'A', 'third');`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0016-insert-into-typed_unique_tasks-values-3", Compare: "sqlstate"},
 				},
 				{
-					Query:       `INSERT INTO typed_unique_tasks VALUES (4, 'C', 'second');`,
-					ExpectedErr: `duplicate unique key`,
+					Query: `INSERT INTO typed_unique_tasks VALUES (4, 'C', 'second');`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0017-insert-into-typed_unique_tasks-values-4", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT constraint_name, constraint_type
 FROM information_schema.table_constraints
 WHERE table_name = 'typed_unique_tasks' AND constraint_type = 'UNIQUE'
-ORDER BY constraint_name;`,
-					Expected: []sql.Row{
-						{"typed_unique_tasks_code_key", "UNIQUE"},
-						{"typed_unique_tasks_note_key", "UNIQUE"},
-					},
+ORDER BY constraint_name;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0018-select-constraint_name-constraint_type-from-information_schema.table_constraints"},
 				},
 				{
 					Query: `SELECT indexname
 FROM pg_catalog.pg_indexes
 WHERE tablename = 'typed_unique_tasks'
-ORDER BY indexname;`,
-					Expected: []sql.Row{
-						{"typed_unique_tasks_code_key"},
-						{"typed_unique_tasks_note_key"},
-					},
+ORDER BY indexname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0019-select-indexname-from-pg_catalog.pg_indexes-where"},
 				},
 			},
 		},
@@ -256,12 +206,10 @@ ORDER BY indexname;`,
 					Query: `INSERT INTO typed_temp_unique_tasks VALUES (2, 'B', 'second');`,
 				},
 				{
-					Query:       `INSERT INTO typed_temp_unique_tasks VALUES (3, 'A', 'third');`,
-					ExpectedErr: `duplicate unique key`,
+					Query: `INSERT INTO typed_temp_unique_tasks VALUES (3, 'A', 'third');`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0020-insert-into-typed_temp_unique_tasks-values-3", Compare: "sqlstate"},
 				},
 				{
-					Query:       `INSERT INTO typed_temp_unique_tasks VALUES (4, 'C', 'second');`,
-					ExpectedErr: `duplicate unique key`,
+					Query: `INSERT INTO typed_temp_unique_tasks VALUES (4, 'C', 'second');`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0021-insert-into-typed_temp_unique_tasks-values-4", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO typed_temp_unique_tasks VALUES (5, NULL, NULL);`,
@@ -270,12 +218,10 @@ ORDER BY indexname;`,
 					Query: `INSERT INTO typed_temp_unique_tasks VALUES (6, NULL, NULL);`,
 				},
 				{
-					Query:       `UPDATE typed_temp_unique_tasks SET code = 'B' WHERE id = 1;`,
-					ExpectedErr: `duplicate unique key`,
+					Query: `UPDATE typed_temp_unique_tasks SET code = 'B' WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0022-update-typed_temp_unique_tasks-set-code-=", Compare: "sqlstate"},
 				},
 				{
-					Query:       `INSERT INTO typed_temp_unique_tasks VALUES (7, 'D', 'fourth'), (8, 'D', 'fifth');`,
-					ExpectedErr: `duplicate unique key`,
+					Query: `INSERT INTO typed_temp_unique_tasks VALUES (7, 'D', 'fourth'), (8, 'D', 'fifth');`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0023-insert-into-typed_temp_unique_tasks-values-7", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -316,23 +262,17 @@ WHERE table_name = 'typed_index_option_tasks' AND constraint_type = 'UNIQUE';`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `INSERT INTO typed_unique_nnd_tasks VALUES (3, NULL, 'second');`,
-					ExpectedErr: `duplicate unique key`,
+					Query: `INSERT INTO typed_unique_nnd_tasks VALUES (3, NULL, 'second');`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0026-insert-into-typed_unique_nnd_tasks-values-3", Compare: "sqlstate"},
 				},
 				{
-					Query:       `INSERT INTO typed_unique_nnd_tasks VALUES (4, 'B', NULL);`,
-					ExpectedErr: `duplicate unique key`,
+					Query: `INSERT INTO typed_unique_nnd_tasks VALUES (4, 'B', NULL);`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0027-insert-into-typed_unique_nnd_tasks-values-4", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT c.relname, i.indnullsnotdistinct
 	FROM pg_catalog.pg_class c
 	JOIN pg_catalog.pg_index i ON i.indexrelid = c.oid
 	WHERE c.relname IN ('typed_unique_nnd_tasks_code_key', 'typed_unique_nnd_tasks_note_key')
-	ORDER BY c.relname;`,
-					Expected: []sql.Row{
-						{"typed_unique_nnd_tasks_code_key", "t"},
-						{"typed_unique_nnd_tasks_note_key", "t"},
-					},
+	ORDER BY c.relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0028-select-c.relname-i.indnullsnotdistinct-from-pg_catalog.pg_class"},
 				},
 			},
 		},
@@ -349,12 +289,10 @@ WHERE table_name = 'typed_index_option_tasks' AND constraint_type = 'UNIQUE';`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `INSERT INTO typed_temp_unique_nnd_tasks VALUES (3, NULL, 'second');`,
-					ExpectedErr: `duplicate unique key`,
+					Query: `INSERT INTO typed_temp_unique_nnd_tasks VALUES (3, NULL, 'second');`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0029-insert-into-typed_temp_unique_nnd_tasks-values-3", Compare: "sqlstate"},
 				},
 				{
-					Query:       `INSERT INTO typed_temp_unique_nnd_tasks VALUES (4, 'B', NULL);`,
-					ExpectedErr: `duplicate unique key`,
+					Query: `INSERT INTO typed_temp_unique_nnd_tasks VALUES (4, 'B', NULL);`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0030-insert-into-typed_temp_unique_nnd_tasks-values-4", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -372,22 +310,13 @@ WHERE table_name = 'typed_index_option_tasks' AND constraint_type = 'UNIQUE';`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT id, code, active, priority FROM typed_default_tasks ORDER BY id;`,
-					Expected: []sql.Row{
-						{int32(1), "new", "t", int32(-7)},
-						{int32(2), "custom", "f", int32(3)},
-					},
+					Query: `SELECT id, code, active, priority FROM typed_default_tasks ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0031-select-id-code-active-priority"},
 				},
 				{
 					Query: `SELECT column_name, (column_default IS NOT NULL)::text
 	FROM information_schema.columns
 	WHERE table_name = 'typed_default_tasks' AND column_name IN ('code', 'active', 'priority')
-	ORDER BY ordinal_position;`,
-					Expected: []sql.Row{
-						{"code", "true"},
-						{"active", "true"},
-						{"priority", "true"},
-					},
+	ORDER BY ordinal_position;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0032-select-column_name-column_default-is-not"},
 				},
 			},
 		},
@@ -403,10 +332,7 @@ WHERE table_name = 'typed_index_option_tasks' AND constraint_type = 'UNIQUE';`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT id, code, priority FROM typed_temp_default_tasks;`,
-					Expected: []sql.Row{
-						{int32(1), "temp", int32(5)},
-					},
+					Query: `SELECT id, code, priority FROM typed_temp_default_tasks;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0033-select-id-code-priority-from"},
 				},
 			},
 		},
@@ -422,20 +348,13 @@ WHERE table_name = 'typed_index_option_tasks' AND constraint_type = 'UNIQUE';`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT id, code, priority FROM typed_expr_default_tasks;`,
-					Expected: []sql.Row{
-						{int32(1), "new", int32(5)},
-					},
+					Query: `SELECT id, code, priority FROM typed_expr_default_tasks;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0034-select-id-code-priority-from"},
 				},
 				{
 					Query: `SELECT column_name, (column_default IS NOT NULL)::text
 	FROM information_schema.columns
 	WHERE table_name = 'typed_expr_default_tasks' AND column_name IN ('code', 'priority')
-	ORDER BY ordinal_position;`,
-					Expected: []sql.Row{
-						{"code", "true"},
-						{"priority", "true"},
-					},
+	ORDER BY ordinal_position;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0035-select-column_name-column_default-is-not"},
 				},
 			},
 		},
@@ -450,10 +369,7 @@ WHERE table_name = 'typed_index_option_tasks' AND constraint_type = 'UNIQUE';`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT id, code FROM typed_temp_expr_default_tasks;`,
-					Expected: []sql.Row{
-						{int32(1), "TEMP"},
-					},
+					Query: `SELECT id, code FROM typed_temp_expr_default_tasks;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0036-select-id-code-from-typed_temp_expr_default_tasks"},
 				},
 			},
 		},
@@ -517,26 +433,19 @@ WHERE table_name = 'typed_index_option_tasks' AND constraint_type = 'UNIQUE';`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `INSERT INTO typed_check_tasks VALUES (2, 'B', 0);`,
-					ExpectedErr: `Check constraint "typed_check_priority" violated`,
+					Query: `INSERT INTO typed_check_tasks VALUES (2, 'B', 0);`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0041-insert-into-typed_check_tasks-values-2", Compare: "sqlstate"},
 				},
 				{
-					Query:       `INSERT INTO typed_check_tasks VALUES (3, '', 5);`,
-					ExpectedErr: `Check constraint "typed_check_code" violated`,
+					Query: `INSERT INTO typed_check_tasks VALUES (3, '', 5);`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0042-insert-into-typed_check_tasks-values-3", Compare: "sqlstate"},
 				},
 				{
-					Query:       `UPDATE typed_check_tasks SET priority = -1 WHERE id = 1;`,
-					ExpectedErr: `Check constraint "typed_check_priority" violated`,
+					Query: `UPDATE typed_check_tasks SET priority = -1 WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0043-update-typed_check_tasks-set-priority-=", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT constraint_name, constraint_type
 	FROM information_schema.table_constraints
 	WHERE table_name = 'typed_check_tasks' AND constraint_type = 'CHECK'
-	ORDER BY constraint_name;`,
-					Expected: []sql.Row{
-						{"typed_check_code", "CHECK"},
-						{"typed_check_priority", "CHECK"},
-					},
+	ORDER BY constraint_name;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0044-select-constraint_name-constraint_type-from-information_schema.table_constraints"},
 				},
 			},
 		},
@@ -551,12 +460,10 @@ WHERE table_name = 'typed_index_option_tasks' AND constraint_type = 'UNIQUE';`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `INSERT INTO typed_temp_check_tasks VALUES (2, 0);`,
-					ExpectedErr: `Check constraint "typed_temp_check_priority" violated`,
+					Query: `INSERT INTO typed_temp_check_tasks VALUES (2, 0);`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0045-insert-into-typed_temp_check_tasks-values-2", Compare: "sqlstate"},
 				},
 				{
-					Query:       `UPDATE typed_temp_check_tasks SET priority = 0 WHERE id = 1;`,
-					ExpectedErr: `Check constraint "typed_temp_check_priority" violated`,
+					Query: `UPDATE typed_temp_check_tasks SET priority = 0 WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0046-update-typed_temp_check_tasks-set-priority-=", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -574,22 +481,16 @@ WHERE table_name = 'typed_index_option_tasks' AND constraint_type = 'UNIQUE';`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `INSERT INTO typed_fk_tasks VALUES (2, 2, 1);`,
-					ExpectedErr: `Foreign key violation`,
+					Query: `INSERT INTO typed_fk_tasks VALUES (2, 2, 1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0047-insert-into-typed_fk_tasks-values-2", Compare: "sqlstate"},
 				},
 				{
-					Query:       `INSERT INTO typed_fk_tasks VALUES (3, 1, 3);`,
-					ExpectedErr: `Foreign key violation`,
+					Query: `INSERT INTO typed_fk_tasks VALUES (3, 1, 3);`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0048-insert-into-typed_fk_tasks-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT constraint_name, constraint_type
 	FROM information_schema.table_constraints
 	WHERE table_name = 'typed_fk_tasks' AND constraint_type = 'FOREIGN KEY'
-	ORDER BY constraint_name;`,
-					Expected: []sql.Row{
-						{"typed_fk_tasks_owner_id_fkey", "FOREIGN KEY"},
-						{"typed_fk_tasks_parent_id_fkey", "FOREIGN KEY"},
-					},
+	ORDER BY constraint_name;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0049-select-constraint_name-constraint_type-from-information_schema.table_constraints"},
 				},
 			},
 		},
@@ -601,32 +502,25 @@ WHERE table_name = 'typed_index_option_tasks' AND constraint_type = 'UNIQUE';`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CREATE TABLE typed_unknown OF typed_options (missing WITH OPTIONS NOT NULL);`,
-					ExpectedErr: `column "missing" does not exist in composite type "typed_options"`,
+					Query: `CREATE TABLE typed_unknown OF typed_options (missing WITH OPTIONS NOT NULL);`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0050-create-table-typed_unknown-of-typed_options", Compare: "sqlstate"},
 				},
 				{
-					Query:       `CREATE TABLE typed_unique_missing OF typed_options (UNIQUE (missing));`,
-					ExpectedErr: `column "missing" does not exist in composite type "typed_options"`,
+					Query: `CREATE TABLE typed_unique_missing OF typed_options (UNIQUE (missing));`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0051-create-table-typed_unique_missing-of-typed_options", Compare: "sqlstate"},
 				},
 				{
-					Query:       `CREATE TABLE typed_unique_duplicate OF typed_options (UNIQUE (code, code));`,
-					ExpectedErr: `column "code" appears twice in unique constraint`,
+					Query: `CREATE TABLE typed_unique_duplicate OF typed_options (UNIQUE (code, code));`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0052-create-table-typed_unique_duplicate-of-typed_options", Compare: "sqlstate"},
 				},
 				{
-					Query:       `CREATE TABLE typed_unique_include OF typed_options (UNIQUE (code) INCLUDE (id));`,
-					ExpectedErr: `CREATE TABLE OF unique constraint INCLUDE columns are not yet supported`,
+					Query: `CREATE TABLE typed_unique_include OF typed_options (UNIQUE (code) INCLUDE (id));`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0053-create-table-typed_unique_include-of-typed_options", Compare: "sqlstate"},
 				},
 				{
-					Query:       `CREATE TABLE typed_partitioned OF typed_options PARTITION BY LIST (id);`,
-					ExpectedErr: `CREATE TABLE OF cannot use PARTITION BY`,
+					Query: `CREATE TABLE typed_partitioned OF typed_options PARTITION BY LIST (id);`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0054-create-table-typed_partitioned-of-typed_options", Compare: "sqlstate"},
 				},
 				{
-					Query:       `CREATE TABLE typed_exclude OF typed_options (EXCLUDE USING gist (id WITH =));`,
-					ExpectedErr: `CREATE TABLE OF exclude constraints are not supported`,
+					Query: `CREATE TABLE typed_exclude OF typed_options (EXCLUDE USING gist (id WITH =));`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0055-create-table-typed_exclude-of-typed_options", Compare: "sqlstate"},
 				},
 				{
-					Query:       `CREATE TEMP TABLE typed_temp_fk OF typed_options (CONSTRAINT typed_temp_fk_parent FOREIGN KEY (id) REFERENCES typed_options_parent(id));`,
-					ExpectedErr: `temporary tables do not support foreign keys`,
+					Query: `CREATE TEMP TABLE typed_temp_fk OF typed_options (CONSTRAINT typed_temp_fk_parent FOREIGN KEY (id) REFERENCES typed_options_parent(id));`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0056-create-temp-table-typed_temp_fk-of", Compare: "sqlstate"},
 				},
 			},
 		},

@@ -939,8 +939,7 @@ func TestDoltResetHardRemovesUncommittedEnumTypeRepro(t *testing.T) {
 				{
 					Query: `SELECT COUNT(*)
 						FROM pg_catalog.pg_type
-						WHERE typname = 'reset_uncommitted_enum';`,
-					Expected: []sql.Row{{int64(1)}},
+						WHERE typname = 'reset_uncommitted_enum';`, PostgresOracle: ScriptTestPostgresOracle{ID: "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedenumtyperepro-0001-select-count-*-from-pg_catalog.pg_type"},
 				},
 				{
 					Query:    `SELECT DOLT_RESET('--hard');`,
@@ -975,8 +974,7 @@ func TestDoltResetHardRemovesUncommittedCompositeTypeRepro(t *testing.T) {
 				{
 					Query: `SELECT COUNT(*)
 						FROM pg_catalog.pg_type
-						WHERE typname = 'reset_uncommitted_composite';`,
-					Expected: []sql.Row{{int64(1)}},
+						WHERE typname = 'reset_uncommitted_composite';`, PostgresOracle: ScriptTestPostgresOracle{ID: "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommittedcompositetyperepro-0001-select-count-*-from-pg_catalog.pg_type"},
 				},
 				{
 					Query:    `SELECT DOLT_RESET('--hard');`,
@@ -1011,8 +1009,7 @@ func TestDoltResetHardRemovesUncommittedDomainRepro(t *testing.T) {
 				{
 					Query: `SELECT COUNT(*)
 						FROM pg_catalog.pg_type
-						WHERE typname = 'reset_uncommitted_domain';`,
-					Expected: []sql.Row{{int64(1)}},
+						WHERE typname = 'reset_uncommitted_domain';`, PostgresOracle: ScriptTestPostgresOracle{ID: "dolt-versioning-correctness-repro-test-testdoltresethardremovesuncommitteddomainrepro-0001-select-count-*-from-pg_catalog.pg_type"},
 				},
 				{
 					Query:    `SELECT DOLT_RESET('--hard');`,

@@ -75,8 +75,7 @@ func TestCreateStatisticsPopulatesPgStatisticExtRepro(t *testing.T) {
 				{
 					Query: `SELECT stxname, stxkeys::text, stxkind::text
 						FROM pg_catalog.pg_statistic_ext
-						WHERE stxname = 'extended_stats_ab_stats';`,
-					Expected: []sql.Row{{"extended_stats_ab_stats", "1 2", "{f}"}},
+						WHERE stxname = 'extended_stats_ab_stats';`, PostgresOracle: ScriptTestPostgresOracle{ID: "statistics-catalog-repro-test-testcreatestatisticspopulatespgstatisticextrepro-0001-select-stxname-stxkeys::text-stxkind::text-from"},
 				},
 			},
 		},

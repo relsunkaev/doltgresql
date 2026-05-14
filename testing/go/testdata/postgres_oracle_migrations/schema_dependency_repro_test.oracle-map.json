@@ -1,0 +1,547 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map schema_dependency_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/schema_dependency_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/schema_dependency_repro_test.go:TestCreateSchemaExecutesContainedTableRepro#0001",
+      "source": "testing/go/schema_dependency_repro_test.go:TestCreateSchemaExecutesContainedTableRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE SCHEMA executes contained table definition",
+      "oracle": "postgres",
+      "postgresId": "schema-dependency-repro-test-testcreateschemaexecutescontainedtablerepro-0001-select-id-label-from-inline_schema_repro.inline_items",
+      "suggestedId": "schema-dependency-repro-test-testcreateschemaexecutescontainedtablerepro-0001-select-id-label-from-inline_schema_repro.inline_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM inline_schema_repro.inline_items;",
+      "querySha256": "eba25ccba0d797446f46fd8248ebe92e4e5ccdfd6725e4551a8a163e749f43fb",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "ok"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/schema_dependency_repro_test.go:TestDropSchemaContainingTableRequiresCascadeRepro#0001",
+      "source": "testing/go/schema_dependency_repro_test.go:TestDropSchemaContainingTableRequiresCascadeRepro",
+      "ordinal": 1,
+      "scriptName": "DROP SCHEMA rejects schemas containing tables",
+      "oracle": "postgres",
+      "postgresId": "schema-dependency-repro-test-testdropschemacontainingtablerequirescascaderepro-0001-drop-schema-schema_with_table",
+      "suggestedId": "schema-dependency-repro-test-testdropschemacontainingtablerequirescascaderepro-0001-drop-schema-schema_with_table",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "2BP01",
+      "errorSeverity": "ERROR",
+      "query": "DROP SCHEMA schema_with_table;",
+      "querySha256": "3c90111da354fea5d2cbb31e8db5a4de0aeeb2aa3d172f3be1a6b6fb8e42c028",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/schema_dependency_repro_test.go:TestDropSchemaContainingViewRequiresCascadeRepro#0001",
+      "source": "testing/go/schema_dependency_repro_test.go:TestDropSchemaContainingViewRequiresCascadeRepro",
+      "ordinal": 1,
+      "scriptName": "DROP SCHEMA rejects schemas containing views",
+      "oracle": "postgres",
+      "postgresId": "schema-dependency-repro-test-testdropschemacontainingviewrequirescascaderepro-0001-drop-schema-schema_with_view",
+      "suggestedId": "schema-dependency-repro-test-testdropschemacontainingviewrequirescascaderepro-0001-drop-schema-schema_with_view",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "2BP01",
+      "errorSeverity": "ERROR",
+      "query": "DROP SCHEMA schema_with_view;",
+      "querySha256": "19f8ab27948e415d24f4088f21af9dac9269b95af0be323489cff99e52a852d7",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/schema_dependency_repro_test.go:TestDropSchemaContainingMaterializedViewRequiresCascadeRepro#0001",
+      "source": "testing/go/schema_dependency_repro_test.go:TestDropSchemaContainingMaterializedViewRequiresCascadeRepro",
+      "ordinal": 1,
+      "scriptName": "DROP SCHEMA rejects schemas containing materialized views",
+      "oracle": "postgres",
+      "postgresId": "schema-dependency-repro-test-testdropschemacontainingmaterializedviewrequirescascaderepro-0001-drop-schema-schema_with_matview",
+      "suggestedId": "schema-dependency-repro-test-testdropschemacontainingmaterializedviewrequirescascaderepro-0001-drop-schema-schema_with_matview",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "2BP01",
+      "errorSeverity": "ERROR",
+      "query": "DROP SCHEMA schema_with_matview;",
+      "querySha256": "e0415f9fbf768c5a687e6536593f4ef7b104b3db914f3acd74f333772d94a1dc",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/schema_dependency_repro_test.go:TestAlterTableQualifiedRenameStaysInSchemaRepro#0001",
+      "source": "testing/go/schema_dependency_repro_test.go:TestAlterTableQualifiedRenameStaysInSchemaRepro",
+      "ordinal": 1,
+      "scriptName": "schema-qualified ALTER TABLE RENAME keeps relation in schema",
+      "oracle": "postgres",
+      "postgresId": "schema-dependency-repro-test-testaltertablequalifiedrenamestaysinschemarepro-0001-select-id-note-from-rename_schema.renamed_table",
+      "suggestedId": "schema-dependency-repro-test-testaltertablequalifiedrenamestaysinschemarepro-0001-select-id-note-from-rename_schema.renamed_table",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, note\n\t\t\t\t\t\tFROM rename_schema.renamed_table;",
+      "querySha256": "76d063d197aee86b462cb96c25e194de88fab35bcffac5c0d50142420d0be579",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "kept"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/schema_dependency_repro_test.go:TestAlterTableQualifiedRenameStaysInSchemaRepro#0002",
+      "source": "testing/go/schema_dependency_repro_test.go:TestAlterTableQualifiedRenameStaysInSchemaRepro",
+      "ordinal": 2,
+      "scriptName": "schema-qualified ALTER TABLE RENAME keeps relation in schema",
+      "oracle": "postgres",
+      "postgresId": "schema-dependency-repro-test-testaltertablequalifiedrenamestaysinschemarepro-0002-select-id-note-from-rename_schema.source_table",
+      "suggestedId": "schema-dependency-repro-test-testaltertablequalifiedrenamestaysinschemarepro-0002-select-id-note-from-rename_schema.source_table",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
+      "query": "SELECT id, note FROM rename_schema.source_table;",
+      "querySha256": "0d39a46c545d9a6b6dc4e88c6a942b958160a311e5798e81c1a2767ece00264e",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/schema_dependency_repro_test.go:TestAlterTableQualifiedRenamePreservesForeignKeysRepro#0001",
+      "source": "testing/go/schema_dependency_repro_test.go:TestAlterTableQualifiedRenamePreservesForeignKeysRepro",
+      "ordinal": 1,
+      "scriptName": "schema-qualified ALTER TABLE RENAME preserves foreign keys",
+      "oracle": "postgres",
+      "postgresId": "schema-dependency-repro-test-testaltertablequalifiedrenamepreservesforeignkeysrepro-0001-insert-into-rename_fk_schema.child_table-values-12",
+      "suggestedId": "schema-dependency-repro-test-testaltertablequalifiedrenamepreservesforeignkeysrepro-0001-insert-into-rename_fk_schema.child_table-values-12",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23503",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO rename_fk_schema.child_table VALUES (12, 99);",
+      "querySha256": "97ce6d283ec1210b383b2a1d38b57836368f156810b6b00793f0c9a9ef37d456",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/schema_dependency_repro_test.go:TestAlterSchemaRenameRepro#0001",
+      "source": "testing/go/schema_dependency_repro_test.go:TestAlterSchemaRenameRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER SCHEMA RENAME TO renames namespace",
+      "oracle": "internal",
+      "suggestedId": "schema-dependency-repro-test-testalterschemarenamerepro-0001-select-id-label-from-rename_namespace_new.items",
+      "expectedKind": "rows",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM rename_namespace_new.items;",
+      "querySha256": "997d75e2ec2c234647f5b5df0e2d72102b526be73d4a367905c7922dbb7ae331",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/schema_dependency_repro_test.go:TestAlterSchemaRenameRepro#0002",
+      "source": "testing/go/schema_dependency_repro_test.go:TestAlterSchemaRenameRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER SCHEMA RENAME TO renames namespace",
+      "oracle": "internal",
+      "suggestedId": "schema-dependency-repro-test-testalterschemarenamerepro-0002-select-id-label-from-rename_namespace_old.items",
+      "expectedKind": "error",
+      "query": "SELECT id, label FROM rename_namespace_old.items;",
+      "querySha256": "f6bc7f818e65b0cb50af930d1124866ca700e5e07eee6493e343d065b3679711",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/schema_dependency_repro_test.go:TestAlterSchemaRenameRepro#0003",
+      "source": "testing/go/schema_dependency_repro_test.go:TestAlterSchemaRenameRepro",
+      "ordinal": 3,
+      "scriptName": "ALTER SCHEMA RENAME TO rejects existing target",
+      "oracle": "postgres",
+      "postgresId": "schema-dependency-repro-test-testalterschemarenamerepro-0003-alter-schema-rename_namespace_collision_old-rename-to",
+      "suggestedId": "schema-dependency-repro-test-testalterschemarenamerepro-0003-alter-schema-rename_namespace_collision_old-rename-to",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P06",
+      "errorSeverity": "ERROR",
+      "query": "ALTER SCHEMA rename_namespace_collision_old\n\t\t\t\t\t\tRENAME TO rename_namespace_collision_new;",
+      "querySha256": "fa4ad9be62049ec2aca6a6593454fd726c0c30df9f323f34c79a5d6d22151a68",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/schema_dependency_repro_test.go:TestAlterSchemaRenameRepro#0004",
+      "source": "testing/go/schema_dependency_repro_test.go:TestAlterSchemaRenameRepro",
+      "ordinal": 4,
+      "scriptName": "ALTER SCHEMA RENAME TO rejects existing target",
+      "oracle": "postgres",
+      "postgresId": "schema-dependency-repro-test-testalterschemarenamerepro-0004-select-id-label-from-rename_namespace_collision_old.items",
+      "suggestedId": "schema-dependency-repro-test-testalterschemarenamerepro-0004-select-id-label-from-rename_namespace_collision_old.items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM rename_namespace_collision_old.items;",
+      "querySha256": "efce663d005490e777150cb5441531af8a1f1899a195b8813505c0a46d8f34e2",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "kept"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/schema_dependency_repro_test.go:TestAlterTableSetSchemaMovesRelationRepro#0001",
+      "source": "testing/go/schema_dependency_repro_test.go:TestAlterTableSetSchemaMovesRelationRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER TABLE SET SCHEMA moves relation",
+      "oracle": "postgres",
+      "postgresId": "schema-dependency-repro-test-testaltertablesetschemamovesrelationrepro-0001-select-id-label-from",
+      "suggestedId": "schema-dependency-repro-test-testaltertablesetschemamovesrelationrepro-0001-select-id-label-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM move_target_schema.alter_set_schema_items;",
+      "querySha256": "5cbef741c0b1b57fedbfd7dce665528b6cb0476a55a66515f060c776f1080944",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "moved"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/schema_dependency_repro_test.go:TestAlterTableSetSchemaMovesRelationRepro#0002",
+      "source": "testing/go/schema_dependency_repro_test.go:TestAlterTableSetSchemaMovesRelationRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER TABLE SET SCHEMA moves relation",
+      "oracle": "internal",
+      "suggestedId": "schema-dependency-repro-test-testaltertablesetschemamovesrelationrepro-0002-select-id-label-from-public.alter_set_schema_items",
+      "expectedKind": "error",
+      "query": "SELECT id, label FROM public.alter_set_schema_items;",
+      "querySha256": "125c88e695189b8759565c27555ff960142078b5d5a00d1182689516c62a96fb",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/schema_dependency_repro_test.go:TestAlterViewSetSchemaMovesViewRepro#0001",
+      "source": "testing/go/schema_dependency_repro_test.go:TestAlterViewSetSchemaMovesViewRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER VIEW SET SCHEMA moves view",
+      "oracle": "postgres",
+      "postgresId": "schema-dependency-repro-test-testalterviewsetschemamovesviewrepro-0001-select-id-label-from",
+      "suggestedId": "schema-dependency-repro-test-testalterviewsetschemamovesviewrepro-0001-select-id-label-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM move_view_target_schema.alter_view_set_schema_reader;",
+      "querySha256": "876e4c2878321755d3aa2c601b0b81ad738af9f7687a2fd1fdd68d4f199bd9c7",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "visible"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/schema_dependency_repro_test.go:TestAlterViewSetSchemaMovesViewRepro#0002",
+      "source": "testing/go/schema_dependency_repro_test.go:TestAlterViewSetSchemaMovesViewRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER VIEW SET SCHEMA moves view",
+      "oracle": "internal",
+      "suggestedId": "schema-dependency-repro-test-testalterviewsetschemamovesviewrepro-0002-select-id-label-from-public.alter_view_set_schema_reader",
+      "expectedKind": "error",
+      "query": "SELECT id, label FROM public.alter_view_set_schema_reader;",
+      "querySha256": "7377629af9d1cafb3d333444c4c92741bc915643a76f189a007796271439f093",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/schema_dependency_repro_test.go:TestAlterMaterializedViewSetSchemaMovesViewRepro#0001",
+      "source": "testing/go/schema_dependency_repro_test.go:TestAlterMaterializedViewSetSchemaMovesViewRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER MATERIALIZED VIEW SET SCHEMA moves materialized view",
+      "oracle": "postgres",
+      "postgresId": "schema-dependency-repro-test-testaltermaterializedviewsetschemamovesviewrepro-0001-select-id-label-from",
+      "suggestedId": "schema-dependency-repro-test-testaltermaterializedviewsetschemamovesviewrepro-0001-select-id-label-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM move_matview_target_schema.alter_matview_set_schema_reader;",
+      "querySha256": "9afca2a7f18d4687781e8f42b5a7f849afe3a5675f53c79d61852d8fbf610990",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "materialized"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/schema_dependency_repro_test.go:TestAlterMaterializedViewSetSchemaMovesViewRepro#0002",
+      "source": "testing/go/schema_dependency_repro_test.go:TestAlterMaterializedViewSetSchemaMovesViewRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER MATERIALIZED VIEW SET SCHEMA moves materialized view",
+      "oracle": "internal",
+      "suggestedId": "schema-dependency-repro-test-testaltermaterializedviewsetschemamovesviewrepro-0002-select-id-label-from-public.alter_matview_set_schema_reader",
+      "expectedKind": "error",
+      "query": "SELECT id, label FROM public.alter_matview_set_schema_reader;",
+      "querySha256": "c0c5c2eda20e501ad34ad89b81e775c0a2daff96eec71e89ef9f81b69213106f",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/schema_dependency_repro_test.go:TestAlterSequenceSetSchemaMovesSequenceRepro#0001",
+      "source": "testing/go/schema_dependency_repro_test.go:TestAlterSequenceSetSchemaMovesSequenceRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER SEQUENCE SET SCHEMA moves sequence",
+      "oracle": "postgres",
+      "postgresId": "schema-dependency-repro-test-testaltersequencesetschemamovessequencerepro-0001-select-nextval",
+      "suggestedId": "schema-dependency-repro-test-testaltersequencesetschemamovessequencerepro-0001-select-nextval",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('move_sequence_target_schema.alter_sequence_set_schema_seq');",
+      "querySha256": "aaed028e35f2f847581fcef9b340f31899ce36daec42ccd1b8df147077d155b4",
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/schema_dependency_repro_test.go:TestAlterSequenceSetSchemaMovesSequenceRepro#0002",
+      "source": "testing/go/schema_dependency_repro_test.go:TestAlterSequenceSetSchemaMovesSequenceRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER SEQUENCE SET SCHEMA moves sequence",
+      "oracle": "internal",
+      "suggestedId": "schema-dependency-repro-test-testaltersequencesetschemamovessequencerepro-0002-select-nextval-public.alter_sequence_set_schema_seq",
+      "expectedKind": "error",
+      "query": "SELECT nextval('public.alter_sequence_set_schema_seq');",
+      "querySha256": "8586ce2aadee6fde54171a853eb316db24c41297c09475707283b627b7fee417",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/schema_dependency_repro_test.go:TestAlterFunctionSetSchemaMovesFunctionRepro#0001",
+      "source": "testing/go/schema_dependency_repro_test.go:TestAlterFunctionSetSchemaMovesFunctionRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER FUNCTION SET SCHEMA moves function",
+      "oracle": "postgres",
+      "postgresId": "schema-dependency-repro-test-testalterfunctionsetschemamovesfunctionrepro-0001-select",
+      "suggestedId": "schema-dependency-repro-test-testalterfunctionsetschemamovesfunctionrepro-0001-select",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT move_function_target_schema.alter_function_set_schema_value();",
+      "querySha256": "f71a2ee98f45c56eae9aa0f8f964758b0d05e1c1bb0a504065a2536ce2465de4",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/schema_dependency_repro_test.go:TestAlterFunctionSetSchemaMovesFunctionRepro#0002",
+      "source": "testing/go/schema_dependency_repro_test.go:TestAlterFunctionSetSchemaMovesFunctionRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER FUNCTION SET SCHEMA moves function",
+      "oracle": "internal",
+      "suggestedId": "schema-dependency-repro-test-testalterfunctionsetschemamovesfunctionrepro-0002-select-public.alter_function_set_schema_value",
+      "expectedKind": "error",
+      "query": "SELECT public.alter_function_set_schema_value();",
+      "querySha256": "91eb4cc7447d559d943bed1310e1df7eeddfd5e75873e6b5abd3ab17a6993d4a",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/schema_dependency_repro_test.go:TestAlterProcedureSetSchemaMovesProcedureRepro#0001",
+      "source": "testing/go/schema_dependency_repro_test.go:TestAlterProcedureSetSchemaMovesProcedureRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER PROCEDURE SET SCHEMA moves procedure",
+      "oracle": "postgres",
+      "postgresId": "schema-dependency-repro-test-testalterproceduresetschemamovesprocedurerepro-0001-select-count-*-from-alter_procedure_set_schema_audit",
+      "suggestedId": "schema-dependency-repro-test-testalterproceduresetschemamovesprocedurerepro-0001-select-count-*-from-alter_procedure_set_schema_audit",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM alter_procedure_set_schema_audit;",
+      "querySha256": "9871003c66ad874071a3f803f8ce03c8380994699b7e142e6dfd3242b8a718b4",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/schema_dependency_repro_test.go:TestAlterProcedureSetSchemaMovesProcedureRepro#0002",
+      "source": "testing/go/schema_dependency_repro_test.go:TestAlterProcedureSetSchemaMovesProcedureRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER PROCEDURE SET SCHEMA moves procedure",
+      "oracle": "internal",
+      "suggestedId": "schema-dependency-repro-test-testalterproceduresetschemamovesprocedurerepro-0002-call-public.alter_procedure_set_schema_log",
+      "expectedKind": "error",
+      "query": "CALL public.alter_procedure_set_schema_log();",
+      "querySha256": "20a73d062868740ec1d9b9710d705d1b08ecf639245eeb2936b10e63dfd19d4b",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/schema_dependency_repro_test.go:TestAlterRoutineSetSchemaMovesFunctionRepro#0001",
+      "source": "testing/go/schema_dependency_repro_test.go:TestAlterRoutineSetSchemaMovesFunctionRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER ROUTINE SET SCHEMA moves function",
+      "oracle": "postgres",
+      "postgresId": "schema-dependency-repro-test-testalterroutinesetschemamovesfunctionrepro-0001-select",
+      "suggestedId": "schema-dependency-repro-test-testalterroutinesetschemamovesfunctionrepro-0001-select",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT move_routine_target_schema.alter_routine_set_schema_value();",
+      "querySha256": "1c4b9e4eb842f925ab939f9b7f61abfe534aee6c74982ff198f20d23529a6746",
+      "expectedRows": [
+        [
+          {
+            "value": "11"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/schema_dependency_repro_test.go:TestAlterRoutineSetSchemaMovesFunctionRepro#0002",
+      "source": "testing/go/schema_dependency_repro_test.go:TestAlterRoutineSetSchemaMovesFunctionRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER ROUTINE SET SCHEMA moves function",
+      "oracle": "internal",
+      "suggestedId": "schema-dependency-repro-test-testalterroutinesetschemamovesfunctionrepro-0002-select-public.alter_routine_set_schema_value",
+      "expectedKind": "error",
+      "query": "SELECT public.alter_routine_set_schema_value();",
+      "querySha256": "d7b5f59da1b22317851a5c0988f9e01ef79aa34bab3ed98c1b9350c83bb903d1",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/schema_dependency_repro_test.go:TestAlterTypeSetSchemaMovesEnumRepro#0001",
+      "source": "testing/go/schema_dependency_repro_test.go:TestAlterTypeSetSchemaMovesEnumRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER TYPE SET SCHEMA moves enum",
+      "oracle": "postgres",
+      "postgresId": "schema-dependency-repro-test-testaltertypesetschemamovesenumrepro-0001-select-one",
+      "suggestedId": "schema-dependency-repro-test-testaltertypesetschemamovesenumrepro-0001-select-one",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 'one'::move_type_target_schema.alter_type_set_schema_enum::text;",
+      "querySha256": "f65d374a6ef9c50519536c5ff61f2760bad3164cbe69f2e642e18e9de9a49648",
+      "expectedRows": [
+        [
+          {
+            "value": "one"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/schema_dependency_repro_test.go:TestAlterTypeSetSchemaMovesEnumRepro#0002",
+      "source": "testing/go/schema_dependency_repro_test.go:TestAlterTypeSetSchemaMovesEnumRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER TYPE SET SCHEMA moves enum",
+      "oracle": "internal",
+      "suggestedId": "schema-dependency-repro-test-testaltertypesetschemamovesenumrepro-0002-select-one",
+      "expectedKind": "error",
+      "query": "SELECT 'one'::public.alter_type_set_schema_enum::text;",
+      "querySha256": "7d05a6caed3d1115e3b759429d8a68ab5c6c50aebda7a2dc2a25784bfac9b8fa",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/schema_dependency_repro_test.go:TestAlterDomainSetSchemaMovesDomainRepro#0001",
+      "source": "testing/go/schema_dependency_repro_test.go:TestAlterDomainSetSchemaMovesDomainRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER DOMAIN SET SCHEMA moves domain",
+      "oracle": "postgres",
+      "postgresId": "schema-dependency-repro-test-testalterdomainsetschemamovesdomainrepro-0001-select",
+      "suggestedId": "schema-dependency-repro-test-testalterdomainsetschemamovesdomainrepro-0001-select",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 5::move_domain_target_schema.alter_domain_set_schema_positive;",
+      "querySha256": "dd755a308c81e87c0b8af8c82bf180bd96fdc2cd62dd659f6d5b66fa7ea10592",
+      "expectedRows": [
+        [
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/schema_dependency_repro_test.go:TestAlterDomainSetSchemaMovesDomainRepro#0002",
+      "source": "testing/go/schema_dependency_repro_test.go:TestAlterDomainSetSchemaMovesDomainRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER DOMAIN SET SCHEMA moves domain",
+      "oracle": "internal",
+      "suggestedId": "schema-dependency-repro-test-testalterdomainsetschemamovesdomainrepro-0002-select",
+      "expectedKind": "error",
+      "query": "SELECT 5::public.alter_domain_set_schema_positive;",
+      "querySha256": "2b0aae5873e1617907a90cdb57a2db26849225e59f37ad7ec8997ed537744c1c",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    }
+  ]
+}

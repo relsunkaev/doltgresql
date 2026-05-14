@@ -29,47 +29,28 @@ func TestSmokeTests(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "CREATE TABLE test2 (pk BIGINT PRIMARY KEY, v1 BIGINT);",
-					Expected: []sql.Row{},
+					Query: "CREATE TABLE test2 (pk BIGINT PRIMARY KEY, v1 BIGINT);", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0001-create-table-test2-pk-bigint"},
 				},
 				{
-					Query:    "INSERT INTO test VALUES (1, 1), (2, 2);",
-					Expected: []sql.Row{},
+					Query: "INSERT INTO test VALUES (1, 1), (2, 2);", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0002-insert-into-test-values-1"},
 				},
 				{
-					Query:    "INSERT INTO test2 VALUES (3, 3), (4, 4);",
-					Expected: []sql.Row{},
+					Query: "INSERT INTO test2 VALUES (3, 3), (4, 4);", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0003-insert-into-test2-values-3"},
 				},
 				{
-					Query: "SELECT * FROM test;",
-					Expected: []sql.Row{
-						{1, 1},
-						{2, 2},
-					},
+					Query: "SELECT * FROM test;", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0004-select-*-from-test"},
 				},
 				{
-					Query: "SELECT * FROM test2;",
-					Expected: []sql.Row{
-						{3, 3},
-						{4, 4},
-					},
+					Query: "SELECT * FROM test2;", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0005-select-*-from-test2"},
 				},
 				{
-					Query: "SELECT test2.pk FROM test2;",
-					Expected: []sql.Row{
-						{3},
-						{4},
-					},
+					Query: "SELECT test2.pk FROM test2;", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0006-select-test2.pk-from-test2"},
 				},
 				{
-					Query: "SELECT * FROM test ORDER BY 1 LIMIT 1 OFFSET 1;",
-					Expected: []sql.Row{
-						{2, 2},
-					},
+					Query: "SELECT * FROM test ORDER BY 1 LIMIT 1 OFFSET 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0007-select-*-from-test-order"},
 				},
 				{
-					Query:    "SELECT NULL = NULL",
-					Expected: []sql.Row{{nil}},
+					Query: "SELECT NULL = NULL", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0008-select-null-=-null"},
 				},
 				{
 					Query:    ";",
@@ -92,24 +73,16 @@ func TestSmokeTests(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "INSERT INTO test VALUES (1, 2, 3);",
-					Expected: []sql.Row{},
+					Query: "INSERT INTO test VALUES (1, 2, 3);", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0012-insert-into-test-values-1"},
 				},
 				{
-					Query:    "INSERT INTO test (v1, pk) VALUES (5, 4);",
-					Expected: []sql.Row{},
+					Query: "INSERT INTO test (v1, pk) VALUES (5, 4);", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0013-insert-into-test-v1-pk"},
 				},
 				{
-					Query:    "INSERT INTO test (pk, v2) SELECT pk + 5, v2 + 10 FROM test WHERE v2 IS NOT NULL;",
-					Expected: []sql.Row{},
+					Query: "INSERT INTO test (pk, v2) SELECT pk + 5, v2 + 10 FROM test WHERE v2 IS NOT NULL;", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0014-insert-into-test-pk-v2"},
 				},
 				{
-					Query: "SELECT * FROM test;",
-					Expected: []sql.Row{
-						{1, 2, 3},
-						{4, 5, nil},
-						{6, nil, 13},
-					},
+					Query: "SELECT * FROM test;", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0015-select-*-from-test"},
 				},
 			},
 		},
@@ -121,34 +94,23 @@ func TestSmokeTests(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "UPDATE test SET v2 = 10;",
-					Expected: []sql.Row{},
+					Query: "UPDATE test SET v2 = 10;", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0016-update-test-set-v2-="},
 				},
 				{
-					Query:    "UPDATE test SET v1 = pk + v2;",
-					Expected: []sql.Row{},
+					Query: "UPDATE test SET v1 = pk + v2;", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0017-update-test-set-v1-="},
 				},
 				{
-					Query: "SELECT * FROM test;",
-					Expected: []sql.Row{
-						{1, 11, 10},
-						{4, 14, 10},
-						{7, 17, 10},
-					},
+					Query: "SELECT * FROM test;", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0018-select-*-from-test"},
 				},
 				{
-					Query:    "UPDATE test SET pk = subquery.val FROM (SELECT 22 as val) AS subquery WHERE pk >= 7;",
-					Skip:     true, // FROM not yet supported
-					Expected: []sql.Row{},
+					Query: "UPDATE test SET pk = subquery.val FROM (SELECT 22 as val) AS subquery WHERE pk >= 7;",
+					Skip:  true, PostgresOracle: // FROM not yet supported
+					ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0019-update-test-set-pk-="},
 				},
 				{
 					Query: "SELECT * FROM test;",
-					Skip:  true, // Above query doesn't run yet
-					Expected: []sql.Row{
-						{1, 11, 10},
-						{4, 14, 10},
-						{22, 17, 10},
-					},
+					Skip:  true, PostgresOracle: // Above query doesn't run yet
+					ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0020-select-*-from-test"},
 				},
 			},
 		},
@@ -160,18 +122,13 @@ func TestSmokeTests(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "DELETE FROM test WHERE v2 = 9;",
-					Expected: []sql.Row{},
+					Query: "DELETE FROM test WHERE v2 = 9;", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0021-delete-from-test-where-v2"},
 				},
 				{
-					Query:    "DELETE FROM test WHERE v1 = pk;",
-					Expected: []sql.Row{},
+					Query: "DELETE FROM test WHERE v1 = pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0022-delete-from-test-where-v1"},
 				},
 				{
-					Query: "SELECT * FROM test;",
-					Expected: []sql.Row{
-						{2, 3, 4},
-					},
+					Query: "SELECT * FROM test;", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0023-select-*-from-test"},
 				},
 			},
 		},
@@ -244,16 +201,10 @@ func TestSmokeTests(t *testing.T) {
 			Name: "Boolean results",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT 1 IN (2);",
-					Expected: []sql.Row{
-						{"f"},
-					},
+					Query: "SELECT 1 IN (2);", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0028-select-1-in-2"},
 				},
 				{
-					Query: "SELECT 2 IN (2);",
-					Expected: []sql.Row{
-						{"t"},
-					},
+					Query: "SELECT 2 IN (2);", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0029-select-2-in-2"},
 				},
 			},
 		},
@@ -314,51 +265,28 @@ func TestSmokeTests(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT ARRAY[v1]::boolean[] FROM test1 ORDER BY id;",
-					Expected: []sql.Row{
-						{"{t}"},
-						{"{f}"},
-					},
+					Query: "SELECT ARRAY[v1]::boolean[] FROM test1 ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0035-select-array[v1]::boolean[]-from-test1-order"},
 				},
 				{
-					Query: "SELECT ARRAY[v1] FROM test1 ORDER BY id;",
-					Expected: []sql.Row{
-						{"{t}"},
-						{"{f}"},
-					},
+					Query: "SELECT ARRAY[v1] FROM test1 ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0036-select-array[v1]-from-test1-order"},
 				},
 				{
-					Query: "SELECT ARRAY[v1, true, v1] FROM test1 ORDER BY id;",
-					Expected: []sql.Row{
-						{"{t,t,t}"},
-						{"{f,t,f}"},
-					},
+					Query: "SELECT ARRAY[v1, true, v1] FROM test1 ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0037-select-array[v1-true-v1]-from"},
 				},
 				{
-					Query: "SELECT ARRAY[1::float8, 2::numeric];",
-					Expected: []sql.Row{
-						{"{1,2}"},
-					},
+					Query: "SELECT ARRAY[1::float8, 2::numeric];", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0038-select-array[1::float8-2::numeric]"},
 				},
 				{
-					Query: "SELECT ARRAY[1::float8, NULL];",
-					Expected: []sql.Row{
-						{"{1,NULL}"},
-					},
+					Query: "SELECT ARRAY[1::float8, NULL];", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0039-select-array[1::float8-null]"},
 				},
 				{
-					Query: "SELECT ARRAY[1::int2, 2::int4, 3::int8]::varchar[];",
-					Expected: []sql.Row{
-						{"{1,2,3}"},
-					},
+					Query: "SELECT ARRAY[1::int2, 2::int4, 3::int8]::varchar[];", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0040-select-array[1::int2-2::int4-3::int8]::varchar[]"},
 				},
 				{
-					Query:       "SELECT ARRAY[1::int8]::int;",
-					ExpectedErr: "cast from `bigint[]` to `integer` does not exist",
+					Query: "SELECT ARRAY[1::int8]::int;", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0041-select-array[1::int8]::int", Compare: "sqlstate"},
 				},
 				{
-					Query:       "SELECT ARRAY[1::int8, 2::varchar];",
-					ExpectedErr: "ARRAY types bigint and varchar cannot be matched",
+					Query: "SELECT ARRAY[1::int8, 2::varchar];", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0042-select-array[1::int8-2::varchar]", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -366,160 +294,90 @@ func TestSmokeTests(t *testing.T) {
 			Name: "Array casting",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT '{true,false,true}'::boolean[];`,
-					Expected: []sql.Row{
-						{`{t,f,t}`},
-					},
+					Query: `SELECT '{true,false,true}'::boolean[];`, PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0043-select-{true-false-true}-::boolean[]"},
 				},
 				{
 					Skip:  true, // TODO: result differs from Postgres
-					Query: `SELECT '{"\x68656c6c6f", "\x776f726c64", "\x6578616d706c65"}'::bytea[]::text[];`,
-					Expected: []sql.Row{
-						{`{"\\x7836383635366336633666","\\x7837373666373236633634","\\x783635373836313664373036633635"}`},
-					},
+					Query: `SELECT '{"\x68656c6c6f", "\x776f726c64", "\x6578616d706c65"}'::bytea[]::text[];`, PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0044-select-{-\\x68656c6c6f-\\x776f726c64-\\x6578616d706c65"},
 				},
 				{
 					Skip:  true, // TODO: result differs from Postgres
-					Query: `SELECT '{"\\x68656c6c6f", "\\x776f726c64", "\\x6578616d706c65"}'::bytea[]::text[];`,
-					Expected: []sql.Row{
-						{`{"\\x68656c6c6f", "\\x776f726c64", "\\x6578616d706c65"}`},
-					},
+					Query: `SELECT '{"\\x68656c6c6f", "\\x776f726c64", "\\x6578616d706c65"}'::bytea[]::text[];`, PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0045-select-{-\\\\x68656c6c6f-\\\\x776f726c64-\\\\x6578616d706c65"},
 				},
 				{
-					Query: `SELECT '{"abcd", "efgh", "ijkl"}'::char(3)[];`,
-					Expected: []sql.Row{
-						{`{abc,efg,ijk}`},
-					},
+					Query: `SELECT '{"abcd", "efgh", "ijkl"}'::char(3)[];`, PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0046-select-{-abcd-efgh-ijkl"},
 				},
 				{
-					Query: `SELECT '{"2020-02-03", "2020-04-05", "2020-06-06"}'::date[];`,
-					Expected: []sql.Row{
-						{`{2020-02-03,2020-04-05,2020-06-06}`},
-					},
+					Query: `SELECT '{"2020-02-03", "2020-04-05", "2020-06-06"}'::date[];`, PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0047-select-{-2020-02-03-2020-04-05-2020-06-06"},
 				},
 				{
-					Query: `SELECT '{1.25,2.5,3.75}'::float4[];`,
-					Expected: []sql.Row{
-						{`{1.25,2.5,3.75}`},
-					},
+					Query: `SELECT '{1.25,2.5,3.75}'::float4[];`, PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0048-select-{1.25-2.5-3.75}-::float4[]"},
 				},
 				{
-					Query: `SELECT '{4.25,5.5,6.75}'::float8[];`,
-					Expected: []sql.Row{
-						{`{4.25,5.5,6.75}`},
-					},
+					Query: `SELECT '{4.25,5.5,6.75}'::float8[];`, PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0049-select-{4.25-5.5-6.75}-::float8[]"},
 				},
 				{
-					Query: `SELECT '{1,2,3}'::int2[];`,
-					Expected: []sql.Row{
-						{`{1,2,3}`},
-					},
+					Query: `SELECT '{1,2,3}'::int2[];`, PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0050-select-{1-2-3}-::int2[]"},
 				},
 				{
-					Query: `SELECT '{4,5,6}'::int4[];`,
-					Expected: []sql.Row{
-						{`{4,5,6}`},
-					},
+					Query: `SELECT '{4,5,6}'::int4[];`, PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0051-select-{4-5-6}-::int4[]"},
 				},
 				{
-					Query: `SELECT '{7,8,9}'::int8[];`,
-					Expected: []sql.Row{
-						{`{7,8,9}`},
-					},
+					Query: `SELECT '{7,8,9}'::int8[];`, PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0052-select-{7-8-9}-::int8[]"},
 				},
 				{
-					Query: `SELECT '{"{\"a\":\"val1\"}", "{\"b\":\"value2\"}", "{\"c\": \"object_value3\"}"}'::json[];`,
-					Expected: []sql.Row{
-						{`{"{\"a\":\"val1\"}","{\"b\":\"value2\"}","{\"c\": \"object_value3\"}"}`},
-					},
+					Query: `SELECT '{"{\"a\":\"val1\"}", "{\"b\":\"value2\"}", "{\"c\": \"object_value3\"}"}'::json[];`, PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0053-select-{-{\\-a\\-:\\"},
 				},
 				{
-					Query: `SELECT '{"{\"d\":\"val1\"}", "{\"e\":\"value2\"}", "{\"f\": \"object_value3\"}"}'::jsonb[];`,
-					Expected: []sql.Row{
-						{`{"{\"d\": \"val1\"}","{\"e\": \"value2\"}","{\"f\": \"object_value3\"}"}`},
-					},
+					Query: `SELECT '{"{\"d\":\"val1\"}", "{\"e\":\"value2\"}", "{\"f\": \"object_value3\"}"}'::jsonb[];`, PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0054-select-{-{\\-d\\-:\\"},
 				},
 				{
-					Query: `SELECT '{"the", "legendary", "formula"}'::name[];`,
-					Expected: []sql.Row{
-						{`{the,legendary,formula}`},
-					},
+					Query: `SELECT '{"the", "legendary", "formula"}'::name[];`, PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0055-select-{-the-legendary-formula"},
 				},
 				{
-					Query: `SELECT '{10.01,20.02,30.03}'::numeric[];`,
-					Expected: []sql.Row{
-						{`{10.01,20.02,30.03}`},
-					},
+					Query: `SELECT '{10.01,20.02,30.03}'::numeric[];`, PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0056-select-{10.01-20.02-30.03}-::numeric[]"},
 				},
 				{
-					Query: `SELECT '{1,10,100}'::oid[];`,
-					Expected: []sql.Row{
-						{`{1,10,100}`},
-					},
+					Query: `SELECT '{1,10,100}'::oid[];`, PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0057-select-{1-10-100}-::oid[]"},
 				},
 				{
-					Query: `SELECT '{"this", "is", "some", "text"}'::text[], '{text,without,quotes}'::text[], '{null,NULL,"NULL","quoted"}'::text[];`,
-					Expected: []sql.Row{
-						{`{this,is,some,text}`, `{text,without,quotes}`, `{NULL,NULL,"NULL",quoted}`},
-					},
+					Query: `SELECT '{"this", "is", "some", "text"}'::text[], '{text,without,quotes}'::text[], '{null,NULL,"NULL","quoted"}'::text[];`, PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0058-select-{-this-is-some"},
 				},
 				{
-					Query: `SELECT '{"12:12:13", "14:14:15", "16:16:17"}'::time[];`,
-					Expected: []sql.Row{
-						{`{12:12:13,14:14:15,16:16:17}`},
-					},
+					Query: `SELECT '{"12:12:13", "14:14:15", "16:16:17"}'::time[];`, PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0059-select-{-12:12:13-14:14:15-16:16:17"},
 				},
 				{
-					Query: `SELECT '{"2020-02-03 12:13:14", "2020-04-05 15:16:17", "2020-06-06 18:19:20"}'::timestamp[];`,
-					Expected: []sql.Row{
-						{`{"2020-02-03 12:13:14","2020-04-05 15:16:17","2020-06-06 18:19:20"}`},
-					},
+					Query: `SELECT '{"2020-02-03 12:13:14", "2020-04-05 15:16:17", "2020-06-06 18:19:20"}'::timestamp[];`, PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0060-select-{-2020-02-03-12:13:14-2020-04-05"},
 				},
 				{
-					Query: `SELECT '{"3920fd79-7b53-437c-b647-d450b58b4532", "a594c217-4c63-4669-96ec-40eed180b7cf", "4367b70d-8d8b-4969-a1aa-bf59536455fb"}'::uuid[];`,
-					Expected: []sql.Row{
-						{`{3920fd79-7b53-437c-b647-d450b58b4532,a594c217-4c63-4669-96ec-40eed180b7cf,4367b70d-8d8b-4969-a1aa-bf59536455fb}`},
-					},
+					Query: `SELECT '{"3920fd79-7b53-437c-b647-d450b58b4532", "a594c217-4c63-4669-96ec-40eed180b7cf", "4367b70d-8d8b-4969-a1aa-bf59536455fb"}'::uuid[];`, PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0061-select-{-3920fd79-7b53-437c-b647-d450b58b4532-a594c217-4c63-4669-96ec-40eed180b7cf-4367b70d-8d8b-4969-a1aa-bf59536455fb"},
 				},
 				{
-					Query: `SELECT '{"somewhere", "over", "the", "rainbow"}'::varchar(5)[];`,
-					Expected: []sql.Row{
-						{`{somew,over,the,rainb}`},
-					},
+					Query: `SELECT '{"somewhere", "over", "the", "rainbow"}'::varchar(5)[];`, PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0062-select-{-somewhere-over-the"},
 				},
 				{
-					Query: `SELECT '{1,2,3}'::xid[];`,
-					Expected: []sql.Row{
-						{`{1,2,3}`},
-					},
+					Query: `SELECT '{1,2,3}'::xid[];`, PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0063-select-{1-2-3}-::xid[]"},
 				},
 				{
-					Query:       `SELECT '{"abc""","def"}'::text[];`,
-					ExpectedErr: "malformed",
+					Query: `SELECT '{"abc""","def"}'::text[];`, PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0064-select-{-abc-def-}", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SELECT '{a,b,c'::text[];`,
-					ExpectedErr: "malformed",
+					Query: `SELECT '{a,b,c'::text[];`, PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0065-select-{a-b-c-::text[]", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SELECT 'a,b,c}'::text[];`,
-					ExpectedErr: "malformed",
+					Query: `SELECT 'a,b,c}'::text[];`, PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0066-select-a-b-c}-::text[]", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SELECT '{"a,b,c}'::text[];`,
-					ExpectedErr: "malformed",
+					Query: `SELECT '{"a,b,c}'::text[];`, PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0067-select-{-a-b-c}", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SELECT '{a",b,c}'::text[];`,
-					ExpectedErr: "malformed",
+					Query: `SELECT '{a",b,c}'::text[];`, PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0068-select-{a-b-c}-::text[]", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SELECT '{a,b,"c}'::text[];`,
-					ExpectedErr: "malformed",
+					Query: `SELECT '{a,b,"c}'::text[];`, PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0069-select-{a-b-c}-::text[]", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SELECT '{a,b,c"}'::text[];`,
-					ExpectedErr: "malformed",
+					Query: `SELECT '{a,b,c"}'::text[];`, PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0070-select-{a-b-c-}", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -531,81 +389,40 @@ func TestSmokeTests(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT * FROM test WHERE v1 BETWEEN 1 AND 4 ORDER BY v1;",
-					Expected: []sql.Row{
-						{float64(1)},
-						{float64(3)},
-					},
+					Query: "SELECT * FROM test WHERE v1 BETWEEN 1 AND 4 ORDER BY v1;", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0071-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 BETWEEN 2 AND 4 ORDER BY v1;",
-					Expected: []sql.Row{
-						{float64(3)},
-					},
+					Query: "SELECT * FROM test WHERE v1 BETWEEN 2 AND 4 ORDER BY v1;", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0072-select-*-from-test-where"},
 				},
 				{
-					Query:    "SELECT * FROM test WHERE v1 BETWEEN 4 AND 2 ORDER BY v1;",
-					Expected: []sql.Row{},
+					Query: "SELECT * FROM test WHERE v1 BETWEEN 4 AND 2 ORDER BY v1;", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0073-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 BETWEEN SYMMETRIC 1 AND 4 ORDER BY v1;",
-					Expected: []sql.Row{
-						{float64(1)},
-						{float64(3)},
-					},
+					Query: "SELECT * FROM test WHERE v1 BETWEEN SYMMETRIC 1 AND 4 ORDER BY v1;", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0074-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 BETWEEN SYMMETRIC 2 AND 4 ORDER BY v1;",
-					Expected: []sql.Row{
-						{float64(3)},
-					},
+					Query: "SELECT * FROM test WHERE v1 BETWEEN SYMMETRIC 2 AND 4 ORDER BY v1;", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0075-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 BETWEEN SYMMETRIC 4 AND 2 ORDER BY v1;",
-					Expected: []sql.Row{
-						{float64(3)},
-					},
+					Query: "SELECT * FROM test WHERE v1 BETWEEN SYMMETRIC 4 AND 2 ORDER BY v1;", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0076-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 NOT BETWEEN 1 AND 4 ORDER BY v1;",
-					Expected: []sql.Row{
-						{float64(7)},
-					},
+					Query: "SELECT * FROM test WHERE v1 NOT BETWEEN 1 AND 4 ORDER BY v1;", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0077-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 NOT BETWEEN 2 AND 4 ORDER BY v1;",
-					Expected: []sql.Row{
-						{float64(1)},
-						{float64(7)},
-					},
+					Query: "SELECT * FROM test WHERE v1 NOT BETWEEN 2 AND 4 ORDER BY v1;", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0078-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 NOT BETWEEN 4 AND 2 ORDER BY v1;",
-					Expected: []sql.Row{
-						{float64(1)},
-						{float64(3)},
-						{float64(7)},
-					},
+					Query: "SELECT * FROM test WHERE v1 NOT BETWEEN 4 AND 2 ORDER BY v1;", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0079-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 NOT BETWEEN SYMMETRIC 1 AND 4 ORDER BY v1;",
-					Expected: []sql.Row{
-						{float64(7)},
-					},
+					Query: "SELECT * FROM test WHERE v1 NOT BETWEEN SYMMETRIC 1 AND 4 ORDER BY v1;", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0080-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 NOT BETWEEN SYMMETRIC 2 AND 4 ORDER BY v1;",
-					Expected: []sql.Row{
-						{float64(1)},
-						{float64(7)},
-					},
+					Query: "SELECT * FROM test WHERE v1 NOT BETWEEN SYMMETRIC 2 AND 4 ORDER BY v1;", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0081-select-*-from-test-where"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v1 NOT BETWEEN SYMMETRIC 4 AND 2 ORDER BY v1;",
-					Expected: []sql.Row{
-						{float64(1)},
-						{float64(7)},
-					},
+					Query: "SELECT * FROM test WHERE v1 NOT BETWEEN SYMMETRIC 4 AND 2 ORDER BY v1;", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0082-select-*-from-test-where"},
 				},
 			},
 		},
@@ -617,24 +434,13 @@ func TestSmokeTests(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT * FROM test WHERE v1 IN (2, '3', 4) ORDER BY v1;",
-					Expected: []sql.Row{
-						{2, 2},
-						{3, 3},
-						{4, 4},
-					},
+					Query: "SELECT * FROM test WHERE v1 IN (2, '3', 4) ORDER BY v1;", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0083-select-*-from-test-where"},
 				},
 				{
-					Query:    "CREATE INDEX v2_idx ON test(v2);",
-					Expected: []sql.Row{},
+					Query: "CREATE INDEX v2_idx ON test(v2);", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0084-create-index-v2_idx-on-test"},
 				},
 				{
-					Query: "SELECT * FROM test WHERE v2 IN (2, '3', 4) ORDER BY v1;",
-					Expected: []sql.Row{
-						{2, 2},
-						{3, 3},
-						{4, 4},
-					},
+					Query: "SELECT * FROM test WHERE v2 IN (2, '3', 4) ORDER BY v1;", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0085-select-*-from-test-where"},
 				},
 			},
 		},
@@ -646,26 +452,16 @@ func TestSmokeTests(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT SUM(v1) FROM test WHERE v1 BETWEEN 3 AND 5;",
-					Expected: []sql.Row{
-						{int64(12)},
-					},
+					Query: "SELECT SUM(v1) FROM test WHERE v1 BETWEEN 3 AND 5;", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0086-select-sum-v1-from-test"},
 				},
 				{
-					Query: "SELECT pg_typeof(SUM(v1)) FROM test WHERE v1 BETWEEN 3 AND 5;",
-					Expected: []sql.Row{
-						{"bigint"},
-					},
+					Query: "SELECT pg_typeof(SUM(v1)) FROM test WHERE v1 BETWEEN 3 AND 5;", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0087-select-pg_typeof-sum-v1-from"},
 				},
 				{
-					Query:    "CREATE INDEX v1_idx ON test(v1);",
-					Expected: []sql.Row{},
+					Query: "CREATE INDEX v1_idx ON test(v1);", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0088-create-index-v1_idx-on-test"},
 				},
 				{
-					Query: "SELECT SUM(v1) FROM test WHERE v1 BETWEEN 3 AND 5;",
-					Expected: []sql.Row{
-						{int64(12)},
-					},
+					Query: "SELECT SUM(v1) FROM test WHERE v1 BETWEEN 3 AND 5;", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0089-select-sum-v1-from-test"},
 				},
 			},
 		},
@@ -682,8 +478,7 @@ func TestSmokeTests(t *testing.T) {
 			Name: "Unsupported MySQL statements",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       "SHOW CREATE TABLE;",
-					ExpectedErr: "syntax error",
+					Query: "SHOW CREATE TABLE;", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0091-show-create-table", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -691,28 +486,16 @@ func TestSmokeTests(t *testing.T) {
 			Name: "querying tables with same name as pg_catalog tables",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT attname FROM pg_catalog.pg_attribute ORDER BY attname LIMIT 3;",
-					Expected: []sql.Row{
-						{"ACTION_CONDITION"},
-						{"ACTION_ORDER"},
-						{"ACTION_ORIENTATION"},
-					},
+					Query: "SELECT attname FROM pg_catalog.pg_attribute ORDER BY attname LIMIT 3;", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0092-select-attname-from-pg_catalog.pg_attribute-order"},
 				},
 				{
-					Query: "SELECT attname FROM pg_attribute ORDER BY attname LIMIT 3;",
-					Expected: []sql.Row{
-						{"ACTION_CONDITION"},
-						{"ACTION_ORDER"},
-						{"ACTION_ORIENTATION"},
-					},
+					Query: "SELECT attname FROM pg_attribute ORDER BY attname LIMIT 3;", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0093-select-attname-from-pg_attribute-order"},
 				},
 				{
-					Query:    "CREATE TABLE pg_attribute (id INT);",
-					Expected: []sql.Row{},
+					Query: "CREATE TABLE pg_attribute (id INT);", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0094-create-table-pg_attribute-id-int"},
 				},
 				{
-					Query:       "insert into pg_attribute values (1);",
-					ExpectedErr: "number of values does not match number of columns provided",
+					Query: "insert into pg_attribute values (1);", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0095-insert-into-pg_attribute-values-1"},
 				},
 				{
 					Query:    "insert into public.pg_attribute values (1);",
@@ -808,22 +591,16 @@ func TestSmokeTests(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:            `SELECT * FROM test1;`,
-					ExpectedColNames: []string{"index"},
-					Expected:         []sql.Row{{1}},
+					Query: `SELECT * FROM test1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0103-select-*-from-test1"},
 				},
 				{
-					Query:            `SELECT * FROM test2;`,
-					ExpectedColNames: []string{"IndeX"},
-					Expected:         []sql.Row{{2}},
+					Query: `SELECT * FROM test2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0104-select-*-from-test2"},
 				},
 				{
-					Query:       `INSERT INTO test1 VALUES (-1);`,
-					ExpectedErr: "index_constraint1",
+					Query: `INSERT INTO test1 VALUES (-1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0105-insert-into-test1-values-1", Compare: "sqlstate"},
 				},
 				{
-					Query:       `INSERT INTO test2 VALUES (-1);`,
-					ExpectedErr: "index_constraint2",
+					Query: `INSERT INTO test2 VALUES (-1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0106-insert-into-test2-values-1", Compare: "sqlstate"},
 				},
 			},
 		},

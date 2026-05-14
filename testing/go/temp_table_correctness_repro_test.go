@@ -41,8 +41,7 @@ func TestTemporaryTableOnCommitDeleteRowsRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT count(*) FROM temp_on_commit_delete_items;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM temp_on_commit_delete_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "temp-table-correctness-repro-test-testtemporarytableoncommitdeleterowsrepro-0001-select-count-*-from-temp_on_commit_delete_items"},
 				},
 			},
 		},
@@ -66,17 +65,18 @@ func TestTemporaryTableOnCommitDropRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT count(*) FROM temp_on_commit_drop_items;`,
-					ExpectedErr: `does not exist`,
+					Query: `SELECT count(*) FROM temp_on_commit_drop_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "temp-table-correctness-repro-test-testtemporarytableoncommitdroprepro-0001-select-count-*-from-temp_on_commit_drop_items",
+
+						// TestTemporaryTableOnCommitPreserveRowsRepro reproduces a temp-table
+						// persistence gap: PostgreSQL accepts the explicit spelling of the default
+						// ON COMMIT behavior, and rows survive COMMIT.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestTemporaryTableOnCommitPreserveRowsRepro reproduces a temp-table
-// persistence gap: PostgreSQL accepts the explicit spelling of the default
-// ON COMMIT behavior, and rows survive COMMIT.
 func TestTemporaryTableOnCommitPreserveRowsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -91,8 +91,7 @@ func TestTemporaryTableOnCommitPreserveRowsRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT id FROM temp_on_commit_preserve_items ORDER BY id;`,
-					Expected: []sql.Row{{1}, {2}},
+					Query: `SELECT id FROM temp_on_commit_preserve_items ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "temp-table-correctness-repro-test-testtemporarytableoncommitpreserverowsrepro-0001-select-id-from-temp_on_commit_preserve_items-order"},
 				},
 			},
 		},
@@ -108,16 +107,14 @@ func TestTemporaryTableRejectsPersistentSchemaRepro(t *testing.T) {
 			Name: "temporary table rejects persistent schema",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CREATE TEMPORARY TABLE public.temp_in_public_items (id INT);`,
-					ExpectedErr: `cannot create temporary relation in non-temporary schema`,
+					Query: `CREATE TEMPORARY TABLE public.temp_in_public_items (id INT);`, PostgresOracle: ScriptTestPostgresOracle{ID: "temp-table-correctness-repro-test-testtemporarytablerejectspersistentschemarepro-0001-create-temporary-table-public.temp_in_public_items-id", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT count(*)
 						FROM pg_catalog.pg_class c
 						JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
 						WHERE c.relname = 'temp_in_public_items'
-							AND n.nspname = 'public';`,
-					Expected: []sql.Row{{int64(0)}},
+							AND n.nspname = 'public';`, PostgresOracle: ScriptTestPostgresOracle{ID: "temp-table-correctness-repro-test-testtemporarytablerejectspersistentschemarepro-0002-select-count-*-from-pg_catalog.pg_class"},
 				},
 			},
 		},
@@ -262,8 +259,7 @@ func TestTemporaryTableShadowsPersistentTableRepro(t *testing.T) {
 					Query: `INSERT INTO temp_shadow_items VALUES (2, 'temporary');`,
 				},
 				{
-					Query:    `SELECT id, label FROM temp_shadow_items;`,
-					Expected: []sql.Row{{2, "temporary"}},
+					Query: `SELECT id, label FROM temp_shadow_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "temp-table-correctness-repro-test-testtemporarytableshadowspersistenttablerepro-0001-select-id-label-from-temp_shadow_items"},
 				},
 				{
 					Query:    `SELECT id, label FROM public.temp_shadow_items;`,

@@ -30,10 +30,10 @@ func TestSetSessionAuthorizationRequiresSuperuserForOtherInitialUsers(t *testing
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT current_user, session_user;`,
-					Expected: []sql.Row{{"session_auth_actor", "session_auth_actor"}},
+					Query: `SELECT current_user, session_user;`,
+
 					Username: `session_auth_actor`,
-					Password: `actor`,
+					Password: `actor`, PostgresOracle: ScriptTestPostgresOracle{ID: "session-authorization-privilege-guard-test-testsetsessionauthorizationrequiressuperuserforotherinitialusers-0001-select-current_user-session_user"},
 				},
 				{
 					Query:    `SET SESSION AUTHORIZATION session_auth_actor;`,
@@ -41,10 +41,10 @@ func TestSetSessionAuthorizationRequiresSuperuserForOtherInitialUsers(t *testing
 					Password: `actor`,
 				},
 				{
-					Query:    `SELECT current_user, session_user;`,
-					Expected: []sql.Row{{"session_auth_actor", "session_auth_actor"}},
+					Query: `SELECT current_user, session_user;`,
+
 					Username: `session_auth_actor`,
-					Password: `actor`,
+					Password: `actor`, PostgresOracle: ScriptTestPostgresOracle{ID: "session-authorization-privilege-guard-test-testsetsessionauthorizationrequiressuperuserforotherinitialusers-0002-select-current_user-session_user"},
 				},
 				{
 					Query:       `SET SESSION AUTHORIZATION session_auth_target;`,

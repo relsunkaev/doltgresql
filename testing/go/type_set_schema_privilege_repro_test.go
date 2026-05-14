@@ -49,9 +49,9 @@ func TestAlterTypeSetSchemaMovesGrantOptionRepro(t *testing.T) {
 				{
 					Query: `GRANT USAGE ON TYPE set_schema_type_old.move_acl_type
 						TO set_schema_type_after_grantee;`,
-					ExpectedErr: `permission`,
-					Username:    `set_schema_type_grantor`,
-					Password:    `type`,
+
+					Username: `set_schema_type_grantor`,
+					Password: `type`, PostgresOracle: ScriptTestPostgresOracle{ID: "type-set-schema-privilege-repro-test-testaltertypesetschemamovesgrantoptionrepro-0001-grant-usage-on-type-set_schema_type_old.move_acl_type", Compare: "sqlstate"},
 				},
 			},
 		},

@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestFunctionDefinitionsRejectInvalidPlannerOptionsRepro reproduces
@@ -33,40 +31,38 @@ func TestFunctionDefinitionsRejectInvalidPlannerOptionsRepro(t *testing.T) {
 						RETURNS INT
 						LANGUAGE SQL
 						ROWS 10
-						AS $$ SELECT 1 $$;`,
-					ExpectedErr: `ROWS is not applicable when function does not return a set`,
+						AS $$ SELECT 1 $$;`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-option-correctness-repro-test-testfunctiondefinitionsrejectinvalidplanneroptionsrepro-0001-create-function-routine_scalar_rows_option-returns-int", Compare: "sqlstate"},
 				},
 				{
 					Query: `CREATE FUNCTION routine_zero_rows_option()
 						RETURNS SETOF INT
 						LANGUAGE SQL
 						ROWS 0
-						AS $$ SELECT 1 $$;`,
-					ExpectedErr: `ROWS must be positive`,
+						AS $$ SELECT 1 $$;`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-option-correctness-repro-test-testfunctiondefinitionsrejectinvalidplanneroptionsrepro-0002-create-function-routine_zero_rows_option-returns-setof", Compare: "sqlstate"},
 				},
 				{
 					Query: `CREATE FUNCTION routine_zero_cost_option()
 						RETURNS INT
 						LANGUAGE SQL
 						COST 0
-						AS $$ SELECT 1 $$;`,
-					ExpectedErr: `COST must be positive`,
+						AS $$ SELECT 1 $$;`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-option-correctness-repro-test-testfunctiondefinitionsrejectinvalidplanneroptionsrepro-0003-create-function-routine_zero_cost_option-returns-int", Compare: "sqlstate"},
 				},
 				{
 					Query: `CREATE FUNCTION routine_negative_cost_option()
 						RETURNS INT
 						LANGUAGE SQL
 						COST -1
-						AS $$ SELECT 1 $$;`,
-					ExpectedErr: `COST must be positive`,
+						AS $$ SELECT 1 $$;`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-option-correctness-repro-test-testfunctiondefinitionsrejectinvalidplanneroptionsrepro-0004-create-function-routine_negative_cost_option-returns-int",
+
+						// TestCreateFunctionNullInputOptionsGuard keeps coverage for create-time
+						// null-input routine options.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateFunctionNullInputOptionsGuard keeps coverage for create-time
-// null-input routine options.
 func TestCreateFunctionNullInputOptionsGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -85,12 +81,10 @@ func TestCreateFunctionNullInputOptionsGuard(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT strict_null_input_value(NULL::INT) IS NULL;`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT strict_null_input_value(NULL::INT) IS NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-option-correctness-repro-test-testcreatefunctionnullinputoptionsguard-0001-select-strict_null_input_value-null::int-is-null"},
 				},
 				{
-					Query:    `SELECT called_null_input_value(NULL::INT);`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT called_null_input_value(NULL::INT);`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-option-correctness-repro-test-testcreatefunctionnullinputoptionsguard-0002-select-called_null_input_value-null::int"},
 				},
 			},
 		},
@@ -112,20 +106,17 @@ func TestCreateOrReplaceFunctionNullInputOptionsGuard(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT replace_strict_option_value(NULL::INT);`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT replace_strict_option_value(NULL::INT);`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-option-correctness-repro-test-testcreateorreplacefunctionnullinputoptionsguard-0001-select-replace_strict_option_value-null::int"},
 				},
 				{
 					Query: `CREATE OR REPLACE FUNCTION replace_strict_option_value(input INT)
 						RETURNS INT
 						LANGUAGE SQL
 						STRICT
-						AS $$ SELECT 7 $$;`,
-					Expected: []sql.Row{},
+						AS $$ SELECT 7 $$;`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-option-correctness-repro-test-testcreateorreplacefunctionnullinputoptionsguard-0002-create-or-replace-function-replace_strict_option_value"},
 				},
 				{
-					Query:    `SELECT replace_strict_option_value(NULL::INT) IS NULL;`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT replace_strict_option_value(NULL::INT) IS NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-option-correctness-repro-test-testcreateorreplacefunctionnullinputoptionsguard-0003-select-replace_strict_option_value-null::int-is-null"},
 				},
 			},
 		},
@@ -158,11 +149,7 @@ func TestCreateFunctionSecurityDefinerCatalogRepro(t *testing.T) {
 							'catalog_security_definer_value',
 							'catalog_security_invoker_value'
 						)
-						ORDER BY proname;`,
-					Expected: []sql.Row{
-						{"catalog_security_definer_value", true},
-						{"catalog_security_invoker_value", false},
-					},
+						ORDER BY proname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-option-correctness-repro-test-testcreatefunctionsecuritydefinercatalogrepro-0001-select-proname-prosecdef-from-pg_catalog.pg_proc"},
 				},
 			},
 		},
@@ -194,11 +181,7 @@ func TestCreateProcedureSecurityDefinerCatalogRepro(t *testing.T) {
 							'catalog_security_definer_proc',
 							'catalog_security_invoker_proc'
 						)
-						ORDER BY proname;`,
-					Expected: []sql.Row{
-						{"catalog_security_definer_proc", true},
-						{"catalog_security_invoker_proc", false},
-					},
+						ORDER BY proname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-option-correctness-repro-test-testcreateproceduresecuritydefinercatalogrepro-0001-select-proname-prosecdef-from-pg_catalog.pg_proc"},
 				},
 			},
 		},
@@ -228,12 +211,7 @@ func TestCreateFunctionOutArgumentCatalogRepro(t *testing.T) {
 							array_to_string(proargmodes, ','),
 							array_to_string(proargnames, ',')
 						FROM pg_catalog.pg_proc
-						WHERE proname = 'catalog_out_argument_value';`,
-					Expected: []sql.Row{{
-						"1",
-						"i,o,o",
-						"input_value,doubled,tripled",
-					}},
+						WHERE proname = 'catalog_out_argument_value';`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-option-correctness-repro-test-testcreatefunctionoutargumentcatalogrepro-0001-select-pronargs::text-array_to_string-proargmodes-array_to_string"},
 				},
 			},
 		},
@@ -261,12 +239,7 @@ func TestCreateProcedureOutArgumentCatalogRepro(t *testing.T) {
 							array_to_string(proargmodes, ','),
 							array_to_string(proargnames, ',')
 						FROM pg_catalog.pg_proc
-						WHERE proname = 'catalog_out_argument_proc';`,
-					Expected: []sql.Row{{
-						"1",
-						"i,o",
-						"input_value,doubled",
-					}},
+						WHERE proname = 'catalog_out_argument_proc';`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-option-correctness-repro-test-testcreateprocedureoutargumentcatalogrepro-0001-select-pronargs::text-array_to_string-proargmodes-array_to_string"},
 				},
 			},
 		},
@@ -304,12 +277,7 @@ func TestCreateFunctionVolatilityCatalogRepro(t *testing.T) {
 							'catalog_immutable_value',
 							'catalog_stable_value'
 						)
-						ORDER BY proname;`,
-					Expected: []sql.Row{
-						{"catalog_immutable_value", "i"},
-						{"catalog_stable_value", "s"},
-						{"catalog_volatile_default_value", "v"},
-					},
+						ORDER BY proname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-option-correctness-repro-test-testcreatefunctionvolatilitycatalogrepro-0001-select-proname-provolatile-from-pg_catalog.pg_proc"},
 				},
 			},
 		},
@@ -341,11 +309,7 @@ func TestCreateFunctionLeakproofCatalogRepro(t *testing.T) {
 							'catalog_not_leakproof_value',
 							'catalog_leakproof_value'
 						)
-						ORDER BY proname;`,
-					Expected: []sql.Row{
-						{"catalog_leakproof_value", true},
-						{"catalog_not_leakproof_value", false},
-					},
+						ORDER BY proname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-option-correctness-repro-test-testcreatefunctionleakproofcatalogrepro-0001-select-proname-proleakproof-from-pg_catalog.pg_proc"},
 				},
 			},
 		},
@@ -383,12 +347,7 @@ func TestCreateFunctionParallelCatalogRepro(t *testing.T) {
 							'catalog_parallel_safe_value',
 							'catalog_parallel_restricted_value'
 						)
-						ORDER BY proname;`,
-					Expected: []sql.Row{
-						{"catalog_parallel_default_value", "u"},
-						{"catalog_parallel_restricted_value", "r"},
-						{"catalog_parallel_safe_value", "s"},
-					},
+						ORDER BY proname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-option-correctness-repro-test-testcreatefunctionparallelcatalogrepro-0001-select-proname-proparallel-from-pg_catalog.pg_proc"},
 				},
 			},
 		},
@@ -423,11 +382,7 @@ func TestCreateFunctionCostRowsCatalogRepro(t *testing.T) {
 							'catalog_scalar_cost_value',
 							'catalog_setof_cost_rows_value'
 						)
-						ORDER BY proname;`,
-					Expected: []sql.Row{
-						{"catalog_scalar_cost_value", "7", "0"},
-						{"catalog_setof_cost_rows_value", "3", "5"},
-					},
+						ORDER BY proname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-option-correctness-repro-test-testcreatefunctioncostrowscatalogrepro-0001-select-proname-procost::text-prorows::text-from"},
 				},
 			},
 		},
@@ -449,14 +404,12 @@ func TestAlterFunctionVolatilityOptionRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `ALTER FUNCTION alter_catalog_volatility_value() IMMUTABLE;`,
-					Expected: []sql.Row{},
+					Query: `ALTER FUNCTION alter_catalog_volatility_value() IMMUTABLE;`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-option-correctness-repro-test-testalterfunctionvolatilityoptionrepro-0001-alter-function-alter_catalog_volatility_value-immutable"},
 				},
 				{
 					Query: `SELECT provolatile
 						FROM pg_catalog.pg_proc
-						WHERE proname = 'alter_catalog_volatility_value';`,
-					Expected: []sql.Row{{"i"}},
+						WHERE proname = 'alter_catalog_volatility_value';`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-option-correctness-repro-test-testalterfunctionvolatilityoptionrepro-0002-select-provolatile-from-pg_catalog.pg_proc-where"},
 				},
 			},
 		},
@@ -478,14 +431,12 @@ func TestAlterFunctionSecurityDefinerOptionRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `ALTER FUNCTION alter_catalog_security_value() SECURITY DEFINER;`,
-					Expected: []sql.Row{},
+					Query: `ALTER FUNCTION alter_catalog_security_value() SECURITY DEFINER;`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-option-correctness-repro-test-testalterfunctionsecuritydefineroptionrepro-0001-alter-function-alter_catalog_security_value-security-definer"},
 				},
 				{
 					Query: `SELECT prosecdef
 						FROM pg_catalog.pg_proc
-						WHERE proname = 'alter_catalog_security_value';`,
-					Expected: []sql.Row{{true}},
+						WHERE proname = 'alter_catalog_security_value';`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-option-correctness-repro-test-testalterfunctionsecuritydefineroptionrepro-0002-select-prosecdef-from-pg_catalog.pg_proc-where"},
 				},
 			},
 		},
@@ -506,14 +457,12 @@ func TestAlterFunctionLeakproofOptionRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `ALTER FUNCTION alter_catalog_leakproof_value() LEAKPROOF;`,
-					Expected: []sql.Row{},
+					Query: `ALTER FUNCTION alter_catalog_leakproof_value() LEAKPROOF;`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-option-correctness-repro-test-testalterfunctionleakproofoptionrepro-0001-alter-function-alter_catalog_leakproof_value-leakproof"},
 				},
 				{
 					Query: `SELECT proleakproof
 						FROM pg_catalog.pg_proc
-						WHERE proname = 'alter_catalog_leakproof_value';`,
-					Expected: []sql.Row{{true}},
+						WHERE proname = 'alter_catalog_leakproof_value';`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-option-correctness-repro-test-testalterfunctionleakproofoptionrepro-0002-select-proleakproof-from-pg_catalog.pg_proc-where"},
 				},
 			},
 		},
@@ -534,14 +483,12 @@ func TestAlterFunctionCostRowsOptionRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `ALTER FUNCTION alter_catalog_cost_rows_value() COST 9 ROWS 11;`,
-					Expected: []sql.Row{},
+					Query: `ALTER FUNCTION alter_catalog_cost_rows_value() COST 9 ROWS 11;`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-option-correctness-repro-test-testalterfunctioncostrowsoptionrepro-0001-alter-function-alter_catalog_cost_rows_value-cost-9"},
 				},
 				{
 					Query: `SELECT procost::text, prorows::text
 						FROM pg_catalog.pg_proc
-						WHERE proname = 'alter_catalog_cost_rows_value';`,
-					Expected: []sql.Row{{"9", "11"}},
+						WHERE proname = 'alter_catalog_cost_rows_value';`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-option-correctness-repro-test-testalterfunctioncostrowsoptionrepro-0002-select-procost::text-prorows::text-from-pg_catalog.pg_proc"},
 				},
 			},
 		},
@@ -569,8 +516,7 @@ func TestAlterFunctionSetConfigOptionRepro(t *testing.T) {
 				{
 					Query: `SELECT array_to_string(proconfig, ',')
 						FROM pg_catalog.pg_proc
-						WHERE proname = 'alter_config_option_value';`,
-					Expected: []sql.Row{{"work_mem=64kB"}},
+						WHERE proname = 'alter_config_option_value';`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-option-correctness-repro-test-testalterfunctionsetconfigoptionrepro-0001-select-array_to_string-proconfig-from-pg_catalog.pg_proc"},
 				},
 			},
 		},
@@ -600,8 +546,7 @@ func TestAlterProcedureSetConfigOptionRepro(t *testing.T) {
 				{
 					Query: `SELECT array_to_string(proconfig, ',')
 						FROM pg_catalog.pg_proc
-						WHERE proname = 'alter_config_option_proc';`,
-					Expected: []sql.Row{{"work_mem=64kB"}},
+						WHERE proname = 'alter_config_option_proc';`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-option-correctness-repro-test-testalterproceduresetconfigoptionrepro-0001-select-array_to_string-proconfig-from-pg_catalog.pg_proc"},
 				},
 			},
 		},
@@ -627,8 +572,7 @@ func TestCreateProcedurePgProcCatalogRowRepro(t *testing.T) {
 				{
 					Query: `SELECT proname, prokind
 						FROM pg_catalog.pg_proc
-						WHERE proname = 'catalog_proc_row_value';`,
-					Expected: []sql.Row{{"catalog_proc_row_value", "p"}},
+						WHERE proname = 'catalog_proc_row_value';`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-option-correctness-repro-test-testcreateprocedurepgproccatalogrowrepro-0001-select-proname-prokind-from-pg_catalog.pg_proc"},
 				},
 			},
 		},
@@ -651,16 +595,13 @@ func TestAlterFunctionNullInputOptionRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT alter_strict_null_input_value(NULL::INT);`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT alter_strict_null_input_value(NULL::INT);`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-option-correctness-repro-test-testalterfunctionnullinputoptionrepro-0001-select-alter_strict_null_input_value-null::int"},
 				},
 				{
-					Query:    `ALTER FUNCTION alter_strict_null_input_value(INT) STRICT;`,
-					Expected: []sql.Row{},
+					Query: `ALTER FUNCTION alter_strict_null_input_value(INT) STRICT;`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-option-correctness-repro-test-testalterfunctionnullinputoptionrepro-0002-alter-function-alter_strict_null_input_value-int-strict"},
 				},
 				{
-					Query:    `SELECT alter_strict_null_input_value(NULL::INT) IS NULL;`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT alter_strict_null_input_value(NULL::INT) IS NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-option-correctness-repro-test-testalterfunctionnullinputoptionrepro-0003-select-alter_strict_null_input_value-null::int-is-null"},
 				},
 			},
 		},

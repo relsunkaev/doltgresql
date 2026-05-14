@@ -37,12 +37,10 @@ func TestCreateUniqueIndexOnDuplicateRowsRollsBackIndexRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `CREATE UNIQUE INDEX index_duplicate_items_code_idx
-						ON index_duplicate_items (code);`,
-					ExpectedErr: `duplicate`,
+						ON index_duplicate_items (code);`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-atomicity-repro-test-testcreateuniqueindexonduplicaterowsrollsbackindexrepro-0001-create-unique-index-index_duplicate_items_code_idx-on", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT to_regclass('index_duplicate_items_code_idx') IS NULL;`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT to_regclass('index_duplicate_items_code_idx') IS NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-atomicity-repro-test-testcreateuniqueindexonduplicaterowsrollsbackindexrepro-0002-select-to_regclass-index_duplicate_items_code_idx-is-null"},
 				},
 				{
 					Query: `SELECT count(*)

@@ -12,9 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package _go
+package postgres18
 
-import "testing"
+import (
+	. "github.com/dolthub/doltgresql/testing/go"
+	"testing"
+)
 
 // TestPostgres18WithoutOverlapsTemporalUniqueRepro reproduces a PostgreSQL 18
 // data-consistency gap: temporal UNIQUE constraints reject overlapping ranges.
@@ -23,27 +26,30 @@ func TestPostgres18WithoutOverlapsTemporalUniqueRepro(t *testing.T) {
 		{
 			Name: "UNIQUE WITHOUT OVERLAPS rejects overlapping ranges",
 			SetUpScript: []string{
+				`CREATE EXTENSION btree_gist;`,
 				`CREATE TABLE temporal_unique_bookings (
+					room_id INT NOT NULL,
 					booked daterange NOT NULL,
-					UNIQUE (booked WITHOUT OVERLAPS)
+					UNIQUE (room_id, booked WITHOUT OVERLAPS)
 				);`,
 				`INSERT INTO temporal_unique_bookings VALUES
-					('[2026-01-01,2026-02-01)'::daterange),
-					('[2026-02-01,2026-03-01)'::daterange);`,
+					(1, '[2026-01-01,2026-02-01)'::daterange),
+					(1, '[2026-02-01,2026-03-01)'::daterange);`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `INSERT INTO temporal_unique_bookings VALUES ('[2026-01-15,2026-01-20)'::daterange);`,
-					ExpectedErr: `conflicting key value`,
+					Query: `INSERT INTO temporal_unique_bookings VALUES (1, '[2026-01-15,2026-01-20)'::daterange);`, PostgresOracle: ScriptTestPostgresOracle{ID: "postgres18/temporal-constraint-repro-test-testpostgres18withoutoverlapstemporaluniquerepro-0001-insert-into-temporal_unique_bookings-values-1", Compare: "sqlstate"},
+
+					// TestPostgres18TemporalForeignKeyPeriodRepro reproduces a PostgreSQL 18
+					// referential-integrity gap: PERIOD foreign keys require the referenced
+					// temporal key to cover the referencing row's full period.
+
 				},
 			},
 		},
 	})
 }
 
-// TestPostgres18TemporalForeignKeyPeriodRepro reproduces a PostgreSQL 18
-// referential-integrity gap: PERIOD foreign keys require the referenced
-// temporal key to cover the referencing row's full period.
 func TestPostgres18TemporalForeignKeyPeriodRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -71,8 +77,7 @@ func TestPostgres18TemporalForeignKeyPeriodRepro(t *testing.T) {
 						(1, '[2026-01-15,2026-02-15)'::daterange);`,
 				},
 				{
-					Query:       `INSERT INTO temporal_fk_child VALUES (1, '[2026-03-01,2026-04-01)'::daterange);`,
-					ExpectedErr: `violates foreign key constraint`,
+					Query: `INSERT INTO temporal_fk_child VALUES (1, '[2026-03-01,2026-04-01)'::daterange);`, PostgresOracle: ScriptTestPostgresOracle{ID: "postgres18/temporal-constraint-repro-test-testpostgres18temporalforeignkeyperiodrepro-0001-insert-into-temporal_fk_child-values-1", Compare: "sqlstate"},
 				},
 			},
 		},

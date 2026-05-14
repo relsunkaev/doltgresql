@@ -1,0 +1,51 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map role_option_correctness_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/role_option_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/role_option_correctness_repro_test.go:TestCreateRoleRejectsInvalidConnectionLimitRepro#0001",
+      "source": "testing/go/role_option_correctness_repro_test.go:TestCreateRoleRejectsInvalidConnectionLimitRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE ROLE rejects invalid connection limit",
+      "oracle": "postgres",
+      "postgresId": "role-option-correctness-repro-test-testcreaterolerejectsinvalidconnectionlimitrepro-0001-create-role-invalid_create_conn_limit-connection-limit",
+      "suggestedId": "role-option-correctness-repro-test-testcreaterolerejectsinvalidconnectionlimitrepro-0001-create-role-invalid_create_conn_limit-connection-limit",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "CREATE ROLE invalid_create_conn_limit CONNECTION LIMIT -2;",
+      "querySha256": "27f9ffc276db5bd3ae2052ddf4df0322d68fc62368f3710489f4c13b94d12dc0",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/role_option_correctness_repro_test.go:TestAlterRoleRejectsInvalidConnectionLimitRepro#0001",
+      "source": "testing/go/role_option_correctness_repro_test.go:TestAlterRoleRejectsInvalidConnectionLimitRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER ROLE rejects invalid connection limit",
+      "oracle": "postgres",
+      "postgresId": "role-option-correctness-repro-test-testalterrolerejectsinvalidconnectionlimitrepro-0001-alter-role-invalid_alter_conn_limit-connection-limit",
+      "suggestedId": "role-option-correctness-repro-test-testalterrolerejectsinvalidconnectionlimitrepro-0001-alter-role-invalid_alter_conn_limit-connection-limit",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "ALTER ROLE invalid_alter_conn_limit CONNECTION LIMIT -2;",
+      "querySha256": "9ba92e5130786219e8e747f69f4ac2ead39296f3262e84d5750c69fdee2b01f9",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

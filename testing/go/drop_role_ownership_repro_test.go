@@ -33,17 +33,18 @@ func TestDropRoleOwningTableRepro(t *testing.T) {
 					Password: `owner`,
 				},
 				{
-					Query:       `DROP ROLE doomed_owner;`,
-					ExpectedErr: `cannot be dropped`,
+					Query: `DROP ROLE doomed_owner;`, PostgresOracle: ScriptTestPostgresOracle{ID: "drop-role-ownership-repro-test-testdroproleowningtablerepro-0001-drop-role-doomed_owner",
+
+					// TestDropRoleWithGrantedTablePrivilegesRepro reproduces a catalog integrity
+					// bug: Doltgres allows DROP ROLE even while explicit table ACL entries still
+					// depend on that role.
+					Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropRoleWithGrantedTablePrivilegesRepro reproduces a catalog integrity
-// bug: Doltgres allows DROP ROLE even while explicit table ACL entries still
-// depend on that role.
 func TestDropRoleWithGrantedTablePrivilegesRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -55,17 +56,18 @@ func TestDropRoleWithGrantedTablePrivilegesRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP ROLE doomed_acl_role;`,
-					ExpectedErr: `cannot be dropped`,
+					Query: `DROP ROLE doomed_acl_role;`, PostgresOracle: ScriptTestPostgresOracle{ID: "drop-role-ownership-repro-test-testdroprolewithgrantedtableprivilegesrepro-0001-drop-role-doomed_acl_role",
+
+					// TestDropRoleWithGrantedSchemaPrivilegesRepro reproduces a catalog integrity
+					// bug: Doltgres allows DROP ROLE even while explicit schema ACL entries still
+					// depend on that role.
+					Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropRoleWithGrantedSchemaPrivilegesRepro reproduces a catalog integrity
-// bug: Doltgres allows DROP ROLE even while explicit schema ACL entries still
-// depend on that role.
 func TestDropRoleWithGrantedSchemaPrivilegesRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -77,17 +79,18 @@ func TestDropRoleWithGrantedSchemaPrivilegesRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP ROLE doomed_schema_acl_role;`,
-					ExpectedErr: `cannot be dropped`,
+					Query: `DROP ROLE doomed_schema_acl_role;`, PostgresOracle: ScriptTestPostgresOracle{ID: "drop-role-ownership-repro-test-testdroprolewithgrantedschemaprivilegesrepro-0001-drop-role-doomed_schema_acl_role",
+
+					// TestDropRoleWithGrantedSequencePrivilegesRepro reproduces a catalog integrity
+					// bug: Doltgres allows DROP ROLE even while explicit sequence ACL entries still
+					// depend on that role.
+					Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropRoleWithGrantedSequencePrivilegesRepro reproduces a catalog integrity
-// bug: Doltgres allows DROP ROLE even while explicit sequence ACL entries still
-// depend on that role.
 func TestDropRoleWithGrantedSequencePrivilegesRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -99,17 +102,18 @@ func TestDropRoleWithGrantedSequencePrivilegesRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP ROLE doomed_sequence_acl_role;`,
-					ExpectedErr: `cannot be dropped`,
+					Query: `DROP ROLE doomed_sequence_acl_role;`, PostgresOracle: ScriptTestPostgresOracle{ID: "drop-role-ownership-repro-test-testdroprolewithgrantedsequenceprivilegesrepro-0001-drop-role-doomed_sequence_acl_role",
+
+					// TestDropRoleWithGrantedRoutinePrivilegesRepro reproduces a catalog integrity
+					// bug: Doltgres allows DROP ROLE even while explicit routine ACL entries still
+					// depend on that role.
+					Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropRoleWithGrantedRoutinePrivilegesRepro reproduces a catalog integrity
-// bug: Doltgres allows DROP ROLE even while explicit routine ACL entries still
-// depend on that role.
 func TestDropRoleWithGrantedRoutinePrivilegesRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -123,17 +127,18 @@ func TestDropRoleWithGrantedRoutinePrivilegesRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP ROLE doomed_routine_acl_role;`,
-					ExpectedErr: `cannot be dropped`,
+					Query: `DROP ROLE doomed_routine_acl_role;`, PostgresOracle: ScriptTestPostgresOracle{ID: "drop-role-ownership-repro-test-testdroprolewithgrantedroutineprivilegesrepro-0001-drop-role-doomed_routine_acl_role",
+
+					// TestDropRoleWithGrantedDatabasePrivilegesRepro reproduces a catalog integrity
+					// bug: Doltgres allows DROP ROLE even while explicit database ACL entries still
+					// depend on that role.
+					Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropRoleWithGrantedDatabasePrivilegesRepro reproduces a catalog integrity
-// bug: Doltgres allows DROP ROLE even while explicit database ACL entries still
-// depend on that role.
 func TestDropRoleWithGrantedDatabasePrivilegesRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -144,17 +149,18 @@ func TestDropRoleWithGrantedDatabasePrivilegesRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP ROLE doomed_database_acl_role;`,
-					ExpectedErr: `cannot be dropped`,
+					Query: `DROP ROLE doomed_database_acl_role;`, PostgresOracle: ScriptTestPostgresOracle{ID: "drop-role-ownership-repro-test-testdroprolewithgranteddatabaseprivilegesrepro-0001-drop-role-doomed_database_acl_role",
+
+					// TestDropRoleWithGrantedRoleMembershipRepro reproduces a catalog integrity bug:
+					// Doltgres allows DROP ROLE even while that role is the grantor of an active
+					// role membership.
+					Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropRoleWithGrantedRoleMembershipRepro reproduces a catalog integrity bug:
-// Doltgres allows DROP ROLE even while that role is the grantor of an active
-// role membership.
 func TestDropRoleWithGrantedRoleMembershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -174,8 +180,7 @@ func TestDropRoleWithGrantedRoleMembershipRepro(t *testing.T) {
 					Password: `grantor`,
 				},
 				{
-					Query:       `DROP ROLE doomed_membership_grantor;`,
-					ExpectedErr: `cannot be dropped`,
+					Query: `DROP ROLE doomed_membership_grantor;`, PostgresOracle: ScriptTestPostgresOracle{ID: "drop-role-ownership-repro-test-testdroprolewithgrantedrolemembershiprepro-0001-drop-role-doomed_membership_grantor", Compare: "sqlstate"},
 				},
 			},
 		},

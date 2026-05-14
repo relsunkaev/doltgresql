@@ -37,8 +37,7 @@ func TestPgDumpPartitionedTableOpclassProbe(t *testing.T) {
 				{
 					Query: `SELECT partrelid FROM pg_catalog.pg_partitioned_table WHERE
 (SELECT c.oid FROM pg_catalog.pg_opclass c JOIN pg_catalog.pg_am a ON c.opcmethod = a.oid
-WHERE opcname = 'enum_ops' AND opcnamespace = 'pg_catalog'::regnamespace AND amname = 'hash') = ANY(partclass);`,
-					Expected: []gms.Row{},
+WHERE opcname = 'enum_ops' AND opcnamespace = 'pg_catalog'::regnamespace AND amname = 'hash') = ANY(partclass);`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-dump-round-trip-test-testpgdumppartitionedtableopclassprobe-0001-select-partrelid-from-pg_catalog.pg_partitioned_table-where"},
 				},
 			},
 		},
@@ -91,11 +90,7 @@ JOIN pg_catalog.pg_class ref_class ON ref_class.oid = d.refobjid
 WHERE d.classid = 'pg_class'::regclass
 	AND d.refclassid = 'pg_class'::regclass
 	AND view_class.relname = 'dep_active_projects'
-ORDER BY ref_class.relname;`,
-					Expected: []gms.Row{
-						{"dep_active_projects", "dep_accounts", "n"},
-						{"dep_active_projects", "dep_projects", "n"},
-					},
+ORDER BY ref_class.relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-dump-round-trip-test-testpgdependviewtabledependencies-0001-select-view_class.relname-ref_class.relname-d.deptype-from"},
 				},
 				{
 					Query: `SELECT

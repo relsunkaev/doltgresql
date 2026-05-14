@@ -1,0 +1,63 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map default_privileges_security_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/default_privileges_security_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/default_privileges_security_repro_test.go:TestAlterDefaultPrivilegesForRoleRequiresOwnershipRepro#0001",
+      "source": "testing/go/default_privileges_security_repro_test.go:TestAlterDefaultPrivilegesForRoleRequiresOwnershipRepro",
+      "ordinal": 1,
+      "scriptName": "unprivileged role cannot alter another role's default privileges",
+      "oracle": "internal",
+      "suggestedId": "default-privileges-security-repro-test-testalterdefaultprivilegesforrolerequiresownershiprepro-0001-alter-default-privileges-for-role",
+      "expectedKind": "error",
+      "username": "default_priv_hijacker",
+      "query": "ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public\n\t\t\t\t\t\tGRANT SELECT ON TABLES TO default_priv_hijacker;",
+      "querySha256": "624091d3109f06e0305df60a861d385010504b99537c02c2994f99d4421bf829",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/default_privileges_security_repro_test.go:TestAlterDefaultPrivilegesForRoleRequiresOwnershipRepro#0002",
+      "source": "testing/go/default_privileges_security_repro_test.go:TestAlterDefaultPrivilegesForRoleRequiresOwnershipRepro",
+      "ordinal": 2,
+      "scriptName": "unprivileged role cannot alter another role's default privileges",
+      "oracle": "postgres",
+      "postgresId": "default-privileges-security-repro-test-testalterdefaultprivilegesforrolerequiresownershiprepro-0002-select-id-secret-from-default_priv_hijack_private",
+      "suggestedId": "default-privileges-security-repro-test-testalterdefaultprivilegesforrolerequiresownershiprepro-0002-select-id-secret-from-default_priv_hijack_private",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "default_priv_hijacker",
+      "query": "SELECT id, secret FROM default_priv_hijack_private;",
+      "querySha256": "009fa55d57e3de9fd915a43326b19c07571858225f7739110aa60eb83021a9ad",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/default_privileges_security_repro_test.go:TestAlterDefaultPrivilegesForRoleRequiresOwnershipRepro#0003",
+      "source": "testing/go/default_privileges_security_repro_test.go:TestAlterDefaultPrivilegesForRoleRequiresOwnershipRepro",
+      "ordinal": 3,
+      "scriptName": "owner can alter its own default privileges",
+      "oracle": "internal",
+      "suggestedId": "default-privileges-security-repro-test-testalterdefaultprivilegesforrolerequiresownershiprepro-0003-select-id-label-from-default_priv_owner_items",
+      "expectedKind": "rows",
+      "username": "default_priv_owner_reader",
+      "query": "SELECT id, label FROM default_priv_owner_items;",
+      "querySha256": "9cf72e94b9754e0ff68ebe505d8495db6b10f0251fc6dcc48eaf2c865904b913",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    }
+  ]
+}

@@ -51,10 +51,10 @@ func TestDropSchemaClearsPrivilegesRepro(t *testing.T) {
 					Query: `REVOKE ALL ON SCHEMA drop_recreate_schema_acl FROM PUBLIC;`,
 				},
 				{
-					Query:       `CREATE TABLE drop_recreate_schema_acl.after_drop (pk INT);`,
-					ExpectedErr: `permission denied`,
-					Username:    `drop_recreate_schema_user`,
-					Password:    `schema`,
+					Query: `CREATE TABLE drop_recreate_schema_acl.after_drop (pk INT);`,
+
+					Username: `drop_recreate_schema_user`,
+					Password: `schema`, PostgresOracle: ScriptTestPostgresOracle{ID: "schema-drop-privilege-repro-test-testdropschemaclearsprivilegesrepro-0001-create-table-drop_recreate_schema_acl.after_drop-pk-int", Compare: "sqlstate"},
 				},
 			},
 		},

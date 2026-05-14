@@ -43,8 +43,7 @@ func TestSubscriptionAddPublicationNamesAreCaseSensitiveRepro(t *testing.T) {
 				{
 					Query: `SELECT array_to_string(subpublications, ',')
 						FROM pg_catalog.pg_subscription
-						WHERE subname = 'subscription_case_add_sub';`,
-					Expected: []sql.Row{{"CasePublication,casepublication"}},
+						WHERE subname = 'subscription_case_add_sub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testsubscriptionaddpublicationnamesarecasesensitiverepro-0001-select-array_to_string-subpublications-from-pg_catalog.pg_subscription"},
 				},
 			},
 		},
@@ -73,8 +72,7 @@ func TestSubscriptionAddPublicationRefreshFalseRepro(t *testing.T) {
 				{
 					Query: `SELECT array_to_string(subpublications, ',')
 						FROM pg_catalog.pg_subscription
-						WHERE subname = 'subscription_add_refresh_sub';`,
-					Expected: []sql.Row{{"add_refresh_pub1,add_refresh_pub2"}},
+						WHERE subname = 'subscription_add_refresh_sub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testsubscriptionaddpublicationrefreshfalserepro-0001-select-array_to_string-subpublications-from-pg_catalog.pg_subscription"},
 				},
 			},
 		},
@@ -103,8 +101,7 @@ func TestSubscriptionSetPublicationRefreshFalseRepro(t *testing.T) {
 				{
 					Query: `SELECT array_to_string(subpublications, ',')
 						FROM pg_catalog.pg_subscription
-						WHERE subname = 'subscription_set_refresh_sub';`,
-					Expected: []sql.Row{{"set_refresh_pub2"}},
+						WHERE subname = 'subscription_set_refresh_sub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testsubscriptionsetpublicationrefreshfalserepro-0001-select-array_to_string-subpublications-from-pg_catalog.pg_subscription"},
 				},
 			},
 		},
@@ -133,8 +130,7 @@ func TestSubscriptionDropPublicationRefreshFalseRepro(t *testing.T) {
 				{
 					Query: `SELECT array_to_string(subpublications, ',')
 						FROM pg_catalog.pg_subscription
-						WHERE subname = 'subscription_case_drop_sub';`,
-					Expected: []sql.Row{{"CasePublication"}},
+						WHERE subname = 'subscription_case_drop_sub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testsubscriptiondroppublicationrefreshfalserepro-0001-select-array_to_string-subpublications-from-pg_catalog.pg_subscription"},
 				},
 			},
 		},
@@ -189,8 +185,7 @@ func TestSubscriptionCreatePreservesPublicationOrderRepro(t *testing.T) {
 				{
 					Query: `SELECT array_to_string(subpublications, ',')
 						FROM pg_catalog.pg_subscription
-						WHERE subname = 'subscription_create_order_sub';`,
-					Expected: []sql.Row{{"z_pub_order,a_pub_order"}},
+						WHERE subname = 'subscription_create_order_sub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testsubscriptioncreatepreservespublicationorderrepro-0001-select-array_to_string-subpublications-from-pg_catalog.pg_subscription"},
 				},
 			},
 		},
@@ -209,17 +204,18 @@ func TestSubscriptionCreateRejectsDuplicatePublicationRepro(t *testing.T) {
 					Query: `CREATE SUBSCRIPTION subscription_duplicate_create_sub
 						CONNECTION 'host=127.0.0.1 dbname=postgres'
 						PUBLICATION duplicate_pub, duplicate_pub
-						WITH (connect = false, enabled = false, create_slot = false, slot_name = NONE);`,
-					ExpectedErr: `used more than once`,
+						WITH (connect = false, enabled = false, create_slot = false, slot_name = NONE);`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testsubscriptioncreaterejectsduplicatepublicationrepro-0001-create-subscription-subscription_duplicate_create_sub-connection-host=127.0.0.1",
+
+						// TestSubscriptionCreateRejectsDuplicateConnectOptionRepro reproduces a
+						// subscription option correctness bug: PostgreSQL rejects duplicate option
+						// names instead of silently keeping one value.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestSubscriptionCreateRejectsDuplicateConnectOptionRepro reproduces a
-// subscription option correctness bug: PostgreSQL rejects duplicate option
-// names instead of silently keeping one value.
 func TestSubscriptionCreateRejectsDuplicateConnectOptionRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -230,14 +226,12 @@ func TestSubscriptionCreateRejectsDuplicateConnectOptionRepro(t *testing.T) {
 						CONNECTION 'host=127.0.0.1 dbname=postgres'
 						PUBLICATION duplicate_connect_pub
 						WITH (connect = false, connect = false,
-							enabled = false, create_slot = false, slot_name = NONE);`,
-					ExpectedErr: `conflicting or redundant options`,
+							enabled = false, create_slot = false, slot_name = NONE);`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testsubscriptioncreaterejectsduplicateconnectoptionrepro-0001-create-subscription-connection-host=127.0.0.1-dbname=postgres", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT count(*)
 						FROM pg_catalog.pg_subscription
-						WHERE subname = 'subscription_duplicate_connect_option_sub';`,
-					Expected: []sql.Row{{0}},
+						WHERE subname = 'subscription_duplicate_connect_option_sub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testsubscriptioncreaterejectsduplicateconnectoptionrepro-0002-select-count-*-from-pg_catalog.pg_subscription"},
 				},
 			},
 		},
@@ -257,14 +251,12 @@ func TestSubscriptionCreateRejectsDuplicateEnabledOptionRepro(t *testing.T) {
 						CONNECTION 'host=127.0.0.1 dbname=postgres'
 						PUBLICATION duplicate_enabled_pub
 						WITH (connect = false, enabled = false, enabled = false,
-							create_slot = false, slot_name = NONE);`,
-					ExpectedErr: `conflicting or redundant options`,
+							create_slot = false, slot_name = NONE);`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testsubscriptioncreaterejectsduplicateenabledoptionrepro-0001-create-subscription-connection-host=127.0.0.1-dbname=postgres", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT count(*)
 						FROM pg_catalog.pg_subscription
-						WHERE subname = 'subscription_duplicate_enabled_option_sub';`,
-					Expected: []sql.Row{{0}},
+						WHERE subname = 'subscription_duplicate_enabled_option_sub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testsubscriptioncreaterejectsduplicateenabledoptionrepro-0002-select-count-*-from-pg_catalog.pg_subscription"},
 				},
 			},
 		},
@@ -289,14 +281,12 @@ func TestSubscriptionAlterRejectsDuplicateSynchronousCommitOptionRepro(t *testin
 				{
 					Query: `ALTER SUBSCRIPTION subscription_duplicate_sync_commit_sub
 						SET (synchronous_commit = 'off',
-							synchronous_commit = 'local');`,
-					ExpectedErr: `conflicting or redundant options`,
+							synchronous_commit = 'local');`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testsubscriptionalterrejectsduplicatesynchronouscommitoptionrepro-0001-alter-subscription-subscription_duplicate_sync_commit_sub-set-synchronous_commit", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT subsynccommit
 						FROM pg_catalog.pg_subscription
-						WHERE subname = 'subscription_duplicate_sync_commit_sub';`,
-					Expected: []sql.Row{{"off"}},
+						WHERE subname = 'subscription_duplicate_sync_commit_sub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testsubscriptionalterrejectsduplicatesynchronouscommitoptionrepro-0002-select-subsynccommit-from-pg_catalog.pg_subscription-where"},
 				},
 			},
 		},
@@ -316,14 +306,12 @@ func TestSubscriptionCreateRejectsDuplicateSlotNameOptionRepro(t *testing.T) {
 						CONNECTION 'host=127.0.0.1 dbname=postgres'
 						PUBLICATION duplicate_slot_name_create_pub
 						WITH (connect = false, enabled = false, create_slot = false,
-							slot_name = NONE, slot_name = 'kept_slot');`,
-					ExpectedErr: `conflicting or redundant options`,
+							slot_name = NONE, slot_name = 'kept_slot');`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testsubscriptioncreaterejectsduplicateslotnameoptionrepro-0001-create-subscription-connection-host=127.0.0.1-dbname=postgres", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT count(*)
 						FROM pg_catalog.pg_subscription
-						WHERE subname = 'subscription_duplicate_slot_name_create_sub';`,
-					Expected: []sql.Row{{0}},
+						WHERE subname = 'subscription_duplicate_slot_name_create_sub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testsubscriptioncreaterejectsduplicateslotnameoptionrepro-0002-select-count-*-from-pg_catalog.pg_subscription"},
 				},
 			},
 		},
@@ -347,8 +335,7 @@ func TestSubscriptionAlterRejectsDuplicateSlotNameOptionRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `ALTER SUBSCRIPTION subscription_duplicate_slot_name_alter_sub
-						SET (slot_name = 'original_slot', slot_name = NONE);`,
-					ExpectedErr: `conflicting or redundant options`,
+						SET (slot_name = 'original_slot', slot_name = NONE);`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testsubscriptionalterrejectsduplicateslotnameoptionrepro-0001-alter-subscription-set-slot_name-=", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT subslotname
@@ -376,14 +363,12 @@ func TestSubscriptionCreateRejectsDuplicateSynchronousCommitOptionRepro(t *testi
 						PUBLICATION duplicate_sync_commit_create_pub
 						WITH (connect = false, enabled = false, create_slot = false,
 							slot_name = NONE, synchronous_commit = 'off',
-							synchronous_commit = 'local');`,
-					ExpectedErr: `conflicting or redundant options`,
+							synchronous_commit = 'local');`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testsubscriptioncreaterejectsduplicatesynchronouscommitoptionrepro-0001-create-subscription-connection-host=127.0.0.1-dbname=postgres", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT count(*)
 						FROM pg_catalog.pg_subscription
-						WHERE subname = 'subscription_duplicate_sync_commit_create_sub';`,
-					Expected: []sql.Row{{0}},
+						WHERE subname = 'subscription_duplicate_sync_commit_create_sub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testsubscriptioncreaterejectsduplicatesynchronouscommitoptionrepro-0002-select-count-*-from-pg_catalog.pg_subscription"},
 				},
 			},
 		},
@@ -407,14 +392,12 @@ func TestSubscriptionAlterRejectsDuplicateBinaryOptionRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `ALTER SUBSCRIPTION subscription_duplicate_binary_alter_sub
-						SET (binary = false, binary = true);`,
-					ExpectedErr: `conflicting or redundant options`,
+						SET (binary = false, binary = true);`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testsubscriptionalterrejectsduplicatebinaryoptionrepro-0001-alter-subscription-subscription_duplicate_binary_alter_sub-set-binary", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT subbinary
 						FROM pg_catalog.pg_subscription
-						WHERE subname = 'subscription_duplicate_binary_alter_sub';`,
-					Expected: []sql.Row{{"f"}},
+						WHERE subname = 'subscription_duplicate_binary_alter_sub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testsubscriptionalterrejectsduplicatebinaryoptionrepro-0002-select-subbinary-from-pg_catalog.pg_subscription-where"},
 				},
 			},
 		},
@@ -432,17 +415,18 @@ func TestSubscriptionCreateRejectsEmptySlotNameRepro(t *testing.T) {
 					Query: `CREATE SUBSCRIPTION subscription_empty_slot_create_sub
 						CONNECTION 'host=127.0.0.1 dbname=postgres'
 						PUBLICATION empty_slot_pub
-						WITH (connect = false, enabled = false, create_slot = false, slot_name = '');`,
-					ExpectedErr: `too short`,
+						WITH (connect = false, enabled = false, create_slot = false, slot_name = '');`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testsubscriptioncreaterejectsemptyslotnamerepro-0001-create-subscription-subscription_empty_slot_create_sub-connection-host=127.0.0.1",
+
+						// TestSubscriptionAlterRejectsEmptySlotNameRepro reproduces a subscription
+						// metadata validation bug: PostgreSQL rejects an empty replication slot name
+						// and preserves the existing slot association.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestSubscriptionAlterRejectsEmptySlotNameRepro reproduces a subscription
-// metadata validation bug: PostgreSQL rejects an empty replication slot name
-// and preserves the existing slot association.
 func TestSubscriptionAlterRejectsEmptySlotNameRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -456,8 +440,7 @@ func TestSubscriptionAlterRejectsEmptySlotNameRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `ALTER SUBSCRIPTION subscription_empty_slot_alter_sub
-						SET (slot_name = '');`,
-					ExpectedErr: `too short`,
+						SET (slot_name = '');`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testsubscriptionalterrejectsemptyslotnamerepro-0001-alter-subscription-subscription_empty_slot_alter_sub-set-slot_name", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT subslotname
@@ -482,17 +465,18 @@ func TestSubscriptionCreateRejectsInvalidStreamingOptionRepro(t *testing.T) {
 					Query: `CREATE SUBSCRIPTION subscription_invalid_streaming_create_sub
 						CONNECTION 'host=127.0.0.1 dbname=postgres'
 						PUBLICATION invalid_streaming_pub
-						WITH (connect = false, enabled = false, create_slot = false, slot_name = NONE, streaming = definitely_invalid);`,
-					ExpectedErr: `streaming`,
+						WITH (connect = false, enabled = false, create_slot = false, slot_name = NONE, streaming = definitely_invalid);`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testsubscriptioncreaterejectsinvalidstreamingoptionrepro-0001-create-subscription-connection-host=127.0.0.1-dbname=postgres",
+
+						// TestSubscriptionAlterRejectsInvalidStreamingOptionRepro reproduces a
+						// subscription option validation bug: PostgreSQL rejects invalid streaming
+						// values and preserves the stored streaming flag.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestSubscriptionAlterRejectsInvalidStreamingOptionRepro reproduces a
-// subscription option validation bug: PostgreSQL rejects invalid streaming
-// values and preserves the stored streaming flag.
 func TestSubscriptionAlterRejectsInvalidStreamingOptionRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -506,14 +490,12 @@ func TestSubscriptionAlterRejectsInvalidStreamingOptionRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `ALTER SUBSCRIPTION subscription_invalid_streaming_alter_sub
-						SET (streaming = definitely_invalid);`,
-					ExpectedErr: `streaming`,
+						SET (streaming = definitely_invalid);`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testsubscriptionalterrejectsinvalidstreamingoptionrepro-0001-alter-subscription-subscription_invalid_streaming_alter_sub-set-streaming", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT substream
 						FROM pg_catalog.pg_subscription
-						WHERE subname = 'subscription_invalid_streaming_alter_sub';`,
-					Expected: []sql.Row{{"t"}},
+						WHERE subname = 'subscription_invalid_streaming_alter_sub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testsubscriptionalterrejectsinvalidstreamingoptionrepro-0002-select-substream-from-pg_catalog.pg_subscription-where"},
 				},
 			},
 		},
@@ -536,14 +518,12 @@ func TestSubscriptionAlterRejectsInvalidSynchronousCommitRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `ALTER SUBSCRIPTION subscription_invalid_synccommit_alter_sub
-						SET (synchronous_commit = 'definitely_invalid');`,
-					ExpectedErr: `synchronous_commit`,
+						SET (synchronous_commit = 'definitely_invalid');`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testsubscriptionalterrejectsinvalidsynchronouscommitrepro-0001-alter-subscription-set-synchronous_commit-=", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT subsynccommit
 						FROM pg_catalog.pg_subscription
-						WHERE subname = 'subscription_invalid_synccommit_alter_sub';`,
-					Expected: []sql.Row{{"remote_apply"}},
+						WHERE subname = 'subscription_invalid_synccommit_alter_sub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testsubscriptionalterrejectsinvalidsynchronouscommitrepro-0002-select-subsynccommit-from-pg_catalog.pg_subscription-where"},
 				},
 			},
 		},
@@ -562,17 +542,18 @@ func TestSubscriptionCreateRejectsInvalidSynchronousCommitRepro(t *testing.T) {
 					Query: `CREATE SUBSCRIPTION subscription_invalid_synccommit_create_sub
 						CONNECTION 'host=127.0.0.1 dbname=postgres'
 						PUBLICATION invalid_synccommit_pub
-						WITH (connect = false, enabled = false, create_slot = false, slot_name = NONE, synchronous_commit = 'definitely_invalid');`,
-					ExpectedErr: `synchronous_commit`,
+						WITH (connect = false, enabled = false, create_slot = false, slot_name = NONE, synchronous_commit = 'definitely_invalid');`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testsubscriptioncreaterejectsinvalidsynchronouscommitrepro-0001-create-subscription-connection-host=127.0.0.1-dbname=postgres",
+
+						// TestSubscriptionAlterRejectsTwoPhaseOptionRepro reproduces a subscription
+						// metadata validation bug: PostgreSQL does not allow altering the two_phase
+						// subscription parameter on this baseline.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestSubscriptionAlterRejectsTwoPhaseOptionRepro reproduces a subscription
-// metadata validation bug: PostgreSQL does not allow altering the two_phase
-// subscription parameter on this baseline.
 func TestSubscriptionAlterRejectsTwoPhaseOptionRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -586,14 +567,12 @@ func TestSubscriptionAlterRejectsTwoPhaseOptionRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `ALTER SUBSCRIPTION subscription_two_phase_alter_sub
-						SET (two_phase = false);`,
-					ExpectedErr: `two_phase`,
+						SET (two_phase = false);`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testsubscriptionalterrejectstwophaseoptionrepro-0001-alter-subscription-subscription_two_phase_alter_sub-set-two_phase", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT subtwophasestate
 						FROM pg_catalog.pg_subscription
-						WHERE subname = 'subscription_two_phase_alter_sub';`,
-					Expected: []sql.Row{{"p"}},
+						WHERE subname = 'subscription_two_phase_alter_sub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testsubscriptionalterrejectstwophaseoptionrepro-0002-select-subtwophasestate-from-pg_catalog.pg_subscription-where"},
 				},
 			},
 		},
@@ -623,8 +602,7 @@ func TestSubscriptionSkipLsnNoneClearsSkipLsnRepro(t *testing.T) {
 				{
 					Query: `SELECT subskiplsn::text
 						FROM pg_catalog.pg_subscription
-						WHERE subname = 'subscription_skip_lsn_none_sub';`,
-					Expected: []sql.Row{{"0/0"}},
+						WHERE subname = 'subscription_skip_lsn_none_sub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testsubscriptionskiplsnnoneclearsskiplsnrepro-0001-select-subskiplsn::text-from-pg_catalog.pg_subscription-where"},
 				},
 			},
 		},
@@ -648,14 +626,12 @@ func TestSubscriptionAddPublicationRejectsInvalidCopyDataRepro(t *testing.T) {
 				{
 					Query: `ALTER SUBSCRIPTION subscription_add_copy_data_invalid_sub
 						ADD PUBLICATION add_copy_data_pub2
-						WITH (copy_data = definitely_invalid);`,
-					ExpectedErr: `copy_data`,
+						WITH (copy_data = definitely_invalid);`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testsubscriptionaddpublicationrejectsinvalidcopydatarepro-0001-alter-subscription-subscription_add_copy_data_invalid_sub-add-publication", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT array_to_string(subpublications, ',')
 						FROM pg_catalog.pg_subscription
-						WHERE subname = 'subscription_add_copy_data_invalid_sub';`,
-					Expected: []sql.Row{{"add_copy_data_pub1"}},
+						WHERE subname = 'subscription_add_copy_data_invalid_sub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testsubscriptionaddpublicationrejectsinvalidcopydatarepro-0002-select-array_to_string-subpublications-from-pg_catalog.pg_subscription"},
 				},
 			},
 		},
@@ -679,14 +655,12 @@ func TestSubscriptionSetPublicationRejectsInvalidCopyDataRepro(t *testing.T) {
 				{
 					Query: `ALTER SUBSCRIPTION subscription_set_copy_data_invalid_sub
 						SET PUBLICATION set_copy_data_pub2
-						WITH (copy_data = definitely_invalid);`,
-					ExpectedErr: `copy_data`,
+						WITH (copy_data = definitely_invalid);`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testsubscriptionsetpublicationrejectsinvalidcopydatarepro-0001-alter-subscription-subscription_set_copy_data_invalid_sub-set-publication", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT array_to_string(subpublications, ',')
 						FROM pg_catalog.pg_subscription
-						WHERE subname = 'subscription_set_copy_data_invalid_sub';`,
-					Expected: []sql.Row{{"set_copy_data_pub1"}},
+						WHERE subname = 'subscription_set_copy_data_invalid_sub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testsubscriptionsetpublicationrejectsinvalidcopydatarepro-0002-select-array_to_string-subpublications-from-pg_catalog.pg_subscription"},
 				},
 			},
 		},
@@ -710,14 +684,12 @@ func TestSubscriptionDropPublicationRejectsInvalidCopyDataRepro(t *testing.T) {
 				{
 					Query: `ALTER SUBSCRIPTION subscription_drop_copy_data_invalid_sub
 						DROP PUBLICATION drop_copy_data_pub2
-						WITH (copy_data = definitely_invalid);`,
-					ExpectedErr: `copy_data`,
+						WITH (copy_data = definitely_invalid);`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testsubscriptiondroppublicationrejectsinvalidcopydatarepro-0001-alter-subscription-subscription_drop_copy_data_invalid_sub-drop-publication", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT array_to_string(subpublications, ',')
 						FROM pg_catalog.pg_subscription
-						WHERE subname = 'subscription_drop_copy_data_invalid_sub';`,
-					Expected: []sql.Row{{"drop_copy_data_pub1,drop_copy_data_pub2"}},
+						WHERE subname = 'subscription_drop_copy_data_invalid_sub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testsubscriptiondroppublicationrejectsinvalidcopydatarepro-0002-select-array_to_string-subpublications-from-pg_catalog.pg_subscription"},
 				},
 			},
 		},
@@ -741,14 +713,12 @@ func TestSubscriptionSetPublicationRejectsDuplicatePublicationRepro(t *testing.T
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `ALTER SUBSCRIPTION subscription_set_duplicate_pub_sub
-						SET PUBLICATION set_dup_pub, set_dup_pub;`,
-					ExpectedErr: `used more than once`,
+						SET PUBLICATION set_dup_pub, set_dup_pub;`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testsubscriptionsetpublicationrejectsduplicatepublicationrepro-0001-alter-subscription-subscription_set_duplicate_pub_sub-set-publication", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT array_to_string(subpublications, ',')
 						FROM pg_catalog.pg_subscription
-						WHERE subname = 'subscription_set_duplicate_pub_sub';`,
-					Expected: []sql.Row{{"set_dup_original"}},
+						WHERE subname = 'subscription_set_duplicate_pub_sub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testsubscriptionsetpublicationrejectsduplicatepublicationrepro-0002-select-array_to_string-subpublications-from-pg_catalog.pg_subscription"},
 				},
 			},
 		},
@@ -766,17 +736,18 @@ func TestSubscriptionCreateRejectsInvalidOriginOptionRepro(t *testing.T) {
 					Query: `CREATE SUBSCRIPTION subscription_invalid_origin_sub
 						CONNECTION 'host=127.0.0.1 dbname=postgres'
 						PUBLICATION invalid_origin_pub
-						WITH (connect = false, enabled = false, create_slot = false, slot_name = NONE, origin = definitely_invalid);`,
-					ExpectedErr: `origin`,
+						WITH (connect = false, enabled = false, create_slot = false, slot_name = NONE, origin = definitely_invalid);`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testsubscriptioncreaterejectsinvalidoriginoptionrepro-0001-create-subscription-subscription_invalid_origin_sub-connection-host=127.0.0.1",
+
+						// TestSubscriptionCreateRejectsInvalidPasswordRequiredOptionRepro reproduces a
+						// subscription option validation bug: PostgreSQL validates password_required as
+						// a boolean subscription option.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestSubscriptionCreateRejectsInvalidPasswordRequiredOptionRepro reproduces a
-// subscription option validation bug: PostgreSQL validates password_required as
-// a boolean subscription option.
 func TestSubscriptionCreateRejectsInvalidPasswordRequiredOptionRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -786,17 +757,18 @@ func TestSubscriptionCreateRejectsInvalidPasswordRequiredOptionRepro(t *testing.
 					Query: `CREATE SUBSCRIPTION subscription_invalid_password_required_sub
 						CONNECTION 'host=127.0.0.1 dbname=postgres'
 						PUBLICATION invalid_password_required_pub
-						WITH (connect = false, enabled = false, create_slot = false, slot_name = NONE, password_required = definitely_invalid);`,
-					ExpectedErr: `password_required`,
+						WITH (connect = false, enabled = false, create_slot = false, slot_name = NONE, password_required = definitely_invalid);`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testsubscriptioncreaterejectsinvalidpasswordrequiredoptionrepro-0001-create-subscription-connection-host=127.0.0.1-dbname=postgres",
+
+						// TestSubscriptionCreateRejectsInvalidRunAsOwnerOptionRepro reproduces a
+						// subscription option validation bug: PostgreSQL validates run_as_owner as a
+						// boolean subscription option.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestSubscriptionCreateRejectsInvalidRunAsOwnerOptionRepro reproduces a
-// subscription option validation bug: PostgreSQL validates run_as_owner as a
-// boolean subscription option.
 func TestSubscriptionCreateRejectsInvalidRunAsOwnerOptionRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -806,17 +778,18 @@ func TestSubscriptionCreateRejectsInvalidRunAsOwnerOptionRepro(t *testing.T) {
 					Query: `CREATE SUBSCRIPTION subscription_invalid_run_as_owner_sub
 						CONNECTION 'host=127.0.0.1 dbname=postgres'
 						PUBLICATION invalid_run_as_owner_pub
-						WITH (connect = false, enabled = false, create_slot = false, slot_name = NONE, run_as_owner = definitely_invalid);`,
-					ExpectedErr: `run_as_owner`,
+						WITH (connect = false, enabled = false, create_slot = false, slot_name = NONE, run_as_owner = definitely_invalid);`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testsubscriptioncreaterejectsinvalidrunasowneroptionrepro-0001-create-subscription-subscription_invalid_run_as_owner_sub-connection-host=127.0.0.1",
+
+						// TestDropSubscriptionWithSlotInsideTransactionRejectedRepro reproduces a
+						// subscription metadata consistency bug: PostgreSQL refuses to drop a
+						// slot-backed subscription inside a transaction block.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropSubscriptionWithSlotInsideTransactionRejectedRepro reproduces a
-// subscription metadata consistency bug: PostgreSQL refuses to drop a
-// slot-backed subscription inside a transaction block.
 func TestDropSubscriptionWithSlotInsideTransactionRejectedRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -832,8 +805,7 @@ func TestDropSubscriptionWithSlotInsideTransactionRejectedRepro(t *testing.T) {
 					Query: `BEGIN;`,
 				},
 				{
-					Query:       `DROP SUBSCRIPTION subscription_drop_xact_slot_sub;`,
-					ExpectedErr: `cannot run inside a transaction block`,
+					Query: `DROP SUBSCRIPTION subscription_drop_xact_slot_sub;`, PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-correctness-repro-test-testdropsubscriptionwithslotinsidetransactionrejectedrepro-0001-drop-subscription-subscription_drop_xact_slot_sub", Compare: "sqlstate"},
 				},
 				{
 					Query: `ROLLBACK;`,

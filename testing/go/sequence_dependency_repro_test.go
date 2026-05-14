@@ -42,17 +42,18 @@ func TestDropSequenceReferencedByDefaultRequiresCascadeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP SEQUENCE default_dependency_seq;`,
-					ExpectedErr: `depends on it`,
+					Query: `DROP SEQUENCE default_dependency_seq;`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testdropsequencereferencedbydefaultrequirescascaderepro-0001-drop-sequence-default_dependency_seq",
+
+						// TestDropSequenceCascadeRemovesColumnDefaultRepro reproduces a dependency
+						// cleanup bug: CASCADE should remove defaults that depend on the dropped
+						// sequence instead of leaving stale nextval() expressions behind.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropSequenceCascadeRemovesColumnDefaultRepro reproduces a dependency
-// cleanup bug: CASCADE should remove defaults that depend on the dropped
-// sequence instead of leaving stale nextval() expressions behind.
 func TestDropSequenceCascadeRemovesColumnDefaultRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -76,11 +77,7 @@ func TestDropSequenceCascadeRemovesColumnDefaultRepro(t *testing.T) {
 				{
 					Query: `SELECT id, label
 						FROM cascade_default_items
-						ORDER BY label;`,
-					Expected: []sql.Row{
-						{nil, "after cascade"},
-						{1, "before cascade"},
-					},
+						ORDER BY label;`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testdropsequencecascaderemovescolumndefaultrepro-0001-select-id-label-from-cascade_default_items"},
 				},
 			},
 		},
@@ -109,13 +106,11 @@ func TestDropOwnedSequenceWithoutDefaultRepro(t *testing.T) {
 					Query: `SELECT c.relname
 						FROM pg_catalog.pg_class c
 						WHERE c.relkind = 'S'
-							AND c.relname = 'owned_sequence_without_default_seq';`,
-					Expected: []sql.Row{},
+							AND c.relname = 'owned_sequence_without_default_seq';`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testdropownedsequencewithoutdefaultrepro-0001-select-c.relname-from-pg_catalog.pg_class-c"},
 				},
 				{
 					Query: `SELECT id
-						FROM owned_sequence_without_default_items;`,
-					Expected: []sql.Row{},
+						FROM owned_sequence_without_default_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testdropownedsequencewithoutdefaultrepro-0002-select-id-from-owned_sequence_without_default_items"},
 				},
 			},
 		},
@@ -145,8 +140,7 @@ func TestDropOwnedColumnDropsOwnedSequenceRepro(t *testing.T) {
 					Query: `SELECT c.relname
 						FROM pg_catalog.pg_class c
 						WHERE c.relkind = 'S'
-							AND c.relname = 'drop_owned_column_sequence_seq';`,
-					Expected: []sql.Row{},
+							AND c.relname = 'drop_owned_column_sequence_seq';`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testdropownedcolumndropsownedsequencerepro-0001-select-c.relname-from-pg_catalog.pg_class-c"},
 				},
 			},
 		},
@@ -175,8 +169,7 @@ func TestDropOwnedTableDropsOwnedSequenceGuard(t *testing.T) {
 					Query: `SELECT c.relname
 						FROM pg_catalog.pg_class c
 						WHERE c.relkind = 'S'
-							AND c.relname = 'drop_owned_table_sequence_seq';`,
-					Expected: []sql.Row{},
+							AND c.relname = 'drop_owned_table_sequence_seq';`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testdropownedtabledropsownedsequenceguard-0001-select-c.relname-from-pg_catalog.pg_class-c"},
 				},
 			},
 		},
@@ -207,16 +200,17 @@ func TestRenameOwnedColumnUpdatesOwnedSequenceRepro(t *testing.T) {
 					Query: `SELECT pg_get_serial_sequence(
 							'rename_owned_column_sequence_items',
 							'renamed_id'
-						);`,
-					Expected: []sql.Row{{"public.rename_owned_column_sequence_seq"}},
+						);`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testrenameownedcolumnupdatesownedsequencerepro-0001-select-pg_get_serial_sequence-rename_owned_column_sequence_items-renamed_id",
+
+						// TestRenameOwnedTableUpdatesOwnedSequenceGuard guards that renaming a table
+						// keeps sequences owned by that table associated with the renamed table.
+						ColumnModes: []string{"schema"}},
 				},
 			},
 		},
 	})
 }
 
-// TestRenameOwnedTableUpdatesOwnedSequenceGuard guards that renaming a table
-// keeps sequences owned by that table associated with the renamed table.
 func TestRenameOwnedTableUpdatesOwnedSequenceGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -238,17 +232,18 @@ func TestRenameOwnedTableUpdatesOwnedSequenceGuard(t *testing.T) {
 					Query: `SELECT pg_get_serial_sequence(
 							'rename_owned_table_sequence_new',
 							'id'
-						);`,
-					Expected: []sql.Row{{"public.rename_owned_table_sequence_seq"}},
+						);`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testrenameownedtableupdatesownedsequenceguard-0001-select-pg_get_serial_sequence-rename_owned_table_sequence_new-id",
+
+						// TestPgGetSerialSequenceHandlesQuotedTableNamesWithDots guards that
+						// pg_get_serial_sequence parses double-quoted table names that contain dots
+						// as a single identifier, matching PostgreSQL's quoted-identifier semantics.
+						ColumnModes: []string{"schema"}},
 				},
 			},
 		},
 	})
 }
 
-// TestPgGetSerialSequenceHandlesQuotedTableNamesWithDots guards that
-// pg_get_serial_sequence parses double-quoted table names that contain dots
-// as a single identifier, matching PostgreSQL's quoted-identifier semantics.
 func TestPgGetSerialSequenceHandlesQuotedTableNamesWithDots(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -262,8 +257,7 @@ func TestPgGetSerialSequenceHandlesQuotedTableNamesWithDots(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT pg_get_serial_sequence('"pgget.serial.table"', 'id');`,
-					Expected: []sql.Row{{"public.pgget_serial_table_seq"}},
+					Query: `SELECT pg_get_serial_sequence('"pgget.serial.table"', 'id');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testpggetserialsequencehandlesquotedtablenameswithdots-0001-select-pg_get_serial_sequence-pgget.serial.table-id", ColumnModes: []string{"schema"}},
 				},
 				{
 					Query:    `SELECT pg_get_serial_sequence('public."pgget.serial.table"', 'id');`,
@@ -294,15 +288,13 @@ func TestPgGetSerialSequenceQuotesSequenceNames(t *testing.T) {
 					Query: `SELECT pg_get_serial_sequence(
 							'pgget_quote_items',
 							'id'
-						);`,
-					Expected: []sql.Row{{`public."PgGetQuoteSeq"`}},
+						);`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testpggetserialsequencequotessequencenames-0001-select-pg_get_serial_sequence-pgget_quote_items-id", ColumnModes: []string{"schema"}},
 				},
 				{
 					Query: `SELECT nextval(pg_get_serial_sequence(
 							'pgget_quote_items',
 							'id'
-						));`,
-					Expected: []sql.Row{{1}},
+						));`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testpggetserialsequencequotessequencenames-0002-select-nextval-pg_get_serial_sequence-pgget_quote_items-id"},
 				},
 			},
 		},
@@ -324,12 +316,10 @@ func TestAlterSequenceRenameToRepro(t *testing.T) {
 						RENAME TO rename_sequence_new_seq;`,
 				},
 				{
-					Query:    `SELECT nextval('rename_sequence_new_seq');`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT nextval('rename_sequence_new_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testaltersequencerenametorepro-0001-select-nextval-rename_sequence_new_seq"},
 				},
 				{
-					Query:       `SELECT nextval('rename_sequence_old_seq');`,
-					ExpectedErr: `does not exist`,
+					Query: `SELECT nextval('rename_sequence_old_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testaltersequencerenametorepro-0002-select-nextval-rename_sequence_old_seq", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -347,12 +337,10 @@ func TestAlterSequenceRenameEdgeCasesRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `ALTER SEQUENCE rename_sequence_existing_old
-						RENAME TO rename_sequence_existing_new;`,
-					ExpectedErr: `already exists`,
+						RENAME TO rename_sequence_existing_new;`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testaltersequencerenameedgecasesrepro-0001-alter-sequence-rename_sequence_existing_old-rename-to", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT nextval('rename_sequence_existing_old');`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT nextval('rename_sequence_existing_old');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testaltersequencerenameedgecasesrepro-0002-select-nextval-rename_sequence_existing_old"},
 				},
 			},
 		},
@@ -442,15 +430,13 @@ func TestNextvalIsNotRolledBackRepro(t *testing.T) {
 					Query: `BEGIN;`,
 				},
 				{
-					Query:    `SELECT nextval('rollback_nextval_seq');`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT nextval('rollback_nextval_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testnextvalisnotrolledbackrepro-0001-select-nextval-rollback_nextval_seq"},
 				},
 				{
 					Query: `ROLLBACK;`,
 				},
 				{
-					Query:    `SELECT nextval('rollback_nextval_seq');`,
-					Expected: []sql.Row{{2}},
+					Query: `SELECT nextval('rollback_nextval_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testnextvalisnotrolledbackrepro-0002-select-nextval-rollback_nextval_seq"},
 				},
 			},
 		},
@@ -472,15 +458,13 @@ func TestSetvalIsNotRolledBackRepro(t *testing.T) {
 					Query: `BEGIN;`,
 				},
 				{
-					Query:    `SELECT setval('rollback_setval_seq', 50);`,
-					Expected: []sql.Row{{50}},
+					Query: `SELECT setval('rollback_setval_seq', 50);`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testsetvalisnotrolledbackrepro-0001-select-setval-rollback_setval_seq-50"},
 				},
 				{
 					Query: `ROLLBACK;`,
 				},
 				{
-					Query:    `SELECT nextval('rollback_setval_seq');`,
-					Expected: []sql.Row{{51}},
+					Query: `SELECT nextval('rollback_setval_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testsetvalisnotrolledbackrepro-0002-select-nextval-rollback_setval_seq"},
 				},
 			},
 		},
@@ -502,15 +486,13 @@ func TestNextvalIsNotRolledBackToSavepointRepro(t *testing.T) {
 					Query: `BEGIN;`,
 				},
 				{
-					Query:    `SELECT nextval('savepoint_nextval_seq');`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT nextval('savepoint_nextval_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testnextvalisnotrolledbacktosavepointrepro-0001-select-nextval-savepoint_nextval_seq"},
 				},
 				{
 					Query: `SAVEPOINT sp;`,
 				},
 				{
-					Query:    `SELECT nextval('savepoint_nextval_seq');`,
-					Expected: []sql.Row{{2}},
+					Query: `SELECT nextval('savepoint_nextval_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testnextvalisnotrolledbacktosavepointrepro-0002-select-nextval-savepoint_nextval_seq"},
 				},
 				{
 					Query: `ROLLBACK TO SAVEPOINT sp;`,
@@ -519,8 +501,7 @@ func TestNextvalIsNotRolledBackToSavepointRepro(t *testing.T) {
 					Query: `COMMIT;`,
 				},
 				{
-					Query:    `SELECT nextval('savepoint_nextval_seq');`,
-					Expected: []sql.Row{{3}},
+					Query: `SELECT nextval('savepoint_nextval_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testnextvalisnotrolledbacktosavepointrepro-0003-select-nextval-savepoint_nextval_seq"},
 				},
 			},
 		},
@@ -545,8 +526,7 @@ func TestSetvalIsNotRolledBackToSavepointRepro(t *testing.T) {
 					Query: `SAVEPOINT sp;`,
 				},
 				{
-					Query:    `SELECT setval('savepoint_setval_seq', 50);`,
-					Expected: []sql.Row{{50}},
+					Query: `SELECT setval('savepoint_setval_seq', 50);`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testsetvalisnotrolledbacktosavepointrepro-0001-select-setval-savepoint_setval_seq-50"},
 				},
 				{
 					Query: `ROLLBACK TO SAVEPOINT sp;`,
@@ -555,8 +535,7 @@ func TestSetvalIsNotRolledBackToSavepointRepro(t *testing.T) {
 					Query: `COMMIT;`,
 				},
 				{
-					Query:    `SELECT nextval('savepoint_setval_seq');`,
-					Expected: []sql.Row{{51}},
+					Query: `SELECT nextval('savepoint_setval_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testsetvalisnotrolledbacktosavepointrepro-0002-select-nextval-savepoint_setval_seq"},
 				},
 			},
 		},
@@ -575,16 +554,13 @@ func TestCurrvalReturnsSessionSequenceValueRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT currval('currval_session_seq');`,
-					ExpectedErr: `not yet defined in this session`,
+					Query: `SELECT currval('currval_session_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testcurrvalreturnssessionsequencevaluerepro-0001-select-currval-currval_session_seq", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT nextval('currval_session_seq');`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT nextval('currval_session_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testcurrvalreturnssessionsequencevaluerepro-0002-select-nextval-currval_session_seq"},
 				},
 				{
-					Query:    `SELECT currval('currval_session_seq');`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT currval('currval_session_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testcurrvalreturnssessionsequencevaluerepro-0003-select-currval-currval_session_seq"},
 				},
 			},
 		},
@@ -604,20 +580,16 @@ func TestLastvalReturnsLatestSessionSequenceValueRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT lastval();`,
-					ExpectedErr: `not yet defined in this session`,
+					Query: `SELECT lastval();`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testlastvalreturnslatestsessionsequencevaluerepro-0001-select-lastval", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT nextval('lastval_first_seq');`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT nextval('lastval_first_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testlastvalreturnslatestsessionsequencevaluerepro-0002-select-nextval-lastval_first_seq"},
 				},
 				{
-					Query:    `SELECT nextval('lastval_second_seq');`,
-					Expected: []sql.Row{{10}},
+					Query: `SELECT nextval('lastval_second_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testlastvalreturnslatestsessionsequencevaluerepro-0003-select-nextval-lastval_second_seq"},
 				},
 				{
-					Query:    `SELECT lastval();`,
-					Expected: []sql.Row{{10}},
+					Query: `SELECT lastval();`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testlastvalreturnslatestsessionsequencevaluerepro-0004-select-lastval"},
 				},
 			},
 		},
@@ -639,12 +611,10 @@ func TestNextvalDoesNotResolveOutsideSearchPathRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT nextval('search_path_hidden_seq');`,
-					ExpectedErr: `does not exist`,
+					Query: `SELECT nextval('search_path_hidden_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testnextvaldoesnotresolveoutsidesearchpathrepro-0001-select-nextval-search_path_hidden_seq", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT nextval('hidden_sequence_schema.search_path_hidden_seq');`,
-					Expected: []sql.Row{{50}},
+					Query: `SELECT nextval('hidden_sequence_schema.search_path_hidden_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testnextvaldoesnotresolveoutsidesearchpathrepro-0002-select-nextval"},
 				},
 			},
 		},
@@ -663,8 +633,7 @@ func TestNextvalHandlesQuotedSequenceNamesWithDotsRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT nextval('"quoted.sequence.name"');`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT nextval('"quoted.sequence.name"');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testnextvalhandlesquotedsequencenameswithdotsrepro-0001-select-nextval-quoted.sequence.name"},
 				},
 				{
 					Query:    `SELECT nextval('public."quoted.sequence.name"');`,
@@ -687,8 +656,7 @@ func TestSetvalHandlesQuotedSequenceNamesWithDotsRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT setval('"setval.quoted.sequence"', 42);`,
-					Expected: []sql.Row{{42}},
+					Query: `SELECT setval('"setval.quoted.sequence"', 42);`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testsetvalhandlesquotedsequencenameswithdotsrepro-0001-select-setval-setval.quoted.sequence-42"},
 				},
 				{
 					Query:    `SELECT setval('public."setval.quoted.sequence"', 50);`,
@@ -714,12 +682,10 @@ func TestNextvalUsesSecondSearchPathSchemaRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT nextval('search_path_later_seq');`,
-					Expected: []sql.Row{{70}},
+					Query: `SELECT nextval('search_path_later_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testnextvalusessecondsearchpathschemarepro-0001-select-nextval-search_path_later_seq"},
 				},
 				{
-					Query:    `SELECT nextval('second_sequence_path_schema.search_path_later_seq');`,
-					Expected: []sql.Row{{71}},
+					Query: `SELECT nextval('second_sequence_path_schema.search_path_later_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testnextvalusessecondsearchpathschemarepro-0002-select-nextval"},
 				},
 			},
 		},
@@ -741,12 +707,10 @@ func TestSetvalUsesSecondSearchPathSchemaRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT setval('search_path_setval_seq', 90);`,
-					Expected: []sql.Row{{90}},
+					Query: `SELECT setval('search_path_setval_seq', 90);`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testsetvalusessecondsearchpathschemarepro-0001-select-setval-search_path_setval_seq-90"},
 				},
 				{
-					Query:    `SELECT nextval('second_setval_path_schema.search_path_setval_seq');`,
-					Expected: []sql.Row{{91}},
+					Query: `SELECT nextval('second_setval_path_schema.search_path_setval_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testsetvalusessecondsearchpathschemarepro-0002-select-nextval"},
 				},
 			},
 		},
@@ -976,16 +940,10 @@ func TestAddColumnNextvalDefaultBackfillsEachExistingRowRepro(t *testing.T) {
 				{
 					Query: `SELECT id, generated_id
 						FROM add_column_nextval_items
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{int64(10), int64(1)},
-						{int64(20), int64(2)},
-						{int64(30), int64(3)},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testaddcolumnnextvaldefaultbackfillseachexistingrowrepro-0001-select-id-generated_id-from-add_column_nextval_items"},
 				},
 				{
-					Query:    `SELECT nextval('add_column_nextval_seq');`,
-					Expected: []sql.Row{{int64(4)}},
+					Query: `SELECT nextval('add_column_nextval_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testaddcolumnnextvaldefaultbackfillseachexistingrowrepro-0002-select-nextval-add_column_nextval_seq"},
 				},
 			},
 		},
@@ -1017,16 +975,10 @@ func TestUpdateSetNextvalDefaultEvaluatesPerRowGuard(t *testing.T) {
 				{
 					Query: `SELECT id, generated_id
 						FROM update_default_nextval_items
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{int64(1), int64(1)},
-						{int64(2), int64(2)},
-						{int64(3), int64(3)},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testupdatesetnextvaldefaultevaluatesperrowguard-0001-select-id-generated_id-from-update_default_nextval_items"},
 				},
 				{
-					Query:    `SELECT nextval('update_default_nextval_seq');`,
-					Expected: []sql.Row{{int64(4)}},
+					Query: `SELECT nextval('update_default_nextval_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testupdatesetnextvaldefaultevaluatesperrowguard-0002-select-nextval-update_default_nextval_seq"},
 				},
 			},
 		},
@@ -1058,13 +1010,7 @@ func TestAddIdentityColumnBackfillsEachExistingRowRepro(t *testing.T) {
 				{
 					Query: `SELECT id, generated_id
 						FROM add_identity_column_items
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{10, 1},
-						{20, 2},
-						{30, 3},
-						{40, 4},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testaddidentitycolumnbackfillseachexistingrowrepro-0001-select-id-generated_id-from-add_identity_column_items"},
 				},
 			},
 		},
@@ -1153,12 +1099,10 @@ func TestIdentitySequenceOptionsAffectGeneratedValuesRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `INSERT INTO identity_sequence_option_items (label) VALUES ('first') RETURNING id;`,
-					Expected: []sql.Row{{100}},
+					Query: `INSERT INTO identity_sequence_option_items (label) VALUES ('first') RETURNING id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testidentitysequenceoptionsaffectgeneratedvaluesrepro-0001-insert-into-identity_sequence_option_items-label-values"},
 				},
 				{
-					Query:    `INSERT INTO identity_sequence_option_items (label) VALUES ('second') RETURNING id;`,
-					Expected: []sql.Row{{102}},
+					Query: `INSERT INTO identity_sequence_option_items (label) VALUES ('second') RETURNING id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testidentitysequenceoptionsaffectgeneratedvaluesrepro-0002-insert-into-identity_sequence_option_items-label-values"},
 				},
 			},
 		},
@@ -1176,17 +1120,18 @@ func TestIdentityColumnRejectsExplicitNullabilityRepro(t *testing.T) {
 				{
 					Query: `CREATE TABLE identity_explicit_null_items (
 						id INT GENERATED ALWAYS AS IDENTITY NULL
-					);`,
-					ExpectedErr: `conflicting NULL/NOT NULL declarations`,
+					);`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testidentitycolumnrejectsexplicitnullabilityrepro-0001-create-table-identity_explicit_null_items-id-int",
+
+						// TestIdentityColumnIsImplicitlyNotNullRepro reproduces an identity integrity
+						// bug: identity columns implicitly reject NULL values even when the table
+						// definition does not spell out NOT NULL.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestIdentityColumnIsImplicitlyNotNullRepro reproduces an identity integrity
-// bug: identity columns implicitly reject NULL values even when the table
-// definition does not spell out NOT NULL.
 func TestIdentityColumnIsImplicitlyNotNullRepro(t *testing.T) {
 	ctx, conn, controller := CreateServer(t, "postgres")
 	t.Cleanup(func() {
@@ -1502,22 +1447,22 @@ func TestNextvalDefaultIsNotRolledBackAfterFailedInsertRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `INSERT INTO failed_insert_default_items (label) VALUES ('bad');`,
-					ExpectedErr: `Check constraint`,
+					Query: `INSERT INTO failed_insert_default_items (label) VALUES ('bad');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testnextvaldefaultisnotrolledbackafterfailedinsertrepro-0001-insert-into-failed_insert_default_items-label-values",
+
+						// TestOnConflictDoNothingConsumesNextvalDefaultRepro reproduces a sequence
+						// correctness bug: PostgreSQL evaluates INSERT defaults before conflict
+						// handling, so a nextval() default is consumed even when ON CONFLICT DO NOTHING
+						// skips the proposed row.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT nextval('failed_insert_default_seq');`,
-					Expected: []sql.Row{{2}},
+					Query: `SELECT nextval('failed_insert_default_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testnextvaldefaultisnotrolledbackafterfailedinsertrepro-0002-select-nextval-failed_insert_default_seq"},
 				},
 			},
 		},
 	})
 }
 
-// TestOnConflictDoNothingConsumesNextvalDefaultRepro reproduces a sequence
-// correctness bug: PostgreSQL evaluates INSERT defaults before conflict
-// handling, so a nextval() default is consumed even when ON CONFLICT DO NOTHING
-// skips the proposed row.
 func TestOnConflictDoNothingConsumesNextvalDefaultRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1537,8 +1482,7 @@ func TestOnConflictDoNothingConsumesNextvalDefaultRepro(t *testing.T) {
 						ON CONFLICT (label) DO NOTHING;`,
 				},
 				{
-					Query:    `SELECT nextval('conflict_default_nextval_seq');`,
-					Expected: []sql.Row{{int64(3)}},
+					Query: `SELECT nextval('conflict_default_nextval_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testonconflictdonothingconsumesnextvaldefaultrepro-0001-select-nextval-conflict_default_nextval_seq"},
 				},
 			},
 		},
@@ -1570,12 +1514,10 @@ func TestOnConflictDoUpdateConsumesNextvalDefaultRepro(t *testing.T) {
 						SET touched = conflict_update_nextval_items.touched + 1;`,
 				},
 				{
-					Query:    `SELECT nextval('conflict_update_nextval_seq');`,
-					Expected: []sql.Row{{int64(3)}},
+					Query: `SELECT nextval('conflict_update_nextval_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testonconflictdoupdateconsumesnextvaldefaultrepro-0001-select-nextval-conflict_update_nextval_seq"},
 				},
 				{
-					Query:    `SELECT id, label, touched FROM conflict_update_nextval_items;`,
-					Expected: []sql.Row{{1, "kept", 1}},
+					Query: `SELECT id, label, touched FROM conflict_update_nextval_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testonconflictdoupdateconsumesnextvaldefaultrepro-0002-select-id-label-touched-from"},
 				},
 			},
 		},
@@ -1605,8 +1547,7 @@ func TestTruncateRestartIdentityResetsOwnedSequenceRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT id, label
-						FROM truncate_restart_identity_items;`,
-					Expected: []sql.Row{{1, "after truncate"}},
+						FROM truncate_restart_identity_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testtruncaterestartidentityresetsownedsequencerepro-0001-select-id-label-from-truncate_restart_identity_items"},
 				},
 			},
 		},
@@ -1635,17 +1576,18 @@ func TestAlterSequenceOwnedByRejectsTriggerNameGuard(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `ALTER SEQUENCE sequence_owned_trigger_seq
-						OWNED BY sequence_owned_trigger.trig;`,
-					ExpectedErr: `does not exist`,
+						OWNED BY sequence_owned_trigger.trig;`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testaltersequenceownedbyrejectstriggernameguard-0001-alter-sequence-sequence_owned_trigger_seq-owned-by",
+
+						// TestNextvalInWherePredicateEvaluatesPerRowRepro reproduces a sequence
+						// correctness bug: volatile nextval() calls in a WHERE predicate are evaluated
+						// once and reused instead of being evaluated for each candidate row.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestNextvalInWherePredicateEvaluatesPerRowRepro reproduces a sequence
-// correctness bug: volatile nextval() calls in a WHERE predicate are evaluated
-// once and reused instead of being evaluated for each candidate row.
 func TestNextvalInWherePredicateEvaluatesPerRowRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1660,12 +1602,10 @@ func TestNextvalInWherePredicateEvaluatesPerRowRepro(t *testing.T) {
 					Query: `SELECT id
 						FROM volatile_filter_items
 						WHERE nextval('volatile_filter_seq') = marker
-						ORDER BY id;`,
-					Expected: []sql.Row{{1}, {2}, {3}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testnextvalinwherepredicateevaluatesperrowrepro-0001-select-id-from-volatile_filter_items-where"},
 				},
 				{
-					Query:    `SELECT nextval('volatile_filter_seq');`,
-					Expected: []sql.Row{{4}},
+					Query: `SELECT nextval('volatile_filter_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testnextvalinwherepredicateevaluatesperrowrepro-0002-select-nextval-volatile_filter_seq"},
 				},
 			},
 		},

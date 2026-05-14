@@ -1,0 +1,105 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map view_security_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/view_security_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/view_security_repro_test.go:TestSecurityInvokerViewRequiresBaseTablePrivilegesGuard#0001",
+      "source": "testing/go/view_security_repro_test.go:TestSecurityInvokerViewRequiresBaseTablePrivilegesGuard",
+      "ordinal": 1,
+      "scriptName": "security invoker view checks invoker permissions on base table",
+      "oracle": "postgres",
+      "postgresId": "view-security-repro-test-testsecurityinvokerviewrequiresbasetableprivilegesguard-0001-select-id-secret-from-invoker_view",
+      "suggestedId": "view-security-repro-test-testsecurityinvokerviewrequiresbasetableprivilegesguard-0001-select-id-secret-from-invoker_view",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "view_reader",
+      "query": "SELECT id, secret FROM invoker_view ORDER BY id;",
+      "querySha256": "45d781ed9683c7d25fd494297b1a742c5f307a0ac9c2ce3a73d353a8aedff2ee",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_security_repro_test.go:TestAlterViewSecurityInvokerRequiresBaseTablePrivilegesRepro#0001",
+      "source": "testing/go/view_security_repro_test.go:TestAlterViewSecurityInvokerRequiresBaseTablePrivilegesRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER VIEW security_invoker checks invoker permissions",
+      "oracle": "postgres",
+      "postgresId": "view-security-repro-test-testalterviewsecurityinvokerrequiresbasetableprivilegesrepro-0001-select-id-secret-from-alter_invoker_view",
+      "suggestedId": "view-security-repro-test-testalterviewsecurityinvokerrequiresbasetableprivilegesrepro-0001-select-id-secret-from-alter_invoker_view",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "alter_view_reader",
+      "query": "SELECT id, secret FROM alter_invoker_view ORDER BY id;",
+      "querySha256": "8b50d35b0cb7e6127929711e8d724b622f956a66f610ab41b167afaaa65b0d09",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_security_repro_test.go:TestDefaultViewGrantUsesViewOwnerPrivilegesRepro#0001",
+      "source": "testing/go/view_security_repro_test.go:TestDefaultViewGrantUsesViewOwnerPrivilegesRepro",
+      "ordinal": 1,
+      "scriptName": "default view grant uses view owner privileges",
+      "oracle": "postgres",
+      "postgresId": "view-security-repro-test-testdefaultviewgrantusesviewownerprivilegesrepro-0001-select-id-label-from-default_view_grant_reader",
+      "suggestedId": "view-security-repro-test-testdefaultviewgrantusesviewownerprivilegesrepro-0001-select-id-label-from-default_view_grant_reader",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "default_view_reader",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM default_view_grant_reader;",
+      "querySha256": "2e1096d535912493f3a339c09a6135cfab4544c7ffaa2902b45428d0c19569b6",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "visible"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_security_repro_test.go:TestCreateOrReplaceViewPreservesGrantedPrivilegesGuard#0001",
+      "source": "testing/go/view_security_repro_test.go:TestCreateOrReplaceViewPreservesGrantedPrivilegesGuard",
+      "ordinal": 1,
+      "scriptName": "CREATE OR REPLACE VIEW preserves granted privileges",
+      "oracle": "postgres",
+      "postgresId": "view-security-repro-test-testcreateorreplaceviewpreservesgrantedprivilegesguard-0001-select-id-label-from-replace_view_acl_reader",
+      "suggestedId": "view-security-repro-test-testcreateorreplaceviewpreservesgrantedprivilegesguard-0001-select-id-label-from-replace_view_acl_reader",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "replace_view_acl_user",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM replace_view_acl_reader;",
+      "querySha256": "9cc3f044d71f42188ce2d67406e7ba826c77a0595fdbb34ebf86788718b09bf6",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "new"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

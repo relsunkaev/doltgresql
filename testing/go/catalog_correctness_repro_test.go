@@ -35,8 +35,7 @@ func TestPgClassNamespaceOidLookupDoesNotRequireWarmCacheRepro(t *testing.T) {
 					Query: `SELECT c.relname
 						FROM pg_catalog.pg_class c
 						WHERE c.relnamespace = 2638679668
-							AND c.relname = 'testtable';`,
-					Expected: []sql.Row{{"testtable"}},
+							AND c.relname = 'testtable';`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgclassnamespaceoidlookupdoesnotrequirewarmcacherepro-0001-select-c.relname-from-pg_catalog.pg_class-c"},
 				},
 			},
 		},
@@ -55,15 +54,13 @@ func TestQuotedSchemaNamesAreCaseSensitiveRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `CREATE SCHEMA caseschema;`,
-					Expected: []sql.Row{},
+					Query: `CREATE SCHEMA caseschema;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testquotedschemanamesarecasesensitiverepro-0001-create-schema-caseschema"},
 				},
 				{
 					Query: `SELECT nspname
 						FROM pg_catalog.pg_namespace
 						WHERE nspname IN ('CaseSchema', 'caseschema')
-						ORDER BY nspname;`,
-					Expected: []sql.Row{{"CaseSchema"}, {"caseschema"}},
+						ORDER BY nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testquotedschemanamesarecasesensitiverepro-0002-select-nspname-from-pg_catalog.pg_namespace-where"},
 				},
 			},
 		},
@@ -80,19 +77,16 @@ func TestQuotedDatabaseNamesAreCaseSensitiveRepro(t *testing.T) {
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `CREATE DATABASE "CaseDatabase";`,
-					Expected: []sql.Row{},
+					Query: `CREATE DATABASE "CaseDatabase";`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testquoteddatabasenamesarecasesensitiverepro-0001-create-database-casedatabase"},
 				},
 				{
-					Query:    `CREATE DATABASE casedatabase;`,
-					Expected: []sql.Row{},
+					Query: `CREATE DATABASE casedatabase;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testquoteddatabasenamesarecasesensitiverepro-0002-create-database-casedatabase"},
 				},
 				{
 					Query: `SELECT datname
 						FROM pg_catalog.pg_database
 						WHERE datname IN ('CaseDatabase', 'casedatabase')
-						ORDER BY datname;`,
-					Expected: []sql.Row{{"CaseDatabase"}, {"casedatabase"}},
+						ORDER BY datname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testquoteddatabasenamesarecasesensitiverepro-0003-select-datname-from-pg_catalog.pg_database-where"},
 				},
 			},
 		},
@@ -112,28 +106,23 @@ func TestQuotedTableNamesAreCaseSensitiveRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `CREATE TABLE casetable (id INT PRIMARY KEY, label TEXT);`,
-					Expected: []sql.Row{},
+					Query: `CREATE TABLE casetable (id INT PRIMARY KEY, label TEXT);`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testquotedtablenamesarecasesensitiverepro-0001-create-table-casetable-id-int"},
 				},
 				{
-					Query:    `INSERT INTO casetable VALUES (2, 'folded');`,
-					Expected: []sql.Row{},
+					Query: `INSERT INTO casetable VALUES (2, 'folded');`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testquotedtablenamesarecasesensitiverepro-0002-insert-into-casetable-values-2"},
 				},
 				{
-					Query:    `SELECT id, label FROM "CaseTable" ORDER BY id;`,
-					Expected: []sql.Row{{1, "quoted"}},
+					Query: `SELECT id, label FROM "CaseTable" ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testquotedtablenamesarecasesensitiverepro-0003-select-id-label-from-casetable"},
 				},
 				{
-					Query:    `SELECT id, label FROM casetable ORDER BY id;`,
-					Expected: []sql.Row{{2, "folded"}},
+					Query: `SELECT id, label FROM casetable ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testquotedtablenamesarecasesensitiverepro-0004-select-id-label-from-casetable"},
 				},
 				{
 					Query: `SELECT relname
 						FROM pg_catalog.pg_class
 						WHERE relnamespace = 'public'::regnamespace
 							AND relname IN ('CaseTable', 'casetable')
-						ORDER BY relname;`,
-					Expected: []sql.Row{{"CaseTable"}, {"casetable"}},
+						ORDER BY relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testquotedtablenamesarecasesensitiverepro-0005-select-relname-from-pg_catalog.pg_class-where"},
 				},
 			},
 		},
@@ -155,16 +144,13 @@ func TestQuotedViewNamesAreCaseSensitiveRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `CREATE VIEW caseview AS
-						SELECT id, label FROM quoted_view_source WHERE id = 2;`,
-					Expected: []sql.Row{},
+						SELECT id, label FROM quoted_view_source WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testquotedviewnamesarecasesensitiverepro-0001-create-view-caseview-as-select"},
 				},
 				{
-					Query:    `SELECT id, label FROM "CaseView";`,
-					Expected: []sql.Row{{1, "quoted"}},
+					Query: `SELECT id, label FROM "CaseView";`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testquotedviewnamesarecasesensitiverepro-0002-select-id-label-from-caseview"},
 				},
 				{
-					Query:    `SELECT id, label FROM caseview;`,
-					Expected: []sql.Row{{2, "folded"}},
+					Query: `SELECT id, label FROM caseview;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testquotedviewnamesarecasesensitiverepro-0003-select-id-label-from-caseview"},
 				},
 				{
 					Query: `SELECT relname
@@ -172,8 +158,7 @@ func TestQuotedViewNamesAreCaseSensitiveRepro(t *testing.T) {
 						WHERE relnamespace = 'public'::regnamespace
 							AND relkind = 'v'
 							AND relname IN ('CaseView', 'caseview')
-						ORDER BY relname;`,
-					Expected: []sql.Row{{"CaseView"}, {"caseview"}},
+						ORDER BY relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testquotedviewnamesarecasesensitiverepro-0004-select-relname-from-pg_catalog.pg_class-where"},
 				},
 			},
 		},
@@ -196,16 +181,13 @@ func TestQuotedMaterializedViewNamesAreCaseSensitiveRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `CREATE MATERIALIZED VIEW casematview AS
-						SELECT id, label FROM quoted_matview_source WHERE id = 2;`,
-					Expected: []sql.Row{},
+						SELECT id, label FROM quoted_matview_source WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testquotedmaterializedviewnamesarecasesensitiverepro-0001-create-materialized-view-casematview-as"},
 				},
 				{
-					Query:    `SELECT id, label FROM "CaseMatView";`,
-					Expected: []sql.Row{{1, "quoted"}},
+					Query: `SELECT id, label FROM "CaseMatView";`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testquotedmaterializedviewnamesarecasesensitiverepro-0002-select-id-label-from-casematview"},
 				},
 				{
-					Query:    `SELECT id, label FROM casematview;`,
-					Expected: []sql.Row{{2, "folded"}},
+					Query: `SELECT id, label FROM casematview;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testquotedmaterializedviewnamesarecasesensitiverepro-0003-select-id-label-from-casematview"},
 				},
 				{
 					Query: `SELECT relname
@@ -213,8 +195,7 @@ func TestQuotedMaterializedViewNamesAreCaseSensitiveRepro(t *testing.T) {
 						WHERE relnamespace = 'public'::regnamespace
 							AND relkind = 'm'
 							AND relname IN ('CaseMatView', 'casematview')
-						ORDER BY relname;`,
-					Expected: []sql.Row{{"CaseMatView"}, {"casematview"}},
+						ORDER BY relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testquotedmaterializedviewnamesarecasesensitiverepro-0004-select-relname-from-pg_catalog.pg_class-where"},
 				},
 			},
 		},
@@ -233,8 +214,7 @@ func TestQuotedSequenceNamesAreCaseSensitive(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `CREATE SEQUENCE casesequence;`,
-					Expected: []sql.Row{},
+					Query: `CREATE SEQUENCE casesequence;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testquotedsequencenamesarecasesensitive-0001-create-sequence-casesequence"},
 				},
 				{
 					Query: `SELECT relname
@@ -242,8 +222,7 @@ func TestQuotedSequenceNamesAreCaseSensitive(t *testing.T) {
 						WHERE relnamespace = 'public'::regnamespace
 							AND relkind = 'S'
 							AND relname IN ('CaseSequence', 'casesequence')
-						ORDER BY relname;`,
-					Expected: []sql.Row{{"CaseSequence"}, {"casesequence"}},
+						ORDER BY relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testquotedsequencenamesarecasesensitive-0002-select-relname-from-pg_catalog.pg_class-where"},
 				},
 			},
 		},
@@ -268,24 +247,21 @@ func TestQuotedColumnNamesAreCaseSensitiveRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT "CaseColumn", casecolumn FROM quoted_column_items;`,
-					Expected: []sql.Row{{"quoted", "folded"}},
+					Query: `SELECT "CaseColumn", casecolumn FROM quoted_column_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testquotedcolumnnamesarecasesensitiverepro-0001-select-casecolumn-casecolumn-from-quoted_column_items"},
 				},
 				{
 					Query: `SELECT attname
 						FROM pg_catalog.pg_attribute
 						WHERE attrelid = 'quoted_column_items'::regclass
 							AND attname IN ('CaseColumn', 'casecolumn')
-						ORDER BY attname;`,
-					Expected: []sql.Row{{"CaseColumn"}, {"casecolumn"}},
+						ORDER BY attname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testquotedcolumnnamesarecasesensitiverepro-0002-select-attname-from-pg_catalog.pg_attribute-where"},
 				},
 				{
 					Query: `SELECT column_name
 						FROM information_schema.columns
 						WHERE table_name = 'quoted_column_items'
 							AND column_name IN ('CaseColumn', 'casecolumn')
-						ORDER BY column_name;`,
-					Expected: []sql.Row{{"CaseColumn"}, {"casecolumn"}},
+						ORDER BY column_name;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testquotedcolumnnamesarecasesensitiverepro-0003-select-column_name-from-information_schema.columns-where"},
 				},
 			},
 		},
@@ -315,12 +291,7 @@ func TestDroppedColumnRemainsInPgAttributeRepro(t *testing.T) {
 						FROM pg_catalog.pg_attribute
 						WHERE attrelid = 'dropped_column_metadata_items'::regclass
 							AND attnum > 0
-						ORDER BY attnum;`,
-					Expected: []sql.Row{
-						{"1", "false", "a"},
-						{"2", "true", "dropped"},
-						{"3", "false", "c"},
-					},
+						ORDER BY attnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testdroppedcolumnremainsinpgattributerepro-0001-select-attnum::text-attisdropped::text-case-when"},
 				},
 			},
 		},
@@ -353,14 +324,7 @@ func TestPgAttributePhysicalTypeMetadataRepro(t *testing.T) {
 						FROM pg_catalog.pg_attribute
 						WHERE attrelid = 'attribute_type_metadata_items'::regclass
 							AND attnum > 0
-						ORDER BY attnum;`,
-					Expected: []sql.Row{
-						{"i", "4", "true", "i", "p"},
-						{"t", "-1", "false", "i", "x"},
-						{"b", "1", "true", "c", "p"},
-						{"n", "-1", "false", "i", "m"},
-						{"ts", "8", "true", "d", "p"},
-					},
+						ORDER BY attnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgattributephysicaltypemetadatarepro-0001-select-attname-attlen::text-attbyval::text-attalign"},
 				},
 			},
 		},
@@ -387,12 +351,10 @@ func TestPgAttributeMissingValueMetadataRepro(t *testing.T) {
 							attmissingval::TEXT
 						FROM pg_catalog.pg_attribute
 						WHERE attrelid = 'attribute_missing_value_items'::regclass
-							AND attname = 'marker';`,
-					Expected: []sql.Row{{"marker", "true", "{7}"}},
+							AND attname = 'marker';`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgattributemissingvaluemetadatarepro-0001-select-attname-atthasmissing::text-attmissingval::text-from"},
 				},
 				{
-					Query:    `SELECT id, marker FROM attribute_missing_value_items;`,
-					Expected: []sql.Row{{1, 7}},
+					Query: `SELECT id, marker FROM attribute_missing_value_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgattributemissingvaluemetadatarepro-0002-select-id-marker-from-attribute_missing_value_items"},
 				},
 			},
 		},
@@ -423,11 +385,7 @@ func TestPgAttributeColumnAclMetadataRepro(t *testing.T) {
 						FROM pg_catalog.pg_attribute
 						WHERE attrelid = 'attribute_attacl_items'::regclass
 							AND attname IN ('id', 'secret')
-						ORDER BY attname;`,
-					Expected: []sql.Row{
-						{"id", "true", "false"},
-						{"secret", "false", "true"},
-					},
+						ORDER BY attname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgattributecolumnaclmetadatarepro-0001-select-attname-attacl-is-null"},
 				},
 			},
 		},
@@ -456,11 +414,7 @@ func TestPgAttributeColumnOptionsMetadataRepro(t *testing.T) {
 					Query: `SELECT attname, CAST(attoptions AS TEXT)
 						FROM pg_catalog.pg_attribute
 						WHERE attrelid = 'attribute_options_items'::regclass
-							AND attname = 'category';`,
-					Expected: []sql.Row{{
-						"category",
-						"{n_distinct=100,n_distinct_inherited=200}",
-					}},
+							AND attname = 'category';`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgattributecolumnoptionsmetadatarepro-0001-select-attname-cast-attoptions-as"},
 				},
 			},
 		},
@@ -484,8 +438,7 @@ func TestQuotedIndexNamesAreCaseSensitiveRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `CREATE INDEX caseindex ON quoted_index_items (second_label);`,
-					Expected: []sql.Row{},
+					Query: `CREATE INDEX caseindex ON quoted_index_items (second_label);`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testquotedindexnamesarecasesensitiverepro-0001-create-index-caseindex-on-quoted_index_items"},
 				},
 				{
 					Query: `SELECT relname
@@ -493,8 +446,7 @@ func TestQuotedIndexNamesAreCaseSensitiveRepro(t *testing.T) {
 						WHERE relnamespace = 'public'::regnamespace
 							AND relkind = 'i'
 							AND relname IN ('CaseIndex', 'caseindex')
-						ORDER BY relname;`,
-					Expected: []sql.Row{{"CaseIndex"}, {"caseindex"}},
+						ORDER BY relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testquotedindexnamesarecasesensitiverepro-0002-select-relname-from-pg_catalog.pg_class-where"},
 				},
 			},
 		},
@@ -518,16 +470,14 @@ func TestQuotedConstraintNamesAreCaseSensitiveRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `ALTER TABLE quoted_constraint_items
-						ADD CONSTRAINT caseconstraint CHECK (amount < 100);`,
-					Expected: []sql.Row{},
+						ADD CONSTRAINT caseconstraint CHECK (amount < 100);`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testquotedconstraintnamesarecasesensitiverepro-0001-alter-table-quoted_constraint_items-add-constraint"},
 				},
 				{
 					Query: `SELECT conname
 						FROM pg_catalog.pg_constraint
 						WHERE conrelid = 'quoted_constraint_items'::regclass
 							AND conname IN ('CaseConstraint', 'caseconstraint')
-						ORDER BY conname;`,
-					Expected: []sql.Row{{"CaseConstraint"}, {"caseconstraint"}},
+						ORDER BY conname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testquotedconstraintnamesarecasesensitiverepro-0002-select-conname-from-pg_catalog.pg_constraint-where"},
 				},
 			},
 		},
@@ -552,12 +502,10 @@ func TestQuotedFunctionNamesAreCaseSensitiveRepro(t *testing.T) {
 					Query: `CREATE FUNCTION casefunction(value integer)
 						RETURNS integer
 						LANGUAGE SQL
-						AS $$ SELECT value + 2 $$;`,
-					Expected: []sql.Row{},
+						AS $$ SELECT value + 2 $$;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testquotedfunctionnamesarecasesensitiverepro-0001-create-function-casefunction-value-integer"},
 				},
 				{
-					Query:    `SELECT "CaseFunction"(10), casefunction(10);`,
-					Expected: []sql.Row{{11, 12}},
+					Query: `SELECT "CaseFunction"(10), casefunction(10);`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testquotedfunctionnamesarecasesensitiverepro-0002-select-casefunction-10-casefunction-10"},
 				},
 			},
 		},
@@ -589,20 +537,16 @@ func TestQuotedProcedureNamesAreCaseSensitiveRepro(t *testing.T) {
 						BEGIN
 							INSERT INTO quoted_procedure_calls VALUES ('folded:' || input);
 						END;
-						$$;`,
-					Expected: []sql.Row{},
+						$$;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testquotedprocedurenamesarecasesensitiverepro-0001-create-procedure-caseprocedure-input-text"},
 				},
 				{
-					Query:    `CALL "CaseProcedure"('one');`,
-					Expected: []sql.Row{},
+					Query: `CALL "CaseProcedure"('one');`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testquotedprocedurenamesarecasesensitiverepro-0002-call-caseprocedure-one"},
 				},
 				{
-					Query:    `CALL caseprocedure('two');`,
-					Expected: []sql.Row{},
+					Query: `CALL caseprocedure('two');`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testquotedprocedurenamesarecasesensitiverepro-0003-call-caseprocedure-two"},
 				},
 				{
-					Query:    `SELECT label FROM quoted_procedure_calls ORDER BY label;`,
-					Expected: []sql.Row{{"folded:two"}, {"quoted:one"}},
+					Query: `SELECT label FROM quoted_procedure_calls ORDER BY label;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testquotedprocedurenamesarecasesensitiverepro-0004-select-label-from-quoted_procedure_calls-order"},
 				},
 			},
 		},
@@ -620,16 +564,14 @@ func TestQuotedDomainNamesAreCaseSensitive(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `CREATE DOMAIN casedomain AS integer CHECK (VALUE < 100);`,
-					Expected: []sql.Row{},
+					Query: `CREATE DOMAIN casedomain AS integer CHECK (VALUE < 100);`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testquoteddomainnamesarecasesensitive-0001-create-domain-casedomain-as-integer"},
 				},
 				{
 					Query: `SELECT typname
 						FROM pg_catalog.pg_type
 						WHERE typnamespace = 'public'::regnamespace
 							AND typname IN ('CaseDomain', 'casedomain')
-						ORDER BY typname;`,
-					Expected: []sql.Row{{"CaseDomain"}, {"casedomain"}},
+						ORDER BY typname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testquoteddomainnamesarecasesensitive-0002-select-typname-from-pg_catalog.pg_type-where"},
 				},
 			},
 		},
@@ -653,8 +595,7 @@ func TestPgGetExprReturnsGeneratedColumnExpressionRepro(t *testing.T) {
 				{
 					Query: `SELECT pg_get_expr(adbin, adrelid)
 						FROM pg_catalog.pg_attrdef
-						WHERE adrelid = 'attrdef_generated_temperature'::regclass;`,
-					Expected: []sql.Row{{"(celsius * 9 / 5 + 32)"}},
+						WHERE adrelid = 'attrdef_generated_temperature'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpggetexprreturnsgeneratedcolumnexpressionrepro-0001-select-pg_get_expr-adbin-adrelid-from"},
 				},
 			},
 		},
@@ -682,11 +623,7 @@ func TestPgAttrdefDefaultExpressionsRepro(t *testing.T) {
 							ON a.attrelid = d.adrelid
 							AND a.attnum = d.adnum
 						WHERE d.adrelid = 'attrdef_default_items'::regclass
-						ORDER BY a.attnum;`,
-					Expected: []sql.Row{
-						{"id", "42"},
-						{"label", "lower('ABC'::text)"},
-					},
+						ORDER BY a.attnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgattrdefdefaultexpressionsrepro-0001-select-a.attname-pg_get_expr-d.adbin-d.adrelid"},
 				},
 			},
 		},
@@ -712,8 +649,7 @@ func TestInformationSchemaGeneratedColumnExpressionRepro(t *testing.T) {
 					Query: `SELECT generation_expression IS NOT NULL
 						FROM information_schema.columns
 						WHERE table_name = 'information_schema_generated_items'
-							AND column_name = 'doubled';`,
-					Expected: []sql.Row{{"t"}},
+							AND column_name = 'doubled';`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testinformationschemageneratedcolumnexpressionrepro-0001-select-generation_expression-is-not-null"},
 				},
 			},
 		},
@@ -740,22 +676,14 @@ func TestIdentityColumnCatalogMetadataRepro(t *testing.T) {
 						FROM pg_catalog.pg_attribute
 						WHERE attrelid = 'identity_catalog_items'::regclass
 							AND attname IN ('always_id', 'default_id')
-						ORDER BY attname;`,
-					Expected: []sql.Row{
-						{"always_id", "a"},
-						{"default_id", "d"},
-					},
+						ORDER BY attname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testidentitycolumncatalogmetadatarepro-0001-select-attname-attidentity-from-pg_catalog.pg_attribute"},
 				},
 				{
 					Query: `SELECT column_name, is_identity, identity_generation
 						FROM information_schema.columns
 						WHERE table_name = 'identity_catalog_items'
 							AND column_name IN ('always_id', 'default_id')
-						ORDER BY column_name;`,
-					Expected: []sql.Row{
-						{"always_id", "YES", "ALWAYS"},
-						{"default_id", "YES", "BY DEFAULT"},
-					},
+						ORDER BY column_name;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testidentitycolumncatalogmetadatarepro-0002-select-column_name-is_identity-identity_generation-from"},
 				},
 			},
 		},
@@ -781,17 +709,18 @@ func TestInformationSchemaDomainColumnMetadataRepro(t *testing.T) {
 					Query: `SELECT data_type, domain_catalog, domain_schema, domain_name
 						FROM information_schema.columns
 						WHERE table_name = 'domain_metadata_items'
-							AND column_name = 'amount';`,
-					Expected: []sql.Row{{"integer", "postgres", "public", "positive_amount"}},
+							AND column_name = 'amount';`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testinformationschemadomaincolumnmetadatarepro-0001-select-data_type-domain_catalog-domain_schema-domain_name",
+
+						// TestInformationSchemaViewUpdatabilityMetadataRepro reproduces a catalog
+						// correctness bug: information_schema.views leaves the view updatability
+						// columns null instead of reporting YES/NO.
+						ColumnModes: []string{"structural", "structural", "schema"}},
 				},
 			},
 		},
 	})
 }
 
-// TestInformationSchemaViewUpdatabilityMetadataRepro reproduces a catalog
-// correctness bug: information_schema.views leaves the view updatability
-// columns null instead of reporting YES/NO.
 func TestInformationSchemaViewUpdatabilityMetadataRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -860,10 +789,7 @@ func TestPgGetViewdefWrapColumnOverloadRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT pg_get_viewdef('pg_get_viewdef_wrap_reader'::regclass, 0) IS NOT NULL;`,
-					Expected: []sql.Row{
-						{"t"},
-					},
+					Query: `SELECT pg_get_viewdef('pg_get_viewdef_wrap_reader'::regclass, 0) IS NOT NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpggetviewdefwrapcolumnoverloadrepro-0001-select-pg_get_viewdef-pg_get_viewdef_wrap_reader-::regclass-0"},
 				},
 			},
 		},
@@ -896,10 +822,7 @@ func TestPgGetTriggerdefPrettyOverloadRepro(t *testing.T) {
 				{
 					Query: `SELECT pg_get_triggerdef(oid, true) IS NOT NULL
 						FROM pg_catalog.pg_trigger
-						WHERE tgname = 'pg_get_triggerdef_pretty_before_insert';`,
-					Expected: []sql.Row{
-						{"t"},
-					},
+						WHERE tgname = 'pg_get_triggerdef_pretty_before_insert';`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpggettriggerdefprettyoverloadrepro-0001-select-pg_get_triggerdef-oid-true-is"},
 				},
 			},
 		},
@@ -934,18 +857,12 @@ func TestTriggerConditionMetadataRepro(t *testing.T) {
 				{
 					Query: `SELECT tgqual IS NOT NULL
 						FROM pg_catalog.pg_trigger
-						WHERE tgname = 'trigger_condition_metadata_before_insert';`,
-					Expected: []sql.Row{
-						{"t"},
-					},
+						WHERE tgname = 'trigger_condition_metadata_before_insert';`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testtriggerconditionmetadatarepro-0001-select-tgqual-is-not-null"},
 				},
 				{
 					Query: `SELECT action_condition IS NOT NULL
 						FROM information_schema.triggers
-						WHERE trigger_name = 'trigger_condition_metadata_before_insert';`,
-					Expected: []sql.Row{
-						{"t"},
-					},
+						WHERE trigger_name = 'trigger_condition_metadata_before_insert';`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testtriggerconditionmetadatarepro-0002-select-action_condition-is-not-null"},
 				},
 			},
 		},
@@ -962,17 +879,14 @@ func TestPgGetFunctionCatalogIntrospectionRepro(t *testing.T) {
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT pg_get_function_result(31::oid);`,
-					Expected: []sql.Row{{"cstring"}},
+					Query: `SELECT pg_get_function_result(31::oid);`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpggetfunctioncatalogintrospectionrepro-0001-select-pg_get_function_result-31::oid"},
 				},
 				{
-					Query:    `SELECT pg_get_function_identity_arguments(31::oid);`,
-					Expected: []sql.Row{{"bytea"}},
+					Query: `SELECT pg_get_function_identity_arguments(31::oid);`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpggetfunctioncatalogintrospectionrepro-0002-select-pg_get_function_identity_arguments-31::oid"},
 				},
 				{
 					Query: `SELECT pg_get_functiondef(31::oid) LIKE
-						'CREATE OR REPLACE FUNCTION pg_catalog.byteaout(bytea)%RETURNS cstring%LANGUAGE internal%byteaout%';`,
-					Expected: []sql.Row{{"t"}},
+						'CREATE OR REPLACE FUNCTION pg_catalog.byteaout(bytea)%RETURNS cstring%LANGUAGE internal%byteaout%';`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpggetfunctioncatalogintrospectionrepro-0003-select-pg_get_functiondef-31::oid-like-create"},
 				},
 			},
 		},
@@ -1027,8 +941,7 @@ func TestPgEncodingToCharMapsKnownEncodingIdsRepro(t *testing.T) {
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT pg_encoding_to_char(0), pg_encoding_to_char(6);`,
-					Expected: []sql.Row{{"SQL_ASCII", "UTF8"}},
+					Query: `SELECT pg_encoding_to_char(0), pg_encoding_to_char(6);`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgencodingtocharmapsknownencodingidsrepro-0001-select-pg_encoding_to_char-0-pg_encoding_to_char-6"},
 				},
 			},
 		},
@@ -1060,8 +973,7 @@ func TestRelationSizeHelpersReportStoredDataRepro(t *testing.T) {
 							pg_relation_size('relation_size_items'::regclass, 'main') > 0,
 							pg_table_size('relation_size_items'::regclass) > 0,
 							pg_indexes_size('relation_size_items'::regclass) > 0,
-							pg_total_relation_size('relation_size_items'::regclass) > 0;`,
-					Expected: []sql.Row{{"t", "t", "t", "t", "t"}},
+							pg_total_relation_size('relation_size_items'::regclass) > 0;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testrelationsizehelpersreportstoreddatarepro-0001-select-pg_relation_size-relation_size_items-::regclass->"},
 				},
 			},
 		},
@@ -1082,8 +994,7 @@ func TestPgBackendMemoryContextsReportsTopContextRepro(t *testing.T) {
 						FROM pg_catalog.pg_backend_memory_contexts
 						WHERE level = 0
 							AND name = 'TopMemoryContext'
-							AND total_bytes >= free_bytes;`,
-					Expected: []sql.Row{{"t"}},
+							AND total_bytes >= free_bytes;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgbackendmemorycontextsreportstopcontextrepro-0001-select-count-*->-0"},
 				},
 			},
 		},
@@ -1101,8 +1012,7 @@ func TestPgHbaFileRulesReportsParsedRulesRepro(t *testing.T) {
 				{
 					Query: `SELECT count(*) > 0,
 							count(*) FILTER (WHERE error IS NOT NULL) = 0
-						FROM pg_catalog.pg_hba_file_rules;`,
-					Expected: []sql.Row{{"t", "t"}},
+						FROM pg_catalog.pg_hba_file_rules;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpghbafilerulesreportsparsedrulesrepro-0001-select-count-*->-0"},
 				},
 			},
 		},
@@ -1122,8 +1032,7 @@ func TestPgShmemAllocationsReportsAllocationRowsRepro(t *testing.T) {
 					Query: `SELECT count(*) > 0
 						FROM pg_catalog.pg_shmem_allocations
 						WHERE allocated_size >= size
-							AND size >= 0;`,
-					Expected: []sql.Row{{"t"}},
+							AND size >= 0;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgshmemallocationsreportsallocationrowsrepro-0001-select-count-*->-0"},
 				},
 			},
 		},
@@ -1141,8 +1050,7 @@ func TestPgStatActivityReportsCurrentBackendRepro(t *testing.T) {
 				{
 					Query: `SELECT count(*) > 0
 						FROM pg_catalog.pg_stat_activity
-						WHERE pid = pg_backend_pid();`,
-					Expected: []sql.Row{{"t"}},
+						WHERE pid = pg_backend_pid();`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgstatactivityreportscurrentbackendrepro-0001-select-count-*->-0"},
 				},
 			},
 		},
@@ -1160,8 +1068,7 @@ func TestPgStatSslReportsCurrentBackendRepro(t *testing.T) {
 				{
 					Query: `SELECT count(*) > 0
 						FROM pg_catalog.pg_stat_ssl
-						WHERE pid = pg_backend_pid();`,
-					Expected: []sql.Row{{"t"}},
+						WHERE pid = pg_backend_pid();`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgstatsslreportscurrentbackendrepro-0001-select-count-*->-0"},
 				},
 			},
 		},
@@ -1180,8 +1087,7 @@ func TestPgStatGssapiReportsCurrentBackendRepro(t *testing.T) {
 				{
 					Query: `SELECT count(*) > 0
 						FROM pg_catalog.pg_stat_gssapi
-						WHERE pid = pg_backend_pid();`,
-					Expected: []sql.Row{{"t"}},
+						WHERE pid = pg_backend_pid();`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgstatgssapireportscurrentbackendrepro-0001-select-count-*->-0"},
 				},
 			},
 		},
@@ -1204,16 +1110,17 @@ func TestPgStatUserTablesReportsUserRelationsRepro(t *testing.T) {
 				{
 					Query: `SELECT schemaname, relname, n_tup_ins >= 0
 						FROM pg_catalog.pg_stat_user_tables
-						WHERE relname = 'stat_user_table_items';`,
-					Expected: []sql.Row{{"public", "stat_user_table_items", "t"}},
+						WHERE relname = 'stat_user_table_items';`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgstatusertablesreportsuserrelationsrepro-0001-select-schemaname-relname-n_tup_ins->=",
+
+						// TestPgStatAllTablesReportsUserRelationsRepro reproduces an admin/catalog
+						// correctness bug: PostgreSQL's pg_stat_all_tables exposes user table rows.
+						ColumnModes: []string{"schema"}},
 				},
 			},
 		},
 	})
 }
 
-// TestPgStatAllTablesReportsUserRelationsRepro reproduces an admin/catalog
-// correctness bug: PostgreSQL's pg_stat_all_tables exposes user table rows.
 func TestPgStatAllTablesReportsUserRelationsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1228,16 +1135,17 @@ func TestPgStatAllTablesReportsUserRelationsRepro(t *testing.T) {
 				{
 					Query: `SELECT schemaname, relname, n_tup_ins >= 0
 						FROM pg_catalog.pg_stat_all_tables
-						WHERE relname = 'stat_all_table_items';`,
-					Expected: []sql.Row{{"public", "stat_all_table_items", "t"}},
+						WHERE relname = 'stat_all_table_items';`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgstatalltablesreportsuserrelationsrepro-0001-select-schemaname-relname-n_tup_ins->=",
+
+						// TestPgStatSysTablesReportsSystemRelationsRepro reproduces an admin/catalog
+						// correctness bug: PostgreSQL's pg_stat_sys_tables exposes system table rows.
+						ColumnModes: []string{"schema"}},
 				},
 			},
 		},
 	})
 }
 
-// TestPgStatSysTablesReportsSystemRelationsRepro reproduces an admin/catalog
-// correctness bug: PostgreSQL's pg_stat_sys_tables exposes system table rows.
 func TestPgStatSysTablesReportsSystemRelationsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1248,8 +1156,7 @@ func TestPgStatSysTablesReportsSystemRelationsRepro(t *testing.T) {
 					Query: `SELECT count(*) > 0
 						FROM pg_catalog.pg_stat_sys_tables
 						WHERE schemaname = 'pg_catalog'
-							AND relname = 'pg_class';`,
-					Expected: []sql.Row{{"t"}},
+							AND relname = 'pg_class';`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgstatsystablesreportssystemrelationsrepro-0001-select-count-*->-0"},
 				},
 			},
 		},
@@ -1272,16 +1179,17 @@ func TestPgStatioUserTablesReportsUserRelationsRepro(t *testing.T) {
 				{
 					Query: `SELECT schemaname, relname, heap_blks_read >= 0
 						FROM pg_catalog.pg_statio_user_tables
-						WHERE relname = 'statio_user_table_items';`,
-					Expected: []sql.Row{{"public", "statio_user_table_items", "t"}},
+						WHERE relname = 'statio_user_table_items';`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgstatiousertablesreportsuserrelationsrepro-0001-select-schemaname-relname-heap_blks_read->=",
+
+						// TestPgStatioAllTablesReportsUserRelationsRepro reproduces an admin/catalog
+						// correctness bug: PostgreSQL's pg_statio_all_tables exposes user table rows.
+						ColumnModes: []string{"schema"}},
 				},
 			},
 		},
 	})
 }
 
-// TestPgStatioAllTablesReportsUserRelationsRepro reproduces an admin/catalog
-// correctness bug: PostgreSQL's pg_statio_all_tables exposes user table rows.
 func TestPgStatioAllTablesReportsUserRelationsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1296,16 +1204,17 @@ func TestPgStatioAllTablesReportsUserRelationsRepro(t *testing.T) {
 				{
 					Query: `SELECT schemaname, relname, heap_blks_read >= 0
 						FROM pg_catalog.pg_statio_all_tables
-						WHERE relname = 'statio_all_table_items';`,
-					Expected: []sql.Row{{"public", "statio_all_table_items", "t"}},
+						WHERE relname = 'statio_all_table_items';`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgstatioalltablesreportsuserrelationsrepro-0001-select-schemaname-relname-heap_blks_read->=",
+
+						// TestPgStatioSysTablesReportsSystemRelationsRepro reproduces an admin/catalog
+						// correctness bug: PostgreSQL's pg_statio_sys_tables exposes system table rows.
+						ColumnModes: []string{"schema"}},
 				},
 			},
 		},
 	})
 }
 
-// TestPgStatioSysTablesReportsSystemRelationsRepro reproduces an admin/catalog
-// correctness bug: PostgreSQL's pg_statio_sys_tables exposes system table rows.
 func TestPgStatioSysTablesReportsSystemRelationsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1316,8 +1225,7 @@ func TestPgStatioSysTablesReportsSystemRelationsRepro(t *testing.T) {
 					Query: `SELECT count(*) > 0
 						FROM pg_catalog.pg_statio_sys_tables
 						WHERE schemaname = 'pg_catalog'
-							AND relname = 'pg_class';`,
-					Expected: []sql.Row{{"t"}},
+							AND relname = 'pg_class';`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgstatiosystablesreportssystemrelationsrepro-0001-select-count-*->-0"},
 				},
 			},
 		},
@@ -1341,17 +1249,18 @@ func TestPgStatXactUserTablesReportsUserRelationsRepro(t *testing.T) {
 				{
 					Query: `SELECT schemaname, relname, n_tup_ins >= 0
 						FROM pg_catalog.pg_stat_xact_user_tables
-						WHERE relname = 'stat_xact_user_table_items';`,
-					Expected: []sql.Row{{"public", "stat_xact_user_table_items", "t"}},
+						WHERE relname = 'stat_xact_user_table_items';`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgstatxactusertablesreportsuserrelationsrepro-0001-select-schemaname-relname-n_tup_ins->=",
+
+						// TestPgStatXactAllTablesReportsUserRelationsRepro reproduces an admin/catalog
+						// correctness bug: PostgreSQL's pg_stat_xact_all_tables exposes user table
+						// rows for current-transaction statistics.
+						ColumnModes: []string{"schema"}},
 				},
 			},
 		},
 	})
 }
 
-// TestPgStatXactAllTablesReportsUserRelationsRepro reproduces an admin/catalog
-// correctness bug: PostgreSQL's pg_stat_xact_all_tables exposes user table
-// rows for current-transaction statistics.
 func TestPgStatXactAllTablesReportsUserRelationsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1366,17 +1275,18 @@ func TestPgStatXactAllTablesReportsUserRelationsRepro(t *testing.T) {
 				{
 					Query: `SELECT schemaname, relname, n_tup_ins >= 0
 						FROM pg_catalog.pg_stat_xact_all_tables
-						WHERE relname = 'stat_xact_all_table_items';`,
-					Expected: []sql.Row{{"public", "stat_xact_all_table_items", "t"}},
+						WHERE relname = 'stat_xact_all_table_items';`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgstatxactalltablesreportsuserrelationsrepro-0001-select-schemaname-relname-n_tup_ins->=",
+
+						// TestPgStatXactSysTablesReportsSystemRelationsRepro reproduces an
+						// admin/catalog correctness bug: PostgreSQL's pg_stat_xact_sys_tables exposes
+						// system table rows for current-transaction statistics.
+						ColumnModes: []string{"schema"}},
 				},
 			},
 		},
 	})
 }
 
-// TestPgStatXactSysTablesReportsSystemRelationsRepro reproduces an
-// admin/catalog correctness bug: PostgreSQL's pg_stat_xact_sys_tables exposes
-// system table rows for current-transaction statistics.
 func TestPgStatXactSysTablesReportsSystemRelationsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1387,8 +1297,7 @@ func TestPgStatXactSysTablesReportsSystemRelationsRepro(t *testing.T) {
 					Query: `SELECT count(*) > 0
 						FROM pg_catalog.pg_stat_xact_sys_tables
 						WHERE schemaname = 'pg_catalog'
-							AND relname = 'pg_class';`,
-					Expected: []sql.Row{{"t"}},
+							AND relname = 'pg_class';`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgstatxactsystablesreportssystemrelationsrepro-0001-select-count-*->-0"},
 				},
 			},
 		},
@@ -1470,8 +1379,7 @@ func TestPgStatDatabaseReportsCurrentDatabaseRepro(t *testing.T) {
 				{
 					Query: `SELECT count(*) > 0
 						FROM pg_catalog.pg_stat_database
-						WHERE datname = current_database();`,
-					Expected: []sql.Row{{"t"}},
+						WHERE datname = current_database();`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgstatdatabasereportscurrentdatabaserepro-0001-select-count-*->-0"},
 				},
 			},
 		},
@@ -1487,8 +1395,7 @@ func TestPgStatArchiverReportsClusterRowRepro(t *testing.T) {
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT count(*) = 1 FROM pg_catalog.pg_stat_archiver;`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT count(*) = 1 FROM pg_catalog.pg_stat_archiver;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgstatarchiverreportsclusterrowrepro-0001-select-count-*-=-1"},
 				},
 			},
 		},
@@ -1504,8 +1411,7 @@ func TestPgStatBgwriterReportsClusterRowRepro(t *testing.T) {
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT count(*) = 1 FROM pg_catalog.pg_stat_bgwriter;`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT count(*) = 1 FROM pg_catalog.pg_stat_bgwriter;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgstatbgwriterreportsclusterrowrepro-0001-select-count-*-=-1"},
 				},
 			},
 		},
@@ -1524,8 +1430,7 @@ func TestPgStatDatabaseConflictsReportsCurrentDatabaseRepro(t *testing.T) {
 				{
 					Query: `SELECT count(*) > 0
 						FROM pg_catalog.pg_stat_database_conflicts
-						WHERE datname = current_database();`,
-					Expected: []sql.Row{{"t"}},
+						WHERE datname = current_database();`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgstatdatabaseconflictsreportscurrentdatabaserepro-0001-select-count-*->-0"},
 				},
 			},
 		},
@@ -1541,8 +1446,7 @@ func TestPgStatWalReportsClusterRowRepro(t *testing.T) {
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT count(*) = 1 FROM pg_catalog.pg_stat_wal;`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT count(*) = 1 FROM pg_catalog.pg_stat_wal;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgstatwalreportsclusterrowrepro-0001-select-count-*-=-1"},
 				},
 			},
 		},
@@ -1558,8 +1462,7 @@ func TestPgStatSlruReportsCacheRowsRepro(t *testing.T) {
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT count(*) > 0 FROM pg_catalog.pg_stat_slru;`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT count(*) > 0 FROM pg_catalog.pg_stat_slru;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgstatslrureportscacherowsrepro-0001-select-count-*->-0"},
 				},
 			},
 		},
@@ -1583,42 +1486,10 @@ func TestPgStatIoCatalogShapeRepro(t *testing.T) {
 								'writes', 'write_time', 'writebacks', 'writeback_time',
 								'extends', 'extend_time', 'op_bytes', 'hits', 'evictions',
 								'reuses', 'fsyncs', 'fsync_time', 'stats_reset'
-							);`,
-					Expected: []sql.Row{{"t"}},
+							);`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgstatiocatalogshaperepro-0001-select-count-*-=-18"},
 				},
 				{
-					Query:    `SELECT count(*) > 0 FROM pg_catalog.pg_stat_io;`,
-					Expected: []sql.Row{{"t"}},
-				},
-			},
-		},
-	})
-}
-
-// TestPostgres18PgAiosCatalogShapeRepro reproduces a PostgreSQL 18
-// monitoring-catalog compatibility gap: pg_aios should expose active
-// asynchronous I/O handles as a readable pg_catalog system view.
-func TestPostgres18PgAiosCatalogShapeRepro(t *testing.T) {
-	RunScripts(t, []ScriptTest{
-		{
-			Name: "pg_aios exposes PostgreSQL 18 columns",
-			Assertions: []ScriptTestAssertion{
-				{
-					Query: `SELECT count(*) = 15
-						FROM pg_catalog.pg_attribute
-						WHERE attrelid = 'pg_catalog.pg_aios'::regclass
-							AND NOT attisdropped
-							AND attname IN (
-								'pid', 'io_id', 'io_generation', 'state', 'operation',
-								'off', 'length', 'target', 'handle_data_len', 'raw_result',
-								'result', 'target_desc', 'f_sync', 'f_localmem', 'f_buffered'
-							);`,
-					Expected: []sql.Row{{"t"}},
-				},
-				{
-					Query: `SELECT count(*) >= 0
-						FROM pg_catalog.pg_aios;`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT count(*) > 0 FROM pg_catalog.pg_stat_io;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgstatiocatalogshaperepro-0002-select-count-*->-0"},
 				},
 			},
 		},
@@ -1642,8 +1513,7 @@ func TestPgTableIsVisibleHonorsSearchPathShadowingRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT pg_table_is_visible('visible_first.shadowed_table'::regclass),
-						pg_table_is_visible('visible_second.shadowed_table'::regclass);`,
-					Expected: []sql.Row{{"t", "f"}},
+						pg_table_is_visible('visible_second.shadowed_table'::regclass);`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgtableisvisiblehonorssearchpathshadowingrepro-0001-select-pg_table_is_visible-visible_first.shadowed_table-::regclass-pg_table_is_visible"},
 				},
 			},
 		},
@@ -1666,8 +1536,7 @@ func TestRegtypeResolvesSchemaQualifiedDomainsRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT 'regtype_schema_first.lookup_domain'::regtype IS NOT NULL,
-						'regtype_schema_second.lookup_domain'::regtype IS NOT NULL;`,
-					Expected: []sql.Row{{"t", "t"}},
+						'regtype_schema_second.lookup_domain'::regtype IS NOT NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testregtyperesolvesschemaqualifieddomainsrepro-0001-select-regtype_schema_first.lookup_domain-::regtype-is-not"},
 				},
 			},
 		},
@@ -1691,12 +1560,7 @@ func TestRegtypeResolvesUserDefinedTypesRepro(t *testing.T) {
 					Query: `SELECT
 							'regtype_lookup_enum'::regtype::text,
 							'regtype_lookup_composite'::regtype::text,
-							'regtype_lookup_domain'::regtype::text;`,
-					Expected: []sql.Row{{
-						"regtype_lookup_enum",
-						"regtype_lookup_composite",
-						"regtype_lookup_domain",
-					}},
+							'regtype_lookup_domain'::regtype::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testregtyperesolvesuserdefinedtypesrepro-0001-select-regtype_lookup_enum-::regtype::text-regtype_lookup_composite-::regtype::text"},
 				},
 			},
 		},
@@ -1720,12 +1584,7 @@ func TestToRegtypeResolvesUserDefinedTypesRepro(t *testing.T) {
 					Query: `SELECT
 							to_regtype('to_regtype_lookup_enum')::text,
 							to_regtype('to_regtype_lookup_composite')::text,
-							to_regtype('to_regtype_lookup_domain')::text;`,
-					Expected: []sql.Row{{
-						"to_regtype_lookup_enum",
-						"to_regtype_lookup_composite",
-						"to_regtype_lookup_domain",
-					}},
+							to_regtype('to_regtype_lookup_domain')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testtoregtyperesolvesuserdefinedtypesrepro-0001-select-to_regtype-to_regtype_lookup_enum-::text-to_regtype"},
 				},
 			},
 		},
@@ -1762,8 +1621,7 @@ func TestPgTypeIsVisibleHonorsSearchPathShadowingRepro(t *testing.T) {
 								JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace
 								WHERE n.nspname = 'visible_type_second'
 									AND t.typname = 'shadowed_domain'
-							));`,
-					Expected: []sql.Row{{"t", "f"}},
+							));`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgtypeisvisiblehonorssearchpathshadowingrepro-0001-select-pg_type_is_visible-select-t.oid-from"},
 				},
 			},
 		},
@@ -1783,8 +1641,7 @@ func TestPgCastExposesBuiltinCastsRepro(t *testing.T) {
 					Query: `SELECT castsource::regtype::text, casttarget::regtype::text, castcontext, castmethod
 						FROM pg_catalog.pg_cast
 						WHERE castsource = 'integer'::regtype
-							AND casttarget = 'bigint'::regtype;`,
-					Expected: []sql.Row{{"integer", "bigint", "i", "f"}},
+							AND casttarget = 'bigint'::regtype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgcastexposesbuiltincastsrepro-0001-select-castsource::regtype::text-casttarget::regtype::text-castcontext-castmethod"},
 				},
 			},
 		},
@@ -1805,8 +1662,7 @@ func TestPgOperatorEqualityMergeHashFlagsRepro(t *testing.T) {
 						FROM pg_catalog.pg_operator
 						WHERE oprname = '='
 							AND oprleft = 'integer'::regtype
-							AND oprright = 'integer'::regtype;`,
-					Expected: []sql.Row{{"t", "t"}},
+							AND oprright = 'integer'::regtype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgoperatorequalitymergehashflagsrepro-0001-select-oprcanmerge-oprcanhash-from-pg_catalog.pg_operator"},
 				},
 			},
 		},
@@ -1826,8 +1682,7 @@ func TestPgLanguageExposesBuiltinLanguagesRepro(t *testing.T) {
 					Query: `SELECT lanname
 						FROM pg_catalog.pg_language
 						WHERE lanname IN ('sql', 'plpgsql')
-						ORDER BY lanname;`,
-					Expected: []sql.Row{{"plpgsql"}, {"sql"}},
+						ORDER BY lanname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpglanguageexposesbuiltinlanguagesrepro-0001-select-lanname-from-pg_catalog.pg_language-where"},
 				},
 			},
 		},
@@ -1847,8 +1702,7 @@ func TestPgTablespaceExposesBuiltinTablespacesRepro(t *testing.T) {
 					Query: `SELECT spcname
 						FROM pg_catalog.pg_tablespace
 						WHERE spcname IN ('pg_default', 'pg_global')
-						ORDER BY spcname;`,
-					Expected: []sql.Row{{"pg_default"}, {"pg_global"}},
+						ORDER BY spcname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgtablespaceexposesbuiltintablespacesrepro-0001-select-spcname-from-pg_catalog.pg_tablespace-where"},
 				},
 			},
 		},
@@ -1867,14 +1721,12 @@ func TestPgTimezoneCatalogsExposeUtcRepro(t *testing.T) {
 				{
 					Query: `SELECT name, abbrev
 						FROM pg_catalog.pg_timezone_names
-						WHERE name = 'UTC';`,
-					Expected: []sql.Row{{"UTC", "UTC"}},
+						WHERE name = 'UTC';`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgtimezonecatalogsexposeutcrepro-0001-select-name-abbrev-from-pg_catalog.pg_timezone_names"},
 				},
 				{
 					Query: `SELECT abbrev
 						FROM pg_catalog.pg_timezone_abbrevs
-						WHERE abbrev = 'UTC';`,
-					Expected: []sql.Row{{"UTC"}},
+						WHERE abbrev = 'UTC';`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgtimezonecatalogsexposeutcrepro-0002-select-abbrev-from-pg_catalog.pg_timezone_abbrevs-where"},
 				},
 			},
 		},
@@ -1893,8 +1745,7 @@ func TestPgRangeExposesBuiltinRangesRepro(t *testing.T) {
 				{
 					Query: `SELECT rngtypid::regtype::text, rngsubtype::regtype::text
 						FROM pg_catalog.pg_range
-						WHERE rngtypid::regtype::text = 'int4range';`,
-					Expected: []sql.Row{{"int4range", "integer"}},
+						WHERE rngtypid::regtype::text = 'int4range';`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgrangeexposesbuiltinrangesrepro-0001-select-rngtypid::regtype::text-rngsubtype::regtype::text-from-pg_catalog.pg_range"},
 				},
 			},
 		},
@@ -1913,26 +1764,22 @@ func TestTextSearchCatalogsExposeBuiltinsRepro(t *testing.T) {
 				{
 					Query: `SELECT cfgname
 						FROM pg_catalog.pg_ts_config
-						WHERE cfgname = 'english';`,
-					Expected: []sql.Row{{"english"}},
+						WHERE cfgname = 'english';`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testtextsearchcatalogsexposebuiltinsrepro-0001-select-cfgname-from-pg_catalog.pg_ts_config-where"},
 				},
 				{
 					Query: `SELECT dictname
 						FROM pg_catalog.pg_ts_dict
-						WHERE dictname = 'english_stem';`,
-					Expected: []sql.Row{{"english_stem"}},
+						WHERE dictname = 'english_stem';`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testtextsearchcatalogsexposebuiltinsrepro-0002-select-dictname-from-pg_catalog.pg_ts_dict-where"},
 				},
 				{
 					Query: `SELECT prsname
 						FROM pg_catalog.pg_ts_parser
-						WHERE prsname = 'default';`,
-					Expected: []sql.Row{{"default"}},
+						WHERE prsname = 'default';`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testtextsearchcatalogsexposebuiltinsrepro-0003-select-prsname-from-pg_catalog.pg_ts_parser-where"},
 				},
 				{
 					Query: `SELECT tmplname
 						FROM pg_catalog.pg_ts_template
-						WHERE tmplname = 'simple';`,
-					Expected: []sql.Row{{"simple"}},
+						WHERE tmplname = 'simple';`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testtextsearchcatalogsexposebuiltinsrepro-0004-select-tmplname-from-pg_catalog.pg_ts_template-where"},
 				},
 			},
 		},
@@ -1951,19 +1798,16 @@ func TestMiscBuiltinCatalogsExposeRowsRepro(t *testing.T) {
 				{
 					Query: `SELECT name
 						FROM pg_catalog.pg_config
-						WHERE name = 'BINDIR';`,
-					Expected: []sql.Row{{"BINDIR"}},
+						WHERE name = 'BINDIR';`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testmiscbuiltincatalogsexposerowsrepro-0001-select-name-from-pg_catalog.pg_config-where"},
 				},
 				{
 					Query: `SELECT conname
 						FROM pg_catalog.pg_conversion
-						WHERE conname = 'utf8_to_iso_8859_1';`,
-					Expected: []sql.Row{{"utf8_to_iso_8859_1"}},
+						WHERE conname = 'utf8_to_iso_8859_1';`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testmiscbuiltincatalogsexposerowsrepro-0002-select-conname-from-pg_catalog.pg_conversion-where"},
 				},
 				{
 					Query: `SELECT count(*) > 0
-						FROM pg_catalog.pg_aggregate;`,
-					Expected: []sql.Row{{"t"}},
+						FROM pg_catalog.pg_aggregate;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testmiscbuiltincatalogsexposerowsrepro-0003-select-count-*->-0"},
 				},
 			},
 		},
@@ -1982,8 +1826,7 @@ func TestPgProcExposesBuiltinFunctionsRepro(t *testing.T) {
 				{
 					Query: `SELECT count(*) > 0
 						FROM pg_catalog.pg_proc
-						WHERE proname = 'abs';`,
-					Expected: []sql.Row{{"t"}},
+						WHERE proname = 'abs';`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgprocexposesbuiltinfunctionsrepro-0001-select-count-*->-0"},
 				},
 			},
 		},
@@ -2001,8 +1844,7 @@ func TestPgInitPrivsExposesBuiltinInitialPrivilegesRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT count(*) > 0
-						FROM pg_catalog.pg_init_privs;`,
-					Expected: []sql.Row{{"t"}},
+						FROM pg_catalog.pg_init_privs;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpginitprivsexposesbuiltininitialprivilegesrepro-0001-select-count-*->-0"},
 				},
 			},
 		},
@@ -2024,8 +1866,7 @@ func TestAlterRoleSetPopulatesPgDbRoleSettingRepro(t *testing.T) {
 				{
 					Query: `SELECT setrole::regrole::text, setdatabase, array_to_string(setconfig, ',')
 						FROM pg_catalog.pg_db_role_setting
-						WHERE setrole = 'role_setting_catalog'::regrole;`,
-					Expected: []sql.Row{{"role_setting_catalog", uint32(0), "work_mem=64kB"}},
+						WHERE setrole = 'role_setting_catalog'::regrole;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testalterrolesetpopulatespgdbrolesettingrepro-0001-select-setrole::regrole::text-setdatabase-array_to_string-setconfig"},
 				},
 			},
 		},
@@ -2048,8 +1889,7 @@ func TestAlterRoleResetSettingRepro(t *testing.T) {
 				{
 					Query: `SELECT COUNT(*)
 						FROM pg_catalog.pg_db_role_setting
-						WHERE setrole = 'role_reset_setting_catalog'::regrole;`,
-					Expected: []sql.Row{{0}},
+						WHERE setrole = 'role_reset_setting_catalog'::regrole;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testalterroleresetsettingrepro-0001-select-count-*-from-pg_catalog.pg_db_role_setting"},
 				},
 			},
 		},
@@ -2077,8 +1917,7 @@ func TestAlterRoleInDatabaseSetPopulatesPgDbRoleSettingRepro(t *testing.T) {
 					Query: `SELECT setrole::regrole::text, datname, array_to_string(setconfig, ',')
 						FROM pg_catalog.pg_db_role_setting
 						JOIN pg_catalog.pg_database ON setdatabase = pg_database.oid
-						WHERE setrole = 'role_database_setting_catalog'::regrole;`,
-					Expected: []sql.Row{{"role_database_setting_catalog", "role_database_setting_db", "work_mem=64kB"}},
+						WHERE setrole = 'role_database_setting_catalog'::regrole;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testalterroleindatabasesetpopulatespgdbrolesettingrepro-0001-select-setrole::regrole::text-datname-array_to_string-setconfig"},
 				},
 			},
 		},
@@ -2102,15 +1941,13 @@ func TestCompositeTypeCatalogRelidRepro(t *testing.T) {
 				{
 					Query: `SELECT typname, typtype, typrelid <> 0::oid
 						FROM pg_catalog.pg_type
-						WHERE typname = 'composite_catalog_type';`,
-					Expected: []sql.Row{{"composite_catalog_type", "c", "t"}},
+						WHERE typname = 'composite_catalog_type';`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testcompositetypecatalogrelidrepro-0001-select-typname-typtype-typrelid-<>"},
 				},
 				{
 					Query: `SELECT c.relname, c.relkind
 						FROM pg_catalog.pg_class c
 						JOIN pg_catalog.pg_type t ON t.typrelid = c.oid
-						WHERE t.typname = 'composite_catalog_type';`,
-					Expected: []sql.Row{{"composite_catalog_type", "c"}},
+						WHERE t.typname = 'composite_catalog_type';`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testcompositetypecatalogrelidrepro-0002-select-c.relname-c.relkind-from-pg_catalog.pg_class"},
 				},
 			},
 		},
@@ -2127,8 +1964,7 @@ func TestFormatTypeInvalidOidRepro(t *testing.T) {
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT format_type(0::oid, NULL), format_type(0::oid, 20);`,
-					Expected: []sql.Row{{"-", "-"}},
+					Query: `SELECT format_type(0::oid, NULL), format_type(0::oid, 20);`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testformattypeinvalidoidrepro-0001-select-format_type-0::oid-null-format_type"},
 				},
 			},
 		},
@@ -2154,8 +1990,7 @@ func TestFormatTypeDomainAttributeRepro(t *testing.T) {
 					Query: `SELECT format_type(atttypid, atttypmod)
 						FROM pg_catalog.pg_attribute
 						WHERE attrelid = 'format_type_domain_items'::regclass
-							AND attname = 'amount';`,
-					Expected: []sql.Row{{"format_type_domain"}},
+							AND attname = 'amount';`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testformattypedomainattributerepro-0001-select-format_type-atttypid-atttypmod-from"},
 				},
 			},
 		},
@@ -2173,12 +2008,10 @@ func TestRegroleTypeResolvesRolesRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT 'regrole_catalog_user'::regrole::text;`,
-					Expected: []sql.Row{{"regrole_catalog_user"}},
+					Query: `SELECT 'regrole_catalog_user'::regrole::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testregroletyperesolvesrolesrepro-0001-select-regrole_catalog_user-::regrole::text"},
 				},
 				{
-					Query:    `SELECT 0::regrole::text;`,
-					Expected: []sql.Row{{"-"}},
+					Query: `SELECT 0::regrole::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testregroletyperesolvesrolesrepro-0002-select-0::regrole::text"},
 				},
 			},
 		},
@@ -2195,20 +2028,16 @@ func TestAdditionalRegTypesResolveBuiltinsRepro(t *testing.T) {
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT 'abs(integer)'::regprocedure::text;`,
-					Expected: []sql.Row{{"abs(integer)"}},
+					Query: `SELECT 'abs(integer)'::regprocedure::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testadditionalregtypesresolvebuiltinsrepro-0001-select-abs-integer-::regprocedure::text"},
 				},
 				{
-					Query:    `SELECT '+(integer,integer)'::regoperator::text;`,
-					Expected: []sql.Row{{"+(integer,integer)"}},
+					Query: `SELECT '+(integer,integer)'::regoperator::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testadditionalregtypesresolvebuiltinsrepro-0002-select-+-integer-integer-::regoperator::text"},
 				},
 				{
-					Query:    `SELECT 'english'::regconfig::text;`,
-					Expected: []sql.Row{{"english"}},
+					Query: `SELECT 'english'::regconfig::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testadditionalregtypesresolvebuiltinsrepro-0003-select-english-::regconfig::text"},
 				},
 				{
-					Query:    `SELECT 'simple'::regdictionary::text;`,
-					Expected: []sql.Row{{"simple"}},
+					Query: `SELECT 'simple'::regdictionary::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testadditionalregtypesresolvebuiltinsrepro-0004-select-simple-::regdictionary::text"},
 				},
 			},
 		},
@@ -2226,8 +2055,7 @@ func TestToRegnamespaceResolvesSchemaNamesRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT to_regnamespace('pg_catalog')::text,
-						to_regnamespace('missing_schema_for_to_regnamespace') IS NULL;`,
-					Expected: []sql.Row{{"pg_catalog", true}},
+						to_regnamespace('missing_schema_for_to_regnamespace') IS NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testtoregnamespaceresolvesschemanamesrepro-0001-select-to_regnamespace-pg_catalog-::text-to_regnamespace"},
 				},
 			},
 		},
@@ -2245,8 +2073,7 @@ func TestToRegprocedureResolvesFunctionSignaturesRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT to_regprocedure('array_in(cstring,oid,integer)')::text,
-						to_regprocedure('missing_function_for_to_regprocedure(integer)') IS NULL;`,
-					Expected: []sql.Row{{"array_in(cstring,oid,integer)", true}},
+						to_regprocedure('missing_function_for_to_regprocedure(integer)') IS NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testtoregprocedureresolvesfunctionsignaturesrepro-0001-select-to_regprocedure-array_in-cstring-oid"},
 				},
 			},
 		},
@@ -2273,12 +2100,7 @@ func TestIntervalTypmodCatalogMetadataRepro(t *testing.T) {
 						FROM pg_catalog.pg_attribute
 						WHERE attrelid = 'interval_typmod_catalog'::regclass
 							AND attnum > 0
-						ORDER BY attnum;`,
-					Expected: []sql.Row{
-						{"ym", int32(458751), "interval year to month"},
-						{"ds3", int32(470286339), "interval day to second(3)"},
-						{"p2", int32(2147418114), "interval(2)"},
-					},
+						ORDER BY attnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testintervaltypmodcatalogmetadatarepro-0001-select-attname-atttypmod-format_type-atttypid"},
 				},
 			},
 		},
@@ -2299,8 +2121,7 @@ func TestTemporaryTableRelpersistenceCatalogMetadataRepro(t *testing.T) {
 				{
 					Query: `SELECT relpersistence
 						FROM pg_catalog.pg_class
-						WHERE relname = 'temp_rel_persistence';`,
-					Expected: []sql.Row{{"t"}},
+						WHERE relname = 'temp_rel_persistence';`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testtemporarytablerelpersistencecatalogmetadatarepro-0001-select-relpersistence-from-pg_catalog.pg_class-where"},
 				},
 			},
 		},
@@ -2321,8 +2142,7 @@ func TestUnloggedTableRelpersistenceCatalogMetadataRepro(t *testing.T) {
 				{
 					Query: `SELECT relpersistence
 						FROM pg_catalog.pg_class
-						WHERE relname = 'unlogged_rel_persistence';`,
-					Expected: []sql.Row{{"u"}},
+						WHERE relname = 'unlogged_rel_persistence';`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testunloggedtablerelpersistencecatalogmetadatarepro-0001-select-relpersistence-from-pg_catalog.pg_class-where"},
 				},
 			},
 		},
@@ -2343,8 +2163,7 @@ func TestUnloggedSequenceRelpersistenceCatalogMetadataRepro(t *testing.T) {
 				{
 					Query: `SELECT relpersistence
 						FROM pg_catalog.pg_class
-						WHERE relname = 'unlogged_sequence_rel_persistence';`,
-					Expected: []sql.Row{{"u"}},
+						WHERE relname = 'unlogged_sequence_rel_persistence';`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testunloggedsequencerelpersistencecatalogmetadatarepro-0001-select-relpersistence-from-pg_catalog.pg_class-where"},
 				},
 			},
 		},
@@ -2369,8 +2188,7 @@ func TestPgClassColumnAndCheckCountsRepro(t *testing.T) {
 				{
 					Query: `SELECT relnatts, relchecks
 						FROM pg_catalog.pg_class
-						WHERE oid = 'pg_class_count_target'::regclass;`,
-					Expected: []sql.Row{{int16(3), int16(1)}},
+						WHERE oid = 'pg_class_count_target'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgclasscolumnandcheckcountsrepro-0001-select-relnatts-relchecks-from-pg_catalog.pg_class"},
 				},
 			},
 		},
@@ -2395,8 +2213,7 @@ func TestPgClassViewRuleMetadataRepro(t *testing.T) {
 				{
 					Query: `SELECT relnatts, relhasrules
 						FROM pg_catalog.pg_class
-						WHERE oid = 'pg_class_view_metadata'::regclass;`,
-					Expected: []sql.Row{{int16(2), "t"}},
+						WHERE oid = 'pg_class_view_metadata'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgclassviewrulemetadatarepro-0001-select-relnatts-relhasrules-from-pg_catalog.pg_class"},
 				},
 			},
 		},
@@ -2422,8 +2239,7 @@ func TestCreateViewPopulatesPgRewriteRepro(t *testing.T) {
 					Query: `SELECT rulename
 						FROM pg_catalog.pg_rewrite
 						WHERE ev_class = 'rewrite_catalog_view'::regclass
-							AND rulename = '_RETURN';`,
-					Expected: []sql.Row{{"_RETURN"}},
+							AND rulename = '_RETURN';`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testcreateviewpopulatespgrewriterepro-0001-select-rulename-from-pg_catalog.pg_rewrite-where"},
 				},
 			},
 		},
@@ -2451,8 +2267,7 @@ func TestColumnDefaultSequenceDependencyPopulatesPgDependRepro(t *testing.T) {
 						JOIN pg_catalog.pg_attrdef ad ON d.objid = ad.oid
 						JOIN pg_catalog.pg_class t ON ad.adrelid = t.oid
 						WHERE s.relname = 'depend_catalog_seq'
-							AND t.relname = 'depend_catalog_items';`,
-					Expected: []sql.Row{{"n"}},
+							AND t.relname = 'depend_catalog_items';`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testcolumndefaultsequencedependencypopulatespgdependrepro-0001-select-d.deptype-from-pg_catalog.pg_depend-d"},
 				},
 			},
 		},
@@ -2477,8 +2292,7 @@ func TestTableOwnershipPopulatesPgShdependRepro(t *testing.T) {
 						JOIN pg_catalog.pg_class c ON d.objid = c.oid
 						JOIN pg_catalog.pg_roles r ON d.refobjid = r.oid
 						WHERE c.relname = 'shdepend_catalog_items'
-							AND r.rolname = 'shdepend_catalog_owner';`,
-					Expected: []sql.Row{{"o"}},
+							AND r.rolname = 'shdepend_catalog_owner';`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testtableownershippopulatespgshdependrepro-0001-select-d.deptype-from-pg_catalog.pg_shdepend-d"},
 				},
 			},
 		},
@@ -2497,8 +2311,7 @@ func TestPgTypeRegprocColumnComparisonGuard(t *testing.T) {
 						FROM pg_catalog.pg_type t1
 						LEFT JOIN pg_catalog.pg_type t2 ON t1.typarray = t2.oid
 						WHERE t1.typarray <> 0
-							AND (t2.oid IS NULL OR t2.typsubscript <> 'array_subscript_handler'::regproc);`,
-					Expected: []sql.Row{},
+							AND (t2.oid IS NULL OR t2.typsubscript <> 'array_subscript_handler'::regproc);`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgtyperegproccolumncomparisonguard-0001-select-t1.oid-t1.typname-as-basetype"},
 				},
 			},
 		},

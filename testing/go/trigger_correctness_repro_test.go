@@ -45,15 +45,10 @@ func TestBeforeInsertTriggerReturningNullSkipsRowRepro(t *testing.T) {
 					Query: `INSERT INTO trigger_skip_target VALUES (1, 'hi'), (2, 'there');`,
 				},
 				{
-					Query:    `SELECT * FROM trigger_skip_target ORDER BY pk;`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM trigger_skip_target ORDER BY pk;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testbeforeinserttriggerreturningnullskipsrowrepro-0001-select-*-from-trigger_skip_target-order"},
 				},
 				{
-					Query: `SELECT * FROM trigger_skip_audit ORDER BY pk;`,
-					Expected: []sql.Row{
-						{1, "hi_1"},
-						{2, "there_2"},
-					},
+					Query: `SELECT * FROM trigger_skip_audit ORDER BY pk;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testbeforeinserttriggerreturningnullskipsrowrepro-0002-select-*-from-trigger_skip_audit-order"},
 				},
 			},
 		},
@@ -96,10 +91,7 @@ func TestTriggerArgumentsPopulateTgArgvRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT id, arg_count, first_arg, second_arg
-						FROM trigger_argument_audit;`,
-					Expected: []sql.Row{
-						{int64(1), int64(2), "alpha", "beta"},
-					},
+						FROM trigger_argument_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testtriggerargumentspopulatetgargvrepro-0001-select-id-arg_count-first_arg-second_arg"},
 				},
 			},
 		},
@@ -130,20 +122,20 @@ func TestBeforeInsertTriggerMutatedRowChecksConstraintsRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `INSERT INTO trigger_check_target VALUES (1, 5);`,
-					ExpectedErr: `Check constraint`,
+					Query: `INSERT INTO trigger_check_target VALUES (1, 5);`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testbeforeinserttriggermutatedrowchecksconstraintsrepro-0001-insert-into-trigger_check_target-values-1",
+
+						// TestBeforeInsertTriggerReturningSeesMutatedRowRepro guards that INSERT
+						// RETURNING reports the row after BEFORE INSERT triggers mutate NEW.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM trigger_check_target;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM trigger_check_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testbeforeinserttriggermutatedrowchecksconstraintsrepro-0002-select-count-*-from-trigger_check_target"},
 				},
 			},
 		},
 	})
 }
 
-// TestBeforeInsertTriggerReturningSeesMutatedRowRepro guards that INSERT
-// RETURNING reports the row after BEFORE INSERT triggers mutate NEW.
 func TestBeforeInsertTriggerReturningSeesMutatedRowRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -165,12 +157,10 @@ func TestBeforeInsertTriggerReturningSeesMutatedRowRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `INSERT INTO trigger_returning_target VALUES (1, 'alpha') RETURNING label;`,
-					Expected: []sql.Row{{"ALPHA_triggered"}},
+					Query: `INSERT INTO trigger_returning_target VALUES (1, 'alpha') RETURNING label;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testbeforeinserttriggerreturningseesmutatedrowrepro-0001-insert-into-trigger_returning_target-values-1"},
 				},
 				{
-					Query:    `SELECT label FROM trigger_returning_target WHERE id = 1;`,
-					Expected: []sql.Row{{"ALPHA_triggered"}},
+					Query: `SELECT label FROM trigger_returning_target WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testbeforeinserttriggerreturningseesmutatedrowrepro-0002-select-label-from-trigger_returning_target-where"},
 				},
 			},
 		},
@@ -201,22 +191,22 @@ func TestBeforeUpdateTriggerMutatedRowChecksConstraintsRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `UPDATE trigger_update_check_target SET qty = 6 WHERE id = 1;`,
-					ExpectedErr: `Check constraint`,
+					Query: `UPDATE trigger_update_check_target SET qty = 6 WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testbeforeupdatetriggermutatedrowchecksconstraintsrepro-0001-update-trigger_update_check_target-set-qty-=", Compare:
+
+					// TestOnConflictUpdateWhereFalseDoesNotFireUpdateTriggersRepro reproduces an
+					// UPSERT/trigger correctness bug: PostgreSQL does not fire row-level UPDATE
+					// triggers when the ON CONFLICT DO UPDATE WHERE predicate rejects the
+					// conflicting row.
+					"sqlstate"},
 				},
 				{
-					Query:    `SELECT qty FROM trigger_update_check_target WHERE id = 1;`,
-					Expected: []sql.Row{{5}},
+					Query: `SELECT qty FROM trigger_update_check_target WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testbeforeupdatetriggermutatedrowchecksconstraintsrepro-0002-select-qty-from-trigger_update_check_target-where"},
 				},
 			},
 		},
 	})
 }
 
-// TestOnConflictUpdateWhereFalseDoesNotFireUpdateTriggersRepro reproduces an
-// UPSERT/trigger correctness bug: PostgreSQL does not fire row-level UPDATE
-// triggers when the ON CONFLICT DO UPDATE WHERE predicate rejects the
-// conflicting row.
 func TestOnConflictUpdateWhereFalseDoesNotFireUpdateTriggersRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -249,12 +239,10 @@ func TestOnConflictUpdateWhereFalseDoesNotFireUpdateTriggersRepro(t *testing.T) 
 						WHERE false;`,
 				},
 				{
-					Query:    `SELECT count(*) FROM upsert_where_false_trigger_audit;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM upsert_where_false_trigger_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testonconflictupdatewherefalsedoesnotfireupdatetriggersrepro-0001-select-count-*-from-upsert_where_false_trigger_audit"},
 				},
 				{
-					Query:    `SELECT id, v FROM upsert_where_false_trigger_target;`,
-					Expected: []sql.Row{{1, "old"}},
+					Query: `SELECT id, v FROM upsert_where_false_trigger_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testonconflictupdatewherefalsedoesnotfireupdatetriggersrepro-0002-select-id-v-from-upsert_where_false_trigger_target"},
 				},
 			},
 		},
@@ -294,11 +282,7 @@ func TestBeforeInsertTriggerSeesEarlierRowsInSameStatementRepro(t *testing.T) {
 					Query: `INSERT INTO trigger_visibility_items VALUES (1, 'hi'), (2, 'there');`,
 				},
 				{
-					Query: `SELECT * FROM trigger_visibility_items ORDER BY pk;`,
-					Expected: []sql.Row{
-						{1, "hi2_u"},
-						{2, "there"},
-					},
+					Query: `SELECT * FROM trigger_visibility_items ORDER BY pk;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testbeforeinserttriggerseesearlierrowsinsamestatementrepro-0001-select-*-from-trigger_visibility_items-order"},
 				},
 			},
 		},
@@ -389,11 +373,7 @@ func TestUpdateFromFiresRowTriggersRepro(t *testing.T) {
 				{
 					Query: `SELECT employee_id, old_salary, new_salary
 						FROM update_from_trigger_log
-						ORDER BY employee_id;`,
-					Expected: []sql.Row{
-						{1, 50000, 51000},
-						{2, 45000, 45500},
-					},
+						ORDER BY employee_id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testupdatefromfiresrowtriggersrepro-0001-select-employee_id-old_salary-new_salary-from"},
 				},
 			},
 		},
@@ -439,11 +419,7 @@ func TestBeforeInsertTriggerTableTypedRecordAssignmentRepro(t *testing.T) {
 				{
 					Query: `SELECT id, name, qty, price
 						FROM trigger_record_items
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, "apple", 3, 2.5},
-						{2, "banana", 5, -1.2},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testbeforeinserttriggertabletypedrecordassignmentrepro-0001-select-id-name-qty-price"},
 				},
 			},
 		},
@@ -481,8 +457,7 @@ func TestInsteadOfInsertTriggerOnViewRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT id, label
-						FROM instead_view_trigger_base;`,
-					Expected: []sql.Row{{1, "ALPHA"}},
+						FROM instead_view_trigger_base;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testinsteadofinserttriggeronviewrepro-0001-select-id-label-from-instead_view_trigger_base"},
 				},
 			},
 		},
@@ -522,15 +497,13 @@ func TestAlterTableDisableEnableTriggerRepro(t *testing.T) {
 				{
 					Query: `SELECT tgenabled
 						FROM pg_catalog.pg_trigger
-						WHERE tgname = 'trigger_toggle_after_insert';`,
-					Expected: []sql.Row{{"D"}},
+						WHERE tgname = 'trigger_toggle_after_insert';`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testaltertabledisableenabletriggerrepro-0001-select-tgenabled-from-pg_catalog.pg_trigger-where"},
 				},
 				{
 					Query: `INSERT INTO trigger_toggle_target VALUES (1, 'disabled');`,
 				},
 				{
-					Query:    `SELECT * FROM trigger_toggle_log ORDER BY id;`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM trigger_toggle_log ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testaltertabledisableenabletriggerrepro-0002-select-*-from-trigger_toggle_log-order"},
 				},
 				{
 					Query: `ALTER TABLE trigger_toggle_target ENABLE TRIGGER trigger_toggle_after_insert;`,
@@ -538,17 +511,13 @@ func TestAlterTableDisableEnableTriggerRepro(t *testing.T) {
 				{
 					Query: `SELECT tgenabled
 						FROM pg_catalog.pg_trigger
-						WHERE tgname = 'trigger_toggle_after_insert';`,
-					Expected: []sql.Row{{"O"}},
+						WHERE tgname = 'trigger_toggle_after_insert';`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testaltertabledisableenabletriggerrepro-0003-select-tgenabled-from-pg_catalog.pg_trigger-where"},
 				},
 				{
 					Query: `INSERT INTO trigger_toggle_target VALUES (2, 'enabled');`,
 				},
 				{
-					Query: `SELECT * FROM trigger_toggle_log ORDER BY id;`,
-					Expected: []sql.Row{
-						{2, "enabled"},
-					},
+					Query: `SELECT * FROM trigger_toggle_log ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testaltertabledisableenabletriggerrepro-0004-select-*-from-trigger_toggle_log-order"},
 				},
 			},
 		},
@@ -588,15 +557,13 @@ func TestAlterTriggerRenameRepro(t *testing.T) {
 						FROM pg_catalog.pg_trigger
 						WHERE tgrelid = 'trigger_rename_target'::regclass
 							AND NOT tgisinternal
-						ORDER BY tgname;`,
-					Expected: []sql.Row{{"trigger_renamed_before_insert"}},
+						ORDER BY tgname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testaltertriggerrenamerepro-0001-select-tgname-from-pg_catalog.pg_trigger-where"},
 				},
 				{
 					Query: `INSERT INTO trigger_rename_target VALUES (1, 'row');`,
 				},
 				{
-					Query:    `SELECT label FROM trigger_rename_target;`,
-					Expected: []sql.Row{{"row:triggered"}},
+					Query: `SELECT label FROM trigger_rename_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testaltertriggerrenamerepro-0002-select-label-from-trigger_rename_target"},
 				},
 			},
 		},
@@ -619,17 +586,18 @@ func TestTriggerFunctionCannotBeCalledDirectlyRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT trigger_direct_call_func();`,
-					ExpectedErr: "trigger functions can only be called as triggers",
+					Query: `SELECT trigger_direct_call_func();`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testtriggerfunctioncannotbecalleddirectlyrepro-0001-select-trigger_direct_call_func",
+
+						// TestDeferrableConstraintTriggerFiresAtCommitRepro reproduces a trigger
+						// correctness bug: PostgreSQL supports deferrable constraint triggers that run
+						// at transaction end rather than immediately after the statement.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDeferrableConstraintTriggerFiresAtCommitRepro reproduces a trigger
-// correctness bug: PostgreSQL supports deferrable constraint triggers that run
-// at transaction end rather than immediately after the statement.
 func TestDeferrableConstraintTriggerFiresAtCommitRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -662,8 +630,7 @@ func TestDeferrableConstraintTriggerFiresAtCommitRepro(t *testing.T) {
 					Query: `INSERT INTO constraint_trigger_target VALUES (1, 10);`,
 				},
 				{
-					Query:    `SELECT count(*) FROM constraint_trigger_audit;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM constraint_trigger_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testdeferrableconstrainttriggerfiresatcommitrepro-0001-select-count-*-from-constraint_trigger_audit"},
 				},
 				{
 					Query: `COMMIT;`,

@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestTypeUsagePrivilegeCanBeRevokedAndGrantedRepro reproduces a type ACL
@@ -37,30 +35,30 @@ func TestTypeUsagePrivilegeCanBeRevokedAndGrantedRepro(t *testing.T) {
 					ExpectedTag: `REVOKE`,
 				},
 				{
-					Query:       `SELECT 'ok'::type_usage_acl_mood::text;`,
-					ExpectedErr: `permission denied`,
-					Username:    `type_usage_acl_user`,
-					Password:    `pw`,
+					Query: `SELECT 'ok'::type_usage_acl_mood::text;`,
+
+					Username: `type_usage_acl_user`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{ID: "type-privilege-repro-test-testtypeusageprivilegecanberevokedandgrantedrepro-0002-select-ok-::type_usage_acl_mood::text", Compare: "sqlstate"},
 				},
 				{
 					Query:       `GRANT USAGE ON TYPE type_usage_acl_mood TO type_usage_acl_user;`,
 					ExpectedTag: `GRANT`,
 				},
 				{
-					Query:    `SELECT 'ok'::type_usage_acl_mood::text;`,
-					Expected: []sql.Row{{"ok"}},
+					Query: `SELECT 'ok'::type_usage_acl_mood::text;`,
+
 					Username: `type_usage_acl_user`,
-					Password: `pw`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{ID: "type-privilege-repro-test-testtypeusageprivilegecanberevokedandgrantedrepro-0004-select-ok-::type_usage_acl_mood::text", Compare: "sqlstate"},
 				},
 				{
 					Query:       `REVOKE USAGE ON TYPE type_usage_acl_mood FROM type_usage_acl_user;`,
 					ExpectedTag: `REVOKE`,
 				},
 				{
-					Query:       `SELECT 'ok'::type_usage_acl_mood::text;`,
-					ExpectedErr: `permission denied`,
-					Username:    `type_usage_acl_user`,
-					Password:    `pw`,
+					Query: `SELECT 'ok'::type_usage_acl_mood::text;`,
+
+					Username: `type_usage_acl_user`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{ID: "type-privilege-repro-test-testtypeusageprivilegecanberevokedandgrantedrepro-0006-select-ok-::type_usage_acl_mood::text", Compare: "sqlstate"},
 				},
 			},
 		},

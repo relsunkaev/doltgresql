@@ -1,0 +1,1315 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map pg_class_reloftype_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/pg_class_reloftype_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestPgClassReloftypeForOrdinaryTables#0001",
+      "source": "testing/go/pg_class_reloftype_test.go:TestPgClassReloftypeForOrdinaryTables",
+      "ordinal": 1,
+      "scriptName": "ordinary tables report reloftype=0 (PG-correct)",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testpgclassreloftypeforordinarytables-0001-select-relname-reloftype-from-pg_catalog.pg_class",
+      "suggestedId": "pg-class-reloftype-test-testpgclassreloftypeforordinarytables-0001-select-relname-reloftype-from-pg_catalog.pg_class",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT relname, reloftype\nFROM pg_catalog.pg_class\nWHERE relname IN ('plain_t', 'with_unique')\nORDER BY relname;",
+      "querySha256": "d38efef85f923b0455581cd2d8187c87bf14ca1063174257f611f254815606f9",
+      "expectedRows": [
+        [
+          {
+            "value": "plain_t"
+          },
+          {
+            "value": "0"
+          }
+        ],
+        [
+          {
+            "value": "with_unique"
+          },
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0001",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLE OF derives columns and records reloftype",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0001-select-id-name-active-from",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0001-select-id-name-active-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, name, active FROM typed_people;",
+      "querySha256": "941a4d3ba4f1af0d6299c2dd7bdc830231892850cd5f40f814df1c5d756a6a09",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "Ada"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0002",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 2,
+      "scriptName": "CREATE TABLE OF derives columns and records reloftype",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0002-select-c.reloftype-=-t.oid-from",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0002-select-c.reloftype-=-t.oid-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT c.reloftype = t.oid\nFROM pg_catalog.pg_class c\nJOIN pg_catalog.pg_type t ON t.typname = 'typed_person'\nWHERE c.relname = 'typed_people';",
+      "querySha256": "cf2b1f667914c7acd085c982b2383acdd0294bcc46c394689c27daeb222554de",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0003",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 3,
+      "scriptName": "CREATE TABLE OF derives columns and records reloftype",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0003-select-table_name-is_typed-user_defined_type_catalog-user_defined_type_schema",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0003-select-table_name-is_typed-user_defined_type_catalog-user_defined_type_schema",
+      "compare": "structural",
+      "columnModes": [
+        "structural",
+        "structural",
+        "structural",
+        "schema"
+      ],
+      "expectedKind": "rows",
+      "query": "SELECT table_name, is_typed, user_defined_type_catalog, user_defined_type_schema, user_defined_type_name\nFROM information_schema.tables\nWHERE table_name IN ('plain_t', 'typed_people')\nORDER BY table_name;",
+      "querySha256": "a110de698cdcf36ad2deb277c51fd16737fce8fd712bedbc603651cff1708bb9",
+      "expectedRows": [
+        [
+          {
+            "value": "plain_t"
+          },
+          {
+            "value": "NO"
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          }
+        ],
+        [
+          {
+            "value": "typed_people"
+          },
+          {
+            "value": "YES"
+          },
+          {
+            "value": "postgres"
+          },
+          {
+            "value": "{{schema}}"
+          },
+          {
+            "value": "typed_person"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0004",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 4,
+      "scriptName": "CREATE TABLE OF requires a composite type",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0004-create-table-typed_missing-of-missing_type",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0004-create-table-typed_missing-of-missing_type",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42704",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TABLE typed_missing OF missing_type;",
+      "querySha256": "7ee5e8e5bd1f5a0be6d981c0fd921373a052574a6e41eeec3ad85ecad888bafa",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0005",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 5,
+      "scriptName": "CREATE TABLE OF requires a composite type",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0005-create-table-typed_mood-of-mood_enum",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0005-create-table-typed_mood-of-mood_enum",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42809",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TABLE typed_mood OF mood_enum;",
+      "querySha256": "9e146dda687352f0c762057584ab655b5cab875ff866f664cbacc7facf84dca0",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0006",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 6,
+      "scriptName": "CREATE TABLE OF supports schema-qualified type and table names",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0006-select-street-zip-from-app.addresses",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0006-select-street-zip-from-app.addresses",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT street, zip FROM app.addresses;",
+      "querySha256": "e4862a450321b25a98cd528729c685a850ea6be86267608de7cbef51e0a5f6b9",
+      "expectedRows": [
+        [
+          {
+            "value": "Main"
+          },
+          {
+            "value": "85001"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0007",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 7,
+      "scriptName": "CREATE TABLE OF supports schema-qualified type and table names",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0007-select-table_schema-table_name-is_typed-user_defined_type_catalog",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0007-select-table_schema-table_name-is_typed-user_defined_type_catalog",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT table_schema, table_name, is_typed, user_defined_type_catalog, user_defined_type_schema, user_defined_type_name\nFROM information_schema.tables\nWHERE table_schema = 'app' AND table_name = 'addresses';",
+      "querySha256": "71fcce37fc018bcb0cd997eef0f6f34205295eddbcf392ba110f01b024b59e19",
+      "expectedRows": [
+        [
+          {
+            "value": "app"
+          },
+          {
+            "value": "addresses"
+          },
+          {
+            "value": "YES"
+          },
+          {
+            "value": "postgres"
+          },
+          {
+            "value": "app"
+          },
+          {
+            "value": "typed_address"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0008",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 8,
+      "scriptName": "CREATE TEMP TABLE OF derives columns for session-local table",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0008-create-temp-table-typed_scratch_rows-of",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0008-create-temp-table-typed_scratch_rows-of",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE TEMP TABLE typed_scratch_rows OF typed_scratch;",
+      "querySha256": "686044986fc3d98e637c79aded1f120d9aca8b808bd6a78d368eac5310dd3ad4",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0009",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 9,
+      "scriptName": "CREATE TEMP TABLE OF derives columns for session-local table",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0009-insert-into-typed_scratch_rows-values-1",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0009-insert-into-typed_scratch_rows-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO typed_scratch_rows VALUES (1, 'temp row');",
+      "querySha256": "daf9708b71a093ee3e39ef1a54c75225bdca9281b4f4e3afe1eb7eee964b4c62",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0010",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 10,
+      "scriptName": "CREATE TEMP TABLE OF derives columns for session-local table",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0010-select-id-note-from-typed_scratch_rows",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0010-select-id-note-from-typed_scratch_rows",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, note FROM typed_scratch_rows;",
+      "querySha256": "bc32fff29b77762dec17b1e89fa2ab9fec98f8f8540dbbf96ecfcf50fbbfd8f0",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "temp row"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0011",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 11,
+      "scriptName": "CREATE TEMP TABLE OF derives columns for session-local table",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0011-create-temp-table-if-not",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0011-create-temp-table-if-not",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE TEMP TABLE IF NOT EXISTS typed_scratch_rows OF missing_type;",
+      "querySha256": "70d21c2cf7c1e558737201a535e20de95f3471b077bb93f605cea9b5d83b255d",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0012",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 12,
+      "scriptName": "CREATE TABLE OF supports primary key and column options",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0012-select-id-code-note-from",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0012-select-id-code-note-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, code, note FROM typed_tasks;",
+      "querySha256": "94429664df7cda300208796aa1f960a01af64e4cc8ce9d5d41985b31c0b6bb59",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "A"
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0013",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 13,
+      "scriptName": "CREATE TABLE OF supports primary key and column options",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0013-select-column_name-is_nullable-from-information_schema.columns",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0013-select-column_name-is_nullable-from-information_schema.columns",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT column_name, is_nullable\nFROM information_schema.columns\nWHERE table_name = 'typed_tasks' AND column_name IN ('id', 'code', 'note')\nORDER BY ordinal_position;",
+      "querySha256": "68e0b1b103a4a896e7fef412f4de40a2b0c2019cac93ee8b13a606a0d4c27137",
+      "expectedRows": [
+        [
+          {
+            "value": "id"
+          },
+          {
+            "value": "NO"
+          }
+        ],
+        [
+          {
+            "value": "code"
+          },
+          {
+            "value": "NO"
+          }
+        ],
+        [
+          {
+            "value": "note"
+          },
+          {
+            "value": "YES"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0014",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 14,
+      "scriptName": "CREATE TABLE OF supports primary key and column options",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0014-select-constraint_name-constraint_type-from-information_schema.table_constraints",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0014-select-constraint_name-constraint_type-from-information_schema.table_constraints",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT constraint_name, constraint_type\nFROM information_schema.table_constraints\nWHERE table_name = 'typed_tasks' AND constraint_type = 'PRIMARY KEY';",
+      "querySha256": "affe41b64c0f9578b964f87c306888af2769d2adf57ca37770df828df56c340e",
+      "expectedRows": [
+        [
+          {
+            "value": "typed_tasks_pkey"
+          },
+          {
+            "value": "PRIMARY KEY"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0015",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 15,
+      "scriptName": "CREATE TABLE OF supports primary key and column options",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0015-insert-into-typed_tasks-id-code",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0015-insert-into-typed_tasks-id-code",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23502",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO typed_tasks (id, code) VALUES (2, NULL);",
+      "querySha256": "5f826cb8b7ff8c38a056f808496e4f33ac714aa1999680c52c221cee3a6cb998",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0016",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 16,
+      "scriptName": "CREATE TABLE OF supports unique options",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0016-insert-into-typed_unique_tasks-values-3",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0016-insert-into-typed_unique_tasks-values-3",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO typed_unique_tasks VALUES (3, 'A', 'third');",
+      "querySha256": "a8e7b8cf2f3f7bef0b76aa8353f5b36a337512ce954358cb620c9914fa5a3d7c",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0017",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 17,
+      "scriptName": "CREATE TABLE OF supports unique options",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0017-insert-into-typed_unique_tasks-values-4",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0017-insert-into-typed_unique_tasks-values-4",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO typed_unique_tasks VALUES (4, 'C', 'second');",
+      "querySha256": "16dd2309d7bf6a4cb4252657039f0f7d24d52febb7e886078ab49bd3ae9f7d7f",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0018",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 18,
+      "scriptName": "CREATE TABLE OF supports unique options",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0018-select-constraint_name-constraint_type-from-information_schema.table_constraints",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0018-select-constraint_name-constraint_type-from-information_schema.table_constraints",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT constraint_name, constraint_type\nFROM information_schema.table_constraints\nWHERE table_name = 'typed_unique_tasks' AND constraint_type = 'UNIQUE'\nORDER BY constraint_name;",
+      "querySha256": "c11f060252f15109b9093b7876836cec6c3f845f11559ead3d6626ce178fee3c",
+      "expectedRows": [
+        [
+          {
+            "value": "typed_unique_tasks_code_key"
+          },
+          {
+            "value": "UNIQUE"
+          }
+        ],
+        [
+          {
+            "value": "typed_unique_tasks_note_key"
+          },
+          {
+            "value": "UNIQUE"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0019",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 19,
+      "scriptName": "CREATE TABLE OF supports unique options",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0019-select-indexname-from-pg_catalog.pg_indexes-where",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0019-select-indexname-from-pg_catalog.pg_indexes-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT indexname\nFROM pg_catalog.pg_indexes\nWHERE tablename = 'typed_unique_tasks'\nORDER BY indexname;",
+      "querySha256": "bc428d09f3bfc31513de9635326b8fcfb43b6fa582a1c0e5ec97b1502a91fe8a",
+      "expectedRows": [
+        [
+          {
+            "value": "typed_unique_tasks_code_key"
+          }
+        ],
+        [
+          {
+            "value": "typed_unique_tasks_note_key"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0020",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 20,
+      "scriptName": "CREATE TEMP TABLE OF supports unique options",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0020-insert-into-typed_temp_unique_tasks-values-3",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0020-insert-into-typed_temp_unique_tasks-values-3",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO typed_temp_unique_tasks VALUES (3, 'A', 'third');",
+      "querySha256": "91d0236ecbcd0562c3ec5af3bc113f41f723305130a72a185bb28fcd6c00b43d",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0021",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 21,
+      "scriptName": "CREATE TEMP TABLE OF supports unique options",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0021-insert-into-typed_temp_unique_tasks-values-4",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0021-insert-into-typed_temp_unique_tasks-values-4",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO typed_temp_unique_tasks VALUES (4, 'C', 'second');",
+      "querySha256": "e1faeaab307e413c285bd0fdacda19094ae5b24bbc3d51b15c2ca4846b368b11",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0022",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 22,
+      "scriptName": "CREATE TEMP TABLE OF supports unique options",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0022-update-typed_temp_unique_tasks-set-code-=",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0022-update-typed_temp_unique_tasks-set-code-=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "UPDATE typed_temp_unique_tasks SET code = 'B' WHERE id = 1;",
+      "querySha256": "f532fa97c568b26f1d3f684f7bc5b8e5b62dc8b8545cad5f4939267df46c2e44",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0023",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 23,
+      "scriptName": "CREATE TEMP TABLE OF supports unique options",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0023-insert-into-typed_temp_unique_tasks-values-7",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0023-insert-into-typed_temp_unique_tasks-values-7",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO typed_temp_unique_tasks VALUES (7, 'D', 'fourth'), (8, 'D', 'fifth');",
+      "querySha256": "59f0c0e23bd76f49072190ef9b92cbecc6284b065562edf2c0457ac5cea8f194",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0024",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 24,
+      "scriptName": "CREATE TABLE OF accepts unique index element options",
+      "oracle": "internal",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0024-insert-into-typed_index_option_tasks-values-2",
+      "expectedKind": "error",
+      "query": "INSERT INTO typed_index_option_tasks VALUES (2, 'A');",
+      "querySha256": "1d4cb72793c41351a02ce2c9c9971912131f92920890871599666d3cd28d4da2",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0025",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 25,
+      "scriptName": "CREATE TABLE OF accepts unique index element options",
+      "oracle": "internal",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0025-select-constraint_name-constraint_type-from-information_schema.table_constraints",
+      "expectedKind": "rows",
+      "query": "SELECT constraint_name, constraint_type\nFROM information_schema.table_constraints\nWHERE table_name = 'typed_index_option_tasks' AND constraint_type = 'UNIQUE';",
+      "querySha256": "b89f19506449789679392f57e19e2b2c00f30f84767e066bfa468b82d16d6dd1",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0026",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 26,
+      "scriptName": "CREATE TABLE OF supports unique nulls not distinct options",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0026-insert-into-typed_unique_nnd_tasks-values-3",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0026-insert-into-typed_unique_nnd_tasks-values-3",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO typed_unique_nnd_tasks VALUES (3, NULL, 'second');",
+      "querySha256": "12f837d3161db83e125d053ca1b23571761d11186857d2d43379c80344cdf778",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0027",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 27,
+      "scriptName": "CREATE TABLE OF supports unique nulls not distinct options",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0027-insert-into-typed_unique_nnd_tasks-values-4",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0027-insert-into-typed_unique_nnd_tasks-values-4",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO typed_unique_nnd_tasks VALUES (4, 'B', NULL);",
+      "querySha256": "b39b4f5113691d5e967b32e9532bf5e61fc57d5be29a1f01009eaa1290489028",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0028",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 28,
+      "scriptName": "CREATE TABLE OF supports unique nulls not distinct options",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0028-select-c.relname-i.indnullsnotdistinct-from-pg_catalog.pg_class",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0028-select-c.relname-i.indnullsnotdistinct-from-pg_catalog.pg_class",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT c.relname, i.indnullsnotdistinct\n\tFROM pg_catalog.pg_class c\n\tJOIN pg_catalog.pg_index i ON i.indexrelid = c.oid\n\tWHERE c.relname IN ('typed_unique_nnd_tasks_code_key', 'typed_unique_nnd_tasks_note_key')\n\tORDER BY c.relname;",
+      "querySha256": "3479021e4b7dec74d703e927dbade104da3962e92ce1317d5939c3a1d0317391",
+      "expectedRows": [
+        [
+          {
+            "value": "typed_unique_nnd_tasks_code_key"
+          },
+          {
+            "value": "t"
+          }
+        ],
+        [
+          {
+            "value": "typed_unique_nnd_tasks_note_key"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0029",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 29,
+      "scriptName": "CREATE TEMP TABLE OF supports unique nulls not distinct options",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0029-insert-into-typed_temp_unique_nnd_tasks-values-3",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0029-insert-into-typed_temp_unique_nnd_tasks-values-3",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO typed_temp_unique_nnd_tasks VALUES (3, NULL, 'second');",
+      "querySha256": "b7a89de70345a85a6e3d1027421bcfaa1408ea39de5263461fab894ff9f6f05d",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0030",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 30,
+      "scriptName": "CREATE TEMP TABLE OF supports unique nulls not distinct options",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0030-insert-into-typed_temp_unique_nnd_tasks-values-4",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0030-insert-into-typed_temp_unique_nnd_tasks-values-4",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO typed_temp_unique_nnd_tasks VALUES (4, 'B', NULL);",
+      "querySha256": "e38a7b6f11a614559fc002b37cb8b64c2e6ed8f1f491be35d23f8769857fe1cb",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0031",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 31,
+      "scriptName": "CREATE TABLE OF supports literal column defaults",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0031-select-id-code-active-priority",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0031-select-id-code-active-priority",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, code, active, priority FROM typed_default_tasks ORDER BY id;",
+      "querySha256": "65d16b1d6a4bd3ebea118434e49d4c09a12662a6d01118f8cb36746e9e2a99be",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "new"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "-7"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "custom"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0032",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 32,
+      "scriptName": "CREATE TABLE OF supports literal column defaults",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0032-select-column_name-column_default-is-not",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0032-select-column_name-column_default-is-not",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT column_name, (column_default IS NOT NULL)::text\n\tFROM information_schema.columns\n\tWHERE table_name = 'typed_default_tasks' AND column_name IN ('code', 'active', 'priority')\n\tORDER BY ordinal_position;",
+      "querySha256": "bdc6427a95ba104e5e38d199c7708a7a383f859a8eaf27c1fd862cbeef59cc46",
+      "expectedRows": [
+        [
+          {
+            "value": "code"
+          },
+          {
+            "value": "true"
+          }
+        ],
+        [
+          {
+            "value": "active"
+          },
+          {
+            "value": "true"
+          }
+        ],
+        [
+          {
+            "value": "priority"
+          },
+          {
+            "value": "true"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0033",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 33,
+      "scriptName": "CREATE TEMP TABLE OF supports literal column defaults",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0033-select-id-code-priority-from",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0033-select-id-code-priority-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, code, priority FROM typed_temp_default_tasks;",
+      "querySha256": "417b4bc563d1e7a380e81367c285ac3491932a85adcddfa329c4fb2b1da4668e",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "temp"
+          },
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0034",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 34,
+      "scriptName": "CREATE TABLE OF supports expression column defaults",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0034-select-id-code-priority-from",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0034-select-id-code-priority-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, code, priority FROM typed_expr_default_tasks;",
+      "querySha256": "f72099c9aee308ee6bd2f96c1ff5ae0c67444c911629689f97b88e0023d01ac9",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "new"
+          },
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0035",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 35,
+      "scriptName": "CREATE TABLE OF supports expression column defaults",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0035-select-column_name-column_default-is-not",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0035-select-column_name-column_default-is-not",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT column_name, (column_default IS NOT NULL)::text\n\tFROM information_schema.columns\n\tWHERE table_name = 'typed_expr_default_tasks' AND column_name IN ('code', 'priority')\n\tORDER BY ordinal_position;",
+      "querySha256": "3e210c15b275b32a1189c5684d3514f7d0480baa03046c91eadaf3836584e6bf",
+      "expectedRows": [
+        [
+          {
+            "value": "code"
+          },
+          {
+            "value": "true"
+          }
+        ],
+        [
+          {
+            "value": "priority"
+          },
+          {
+            "value": "true"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0036",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 36,
+      "scriptName": "CREATE TEMP TABLE OF supports expression column defaults",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0036-select-id-code-from-typed_temp_expr_default_tasks",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0036-select-id-code-from-typed_temp_expr_default_tasks",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, code FROM typed_temp_expr_default_tasks;",
+      "querySha256": "9dc13773798ce12162cc65da7ed9d7185560d3e5bb98bf7036876d1253ab716e",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "TEMP"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0037",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 37,
+      "scriptName": "CREATE TABLE OF supports generated columns",
+      "oracle": "internal",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0037-insert-into-typed_generated_tasks-id-width",
+      "expectedKind": "error",
+      "query": "INSERT INTO typed_generated_tasks (id, width, height, area) VALUES (2, 4, 5, 99);",
+      "querySha256": "9d1bd9f55216d79a9c18701ceabb2987750350a2910a847ee83eb73da7aca003",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0038",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 38,
+      "scriptName": "CREATE TABLE OF supports generated columns",
+      "oracle": "internal",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0038-select-id-area-from-typed_generated_tasks",
+      "expectedKind": "rows",
+      "query": "SELECT id, area FROM typed_generated_tasks;",
+      "querySha256": "12dce0f88c71f703443a395fbbf6ca6f9b68bb7cb26952b52b3c13c1d0bca73c",
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0039",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 39,
+      "scriptName": "CREATE TABLE OF supports generated columns",
+      "oracle": "internal",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0039-select-column_name-is_generated-from-information_schema.columns",
+      "expectedKind": "rows",
+      "query": "SELECT column_name, is_generated\n\tFROM information_schema.columns\n\tWHERE table_name = 'typed_generated_tasks' AND column_name = 'area';",
+      "querySha256": "6e4df149a050144dbd0da417dd95e46814dceddfafac62ea2d69c647435ca46b",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0040",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 40,
+      "scriptName": "CREATE TEMP TABLE OF supports generated columns",
+      "oracle": "internal",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0040-select-id-area-from-typed_temp_generated_tasks",
+      "expectedKind": "rows",
+      "query": "SELECT id, area FROM typed_temp_generated_tasks;",
+      "querySha256": "d496cd188b8dd5743589266250f77606f39de9f14b5f6717f029120e74141199",
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0041",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 41,
+      "scriptName": "CREATE TABLE OF supports check constraints",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0041-insert-into-typed_check_tasks-values-2",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0041-insert-into-typed_check_tasks-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO typed_check_tasks VALUES (2, 'B', 0);",
+      "querySha256": "39b1edfd660a550885feee84e4e31ccb181b3a09e1f54c64a8d5cfdec7d15e2e",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0042",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 42,
+      "scriptName": "CREATE TABLE OF supports check constraints",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0042-insert-into-typed_check_tasks-values-3",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0042-insert-into-typed_check_tasks-values-3",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO typed_check_tasks VALUES (3, '', 5);",
+      "querySha256": "af5c3eafceed5b6fb40d8d206121dd6e269462da0fb754f21bd097a3acfe61a4",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0043",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 43,
+      "scriptName": "CREATE TABLE OF supports check constraints",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0043-update-typed_check_tasks-set-priority-=",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0043-update-typed_check_tasks-set-priority-=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "55000",
+      "errorSeverity": "ERROR",
+      "query": "UPDATE typed_check_tasks SET priority = -1 WHERE id = 1;",
+      "querySha256": "971a60e403919768bf6f88dea3848bfa362f9732f551bd7ebf99fe0d1310b317",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0044",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 44,
+      "scriptName": "CREATE TABLE OF supports check constraints",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0044-select-constraint_name-constraint_type-from-information_schema.table_constraints",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0044-select-constraint_name-constraint_type-from-information_schema.table_constraints",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT constraint_name, constraint_type\n\tFROM information_schema.table_constraints\n\tWHERE table_name = 'typed_check_tasks' AND constraint_type = 'CHECK'\n\tORDER BY constraint_name;",
+      "querySha256": "adb80b01ae13445ecd74d4ac4fe6c8714d833c5c425d7f246d0167ae2598a1e2",
+      "expectedRows": [
+        [
+          {
+            "value": "typed_check_code"
+          },
+          {
+            "value": "CHECK"
+          }
+        ],
+        [
+          {
+            "value": "typed_check_priority"
+          },
+          {
+            "value": "CHECK"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0045",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 45,
+      "scriptName": "CREATE TEMP TABLE OF supports check constraints",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0045-insert-into-typed_temp_check_tasks-values-2",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0045-insert-into-typed_temp_check_tasks-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO typed_temp_check_tasks VALUES (2, 0);",
+      "querySha256": "6dda7cd6db782a3ae0f29fadff738b99c7067d3b992438c5def0ad10bb7847f7",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0046",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 46,
+      "scriptName": "CREATE TEMP TABLE OF supports check constraints",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0046-update-typed_temp_check_tasks-set-priority-=",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0046-update-typed_temp_check_tasks-set-priority-=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "UPDATE typed_temp_check_tasks SET priority = 0 WHERE id = 1;",
+      "querySha256": "19ee1cc208b189ee03c279a36965052e60c939cbec23b0edfbffd516e573addc",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0047",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 47,
+      "scriptName": "CREATE TABLE OF supports foreign key constraints",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0047-insert-into-typed_fk_tasks-values-2",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0047-insert-into-typed_fk_tasks-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23503",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO typed_fk_tasks VALUES (2, 2, 1);",
+      "querySha256": "3b71f2477a610ba3e4c6a517afddd834fc15a0eccca7dea940b7d4cc5f42552b",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0048",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 48,
+      "scriptName": "CREATE TABLE OF supports foreign key constraints",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0048-insert-into-typed_fk_tasks-values-3",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0048-insert-into-typed_fk_tasks-values-3",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23503",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO typed_fk_tasks VALUES (3, 1, 3);",
+      "querySha256": "ac878fb75834d497de0c32fd8149cdb48780b70a06d6b37465a2603077f14a48",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0049",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 49,
+      "scriptName": "CREATE TABLE OF supports foreign key constraints",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0049-select-constraint_name-constraint_type-from-information_schema.table_constraints",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0049-select-constraint_name-constraint_type-from-information_schema.table_constraints",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT constraint_name, constraint_type\n\tFROM information_schema.table_constraints\n\tWHERE table_name = 'typed_fk_tasks' AND constraint_type = 'FOREIGN KEY'\n\tORDER BY constraint_name;",
+      "querySha256": "188d4c27efce9989d9e7ac0a4fb33032b2f7cf9e4e7abfe3417228608bd4b031",
+      "expectedRows": [
+        [
+          {
+            "value": "typed_fk_tasks_owner_id_fkey"
+          },
+          {
+            "value": "FOREIGN KEY"
+          }
+        ],
+        [
+          {
+            "value": "typed_fk_tasks_parent_id_fkey"
+          },
+          {
+            "value": "FOREIGN KEY"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0050",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 50,
+      "scriptName": "CREATE TABLE OF rejects unsupported table-definition options",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0050-create-table-typed_unknown-of-typed_options",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0050-create-table-typed_unknown-of-typed_options",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42703",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TABLE typed_unknown OF typed_options (missing WITH OPTIONS NOT NULL);",
+      "querySha256": "aa0b5d620bf86a561aca054c8ac975ec49378a8ae7b8976177d19c42044b909b",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0051",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 51,
+      "scriptName": "CREATE TABLE OF rejects unsupported table-definition options",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0051-create-table-typed_unique_missing-of-typed_options",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0051-create-table-typed_unique_missing-of-typed_options",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42703",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TABLE typed_unique_missing OF typed_options (UNIQUE (missing));",
+      "querySha256": "57233a2402425e51f254f1844cc90d2122b09ffa7fb7bc0f046b457f65da331e",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0052",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 52,
+      "scriptName": "CREATE TABLE OF rejects unsupported table-definition options",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0052-create-table-typed_unique_duplicate-of-typed_options",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0052-create-table-typed_unique_duplicate-of-typed_options",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42701",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TABLE typed_unique_duplicate OF typed_options (UNIQUE (code, code));",
+      "querySha256": "b478065fd6074ddb5ef11f5d6afbcd62076cc5fcd07966ad4808d387b6b3099c",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0053",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 53,
+      "scriptName": "CREATE TABLE OF rejects unsupported table-definition options",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0053-create-table-typed_unique_include-of-typed_options",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0053-create-table-typed_unique_include-of-typed_options",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P07",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TABLE typed_unique_include OF typed_options (UNIQUE (code) INCLUDE (id));",
+      "querySha256": "bfc505810094a1f1e9f780fce59edd76cd553d4db74301c6abc948b4771b74b3",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0054",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 54,
+      "scriptName": "CREATE TABLE OF rejects unsupported table-definition options",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0054-create-table-typed_partitioned-of-typed_options",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0054-create-table-typed_partitioned-of-typed_options",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P07",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TABLE typed_partitioned OF typed_options PARTITION BY LIST (id);",
+      "querySha256": "5b36948ea963a345bd1b4a2104884552fa78d6b3fec6c56813bb7187a083710d",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0055",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 55,
+      "scriptName": "CREATE TABLE OF rejects unsupported table-definition options",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0055-create-table-typed_exclude-of-typed_options",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0055-create-table-typed_exclude-of-typed_options",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42704",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TABLE typed_exclude OF typed_options (EXCLUDE USING gist (id WITH =));",
+      "querySha256": "eefccb5477da198b54136758df5066d10904c50e82a8161f07dd5876201ac133",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType#0056",
+      "source": "testing/go/pg_class_reloftype_test.go:TestTypedTableFromCompositeType",
+      "ordinal": 56,
+      "scriptName": "CREATE TABLE OF rejects unsupported table-definition options",
+      "oracle": "postgres",
+      "postgresId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0056-create-temp-table-typed_temp_fk-of",
+      "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0056-create-temp-table-typed_temp_fk-of",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P16",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TEMP TABLE typed_temp_fk OF typed_options (CONSTRAINT typed_temp_fk_parent FOREIGN KEY (id) REFERENCES typed_options_parent(id));",
+      "querySha256": "2f1fe92340ade21c47b0b60225d6e015b39657156f987f58dfcd3042e8c05278",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

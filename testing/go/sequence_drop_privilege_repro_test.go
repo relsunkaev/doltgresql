@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestDropSequenceClearsSequencePrivilegesRepro reproduces an ACL persistence
@@ -35,10 +33,10 @@ func TestDropSequenceClearsSequencePrivilegesRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT nextval('drop_recreate_acl_seq');`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT nextval('drop_recreate_acl_seq');`,
+
 					Username: `drop_recreate_sequence_user`,
-					Password: `sequence`,
+					Password: `sequence`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-drop-privilege-repro-test-testdropsequenceclearssequenceprivilegesrepro-0001-select-nextval-drop_recreate_acl_seq"},
 				},
 				{
 					Query: `DROP SEQUENCE drop_recreate_acl_seq;`,
@@ -47,10 +45,10 @@ func TestDropSequenceClearsSequencePrivilegesRepro(t *testing.T) {
 					Query: `CREATE SEQUENCE drop_recreate_acl_seq;`,
 				},
 				{
-					Query:       `SELECT nextval('drop_recreate_acl_seq');`,
-					ExpectedErr: `permission denied`,
-					Username:    `drop_recreate_sequence_user`,
-					Password:    `sequence`,
+					Query: `SELECT nextval('drop_recreate_acl_seq');`,
+
+					Username: `drop_recreate_sequence_user`,
+					Password: `sequence`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-drop-privilege-repro-test-testdropsequenceclearssequenceprivilegesrepro-0002-select-nextval-drop_recreate_acl_seq", Compare: "sqlstate"},
 				},
 			},
 		},

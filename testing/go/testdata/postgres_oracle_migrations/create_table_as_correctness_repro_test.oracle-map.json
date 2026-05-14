@@ -1,0 +1,721 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map create_table_as_correctness_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/create_table_as_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsWithNoDataDoesNotEvaluateQuery#0001",
+      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsWithNoDataDoesNotEvaluateQuery",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLE AS WITH NO DATA does not evaluate query",
+      "oracle": "postgres",
+      "postgresId": "create-table-as-correctness-repro-test-testcreatetableaswithnodatadoesnotevaluatequery-0001-select-value-from-ctas_no_data_error",
+      "suggestedId": "create-table-as-correctness-repro-test-testcreatetableaswithnodatadoesnotevaluatequery-0001-select-value-from-ctas_no_data_error",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT value FROM ctas_no_data_error;",
+      "querySha256": "bc6f532d8cae327b2ef9dfa10088733f169d5d8411323b5a29d751103ca836d4",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsWithNoDataPreservesColumnSchema#0001",
+      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsWithNoDataPreservesColumnSchema",
+      "ordinal": 1,
+      "scriptName": "WITH NO DATA infers projection schema",
+      "oracle": "postgres",
+      "postgresId": "create-table-as-correctness-repro-test-testcreatetableaswithnodatapreservescolumnschema-0001-select-id-label-from-ctas_no_data_schema",
+      "suggestedId": "create-table-as-correctness-repro-test-testcreatetableaswithnodatapreservescolumnschema-0001-select-id-label-from-ctas_no_data_schema",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label FROM ctas_no_data_schema;",
+      "querySha256": "cbfaa2deb4e97ff7a84eef182cf887a803fcc3ace2c3a56cf1542ed31fbdd640",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "hello"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsWithNoDataPreservesColumnSchema#0002",
+      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsWithNoDataPreservesColumnSchema",
+      "ordinal": 2,
+      "scriptName": "WITH NO DATA infers projection schema",
+      "oracle": "postgres",
+      "postgresId": "create-table-as-correctness-repro-test-testcreatetableaswithnodatapreservescolumnschema-0002-select-missing_col-from-ctas_no_data_schema",
+      "suggestedId": "create-table-as-correctness-repro-test-testcreatetableaswithnodatapreservescolumnschema-0002-select-missing_col-from-ctas_no_data_schema",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42703",
+      "errorSeverity": "ERROR",
+      "query": "SELECT missing_col FROM ctas_no_data_schema;",
+      "querySha256": "ba1632661446fc0991a7361cf53671afb0c2e3a9b674e315fad4ffccdb46cbf8",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsWithNoDataAcceptsUnionSource#0001",
+      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsWithNoDataAcceptsUnionSource",
+      "ordinal": 1,
+      "scriptName": "WITH NO DATA accepts UNION source",
+      "oracle": "postgres",
+      "postgresId": "create-table-as-correctness-repro-test-testcreatetableaswithnodataacceptsunionsource-0001-select-value-from-ctas_no_data_union",
+      "suggestedId": "create-table-as-correctness-repro-test-testcreatetableaswithnodataacceptsunionsource-0001-select-value-from-ctas_no_data_union",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT value FROM ctas_no_data_union;",
+      "querySha256": "3eb2c4761e2baef12ef42128c64302af944479deabb51dbe1e7bf6d84475ed9b",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsWithDataClauseRepro#0001",
+      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsWithDataClauseRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLE AS WITH DATA evaluates query",
+      "oracle": "postgres",
+      "postgresId": "create-table-as-correctness-repro-test-testcreatetableaswithdataclauserepro-0001-select-value-from-ctas_with_data",
+      "suggestedId": "create-table-as-correctness-repro-test-testcreatetableaswithdataclauserepro-0001-select-value-from-ctas_with_data",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT value FROM ctas_with_data;",
+      "querySha256": "737ec845ba7e33fd0cfb1e9b8882ed8d33b8f54bd33cd335e14a906ebc0952f1",
+      "expectedRows": [
+        [
+          {
+            "value": "42"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsIfNotExistsDoesNotEvaluateQueryRepro#0001",
+      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsIfNotExistsDoesNotEvaluateQueryRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLE AS IF NOT EXISTS skips replacement query",
+      "oracle": "postgres",
+      "postgresId": "create-table-as-correctness-repro-test-testcreatetableasifnotexistsdoesnotevaluatequeryrepro-0001-select-value-from-ctas_if_not_exists_error",
+      "suggestedId": "create-table-as-correctness-repro-test-testcreatetableasifnotexistsdoesnotevaluatequeryrepro-0001-select-value-from-ctas_if_not_exists_error",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT value FROM ctas_if_not_exists_error;",
+      "querySha256": "93e24f6ef2f9d37d6c74f19eec677439650b5ff5bdcb47d3ac62210b14aaf934",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsDoesNotCopyDefaultsRepro#0001",
+      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsDoesNotCopyDefaultsRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLE AS does not copy defaults",
+      "oracle": "postgres",
+      "postgresId": "create-table-as-correctness-repro-test-testcreatetableasdoesnotcopydefaultsrepro-0001-select-id-label-from-ctas_default_copy",
+      "suggestedId": "create-table-as-correctness-repro-test-testcreatetableasdoesnotcopydefaultsrepro-0001-select-id-label-from-ctas_default_copy",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label FROM ctas_default_copy ORDER BY id;",
+      "querySha256": "b5fda541c5f68c4d07ca92d4f54504700fef18fb7a76a7f1541e89735c350d5a",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "source row"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsDoesNotCopyCheckConstraintsRepro#0001",
+      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsDoesNotCopyCheckConstraintsRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLE AS does not copy check constraints",
+      "oracle": "postgres",
+      "postgresId": "create-table-as-correctness-repro-test-testcreatetableasdoesnotcopycheckconstraintsrepro-0001-select-id-amount-from-ctas_check_copy",
+      "suggestedId": "create-table-as-correctness-repro-test-testcreatetableasdoesnotcopycheckconstraintsrepro-0001-select-id-amount-from-ctas_check_copy",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, amount FROM ctas_check_copy ORDER BY id;",
+      "querySha256": "d05c695a1d14af942e86a26204cf5d16b60e5c7d569c73f429bed8a2128adaca",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "10"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "-10"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsDoesNotCopyUniqueIndexesRepro#0001",
+      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsDoesNotCopyUniqueIndexesRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLE AS does not copy unique indexes",
+      "oracle": "postgres",
+      "postgresId": "create-table-as-correctness-repro-test-testcreatetableasdoesnotcopyuniqueindexesrepro-0001-select-id-code-from-ctas_unique_copy",
+      "suggestedId": "create-table-as-correctness-repro-test-testcreatetableasdoesnotcopyuniqueindexesrepro-0001-select-id-code-from-ctas_unique_copy",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, code FROM ctas_unique_copy ORDER BY id;",
+      "querySha256": "7980d905a5c3fb398cba59572fd9e5d09788e54092e2face877e547f72b01fdc",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "7"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsPreservesDomainColumnTypesGuard#0001",
+      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsPreservesDomainColumnTypesGuard",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLE AS preserves domain column types",
+      "oracle": "postgres",
+      "postgresId": "create-table-as-correctness-repro-test-testcreatetableaspreservesdomaincolumntypesguard-0001-insert-into-ctas_domain_copy-values-2",
+      "suggestedId": "create-table-as-correctness-repro-test-testcreatetableaspreservesdomaincolumntypesguard-0001-insert-into-ctas_domain_copy-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO ctas_domain_copy VALUES (2, -1);",
+      "querySha256": "f7ecd0ee7a8379a9057405e750c0632ae33583bd0e9cacee63ce13f367ff1223",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsPreservesDomainColumnTypesGuard#0002",
+      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsPreservesDomainColumnTypesGuard",
+      "ordinal": 2,
+      "scriptName": "CREATE TABLE AS preserves domain column types",
+      "oracle": "postgres",
+      "postgresId": "create-table-as-correctness-repro-test-testcreatetableaspreservesdomaincolumntypesguard-0002-select-id-amount-from-ctas_domain_copy",
+      "suggestedId": "create-table-as-correctness-repro-test-testcreatetableaspreservesdomaincolumntypesguard-0002-select-id-amount-from-ctas_domain_copy",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, amount\n\t\t\t\t\t\tFROM ctas_domain_copy\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "bdbbc40097391c294a230b60c5092d118226725ce43ad923024273bc733ed52f",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsTextDomainTypmodMaterializesCoercedValueRepro#0001",
+      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsTextDomainTypmodMaterializesCoercedValueRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLE AS text domain typmod materializes coerced value",
+      "oracle": "postgres",
+      "postgresId": "create-table-as-correctness-repro-test-testcreatetableastextdomaintypmodmaterializescoercedvaluerepro-0001-select-v-length-v-c",
+      "suggestedId": "create-table-as-correctness-repro-test-testcreatetableastextdomaintypmodmaterializescoercedvaluerepro-0001-select-v-length-v-c",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT v, length(v), c = 'ab '::CHARACTER(3), octet_length(c), pg_typeof(v)::text, pg_typeof(c)::text\n\t\t\t\t\t\tFROM ctas_text_domain_typmod_items;",
+      "querySha256": "626a6e4145422c0295a3259d1f603424da0b7f0e1d01c49a7420bbbc3019f7ac",
+      "expectedRows": [
+        [
+          {
+            "value": "abc"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "varchar3_ctas_domain"
+          },
+          {
+            "value": "char3_ctas_domain"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsTextDomainTypmodMaterializesCoercedValueRepro#0002",
+      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsTextDomainTypmodMaterializesCoercedValueRepro",
+      "ordinal": 2,
+      "scriptName": "CREATE TABLE AS text domain typmod materializes coerced value",
+      "oracle": "postgres",
+      "postgresId": "create-table-as-correctness-repro-test-testcreatetableastextdomaintypmodmaterializescoercedvaluerepro-0002-select-format_type-atttypid-atttypmod-from",
+      "suggestedId": "create-table-as-correctness-repro-test-testcreatetableastextdomaintypmodmaterializescoercedvaluerepro-0002-select-format_type-atttypid-atttypmod-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT format_type(atttypid, atttypmod)\n\t\t\t\t\t\tFROM pg_attribute\n\t\t\t\t\t\tWHERE attrelid = 'ctas_text_domain_typmod_items'::regclass\n\t\t\t\t\t\t\tAND attnum > 0\n\t\t\t\t\t\tORDER BY attnum;",
+      "querySha256": "0ee0264d00cd5a3ef134217e82ab237b2b4723089e273064bef29b2c0f5f0720",
+      "expectedRows": [
+        [
+          {
+            "value": "varchar3_ctas_domain"
+          }
+        ],
+        [
+          {
+            "value": "char3_ctas_domain"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsTimetzTypmodMaterializesRoundedValueRepro#0001",
+      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsTimetzTypmodMaterializesRoundedValueRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLE AS timetz typmod materializes rounded value",
+      "oracle": "postgres",
+      "postgresId": "create-table-as-correctness-repro-test-testcreatetableastimetztypmodmaterializesroundedvaluerepro-0001-select-tz::text-from-ctas_timetz_typmod_items",
+      "suggestedId": "create-table-as-correctness-repro-test-testcreatetableastimetztypmodmaterializesroundedvaluerepro-0001-select-tz::text-from-ctas_timetz_typmod_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT tz::text\n\t\t\t\t\t\tFROM ctas_timetz_typmod_items;",
+      "querySha256": "866a7e88dcb8b32374015db8723bc6b76b1c3250dca36a49066baf4ede4ded02",
+      "expectedRows": [
+        [
+          {
+            "value": "21:43:57+00"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsTimetzTypmodMaterializesRoundedValueRepro#0002",
+      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsTimetzTypmodMaterializesRoundedValueRepro",
+      "ordinal": 2,
+      "scriptName": "CREATE TABLE AS timetz typmod materializes rounded value",
+      "oracle": "postgres",
+      "postgresId": "create-table-as-correctness-repro-test-testcreatetableastimetztypmodmaterializesroundedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "suggestedId": "create-table-as-correctness-repro-test-testcreatetableastimetztypmodmaterializesroundedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT format_type(a.atttypid, a.atttypmod)\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute a\n\t\t\t\t\t\tWHERE a.attrelid = 'ctas_timetz_typmod_items'::regclass\n\t\t\t\t\t\t\tAND a.attname = 'tz';",
+      "querySha256": "695c6e939d3b7384ef83143e7001cf21662b5a6969305e9980666503e6bc381a",
+      "expectedRows": [
+        [
+          {
+            "value": "time(0) with time zone"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsTimeTypmodMaterializesRoundedValueGuard#0001",
+      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsTimeTypmodMaterializesRoundedValueGuard",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLE AS time typmod materializes rounded value",
+      "oracle": "postgres",
+      "postgresId": "create-table-as-correctness-repro-test-testcreatetableastimetypmodmaterializesroundedvalueguard-0001-select-t::text-from-ctas_time_typmod_items",
+      "suggestedId": "create-table-as-correctness-repro-test-testcreatetableastimetypmodmaterializesroundedvalueguard-0001-select-t::text-from-ctas_time_typmod_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT t::text\n\t\t\t\t\t\tFROM ctas_time_typmod_items;",
+      "querySha256": "4c4e71f85e96826357d64f1d17d374a0bbd876fd4b3178397209d5f5bd3a2abf",
+      "expectedRows": [
+        [
+          {
+            "value": "21:43:57"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsTimeTypmodMaterializesRoundedValueGuard#0002",
+      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsTimeTypmodMaterializesRoundedValueGuard",
+      "ordinal": 2,
+      "scriptName": "CREATE TABLE AS time typmod materializes rounded value",
+      "oracle": "postgres",
+      "postgresId": "create-table-as-correctness-repro-test-testcreatetableastimetypmodmaterializesroundedvalueguard-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "suggestedId": "create-table-as-correctness-repro-test-testcreatetableastimetypmodmaterializesroundedvalueguard-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT format_type(a.atttypid, a.atttypmod)\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute a\n\t\t\t\t\t\tWHERE a.attrelid = 'ctas_time_typmod_items'::regclass\n\t\t\t\t\t\t\tAND a.attname = 't';",
+      "querySha256": "25003037f4cb719249fafc54817db219ec3be4ac794e0a3b7afd605a14ff4fc7",
+      "expectedRows": [
+        [
+          {
+            "value": "time(0) without time zone"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsNumericTypmodMaterializesRoundedValueGuard#0001",
+      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsNumericTypmodMaterializesRoundedValueGuard",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLE AS numeric typmod materializes rounded value",
+      "oracle": "postgres",
+      "postgresId": "create-table-as-correctness-repro-test-testcreatetableasnumerictypmodmaterializesroundedvalueguard-0001-select-amount::text-from-ctas_numeric_typmod_items",
+      "suggestedId": "create-table-as-correctness-repro-test-testcreatetableasnumerictypmodmaterializesroundedvalueguard-0001-select-amount::text-from-ctas_numeric_typmod_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT amount::text\n\t\t\t\t\t\tFROM ctas_numeric_typmod_items;",
+      "querySha256": "56b7ce52f07ad432ec616d3087dd5ab165da5adf351558c2e1b8027e7d3ab201",
+      "expectedRows": [
+        [
+          {
+            "value": "123.46"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsNumericTypmodMaterializesRoundedValueGuard#0002",
+      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsNumericTypmodMaterializesRoundedValueGuard",
+      "ordinal": 2,
+      "scriptName": "CREATE TABLE AS numeric typmod materializes rounded value",
+      "oracle": "postgres",
+      "postgresId": "create-table-as-correctness-repro-test-testcreatetableasnumerictypmodmaterializesroundedvalueguard-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "suggestedId": "create-table-as-correctness-repro-test-testcreatetableasnumerictypmodmaterializesroundedvalueguard-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT format_type(a.atttypid, a.atttypmod)\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute a\n\t\t\t\t\t\tWHERE a.attrelid = 'ctas_numeric_typmod_items'::regclass\n\t\t\t\t\t\t\tAND a.attname = 'amount';",
+      "querySha256": "5d27488a0d9f477601bfa4dcb48ab92fbc8a34fd4970721eab78596f0753e2be",
+      "expectedRows": [
+        [
+          {
+            "value": "numeric(5,2)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsTimestampTypmodMaterializesRoundedValueRepro#0001",
+      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsTimestampTypmodMaterializesRoundedValueRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLE AS timestamp typmod materializes rounded value",
+      "oracle": "postgres",
+      "postgresId": "create-table-as-correctness-repro-test-testcreatetableastimestamptypmodmaterializesroundedvaluerepro-0001-select-ts::text-from-ctas_timestamp_typmod_items",
+      "suggestedId": "create-table-as-correctness-repro-test-testcreatetableastimestamptypmodmaterializesroundedvaluerepro-0001-select-ts::text-from-ctas_timestamp_typmod_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ts::text\n\t\t\t\t\t\tFROM ctas_timestamp_typmod_items;",
+      "querySha256": "82ea090f5835de478d801f7205a6a08881c964bcee2a964965661dee1d0c933a",
+      "expectedRows": [
+        [
+          {
+            "value": "2021-09-15 21:43:57"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsTimestampTypmodMaterializesRoundedValueRepro#0002",
+      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsTimestampTypmodMaterializesRoundedValueRepro",
+      "ordinal": 2,
+      "scriptName": "CREATE TABLE AS timestamp typmod materializes rounded value",
+      "oracle": "postgres",
+      "postgresId": "create-table-as-correctness-repro-test-testcreatetableastimestamptypmodmaterializesroundedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "suggestedId": "create-table-as-correctness-repro-test-testcreatetableastimestamptypmodmaterializesroundedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT format_type(a.atttypid, a.atttypmod)\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute a\n\t\t\t\t\t\tWHERE a.attrelid = 'ctas_timestamp_typmod_items'::regclass\n\t\t\t\t\t\t\tAND a.attname = 'ts';",
+      "querySha256": "71df486adff591d5be75bcffa6f1093050455868c8bed13b6758e6b1003e4279",
+      "expectedRows": [
+        [
+          {
+            "value": "timestamp(0) without time zone"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsTimestamptzTypmodMaterializesRoundedValueRepro#0001",
+      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsTimestamptzTypmodMaterializesRoundedValueRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLE AS timestamptz typmod materializes rounded value",
+      "oracle": "postgres",
+      "postgresId": "create-table-as-correctness-repro-test-testcreatetableastimestamptztypmodmaterializesroundedvaluerepro-0001-select-ts::text-from-ctas_timestamptz_typmod_items",
+      "suggestedId": "create-table-as-correctness-repro-test-testcreatetableastimestamptztypmodmaterializesroundedvaluerepro-0001-select-ts::text-from-ctas_timestamptz_typmod_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ts::text\n\t\t\t\t\t\tFROM ctas_timestamptz_typmod_items;",
+      "querySha256": "4a6f56d0bcec3f4aaad53c65b6fb533475fa4f96e2f00e13c18a9131d320e1f4",
+      "expectedRows": [
+        [
+          {
+            "value": "2021-09-15 21:43:57+00"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsTimestamptzTypmodMaterializesRoundedValueRepro#0002",
+      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsTimestamptzTypmodMaterializesRoundedValueRepro",
+      "ordinal": 2,
+      "scriptName": "CREATE TABLE AS timestamptz typmod materializes rounded value",
+      "oracle": "postgres",
+      "postgresId": "create-table-as-correctness-repro-test-testcreatetableastimestamptztypmodmaterializesroundedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "suggestedId": "create-table-as-correctness-repro-test-testcreatetableastimestamptztypmodmaterializesroundedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT format_type(a.atttypid, a.atttypmod)\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute a\n\t\t\t\t\t\tWHERE a.attrelid = 'ctas_timestamptz_typmod_items'::regclass\n\t\t\t\t\t\t\tAND a.attname = 'ts';",
+      "querySha256": "bf7f26b3e93e555429a90744c023e0aeee826e9f561da3dae88785b2aa848877",
+      "expectedRows": [
+        [
+          {
+            "value": "timestamp(0) with time zone"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsIntervalTypmodMaterializesRestrictedValueRepro#0001",
+      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsIntervalTypmodMaterializesRestrictedValueRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLE AS interval typmod materializes restricted value",
+      "oracle": "postgres",
+      "postgresId": "create-table-as-correctness-repro-test-testcreatetableasintervaltypmodmaterializesrestrictedvaluerepro-0001-select-ds::text-from-ctas_interval_typmod_items",
+      "suggestedId": "create-table-as-correctness-repro-test-testcreatetableasintervaltypmodmaterializesrestrictedvaluerepro-0001-select-ds::text-from-ctas_interval_typmod_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ds::text\n\t\t\t\t\t\tFROM ctas_interval_typmod_items;",
+      "querySha256": "0dc9dd14e3b851b02a182ce35382912b307e3b347d349c680bb1c9be53a0ef74",
+      "expectedRows": [
+        [
+          {
+            "value": "3 days 04:05:07"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsIntervalTypmodMaterializesRestrictedValueRepro#0002",
+      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsIntervalTypmodMaterializesRestrictedValueRepro",
+      "ordinal": 2,
+      "scriptName": "CREATE TABLE AS interval typmod materializes restricted value",
+      "oracle": "postgres",
+      "postgresId": "create-table-as-correctness-repro-test-testcreatetableasintervaltypmodmaterializesrestrictedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "suggestedId": "create-table-as-correctness-repro-test-testcreatetableasintervaltypmodmaterializesrestrictedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT format_type(a.atttypid, a.atttypmod)\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute a\n\t\t\t\t\t\tWHERE a.attrelid = 'ctas_interval_typmod_items'::regclass\n\t\t\t\t\t\t\tAND a.attname = 'ds';",
+      "querySha256": "30abe8d7ae42ba8cbd267523fa6fe33fb7aebb9d4a45832ed26d593df19b169b",
+      "expectedRows": [
+        [
+          {
+            "value": "interval day to second(0)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsVarcharTypmodMaterializesTruncatedValueGuard#0001",
+      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsVarcharTypmodMaterializesTruncatedValueGuard",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLE AS varchar typmod materializes truncated value",
+      "oracle": "postgres",
+      "postgresId": "create-table-as-correctness-repro-test-testcreatetableasvarchartypmodmaterializestruncatedvalueguard-0001-select-label-from-ctas_varchar_typmod_items",
+      "suggestedId": "create-table-as-correctness-repro-test-testcreatetableasvarchartypmodmaterializestruncatedvalueguard-0001-select-label-from-ctas_varchar_typmod_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT label\n\t\t\t\t\t\tFROM ctas_varchar_typmod_items;",
+      "querySha256": "02d40f698c331145a0cf04c901a6e7b5de18f90adc5d72326ab77fd8b40dda79",
+      "expectedRows": [
+        [
+          {
+            "value": "abc"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsVarcharTypmodMaterializesTruncatedValueGuard#0002",
+      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsVarcharTypmodMaterializesTruncatedValueGuard",
+      "ordinal": 2,
+      "scriptName": "CREATE TABLE AS varchar typmod materializes truncated value",
+      "oracle": "postgres",
+      "postgresId": "create-table-as-correctness-repro-test-testcreatetableasvarchartypmodmaterializestruncatedvalueguard-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "suggestedId": "create-table-as-correctness-repro-test-testcreatetableasvarchartypmodmaterializestruncatedvalueguard-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT format_type(a.atttypid, a.atttypmod)\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute a\n\t\t\t\t\t\tWHERE a.attrelid = 'ctas_varchar_typmod_items'::regclass\n\t\t\t\t\t\t\tAND a.attname = 'label';",
+      "querySha256": "76f41ec59bef679832033e68e34de82aa552bf4aeca0ecfd437bf8b223d33bf7",
+      "expectedRows": [
+        [
+          {
+            "value": "character varying(3)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsCharacterTypmodMaterializesPaddedValueRepro#0001",
+      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsCharacterTypmodMaterializesPaddedValueRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLE AS character typmod materializes padded value",
+      "oracle": "postgres",
+      "postgresId": "create-table-as-correctness-repro-test-testcreatetableascharactertypmodmaterializespaddedvaluerepro-0001-select-octet_length-label-from-ctas_character_typmod_items",
+      "suggestedId": "create-table-as-correctness-repro-test-testcreatetableascharactertypmodmaterializespaddedvaluerepro-0001-select-octet_length-label-from-ctas_character_typmod_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT octet_length(label)\n\t\t\t\t\t\tFROM ctas_character_typmod_items;",
+      "querySha256": "11b977de68269e5d20c8b82d0ae9c6018644fdb35075bb370a7b41a208e54887",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsCharacterTypmodMaterializesPaddedValueRepro#0002",
+      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsCharacterTypmodMaterializesPaddedValueRepro",
+      "ordinal": 2,
+      "scriptName": "CREATE TABLE AS character typmod materializes padded value",
+      "oracle": "postgres",
+      "postgresId": "create-table-as-correctness-repro-test-testcreatetableascharactertypmodmaterializespaddedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "suggestedId": "create-table-as-correctness-repro-test-testcreatetableascharactertypmodmaterializespaddedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT format_type(a.atttypid, a.atttypmod)\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute a\n\t\t\t\t\t\tWHERE a.attrelid = 'ctas_character_typmod_items'::regclass\n\t\t\t\t\t\t\tAND a.attname = 'label';",
+      "querySha256": "c4a1a2318323905fe49166d4d281d0d05fd6981541a4ce5d5f4d4aa0db2a7ac3",
+      "expectedRows": [
+        [
+          {
+            "value": "character(3)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsExplicitColumnNamesRepro#0001",
+      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsExplicitColumnNamesRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLE AS explicit column names rename output",
+      "oracle": "internal",
+      "suggestedId": "create-table-as-correctness-repro-test-testcreatetableasexplicitcolumnnamesrepro-0001-select-column_name-from-information_schema.columns-where",
+      "expectedKind": "rows",
+      "query": "SELECT column_name\n\t\t\t\t\t\tFROM information_schema.columns\n\t\t\t\t\t\tWHERE table_schema = 'public'\n\t\t\t\t\t\t\tAND table_name = 'ctas_explicit_names'\n\t\t\t\t\t\tORDER BY ordinal_position;",
+      "querySha256": "769f6942ba821179e2a8a043b9bb2d316c8eb3b888958d79ea11ae6c0c0764b6",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsExplicitColumnNamesRepro#0002",
+      "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsExplicitColumnNamesRepro",
+      "ordinal": 2,
+      "scriptName": "CREATE TABLE AS explicit column names rename output",
+      "oracle": "internal",
+      "suggestedId": "create-table-as-correctness-repro-test-testcreatetableasexplicitcolumnnamesrepro-0002-select-new_id-new_label-from-ctas_explicit_names",
+      "expectedKind": "rows",
+      "query": "SELECT new_id, new_label FROM ctas_explicit_names;",
+      "querySha256": "5841d0bc0759d27eab583741595fe5da445da28cba14aa4075e772485f0ba655",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    }
+  ]
+}

@@ -33,17 +33,18 @@ func TestDropFunctionUsedByColumnDefaultRequiresCascadeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP FUNCTION default_dependency_value();`,
-					ExpectedErr: `because other objects depend on it`,
+					Query: `DROP FUNCTION default_dependency_value();`, PostgresOracle: ScriptTestPostgresOracle{ID: "function-dependency-repro-test-testdropfunctionusedbycolumndefaultrequirescascaderepro-0001-drop-function-default_dependency_value",
+
+					// TestDropFunctionUsedByViewRequiresCascadeRepro reproduces a dependency bug:
+					// PostgreSQL rejects dropping a function referenced by a view unless CASCADE is
+					// requested.
+					Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropFunctionUsedByViewRequiresCascadeRepro reproduces a dependency bug:
-// PostgreSQL rejects dropping a function referenced by a view unless CASCADE is
-// requested.
 func TestDropFunctionUsedByViewRequiresCascadeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -58,17 +59,18 @@ func TestDropFunctionUsedByViewRequiresCascadeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP FUNCTION view_dependency_value(INT);`,
-					ExpectedErr: `because other objects depend on it`,
+					Query: `DROP FUNCTION view_dependency_value(INT);`, PostgresOracle: ScriptTestPostgresOracle{ID: "function-dependency-repro-test-testdropfunctionusedbyviewrequirescascaderepro-0001-drop-function-view_dependency_value-int",
+
+					// TestDropFunctionUsedByMaterializedViewRequiresCascadeRepro reproduces a
+					// dependency bug: PostgreSQL rejects dropping a function referenced by a
+					// materialized view unless CASCADE is requested.
+					Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropFunctionUsedByMaterializedViewRequiresCascadeRepro reproduces a
-// dependency bug: PostgreSQL rejects dropping a function referenced by a
-// materialized view unless CASCADE is requested.
 func TestDropFunctionUsedByMaterializedViewRequiresCascadeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -84,17 +86,18 @@ func TestDropFunctionUsedByMaterializedViewRequiresCascadeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP FUNCTION matview_dependency_value(INT);`,
-					ExpectedErr: `because other objects depend on it`,
+					Query: `DROP FUNCTION matview_dependency_value(INT);`, PostgresOracle: ScriptTestPostgresOracle{ID: "function-dependency-repro-test-testdropfunctionusedbymaterializedviewrequirescascaderepro-0001-drop-function-matview_dependency_value-int",
+
+					// TestDropFunctionUsedByTriggerRequiresCascadeRepro reproduces a dependency
+					// bug: PostgreSQL rejects dropping a trigger function while a trigger still
+					// depends on it unless CASCADE is requested.
+					Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropFunctionUsedByTriggerRequiresCascadeRepro reproduces a dependency
-// bug: PostgreSQL rejects dropping a trigger function while a trigger still
-// depends on it unless CASCADE is requested.
 func TestDropFunctionUsedByTriggerRequiresCascadeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -113,17 +116,18 @@ func TestDropFunctionUsedByTriggerRequiresCascadeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP FUNCTION trigger_dependency_value();`,
-					ExpectedErr: `because other objects depend on it`,
+					Query: `DROP FUNCTION trigger_dependency_value();`, PostgresOracle: ScriptTestPostgresOracle{ID: "function-dependency-repro-test-testdropfunctionusedbytriggerrequirescascaderepro-0001-drop-function-trigger_dependency_value",
+
+					// TestDropFunctionUsedByGeneratedColumnRequiresCascadeRepro reproduces a
+					// dependency bug: PostgreSQL rejects dropping a function referenced by a stored
+					// generated column unless CASCADE is requested.
+					Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropFunctionUsedByGeneratedColumnRequiresCascadeRepro reproduces a
-// dependency bug: PostgreSQL rejects dropping a function referenced by a stored
-// generated column unless CASCADE is requested.
 func TestDropFunctionUsedByGeneratedColumnRequiresCascadeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -139,17 +143,18 @@ func TestDropFunctionUsedByGeneratedColumnRequiresCascadeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP FUNCTION generated_dependency_value(INT);`,
-					ExpectedErr: `because other objects depend on it`,
+					Query: `DROP FUNCTION generated_dependency_value(INT);`, PostgresOracle: ScriptTestPostgresOracle{ID: "function-dependency-repro-test-testdropfunctionusedbygeneratedcolumnrequirescascaderepro-0001-drop-function-generated_dependency_value-int",
+
+					// TestDropFunctionUsedByExpressionIndexRequiresCascadeRepro reproduces a
+					// dependency bug: PostgreSQL rejects dropping a function referenced by an
+					// expression index unless CASCADE is requested.
+					Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropFunctionUsedByExpressionIndexRequiresCascadeRepro reproduces a
-// dependency bug: PostgreSQL rejects dropping a function referenced by an
-// expression index unless CASCADE is requested.
 func TestDropFunctionUsedByExpressionIndexRequiresCascadeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -168,8 +173,7 @@ func TestDropFunctionUsedByExpressionIndexRequiresCascadeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP FUNCTION expression_index_dependency_value(INT);`,
-					ExpectedErr: `because other objects depend on it`,
+					Query: `DROP FUNCTION expression_index_dependency_value(INT);`, PostgresOracle: ScriptTestPostgresOracle{ID: "function-dependency-repro-test-testdropfunctionusedbyexpressionindexrequirescascaderepro-0001-drop-function-expression_index_dependency_value-int", Compare: "sqlstate"},
 				},
 			},
 		},

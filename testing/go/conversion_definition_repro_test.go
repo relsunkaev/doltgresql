@@ -58,11 +58,11 @@ func TestCreateConversionRequiresSchemaCreatePrivilegeRepro(t *testing.T) {
 						FROM iso8859_1_to_utf8;`,
 
 					Username: `conversion_creator`,
-					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{ID: "conversion-definition-repro-test-testcreateconversionrequiresschemacreateprivilegerepro-0001-create-conversion-unauthorized_latin1_to_utf8-for-latin1", Compare: "sqlstate"},
 
-						// TestDropConversionRequiresOwnershipRepro reproduces a security bug:
-						// PostgreSQL requires conversion ownership to drop a conversion.
-						ID: "conversion-definition-repro-test-testcreateconversionrequiresschemacreateprivilegerepro-0001-create-conversion-unauthorized_latin1_to_utf8-for-latin1", Compare: "sqlstate"},
+					// TestDropConversionRequiresOwnershipRepro reproduces a security bug:
+					// PostgreSQL requires conversion ownership to drop a conversion.
+
 				},
 			},
 		},

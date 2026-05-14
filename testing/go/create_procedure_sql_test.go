@@ -48,8 +48,7 @@ func TestSqlProcedureInsertReturningExecutesRepro(t *testing.T) {
 				{
 					Query: `SELECT label
 						FROM sql_proc_returning_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"first"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-sql-test-testsqlprocedureinsertreturningexecutesrepro-0001-select-label-from-sql_proc_returning_items-order"},
 				},
 			},
 		},
@@ -80,8 +79,7 @@ func TestSqlProcedureBeginAtomicBodyRepro(t *testing.T) {
 					Query: `CALL sql_proc_atomic_insert(1, 'first');`,
 				},
 				{
-					Query:    `SELECT id, label FROM sql_proc_atomic_items;`,
-					Expected: []sql.Row{{1, "first"}},
+					Query: `SELECT id, label FROM sql_proc_atomic_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-sql-test-testsqlprocedurebeginatomicbodyrepro-0001-select-id-label-from-sql_proc_atomic_items"},
 				},
 			},
 		},
@@ -174,24 +172,19 @@ $$;`,
 							AS $$
 								INSERT INTO cp_test VALUES(a, b);
 								INSERT INTO cp_test VALUES(c, b);
-							$$;`,
-					Expected: []sql.Row{},
+							$$;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-sql-test-testcreateprocedurelanguagesql-0006-create-or-replace-procedure-ptest5"},
 				},
 				{
-					Query:    `CALL ptest5(10, 'Hello', 20);`,
-					Expected: []sql.Row{},
+					Query: `CALL ptest5(10, 'Hello', 20);`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-sql-test-testcreateprocedurelanguagesql-0007-call-ptest5-10-hello-20"},
 				},
 				{
-					Query:    `SELECT * FROM cp_test`,
-					Expected: []sql.Row{{10, "Hello"}, {20, "Hello"}},
+					Query: `SELECT * FROM cp_test`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-sql-test-testcreateprocedurelanguagesql-0008-select-*-from-cp_test"},
 				},
 				{
-					Query:    `CALL ptest5(50, 'Bye');`,
-					Expected: []sql.Row{},
+					Query: `CALL ptest5(50, 'Bye');`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-sql-test-testcreateprocedurelanguagesql-0009-call-ptest5-50-bye"},
 				},
 				{
-					Query:    `SELECT * FROM cp_test`,
-					Expected: []sql.Row{{10, "Hello"}, {20, "Hello"}, {50, "Bye"}, {100, "Bye"}},
+					Query: `SELECT * FROM cp_test`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-sql-test-testcreateprocedurelanguagesql-0010-select-*-from-cp_test"},
 				},
 			},
 		},

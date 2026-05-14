@@ -1,0 +1,720 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map subqueries_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/subqueries_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/subqueries_test.go:TestSubqueries#0001",
+      "source": "testing/go/subqueries_test.go:TestSubqueries",
+      "ordinal": 1,
+      "scriptName": "Subselect",
+      "oracle": "postgres",
+      "postgresId": "subqueries-test-testsubqueries-0001-select-*-from-test-where",
+      "suggestedId": "subqueries-test-testsubqueries-0001-select-*-from-test-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test WHERE id = (SELECT 2);",
+      "querySha256": "2e9dde100e06f2e6772e52394c2b6b59fda26ab58592036ecbb35877ba102419",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subqueries_test.go:TestSubqueries#0002",
+      "source": "testing/go/subqueries_test.go:TestSubqueries",
+      "ordinal": 2,
+      "scriptName": "Subselect",
+      "oracle": "postgres",
+      "postgresId": "subqueries-test-testsubqueries-0002-select-*-select-id-from",
+      "suggestedId": "subqueries-test-testsubqueries-0002-select-*-select-id-from",
+      "compare": "sqlstate",
+      "expectedKind": "rows",
+      "sqlstate": "42702",
+      "errorSeverity": "ERROR",
+      "query": "SELECT *, (SELECT id from test where id = 2) FROM test order by id;",
+      "querySha256": "e0e25d8f7e1dfcba50c8bb27c82a302d4d4909ca5d78248af1ff68eac8a7ea06",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subqueries_test.go:TestSubqueries#0003",
+      "source": "testing/go/subqueries_test.go:TestSubqueries",
+      "ordinal": 3,
+      "scriptName": "Subselect",
+      "oracle": "internal",
+      "suggestedId": "subqueries-test-testsubqueries-0003-select-*-select-id-from",
+      "expectedKind": "rows",
+      "query": "SELECT *, (SELECT id from test t2 where t2.id = test.id) FROM test order by id;",
+      "querySha256": "d937169a0bc51c879ab726cb9080158dbee2fc2a3440e7804ecfa2258c90320c",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subqueries_test.go:TestSubqueries#0004",
+      "source": "testing/go/subqueries_test.go:TestSubqueries",
+      "ordinal": 4,
+      "scriptName": "IN",
+      "oracle": "postgres",
+      "postgresId": "subqueries-test-testsubqueries-0004-select-*-from-test-where",
+      "suggestedId": "subqueries-test-testsubqueries-0004-select-*-from-test-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test WHERE id IN (SELECT * FROM test WHERE id = 2);",
+      "querySha256": "cf1cb941af5fd17c98bfcb623543944fe7e49b70c192caf8ead1441f908e672a",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subqueries_test.go:TestSubqueries#0005",
+      "source": "testing/go/subqueries_test.go:TestSubqueries",
+      "ordinal": 5,
+      "scriptName": "IN",
+      "oracle": "postgres",
+      "postgresId": "subqueries-test-testsubqueries-0005-select-*-from-test-where",
+      "suggestedId": "subqueries-test-testsubqueries-0005-select-*-from-test-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test WHERE id IN (SELECT id FROM test WHERE id = 3);",
+      "querySha256": "c97f8275cbd833e729a7963a20d4487dcded8a887190a913b440a0ec5261ce9a",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subqueries_test.go:TestSubqueries#0006",
+      "source": "testing/go/subqueries_test.go:TestSubqueries",
+      "ordinal": 6,
+      "scriptName": "IN",
+      "oracle": "postgres",
+      "postgresId": "subqueries-test-testsubqueries-0006-select-*-from-test-where",
+      "suggestedId": "subqueries-test-testsubqueries-0006-select-*-from-test-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test WHERE id IN (SELECT * FROM test WHERE id > 0);",
+      "querySha256": "b1db78b328bcc732c2d52a432b19c3ea8037029fd979107ac12921f7b718b517",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subqueries_test.go:TestSubqueries#0007",
+      "source": "testing/go/subqueries_test.go:TestSubqueries",
+      "ordinal": 7,
+      "scriptName": "IN",
+      "oracle": "postgres",
+      "postgresId": "subqueries-test-testsubqueries-0007-select-*-from-test2-where",
+      "suggestedId": "subqueries-test-testsubqueries-0007-select-*-from-test2-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test2 WHERE test_id IN (SELECT * FROM test WHERE id = 2);",
+      "querySha256": "2535617682065f50cd324c7f1689317001d821b5a06739542d86a3c6ec82d979",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "baz"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subqueries_test.go:TestSubqueries#0008",
+      "source": "testing/go/subqueries_test.go:TestSubqueries",
+      "ordinal": 8,
+      "scriptName": "IN",
+      "oracle": "postgres",
+      "postgresId": "subqueries-test-testsubqueries-0008-select-*-from-test2-where",
+      "suggestedId": "subqueries-test-testsubqueries-0008-select-*-from-test2-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test2 WHERE test_id IN (SELECT * FROM test WHERE id > 0);",
+      "querySha256": "4a01a8978d5ff05a35a29862b0f09aee78189fedc28ed7030da17c3684520796",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "foo"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "baz"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subqueries_test.go:TestSubqueries#0009",
+      "source": "testing/go/subqueries_test.go:TestSubqueries",
+      "ordinal": 9,
+      "scriptName": "IN",
+      "oracle": "postgres",
+      "postgresId": "subqueries-test-testsubqueries-0009-select-id-from-test2-where",
+      "suggestedId": "subqueries-test-testsubqueries-0009-select-id-from-test2-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM test2 WHERE (2, 10) IN (SELECT id, test_id FROM test2 WHERE id > 0);",
+      "querySha256": "14accf790d63aec39973457182b7534b5643ef8cc799ae63d5f84cef3a7f5a9e",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subqueries_test.go:TestSubqueries#0010",
+      "source": "testing/go/subqueries_test.go:TestSubqueries",
+      "ordinal": 10,
+      "scriptName": "IN",
+      "oracle": "postgres",
+      "postgresId": "subqueries-test-testsubqueries-0010-select-id-from-test2-where",
+      "suggestedId": "subqueries-test-testsubqueries-0010-select-id-from-test2-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM test2 WHERE (id, test_id) IN (SELECT id, test_id FROM test2 WHERE id > 0);",
+      "querySha256": "f1607abe7670da1fd7b1850e5f32940fd175dbf5aff94a385c283480cd60add4",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subqueries_test.go:TestSubqueries#0011",
+      "source": "testing/go/subqueries_test.go:TestSubqueries",
+      "ordinal": 11,
+      "scriptName": "subquery equality",
+      "oracle": "postgres",
+      "postgresId": "subqueries-test-testsubqueries-0011-select-*-from-test-where",
+      "suggestedId": "subqueries-test-testsubqueries-0011-select-*-from-test-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test WHERE id = (SELECT id from test where id = 2);",
+      "querySha256": "abdb10b7c551b046b2dd34c5ad6e6cfb2e8a004f5cb39b24e3596f4b3d7e9eae",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "b"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subqueries_test.go:TestSubqueries#0012",
+      "source": "testing/go/subqueries_test.go:TestSubqueries",
+      "ordinal": 12,
+      "scriptName": "subquery equality",
+      "oracle": "postgres",
+      "postgresId": "subqueries-test-testsubqueries-0012-select-select-id-from-test",
+      "suggestedId": "subqueries-test-testsubqueries-0012-select-select-id-from-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT (SELECT id from test where id = 2) = (SELECT id from test where id = 2);",
+      "querySha256": "798cbd4d83d0ff81032cb69a4a3035a35f3e96a667a3bfc16e9ba37928cdbdc0",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subqueries_test.go:TestSubqueries#0013",
+      "source": "testing/go/subqueries_test.go:TestSubqueries",
+      "ordinal": 13,
+      "scriptName": "subquery equality",
+      "oracle": "postgres",
+      "postgresId": "subqueries-test-testsubqueries-0013-select-select-c-from-test",
+      "suggestedId": "subqueries-test-testsubqueries-0013-select-select-c-from-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT (SELECT c from test where id = 2) = (SELECT c from test where id = 3);",
+      "querySha256": "4073c2eba20bc0ab543c3c31ca18556d3294e64a7a84d1226e0eddfb1a4bcdad",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subqueries_test.go:TestSubqueries#0014",
+      "source": "testing/go/subqueries_test.go:TestSubqueries",
+      "ordinal": 14,
+      "scriptName": "subquery equality",
+      "oracle": "postgres",
+      "postgresId": "subqueries-test-testsubqueries-0014-select-select-c-from-test",
+      "suggestedId": "subqueries-test-testsubqueries-0014-select-select-c-from-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT (SELECT c from test where id = 1) = (SELECT c from test where id = 2);",
+      "querySha256": "9794a2cfc6a85797f06f1420528bddc1c193e1b8736fac4ebd4edf00330a0c31",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subqueries_test.go:TestSubqueries#0015",
+      "source": "testing/go/subqueries_test.go:TestSubqueries",
+      "ordinal": 15,
+      "scriptName": "array flatten",
+      "oracle": "postgres",
+      "postgresId": "subqueries-test-testsubqueries-0015-select-array-select-id-from",
+      "suggestedId": "subqueries-test-testsubqueries-0015-select-array-select-id-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ARRAY(SELECT id FROM test order by 1);",
+      "querySha256": "3a6d1045ffa22f926e147058bb5e691295986804f53cfef296fa9b16cb122daa",
+      "expectedRows": [
+        [
+          {
+            "value": "{1,2,3}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subqueries_test.go:TestSubqueries#0016",
+      "source": "testing/go/subqueries_test.go:TestSubqueries",
+      "ordinal": 16,
+      "scriptName": "array flatten",
+      "oracle": "postgres",
+      "postgresId": "subqueries-test-testsubqueries-0016-select-array-select-c-from",
+      "suggestedId": "subqueries-test-testsubqueries-0016-select-array-select-c-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ARRAY(SELECT c FROM test order by id limit 1);",
+      "querySha256": "19a5b9945505daebf5344aed2d1ee333b7d597647c8ed8f6c862ada6b5b89907",
+      "expectedRows": [
+        [
+          {
+            "value": "{a}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subqueries_test.go:TestSubqueries#0017",
+      "source": "testing/go/subqueries_test.go:TestSubqueries",
+      "ordinal": 17,
+      "scriptName": "array flatten",
+      "oracle": "postgres",
+      "postgresId": "subqueries-test-testsubqueries-0017-select-array-select-c-from",
+      "suggestedId": "subqueries-test-testsubqueries-0017-select-array-select-c-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ARRAY(SELECT c FROM test order by id desc);",
+      "querySha256": "2d7e7bec5a8e6041438788ed09819d0c8b691db95b26b041cbaee74fb2dd5a9a",
+      "expectedRows": [
+        [
+          {
+            "value": "{c,b,a}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subqueries_test.go:TestSubqueries#0018",
+      "source": "testing/go/subqueries_test.go:TestSubqueries",
+      "ordinal": 18,
+      "scriptName": "array flatten",
+      "oracle": "postgres",
+      "postgresId": "subqueries-test-testsubqueries-0018-select-array-select-id-id",
+      "suggestedId": "subqueries-test-testsubqueries-0018-select-array-select-id-id",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "SELECT ARRAY(SELECT id, id FROM test order by 1);",
+      "querySha256": "91e455b3868a8c80ac7b8cf2eec57b8ddcf4bfaa3baacc47eff6c1dac4e5e57c",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subqueries_test.go:TestSubqueries#0019",
+      "source": "testing/go/subqueries_test.go:TestSubqueries",
+      "ordinal": 19,
+      "scriptName": "array flatten",
+      "oracle": "postgres",
+      "postgresId": "subqueries-test-testsubqueries-0019-select-array_to_string-array-select-id",
+      "suggestedId": "subqueries-test-testsubqueries-0019-select-array_to_string-array-select-id",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT array_to_string(ARRAY(SELECT id FROM test order by 1), ',')",
+      "querySha256": "a2f56d3aaa46f9ac8e5e84c6468c496668a9cca913f537af413397f91a61877e",
+      "expectedRows": [
+        [
+          {
+            "value": "1,2,3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subqueries_test.go:TestSubqueries#0020",
+      "source": "testing/go/subqueries_test.go:TestSubqueries",
+      "ordinal": 20,
+      "scriptName": "array flatten",
+      "oracle": "postgres",
+      "postgresId": "subqueries-test-testsubqueries-0020-with-flattened-as-select-array",
+      "suggestedId": "subqueries-test-testsubqueries-0020-with-flattened-as-select-array",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "WITH flattened AS (SELECT ARRAY(SELECT id FROM test ORDER BY 1) AS ids)\nSELECT array_to_string(ids, ',') FROM flattened;",
+      "querySha256": "fa4580fd0afc97a392adc576fc67502c394cb365487261bd5d3cdaf00c2a2702",
+      "expectedRows": [
+        [
+          {
+            "value": "1,2,3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subqueries_test.go:TestSubqueryJoins#0001",
+      "source": "testing/go/subqueries_test.go:TestSubqueryJoins",
+      "ordinal": 1,
+      "scriptName": "subquery join",
+      "oracle": "postgres",
+      "postgresId": "subqueries-test-testsubqueryjoins-0001-select-s1.a-from-select-a",
+      "suggestedId": "subqueries-test-testsubqueryjoins-0001-select-s1.a-from-select-a",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT\ns1.a FROM (SELECT a from t1) s1\nINNER JOIN t2 q1\nON q1.b = s1.a\nORDER BY 1;",
+      "querySha256": "d51a93715b8da313fbdebbbc71a0be1f13308d9aa57e00793c9ae1d5a00aa124",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subqueries_test.go:TestSubqueryJoins#0002",
+      "source": "testing/go/subqueries_test.go:TestSubqueryJoins",
+      "ordinal": 2,
+      "scriptName": "subquery join with aliased column",
+      "oracle": "postgres",
+      "postgresId": "subqueries-test-testsubqueryjoins-0002-select-s1.c-from-select-a",
+      "suggestedId": "subqueries-test-testsubqueryjoins-0002-select-s1.c-from-select-a",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT\ns1.c FROM (SELECT a as c from t1) s1\nINNER JOIN t2 q1\nON q1.b = s1.c\nORDER BY 1;",
+      "querySha256": "46439298e3b736fe1b9d66d6001190cb8d5afee0bb4edf86bcb30d89b72e4911",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subqueries_test.go:TestSubqueryJoins#0003",
+      "source": "testing/go/subqueries_test.go:TestSubqueryJoins",
+      "ordinal": 3,
+      "scriptName": "subquery join with column renames",
+      "oracle": "postgres",
+      "postgresId": "subqueries-test-testsubqueryjoins-0003-select-s1.d-from-select-b",
+      "suggestedId": "subqueries-test-testsubqueryjoins-0003-select-s1.d-from-select-b",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT\ns1.d FROM (SELECT b as f, a as g from t1) s1(d,e)\nINNER JOIN t2 q1\nON q1.c = s1.e\nORDER BY 1;",
+      "querySha256": "2abf3298c8890915e2d4e1940b3bd5bc46f201f0e2c463a67f41b5c39eb78241",
+      "expectedRows": [
+        [
+          {
+            "value": "20"
+          }
+        ],
+        [
+          {
+            "value": "30"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subqueries_test.go:TestExistSubquery#0001",
+      "source": "testing/go/subqueries_test.go:TestExistSubquery",
+      "ordinal": 1,
+      "scriptName": "basic case",
+      "oracle": "postgres",
+      "postgresId": "subqueries-test-testexistsubquery-0001-select-*-from-test-where",
+      "suggestedId": "subqueries-test-testexistsubquery-0001-select-*-from-test-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test WHERE EXISTS (SELECT 123);",
+      "querySha256": "5b41f194b3622cf1675cd92b0a24109d5d9340f9c6b9d6e7d060e6ac100e084a",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subqueries_test.go:TestExistSubquery#0002",
+      "source": "testing/go/subqueries_test.go:TestExistSubquery",
+      "ordinal": 2,
+      "scriptName": "basic case",
+      "oracle": "postgres",
+      "postgresId": "subqueries-test-testexistsubquery-0002-select-*-from-test-where",
+      "suggestedId": "subqueries-test-testexistsubquery-0002-select-*-from-test-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test WHERE NOT EXISTS (SELECT 123);",
+      "querySha256": "b4235fcbdcd55fc5762af6c058efb545e7f8babc84443b019b591c9e0d03f647",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subqueries_test.go:TestExistSubquery#0003",
+      "source": "testing/go/subqueries_test.go:TestExistSubquery",
+      "ordinal": 3,
+      "scriptName": "basic case",
+      "oracle": "postgres",
+      "postgresId": "subqueries-test-testexistsubquery-0003-select-123-where-exists-select",
+      "suggestedId": "subqueries-test-testexistsubquery-0003-select-123-where-exists-select",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 123 WHERE EXISTS (SELECT * FROM test);",
+      "querySha256": "47a2baf348e2b99ba4be597617cfb41e38ce4bf0ad946a42f152a7917c9445d4",
+      "expectedRows": [
+        [
+          {
+            "value": "123"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subqueries_test.go:TestExistSubquery#0004",
+      "source": "testing/go/subqueries_test.go:TestExistSubquery",
+      "ordinal": 4,
+      "scriptName": "basic case",
+      "oracle": "postgres",
+      "postgresId": "subqueries-test-testexistsubquery-0004-select-123-where-exists-select",
+      "suggestedId": "subqueries-test-testexistsubquery-0004-select-123-where-exists-select",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 123 WHERE EXISTS (SELECT * FROM test WHERE id > 10);",
+      "querySha256": "a05bba6c4fefead6a56880622be58877db6cd06bc36e6ac06b4f277e6c85267a",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subqueries_test.go:TestExistSubquery#0005",
+      "source": "testing/go/subqueries_test.go:TestExistSubquery",
+      "ordinal": 5,
+      "scriptName": "basic case",
+      "oracle": "postgres",
+      "postgresId": "subqueries-test-testexistsubquery-0005-select-123-where-not-exists",
+      "suggestedId": "subqueries-test-testexistsubquery-0005-select-123-where-not-exists",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 123 WHERE NOT EXISTS (SELECT * FROM test);",
+      "querySha256": "f05f25a88d7878a31fd4f74ce69a31141151429c274795ff28de523d71e085b9",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subqueries_test.go:TestExistSubquery#0006",
+      "source": "testing/go/subqueries_test.go:TestExistSubquery",
+      "ordinal": 6,
+      "scriptName": "basic case",
+      "oracle": "postgres",
+      "postgresId": "subqueries-test-testexistsubquery-0006-select-123-where-not-exists",
+      "suggestedId": "subqueries-test-testexistsubquery-0006-select-123-where-not-exists",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 123 WHERE NOT EXISTS (SELECT * FROM test WHERE id > 10);",
+      "querySha256": "35b4404e52c1c74d3ad31605dea95494f7e802500d3f29032b72f003d39b9530",
+      "expectedRows": [
+        [
+          {
+            "value": "123"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

@@ -26,12 +26,10 @@ func TestDropFunction(t *testing.T) {
 			Name: "Function does not exist",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       "DROP FUNCTION doesnotexist;",
-					ExpectedErr: "does not exist",
+					Query: "DROP FUNCTION doesnotexist;", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-function-test-testdropfunction-0001-drop-function-doesnotexist", Compare: "sqlstate"},
 				},
 				{
-					Query:    "DROP FUNCTION IF EXISTS doesnotexist;",
-					Expected: []sql.Row{},
+					Query: "DROP FUNCTION IF EXISTS doesnotexist;", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-function-test-testdropfunction-0002-drop-function-if-exists-doesnotexist"},
 				},
 			},
 		},
@@ -47,24 +45,19 @@ $$ LANGUAGE plpgsql;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "SELECT func1(), func2(99);",
-					Expected: []sql.Row{{"func1", "func2(INT)"}},
+					Query: "SELECT func1(), func2(99);", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-function-test-testdropfunction-0003-select-func1-func2-99"},
 				},
 				{
-					Query:    "DROP FUNCTION func1;",
-					Expected: []sql.Row{},
+					Query: "DROP FUNCTION func1;", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-function-test-testdropfunction-0004-drop-function-func1"},
 				},
 				{
-					Query:    "DROP FUNCTION func2(INT);",
-					Expected: []sql.Row{},
+					Query: "DROP FUNCTION func2(INT);", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-function-test-testdropfunction-0005-drop-function-func2-int"},
 				},
 				{
-					Query:       "SELECT func1();",
-					ExpectedErr: "not found",
+					Query: "SELECT func1();", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-function-test-testdropfunction-0006-select-func1", Compare: "sqlstate"},
 				},
 				{
-					Query:       "SELECT func2(99);",
-					ExpectedErr: "not found",
+					Query: "SELECT func2(99);", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-function-test-testdropfunction-0007-select-func2-99", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -89,28 +82,22 @@ $$ LANGUAGE plpgsql;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "SELECT func1(), func2(), func3(1), func4(2);",
-					Expected: []sql.Row{{"func1", "func2", "func3(INT)", "func4(INT)"}},
+					Query: "SELECT func1(), func2(), func3(1), func4(2);", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-function-test-testdropfunction-0008-select-func1-func2-func3-1"},
 				},
 				{
-					Query:    "DROP FUNCTION func1(OUT TEXT);",
-					Expected: []sql.Row{},
+					Query: "DROP FUNCTION func1(OUT TEXT);", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-function-test-testdropfunction-0009-drop-function-func1-out-text"},
 				},
 				{
-					Query:    "DROP FUNCTION func2(OUT paramname TEXT);",
-					Expected: []sql.Row{},
+					Query: "DROP FUNCTION func2(OUT paramname TEXT);", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-function-test-testdropfunction-0010-drop-function-func2-out-paramname"},
 				},
 				{
-					Query:    "DROP FUNCTION func3(paramname INT);",
-					Expected: []sql.Row{},
+					Query: "DROP FUNCTION func3(paramname INT);", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-function-test-testdropfunction-0011-drop-function-func3-paramname-int"},
 				},
 				{
-					Query:    "DROP FUNCTION func4(IN paramname INT);",
-					Expected: []sql.Row{},
+					Query: "DROP FUNCTION func4(IN paramname INT);", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-function-test-testdropfunction-0012-drop-function-func4-in-paramname"},
 				},
 				{
-					Query:    "DROP FUNCTION func5(IN paramname INT, IN paramname TEXT);",
-					Expected: []sql.Row{},
+					Query: "DROP FUNCTION func5(IN paramname INT, IN paramname TEXT);", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-function-test-testdropfunction-0013-drop-function-func5-in-paramname"},
 				},
 			},
 		},
@@ -126,16 +113,13 @@ $$ LANGUAGE plpgsql;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "SELECT current_schema(), current_database();",
-					Expected: []sql.Row{{"public", "postgres"}},
+					Query: "SELECT current_schema(), current_database();", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-function-test-testdropfunction-0014-select-current_schema-current_database", ColumnModes: []string{"schema"}},
 				},
 				{
-					Query:    "SELECT func1(), func2('foo');",
-					Expected: []sql.Row{{"func1", "func2(TEXT)"}},
+					Query: "SELECT func1(), func2('foo');", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-function-test-testdropfunction-0015-select-func1-func2-foo"},
 				},
 				{
-					Query:    "DROP FUNCTION public.func1;",
-					Expected: []sql.Row{},
+					Query: "DROP FUNCTION public.func1;", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-function-test-testdropfunction-0016-drop-function-public.func1", Compare: "sqlstate"},
 				},
 				{
 					Query:       "SELECT func1();",
@@ -173,22 +157,22 @@ BEGIN RETURN 42; END;
 $$ LANGUAGE plpgsql;`},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "DROP FUNCTION func1;",
-					Expected: []sql.Row{},
+					Query: "DROP FUNCTION func1;", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-function-test-testdropfunction-0020-drop-function-func1"},
 				},
 				{
-					Query:       "DROP FUNCTION func2;",
-					ExpectedErr: "is not unique",
+					Query: "DROP FUNCTION func2;", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-function-test-testdropfunction-0021-drop-function-func2", Compare: "sqlstate"},
 				},
 				{
-					Query:    "DROP FUNCTION func3;",
-					Expected: []sql.Row{},
+					Query: "DROP FUNCTION func3;", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-function-test-testdropfunction-0022-drop-function-func3",
+
+						// TODO: Postgres supports specifying multiple functions to drop, but our
+						//       parser doesn't seem to support parsing multiple functions yet.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 		{
-			// TODO: Postgres supports specifying multiple functions to drop, but our
-			//       parser doesn't seem to support parsing multiple functions yet.
+
 			Skip: true,
 			Name: "Multiple functions",
 			SetUpScript: []string{`
@@ -205,12 +189,10 @@ $$ LANGUAGE plpgsql;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "SELECT func1(), func2('foo');",
-					Expected: []sql.Row{{"func1", "func2(TEXT)"}},
+					Query: "SELECT func1(), func2('foo');", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-function-test-testdropfunction-0023-select-func1-func2-foo"},
 				},
 				{
-					Query:    "DELETE FUNCTION func1, func2(TExT);",
-					Expected: []sql.Row{},
+					Query: "DELETE FUNCTION func1, func2(TExT);", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-function-test-testdropfunction-0024-delete-function-func1-func2-text", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -230,28 +212,22 @@ $$ LANGUAGE plpgsql;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "SELECT func2('foo'), func2(42);",
-					Expected: []sql.Row{{"func2(TEXT)", "func2(INT)"}},
+					Query: "SELECT func2('foo'), func2(42);", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-function-test-testdropfunction-0025-select-func2-foo-func2-42"},
 				},
 				{
-					Query:    "DROP FUNCTION func2(TEXT);",
-					Expected: []sql.Row{},
+					Query: "DROP FUNCTION func2(TEXT);", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-function-test-testdropfunction-0026-drop-function-func2-text"},
 				},
 				{
-					Query:       "SELECT func2('foo'::text);",
-					ExpectedErr: "does not exist",
+					Query: "SELECT func2('foo'::text);", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-function-test-testdropfunction-0027-select-func2-foo-::text", Compare: "sqlstate"},
 				},
 				{
-					Query:    "SELECT func2(42);",
-					Expected: []sql.Row{{"func2(INT)"}},
+					Query: "SELECT func2(42);", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-function-test-testdropfunction-0028-select-func2-42"},
 				},
 				{
-					Query:    "DROP FUNCTION func2(INT);",
-					Expected: []sql.Row{},
+					Query: "DROP FUNCTION func2(INT);", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-function-test-testdropfunction-0029-drop-function-func2-int"},
 				},
 				{
-					Query:       "SELECT func2(42);",
-					ExpectedErr: "not found",
+					Query: "SELECT func2(42);", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-function-test-testdropfunction-0030-select-func2-42", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -281,8 +257,7 @@ END;
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `DROP FUNCTION IF EXISTS public.tax_job_trans(t public.trans);`,
-					Expected: []sql.Row{},
+					Query: `DROP FUNCTION IF EXISTS public.tax_job_trans(t public.trans);`, PostgresOracle: ScriptTestPostgresOracle{ID: "drop-function-test-testdropfunction-0032-drop-function-if-exists-public.tax_job_trans"},
 				},
 			},
 		},
@@ -290,8 +265,7 @@ END;
 			Name: "drop non existing function with non existing type",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "DROP FUNCTION IF EXISTS public.tax_job_trans(t public.trans);",
-					Expected: []sql.Row{},
+					Query: "DROP FUNCTION IF EXISTS public.tax_job_trans(t public.trans);", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-function-test-testdropfunction-0033-drop-function-if-exists-public.tax_job_trans"},
 				},
 			},
 		},

@@ -36,8 +36,7 @@ func TestDropDatabaseWithForceDropsIdleDatabase(t *testing.T) {
 				{
 					Query: `SELECT datname
 						FROM pg_database
-						WHERE datname = 'force_drop_database_idle';`,
-					Expected: []sql.Row{},
+						WHERE datname = 'force_drop_database_idle';`, PostgresOracle: ScriptTestPostgresOracle{ID: "drop-database-correctness-repro-test-testdropdatabasewithforcedropsidledatabase-0001-select-datname-from-pg_database-where"},
 				},
 			},
 		},

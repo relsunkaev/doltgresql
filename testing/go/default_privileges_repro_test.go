@@ -112,19 +112,21 @@ func TestAlterDefaultPrivilegesGrantAppliesToFutureFunctionsRepro(t *testing.T) 
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT default_priv_function();`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT default_priv_function();`,
+
 					Username: `default_function_user`,
-					Password: `function`,
+					Password: `function`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestAlterDefaultPrivilegesPopulatesPgDefaultAclRepro reproduces a catalog
+						// persistence bug: Doltgres accepts ALTER DEFAULT PRIVILEGES but pg_default_acl
+						// does not expose the default ACL row.
+						ID: "default-privileges-repro-test-testalterdefaultprivilegesgrantappliestofuturefunctionsrepro-0001-select-default_priv_function"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterDefaultPrivilegesPopulatesPgDefaultAclRepro reproduces a catalog
-// persistence bug: Doltgres accepts ALTER DEFAULT PRIVILEGES but pg_default_acl
-// does not expose the default ACL row.
 func TestAlterDefaultPrivilegesPopulatesPgDefaultAclRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -139,31 +141,6 @@ func TestAlterDefaultPrivilegesPopulatesPgDefaultAclRepro(t *testing.T) {
 						FROM pg_catalog.pg_default_acl
 						WHERE defaclnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public');`,
 					Expected: []sql.Row{{"r"}},
-				},
-			},
-		},
-	})
-}
-
-// TestPostgres18LargeObjectDefaultPrivilegesRepro reproduces a PostgreSQL 18
-// ACL parity gap: ALTER DEFAULT PRIVILEGES can set default SELECT/UPDATE
-// privileges for future large objects and records them with defaclobjtype = 'L'.
-func TestPostgres18LargeObjectDefaultPrivilegesRepro(t *testing.T) {
-	RunScripts(t, []ScriptTest{
-		{
-			Name: "ALTER DEFAULT PRIVILEGES supports large objects",
-			SetUpScript: []string{
-				`CREATE ROLE default_large_object_reader;`,
-				`ALTER DEFAULT PRIVILEGES
-					GRANT SELECT ON LARGE OBJECTS TO default_large_object_reader;`,
-			},
-			Assertions: []ScriptTestAssertion{
-				{
-					Query: `SELECT defaclobjtype
-						FROM pg_catalog.pg_default_acl
-						WHERE defaclnamespace = 0
-							AND defaclobjtype = 'L';`,
-					Expected: []sql.Row{{"L"}},
 				},
 			},
 		},

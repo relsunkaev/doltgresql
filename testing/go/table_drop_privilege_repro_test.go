@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestDropTableClearsTablePrivilegesRepro reproduces an ACL persistence bug:
@@ -41,9 +39,9 @@ func TestDropTableClearsTablePrivilegesRepro(t *testing.T) {
 				{
 					Query: `SELECT id, label
 						FROM drop_recreate_acl_items;`,
-					Expected: []sql.Row{{1, "old visible"}},
+
 					Username: `drop_recreate_acl_reader`,
-					Password: `reader`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{ID: "table-drop-privilege-repro-test-testdroptableclearstableprivilegesrepro-0001-select-id-label-from-drop_recreate_acl_items"},
 				},
 				{
 					Query: `DROP TABLE drop_recreate_acl_items;`,
@@ -58,10 +56,10 @@ func TestDropTableClearsTablePrivilegesRepro(t *testing.T) {
 					Query: `INSERT INTO drop_recreate_acl_items VALUES (1, 'new sensitive');`,
 				},
 				{
-					Query:       `SELECT id, label FROM drop_recreate_acl_items;`,
-					ExpectedErr: `permission denied`,
-					Username:    `drop_recreate_acl_reader`,
-					Password:    `reader`,
+					Query: `SELECT id, label FROM drop_recreate_acl_items;`,
+
+					Username: `drop_recreate_acl_reader`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{ID: "table-drop-privilege-repro-test-testdroptableclearstableprivilegesrepro-0002-select-id-label-from-drop_recreate_acl_items", Compare: "sqlstate"},
 				},
 			},
 		},

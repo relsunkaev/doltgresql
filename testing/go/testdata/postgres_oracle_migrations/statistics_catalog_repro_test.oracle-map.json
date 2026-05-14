@@ -1,0 +1,58 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map statistics_catalog_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/statistics_catalog_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/statistics_catalog_repro_test.go:TestAnalyzePopulatesPgStatsRepro#0001",
+      "source": "testing/go/statistics_catalog_repro_test.go:TestAnalyzePopulatesPgStatsRepro",
+      "ordinal": 1,
+      "scriptName": "ANALYZE populates pg_stats",
+      "oracle": "internal",
+      "suggestedId": "statistics-catalog-repro-test-testanalyzepopulatespgstatsrepro-0001-select-attname-from-pg_catalog.pg_stats-where",
+      "expectedKind": "rows",
+      "query": "SELECT attname\n\t\t\t\t\t\tFROM pg_catalog.pg_stats\n\t\t\t\t\t\tWHERE schemaname = 'public'\n\t\t\t\t\t\t\tAND tablename = 'analyze_catalog_target'\n\t\t\t\t\t\t\tAND attname = 'category';",
+      "querySha256": "4f350cef330302da8a063f19fb06d791f5ac0b94a0f31afeeb3ae3c990294374",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/statistics_catalog_repro_test.go:TestCreateStatisticsPopulatesPgStatisticExtRepro#0001",
+      "source": "testing/go/statistics_catalog_repro_test.go:TestCreateStatisticsPopulatesPgStatisticExtRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE STATISTICS populates pg_statistic_ext",
+      "oracle": "postgres",
+      "postgresId": "statistics-catalog-repro-test-testcreatestatisticspopulatespgstatisticextrepro-0001-select-stxname-stxkeys::text-stxkind::text-from",
+      "suggestedId": "statistics-catalog-repro-test-testcreatestatisticspopulatespgstatisticextrepro-0001-select-stxname-stxkeys::text-stxkind::text-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT stxname, stxkeys::text, stxkind::text\n\t\t\t\t\t\tFROM pg_catalog.pg_statistic_ext\n\t\t\t\t\t\tWHERE stxname = 'extended_stats_ab_stats';",
+      "querySha256": "1ca4abe95729e660447f2d0466d350958cd0b322f44c87cd70e89f7565fc0523",
+      "expectedRows": [
+        [
+          {
+            "value": "extended_stats_ab_stats"
+          },
+          {
+            "value": "1 2"
+          },
+          {
+            "value": "{f}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

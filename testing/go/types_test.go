@@ -18,7 +18,6 @@ import (
 	"testing"
 
 	"github.com/dolthub/go-mysql-server/sql"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 func TestTypes(t *testing.T) {
@@ -34,16 +33,10 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_bigint ORDER BY id;",
-				Expected: []sql.Row{
-					{1, 123456789012345},
-					{2, 987654321098765},
-				},
+				Query: "SELECT * FROM t_bigint ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0001-select-*-from-t_bigint-order"},
 			},
 			{
-				Query:            `SELECT 1::pg_catalog.int8;`,
-				ExpectedColNames: []string{"int8"},
-				Expected:         []sql.Row{{1}},
+				Query: `SELECT 1::pg_catalog.int8;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0002-select-1::pg_catalog.int8"},
 			},
 		},
 	},
@@ -55,10 +48,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_bigint WHERE id = 1 ORDER BY id;",
-				Expected: []sql.Row{
-					{1, 123456789012345},
-				},
+				Query: "SELECT * FROM t_bigint WHERE id = 1 ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0003-select-*-from-t_bigint-where"},
 			},
 		},
 	},
@@ -70,12 +60,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_bigint ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "{123456789012345,NULL}"},
-					{2, "{987654321098765,5}"},
-					{3, "{4,5}"},
-				},
+				Query: "SELECT * FROM t_bigint ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0004-select-*-from-t_bigint-order"},
 			},
 		},
 	},
@@ -84,16 +69,13 @@ var typesTests = []ScriptTest{
 		SetUpScript: []string{},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query:    `SELECT pg_catalog.array_to_string('{70000,70001}'::pg_catalog.oid[], ',');`,
-				Expected: []sql.Row{{"70000,70001"}},
+				Query: `SELECT pg_catalog.array_to_string('{70000,70001}'::pg_catalog.oid[], ',');`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0005-select-pg_catalog.array_to_string-{70000-70001}-::pg_catalog.oid[]"},
 			},
 			{
-				Query:    `SELECT count(*) FROM unnest('{70000,70001}'::pg_catalog.oid[]) AS src(tbloid);`,
-				Expected: []sql.Row{{int64(2)}},
+				Query: `SELECT count(*) FROM unnest('{70000,70001}'::pg_catalog.oid[]) AS src(tbloid);`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0006-select-count-*-from-unnest"},
 			},
 			{
-				Query:    `SELECT count(*) FROM unnest('{70000,70001}'::pg_catalog.oid[]) AS src(tbloid) JOIN (SELECT 70000::pg_catalog.oid AS oid) AS t ON src.tbloid = t.oid;`,
-				Expected: []sql.Row{{int64(1)}},
+				Query: `SELECT count(*) FROM unnest('{70000,70001}'::pg_catalog.oid[]) AS src(tbloid) JOIN (SELECT 70000::pg_catalog.oid AS oid) AS t ON src.tbloid = t.oid;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0007-select-count-*-from-unnest"},
 			},
 		},
 	},
@@ -105,31 +87,22 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_bit ORDER BY id;",
-				Expected: []sql.Row{
-					{1, pgtype.Bits{Bytes: []uint8{0xda}, Len: 8, Valid: true}, pgtype.Bits{Bytes: []uint8{0xa0}, Len: 3, Valid: true}},
-					{2, pgtype.Bits{Bytes: []uint8{0x2b}, Len: 8, Valid: true}, pgtype.Bits{Bytes: []uint8{0x0}, Len: 3, Valid: true}},
-				},
+				Query: "SELECT * FROM t_bit ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0008-select-*-from-t_bit-order"},
 			},
 			{
-				Query:       "INSERT INTO t_bit VALUES (3, B'101', '111');",
-				ExpectedErr: "bit string length 3 does not match type bit(8)",
+				Query: "INSERT INTO t_bit VALUES (3, B'101', '111');", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0009-insert-into-t_bit-values-3", Compare: "sqlstate"},
 			},
 			{
-				Query:       "INSERT INTO t_bit VALUES (3, B'1001000110', '111');",
-				ExpectedErr: "bit string length 10 does not match type bit(8)",
+				Query: "INSERT INTO t_bit VALUES (3, B'1001000110', '111');", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0010-insert-into-t_bit-values-3", Compare: "sqlstate"},
 			},
 			{
-				Query:       "INSERT INTO t_bit VALUES (3, B'10010001', '11100100');",
-				ExpectedErr: "bit string length 8 does not match type bit(3)",
+				Query: "INSERT INTO t_bit VALUES (3, B'10010001', '11100100');", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0011-insert-into-t_bit-values-3", Compare: "sqlstate"},
 			},
 			{
-				Query:       "INSERT INTO t_bit VALUES (3, B'10012345', '111');",
-				ExpectedErr: "not a valid binary digit",
+				Query: "INSERT INTO t_bit VALUES (3, B'10012345', '111');", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0012-insert-into-t_bit-values-3", Compare: "sqlstate"},
 			},
 			{
-				Query:       "INSERT INTO t_bit VALUES (3, '10012345', '111');",
-				ExpectedErr: "not a valid binary digit",
+				Query: "INSERT INTO t_bit VALUES (3, '10012345', '111');", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0013-insert-into-t_bit-values-3", Compare: "sqlstate"},
 			},
 		},
 	},
@@ -141,10 +114,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_bit WHERE id = B'11011010' ORDER BY id;",
-				Expected: []sql.Row{
-					{pgtype.Bits{Bytes: []uint8{0xda}, Len: 8, Valid: true}, pgtype.Bits{Bytes: []uint8{0xda}, Len: 8, Valid: true}},
-				},
+				Query: "SELECT * FROM t_bit WHERE id = B'11011010' ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0014-select-*-from-t_bit-where"},
 			},
 		},
 	},
@@ -157,35 +127,19 @@ var typesTests = []ScriptTest{
 		Assertions: []ScriptTestAssertion{
 			{
 				Query: "SELECT * FROM t_boolean ORDER BY id;",
-				Skip:  true, // Proper NULL-ordering has not yet been implemented
-				Expected: []sql.Row{
-					{1, "t"},
-					{2, "f"},
-					{3, nil},
-				},
+				Skip:  true, PostgresOracle: // Proper NULL-ordering has not yet been implemented
+				ScriptTestPostgresOracle{ID: "types-test-testtypes-0015-select-*-from-t_boolean-order"},
 			},
 			{
 				Query: "SELECT * FROM t_boolean ORDER BY v1;",
-				Skip:  true, // Proper NULL-ordering has not yet been implemented
-				Expected: []sql.Row{
-					{2, "f"},
-					{1, "t"},
-					{3, nil},
-				},
+				Skip:  true, PostgresOracle: // Proper NULL-ordering has not yet been implemented
+				ScriptTestPostgresOracle{ID: "types-test-testtypes-0016-select-*-from-t_boolean-order"},
 			},
 			{
-				Query: "SELECT * FROM t_boolean WHERE v1 IS NOT NULL ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "t"},
-					{2, "f"},
-				},
+				Query: "SELECT * FROM t_boolean WHERE v1 IS NOT NULL ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0017-select-*-from-t_boolean-where"},
 			},
 			{
-				Query: "SELECT * FROM t_boolean WHERE v1 IS NOT NULL ORDER BY v1;",
-				Expected: []sql.Row{
-					{2, "f"},
-					{1, "t"},
-				},
+				Query: "SELECT * FROM t_boolean WHERE v1 IS NOT NULL ORDER BY v1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0018-select-*-from-t_boolean-where"},
 			},
 		},
 	},
@@ -198,10 +152,8 @@ var typesTests = []ScriptTest{
 		Assertions: []ScriptTestAssertion{
 			{
 				Query: "SELECT * FROM t_boolean where id ORDER BY id;",
-				Skip:  true, // Proper NULL-ordering has not yet been implemented
-				Expected: []sql.Row{
-					{"t", "t"},
-				},
+				Skip:  true, PostgresOracle: // Proper NULL-ordering has not yet been implemented
+				ScriptTestPostgresOracle{ID: "types-test-testtypes-0019-select-*-from-t_boolean-where"},
 			},
 		},
 	},
@@ -217,16 +169,10 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "select * from t where (b in (false));",
-				Expected: []sql.Row{
-					{0},
-				},
+				Query: "select * from t where (b in (false));", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0020-select-*-from-t-where"},
 			},
 			{
-				Query: "select * from t_idx where (b in (false));",
-				Expected: []sql.Row{
-					{0},
-				},
+				Query: "select * from t_idx where (b in (false));", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0021-select-*-from-t_idx-where"},
 			},
 		},
 	},
@@ -239,51 +185,19 @@ var typesTests = []ScriptTest{
 		Assertions: []ScriptTestAssertion{
 			{
 				Query: "SELECT * FROM t_boolean_array ORDER BY id;",
-				Skip:  true, // Proper NULL-ordering has not yet been implemented
-				Expected: []sql.Row{
-					{1, "{t,f}"},
-					{2, "{f,t}"},
-					{3, "{t,t}"},
-					{4, "{f,f}"},
-					{5, "{t}"},
-					{6, "{f}"},
-					{7, nil},
-				},
+				Skip:  true, PostgresOracle: // Proper NULL-ordering has not yet been implemented
+				ScriptTestPostgresOracle{ID: "types-test-testtypes-0022-select-*-from-t_boolean_array-order"},
 			},
 			{
 				Query: "SELECT * FROM t_boolean_array ORDER BY v1;",
-				Skip:  true, // Proper NULL-ordering has not yet been implemented
-				Expected: []sql.Row{
-					{6, "{f}"},
-					{4, "{f,f}"},
-					{2, "{f,t}"},
-					{5, "{t}"},
-					{1, "{t,f}"},
-					{3, "{t,t}"},
-					{7, nil},
-				},
+				Skip:  true, PostgresOracle: // Proper NULL-ordering has not yet been implemented
+				ScriptTestPostgresOracle{ID: "types-test-testtypes-0023-select-*-from-t_boolean_array-order"},
 			},
 			{
-				Query: "SELECT * FROM t_boolean_array WHERE v1 IS NOT NULL ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "{t,f}"},
-					{2, "{f,t}"},
-					{3, "{t,t}"},
-					{4, "{f,f}"},
-					{5, "{t}"},
-					{6, "{f}"},
-				},
+				Query: "SELECT * FROM t_boolean_array WHERE v1 IS NOT NULL ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0024-select-*-from-t_boolean_array-where"},
 			},
 			{
-				Query: "SELECT * FROM t_boolean_array WHERE v1 IS NOT NULL ORDER BY v1;",
-				Expected: []sql.Row{
-					{6, "{f}"},
-					{4, "{f,f}"},
-					{2, "{f,t}"},
-					{5, "{t}"},
-					{1, "{t,f}"},
-					{3, "{t,t}"},
-				},
+				Query: "SELECT * FROM t_boolean_array WHERE v1 IS NOT NULL ORDER BY v1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0025-select-*-from-t_boolean_array-where"},
 			},
 		},
 	},
@@ -295,11 +209,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_bigserial ORDER BY id;",
-				Expected: []sql.Row{
-					{1, 123456789012345},
-					{2, 987654321098765},
-				},
+				Query: "SELECT * FROM t_bigserial ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0026-select-*-from-t_bigserial-order"},
 			},
 		},
 	},
@@ -311,10 +221,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_bigserial where ID = 987654321098765 ORDER BY id;",
-				Expected: []sql.Row{
-					{987654321098765, 987654321098765},
-				},
+				Query: "SELECT * FROM t_bigserial where ID = 987654321098765 ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0027-select-*-from-t_bigserial-where"},
 			},
 		},
 	},
@@ -326,15 +233,10 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_bit_varying ORDER BY id;",
-				Expected: []sql.Row{
-					{1, pgtype.Bits{Bytes: []uint8{0xda, 0xaa}, Len: 16, Valid: true}},
-					{2, pgtype.Bits{Bytes: []uint8{0x2b, 0x55}, Len: 16, Valid: true}},
-				},
+				Query: "SELECT * FROM t_bit_varying ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0028-select-*-from-t_bit_varying-order"},
 			},
 			{
-				Query:       "INSERT INTO t_bit_varying VALUES (3, B'101010101010101010');",
-				ExpectedErr: "bit string too long for type bit varying(16)",
+				Query: "INSERT INTO t_bit_varying VALUES (3, B'101010101010101010');", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0029-insert-into-t_bit_varying-values-3", Compare: "sqlstate"},
 			},
 		},
 	},
@@ -346,20 +248,13 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_bit_varying ORDER BY id;",
-				Expected: []sql.Row{
-					{1, pgtype.Bits{Bytes: []uint8{0xda, 0xaa}, Len: 16, Valid: true}},
-					{2, pgtype.Bits{Bytes: []uint8{0x2b, 0x55}, Len: 16, Valid: true}},
-				},
+				Query: "SELECT * FROM t_bit_varying ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0030-select-*-from-t_bit_varying-order"},
 			},
 			{
 				Query: "INSERT INTO t_bit_varying VALUES (3, B'101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010');",
 			},
 			{
-				Query: "SELECT * FROM t_bit_varying WHERE id = 3 order by 1;",
-				Expected: []sql.Row{
-					{3, pgtype.Bits{Bytes: []uint8{0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xa0}, Len: 108, Valid: true}},
-				},
+				Query: "SELECT * FROM t_bit_varying WHERE id = 3 order by 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0031-select-*-from-t_bit_varying-where"},
 			},
 		},
 	},
@@ -372,12 +267,9 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_box ORDER BY id;",
+				Query: "SELECT * FROM t_box ORDER BY id;", PostgresOracle:
 				// TODO: the output and ordering of points here varies from postgres, probably need a GMS type, not a string
-				Expected: []sql.Row{
-					{1, "((1,2),(3,4))"},
-					{2, "((5,6),(7,8))"},
-				},
+				ScriptTestPostgresOracle{ID: "types-test-testtypes-0032-select-*-from-t_box-order"},
 			},
 		},
 	},
@@ -389,17 +281,10 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_bytea ORDER BY id;",
-				Expected: []sql.Row{
-					{1, []byte{0xDE, 0xAD, 0xBE, 0xEF}},
-					{2, []byte{0xC0, 0xFF, 0xEE}},
-					{3, []byte{}},
-					{4, nil},
-				},
+				Query: "SELECT * FROM t_bytea ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0033-select-*-from-t_bytea-order", ColumnModes: []string{"structural", "bytea"}},
 			},
 			{
-				Query:    "SELECT octet_length(v1), bit_length(v1) FROM t_bytea ORDER BY id;",
-				Expected: []sql.Row{{int32(4), int32(32)}, {int32(3), int32(24)}, {int32(0), int32(0)}, {nil, nil}},
+				Query: "SELECT octet_length(v1), bit_length(v1) FROM t_bytea ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0034-select-octet_length-v1-bit_length-v1"},
 			},
 		},
 	},
@@ -412,50 +297,34 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_bytea WHERE ID = E'\\\\xCAFEBABE' ORDER BY id;",
-				Expected: []sql.Row{
-					{[]byte{0xCA, 0xFE, 0xBA, 0xBE}, []byte{0xDE, 0xAD, 0xBE, 0xEF}},
-				},
+				Query: "SELECT * FROM t_bytea WHERE ID = E'\\\\xCAFEBABE' ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0035-select-*-from-t_bytea-where", ColumnModes: []string{"bytea",
+
+					// https://github.com/dolthub/doltgresql/issues/2145
+					"bytea"}},
 			},
 		},
 	},
 	{
-		// https://github.com/dolthub/doltgresql/issues/2145
+
 		Name: "bpchar type",
 		Assertions: []ScriptTestAssertion{
 			{
-				Query:    "create table bptest1 (pk int primary key, c1 bpchar, c2 bpchar(12));",
-				Expected: nil,
+				Query: "create table bptest1 (pk int primary key, c1 bpchar, c2 bpchar(12));", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0036-create-table-bptest1-pk-int"},
 			},
 			{
-				Query:    "insert into bptest1 values (1, '1', '1');",
-				Expected: nil,
+				Query: "insert into bptest1 values (1, '1', '1');", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0037-insert-into-bptest1-values-1"},
 			},
 			{
-				Query: "select * from bptest1;",
-				Expected: []sql.Row{
-					{1, "1", "1           "},
-				},
+				Query: "select * from bptest1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0038-select-*-from-bptest1"},
 			},
 			{
-				Query:            "SELECT '!'::bpchar;",
-				ExpectedColNames: []string{"bpchar"},
-				Expected: []sql.Row{
-					{"!"},
-				},
+				Query: "SELECT '!'::bpchar;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0039-select-!-::bpchar"},
 			},
 			{
-				Query:            "SELECT '!'::bpchar(1);",
-				ExpectedColNames: []string{"bpchar"},
-				Expected: []sql.Row{
-					{"!"},
-				},
+				Query: "SELECT '!'::bpchar(1);", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0040-select-!-::bpchar-1"},
 			},
 			{
-				Query: "SELECT '!'::bpchar(2);",
-				Expected: []sql.Row{
-					{"! "},
-				},
+				Query: "SELECT '!'::bpchar(2);", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0041-select-!-::bpchar-2"},
 			},
 		},
 	},
@@ -467,46 +336,22 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_character ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "abcde"},
-					{2, "vwxyz"},
-					{3, "ghi  "},
-					{4, "     "},
-					{5, nil},
-				},
+				Query: "SELECT * FROM t_character ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0042-select-*-from-t_character-order"},
 			},
 			{
-				Query: "SELECT length(v1) FROM t_character ORDER BY id;",
-				Expected: []sql.Row{
-					{5},
-					{5},
-					{3},
-					{0},
-					{nil},
-				},
+				Query: "SELECT length(v1) FROM t_character ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0043-select-length-v1-from-t_character"},
 			},
 			{
-				Query:    `SELECT char(20) 'characters' || ' and text' AS "Concat char to unknown type";`,
-				Expected: []sql.Row{{"characters and text"}},
+				Query: `SELECT char(20) 'characters' || ' and text' AS "Concat char to unknown type";`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0044-select-char-20-characters-||"},
 			},
 			{
-				Query: "SELECT true::char, false::char;",
-				Expected: []sql.Row{
-					{"t", "f"},
-				},
+				Query: "SELECT true::char, false::char;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0045-select-true::char-false::char"},
 			},
 			{
-				Query: "SELECT true::character(5), false::character(5);",
-				Expected: []sql.Row{
-					{"true ", "false"},
-				},
+				Query: "SELECT true::character(5), false::character(5);", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0046-select-true::character-5-false::character-5"},
 			},
 			{
-				Query: "SELECT char 'c' = char 'c' AS true;",
-				Expected: []sql.Row{
-					{"t"},
-				},
+				Query: "SELECT char 'c' = char 'c' AS true;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0047-select-char-c-=-char"},
 			},
 		},
 	},
@@ -518,16 +363,10 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_character WHERE ID = 'vwxyz' ORDER BY id;",
-				Expected: []sql.Row{
-					{"vwxyz", "12345"},
-				},
+				Query: "SELECT * FROM t_character WHERE ID = 'vwxyz' ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0048-select-*-from-t_character-where"},
 			},
 			{
-				Query: "SELECT length(id) FROM t_character;",
-				Expected: []sql.Row{
-					{5}, {5}, {4},
-				},
+				Query: "SELECT length(id) FROM t_character;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0049-select-length-id-from-t_character"},
 			},
 		},
 	},
@@ -550,79 +389,47 @@ var typesTests = []ScriptTest{
 				},
 			},
 			{
-				Query:       "INSERT INTO t_char VALUES (6, 7);",
-				ExpectedErr: `target is of type "char" but expression is of type integer`,
+				Query: "INSERT INTO t_char VALUES (6, 7);", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0051-insert-into-t_char-values-6", Compare: "sqlstate"},
 			},
 			{
-				Query:       "INSERT INTO t_char VALUES (6, true);",
-				ExpectedErr: `target is of type "char" but expression is of type boolean`,
+				Query: "INSERT INTO t_char VALUES (6, true);", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0052-insert-into-t_char-values-6", Compare: "sqlstate"},
 			},
 			{
-				Query:       `SELECT true::"char";`,
-				ExpectedErr: "cast from `boolean` to `\"char\"` does not exist",
+				Query: `SELECT true::"char";`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0053-select-true::-char", Compare: "sqlstate"},
 			},
 			{
-				Query:       `SELECT 100000::bigint::"char";`,
-				ExpectedErr: "cast from `bigint` to `\"char\"` does not exist",
+				Query: `SELECT 100000::bigint::"char";`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0054-select-100000::bigint::-char", Compare: "sqlstate"},
 			},
 			{
-				Query: `SELECT 'abc'::"char", '123'::varchar(3)::"char";`,
-				Expected: []sql.Row{
-					{"a", "1"},
-				},
+				Query: `SELECT 'abc'::"char", '123'::varchar(3)::"char";`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0055-select-abc-::-char-123"},
 			},
 			{
-				Query:            `SELECT 'def'::name::"char";`,
-				ExpectedColNames: []string{"char"},
-				Expected: []sql.Row{
-					{"d"},
-				},
+				Query: `SELECT 'def'::name::"char";`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0056-select-def-::name::-char"},
 			},
 			{
-				Query: `SELECT id, v1::int, v1::text FROM t_char WHERE id < 10;`,
-				Expected: []sql.Row{
-					{1, 97, "a"},
-					{2, 118, "v"},
-					{3, 1, "1"},
-					{4, 0, ""},
-					{5, nil, nil},
-				},
+				Query: `SELECT id, v1::int, v1::text FROM t_char WHERE id < 10;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0057-select-id-v1::int-v1::text-from"},
 			},
 			{
 				Skip:  true, // TODO: We currently return '227'
-				Query: `SELECT v1::int FROM t_char WHERE id = 100;`,
-				Expected: []sql.Row{
-					{-29},
-				},
+				Query: `SELECT v1::int FROM t_char WHERE id = 100;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0058-select-v1::int-from-t_char-where"},
 			},
 			{
-				Query:    "INSERT INTO t_char VALUES (6, '0123456789012345678901234567890123456789012345678901234567890123456789');",
-				Expected: []sql.Row{},
+				Query: "INSERT INTO t_char VALUES (6, '0123456789012345678901234567890123456789012345678901234567890123456789');", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0059-insert-into-t_char-values-6"},
 			},
 			{
-				Query: "SELECT * FROM t_char WHERE id=6;",
-				Expected: []sql.Row{
-					{6, "0"},
-				},
+				Query: "SELECT * FROM t_char WHERE id=6;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0060-select-*-from-t_char-where"},
 			},
 			{
-				Query:       "INSERT INTO t_char VALUES (7, 'abc'::name);",
-				ExpectedErr: "expression is of type",
+				Query: "INSERT INTO t_char VALUES (7, 'abc'::name);", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0061-insert-into-t_char-values-7", Compare: "sqlstate"},
 			},
 			{
-				Query:    "INSERT INTO t_char VALUES (8, 'def'::text);",
-				Expected: []sql.Row{},
+				Query: "INSERT INTO t_char VALUES (8, 'def'::text);", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0062-insert-into-t_char-values-8"},
 			},
 			{
-				Query:    "INSERT INTO t_char VALUES (9, 'ghi'::varchar);",
-				Expected: []sql.Row{},
+				Query: "INSERT INTO t_char VALUES (9, 'ghi'::varchar);", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0063-insert-into-t_char-values-9"},
 			},
 			{
-				Query: `SELECT * FROM t_char WHERE id >= 7 AND id < 10 ORDER BY id;`,
-				Expected: []sql.Row{
-					{8, "d"},
-					{9, "g"},
-				},
+				Query: `SELECT * FROM t_char WHERE id >= 7 AND id < 10 ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0064-select-*-from-t_char-where"},
 			},
 		},
 	},
@@ -634,19 +441,10 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_varchar ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "abcdefghij"},
-					{2, "klmnopqrst"},
-					{3, ""},
-					{4, nil},
-				},
+				Query: "SELECT * FROM t_varchar ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0065-select-*-from-t_varchar-order"},
 			},
 			{
-				Query: "SELECT true::character varying(10), false::character varying(10);",
-				Expected: []sql.Row{
-					{"true", "false"},
-				},
+				Query: "SELECT true::character varying(10), false::character varying(10);", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0066-select-true::character-varying-10-false::character"},
 			},
 		},
 	},
@@ -658,18 +456,10 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_varchar ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "abcdefghij"},
-					{2, "klmnopqrst"},
-					{3, ""},
-				},
+				Query: "SELECT * FROM t_varchar ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0067-select-*-from-t_varchar-order"},
 			},
 			{
-				Query: "SELECT true::character varying(10), false::character varying(10);",
-				Expected: []sql.Row{
-					{"true", "false"},
-				},
+				Query: "SELECT true::character varying(10), false::character varying(10);", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0068-select-true::character-varying-10-false::character"},
 			},
 		},
 	},
@@ -682,24 +472,16 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: `SELECT v1::varchar(1)[] FROM t_varchar1;`,
-				Expected: []sql.Row{
-					{"{a,w,i,w}"},
-				},
+				Query: `SELECT v1::varchar(1)[] FROM t_varchar1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0069-select-v1::varchar-1-[]-from"},
 			},
 			{
-				Query:       "INSERT INTO t_varchar2 VALUES (ARRAY['ab''cdef', 'what', 'is,hi', 'wh\"at']);",
-				ExpectedErr: "too long",
+				Query: "INSERT INTO t_varchar2 VALUES (ARRAY['ab''cdef', 'what', 'is,hi', 'wh\"at']);", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0070-insert-into-t_varchar2-values-array[", Compare: "sqlstate"},
 			},
 			{
-				Query:    "INSERT INTO t_varchar2 VALUES (ARRAY['a', 'w', 'i', 'w']);",
-				Expected: []sql.Row{},
+				Query: "INSERT INTO t_varchar2 VALUES (ARRAY['a', 'w', 'i', 'w']);", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0071-insert-into-t_varchar2-values-array["},
 			},
 			{
-				Query: `SELECT * FROM t_varchar2;`,
-				Expected: []sql.Row{
-					{"{a,w,i,w}"},
-				},
+				Query: `SELECT * FROM t_varchar2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0072-select-*-from-t_varchar2"},
 			},
 		},
 	},
@@ -711,11 +493,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_varchar ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "abcdefghij"},
-					{2, "klmnopqrst"},
-				},
+				Query: "SELECT * FROM t_varchar ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0073-select-*-from-t_varchar-order"},
 			},
 		},
 	},
@@ -729,11 +507,8 @@ var typesTests = []ScriptTest{
 		Assertions: []ScriptTestAssertion{
 			{
 				Query: "SELECT * FROM t_varchar ORDER BY id;",
-				Skip:  true, // missing the second row
-				Expected: []sql.Row{
-					{1, "abcdefghij"},
-					{2, "klmnopqrst"},
-				},
+				Skip:  true, PostgresOracle: // missing the second row
+				ScriptTestPostgresOracle{ID: "types-test-testtypes-0074-select-*-from-t_varchar-order"},
 			},
 		},
 	},
@@ -745,11 +520,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_varchar ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "{abcdefghij,NULL}"},
-					{2, `{ab'cdef,what,"is,hi","wh\"at","}","{","{}"}`},
-				},
+				Query: "SELECT * FROM t_varchar ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0075-select-*-from-t_varchar-order"},
 			},
 		},
 	},
@@ -762,11 +533,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_varchar ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "{abcdefghij,NULL}"},
-					{2, `{ab'cdef,what,"is,hi","wh\"at","}","{","{}"}`},
-				},
+				Query: "SELECT * FROM t_varchar ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0076-select-*-from-t_varchar-order"},
 			},
 		},
 	}, {
@@ -778,11 +545,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_cidr ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "192.168.1.0/24"},
-					{2, "10.0.0.0/8"},
-				},
+				Query: "SELECT * FROM t_cidr ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0077-select-*-from-t_cidr-order"},
 			},
 		},
 	},
@@ -796,11 +559,7 @@ var typesTests = []ScriptTest{
 		Assertions: []ScriptTestAssertion{
 			{
 				// TODO: might need a GMS type here, not a string
-				Query: "SELECT * FROM t_circle ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "<(1,2),3>"},
-					{2, "<(4,5),6>"},
-				},
+				Query: "SELECT * FROM t_circle ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0078-select-*-from-t_circle-order"},
 			},
 		},
 	},
@@ -812,110 +571,67 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_date ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "2023-01-01"},
-					{2, "2023-02-02"},
-				},
+				Query: "SELECT * FROM t_date ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0079-select-*-from-t_date-order"},
 			},
 			{
-				Query: "SELECT date '2022-2-2'",
-				Expected: []sql.Row{
-					{"2022-02-02"},
-				},
+				Query: "SELECT date '2022-2-2'", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0080-select-date-2022-2-2"},
 			},
 			{
-				Query:            "SELECT date '2022-02-02'",
-				ExpectedColNames: []string{"date"},
-				Expected: []sql.Row{
-					{"2022-02-02"},
-				},
+				Query: "SELECT date '2022-02-02'", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0081-select-date-2022-02-02"},
 			},
 			{
-				Query: "select '2024-10-31'::date;",
-				Expected: []sql.Row{
-					{"2024-10-31"},
-				},
+				Query: "select '2024-10-31'::date;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0082-select-2024-10-31-::date"},
 			},
 			{
-				Query: "select '2024-OCT-31'::date;",
-				Expected: []sql.Row{
-					{"2024-10-31"},
-				},
+				Query: "select '2024-OCT-31'::date;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0083-select-2024-oct-31-::date"},
 			},
 			{
-				Query: "select '20241031'::date;",
-				Expected: []sql.Row{
-					{"2024-10-31"},
-				},
+				Query: "select '20241031'::date;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0084-select-20241031-::date"},
 			},
 			{
-				Query: "select '2024Oct31'::date;",
-				Expected: []sql.Row{
-					{"2024-10-31"},
-				},
+				Query: "select '2024Oct31'::date;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0085-select-2024oct31-::date"},
 			},
 			{
-				Query: "select '10 31 2024'::date;",
-				Expected: []sql.Row{
-					{"2024-10-31"},
-				},
+				Query: "select '10 31 2024'::date;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0086-select-10-31-2024-::date"},
 			},
 			{
-				Query: "select 'Oct 31 2024'::date;",
-				Expected: []sql.Row{
-					{"2024-10-31"},
-				},
+				Query: "select 'Oct 31 2024'::date;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0087-select-oct-31-2024-::date"},
 			},
 			{
-				Query: "SELECT date 'J2451187';",
-				Expected: []sql.Row{
-					{"1999-01-08"},
-				},
+				Query: "SELECT date 'J2451187';", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0088-select-date-j2451187"},
 			},
 			{
-				Query:    `SELECT date '08-Jan-99';`,
-				Expected: []sql.Row{{"1999-01-08"}},
+				Query: `SELECT date '08-Jan-99';`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0089-select-date-08-jan-99"},
 			},
 			{
-				Query:    `SELECT date '2025-07-21' - 1;`,
-				Expected: []sql.Row{{"2025-07-20"}},
+				Query: `SELECT date '2025-07-21' - 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0090-select-date-2025-07-21-1"},
 			},
 			{
-				Query:    `SELECT date '2025-07-21' - date '2025-07-18';`,
-				Expected: []sql.Row{{3}},
+				Query: `SELECT date '2025-07-21' - date '2025-07-18';`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0091-select-date-2025-07-21-date-2025-07-18"},
 			},
 			{
-				Query:    `SELECT date '2025-07-21' - interval '2 days';`,
-				Expected: []sql.Row{{"2025-07-19 00:00:00"}},
+				Query: `SELECT date '2025-07-21' - interval '2 days';`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0092-select-date-2025-07-21-interval-2"},
 			},
 			{
-				Query:    `SELECT date '1991-02-03' - time '04:05:06';`,
-				Expected: []sql.Row{{"1991-02-02 19:54:54"}},
+				Query: `SELECT date '1991-02-03' - time '04:05:06';`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0093-select-date-1991-02-03-time-04:05:06"},
 			},
 			{
-				Query:    `SELECT date '2025-07-21' - 1;`,
-				Expected: []sql.Row{{"2025-07-20"}},
+				Query: `SELECT date '2025-07-21' - 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0094-select-date-2025-07-21-1"},
 			},
 			{
-				Query:    `SELECT date '1991-02-03' - time '04:05:06';`,
-				Expected: []sql.Row{{"1991-02-02 19:54:54"}},
+				Query: `SELECT date '1991-02-03' - time '04:05:06';`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0095-select-date-1991-02-03-time-04:05:06"},
 			},
 			{
-				Query:    `SELECT date '2025-07-21' + 1;`,
-				Expected: []sql.Row{{"2025-07-22"}},
+				Query: `SELECT date '2025-07-21' + 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0096-select-date-2025-07-21-+-1"},
 			},
 			{
-				Query:    `SELECT date '2025-07-21' + interval '2 days';`,
-				Expected: []sql.Row{{"2025-07-23 00:00:00"}},
+				Query: `SELECT date '2025-07-21' + interval '2 days';`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0097-select-date-2025-07-21-+-interval"},
 			},
 			{
-				Query:    `SELECT date '2025-07-21' + time '04:05:06';`,
-				Expected: []sql.Row{{"2025-07-21 04:05:06"}},
+				Query: `SELECT date '2025-07-21' + time '04:05:06';`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0098-select-date-2025-07-21-+-time"},
 			},
 			{
-				Query:    `SELECT date '2025-07-21' + time '04:05:06 UTC';`,
-				Expected: []sql.Row{{"2025-07-21 04:05:06"}},
+				Query: `SELECT date '2025-07-21' + time '04:05:06 UTC';`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0099-select-date-2025-07-21-+-time"},
 			},
 		},
 	},
@@ -927,10 +643,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_date where Id = '2025-01-01' ORDER BY id;",
-				Expected: []sql.Row{
-					{"2025-01-01", "2023-01-01"},
-				},
+				Query: "SELECT * FROM t_date where Id = '2025-01-01' ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0100-select-*-from-t_date-where"},
 			},
 		},
 	},
@@ -942,11 +655,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_double_precision ORDER BY id;",
-				Expected: []sql.Row{
-					{1, 123.456},
-					{2, 789.012},
-				},
+				Query: "SELECT * FROM t_double_precision ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0101-select-*-from-t_double_precision-order"},
 			},
 		},
 	},
@@ -958,10 +667,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_double_precision WHERE id = 456.789 ORDER BY id;",
-				Expected: []sql.Row{
-					{456.789, 123.456},
-				},
+				Query: "SELECT * FROM t_double_precision WHERE id = 456.789 ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0102-select-*-from-t_double_precision-where"},
 			},
 		},
 	},
@@ -973,11 +679,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_double_precision ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "{123.456,NULL}"},
-					{2, "{789.012,125.125}"},
-				},
+				Query: "SELECT * FROM t_double_precision ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0103-select-*-from-t_double_precision-order"},
 			},
 		},
 	},
@@ -990,11 +692,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_inet ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "192.168.1.1"},
-					{2, "10.0.0.1"},
-				},
+				Query: "SELECT * FROM t_inet ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0104-select-*-from-t_inet-order"},
 			},
 		},
 	},
@@ -1006,11 +704,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_integer ORDER BY id;",
-				Expected: []sql.Row{
-					{1, 123},
-					{2, 456},
-				},
+				Query: "SELECT * FROM t_integer ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0105-select-*-from-t_integer-order"},
 			},
 		},
 	},
@@ -1022,11 +716,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_integer ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "{123,NULL}"},
-					{2, "{456,823753913}"},
-				},
+				Query: "SELECT * FROM t_integer ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0106-select-*-from-t_integer-order"},
 			},
 		},
 	},
@@ -1038,76 +728,49 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_interval ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "1 day 03:00:00"},
-					{2, "23:30:00"},
-					{3, "00:01:00"},
-				},
+				Query: "SELECT * FROM t_interval ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0107-select-*-from-t_interval-order"},
 			},
 			{
-				Query: "SELECT * FROM t_interval ORDER BY v1;",
-				Expected: []sql.Row{
-					{3, "00:01:00"},
-					{2, "23:30:00"},
-					{1, "1 day 03:00:00"},
-				},
+				Query: "SELECT * FROM t_interval ORDER BY v1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0108-select-*-from-t_interval-order"},
 			},
 			{
-				Query: `SELECT id, v1::char, v1::name FROM t_interval;`,
-				Expected: []sql.Row{
-					{1, "1", "1 day 03:00:00"},
-					{2, "2", "23:30:00"},
-					{3, "0", "00:01:00"},
-				},
+				Query: `SELECT id, v1::char, v1::name FROM t_interval;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0109-select-id-v1::char-v1::name-from"},
 			},
 			{
-				Query:    `SELECT '2 years 15 months 100 weeks 99 hours 123456789 milliseconds'::interval;`,
-				Expected: []sql.Row{{"3 years 3 mons 700 days 133:17:36.789"}},
+				Query: `SELECT '2 years 15 months 100 weeks 99 hours 123456789 milliseconds'::interval;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0110-select-2-years-15-months"},
 			},
 			{
-				Query:    `SELECT '2 years 15 months 100 weeks 99 hours 123456789 milliseconds'::interval::char;`,
-				Expected: []sql.Row{{"3"}},
+				Query: `SELECT '2 years 15 months 100 weeks 99 hours 123456789 milliseconds'::interval::char;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0111-select-2-years-15-months"},
 			},
 			{
-				Query:    `SELECT '2 years 15 months 100 weeks 99 hours 123456789 milliseconds'::interval::text;`,
-				Expected: []sql.Row{{"3 years 3 mons 700 days 133:17:36.789"}},
+				Query: `SELECT '2 years 15 months 100 weeks 99 hours 123456789 milliseconds'::interval::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0112-select-2-years-15-months"},
 			},
 			{
-				Query:    `SELECT '2 years 15 months 100 weeks 99 hours 123456789 milliseconds'::char::interval;`,
-				Expected: []sql.Row{{"00:00:02"}},
+				Query: `SELECT '2 years 15 months 100 weeks 99 hours 123456789 milliseconds'::char::interval;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0113-select-2-years-15-months"},
 			},
 			{
-				Query:    `SELECT '13 months'::name::interval;`,
-				Expected: []sql.Row{{"1 year 1 mon"}},
+				Query: `SELECT '13 months'::name::interval;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0114-select-13-months-::name::interval"},
 			},
 			{
-				Query:    `SELECT '13 months'::bpchar::interval;`,
-				Expected: []sql.Row{{"1 year 1 mon"}},
+				Query: `SELECT '13 months'::bpchar::interval;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0115-select-13-months-::bpchar::interval"},
 			},
 			{
-				Query:    `SELECT '13 months'::varchar::interval;`,
-				Expected: []sql.Row{{"1 year 1 mon"}},
+				Query: `SELECT '13 months'::varchar::interval;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0116-select-13-months-::varchar::interval"},
 			},
 			{
-				Query:    `SELECT '13 months'::text::interval;`,
-				Expected: []sql.Row{{"1 year 1 mon"}},
+				Query: `SELECT '13 months'::text::interval;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0117-select-13-months-::text::interval"},
 			},
 			{
-				Query:    `SELECT '13 months'::char::interval;`,
-				Expected: []sql.Row{{"00:00:01"}},
+				Query: `SELECT '13 months'::char::interval;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0118-select-13-months-::char::interval"},
 			},
 			{
-				Query:       "INSERT INTO t_interval VALUES (3, 7);",
-				ExpectedErr: `ASSIGNMENT_CAST: target is of type interval but expression is of type integer: 7`,
+				Query: "INSERT INTO t_interval VALUES (3, 7);", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0119-insert-into-t_interval-values-3", Compare: "sqlstate"},
 			},
 			{
-				Query:       "INSERT INTO t_interval VALUES (3, true);",
-				ExpectedErr: `ASSIGNMENT_CAST: target is of type interval but expression is of type boolean: true`,
+				Query: "INSERT INTO t_interval VALUES (3, true);", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0120-insert-into-t_interval-values-3", Compare: "sqlstate"},
 			},
 			{
-				Query:    `SELECT CAST(interval '02:03' AS time) AS "02:03:00";`,
-				Expected: []sql.Row{{"02:03:00"}},
+				Query: `SELECT CAST(interval '02:03' AS time) AS "02:03:00";`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0121-select-cast-interval-02:03-as"},
 			},
 		},
 	},
@@ -1119,10 +782,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_interval WHERE id = '1 hour' ORDER BY id;",
-				Expected: []sql.Row{
-					{"01:00:00", "1 day 03:00:00"},
-				},
+				Query: "SELECT * FROM t_interval WHERE id = '1 hour' ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0122-select-*-from-t_interval-where"},
 			},
 		},
 	},
@@ -1134,11 +794,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_interval_array ORDER BY id;",
-				Expected: []sql.Row{
-					{1, `{"1 day 03:00:00","5 days 02:00:00"}`},
-					{2, `{"3 years 3 mons 700 days 133:17:36.789",200:00:00}`},
-				},
+				Query: "SELECT * FROM t_interval_array ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0123-select-*-from-t_interval_array-order"},
 			},
 		},
 	},
@@ -1147,9 +803,10 @@ var typesTests = []ScriptTest{
 		SetUpScript: []string{},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query:       "CREATE TABLE t_json (id JSON primary key, v1 JSON);",
-				ExpectedErr: "data type json has no default operator class for access method \"btree\"",
-				Skip:        true, // current error message is blob/text column 'id' used in key specification without a key length
+				Query: "CREATE TABLE t_json (id JSON primary key, v1 JSON);",
+
+				Skip: true, PostgresOracle: // current error message is blob/text column 'id' used in key specification without a key length
+				ScriptTestPostgresOracle{ID: "types-test-testtypes-0124-create-table-t_json-id-json", Compare: "sqlstate"},
 			},
 		},
 	},
@@ -1161,34 +818,16 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_json ORDER BY 1;",
-				Expected: []sql.Row{
-					{1, `{"key1": {"key": "value"}}`},
-					{2, `{"num":42}`},
-					{3, `{"key1": "value1", "key2": "value2"}`},
-					{4, `{"key1": {"key": [2,3]}}`},
-				},
+				Query: "SELECT * FROM t_json ORDER BY 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0125-select-*-from-t_json-order"},
 			},
 			{
-				Query: "SELECT * FROM t_json ORDER BY id;",
-				Expected: []sql.Row{
-					{1, `{"key1": {"key": "value"}}`},
-					{2, `{"num":42}`},
-					{3, `{"key1": "value1", "key2": "value2"}`},
-					{4, `{"key1": {"key": [2,3]}}`},
-				},
+				Query: "SELECT * FROM t_json ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0126-select-*-from-t_json-order"},
 			},
 			{
-				Query: "Insert into t_json values (100, null) returning *",
-				Expected: []sql.Row{
-					{100, nil},
-				},
+				Query: "Insert into t_json values (100, null) returning *", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0127-insert-into-t_json-values-100"},
 			},
 			{
-				Query: "select * from t_json where id = 100",
-				Expected: []sql.Row{
-					{100, nil},
-				},
+				Query: "select * from t_json where id = 100", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0128-select-*-from-t_json-where"},
 			},
 			{
 				Query:    "Insert into t_json values ($1, $2) returning *",
@@ -1251,11 +890,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_json ORDER BY 1;",
-				Expected: []sql.Row{
-					{1, `{"key1": {"key": "value"}}`},
-					{2, `{"num":42}`},
-				},
+				Query: "SELECT * FROM t_json ORDER BY 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0137-select-*-from-t_json-order"},
 			},
 		},
 	},
@@ -1271,17 +906,10 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_jsonb ORDER BY id;",
-				Expected: []sql.Row{
-					{1, `{"key": "value"}`},
-					{2, `{"num": 42}`},
-				},
+				Query: "SELECT * FROM t_jsonb ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0138-select-*-from-t_jsonb-order"},
 			},
 			{
-				Query: "insert into t_jsonb values (3, null) returning *",
-				Expected: []sql.Row{
-					{3, nil},
-				},
+				Query: "insert into t_jsonb values (3, null) returning *", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0139-insert-into-t_jsonb-values-3"},
 			},
 			{
 				Query:    "insert into t_jsonb values ($1, $2) returning *",
@@ -1333,11 +961,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_json ORDER BY 1;",
-				Expected: []sql.Row{
-					{1, `{"key1": {"key": "value"}}`},
-					{2, `{"num": 42}`},
-				},
+				Query: "SELECT * FROM t_json ORDER BY 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0147-select-*-from-t_json-order"},
 			},
 		},
 	},
@@ -1448,108 +1072,10 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_jsonb ORDER BY v1;",
-				Expected: []sql.Row{
-					{nil}, // should be "null", but https://github.com/jackc/pgx/issues/2430
-					{`"random string"`},
-					{`789.123`},
-					{`123456`},
-					{`false`},
-					{`true`},
-					{`["just_text"]`},
-					{`["simple_text"]`},
-					{`["string_with_emoji_😊"]`},
-					{`["special_chars_!@#$%^&*()_+", {"more": "!@#$"}]`},
-					{`["unicode_안녕하세요", "string"]`},
-					{`[{"emoji": "😊"}, {"another_emoji": "😢"}]`},
-					{`[{"key1": "value1"}, {"key2": "value2"}]`},
-					{`[{"nested_array": [1, 2, 3]}, {"nested_object": {"inner_key": "inner_value"}}]`},
-					{`[{"nested_array": [1, 2, {"deep": {"inner": "value"}}]}, "text"]`},
-					{`[{"unicode": "こんにちは"}, {"another": "你好"}]`},
-					{`[null, null, null]`},
-					{`["emoji_😀", "nested_😂", {"key": "value"}]`},
-					{`["string1", "string2", "string3"]`},
-					{`[3.14159, 2.71828, 1.61803]`},
-					{`[123, 456, 789]`},
-					{`[1234567890, "large_number", false]`},
-					{`[true, false, true]`},
-					{`[[], [], []]`},
-					{`[[], ["nested", "array"], 123]`},
-					{`[{"complex": {"nested": {"structure": "value"}}}, [1, 2, 3], false]`},
-					{`[{"deep": {"structure": {"key": "value"}}}, 123, false]`},
-					{`[{"deep_nested": {"level1": {"level2": {"level3": "value"}}}}, 42, "text"]`},
-					{`[{"key": "value"}, {"array": [1, 2, 3]}, {"nested": {"inner": "deep"}}]`},
-					{`[{"obj_in_array": {"key": "value"}}, [1, 2, 3], false]`},
-					{`[null, "null_as_string", false, 0]`},
-					{`["a", "b", "c", {"nested": {"key": "value"}}]`},
-					{`["flat", "array", "of", "strings"]`},
-					{`["simple", "array", "of", "strings"]`},
-					{`[-1, -2, -3, -4]`},
-					{`[0.1, 0.2, 0.3, 0.4]`},
-					{`[true, null, "string", 3.14]`},
-					{`[true, false, null, "end"]`},
-					{`[{"key": {"subkey": [1, 2, 3]}}, 42, "text", false]`},
-					{`[null, 1, "two", true, {"five": 5}]`},
-					{`["end", "of", "array", 123, true]`},
-					{`["mixed", 123, false, null, {"complex": {"key": "value"}}]`},
-					{`["multiple", "types", 123, true, {"key": "value"}]`},
-					{`["text", 123, false, {"key": "value"}, [1, 2, 3]]`},
-					{`["varied", "types", true, 123, {"key": "value"}]`},
-					{`[1, "two", true, null, [1, 2, 3]]`},
-					{`[1, "two", true, null, {"key": "value"}]`},
-					{`[1, 2, 3, 4, 5]`},
-					{`[1.1, 2.2, 3.3, 4.4, 5.5]`},
-					{`[true, false, true, false, null]`},
-					{`{"array_of_arrays": {"array1": [1, 2, 3], "array2": [4, 5, 6], "array3": [7, 8, 9]}}`},
-					{`{"array_of_bools": [true, false, true]}`},
-					{`{"array_of_numbers": [1, 2, 3]}`},
-					{`{"array_of_objects": [{"key1": "value1"}, {"key2": "value2"}, {"key3": "value3"}]}`},
-					{`{"array_of_strings": ["one", "two", "three"]}`},
-					{`{"boolean_mixed": {"null": null, "true": true, "false": false}}`},
-					{`{"combos": [{"number": 1}, {"string": "two"}, {"boolean": true}]}`},
-					{`{"common_key": "different_value"}`},
-					{`{"common_key": "same_value"}`},
-					{`{"common_key": 123}`},
-					{`{"common_key": 456}`},
-					{`{"common_key": {"nested_key": "different_value"}}`},
-					{`{"common_key": {"nested_key": "value"}}`},
-					{`{"complex_array": {"array1": [1, 2, 3], "array2": ["a", "b", "c"]}}`},
-					{`{"complex_object": {"key1": {"subkey": "value1"}, "key2": {"subkey": "value2"}}}`},
-					{`{"deep_nesting": {"level1": {"level2": {"level3": {"key": "value"}}}}}`},
-					{`{"empty": {}}`},
-					{`{"mixed": {"bool": false, "null": null, "number": 100, "string": "text"}}`},
-					{`{"mixed_data": {"bool": false, "null": null, "number": 100, "string": "text"}}`},
-					{`{"nested": {"level1": {"level2": {"key": "deep_value"}}}}`},
-					{`{"nested_mixed": {"key1": 1, "key2": [true, false], "key3": {"inner_key": "inner_value"}}}`},
-					{`{"nested_numbers": {"one": 1, "two": 2, "three": 3}}`},
-					{`{"nested_object": {"subkey1": 789, "subkey2": [true, false], "subkey3": {"deep": "value"}}}`},
-					{`{"nested_string": {"outer": {"inner": "text"}}}`},
-					{`{"number_key": {"float": 2.3, "integer": 1, "negative": -1}}`},
-					{`{"object_in_array": [{"key": "value"}, {"another": "one"}]}`},
-					{`{"object_in_array": {"array": [1, 2, 3], "nested": {"key": "value"}}}`},
-					{`{"random_mixed": {"null": null, "number": 1, "string": "two", "boolean": true}}`},
-					{`{"random_text": "Lorem ipsum dolor sit amet"}`},
-					{`{"simple": "object"}`},
-					{`{"simple_object": {"key": "value"}}`},
-					{`{"single_bool": true}`},
-					{`{"single_number": 42}`},
-					{`{"single_string": "hello"}`},
-					{`{"string_with_numbers": {"key": "123abc", "another_key": "456def"}}`},
-					{`{"unicode_chars": {"char1": "あ", "char2": "い", "char3": "う"}}`},
-					{`{"unicode_string": {"greeting": "你好"}}`},
-					{`{"emoji": "😊", "unicode": "こんにちは"}`},
-					{`{"boolean": true, "empty_array": [], "empty_object": {}}`},
-					{`{"key1": "value1", "key2": "value2", "key3": "value3"}`},
-					{`{"key1": 123, "key2": "duplicate_key", "common_key": "same_value"}`},
-					{`{"key1": 123, "key2": "value", "key3": true}`},
-					{`{"keyX": "string_value", "keyY": 123.456, "keyZ": null}`},
-					{`{"null_value": null, "boolean_true": true, "boolean_false": false}`},
-					{`{"numbers": [1, 2, 3], "strings": ["a", "b", "c"], "booleans": [true, false]}`},
-					{`{"text": "simple_string", "float": 3.14, "integer": 123}`},
-					{`{"double": 2, "single": 1, "triple": 3, "quadruple": 4}`},
-					{`{"keyA": 456, "keyB": "another_value", "keyC": false, "keyD": [1, 2, 3]}`},
-					{`{"key1": 1, "key2": 2, "key3": 3, "key4": 4, "key5": 5}`},
-				},
+				Query: "SELECT * FROM t_jsonb ORDER BY v1;", PostgresOracle: ScriptTestPostgresOracle{
+
+					// should be "null", but https://github.com/jackc/pgx/issues/2430
+					ID: "types-test-testtypes-0148-select-*-from-t_jsonb-order"},
 			},
 		},
 	},
@@ -1561,10 +1087,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT pk, length(v1::TEXT) FROM t_jsonl;",
-				Expected: []sql.Row{
-					{1, 4112},
-				},
+				Query: "SELECT pk, length(v1::TEXT) FROM t_jsonl;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0149-select-pk-length-v1::text-from"},
 			},
 		},
 	},
@@ -1577,11 +1100,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_line ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "{1,2,3}"},
-					{2, "{4,5,6}"},
-				},
+				Query: "SELECT * FROM t_line ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0150-select-*-from-t_line-order"},
 			},
 		},
 	},
@@ -1594,11 +1113,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_lseg ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "((1,2),(3,4))"},
-					{2, "((5,6),(7,8))"},
-				},
+				Query: "SELECT * FROM t_lseg ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0151-select-*-from-t_lseg-order"},
 			},
 		},
 	},
@@ -1611,11 +1126,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_macaddr ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "08:00:2b:01:02:03"},
-					{2, "00:11:22:33:44:55"},
-				},
+				Query: "SELECT * FROM t_macaddr ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0152-select-*-from-t_macaddr-order"},
 			},
 		},
 	},
@@ -1628,11 +1139,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_money ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "$100.25"},
-					{2, "$50.50"},
-				},
+				Query: "SELECT * FROM t_money ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0153-select-*-from-t_money-order"},
 			},
 		},
 	},
@@ -1644,67 +1151,41 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_name ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "abcdefghij"},
-					{2, "klmnopqrst"},
-				},
+				Query: "SELECT * FROM t_name ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0154-select-*-from-t_name-order"},
 			},
 			{
-				Query: "SELECT * FROM t_name ORDER BY v1 DESC;",
-				Expected: []sql.Row{
-					{2, "klmnopqrst"},
-					{1, "abcdefghij"},
-				},
+				Query: "SELECT * FROM t_name ORDER BY v1 DESC;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0155-select-*-from-t_name-order"},
 			},
 			{
-				Query: "SELECT v1::char(1) FROM t_name WHERE v1='klmnopqrst';",
-				Expected: []sql.Row{
-					{"k"},
-				},
+				Query: "SELECT v1::char(1) FROM t_name WHERE v1='klmnopqrst';", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0156-select-v1::char-1-from-t_name"},
 			},
 			{
-				Query:    "UPDATE t_name SET v1='tuvwxyz' WHERE id=2;",
-				Expected: []sql.Row{},
+				Query: "UPDATE t_name SET v1='tuvwxyz' WHERE id=2;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0157-update-t_name-set-v1=-tuvwxyz"},
 			},
 			{
-				Query:    "DELETE FROM t_name WHERE v1='abcdefghij';",
-				Expected: []sql.Row{},
+				Query: "DELETE FROM t_name WHERE v1='abcdefghij';", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0158-delete-from-t_name-where-v1="},
 			},
 			{
-				Query: "SELECT id::name, v1::text FROM t_name ORDER BY id;",
-				Expected: []sql.Row{
-					{"2", "tuvwxyz"},
-				},
+				Query: "SELECT id::name, v1::text FROM t_name ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0159-select-id::name-v1::text-from-t_name"},
 			},
 			{
-				Query:    "INSERT INTO t_name VALUES (3, '0123456789012345678901234567890123456789012345678901234567890123456789');",
-				Expected: []sql.Row{},
+				Query: "INSERT INTO t_name VALUES (3, '0123456789012345678901234567890123456789012345678901234567890123456789');", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0160-insert-into-t_name-values-3"},
+			},
+			{
+				Query: "SELECT * FROM t_name ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0161-select-*-from-t_name-order"},
+			},
+			{
+				Query: "INSERT INTO t_name VALUES (4, 12345);",
+				Skip:  true, PostgresOracle: // TODO: according to casting rules this shouldn't work but it does, investigate why
+				ScriptTestPostgresOracle{ID: "types-test-testtypes-0162-insert-into-t_name-values-4"},
 			},
 			{
 				Query: "SELECT * FROM t_name ORDER BY id;",
-				Expected: []sql.Row{
-					{2, "tuvwxyz"},
-					{3, "012345678901234567890123456789012345678901234567890123456789012"},
-				},
+				Skip:  true, PostgresOracle: // This is skipped because the one above is skipped
+				ScriptTestPostgresOracle{ID: "types-test-testtypes-0163-select-*-from-t_name-order"},
 			},
 			{
-				Query:    "INSERT INTO t_name VALUES (4, 12345);",
-				Skip:     true, // TODO: according to casting rules this shouldn't work but it does, investigate why
-				Expected: []sql.Row{},
-			},
-			{
-				Query: "SELECT * FROM t_name ORDER BY id;",
-				Skip:  true, // This is skipped because the one above is skipped
-				Expected: []sql.Row{
-					{2, "tuvwxyz"},
-					{3, "012345678901234567890123456789012345678901234567890123456789012"},
-					{4, "12345"},
-				},
-			},
-			{
-				Query:    `SELECT name 'name string' = name 'name string' AS "True";`,
-				Expected: []sql.Row{{"t"}},
+				Query: `SELECT name 'name string' = name 'name string' AS "True";`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0164-select-name-name-string-="},
 			},
 		},
 	},
@@ -1716,10 +1197,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_name WHERE id = 'wxyz' ORDER BY id;",
-				Expected: []sql.Row{
-					{"wxyz", "abcdefghij"},
-				},
+				Query: "SELECT * FROM t_name WHERE id = 'wxyz' ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0165-select-*-from-t_name-where"},
 			},
 		},
 	},
@@ -1731,36 +1209,20 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_name ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "abcdefghij"},
-					{2, "12345"},
-				},
+				Query: "SELECT * FROM t_name ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0166-select-*-from-t_name-order"},
 			},
 			// Cast from Name to types
 			{
-				Query: "SELECT v1::char(1), v1::varchar(2), v1::text FROM t_name WHERE id=1;",
-				Expected: []sql.Row{
-					{"a", "ab", "abcdefghij"},
-				},
+				Query: "SELECT v1::char(1), v1::varchar(2), v1::text FROM t_name WHERE id=1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0167-select-v1::char-1-v1::varchar-2"},
 			},
 			{
-				Query: "SELECT v1::smallint, v1::integer, v1::bigint, v1::float4, v1::float8, v1::numeric FROM t_name WHERE id=2;",
-				Expected: []sql.Row{
-					{12345, 12345, 12345, float64(12345), float64(12345), Numeric("12345")},
-				},
+				Query: "SELECT v1::smallint, v1::integer, v1::bigint, v1::float4, v1::float8, v1::numeric FROM t_name WHERE id=2;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0168-select-v1::smallint-v1::integer-v1::bigint-v1::float4"},
 			},
 			{
-				Query: "SELECT v1::oid, v1::xid FROM t_name WHERE id=2;",
-				Expected: []sql.Row{
-					{12345, 12345},
-				},
+				Query: "SELECT v1::oid, v1::xid FROM t_name WHERE id=2;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0169-select-v1::oid-v1::xid-from-t_name"},
 			},
 			{
-				Query: "SELECT v1::xid FROM t_name WHERE id=1;",
-				Expected: []sql.Row{
-					{0},
-				},
+				Query: "SELECT v1::xid FROM t_name WHERE id=1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0170-select-v1::xid-from-t_name-where", Compare: "sqlstate"},
 			},
 			{
 				Query: "SELECT ('0'::name)::boolean, ('1'::name)::boolean;",
@@ -1847,16 +1309,10 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: `SELECT v1::varchar(1)[] FROM t_namea;`,
-				Expected: []sql.Row{
-					{"{a,w,i,w}"},
-				},
+				Query: `SELECT v1::varchar(1)[] FROM t_namea;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0186-select-v1::varchar-1-[]-from"},
 			},
 			{
-				Query: `SELECT v2::name, v3::name FROM t_namea;`,
-				Expected: []sql.Row{
-					{"123456789012345678901234567890123456789012345678901234567890123", "t"},
-				},
+				Query: `SELECT v2::name, v3::name FROM t_namea;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0187-select-v2::name-v3::name-from-t_namea"},
 			},
 		},
 	},
@@ -1869,36 +1325,25 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_numeric ORDER BY id;",
-				Expected: []sql.Row{
-					{1, Numeric("123.45")},
-					{2, Numeric("67.89")},
-					{3, Numeric("100.30")},
-				},
+				Query: "SELECT * FROM t_numeric ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0188-select-*-from-t_numeric-order"},
 			},
 			{
-				Query:    "INSERT INTO fract_only VALUES (1, '0.0');",
-				Expected: []sql.Row{},
+				Query: "INSERT INTO fract_only VALUES (1, '0.0');", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0189-insert-into-fract_only-values-1"},
 			},
 			{
-				Query:    "SELECT numeric '10.00';",
-				Expected: []sql.Row{{Numeric("10.00")}},
+				Query: "SELECT numeric '10.00';", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0190-select-numeric-10.00"},
 			},
 			{
-				Query:    "SELECT numeric '-10.00';",
-				Expected: []sql.Row{{Numeric("-10.00")}},
+				Query: "SELECT numeric '-10.00';", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0191-select-numeric-10.00"},
 			},
 			{
-				Query:    "select 0.03::numeric(3,3);",
-				Expected: []sql.Row{{Numeric("0.030")}},
+				Query: "select 0.03::numeric(3,3);", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0192-select-0.03::numeric-3-3"},
 			},
 			{
-				Query:       "select 1.03::numeric(2,2);",
-				ExpectedErr: `numeric field overflow`,
+				Query: "select 1.03::numeric(2,2);", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0193-select-1.03::numeric-2-2", Compare: "sqlstate"},
 			},
 			{
-				Query:       "select 1.03::float4::numeric(2,2);",
-				ExpectedErr: `numeric field overflow`,
+				Query: "select 1.03::float4::numeric(2,2);", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0194-select-1.03::float4::numeric-2-2", Compare: "sqlstate"},
 			},
 		},
 	},
@@ -1911,18 +1356,13 @@ var typesTests = []ScriptTest{
 		Assertions: []ScriptTestAssertion{
 			{
 				Query: "SELECT * FROM t_numeric;",
-				Skip:  true, // test setup problem, values are logically equivalent but don't match
-				Expected: []sql.Row{
-					{Numeric("123.45"), Numeric("67.89")},
-					{Numeric("67.89"), Numeric("100.3")},
-				},
+				Skip:  true, PostgresOracle: // test setup problem, values are logically equivalent but don't match
+				ScriptTestPostgresOracle{ID: "types-test-testtypes-0195-select-*-from-t_numeric"},
 			},
 			{
 				Query: "SELECT * FROM t_numeric WHERE ID = 123.45 ORDER BY id;",
-				Skip:  true, // value not found
-				Expected: []sql.Row{
-					{Numeric("123.45"), Numeric("67.89")},
-				},
+				Skip:  true, PostgresOracle: // value not found
+				ScriptTestPostgresOracle{ID: "types-test-testtypes-0196-select-*-from-t_numeric-where"},
 			},
 		},
 	},
@@ -1934,12 +1374,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_numeric ORDER BY id;",
-				Expected: []sql.Row{
-					{1, Numeric("123.45")},
-					{2, Numeric("67.875")},
-					{3, Numeric("100.3")},
-				},
+				Query: "SELECT * FROM t_numeric ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0197-select-*-from-t_numeric-order"},
 			},
 		},
 	},
@@ -1951,11 +1386,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_numeric ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "{NULL,123.45}"},
-					{2, "{67.89,572903.1468}"},
-				},
+				Query: "SELECT * FROM t_numeric ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0198-select-*-from-t_numeric-order"},
 			},
 		},
 	},
@@ -1967,73 +1398,43 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_oid ORDER BY id;",
-				Expected: []sql.Row{
-					{1, 1234},
-					{2, 5678},
-				},
+				Query: "SELECT * FROM t_oid ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0199-select-*-from-t_oid-order"},
 			},
 			{
-				Query: "SELECT * FROM t_oid ORDER BY v1 DESC;",
-				Expected: []sql.Row{
-					{2, 5678},
-					{1, 1234},
-				},
+				Query: "SELECT * FROM t_oid ORDER BY v1 DESC;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0200-select-*-from-t_oid-order"},
 			},
 			{
-				Query:    "UPDATE t_oid SET v1=9012 WHERE id=2;",
-				Expected: []sql.Row{},
+				Query: "UPDATE t_oid SET v1=9012 WHERE id=2;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0201-update-t_oid-set-v1=9012-where"},
 			},
 			{
-				Query:    "DELETE FROM t_oid WHERE v1=1234;",
-				Expected: []sql.Row{},
+				Query: "DELETE FROM t_oid WHERE v1=1234;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0202-delete-from-t_oid-where-v1=1234"},
 			},
 			{
-				Query: "SELECT * FROM t_oid ORDER BY id;",
-				Expected: []sql.Row{
-					{2, 9012},
-				},
+				Query: "SELECT * FROM t_oid ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0203-select-*-from-t_oid-order"},
 			},
 			{
-				Query:    "INSERT INTO t_oid VALUES (3, '2345');",
-				Expected: []sql.Row{},
+				Query: "INSERT INTO t_oid VALUES (3, '2345');", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0204-insert-into-t_oid-values-3"},
 			},
 			{
-				Query: "SELECT * FROM t_oid ORDER BY id;",
-				Expected: []sql.Row{
-					{2, 9012},
-					{3, 2345},
-				},
+				Query: "SELECT * FROM t_oid ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0205-select-*-from-t_oid-order"},
 			},
 			{
-				Query:    "INSERT INTO t_oid VALUES (4, 4294967295);",
-				Expected: []sql.Row{},
+				Query: "INSERT INTO t_oid VALUES (4, 4294967295);", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0206-insert-into-t_oid-values-4"},
 			},
 			{
-				Query:       "INSERT INTO t_oid VALUES (5, 4294967296);",
-				ExpectedErr: "out of range",
+				Query: "INSERT INTO t_oid VALUES (5, 4294967296);", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0207-insert-into-t_oid-values-5", Compare: "sqlstate"},
 			},
 			{
-				Query:    "INSERT INTO t_oid VALUES (6, 0);",
-				Expected: []sql.Row{},
+				Query: "INSERT INTO t_oid VALUES (6, 0);", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0208-insert-into-t_oid-values-6"},
 			},
 			{
-				Query:    "INSERT INTO t_oid VALUES (7, -1);",
-				Expected: []sql.Row{},
+				Query: "INSERT INTO t_oid VALUES (7, -1);", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0209-insert-into-t_oid-values-7"},
 			},
 			{
-				Query: "SELECT * FROM t_oid ORDER BY id;",
-				Expected: []sql.Row{
-					{2, 9012},
-					{3, 2345},
-					{4, 4294967295},
-					{6, 0},
-					{7, 4294967295},
-				},
+				Query: "SELECT * FROM t_oid ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0210-select-*-from-t_oid-order"},
 			},
 			{
-				Query:    "select oid '20304';",
-				Expected: []sql.Row{{20304}},
+				Query: "select oid '20304';", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0211-select-oid-20304"},
 			},
 		},
 	},
@@ -2045,11 +1446,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_oidvector ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "1234 5678 9012"},
-					{2, "556 778 223"},
-				},
+				Query: "SELECT * FROM t_oidvector ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0212-select-*-from-t_oidvector-order"},
 			},
 		},
 	},
@@ -2061,10 +1458,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_oidvector ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "{\"1234 5678 9012\",\"556 778 223\"}"},
-				},
+				Query: "SELECT * FROM t_oidvector ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0213-select-*-from-t_oidvector-order"},
 			},
 		},
 	},
@@ -2151,159 +1545,102 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_oid ORDER BY id;",
-				Expected: []sql.Row{
-					{1, 1234},
-					{2, 4294967295},
-				},
+				Query: "SELECT * FROM t_oid ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0223-select-*-from-t_oid-order"},
 			},
 			// Cast from OID to types
 			{
-				Query: "SELECT coid::char(1) FROM t_oid WHERE id=1;",
-				Expected: []sql.Row{
-					{"1"},
-				},
+				Query: "SELECT coid::char(1) FROM t_oid WHERE id=1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0224-select-coid::char-1-from-t_oid"},
 			},
 			{
-				Query: "SELECT coid::varchar(2) FROM t_oid WHERE id=1;",
-				Expected: []sql.Row{
-					{"12"},
-				},
+				Query: "SELECT coid::varchar(2) FROM t_oid WHERE id=1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0225-select-coid::varchar-2-from-t_oid"},
 			},
 			{
-				Query: "SELECT coid::text FROM t_oid WHERE id=1;",
-				Expected: []sql.Row{
-					{"1234"},
-				},
+				Query: "SELECT coid::text FROM t_oid WHERE id=1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0226-select-coid::text-from-t_oid-where"},
 			},
 			{
-				Query:       "SELECT coid::smallint FROM t_oid WHERE id=1;",
-				ExpectedErr: "does not exist",
+				Query: "SELECT coid::smallint FROM t_oid WHERE id=1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0227-select-coid::smallint-from-t_oid-where", Compare: "sqlstate"},
 			},
 			{
-				Query:       "SELECT coid::smallint FROM t_oid WHERE id=2;",
-				ExpectedErr: "does not exist",
+				Query: "SELECT coid::smallint FROM t_oid WHERE id=2;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0228-select-coid::smallint-from-t_oid-where", Compare: "sqlstate"},
 			},
 			{
-				Query: "SELECT coid::integer FROM t_oid WHERE id=1;",
-				Expected: []sql.Row{
-					{1234},
-				},
+				Query: "SELECT coid::integer FROM t_oid WHERE id=1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0229-select-coid::integer-from-t_oid-where"},
 			},
 			{
-				Query: "SELECT coid::integer FROM t_oid WHERE id=2;",
-				Expected: []sql.Row{
-					{-1},
-				},
+				Query: "SELECT coid::integer FROM t_oid WHERE id=2;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0230-select-coid::integer-from-t_oid-where"},
 			},
 			{
-				Query: "SELECT coid::bigint FROM t_oid WHERE id=1;",
-				Expected: []sql.Row{
-					{1234},
-				},
+				Query: "SELECT coid::bigint FROM t_oid WHERE id=1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0231-select-coid::bigint-from-t_oid-where"},
 			},
 			{
-				Query: "SELECT coid::name FROM t_oid WHERE id=1;",
-				Expected: []sql.Row{
-					{"1234"},
-				},
+				Query: "SELECT coid::name FROM t_oid WHERE id=1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0232-select-coid::name-from-t_oid-where"},
 			},
 			{
-				Query: "SELECT coid::bigint FROM t_oid WHERE id=2;",
-				Expected: []sql.Row{
-					{4294967295},
-				},
+				Query: "SELECT coid::bigint FROM t_oid WHERE id=2;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0233-select-coid::bigint-from-t_oid-where"},
 			},
 			{
-				Query:       "SELECT coid::float4 FROM t_oid WHERE id=1;",
-				ExpectedErr: "does not exist",
+				Query: "SELECT coid::float4 FROM t_oid WHERE id=1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0234-select-coid::float4-from-t_oid-where", Compare: "sqlstate"},
 			},
 			{
-				Query:       "SELECT coid::float8 FROM t_oid WHERE id=1;",
-				ExpectedErr: "does not exist",
+				Query: "SELECT coid::float8 FROM t_oid WHERE id=1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0235-select-coid::float8-from-t_oid-where", Compare: "sqlstate"},
 			},
 			{
-				Query:       "SELECT coid::numeric FROM t_oid WHERE id=1;",
-				ExpectedErr: "does not exist",
+				Query: "SELECT coid::numeric FROM t_oid WHERE id=1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0236-select-coid::numeric-from-t_oid-where", Compare: "sqlstate"},
 			},
 			{
-				Query:       "SELECT coid::xid FROM t_oid WHERE id=1;",
-				ExpectedErr: "does not exist",
+				Query: "SELECT coid::xid FROM t_oid WHERE id=1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0237-select-coid::xid-from-t_oid-where",
+
+					// Cast to OID from types
+					Compare: "sqlstate"},
 			},
-			// Cast to OID from types
+
 			{
-				Query: "SELECT ('123'::char(3))::oid, ('123'::varchar)::oid, ('0'::text)::oid, ('400'::name)::oid;",
-				Expected: []sql.Row{
-					{123, 123, 0, 400},
-				},
-			},
-			{
-				Query: "SELECT ('-1'::char(3))::oid, ('-1'::varchar)::oid, ('-1'::text)::oid, ('-1'::name)::oid;",
-				Expected: []sql.Row{
-					{4294967295, 4294967295, 4294967295, 4294967295},
-				},
+				Query: "SELECT ('123'::char(3))::oid, ('123'::varchar)::oid, ('0'::text)::oid, ('400'::name)::oid;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0238-select-123-::char-3-::oid"},
 			},
 			{
-				Query: "SELECT ('-2147483648'::char(11))::oid, ('-2147483648'::varchar)::oid, ('-2147483648'::text)::oid, ('-2147483648'::name)::oid;",
-				Expected: []sql.Row{
-					{2147483648, 2147483648, 2147483648, 2147483648},
-				},
+				Query: "SELECT ('-1'::char(3))::oid, ('-1'::varchar)::oid, ('-1'::text)::oid, ('-1'::name)::oid;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0239-select-1-::char-3-::oid"},
 			},
 			{
-				Query: "SELECT (10::int2)::oid, (10::int4)::oid, (100::int8)::oid;",
-				Expected: []sql.Row{
-					{10, 10, 100},
-				},
+				Query: "SELECT ('-2147483648'::char(11))::oid, ('-2147483648'::varchar)::oid, ('-2147483648'::text)::oid, ('-2147483648'::name)::oid;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0240-select-2147483648-::char-11-::oid"},
 			},
 			{
-				Query: "SELECT (-1::int2)::oid, (-1::int4)::oid;",
-				Expected: []sql.Row{
-					{4294967295, 4294967295},
-				},
+				Query: "SELECT (10::int2)::oid, (10::int4)::oid, (100::int8)::oid;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0241-select-10::int2-::oid-10::int4-::oid"},
 			},
 			{
-				Query:       "SELECT (-1::int8)::oid;",
-				ExpectedErr: "out of range",
+				Query: "SELECT (-1::int2)::oid, (-1::int4)::oid;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0242-select-1::int2-::oid-1::int4-::oid"},
 			},
 			{
-				Query:       "SELECT (922337203685477580::int8)::oid;",
-				ExpectedErr: "out of range",
+				Query: "SELECT (-1::int8)::oid;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0243-select-1::int8-::oid", Compare: "sqlstate"},
 			},
 			{
-				Query:       "SELECT (1.1::float4)::oid;",
-				ExpectedErr: "does not exist",
+				Query: "SELECT (922337203685477580::int8)::oid;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0244-select-922337203685477580::int8-::oid", Compare: "sqlstate"},
 			},
 			{
-				Query:       "SELECT (1.1::float8)::oid;",
-				ExpectedErr: "does not exist",
+				Query: "SELECT (1.1::float4)::oid;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0245-select-1.1::float4-::oid", Compare: "sqlstate"},
 			},
 			{
-				Query:       "SELECT (1.1::decimal)::oid;",
-				ExpectedErr: "does not exist",
+				Query: "SELECT (1.1::float8)::oid;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0246-select-1.1::float8-::oid", Compare: "sqlstate"},
 			},
 			{
-				Query:       "SELECT ('922337203685477580'::text)::oid;",
-				ExpectedErr: "out of range",
+				Query: "SELECT (1.1::decimal)::oid;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0247-select-1.1::decimal-::oid", Compare: "sqlstate"},
 			},
 			{
-				Query:       "SELECT ('abc'::char(3))::oid;",
-				ExpectedErr: "invalid input syntax",
+				Query: "SELECT ('922337203685477580'::text)::oid;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0248-select-922337203685477580-::text-::oid", Compare: "sqlstate"},
 			},
 			{
-				Query:       "SELECT ('-2147483649'::char(11))::oid;",
-				ExpectedErr: "out of range",
+				Query: "SELECT ('abc'::char(3))::oid;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0249-select-abc-::char-3-::oid", Compare: "sqlstate"},
 			},
 			{
-				Query:       "SELECT ('-2147483649'::varchar)::oid;",
-				ExpectedErr: "out of range",
+				Query: "SELECT ('-2147483649'::char(11))::oid;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0250-select-2147483649-::char-11-::oid", Compare: "sqlstate"},
 			},
 			{
-				Query:       "SELECT ('-2147483649'::text)::oid;",
-				ExpectedErr: "out of range",
+				Query: "SELECT ('-2147483649'::varchar)::oid;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0251-select-2147483649-::varchar-::oid", Compare: "sqlstate"},
 			},
 			{
-				Query:       "SELECT ('-2147483649'::name)::oid;",
-				ExpectedErr: "out of range",
+				Query: "SELECT ('-2147483649'::text)::oid;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0252-select-2147483649-::text-::oid", Compare: "sqlstate"},
+			},
+			{
+				Query: "SELECT ('-2147483649'::name)::oid;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0253-select-2147483649-::name-::oid", Compare: "sqlstate"},
 			},
 		},
 	},
@@ -2315,14 +1652,10 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: `SELECT v1::varchar(1)[] FROM t_oid;`,
-				Expected: []sql.Row{
-					{"{1,4,7,1}"},
-				},
+				Query: `SELECT v1::varchar(1)[] FROM t_oid;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0254-select-v1::varchar-1-[]-from"},
 			},
 			{
-				Query:       `SELECT v2::oid, v3::oid FROM t_oid;`,
-				ExpectedErr: "cast",
+				Query: `SELECT v2::oid, v3::oid FROM t_oid;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0255-select-v2::oid-v3::oid-from-t_oid", Compare: "sqlstate"},
 			},
 		},
 	},
@@ -2335,11 +1668,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_path ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "((1,2),(3,4),(5,6))"},
-					{2, "((7,8),(9,10),(11,12))"},
-				},
+				Query: "SELECT * FROM t_path ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0256-select-*-from-t_path-order"},
 			},
 		},
 	},
@@ -2351,11 +1680,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_pg_lsn ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "16/B8E36C60"},
-					{2, "16/B8E36C70"},
-				},
+				Query: "SELECT * FROM t_pg_lsn ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0257-select-*-from-t_pg_lsn-order"},
 			},
 		},
 	},
@@ -2363,72 +1688,40 @@ var typesTests = []ScriptTest{
 		Name: "Pg_lsn functions and operators",
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT '0/16AE7F8'::pg_lsn = '0/16AE7F8'::pg_lsn;",
-				Expected: []sql.Row{
-					{"t"},
-				},
+				Query: "SELECT '0/16AE7F8'::pg_lsn = '0/16AE7F8'::pg_lsn;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0258-select-0/16ae7f8-::pg_lsn-=-0/16ae7f8"},
 			},
 			{
-				Query: "SELECT '0/16AE7F8'::pg_lsn != '0/16AE7F7'::pg_lsn;",
-				Expected: []sql.Row{
-					{"t"},
-				},
+				Query: "SELECT '0/16AE7F8'::pg_lsn != '0/16AE7F7'::pg_lsn;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0259-select-0/16ae7f8-::pg_lsn-!=-0/16ae7f7"},
 			},
 			{
-				Query: "SELECT '0/16AE7F7'::pg_lsn < '0/16AE7F8'::pg_lsn;",
-				Expected: []sql.Row{
-					{"t"},
-				},
+				Query: "SELECT '0/16AE7F7'::pg_lsn < '0/16AE7F8'::pg_lsn;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0260-select-0/16ae7f7-::pg_lsn-<-0/16ae7f8"},
 			},
 			{
-				Query: "SELECT '0/16AE7F8'::pg_lsn > '0/16AE7F7'::pg_lsn;",
-				Expected: []sql.Row{
-					{"t"},
-				},
+				Query: "SELECT '0/16AE7F8'::pg_lsn > '0/16AE7F7'::pg_lsn;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0261-select-0/16ae7f8-::pg_lsn->-0/16ae7f7"},
 			},
 			{
-				Query: "SELECT pg_wal_lsn_diff('0/16AE7F8'::pg_lsn, '0/16AE7F7'::pg_lsn);",
-				Expected: []sql.Row{
-					{Numeric("1")},
-				},
+				Query: "SELECT pg_wal_lsn_diff('0/16AE7F8'::pg_lsn, '0/16AE7F7'::pg_lsn);", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0262-select-pg_wal_lsn_diff-0/16ae7f8-::pg_lsn-0/16ae7f7"},
 			},
 			{
-				Query: "SELECT '0/16AE7F8'::pg_lsn - '0/16AE7F7'::pg_lsn;",
-				Expected: []sql.Row{
-					{Numeric("1")},
-				},
+				Query: "SELECT '0/16AE7F8'::pg_lsn - '0/16AE7F7'::pg_lsn;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0263-select-0/16ae7f8-::pg_lsn-0/16ae7f7-::pg_lsn"},
 			},
 			{
-				Query: "SELECT '0/10'::pg_lsn + 16::numeric, 16::numeric + '0/10'::pg_lsn, '0/10'::pg_lsn - 16::numeric;",
-				Expected: []sql.Row{
-					{"0/20", "0/20", "0/0"},
-				},
+				Query: "SELECT '0/10'::pg_lsn + 16::numeric, 16::numeric + '0/10'::pg_lsn, '0/10'::pg_lsn - 16::numeric;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0264-select-0/10-::pg_lsn-+-16::numeric"},
 			},
 			{
-				Query: "SELECT pg_lsn_larger('0/1'::pg_lsn, '0/2'::pg_lsn), pg_lsn_smaller('0/1'::pg_lsn, '0/2'::pg_lsn);",
-				Expected: []sql.Row{
-					{"0/2", "0/1"},
-				},
+				Query: "SELECT pg_lsn_larger('0/1'::pg_lsn, '0/2'::pg_lsn), pg_lsn_smaller('0/1'::pg_lsn, '0/2'::pg_lsn);", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0265-select-pg_lsn_larger-0/1-::pg_lsn-0/2"},
 			},
 			{
-				Query: "SELECT pg_wal_lsn_diff('0/0'::pg_lsn, '0/1'::pg_lsn);",
-				Expected: []sql.Row{
-					{Numeric("-1")},
-				},
+				Query: "SELECT pg_wal_lsn_diff('0/0'::pg_lsn, '0/1'::pg_lsn);", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0266-select-pg_wal_lsn_diff-0/0-::pg_lsn-0/1"},
 			},
 			{
-				Query: "SELECT pg_current_wal_lsn(), pg_last_wal_receive_lsn(), pg_last_wal_replay_lsn();",
-				Expected: []sql.Row{
-					{"0/0", nil, nil},
-				},
+				Query: "SELECT pg_current_wal_lsn(), pg_last_wal_receive_lsn(), pg_last_wal_replay_lsn();", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0267-select-pg_current_wal_lsn-pg_last_wal_receive_lsn-pg_last_wal_replay_lsn"},
 			},
 			{
-				Query:       "SELECT 'G/0'::pg_lsn;",
-				ExpectedErr: "invalid input syntax for type pg_lsn",
+				Query: "SELECT 'G/0'::pg_lsn;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0268-select-g/0-::pg_lsn", Compare: "sqlstate"},
 			},
 			{
-				Query:       "SELECT ' 0/12345678'::pg_lsn;",
-				ExpectedErr: "invalid input syntax for type pg_lsn",
+				Query: "SELECT ' 0/12345678'::pg_lsn;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0269-select-0/12345678-::pg_lsn", Compare: "sqlstate"},
 			},
 		},
 	},
@@ -2441,11 +1734,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_point ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "(1,2)"},
-					{2, "(3,4)"},
-				},
+				Query: "SELECT * FROM t_point ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0270-select-*-from-t_point-order"},
 			},
 		},
 	},
@@ -2458,11 +1747,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_polygon ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "((1,2),(3,4),(5,6))"},
-					{2, "((7,8),(9,10),(11,12))"},
-				},
+				Query: "SELECT * FROM t_polygon ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0271-select-*-from-t_polygon-order"},
 			},
 		},
 	},
@@ -2474,11 +1759,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_real ORDER BY id;",
-				Expected: []sql.Row{
-					{1, 123.875},
-					{2, 67.125},
-				},
+				Query: "SELECT * FROM t_real ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0272-select-*-from-t_real-order"},
 			},
 		},
 	},
@@ -2490,10 +1771,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_real WHERE ID = 123.875 ORDER BY id;",
-				Expected: []sql.Row{
-					{123.875, 67.125},
-				},
+				Query: "SELECT * FROM t_real WHERE ID = 123.875 ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0273-select-*-from-t_real-where"},
 			},
 		},
 	},
@@ -2505,11 +1783,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_real ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "{NULL,123.875}"},
-					{2, "{67.125,84256}"},
-				},
+				Query: "SELECT * FROM t_real ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0274-select-*-from-t_real-order"},
 			},
 		},
 	},
@@ -2523,10 +1797,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: `SELECT 'testing'::regclass;`,
-				Expected: []sql.Row{
-					{"testing"},
-				},
+				Query: `SELECT 'testing'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0275-select-testing-::regclass"},
 			},
 			{
 				Query: `SELECT 'public.testing'::regclass;`,
@@ -2614,56 +1885,34 @@ var typesTests = []ScriptTest{
 		Name: "Regproc type",
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: `SELECT 'acos'::regproc;`,
-				Expected: []sql.Row{
-					{"acos"},
-				},
+				Query: `SELECT 'acos'::regproc;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0290-select-acos-::regproc"},
 			},
 			{
-				Query: `SELECT ' acos'::regproc;`,
-				Expected: []sql.Row{
-					{"acos"},
-				},
+				Query: `SELECT ' acos'::regproc;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0291-select-acos-::regproc"},
 			},
 			{
-				Query: `SELECT '"acos"'::regproc;`,
-				Expected: []sql.Row{
-					{"acos"},
-				},
+				Query: `SELECT '"acos"'::regproc;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0292-select-acos-::regproc"},
 			},
 			{ // This tests that a raw OID properly converts
-				Query: `SELECT (('acos'::regproc)::oid)::regproc;`,
-				Expected: []sql.Row{
-					{"acos"},
-				},
+				Query: `SELECT (('acos'::regproc)::oid)::regproc;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0293-select-acos-::regproc-::oid-::regproc"},
 			},
 			{ // This tests that a string representing a raw OID converts the same as a raw OID
-				Query: `SELECT ((('acos'::regproc)::oid)::text)::regproc;`,
-				Expected: []sql.Row{
-					{"acos"},
-				},
+				Query: `SELECT ((('acos'::regproc)::oid)::text)::regproc;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0294-select-acos-::regproc-::oid-::text"},
 			},
 			{ // This tests that an invalid OID returns itself in string form
-				Query: `SELECT 4294967295::regproc;`,
-				Expected: []sql.Row{
-					{"4294967295"},
-				},
+				Query: `SELECT 4294967295::regproc;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0295-select-4294967295::regproc"},
 			},
 			{
-				Query:       `SELECT '"Abs"'::regproc;`,
-				ExpectedErr: "does not exist",
+				Query: `SELECT '"Abs"'::regproc;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0296-select-abs-::regproc", Compare: "sqlstate"},
 			},
 			{
-				Query:       `SELECT '"acos'::regproc;`,
-				ExpectedErr: "invalid name syntax",
+				Query: `SELECT '"acos'::regproc;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0297-select-acos-::regproc", Compare: "sqlstate"},
 			},
 			{
-				Query:       `SELECT 'acos"'::regproc;`,
-				ExpectedErr: "does not exist",
+				Query: `SELECT 'acos"'::regproc;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0298-select-acos-::regproc", Compare: "sqlstate"},
 			},
 			{
-				Query:       `SELECT '""acos'::regproc;`,
-				ExpectedErr: "invalid name syntax",
+				Query: `SELECT '""acos'::regproc;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0299-select-acos-::regproc", Compare: "sqlstate"},
 			},
 		},
 	},
@@ -2671,16 +1920,10 @@ var typesTests = []ScriptTest{
 		Name: "Regprocedure type",
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: `SELECT 'array_in(cstring,oid,integer)'::regprocedure;`,
-				Expected: []sql.Row{
-					{"array_in(cstring,oid,integer)"},
-				},
+				Query: `SELECT 'array_in(cstring,oid,integer)'::regprocedure;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0300-select-array_in-cstring-oid-integer"},
 			},
 			{
-				Query: `SELECT 'array_in(cstring, oid, int4)'::regprocedure::oid = (SELECT typinput::oid FROM pg_catalog.pg_type WHERE typname = '_int4');`,
-				Expected: []sql.Row{
-					{"t"},
-				},
+				Query: `SELECT 'array_in(cstring, oid, int4)'::regprocedure::oid = (SELECT typinput::oid FROM pg_catalog.pg_type WHERE typname = '_int4');`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0301-select-array_in-cstring-oid-int4"},
 			},
 			{
 				Query: `SELECT EXISTS (
@@ -2688,20 +1931,13 @@ var typesTests = []ScriptTest{
 					FROM pg_catalog.pg_type t
 					WHERE t.typname = '_int4'
 					  AND t.typinput = 'array_in(cstring,oid,integer)'::regprocedure
-				);`,
-				Expected: []sql.Row{
-					{"t"},
-				},
+				);`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0302-select-exists-select-1-from"},
 			},
 			{
-				Query: `SELECT 4294967295::regprocedure;`,
-				Expected: []sql.Row{
-					{"4294967295"},
-				},
+				Query: `SELECT 4294967295::regprocedure;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0303-select-4294967295::regprocedure"},
 			},
 			{
-				Query:       `SELECT 'array_in(cstring,oid,does_not_exist)'::regprocedure;`,
-				ExpectedErr: "type \"does_not_exist\" does not exist",
+				Query: `SELECT 'array_in(cstring,oid,does_not_exist)'::regprocedure;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0304-select-array_in-cstring-oid-does_not_exist", Compare: "sqlstate"},
 			},
 		},
 	},
@@ -2709,92 +1945,52 @@ var typesTests = []ScriptTest{
 		Name: "Regtype type",
 		Assertions: []ScriptTestAssertion{
 			{
-				Skip:             true, // TODO: Column should be regtype, not "integer"
-				Query:            `SELECT 'integer'::regtype;`,
-				ExpectedColNames: []string{"regtype"},
-				Expected: []sql.Row{
-					{"integer"},
-				},
+				Skip:  true, // TODO: Column should be regtype, not "integer"
+				Query: `SELECT 'integer'::regtype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0305-select-integer-::regtype"},
 			},
 			{
-				Query: `SELECT 'integer'::regtype;`,
-				Expected: []sql.Row{
-					{"integer"},
-				},
+				Query: `SELECT 'integer'::regtype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0306-select-integer-::regtype"},
 			},
 			{
-				Query: `SELECT 'integer[]'::regtype;`,
-				Expected: []sql.Row{
-					{"integer[]"},
-				},
+				Query: `SELECT 'integer[]'::regtype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0307-select-integer[]-::regtype"},
 			},
 			{
-				Query: `SELECT 'int4'::regtype;`,
-				Expected: []sql.Row{
-					{"integer"},
-				},
+				Query: `SELECT 'int4'::regtype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0308-select-int4-::regtype"},
 			},
 			{
-				Query: `SELECT 'float8'::regtype;`,
-				Expected: []sql.Row{
-					{"double precision"},
-				},
+				Query: `SELECT 'float8'::regtype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0309-select-float8-::regtype"},
 			},
 			{
-				Query: `SELECT 'character varying'::regtype;`,
-				Expected: []sql.Row{
-					{"character varying"},
-				},
+				Query: `SELECT 'character varying'::regtype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0310-select-character-varying-::regtype"},
 			},
 			{
-				Query: `SELECT '"char"'::regtype;`,
-				Expected: []sql.Row{
-					{`"char"`},
-				},
+				Query: `SELECT '"char"'::regtype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0311-select-char-::regtype"},
 			},
 			{
-				Query: `SELECT 'char'::regtype;`,
-				Expected: []sql.Row{
-					{"character"},
-				},
+				Query: `SELECT 'char'::regtype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0312-select-char-::regtype"},
 			},
 			{
-				Query: `SELECT 'char(10)'::regtype;`,
-				Expected: []sql.Row{
-					{"character"},
-				},
+				Query: `SELECT 'char(10)'::regtype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0313-select-char-10-::regtype"},
 			},
 			{
-				Query: `SELECT '"char"'::regtype::oid;`,
-				Expected: []sql.Row{
-					{18},
-				},
+				Query: `SELECT '"char"'::regtype::oid;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0314-select-char-::regtype::oid"},
 			},
 			{
-				Query: `SELECT 'char'::regtype::oid;`,
-				Expected: []sql.Row{
-					{1042},
-				},
+				Query: `SELECT 'char'::regtype::oid;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0315-select-char-::regtype::oid"},
 			},
 			{
-				Query: `SELECT '"char"[]'::regtype;`,
-				Expected: []sql.Row{
-					{"\"char\"[]"},
-				},
+				Query: `SELECT '"char"[]'::regtype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0316-select-char-[]-::regtype"},
 			},
 			{
-				Query: `SELECT ' integer'::regtype;`,
-				Expected: []sql.Row{
-					{"integer"},
-				},
+				Query: `SELECT ' integer'::regtype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0317-select-integer-::regtype"},
 			},
 			{
-				Query: `SELECT '"integer"'::regtype;`,
-				Expected: []sql.Row{
-					{"integer"},
-				},
+				Query: `SELECT '"integer"'::regtype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0318-select-integer-::regtype",
+
+					// This tests that a raw OID properly converts
+					Compare: "sqlstate"},
 			},
-			{ // This tests that a raw OID properly converts
+			{
 				Query: `SELECT (('integer'::regtype)::oid)::regtype;`,
 				Expected: []sql.Row{
 					{"integer"},
@@ -2838,11 +2034,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_smallint ORDER BY id;",
-				Expected: []sql.Row{
-					{1, 42},
-					{2, 99},
-				},
+				Query: "SELECT * FROM t_smallint ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0326-select-*-from-t_smallint-order"},
 			},
 		},
 	},
@@ -2854,15 +2046,10 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_int2vector ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "1 2 3"},
-					{2, "6 7 8 9"},
-				},
+				Query: "SELECT * FROM t_int2vector ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0327-select-*-from-t_int2vector-order"},
 			},
 			{
-				Query:    `SELECT unnest(v1) FROM t_int2vector ORDER BY id;`,
-				Expected: []sql.Row{{1}, {2}, {3}, {6}, {7}, {8}, {9}},
+				Query: `SELECT unnest(v1) FROM t_int2vector ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0328-select-unnest-v1-from-t_int2vector"},
 			},
 		},
 	},
@@ -2874,20 +2061,15 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_int2vector ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "{\"1 2\",\"3 4\"}"},
-				},
+				Query: "SELECT * FROM t_int2vector ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0329-select-*-from-t_int2vector-order"},
 			},
 			{
-				Skip:     true,
-				Query:    `SELECT unnest(v1) FROM t_int2vector ORDER BY id;`,
-				Expected: []sql.Row{{"1 2"}, {"3 4"}},
+				Skip:  true,
+				Query: `SELECT unnest(v1) FROM t_int2vector ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0330-select-unnest-v1-from-t_int2vector"},
 			},
 			{
-				Skip:     true,
-				Query:    `SELECT unnest(unnest(v1)) FROM t_int2vector ORDER BY id;`,
-				Expected: []sql.Row{{1}, {2}, {3}, {4}},
+				Skip:  true,
+				Query: `SELECT unnest(unnest(v1)) FROM t_int2vector ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0331-select-unnest-unnest-v1-from"},
 			},
 		},
 	},
@@ -2899,10 +2081,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_smallint WHERE ID = 1 ORDER BY id;",
-				Expected: []sql.Row{
-					{1, 42},
-				},
+				Query: "SELECT * FROM t_smallint WHERE ID = 1 ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0332-select-*-from-t_smallint-where"},
 			},
 		},
 	},
@@ -2914,11 +2093,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_smallint ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "{42,NULL}"},
-					{2, "{99,126}"},
-				},
+				Query: "SELECT * FROM t_smallint ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0333-select-*-from-t_smallint-order"},
 			},
 		},
 	},
@@ -2930,11 +2105,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_smallserial ORDER BY id;",
-				Expected: []sql.Row{
-					{1, 42},
-					{2, 99},
-				},
+				Query: "SELECT * FROM t_smallserial ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0334-select-*-from-t_smallserial-order"},
 			},
 		},
 	},
@@ -2946,10 +2117,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_smallserial WHERE ID = 1 ORDER BY id;",
-				Expected: []sql.Row{
-					{1, 42},
-				},
+				Query: "SELECT * FROM t_smallserial WHERE ID = 1 ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0335-select-*-from-t_smallserial-where"},
 			},
 		},
 	},
@@ -2961,17 +2129,10 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_serial ORDER BY id;",
-				Expected: []sql.Row{
-					{1, 123},
-					{2, 456},
-				},
+				Query: "SELECT * FROM t_serial ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0336-select-*-from-t_serial-order"},
 			},
 			{
-				Query: "SELECT * FROM t_serial WHERE ID = 2 ORDER BY id;",
-				Expected: []sql.Row{
-					{2, 456},
-				},
+				Query: "SELECT * FROM t_serial WHERE ID = 2 ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0337-select-*-from-t_serial-where"},
 			},
 		},
 	},
@@ -2989,102 +2150,65 @@ var typesTests = []ScriptTest{
 		Assertions: []ScriptTestAssertion{
 			{
 				// Use the text keyword to cast
-				Query:    `SELECT text 'text' || ' and unknown';`,
-				Expected: []sql.Row{{"text and unknown"}},
+				Query: `SELECT text 'text' || ' and unknown';`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0338-select-text-text-||-and"},
 			},
 			{
 				// Use the text keyword to cast
-				Query:    `SELECT text 'this is a text string' = text 'this is a text string' AS true;`,
-				Expected: []sql.Row{{"t"}},
+				Query: `SELECT text 'this is a text string' = text 'this is a text string' AS true;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0339-select-text-this-is-a"},
 			},
 			{
 				// Basic select from a table with a TEXT column
-				Query: "SELECT * FROM t_text ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "Hello"},
-					{2, "World"},
-					{3, ""},
-					{4, nil},
-				},
+				Query: "SELECT * FROM t_text ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0340-select-*-from-t_text-order"},
 			},
 			{
 				// Create a unique, secondary index on a TEXT column
-				Query:    "CREATE UNIQUE INDEX v1_unique ON t_text(v1);",
-				Expected: []sql.Row{},
+				Query: "CREATE UNIQUE INDEX v1_unique ON t_text(v1);", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0341-create-unique-index-v1_unique-on"},
 			},
 			{
-				Query: "SELECT * FROM t_text WHERE v1 = 'World';",
-				Expected: []sql.Row{
-					{2, "World"},
-				},
+				Query: "SELECT * FROM t_text WHERE v1 = 'World';", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0342-select-*-from-t_text-where"},
 			},
 			{
 				// Test the new unique constraint on the TEXT column
-				Query:       "INSERT INTO t_text VALUES (5, 'World');",
-				ExpectedErr: "unique",
+				Query: "INSERT INTO t_text VALUES (5, 'World');", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0343-insert-into-t_text-values-5", Compare: "sqlstate"},
 			},
 			{
-				Query: "SELECT * FROM t_text_unique WHERE v2 = '!';",
-				Expected: []sql.Row{
-					{4, nil, "!"},
-				},
+				Query: "SELECT * FROM t_text_unique WHERE v2 = '!';", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0344-select-*-from-t_text_unique-where"},
 			},
 			{
-				Query: "SELECT * FROM t_text_unique WHERE v2 >= '!' ORDER BY v2;",
-				Expected: []sql.Row{
-					{4, nil, "!"},
-					{1, "Hello", "Bonjour"},
-					{2, "World", "tout le monde"},
-				},
+				Query: "SELECT * FROM t_text_unique WHERE v2 >= '!' ORDER BY v2;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0345-select-*-from-t_text_unique-where"},
 			},
 			{
 				// Test ordering by TEXT column in a secondary index
-				Query: "SELECT * FROM t_text_unique ORDER BY v2;",
-				Expected: []sql.Row{
-					{3, "", ""},
-					{4, nil, "!"},
-					{1, "Hello", "Bonjour"},
-					{2, "World", "tout le monde"},
-				},
+				Query: "SELECT * FROM t_text_unique ORDER BY v2;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0346-select-*-from-t_text_unique-order"},
 			},
 			{
-				Query: "SELECT * FROM t_text_unique ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "Hello", "Bonjour"},
-					{2, "World", "tout le monde"},
-					{3, "", ""},
-					{4, nil, "!"},
-				},
+				Query: "SELECT * FROM t_text_unique ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0347-select-*-from-t_text_unique-order"},
 			},
 			{
-				Query:       "INSERT INTO t_text_unique VALUES (5, 'Another', 'Bonjour');",
-				ExpectedErr: "unique",
+				Query: "INSERT INTO t_text_unique VALUES (5, 'Another', 'Bonjour');", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0348-insert-into-t_text_unique-values-5",
+
+					// Create a secondary index over multiple text fields
+					Compare: "sqlstate"},
 			},
 			{
-				// Create a secondary index over multiple text fields
-				Query:    "CREATE INDEX on t_text_unique(v1, v2);",
-				Expected: []sql.Row{},
+
+				Query: "CREATE INDEX on t_text_unique(v1, v2);", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0349-create-index-on-t_text_unique-v1"},
 			},
 			{
-				Query:    "SELECT id FROM t_text_unique WHERE v1='Hello' and v2='Bonjour';",
-				Expected: []sql.Row{{1}},
+				Query: "SELECT id FROM t_text_unique WHERE v1='Hello' and v2='Bonjour';", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0350-select-id-from-t_text_unique-where"},
 			},
 			{
 				// Create a table with a TEXT column to test adding a non-unique, secondary index
-				Query:    `CREATE TABLE t2 (pk int primary key, c1 TEXT);`,
-				Expected: []sql.Row{},
+				Query: `CREATE TABLE t2 (pk int primary key, c1 TEXT);`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0351-create-table-t2-pk-int"},
 			},
 			{
-				Query:    `CREATE INDEX idx1 ON t2(c1);`,
-				Expected: []sql.Row{},
+				Query: `CREATE INDEX idx1 ON t2(c1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0352-create-index-idx1-on-t2"},
 			},
 			{
-				Query:    `INSERT INTO t2 VALUES (1, 'one'), (2, 'two');`,
-				Expected: []sql.Row{},
+				Query: `INSERT INTO t2 VALUES (1, 'one'), (2, 'two');`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0353-insert-into-t2-values-1"},
 			},
 			{
-				Query:    `SELECT c1 from t2 order by c1;`,
-				Expected: []sql.Row{{"one"}, {"two"}},
+				Query: `SELECT c1 from t2 order by c1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0354-select-c1-from-t2-order"},
 			},
 		},
 	},
@@ -3096,10 +2220,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_text where id = 'goodbye' ORDER BY id;",
-				Expected: []sql.Row{
-					{"goodbye", "cruel world"},
-				},
+				Query: "SELECT * FROM t_text where id = 'goodbye' ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0355-select-*-from-t_text-where"},
 			},
 		},
 	},
@@ -3111,44 +2232,25 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_time_without_zone ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "12:34:56"},
-					{2, "23:45:01"},
-					{3, "02:03:00"},
-				},
+				Query: "SELECT * FROM t_time_without_zone ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0356-select-*-from-t_time_without_zone-order"},
 			},
 			{
-				Query: "SELECT v1::interval FROM t_time_without_zone ORDER BY id;",
-				Expected: []sql.Row{
-					{"12:34:56"},
-					{"23:45:01"},
-					{"02:03:00"},
-				},
+				Query: "SELECT v1::interval FROM t_time_without_zone ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0357-select-v1::interval-from-t_time_without_zone-order"},
 			},
 			{
-				Query: `SELECT '00:00:00'::time;`,
-				Expected: []sql.Row{
-					{"00:00:00"},
-				},
+				Query: `SELECT '00:00:00'::time;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0358-select-00:00:00-::time"},
 			},
 			{
-				Query: `SELECT '23:59:59.999999'::time;`,
-				Expected: []sql.Row{
-					{"23:59:59.999999"},
-				},
+				Query: `SELECT '23:59:59.999999'::time;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0359-select-23:59:59.999999-::time"},
 			},
 			{
-				Query:    "SELECT time without time zone '040506.789+08';",
-				Expected: []sql.Row{{"04:05:06.789"}},
+				Query: "SELECT time without time zone '040506.789+08';", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0360-select-time-without-time-zone"},
 			},
 			{
-				Query:    `SELECT time '04:05:06' + date '2025-07-21';`,
-				Expected: []sql.Row{{"2025-07-21 04:05:06"}},
+				Query: `SELECT time '04:05:06' + date '2025-07-21';`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0361-select-time-04:05:06-+-date"},
 			},
 			{
-				Query:    `SELECT time without time zone '04:05:06' + interval '2 minutes';`,
-				Expected: []sql.Row{{"04:07:06"}},
+				Query: `SELECT time without time zone '04:05:06' + interval '2 minutes';`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0362-select-time-without-time-zone"},
 			},
 		},
 	},
@@ -3160,10 +2262,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_time_without_zone WHERE ID = '12:34:56' ORDER BY id;",
-				Expected: []sql.Row{
-					{"12:34:56", "23:45:01"},
-				},
+				Query: "SELECT * FROM t_time_without_zone WHERE ID = '12:34:56' ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0363-select-*-from-t_time_without_zone-where"},
 			},
 		},
 	},
@@ -3175,40 +2274,25 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_time_with_zone ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "12:34:56+00"},
-					{2, "23:45:01-02"},
-					{3, "02:03:00-04"},
-				},
+				Query: "SELECT * FROM t_time_with_zone ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0364-select-*-from-t_time_with_zone-order"},
 			},
 			{
-				Query:    `SET TIMEZONE TO 'UTC';`,
-				Expected: []sql.Row{},
+				Query: `SET TIMEZONE TO 'UTC';`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0365-set-timezone-to-utc"},
 			},
 			{
-				Query: `SELECT '00:00:00'::timetz;`,
-				Expected: []sql.Row{
-					{"00:00:00+00"},
-				},
+				Query: `SELECT '00:00:00'::timetz;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0366-select-00:00:00-::timetz"},
 			},
 			{
-				Query:    `SELECT time with time zone '04:05:06 UTC' + date '2025-07-21';`,
-				Expected: []sql.Row{{"2025-07-21 04:05:06+00"}},
+				Query: `SELECT time with time zone '04:05:06 UTC' + date '2025-07-21';`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0367-select-time-with-time-zone"},
 			},
 			{
-				Query:    `SELECT time with time zone '04:05:06 UTC' + interval '2 minutes';`,
-				Expected: []sql.Row{{"04:07:06+00"}},
+				Query: `SELECT time with time zone '04:05:06 UTC' + interval '2 minutes';`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0368-select-time-with-time-zone"},
 			},
 			{
-				Query:    `SET TIMEZONE TO DEFAULT;`,
-				Expected: []sql.Row{},
+				Query: `SET TIMEZONE TO DEFAULT;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0369-set-timezone-to-default"},
 			},
 			{
-				Query: `SELECT '00:00:00-07'::timetz;`,
-				Expected: []sql.Row{
-					{"00:00:00-07"},
-				},
+				Query: `SELECT '00:00:00-07'::timetz;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0370-select-00:00:00-07-::timetz"},
 			},
 		},
 	},
@@ -3220,29 +2304,16 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_timestamp_without_zone ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "2022-01-01 12:34:56"},
-					{2, "2022-02-01 23:45:01"},
-					{3, "1997-02-10 17:32:00"},
-					{4, "1999-02-10 16:32:05"},
-				},
+				Query: "SELECT * FROM t_timestamp_without_zone ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0371-select-*-from-t_timestamp_without_zone-order"},
 			},
 			{
-				Query: "SELECT '2000-01-01'::timestamp;",
-				Expected: []sql.Row{
-					{"2000-01-01 00:00:00"},
-				},
+				Query: "SELECT '2000-01-01'::timestamp;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0372-select-2000-01-01-::timestamp"},
 			},
 			{
-				Query: `SELECT '2000-01-01 00:00:00'::timestamp;`,
-				Expected: []sql.Row{
-					{"2000-01-01 00:00:00"},
-				},
+				Query: `SELECT '2000-01-01 00:00:00'::timestamp;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0373-select-2000-01-01-00:00:00-::timestamp"},
 			},
 			{
-				Query:    `SELECT timestamp without time zone '2025-07-21 04:05:06' + interval '2 minutes';`,
-				Expected: []sql.Row{{"2025-07-21 04:07:06"}},
+				Query: `SELECT timestamp without time zone '2025-07-21 04:05:06' + interval '2 minutes';`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0374-select-timestamp-without-time-zone"},
 			},
 		},
 	},
@@ -3255,47 +2326,29 @@ var typesTests = []ScriptTest{
 		Assertions: []ScriptTestAssertion{
 			{
 				// timezone representation is reported via local time, need to account for that in testing
-				Query:    "SET timezone TO '-04:25'",
-				Expected: []sql.Row{},
+				Query: "SET timezone TO '-04:25'", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0375-set-timezone-to-04:25"},
 			},
 			{
-				Query: "SELECT * FROM t_timestamp_with_zone ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "2022-01-01 16:59:56+04:25"},
-					{2, "2022-02-02 09:10:01+04:25"},
-				},
+				Query: "SELECT * FROM t_timestamp_with_zone ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0376-select-*-from-t_timestamp_with_zone-order"},
 			},
 			{
-				Query: "SELECT '2000-01-01'::timestamptz;",
-				Expected: []sql.Row{
-					{"2000-01-01 00:00:00+04:25"},
-				},
+				Query: "SELECT '2000-01-01'::timestamptz;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0377-select-2000-01-01-::timestamptz"},
 			},
 			{
-				Query: `SELECT '2000-01-01 00:00:00'::timestamptz;`,
-				Expected: []sql.Row{
-					{"2000-01-01 00:00:00+04:25"},
-				},
+				Query: `SELECT '2000-01-01 00:00:00'::timestamptz;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0378-select-2000-01-01-00:00:00-::timestamptz"},
 			},
 			{
 				// timezone representation is reported via local time, need to account for that in testing
-				Query:    "SET timezone TO '-06:00'",
-				Expected: []sql.Row{},
+				Query: "SET timezone TO '-06:00'", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0379-set-timezone-to-06:00"},
 			},
 			{
-				Query: "SELECT * FROM t_timestamp_with_zone ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "2022-01-01 18:34:56+06"},
-					{2, "2022-02-02 10:45:01+06"},
-				},
+				Query: "SELECT * FROM t_timestamp_with_zone ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0380-select-*-from-t_timestamp_with_zone-order"},
 			},
 			{
-				Query:    `SELECT timestamp with time zone '2025-07-21 04:05:06 UTC' + interval '2 minutes';`,
-				Expected: []sql.Row{{"2025-07-21 10:07:06+06"}},
+				Query: `SELECT timestamp with time zone '2025-07-21 04:05:06 UTC' + interval '2 minutes';`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0381-select-timestamp-with-time-zone"},
 			},
 			{
-				Query:    "SET timezone TO default",
-				Expected: []sql.Row{},
+				Query: "SET timezone TO default", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0382-set-timezone-to-default"},
 			},
 		},
 	},
@@ -3308,11 +2361,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_tsquery ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "word"},
-					{2, "phrase & (another | term)"},
-				},
+				Query: "SELECT * FROM t_tsquery ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0383-select-*-from-t_tsquery-order"},
 			},
 		},
 	},
@@ -3325,12 +2374,9 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_tsvector ORDER BY id;",
+				Query: "SELECT * FROM t_tsvector ORDER BY id;", PostgresOracle:
 				// TODO: output differs from postgres, may need a custom type, not a string
-				Expected: []sql.Row{
-					{1, "simple"},
-					{2, "complex & (query | terms)"},
-				},
+				ScriptTestPostgresOracle{ID: "types-test-testtypes-0384-select-*-from-t_tsvector-order"},
 			},
 		},
 	},
@@ -3340,8 +2386,7 @@ var typesTests = []ScriptTest{
 		Name: "tsvector unsupported error",
 		Assertions: []ScriptTestAssertion{
 			{
-				Query:       `CREATE TABLE t_tsvector (id INTEGER primary key, v1 TSVECTOR);`,
-				ExpectedErr: `type "tsvector" does not exist`,
+				Query: `CREATE TABLE t_tsvector (id INTEGER primary key, v1 TSVECTOR);`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0385-create-table-t_tsvector-id-integer", Compare: "sqlstate"},
 			},
 		},
 	},
@@ -3353,15 +2398,10 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_uuid ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"},
-					{2, "f47ac10b-58cc-4372-a567-0e02b2c3d479"},
-				},
+				Query: "SELECT * FROM t_uuid ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0386-select-*-from-t_uuid-order"},
 			},
 			{
-				Query:    "select uuid 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';",
-				Expected: []sql.Row{{"a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"}},
+				Query: "select uuid 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0387-select-uuid-a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"},
 			},
 		},
 	},
@@ -3374,11 +2414,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_uuid ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "f47ac10b-58cc-4372-a567-0e02b2c3d479"},
-					{2, "a1eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"},
-				},
+				Query: "SELECT * FROM t_uuid ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0388-select-*-from-t_uuid-order"},
 			},
 		},
 	},
@@ -3422,11 +2458,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_uuid ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "{a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11,NULL}"},
-					{2, "{NULL,f47ac10b-58cc-4372-a567-0e02b2c3d479}"},
-				},
+				Query: "SELECT * FROM t_uuid ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0392-select-*-from-t_uuid-order"},
 			},
 		},
 	},
@@ -3437,54 +2469,41 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query:       "INSERT INTO t_xid VALUES (1, 1234, '100');",
-				ExpectedErr: "expression is of type",
+				Query: "INSERT INTO t_xid VALUES (1, 1234, '100');", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0393-insert-into-t_xid-values-1", Compare: "sqlstate"},
 			},
 			{
-				Query:       "INSERT INTO t_xid VALUES (1, 1234::xid, '100');",
-				ExpectedErr: "does not exist",
+				Query: "INSERT INTO t_xid VALUES (1, 1234::xid, '100');", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0394-insert-into-t_xid-values-1", Compare: "sqlstate"},
 			},
 			{
-				Query:    "INSERT INTO t_xid VALUES (1, NULL, '100');",
-				Expected: []sql.Row{},
+				Query: "INSERT INTO t_xid VALUES (1, NULL, '100');", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0395-insert-into-t_xid-values-1"},
 			},
 			{
-				Query: "SELECT * FROM t_xid ORDER BY id;",
-				Expected: []sql.Row{
-					{1, nil, "100"},
-				},
+				Query: "SELECT * FROM t_xid ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0396-select-*-from-t_xid-order"},
 			},
 			{
-				Query:    "INSERT INTO t_xid VALUES (2, '100', '101');",
-				Expected: []sql.Row{},
+				Query: "INSERT INTO t_xid VALUES (2, '100', '101');", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0397-insert-into-t_xid-values-2"},
 			},
 			{
-				Query: "SELECT * FROM t_xid WHERE v1 IS NOT NULL;",
-				Expected: []sql.Row{
-					{2, 100, "101"},
-				},
+				Query: "SELECT * FROM t_xid WHERE v1 IS NOT NULL;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0398-select-*-from-t_xid-where"},
 			},
 			{
-				Query:    "UPDATE t_xid SET v1='9012' WHERE id=1;",
-				Expected: []sql.Row{},
+				Query: "UPDATE t_xid SET v1='9012' WHERE id=1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0399-update-t_xid-set-v1=-9012"},
 			},
 			{
-				Query:    "DELETE FROM t_xid WHERE v1=100;",
-				Skip:     true, // TODO: need to implement comparisons, cast interface isn't adequate enough
-				Expected: []sql.Row{},
+				Query: "DELETE FROM t_xid WHERE v1=100;",
+				Skip:  true, PostgresOracle: // TODO: need to implement comparisons, cast interface isn't adequate enough
+				ScriptTestPostgresOracle{ID: "types-test-testtypes-0400-delete-from-t_xid-where-v1=100"},
 			},
 			{
-				Query:       "SELECT * FROM t_xid ORDER BY v1 DESC;",
-				Skip:        true, // TODO: should error with "could not identify an ordering operator for type xid"
-				ExpectedErr: "does not exist",
+				Query: "SELECT * FROM t_xid ORDER BY v1 DESC;",
+				Skip:  true, PostgresOracle: // TODO: should error with "could not identify an ordering operator for type xid"
+				ScriptTestPostgresOracle{ID: "types-test-testtypes-0401-select-*-from-t_xid-order", Compare: "sqlstate"},
 			},
 			{
-				Query:    "INSERT INTO t_xid VALUES (4, '4294967295', 'a');",
-				Expected: []sql.Row{},
+				Query: "INSERT INTO t_xid VALUES (4, '4294967295', 'a');", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0402-insert-into-t_xid-values-4"},
 			},
 			{
-				Query:    "INSERT INTO t_xid VALUES (5, '4294967296', 'b');",
-				Expected: []sql.Row{},
+				Query: "INSERT INTO t_xid VALUES (5, '4294967296', 'b');", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0403-insert-into-t_xid-values-5", Compare: "sqlstate"},
 			},
 			{
 				Query:    "INSERT INTO t_xid VALUES (6, '0', 'c');",
@@ -3520,103 +2539,72 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_xid ORDER BY id;",
-				Expected: []sql.Row{
-					{1, 1234},
-					{2, 4294967295},
-				},
+				Query: "SELECT * FROM t_xid ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0408-select-*-from-t_xid-order"},
 			},
 			// Cast from XID to types
 			{
-				Query: "SELECT v1::char(1), v1::varchar(2), v1::text, v1::name FROM t_xid WHERE id=1;",
-				Expected: []sql.Row{
-					{"1", "12", "1234", "1234"},
-				},
+				Query: "SELECT v1::char(1), v1::varchar(2), v1::text, v1::name FROM t_xid WHERE id=1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0409-select-v1::char-1-v1::varchar-2"},
 			},
 			{
-				Query:       "SELECT v1::smallint FROM t_xid WHERE id=1;",
-				ExpectedErr: "does not exist",
+				Query: "SELECT v1::smallint FROM t_xid WHERE id=1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0410-select-v1::smallint-from-t_xid-where", Compare: "sqlstate"},
 			},
 			{
-				Query:       "SELECT v1::integer FROM t_xid WHERE id=1;",
-				ExpectedErr: "does not exist",
+				Query: "SELECT v1::integer FROM t_xid WHERE id=1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0411-select-v1::integer-from-t_xid-where", Compare: "sqlstate"},
 			},
 			{
-				Query:       "SELECT v1::bigint FROM t_xid WHERE id=1;",
-				ExpectedErr: "does not exist",
+				Query: "SELECT v1::bigint FROM t_xid WHERE id=1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0412-select-v1::bigint-from-t_xid-where", Compare: "sqlstate"},
 			},
 			{
-				Query:       "SELECT v1::oid FROM t_xid WHERE id=1;",
-				ExpectedErr: "does not exist",
+				Query: "SELECT v1::oid FROM t_xid WHERE id=1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0413-select-v1::oid-from-t_xid-where", Compare: "sqlstate"},
 			},
 			{
-				Query:       "SELECT v1::float4 FROM t_xid WHERE id=1;",
-				ExpectedErr: "does not exist",
+				Query: "SELECT v1::float4 FROM t_xid WHERE id=1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0414-select-v1::float4-from-t_xid-where", Compare: "sqlstate"},
 			},
 			{
-				Query:       "SELECT v1::float8 FROM t_xid WHERE id=1;",
-				ExpectedErr: "does not exist",
+				Query: "SELECT v1::float8 FROM t_xid WHERE id=1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0415-select-v1::float8-from-t_xid-where", Compare: "sqlstate"},
 			},
 			{
-				Query:       "SELECT v1::numeric FROM t_xid WHERE id=1;",
-				ExpectedErr: "does not exist",
+				Query: "SELECT v1::numeric FROM t_xid WHERE id=1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0416-select-v1::numeric-from-t_xid-where", Compare: "sqlstate"},
 			},
 			{
-				Query:       "SELECT v1::boolean FROM t_xid WHERE id=1;",
-				ExpectedErr: "does not exist",
+				Query: "SELECT v1::boolean FROM t_xid WHERE id=1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0417-select-v1::boolean-from-t_xid-where",
+
+					// Cast to XID from types
+					Compare: "sqlstate"},
 			},
-			// Cast to XID from types
+
 			{
-				Query: "SELECT ('123'::char(3))::xid, ('123'::varchar)::xid, ('0'::text)::xid, ('400'::name)::xid;",
-				Expected: []sql.Row{
-					{123, 123, 0, 400},
-				},
-			},
-			{
-				Query: "SELECT ('-1'::char(3))::xid, ('-1'::varchar)::xid, ('-1'::text)::xid, ('-1'::name)::xid;",
-				Expected: []sql.Row{
-					{4294967295, 4294967295, 4294967295, 4294967295},
-				},
+				Query: "SELECT ('123'::char(3))::xid, ('123'::varchar)::xid, ('0'::text)::xid, ('400'::name)::xid;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0418-select-123-::char-3-::xid"},
 			},
 			{
-				Query: "SELECT ('-2147483648'::char(11))::xid, ('-2147483648'::varchar)::xid, ('-2147483648'::text)::xid, ('-2147483648'::name)::xid;",
-				Expected: []sql.Row{
-					{2147483648, 2147483648, 2147483648, 2147483648},
-				},
+				Query: "SELECT ('-1'::char(3))::xid, ('-1'::varchar)::xid, ('-1'::text)::xid, ('-1'::name)::xid;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0419-select-1-::char-3-::xid"},
 			},
 			{
-				Query:       "SELECT (10::int2)::xid;",
-				ExpectedErr: "does not exist",
+				Query: "SELECT ('-2147483648'::char(11))::xid, ('-2147483648'::varchar)::xid, ('-2147483648'::text)::xid, ('-2147483648'::name)::xid;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0420-select-2147483648-::char-11-::xid"},
 			},
 			{
-				Query:       "SELECT (10::boolean)::xid;",
-				ExpectedErr: "does not exist",
+				Query: "SELECT (10::int2)::xid;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0421-select-10::int2-::xid", Compare: "sqlstate"},
 			},
 			{
-				Query:       "SELECT (10::int4)::xid;",
-				ExpectedErr: "does not exist",
+				Query: "SELECT (10::boolean)::xid;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0422-select-10::boolean-::xid", Compare: "sqlstate"},
 			},
 			{
-				Query:       "SELECT (10::int8)::xid;",
-				ExpectedErr: "does not exist",
+				Query: "SELECT (10::int4)::xid;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0423-select-10::int4-::xid", Compare: "sqlstate"},
 			},
 			{
-				Query:       "SELECT (1.1::float4)::xid;",
-				ExpectedErr: "does not exist",
+				Query: "SELECT (10::int8)::xid;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0424-select-10::int8-::xid", Compare: "sqlstate"},
 			},
 			{
-				Query:       "SELECT (1.1::float8)::xid;",
-				ExpectedErr: "does not exist",
+				Query: "SELECT (1.1::float4)::xid;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0425-select-1.1::float4-::xid", Compare: "sqlstate"},
 			},
 			{
-				Query:       "SELECT (1.1::decimal)::xid;",
-				ExpectedErr: "does not exist",
+				Query: "SELECT (1.1::float8)::xid;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0426-select-1.1::float8-::xid", Compare: "sqlstate"},
 			},
 			{
-				Query: "SELECT ('4294967295'::text)::xid, ('4294967297'::text)::xid;",
-				Expected: []sql.Row{
-					{4294967295, 1},
-				},
+				Query: "SELECT (1.1::decimal)::xid;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0427-select-1.1::decimal-::xid", Compare: "sqlstate"},
+			},
+			{
+				Query: "SELECT ('4294967295'::text)::xid, ('4294967297'::text)::xid;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0428-select-4294967295-::text-::xid-4294967297", Compare: "sqlstate"},
 			},
 			{
 				Query: "SELECT ('-4294967295'::text)::xid, ('-4294967297'::text)::xid;",
@@ -3664,14 +2652,10 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: `SELECT v1::varchar(1)[] FROM t_xid;`,
-				Expected: []sql.Row{
-					{"{1,4,7,1}"},
-				},
+				Query: `SELECT v1::varchar(1)[] FROM t_xid;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0435-select-v1::varchar-1-[]-from"},
 			},
 			{
-				Query:       `INSERT INTO t_xid VALUES (2, ARRAY[123, 456, 789, 101], '1234567890', true);`,
-				ExpectedErr: "is of type",
+				Query: `INSERT INTO t_xid VALUES (2, ARRAY[123, 456, 789, 101], '1234567890', true);`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0436-insert-into-t_xid-values-2", Compare: "sqlstate"},
 			},
 		},
 	},
@@ -3684,11 +2668,7 @@ var typesTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_xml ORDER BY id;",
-				Expected: []sql.Row{
-					{1, "<note><to>Tove</to><from>Jani</from><body>Don't forget me this weekend!</body></note>"},
-					{2, "<book><title>Introduction to Golang</title><author>John Doe</author></book>"},
-				},
+				Query: "SELECT * FROM t_xml ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0437-select-*-from-t_xml-order"},
 			},
 		},
 	},
@@ -3696,52 +2676,31 @@ var typesTests = []ScriptTest{
 		Name: "Polymorphic types",
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT array_append(ARRAY[1], 2);",
-				Expected: []sql.Row{
-					{"{1,2}"},
-				},
+				Query: "SELECT array_append(ARRAY[1], 2);", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0438-select-array_append-array[1]-2"},
 			},
 			{
-				Query: "SELECT array_append(ARRAY['abc','def'], 'ghi');",
-				Expected: []sql.Row{
-					{"{abc,def,ghi}"},
-				},
+				Query: "SELECT array_append(ARRAY['abc','def'], 'ghi');", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0439-select-array_append-array[-abc-def"},
 			},
 			{
-				Query: "SELECT array_append(ARRAY['abc','def'], null);",
-				Expected: []sql.Row{
-					{"{abc,def,NULL}"},
-				},
+				Query: "SELECT array_append(ARRAY['abc','def'], null);", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0440-select-array_append-array[-abc-def"},
 			},
 			{
-				Query: "SELECT array_append(null, null);",
-				Expected: []sql.Row{
-					{"{NULL}"},
-				},
+				Query: "SELECT array_append(null, null);", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0441-select-array_append-null-null"},
 			},
 			{
-				Query: "SELECT array_append(null, 'ghi');",
-				Expected: []sql.Row{
-					{"{ghi}"},
-				},
+				Query: "SELECT array_append(null, 'ghi');", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0442-select-array_append-null-ghi"},
 			},
 			{
-				Query: "SELECT array_append(null, 3);",
-				Expected: []sql.Row{
-					{"{3}"},
-				},
+				Query: "SELECT array_append(null, 3);", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0443-select-array_append-null-3"},
 			},
 			{
-				Query:       "SELECT array_append(1, 2);",
-				ExpectedErr: "does not exist",
+				Query: "SELECT array_append(1, 2);", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0444-select-array_append-1-2", Compare: "sqlstate"},
 			},
 			{
-				Query:       "SELECT array_append(1, ARRAY[2]);",
-				ExpectedErr: "does not exist",
+				Query: "SELECT array_append(1, ARRAY[2]);", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0445-select-array_append-1-array[2]", Compare: "sqlstate"},
 			},
 			{
-				Query:       "SELECT array_append(ARRAY[1], ARRAY[2]);",
-				ExpectedErr: "does not exist",
+				Query: "SELECT array_append(ARRAY[1], ARRAY[2]);", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0446-select-array_append-array[1]-array[2]", Compare: "sqlstate"},
 			},
 		},
 	},
@@ -3846,58 +2805,43 @@ var enumTypeTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query:    `CREATE TABLE person (name text, current_mood mood);`,
-				Expected: []sql.Row{},
+				Query: `CREATE TABLE person (name text, current_mood mood);`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testenumtypes-0001-create-table-person-name-text"},
 			},
 			{
-				Query:    `INSERT INTO person VALUES ('Moe', 'happy'), ('Larry', 'sad'), ('Curly', 'ok');`,
-				Expected: []sql.Row{},
+				Query: `INSERT INTO person VALUES ('Moe', 'happy'), ('Larry', 'sad'), ('Curly', 'ok');`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testenumtypes-0002-insert-into-person-values-moe"},
 			},
 			{
-				Query:            `SELECT 'happy'::mood;`,
-				ExpectedColNames: []string{"mood"},
-				Expected:         []sql.Row{{"happy"}},
+				Query: `SELECT 'happy'::mood;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testenumtypes-0003-select-happy-::mood"},
 			},
 			{
-				Query:            `SELECT current_mood::mood from person where name = 'Moe';`,
-				ExpectedColNames: []string{"current_mood"},
-				Expected:         []sql.Row{{"happy"}},
+				Query: `SELECT current_mood::mood from person where name = 'Moe';`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testenumtypes-0004-select-current_mood::mood-from-person-where"},
 			},
 			{
-				Query:    `SELECT * FROM person order by current_mood;`,
-				Expected: []sql.Row{{"Larry", "sad"}, {"Curly", "ok"}, {"Moe", "happy"}},
+				Query: `SELECT * FROM person order by current_mood;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testenumtypes-0005-select-*-from-person-order"},
 			},
 			{
-				Query:    `SELECT * FROM person order by name;`,
-				Expected: []sql.Row{{"Curly", "ok"}, {"Larry", "sad"}, {"Moe", "happy"}},
+				Query: `SELECT * FROM person order by name;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testenumtypes-0006-select-*-from-person-order"},
 			},
 			{
-				Query:    `SELECT * FROM person;`,
-				Expected: []sql.Row{{"Moe", "happy"}, {"Larry", "sad"}, {"Curly", "ok"}},
+				Query: `SELECT * FROM person;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testenumtypes-0007-select-*-from-person"},
 			},
 			{
-				Query:    `SELECT * FROM person WHERE current_mood = 'happy';`,
-				Expected: []sql.Row{{"Moe", "happy"}},
+				Query: `SELECT * FROM person WHERE current_mood = 'happy';`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testenumtypes-0008-select-*-from-person-where"},
 			},
 			{
-				Query:    `SELECT * FROM person WHERE current_mood > 'sad';`,
-				Expected: []sql.Row{{"Moe", "happy"}, {"Curly", "ok"}},
+				Query: `SELECT * FROM person WHERE current_mood > 'sad';`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testenumtypes-0009-select-*-from-person-where"},
 			},
 			{
-				Query:    `SELECT * FROM person WHERE current_mood > 'sad' ORDER BY current_mood;`,
-				Expected: []sql.Row{{"Curly", "ok"}, {"Moe", "happy"}},
+				Query: `SELECT * FROM person WHERE current_mood > 'sad' ORDER BY current_mood;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testenumtypes-0010-select-*-from-person-where"},
 			},
 			{
-				Query:       `INSERT INTO person VALUES ('Joey', 'invalid');`,
-				ExpectedErr: `invalid input value for enum mood: "invalid"`,
+				Query: `INSERT INTO person VALUES ('Joey', 'invalid');`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testenumtypes-0011-insert-into-person-values-joey", Compare: "sqlstate"},
 			},
 			{
-				Query:       `CREATE TYPE failure AS ENUM ('ok','ok');`,
-				ExpectedErr: `duplicate key value violates unique constraint "pg_enum_typid_label_index"`,
+				Query: `CREATE TYPE failure AS ENUM ('ok','ok');`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testenumtypes-0012-create-type-failure-as-enum", Compare: "sqlstate"},
 			},
 			{
-				Query:    `CREATE TYPE empty_mood AS ENUM ();`,
-				Expected: []sql.Row{},
+				Query: `CREATE TYPE empty_mood AS ENUM ();`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testenumtypes-0013-create-type-empty_mood-as-enum"},
 			},
 		},
 	},
@@ -3909,24 +2853,19 @@ var enumTypeTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query:       `DROP TYPE mood, empty_enum;`,
-				ExpectedErr: `dropping multiple types in DROP TYPE is not yet supported`,
+				Query: `DROP TYPE mood, empty_enum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testenumtypes-0014-drop-type-mood-empty_enum", Compare: "sqlstate"},
 			},
 			{
-				Query:    `DROP TYPE empty_enum;`,
-				Expected: []sql.Row{},
+				Query: `DROP TYPE empty_enum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testenumtypes-0015-drop-type-empty_enum"},
 			},
 			{
-				Query:       `DROP TYPE empty_enum;`,
-				ExpectedErr: `type "empty_enum" does not exist`,
+				Query: `DROP TYPE empty_enum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testenumtypes-0016-drop-type-empty_enum", Compare: "sqlstate"},
 			},
 			{
-				Query:    `DROP TYPE IF EXISTS empty_enum;`,
-				Expected: []sql.Row{},
+				Query: `DROP TYPE IF EXISTS empty_enum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testenumtypes-0017-drop-type-if-exists-empty_enum"},
 			},
 			{
-				Query:       `DROP TYPE _mood;`,
-				ExpectedErr: `cannot drop type mood[] because type mood requires it`,
+				Query: `DROP TYPE _mood;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testenumtypes-0018-drop-type-mood", Compare: "sqlstate"},
 			},
 		},
 	},
@@ -3937,12 +2876,10 @@ var enumTypeTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query:    `select 'sad'::mood`,
-				Expected: []sql.Row{{"sad"}},
+				Query: `select 'sad'::mood`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testenumtypes-0019-select-sad-::mood"},
 			},
 			{
-				Query:       `select 'invalid'::mood`,
-				ExpectedErr: `invalid input value for enum mood: "invalid"`,
+				Query: `select 'invalid'::mood`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testenumtypes-0020-select-invalid-::mood", Compare: "sqlstate"},
 			},
 		},
 	},
@@ -3955,8 +2892,7 @@ var enumTypeTests = []ScriptTest{
 		Assertions: []ScriptTestAssertion{
 			{
 				// oid of type 'mood' = 16675
-				Query:    `select enum_in('sad'::cstring, 16675);`,
-				Expected: []sql.Row{{"sad"}},
+				Query: `select enum_in('sad'::cstring, 16675);`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testenumtypes-0021-select-enum_in-sad-::cstring-16675", Compare: "sqlstate"},
 			},
 		},
 	},
@@ -3965,24 +2901,19 @@ var enumTypeTests = []ScriptTest{
 		Name: "create type with existing array type name updates the name of the array type",
 		Assertions: []ScriptTestAssertion{
 			{
-				Query:    `CREATE TYPE my_type AS ENUM ();`,
-				Expected: []sql.Row{},
+				Query: `CREATE TYPE my_type AS ENUM ();`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testenumtypes-0022-create-type-my_type-as-enum"},
 			},
 			{
-				Query:    `CREATE TYPE _my_type;`,
-				Expected: []sql.Row{},
+				Query: `CREATE TYPE _my_type;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testenumtypes-0023-create-type-my_type"},
 			},
 			{
-				Query:    `SELECT typname from pg_type where typname like '%my_type'`,
-				Expected: []sql.Row{{"my_type"}, {"_my_type"}, {"__my_type"}},
+				Query: `SELECT typname from pg_type where typname like '%my_type'`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testenumtypes-0024-select-typname-from-pg_type-where"},
 			},
 			{
-				Query:    `DROP TYPE my_type;`,
-				Expected: []sql.Row{},
+				Query: `DROP TYPE my_type;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testenumtypes-0025-drop-type-my_type"},
 			},
 			{
-				Query:    `DROP TYPE _my_type;`,
-				Expected: []sql.Row{},
+				Query: `DROP TYPE _my_type;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testenumtypes-0026-drop-type-my_type"},
 			},
 		},
 	},

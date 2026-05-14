@@ -1,0 +1,315 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map adaptive_encoding_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/adaptive_encoding_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/adaptive_encoding_test.go:TestAdaptiveEncodingText#0001",
+      "source": "testing/go/adaptive_encoding_test.go:TestAdaptiveEncodingText",
+      "ordinal": 1,
+      "scriptName": "Adaptive Encoding With One Column",
+      "oracle": "internal",
+      "suggestedId": "adaptive-encoding-test-testadaptiveencodingtext-0001-select-b-from-blobt-where",
+      "expectedKind": "rows",
+      "query": "select b from blobt where i = 'F'",
+      "querySha256": "ceabdd1aef08dc718312036778cbcbcb588cf8c76daa21b3d81c650806d05af3",
+      "nonLiteral": [
+        "Expected",
+        "SetUpScript"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/adaptive_encoding_test.go:TestAdaptiveEncodingText#0002",
+      "source": "testing/go/adaptive_encoding_test.go:TestAdaptiveEncodingText",
+      "ordinal": 2,
+      "scriptName": "Adaptive Encoding With One Column",
+      "oracle": "internal",
+      "suggestedId": "adaptive-encoding-test-testadaptiveencodingtext-0002-select-b-from-blobt-where",
+      "expectedKind": "rows",
+      "query": "select b from blobt where i = 'H'",
+      "querySha256": "bc2cdf532a1c52c0186bfa0142e017859ee8c6b058a7eb48b9097105d6e3410e",
+      "nonLiteral": [
+        "Expected",
+        "SetUpScript"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/adaptive_encoding_test.go:TestAdaptiveEncodingText#0003",
+      "source": "testing/go/adaptive_encoding_test.go:TestAdaptiveEncodingText",
+      "ordinal": 3,
+      "scriptName": "Adaptive Encoding With One Column",
+      "oracle": "internal",
+      "suggestedId": "adaptive-encoding-test-testadaptiveencodingtext-0003-select-i-from-blobt-where",
+      "expectedKind": "rows",
+      "query": "select i from blobt where b = LOAD_FILE('testdata/fullSize')",
+      "querySha256": "5b0ba97a59674857eeaf56fa4f2587ac419316fd15f3af3eaefeb943219cbbcc",
+      "nonLiteral": [
+        "SetUpScript"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/adaptive_encoding_test.go:TestAdaptiveEncodingText#0004",
+      "source": "testing/go/adaptive_encoding_test.go:TestAdaptiveEncodingText",
+      "ordinal": 4,
+      "scriptName": "Adaptive Encoding With One Column",
+      "oracle": "internal",
+      "suggestedId": "adaptive-encoding-test-testadaptiveencodingtext-0004-select-i-from-blobt-where",
+      "expectedKind": "rows",
+      "query": "select i from blobt where b = LOAD_FILE('testdata/halfSize')",
+      "querySha256": "3d0a7ebade445b947429a4938e3c75d5d21871b60ad7b6b166d9b829dcde8ea3",
+      "nonLiteral": [
+        "SetUpScript"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/adaptive_encoding_test.go:TestAdaptiveEncodingText#0005",
+      "source": "testing/go/adaptive_encoding_test.go:TestAdaptiveEncodingText",
+      "ordinal": 5,
+      "scriptName": "Adaptive Encoding With Two Columns",
+      "oracle": "internal",
+      "suggestedId": "adaptive-encoding-test-testadaptiveencodingtext-0005-select-i-b1-b2-from",
+      "expectedKind": "rows",
+      "query": "select i, b1, b2 from blobt2",
+      "querySha256": "8ee62db3904c9db49206e74f44489936593d6bf5e75c0fe9f0b462acb1c6260f",
+      "nonLiteral": [
+        "Expected",
+        "SetUpScript"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/adaptive_encoding_test.go:TestAdaptiveEncodingText#0006",
+      "source": "testing/go/adaptive_encoding_test.go:TestAdaptiveEncodingText",
+      "ordinal": 6,
+      "scriptName": "Adaptive Encoding With Two Columns",
+      "oracle": "internal",
+      "suggestedId": "adaptive-encoding-test-testadaptiveencodingtext-0006-select-i-from-blobt2-where",
+      "expectedKind": "rows",
+      "query": "select i from blobt2 where b1 = LOAD_FILE('testdata/halfSize')",
+      "querySha256": "a5b8886636a05089603d81a87e0e5702864f0eeb08bf90cbc01684e2e7bf4a81",
+      "nonLiteral": [
+        "SetUpScript"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/adaptive_encoding_test.go:TestAdaptiveEncodingText#0007",
+      "source": "testing/go/adaptive_encoding_test.go:TestAdaptiveEncodingText",
+      "ordinal": 7,
+      "scriptName": "Adaptive Encoding With Two Columns",
+      "oracle": "internal",
+      "suggestedId": "adaptive-encoding-test-testadaptiveencodingtext-0007-select-i-from-blobt2-where",
+      "expectedKind": "rows",
+      "query": "select i from blobt2 where b2 = LOAD_FILE('testdata/halfSize')",
+      "querySha256": "4f8e86d194e479d3ee671abf7d0a248e912575a62662601ff211704358b00498",
+      "nonLiteral": [
+        "SetUpScript"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/adaptive_encoding_test.go:TestAdaptiveEncodingText#0008",
+      "source": "testing/go/adaptive_encoding_test.go:TestAdaptiveEncodingText",
+      "ordinal": 8,
+      "scriptName": "Adaptive Encoding With Two Columns",
+      "oracle": "internal",
+      "suggestedId": "adaptive-encoding-test-testadaptiveencodingtext-0008-select-i-b1-from-blobt2",
+      "expectedKind": "rows",
+      "query": "select i, b1 FROM blobt2 WHERE b1 LIKE '\u0001%'",
+      "querySha256": "4b2e836750aa04c1067ea91b39bcbcedea51a43ae3271c4e12e2846b82edaa7a",
+      "nonLiteral": [
+        "Expected",
+        "SetUpScript"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/adaptive_encoding_test.go:TestAdaptiveEncodingText#0009",
+      "source": "testing/go/adaptive_encoding_test.go:TestAdaptiveEncodingText",
+      "ordinal": 9,
+      "scriptName": "Adaptive Encoding With Two Columns",
+      "oracle": "internal",
+      "suggestedId": "adaptive-encoding-test-testadaptiveencodingtext-0009-select-i-b2-from-blobt2",
+      "expectedKind": "rows",
+      "query": "select i, b2 FROM blobt2 WHERE b2 LIKE '\u0002%'",
+      "querySha256": "fd0c7fcc446cde60f9eb6bf0c86212e3b93de0e6d1e6116934624cb10402a323",
+      "nonLiteral": [
+        "Expected",
+        "SetUpScript"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/adaptive_encoding_test.go:TestAdaptiveEncodingText#0010",
+      "source": "testing/go/adaptive_encoding_test.go:TestAdaptiveEncodingText",
+      "ordinal": 10,
+      "scriptName": "Adaptive Encoding With Two Columns",
+      "oracle": "internal",
+      "suggestedId": "adaptive-encoding-test-testadaptiveencodingtext-0010-select-i-b1-b2-from",
+      "expectedKind": "rows",
+      "query": "select i, b1, b2 from blobt2 where i = 'HH'",
+      "querySha256": "60f660afa761b997345b5c3c1e00aa1dfd73ae4ad114d1f5a1822fe0a6775ad1",
+      "nonLiteral": [
+        "Expected",
+        "SetUpScript"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/adaptive_encoding_test.go:TestAdaptiveEncodingText#0011",
+      "source": "testing/go/adaptive_encoding_test.go:TestAdaptiveEncodingText",
+      "ordinal": 11,
+      "scriptName": "Adaptive Encoding With Two Columns",
+      "oracle": "internal",
+      "suggestedId": "adaptive-encoding-test-testadaptiveencodingtext-0011-select-i-b1-from-blobt2",
+      "expectedKind": "rows",
+      "query": "select i, b1 from blobt2",
+      "querySha256": "f499accdf3d1a7680ff3c5e2e816040ed573193472bef7e755a16f378ebf024a",
+      "nonLiteral": [
+        "Expected",
+        "SetUpScript"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/adaptive_encoding_test.go:TestAdaptiveEncodingVarbit#0001",
+      "source": "testing/go/adaptive_encoding_test.go:TestAdaptiveEncodingVarbit",
+      "ordinal": 1,
+      "scriptName": "Adaptive Encoding With One Column",
+      "oracle": "internal",
+      "suggestedId": "adaptive-encoding-test-testadaptiveencodingvarbit-0001-select-b-from-blobt-where",
+      "expectedKind": "rows",
+      "query": "select b from blobt where i = 'F'",
+      "querySha256": "ceabdd1aef08dc718312036778cbcbcb588cf8c76daa21b3d81c650806d05af3",
+      "nonLiteral": [
+        "Expected",
+        "SetUpScript"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/adaptive_encoding_test.go:TestAdaptiveEncodingVarbit#0002",
+      "source": "testing/go/adaptive_encoding_test.go:TestAdaptiveEncodingVarbit",
+      "ordinal": 2,
+      "scriptName": "Adaptive Encoding With One Column",
+      "oracle": "internal",
+      "suggestedId": "adaptive-encoding-test-testadaptiveencodingvarbit-0002-select-b-from-blobt-where",
+      "expectedKind": "rows",
+      "query": "select b from blobt where i = 'H'",
+      "querySha256": "bc2cdf532a1c52c0186bfa0142e017859ee8c6b058a7eb48b9097105d6e3410e",
+      "nonLiteral": [
+        "Expected",
+        "SetUpScript"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/adaptive_encoding_test.go:TestAdaptiveEncodingVarbit#0003",
+      "source": "testing/go/adaptive_encoding_test.go:TestAdaptiveEncodingVarbit",
+      "ordinal": 3,
+      "scriptName": "Adaptive Encoding With One Column",
+      "oracle": "internal",
+      "suggestedId": "adaptive-encoding-test-testadaptiveencodingvarbit-0003-select-i-from-blobt-where",
+      "expectedKind": "rows",
+      "query": "select i from blobt where b = LOAD_FILE('testdata/fullSizeVarbit')::varbit",
+      "querySha256": "8bff6d344da46fcc6aafbb4bdc7d7188146e691c6a9cc8f38325ab575428183e",
+      "nonLiteral": [
+        "SetUpScript"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/adaptive_encoding_test.go:TestAdaptiveEncodingVarbit#0004",
+      "source": "testing/go/adaptive_encoding_test.go:TestAdaptiveEncodingVarbit",
+      "ordinal": 4,
+      "scriptName": "Adaptive Encoding With One Column",
+      "oracle": "internal",
+      "suggestedId": "adaptive-encoding-test-testadaptiveencodingvarbit-0004-select-i-from-blobt-where",
+      "expectedKind": "rows",
+      "query": "select i from blobt where b = LOAD_FILE('testdata/halfSizeVarbit')::varbit",
+      "querySha256": "06967a9a6f36848f944615815c66a8584f5e1f0d1219ed3df992f9d85ac7d56c",
+      "nonLiteral": [
+        "SetUpScript"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/adaptive_encoding_test.go:TestAdaptiveEncodingVarbit#0005",
+      "source": "testing/go/adaptive_encoding_test.go:TestAdaptiveEncodingVarbit",
+      "ordinal": 5,
+      "scriptName": "Adaptive Encoding With Two Columns",
+      "oracle": "internal",
+      "suggestedId": "adaptive-encoding-test-testadaptiveencodingvarbit-0005-select-i-b1-b2-from",
+      "expectedKind": "rows",
+      "query": "select i, b1, b2 from blobt2 order by 1",
+      "querySha256": "cb5d3016c52b7c886c2e5411032c7356b808b046782fdb854dcbf4ea50815eb2",
+      "nonLiteral": [
+        "Expected",
+        "SetUpScript"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/adaptive_encoding_test.go:TestAdaptiveEncodingVarbit#0006",
+      "source": "testing/go/adaptive_encoding_test.go:TestAdaptiveEncodingVarbit",
+      "ordinal": 6,
+      "scriptName": "Adaptive Encoding With Two Columns",
+      "oracle": "internal",
+      "suggestedId": "adaptive-encoding-test-testadaptiveencodingvarbit-0006-select-i-from-blobt2-where",
+      "expectedKind": "rows",
+      "query": "select i from blobt2 where b1 = LOAD_FILE('testdata/halfSizeVarbit')::varbit",
+      "querySha256": "41a450c62a7129c2dea6e03a25e8c31c5a3e859aa077d218897dcf05ec71c5b8",
+      "nonLiteral": [
+        "SetUpScript"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/adaptive_encoding_test.go:TestAdaptiveEncodingVarbit#0007",
+      "source": "testing/go/adaptive_encoding_test.go:TestAdaptiveEncodingVarbit",
+      "ordinal": 7,
+      "scriptName": "Adaptive Encoding With Two Columns",
+      "oracle": "internal",
+      "suggestedId": "adaptive-encoding-test-testadaptiveencodingvarbit-0007-select-i-from-blobt2-where",
+      "expectedKind": "rows",
+      "query": "select i from blobt2 where b2 = LOAD_FILE('testdata/halfSizeVarbit')::varbit",
+      "querySha256": "ab13f46c04551b2402f6e955623b76d7d1dceefae353efda099548718a801389",
+      "nonLiteral": [
+        "SetUpScript"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    }
+  ]
+}

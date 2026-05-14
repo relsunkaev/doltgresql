@@ -44,10 +44,10 @@ func TestDropTypeClearsGrantOptionRepro(t *testing.T) {
 					Query: `CREATE TYPE drop_recreate_acl_type AS ENUM ('new');`,
 				},
 				{
-					Query:       `GRANT USAGE ON TYPE drop_recreate_acl_type TO drop_recreate_type_after_grantee;`,
-					ExpectedErr: `permission`,
-					Username:    `drop_recreate_type_grantor`,
-					Password:    `type`,
+					Query: `GRANT USAGE ON TYPE drop_recreate_acl_type TO drop_recreate_type_after_grantee;`,
+
+					Username: `drop_recreate_type_grantor`,
+					Password: `type`, PostgresOracle: ScriptTestPostgresOracle{ID: "type-drop-privilege-repro-test-testdroptypeclearsgrantoptionrepro-0001-grant-usage-on-type-drop_recreate_acl_type", Compare: "sqlstate"},
 				},
 			},
 		},

@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestCreateSchemaRejectsDoltReservedNamespaceRepro reproduces a namespace
@@ -49,18 +47,20 @@ func TestCreateSchemaRequiresCreatePrivilegeGuard(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CREATE SCHEMA unauthorized_schema;`,
-					ExpectedErr: `permission denied`,
-					Username:    `schema_creator`,
-					Password:    `creator`,
+					Query: `CREATE SCHEMA unauthorized_schema;`,
+
+					Username: `schema_creator`,
+					Password: `creator`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestRelationAccessRequiresSchemaUsageRepro reproduces a schema security bug:
+						// a table privilege should not bypass missing USAGE on the table's schema.
+						ID: "schema-privilege-guard-test-testcreateschemarequirescreateprivilegeguard-0001-create-schema-unauthorized_schema", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestRelationAccessRequiresSchemaUsageRepro reproduces a schema security bug:
-// a table privilege should not bypass missing USAGE on the table's schema.
 func TestRelationAccessRequiresSchemaUsageRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -74,19 +74,21 @@ func TestRelationAccessRequiresSchemaUsageRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT id FROM schema_usage_private.items;`,
-					ExpectedErr: `permission denied for schema`,
-					Username:    `schema_usage_reader`,
-					Password:    `reader`,
+					Query: `SELECT id FROM schema_usage_private.items;`,
+
+					Username: `schema_usage_reader`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestMaterializedViewAccessRequiresSchemaUsageRepro reproduces a schema
+						// security bug: materialized-view privileges should not bypass missing USAGE on
+						// the containing schema.
+						ID: "schema-privilege-guard-test-testrelationaccessrequiresschemausagerepro-0001-select-id-from-schema_usage_private.items", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestMaterializedViewAccessRequiresSchemaUsageRepro reproduces a schema
-// security bug: materialized-view privileges should not bypass missing USAGE on
-// the containing schema.
 func TestMaterializedViewAccessRequiresSchemaUsageRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -103,19 +105,21 @@ func TestMaterializedViewAccessRequiresSchemaUsageRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT id FROM schema_view_private.visible_matview;`,
-					ExpectedErr: `permission denied for schema`,
-					Username:    `schema_view_user`,
-					Password:    `view`,
+					Query: `SELECT id FROM schema_view_private.visible_matview;`,
+
+					Username: `schema_view_user`,
+					Password: `view`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestProcedureAndTypeAccessRequiresSchemaUsageRepro reproduces schema security
+						// bugs: procedure EXECUTE and type USAGE privileges should not bypass missing
+						// USAGE on the containing schema.
+						ID: "schema-privilege-guard-test-testmaterializedviewaccessrequiresschemausagerepro-0001-select-id-from-schema_view_private.visible_matview", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestProcedureAndTypeAccessRequiresSchemaUsageRepro reproduces schema security
-// bugs: procedure EXECUTE and type USAGE privileges should not bypass missing
-// USAGE on the containing schema.
 func TestProcedureAndTypeAccessRequiresSchemaUsageRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -132,25 +136,27 @@ func TestProcedureAndTypeAccessRequiresSchemaUsageRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CALL schema_object_private.hidden_procedure();`,
-					ExpectedErr: `permission denied for schema`,
-					Username:    `schema_object_user`,
-					Password:    `object`,
+					Query: `CALL schema_object_private.hidden_procedure();`,
+
+					Username: `schema_object_user`,
+					Password: `object`, PostgresOracle: ScriptTestPostgresOracle{ID: "schema-privilege-guard-test-testprocedureandtypeaccessrequiresschemausagerepro-0001-call-schema_object_private.hidden_procedure", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SELECT 'ok'::schema_object_private.hidden_type::text;`,
-					ExpectedErr: `permission denied for schema`,
-					Username:    `schema_object_user`,
-					Password:    `object`,
+					Query: `SELECT 'ok'::schema_object_private.hidden_type::text;`,
+
+					Username: `schema_object_user`,
+					Password: `object`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCreateSchemaAuthorizationRequiresTargetRoleMembershipRepro reproduces a
+						// security bug: a normal role cannot create a schema owned by another role
+						// unless it is allowed to act as that role.
+						ID: "schema-privilege-guard-test-testprocedureandtypeaccessrequiresschemausagerepro-0002-select-ok", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateSchemaAuthorizationRequiresTargetRoleMembershipRepro reproduces a
-// security bug: a normal role cannot create a schema owned by another role
-// unless it is allowed to act as that role.
 func TestCreateSchemaAuthorizationRequiresTargetRoleMembershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -162,18 +168,20 @@ func TestCreateSchemaAuthorizationRequiresTargetRoleMembershipRepro(t *testing.T
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CREATE SCHEMA unauthorized_schema_auth AUTHORIZATION schema_auth_target;`,
-					ExpectedErr: `permission denied`,
-					Username:    `schema_auth_actor`,
-					Password:    `actor`,
+					Query: `CREATE SCHEMA unauthorized_schema_auth AUTHORIZATION schema_auth_target;`,
+
+					Username: `schema_auth_actor`,
+					Password: `actor`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestDropSchemaRequiresOwnershipGuard covers a sensitive privilege boundary:
+						// a normal login role must not drop schemas owned by another role.
+						ID: "schema-privilege-guard-test-testcreateschemaauthorizationrequirestargetrolemembershiprepro-0001-create-schema-unauthorized_schema_auth-authorization-schema_auth_target", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropSchemaRequiresOwnershipGuard covers a sensitive privilege boundary:
-// a normal login role must not drop schemas owned by another role.
 func TestDropSchemaRequiresOwnershipGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -184,19 +192,21 @@ func TestDropSchemaRequiresOwnershipGuard(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP SCHEMA protected_schema;`,
-					ExpectedErr: `permission denied`,
-					Username:    `schema_dropper`,
-					Password:    `dropper`,
+					Query: `DROP SCHEMA protected_schema;`,
+
+					Username: `schema_dropper`,
+					Password: `dropper`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestDropSchemaRequiresOwnershipDespiteAllPrivilegesGuard guards that GRANT
+						// ALL PRIVILEGES ON SCHEMA does not transfer ownership and does not allow the
+						// grantee to DROP the schema.
+						ID: "schema-privilege-guard-test-testdropschemarequiresownershipguard-0001-drop-schema-protected_schema", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropSchemaRequiresOwnershipDespiteAllPrivilegesGuard guards that GRANT
-// ALL PRIVILEGES ON SCHEMA does not transfer ownership and does not allow the
-// grantee to DROP the schema.
 func TestDropSchemaRequiresOwnershipDespiteAllPrivilegesGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -208,14 +218,13 @@ func TestDropSchemaRequiresOwnershipDespiteAllPrivilegesGuard(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP SCHEMA protected_all_schema;`,
-					ExpectedErr: `permission denied`,
-					Username:    `drop_schema_intruder`,
-					Password:    `dropper`,
+					Query: `DROP SCHEMA protected_all_schema;`,
+
+					Username: `drop_schema_intruder`,
+					Password: `dropper`, PostgresOracle: ScriptTestPostgresOracle{ID: "schema-privilege-guard-test-testdropschemarequiresownershipdespiteallprivilegesguard-0001-drop-schema-protected_all_schema", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT nspname FROM pg_namespace WHERE nspname = 'protected_all_schema';`,
-					Expected: []sql.Row{{"protected_all_schema"}},
+					Query: `SELECT nspname FROM pg_namespace WHERE nspname = 'protected_all_schema';`, PostgresOracle: ScriptTestPostgresOracle{ID: "schema-privilege-guard-test-testdropschemarequiresownershipdespiteallprivilegesguard-0002-select-nspname-from-pg_namespace-where"},
 				},
 			},
 		},

@@ -37,21 +37,21 @@ func TestAlterFunctionRenameRepro(t *testing.T) {
 						RENAME TO rename_function_new;`,
 				},
 				{
-					Query:    `SELECT rename_function_new();`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT rename_function_new();`, PostgresOracle: ScriptTestPostgresOracle{ID: "function-lookup-repro-test-testalterfunctionrenamerepro-0001-select-rename_function_new"},
 				},
 				{
-					Query:       `SELECT rename_function_old();`,
-					ExpectedErr: `not found`,
+					Query: `SELECT rename_function_old();`, PostgresOracle: ScriptTestPostgresOracle{ID: "function-lookup-repro-test-testalterfunctionrenamerepro-0002-select-rename_function_old",
+
+						// TestAlterRoutineRenameFunctionRepro reproduces a routine DDL correctness bug:
+						// PostgreSQL supports the generic ALTER ROUTINE ... RENAME TO syntax for
+						// functions.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterRoutineRenameFunctionRepro reproduces a routine DDL correctness bug:
-// PostgreSQL supports the generic ALTER ROUTINE ... RENAME TO syntax for
-// functions.
 func TestAlterRoutineRenameFunctionRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -66,20 +66,20 @@ func TestAlterRoutineRenameFunctionRepro(t *testing.T) {
 						RENAME TO rename_routine_new;`,
 				},
 				{
-					Query:    `SELECT rename_routine_new();`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT rename_routine_new();`, PostgresOracle: ScriptTestPostgresOracle{ID: "function-lookup-repro-test-testalterroutinerenamefunctionrepro-0001-select-rename_routine_new"},
 				},
 				{
-					Query:       `SELECT rename_routine_old();`,
-					ExpectedErr: `not found`,
+					Query: `SELECT rename_routine_old();`, PostgresOracle: ScriptTestPostgresOracle{ID: "function-lookup-repro-test-testalterroutinerenamefunctionrepro-0002-select-rename_routine_old",
+
+						// TestDropRoutineFunctionRepro reproduces a routine DDL compatibility gap:
+						// PostgreSQL supports the generic DROP ROUTINE syntax for functions.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropRoutineFunctionRepro reproduces a routine DDL compatibility gap:
-// PostgreSQL supports the generic DROP ROUTINE syntax for functions.
 func TestDropRoutineFunctionRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -93,8 +93,7 @@ func TestDropRoutineFunctionRepro(t *testing.T) {
 					Query: `DROP ROUTINE drop_routine_value();`,
 				},
 				{
-					Query:       `SELECT drop_routine_value();`,
-					ExpectedErr: `not found`,
+					Query: `SELECT drop_routine_value();`, PostgresOracle: ScriptTestPostgresOracle{ID: "function-lookup-repro-test-testdroproutinefunctionrepro-0001-select-drop_routine_value", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -110,12 +109,10 @@ func TestDropRoutineFunctionRepro(t *testing.T) {
 					Query: `DROP ROUTINE drop_routine_proc_value();`,
 				},
 				{
-					Query:       `CALL drop_routine_proc_value();`,
-					ExpectedErr: `does not exist`,
+					Query: `CALL drop_routine_proc_value();`, PostgresOracle: ScriptTestPostgresOracle{ID: "function-lookup-repro-test-testdroproutinefunctionrepro-0002-call-drop_routine_proc_value", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM drop_routine_proc_audit;`,
-					Expected: []sql.Row{{0}},
+					Query: `SELECT count(*) FROM drop_routine_proc_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "function-lookup-repro-test-testdroproutinefunctionrepro-0003-select-count-*-from-drop_routine_proc_audit"},
 				},
 			},
 		},
@@ -152,12 +149,10 @@ func TestSchemaQualifiedFunctionLookupUsesExplicitSchemaRepro(t *testing.T) {
 					Query: `SET search_path = dg_fn_lookup_a, public;`,
 				},
 				{
-					Query:    `SELECT dg_lookup_probe();`,
-					Expected: []sql.Row{{"a"}},
+					Query: `SELECT dg_lookup_probe();`, PostgresOracle: ScriptTestPostgresOracle{ID: "function-lookup-repro-test-testschemaqualifiedfunctionlookupusesexplicitschemarepro-0001-select-dg_lookup_probe"},
 				},
 				{
-					Query:    `SELECT dg_fn_lookup_b.dg_lookup_probe();`,
-					Expected: []sql.Row{{"b"}},
+					Query: `SELECT dg_fn_lookup_b.dg_lookup_probe();`, PostgresOracle: ScriptTestPostgresOracle{ID: "function-lookup-repro-test-testschemaqualifiedfunctionlookupusesexplicitschemarepro-0002-select-dg_fn_lookup_b.dg_lookup_probe"},
 				},
 			},
 		},
@@ -195,8 +190,13 @@ func TestSchemaQualifiedFunctionSideEffectsUseExplicitSchemaRepro(t *testing.T) 
 					Query: `SET search_path = dg_fn_effect_a, public;`,
 				},
 				{
-					Query:    `SELECT dg_fn_effect_b.lookup_mutator();`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT dg_fn_effect_b.lookup_mutator();`, PostgresOracle: ScriptTestPostgresOracle{ID: "function-lookup-repro-test-testschemaqualifiedfunctionsideeffectsuseexplicitschemarepro-0001-select-dg_fn_effect_b.lookup_mutator",
+
+						// TestSchemaQualifiedDefaultFunctionUsesExplicitSchemaRepro reproduces a data
+						// corruption bug: stored defaults that explicitly call a schema-qualified
+						// function should persist the named function's result, not the result from a
+						// same-name function in the current search path.
+						Compare: "sqlstate"},
 				},
 				{
 					Query:    `SELECT label FROM dg_fn_effect_audit;`,
@@ -207,10 +207,6 @@ func TestSchemaQualifiedFunctionSideEffectsUseExplicitSchemaRepro(t *testing.T) 
 	})
 }
 
-// TestSchemaQualifiedDefaultFunctionUsesExplicitSchemaRepro reproduces a data
-// corruption bug: stored defaults that explicitly call a schema-qualified
-// function should persist the named function's result, not the result from a
-// same-name function in the current search path.
 func TestSchemaQualifiedDefaultFunctionUsesExplicitSchemaRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -235,8 +231,7 @@ func TestSchemaQualifiedDefaultFunctionUsesExplicitSchemaRepro(t *testing.T) {
 					Query: `INSERT INTO dg_default_fn_items (id) VALUES (1);`,
 				},
 				{
-					Query:    `SELECT value FROM dg_default_fn_items;`,
-					Expected: []sql.Row{{2}},
+					Query: `SELECT value FROM dg_default_fn_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "function-lookup-repro-test-testschemaqualifieddefaultfunctionusesexplicitschemarepro-0001-select-value-from-dg_default_fn_items"},
 				},
 			},
 		},
@@ -272,8 +267,7 @@ func TestUnqualifiedDefaultFunctionBindsAtCreateTimeRepro(t *testing.T) {
 					Query: `INSERT INTO dg_default_bind_a.dg_default_bind_items (id) VALUES (1);`,
 				},
 				{
-					Query:    `SELECT value FROM dg_default_bind_a.dg_default_bind_items;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT value FROM dg_default_bind_a.dg_default_bind_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "function-lookup-repro-test-testunqualifieddefaultfunctionbindsatcreatetimerepro-0001-select-value-from-dg_default_bind_a.dg_default_bind_items"},
 				},
 			},
 		},
@@ -361,21 +355,21 @@ func TestSchemaQualifiedUniqueExpressionIndexUsesExplicitSchemaRepro(t *testing.
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `INSERT INTO dg_unique_fn_items VALUES (2, 11);`,
-					ExpectedErr: `duplicate`,
+					Query: `INSERT INTO dg_unique_fn_items VALUES (2, 11);`, PostgresOracle: ScriptTestPostgresOracle{ID: "function-lookup-repro-test-testschemaqualifieduniqueexpressionindexusesexplicitschemarepro-0001-insert-into-dg_unique_fn_items-values-2",
+
+						// TestUnqualifiedUniqueExpressionIndexBindsAtCreateTimeRepro reproduces a data
+						// integrity bug: unqualified functions in expression indexes should bind at
+						// CREATE INDEX time, not re-resolve through the INSERT-time search_path.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM dg_unique_fn_items;`,
-					Expected: []sql.Row{{int64(1)}},
+					Query: `SELECT count(*) FROM dg_unique_fn_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "function-lookup-repro-test-testschemaqualifieduniqueexpressionindexusesexplicitschemarepro-0002-select-count-*-from-dg_unique_fn_items"},
 				},
 			},
 		},
 	})
 }
 
-// TestUnqualifiedUniqueExpressionIndexBindsAtCreateTimeRepro reproduces a data
-// integrity bug: unqualified functions in expression indexes should bind at
-// CREATE INDEX time, not re-resolve through the INSERT-time search_path.
 func TestUnqualifiedUniqueExpressionIndexBindsAtCreateTimeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -402,8 +396,7 @@ func TestUnqualifiedUniqueExpressionIndexBindsAtCreateTimeRepro(t *testing.T) {
 					Query: `INSERT INTO dg_unique_bind_a.dg_unique_bind_items VALUES (2, 11);`,
 				},
 				{
-					Query:    `SELECT count(*) FROM dg_unique_bind_a.dg_unique_bind_items;`,
-					Expected: []sql.Row{{int64(2)}},
+					Query: `SELECT count(*) FROM dg_unique_bind_a.dg_unique_bind_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "function-lookup-repro-test-testunqualifieduniqueexpressionindexbindsatcreatetimerepro-0001-select-count-*-from-dg_unique_bind_a.dg_unique_bind_items"},
 				},
 			},
 		},
@@ -516,8 +509,7 @@ func TestSchemaQualifiedGeneratedColumnFunctionUsesExplicitSchemaRepro(t *testin
 					Query: `INSERT INTO dg_generated_fn_items (id, value) VALUES (1, 5);`,
 				},
 				{
-					Query:    `SELECT derived FROM dg_generated_fn_items;`,
-					Expected: []sql.Row{{205}},
+					Query: `SELECT derived FROM dg_generated_fn_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "function-lookup-repro-test-testschemaqualifiedgeneratedcolumnfunctionusesexplicitschemarepro-0001-select-derived-from-dg_generated_fn_items"},
 				},
 			},
 		},
@@ -553,8 +545,7 @@ func TestUnqualifiedGeneratedColumnFunctionBindsAtCreateTimeRepro(t *testing.T) 
 						VALUES (1, 5);`,
 				},
 				{
-					Query:    `SELECT derived FROM dg_generated_bind_a.dg_generated_bind_items;`,
-					Expected: []sql.Row{{105}},
+					Query: `SELECT derived FROM dg_generated_bind_a.dg_generated_bind_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "function-lookup-repro-test-testunqualifiedgeneratedcolumnfunctionbindsatcreatetimerepro-0001-select-derived-from"},
 				},
 			},
 		},
@@ -744,12 +735,10 @@ func TestFunctionSetSearchPathOptionAppliesDuringExecutionRepro(t *testing.T) {
 					Query: `SET search_path = dg_fn_set_attacker, public;`,
 				},
 				{
-					Query:    `SELECT function_set_path_count();`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT function_set_path_count();`, PostgresOracle: ScriptTestPostgresOracle{ID: "function-lookup-repro-test-testfunctionsetsearchpathoptionappliesduringexecutionrepro-0001-select-function_set_path_count"},
 				},
 				{
-					Query:    `SELECT current_setting('search_path');`,
-					Expected: []sql.Row{{"dg_fn_set_attacker, public"}},
+					Query: `SELECT current_setting('search_path');`, PostgresOracle: ScriptTestPostgresOracle{ID: "function-lookup-repro-test-testfunctionsetsearchpathoptionappliesduringexecutionrepro-0002-select-current_setting-search_path"},
 				},
 			},
 		},

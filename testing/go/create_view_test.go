@@ -33,12 +33,10 @@ var createViewStmts = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query:    "create view v as select * from t1 order by pk;",
-				Expected: []sql.Row{},
+				Query: "create view v as select * from t1 order by pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-view-test-testcreateviewstatements-0001-create-view-v-as-select"},
 			},
 			{
-				Query:    "select * from v order by pk;",
-				Expected: []sql.Row{{1}, {1}, {2}, {3}},
+				Query: "select * from v order by pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-view-test-testcreateviewstatements-0002-select-*-from-v-order"},
 			},
 		},
 	},
@@ -58,20 +56,16 @@ var createViewStmts = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query:    "SHOW search_path;",
-				Expected: []sql.Row{{"myschema"}},
+				Query: "SHOW search_path;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-view-test-testcreateviewstatements-0003-show-search_path"},
 			},
 			{
-				Query:    "select v1 from myview order by pk;",
-				Expected: []sql.Row{{4}, {5}, {6}},
+				Query: "select v1 from myview order by pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-view-test-testcreateviewstatements-0004-select-v1-from-myview-order"},
 			},
 			{
-				Query:       "select v2 from testview order by pk;",
-				ExpectedErr: "table not found: testview",
+				Query: "select v2 from testview order by pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-view-test-testcreateviewstatements-0005-select-v2-from-testview-order", Compare: "sqlstate"},
 			},
 			{
-				Query:    "select v2 from testschema.testview order by pk;",
-				Expected: []sql.Row{{"a"}, {"b"}, {"c"}},
+				Query: "select v2 from testschema.testview order by pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-view-test-testcreateviewstatements-0006-select-v2-from-testschema.testview-order"},
 			},
 			{
 				Query:    "select name from dolt_schemas;",
@@ -81,20 +75,16 @@ var createViewStmts = []ScriptTest{
 				Query: "SET search_path = 'testschema';",
 			},
 			{
-				Query:    "SHOW search_path;",
-				Expected: []sql.Row{{"testschema"}},
+				Query: "SHOW search_path;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-view-test-testcreateviewstatements-0008-show-search_path"},
 			},
 			{
-				Query:       "select * from myview order by pk; /* err */",
-				ExpectedErr: "table not found: myview",
+				Query: "select * from myview order by pk; /* err */", PostgresOracle: ScriptTestPostgresOracle{ID: "create-view-test-testcreateviewstatements-0009-select-*-from-myview-order", Compare: "sqlstate"},
 			},
 			{
-				Query:    "select v1 from myschema.myview order by pk;",
-				Expected: []sql.Row{{4}, {5}, {6}},
+				Query: "select v1 from myschema.myview order by pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-view-test-testcreateviewstatements-0010-select-v1-from-myschema.myview-order"},
 			},
 			{
-				Query:    "select v2 from testview order by pk;",
-				Expected: []sql.Row{{"a"}, {"b"}, {"c"}},
+				Query: "select v2 from testview order by pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-view-test-testcreateviewstatements-0011-select-v2-from-testview-order"},
 			},
 			{
 				Query:    "select name from dolt_schemas;",
@@ -133,12 +123,10 @@ var createViewStmts = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query:    "create view v1 as select * from v order by pk;",
-				Expected: []sql.Row{},
+				Query: "create view v1 as select * from v order by pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-view-test-testcreateviewstatements-0018-create-view-v1-as-select"},
 			},
 			{
-				Query:    "select * from v1 order by pk;",
-				Expected: []sql.Row{{2}, {3}},
+				Query: "select * from v1 order by pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-view-test-testcreateviewstatements-0019-select-*-from-v1-order"},
 			},
 		},
 	},
@@ -149,8 +137,7 @@ var createViewStmts = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query:    "SELECT * from v;",
-				Expected: []sql.Row{{4}},
+				Query: "SELECT * from v;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-view-test-testcreateviewstatements-0020-select-*-from-v"},
 			},
 		},
 	},
@@ -162,20 +149,16 @@ var createViewStmts = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query:    "create view v_today(today) as select 2",
-				Expected: []sql.Row{},
+				Query: "create view v_today(today) as select 2", PostgresOracle: ScriptTestPostgresOracle{ID: "create-view-test-testcreateviewstatements-0021-create-view-v_today-today-as"},
 			},
 			{
-				Query:    "CREATE VIEW xyv (u,v) AS SELECT * from xy",
-				Expected: []sql.Row{},
+				Query: "CREATE VIEW xyv (u,v) AS SELECT * from xy", PostgresOracle: ScriptTestPostgresOracle{ID: "create-view-test-testcreateviewstatements-0022-create-view-xyv-u-v"},
 			},
 			{
-				Query:    "SELECT v from xyv;",
-				Expected: []sql.Row{{4}, {9}},
+				Query: "SELECT v from xyv;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-view-test-testcreateviewstatements-0023-select-v-from-xyv"},
 			},
 			{
-				Query:    "SELECT today from v_today;",
-				Expected: []sql.Row{{2}},
+				Query: "SELECT today from v_today;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-view-test-testcreateviewstatements-0024-select-today-from-v_today"},
 			},
 		},
 	},
@@ -188,12 +171,10 @@ var createViewStmts = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query:    "create view unionView as (select * from t1 order by pk desc limit 1) union all (select * from t1 order by pk limit 1)",
-				Expected: []sql.Row{},
+				Query: "create view unionView as (select * from t1 order by pk desc limit 1) union all (select * from t1 order by pk limit 1)", PostgresOracle: ScriptTestPostgresOracle{ID: "create-view-test-testcreateviewstatements-0025-create-view-unionview-as-select"},
 			},
 			{
-				Query:    "select * from unionView order by pk;",
-				Expected: []sql.Row{{1}, {4}},
+				Query: "select * from unionView order by pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-view-test-testcreateviewstatements-0026-select-*-from-unionview-order"},
 			},
 		},
 	},
@@ -205,20 +186,16 @@ var createViewStmts = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query:    "CREATE VIEW v AS SELECT pk::INT2 FROM t1 ORDER BY pk;",
-				Expected: []sql.Row{},
+				Query: "CREATE VIEW v AS SELECT pk::INT2 FROM t1 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-view-test-testcreateviewstatements-0027-create-view-v-as-select"},
 			},
 			{
-				Query:    "select * from v order by pk;",
-				Expected: []sql.Row{{1}, {2}, {3}, {4}},
+				Query: "select * from v order by pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-view-test-testcreateviewstatements-0028-select-*-from-v-order"},
 			},
 			{
-				Query:    "CREATE VIEW v_text AS SELECT pk::int2, (pk)::text AS pk_text FROM t1;",
-				Expected: []sql.Row{},
+				Query: "CREATE VIEW v_text AS SELECT pk::int2, (pk)::text AS pk_text FROM t1;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-view-test-testcreateviewstatements-0029-create-view-v_text-as-select"},
 			},
 			{
-				Query:    "select pk_text from v_text order by pk;",
-				Expected: []sql.Row{{"1"}, {"2"}, {"3"}, {"4"}},
+				Query: "select pk_text from v_text order by pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-view-test-testcreateviewstatements-0030-select-pk_text-from-v_text-order"},
 			},
 		},
 	},
@@ -268,12 +245,10 @@ var createViewStmts = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query:    `create view v as select * from t where (t = 'busy'::e);`,
-				Expected: []sql.Row{},
+				Query: `create view v as select * from t where (t = 'busy'::e);`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-view-test-testcreateviewstatements-0032-create-view-v-as-select"},
 			},
 			{
-				Query:    `select * from v;`,
-				Expected: []sql.Row{{1, "busy"}, {3, "busy"}},
+				Query: `select * from v;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-view-test-testcreateviewstatements-0033-select-*-from-v"},
 			},
 		},
 	},

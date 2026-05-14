@@ -19,9 +19,6 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/jackc/pgx/v5/pgproto3"
-
-	"github.com/dolthub/doltgresql/core/id"
-	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
 func TestIssues(t *testing.T) {
@@ -163,16 +160,7 @@ left join lateral (
   ) "entities_defaultSubEntity"
 ) "entities_defaultSubEntity" on true
 where ("entities"."project_id" = 'projectA' and "entities"."id" = 'entityA')
-limit 1`,
-					Expected: []sql.Row{
-						{
-							"projectA",
-							"entityA",
-							"Entity A",
-							"subA1",
-							`["projectA", "entityA", "subA1", "Sub-Entity A1"]`,
-						},
-					},
+limit 1`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0008-select-entities-.-project_id-entities"},
 				},
 			},
 		},
@@ -208,28 +196,22 @@ limit 1`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `INSERT INTO t2(t1) VALUES (ROW(1, 'abc'));`,
-					Expected: []sql.Row{},
+					Query: `INSERT INTO t2(t1) VALUES (ROW(1, 'abc'));`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0010-insert-into-t2-t1-values"},
 				},
 				{
-					Query:    `SELECT * FROM t2;`,
-					Expected: []sql.Row{{1, "(1,abc)"}},
+					Query: `SELECT * FROM t2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0011-select-*-from-t2"},
 				},
 				{
-					Query:       `INSERT INTO t2(t1) VALUES (ROW('a', 'def'));`,
-					ExpectedErr: "invalid input syntax for type",
+					Query: `INSERT INTO t2(t1) VALUES (ROW('a', 'def'));`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0012-insert-into-t2-t1-values", Compare: "sqlstate"},
 				},
 				{
-					Query:       `INSERT INTO t2(t1) VALUES (ROW(true, 'def'));`,
-					ExpectedErr: "Cannot cast type",
+					Query: `INSERT INTO t2(t1) VALUES (ROW(true, 'def'));`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0013-insert-into-t2-t1-values", Compare: "sqlstate"},
 				},
 				{
-					Query:       `INSERT INTO t2(t1) VALUES (ROW(2, 'def', 'ghi'));`,
-					ExpectedErr: "cannot cast type",
+					Query: `INSERT INTO t2(t1) VALUES (ROW(2, 'def', 'ghi'));`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0014-insert-into-t2-t1-values", Compare: "sqlstate"},
 				},
 				{
-					Query:       `INSERT INTO t2(t1) VALUES (ROW(2));`,
-					ExpectedErr: "cannot cast type",
+					Query: `INSERT INTO t2(t1) VALUES (ROW(2));`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0015-insert-into-t2-t1-values", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -244,75 +226,43 @@ limit 1`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM t2;`,
-					Expected: []sql.Row{
-						{1, "(1,abc)", nil},
-						{2, nil, "(1,abc)"},
-					},
+					Query: `SELECT * FROM t2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0016-select-*-from-t2"},
 				},
 				{
-					Query:    `ALTER TABLE t1a ADD COLUMN c VARCHAR(10);`,
-					Expected: []sql.Row{},
+					Query: `ALTER TABLE t1a ADD COLUMN c VARCHAR(10);`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0017-alter-table-t1a-add-column"},
 				},
 				{
-					Query:    `ALTER TABLE t1b ADD COLUMN c VARCHAR(10) NOT NULL;`,
-					Expected: []sql.Row{},
+					Query: `ALTER TABLE t1b ADD COLUMN c VARCHAR(10) NOT NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0018-alter-table-t1b-add-column"},
 				},
 				{
-					Query: `SELECT * FROM t2 ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, "(1,abc,)", nil},
-						{2, nil, "(1,abc,)"},
-					},
+					Query: `SELECT * FROM t2 ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0019-select-*-from-t2-order"},
 				},
 				{
-					Query:    `ALTER TABLE t1a DROP COLUMN b;`,
-					Expected: []sql.Row{},
+					Query: `ALTER TABLE t1a DROP COLUMN b;`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0020-alter-table-t1a-drop-column"},
 				},
 				{
-					Query:    `ALTER TABLE t1b DROP COLUMN b;`,
-					Expected: []sql.Row{},
+					Query: `ALTER TABLE t1b DROP COLUMN b;`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0021-alter-table-t1b-drop-column"},
 				},
 				{
-					Query: `SELECT * FROM t2 ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, "(1,)", nil},
-						{2, nil, "(1,)"},
-					},
+					Query: `SELECT * FROM t2 ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0022-select-*-from-t2-order"},
 				},
 				{
-					Query:    `INSERT INTO t1a VALUES (2, 'def');`,
-					Expected: []sql.Row{},
+					Query: `INSERT INTO t1a VALUES (2, 'def');`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0023-insert-into-t1a-values-2"},
 				},
 				{
-					Query:    `INSERT INTO t1b VALUES (3, 'xyzzy');`,
-					Expected: []sql.Row{},
+					Query: `INSERT INTO t1b VALUES (3, 'xyzzy');`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0024-insert-into-t1b-values-3"},
 				},
 				{
-					Query:    `INSERT INTO t2 (t1a) SELECT ROW(a,c)::t1a FROM t1a;`,
-					Expected: []sql.Row{},
+					Query: `INSERT INTO t2 (t1a) SELECT ROW(a,c)::t1a FROM t1a;`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0025-insert-into-t2-t1a-select"},
 				},
 				{
-					Query:    `INSERT INTO t2 (t1b) SELECT ROW(a,c)::t1b FROM t1b;`,
-					Expected: []sql.Row{},
+					Query: `INSERT INTO t2 (t1b) SELECT ROW(a,c)::t1b FROM t1b;`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0026-insert-into-t2-t1b-select"},
 				},
 				{
-					Query: `SELECT * FROM t2 ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, "(1,)", nil},
-						{2, nil, "(1,)"},
-						{3, "(2,def)", nil},
-						{4, nil, "(3,xyzzy)"},
-					},
+					Query: `SELECT * FROM t2 ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0027-select-*-from-t2-order"},
 				},
 				{
-					Query: `SELECT ((t1a).@1), ((t1b).@2) FROM t2 ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, nil},
-						{nil, nil},
-						{2, nil},
-						{nil, "xyzzy"},
-					},
+					Query: `SELECT ((t1a).@1), ((t1b).@2) FROM t2 ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0028-select-t1a-.@1-t1b-.@2", Compare: "sqlstate"},
 				},
 				{
 					Query:    `UPDATE t2 SET t1a=ROW((t1a).a+100, (t1a).c)::t1a WHERE length(t1a::text) > 0;`,
@@ -377,16 +327,13 @@ limit 1`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `CREATE TABLE users (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), role team_role NOT NULL DEFAULT 'member');`,
-					Expected: []sql.Row{},
+					Query: `CREATE TABLE users (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), role team_role NOT NULL DEFAULT 'member');`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0040-create-table-users-id-uuid"},
 				},
 				{
-					Query:    `INSERT INTO users (role) VALUES (DEFAULT);`,
-					Expected: []sql.Row{},
+					Query: `INSERT INTO users (role) VALUES (DEFAULT);`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0041-insert-into-users-role-values"},
 				},
 				{
-					Query:    `SELECT role FROM users;`,
-					Expected: []sql.Row{{"member"}},
+					Query: `SELECT role FROM users;`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0042-select-role-from-users"},
 				},
 			},
 		},
@@ -397,14 +344,10 @@ limit 1`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:            `SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_tables WHERE tablename = 'test');`,
-					ExpectedColTypes: []id.Type{pgtypes.Bool.ID},
-					Expected:         []sql.Row{{"t"}},
+					Query: `SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_tables WHERE tablename = 'test');`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0043-select-exists-select-1-from"},
 				},
 				{
-					Query:            `SELECT NOT EXISTS(SELECT 1 FROM pg_catalog.pg_tables WHERE tablename = 'test');`,
-					ExpectedColTypes: []id.Type{pgtypes.Bool.ID},
-					Expected:         []sql.Row{{"f"}},
+					Query: `SELECT NOT EXISTS(SELECT 1 FROM pg_catalog.pg_tables WHERE tablename = 'test');`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0044-select-not-exists-select-1"},
 				},
 			},
 		},
@@ -415,24 +358,19 @@ limit 1`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SET TimeZone = 'UTC-01:00';`,
-					Expected: []sql.Row{},
+					Query: `SET TimeZone = 'UTC-01:00';`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0045-set-timezone-=-utc-01:00"},
 				},
 				{
-					Query:    `INSERT INTO test VALUES (1, '2026-04-15 10:11:12');`,
-					Expected: []sql.Row{},
+					Query: `INSERT INTO test VALUES (1, '2026-04-15 10:11:12');`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0046-insert-into-test-values-1"},
 				},
 				{
-					Query:    `SET TimeZone = 'UTC-03:00';`,
-					Expected: []sql.Row{},
+					Query: `SET TimeZone = 'UTC-03:00';`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0047-set-timezone-=-utc-03:00"},
 				},
 				{
-					Query:    `INSERT INTO test VALUES (2, '2026-04-15 10:11:12');`,
-					Expected: []sql.Row{},
+					Query: `INSERT INTO test VALUES (2, '2026-04-15 10:11:12');`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0048-insert-into-test-values-2"},
 				},
 				{
-					Query:    `SELECT (SELECT v1 FROM test WHERE pk = 2) - (SELECT v1 FROM test WHERE pk = 1);`,
-					Expected: []sql.Row{{"-02:00:00"}},
+					Query: `SELECT (SELECT v1 FROM test WHERE pk = 2) - (SELECT v1 FROM test WHERE pk = 1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0049-select-select-v1-from-test"},
 				},
 			},
 		},

@@ -1,0 +1,52 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map object_identity_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/object_identity_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/object_identity_repro_test.go:TestPgGetObjectAddressTableRepro#0001",
+      "source": "testing/go/object_identity_repro_test.go:TestPgGetObjectAddressTableRepro",
+      "ordinal": 1,
+      "scriptName": "pg_get_object_address resolves a table name",
+      "oracle": "internal",
+      "suggestedId": "object-identity-repro-test-testpggetobjectaddresstablerepro-0001-select-classid::regclass::text-objid::regclass::text-objsubid::text-from",
+      "expectedKind": "rows",
+      "query": "\nSELECT classid::regclass::TEXT, objid::regclass::TEXT, objsubid::TEXT\nFROM pg_catalog.pg_get_object_address(\n\t'table',\n\tARRAY['public', 'object_address_items'],\n\tARRAY[]::TEXT[]\n);",
+      "querySha256": "a72a619aa55626cea850a8ebd92256a4af0ca94bd2f9b566ccc97dfc295880f3",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/object_identity_repro_test.go:TestPgDescribeObjectTableRepro#0001",
+      "source": "testing/go/object_identity_repro_test.go:TestPgDescribeObjectTableRepro",
+      "ordinal": 1,
+      "scriptName": "pg_describe_object describes a table address",
+      "oracle": "postgres",
+      "postgresId": "object-identity-repro-test-testpgdescribeobjecttablerepro-0001-select-pg_catalog.pg_describe_object-pg_class-::regclass-object_describe_items",
+      "suggestedId": "object-identity-repro-test-testpgdescribeobjecttablerepro-0001-select-pg_catalog.pg_describe_object-pg_class-::regclass-object_describe_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "\nSELECT (pg_catalog.pg_describe_object(\n\t'pg_class'::regclass,\n\t'object_describe_items'::regclass,\n\t0\n) LIKE '%object_describe_items%')::TEXT;",
+      "querySha256": "6786afa66abacbe764e11a975cf00c9c3473e23db5259c12fe462ec1cf66355b",
+      "expectedRows": [
+        [
+          {
+            "value": "true"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

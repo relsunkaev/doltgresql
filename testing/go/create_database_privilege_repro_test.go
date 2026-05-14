@@ -32,11 +32,11 @@ func TestCreateDatabaseRequiresCreatedbPrivilegeRepro(t *testing.T) {
 					Query: `CREATE DATABASE unauthorized_db;`,
 
 					Username: `db_creator`,
-					Password: `creator`, PostgresOracle: ScriptTestPostgresOracle{
+					Password: `creator`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-database-privilege-repro-test-testcreatedatabaserequirescreatedbprivilegerepro-0001-create-database-unauthorized_db", Compare: "sqlstate"},
 
-						// TestDropDatabaseRequiresOwnershipRepro reproduces a security bug: a normal
-						// login role can drop a database owned by another role.
-						ID: "create-database-privilege-repro-test-testcreatedatabaserequirescreatedbprivilegerepro-0001-create-database-unauthorized_db", Compare: "sqlstate"},
+					// TestDropDatabaseRequiresOwnershipRepro reproduces a security bug: a normal
+					// login role can drop a database owned by another role.
+
 				},
 			},
 		},
@@ -56,12 +56,12 @@ func TestDropDatabaseRequiresOwnershipRepro(t *testing.T) {
 					Query: `DROP DATABASE protected_db;`,
 
 					Username: `db_dropper`,
-					Password: `dropper`, PostgresOracle: ScriptTestPostgresOracle{
+					Password: `dropper`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-database-privilege-repro-test-testdropdatabaserequiresownershiprepro-0001-drop-database-protected_db", Compare: "sqlstate"},
 
-						// TestDropDatabaseRequiresOwnershipDespiteAllPrivilegesRepro reproduces a
-						// PostgreSQL authorization bug: GRANT ALL PRIVILEGES ON DATABASE does not
-						// transfer ownership and should not allow the grantee to DROP the database.
-						ID: "create-database-privilege-repro-test-testdropdatabaserequiresownershiprepro-0001-drop-database-protected_db", Compare: "sqlstate"},
+					// TestDropDatabaseRequiresOwnershipDespiteAllPrivilegesRepro reproduces a
+					// PostgreSQL authorization bug: GRANT ALL PRIVILEGES ON DATABASE does not
+					// transfer ownership and should not allow the grantee to DROP the database.
+
 				},
 			},
 		},
@@ -82,12 +82,12 @@ func TestDropDatabaseRequiresOwnershipDespiteAllPrivilegesRepro(t *testing.T) {
 					Query: `DROP DATABASE protected_all_db;`,
 
 					Username: `drop_database_intruder`,
-					Password: `dropper`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-database-privilege-repro-test-testdropdatabaserequiresownershipdespiteallprivilegesrepro-0001-drop-database-protected_all_db",
+					Password: `dropper`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-database-privilege-repro-test-testdropdatabaserequiresownershipdespiteallprivilegesrepro-0001-drop-database-protected_all_db", Compare: "sqlstate"},
 
-						// TestAlterDatabaseOwnerToRequiresOwnershipRepro reproduces a PostgreSQL
-						// privilege incompatibility: a normal login role can run ALTER DATABASE OWNER
-						// TO against a database owned by another role.
-						Compare: "sqlstate"},
+					// TestAlterDatabaseOwnerToRequiresOwnershipRepro reproduces a PostgreSQL
+					// privilege incompatibility: a normal login role can run ALTER DATABASE OWNER
+					// TO against a database owned by another role.
+
 				},
 				{
 					Query: `SELECT datname FROM pg_database WHERE datname = 'protected_all_db';`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-database-privilege-repro-test-testdropdatabaserequiresownershipdespiteallprivilegesrepro-0002-select-datname-from-pg_database-where"},
@@ -110,11 +110,11 @@ func TestAlterDatabaseOwnerToRequiresOwnershipRepro(t *testing.T) {
 					Query: `ALTER DATABASE owner_to_database_private OWNER TO db_owner_hijacker;`,
 
 					Username: `db_owner_hijacker`,
-					Password: `hijacker`, PostgresOracle: ScriptTestPostgresOracle{
+					Password: `hijacker`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-database-privilege-repro-test-testalterdatabaseownertorequiresownershiprepro-0001-alter-database-owner_to_database_private-owner-to", Compare: "sqlstate"},
 
-						// TestAlterDatabaseRenameToRequiresOwnershipRepro reproduces a security bug:
-						// Doltgres allows a role that does not own a database to rename it.
-						ID: "create-database-privilege-repro-test-testalterdatabaseownertorequiresownershiprepro-0001-alter-database-owner_to_database_private-owner-to", Compare: "sqlstate"},
+					// TestAlterDatabaseRenameToRequiresOwnershipRepro reproduces a security bug:
+					// Doltgres allows a role that does not own a database to rename it.
+
 				},
 			},
 		},
@@ -169,12 +169,12 @@ func TestAlterDatabaseSetRequiresOwnershipRepro(t *testing.T) {
 				{
 					Query: `SELECT COUNT(*)
 						FROM pg_catalog.pg_db_role_setting
-						WHERE setdatabase = 'setting_database_private'::regdatabase;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-database-privilege-repro-test-testalterdatabasesetrequiresownershiprepro-0002-select-count-*-from-pg_catalog.pg_db_role_setting",
+						WHERE setdatabase = 'setting_database_private'::regdatabase;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-database-privilege-repro-test-testalterdatabasesetrequiresownershiprepro-0002-select-count-*-from-pg_catalog.pg_db_role_setting", Compare: "sqlstate"},
 
-						// TestAlterDatabaseCatalogOptionsRequireOwnershipRepro reproduces a security
-						// bug: Doltgres allows a role that does not own a database to change persisted
-						// pg_database catalog options.
-						Compare: "sqlstate"},
+					// TestAlterDatabaseCatalogOptionsRequireOwnershipRepro reproduces a security
+					// bug: Doltgres allows a role that does not own a database to change persisted
+					// pg_database catalog options.
+
 				},
 			},
 		},

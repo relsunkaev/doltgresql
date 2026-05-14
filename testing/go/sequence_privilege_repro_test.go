@@ -35,18 +35,20 @@ func TestSetvalRequiresUpdatePrivilegeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT setval('setval_private_seq', 100);`,
-					ExpectedErr: `permission denied`,
-					Username:    `setval_sequence_user`,
-					Password:    `sequence`,
+					Query: `SELECT setval('setval_private_seq', 100);`,
+
+					Username: `setval_sequence_user`,
+					Password: `sequence`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestSetvalWithSelectOnlyRequiresUpdatePrivilegeRepro guards that sequence
+						// SELECT alone is not enough to mutate sequence state with setval.
+						ID: "sequence-privilege-repro-test-testsetvalrequiresupdateprivilegerepro-0001-select-setval-setval_private_seq-100", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestSetvalWithSelectOnlyRequiresUpdatePrivilegeRepro guards that sequence
-// SELECT alone is not enough to mutate sequence state with setval.
 func TestSetvalWithSelectOnlyRequiresUpdatePrivilegeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -59,19 +61,21 @@ func TestSetvalWithSelectOnlyRequiresUpdatePrivilegeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT setval('setval_select_only_seq', 100);`,
-					ExpectedErr: `permission denied`,
-					Username:    `setval_select_only_user`,
-					Password:    `sequence`,
+					Query: `SELECT setval('setval_select_only_seq', 100);`,
+
+					Username: `setval_select_only_user`,
+					Password: `sequence`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestNextvalRequiresUsageOrUpdatePrivilegeRepro guards PostgreSQL sequence
+						// ACL semantics: SELECT lets a role read sequence state, but nextval requires
+						// USAGE or UPDATE because it advances the sequence.
+						ID: "sequence-privilege-repro-test-testsetvalwithselectonlyrequiresupdateprivilegerepro-0001-select-setval-setval_select_only_seq-100", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestNextvalRequiresUsageOrUpdatePrivilegeRepro guards PostgreSQL sequence
-// ACL semantics: SELECT lets a role read sequence state, but nextval requires
-// USAGE or UPDATE because it advances the sequence.
 func TestNextvalRequiresUsageOrUpdatePrivilegeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -84,19 +88,21 @@ func TestNextvalRequiresUsageOrUpdatePrivilegeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT nextval('nextval_select_only_seq');`,
-					ExpectedErr: `permission denied`,
-					Username:    `nextval_select_only_user`,
-					Password:    `sequence`,
+					Query: `SELECT nextval('nextval_select_only_seq');`,
+
+					Username: `nextval_select_only_user`,
+					Password: `sequence`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestNextvalAllowsUpdatePrivilegeRepro reproduces a sequence ACL correctness
+						// bug: UPDATE privilege can advance a sequence even without USAGE, but
+						// Doltgres denies the call.
+						ID: "sequence-privilege-repro-test-testnextvalrequiresusageorupdateprivilegerepro-0001-select-nextval-nextval_select_only_seq", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestNextvalAllowsUpdatePrivilegeRepro reproduces a sequence ACL correctness
-// bug: UPDATE privilege can advance a sequence even without USAGE, but
-// Doltgres denies the call.
 func TestNextvalAllowsUpdatePrivilegeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -109,18 +115,20 @@ func TestNextvalAllowsUpdatePrivilegeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT nextval('nextval_update_seq');`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT nextval('nextval_update_seq');`,
+
 					Username: `nextval_update_user`,
-					Password: `sequence`,
+					Password: `sequence`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestSequenceRelationSelectRequiresSelectPrivilegeRepro guards sequence
+						// relation reads: a role with only schema USAGE cannot read sequence state.
+						ID: "sequence-privilege-repro-test-testnextvalallowsupdateprivilegerepro-0001-select-nextval-nextval_update_seq"},
 				},
 			},
 		},
 	})
 }
 
-// TestSequenceRelationSelectRequiresSelectPrivilegeRepro guards sequence
-// relation reads: a role with only schema USAGE cannot read sequence state.
 func TestSequenceRelationSelectRequiresSelectPrivilegeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -133,19 +141,21 @@ func TestSequenceRelationSelectRequiresSelectPrivilegeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT last_value FROM relation_private_seq;`,
-					ExpectedErr: `permission denied`,
-					Username:    `sequence_relation_reader`,
-					Password:    `reader`,
+					Query: `SELECT last_value FROM relation_private_seq;`,
+
+					Username: `sequence_relation_reader`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestSequenceRelationSelectAllowsSelectPrivilegeRepro reproduces a sequence
+						// ACL correctness bug: explicit sequence SELECT should allow reading the
+						// sequence relation, but Doltgres still denies the read.
+						ID: "sequence-privilege-repro-test-testsequencerelationselectrequiresselectprivilegerepro-0001-select-last_value-from-relation_private_seq", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestSequenceRelationSelectAllowsSelectPrivilegeRepro reproduces a sequence
-// ACL correctness bug: explicit sequence SELECT should allow reading the
-// sequence relation, but Doltgres still denies the read.
 func TestSequenceRelationSelectAllowsSelectPrivilegeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -159,19 +169,21 @@ func TestSequenceRelationSelectAllowsSelectPrivilegeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT last_value FROM relation_select_seq;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT last_value FROM relation_select_seq;`,
+
 					Username: `sequence_relation_select_user`,
-					Password: `reader`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestSequenceOwnerCanUseCreatedSequenceRepro reproduces a sequence privilege
+						// bug: a role that creates a sequence owns it and has implicit privileges to
+						// use it.
+						ID: "sequence-privilege-repro-test-testsequencerelationselectallowsselectprivilegerepro-0001-select-last_value-from-relation_select_seq"},
 				},
 			},
 		},
 	})
 }
 
-// TestSequenceOwnerCanUseCreatedSequenceRepro reproduces a sequence privilege
-// bug: a role that creates a sequence owns it and has implicit privileges to
-// use it.
 func TestSequenceOwnerCanUseCreatedSequenceRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -215,16 +227,16 @@ func TestCurrvalAllowsSequenceUsagePrivilegeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT nextval('currval_usage_seq');`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT nextval('currval_usage_seq');`,
+
 					Username: `currval_usage_user`,
-					Password: `sequence`,
+					Password: `sequence`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-privilege-repro-test-testcurrvalallowssequenceusageprivilegerepro-0001-select-nextval-currval_usage_seq"},
 				},
 				{
-					Query:    `SELECT currval('currval_usage_seq');`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT currval('currval_usage_seq');`,
+
 					Username: `currval_usage_user`,
-					Password: `sequence`,
+					Password: `sequence`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-privilege-repro-test-testcurrvalallowssequenceusageprivilegerepro-0002-select-currval-currval_usage_seq"},
 				},
 			},
 		},

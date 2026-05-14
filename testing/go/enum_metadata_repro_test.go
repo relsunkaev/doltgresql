@@ -35,8 +35,7 @@ func TestCreateEnumPopulatesPgEnumRepro(t *testing.T) {
 					Query: `SELECT enumlabel
 						FROM pg_catalog.pg_enum
 						WHERE enumtypid = (SELECT oid FROM pg_type WHERE typname = 'enum_catalog_target')
-						ORDER BY enumsortorder;`,
-					Expected: []sql.Row{{"sad"}, {"ok"}, {"happy"}},
+						ORDER BY enumsortorder;`, PostgresOracle: ScriptTestPostgresOracle{ID: "enum-metadata-repro-test-testcreateenumpopulatespgenumrepro-0001-select-enumlabel-from-pg_catalog.pg_enum-where"},
 				},
 			},
 		},
@@ -59,14 +58,12 @@ func TestEnumLabelsAreCaseSensitive(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `INSERT INTO enum_label_case_items VALUES (1, 'Open'), (2, 'open');`,
-					Expected: []sql.Row{},
+					Query: `INSERT INTO enum_label_case_items VALUES (1, 'Open'), (2, 'open');`, PostgresOracle: ScriptTestPostgresOracle{ID: "enum-metadata-repro-test-testenumlabelsarecasesensitive-0001-insert-into-enum_label_case_items-values-1"},
 				},
 				{
 					Query: `SELECT id, status::text
 						FROM enum_label_case_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, "Open"}, {2, "open"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "enum-metadata-repro-test-testenumlabelsarecasesensitive-0002-select-id-status::text-from-enum_label_case_items"},
 				},
 			},
 		},
@@ -93,20 +90,17 @@ func TestEnumOrderingUsesDeclarationOrderRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT 'alpha'::enum_declared_order > 'beta'::enum_declared_order,
-							'beta'::enum_declared_order < 'gamma'::enum_declared_order;`,
-					Expected: []sql.Row{{"t", "t"}},
+							'beta'::enum_declared_order < 'gamma'::enum_declared_order;`, PostgresOracle: ScriptTestPostgresOracle{ID: "enum-metadata-repro-test-testenumorderingusesdeclarationorderrepro-0001-select-alpha-::enum_declared_order->-beta"},
 				},
 				{
 					Query: `SELECT status::text
 						FROM enum_declared_order_items
-						ORDER BY enum_declared_order_items.status;`,
-					Expected: []sql.Row{{"beta"}, {"alpha"}, {"gamma"}},
+						ORDER BY enum_declared_order_items.status;`, PostgresOracle: ScriptTestPostgresOracle{ID: "enum-metadata-repro-test-testenumorderingusesdeclarationorderrepro-0002-select-status::text-from-enum_declared_order_items-order"},
 				},
 				{
 					Query: `SELECT status::text
 						FROM enum_declared_order_items
-						ORDER BY status;`,
-					Expected: []sql.Row{{"alpha"}, {"beta"}, {"gamma"}},
+						ORDER BY status;`, PostgresOracle: ScriptTestPostgresOracle{ID: "enum-metadata-repro-test-testenumorderingusesdeclarationorderrepro-0003-select-status::text-from-enum_declared_order_items-order"},
 				},
 			},
 		},
@@ -134,8 +128,7 @@ func TestEnumMinMaxUseDeclarationOrder(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT min(status)::text, max(status)::text
-						FROM enum_minmax_items;`,
-					Expected: []sql.Row{{"beta", "gamma"}},
+						FROM enum_minmax_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "enum-metadata-repro-test-testenumminmaxusedeclarationorder-0001-select-min-status-::text-max"},
 				},
 			},
 		},
@@ -161,8 +154,7 @@ func TestEnumArrayColumnRoundTripsValuesRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT id, moods, moods[2]::text, 'sad'::enum_array_mood = ANY (moods)
-						FROM enum_array_items;`,
-					Expected: []sql.Row{{1, "{sad,happy}", "happy", "t"}},
+						FROM enum_array_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "enum-metadata-repro-test-testenumarraycolumnroundtripsvaluesrepro-0001-select-id-moods-moods[2]::text-sad"},
 				},
 			},
 		},
@@ -185,17 +177,18 @@ func TestDropEnumTypeUsedByTableRequiresCascadeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP TYPE enum_dependency_mood;`,
-					ExpectedErr: `other objects depend on it`,
+					Query: `DROP TYPE enum_dependency_mood;`, PostgresOracle: ScriptTestPostgresOracle{ID: "enum-metadata-repro-test-testdropenumtypeusedbytablerequirescascaderepro-0001-drop-type-enum_dependency_mood",
+
+						// TestDropEnumTypeUsedByColumnDefaultRequiresCascadeRepro reproduces a
+						// dependency bug: PostgreSQL rejects dropping an enum type referenced by a
+						// column default unless CASCADE is requested.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropEnumTypeUsedByColumnDefaultRequiresCascadeRepro reproduces a
-// dependency bug: PostgreSQL rejects dropping an enum type referenced by a
-// column default unless CASCADE is requested.
 func TestDropEnumTypeUsedByColumnDefaultRequiresCascadeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -209,8 +202,7 @@ func TestDropEnumTypeUsedByColumnDefaultRequiresCascadeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP TYPE enum_default_dependency_status;`,
-					ExpectedErr: `other objects depend on it`,
+					Query: `DROP TYPE enum_default_dependency_status;`, PostgresOracle: ScriptTestPostgresOracle{ID: "enum-metadata-repro-test-testdropenumtypeusedbycolumndefaultrequirescascaderepro-0001-drop-type-enum_default_dependency_status", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO enum_default_dependency_items (id)
@@ -218,8 +210,7 @@ func TestDropEnumTypeUsedByColumnDefaultRequiresCascadeRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT id::text, status
-						FROM enum_default_dependency_items;`,
-					Expected: []sql.Row{{"1", "new"}},
+						FROM enum_default_dependency_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "enum-metadata-repro-test-testdropenumtypeusedbycolumndefaultrequirescascaderepro-0002-select-id::text-status-from-enum_default_dependency_items"},
 				},
 			},
 		},
@@ -244,25 +235,25 @@ func TestDropEnumTypeUsedByCheckConstraintRequiresCascadeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP TYPE enum_check_dependency_status;`,
-					ExpectedErr: `other objects depend on it`,
+					Query: `DROP TYPE enum_check_dependency_status;`, PostgresOracle: ScriptTestPostgresOracle{ID: "enum-metadata-repro-test-testdropenumtypeusedbycheckconstraintrequirescascaderepro-0001-drop-type-enum_check_dependency_status", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO enum_check_dependency_items
 						VALUES (1, 'new');`,
 				},
 				{
-					Query:       `INSERT INTO enum_check_dependency_items VALUES (2, 'done');`,
-					ExpectedErr: `enum_check_dependency_not_done`,
+					Query: `INSERT INTO enum_check_dependency_items VALUES (2, 'done');`, PostgresOracle: ScriptTestPostgresOracle{ID: "enum-metadata-repro-test-testdropenumtypeusedbycheckconstraintrequirescascaderepro-0002-insert-into-enum_check_dependency_items-values-2",
+
+						// TestDropEnumTypeUsedByGeneratedColumnRequiresCascadeRepro reproduces a
+						// dependency bug: PostgreSQL rejects dropping an enum type referenced by a
+						// stored generated column unless CASCADE is requested.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropEnumTypeUsedByGeneratedColumnRequiresCascadeRepro reproduces a
-// dependency bug: PostgreSQL rejects dropping an enum type referenced by a
-// stored generated column unless CASCADE is requested.
 func TestDropEnumTypeUsedByGeneratedColumnRequiresCascadeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -345,17 +336,18 @@ func TestDropEnumTypeUsedByViewRequiresCascadeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP TYPE enum_view_dependency_status;`,
-					ExpectedErr: `other objects depend on it`,
+					Query: `DROP TYPE enum_view_dependency_status;`, PostgresOracle: ScriptTestPostgresOracle{ID: "enum-metadata-repro-test-testdropenumtypeusedbyviewrequirescascaderepro-0001-drop-type-enum_view_dependency_status",
+
+						// TestDropEnumTypeUsedByFunctionRequiresCascadeRepro reproduces a dependency
+						// bug: PostgreSQL rejects dropping an enum type referenced by a function
+						// signature unless CASCADE is requested.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropEnumTypeUsedByFunctionRequiresCascadeRepro reproduces a dependency
-// bug: PostgreSQL rejects dropping an enum type referenced by a function
-// signature unless CASCADE is requested.
 func TestDropEnumTypeUsedByFunctionRequiresCascadeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -369,17 +361,18 @@ func TestDropEnumTypeUsedByFunctionRequiresCascadeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP TYPE enum_function_dependency_status;`,
-					ExpectedErr: `other objects depend on it`,
+					Query: `DROP TYPE enum_function_dependency_status;`, PostgresOracle: ScriptTestPostgresOracle{ID: "enum-metadata-repro-test-testdropenumtypeusedbyfunctionrequirescascaderepro-0001-drop-type-enum_function_dependency_status",
+
+						// TestAlterEnumAddValuePersistsUsableLabelRepro reproduces an enum
+						// persistence bug: PostgreSQL persists values added with ALTER TYPE ADD VALUE
+						// and accepts them in future enum-typed rows.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterEnumAddValuePersistsUsableLabelRepro reproduces an enum
-// persistence bug: PostgreSQL persists values added with ALTER TYPE ADD VALUE
-// and accepts them in future enum-typed rows.
 func TestAlterEnumAddValuePersistsUsableLabelRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -400,13 +393,11 @@ func TestAlterEnumAddValuePersistsUsableLabelRepro(t *testing.T) {
 					Query: `SELECT enumlabel
 						FROM pg_catalog.pg_enum
 						WHERE enumtypid = 'enum_alter_status'::regtype
-						ORDER BY enumsortorder;`,
-					Expected: []sql.Row{{"new"}, {"archived"}, {"done"}},
+						ORDER BY enumsortorder;`, PostgresOracle: ScriptTestPostgresOracle{ID: "enum-metadata-repro-test-testalterenumaddvaluepersistsusablelabelrepro-0001-select-enumlabel-from-pg_catalog.pg_enum-where"},
 				},
 				{
 					Query: `SELECT status::text
-						FROM enum_alter_items;`,
-					Expected: []sql.Row{{"archived"}},
+						FROM enum_alter_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "enum-metadata-repro-test-testalterenumaddvaluepersistsusablelabelrepro-0002-select-status::text-from-enum_alter_items"},
 				},
 			},
 		},
@@ -435,12 +426,10 @@ func TestAlterEnumRenameValueUpdatesStoredRowsRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT status::text
-						FROM enum_rename_items;`,
-					Expected: []sql.Row{{"open"}},
+						FROM enum_rename_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "enum-metadata-repro-test-testalterenumrenamevalueupdatesstoredrowsrepro-0001-select-status::text-from-enum_rename_items"},
 				},
 				{
-					Query:       `INSERT INTO enum_rename_items VALUES (2, 'new');`,
-					ExpectedErr: `invalid input value for enum enum_rename_status: "new"`,
+					Query: `INSERT INTO enum_rename_items VALUES (2, 'new');`, PostgresOracle: ScriptTestPostgresOracle{ID: "enum-metadata-repro-test-testalterenumrenamevalueupdatesstoredrowsrepro-0002-insert-into-enum_rename_items-values-2", Compare: "sqlstate"},
 				},
 			},
 		},

@@ -36,36 +36,28 @@ func TestSequences(t *testing.T) {
 			Name: "Basic CREATE SEQUENCE and DROP SEQUENCE",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "CREATE SEQUENCE test;",
-					Expected: []sql.Row{},
+					Query: "CREATE SEQUENCE test;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0001-create-sequence-test"},
 				},
 				{
-					Query:    "SELECT nextval('test');",
-					Expected: []sql.Row{{1}},
+					Query: "SELECT nextval('test');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0002-select-nextval-test"},
 				},
 				{
-					Query:    "SELECT nextval('test');",
-					Expected: []sql.Row{{2}},
+					Query: "SELECT nextval('test');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0003-select-nextval-test"},
 				},
 				{
-					Query:    "SELECT nextval('test');",
-					Expected: []sql.Row{{3}},
+					Query: "SELECT nextval('test');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0004-select-nextval-test"},
 				},
 				{
-					Query:    "SELECT nextval('test'::regclass);",
-					Expected: []sql.Row{{4}},
+					Query: "SELECT nextval('test'::regclass);", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0005-select-nextval-test-::regclass"},
 				},
 				{
-					Query:       "SELECT nextval('doesnotexist'::regclass);",
-					ExpectedErr: "does not exist",
+					Query: "SELECT nextval('doesnotexist'::regclass);", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0006-select-nextval-doesnotexist-::regclass", Compare: "sqlstate"},
 				},
 				{
-					Query:    "DROP SEQUENCE test;",
-					Expected: []sql.Row{},
+					Query: "DROP SEQUENCE test;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0007-drop-sequence-test"},
 				},
 				{
-					Query:       "SELECT nextval('test');",
-					ExpectedErr: "does not exist",
+					Query: "SELECT nextval('test');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0008-select-nextval-test"},
 				},
 			},
 		},
@@ -73,40 +65,31 @@ func TestSequences(t *testing.T) {
 			Name: "CREATE SEQUENCE IF NOT EXISTS",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "CREATE SEQUENCE test1;",
-					Expected: []sql.Row{},
+					Query: "CREATE SEQUENCE test1;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0009-create-sequence-test1"},
 				},
 				{
-					Query:       "CREATE SEQUENCE test1;",
-					ExpectedErr: "already exists",
+					Query: "CREATE SEQUENCE test1;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0010-create-sequence-test1", Compare: "sqlstate"},
 				},
 				{
-					Query:    "SELECT nextval('test1');",
-					Expected: []sql.Row{{1}},
+					Query: "SELECT nextval('test1');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0011-select-nextval-test1"},
 				},
 				{
-					Query:    "CREATE SEQUENCE IF NOT EXISTS test1;",
-					Expected: []sql.Row{},
+					Query: "CREATE SEQUENCE IF NOT EXISTS test1;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0012-create-sequence-if-not-exists"},
 				},
 				{
-					Query:    "SELECT nextval('test1');",
-					Expected: []sql.Row{{2}},
+					Query: "SELECT nextval('test1');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0013-select-nextval-test1"},
 				},
 				{
-					Query:    "CREATE SEQUENCE IF NOT EXISTS test2;",
-					Expected: []sql.Row{},
+					Query: "CREATE SEQUENCE IF NOT EXISTS test2;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0014-create-sequence-if-not-exists"},
 				},
 				{
-					Query:    "SELECT nextval('test2');",
-					Expected: []sql.Row{{1}},
+					Query: "SELECT nextval('test2');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0015-select-nextval-test2"},
 				},
 				{
-					Query:    "CREATE SEQUENCE IF NOT EXISTS test2;",
-					Expected: []sql.Row{},
+					Query: "CREATE SEQUENCE IF NOT EXISTS test2;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0016-create-sequence-if-not-exists"},
 				},
 				{
-					Query:    "SELECT nextval('test2');",
-					Expected: []sql.Row{{2}},
+					Query: "SELECT nextval('test2');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0017-select-nextval-test2"},
 				},
 			},
 		},
@@ -114,52 +97,40 @@ func TestSequences(t *testing.T) {
 			Name: "DROP SEQUENCE IF NOT EXISTS",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "CREATE SEQUENCE test1;",
-					Expected: []sql.Row{},
+					Query: "CREATE SEQUENCE test1;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0018-create-sequence-test1", Compare: "sqlstate"},
 				},
 				{
-					Query:    "CREATE SEQUENCE test2;",
-					Expected: []sql.Row{},
+					Query: "CREATE SEQUENCE test2;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0019-create-sequence-test2"},
 				},
 				{
-					Query:    "SELECT nextval('test1');",
-					Expected: []sql.Row{{1}},
+					Query: "SELECT nextval('test1');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0020-select-nextval-test1"},
 				},
 				{
-					Query:    "SELECT nextval('test2');",
-					Expected: []sql.Row{{1}},
+					Query: "SELECT nextval('test2');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0021-select-nextval-test2"},
 				},
 				{
-					Query:    "DROP SEQUENCE test1;",
-					Expected: []sql.Row{},
+					Query: "DROP SEQUENCE test1;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0022-drop-sequence-test1"},
 				},
 				{
-					Query:       "DROP SEQUENCE test1;",
-					ExpectedErr: "does not exist",
+					Query: "DROP SEQUENCE test1;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0023-drop-sequence-test1", Compare: "sqlstate"},
 				},
 				{
-					Query:    "DROP SEQUENCE IF EXISTS test1;",
-					Expected: []sql.Row{},
+					Query: "DROP SEQUENCE IF EXISTS test1;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0024-drop-sequence-if-exists-test1"},
 				},
 				{
-					Query:       "SELECT nextval('test1');",
-					ExpectedErr: "does not exist",
+					Query: "SELECT nextval('test1');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0025-select-nextval-test1", Compare: "sqlstate"},
 				},
 				{
-					Query:    "SELECT nextval('test2');",
-					Expected: []sql.Row{{2}},
+					Query: "SELECT nextval('test2');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0026-select-nextval-test2"},
 				},
 				{
-					Query:    "DROP SEQUENCE IF EXISTS test2;",
-					Expected: []sql.Row{},
+					Query: "DROP SEQUENCE IF EXISTS test2;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0027-drop-sequence-if-exists-test2"},
 				},
 				{
-					Query:       "SELECT nextval('test2');",
-					ExpectedErr: "does not exist",
+					Query: "SELECT nextval('test2');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0028-select-nextval-test2", Compare: "sqlstate"},
 				},
 				{
-					Query:    "DROP SEQUENCE IF EXISTS test2;",
-					Expected: []sql.Row{},
+					Query: "DROP SEQUENCE IF EXISTS test2;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0029-drop-sequence-if-exists-test2"},
 				},
 			},
 		},
@@ -167,52 +138,40 @@ func TestSequences(t *testing.T) {
 			Name: "MINVALUE and MAXVALUE with DATA TYPE",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "CREATE SEQUENCE test1 AS SMALLINT MINVALUE -32768;",
-					Expected: []sql.Row{},
+					Query: "CREATE SEQUENCE test1 AS SMALLINT MINVALUE -32768;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0030-create-sequence-test1-as-smallint"},
 				},
 				{
-					Query:       "CREATE SEQUENCE test2 AS SMALLINT MINVALUE -32769;",
-					ExpectedErr: "out of range",
+					Query: "CREATE SEQUENCE test2 AS SMALLINT MINVALUE -32769;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0031-create-sequence-test2-as-smallint", Compare: "sqlstate"},
 				},
 				{
-					Query:    "CREATE SEQUENCE test3 AS SMALLINT MAXVALUE 32767;",
-					Expected: []sql.Row{},
+					Query: "CREATE SEQUENCE test3 AS SMALLINT MAXVALUE 32767;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0032-create-sequence-test3-as-smallint"},
 				},
 				{
-					Query:       "CREATE SEQUENCE test4 AS SMALLINT MINVALUE 32768;",
-					ExpectedErr: "out of range",
+					Query: "CREATE SEQUENCE test4 AS SMALLINT MINVALUE 32768;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0033-create-sequence-test4-as-smallint", Compare: "sqlstate"},
 				},
 				{
-					Query:    "CREATE SEQUENCE test5 AS INTEGER MINVALUE -2147483648;",
-					Expected: []sql.Row{},
+					Query: "CREATE SEQUENCE test5 AS INTEGER MINVALUE -2147483648;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0034-create-sequence-test5-as-integer"},
 				},
 				{
-					Query:       "CREATE SEQUENCE test6 AS INTEGER MINVALUE -2147483649;",
-					ExpectedErr: "out of range",
+					Query: "CREATE SEQUENCE test6 AS INTEGER MINVALUE -2147483649;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0035-create-sequence-test6-as-integer", Compare: "sqlstate"},
 				},
 				{
-					Query:    "CREATE SEQUENCE test7 AS INTEGER MAXVALUE 2147483647;",
-					Expected: []sql.Row{},
+					Query: "CREATE SEQUENCE test7 AS INTEGER MAXVALUE 2147483647;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0036-create-sequence-test7-as-integer"},
 				},
 				{
-					Query:       "CREATE SEQUENCE test8 AS INTEGER MINVALUE 2147483648;",
-					ExpectedErr: "out of range",
+					Query: "CREATE SEQUENCE test8 AS INTEGER MINVALUE 2147483648;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0037-create-sequence-test8-as-integer", Compare: "sqlstate"},
 				},
 				{
-					Query:    "CREATE SEQUENCE test9 AS BIGINT MINVALUE -9223372036854775808;",
-					Expected: []sql.Row{},
+					Query: "CREATE SEQUENCE test9 AS BIGINT MINVALUE -9223372036854775808;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0038-create-sequence-test9-as-bigint"},
 				},
 				{
-					Query:       "CREATE SEQUENCE test10 AS BIGINT MINVALUE -9223372036854775809;",
-					ExpectedErr: "out of int64 range",
+					Query: "CREATE SEQUENCE test10 AS BIGINT MINVALUE -9223372036854775809;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0039-create-sequence-test10-as-bigint", Compare: "sqlstate"},
 				},
 				{
-					Query:    "CREATE SEQUENCE test11 AS BIGINT MAXVALUE 9223372036854775807;",
-					Expected: []sql.Row{},
+					Query: "CREATE SEQUENCE test11 AS BIGINT MAXVALUE 9223372036854775807;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0040-create-sequence-test11-as-bigint"},
 				},
 				{
-					Query:       "CREATE SEQUENCE test12 AS BIGINT MINVALUE 9223372036854775808;",
-					ExpectedErr: "out of int64 range",
+					Query: "CREATE SEQUENCE test12 AS BIGINT MINVALUE 9223372036854775808;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0041-create-sequence-test12-as-bigint", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -220,60 +179,46 @@ func TestSequences(t *testing.T) {
 			Name: "CREATE SEQUENCE START",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "CREATE SEQUENCE test1 START 39;",
-					Expected: []sql.Row{},
+					Query: "CREATE SEQUENCE test1 START 39;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0042-create-sequence-test1-start-39", Compare: "sqlstate"},
 				},
 				{
-					Query:    "SELECT nextval('test1');",
-					Expected: []sql.Row{{39}},
+					Query: "SELECT nextval('test1');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0043-select-nextval-test1"},
 				},
 				{
-					Query:       "CREATE SEQUENCE test2 START 0;",
-					ExpectedErr: "cannot be less than",
+					Query: "CREATE SEQUENCE test2 START 0;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0044-create-sequence-test2-start-0", Compare: "sqlstate"},
 				},
 				{
-					Query:    "CREATE SEQUENCE test2 MINVALUE 0 START 0;",
-					Expected: []sql.Row{},
+					Query: "CREATE SEQUENCE test2 MINVALUE 0 START 0;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0045-create-sequence-test2-minvalue-0"},
 				},
 				{
-					Query:    "SELECT nextval('test2');",
-					Expected: []sql.Row{{0}},
+					Query: "SELECT nextval('test2');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0046-select-nextval-test2"},
 				},
 				{
-					Query:    "CREATE SEQUENCE test3 MINVALUE -100 START -7;",
-					Expected: []sql.Row{},
+					Query: "CREATE SEQUENCE test3 MINVALUE -100 START -7;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0047-create-sequence-test3-minvalue-100"},
 				},
 				{
-					Query:    "SELECT nextval('test3');",
-					Expected: []sql.Row{{-7}},
+					Query: "SELECT nextval('test3');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0048-select-nextval-test3"},
 				},
 				{
-					Query:       "CREATE SEQUENCE test4 START -5 INCREMENT 1;",
-					ExpectedErr: "cannot be less than",
+					Query: "CREATE SEQUENCE test4 START -5 INCREMENT 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0049-create-sequence-test4-start-5", Compare: "sqlstate"},
 				},
 				{
-					Query:    "CREATE SEQUENCE test4 START -5 INCREMENT -1;",
-					Expected: []sql.Row{},
+					Query: "CREATE SEQUENCE test4 START -5 INCREMENT -1;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0050-create-sequence-test4-start-5"},
 				},
 				{
-					Query:    "SELECT nextval('test4');",
-					Expected: []sql.Row{{-5}},
+					Query: "SELECT nextval('test4');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0051-select-nextval-test4"},
 				},
 				{
-					Query:       "CREATE SEQUENCE test5 START 25 INCREMENT -1;",
-					ExpectedErr: "cannot be greater than",
+					Query: "CREATE SEQUENCE test5 START 25 INCREMENT -1;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0052-create-sequence-test5-start-25", Compare: "sqlstate"},
 				},
 				{
-					Query:    "CREATE SEQUENCE test5 START 25 MAXVALUE 25 INCREMENT -1;",
-					Expected: []sql.Row{},
+					Query: "CREATE SEQUENCE test5 START 25 MAXVALUE 25 INCREMENT -1;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0053-create-sequence-test5-start-25"},
 				},
 				{
-					Query:    "SELECT nextval('test5');",
-					Expected: []sql.Row{{25}},
+					Query: "SELECT nextval('test5');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0054-select-nextval-test5"},
 				},
 				{
-					Query:    "SELECT nextval('test5');",
-					Expected: []sql.Row{{24}},
+					Query: "SELECT nextval('test5');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0055-select-nextval-test5"},
 				},
 			},
 		},
@@ -281,104 +226,79 @@ func TestSequences(t *testing.T) {
 			Name: "CYCLE and NO CYCLE",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "CREATE SEQUENCE test1 MINVALUE 0 MAXVALUE 3 START 2 INCREMENT 1 NO CYCLE;",
-					Expected: []sql.Row{},
+					Query: "CREATE SEQUENCE test1 MINVALUE 0 MAXVALUE 3 START 2 INCREMENT 1 NO CYCLE;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0056-create-sequence-test1-minvalue-0", Compare: "sqlstate"},
 				},
 				{
-					Query:    "SELECT nextval('test1');",
-					Expected: []sql.Row{{2}},
+					Query: "SELECT nextval('test1');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0057-select-nextval-test1"},
 				},
 				{
-					Query:    "SELECT nextval('test1');",
-					Expected: []sql.Row{{3}},
+					Query: "SELECT nextval('test1');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0058-select-nextval-test1"},
 				},
 				{
-					Query:       "SELECT nextval('test1');",
-					ExpectedErr: "reached maximum value",
+					Query: "SELECT nextval('test1');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0059-select-nextval-test1", Compare: "sqlstate"},
 				},
 				{
-					Query:    "CREATE SEQUENCE test2 MINVALUE 0 MAXVALUE 3 START 2 INCREMENT 1 CYCLE;",
-					Expected: []sql.Row{},
+					Query: "CREATE SEQUENCE test2 MINVALUE 0 MAXVALUE 3 START 2 INCREMENT 1 CYCLE;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0060-create-sequence-test2-minvalue-0"},
 				},
 				{
-					Query:    "SELECT nextval('test2');",
-					Expected: []sql.Row{{2}},
+					Query: "SELECT nextval('test2');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0061-select-nextval-test2"},
 				},
 				{
-					Query:    "SELECT nextval('test2');",
-					Expected: []sql.Row{{3}},
+					Query: "SELECT nextval('test2');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0062-select-nextval-test2"},
 				},
 				{
-					Query:    "SELECT nextval('test2');",
-					Expected: []sql.Row{{0}},
+					Query: "SELECT nextval('test2');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0063-select-nextval-test2"},
 				},
 				{
-					Query:    "CREATE SEQUENCE test3 MINVALUE 0 MAXVALUE 3 START 1 INCREMENT -1 NO CYCLE;",
-					Expected: []sql.Row{},
+					Query: "CREATE SEQUENCE test3 MINVALUE 0 MAXVALUE 3 START 1 INCREMENT -1 NO CYCLE;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0064-create-sequence-test3-minvalue-0"},
 				},
 				{
-					Query:    "SELECT nextval('test3');",
-					Expected: []sql.Row{{1}},
+					Query: "SELECT nextval('test3');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0065-select-nextval-test3"},
 				},
 				{
-					Query:    "SELECT nextval('test3');",
-					Expected: []sql.Row{{0}},
+					Query: "SELECT nextval('test3');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0066-select-nextval-test3"},
 				},
 				{
-					Query:       "SELECT nextval('test3');",
-					ExpectedErr: "reached minimum value",
+					Query: "SELECT nextval('test3');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0067-select-nextval-test3", Compare: "sqlstate"},
 				},
 				{
-					Query:    "CREATE SEQUENCE test4 MINVALUE 0 MAXVALUE 3 START 1 INCREMENT -1 CYCLE;",
-					Expected: []sql.Row{},
+					Query: "CREATE SEQUENCE test4 MINVALUE 0 MAXVALUE 3 START 1 INCREMENT -1 CYCLE;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0068-create-sequence-test4-minvalue-0"},
 				},
 				{
-					Query:    "SELECT nextval('test4');",
-					Expected: []sql.Row{{1}},
+					Query: "SELECT nextval('test4');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0069-select-nextval-test4"},
 				},
 				{
-					Query:    "SELECT nextval('test4');",
-					Expected: []sql.Row{{0}},
+					Query: "SELECT nextval('test4');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0070-select-nextval-test4"},
 				},
 				{
-					Query:    "SELECT nextval('test4');",
-					Expected: []sql.Row{{3}},
+					Query: "SELECT nextval('test4');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0071-select-nextval-test4"},
 				},
 				{
-					Query:    "CREATE SEQUENCE test5 MINVALUE 1 MAXVALUE 7 START 1 INCREMENT 5 CYCLE;",
-					Expected: []sql.Row{},
+					Query: "CREATE SEQUENCE test5 MINVALUE 1 MAXVALUE 7 START 1 INCREMENT 5 CYCLE;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0072-create-sequence-test5-minvalue-1"},
 				},
 				{
-					Query:    "SELECT nextval('test5');",
-					Expected: []sql.Row{{1}},
+					Query: "SELECT nextval('test5');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0073-select-nextval-test5"},
 				},
 				{
-					Query:    "SELECT nextval('test5');",
-					Expected: []sql.Row{{6}},
+					Query: "SELECT nextval('test5');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0074-select-nextval-test5"},
 				},
 				{
-					Query:    "SELECT nextval('test5');",
-					Expected: []sql.Row{{1}},
+					Query: "SELECT nextval('test5');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0075-select-nextval-test5"},
 				},
 				{
-					Query:    "CREATE SEQUENCE test6 MINVALUE 1 MAXVALUE 7 START 6 INCREMENT -5 CYCLE;",
-					Expected: []sql.Row{},
+					Query: "CREATE SEQUENCE test6 MINVALUE 1 MAXVALUE 7 START 6 INCREMENT -5 CYCLE;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0076-create-sequence-test6-minvalue-1"},
 				},
 				{
-					Query:    "SELECT nextval('test6');",
-					Expected: []sql.Row{{6}},
+					Query: "SELECT nextval('test6');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0077-select-nextval-test6"},
 				},
 				{
-					Query:    "SELECT nextval('test6');",
-					Expected: []sql.Row{{1}},
+					Query: "SELECT nextval('test6');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0078-select-nextval-test6"},
 				},
 				{
-					Query:    "SELECT nextval('test6');",
-					Expected: []sql.Row{{7}},
+					Query: "SELECT nextval('test6');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0079-select-nextval-test6"},
 				},
 				{
-					Query:    "SELECT nextval('test6');",
-					Expected: []sql.Row{{2}},
+					Query: "SELECT nextval('test6');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0080-select-nextval-test6"},
 				},
 			},
 		},
@@ -390,34 +310,19 @@ func TestSequences(t *testing.T) {
 					Expected: []sql.Row{},
 				},
 				{
-					Query:    "CREATE SEQUENCE seq1;",
-					Expected: []sql.Row{},
+					Query: "CREATE SEQUENCE seq1;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0082-create-sequence-seq1"},
 				},
 				{
-					Query:    "INSERT INTO test VALUES (nextval('seq1'), 7), (nextval('seq1'), 11), (nextval('seq1'), 17);",
-					Expected: []sql.Row{},
+					Query: "INSERT INTO test VALUES (nextval('seq1'), 7), (nextval('seq1'), 11), (nextval('seq1'), 17);", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0083-insert-into-test-values-nextval"},
 				},
 				{
-					Query: "SELECT * FROM test ORDER BY v1;",
-					Expected: []sql.Row{
-						{1, 7},
-						{2, 11},
-						{3, 17},
-					},
+					Query: "SELECT * FROM test ORDER BY v1;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0084-select-*-from-test-order"},
 				},
 				{
-					Query:    "INSERT INTO test VALUES (nextval('seq1'), nextval('seq1')), (nextval('seq1'), nextval('seq1'));",
-					Expected: []sql.Row{},
+					Query: "INSERT INTO test VALUES (nextval('seq1'), nextval('seq1')), (nextval('seq1'), nextval('seq1'));", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0085-insert-into-test-values-nextval"},
 				},
 				{
-					Query: "SELECT * FROM test ORDER BY v1;",
-					Expected: []sql.Row{
-						{1, 7},
-						{2, 11},
-						{3, 17},
-						{4, 5},
-						{6, 7},
-					},
+					Query: "SELECT * FROM test ORDER BY v1;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0086-select-*-from-test-order"},
 				},
 			},
 		},
@@ -428,10 +333,7 @@ func TestSequences(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT nextval('test_sequence');",
-					Expected: []sql.Row{
-						{1},
-					},
+					Query: "SELECT nextval('test_sequence');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0087-select-nextval-test_sequence"},
 				},
 				{
 					Query: "SELECT nextval('public.test_sequence');",
@@ -465,28 +367,16 @@ func TestSequences(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT * FROM test_serial WHERE nextval('test_serial_v1_seq') = v2 ORDER BY v1;",
-					Expected: []sql.Row{
-						{1, 4},
-						{2, 5},
-						{3, 6},
-					},
+					Query: "SELECT * FROM test_serial WHERE nextval('test_serial_v1_seq') = v2 ORDER BY v1;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0091-select-*-from-test_serial-where"},
 				},
 				{
-					Query:    "SELECT nextval('test_serial_v1_seq');",
-					Expected: []sql.Row{{7}},
+					Query: "SELECT nextval('test_serial_v1_seq');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0092-select-nextval-test_serial_v1_seq"},
 				},
 				{
-					Query: "SELECT * FROM test_seq WHERE nextval('test_sequence') = v2 ORDER BY v1;",
-					Expected: []sql.Row{
-						{1, 4},
-						{2, 5},
-						{3, 6},
-					},
+					Query: "SELECT * FROM test_seq WHERE nextval('test_sequence') = v2 ORDER BY v1;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0093-select-*-from-test_seq-where"},
 				},
 				{
-					Query:    "SELECT nextval('test_sequence');",
-					Expected: []sql.Row{{7}},
+					Query: "SELECT nextval('test_sequence');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0094-select-nextval-test_sequence"},
 				},
 			},
 		},
@@ -494,104 +384,79 @@ func TestSequences(t *testing.T) {
 			Name: "setval()",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "CREATE SEQUENCE test1 MINVALUE 1 MAXVALUE 10 START 5 INCREMENT 1;",
-					Expected: []sql.Row{},
+					Query: "CREATE SEQUENCE test1 MINVALUE 1 MAXVALUE 10 START 5 INCREMENT 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0095-create-sequence-test1-minvalue-1", Compare: "sqlstate"},
 				},
 				{
-					Query:    "CREATE SEQUENCE test2 MINVALUE 1 MAXVALUE 10 START 5 INCREMENT -1;",
-					Expected: []sql.Row{},
+					Query: "CREATE SEQUENCE test2 MINVALUE 1 MAXVALUE 10 START 5 INCREMENT -1;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0096-create-sequence-test2-minvalue-1"},
 				},
 				{
-					Query:    "SELECT setval('test1', 2);",
-					Expected: []sql.Row{{2}},
+					Query: "SELECT setval('test1', 2);", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0097-select-setval-test1-2"},
 				},
 				{
-					Query:    "SELECT nextval('test1');",
-					Expected: []sql.Row{{3}},
+					Query: "SELECT nextval('test1');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0098-select-nextval-test1"},
 				},
 				{
-					Query:    "SELECT setval('test1', 10);",
-					Expected: []sql.Row{{10}},
+					Query: "SELECT setval('test1', 10);", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0099-select-setval-test1-10"},
 				},
 				{
-					Query:       "SELECT nextval('test1');",
-					ExpectedErr: "reached maximum value",
+					Query: "SELECT nextval('test1');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0100-select-nextval-test1", Compare: "sqlstate"},
 				},
 				{
-					Query:    "SELECT setval('test1', 10, false);",
-					Expected: []sql.Row{{10}},
+					Query: "SELECT setval('test1', 10, false);", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0101-select-setval-test1-10-false"},
 				},
 				{
-					Query:    "SELECT nextval('test1');",
-					Expected: []sql.Row{{10}},
+					Query: "SELECT nextval('test1');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0102-select-nextval-test1"},
 				},
 				{
-					Query:    "SELECT setval('test1', 10, true);",
-					Expected: []sql.Row{{10}},
+					Query: "SELECT setval('test1', 10, true);", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0103-select-setval-test1-10-true"},
 				},
 				{
-					Query:       "SELECT nextval('test1');",
-					ExpectedErr: "reached maximum value",
+					Query: "SELECT nextval('test1');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0104-select-nextval-test1", Compare: "sqlstate"},
 				},
 				{
-					Query:    "SELECT setval('test2', 9);",
-					Expected: []sql.Row{{9}},
+					Query: "SELECT setval('test2', 9);", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0105-select-setval-test2-9"},
 				},
 				{
-					Query:    "SELECT nextval('test2');",
-					Expected: []sql.Row{{8}},
+					Query: "SELECT nextval('test2');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0106-select-nextval-test2"},
 				},
 				{
-					Query:    "SELECT setval('test2', 1);",
-					Expected: []sql.Row{{1}},
+					Query: "SELECT setval('test2', 1);", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0107-select-setval-test2-1"},
 				},
 				{
-					Query:       "SELECT nextval('test2');",
-					ExpectedErr: "reached minimum value",
+					Query: "SELECT nextval('test2');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0108-select-nextval-test2", Compare: "sqlstate"},
 				},
 				{
-					Query:    "SELECT setval('test2', 1, false);",
-					Expected: []sql.Row{{1}},
+					Query: "SELECT setval('test2', 1, false);", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0109-select-setval-test2-1-false"},
 				},
 				{
-					Query:    "SELECT nextval('test2');",
-					Expected: []sql.Row{{1}},
+					Query: "SELECT nextval('test2');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0110-select-nextval-test2"},
 				},
 				{
-					Query:    "SELECT setval('test2', 1, true);",
-					Expected: []sql.Row{{1}},
+					Query: "SELECT setval('test2', 1, true);", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0111-select-setval-test2-1-true"},
 				},
 				{
-					Query:       "SELECT nextval('test2');",
-					ExpectedErr: "reached minimum value",
+					Query: "SELECT nextval('test2');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0112-select-nextval-test2", Compare: "sqlstate"},
 				},
 				{
-					Query:    "CREATE SEQUENCE test3 MINVALUE 3 MAXVALUE 7 START 5 INCREMENT 1 CYCLE;",
-					Expected: []sql.Row{},
+					Query: "CREATE SEQUENCE test3 MINVALUE 3 MAXVALUE 7 START 5 INCREMENT 1 CYCLE;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0113-create-sequence-test3-minvalue-3"},
 				},
 				{
-					Query:    "CREATE SEQUENCE test4 MINVALUE 3 MAXVALUE 7 START 5 INCREMENT -1 CYCLE;",
-					Expected: []sql.Row{},
+					Query: "CREATE SEQUENCE test4 MINVALUE 3 MAXVALUE 7 START 5 INCREMENT -1 CYCLE;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0114-create-sequence-test4-minvalue-3"},
 				},
 				{
-					Query:    "SELECT setval('test3', 7, true);",
-					Expected: []sql.Row{{7}},
+					Query: "SELECT setval('test3', 7, true);", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0115-select-setval-test3-7-true"},
 				},
 				{
-					Query:    "SELECT nextval('test3');",
-					Expected: []sql.Row{{3}},
+					Query: "SELECT nextval('test3');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0116-select-nextval-test3"},
 				},
 				{
-					Query:    "SELECT setval('test4', 3, true);",
-					Expected: []sql.Row{{3}},
+					Query: "SELECT setval('test4', 3, true);", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0117-select-setval-test4-3-true"},
 				},
 				{
-					Query:    "SELECT nextval('test4');",
-					Expected: []sql.Row{{7}},
+					Query: "SELECT nextval('test4');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0118-select-nextval-test4"},
 				},
 				{
-					Query:    "CREATE SEQUENCE test5;",
-					Expected: []sql.Row{},
+					Query: "CREATE SEQUENCE test5;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0119-create-sequence-test5"},
 				},
 				{
 					// test with a double-quoted identifier
@@ -612,54 +477,28 @@ func TestSequences(t *testing.T) {
 					Expected: []sql.Row{},
 				},
 				{
-					Query:    "CREATE TABLE test_small (pk SMALLSERIAL PRIMARY KEY, v1 INTEGER);",
-					Expected: []sql.Row{},
+					Query: "CREATE TABLE test_small (pk SMALLSERIAL PRIMARY KEY, v1 INTEGER);", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0123-create-table-test_small-pk-smallserial"},
 				},
 				{
-					Query:    "CREATE TABLE test_big (pk BIGSERIAL PRIMARY KEY, v1 INTEGER);",
-					Expected: []sql.Row{},
+					Query: "CREATE TABLE test_big (pk BIGSERIAL PRIMARY KEY, v1 INTEGER);", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0124-create-table-test_big-pk-bigserial"},
 				},
 				{
-					Query:    "INSERT INTO test (v1) VALUES (2), (3), (5), (7), (11);",
-					Expected: []sql.Row{},
+					Query: "INSERT INTO test (v1) VALUES (2), (3), (5), (7), (11);", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0125-insert-into-test-v1-values"},
 				},
 				{
-					Query:    "INSERT INTO test_small (v1) VALUES (2), (3), (5), (7), (11);",
-					Expected: []sql.Row{},
+					Query: "INSERT INTO test_small (v1) VALUES (2), (3), (5), (7), (11);", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0126-insert-into-test_small-v1-values"},
 				},
 				{
-					Query:    "INSERT INTO test_big (v1) VALUES (2), (3), (5), (7), (11);",
-					Expected: []sql.Row{},
+					Query: "INSERT INTO test_big (v1) VALUES (2), (3), (5), (7), (11);", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0127-insert-into-test_big-v1-values"},
 				},
 				{
-					Query: "SELECT * FROM test;",
-					Expected: []sql.Row{
-						{1, 2},
-						{2, 3},
-						{3, 5},
-						{4, 7},
-						{5, 11},
-					},
+					Query: "SELECT * FROM test;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0128-select-*-from-test"},
 				},
 				{
-					Query: "SELECT * FROM test_small;",
-					Expected: []sql.Row{
-						{1, 2},
-						{2, 3},
-						{3, 5},
-						{4, 7},
-						{5, 11},
-					},
+					Query: "SELECT * FROM test_small;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0129-select-*-from-test_small"},
 				},
 				{
-					Query: "SELECT * FROM test_big;",
-					Expected: []sql.Row{
-						{1, 2},
-						{2, 3},
-						{3, 5},
-						{4, 7},
-						{5, 11},
-					},
+					Query: "SELECT * FROM test_big;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0130-select-*-from-test_big"},
 				},
 			},
 		},
@@ -670,38 +509,22 @@ func TestSequences(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "CREATE TABLE myschema.test (pk SERIAL PRIMARY KEY, v1 INTEGER);",
-					Expected: []sql.Row{},
+					Query: "CREATE TABLE myschema.test (pk SERIAL PRIMARY KEY, v1 INTEGER);", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0131-create-table-myschema.test-pk-serial"},
 				},
 				{
-					Query:    "INSERT INTO myschema.test (v1) VALUES (2), (3), (5), (7), (11);",
-					Expected: []sql.Row{},
+					Query: "INSERT INTO myschema.test (v1) VALUES (2), (3), (5), (7), (11);", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0132-insert-into-myschema.test-v1-values"},
 				},
 				{
-					Query: "SELECT * FROM myschema.test;",
-					Expected: []sql.Row{
-						{1, 2},
-						{2, 3},
-						{3, 5},
-						{4, 7},
-						{5, 11},
-					},
+					Query: "SELECT * FROM myschema.test;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0133-select-*-from-myschema.test"},
 				},
 				{
-					Query:       "SELECT nextval('test_pk_seq');",
-					ExpectedErr: `relation "test_pk_seq" does not exist`,
+					Query: "SELECT nextval('test_pk_seq');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0134-select-nextval-test_pk_seq", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT nextval('myschema.test_pk_seq');",
-					Expected: []sql.Row{
-						{6},
-					},
+					Query: "SELECT nextval('myschema.test_pk_seq');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0135-select-nextval-myschema.test_pk_seq"},
 				},
 				{
-					Query: "SELECT nextval('postgres.myschema.test_pk_seq');",
-					Expected: []sql.Row{
-						{7},
-					},
+					Query: "SELECT nextval('postgres.myschema.test_pk_seq');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0136-select-nextval-postgres.myschema.test_pk_seq"},
 				},
 			},
 		},
@@ -709,26 +532,16 @@ func TestSequences(t *testing.T) {
 			Name: "Default emulating SERIAL",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "CREATE SEQUENCE seq1;",
-					Expected: []sql.Row{},
+					Query: "CREATE SEQUENCE seq1;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0137-create-sequence-seq1"},
 				},
 				{
-					Query:    "CREATE TABLE test (pk INTEGER DEFAULT (nextval('seq1')), v1 INTEGER);",
-					Expected: []sql.Row{},
+					Query: "CREATE TABLE test (pk INTEGER DEFAULT (nextval('seq1')), v1 INTEGER);", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0138-create-table-test-pk-integer"},
 				},
 				{
-					Query:    "INSERT INTO test (v1) VALUES (2), (3), (5), (7), (11);",
-					Expected: []sql.Row{},
+					Query: "INSERT INTO test (v1) VALUES (2), (3), (5), (7), (11);", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0139-insert-into-test-v1-values"},
 				},
 				{
-					Query: "SELECT * FROM test ORDER BY v1;",
-					Expected: []sql.Row{
-						{1, 2},
-						{2, 3},
-						{3, 5},
-						{4, 7},
-						{5, 11},
-					},
+					Query: "SELECT * FROM test ORDER BY v1;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0140-select-*-from-test-order"},
 				},
 			},
 		},
@@ -739,28 +552,18 @@ func TestSequences(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "CREATE SEQUENCE myschema.seq1;",
-					Expected: []sql.Row{},
+					Query: "CREATE SEQUENCE myschema.seq1;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0141-create-sequence-myschema.seq1"},
 				},
 				{
-					Query:    "CREATE TABLE myschema.test (pk INTEGER DEFAULT (nextval('seq1')), v1 INTEGER);",
-					Expected: []sql.Row{},
+					Query: "CREATE TABLE myschema.test (pk INTEGER DEFAULT (nextval('seq1')), v1 INTEGER);", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0142-create-table-myschema.test-pk-integer"},
 				},
 				{
-					Skip:     true, // TODO: relation "seq1" does not exist
-					Query:    "INSERT INTO myschema.test (v1) VALUES (2), (3), (5), (7), (11);",
-					Expected: []sql.Row{},
+					Skip:  true, // TODO: relation "seq1" does not exist
+					Query: "INSERT INTO myschema.test (v1) VALUES (2), (3), (5), (7), (11);", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0143-insert-into-myschema.test-v1-values"},
 				},
 				{
 					Skip:  true, // TODO: unskip when INSERT above is unskipped
-					Query: "SELECT * FROM myschema.test ORDER BY v1;",
-					Expected: []sql.Row{
-						{1, 2},
-						{2, 3},
-						{3, 5},
-						{4, 7},
-						{5, 11},
-					},
+					Query: "SELECT * FROM myschema.test ORDER BY v1;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0144-select-*-from-myschema.test-order"},
 				},
 			},
 		},
@@ -768,62 +571,43 @@ func TestSequences(t *testing.T) {
 			Name: "pg_sequence",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_sequence";`,
-					Expected: []sql.Row{},
-				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_sequence";`,
-					ExpectedErr: "not",
-				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "pg_catalog"."PG_sequence";`,
-					ExpectedErr: "not",
+					Query: `SELECT * FROM "pg_catalog"."pg_sequence";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Different cases and quoted, so it fails
+					"sequences-test-testsequences-0145-select-*-from-pg_catalog-."},
 				},
 				{
-					Query:    "CREATE SEQUENCE some_sequence;",
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "PG_catalog"."pg_sequence";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases and quoted, so it fails
+						ID: "sequences-test-testsequences-0146-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query:    "CREATE SEQUENCE another_sequence INCREMENT 3 CYCLE;",
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."PG_sequence";`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0147-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT * FROM pg_catalog.pg_sequence ORDER BY seqrelid;",
-					Expected: []sql.Row{
-						{2795592127, 20, 1, 1, 9223372036854775807, 1, 1, "f"},
-						{3473123643, 20, 1, 3, 9223372036854775807, 1, 1, "t"},
-					},
+					Query: "CREATE SEQUENCE some_sequence;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0148-create-sequence-some_sequence"},
+				},
+				{
+					Query: "CREATE SEQUENCE another_sequence INCREMENT 3 CYCLE;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0149-create-sequence-another_sequence-increment-3"},
+				},
+				{
+					Query: "SELECT * FROM pg_catalog.pg_sequence ORDER BY seqrelid;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0150-select-*-from-pg_catalog.pg_sequence-order"},
 				},
 				{ // Different cases but non-quoted, so it works
-					Query: "SELECT * FROM PG_catalog.pg_SEQUENCE ORDER BY seqrelid;",
-					Expected: []sql.Row{
-						{2795592127, 20, 1, 1, 9223372036854775807, 1, 1, "f"},
-						{3473123643, 20, 1, 3, 9223372036854775807, 1, 1, "t"},
-					},
+					Query: "SELECT * FROM PG_catalog.pg_SEQUENCE ORDER BY seqrelid;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0151-select-*-from-pg_catalog.pg_sequence-order"},
 				},
 				{
-					Query: "SELECT * FROM pg_catalog.pg_sequence WHERE seqrelid = 'some_sequence'::regclass;",
-					Expected: []sql.Row{
-						{2795592127, 20, 1, 1, 9223372036854775807, 1, 1, "f"},
-					},
+					Query: "SELECT * FROM pg_catalog.pg_sequence WHERE seqrelid = 'some_sequence'::regclass;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0152-select-*-from-pg_catalog.pg_sequence-where"},
 				},
 				{
-					Query: "SELECT * FROM pg_catalog.pg_sequence WHERE seqrelid = 'another_sequence'::regclass;",
-					Expected: []sql.Row{
-						{3473123643, 20, 1, 3, 9223372036854775807, 1, 1, "t"},
-					},
+					Query: "SELECT * FROM pg_catalog.pg_sequence WHERE seqrelid = 'another_sequence'::regclass;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0153-select-*-from-pg_catalog.pg_sequence-where"},
 				},
 				{
-					Query: "SELECT nextval('another_sequence');",
-					Expected: []sql.Row{
-						{1},
-					},
+					Query: "SELECT nextval('another_sequence');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0154-select-nextval-another_sequence"},
 				},
 				{
-					Query: "SELECT nextval('another_sequence');",
-					Expected: []sql.Row{
-						{4},
-					},
+					Query: "SELECT nextval('another_sequence');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0155-select-nextval-another_sequence"},
 				},
 			},
 		},
@@ -885,28 +669,16 @@ func TestSequences(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT * FROM test;",
-					Expected: []sql.Row{
-						{1, 2},
-						{2, 3},
-						{3, 5},
-						{4, 7},
-						{5, 11},
-					},
+					Query: "SELECT * FROM test;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0163-select-*-from-test"},
 				},
 				{
-					Query: "SELECT * FROM pg_catalog.pg_sequence;",
-					Expected: []sql.Row{
-						{3822699147, 23, 1, 1, 2147483647, 1, 1, "f"},
-					},
+					Query: "SELECT * FROM pg_catalog.pg_sequence;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0164-select-*-from-pg_catalog.pg_sequence"},
 				},
 				{
-					Query:    "DROP TABLE test;",
-					Expected: []sql.Row{},
+					Query: "DROP TABLE test;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0165-drop-table-test"},
 				},
 				{
-					Query:    "SELECT * FROM pg_catalog.pg_sequence;",
-					Expected: []sql.Row{},
+					Query: "SELECT * FROM pg_catalog.pg_sequence;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0166-select-*-from-pg_catalog.pg_sequence"},
 				},
 			},
 		},
@@ -920,16 +692,10 @@ func TestSequences(t *testing.T) {
 					Query: "CREATE TABLE my_table (id SERIAL PRIMARY KEY, val INT);",
 				},
 				{
-					Query: "select nextval('my_table_id_seq1');",
-					Expected: []sql.Row{
-						{1},
-					},
+					Query: "select nextval('my_table_id_seq1');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0167-select-nextval-my_table_id_seq1"},
 				},
 				{
-					Query: "Select count(*) from pg_catalog.pg_sequence where seqrelid = 'my_table_id_seq1'::regclass;",
-					Expected: []sql.Row{
-						{1},
-					},
+					Query: "Select count(*) from pg_catalog.pg_sequence where seqrelid = 'my_table_id_seq1'::regclass;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0168-select-count-*-from-pg_catalog.pg_sequence"},
 				},
 			},
 		},
@@ -953,22 +719,13 @@ func TestSequences(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `INSERT INTO "django_migrations" ("app", "name", "applied") VALUES ('contenttypes', '0001_initial', '2025-03-25T17:45:54.794344+00:00'::timestamptz) RETURNING "django_migrations"."id"`,
-					Expected: []sql.Row{
-						{1},
-					},
+					Query: `INSERT INTO "django_migrations" ("app", "name", "applied") VALUES ('contenttypes', '0001_initial', '2025-03-25T17:45:54.794344+00:00'::timestamptz) RETURNING "django_migrations"."id"`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0169-insert-into-django_migrations-app-name"},
 				},
 				{
-					Query: `INSERT INTO "django_migrations" ("app", "name", "applied") VALUES ('contenttypes', '0001_initial', '2025-03-25T17:45:54.794344+00:00'::timestamptz) RETURNING "django_migrations"."id"`,
-					Expected: []sql.Row{
-						{2},
-					},
+					Query: `INSERT INTO "django_migrations" ("app", "name", "applied") VALUES ('contenttypes', '0001_initial', '2025-03-25T17:45:54.794344+00:00'::timestamptz) RETURNING "django_migrations"."id"`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0170-insert-into-django_migrations-app-name"},
 				},
 				{
-					Query: `INSERT INTO "django_migrations" ("id", "app", "name", "applied") VALUES (100, 'contenttypes', '0001_initial', '2025-03-25T17:45:54.794344+00:00'::timestamptz) RETURNING "django_migrations"."id"`,
-					Expected: []sql.Row{
-						{100},
-					},
+					Query: `INSERT INTO "django_migrations" ("id", "app", "name", "applied") VALUES (100, 'contenttypes', '0001_initial', '2025-03-25T17:45:54.794344+00:00'::timestamptz) RETURNING "django_migrations"."id"`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0171-insert-into-django_migrations-id-app"},
 				},
 			},
 		},
@@ -984,16 +741,10 @@ func TestSequences(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `INSERT INTO "django_migrations" ("app", "name", "applied") VALUES ('contenttypes', '0001_initial', '2025-03-25T17:45:54.794344+00:00'::timestamptz) RETURNING "django_migrations"."id"`,
-					Expected: []sql.Row{
-						{100},
-					},
+					Query: `INSERT INTO "django_migrations" ("app", "name", "applied") VALUES ('contenttypes', '0001_initial', '2025-03-25T17:45:54.794344+00:00'::timestamptz) RETURNING "django_migrations"."id"`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0172-insert-into-django_migrations-app-name"},
 				},
 				{
-					Query: `INSERT INTO "django_migrations" ("app", "name", "applied") VALUES ('contenttypes', '0001_initial', '2025-03-25T17:45:54.794344+00:00'::timestamptz) RETURNING "django_migrations"."id"`,
-					Expected: []sql.Row{
-						{102},
-					},
+					Query: `INSERT INTO "django_migrations" ("app", "name", "applied") VALUES ('contenttypes', '0001_initial', '2025-03-25T17:45:54.794344+00:00'::timestamptz) RETURNING "django_migrations"."id"`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0173-insert-into-django_migrations-app-name"},
 				},
 			},
 		},
@@ -1034,16 +785,13 @@ func TestSequences(t *testing.T) {
 			Name: "dolt_add, dolt_branch, dolt_checkout, dolt_commit, dolt_reset",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "CREATE SEQUENCE test;",
-					Expected: []sql.Row{},
+					Query: "CREATE SEQUENCE test;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0176-create-sequence-test", Compare: "sqlstate"},
 				},
 				{
-					Query:    "SELECT setval('test', 10);",
-					Expected: []sql.Row{{10}},
+					Query: "SELECT setval('test', 10);", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0177-select-setval-test-10"},
 				},
 				{
-					Query:    "SELECT nextval('test');",
-					Expected: []sql.Row{{11}},
+					Query: "SELECT nextval('test');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0178-select-nextval-test"},
 				},
 				{
 					Query: "SELECT * FROM dolt_diff_summary('HEAD', 'WORKING')",
@@ -1101,28 +849,22 @@ func TestSequences(t *testing.T) {
 			Name: "dolt_clean",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "CREATE SEQUENCE test1;",
-					Expected: []sql.Row{},
+					Query: "CREATE SEQUENCE test1;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0191-create-sequence-test1", Compare: "sqlstate"},
 				},
 				{
-					Query:    "CREATE SEQUENCE test2;",
-					Expected: []sql.Row{},
+					Query: "CREATE SEQUENCE test2;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0192-create-sequence-test2"},
 				},
 				{
-					Query:    "SELECT setval('test1', 10);",
-					Expected: []sql.Row{{10}},
+					Query: "SELECT setval('test1', 10);", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0193-select-setval-test1-10"},
 				},
 				{
-					Query:    "SELECT nextval('test1');",
-					Expected: []sql.Row{{11}},
+					Query: "SELECT nextval('test1');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0194-select-nextval-test1"},
 				},
 				{
-					Query:    "SELECT setval('test2', 10);",
-					Expected: []sql.Row{{10}},
+					Query: "SELECT setval('test2', 10);", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0195-select-setval-test2-10"},
 				},
 				{
-					Query:    "SELECT nextval('test2');",
-					Expected: []sql.Row{{11}},
+					Query: "SELECT nextval('test2');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0196-select-nextval-test2"},
 				},
 				{
 					Query:    "SELECT dolt_add('test1');",
@@ -1151,12 +893,10 @@ func TestSequences(t *testing.T) {
 			Name: "dolt_merge",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "CREATE SEQUENCE test;",
-					Expected: []sql.Row{},
+					Query: "CREATE SEQUENCE test;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0201-create-sequence-test", Compare: "sqlstate"},
 				},
 				{
-					Query:    "SELECT setval('test', 10);",
-					Expected: []sql.Row{{10}},
+					Query: "SELECT setval('test', 10);", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0202-select-setval-test-10"},
 				},
 				{
 					Query:    "SELECT length(dolt_commit('-Am', 'initial')::text) = 34;",
@@ -1212,8 +952,7 @@ func TestSequences(t *testing.T) {
 			Name: "Information Schema & DIFF_STAT regression testing",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `CREATE TABLE "user" ("id" bigint NOT NULL GENERATED BY DEFAULT AS IDENTITY, PRIMARY KEY ("id"));`,
-					Expected: []sql.Row{},
+					Query: `CREATE TABLE "user" ("id" bigint NOT NULL GENERATED BY DEFAULT AS IDENTITY, PRIMARY KEY ("id"));`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0215-create-table-user-id-bigint"},
 				},
 				{
 					Query: `CREATE TABLE "call" (
@@ -1226,16 +965,10 @@ func TestSequences(t *testing.T) {
   "user" bigint NOT NULL,
   PRIMARY KEY ("id"),
   CONSTRAINT "call_user_user_fk" FOREIGN KEY ("user") REFERENCES "user" ("id") ON DELETE NO ACTION
-);`,
-					Expected: []sql.Row{},
+);`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0216-create-table-call-id-bigint"},
 				},
 				{
-					Query: "SELECT * FROM information_schema.key_column_usage where constraint_schema <> 'pg_catalog';",
-					Expected: []sql.Row{
-						{"postgres", "public", "PRIMARY", "postgres", "public", "call", "id", 1, nil, nil, nil, nil},
-						{"postgres", "public", "PRIMARY", "postgres", "public", "user", "id", 1, nil, nil, nil, nil},
-						{"postgres", "public", "call_user_user_fk", "postgres", "public", "call", "user", 1, 1, "postgres", "user", "id"},
-					},
+					Query: "SELECT * FROM information_schema.key_column_usage where constraint_schema <> 'pg_catalog';", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0217-select-*-from-information_schema.key_column_usage-where", ColumnModes: []string{"structural", "schema", "structural", "structural", "schema"}},
 				},
 				{
 					Query: "SELECT * FROM DOLT_DIFF_STAT('HEAD', 'WORKING');",
@@ -1326,53 +1059,45 @@ ORDER BY 1,2;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "SELECT nextval('seq1');",
-					Expected: []sql.Row{{1}},
+					Query: "SELECT nextval('seq1');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0229-select-nextval-seq1"},
 				},
 				{
-					Query:    "SELECT nextval('seq2');",
-					Expected: []sql.Row{{1}},
+					Query: "SELECT nextval('seq2');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0230-select-nextval-seq2"},
 				},
 				{
-					Query:       "ALTER SEQUENCE seq1 OWNED BY test.non_existent;",
-					ExpectedErr: "does not exist",
+					Query: "ALTER SEQUENCE seq1 OWNED BY test.non_existent;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0231-alter-sequence-seq1-owned-by", Compare: "sqlstate"},
 				},
 				{
-					Query:       "ALTER SEQUENCE public.seq1 OWNED BY other.test.non_existent;",
-					ExpectedErr: "same schema",
+					Query: "ALTER SEQUENCE public.seq1 OWNED BY other.test.non_existent;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0232-alter-sequence-public.seq1-owned-by", Compare: "sqlstate"},
 				},
 				{
-					Query:       "ALTER SEQUENCE seq1 OWNED BY test;",
-					ExpectedErr: "invalid",
+					Query: "ALTER SEQUENCE seq1 OWNED BY test;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0233-alter-sequence-seq1-owned-by", Compare: "sqlstate"},
 				},
 				{
-					Query:       "ALTER SEQUENCE seq1 OWNED BY trig_trigger.trig;",
-					Skip:        true, // TODO: need to add triggers to relation checking
-					ExpectedErr: "cannot be owned by relation",
+					Query: "ALTER SEQUENCE seq1 OWNED BY trig_trigger.trig;",
+					Skip:  true, PostgresOracle: // TODO: need to add triggers to relation checking
+					ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0234-alter-sequence-seq1-owned-by", Compare: "sqlstate"},
 				},
 				{
-					Query:    "ALTER SEQUENCE seq1 OWNED BY test.id;",
-					Expected: []sql.Row{},
+					Query: "ALTER SEQUENCE seq1 OWNED BY test.id;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0235-alter-sequence-seq1-owned-by"},
 				},
 				{
-					Query:    "ALTER SEQUENCE seq2 OWNED BY test.id;",
-					Expected: []sql.Row{},
-				},
-				{ // Setting OWNED BY back to NONE ensures that we properly handle this case
-					Query:    "ALTER SEQUENCE seq2 OWNED BY NONE;",
-					Expected: []sql.Row{},
+					Query: "ALTER SEQUENCE seq2 OWNED BY test.id;", PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Setting OWNED BY back to NONE ensures that we properly handle this case
+					"sequences-test-testsequences-0236-alter-sequence-seq2-owned-by"},
 				},
 				{
-					Query:    "DROP TABLE test;",
-					Expected: []sql.Row{},
+					Query: "ALTER SEQUENCE seq2 OWNED BY NONE;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0237-alter-sequence-seq2-owned-by"},
 				},
 				{
-					Query:       "SELECT nextval('seq1');",
-					ExpectedErr: "does not exist",
+					Query: "DROP TABLE test;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0238-drop-table-test"},
 				},
 				{
-					Query:    "SELECT nextval('seq2');",
-					Expected: []sql.Row{{2}},
+					Query: "SELECT nextval('seq1');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0239-select-nextval-seq1"},
+				},
+				{
+					Query: "SELECT nextval('seq2');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0240-select-nextval-seq2"},
 				},
 			},
 		},

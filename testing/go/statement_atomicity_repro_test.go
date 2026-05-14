@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestMultiRowInsertDuplicateKeyIsStatementAtomicRepro guards PostgreSQL
@@ -37,21 +35,21 @@ func TestMultiRowInsertDuplicateKeyIsStatementAtomicRepro(t *testing.T) {
 				{
 					Query: `INSERT INTO atomic_insert_items VALUES
 						(1, 'first'),
-						(1, 'duplicate');`,
-					ExpectedErr: `duplicate`,
+						(1, 'duplicate');`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testmultirowinsertduplicatekeyisstatementatomicrepro-0001-insert-into-atomic_insert_items-values-1",
+
+						// TestMultiRowInsertCheckConstraintIsStatementAtomicRepro guards PostgreSQL
+						// statement atomicity: if a later VALUES row violates a CHECK constraint, no
+						// earlier rows from that INSERT statement should persist.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM atomic_insert_items;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM atomic_insert_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testmultirowinsertduplicatekeyisstatementatomicrepro-0002-select-count-*-from-atomic_insert_items"},
 				},
 			},
 		},
 	})
 }
 
-// TestMultiRowInsertCheckConstraintIsStatementAtomicRepro guards PostgreSQL
-// statement atomicity: if a later VALUES row violates a CHECK constraint, no
-// earlier rows from that INSERT statement should persist.
 func TestMultiRowInsertCheckConstraintIsStatementAtomicRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -66,21 +64,21 @@ func TestMultiRowInsertCheckConstraintIsStatementAtomicRepro(t *testing.T) {
 				{
 					Query: `INSERT INTO atomic_insert_check_items VALUES
 						(1, 1),
-						(2, -1);`,
-					ExpectedErr: `Check constraint`,
+						(2, -1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testmultirowinsertcheckconstraintisstatementatomicrepro-0001-insert-into-atomic_insert_check_items-values-1",
+
+						// TestInsertSelectDuplicateKeyIsStatementAtomicRepro guards PostgreSQL
+						// statement atomicity for INSERT ... SELECT: if a later selected row violates a
+						// key, earlier selected rows from the same statement should not persist.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM atomic_insert_check_items;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM atomic_insert_check_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testmultirowinsertcheckconstraintisstatementatomicrepro-0002-select-count-*-from-atomic_insert_check_items"},
 				},
 			},
 		},
 	})
 }
 
-// TestInsertSelectDuplicateKeyIsStatementAtomicRepro guards PostgreSQL
-// statement atomicity for INSERT ... SELECT: if a later selected row violates a
-// key, earlier selected rows from the same statement should not persist.
 func TestInsertSelectDuplicateKeyIsStatementAtomicRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -101,22 +99,22 @@ func TestInsertSelectDuplicateKeyIsStatementAtomicRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `INSERT INTO atomic_insert_select_target
-						SELECT id, note FROM atomic_insert_select_source ORDER BY note;`,
-					ExpectedErr: `duplicate`,
+						SELECT id, note FROM atomic_insert_select_source ORDER BY note;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testinsertselectduplicatekeyisstatementatomicrepro-0001-insert-into-atomic_insert_select_target-select-id",
+
+						// TestInsertSelectCheckConstraintIsStatementAtomicRepro guards PostgreSQL
+						// statement atomicity for INSERT ... SELECT: if a later selected row violates a
+						// CHECK constraint, earlier selected rows from the same statement should not
+						// persist.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM atomic_insert_select_target;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM atomic_insert_select_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testinsertselectduplicatekeyisstatementatomicrepro-0002-select-count-*-from-atomic_insert_select_target"},
 				},
 			},
 		},
 	})
 }
 
-// TestInsertSelectCheckConstraintIsStatementAtomicRepro guards PostgreSQL
-// statement atomicity for INSERT ... SELECT: if a later selected row violates a
-// CHECK constraint, earlier selected rows from the same statement should not
-// persist.
 func TestInsertSelectCheckConstraintIsStatementAtomicRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -137,21 +135,21 @@ func TestInsertSelectCheckConstraintIsStatementAtomicRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `INSERT INTO atomic_insert_select_check_target
-						SELECT id, qty FROM atomic_insert_select_check_source ORDER BY id;`,
-					ExpectedErr: `Check constraint`,
+						SELECT id, qty FROM atomic_insert_select_check_source ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testinsertselectcheckconstraintisstatementatomicrepro-0001-insert-into-atomic_insert_select_check_target-select-id",
+
+						// TestInsertSelectFunctionSideEffectsRollBackOnConstraintErrorRepro reproduces
+						// a data consistency bug: side effects from a function evaluated by INSERT ...
+						// SELECT must roll back if a later selected row fails a target constraint.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM atomic_insert_select_check_target;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM atomic_insert_select_check_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testinsertselectcheckconstraintisstatementatomicrepro-0002-select-count-*-from-atomic_insert_select_check_target"},
 				},
 			},
 		},
 	})
 }
 
-// TestInsertSelectFunctionSideEffectsRollBackOnConstraintErrorRepro reproduces
-// a data consistency bug: side effects from a function evaluated by INSERT ...
-// SELECT must roll back if a later selected row fails a target constraint.
 func TestInsertSelectFunctionSideEffectsRollBackOnConstraintErrorRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -183,14 +181,12 @@ func TestInsertSelectFunctionSideEffectsRollBackOnConstraintErrorRepro(t *testin
 					Query: `INSERT INTO insert_select_function_check_target
 						SELECT id, audit_and_return_insert_select_qty(id, qty)
 						FROM insert_select_function_check_source
-						ORDER BY id;`,
-					ExpectedErr: `Check constraint`,
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testinsertselectfunctionsideeffectsrollbackonconstrainterrorrepro-0001-insert-into-insert_select_function_check_target-select-id", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT
 						(SELECT count(*) FROM insert_select_function_check_target),
-						(SELECT count(*) FROM insert_select_function_check_audit);`,
-					Expected: []sql.Row{{int64(0), int64(0)}},
+						(SELECT count(*) FROM insert_select_function_check_audit);`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testinsertselectfunctionsideeffectsrollbackonconstrainterrorrepro-0002-select-select-count-*-from"},
 				},
 			},
 		},
@@ -233,14 +229,12 @@ func TestInsertSelectFunctionSideEffectsRollBackOnDuplicateKeyErrorRepro(t *test
 					Query: `INSERT INTO insert_select_function_duplicate_target
 						SELECT id, audit_and_return_insert_select_label(seq, label)
 						FROM insert_select_function_duplicate_source
-						ORDER BY seq;`,
-					ExpectedErr: `duplicate`,
+						ORDER BY seq;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testinsertselectfunctionsideeffectsrollbackonduplicatekeyerrorrepro-0001-insert-into-insert_select_function_duplicate_target-select-id", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT
 						(SELECT count(*) FROM insert_select_function_duplicate_target),
-						(SELECT count(*) FROM insert_select_function_duplicate_audit);`,
-					Expected: []sql.Row{{int64(0), int64(0)}},
+						(SELECT count(*) FROM insert_select_function_duplicate_audit);`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testinsertselectfunctionsideeffectsrollbackonduplicatekeyerrorrepro-0002-select-select-count-*-from"},
 				},
 			},
 		},
@@ -267,24 +261,24 @@ func TestOnConflictDoNothingNonTargetUniqueViolationIsStatementAtomicRepro(t *te
 					Query: `INSERT INTO atomic_on_conflict_do_nothing_items VALUES
 							(2, 20),
 							(3, 10)
-						ON CONFLICT (id) DO NOTHING;`,
-					ExpectedErr: `duplicate`,
+						ON CONFLICT (id) DO NOTHING;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testonconflictdonothingnontargetuniqueviolationisstatementatomicrepro-0001-insert-into-atomic_on_conflict_do_nothing_items-values-2",
+
+						// TestOnConflictDoNothingFunctionSideEffectsRollBackOnNonTargetUniqueErrorRepro
+						// reproduces a data consistency bug: side effects from INSERT expressions must
+						// roll back when ON CONFLICT DO NOTHING later fails a non-arbiter unique
+						// constraint.
+						Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, code
 						FROM atomic_on_conflict_do_nothing_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, 10}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testonconflictdonothingnontargetuniqueviolationisstatementatomicrepro-0002-select-id-code-from-atomic_on_conflict_do_nothing_items"},
 				},
 			},
 		},
 	})
 }
 
-// TestOnConflictDoNothingFunctionSideEffectsRollBackOnNonTargetUniqueErrorRepro
-// reproduces a data consistency bug: side effects from INSERT expressions must
-// roll back when ON CONFLICT DO NOTHING later fails a non-arbiter unique
-// constraint.
 func TestOnConflictDoNothingFunctionSideEffectsRollBackOnNonTargetUniqueErrorRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -310,20 +304,17 @@ func TestOnConflictDoNothingFunctionSideEffectsRollBackOnNonTargetUniqueErrorRep
 					Query: `INSERT INTO on_conflict_do_nothing_function_target VALUES
 							(2, audit_and_return_on_conflict_code(1, 20)),
 							(3, audit_and_return_on_conflict_code(2, 10))
-						ON CONFLICT (id) DO NOTHING;`,
-					ExpectedErr: `duplicate`,
+						ON CONFLICT (id) DO NOTHING;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testonconflictdonothingfunctionsideeffectsrollbackonnontargetuniqueerrorrepro-0001-insert-into-on_conflict_do_nothing_function_target-values-2", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT
 						(SELECT count(*) FROM on_conflict_do_nothing_function_target),
-						(SELECT count(*) FROM on_conflict_do_nothing_function_audit);`,
-					Expected: []sql.Row{{int64(1), int64(0)}},
+						(SELECT count(*) FROM on_conflict_do_nothing_function_audit);`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testonconflictdonothingfunctionsideeffectsrollbackonnontargetuniqueerrorrepro-0002-select-select-count-*-from"},
 				},
 				{
 					Query: `SELECT id, code
 						FROM on_conflict_do_nothing_function_target
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, 10}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testonconflictdonothingfunctionsideeffectsrollbackonnontargetuniqueerrorrepro-0003-select-id-code-from-on_conflict_do_nothing_function_target"},
 				},
 			},
 		},
@@ -352,8 +343,7 @@ func TestOnConflictDoNothingSkipsDuplicateInputRowsGuard(t *testing.T) {
 				},
 				{
 					Query: `SELECT id, label
-						FROM on_conflict_duplicate_input_items;`,
-					Expected: []sql.Row{{1, "first"}},
+						FROM on_conflict_duplicate_input_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testonconflictdonothingskipsduplicateinputrowsguard-0001-select-id-label-from-on_conflict_duplicate_input_items"},
 				},
 			},
 		},
@@ -380,14 +370,12 @@ func TestOnConflictDoUpdateCheckViolationIsStatementAtomicRepro(t *testing.T) {
 					Query: `INSERT INTO atomic_on_conflict_update_check_items VALUES
 							(2, 2),
 							(1, -1)
-						ON CONFLICT (id) DO UPDATE SET qty = EXCLUDED.qty;`,
-					ExpectedErr: `Check constraint`,
+						ON CONFLICT (id) DO UPDATE SET qty = EXCLUDED.qty;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testonconflictdoupdatecheckviolationisstatementatomicrepro-0001-insert-into-atomic_on_conflict_update_check_items-values-2", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, qty
 						FROM atomic_on_conflict_update_check_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, 1}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testonconflictdoupdatecheckviolationisstatementatomicrepro-0002-select-id-qty-from-atomic_on_conflict_update_check_items"},
 				},
 			},
 		},
@@ -423,18 +411,15 @@ func TestOnConflictDoUpdateFunctionSideEffectsRollBackOnConstraintErrorRepro(t *
 				{
 					Query: `INSERT INTO upsert_function_side_effect_target VALUES (1, 2)
 						ON CONFLICT (id) DO UPDATE
-						SET qty = audit_and_return_bad_upsert(upsert_function_side_effect_target.id);`,
-					ExpectedErr: `Check constraint`,
+						SET qty = audit_and_return_bad_upsert(upsert_function_side_effect_target.id);`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testonconflictdoupdatefunctionsideeffectsrollbackonconstrainterrorrepro-0001-insert-into-upsert_function_side_effect_target-values-1", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, qty
 						FROM upsert_function_side_effect_target
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, 1}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testonconflictdoupdatefunctionsideeffectsrollbackonconstrainterrorrepro-0002-select-id-qty-from-upsert_function_side_effect_target"},
 				},
 				{
-					Query:    `SELECT count(*) FROM upsert_function_side_effect_audit;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM upsert_function_side_effect_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testonconflictdoupdatefunctionsideeffectsrollbackonconstrainterrorrepro-0003-select-count-*-from-upsert_function_side_effect_audit"},
 				},
 			},
 		},
@@ -469,14 +454,12 @@ func TestOnConflictDoUpdateInsertFunctionSideEffectsRollBackOnConstraintErrorRep
 				{
 					Query: `INSERT INTO upsert_insert_function_side_effect_target VALUES
 							(1, audit_and_return_bad_upsert_insert(1, -1))
-						ON CONFLICT (id) DO UPDATE SET qty = EXCLUDED.qty;`,
-					ExpectedErr: `Check constraint`,
+						ON CONFLICT (id) DO UPDATE SET qty = EXCLUDED.qty;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testonconflictdoupdateinsertfunctionsideeffectsrollbackonconstrainterrorrepro-0001-insert-into-values-1-audit_and_return_bad_upsert_insert", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT
 						(SELECT qty FROM upsert_insert_function_side_effect_target WHERE id = 1),
-						(SELECT count(*) FROM upsert_insert_function_side_effect_audit);`,
-					Expected: []sql.Row{{1, int64(0)}},
+						(SELECT count(*) FROM upsert_insert_function_side_effect_audit);`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testonconflictdoupdateinsertfunctionsideeffectsrollbackonconstrainterrorrepro-0002-select-select-qty-from-where"},
 				},
 			},
 		},
@@ -501,22 +484,22 @@ func TestOnConflictDoUpdateReturningExpressionErrorRollsBackUpdateRepro(t *testi
 				{
 					Query: `INSERT INTO upsert_returning_error_target VALUES (1, 2)
 						ON CONFLICT (id) DO UPDATE SET qty = EXCLUDED.qty
-						RETURNING 1 / 0;`,
-					ExpectedErr: `division by zero`,
+						RETURNING 1 / 0;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testonconflictdoupdatereturningexpressionerrorrollsbackupdaterepro-0001-insert-into-upsert_returning_error_target-values-1",
+
+						// TestOnConflictDoUpdateReturningFunctionSucceedsAfterUpdateRepro guards that
+						// PostgreSQL permits PL/pgSQL functions in the RETURNING list of a conflict
+						// update, and the successful statement commits both the row update and the
+						// function's side effect.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT id, qty FROM upsert_returning_error_target;`,
-					Expected: []sql.Row{{1, 1}},
+					Query: `SELECT id, qty FROM upsert_returning_error_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testonconflictdoupdatereturningexpressionerrorrollsbackupdaterepro-0002-select-id-qty-from-upsert_returning_error_target"},
 				},
 			},
 		},
 	})
 }
 
-// TestOnConflictDoUpdateReturningFunctionSucceedsAfterUpdateRepro guards that
-// PostgreSQL permits PL/pgSQL functions in the RETURNING list of a conflict
-// update, and the successful statement commits both the row update and the
-// function's side effect.
 func TestOnConflictDoUpdateReturningFunctionSucceedsAfterUpdateRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -541,16 +524,13 @@ func TestOnConflictDoUpdateReturningFunctionSucceedsAfterUpdateRepro(t *testing.
 				{
 					Query: `INSERT INTO upsert_returning_function_target VALUES (1, 2)
 						ON CONFLICT (id) DO UPDATE SET qty = EXCLUDED.qty
-						RETURNING audit_upsert_returning(id);`,
-					Expected: []sql.Row{{1}},
+						RETURNING audit_upsert_returning(id);`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testonconflictdoupdatereturningfunctionsucceedsafterupdaterepro-0001-insert-into-upsert_returning_function_target-values-1"},
 				},
 				{
-					Query:    `SELECT id, qty FROM upsert_returning_function_target;`,
-					Expected: []sql.Row{{1, 2}},
+					Query: `SELECT id, qty FROM upsert_returning_function_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testonconflictdoupdatereturningfunctionsucceedsafterupdaterepro-0002-select-id-qty-from-upsert_returning_function_target"},
 				},
 				{
-					Query:    `SELECT count(*) FROM upsert_returning_function_audit;`,
-					Expected: []sql.Row{{int64(1)}},
+					Query: `SELECT count(*) FROM upsert_returning_function_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testonconflictdoupdatereturningfunctionsucceedsafterupdaterepro-0003-select-count-*-from-upsert_returning_function_audit"},
 				},
 			},
 		},
@@ -576,17 +556,12 @@ func TestUpdateDuplicateKeyIsStatementAtomicRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `UPDATE atomic_update_items SET code = 10, v = 'changed';`,
-					ExpectedErr: `duplicate`,
+					Query: `UPDATE atomic_update_items SET code = 10, v = 'changed';`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testupdateduplicatekeyisstatementatomicrepro-0001-update-atomic_update_items-set-code-=", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, code, v
 						FROM atomic_update_items
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, 10, "one"},
-						{2, 20, "two"},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testupdateduplicatekeyisstatementatomicrepro-0002-select-id-code-v-from"},
 				},
 			},
 		},
@@ -623,17 +598,12 @@ func TestUpdateFromDuplicateKeyIsStatementAtomicGuard(t *testing.T) {
 					Query: `UPDATE atomic_update_from_unique_items AS t
 						SET code = s.new_code, v = s.new_v
 						FROM atomic_update_from_unique_source AS s
-						WHERE t.id = s.id;`,
-					ExpectedErr: `duplicate`,
+						WHERE t.id = s.id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testupdatefromduplicatekeyisstatementatomicguard-0001-update-atomic_update_from_unique_items-as-t-set", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, code, v
 						FROM atomic_update_from_unique_items
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, 10, "one"},
-						{2, 20, "two"},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testupdatefromduplicatekeyisstatementatomicguard-0002-select-id-code-v-from"},
 				},
 			},
 		},
@@ -664,17 +634,12 @@ func TestUpdateFromCheckConstraintIsStatementAtomicRepro(t *testing.T) {
 					Query: `UPDATE atomic_update_from_items AS t
 						SET qty = s.new_qty
 						FROM atomic_update_from_source AS s
-						WHERE t.id = s.id;`,
-					ExpectedErr: `Check constraint`,
+						WHERE t.id = s.id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testupdatefromcheckconstraintisstatementatomicrepro-0001-update-atomic_update_from_items-as-t-set", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, qty
 						FROM atomic_update_from_items
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, 1},
-						{2, 2},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testupdatefromcheckconstraintisstatementatomicrepro-0002-select-id-qty-from-atomic_update_from_items"},
 				},
 			},
 		},
@@ -709,17 +674,12 @@ func TestUpdateFromNotNullConstraintIsStatementAtomicGuard(t *testing.T) {
 					Query: `UPDATE atomic_update_from_not_null_items AS t
 						SET label = s.new_label
 						FROM atomic_update_from_not_null_source AS s
-						WHERE t.id = s.id;`,
-					ExpectedErr: `non-nullable`,
+						WHERE t.id = s.id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testupdatefromnotnullconstraintisstatementatomicguard-0001-update-atomic_update_from_not_null_items-as-t-set", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, label
 						FROM atomic_update_from_not_null_items
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, "one"},
-						{2, "two"},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testupdatefromnotnullconstraintisstatementatomicguard-0002-select-id-label-from-atomic_update_from_not_null_items"},
 				},
 			},
 		},
@@ -754,17 +714,12 @@ func TestUpdateFromForeignKeyConstraintIsStatementAtomicGuard(t *testing.T) {
 					Query: `UPDATE atomic_update_from_fk_children AS c
 						SET parent_id = s.new_parent_id
 						FROM atomic_update_from_fk_source AS s
-						WHERE c.id = s.id;`,
-					ExpectedErr: `Foreign key violation`,
+						WHERE c.id = s.id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testupdatefromforeignkeyconstraintisstatementatomicguard-0001-update-atomic_update_from_fk_children-as-c-set", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, parent_id
 						FROM atomic_update_from_fk_children
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, 1},
-						{2, 2},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testupdatefromforeignkeyconstraintisstatementatomicguard-0002-select-id-parent_id-from-atomic_update_from_fk_children"},
 				},
 			},
 		},
@@ -791,14 +746,12 @@ func TestDeleteForeignKeyRestrictIsStatementAtomicRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DELETE FROM atomic_delete_parent WHERE id IN (1, 2);`,
-					ExpectedErr: `Foreign key`,
+					Query: `DELETE FROM atomic_delete_parent WHERE id IN (1, 2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testdeleteforeignkeyrestrictisstatementatomicrepro-0001-delete-from-atomic_delete_parent-where-id", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id
 						FROM atomic_delete_parent
-						ORDER BY id;`,
-					Expected: []sql.Row{{1}, {2}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testdeleteforeignkeyrestrictisstatementatomicrepro-0002-select-id-from-atomic_delete_parent-order"},
 				},
 			},
 		},
@@ -836,8 +789,7 @@ func TestPlpgsqlExceptionBlockRollsBackInnerWritesRepro(t *testing.T) {
 				{
 					Query: `SELECT id, label
 						FROM plpgsql_exception_atomic_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{2, "handler"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testplpgsqlexceptionblockrollsbackinnerwritesrepro-0001-select-id-label-from-plpgsql_exception_atomic_items"},
 				},
 			},
 		},
@@ -865,12 +817,10 @@ func TestPlpgsqlUnhandledExceptionRollsBackFunctionWritesRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT insert_then_raise_plpgsql_exception();`,
-					ExpectedErr: `rollback function body`,
+					Query: `SELECT insert_then_raise_plpgsql_exception();`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testplpgsqlunhandledexceptionrollsbackfunctionwritesrepro-0001-select-insert_then_raise_plpgsql_exception", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM plpgsql_unhandled_exception_items;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM plpgsql_unhandled_exception_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testplpgsqlunhandledexceptionrollsbackfunctionwritesrepro-0002-select-count-*-from-plpgsql_unhandled_exception_items"},
 				},
 			},
 		},
@@ -897,12 +847,10 @@ func TestDoBlockUnhandledExceptionRollsBackWritesRepro(t *testing.T) {
 						INSERT INTO do_unhandled_exception_items VALUES (1, 'before exception');
 						RAISE EXCEPTION 'rollback do block';
 					END;
-					$$;`,
-					ExpectedErr: `rollback do block`,
+					$$;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testdoblockunhandledexceptionrollsbackwritesrepro-0001-do-$$-begin-insert-into", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM do_unhandled_exception_items;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM do_unhandled_exception_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testdoblockunhandledexceptionrollsbackwritesrepro-0002-select-count-*-from-do_unhandled_exception_items"},
 				},
 			},
 		},
@@ -928,12 +876,10 @@ func TestSqlFunctionErrorRollsBackFunctionWritesRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT insert_then_duplicate_sql();`,
-					ExpectedErr: `duplicate`,
+					Query: `SELECT insert_then_duplicate_sql();`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testsqlfunctionerrorrollsbackfunctionwritesrepro-0001-select-insert_then_duplicate_sql", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM sql_function_atomic_items;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM sql_function_atomic_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testsqlfunctionerrorrollsbackfunctionwritesrepro-0002-select-count-*-from-sql_function_atomic_items"},
 				},
 			},
 		},
@@ -965,16 +911,13 @@ func TestFunctionSideEffectsRollBackOnOuterStatementErrorRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `INSERT INTO function_side_effect_target VALUES (1, audit_and_return_bad_qty(1));`,
-					ExpectedErr: `Check constraint`,
+					Query: `INSERT INTO function_side_effect_target VALUES (1, audit_and_return_bad_qty(1));`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testfunctionsideeffectsrollbackonouterstatementerrorrepro-0001-insert-into-function_side_effect_target-values-1", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM function_side_effect_target;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM function_side_effect_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testfunctionsideeffectsrollbackonouterstatementerrorrepro-0002-select-count-*-from-function_side_effect_target"},
 				},
 				{
-					Query:    `SELECT count(*) FROM function_side_effect_audit;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM function_side_effect_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testfunctionsideeffectsrollbackonouterstatementerrorrepro-0003-select-count-*-from-function_side_effect_audit"},
 				},
 			},
 		},
@@ -1008,16 +951,13 @@ func TestInsertFunctionSideEffectsRollBackOnForeignKeyErrorRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `INSERT INTO insert_function_fk_child VALUES (1, audit_and_return_missing_insert_parent(1));`,
-					ExpectedErr: `Foreign key violation`,
+					Query: `INSERT INTO insert_function_fk_child VALUES (1, audit_and_return_missing_insert_parent(1));`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testinsertfunctionsideeffectsrollbackonforeignkeyerrorrepro-0001-insert-into-insert_function_fk_child-values-1", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM insert_function_fk_child;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM insert_function_fk_child;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testinsertfunctionsideeffectsrollbackonforeignkeyerrorrepro-0002-select-count-*-from-insert_function_fk_child"},
 				},
 				{
-					Query:    `SELECT count(*) FROM insert_function_fk_audit;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM insert_function_fk_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testinsertfunctionsideeffectsrollbackonforeignkeyerrorrepro-0003-select-count-*-from-insert_function_fk_audit"},
 				},
 			},
 		},
@@ -1056,16 +996,13 @@ func TestUpdateFunctionForeignKeyViolationReportsForeignKeyErrorRepro(t *testing
 				{
 					Query: `UPDATE update_function_fk_child
 						SET parent_id = audit_and_return_missing_update_parent(id)
-						WHERE id = 10;`,
-					ExpectedErr: `Foreign key violation`,
+						WHERE id = 10;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testupdatefunctionforeignkeyviolationreportsforeignkeyerrorrepro-0001-update-update_function_fk_child-set-parent_id-=", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT parent_id FROM update_function_fk_child WHERE id = 10;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT parent_id FROM update_function_fk_child WHERE id = 10;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testupdatefunctionforeignkeyviolationreportsforeignkeyerrorrepro-0002-select-parent_id-from-update_function_fk_child-where"},
 				},
 				{
-					Query:    `SELECT count(*) FROM update_function_fk_audit;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM update_function_fk_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testupdatefunctionforeignkeyviolationreportsforeignkeyerrorrepro-0003-select-count-*-from-update_function_fk_audit"},
 				},
 			},
 		},
@@ -1102,16 +1039,13 @@ func TestDeleteFunctionPredicateForeignKeyViolationReportsForeignKeyErrorRepro(t
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DELETE FROM delete_function_fk_parent WHERE id = audit_and_return_delete_parent(1);`,
-					ExpectedErr: `Foreign key`,
+					Query: `DELETE FROM delete_function_fk_parent WHERE id = audit_and_return_delete_parent(1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testdeletefunctionpredicateforeignkeyviolationreportsforeignkeyerrorrepro-0001-delete-from-delete_function_fk_parent-where-id", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM delete_function_fk_parent;`,
-					Expected: []sql.Row{{int64(1)}},
+					Query: `SELECT count(*) FROM delete_function_fk_parent;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testdeletefunctionpredicateforeignkeyviolationreportsforeignkeyerrorrepro-0002-select-count-*-from-delete_function_fk_parent"},
 				},
 				{
-					Query:    `SELECT count(*) FROM delete_function_fk_audit;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM delete_function_fk_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testdeletefunctionpredicateforeignkeyviolationreportsforeignkeyerrorrepro-0003-select-count-*-from-delete_function_fk_audit"},
 				},
 			},
 		},
@@ -1138,21 +1072,21 @@ func TestSelectFunctionSideEffectsRollBackOnExpressionErrorRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT audit_and_return_bad_select(1), 1 / 0;`,
-					ExpectedErr: `division by zero`,
+					Query: `SELECT audit_and_return_bad_select(1), 1 / 0;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testselectfunctionsideeffectsrollbackonexpressionerrorrepro-0001-select-audit_and_return_bad_select-1-1-/", Compare:
+
+					// TestReturningFunctionSideEffectsRollBackOnExpressionErrorRepro reproduces a
+					// data consistency bug: if a RETURNING expression errors, PostgreSQL rolls back
+					// the base write and any function side effects from the RETURNING list.
+					"sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM select_function_side_effect_audit;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM select_function_side_effect_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testselectfunctionsideeffectsrollbackonexpressionerrorrepro-0002-select-count-*-from-select_function_side_effect_audit"},
 				},
 			},
 		},
 	})
 }
 
-// TestReturningFunctionSideEffectsRollBackOnExpressionErrorRepro reproduces a
-// data consistency bug: if a RETURNING expression errors, PostgreSQL rolls back
-// the base write and any function side effects from the RETURNING list.
 func TestReturningFunctionSideEffectsRollBackOnExpressionErrorRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1174,16 +1108,13 @@ func TestReturningFunctionSideEffectsRollBackOnExpressionErrorRepro(t *testing.T
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `INSERT INTO returning_function_target VALUES (1)
-						RETURNING audit_and_return_bad_returning(id), 1 / 0;`,
-					ExpectedErr: `division by zero`,
+						RETURNING audit_and_return_bad_returning(id), 1 / 0;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testreturningfunctionsideeffectsrollbackonexpressionerrorrepro-0001-insert-into-returning_function_target-values-1", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM returning_function_target;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM returning_function_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testreturningfunctionsideeffectsrollbackonexpressionerrorrepro-0002-select-count-*-from-returning_function_target"},
 				},
 				{
-					Query:    `SELECT count(*) FROM returning_function_audit;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM returning_function_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testreturningfunctionsideeffectsrollbackonexpressionerrorrepro-0003-select-count-*-from-returning_function_audit"},
 				},
 			},
 		},
@@ -1207,22 +1138,22 @@ func TestUpdateReturningExpressionErrorRollsBackRowChangeRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `UPDATE update_returning_error_target SET qty = 2
-						RETURNING 1 / 0;`,
-					ExpectedErr: `division by zero`,
+						RETURNING 1 / 0;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testupdatereturningexpressionerrorrollsbackrowchangerepro-0001-update-update_returning_error_target-set-qty-=",
+
+						// TestUpdateReturningFunctionSucceedsAfterRowChangeRepro reproduces a
+						// correctness bug: PostgreSQL permits PL/pgSQL functions in UPDATE RETURNING,
+						// and the successful statement commits both the row change and the function's
+						// side effect.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT id, qty FROM update_returning_error_target;`,
-					Expected: []sql.Row{{1, 1}},
+					Query: `SELECT id, qty FROM update_returning_error_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testupdatereturningexpressionerrorrollsbackrowchangerepro-0002-select-id-qty-from-update_returning_error_target"},
 				},
 			},
 		},
 	})
 }
 
-// TestUpdateReturningFunctionSucceedsAfterRowChangeRepro reproduces a
-// correctness bug: PostgreSQL permits PL/pgSQL functions in UPDATE RETURNING,
-// and the successful statement commits both the row change and the function's
-// side effect.
 func TestUpdateReturningFunctionSucceedsAfterRowChangeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1246,16 +1177,13 @@ func TestUpdateReturningFunctionSucceedsAfterRowChangeRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `UPDATE update_returning_function_target SET qty = 2
-						RETURNING audit_update_returning(id);`,
-					Expected: []sql.Row{{1}},
+						RETURNING audit_update_returning(id);`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testupdatereturningfunctionsucceedsafterrowchangerepro-0001-update-update_returning_function_target-set-qty-="},
 				},
 				{
-					Query:    `SELECT id, qty FROM update_returning_function_target;`,
-					Expected: []sql.Row{{1, 2}},
+					Query: `SELECT id, qty FROM update_returning_function_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testupdatereturningfunctionsucceedsafterrowchangerepro-0002-select-id-qty-from-update_returning_function_target"},
 				},
 				{
-					Query:    `SELECT count(*) FROM update_returning_function_audit;`,
-					Expected: []sql.Row{{int64(1)}},
+					Query: `SELECT count(*) FROM update_returning_function_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testupdatereturningfunctionsucceedsafterrowchangerepro-0003-select-count-*-from-update_returning_function_audit"},
 				},
 			},
 		},
@@ -1280,21 +1208,21 @@ func TestDeleteReturningExpressionErrorRollsBackDeleteRepro(t *testing.T) {
 				{
 					Query: `DELETE FROM delete_returning_error_target
 						WHERE id = 1
-						RETURNING 1 / 0;`,
-					ExpectedErr: `division by zero`,
+						RETURNING 1 / 0;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testdeletereturningexpressionerrorrollsbackdeleterepro-0001-delete-from-delete_returning_error_target-where-id",
+
+						// TestDeleteReturningFunctionSucceedsAfterDeleteRepro reproduces a correctness
+						// bug: PostgreSQL permits PL/pgSQL functions in DELETE RETURNING, and the
+						// successful statement commits both the delete and the function's side effect.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT id, qty FROM delete_returning_error_target;`,
-					Expected: []sql.Row{{1, 1}},
+					Query: `SELECT id, qty FROM delete_returning_error_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testdeletereturningexpressionerrorrollsbackdeleterepro-0002-select-id-qty-from-delete_returning_error_target"},
 				},
 			},
 		},
 	})
 }
 
-// TestDeleteReturningFunctionSucceedsAfterDeleteRepro reproduces a correctness
-// bug: PostgreSQL permits PL/pgSQL functions in DELETE RETURNING, and the
-// successful statement commits both the delete and the function's side effect.
 func TestDeleteReturningFunctionSucceedsAfterDeleteRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1319,16 +1247,13 @@ func TestDeleteReturningFunctionSucceedsAfterDeleteRepro(t *testing.T) {
 				{
 					Query: `DELETE FROM delete_returning_function_target
 						WHERE id = 1
-						RETURNING audit_delete_returning(id);`,
-					Expected: []sql.Row{{1}},
+						RETURNING audit_delete_returning(id);`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testdeletereturningfunctionsucceedsafterdeleterepro-0001-delete-from-delete_returning_function_target-where-id"},
 				},
 				{
-					Query:    `SELECT count(*) FROM delete_returning_function_target;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM delete_returning_function_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testdeletereturningfunctionsucceedsafterdeleterepro-0002-select-count-*-from-delete_returning_function_target"},
 				},
 				{
-					Query:    `SELECT count(*) FROM delete_returning_function_audit;`,
-					Expected: []sql.Row{{int64(1)}},
+					Query: `SELECT count(*) FROM delete_returning_function_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testdeletereturningfunctionsucceedsafterdeleterepro-0003-select-count-*-from-delete_returning_function_audit"},
 				},
 			},
 		},
@@ -1363,16 +1288,13 @@ func TestUpdateFunctionSideEffectsRollBackOnConstraintErrorRepro(t *testing.T) {
 				{
 					Query: `UPDATE update_function_side_effect_target
 						SET qty = audit_and_return_bad_update(id)
-						WHERE id = 1;`,
-					ExpectedErr: `ERROR`,
+						WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testupdatefunctionsideeffectsrollbackonconstrainterrorrepro-0001-update-update_function_side_effect_target-set-qty-=", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT qty FROM update_function_side_effect_target WHERE id = 1;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT qty FROM update_function_side_effect_target WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testupdatefunctionsideeffectsrollbackonconstrainterrorrepro-0002-select-qty-from-update_function_side_effect_target-where"},
 				},
 				{
-					Query:    `SELECT count(*) FROM update_function_side_effect_audit;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM update_function_side_effect_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testupdatefunctionsideeffectsrollbackonconstrainterrorrepro-0003-select-count-*-from-update_function_side_effect_audit"},
 				},
 			},
 		},
@@ -1408,18 +1330,19 @@ func TestUpdateFunctionConstraintViolationReportsCheckErrorRepro(t *testing.T) {
 				{
 					Query: `UPDATE update_function_error_target
 						SET qty = audit_and_return_bad_update_error(id)
-						WHERE id = 1;`,
-					ExpectedErr: `Check constraint`,
+						WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testupdatefunctionconstraintviolationreportscheckerrorrepro-0001-update-update_function_error_target-set-qty-=",
+
+						// TestCreateTableAsRollsBackFunctionSideEffectsOnQueryErrorRepro reproduces a
+						// persistence bug: CREATE TABLE AS is atomic in PostgreSQL, so an error while
+						// evaluating the source query must roll back function side effects and leave no
+						// durable target relation.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateTableAsRollsBackFunctionSideEffectsOnQueryErrorRepro reproduces a
-// persistence bug: CREATE TABLE AS is atomic in PostgreSQL, so an error while
-// evaluating the source query must roll back function side effects and leave no
-// durable target relation.
 func TestCreateTableAsRollsBackFunctionSideEffectsOnQueryErrorRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1438,16 +1361,13 @@ func TestCreateTableAsRollsBackFunctionSideEffectsOnQueryErrorRepro(t *testing.T
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `CREATE TABLE ctas_side_effect_target AS
-						SELECT audit_and_return_bad_ctas(1) AS id, 1 / 0 AS boom;`,
-					ExpectedErr: `division by zero`,
+						SELECT audit_and_return_bad_ctas(1) AS id, 1 / 0 AS boom;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testcreatetableasrollsbackfunctionsideeffectsonqueryerrorrepro-0001-create-table-ctas_side_effect_target-as-select", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT to_regclass('ctas_side_effect_target') IS NULL;`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT to_regclass('ctas_side_effect_target') IS NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testcreatetableasrollsbackfunctionsideeffectsonqueryerrorrepro-0002-select-to_regclass-ctas_side_effect_target-is-null"},
 				},
 				{
-					Query:    `SELECT count(*) FROM ctas_side_effect_audit;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM ctas_side_effect_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testcreatetableasrollsbackfunctionsideeffectsonqueryerrorrepro-0003-select-count-*-from-ctas_side_effect_audit"},
 				},
 			},
 		},
@@ -1476,16 +1396,13 @@ func TestCreateMaterializedViewRollsBackFunctionSideEffectsOnQueryErrorRepro(t *
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `CREATE MATERIALIZED VIEW matview_side_effect_target AS
-						SELECT audit_and_return_bad_matview(1) AS id, 1 / 0 AS boom;`,
-					ExpectedErr: `division by zero`,
+						SELECT audit_and_return_bad_matview(1) AS id, 1 / 0 AS boom;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testcreatematerializedviewrollsbackfunctionsideeffectsonqueryerrorrepro-0001-create-materialized-view-matview_side_effect_target-as", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT to_regclass('matview_side_effect_target') IS NULL;`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT to_regclass('matview_side_effect_target') IS NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testcreatematerializedviewrollsbackfunctionsideeffectsonqueryerrorrepro-0002-select-to_regclass-matview_side_effect_target-is-null"},
 				},
 				{
-					Query:    `SELECT count(*) FROM matview_side_effect_audit;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM matview_side_effect_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testcreatematerializedviewrollsbackfunctionsideeffectsonqueryerrorrepro-0003-select-count-*-from-matview_side_effect_audit"},
 				},
 			},
 		},
@@ -1525,16 +1442,13 @@ func TestRefreshMaterializedViewRollsBackFunctionSideEffectsOnQueryErrorRepro(t 
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `REFRESH MATERIALIZED VIEW refresh_mv_side_effect_target;`,
-					ExpectedErr: `refresh failure`,
+					Query: `REFRESH MATERIALIZED VIEW refresh_mv_side_effect_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testrefreshmaterializedviewrollsbackfunctionsideeffectsonqueryerrorrepro-0001-refresh-materialized-view-refresh_mv_side_effect_target", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM refresh_mv_side_effect_audit;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM refresh_mv_side_effect_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testrefreshmaterializedviewrollsbackfunctionsideeffectsonqueryerrorrepro-0002-select-count-*-from-refresh_mv_side_effect_audit"},
 				},
 				{
-					Query:    `SELECT id FROM refresh_mv_side_effect_target;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT id FROM refresh_mv_side_effect_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testrefreshmaterializedviewrollsbackfunctionsideeffectsonqueryerrorrepro-0003-select-id-from-refresh_mv_side_effect_target"},
 				},
 			},
 		},
@@ -1567,20 +1481,17 @@ func TestAlterTableAddColumnRollsBackDefaultSideEffectsOnCheckErrorRepro(t *test
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `ALTER TABLE alter_default_side_effect_items
-						ADD COLUMN qty INT DEFAULT audit_and_return_bad_default() CHECK (qty > 0);`,
-					ExpectedErr: `Check constraint`,
+						ADD COLUMN qty INT DEFAULT audit_and_return_bad_default() CHECK (qty > 0);`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testaltertableaddcolumnrollsbackdefaultsideeffectsoncheckerrorrepro-0001-alter-table-alter_default_side_effect_items-add-column", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT count(*)
 						FROM information_schema.columns
 						WHERE table_schema = 'public'
 							AND table_name = 'alter_default_side_effect_items'
-							AND column_name = 'qty';`,
-					Expected: []sql.Row{{int64(0)}},
+							AND column_name = 'qty';`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testaltertableaddcolumnrollsbackdefaultsideeffectsoncheckerrorrepro-0002-select-count-*-from-information_schema.columns"},
 				},
 				{
-					Query:    `SELECT count(*) FROM alter_default_side_effect_audit;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM alter_default_side_effect_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "statement-atomicity-repro-test-testaltertableaddcolumnrollsbackdefaultsideeffectsoncheckerrorrepro-0003-select-count-*-from-alter_default_side_effect_audit"},
 				},
 			},
 		},

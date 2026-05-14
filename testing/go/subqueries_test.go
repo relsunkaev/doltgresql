@@ -16,18 +16,10 @@ func TestSubqueries(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM test WHERE id = (SELECT 2);`,
-					Expected: []sql.Row{
-						{int32(2)},
-					},
+					Query: `SELECT * FROM test WHERE id = (SELECT 2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "subqueries-test-testsubqueries-0001-select-*-from-test-where"},
 				},
 				{
-					Query: `SELECT *, (SELECT id from test where id = 2) FROM test order by id;`,
-					Expected: []sql.Row{
-						{1, 2},
-						{2, 2},
-						{3, 2},
-					},
+					Query: `SELECT *, (SELECT id from test where id = 2) FROM test order by id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "subqueries-test-testsubqueries-0002-select-*-select-id-from", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT *, (SELECT id from test t2 where t2.id = test.id) FROM test order by id;`,
@@ -50,41 +42,29 @@ func TestSubqueries(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM test WHERE id IN (SELECT * FROM test WHERE id = 2);`,
-					Expected: []sql.Row{{int32(2)}},
+					Query: `SELECT * FROM test WHERE id IN (SELECT * FROM test WHERE id = 2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "subqueries-test-testsubqueries-0004-select-*-from-test-where"},
 				},
 				{
-					Query:    `SELECT * FROM test WHERE id IN (SELECT id FROM test WHERE id = 3);`,
-					Expected: []sql.Row{{int32(3)}},
+					Query: `SELECT * FROM test WHERE id IN (SELECT id FROM test WHERE id = 3);`, PostgresOracle: ScriptTestPostgresOracle{ID: "subqueries-test-testsubqueries-0005-select-*-from-test-where"},
 				},
 				{
-					Query:    `SELECT * FROM test WHERE id IN (SELECT * FROM test WHERE id > 0);`,
-					Expected: []sql.Row{{int32(1)}, {int32(3)}, {int32(2)}},
+					Query: `SELECT * FROM test WHERE id IN (SELECT * FROM test WHERE id > 0);`, PostgresOracle: ScriptTestPostgresOracle{ID: "subqueries-test-testsubqueries-0006-select-*-from-test-where"},
 				},
 				{
-					Query:    `SELECT * FROM test2 WHERE test_id IN (SELECT * FROM test WHERE id = 2);`,
-					Expected: []sql.Row{{int32(3), int32(2), "baz"}},
+					Query: `SELECT * FROM test2 WHERE test_id IN (SELECT * FROM test WHERE id = 2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "subqueries-test-testsubqueries-0007-select-*-from-test2-where"},
 				},
 				{
-					Query: `SELECT * FROM test2 WHERE test_id IN (SELECT * FROM test WHERE id > 0);`,
-					Expected: []sql.Row{
-						{int32(1), int32(1), "foo"},
-						{int32(3), int32(2), "baz"},
-					},
+					Query: `SELECT * FROM test2 WHERE test_id IN (SELECT * FROM test WHERE id > 0);`, PostgresOracle: ScriptTestPostgresOracle{ID: "subqueries-test-testsubqueries-0008-select-*-from-test2-where"},
 				},
 				{
 					Query: `SELECT id FROM test2 WHERE (2, 10) IN (SELECT id, test_id FROM test2 WHERE id > 0);`,
-					Skip:  true, // won't pass until we have a doltgres tuple type to match against for equality funcs
-					Expected: []sql.Row{
-						{1}, {2}, {3},
-					},
+					Skip:  true, PostgresOracle: // won't pass until we have a doltgres tuple type to match against for equality funcs
+					ScriptTestPostgresOracle{ID: "subqueries-test-testsubqueries-0009-select-id-from-test2-where"},
 				},
 				{
 					Query: `SELECT id FROM test2 WHERE (id, test_id) IN (SELECT id, test_id FROM test2 WHERE id > 0);`,
-					Skip:  true, // won't pass until we have a doltgres tuple type to match against for equality funcs
-					Expected: []sql.Row{
-						{2},
-					},
+					Skip:  true, PostgresOracle: // won't pass until we have a doltgres tuple type to match against for equality funcs
+					ScriptTestPostgresOracle{ID: "subqueries-test-testsubqueries-0010-select-id-from-test2-where"},
 				},
 			},
 		},
@@ -96,23 +76,19 @@ func TestSubqueries(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM test WHERE id = (SELECT id from test where id = 2);`,
-					Expected: []sql.Row{{int32(2), "b"}},
+					Query: `SELECT * FROM test WHERE id = (SELECT id from test where id = 2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "subqueries-test-testsubqueries-0011-select-*-from-test-where"},
 				},
 				{
-					Skip:     true, // panic in equality func
-					Query:    `SELECT (SELECT id from test where id = 2) = (SELECT id from test where id = 2);`,
-					Expected: []sql.Row{{"t"}},
+					Skip:  true, // panic in equality func
+					Query: `SELECT (SELECT id from test where id = 2) = (SELECT id from test where id = 2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "subqueries-test-testsubqueries-0012-select-select-id-from-test"},
 				},
 				{
-					Skip:     true, // panic in equality func
-					Query:    `SELECT (SELECT c from test where id = 2) = (SELECT c from test where id = 3);`,
-					Expected: []sql.Row{{"t"}},
+					Skip:  true, // panic in equality func
+					Query: `SELECT (SELECT c from test where id = 2) = (SELECT c from test where id = 3);`, PostgresOracle: ScriptTestPostgresOracle{ID: "subqueries-test-testsubqueries-0013-select-select-c-from-test"},
 				},
 				{
-					Skip:     true, // panic in equality func
-					Query:    `SELECT (SELECT c from test where id = 1) = (SELECT c from test where id = 2);`,
-					Expected: []sql.Row{{"f"}},
+					Skip:  true, // panic in equality func
+					Query: `SELECT (SELECT c from test where id = 1) = (SELECT c from test where id = 2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "subqueries-test-testsubqueries-0014-select-select-c-from-test"},
 				},
 			},
 		},
@@ -124,39 +100,23 @@ func TestSubqueries(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT ARRAY(SELECT id FROM test order by 1);`,
-					Expected: []sql.Row{
-						{"{1,2,3}"},
-					},
+					Query: `SELECT ARRAY(SELECT id FROM test order by 1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "subqueries-test-testsubqueries-0015-select-array-select-id-from"},
 				},
 				{
-					Query: `SELECT ARRAY(SELECT c FROM test order by id limit 1);`,
-					Expected: []sql.Row{
-						{"{a}"},
-					},
+					Query: `SELECT ARRAY(SELECT c FROM test order by id limit 1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "subqueries-test-testsubqueries-0016-select-array-select-c-from"},
 				},
 				{
-					Query: `SELECT ARRAY(SELECT c FROM test order by id desc);`,
-					Expected: []sql.Row{
-						{"{c,b,a}"},
-					},
+					Query: `SELECT ARRAY(SELECT c FROM test order by id desc);`, PostgresOracle: ScriptTestPostgresOracle{ID: "subqueries-test-testsubqueries-0017-select-array-select-c-from"},
 				},
 				{
-					Query:       `SELECT ARRAY(SELECT id, id FROM test order by 1);`,
-					ExpectedErr: "only a single column subquery is supported",
+					Query: `SELECT ARRAY(SELECT id, id FROM test order by 1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "subqueries-test-testsubqueries-0018-select-array-select-id-id", Compare: "sqlstate"},
 				},
 				{
-					Query: `SELECT array_to_string(ARRAY(SELECT id FROM test order by 1), ',')`,
-					Expected: []sql.Row{
-						{"1,2,3"},
-					},
+					Query: `SELECT array_to_string(ARRAY(SELECT id FROM test order by 1), ',')`, PostgresOracle: ScriptTestPostgresOracle{ID: "subqueries-test-testsubqueries-0019-select-array_to_string-array-select-id"},
 				},
 				{
 					Query: `WITH flattened AS (SELECT ARRAY(SELECT id FROM test ORDER BY 1) AS ids)
-SELECT array_to_string(ids, ',') FROM flattened;`,
-					Expected: []sql.Row{
-						{"1,2,3"},
-					},
+SELECT array_to_string(ids, ',') FROM flattened;`, PostgresOracle: ScriptTestPostgresOracle{ID: "subqueries-test-testsubqueries-0020-with-flattened-as-select-array"},
 				},
 			},
 		},
@@ -179,11 +139,7 @@ func TestSubqueryJoins(t *testing.T) {
 s1.a FROM (SELECT a from t1) s1
 INNER JOIN t2 q1
 ON q1.b = s1.a
-ORDER BY 1;`,
-					Expected: []sql.Row{
-						{2},
-						{3},
-					},
+ORDER BY 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "subqueries-test-testsubqueryjoins-0001-select-s1.a-from-select-a"},
 				},
 			},
 		},
@@ -201,11 +157,7 @@ ORDER BY 1;`,
 s1.c FROM (SELECT a as c from t1) s1
 INNER JOIN t2 q1
 ON q1.b = s1.c
-ORDER BY 1;`,
-					Expected: []sql.Row{
-						{2},
-						{3},
-					},
+ORDER BY 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "subqueries-test-testsubqueryjoins-0002-select-s1.c-from-select-a"},
 				},
 			},
 		},
@@ -223,11 +175,7 @@ ORDER BY 1;`,
 s1.d FROM (SELECT b as f, a as g from t1) s1(d,e)
 INNER JOIN t2 q1
 ON q1.c = s1.e
-ORDER BY 1;`,
-					Expected: []sql.Row{
-						{20},
-						{30},
-					},
+ORDER BY 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "subqueries-test-testsubqueryjoins-0003-select-s1.d-from-select-b"},
 				},
 			},
 		},
@@ -244,36 +192,22 @@ func TestExistSubquery(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM test WHERE EXISTS (SELECT 123);`,
-					Expected: []sql.Row{
-						{1},
-						{2},
-						{3},
-					},
+					Query: `SELECT * FROM test WHERE EXISTS (SELECT 123);`, PostgresOracle: ScriptTestPostgresOracle{ID: "subqueries-test-testexistsubquery-0001-select-*-from-test-where"},
 				},
 				{
-					Query:    `SELECT * FROM test WHERE NOT EXISTS (SELECT 123);`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM test WHERE NOT EXISTS (SELECT 123);`, PostgresOracle: ScriptTestPostgresOracle{ID: "subqueries-test-testexistsubquery-0002-select-*-from-test-where"},
 				},
 				{
-					Query: `SELECT 123 WHERE EXISTS (SELECT * FROM test);`,
-					Expected: []sql.Row{
-						{123},
-					},
+					Query: `SELECT 123 WHERE EXISTS (SELECT * FROM test);`, PostgresOracle: ScriptTestPostgresOracle{ID: "subqueries-test-testexistsubquery-0003-select-123-where-exists-select"},
 				},
 				{
-					Query:    `SELECT 123 WHERE EXISTS (SELECT * FROM test WHERE id > 10);`,
-					Expected: []sql.Row{},
+					Query: `SELECT 123 WHERE EXISTS (SELECT * FROM test WHERE id > 10);`, PostgresOracle: ScriptTestPostgresOracle{ID: "subqueries-test-testexistsubquery-0004-select-123-where-exists-select"},
 				},
 				{
-					Query:    `SELECT 123 WHERE NOT EXISTS (SELECT * FROM test);`,
-					Expected: []sql.Row{},
+					Query: `SELECT 123 WHERE NOT EXISTS (SELECT * FROM test);`, PostgresOracle: ScriptTestPostgresOracle{ID: "subqueries-test-testexistsubquery-0005-select-123-where-not-exists"},
 				},
 				{
-					Query: `SELECT 123 WHERE NOT EXISTS (SELECT * FROM test WHERE id > 10);`,
-					Expected: []sql.Row{
-						{123},
-					},
+					Query: `SELECT 123 WHERE NOT EXISTS (SELECT * FROM test WHERE id > 10);`, PostgresOracle: ScriptTestPostgresOracle{ID: "subqueries-test-testexistsubquery-0006-select-123-where-not-exists"},
 				},
 			},
 		},

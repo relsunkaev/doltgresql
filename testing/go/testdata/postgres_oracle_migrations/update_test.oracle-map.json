@@ -1,0 +1,391 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map update_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/update_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/update_test.go:TestUpdate#0001",
+      "source": "testing/go/update_test.go:TestUpdate",
+      "ordinal": 1,
+      "scriptName": "simple update",
+      "oracle": "postgres",
+      "postgresId": "update-test-testupdate-0001-select-*-from-t1-where",
+      "suggestedId": "update-test-testupdate-0001-select-*-from-t1-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM t1 where a =  2",
+      "querySha256": "a72bd1ff60eda4b986517c560870596605d12e88382a2177eea476fa63fc5d68",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/update_test.go:TestUpdate#0002",
+      "source": "testing/go/update_test.go:TestUpdate",
+      "ordinal": 2,
+      "scriptName": "update to default",
+      "oracle": "internal",
+      "suggestedId": "update-test-testupdate-0002-select-*-from-t-order",
+      "expectedKind": "rows",
+      "query": "select * from t order by i",
+      "querySha256": "1981155a1dbb2c87f9c709a43ebbdef812d4b33fca4513b4e855712fb83a60c8",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/update_test.go:TestUpdate#0003",
+      "source": "testing/go/update_test.go:TestUpdate",
+      "ordinal": 3,
+      "scriptName": "update to default",
+      "oracle": "internal",
+      "suggestedId": "update-test-testupdate-0003-select-*-from-t-order",
+      "expectedKind": "rows",
+      "query": "select * from t order by i",
+      "querySha256": "1981155a1dbb2c87f9c709a43ebbdef812d4b33fca4513b4e855712fb83a60c8",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/update_test.go:TestUpdate#0004",
+      "source": "testing/go/update_test.go:TestUpdate",
+      "ordinal": 4,
+      "scriptName": "update to default",
+      "oracle": "internal",
+      "suggestedId": "update-test-testupdate-0004-select-*-from-t-order",
+      "expectedKind": "rows",
+      "query": "select * from t order by i",
+      "querySha256": "1981155a1dbb2c87f9c709a43ebbdef812d4b33fca4513b4e855712fb83a60c8",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/update_test.go:TestUpdate#0005",
+      "source": "testing/go/update_test.go:TestUpdate",
+      "ordinal": 5,
+      "scriptName": "update to default",
+      "oracle": "internal",
+      "suggestedId": "update-test-testupdate-0005-select-*-from-t2",
+      "expectedKind": "rows",
+      "query": "select * from t2",
+      "querySha256": "ce88bc9b16796cee5d027494c41905a465c626f640262c6e96678c6c2f8263b4",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/update_test.go:TestUpdate#0006",
+      "source": "testing/go/update_test.go:TestUpdate",
+      "ordinal": 6,
+      "scriptName": "UPDATE ... RETURNING",
+      "oracle": "postgres",
+      "postgresId": "update-test-testupdate-0006-update-t-set-pk-=",
+      "suggestedId": "update-test-testupdate-0006-update-t-set-pk-=",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "UPDATE t SET pk = pk+1, c1 = '42' RETURNING c1, pk, pk * 2;",
+      "querySha256": "e6152c6b1c00a9eb9d2fed63c57ac5b58d0a968e894dba815146c875bc218de1",
+      "expectedRows": [
+        [
+          {
+            "value": "42"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/update_test.go:TestUpdate#0007",
+      "source": "testing/go/update_test.go:TestUpdate",
+      "ordinal": 7,
+      "scriptName": "UPDATE ... RETURNING",
+      "oracle": "postgres",
+      "postgresId": "update-test-testupdate-0007-update-t-set-c1-=",
+      "suggestedId": "update-test-testupdate-0007-update-t-set-c1-=",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "UPDATE t SET c1 = '43' RETURNING *;",
+      "querySha256": "8306f5b17fc6def645741520d08b511306c04fbb486941093d678ad9e62f3c3d",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "43"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/update_test.go:TestUpdate#0008",
+      "source": "testing/go/update_test.go:TestUpdate",
+      "ordinal": 8,
+      "scriptName": "UPDATE ... RETURNING with join",
+      "oracle": "postgres",
+      "postgresId": "update-test-testupdate-0008-update-employees-e-set-salary",
+      "suggestedId": "update-test-testupdate-0008-update-employees-e-set-salary",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "UPDATE employees e SET salary = salary + d.bonus FROM departments d WHERE e.department_id = d.id RETURNING e.id, e.name, e.salary;",
+      "querySha256": "1b0919204dfdf04b60945a2af672aa49ec73954bf57c7461a708c897e1adf32c",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "Alice"
+          },
+          {
+            "value": "55000"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "Bob"
+          },
+          {
+            "value": "63000"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/update_test.go:TestUpdate#0009",
+      "source": "testing/go/update_test.go:TestUpdate",
+      "ordinal": 9,
+      "scriptName": "UPDATE with join on subquery",
+      "oracle": "postgres",
+      "postgresId": "update-test-testupdate-0009-select-salary-from-employees-where",
+      "suggestedId": "update-test-testupdate-0009-select-salary-from-employees-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT salary FROM employees WHERE name = 'Alice';",
+      "querySha256": "f447e8d9a036c5f9b839a2648d80ec908eefc85058d30216e0b4aed863d202ec",
+      "expectedRows": [
+        [
+          {
+            "value": "55000"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/update_test.go:TestUpdate#0010",
+      "source": "testing/go/update_test.go:TestUpdate",
+      "ordinal": 10,
+      "scriptName": "UPDATE with join on one table",
+      "oracle": "postgres",
+      "postgresId": "update-test-testupdate-0010-select-id-name-price-from",
+      "suggestedId": "update-test-testupdate-0010-select-id-name-price-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, name, price FROM products ORDER BY id;",
+      "querySha256": "8b53b1eb43b112a50555bc9f61dcbe0e4c07b6dd00b8da3eab859c2cd8650f81",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "Laptop"
+          },
+          {
+            "value": "900"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "Phone"
+          },
+          {
+            "value": "750"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/update_test.go:TestUpdate#0011",
+      "source": "testing/go/update_test.go:TestUpdate",
+      "ordinal": 11,
+      "scriptName": "UPDATE with join on two tables",
+      "oracle": "postgres",
+      "postgresId": "update-test-testupdate-0011-select-id-title-price-from",
+      "suggestedId": "update-test-testupdate-0011-select-id-title-price-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, title, price FROM books ORDER BY id;",
+      "querySha256": "6f1f36f4d999b3fbeb24e0bc2bf93ca4af96c2cf50c021f73ac134b1a3972168",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "Book A"
+          },
+          {
+            "value": "95"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "Book B"
+          },
+          {
+            "value": "115"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/update_test.go:TestUpdate#0012",
+      "source": "testing/go/update_test.go:TestUpdate",
+      "ordinal": 12,
+      "scriptName": "UPDATE with join on three tables",
+      "oracle": "postgres",
+      "postgresId": "update-test-testupdate-0012-select-id-total-from-orders",
+      "suggestedId": "update-test-testupdate-0012-select-id-total-from-orders",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, total FROM orders ORDER BY id;",
+      "querySha256": "22e9f4f1e9c398255fdfe7173cff81ad5cbee59406c7a721959966aa2331b2fe",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "105"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "230"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/update_test.go:TestUpdate#0013",
+      "source": "testing/go/update_test.go:TestUpdate",
+      "ordinal": 13,
+      "scriptName": "UPDATE with join on four tables",
+      "oracle": "postgres",
+      "postgresId": "update-test-testupdate-0013-select-id-total_cost-from-rentals",
+      "suggestedId": "update-test-testupdate-0013-select-id-total_cost-from-rentals",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, total_cost FROM rentals ORDER BY id;",
+      "querySha256": "e0263209689c54cf411272fe4c65c1bc54950828c551fb8ba32857e7117e3cb2",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "270"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "360"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/update_test.go:TestUpdate#0014",
+      "source": "testing/go/update_test.go:TestUpdate",
+      "ordinal": 14,
+      "scriptName": "UPDATE with join on table with trigger",
+      "oracle": "postgres",
+      "postgresId": "update-test-testupdate-0014-select-*-from-salary_log",
+      "suggestedId": "update-test-testupdate-0014-select-*-from-salary_log",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM salary_log;",
+      "querySha256": "43db1028bb02119c7cdf440617f014972df111d89bb28aa7338a00860afe31e1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "50000"
+          },
+          {
+            "value": "51000"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "45000"
+          },
+          {
+            "value": "45500"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

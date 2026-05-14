@@ -1,0 +1,51 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map temporal_constraint_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres18/temporal_constraint_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/postgres18/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres18/temporal_constraint_repro_test.go:TestPostgres18WithoutOverlapsTemporalUniqueRepro#0001",
+      "source": "testing/go/postgres18/temporal_constraint_repro_test.go:TestPostgres18WithoutOverlapsTemporalUniqueRepro",
+      "ordinal": 1,
+      "scriptName": "UNIQUE WITHOUT OVERLAPS rejects overlapping ranges",
+      "oracle": "postgres",
+      "postgresId": "postgres18/temporal-constraint-repro-test-testpostgres18withoutoverlapstemporaluniquerepro-0001-insert-into-temporal_unique_bookings-values-1",
+      "suggestedId": "postgres18/temporal-constraint-repro-test-testpostgres18withoutoverlapstemporaluniquerepro-0001-insert-into-temporal_unique_bookings-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23P01",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO temporal_unique_bookings VALUES (1, '[2026-01-15,2026-01-20)'::daterange);",
+      "querySha256": "a8ed36853116af56a91f6738533a28ec47a9e9f1214d32420fa5eab70a39dd22",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres18/temporal_constraint_repro_test.go:TestPostgres18TemporalForeignKeyPeriodRepro#0001",
+      "source": "testing/go/postgres18/temporal_constraint_repro_test.go:TestPostgres18TemporalForeignKeyPeriodRepro",
+      "ordinal": 1,
+      "scriptName": "FOREIGN KEY PERIOD requires full temporal coverage",
+      "oracle": "postgres",
+      "postgresId": "postgres18/temporal-constraint-repro-test-testpostgres18temporalforeignkeyperiodrepro-0001-insert-into-temporal_fk_child-values-1",
+      "suggestedId": "postgres18/temporal-constraint-repro-test-testpostgres18temporalforeignkeyperiodrepro-0001-insert-into-temporal_fk_child-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23503",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO temporal_fk_child VALUES (1, '[2026-03-01,2026-04-01)'::daterange);",
+      "querySha256": "27449e5375fc5e5fa32d009ae3da71568b1a64e2305ba63c3d53e81dbc287140",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

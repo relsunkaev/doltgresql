@@ -18,7 +18,6 @@ import (
 	"testing"
 
 	"github.com/dolthub/go-mysql-server/sql"
-	"github.com/dolthub/go-mysql-server/sql/types"
 )
 
 func TestCreateTable(t *testing.T) {
@@ -28,20 +27,16 @@ func TestCreateTable(t *testing.T) {
 			Name: "create table with UTF8 identifiers",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `CREATE TABLE foo😏(data🍆 TEXT);`,
-					Expected: []sql.Row{},
+					Query: `CREATE TABLE foo😏(data🍆 TEXT);`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0001-create-table-foo😏-data🍆-text"},
 				},
 				{
-					Query:    `CREATE INDEX idx🍤 ON foo😏(data🍆);`,
-					Expected: []sql.Row{},
+					Query: `CREATE INDEX idx🍤 ON foo😏(data🍆);`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0002-create-index-idx🍤-on-foo😏"},
 				},
 				{
-					Query:    `Insert into foo😏 (data🍆) VALUES ('foo');`,
-					Expected: []sql.Row{},
+					Query: `Insert into foo😏 (data🍆) VALUES ('foo');`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0003-insert-into-foo😏-data🍆-values"},
 				},
 				{
-					Query:    `SELECT data🍆 FROM foo😏;`,
-					Expected: []sql.Row{{"foo"}},
+					Query: `SELECT data🍆 FROM foo😏;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0004-select-data🍆-from-foo😏"},
 				},
 			},
 		},
@@ -86,12 +81,10 @@ func TestCreateTable(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "SELECT conname FROM pg_constraint WHERE conrelid = 'users'::regclass AND contype = 'p';",
-					Expected: []sql.Row{{"users_primary_key"}},
+					Query: "SELECT conname FROM pg_constraint WHERE conrelid = 'users'::regclass AND contype = 'p';", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0008-select-conname-from-pg_constraint-where"},
 				},
 				{
-					Query:    "ALTER TABLE users DROP CONSTRAINT users_primary_key;",
-					Expected: []sql.Row{{types.NewOkResult(0)}},
+					Query: "ALTER TABLE users DROP CONSTRAINT users_primary_key;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0009-alter-table-users-drop-constraint"},
 				},
 			},
 		},
@@ -100,16 +93,13 @@ func TestCreateTable(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					// Test with a function in the column default expression
-					Query:    "create table t1 (pk int primary key, c1 TEXT default length('Hello World!'));",
-					Expected: []sql.Row{},
+					Query: "create table t1 (pk int primary key, c1 TEXT default length('Hello World!'));", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0010-create-table-t1-pk-int"},
 				},
 				{
-					Query:    "insert into t1(pk) values (1);",
-					Expected: []sql.Row{},
+					Query: "insert into t1(pk) values (1);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0011-insert-into-t1-pk-values"},
 				},
 				{
-					Query:    "select * from t1;",
-					Expected: []sql.Row{{1, "12"}},
+					Query: "select * from t1;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0012-select-*-from-t1"},
 				},
 			},
 		},
@@ -121,20 +111,16 @@ func TestCreateTable(t *testing.T) {
 						"dataVersion" int NOT NULL,
 						lock char(1) NOT NULL CONSTRAINT DF_schema_meta_lock DEFAULT 'v',
 						CONSTRAINT CK_schema_meta_lock CHECK (lock='v')
-					);`,
-					Expected: []sql.Row{},
+					);`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0013-create-table-zero_version_history-dataversion-int"},
 				},
 				{
-					Query:    `INSERT INTO zero_version_history ("dataVersion") VALUES (1);`,
-					Expected: []sql.Row{},
+					Query: `INSERT INTO zero_version_history ("dataVersion") VALUES (1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0014-insert-into-zero_version_history-dataversion-values"},
 				},
 				{
-					Query:    `SELECT "dataVersion", lock FROM zero_version_history;`,
-					Expected: []sql.Row{{1, "v"}},
+					Query: `SELECT "dataVersion", lock FROM zero_version_history;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0015-select-dataversion-lock-from-zero_version_history"},
 				},
 				{
-					Query:       `INSERT INTO zero_version_history ("dataVersion", lock) VALUES (2, 'x');`,
-					ExpectedErr: `Check constraint "ck_schema_meta_lock" violated`,
+					Query: `INSERT INTO zero_version_history ("dataVersion", lock) VALUES (2, 'x');`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0016-insert-into-zero_version_history-dataversion-lock", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -142,21 +128,17 @@ func TestCreateTable(t *testing.T) {
 			Name: "Create table with table check constraint",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `CREATE TABLE products (name text, price numeric, discounted_price numeric, CHECK (price > discounted_price));`,
-					Expected: []sql.Row{},
+					Query: `CREATE TABLE products (name text, price numeric, discounted_price numeric, CHECK (price > discounted_price));`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0017-create-table-products-name-text"},
 				},
 				{
-					Query:    "insert into products values ('apple', 1.20, 0.80);",
-					Expected: []sql.Row{},
+					Query: "insert into products values ('apple', 1.20, 0.80);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0018-insert-into-products-values-apple"},
 				},
 				{
 					// TODO: the correct error message: `new row for relation "products" violates check constraint "products_chk_rqcthh8j"`
-					Query:       "insert into products values ('peach', 1.20, 1.80);",
-					ExpectedErr: `Check constraint "products_chk_`,
+					Query: "insert into products values ('peach', 1.20, 1.80);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0019-insert-into-products-values-peach", Compare: "sqlstate"},
 				},
 				{
-					Query:    "select * from products;",
-					Expected: []sql.Row{{"apple", Numeric("1.20"), Numeric("0.80")}},
+					Query: "select * from products;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0020-select-*-from-products"},
 				},
 			},
 		},
@@ -164,20 +146,16 @@ func TestCreateTable(t *testing.T) {
 			Name: "Create table with column check constraint",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "create table mytbl (pk int, v1 int constraint v1constraint check (v1 < 100));",
-					Expected: []sql.Row{},
+					Query: "create table mytbl (pk int, v1 int constraint v1constraint check (v1 < 100));", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0021-create-table-mytbl-pk-int"},
 				},
 				{
-					Query:    "insert into mytbl values (1, 20);",
-					Expected: []sql.Row{},
+					Query: "insert into mytbl values (1, 20);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0022-insert-into-mytbl-values-1"},
 				},
 				{
-					Query:       "insert into mytbl values (2, 200);",
-					ExpectedErr: `Check constraint "v1constraint" violated`,
+					Query: "insert into mytbl values (2, 200);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0023-insert-into-mytbl-values-2", Compare: "sqlstate"},
 				},
 				{
-					Query:    "select * from mytbl;",
-					Expected: []sql.Row{{1, 20}},
+					Query: "select * from mytbl;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0024-select-*-from-mytbl"},
 				},
 			},
 		},
@@ -185,20 +163,16 @@ func TestCreateTable(t *testing.T) {
 			Name: "check constraint with a function",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "CREATE TABLE mytbl (a text CHECK (length(a) > 2) PRIMARY KEY, b text);",
-					Expected: []sql.Row{},
+					Query: "CREATE TABLE mytbl (a text CHECK (length(a) > 2) PRIMARY KEY, b text);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0025-create-table-mytbl-a-text"},
 				},
 				{
-					Query:    "insert into mytbl values ('abc', 'def');",
-					Expected: []sql.Row{},
+					Query: "insert into mytbl values ('abc', 'def');", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0026-insert-into-mytbl-values-abc"},
 				},
 				{
-					Query:       "insert into mytbl values ('de', 'abc');",
-					ExpectedErr: `Check constraint "mytbl_a_check" violated`,
+					Query: "insert into mytbl values ('de', 'abc');", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0027-insert-into-mytbl-values-de", Compare: "sqlstate"},
 				},
 				{
-					Query:    "select * from mytbl;",
-					Expected: []sql.Row{{"abc", "def"}},
+					Query: "select * from mytbl;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0028-select-*-from-mytbl"},
 				},
 			},
 		},
@@ -206,20 +180,16 @@ func TestCreateTable(t *testing.T) {
 			Name: "check constraint with JSONB cast expression",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `CREATE TABLE json_checks (payload jsonb CHECK (((payload->>'amount')::int) > 0));`,
-					Expected: []sql.Row{},
+					Query: `CREATE TABLE json_checks (payload jsonb CHECK (((payload->>'amount')::int) > 0));`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0029-create-table-json_checks-payload-jsonb"},
 				},
 				{
-					Query:    `INSERT INTO json_checks VALUES ('{"amount": 3}'::jsonb);`,
-					Expected: []sql.Row{},
+					Query: `INSERT INTO json_checks VALUES ('{"amount": 3}'::jsonb);`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0030-insert-into-json_checks-values-{"},
 				},
 				{
-					Query:       `INSERT INTO json_checks VALUES ('{"amount": -1}'::jsonb);`,
-					ExpectedErr: `Check constraint "json_checks_payload_check" violated`,
+					Query: `INSERT INTO json_checks VALUES ('{"amount": -1}'::jsonb);`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0031-insert-into-json_checks-values-{", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT payload FROM json_checks;`,
-					Expected: []sql.Row{{`{"amount": 3}`}},
+					Query: `SELECT payload FROM json_checks;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0032-select-payload-from-json_checks"},
 				},
 			},
 		},
@@ -228,24 +198,19 @@ func TestCreateTable(t *testing.T) {
 			Name: "Create table with multiple check constraints on a single column",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "create table mytbl (pk int, v1 int constraint v1constraint check (v1 < 100) check (v1 > 10));",
-					Expected: []sql.Row{},
+					Query: "create table mytbl (pk int, v1 int constraint v1constraint check (v1 < 100) check (v1 > 10));", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0033-create-table-mytbl-pk-int"},
 				},
 				{
-					Query:    "insert into mytbl values (1, 20);",
-					Expected: []sql.Row{},
+					Query: "insert into mytbl values (1, 20);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0034-insert-into-mytbl-values-1"},
 				},
 				{
-					Query:       "insert into mytbl values (2, 200);",
-					ExpectedErr: `Check constraint "v1constraint" violated`,
+					Query: "insert into mytbl values (2, 200);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0035-insert-into-mytbl-values-2", Compare: "sqlstate"},
 				},
 				{
-					Query:       "insert into mytbl values (3, 5);",
-					ExpectedErr: `Check constraint "mytbl_chk_`,
+					Query: "insert into mytbl values (3, 5);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0036-insert-into-mytbl-values-3", Compare: "sqlstate"},
 				},
 				{
-					Query:    "select * from mytbl;",
-					Expected: []sql.Row{{1, 20}},
+					Query: "select * from mytbl;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0037-select-*-from-mytbl"},
 				},
 			},
 		},
@@ -253,24 +218,19 @@ func TestCreateTable(t *testing.T) {
 			Name: "Create table with a check constraints on a single column and a table check constraint",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "create table mytbl (pk int, v1 int constraint v1constraint check (v1 < 100), check (v1 > 10));",
-					Expected: []sql.Row{},
+					Query: "create table mytbl (pk int, v1 int constraint v1constraint check (v1 < 100), check (v1 > 10));", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0038-create-table-mytbl-pk-int"},
 				},
 				{
-					Query:    "insert into mytbl values (1, 20);",
-					Expected: []sql.Row{},
+					Query: "insert into mytbl values (1, 20);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0039-insert-into-mytbl-values-1"},
 				},
 				{
-					Query:       "insert into mytbl values (2, 200);",
-					ExpectedErr: `Check constraint "v1constraint" violated`,
+					Query: "insert into mytbl values (2, 200);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0040-insert-into-mytbl-values-2", Compare: "sqlstate"},
 				},
 				{
-					Query:       "insert into mytbl values (3, 5);",
-					ExpectedErr: `Check constraint "mytbl_chk_`,
+					Query: "insert into mytbl values (3, 5);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0041-insert-into-mytbl-values-3", Compare: "sqlstate"},
 				},
 				{
-					Query:    "select * from mytbl;",
-					Expected: []sql.Row{{1, 20}},
+					Query: "select * from mytbl;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0042-select-*-from-mytbl"},
 				},
 			},
 		},
@@ -284,12 +244,10 @@ func TestCreateTable(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "select * from t1;",
-					Expected: []sql.Row{{1, 2, 3}},
+					Query: "select * from t1;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0043-select-*-from-t1"},
 				},
 				{
-					Query:    "select * from t2;",
-					Expected: []sql.Row{{1, 2, 20}},
+					Query: "select * from t2;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0044-select-*-from-t2"},
 				},
 			},
 		},
@@ -324,8 +282,7 @@ func TestCreateTable(t *testing.T) {
 					Query: "insert into t1 (a) values (' foo ');",
 				},
 				{
-					Query:    "select * from t1;",
-					Expected: []sql.Row{{" foo ", "foo foo"}},
+					Query: "select * from t1;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0046-select-*-from-t1"},
 				},
 			},
 		},
@@ -342,11 +299,7 @@ func TestCreateTable(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "select * from t1 order by a;",
-					Expected: []sql.Row{
-						{"foo", "bar", "t"},
-						{"foo2", nil, "f"},
-					},
+					Query: "select * from t1 order by a;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0047-select-*-from-t1-order"},
 				},
 			},
 		},
@@ -363,11 +316,7 @@ func TestCreateTable(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "select * from t1 order by a;",
-					Expected: []sql.Row{
-						{"foo", "bar", "t"},
-						{"foo2", nil, "f"},
-					},
+					Query: "select * from t1 order by a;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0048-select-*-from-t1-order"},
 				},
 			},
 		},
@@ -381,14 +330,10 @@ func TestCreateTable(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "insert into t1 (b) values ('foo') returning a;",
-					Expected: []sql.Row{
-						{1},
-					},
+					Query: "insert into t1 (b) values ('foo') returning a;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0049-insert-into-t1-b-values"},
 				},
 				{
-					Query:       "insert into t1 (a, b) values (2, 'foo') returning a;",
-					ExpectedErr: "The value specified for generated column \"a\" in table \"t1\" is not allowed",
+					Query: "insert into t1 (a, b) values (2, 'foo') returning a;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0050-insert-into-t1-a-b", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -400,8 +345,7 @@ func TestCreateTable(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "select * from t1;",
-					Expected: []sql.Row{{"abc", "foobar"}},
+					Query: "select * from t1;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0051-select-*-from-t1"},
 				},
 			},
 		},
@@ -416,8 +360,7 @@ func TestCreateTable(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "select * from collate_test1;",
-					Expected: []sql.Row{{1, "foo"}},
+					Query: "select * from collate_test1;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0052-select-*-from-collate_test1"},
 				},
 			},
 		},
@@ -448,8 +391,7 @@ func TestCreateTable(t *testing.T) {
 			Name: "create temporary table with serial column",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "CREATE TEMP TABLE temp (id serial primary key)",
-					Expected: []sql.Row{},
+					Query: "CREATE TEMP TABLE temp (id serial primary key)", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0053-create-temp-table-temp-id"},
 				},
 				{
 					Query:    "INSERT INTO temp DEFAULT VALUES",
@@ -477,15 +419,10 @@ func TestCreateTable(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "insert into location values (1, 'Склад Москва', 'Внутренни'), (2, 'Склад Спб', null);",
-					Expected: []sql.Row{},
+					Query: "insert into location values (1, 'Склад Москва', 'Внутренни'), (2, 'Склад Спб', null);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0057-insert-into-location-values-1"},
 				},
 				{
-					Query: "SELECT * FROM location;",
-					Expected: []sql.Row{
-						{1, "Склад Москва", "Внутренни"},
-						{2, "Склад Спб", nil},
-					},
+					Query: "SELECT * FROM location;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0058-select-*-from-location"},
 				},
 			},
 		},
@@ -504,60 +441,40 @@ func TestCreateTableInherit(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "create table t4 (d int) inherits (t1, t2, t3);",
-					Expected: []sql.Row{},
+					Query: "create table t4 (d int) inherits (t1, t2, t3);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetableinherit-0001-create-table-t4-d-int"},
 				},
 				{
-					Query:    "insert into t4(a, b, c, d) values (1, 2, 3, 4);",
-					Expected: []sql.Row{},
+					Query: "insert into t4(a, b, c, d) values (1, 2, 3, 4);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetableinherit-0002-insert-into-t4-a-b"},
 				},
 				{
-					Query: "select * from t4;",
-					Expected: []sql.Row{
-						{1, 2, 3, 4},
-					},
+					Query: "select * from t4;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetableinherit-0003-select-*-from-t4"},
 				},
 				{
-					Query:    "create table t111 () inherits (t1, t11);",
-					Expected: []sql.Row{},
+					Query: "create table t111 () inherits (t1, t11);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetableinherit-0004-create-table-t111-inherits-t1"},
 				},
 				{
-					Query:    "insert into t111(a) values (1);",
-					Expected: []sql.Row{},
+					Query: "insert into t111(a) values (1);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetableinherit-0005-insert-into-t111-a-values"},
 				},
 				{
-					Query: "select * from t111;",
-					Expected: []sql.Row{
-						{1},
-					},
+					Query: "select * from t111;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetableinherit-0006-select-*-from-t111"},
 				},
 				{
-					Query:    "create table t1t1 (a int) inherits (t1);",
-					Expected: []sql.Row{},
+					Query: "create table t1t1 (a int) inherits (t1);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetableinherit-0007-create-table-t1t1-a-int"},
 				},
 				{
-					Query:    "insert into t1t1(a) values (1);",
-					Expected: []sql.Row{},
+					Query: "insert into t1t1(a) values (1);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetableinherit-0008-insert-into-t1t1-a-values"},
 				},
 				{
-					Query: "select * from t1t1;",
-					Expected: []sql.Row{
-						{1},
-					},
+					Query: "select * from t1t1;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetableinherit-0009-select-*-from-t1t1"},
 				},
 				{
-					Query:    "create table TT1t1 (A int) inherits (t1);",
-					Expected: []sql.Row{},
+					Query: "create table TT1t1 (A int) inherits (t1);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetableinherit-0010-create-table-tt1t1-a-int"},
 				},
 				{
-					Query:    "insert into TT1t1(a) values (1);",
-					Expected: []sql.Row{},
+					Query: "insert into TT1t1(a) values (1);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetableinherit-0011-insert-into-tt1t1-a-values"},
 				},
 				{
-					Query: "select * from TT1t1;",
-					Expected: []sql.Row{
-						{1},
-					},
+					Query: "select * from TT1t1;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetableinherit-0012-select-*-from-tt1t1"},
 				},
 			},
 		},

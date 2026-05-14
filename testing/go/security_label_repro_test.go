@@ -29,20 +29,16 @@ func TestSecurityLabelReachesProviderValidationRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SECURITY LABEL ON TABLE security_label_target IS 'classified';`,
-					ExpectedErr: `security label`,
+					Query: `SECURITY LABEL ON TABLE security_label_target IS 'classified';`, PostgresOracle: ScriptTestPostgresOracle{ID: "security-label-repro-test-testsecuritylabelreachesprovidervalidationrepro-0001-security-label-on-table-security_label_target", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SECURITY LABEL ON COLUMN security_label_target.id IS 'classified';`,
-					ExpectedErr: `security label`,
+					Query: `SECURITY LABEL ON COLUMN security_label_target.id IS 'classified';`, PostgresOracle: ScriptTestPostgresOracle{ID: "security-label-repro-test-testsecuritylabelreachesprovidervalidationrepro-0002-security-label-on-column-security_label_target.id", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SECURITY LABEL FOR 'dummy' ON TABLE security_label_target IS 'classified';`,
-					ExpectedErr: `security label`,
+					Query: `SECURITY LABEL FOR 'dummy' ON TABLE security_label_target IS 'classified';`, PostgresOracle: ScriptTestPostgresOracle{ID: "security-label-repro-test-testsecuritylabelreachesprovidervalidationrepro-0003-security-label-for-dummy-on", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SECURITY LABEL ON ROLE security_label_role IS 'classified';`,
-					ExpectedErr: `security label`,
+					Query: `SECURITY LABEL ON ROLE security_label_role IS 'classified';`, PostgresOracle: ScriptTestPostgresOracle{ID: "security-label-repro-test-testsecuritylabelreachesprovidervalidationrepro-0004-security-label-on-role-security_label_role", Compare: "sqlstate"},
 				},
 			},
 		},

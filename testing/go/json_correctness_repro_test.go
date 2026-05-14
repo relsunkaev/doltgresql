@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestJsonAggDistinctRequiresJsonEqualityOperatorRepro reproduces a query
@@ -30,17 +28,18 @@ func TestJsonAggDistinctRequiresJsonEqualityOperatorRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT json_agg(DISTINCT doc)::text
-						FROM (VALUES ('{"a":1}'::json), ('{"a":1}'::json)) AS v(doc);`,
-					ExpectedErr: `could not identify an equality operator for type json`,
+						FROM (VALUES ('{"a":1}'::json), ('{"a":1}'::json)) AS v(doc);`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonaggdistinctrequiresjsonequalityoperatorrepro-0001-select-json_agg-distinct-doc-::text",
+
+						// TestJsonObjectAggDistinctRequiresJsonEqualityOperatorRepro reproduces a
+						// query correctness bug: PostgreSQL rejects DISTINCT rows containing json
+						// values because json does not have an equality operator.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestJsonObjectAggDistinctRequiresJsonEqualityOperatorRepro reproduces a
-// query correctness bug: PostgreSQL rejects DISTINCT rows containing json
-// values because json does not have an equality operator.
 func TestJsonObjectAggDistinctRequiresJsonEqualityOperatorRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -48,16 +47,17 @@ func TestJsonObjectAggDistinctRequiresJsonEqualityOperatorRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT json_object_agg(DISTINCT key, doc)::text
-						FROM (VALUES ('a', '{"x":1}'::json), ('a', '{"x":1}'::json)) AS v(key, doc);`,
-					ExpectedErr: `could not identify an equality operator for type json`,
+						FROM (VALUES ('a', '{"x":1}'::json), ('a', '{"x":1}'::json)) AS v(key, doc);`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonobjectaggdistinctrequiresjsonequalityoperatorrepro-0001-select-json_object_agg-distinct-key-doc",
+
+						// TestJsonbAggDistinctDeduplicatesJsonbValuesRepro reproduces a query
+						// correctness bug: DISTINCT jsonb aggregate inputs are not deduplicated.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestJsonbAggDistinctDeduplicatesJsonbValuesRepro reproduces a query
-// correctness bug: DISTINCT jsonb aggregate inputs are not deduplicated.
 func TestJsonbAggDistinctDeduplicatesJsonbValuesRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -65,8 +65,7 @@ func TestJsonbAggDistinctDeduplicatesJsonbValuesRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT jsonb_agg(DISTINCT doc)::text
-						FROM (VALUES ('{"a":1}'::jsonb), ('{"a":1}'::jsonb)) AS v(doc);`,
-					Expected: []sql.Row{{`[{"a": 1}]`}},
+						FROM (VALUES ('{"a":1}'::jsonb), ('{"a":1}'::jsonb)) AS v(doc);`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonbaggdistinctdeduplicatesjsonbvaluesrepro-0001-select-jsonb_agg-distinct-doc-::text"},
 				},
 			},
 		},
@@ -181,75 +180,72 @@ func TestJsonBuildObjectRejectsNonScalarKeysRepro(t *testing.T) {
 			Name: "json_build_object rejects non-scalar keys",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT json_build_object(json '{"a":1}', 2);`,
-					ExpectedErr: `key value must be scalar, not array, composite, or json`,
+					Query: `SELECT json_build_object(json '{"a":1}', 2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonbuildobjectrejectsnonscalarkeysrepro-0001-select-json_build_object-json-{-a", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SELECT json_build_object(ARRAY[1,2,3], 2);`,
-					ExpectedErr: `key value must be scalar, not array, composite, or json`,
+					Query: `SELECT json_build_object(ARRAY[1,2,3], 2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonbuildobjectrejectsnonscalarkeysrepro-0002-select-json_build_object-array[1-2-3]", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SELECT json_build_object(r, 2) FROM (SELECT 1 AS a, 2 AS b) AS r;`,
-					ExpectedErr: `key value must be scalar, not array, composite, or json`,
+					Query: `SELECT json_build_object(r, 2) FROM (SELECT 1 AS a, 2 AS b) AS r;`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonbuildobjectrejectsnonscalarkeysrepro-0003-select-json_build_object-r-2-from",
+
+						// TestJsonbBuildObjectRejectsNonScalarKeysRepro reproduces a JSONB correctness
+						// bug: PostgreSQL rejects array, composite, and JSON values used as
+						// jsonb_build_object keys.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestJsonbBuildObjectRejectsNonScalarKeysRepro reproduces a JSONB correctness
-// bug: PostgreSQL rejects array, composite, and JSON values used as
-// jsonb_build_object keys.
 func TestJsonbBuildObjectRejectsNonScalarKeysRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "jsonb_build_object rejects non-scalar keys",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT jsonb_build_object(json '{"a":1}', 2);`,
-					ExpectedErr: `key value must be scalar, not array, composite, or json`,
+					Query: `SELECT jsonb_build_object(json '{"a":1}', 2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonbbuildobjectrejectsnonscalarkeysrepro-0001-select-jsonb_build_object-json-{-a", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SELECT jsonb_build_object(ARRAY[1,2,3], 2);`,
-					ExpectedErr: `key value must be scalar, not array, composite, or json`,
+					Query: `SELECT jsonb_build_object(ARRAY[1,2,3], 2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonbbuildobjectrejectsnonscalarkeysrepro-0002-select-jsonb_build_object-array[1-2-3]", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SELECT jsonb_build_object(r, 2) FROM (SELECT 1 AS a, 2 AS b) AS r;`,
-					ExpectedErr: `key value must be scalar, not array, composite, or json`,
+					Query: `SELECT jsonb_build_object(r, 2) FROM (SELECT 1 AS a, 2 AS b) AS r;`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonbbuildobjectrejectsnonscalarkeysrepro-0003-select-jsonb_build_object-r-2-from",
+
+						// TestJsonObjectAggRejectsNonScalarKeysRepro reproduces a JSON correctness bug:
+						// PostgreSQL rejects array, composite, and JSON values used as json_object_agg
+						// keys.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestJsonObjectAggRejectsNonScalarKeysRepro reproduces a JSON correctness bug:
-// PostgreSQL rejects array, composite, and JSON values used as json_object_agg
-// keys.
 func TestJsonObjectAggRejectsNonScalarKeysRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "json_object_agg rejects non-scalar keys",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT json_object_agg(k, 2) FROM (VALUES (json '{"a":1}')) AS v(k);`,
-					ExpectedErr: `key value must be scalar, not array, composite, or json`,
+					Query: `SELECT json_object_agg(k, 2) FROM (VALUES (json '{"a":1}')) AS v(k);`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonobjectaggrejectsnonscalarkeysrepro-0001-select-json_object_agg-k-2-from", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SELECT json_object_agg(k, 2) FROM (VALUES (ARRAY[1,2,3])) AS v(k);`,
-					ExpectedErr: `key value must be scalar, not array, composite, or json`,
+					Query: `SELECT json_object_agg(k, 2) FROM (VALUES (ARRAY[1,2,3])) AS v(k);`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonobjectaggrejectsnonscalarkeysrepro-0002-select-json_object_agg-k-2-from", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SELECT json_object_agg(r, 2) FROM (SELECT 1 AS a, 2 AS b) AS r;`,
-					ExpectedErr: `key value must be scalar, not array, composite, or json`,
+					Query: `SELECT json_object_agg(r, 2) FROM (SELECT 1 AS a, 2 AS b) AS r;`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonobjectaggrejectsnonscalarkeysrepro-0003-select-json_object_agg-r-2-from",
+
+						// TestJsonAggregatesPreserveJsonInputTextRepro reproduces a JSON correctness
+						// bug: PostgreSQL's plain json aggregate outputs preserve input json object
+						// text, including object order, duplicate keys, and whitespace.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestJsonAggregatesPreserveJsonInputTextRepro reproduces a JSON correctness
-// bug: PostgreSQL's plain json aggregate outputs preserve input json object
-// text, including object order, duplicate keys, and whitespace.
 func TestJsonAggregatesPreserveJsonInputTextRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -324,25 +320,24 @@ func TestJsonbObjectAggRejectsNonScalarKeysRepro(t *testing.T) {
 			Name: "jsonb_object_agg rejects non-scalar keys",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT jsonb_object_agg(k, 2) FROM (VALUES (json '{"a":1}')) AS v(k);`,
-					ExpectedErr: `key value must be scalar, not array, composite, or json`,
+					Query: `SELECT jsonb_object_agg(k, 2) FROM (VALUES (json '{"a":1}')) AS v(k);`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonbobjectaggrejectsnonscalarkeysrepro-0001-select-jsonb_object_agg-k-2-from", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SELECT jsonb_object_agg(k, 2) FROM (VALUES (ARRAY[1,2,3])) AS v(k);`,
-					ExpectedErr: `key value must be scalar, not array, composite, or json`,
+					Query: `SELECT jsonb_object_agg(k, 2) FROM (VALUES (ARRAY[1,2,3])) AS v(k);`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonbobjectaggrejectsnonscalarkeysrepro-0002-select-jsonb_object_agg-k-2-from", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SELECT jsonb_object_agg(r, 2) FROM (SELECT 1 AS a, 2 AS b) AS r;`,
-					ExpectedErr: `key value must be scalar, not array, composite, or json`,
+					Query: `SELECT jsonb_object_agg(r, 2) FROM (SELECT 1 AS a, 2 AS b) AS r;`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonbobjectaggrejectsnonscalarkeysrepro-0003-select-jsonb_object_agg-r-2-from",
+
+						// TestJsonObjectAcceptsTwoDimensionalTextArrayRepro reproduces a JSON
+						// correctness bug: PostgreSQL accepts json_object(text[]) inputs shaped as a
+						// two-dimensional array with two columns.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestJsonObjectAcceptsTwoDimensionalTextArrayRepro reproduces a JSON
-// correctness bug: PostgreSQL accepts json_object(text[]) inputs shaped as a
-// two-dimensional array with two columns.
 func TestJsonObjectAcceptsTwoDimensionalTextArrayRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -350,11 +345,7 @@ func TestJsonObjectAcceptsTwoDimensionalTextArrayRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT json_object('{{a,1},{b,2},{3,NULL},{"d e f","a b c"}}'::text[])::jsonb::text,
-						jsonb_object('{{a,1},{b,2},{3,NULL},{"d e f","a b c"}}'::text[])::text;`,
-					Expected: []sql.Row{{
-						`{"3": null, "a": "1", "b": "2", "d e f": "a b c"}`,
-						`{"3": null, "a": "1", "b": "2", "d e f": "a b c"}`,
-					}},
+						jsonb_object('{{a,1},{b,2},{3,NULL},{"d e f","a b c"}}'::text[])::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonobjectacceptstwodimensionaltextarrayrepro-0001-select-json_object-{{a-1}-{b"},
 				},
 			},
 		},
@@ -370,58 +361,54 @@ func TestJsonObjectTwoDimensionalArrayRequiresTwoColumnsRepro(t *testing.T) {
 			Name: "json_object two-dimensional text array requires two columns",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT json_object('{{a},{b}}'::text[]);`,
-					ExpectedErr: `array must have two columns`,
+					Query: `SELECT json_object('{{a},{b}}'::text[]);`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonobjecttwodimensionalarrayrequirestwocolumnsrepro-0001-select-json_object-{{a}-{b}}-::text[]", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SELECT jsonb_object('{{a},{b}}'::text[]);`,
-					ExpectedErr: `array must have two columns`,
+					Query: `SELECT jsonb_object('{{a},{b}}'::text[]);`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonobjecttwodimensionalarrayrequirestwocolumnsrepro-0002-select-jsonb_object-{{a}-{b}}-::text[]", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SELECT json_object('{{a,b,c},{b,c,d}}'::text[]);`,
-					ExpectedErr: `array must have two columns`,
+					Query: `SELECT json_object('{{a,b,c},{b,c,d}}'::text[]);`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonobjecttwodimensionalarrayrequirestwocolumnsrepro-0003-select-json_object-{{a-b-c}", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SELECT jsonb_object('{{a,b,c},{b,c,d}}'::text[]);`,
-					ExpectedErr: `array must have two columns`,
+					Query: `SELECT jsonb_object('{{a,b,c},{b,c,d}}'::text[]);`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonobjecttwodimensionalarrayrequirestwocolumnsrepro-0004-select-jsonb_object-{{a-b-c}",
+
+						// TestJsonObjectTwoArrayFormMultidimensionalInputsErrorRepro reproduces a JSON
+						// correctness bug: PostgreSQL rejects multidimensional arrays in the two-array
+						// json_object(text[], text[]) form with a specific subscript error.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestJsonObjectTwoArrayFormMultidimensionalInputsErrorRepro reproduces a JSON
-// correctness bug: PostgreSQL rejects multidimensional arrays in the two-array
-// json_object(text[], text[]) form with a specific subscript error.
 func TestJsonObjectTwoArrayFormMultidimensionalInputsErrorRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "json_object two-array form rejects multidimensional inputs",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT json_object('{{a,1},{b,2}}'::text[], '{1,2}'::text[]);`,
-					ExpectedErr: `wrong number of array subscripts`,
+					Query: `SELECT json_object('{{a,1},{b,2}}'::text[], '{1,2}'::text[]);`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonobjecttwoarrayformmultidimensionalinputserrorrepro-0001-select-json_object-{{a-1}-{b", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SELECT jsonb_object('{{a,1},{b,2}}'::text[], '{1,2}'::text[]);`,
-					ExpectedErr: `wrong number of array subscripts`,
+					Query: `SELECT jsonb_object('{{a,1},{b,2}}'::text[], '{1,2}'::text[]);`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonobjecttwoarrayformmultidimensionalinputserrorrepro-0002-select-jsonb_object-{{a-1}-{b", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SELECT json_object('{a,b}'::text[], '{{1,2},{3,4}}'::text[]);`,
-					ExpectedErr: `wrong number of array subscripts`,
+					Query: `SELECT json_object('{a,b}'::text[], '{{1,2},{3,4}}'::text[]);`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonobjecttwoarrayformmultidimensionalinputserrorrepro-0003-select-json_object-{a-b}-::text[]", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SELECT jsonb_object('{a,b}'::text[], '{{1,2},{3,4}}'::text[]);`,
-					ExpectedErr: `wrong number of array subscripts`,
+					Query: `SELECT jsonb_object('{a,b}'::text[], '{{1,2},{3,4}}'::text[]);`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonobjecttwoarrayformmultidimensionalinputserrorrepro-0004-select-jsonb_object-{a-b}-::text[]",
+
+						// TestToJsonFloatNonFiniteValuesBecomeStringsRepro reproduces a JSON
+						// correctness bug: PostgreSQL converts non-finite float values to JSON strings
+						// rather than JSON numbers.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestToJsonFloatNonFiniteValuesBecomeStringsRepro reproduces a JSON
-// correctness bug: PostgreSQL converts non-finite float values to JSON strings
-// rather than JSON numbers.
 func TestToJsonFloatNonFiniteValuesBecomeStringsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -433,15 +420,7 @@ func TestToJsonFloatNonFiniteValuesBecomeStringsRepro(t *testing.T) {
 						to_json('-Infinity'::float8)::text,
 						to_jsonb('NaN'::float8)::text,
 						to_jsonb('Infinity'::float8)::text,
-						to_jsonb('-Infinity'::float8)::text;`,
-					Expected: []sql.Row{{
-						`"NaN"`,
-						`"Infinity"`,
-						`"-Infinity"`,
-						`"NaN"`,
-						`"Infinity"`,
-						`"-Infinity"`,
-					}},
+						to_jsonb('-Infinity'::float8)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testtojsonfloatnonfinitevaluesbecomestringsrepro-0001-select-to_json-nan-::float8-::text"},
 				},
 			},
 		},
@@ -460,13 +439,7 @@ func TestJsonBuildersFloatNonFiniteValuesBecomeStringsRepro(t *testing.T) {
 					Query: `SELECT json_build_array('NaN'::float8, 'Infinity'::float8)::text,
 						jsonb_build_array('NaN'::float8, '-Infinity'::float8)::text,
 						json_build_object('x', 'NaN'::float8)::text,
-						jsonb_build_object('x', 'Infinity'::float8)::text;`,
-					Expected: []sql.Row{{
-						`["NaN", "Infinity"]`,
-						`["NaN", "-Infinity"]`,
-						`{"x" : "NaN"}`,
-						`{"x": "Infinity"}`,
-					}},
+						jsonb_build_object('x', 'Infinity'::float8)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonbuildersfloatnonfinitevaluesbecomestringsrepro-0001-select-json_build_array-nan-::float8-infinity"},
 				},
 			},
 		},
@@ -485,13 +458,7 @@ func TestJsonFloatNegativeZeroPreservesJsonSpellingRepro(t *testing.T) {
 					Query: `SELECT to_json('-0'::float8)::text,
 						to_jsonb('-0'::float8)::text,
 						json_build_array('-0'::float8)::text,
-						jsonb_build_array('-0'::float8)::text;`,
-					Expected: []sql.Row{{
-						`-0`,
-						`0`,
-						`[-0]`,
-						`[0]`,
-					}},
+						jsonb_build_array('-0'::float8)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonfloatnegativezeropreservesjsonspellingrepro-0001-select-to_json-0-::float8-::text"},
 				},
 			},
 		},
@@ -508,11 +475,7 @@ func TestToJsonMultidimensionalArrayPreservesNestingRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT to_json('{{1,2},{3,4}}'::int[])::text,
-						to_jsonb('{{1,2},{3,4}}'::int[])::text;`,
-					Expected: []sql.Row{{
-						`[[1,2],[3,4]]`,
-						`[[1, 2], [3, 4]]`,
-					}},
+						to_jsonb('{{1,2},{3,4}}'::int[])::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testtojsonmultidimensionalarraypreservesnestingrepro-0001-select-to_json-{{1-2}-{3"},
 				},
 			},
 		},
@@ -531,13 +494,7 @@ func TestToJsonDateTimestampUsePostgresFormattingRepro(t *testing.T) {
 					Query: `SELECT to_json('2020-01-02'::date)::text,
 						to_jsonb('2020-01-02'::date)::text,
 						to_json('2020-01-02 03:04:05.123456'::timestamp)::text,
-						to_jsonb('2020-01-02 03:04:05.123456'::timestamp)::text;`,
-					Expected: []sql.Row{{
-						`"2020-01-02"`,
-						`"2020-01-02"`,
-						`"2020-01-02T03:04:05.123456"`,
-						`"2020-01-02T03:04:05.123456"`,
-					}},
+						to_jsonb('2020-01-02 03:04:05.123456'::timestamp)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testtojsondatetimestampusepostgresformattingrepro-0001-select-to_json-2020-01-02-::date-::text"},
 				},
 			},
 		},
@@ -560,13 +517,7 @@ func TestJsonBuildersDateTimestampUsePostgresFormattingRepro(t *testing.T) {
 						json_build_object('d', '2020-01-02'::date,
 							'ts', '2020-01-02 03:04:05.123456'::timestamp)::text,
 						jsonb_build_object('d', '2020-01-02'::date,
-							'ts', '2020-01-02 03:04:05.123456'::timestamp)::text;`,
-					Expected: []sql.Row{{
-						`["2020-01-02", "2020-01-02T03:04:05.123456"]`,
-						`["2020-01-02", "2020-01-02T03:04:05.123456"]`,
-						`{"d" : "2020-01-02", "ts" : "2020-01-02T03:04:05.123456"}`,
-						`{"d": "2020-01-02", "ts": "2020-01-02T03:04:05.123456"}`,
-					}},
+							'ts', '2020-01-02 03:04:05.123456'::timestamp)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonbuildersdatetimestampusepostgresformattingrepro-0001-select-json_build_array-2020-01-02-::date-2020-01-02"},
 				},
 			},
 		},
@@ -584,12 +535,7 @@ func TestToJsonRecordPreservesFieldOrderRepro(t *testing.T) {
 					Query: `SELECT to_json(r)::text,
 						row_to_json(r)::text,
 						to_jsonb(r)::text
-						FROM (SELECT 1 AS b, 2 AS a) AS r;`,
-					Expected: []sql.Row{{
-						`{"b":1,"a":2}`,
-						`{"b":1,"a":2}`,
-						`{"a": 2, "b": 1}`,
-					}},
+						FROM (SELECT 1 AS b, 2 AS a) AS r;`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testtojsonrecordpreservesfieldorderrepro-0001-select-to_json-r-::text-row_to_json"},
 				},
 			},
 		},
@@ -609,8 +555,7 @@ func TestJsonbComparisonTypePrecedenceMatchesPostgresRepro(t *testing.T) {
 						'null'::jsonb < '"a"'::jsonb,
 						'"a"'::jsonb < '1'::jsonb,
 						'1'::jsonb < 'false'::jsonb,
-						'false'::jsonb < '{}'::jsonb;`,
-					Expected: []sql.Row{{"t", "t", "t", "t", "t"}},
+						'false'::jsonb < '{}'::jsonb;`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonbcomparisontypeprecedencematchespostgresrepro-0001-select-[]-::jsonb-<-null"},
 				},
 			},
 		},
@@ -626,8 +571,7 @@ func TestJsonbPathMatchJsonNullReturnsSqlNullRepro(t *testing.T) {
 			Name: "jsonb_path_match maps JSON null to SQL null",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT jsonb_path_match('null'::jsonb, '$');`,
-					Expected: []sql.Row{{nil}},
+					Query: `SELECT jsonb_path_match('null'::jsonb, '$');`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonbpathmatchjsonnullreturnssqlnullrepro-0001-select-jsonb_path_match-null-::jsonb-$"},
 				},
 			},
 		},
@@ -643,17 +587,18 @@ func TestJsonbPathMatchRequiresSingleBooleanResultRepro(t *testing.T) {
 			Name: "jsonb_path_match rejects non-boolean results",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT jsonb_path_match('[true]'::jsonb, '$');`,
-					ExpectedErr: `single boolean result is expected`,
+					Query: `SELECT jsonb_path_match('[true]'::jsonb, '$');`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonbpathmatchrequiressinglebooleanresultrepro-0001-select-jsonb_path_match-[true]-::jsonb-$",
+
+						// TestJsonbPathQueryArrayFilterPredicateRepro reproduces a jsonpath
+						// correctness bug: PostgreSQL applies filter predicates inside jsonpath
+						// queries, but Doltgres rejects the accepted expression.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestJsonbPathQueryArrayFilterPredicateRepro reproduces a jsonpath
-// correctness bug: PostgreSQL applies filter predicates inside jsonpath
-// queries, but Doltgres rejects the accepted expression.
 func TestJsonbPathQueryArrayFilterPredicateRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -661,8 +606,7 @@ func TestJsonbPathQueryArrayFilterPredicateRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT jsonb_path_query_array('[{"a": 1}, {"a": 2}]'::jsonb,
-						'$[*].a ? (@ > 1)')::text;`,
-					Expected: []sql.Row{{`[2]`}},
+						'$[*].a ? (@ > 1)')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonbpathqueryarrayfilterpredicaterepro-0001-select-jsonb_path_query_array-[{-a-:"},
 				},
 			},
 		},
@@ -681,8 +625,7 @@ func TestJsonpathPostgres16NumericLiteralSyntaxRepro(t *testing.T) {
 					Query: `SELECT jsonb_path_match('1000'::jsonb, '$ == 1_000'),
 						jsonb_path_match('16'::jsonb, '$ == 0x10'),
 						jsonb_path_match('8'::jsonb, '$ == 0o10'),
-						jsonb_path_match('10'::jsonb, '$ == 0b1010');`,
-					Expected: []sql.Row{{true, true, true, true}},
+						jsonb_path_match('10'::jsonb, '$ == 0b1010');`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonpathpostgres16numericliteralsyntaxrepro-0001-select-jsonb_path_match-1000-::jsonb-$"},
 				},
 			},
 		},
@@ -699,8 +642,7 @@ func TestJsonbNestedArrayContainmentGuard(t *testing.T) {
 				{
 					Query: `SELECT '[1,[2,3],4]'::jsonb @> '[[2,3]]'::jsonb,
 						'[[2,3]]'::jsonb <@ '[1,[2,3],4]'::jsonb,
-						'{"a":[1,[2,3]]}'::jsonb @> '{"a":[[2,3]]}'::jsonb;`,
-					Expected: []sql.Row{{"t", "t", "t"}},
+						'{"a":[1,[2,3]]}'::jsonb @> '{"a":[[2,3]]}'::jsonb;`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonbnestedarraycontainmentguard-0001-select-[1-[2-3]-4]"},
 				},
 			},
 		},
@@ -720,8 +662,7 @@ func TestJsonbArrayContainmentSemanticsGuard(t *testing.T) {
 						'2'::jsonb <@ '[1,2,3]'::jsonb,
 						'[1]'::jsonb @> '[1,1]'::jsonb,
 						'[1,2,3]'::jsonb @> '[3,1]'::jsonb,
-						'[1,2,3]'::jsonb @> '[[1]]'::jsonb;`,
-					Expected: []sql.Row{{"t", "t", "t", "t", "f"}},
+						'[1,2,3]'::jsonb @> '[[1]]'::jsonb;`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonbarraycontainmentsemanticsguard-0001-select-[1-2-3]-::jsonb"},
 				},
 			},
 		},
@@ -737,8 +678,7 @@ func TestJsonbObjectContainmentSemanticsGuard(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT '{"a":1, "b":2}'::jsonb @> '{"b":2}'::jsonb,
-						'{"b":2}'::jsonb <@ '{"a":1, "b":2}'::jsonb;`,
-					Expected: []sql.Row{{"t", "t"}},
+						'{"b":2}'::jsonb <@ '{"a":1, "b":2}'::jsonb;`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonbobjectcontainmentsemanticsguard-0001-select-{-a-:1-b"},
 				},
 			},
 		},
@@ -754,8 +694,7 @@ func TestJsonbSetEmptyPathReplacesWholeDocumentRepro(t *testing.T) {
 			Name: "jsonb_set empty path replaces whole document",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT jsonb_set('{"a":1}'::jsonb, '{}', '2'::jsonb)::text;`,
-					Expected: []sql.Row{{`2`}},
+					Query: `SELECT jsonb_set('{"a":1}'::jsonb, '{}', '2'::jsonb)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonbsetemptypathreplaceswholedocumentrepro-0001-select-jsonb_set-{-a-:1}"},
 				},
 			},
 		},
@@ -783,8 +722,7 @@ func TestJsonbSetEmptyPathUpdateReplacesStoredDocumentRepro(t *testing.T) {
 						WHERE id = 1;`,
 				},
 				{
-					Query:    `SELECT doc::text FROM jsonb_set_empty_path_items;`,
-					Expected: []sql.Row{{`2`}},
+					Query: `SELECT doc::text FROM jsonb_set_empty_path_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonbsetemptypathupdatereplacesstoreddocumentrepro-0001-select-doc::text-from-jsonb_set_empty_path_items"},
 				},
 			},
 		},
@@ -800,8 +738,7 @@ func TestJsonbSetLaxEmptyPathReplacesWholeDocumentRepro(t *testing.T) {
 			Name: "jsonb_set_lax empty path replaces whole document",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT jsonb_set_lax('{"a":1}'::jsonb, '{}', '2'::jsonb)::text;`,
-					Expected: []sql.Row{{`2`}},
+					Query: `SELECT jsonb_set_lax('{"a":1}'::jsonb, '{}', '2'::jsonb)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonbsetlaxemptypathreplaceswholedocumentrepro-0001-select-jsonb_set_lax-{-a-:1}"},
 				},
 			},
 		},
@@ -820,8 +757,7 @@ func TestJsonbExistsDecodesEscapedStringElementsRepro(t *testing.T) {
 					Query: `SELECT '["a\nb"]'::jsonb ? E'a\nb',
 						'"a\nb"'::jsonb ? E'a\nb',
 						'["a\nb","c"]'::jsonb ?| ARRAY[E'a\nb'],
-						'["a\nb","c"]'::jsonb ?& ARRAY[E'a\nb','c'];`,
-					Expected: []sql.Row{{"t", "t", "t", "t"}},
+						'["a\nb","c"]'::jsonb ?& ARRAY[E'a\nb','c'];`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonbexistsdecodesescapedstringelementsrepro-0001-select-[-a\\nb-]-::jsonb"},
 				},
 			},
 		},
@@ -836,17 +772,18 @@ func TestJsonbSetRejectsScalarTargetRepro(t *testing.T) {
 			Name: "jsonb_set rejects scalar targets",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT jsonb_set('"a"'::jsonb, '{a}', '"b"'::jsonb);`,
-					ExpectedErr: `cannot set path in scalar`,
+					Query: `SELECT jsonb_set('"a"'::jsonb, '{a}', '"b"'::jsonb);`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonbsetrejectsscalartargetrepro-0001-select-jsonb_set-a-::jsonb-{a}",
+
+						// TestJsonbSetArrayPathRequiresIntegerRepro reproduces a JSONB correctness bug:
+						// PostgreSQL rejects non-integer path elements when the path descends through a
+						// JSONB array.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestJsonbSetArrayPathRequiresIntegerRepro reproduces a JSONB correctness bug:
-// PostgreSQL rejects non-integer path elements when the path descends through a
-// JSONB array.
 func TestJsonbSetArrayPathRequiresIntegerRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -854,51 +791,54 @@ func TestJsonbSetArrayPathRequiresIntegerRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT jsonb_set('{"a":[1,2,3]}'::jsonb,
-						'{a,not_an_int}', '"new_value"'::jsonb);`,
-					ExpectedErr: `path element at position 2 is not an integer: "not_an_int"`,
+						'{a,not_an_int}', '"new_value"'::jsonb);`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonbsetarraypathrequiresintegerrepro-0001-select-jsonb_set-{-a-:[1",
+
+						// TestJsonbInsertRejectsScalarTargetRepro reproduces a JSONB correctness bug:
+						// PostgreSQL rejects attempts to insert a nested path inside a scalar JSONB
+						// value.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestJsonbInsertRejectsScalarTargetRepro reproduces a JSONB correctness bug:
-// PostgreSQL rejects attempts to insert a nested path inside a scalar JSONB
-// value.
 func TestJsonbInsertRejectsScalarTargetRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "jsonb_insert rejects scalar targets",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT jsonb_insert('"a"'::jsonb, '{a}', '"b"'::jsonb);`,
-					ExpectedErr: `cannot set path in scalar`,
+					Query: `SELECT jsonb_insert('"a"'::jsonb, '{a}', '"b"'::jsonb);`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonbinsertrejectsscalartargetrepro-0001-select-jsonb_insert-a-::jsonb-{a}",
+
+						// TestJsonbInsertRejectsExistingObjectKeyRepro reproduces a JSONB correctness
+						// bug: PostgreSQL rejects jsonb_insert when the target object key already
+						// exists.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestJsonbInsertRejectsExistingObjectKeyRepro reproduces a JSONB correctness
-// bug: PostgreSQL rejects jsonb_insert when the target object key already
-// exists.
 func TestJsonbInsertRejectsExistingObjectKeyRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "jsonb_insert rejects existing object keys",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT jsonb_insert('{"a":1}'::jsonb, '{a}', '2'::jsonb);`,
-					ExpectedErr: `cannot replace existing key`,
+					Query: `SELECT jsonb_insert('{"a":1}'::jsonb, '{a}', '2'::jsonb);`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonbinsertrejectsexistingobjectkeyrepro-0001-select-jsonb_insert-{-a-:1}",
+
+						// TestJsonbExtractPathNullElementReturnsNullGuard guards PostgreSQL JSONB path
+						// extraction semantics: a NULL path element returns SQL NULL for both JSONB and
+						// text extraction operators.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestJsonbExtractPathNullElementReturnsNullGuard guards PostgreSQL JSONB path
-// extraction semantics: a NULL path element returns SQL NULL for both JSONB and
-// text extraction operators.
 func TestJsonbExtractPathNullElementReturnsNullGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -906,8 +846,7 @@ func TestJsonbExtractPathNullElementReturnsNullGuard(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT '{"a":{"b":{"c":"foo"}}}'::jsonb #> ARRAY['a', NULL]::text[],
-						'{"a":{"b":{"c":"foo"}}}'::jsonb #>> ARRAY['a', NULL]::text[];`,
-					Expected: []sql.Row{{nil, nil}},
+						'{"a":{"b":{"c":"foo"}}}'::jsonb #>> ARRAY['a', NULL]::text[];`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonbextractpathnullelementreturnsnullguard-0001-select-{-a-:{-b"},
 				},
 			},
 		},
@@ -932,8 +871,7 @@ func TestJsonbSubscriptUpdatePersistsNestedDocumentRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT doc['a']['b']::text FROM jsonb_subscript_update_items;`,
-					Expected: []sql.Row{{"1"}},
+					Query: `SELECT doc['a']['b']::text FROM jsonb_subscript_update_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonbsubscriptupdatepersistsnesteddocumentrepro-0001-select-doc[-a-][-b"},
 				},
 				{
 					Query: `UPDATE jsonb_subscript_update_items
@@ -941,8 +879,7 @@ func TestJsonbSubscriptUpdatePersistsNestedDocumentRepro(t *testing.T) {
 						WHERE id = 1;`,
 				},
 				{
-					Query:    `SELECT doc::text FROM jsonb_subscript_update_items;`,
-					Expected: []sql.Row{{`{"a": {"b": 2}, "keep": true}`}},
+					Query: `SELECT doc::text FROM jsonb_subscript_update_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonbsubscriptupdatepersistsnesteddocumentrepro-0002-select-doc::text-from-jsonb_subscript_update_items"},
 				},
 			},
 		},
@@ -971,8 +908,7 @@ func TestJsonbDeleteOperatorPersistsStoredDocumentRepro(t *testing.T) {
 						WHERE id = 1;`,
 				},
 				{
-					Query:    `SELECT doc::text FROM jsonb_delete_operator_items;`,
-					Expected: []sql.Row{{`{"keep": true}`}},
+					Query: `SELECT doc::text FROM jsonb_delete_operator_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonbdeleteoperatorpersistsstoreddocumentrepro-0001-select-doc::text-from-jsonb_delete_operator_items"},
 				},
 			},
 		},
@@ -1009,11 +945,7 @@ func TestJsonbInsertPersistsNestedArrayUpdateGuard(t *testing.T) {
 				{
 					Query: `SELECT id, doc::text
 						FROM jsonb_insert_update_items
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, `{"a": [1, 2, 3], "keep": true}`},
-						{2, `{"a": [1, 3, 2], "keep": true}`},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonbinsertpersistsnestedarrayupdateguard-0001-select-id-doc::text-from-jsonb_insert_update_items"},
 				},
 			},
 		},
@@ -1042,57 +974,7 @@ func TestJsonbSetLaxDeleteKeyPersistsStoredDocumentRepro(t *testing.T) {
 						WHERE id = 1;`,
 				},
 				{
-					Query:    `SELECT doc::text FROM jsonb_set_lax_delete_key_items;`,
-					Expected: []sql.Row{{`{"keep": true}`}},
-				},
-			},
-		},
-	})
-}
-
-// TestPostgres18JsonStripNullsStripInArraysRepro reproduces a PostgreSQL 18
-// compatibility gap: json_strip_nulls/jsonb_strip_nulls accept a second
-// strip_in_arrays argument that removes null array elements when true.
-func TestPostgres18JsonStripNullsStripInArraysRepro(t *testing.T) {
-	RunScripts(t, []ScriptTest{
-		{
-			Name: "json strip nulls supports strip_in_arrays",
-			Assertions: []ScriptTestAssertion{
-				{
-					Query:    `SELECT json_strip_nulls('[1,null,{"a":null,"b":2}]'::json, true)::text;`,
-					Expected: []sql.Row{{`[1,{"b":2}]`}},
-				},
-				{
-					Query:    `SELECT jsonb_strip_nulls('[1,null,{"a":null,"b":2}]'::jsonb, true)::text;`,
-					Expected: []sql.Row{{`[1, {"b": 2}]`}},
-				},
-				{
-					Query:    `SELECT jsonb_strip_nulls('[1,null,{"a":null,"b":2}]'::jsonb, false)::text;`,
-					Expected: []sql.Row{{`[1, null, {"b": 2}]`}},
-				},
-				{
-					Query:    `SELECT json_strip_nulls('null'::json, true)::text, jsonb_strip_nulls('null'::jsonb, true)::text;`,
-					Expected: []sql.Row{{`null`, `null`}},
-				},
-			},
-		},
-	})
-}
-
-// TestPostgres18JsonbNullCastsToSqlNullRepro reproduces a PostgreSQL 18
-// compatibility gap: jsonb null values cast to scalar SQL types as SQL NULL
-// instead of raising an error.
-func TestPostgres18JsonbNullCastsToSqlNullRepro(t *testing.T) {
-	RunScripts(t, []ScriptTest{
-		{
-			Name: "jsonb null casts to scalar SQL null",
-			Assertions: []ScriptTestAssertion{
-				{
-					Query: `SELECT
-						(('null'::jsonb)::int4 IS NULL)::text,
-						(('null'::jsonb)::bool IS NULL)::text,
-						(('null'::jsonb)::numeric IS NULL)::text;`,
-					Expected: []sql.Row{{"true", "true", "true"}},
+					Query: `SELECT doc::text FROM jsonb_set_lax_delete_key_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonbsetlaxdeletekeypersistsstoreddocumentrepro-0001-select-doc::text-from-jsonb_set_lax_delete_key_items"},
 				},
 			},
 		},

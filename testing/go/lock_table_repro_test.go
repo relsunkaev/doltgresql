@@ -241,17 +241,18 @@ func TestLockTableRequiresTransactionBlockRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `LOCK TABLE lock_transaction_target IN ACCESS EXCLUSIVE MODE;`,
-					ExpectedErr: `can only be used in transaction blocks`,
+					Query: `LOCK TABLE lock_transaction_target IN ACCESS EXCLUSIVE MODE;`, PostgresOracle: ScriptTestPostgresOracle{ID: "lock-table-repro-test-testlocktablerequirestransactionblockrepro-0001-lock-table-lock_transaction_target-in-access",
+
+						// TestLockTableNowaitRejectsConflictingLocksRepro reproduces a data consistency
+						// bug: PostgreSQL rejects conflicting LOCK TABLE ... NOWAIT attempts
+						// immediately while another transaction holds an incompatible table lock.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestLockTableNowaitRejectsConflictingLocksRepro reproduces a data consistency
-// bug: PostgreSQL rejects conflicting LOCK TABLE ... NOWAIT attempts
-// immediately while another transaction holds an incompatible table lock.
 func TestLockTableNowaitRejectsConflictingLocksRepro(t *testing.T) {
 	port, err := sql.GetEmptyPort()
 	require.NoError(t, err)
@@ -319,10 +320,10 @@ func TestLockTableRequiresTablePrivilegeRepro(t *testing.T) {
 					Password: `lock`,
 				},
 				{
-					Query:       `LOCK TABLE lock_table_private IN ACCESS EXCLUSIVE MODE;`,
-					ExpectedErr: `permission denied`,
-					Username:    `lock_table_user`,
-					Password:    `lock`,
+					Query: `LOCK TABLE lock_table_private IN ACCESS EXCLUSIVE MODE;`,
+
+					Username: `lock_table_user`,
+					Password: `lock`, PostgresOracle: ScriptTestPostgresOracle{ID: "lock-table-repro-test-testlocktablerequirestableprivilegerepro-0001-lock-table-lock_table_private-in-access", Compare: "sqlstate"},
 				},
 				{
 					Query:    `ROLLBACK;`,

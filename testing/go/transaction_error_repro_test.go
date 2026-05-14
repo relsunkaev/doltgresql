@@ -39,8 +39,7 @@ func TestTransactionErrorRollsBackTransactionOnCommitRepro(t *testing.T) {
 					Query: `INSERT INTO transaction_error_items VALUES (1, 'before error');`,
 				},
 				{
-					Query:       `INSERT INTO transaction_error_items VALUES (1, 'duplicate');`,
-					ExpectedErr: `duplicate`,
+					Query: `INSERT INTO transaction_error_items VALUES (1, 'duplicate');`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-error-repro-test-testtransactionerrorrollsbacktransactiononcommitrepro-0001-insert-into-transaction_error_items-values-1", Compare: "sqlstate"},
 				},
 				{
 					Query:       `INSERT INTO transaction_error_items VALUES (2, 'after error');`,

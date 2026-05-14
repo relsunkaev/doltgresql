@@ -1,5 +1,5 @@
 {
-  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map do_block_probe_test.go --oracle-test-name TestDoBlockProbe",
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map do_block_probe_test.go --force-postgres-oracle",
   "sourceFile": "testing/go/do_block_probe_test.go",
   "defaultOracle": "internal",
   "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
@@ -49,6 +49,800 @@
       "errorSeverity": "ERROR",
       "query": "DO LANGUAGE sql $$\n\t\t\t\t\t\tSELECT 1;\n\t\t\t\t\t$$;",
       "querySha256": "3c3b721a6fd3d98d6ceda05a3d8eccf44f0b90beea89c218b0f1885fbc5ad7d5",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0001",
+      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "ordinal": 1,
+      "scriptName": "DO block runs declarations loops and DML",
+      "oracle": "postgres",
+      "postgresId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0001-select-array_to_string-array_agg-label-order",
+      "suggestedId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0001-select-array_to_string-array_agg-label-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT array_to_string(array_agg(label ORDER BY id), ',') FROM do_loop_log;",
+      "querySha256": "690b0ec7215900efd01ca573d0a0a6400ba6376d1a5adb6cd77e9ef3d9189fd8",
+      "expectedRows": [
+        [
+          {
+            "value": "alpha,beta,gamma"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0002",
+      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "ordinal": 2,
+      "scriptName": "DO block runs SELECT INTO FOUND query loops and PERFORM",
+      "oracle": "postgres",
+      "postgresId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0002-select-id-label-touched-from",
+      "suggestedId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0002-select-id-label-touched-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label, touched FROM do_items ORDER BY id;",
+      "querySha256": "4732021de81c33e6659b4768130b98e78e2c0e734e14af525ff4ccec68a1c8ea",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "one-seen"
+          },
+          {
+            "value": "f"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "two"
+          },
+          {
+            "value": "t"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "three-seen"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0003",
+      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "ordinal": 3,
+      "scriptName": "DO block runs SELECT INTO FOUND query loops and PERFORM",
+      "oracle": "postgres",
+      "postgresId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0003-select-nextval-do_perform_seq",
+      "suggestedId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0003-select-nextval-do_perform_seq",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('do_perform_seq');",
+      "querySha256": "9eb7a7f37e3c0bd8d8809d27b9aa8bd2cc45760fa6658fc5c60b17f9110a23db",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0004",
+      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "ordinal": 4,
+      "scriptName": "DO block runs dynamic EXECUTE format with USING parameters",
+      "oracle": "postgres",
+      "postgresId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0004-select-label-from-do_dynamic_target-where",
+      "suggestedId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0004-select-label-from-do_dynamic_target-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT label FROM do_dynamic_target WHERE id = 7;",
+      "querySha256": "3b6ac0daa50840aa5e42bab32a07e7eb6ab83e029602a247356d5c50d4649fce",
+      "expectedRows": [
+        [
+          {
+            "value": "made by execute"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0005",
+      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "ordinal": 5,
+      "scriptName": "DO block evaluates dynamic EXECUTE USING expressions",
+      "oracle": "postgres",
+      "postgresId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0005-select-label-from-do_dynamic_expr_target-where",
+      "suggestedId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0005-select-label-from-do_dynamic_expr_target-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT label FROM do_dynamic_expr_target WHERE id = 7;",
+      "querySha256": "a0ebda3b185126cccfb855156f900609b5f59a8621246579f4fc837522ea8723",
+      "expectedRows": [
+        [
+          {
+            "value": "made by literal"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0006",
+      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "ordinal": 6,
+      "scriptName": "DO block runs dynamic EXECUTE format DDL",
+      "oracle": "postgres",
+      "postgresId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0006-select-label-from-do_dynamic_ddl_target-where",
+      "suggestedId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0006-select-label-from-do_dynamic_ddl_target-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT label FROM do_dynamic_ddl_target WHERE id = 1;",
+      "querySha256": "0db16b7dbc97df2782ff7560e5a05d280fd9fa11f1b19b8cb79c0df107e2fb64",
+      "expectedRows": [
+        [
+          {
+            "value": "created by dynamic ddl"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0007",
+      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "ordinal": 7,
+      "scriptName": "DO block assigns dynamic EXECUTE INTO results",
+      "oracle": "postgres",
+      "postgresId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0007-select-label-from-do_dynamic_into_seen-where",
+      "suggestedId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0007-select-label-from-do_dynamic_into_seen-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT label FROM do_dynamic_into_seen WHERE id = 7;",
+      "querySha256": "2e620727b2763a16f85ad8c186f3e4a0b65b357b476ad62173516847620fe3ea",
+      "expectedRows": [
+        [
+          {
+            "value": "from execute into"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0008",
+      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "ordinal": 8,
+      "scriptName": "DO block handles dynamic EXECUTE INTO row count semantics",
+      "oracle": "postgres",
+      "postgresId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0008-select-label-from-do_dynamic_into_many_seen-where",
+      "suggestedId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0008-select-label-from-do_dynamic_into_many_seen-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT label FROM do_dynamic_into_many_seen WHERE id = 1;",
+      "querySha256": "69f04227136451b62884e13dd729552614c5a88cb2f92129b89d238d60d733e8",
+      "expectedRows": [
+        [
+          {
+            "value": "first row"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0009",
+      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "ordinal": 9,
+      "scriptName": "DO block handles dynamic EXECUTE INTO row count semantics",
+      "oracle": "postgres",
+      "postgresId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0009-do-$$-declare-got_id-int",
+      "suggestedId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0009-do-$$-declare-got_id-int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "P0002",
+      "errorSeverity": "ERROR",
+      "query": "DO $$\n\t\t\t\t\t\tDECLARE\n\t\t\t\t\t\t\tgot_id INT;\n\t\t\t\t\t\tBEGIN\n\t\t\t\t\t\t\tEXECUTE 'SELECT id FROM do_dynamic_into_many WHERE id = 99'\n\t\t\t\t\t\t\t\tINTO STRICT got_id;\n\t\t\t\t\t\tEND;\n\t\t\t\t\t$$;",
+      "querySha256": "36150c160309faca33325e911e8bcd00dc5670249420acb2a0a5bb8031ea16ef",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0010",
+      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "ordinal": 10,
+      "scriptName": "DO block handles dynamic EXECUTE INTO row count semantics",
+      "oracle": "postgres",
+      "postgresId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0010-do-$$-declare-got_id-int",
+      "suggestedId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0010-do-$$-declare-got_id-int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "P0003",
+      "errorSeverity": "ERROR",
+      "query": "DO $$\n\t\t\t\t\t\tDECLARE\n\t\t\t\t\t\t\tgot_id INT;\n\t\t\t\t\t\tBEGIN\n\t\t\t\t\t\t\tEXECUTE 'SELECT id FROM do_dynamic_into_many ORDER BY id'\n\t\t\t\t\t\t\t\tINTO STRICT got_id;\n\t\t\t\t\t\tEND;\n\t\t\t\t\t$$;",
+      "querySha256": "d5d06d6a56cfe71e04303133b8fd4135c07dbbe5d7453922cb653faeb25d3cb1",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0011",
+      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "ordinal": 11,
+      "scriptName": "DO block assigns GET DIAGNOSTICS ROW_COUNT",
+      "oracle": "postgres",
+      "postgresId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0011-select-seq-affected-from-do_diag_seen",
+      "suggestedId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0011-select-seq-affected-from-do_diag_seen",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT seq, affected FROM do_diag_seen ORDER BY seq;",
+      "querySha256": "ccbe8bf31cec86ce2cbd7b433e61e489b9eb8615659adf5a7b5dbe8d31e5b7b7",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "0"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0012",
+      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "ordinal": 12,
+      "scriptName": "DO block assigns GET DIAGNOSTICS PG_CONTEXT",
+      "oracle": "postgres",
+      "postgresId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0012-select-affected-context-like-pl/pgsql",
+      "suggestedId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0012-select-affected-context-like-pl/pgsql",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT affected,\n\t\t\t\t\t\t\t(context LIKE 'PL/pgSQL function inline_code_block line % at GET DIAGNOSTICS')::text\n\t\t\t\t\t\tFROM do_diag_context_seen;",
+      "querySha256": "33997dfe8e5c0ae9a3dc5c544712116bb292710f8838deecbf055c1b4765f652",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "true"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0013",
+      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "ordinal": 13,
+      "scriptName": "DO block assigns GET DIAGNOSTICS PG_CONTEXT",
+      "oracle": "postgres",
+      "postgresId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0013-select-context-like-pl/pgsql-function",
+      "suggestedId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0013-select-context-like-pl/pgsql-function",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT\n\t\t\t\t\t\t\t(context LIKE 'PL/pgSQL function diag_inner_context() line % at GET DIAGNOSTICS%')::text,\n\t\t\t\t\t\t\t(position('PL/pgSQL function diag_outer_context() line ' in context) > 0)::text,\n\t\t\t\t\t\t\t(position('PL/pgSQL function diag_outer_context() line 0' in context) = 0)::text,\n\t\t\t\t\t\t\t(position(' at assignment' in context) > 0)::text,\n\t\t\t\t\t\t\t(position('PL/pgSQL function inline_code_block line ' in context) > 0)::text,\n\t\t\t\t\t\t\t(position('PL/pgSQL function inline_code_block line 0' in context) = 0)::text,\n\t\t\t\t\t\t\t(position(' at PERFORM' in context) > 0)::text\n\t\t\t\t\t\tFROM do_diag_context_stack_seen\n\t\t\t\t\t\tWHERE kind = 'assignment';",
+      "querySha256": "ba87d5b0403bd8caf6423ccb5af8dc77ce89a4c5c02dce18cdda48a67e169361",
+      "expectedRows": [
+        [
+          {
+            "value": "true"
+          },
+          {
+            "value": "true"
+          },
+          {
+            "value": "true"
+          },
+          {
+            "value": "true"
+          },
+          {
+            "value": "true"
+          },
+          {
+            "value": "true"
+          },
+          {
+            "value": "true"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0014",
+      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "ordinal": 14,
+      "scriptName": "DO block assigns GET DIAGNOSTICS PG_CONTEXT",
+      "oracle": "postgres",
+      "postgresId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0014-select-context-like-pl/pgsql-function",
+      "suggestedId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0014-select-context-like-pl/pgsql-function",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT\n\t\t\t\t\t\t\t(context LIKE 'PL/pgSQL function diag_inner_context() line % at GET DIAGNOSTICS%')::text,\n\t\t\t\t\t\t\t(position('PL/pgSQL function diag_sql_context() line ' in context) > 0)::text,\n\t\t\t\t\t\t\t(position('PL/pgSQL function diag_sql_context() line 0' in context) = 0)::text,\n\t\t\t\t\t\t\t(position(' at SQL statement' in context) > 0)::text,\n\t\t\t\t\t\t\t(context LIKE '%SQL statement \"%diag_inner_context()%')::text,\n\t\t\t\t\t\t\t(position('PL/pgSQL function inline_code_block line ' in context) > 0)::text,\n\t\t\t\t\t\t\t(position(' at PERFORM' in context) > 0)::text\n\t\t\t\t\t\tFROM do_diag_context_stack_seen\n\t\t\t\t\t\tWHERE kind = 'sql_statement';",
+      "querySha256": "aadb6a007ce8a72f02a28512d349b2a0c82428b63058eb7394d73a2230fa9e5e",
+      "expectedRows": [
+        [
+          {
+            "value": "true"
+          },
+          {
+            "value": "true"
+          },
+          {
+            "value": "true"
+          },
+          {
+            "value": "true"
+          },
+          {
+            "value": "true"
+          },
+          {
+            "value": "true"
+          },
+          {
+            "value": "true"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0015",
+      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "ordinal": 15,
+      "scriptName": "PL/pgSQL function assigns GET DIAGNOSTICS PG_ROUTINE_OID",
+      "oracle": "postgres",
+      "postgresId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0015-select-routine_oid_text-from-do_diag_routine_oid_seen",
+      "suggestedId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0015-select-routine_oid_text-from-do_diag_routine_oid_seen",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT routine_oid_text FROM do_diag_routine_oid_seen;",
+      "querySha256": "dced0ff6d8aca9600cb77fd0670d7d783348f86b8cd72d188dd8387d6852514b",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0016",
+      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "ordinal": 16,
+      "scriptName": "PL/pgSQL function assigns GET DIAGNOSTICS PG_ROUTINE_OID",
+      "oracle": "postgres",
+      "postgresId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0016-select-diag_routine_oid-::text-<>-0",
+      "suggestedId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0016-select-diag_routine_oid-::text-<>-0",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT (diag_routine_oid()::text <> '0')::text;",
+      "querySha256": "c01ca07a2f515de371de1a89e625850e6f040292327fe81d9abb55756be5d5f7",
+      "expectedRows": [
+        [
+          {
+            "value": "true"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0017",
+      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "ordinal": 17,
+      "scriptName": "DO block catches raised exception with stacked diagnostics",
+      "oracle": "postgres",
+      "postgresId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0017-select-kind-message-sqlstate-detail",
+      "suggestedId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0017-select-kind-message-sqlstate-detail",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT kind, message, sqlstate, detail, hint, has_context FROM do_stacked_diag_seen;",
+      "querySha256": "2ee4c9b7ace18e4529de162134b156c3440d2bb566794be79bc3f5d3f25e0530",
+      "expectedRows": [
+        [
+          {
+            "value": "do"
+          },
+          {
+            "value": "custom exception 7"
+          },
+          {
+            "value": "P0001"
+          },
+          {
+            "value": "some detail"
+          },
+          {
+            "value": "some hint"
+          },
+          {
+            "value": "true"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0018",
+      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "ordinal": 18,
+      "scriptName": "PL/pgSQL function catches raised exception with stacked diagnostics",
+      "oracle": "postgres",
+      "postgresId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0018-select-diag_catch_raise",
+      "suggestedId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0018-select-diag_catch_raise",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT diag_catch_raise();",
+      "querySha256": "bde8d01924efbba18c79af85225f177e6880613fbf858059b33e300bd927ed3b",
+      "expectedRows": [
+        [
+          {
+            "value": "function failed"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0019",
+      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "ordinal": 19,
+      "scriptName": "GET STACKED DIAGNOSTICS requires exception handler",
+      "oracle": "postgres",
+      "postgresId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0019-do-$$-declare-message-text",
+      "suggestedId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0019-do-$$-declare-message-text",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "0Z002",
+      "errorSeverity": "ERROR",
+      "query": "DO $$\n\t\t\t\t\t\tDECLARE\n\t\t\t\t\t\t\tmessage TEXT;\n\t\t\t\t\t\tBEGIN\n\t\t\t\t\t\t\tGET STACKED DIAGNOSTICS message = MESSAGE_TEXT;\n\t\t\t\t\t\tEND;\n\t\t\t\t\t$$;",
+      "querySha256": "a6bff293011ddb43ee78cf759ff47ce22d993cb19daf703dddee476077e265f1",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0020",
+      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "ordinal": 20,
+      "scriptName": "GET STACKED DIAGNOSTICS rejects unsupported items",
+      "oracle": "postgres",
+      "postgresId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0020-do-$$-declare-routine_oid-oid",
+      "suggestedId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0020-do-$$-declare-routine_oid-oid",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "DO $$\n\t\t\t\t\t\tDECLARE\n\t\t\t\t\t\t\troutine_oid oid;\n\t\t\t\t\t\tBEGIN\n\t\t\t\t\t\t\tBEGIN\n\t\t\t\t\t\t\t\tRAISE EXCEPTION 'unsupported stacked diagnostic';\n\t\t\t\t\t\t\tEXCEPTION\n\t\t\t\t\t\t\t\tWHEN OTHERS THEN\n\t\t\t\t\t\t\t\t\tGET STACKED DIAGNOSTICS routine_oid = PG_ROUTINE_OID;\n\t\t\t\t\t\t\tEND;\n\t\t\t\t\t\tEND;\n\t\t\t\t\t$$;",
+      "querySha256": "0ab872cad9eb59ccab6d87e06ee01e6e7f33f76d0d1d785402ad3fb17f904bbe",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0021",
+      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "ordinal": 21,
+      "scriptName": "DO block chooses first matching exception handler",
+      "oracle": "postgres",
+      "postgresId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0021-select-marker-message-sqlstate-from",
+      "suggestedId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0021-select-marker-message-sqlstate-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT marker, message, sqlstate FROM do_multi_handler_seen;",
+      "querySha256": "a2d2dda0aabcbdc7bbd1778c230da974f8e7cfd0e4de8507424689b59b4d3e3c",
+      "expectedRows": [
+        [
+          {
+            "value": "matched"
+          },
+          {
+            "value": "duplicate key branch"
+          },
+          {
+            "value": "23505"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0022",
+      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "ordinal": 22,
+      "scriptName": "DO block matches SQLSTATE exception handler",
+      "oracle": "postgres",
+      "postgresId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0022-select-marker-sqlstate-from-do_sqlstate_handler_seen",
+      "suggestedId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0022-select-marker-sqlstate-from-do_sqlstate_handler_seen",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT marker, sqlstate FROM do_sqlstate_handler_seen;",
+      "querySha256": "accef5dd47431a0e6af17a095773ab87f666bbe81de1a21296b557a8b8dd7b2e",
+      "expectedRows": [
+        [
+          {
+            "value": "matched"
+          },
+          {
+            "value": "P0001"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0023",
+      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "ordinal": 23,
+      "scriptName": "DO block matches non data condition class handlers",
+      "oracle": "postgres",
+      "postgresId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0023-select-marker-sqlstate-from-do_condition_class_seen",
+      "suggestedId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0023-select-marker-sqlstate-from-do_condition_class_seen",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT marker, sqlstate FROM do_condition_class_seen ORDER BY marker;",
+      "querySha256": "ea1759e42714abb40bb28ce3d51f313c36e2b9e95ccd4e83ec920a801eb913b6",
+      "expectedRows": [
+        [
+          {
+            "value": "syntax"
+          },
+          {
+            "value": "42P01"
+          }
+        ],
+        [
+          {
+            "value": "transaction"
+          },
+          {
+            "value": "40001"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0024",
+      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "ordinal": 24,
+      "scriptName": "DO block reads stacked object-name diagnostics",
+      "oracle": "postgres",
+      "postgresId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0024-select-column_name-constraint_name-datatype_name-table_name",
+      "suggestedId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0024-select-column_name-constraint_name-datatype_name-table_name",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT column_name, constraint_name, datatype_name, table_name, schema_name\n\t\t\t\t\t\tFROM do_stacked_object_diag_seen;",
+      "querySha256": "e8c8610d7d23e853c8559fa146a3bc1d7b07c0599fb23555455268b1e6d70ea8",
+      "expectedRows": [
+        [
+          {
+            "value": "amount"
+          },
+          {
+            "value": "amount_positive"
+          },
+          {
+            "value": "numeric"
+          },
+          {
+            "value": "invoice_lines"
+          },
+          {
+            "value": "public"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0025",
+      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "ordinal": 25,
+      "scriptName": "DO block catches native SQL unique violation by condition name",
+      "oracle": "postgres",
+      "postgresId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0025-select-sqlstate-has_message-from-do_native_sqlstate_seen",
+      "suggestedId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0025-select-sqlstate-has_message-from-do_native_sqlstate_seen",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT sqlstate, has_message FROM do_native_sqlstate_seen;",
+      "querySha256": "804cacdbd790a34437ea5caff27417b1cf8f2df51c5de02e4fb21e11faa99692",
+      "expectedRows": [
+        [
+          {
+            "value": "23505"
+          },
+          {
+            "value": "true"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0026",
+      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "ordinal": 26,
+      "scriptName": "DO block reports native SQL exception context",
+      "oracle": "postgres",
+      "postgresId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0026-select-has_statement-has_plpgsql_frame-from-do_native_context_seen",
+      "suggestedId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0026-select-has_statement-has_plpgsql_frame-from-do_native_context_seen",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT has_statement, has_plpgsql_frame FROM do_native_context_seen;",
+      "querySha256": "877f4184bdd6006277b7209f2425297bdfc3f2240e35c0b152733975c6463bf1",
+      "expectedRows": [
+        [
+          {
+            "value": "true"
+          },
+          {
+            "value": "true"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0027",
+      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "ordinal": 27,
+      "scriptName": "DO block catches native SQL integrity constraint category",
+      "oracle": "postgres",
+      "postgresId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0027-select-sqlstate-from-do_native_category_seen",
+      "suggestedId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0027-select-sqlstate-from-do_native_category_seen",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT sqlstate FROM do_native_category_seen;",
+      "querySha256": "3d4d699eaeb8caf21abdb089edb6879dfd1a696473336cdfcd0b7980a684b267",
+      "expectedRows": [
+        [
+          {
+            "value": "23505"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0028",
+      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "ordinal": 28,
+      "scriptName": "DO block catches native SQL data exception category",
+      "oracle": "postgres",
+      "postgresId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0028-select-sqlstate-from-do_native_data_category_seen",
+      "suggestedId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0028-select-sqlstate-from-do_native_data_category_seen",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT sqlstate FROM do_native_data_category_seen;",
+      "querySha256": "81600071f7376d60ff6f2e9f52f71585ee90ddb2e6673ac77f600334e53c2bc9",
+      "expectedRows": [
+        [
+          {
+            "value": "22P02"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0029",
+      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "ordinal": 29,
+      "scriptName": "DO block propagates unmatched native SQL unique violation",
+      "oracle": "postgres",
+      "postgresId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0029-do-$$-begin-begin-insert",
+      "suggestedId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0029-do-$$-begin-begin-insert",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "DO $$\n\t\t\t\t\t\tBEGIN\n\t\t\t\t\t\t\tBEGIN\n\t\t\t\t\t\t\t\tINSERT INTO do_native_unmatched_items VALUES (2, 'existing');\n\t\t\t\t\t\t\tEXCEPTION\n\t\t\t\t\t\t\t\tWHEN division_by_zero THEN\n\t\t\t\t\t\t\t\t\tRAISE NOTICE 'wrong handler';\n\t\t\t\t\t\t\tEND;\n\t\t\t\t\t\tEND;\n\t\t\t\t\t$$;",
+      "querySha256": "950b6a4109d8806b100d1d658c3159e06778e000077c11cb3564f91ee60d9115",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0030",
+      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "ordinal": 30,
+      "scriptName": "DO block multiple exception handlers propagate when unmatched",
+      "oracle": "postgres",
+      "postgresId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0030-do-$$-begin-begin-raise",
+      "suggestedId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0030-do-$$-begin-begin-raise",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "P0001",
+      "errorSeverity": "ERROR",
+      "query": "DO $$\n\t\t\t\t\t\tBEGIN\n\t\t\t\t\t\t\tBEGIN\n\t\t\t\t\t\t\t\tRAISE EXCEPTION 'uncaught branch';\n\t\t\t\t\t\t\tEXCEPTION\n\t\t\t\t\t\t\t\tWHEN division_by_zero THEN\n\t\t\t\t\t\t\t\t\tRAISE NOTICE 'wrong handler';\n\t\t\t\t\t\t\t\tWHEN unique_violation THEN\n\t\t\t\t\t\t\t\t\tRAISE NOTICE 'wrong handler';\n\t\t\t\t\t\t\tEND;\n\t\t\t\t\t\tEND;\n\t\t\t\t\t$$;",
+      "querySha256": "e4d434a1a924b21eb18250c37d9189780bf8d4feb97536b617337b9a15f8973b",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage#0031",
+      "source": "testing/go/do_block_probe_test.go:TestDoBlockPlpgsqlInterpreterCoverage",
+      "ordinal": 31,
+      "scriptName": "DO block propagates raised exception",
+      "oracle": "postgres",
+      "postgresId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0031-do-$$-begin-raise-exception",
+      "suggestedId": "do-block-probe-test-testdoblockplpgsqlinterpretercoverage-0031-do-$$-begin-raise-exception",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "P0001",
+      "errorSeverity": "ERROR",
+      "query": "DO $$\n\t\t\t\t\t\tBEGIN\n\t\t\t\t\t\t\tRAISE EXCEPTION 'do block failed: %', 42;\n\t\t\t\t\t\tEND;\n\t\t\t\t\t$$;",
+      "querySha256": "e2d7078f156baef128796ac2b73eaac3be457732201948efa0f446b1b21e72ba",
       "needsCleanup": false,
       "cleanupProvided": false
     }

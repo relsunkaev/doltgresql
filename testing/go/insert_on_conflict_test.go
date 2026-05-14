@@ -48,10 +48,7 @@ func TestInsertOnConflictExcluded(t *testing.T) {
 ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, age = EXCLUDED.age;`,
 				},
 				{
-					Query: "SELECT id, name, age FROM users WHERE id = 1;",
-					Expected: []gms.Row{
-						{1, "new", 31},
-					},
+					Query: "SELECT id, name, age FROM users WHERE id = 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictexcluded-0001-select-id-name-age-from"},
 				},
 			},
 		},
@@ -71,10 +68,7 @@ SET hits = counters.hits + EXCLUDED.hits,
     label = counters.label || ':' || EXCLUDED.label;`,
 				},
 				{
-					Query: "SELECT id, hits, label FROM counters WHERE id = 1;",
-					Expected: []gms.Row{
-						{1, 8, "old:plus"},
-					},
+					Query: "SELECT id, hits, label FROM counters WHERE id = 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictexcluded-0002-select-id-hits-label-from"},
 				},
 			},
 		},
@@ -90,16 +84,14 @@ SET hits = counters.hits + EXCLUDED.hits,
 ON CONFLICT (id) DO UPDATE SET v = excluded.v;`,
 				},
 				{
-					Query:    "SELECT v FROM c_t WHERE id = 1;",
-					Expected: []gms.Row{{"A"}},
+					Query: "SELECT v FROM c_t WHERE id = 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictexcluded-0003-select-v-from-c_t-where"},
 				},
 				{
 					Query: `INSERT INTO c_t (id, v) VALUES (1, 'B')
 ON CONFLICT (id) DO UPDATE SET v = ExCluDed.v;`,
 				},
 				{
-					Query:    "SELECT v FROM c_t WHERE id = 1;",
-					Expected: []gms.Row{{"B"}},
+					Query: "SELECT v FROM c_t WHERE id = 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictexcluded-0004-select-v-from-c_t-where"},
 				},
 			},
 		},
@@ -117,10 +109,7 @@ ON CONFLICT (id) DO UPDATE SET v = ExCluDed.v;`,
 ON CONFLICT (id) DO UPDATE SET v = m.v + EXCLUDED.v;`,
 				},
 				{
-					Query: "SELECT id, v FROM m ORDER BY id;",
-					Expected: []gms.Row{
-						{1, 111}, {2, 222}, {3, 33},
-					},
+					Query: "SELECT id, v FROM m ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictexcluded-0005-select-id-v-from-m"},
 				},
 			},
 		},
@@ -146,8 +135,7 @@ func TestInsertOnConflictDoNothingAppliesDefaultsToOmittedPrimaryKey(t *testing.
 					SkipResultsCheck: true,
 				},
 				{
-					Query:    `SELECT lock::text, (permissions IS NULL)::text FROM zero_permissions_default_probe;`,
-					Expected: []gms.Row{{"true", "true"}},
+					Query: `SELECT lock::text, (permissions IS NULL)::text FROM zero_permissions_default_probe;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictdonothingappliesdefaultstoomittedprimarykey-0001-select-lock::text-permissions-is-null"},
 				},
 				{
 					Query: `INSERT INTO zero_permissions_default_probe (permissions)
@@ -156,8 +144,7 @@ func TestInsertOnConflictDoNothingAppliesDefaultsToOmittedPrimaryKey(t *testing.
 					SkipResultsCheck: true,
 				},
 				{
-					Query:    `SELECT count(*)::text, bool_and(lock)::text FROM zero_permissions_default_probe;`,
-					Expected: []gms.Row{{"1", "true"}},
+					Query: `SELECT count(*)::text, bool_and(lock)::text FROM zero_permissions_default_probe;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictdonothingappliesdefaultstoomittedprimarykey-0002-select-count-*-::text-bool_and"},
 				},
 			},
 		},
@@ -189,8 +176,7 @@ func TestInsertOnConflictDoNothingAppliesDefaultsToOmittedPrimaryKey(t *testing.
 					SkipResultsCheck: true,
 				},
 				{
-					Query:    `SELECT count(*)::text, bool_and("lock")::text, bool_and("hash" IS NULL)::text FROM zero_permissions_trigger_probe;`,
-					Expected: []gms.Row{{"1", "true", "true"}},
+					Query: `SELECT count(*)::text, bool_and("lock")::text, bool_and("hash" IS NULL)::text FROM zero_permissions_trigger_probe;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictdonothingappliesdefaultstoomittedprimarykey-0003-select-count-*-::text-bool_and"},
 				},
 			},
 		},
@@ -224,8 +210,7 @@ func TestInsertOnConflictDoNothingAppliesDefaultsToOmittedPrimaryKey(t *testing.
 				},
 				{
 					Query: `SELECT id, marker, supplied, nullable_default, noted
-						FROM trigger_default_order_probe;`,
-					Expected: []gms.Row{{10, "from_default", "explicit", nil, "from_default:explicit:null"}},
+						FROM trigger_default_order_probe;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictdonothingappliesdefaultstoomittedprimarykey-0004-select-id-marker-supplied-nullable_default"},
 				},
 			},
 		},
@@ -260,8 +245,7 @@ func TestInsertOnConflictDoUpdateWhere(t *testing.T) {
 ON CONFLICT (id) DO UPDATE SET v = EXCLUDED.v WHERE w.v < 100;`,
 				},
 				{
-					Query:    "SELECT v FROM w WHERE id = 1;",
-					Expected: []gms.Row{{99}},
+					Query: "SELECT v FROM w WHERE id = 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictdoupdatewhere-0001-select-v-from-w-where"},
 				},
 			},
 		},
@@ -277,8 +261,7 @@ ON CONFLICT (id) DO UPDATE SET v = EXCLUDED.v WHERE w.v < 100;`,
 ON CONFLICT (id) DO UPDATE SET v = EXCLUDED.v WHERE w2.v < 100;`,
 				},
 				{
-					Query:    "SELECT v FROM w2 WHERE id = 1;",
-					Expected: []gms.Row{{200}},
+					Query: "SELECT v FROM w2 WHERE id = 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictdoupdatewhere-0002-select-v-from-w2-where"},
 				},
 			},
 		},
@@ -295,8 +278,7 @@ ON CONFLICT (id) DO UPDATE SET v = EXCLUDED.v WHERE w2.v < 100;`,
 ON CONFLICT (id) DO UPDATE SET v = EXCLUDED.v WHERE EXCLUDED.v > w3.v;`,
 				},
 				{
-					Query:    "SELECT v FROM w3 WHERE id = 1;",
-					Expected: []gms.Row{{75}},
+					Query: "SELECT v FROM w3 WHERE id = 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictdoupdatewhere-0003-select-v-from-w3-where"},
 				},
 				{
 					// New value is smaller -> skip.
@@ -304,8 +286,7 @@ ON CONFLICT (id) DO UPDATE SET v = EXCLUDED.v WHERE EXCLUDED.v > w3.v;`,
 ON CONFLICT (id) DO UPDATE SET v = EXCLUDED.v WHERE EXCLUDED.v > w3.v;`,
 				},
 				{
-					Query:    "SELECT v FROM w3 WHERE id = 1;",
-					Expected: []gms.Row{{75}},
+					Query: "SELECT v FROM w3 WHERE id = 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictdoupdatewhere-0004-select-v-from-w3-where"},
 				},
 			},
 		},
@@ -323,10 +304,7 @@ ON CONFLICT (id) DO UPDATE SET v = EXCLUDED.v WHERE EXCLUDED.v > w3.v;`,
 ON CONFLICT (id) DO UPDATE SET v = EXCLUDED.v WHERE w4.v < 50;`,
 				},
 				{
-					Query: "SELECT id, v FROM w4 ORDER BY id;",
-					Expected: []gms.Row{
-						{1, 10}, {2, 99}, {3, 33},
-					},
+					Query: "SELECT id, v FROM w4 ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictdoupdatewhere-0005-select-id-v-from-w4"},
 				},
 			},
 		},
@@ -362,8 +340,7 @@ func TestInsertOnConflictMultiUnique(t *testing.T) {
 ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, email = EXCLUDED.email;`,
 				},
 				{
-					Query:    "SELECT id, email, name FROM u WHERE id = 1;",
-					Expected: []gms.Row{{1, "c@x.com", "updated"}},
+					Query: "SELECT id, email, name FROM u WHERE id = 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictmultiunique-0001-select-id-email-name-from"},
 				},
 			},
 		},
@@ -378,17 +355,15 @@ ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, email = EXCLUDED.email;`,
 					// New id=3 (no PK conflict) but email='a@x.com' (UNIQUE
 					// conflict). PG raises duplicate key violation.
 					Query: `INSERT INTO u2 (id, email, name) VALUES (3, 'a@x.com', 'wrong')
-ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name;`,
-					ExpectedErr: "duplicate",
+ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictmultiunique-0002-insert-into-u2-id-email",
+
+						// State unchanged: no row id=3 was inserted, and
+						// id=1's name is still 'first' (not 'wrong').
+						Compare: "sqlstate"},
 				},
 				{
-					// State unchanged: no row id=3 was inserted, and
-					// id=1's name is still 'first' (not 'wrong').
-					Query: "SELECT id, email, name FROM u2 ORDER BY id;",
-					Expected: []gms.Row{
-						{1, "a@x.com", "first"},
-						{2, "b@x.com", "second"},
-					},
+
+					Query: "SELECT id, email, name FROM u2 ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictmultiunique-0003-select-id-email-name-from"},
 				},
 			},
 		},
@@ -405,14 +380,12 @@ ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name;`,
 ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name;`,
 				},
 				{
-					Query:    "SELECT id, email, name FROM u3;",
-					Expected: []gms.Row{{1, "a@x.com", "updated"}},
+					Query: "SELECT id, email, name FROM u3;", PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictmultiunique-0004-select-id-email-name-from"},
 				},
 				{
 					// PK conflict (id=1) without email conflict -> raises.
 					Query: `INSERT INTO u3 (id, email, name) VALUES (1, 'fresh@x.com', 'wrong')
-ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name;`,
-					ExpectedErr: "duplicate",
+ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictmultiunique-0005-insert-into-u3-id-email", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -432,8 +405,7 @@ ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name;`,
 					Query: `INSERT INTO u4 (id, email, name) VALUES (1, 'b@x.com', 'wrong') ON CONFLICT (id) DO NOTHING;`,
 				},
 				{
-					Query:    "SELECT id, email, name FROM u4;",
-					Expected: []gms.Row{{1, "a@x.com", "first"}},
+					Query: "SELECT id, email, name FROM u4;", PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictmultiunique-0006-select-id-email-name-from"},
 				},
 			},
 		},
@@ -449,12 +421,10 @@ ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name;`,
 					// pre-check this would be silently swallowed by
 					// INSERT IGNORE; with the wrapper, the non-target
 					// conflict surfaces.
-					Query:       `INSERT INTO u4b (id, email, name) VALUES (2, 'a@x.com', 'wrong') ON CONFLICT (id) DO NOTHING;`,
-					ExpectedErr: "duplicate key value violates unique constraint",
+					Query: `INSERT INTO u4b (id, email, name) VALUES (2, 'a@x.com', 'wrong') ON CONFLICT (id) DO NOTHING;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictmultiunique-0007-insert-into-u4b-id-email", Compare: "sqlstate"},
 				},
 				{
-					Query:    "SELECT id, email, name FROM u4b ORDER BY id;",
-					Expected: []gms.Row{{1, "a@x.com", "first"}},
+					Query: "SELECT id, email, name FROM u4b ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictmultiunique-0008-select-id-email-name-from"},
 				},
 			},
 		},
@@ -470,11 +440,7 @@ ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name;`,
 ON CONFLICT (email) DO UPDATE SET name = 'email update';`,
 				},
 				{
-					Query: "SELECT id, email, name FROM u_two ORDER BY id;",
-					Expected: []gms.Row{
-						{1, "a@x.com", "email update"},
-						{2, "b@x.com", "second"},
-					},
+					Query: "SELECT id, email, name FROM u_two ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictmultiunique-0009-select-id-email-name-from"},
 				},
 			},
 		},
@@ -502,16 +468,14 @@ func TestInsertOnConflictArbiterPredicate(t *testing.T) {
 					Query: "INSERT INTO arb_t VALUES (1, 99) ON CONFLICT (id) WHERE id > 0 DO UPDATE SET v = EXCLUDED.v;",
 				},
 				{
-					Query:    "SELECT v FROM arb_t WHERE id = 1;",
-					Expected: []gms.Row{{99}},
+					Query: "SELECT v FROM arb_t WHERE id = 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0001-select-v-from-arb_t-where"},
 				},
 				{
 					// DO NOTHING shape with arbiter predicate.
 					Query: "INSERT INTO arb_t VALUES (1, 1) ON CONFLICT (id) WHERE id IS NOT NULL DO NOTHING;",
 				},
 				{
-					Query:    "SELECT v FROM arb_t WHERE id = 1;",
-					Expected: []gms.Row{{99}},
+					Query: "SELECT v FROM arb_t WHERE id = 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0002-select-v-from-arb_t-where"},
 				},
 			},
 		},
@@ -528,11 +492,7 @@ func TestInsertOnConflictArbiterPredicate(t *testing.T) {
 ON CONFLICT (user_id) WHERE status = 'active' DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query: `SELECT id, user_id, status, note FROM partial_arb ORDER BY id;`,
-					Expected: []gms.Row{
-						{1, 10, "active", "updated"},
-						{2, 10, "inactive", "inactive"},
-					},
+					Query: `SELECT id, user_id, status, note FROM partial_arb ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0003-select-id-user_id-status-note"},
 				},
 				{
 					Query: `INSERT INTO partial_arb VALUES (4, 10, 'inactive', 'inactive2')
@@ -547,22 +507,15 @@ ON CONFLICT (user_id) WHERE status = 'active' DO NOTHING;`,
 ON CONFLICT (user_id) WHERE status = 'active' AND note IS NOT NULL DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query: `SELECT id, user_id, status, note FROM partial_arb ORDER BY id;`,
-					Expected: []gms.Row{
-						{1, 10, "active", "implied"},
-						{2, 10, "inactive", "inactive"},
-						{4, 10, "inactive", "inactive2"},
-					},
+					Query: `SELECT id, user_id, status, note FROM partial_arb ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0004-select-id-user_id-status-note"},
 				},
 				{
 					Query: `INSERT INTO partial_arb VALUES (6, 10, 'active', 'wrong-predicate')
-ON CONFLICT (user_id) WHERE status = 'inactive' DO NOTHING;`,
-					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+ON CONFLICT (user_id) WHERE status = 'inactive' DO NOTHING;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0005-insert-into-partial_arb-values-6", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO partial_arb VALUES (7, 10, 'active', 'wrong-target')
-ON CONFLICT (id) DO NOTHING;`,
-					ExpectedErr: `duplicate key value violates unique constraint "partial_arb_active_idx"`,
+ON CONFLICT (id) DO NOTHING;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0006-insert-into-partial_arb-values-7", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -579,21 +532,18 @@ ON CONFLICT (id) DO NOTHING;`,
 ON CONFLICT (user_id) WHERE score > 10 DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query:    `SELECT id, user_id, score, note FROM partial_arb_score ORDER BY id;`,
-					Expected: []gms.Row{{1, 10, 5, "stronger"}},
+					Query: `SELECT id, user_id, score, note FROM partial_arb_score ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0007-select-id-user_id-score-note"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_score VALUES (3, 10, 20, 'stronger-or-equal')
 ON CONFLICT (user_id) WHERE score >= 10 DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query:    `SELECT id, user_id, score, note FROM partial_arb_score ORDER BY id;`,
-					Expected: []gms.Row{{1, 10, 5, "stronger-or-equal"}},
+					Query: `SELECT id, user_id, score, note FROM partial_arb_score ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0008-select-id-user_id-score-note"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_score VALUES (4, 10, 1, 'not-strong-enough')
-ON CONFLICT (user_id) WHERE score >= 0 DO NOTHING;`,
-					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+ON CONFLICT (user_id) WHERE score >= 0 DO NOTHING;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0009-insert-into-partial_arb_score-values-4", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -610,13 +560,11 @@ ON CONFLICT (user_id) WHERE score >= 0 DO NOTHING;`,
 ON CONFLICT (user_id) WHERE score > 10 AND score < 90 DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query:    `SELECT id, user_id, score, note FROM partial_arb_window ORDER BY id;`,
-					Expected: []gms.Row{{1, 10, 50, "bounded"}},
+					Query: `SELECT id, user_id, score, note FROM partial_arb_window ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0010-select-id-user_id-score-note"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_window VALUES (3, 10, 80, 'upper-not-subset')
-ON CONFLICT (user_id) WHERE score > 10 AND score <= 100 DO NOTHING;`,
-					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+ON CONFLICT (user_id) WHERE score > 10 AND score <= 100 DO NOTHING;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0011-insert-into-partial_arb_window-values-3", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -633,13 +581,11 @@ ON CONFLICT (user_id) WHERE score > 10 AND score <= 100 DO NOTHING;`,
 ON CONFLICT (user_id) WHERE score BETWEEN 10 AND 90 DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query:    `SELECT id, user_id, score, note FROM partial_arb_between ORDER BY id;`,
-					Expected: []gms.Row{{1, 10, 50, "between"}},
+					Query: `SELECT id, user_id, score, note FROM partial_arb_between ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0012-select-id-user_id-score-note"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_between VALUES (3, 10, 60, 'not-subset')
-ON CONFLICT (user_id) WHERE score BETWEEN -10 AND 90 DO NOTHING;`,
-					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+ON CONFLICT (user_id) WHERE score BETWEEN -10 AND 90 DO NOTHING;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0013-insert-into-partial_arb_between-values-3", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -661,12 +607,7 @@ ON CONFLICT (user_id) WHERE active = true DO UPDATE SET note = EXCLUDED.note;`,
 ON CONFLICT (user_id) WHERE active = false DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query: `SELECT id, user_id, active, note FROM partial_arb_bool ORDER BY id;`,
-					Expected: []gms.Row{
-						{1, 10, "t", "new-active"},
-						{2, 10, "f", "new-inactive"},
-						{3, 10, nil, "unknown"},
-					},
+					Query: `SELECT id, user_id, active, note FROM partial_arb_bool ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0014-select-id-user_id-active-note"},
 				},
 			},
 		},
@@ -683,38 +624,25 @@ ON CONFLICT (user_id) WHERE active = false DO UPDATE SET note = EXCLUDED.note;`,
 ON CONFLICT (user_id) WHERE active DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query: `SELECT id, user_id, active, archived, note FROM partial_arb_or ORDER BY id;`,
-					Expected: []gms.Row{
-						{1, 10, "t", "f", "active-upsert"},
-						{2, 10, "f", "f", "hidden"},
-					},
+					Query: `SELECT id, user_id, active, archived, note FROM partial_arb_or ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0015-select-id-user_id-active-archived"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_or VALUES (4, 10, false, true, 'archived-upsert')
 ON CONFLICT (user_id) WHERE archived = true DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query: `SELECT id, user_id, active, archived, note FROM partial_arb_or ORDER BY id;`,
-					Expected: []gms.Row{
-						{1, 10, "t", "f", "archived-upsert"},
-						{2, 10, "f", "f", "hidden"},
-					},
+					Query: `SELECT id, user_id, active, archived, note FROM partial_arb_or ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0016-select-id-user_id-active-archived"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_or VALUES (5, 10, true, false, 'reordered-or')
 ON CONFLICT (user_id) WHERE archived OR active DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query: `SELECT id, user_id, active, archived, note FROM partial_arb_or ORDER BY id;`,
-					Expected: []gms.Row{
-						{1, 10, "t", "f", "reordered-or"},
-						{2, 10, "f", "f", "hidden"},
-					},
+					Query: `SELECT id, user_id, active, archived, note FROM partial_arb_or ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0017-select-id-user_id-active-archived"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_or VALUES (6, 10, true, false, 'wrong-predicate')
-ON CONFLICT (user_id) WHERE active = false DO NOTHING;`,
-					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+ON CONFLICT (user_id) WHERE active = false DO NOTHING;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0018-insert-into-partial_arb_or-values-6", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -731,27 +659,18 @@ ON CONFLICT (user_id) WHERE active = false DO NOTHING;`,
 ON CONFLICT (user_id) WHERE status = 'pending' DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query: `SELECT id, user_id, status, note FROM partial_arb_in ORDER BY id;`,
-					Expected: []gms.Row{
-						{1, 10, "active", "pending-upsert"},
-						{2, 10, "archived", "closed"},
-					},
+					Query: `SELECT id, user_id, status, note FROM partial_arb_in ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0019-select-id-user_id-status-note"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_in VALUES (4, 10, 'active', 'in-list-upsert')
 ON CONFLICT (user_id) WHERE status IN ('pending', 'active') DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query: `SELECT id, user_id, status, note FROM partial_arb_in ORDER BY id;`,
-					Expected: []gms.Row{
-						{1, 10, "active", "in-list-upsert"},
-						{2, 10, "archived", "closed"},
-					},
+					Query: `SELECT id, user_id, status, note FROM partial_arb_in ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0020-select-id-user_id-status-note"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_in VALUES (5, 10, 'active', 'wrong-predicate')
-ON CONFLICT (user_id) WHERE status IN ('active', 'archived') DO NOTHING;`,
-					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+ON CONFLICT (user_id) WHERE status IN ('active', 'archived') DO NOTHING;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0021-insert-into-partial_arb_in-values-5", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -768,16 +687,11 @@ ON CONFLICT (user_id) WHERE status IN ('active', 'archived') DO NOTHING;`,
 ON CONFLICT (user_id) WHERE status NOT IN ('archived', 'deleted', 'blocked') DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query: `SELECT id, user_id, status, note FROM partial_arb_not_in ORDER BY id;`,
-					Expected: []gms.Row{
-						{1, 10, "active", "not-in-upsert"},
-						{2, 10, "archived", "archived-row"},
-					},
+					Query: `SELECT id, user_id, status, note FROM partial_arb_not_in ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0022-select-id-user_id-status-note"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_not_in VALUES (4, 10, 'active', 'wrong-predicate')
-ON CONFLICT (user_id) WHERE status != 'archived' DO NOTHING;`,
-					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+ON CONFLICT (user_id) WHERE status != 'archived' DO NOTHING;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0023-insert-into-partial_arb_not_in-values-4", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -794,22 +708,14 @@ ON CONFLICT (user_id) WHERE status != 'archived' DO NOTHING;`,
 ON CONFLICT (email) WHERE lower(email) = 'active@example.com' DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query: `SELECT id, email, note FROM partial_arb_expr_in ORDER BY id;`,
-					Expected: []gms.Row{
-						{1, "Active@Example.com", "active-upsert"},
-						{2, "ADMIN@EXAMPLE.COM", "old-admin"},
-					},
+					Query: `SELECT id, email, note FROM partial_arb_expr_in ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0024-select-id-email-note-from"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_expr_in VALUES (4, 'ADMIN@EXAMPLE.COM', 'admin-upsert')
 ON CONFLICT (email) WHERE lower(email) IN ('admin@example.com', 'active@example.com') DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query: `SELECT id, email, note FROM partial_arb_expr_in ORDER BY id;`,
-					Expected: []gms.Row{
-						{1, "Active@Example.com", "active-upsert"},
-						{2, "ADMIN@EXAMPLE.COM", "admin-upsert"},
-					},
+					Query: `SELECT id, email, note FROM partial_arb_expr_in ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0025-select-id-email-note-from"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_expr_in VALUES (5, 'Active@Example.com', 'raw-active-upsert')
@@ -921,16 +827,11 @@ ON CONFLICT (user_id) WHERE tenant IS NOT DISTINCT FROM workspace_tenant AND wor
 ON CONFLICT (code) WHERE coalesce(status, 'inactive') = 'active' DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query: `SELECT id, code, status, note FROM partial_arb_coalesce ORDER BY id;`,
-					Expected: []gms.Row{
-						{1, "A", "active", "coalesce-upsert"},
-						{2, "A", nil, "null-status"},
-					},
+					Query: `SELECT id, code, status, note FROM partial_arb_coalesce ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0035-select-id-code-status-note"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_coalesce VALUES (4, 'A', 'active', 'wrong-predicate')
-ON CONFLICT (code) WHERE status = 'active' DO NOTHING;`,
-					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+ON CONFLICT (code) WHERE status = 'active' DO NOTHING;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0036-insert-into-partial_arb_coalesce-values-4", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -947,21 +848,15 @@ ON CONFLICT (code) WHERE status = 'active' DO NOTHING;`,
 ON CONFLICT (code) WHERE nullif(status, '') = 'active' DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query: `SELECT id, code, status, note FROM partial_arb_nullif ORDER BY id;`,
-					Expected: []gms.Row{
-						{1, "A", "active", "nullif-upsert"},
-						{2, "A", "", "blank-status"},
-					},
+					Query: `SELECT id, code, status, note FROM partial_arb_nullif ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0037-select-id-code-status-note"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_nullif VALUES (4, 'A', 'active', 'wrong-predicate')
-ON CONFLICT (code) WHERE status = 'active' DO NOTHING;`,
-					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+ON CONFLICT (code) WHERE status = 'active' DO NOTHING;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0038-insert-into-partial_arb_nullif-values-4", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_nullif VALUES (5, 'A', 'active', 'wrong-argument')
-ON CONFLICT (code) WHERE nullif(status, 'inactive') = 'active' DO NOTHING;`,
-					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+ON CONFLICT (code) WHERE nullif(status, 'inactive') = 'active' DO NOTHING;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0039-insert-into-partial_arb_nullif-values-5", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -993,33 +888,21 @@ ON CONFLICT (code) WHERE nullif(status, 'inactive') = 'active' DO NOTHING;`,
 ON CONFLICT (code) WHERE score + 1 = 8 DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query: `SELECT id, code, score, note FROM partial_arb_arithmetic_plus ORDER BY id;`,
-					Expected: []gms.Row{
-						{1, "A", 7, "plus-upsert"},
-						{2, "A", 8, "outside-plus"},
-					},
+					Query: `SELECT id, code, score, note FROM partial_arb_arithmetic_plus ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0040-select-id-code-score-note"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_arithmetic_minus VALUES (3, 'B', 7, 'minus-upsert')
 ON CONFLICT (code) WHERE score - 1 = 6 DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query: `SELECT id, code, score, note FROM partial_arb_arithmetic_minus ORDER BY id;`,
-					Expected: []gms.Row{
-						{1, "B", 7, "minus-upsert"},
-						{2, "B", 8, "outside-minus"},
-					},
+					Query: `SELECT id, code, score, note FROM partial_arb_arithmetic_minus ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0041-select-id-code-score-note"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_arithmetic_mult VALUES (3, 'C', 7, 'mult-upsert')
 ON CONFLICT (code) WHERE score * 2 = 14 DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query: `SELECT id, code, score, note FROM partial_arb_arithmetic_mult ORDER BY id;`,
-					Expected: []gms.Row{
-						{1, "C", 7, "mult-upsert"},
-						{2, "C", 8, "outside-mult"},
-					},
+					Query: `SELECT id, code, score, note FROM partial_arb_arithmetic_mult ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0042-select-id-code-score-note"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_arithmetic_commuted_plus VALUES (3, 'D', 7, 'commuted-plus-upsert')
@@ -1099,16 +982,11 @@ ON CONFLICT (code) WHERE length(code) = 7 DO NOTHING;`,
 ON CONFLICT (code) WHERE octet_length(code) = 3 DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query: `SELECT id, code, note FROM partial_arb_octet ORDER BY id;`,
-					Expected: []gms.Row{
-						{1, "abc", "octet-upsert"},
-						{2, "de", "old-de"},
-					},
+					Query: `SELECT id, code, note FROM partial_arb_octet ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0050-select-id-code-note-from"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_octet VALUES (4, 'abc', 'wrong-predicate')
-ON CONFLICT (code) WHERE length(code) = 3 DO NOTHING;`,
-					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+ON CONFLICT (code) WHERE length(code) = 3 DO NOTHING;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0051-insert-into-partial_arb_octet-values-4", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1125,16 +1003,11 @@ ON CONFLICT (code) WHERE length(code) = 3 DO NOTHING;`,
 ON CONFLICT (code) WHERE bit_length(code) = 24 DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query: `SELECT id, code, note FROM partial_arb_bit ORDER BY id;`,
-					Expected: []gms.Row{
-						{1, "abc", "bit-upsert"},
-						{2, "de", "old-de"},
-					},
+					Query: `SELECT id, code, note FROM partial_arb_bit ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0052-select-id-code-note-from"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_bit VALUES (4, 'abc', 'wrong-predicate')
-ON CONFLICT (code) WHERE octet_length(code) = 3 DO NOTHING;`,
-					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+ON CONFLICT (code) WHERE octet_length(code) = 3 DO NOTHING;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0053-insert-into-partial_arb_bit-values-4", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1151,16 +1024,11 @@ ON CONFLICT (code) WHERE octet_length(code) = 3 DO NOTHING;`,
 ON CONFLICT (user_id) WHERE strpos(code, 'active') = 1 DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query: `SELECT id, user_id, code, note FROM partial_arb_strpos ORDER BY id;`,
-					Expected: []gms.Row{
-						{1, 10, "active-a", "strpos-upsert"},
-						{2, 10, "pending", "old-pending"},
-					},
+					Query: `SELECT id, user_id, code, note FROM partial_arb_strpos ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0054-select-id-user_id-code-note"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_strpos VALUES (4, 10, 'active-c', 'wrong-predicate')
-ON CONFLICT (user_id) WHERE strpos(code, 'pending') = 1 DO NOTHING;`,
-					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+ON CONFLICT (user_id) WHERE strpos(code, 'pending') = 1 DO NOTHING;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0055-insert-into-partial_arb_strpos-values-4", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1177,16 +1045,11 @@ ON CONFLICT (user_id) WHERE strpos(code, 'pending') = 1 DO NOTHING;`,
 ON CONFLICT (user_id) WHERE starts_with(code, 'active') = true DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query: `SELECT id, user_id, code, note FROM partial_arb_starts_with ORDER BY id;`,
-					Expected: []gms.Row{
-						{1, 10, "active-a", "starts-with-upsert"},
-						{2, 10, "pending", "old-pending"},
-					},
+					Query: `SELECT id, user_id, code, note FROM partial_arb_starts_with ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0056-select-id-user_id-code-note"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_starts_with VALUES (4, 10, 'active-c', 'wrong-predicate')
-ON CONFLICT (user_id) WHERE starts_with(code, 'pending') DO NOTHING;`,
-					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+ON CONFLICT (user_id) WHERE starts_with(code, 'pending') DO NOTHING;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0057-insert-into-partial_arb_starts_with-values-4", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1229,11 +1092,7 @@ ON CONFLICT (user_id) WHERE code LIKE 'pending%' DO NOTHING;`,
 ON CONFLICT (user_id) WHERE left(code, 2) = 'åc' DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query: `SELECT id, user_id, code, note FROM partial_arb_left ORDER BY id;`,
-					Expected: []gms.Row{
-						{1, 10, "åctive-a", "left-upsert"},
-						{2, 10, "pending", "old-pending"},
-					},
+					Query: `SELECT id, user_id, code, note FROM partial_arb_left ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0060-select-id-user_id-code-note"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_left VALUES (4, 10, 'åction', 'raw-left-upsert')
@@ -1282,11 +1141,7 @@ ON CONFLICT (user_id) WHERE left(code, 4) = 'åcti' DO NOTHING;`,
 ON CONFLICT (user_id) WHERE right(code, -1) = 'ctive' DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query: `SELECT id, user_id, code, note FROM partial_arb_right ORDER BY id;`,
-					Expected: []gms.Row{
-						{1, 20, "åctive", "right-upsert"},
-						{2, 20, "pending", "old-pending"},
-					},
+					Query: `SELECT id, user_id, code, note FROM partial_arb_right ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0065-select-id-user_id-code-note"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_right VALUES (4, 20, 'cctive', 'raw-right-upsert')
@@ -1335,16 +1190,11 @@ ON CONFLICT (user_id) WHERE right(code, 2) = 've' DO NOTHING;`,
 ON CONFLICT (user_id) WHERE replace(code, '-', '') = 'activea' DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query: `SELECT id, user_id, code, note FROM partial_arb_replace ORDER BY id;`,
-					Expected: []gms.Row{
-						{1, 10, "active-a", "replace-upsert"},
-						{2, 10, "pending", "old-pending"},
-					},
+					Query: `SELECT id, user_id, code, note FROM partial_arb_replace ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0070-select-id-user_id-code-note"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_replace VALUES (4, 10, 'active-a', 'wrong-predicate')
-ON CONFLICT (user_id) WHERE replace(code, '_', '') = 'active-a' DO NOTHING;`,
-					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+ON CONFLICT (user_id) WHERE replace(code, '_', '') = 'active-a' DO NOTHING;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0071-insert-into-partial_arb_replace-values-4", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1361,16 +1211,11 @@ ON CONFLICT (user_id) WHERE replace(code, '_', '') = 'active-a' DO NOTHING;`,
 ON CONFLICT (user_id) WHERE translate(code, '-_', '') = 'activea' DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query: `SELECT id, user_id, code, note FROM partial_arb_translate ORDER BY id;`,
-					Expected: []gms.Row{
-						{1, 10, "active-a", "translate-upsert"},
-						{2, 10, "pending", "old-pending"},
-					},
+					Query: `SELECT id, user_id, code, note FROM partial_arb_translate ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0072-select-id-user_id-code-note"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_translate VALUES (4, 10, 'active-a', 'wrong-predicate')
-ON CONFLICT (user_id) WHERE translate(code, '-.', '') = 'activea' DO NOTHING;`,
-					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+ON CONFLICT (user_id) WHERE translate(code, '-.', '') = 'activea' DO NOTHING;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0073-insert-into-partial_arb_translate-values-4", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1387,16 +1232,11 @@ ON CONFLICT (user_id) WHERE translate(code, '-.', '') = 'activea' DO NOTHING;`,
 ON CONFLICT (user_id) WHERE md5(code) = 'c76a5e84e4bdee527e274ea30c680d79' DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query: `SELECT id, user_id, code, note FROM partial_arb_md5 ORDER BY id;`,
-					Expected: []gms.Row{
-						{1, 10, "active", "md5-upsert"},
-						{2, 20, "pending", "old-pending"},
-					},
+					Query: `SELECT id, user_id, code, note FROM partial_arb_md5 ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0074-select-id-user_id-code-note"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_md5 VALUES (4, 10, 'active', 'wrong-predicate')
-ON CONFLICT (user_id) WHERE code IN ('active', 'ACTIVE') DO NOTHING;`,
-					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+ON CONFLICT (user_id) WHERE code IN ('active', 'ACTIVE') DO NOTHING;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0075-insert-into-partial_arb_md5-values-4", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_md5 VALUES (5, 10, 'active', 'raw-md5-upsert')
@@ -1435,16 +1275,11 @@ ON CONFLICT (user_id) WHERE code IN ('active', 'pending') DO UPDATE SET note = E
 ON CONFLICT (user_id) WHERE hashtext(code) = -785388649 DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query: `SELECT id, user_id, code, note FROM partial_arb_hashtext ORDER BY id;`,
-					Expected: []gms.Row{
-						{1, int32(10), "abc", "hashtext-upsert"},
-						{2, int32(10), "pending", "old-pending"},
-					},
+					Query: `SELECT id, user_id, code, note FROM partial_arb_hashtext ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0078-select-id-user_id-code-note"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_hashtext VALUES (4, 10, 'abc', 'wrong-predicate')
-ON CONFLICT (user_id) WHERE code = 'abc' DO NOTHING;`,
-					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+ON CONFLICT (user_id) WHERE code = 'abc' DO NOTHING;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0079-insert-into-partial_arb_hashtext-values-4", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1490,32 +1325,22 @@ ON CONFLICT (user_id) WHERE score = 7 DO NOTHING;`,
 ON CONFLICT (user_id) WHERE round(score) = 7 DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query: `SELECT id, user_id, score, note FROM partial_arb_round ORDER BY id;`,
-					Expected: []gms.Row{
-						{1, 10, 7, "round-upsert"},
-						{2, 10, 8, "old-eight"},
-					},
+					Query: `SELECT id, user_id, score, note FROM partial_arb_round ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0082-select-id-user_id-score-note"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_trunc VALUES (3, 20, 9, 'trunc-upsert')
 ON CONFLICT (user_id) WHERE trunc(score) = 9 DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query: `SELECT id, user_id, score, note FROM partial_arb_trunc ORDER BY id;`,
-					Expected: []gms.Row{
-						{1, 20, 9, "trunc-upsert"},
-						{2, 20, 10, "old-ten"},
-					},
+					Query: `SELECT id, user_id, score, note FROM partial_arb_trunc ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0083-select-id-user_id-score-note"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_round VALUES (4, 10, 7, 'wrong-predicate')
-ON CONFLICT (user_id) WHERE score = 7 DO NOTHING;`,
-					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+ON CONFLICT (user_id) WHERE score = 7 DO NOTHING;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0084-insert-into-partial_arb_round-values-4", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_trunc VALUES (4, 20, 9, 'wrong-predicate')
-ON CONFLICT (user_id) WHERE score = 9 DO NOTHING;`,
-					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+ON CONFLICT (user_id) WHERE score = 9 DO NOTHING;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0085-insert-into-partial_arb_trunc-values-4", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1532,16 +1357,11 @@ ON CONFLICT (user_id) WHERE score = 9 DO NOTHING;`,
 ON CONFLICT (user_id) WHERE split_part(email, '@', 2) = 'example.com' DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query: `SELECT id, user_id, email, note FROM partial_arb_split_part ORDER BY id;`,
-					Expected: []gms.Row{
-						{1, 10, "first@example.com", "split-part-upsert"},
-						{2, 10, "second@example.org", "old-pending"},
-					},
+					Query: `SELECT id, user_id, email, note FROM partial_arb_split_part ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0086-select-id-user_id-email-note"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_split_part VALUES (4, 10, 'another@example.com', 'wrong-predicate')
-ON CONFLICT (user_id) WHERE split_part(email, '.', 2) = 'com' DO NOTHING;`,
-					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+ON CONFLICT (user_id) WHERE split_part(email, '.', 2) = 'com' DO NOTHING;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0087-insert-into-partial_arb_split_part-values-4", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1558,11 +1378,7 @@ ON CONFLICT (user_id) WHERE split_part(email, '.', 2) = 'com' DO NOTHING;`,
 ON CONFLICT (user_id) WHERE ascii(code) = 65 DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query: `SELECT id, user_id, code, note FROM partial_arb_ascii ORDER BY id;`,
-					Expected: []gms.Row{
-						{1, 10, "Alpha", "ascii-upsert"},
-						{2, 10, "beta", "old-pending"},
-					},
+					Query: `SELECT id, user_id, code, note FROM partial_arb_ascii ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0088-select-id-user_id-code-note"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_ascii VALUES (4, 10, 'April', 'raw-ascii-upsert')
@@ -1728,11 +1544,7 @@ ON CONFLICT (user_id) WHERE code IN ('ABCD', 'ABXY') DO NOTHING;`,
 ON CONFLICT (user_id) WHERE reverse(code) = 'nimdA' DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query: `SELECT id, user_id, code, note FROM partial_arb_reverse ORDER BY id;`,
-					Expected: []gms.Row{
-						{1, 10, "Admin", "reverse-upsert"},
-						{2, 10, "Alpha", "old-alpha"},
-					},
+					Query: `SELECT id, user_id, code, note FROM partial_arb_reverse ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0102-select-id-user_id-code-note"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_reverse VALUES (4, 10, 'Admin', 'raw-reverse-upsert')
@@ -1939,16 +1751,11 @@ ON CONFLICT (user_id) WHERE role IN ('admin user', 'regular user') DO NOTHING;`,
 ON CONFLICT (code) WHERE ltrim(code) = 'active' DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query: `SELECT id, code, note FROM partial_arb_trim ORDER BY id;`,
-					Expected: []gms.Row{
-						{1, " active", "trim-upsert"},
-						{2, "archived", "old-archived"},
-					},
+					Query: `SELECT id, code, note FROM partial_arb_trim ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0119-select-id-code-note-from"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_trim VALUES (4, ' active', 'wrong-predicate')
-ON CONFLICT (code) WHERE rtrim(code) = 'active' DO NOTHING;`,
-					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+ON CONFLICT (code) WHERE rtrim(code) = 'active' DO NOTHING;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0120-insert-into-partial_arb_trim-values-4", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1965,16 +1772,11 @@ ON CONFLICT (code) WHERE rtrim(code) = 'active' DO NOTHING;`,
 ON CONFLICT (code) WHERE btrim(code) = 'active' DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query: `SELECT id, code, note FROM partial_arb_btrim ORDER BY id;`,
-					Expected: []gms.Row{
-						{1, " active ", "btrim-upsert"},
-						{2, "archived", "old-archived"},
-					},
+					Query: `SELECT id, code, note FROM partial_arb_btrim ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0121-select-id-code-note-from"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_btrim VALUES (4, ' active ', 'wrong-predicate')
-ON CONFLICT (code) WHERE btrim(code) = 'archived' DO NOTHING;`,
-					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+ON CONFLICT (code) WHERE btrim(code) = 'archived' DO NOTHING;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0122-insert-into-partial_arb_btrim-values-4", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1994,32 +1796,22 @@ ON CONFLICT (code) WHERE btrim(code) = 'archived' DO NOTHING;`,
 ON CONFLICT (code) WHERE ltrim(code, '0_') = 'active' DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query: `SELECT id, code, note FROM partial_arb_custom_ltrim ORDER BY id;`,
-					Expected: []gms.Row{
-						{1, "_0active", "custom-ltrim-upsert"},
-						{2, "pending", "old-pending"},
-					},
+					Query: `SELECT id, code, note FROM partial_arb_custom_ltrim ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0123-select-id-code-note-from"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_custom_ltrim VALUES (4, '_0active', 'wrong-predicate')
-ON CONFLICT (code) WHERE ltrim(code, '_') = '0active' DO NOTHING;`,
-					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+ON CONFLICT (code) WHERE ltrim(code, '_') = '0active' DO NOTHING;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0124-insert-into-partial_arb_custom_ltrim-values-4", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_custom_btrim VALUES (3, 'x_active_', 'custom-btrim-upsert')
 ON CONFLICT (code) WHERE btrim(code, 'x_') = 'active' DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query: `SELECT id, code, note FROM partial_arb_custom_btrim ORDER BY id;`,
-					Expected: []gms.Row{
-						{1, "x_active_", "custom-btrim-upsert"},
-						{2, "pending", "old-pending"},
-					},
+					Query: `SELECT id, code, note FROM partial_arb_custom_btrim ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0125-select-id-code-note-from"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_custom_btrim VALUES (4, 'x_active_', 'wrong-predicate')
-ON CONFLICT (code) WHERE btrim(code, '_') = 'x_active' DO NOTHING;`,
-					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+ON CONFLICT (code) WHERE btrim(code, '_') = 'x_active' DO NOTHING;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0126-insert-into-partial_arb_custom_btrim-values-4", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -2036,16 +1828,11 @@ ON CONFLICT (code) WHERE btrim(code, '_') = 'x_active' DO NOTHING;`,
 ON CONFLICT (code) WHERE repeat(code, 2) = 'activeactive' DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query: `SELECT id, code, note FROM partial_arb_repeat ORDER BY id;`,
-					Expected: []gms.Row{
-						{1, "active", "repeat-upsert"},
-						{2, "pending", "old-pending"},
-					},
+					Query: `SELECT id, code, note FROM partial_arb_repeat ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0127-select-id-code-note-from"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_repeat VALUES (4, 'active', 'wrong-predicate')
-ON CONFLICT (code) WHERE repeat(code, 3) = 'activeactiveactive' DO NOTHING;`,
-					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+ON CONFLICT (code) WHERE repeat(code, 3) = 'activeactiveactive' DO NOTHING;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0128-insert-into-partial_arb_repeat-values-4", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_repeat VALUES (5, 'active', 'raw-repeat-upsert')
@@ -2145,11 +1932,7 @@ ON CONFLICT (user_id) WHERE delta > 0 DO NOTHING;`,
 ON CONFLICT (user_id) WHERE sign(delta) = 1 DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query: `SELECT id, user_id, delta, note FROM partial_arb_sign ORDER BY id;`,
-					Expected: []gms.Row{
-						{1, int32(10), int64(5), "sign-upsert"},
-						{2, int32(10), int64(-5), "negative"},
-					},
+					Query: `SELECT id, user_id, delta, note FROM partial_arb_sign ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0136-select-id-user_id-delta-note"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_sign VALUES (4, 10, 20, 'raw-positive-upsert')
@@ -2294,16 +2077,11 @@ ON CONFLICT (user_id) WHERE width = 3 AND height = 4 DO NOTHING;`,
 ON CONFLICT (user_id) WHERE mod(account_id, shard_count) = 1 DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query: `SELECT id, user_id, account_id, shard_count, note FROM partial_arb_mod ORDER BY id;`,
-					Expected: []gms.Row{
-						{1, int32(10), int64(7), int64(3), "mod-upsert"},
-						{2, int32(10), int64(8), int64(3), "old-other"},
-					},
+					Query: `SELECT id, user_id, account_id, shard_count, note FROM partial_arb_mod ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0147-select-id-user_id-account_id-shard_count"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_mod VALUES (4, 10, 7, 3, 'wrong-predicate')
-ON CONFLICT (user_id) WHERE account_id = 7 AND shard_count = 3 DO NOTHING;`,
-					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+ON CONFLICT (user_id) WHERE account_id = 7 AND shard_count = 3 DO NOTHING;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0148-insert-into-partial_arb_mod-values-4", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -2320,34 +2098,31 @@ ON CONFLICT (user_id) WHERE account_id = 7 AND shard_count = 3 DO NOTHING;`,
 ON CONFLICT (user_id) WHERE chr(codepoint) = 'A' DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
-					Query: `SELECT id, user_id, codepoint, note FROM partial_arb_chr ORDER BY id;`,
-					Expected: []gms.Row{
-						{1, int32(10), int32(65), "chr-upsert"},
-						{2, int32(10), int32(66), "old-b"},
-					},
+					Query: `SELECT id, user_id, codepoint, note FROM partial_arb_chr ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0149-select-id-user_id-codepoint-note"},
 				},
 				{
 					Query: `INSERT INTO partial_arb_chr VALUES (4, 10, 65, 'wrong-predicate')
-ON CONFLICT (user_id) WHERE codepoint = 65 DO NOTHING;`,
-					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+ON CONFLICT (user_id) WHERE codepoint = 65 DO NOTHING;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictarbiterpredicate-0150-insert-into-partial_arb_chr-values-4",
+
+						// TestInsertOnConflictOnConstraint covers the
+						// `ON CONFLICT ON CONSTRAINT name` syntax. ORM-generated upserts
+						// (Drizzle .onConflictDoUpdate({target: "constraint_name"}),
+						// SQLAlchemy.dialects.postgresql.insert(...).on_conflict_do_update
+						// with constraint=) routinely use the named-constraint form because
+						// it resolves cleanly even when the constraint columns include
+						// expressions or are inferred from a table-rename migration.
+						//
+						// The implementation looks up the constraint by name, derives its
+						// column list, and routes through the existing target-by-columns
+						// pipeline (which already handles the multi-unique target guard
+						// added earlier).
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestInsertOnConflictOnConstraint covers the
-// `ON CONFLICT ON CONSTRAINT name` syntax. ORM-generated upserts
-// (Drizzle .onConflictDoUpdate({target: "constraint_name"}),
-// SQLAlchemy.dialects.postgresql.insert(...).on_conflict_do_update
-// with constraint=) routinely use the named-constraint form because
-// it resolves cleanly even when the constraint columns include
-// expressions or are inferred from a table-rename migration.
-//
-// The implementation looks up the constraint by name, derives its
-// column list, and routes through the existing target-by-columns
-// pipeline (which already handles the multi-unique target guard
-// added earlier).
 func TestInsertOnConflictOnConstraint(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -2361,8 +2136,7 @@ func TestInsertOnConflictOnConstraint(t *testing.T) {
 					Query: "INSERT INTO oc_pk VALUES (1, 99) ON CONFLICT ON CONSTRAINT oc_pk_pkey DO UPDATE SET v = EXCLUDED.v;",
 				},
 				{
-					Query:    "SELECT v FROM oc_pk WHERE id = 1;",
-					Expected: []gms.Row{{99}},
+					Query: "SELECT v FROM oc_pk WHERE id = 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictonconstraint-0001-select-v-from-oc_pk-where"},
 				},
 			},
 		},
@@ -2394,8 +2168,7 @@ func TestInsertOnConflictOnConstraint(t *testing.T) {
 					Query: "INSERT INTO oc_dn VALUES (1, 999) ON CONFLICT ON CONSTRAINT oc_dn_pkey DO NOTHING;",
 				},
 				{
-					Query:    "SELECT v FROM oc_dn WHERE id = 1;",
-					Expected: []gms.Row{{10}},
+					Query: "SELECT v FROM oc_dn WHERE id = 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictonconstraint-0003-select-v-from-oc_dn-where"},
 				},
 			},
 		},
@@ -2406,16 +2179,17 @@ func TestInsertOnConflictOnConstraint(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       "INSERT INTO oc_bad VALUES (1) ON CONFLICT ON CONSTRAINT nope_no_such_constraint DO NOTHING;",
-					ExpectedErr: "constraint",
+					Query: "INSERT INTO oc_bad VALUES (1) ON CONFLICT ON CONSTRAINT nope_no_such_constraint DO NOTHING;", PostgresOracle: ScriptTestPostgresOracle{ID: "insert-on-conflict-test-testinsertonconflictonconstraint-0004-insert-into-oc_bad-values-1",
+
+						// TestInsertOnConflictORMShape exercises the upsert workflow exactly
+						// as Drizzle / Prisma / SQLAlchemy emit it through the pgx driver.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestInsertOnConflictORMShape exercises the upsert workflow exactly
-// as Drizzle / Prisma / SQLAlchemy emit it through the pgx driver.
 func TestInsertOnConflictORMShape(t *testing.T) {
 	port, err := gms.GetEmptyPort()
 	require.NoError(t, err)

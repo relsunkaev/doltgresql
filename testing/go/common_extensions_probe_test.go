@@ -43,20 +43,16 @@ func TestCommonExtensionsProbe(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT length(uuid_generate_v4()::text)::text;`,
-					Expected: []sql.Row{{"36"}},
+					Query: `SELECT length(uuid_generate_v4()::text)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0001-select-length-uuid_generate_v4-::text-::text"},
 				},
 				{
-					Query:    `SELECT uuid_nil()::text, uuid_ns_dns()::text, uuid_ns_url()::text, uuid_ns_oid()::text, uuid_ns_x500()::text;`,
-					Expected: []sql.Row{{"00000000-0000-0000-0000-000000000000", "6ba7b810-9dad-11d1-80b4-00c04fd430c8", "6ba7b811-9dad-11d1-80b4-00c04fd430c8", "6ba7b812-9dad-11d1-80b4-00c04fd430c8", "6ba7b814-9dad-11d1-80b4-00c04fd430c8"}},
+					Query: `SELECT uuid_nil()::text, uuid_ns_dns()::text, uuid_ns_url()::text, uuid_ns_oid()::text, uuid_ns_x500()::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0002-select-uuid_nil-::text-uuid_ns_dns-::text"},
 				},
 				{
-					Query:    `SELECT uuid_generate_v3(uuid_ns_dns(), 'www.example.com')::text, uuid_generate_v5(uuid_ns_dns(), 'www.example.com')::text;`,
-					Expected: []sql.Row{{"5df41881-3aed-3515-88a7-2f4a814cf09e", "2ed6657d-e927-568b-95e1-2665a8aea6a2"}},
+					Query: `SELECT uuid_generate_v3(uuid_ns_dns(), 'www.example.com')::text, uuid_generate_v5(uuid_ns_dns(), 'www.example.com')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0003-select-uuid_generate_v3-uuid_ns_dns-www.example.com-::text"},
 				},
 				{
-					Query:    `SELECT length(uuid_generate_v1()::text)::text, substr(uuid_generate_v1()::text, 15, 1), length(uuid_generate_v1mc()::text)::text, substr(uuid_generate_v1mc()::text, 15, 1);`,
-					Expected: []sql.Row{{"36", "1", "36", "1"}},
+					Query: `SELECT length(uuid_generate_v1()::text)::text, substr(uuid_generate_v1()::text, 15, 1), length(uuid_generate_v1mc()::text)::text, substr(uuid_generate_v1mc()::text, 15, 1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0004-select-length-uuid_generate_v1-::text-::text"},
 				},
 			},
 		},
@@ -68,12 +64,10 @@ func TestCommonExtensionsProbe(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT length(extensions.uuid_generate_v4()::text)::text;`,
-					Expected: []sql.Row{{"36"}},
+					Query: `SELECT length(extensions.uuid_generate_v4()::text)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0005-select-length-extensions.uuid_generate_v4-::text-::text"},
 				},
 				{
-					Query:    `SELECT extensions.uuid_generate_v3(extensions.uuid_ns_dns(), 'www.example.com')::text;`,
-					Expected: []sql.Row{{"5df41881-3aed-3515-88a7-2f4a814cf09e"}},
+					Query: `SELECT extensions.uuid_generate_v3(extensions.uuid_ns_dns(), 'www.example.com')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0006-select-extensions.uuid_generate_v3-extensions.uuid_ns_dns-www.example.com-::text"},
 				},
 			},
 		},
@@ -87,8 +81,7 @@ func TestCommonExtensionsProbe(t *testing.T) {
 					Query: `SELECT e.extname, n.nspname, e.extrelocatable, e.extversion
 						FROM pg_catalog.pg_extension e
 						JOIN pg_catalog.pg_namespace n ON n.oid = e.extnamespace
-						WHERE e.extname = 'plpgsql';`,
-					Expected: []sql.Row{{"plpgsql", "pg_catalog", "f", "1.0"}},
+						WHERE e.extname = 'plpgsql';`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0007-select-e.extname-n.nspname-e.extrelocatable-e.extversion"},
 				},
 			},
 		},
@@ -105,15 +98,17 @@ func TestCommonExtensionsProbe(t *testing.T) {
 					Query: `CREATE EXTENSION IF NOT EXISTS pgcrypto;`,
 				},
 				{
-					Query:       `CREATE EXTENSION pgcrypto;`,
-					ExpectedErr: `extension "pgcrypto" already exists`,
+					Query: `CREATE EXTENSION pgcrypto;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0008-create-extension-pgcrypto",
+
+						// gen_random_uuid is a builtin in PG 13+; pgcrypto used
+						// to provide it. Real-world apps depend on this being
+						// callable for default UUID PKs.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 		{
-			// gen_random_uuid is a builtin in PG 13+; pgcrypto used
-			// to provide it. Real-world apps depend on this being
-			// callable for default UUID PKs.
+
 			Name:        "gen_random_uuid runtime call",
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
@@ -121,8 +116,7 @@ func TestCommonExtensionsProbe(t *testing.T) {
 					// Don't assert the value (it's random), just
 					// that the call shape lands and the result
 					// type-castable to text has the right length.
-					Query:    `SELECT length(gen_random_uuid()::text)::text;`,
-					Expected: []sql.Row{{"36"}},
+					Query: `SELECT length(gen_random_uuid()::text)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0009-select-length-gen_random_uuid-::text-::text"},
 				},
 			},
 		},
@@ -133,52 +127,40 @@ func TestCommonExtensionsProbe(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT digest('abc', 'sha256')::text;`,
-					Expected: []sql.Row{{`\xba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad`}},
+					Query: `SELECT digest('abc', 'sha256')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0010-select-digest-abc-sha256-::text"},
 				},
 				{
-					Query:    `SELECT digest('\x616263'::bytea, 'sha1')::text;`,
-					Expected: []sql.Row{{`\xa9993e364706816aba3e25717850c26c9cd0d89d`}},
+					Query: `SELECT digest('\x616263'::bytea, 'sha1')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0011-select-digest-\\x616263-::bytea-sha1"},
 				},
 				{
-					Query:    `SELECT hmac('what do ya want for nothing?', 'Jefe', 'md5')::text;`,
-					Expected: []sql.Row{{`\x750c783e6ab0b503eaa86e310a5db738`}},
+					Query: `SELECT hmac('what do ya want for nothing?', 'Jefe', 'md5')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0012-select-hmac-what-do-ya"},
 				},
 				{
-					Query:    `SELECT hmac('\x7768617420646f2079612077616e7420666f72206e6f7468696e673f'::bytea, '\x4a656665'::bytea, 'md5')::text;`,
-					Expected: []sql.Row{{`\x750c783e6ab0b503eaa86e310a5db738`}},
+					Query: `SELECT hmac('\x7768617420646f2079612077616e7420666f72206e6f7468696e673f'::bytea, '\x4a656665'::bytea, 'md5')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0013-select-hmac-::bytea-\\x4a656665-::bytea"},
 				},
 				{
-					Query:       `SELECT digest('abc', 'unknown');`,
-					ExpectedErr: `unsupported pgcrypto digest algorithm: unknown`,
+					Query: `SELECT digest('abc', 'unknown');`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0014-select-digest-abc-unknown", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT length(gen_random_bytes(16)::text)::text, left(gen_random_bytes(4)::text, 2);`,
-					Expected: []sql.Row{{"34", `\x`}},
+					Query: `SELECT length(gen_random_bytes(16)::text)::text, left(gen_random_bytes(4)::text, 2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0015-select-length-gen_random_bytes-16-::text"},
 				},
 				{
-					Query:       `SELECT gen_random_bytes(1025);`,
-					ExpectedErr: `Length not in range`,
+					Query: `SELECT gen_random_bytes(1025);`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0016-select-gen_random_bytes-1025", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT dearmor(armor('\x68656c6c6f20706763727970746f'::bytea))::text;`,
-					Expected: []sql.Row{{`\x68656c6c6f20706763727970746f`}},
+					Query: `SELECT dearmor(armor('\x68656c6c6f20706763727970746f'::bytea))::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0017-select-dearmor-armor-\\x68656c6c6f20706763727970746f-::bytea"},
 				},
 				{
-					Query:    `SELECT (armor('\x68656c6c6f'::bytea, ARRAY['Comment']::text[], ARRAY['Doltgres']::text[]) LIKE '%Comment: Doltgres%')::text;`,
-					Expected: []sql.Row{{"true"}},
+					Query: `SELECT (armor('\x68656c6c6f'::bytea, ARRAY['Comment']::text[], ARRAY['Doltgres']::text[]) LIKE '%Comment: Doltgres%')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0018-select-armor-\\x68656c6c6f-::bytea-array["},
 				},
 				{
-					Query:    `SELECT key, value FROM pgp_armor_headers(armor('\x68656c6c6f'::bytea, ARRAY['Comment','Version']::text[], ARRAY['Doltgres','1']::text[])) ORDER BY key;`,
-					Expected: []sql.Row{{"Comment", "Doltgres"}, {"Version", "1"}},
+					Query: `SELECT key, value FROM pgp_armor_headers(armor('\x68656c6c6f'::bytea, ARRAY['Comment','Version']::text[], ARRAY['Doltgres','1']::text[])) ORDER BY key;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0019-select-key-value-from-pgp_armor_headers"},
 				},
 				{
-					Query:    `SELECT pgp_armor_headers(armor('\x68656c6c6f'::bytea, ARRAY['Comment']::text[], ARRAY['Doltgres']::text[]));`,
-					Expected: []sql.Row{{[]any{"Comment", "Doltgres"}}},
+					Query: `SELECT pgp_armor_headers(armor('\x68656c6c6f'::bytea, ARRAY['Comment']::text[], ARRAY['Doltgres']::text[]));`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0020-select-pgp_armor_headers-armor-\\x68656c6c6f-::bytea"},
 				},
 				{
-					Query:       `SELECT armor('\x00'::bytea, ARRAY['Comment']::text[], ARRAY[]::text[]);`,
-					ExpectedErr: `mismatched array dimensions`,
+					Query: `SELECT armor('\x00'::bytea, ARRAY['Comment']::text[], ARRAY[]::text[]);`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0021-select-armor-\\x00-::bytea-array[", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT dearmor('-----BEGIN PGP MESSAGE-----
@@ -186,12 +168,10 @@ func TestCommonExtensionsProbe(t *testing.T) {
 AAAA
 =AAAA
 -----END PGP MESSAGE-----
-');`,
-					ExpectedErr: `Corrupt ascii-armor`,
+');`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0022-select-dearmor-begin-pgp-message", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT left(gen_salt('bf'), 7), length(gen_salt('bf'))::text, left(gen_salt('bf', 4), 7), length(gen_salt('bf', 4))::text;`,
-					Expected: []sql.Row{{"$2a$06$", "29", "$2a$04$", "29"}},
+					Query: `SELECT left(gen_salt('bf'), 7), length(gen_salt('bf'))::text, left(gen_salt('bf', 4), 7), length(gen_salt('bf', 4))::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0023-select-left-gen_salt-bf-7"},
 				},
 				{
 					Query: `WITH hashed AS (
@@ -200,44 +180,34 @@ AAAA
 					SELECT length(password_hash)::text, left(password_hash, 7),
 						password_hash = crypt('correct horse battery staple', password_hash),
 						password_hash = crypt('wrong password', password_hash)
-					FROM hashed;`,
-					Expected: []sql.Row{{"60", "$2a$04$", "t", "f"}},
+					FROM hashed;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0024-with-hashed-as-select-crypt"},
 				},
 				{
-					Query:    `SELECT crypt('allmine', '$2a$10$XajjQvNhvvRt5GSeFk1xFe');`,
-					Expected: []sql.Row{{"$2a$10$XajjQvNhvvRt5GSeFk1xFeyqRrsxkhBkUiQeg0dt.wU1qD4aFDcga"}},
+					Query: `SELECT crypt('allmine', '$2a$10$XajjQvNhvvRt5GSeFk1xFe');`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0025-select-crypt-allmine-$2a$10$xajjqvnhvvrt5gsefk1xfe"},
 				},
 				{
-					Query:    `SELECT encrypt('\x68656c6c6f20706763727970746f'::bytea, '\x30313233343536373839616263646566'::bytea, 'aes')::text;`,
-					Expected: []sql.Row{{`\xc105fd4a7fae9b39f59ea9a363439e11`}},
+					Query: `SELECT encrypt('\x68656c6c6f20706763727970746f'::bytea, '\x30313233343536373839616263646566'::bytea, 'aes')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0026-select-encrypt-\\x68656c6c6f20706763727970746f-::bytea-\\x30313233343536373839616263646566"},
 				},
 				{
-					Query:    `SELECT decrypt('\xc105fd4a7fae9b39f59ea9a363439e11'::bytea, '\x30313233343536373839616263646566'::bytea, 'aes')::text;`,
-					Expected: []sql.Row{{`\x68656c6c6f20706763727970746f`}},
+					Query: `SELECT decrypt('\xc105fd4a7fae9b39f59ea9a363439e11'::bytea, '\x30313233343536373839616263646566'::bytea, 'aes')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0027-select-decrypt-\\xc105fd4a7fae9b39f59ea9a363439e11-::bytea-\\x30313233343536373839616263646566"},
 				},
 				{
-					Query:    `SELECT encrypt_iv('\x68656c6c6f20706763727970746f'::bytea, '\x30313233343536373839616263646566'::bytea, '\x69766976697669766976697669766976'::bytea, 'aes-cbc/pad:pkcs')::text;`,
-					Expected: []sql.Row{{`\x07ae2f58e0963a6b89784cff3f2247ed`}},
+					Query: `SELECT encrypt_iv('\x68656c6c6f20706763727970746f'::bytea, '\x30313233343536373839616263646566'::bytea, '\x69766976697669766976697669766976'::bytea, 'aes-cbc/pad:pkcs')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0028-select-encrypt_iv-\\x68656c6c6f20706763727970746f-::bytea-\\x30313233343536373839616263646566"},
 				},
 				{
-					Query:    `SELECT decrypt_iv('\x07ae2f58e0963a6b89784cff3f2247ed'::bytea, '\x30313233343536373839616263646566'::bytea, '\x69766976697669766976697669766976'::bytea, 'aes-cbc/pad:pkcs')::text;`,
-					Expected: []sql.Row{{`\x68656c6c6f20706763727970746f`}},
+					Query: `SELECT decrypt_iv('\x07ae2f58e0963a6b89784cff3f2247ed'::bytea, '\x30313233343536373839616263646566'::bytea, '\x69766976697669766976697669766976'::bytea, 'aes-cbc/pad:pkcs')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0029-select-decrypt_iv-\\x07ae2f58e0963a6b89784cff3f2247ed-::bytea-\\x30313233343536373839616263646566"},
 				},
 				{
-					Query:    `SELECT encrypt('\x31323334353637383930616263646566'::bytea, '\x30313233343536373839616263646566'::bytea, 'aes-ecb/pad:none')::text;`,
-					Expected: []sql.Row{{`\x461a5ffd9df79171358e9e0177d84eaa`}},
+					Query: `SELECT encrypt('\x31323334353637383930616263646566'::bytea, '\x30313233343536373839616263646566'::bytea, 'aes-ecb/pad:none')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0030-select-encrypt-\\x31323334353637383930616263646566-::bytea-\\x30313233343536373839616263646566"},
 				},
 				{
-					Query:       `SELECT encrypt('\x73686f7274'::bytea, '\x30313233343536373839616263646566'::bytea, 'aes-cbc/pad:none');`,
-					ExpectedErr: `data not a multiple of block size`,
+					Query: `SELECT encrypt('\x73686f7274'::bytea, '\x30313233343536373839616263646566'::bytea, 'aes-cbc/pad:none');`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0031-select-encrypt-\\x73686f7274-::bytea-\\x30313233343536373839616263646566", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SELECT encrypt('\x00'::bytea, '\x00'::bytea, 'aes');`,
-					ExpectedErr: `invalid pgcrypto aes key length: 1`,
+					Query: `SELECT encrypt('\x00'::bytea, '\x00'::bytea, 'aes');`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0032-select-encrypt-\\x00-::bytea-\\x00", ColumnModes: []string{"bytea"}},
 				},
 				{
-					Query:    `SELECT encrypt('\x68656c6c6f20706763727970746f'::bytea, '\x30313233343536373839616263646566'::bytea, 'bf')::text;`,
-					Expected: []sql.Row{{`\xa50945ee7031548efa0c256a14547425`}},
+					Query: `SELECT encrypt('\x68656c6c6f20706763727970746f'::bytea, '\x30313233343536373839616263646566'::bytea, 'bf')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0033-select-encrypt-\\x68656c6c6f20706763727970746f-::bytea-\\x30313233343536373839616263646566", Compare: "sqlstate"},
 				},
 				{
 					Query:    `SELECT decrypt('\xa50945ee7031548efa0c256a14547425'::bytea, '\x30313233343536373839616263646566'::bytea, 'bf')::text;`,
@@ -357,8 +327,7 @@ AAAA
 					Query: `SELECT e.extname, n.nspname, e.extrelocatable, e.extversion, e.extconfig, e.extcondition
 						FROM pg_catalog.pg_extension e
 						JOIN pg_catalog.pg_namespace n ON n.oid = e.extnamespace
-						WHERE e.extname = 'uuid-ossp';`,
-					Expected: []sql.Row{{"uuid-ossp", "public", "t", "1.1", nil, nil}},
+						WHERE e.extname = 'uuid-ossp';`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0059-select-e.extname-n.nspname-e.extrelocatable-e.extversion", ColumnModes: []string{"structural", "schema"}},
 				},
 			},
 		},
@@ -373,8 +342,7 @@ AAAA
 					Query: `SELECT e.extname, n.nspname, e.extrelocatable, e.extversion, e.extconfig, e.extcondition
 						FROM pg_catalog.pg_extension e
 						JOIN pg_catalog.pg_namespace n ON n.oid = e.extnamespace
-						WHERE e.extname = 'pgcrypto';`,
-					Expected: []sql.Row{{"pgcrypto", "extensions", "t", "1.3", nil, nil}},
+						WHERE e.extname = 'pgcrypto';`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0060-select-e.extname-n.nspname-e.extrelocatable-e.extversion"},
 				},
 			},
 		},
@@ -387,22 +355,18 @@ AAAA
 			},
 			Assertions: []ScriptTestAssertion{
 				{
+					Query: `SELECT extensions.digest('abc', 'sha256')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0061-select-extensions.digest-abc-sha256-::text"},
+				},
+				{
+					Query: `SELECT extensions.crypt('allmine', '$2a$10$XajjQvNhvvRt5GSeFk1xFe');`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0062-select-extensions.crypt-allmine-$2a$10$xajjqvnhvvrt5gsefk1xfe"},
+				},
+				{
+					Query: `SELECT extensions.encrypt('\x68656c6c6f20706763727970746f'::bytea, '\x30313233343536373839616263646566'::bytea, 'aes')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0063-select-extensions.encrypt-\\x68656c6c6f20706763727970746f-::bytea-\\x30313233343536373839616263646566"},
+				},
+				{
 					Query:    `SELECT extensions.digest('abc', 'sha256')::text;`,
-					Expected: []sql.Row{{`\xba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad`}},
-				},
-				{
-					Query:    `SELECT extensions.crypt('allmine', '$2a$10$XajjQvNhvvRt5GSeFk1xFe');`,
-					Expected: []sql.Row{{"$2a$10$XajjQvNhvvRt5GSeFk1xFeyqRrsxkhBkUiQeg0dt.wU1qD4aFDcga"}},
-				},
-				{
-					Query:    `SELECT extensions.encrypt('\x68656c6c6f20706763727970746f'::bytea, '\x30313233343536373839616263646566'::bytea, 'aes')::text;`,
-					Expected: []sql.Row{{`\xc105fd4a7fae9b39f59ea9a363439e11`}},
-				},
-				{
-					Query:       `SELECT extensions.digest('abc', 'sha256')::text;`,
-					Username:    `ext_user`,
-					Password:    `a`,
-					ExpectedErr: `denied`,
+					Username: `ext_user`,
+					Password: `a`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0064-select-extensions.digest-abc-sha256-::text", Compare: "sqlstate"},
 				},
 				{
 					Query: `GRANT USAGE ON SCHEMA extensions TO ext_user;`,
@@ -500,50 +464,42 @@ AAAA
 				{
 					Query:    `SELECT extensions.digest('abc', 'sha256')::text;`,
 					Username: `ext_user`,
-					Password: `a`,
-					Expected: []sql.Row{{`\xba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad`}},
+					Password: `a`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0065-select-extensions.digest-abc-sha256-::text"},
 				},
 				{
 					Query:    `SELECT length(extensions.gen_random_bytes(4)::text)::text, left(extensions.gen_random_uuid()::text, 1) IS NOT NULL;`,
 					Username: `ext_user`,
-					Password: `a`,
-					Expected: []sql.Row{{"10", "t"}},
+					Password: `a`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0066-select-length-extensions.gen_random_bytes-4-::text"},
 				},
 				{
 					Query:    `SELECT extensions.crypt('allmine', '$2a$10$XajjQvNhvvRt5GSeFk1xFe');`,
 					Username: `ext_user`,
-					Password: `a`,
-					Expected: []sql.Row{{"$2a$10$XajjQvNhvvRt5GSeFk1xFeyqRrsxkhBkUiQeg0dt.wU1qD4aFDcga"}},
+					Password: `a`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0067-select-extensions.crypt-allmine-$2a$10$xajjqvnhvvrt5gsefk1xfe"},
 				},
 				{
 					Query:    `SELECT extensions.decrypt(extensions.encrypt('\x68656c6c6f20706763727970746f'::bytea, '\x30313233343536373839616263646566'::bytea, 'aes'), '\x30313233343536373839616263646566'::bytea, 'aes')::text;`,
 					Username: `ext_user`,
-					Password: `a`,
-					Expected: []sql.Row{{`\x68656c6c6f20706763727970746f`}},
+					Password: `a`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0068-select-extensions.decrypt-extensions.encrypt-\\x68656c6c6f20706763727970746f-::bytea"},
 				},
 				{
 					Query:    `SELECT extensions.dearmor(extensions.armor('\x68656c6c6f'::bytea))::text;`,
 					Username: `ext_user`,
-					Password: `a`,
-					Expected: []sql.Row{{`\x68656c6c6f`}},
+					Password: `a`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0069-select-extensions.dearmor-extensions.armor-\\x68656c6c6f-::bytea"},
 				},
 				{
 					Query:    `SELECT extensions.pgp_armor_headers(extensions.armor('\x68656c6c6f'::bytea, ARRAY['Comment']::text[], ARRAY['Doltgres']::text[]));`,
 					Username: `ext_user`,
-					Password: `a`,
-					Expected: []sql.Row{{[]any{"Comment", "Doltgres"}}},
+					Password: `a`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0070-select-extensions.pgp_armor_headers-extensions.armor-\\x68656c6c6f-::bytea"},
 				},
 				{
 					Query:    `SELECT extensions.decrypt_iv(extensions.encrypt_iv('\x68656c6c6f20706763727970746f'::bytea, '\x30313233343536373839616263646566'::bytea, '\x69766976697669766976697669766976'::bytea, 'aes-cbc/pad:pkcs'), '\x30313233343536373839616263646566'::bytea, '\x69766976697669766976697669766976'::bytea, 'aes-cbc/pad:pkcs')::text;`,
 					Username: `ext_user`,
-					Password: `a`,
-					Expected: []sql.Row{{`\x68656c6c6f20706763727970746f`}},
+					Password: `a`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0071-select-extensions.decrypt_iv-extensions.encrypt_iv-\\x68656c6c6f20706763727970746f-::bytea"},
 				},
 				{
-					Query:       `SELECT extensions.pgp_key_id('\x00'::bytea);`,
-					Username:    `ext_user`,
-					Password:    `a`,
-					ExpectedErr: `pgcrypto PGP key inspection is not yet supported`,
+					Query:    `SELECT extensions.pgp_key_id('\x00'::bytea);`,
+					Username: `ext_user`,
+					Password: `a`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0072-select-extensions.pgp_key_id-\\x00-::bytea", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -891,15 +847,13 @@ ORDER BY amproc.amprocnum;`,
 					Query: `SELECT e.extname, n.nspname
 						FROM pg_catalog.pg_extension e
 						JOIN pg_catalog.pg_namespace n ON n.oid = e.extnamespace
-						WHERE e.extname = 'btree_gist';`,
-					Expected: []sql.Row{{"btree_gist", "extensions"}},
+						WHERE e.extname = 'btree_gist';`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0124-select-e.extname-n.nspname-from-pg_catalog.pg_extension"},
 				},
 				{
 					Query: `SELECT opc.opcname, n.nspname
 						FROM pg_catalog.pg_opclass opc
 						JOIN pg_catalog.pg_namespace n ON n.oid = opc.opcnamespace
-						WHERE opc.opcname = 'gist_text_ops';`,
-					Expected: []sql.Row{{"gist_text_ops", "extensions"}},
+						WHERE opc.opcname = 'gist_text_ops';`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0125-select-opc.opcname-n.nspname-from-pg_catalog.pg_opclass"},
 				},
 			},
 		},

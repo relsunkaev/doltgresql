@@ -1,0 +1,61 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map generated_column_correctness_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres18/generated_column_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/postgres18/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres18/generated_column_correctness_repro_test.go:TestPostgres18VirtualGeneratedColumnRepro#0001",
+      "source": "testing/go/postgres18/generated_column_correctness_repro_test.go:TestPostgres18VirtualGeneratedColumnRepro",
+      "ordinal": 1,
+      "scriptName": "virtual generated columns compute on read",
+      "oracle": "postgres",
+      "postgresId": "postgres18/generated-column-correctness-repro-test-testpostgres18virtualgeneratedcolumnrepro-0001-select-area-from-generated_virtual_items-where",
+      "suggestedId": "postgres18/generated-column-correctness-repro-test-testpostgres18virtualgeneratedcolumnrepro-0001-select-area-from-generated_virtual_items-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT area FROM generated_virtual_items WHERE id = 1;",
+      "querySha256": "5900ab7c74a02086299967f72502514fa42d5f24dd705ee71f68346d05297ca7",
+      "expectedRows": [
+        [
+          {
+            "value": "12"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres18/generated_column_correctness_repro_test.go:TestPostgres18VirtualGeneratedColumnRepro#0002",
+      "source": "testing/go/postgres18/generated_column_correctness_repro_test.go:TestPostgres18VirtualGeneratedColumnRepro",
+      "ordinal": 2,
+      "scriptName": "virtual generated columns compute on read",
+      "oracle": "postgres",
+      "postgresId": "postgres18/generated-column-correctness-repro-test-testpostgres18virtualgeneratedcolumnrepro-0002-select-area-from-generated_virtual_items-where",
+      "suggestedId": "postgres18/generated-column-correctness-repro-test-testpostgres18virtualgeneratedcolumnrepro-0002-select-area-from-generated_virtual_items-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT area FROM generated_virtual_items WHERE id = 1;",
+      "querySha256": "5900ab7c74a02086299967f72502514fa42d5f24dd705ee71f68346d05297ca7",
+      "expectedRows": [
+        [
+          {
+            "value": "20"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

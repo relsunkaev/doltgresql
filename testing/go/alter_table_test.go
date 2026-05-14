@@ -33,45 +33,45 @@ func TestAlterTable(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "ALTER TABLE parent ADD FOREIGN KEY (c1) REFERENCES child (pk) ON DELETE CASCADE;",
-					Expected: []sql.Row{},
+					Query: "ALTER TABLE parent ADD FOREIGN KEY (c1) REFERENCES child (pk) ON DELETE CASCADE;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0001-alter-table-parent-add-foreign"},
 				},
 				{
 					// Test that the FK constraint is working
-					Query:       "INSERT INTO parent VALUES (10, 10, 10);",
-					ExpectedErr: "Foreign key violation",
+					Query: "INSERT INTO parent VALUES (10, 10, 10);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0002-insert-into-parent-values-10", Compare: "sqlstate"},
 				},
 				{
-					Query:       "ALTER TABLE parent ADD FOREIGN KEY (c2) REFERENCES child (pk);",
-					ExpectedErr: "Foreign key violation",
+					Query: "ALTER TABLE parent ADD FOREIGN KEY (c2) REFERENCES child (pk);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0003-alter-table-parent-add-foreign",
+
+						// Test an FK reference over multiple columns
+						Compare: "sqlstate"},
 				},
 				{
-					// Test an FK reference over multiple columns
-					Query:       "ALTER TABLE parent ADD FOREIGN KEY (c1, c2) REFERENCES child (pk, c1);",
-					ExpectedErr: "Foreign key violation",
+
+					Query: "ALTER TABLE parent ADD FOREIGN KEY (c1, c2) REFERENCES child (pk, c1);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0004-alter-table-parent-add-foreign", Compare: "sqlstate"},
 				},
 				{
-					Query:    "ALTER TABLE parent ADD CONSTRAINT match_full_single FOREIGN KEY (c1) REFERENCES child (pk) MATCH FULL;",
-					Expected: []sql.Row{},
+					Query: "ALTER TABLE parent ADD CONSTRAINT match_full_single FOREIGN KEY (c1) REFERENCES child (pk) MATCH FULL;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0005-alter-table-parent-add-constraint"},
 				},
 				{
-					Query:       "INSERT INTO parent VALUES (20, 20, 20);",
-					ExpectedErr: "Foreign key violation",
+					Query: "INSERT INTO parent VALUES (20, 20, 20);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0006-insert-into-parent-values-20",
+
+						// Single-column MATCH FULL has the same null behavior as MATCH SIMPLE.
+						Compare: "sqlstate"},
 				},
 				{
-					// Single-column MATCH FULL has the same null behavior as MATCH SIMPLE.
-					Query:    "INSERT INTO parent VALUES (20, NULL, 20);",
-					Expected: []sql.Row{},
+
+					Query: "INSERT INTO parent VALUES (20, NULL, 20);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0007-insert-into-parent-values-20"},
 				},
 				{
 					// Existing rows still have to satisfy the composite reference.
-					Query:       "ALTER TABLE parent ADD FOREIGN KEY (c1, c2) REFERENCES child (pk, c1) MATCH FULL;",
-					ExpectedErr: "Foreign key violation",
+					Query: "ALTER TABLE parent ADD FOREIGN KEY (c1, c2) REFERENCES child (pk, c1) MATCH FULL;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0008-alter-table-parent-add-foreign",
+
+						// Unsupported syntax: MATCH PARTIAL
+						Compare: "sqlstate"},
 				},
 				{
-					// Unsupported syntax: MATCH PARTIAL
-					Query:       "ALTER TABLE parent ADD FOREIGN KEY (c1, c2) REFERENCES child (pk, c1) MATCH PARTIAL;",
-					ExpectedErr: "MATCH PARTIAL is not yet supported",
+
+					Query: "ALTER TABLE parent ADD FOREIGN KEY (c1, c2) REFERENCES child (pk, c1) MATCH PARTIAL;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0009-alter-table-parent-add-foreign", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -86,23 +86,22 @@ func TestAlterTable(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					// Add a secondary unique index using create index
-					Query:    "CREATE UNIQUE INDEX ON t1(c1);",
-					Expected: []sql.Row{},
+					Query: "CREATE UNIQUE INDEX ON t1(c1);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0010-create-unique-index-on-t1"},
 				},
 				{
 					// Test that the unique constraint is working
-					Query:       "INSERT INTO t1 VALUES (2, 1);",
-					ExpectedErr: "unique",
+					Query: "INSERT INTO t1 VALUES (2, 1);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0011-insert-into-t1-values-2",
+
+						// Add a secondary unique index using alter table
+						Compare: "sqlstate"},
 				},
 				{
-					// Add a secondary unique index using alter table
-					Query:    "ALTER TABLE t2 ADD CONSTRAINT uniq1 UNIQUE (c1);",
-					Expected: []sql.Row{},
+
+					Query: "ALTER TABLE t2 ADD CONSTRAINT uniq1 UNIQUE (c1);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0012-alter-table-t2-add-constraint"},
 				},
 				{
 					// Test that the unique constraint is working
-					Query:       "INSERT INTO t2 VALUES (2, 1);",
-					ExpectedErr: "unique",
+					Query: "INSERT INTO t2 VALUES (2, 1);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0013-insert-into-t2-values-2", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -115,21 +114,20 @@ func TestAlterTable(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					// Add a check constraint that is already violated by the existing data
-					Query:       "ALTER TABLE t1 ADD CONSTRAINT constraint1 CHECK (c1 > 100);",
-					ExpectedErr: "violated",
+					Query: "ALTER TABLE t1 ADD CONSTRAINT constraint1 CHECK (c1 > 100);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0014-alter-table-t1-add-constraint",
+
+						// Add a check constraint
+						Compare: "sqlstate"},
 				},
 				{
-					// Add a check constraint
-					Query:    "ALTER TABLE t1 ADD CONSTRAINT constraint1 CHECK (c1 < 100);",
-					Expected: []sql.Row{},
+
+					Query: "ALTER TABLE t1 ADD CONSTRAINT constraint1 CHECK (c1 < 100);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0015-alter-table-t1-add-constraint"},
 				},
 				{
-					Query:    "INSERT INTO t1 VALUES (2, 2);",
-					Expected: []sql.Row{},
+					Query: "INSERT INTO t1 VALUES (2, 2);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0016-insert-into-t1-values-2"},
 				},
 				{
-					Query:       "INSERT INTO t1 VALUES (3, 101);",
-					ExpectedErr: "violated",
+					Query: "INSERT INTO t1 VALUES (3, 101);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0017-insert-into-t1-values-3", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -142,21 +140,20 @@ func TestAlterTable(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					// Add a check constraint that is already violated by the existing data
-					Query:       "ALTER TABLE t1 ADD CONSTRAINT constraint1 CHECK (c1 in (100));",
-					ExpectedErr: "violated",
+					Query: "ALTER TABLE t1 ADD CONSTRAINT constraint1 CHECK (c1 in (100));", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0018-alter-table-t1-add-constraint",
+
+						// Add a check constraint
+						Compare: "sqlstate"},
 				},
 				{
-					// Add a check constraint
-					Query:    "ALTER TABLE t1 ADD CONSTRAINT constraint1 CHECK (c1 in (1,2));",
-					Expected: []sql.Row{},
+
+					Query: "ALTER TABLE t1 ADD CONSTRAINT constraint1 CHECK (c1 in (1,2));", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0019-alter-table-t1-add-constraint"},
 				},
 				{
-					Query:    "INSERT INTO t1 VALUES (2, 2);",
-					Expected: []sql.Row{},
+					Query: "INSERT INTO t1 VALUES (2, 2);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0020-insert-into-t1-values-2"},
 				},
 				{
-					Query:       "INSERT INTO t1 VALUES (3, 101);",
-					ExpectedErr: "violated",
+					Query: "INSERT INTO t1 VALUES (3, 101);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0021-insert-into-t1-values-3", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -169,16 +166,13 @@ func TestAlterTable(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					// Add a check constraint
-					Query:    " ALTER TABLE t1 ADD CONSTRAINT check_a CHECK (c1 IN (1)), ALTER c1 SET NOT NULL;",
-					Expected: []sql.Row{},
+					Query: " ALTER TABLE t1 ADD CONSTRAINT check_a CHECK (c1 IN (1)), ALTER c1 SET NOT NULL;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0022-alter-table-t1-add-constraint"},
 				},
 				{
-					Query:       "INSERT INTO t1 VALUES (2, 2);",
-					ExpectedErr: "violated",
+					Query: "INSERT INTO t1 VALUES (2, 2);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0023-insert-into-t1-values-2", Compare: "sqlstate"},
 				},
 				{
-					Query:       "INSERT INTO t1 VALUES (1, NULL);",
-					ExpectedErr: "non-nullable",
+					Query: "INSERT INTO t1 VALUES (1, NULL);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0024-insert-into-t1-values-1", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -190,20 +184,16 @@ func TestAlterTable(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "ALTER TABLE t1 DROP CONSTRAINT constraint1;",
-					Expected: []sql.Row{},
+					Query: "ALTER TABLE t1 DROP CONSTRAINT constraint1;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0025-alter-table-t1-drop-constraint"},
 				},
 				{
-					Query:    "INSERT INTO t1 VALUES (1, 1);",
-					Expected: []sql.Row{},
+					Query: "INSERT INTO t1 VALUES (1, 1);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0026-insert-into-t1-values-1"},
 				},
 				{
-					Query:       "ALTER TABLE t1 DROP CONSTRAINT doesnotexist;",
-					ExpectedErr: "does not exist",
+					Query: "ALTER TABLE t1 DROP CONSTRAINT doesnotexist;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0027-alter-table-t1-drop-constraint", Compare: "sqlstate"},
 				},
 				{
-					Query:    "ALTER TABLE t1 DROP CONSTRAINT IF EXISTS doesnotexist;",
-					Expected: []sql.Row{},
+					Query: "ALTER TABLE t1 DROP CONSTRAINT IF EXISTS doesnotexist;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0028-alter-table-t1-drop-constraint"},
 				},
 			},
 		},
@@ -218,38 +208,34 @@ func TestAlterTable(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "ALTER TABLE test1 ADD PRIMARY KEY (a);",
-					Expected: []sql.Row{},
+					Query: "ALTER TABLE test1 ADD PRIMARY KEY (a);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0029-alter-table-test1-add-primary"},
 				},
 				{
 					// Test the pk by inserting a duplicate value
-					Query:       "INSERT into test1 values (1, 2), (1, 3);",
-					ExpectedErr: "duplicate primary key",
+					Query: "INSERT into test1 values (1, 2), (1, 3);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0030-insert-into-test1-values-1", Compare: "sqlstate"},
 				},
 				{
-					Query:    "ALTER TABLE test2 ADD PRIMARY KEY (a, b);",
-					Expected: []sql.Row{},
+					Query: "ALTER TABLE test2 ADD PRIMARY KEY (a, b);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0031-alter-table-test2-add-primary"},
 				},
 				{
 					// Test the pk by inserting a duplicate value
-					Query:       "INSERT into test2 values (1, 2, 3), (1, 2, 4);",
-					ExpectedErr: "duplicate primary key",
+					Query: "INSERT into test2 values (1, 2, 3), (1, 2, 4);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0032-insert-into-test2-values-1", Compare: "sqlstate"},
 				},
 				{
-					Query:       "ALTER TABLE pkTable1 ADD PRIMARY KEY (a);",
-					ExpectedErr: "Multiple primary keys defined",
+					Query: "ALTER TABLE pkTable1 ADD PRIMARY KEY (a);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0033-alter-table-pktable1-add-primary", Compare: "sqlstate"},
 				},
 				{
-					Query:       "ALTER TABLE duplicateRows ADD PRIMARY KEY (a);",
-					ExpectedErr: "duplicate primary key",
+					Query: "ALTER TABLE duplicateRows ADD PRIMARY KEY (a);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0034-alter-table-duplicaterows-add-primary",
+
+						// TODO: This statement fails in analysis, because it can't find a table named
+						//       doesNotExist – since IF EXISTS is specified, the analyzer should skip
+						//       errors on resolving the table in this case.
+						Compare: "sqlstate"},
 				},
 				{
-					// TODO: This statement fails in analysis, because it can't find a table named
-					//       doesNotExist – since IF EXISTS is specified, the analyzer should skip
-					//       errors on resolving the table in this case.
-					Skip:     true,
-					Query:    "ALTER TABLE IF EXISTS doesNotExist ADD PRIMARY KEY (a, b);",
-					Expected: []sql.Row{},
+
+					Skip:  true,
+					Query: "ALTER TABLE IF EXISTS doesNotExist ADD PRIMARY KEY (a, b);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0035-alter-table-if-exists-doesnotexist"},
 				},
 			},
 		},
@@ -261,20 +247,14 @@ func TestAlterTable(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "ALTER TABLE test1 ADD PRIMARY KEY (a);",
-					Expected: []sql.Row{},
+					Query: "ALTER TABLE test1 ADD PRIMARY KEY (a);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0036-alter-table-test1-add-primary"},
 				},
 				{
 					// Test the pk by inserting a duplicate value
-					Query:       "INSERT into test1 values ('a', 3);",
-					ExpectedErr: "duplicate primary key",
+					Query: "INSERT into test1 values ('a', 3);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0037-insert-into-test1-values-a", Compare: "sqlstate"},
 				},
 				{
-					Query: "select * from test1;",
-					Expected: []sql.Row{
-						{"a", 1},
-						{"b", 2},
-					},
+					Query: "select * from test1;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0038-select-*-from-test1"},
 				},
 			},
 		},
@@ -297,10 +277,7 @@ func TestAlterTable(t *testing.T) {
 					SkipResultsCheck: true, // only care if it doesn't error
 				},
 				{
-					Query: "Select has_data from t1;",
-					Expected: []sql.Row{
-						{"t"},
-					},
+					Query: "Select has_data from t1;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0039-select-has_data-from-t1"},
 				},
 			},
 		},
@@ -312,20 +289,16 @@ func TestAlterTable(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "ALTER TABLE test1 ADD COLUMN c INT NOT NULL DEFAULT 42;",
-					Expected: []sql.Row{},
+					Query: "ALTER TABLE test1 ADD COLUMN c INT NOT NULL DEFAULT 42;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0040-alter-table-test1-add-column"},
 				},
 				{
-					Query:    "select * from test1;",
-					Expected: []sql.Row{{1, 1, 42}},
+					Query: "select * from test1;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0041-select-*-from-test1"},
 				},
 				{
-					Query:       "ALTER TABLE test1 ADD COLUMN l non_existing_type;",
-					ExpectedErr: `type "non_existing_type" does not exist`,
+					Query: "ALTER TABLE test1 ADD COLUMN l non_existing_type;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0042-alter-table-test1-add-column", Compare: "sqlstate"},
 				},
 				{
-					Query:    `ALTER TABLE test1 ADD COLUMN m xid;`,
-					Expected: []sql.Row{},
+					Query: `ALTER TABLE test1 ADD COLUMN m xid;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0043-alter-table-test1-add-column"},
 				},
 			},
 		},
@@ -336,12 +309,10 @@ func TestAlterTable(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "ALTER TABLE test1 ADD COLUMN c INT NOT NULL DEFAULT 42 CONSTRAINT chk1 CHECK (c > 0);",
-					Expected: []sql.Row{},
+					Query: "ALTER TABLE test1 ADD COLUMN c INT NOT NULL DEFAULT 42 CONSTRAINT chk1 CHECK (c > 0);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0044-alter-table-test1-add-column"},
 				},
 				{
-					Query:       "INSERT INTO test1 VALUES (2, 2, -2);",
-					ExpectedErr: `Check constraint "chk1" violated`,
+					Query: "INSERT INTO test1 VALUES (2, 2, -2);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0045-insert-into-test1-values-2", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -353,16 +324,13 @@ func TestAlterTable(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "ALTER TABLE test1 ADD COLUMN c INT NOT NULL DEFAULT 42 CONSTRAINT chk1 CHECK (c > 0);",
-					Expected: []sql.Row{},
+					Query: "ALTER TABLE test1 ADD COLUMN c INT NOT NULL DEFAULT 42 CONSTRAINT chk1 CHECK (c > 0);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0046-alter-table-test1-add-column"},
 				},
 				{
-					Query:       "INSERT INTO test1 VALUES (2, 2, -2);",
-					ExpectedErr: `Check constraint "chk1" violated`,
+					Query: "INSERT INTO test1 VALUES (2, 2, -2);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0047-insert-into-test1-values-2", Compare: "sqlstate"},
 				},
 				{
-					Query:       "ALTER TABLE test1 ADD COLUMN c2 INT CONSTRAINT chk2 CHECK (c2 IS NOT NULL);",
-					ExpectedErr: `Check constraint "chk2" violated`,
+					Query: "ALTER TABLE test1 ADD COLUMN c2 INT CONSTRAINT chk2 CHECK (c2 IS NOT NULL);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0048-alter-table-test1-add-column", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -374,33 +342,27 @@ func TestAlterTable(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "ALTER TABLE test1 DROP COLUMN c;",
-					Expected: []sql.Row{},
+					Query: "ALTER TABLE test1 DROP COLUMN c;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0049-alter-table-test1-drop-column"},
 				},
 				{
-					Query:    "select * from test1;",
-					Expected: []sql.Row{{1, 2, 4}},
+					Query: "select * from test1;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0050-select-*-from-test1"},
 				},
 				{
-					Query:    "ALTER TABLE test1 DROP COLUMN d;",
-					Expected: []sql.Row{},
+					Query: "ALTER TABLE test1 DROP COLUMN d;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0051-alter-table-test1-drop-column"},
 				},
 				{
-					Query:    "select * from test1;",
-					Expected: []sql.Row{{1, 2}},
+					Query: "select * from test1;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0052-select-*-from-test1"},
 				},
 				{
 					// TODO: Skipped until we support conditional execution on existence of column
-					Skip:     true,
-					Query:    "ALTER TABLE test1 DROP COLUMN IF EXISTS zzz;",
-					Expected: []sql.Row{},
+					Skip:  true,
+					Query: "ALTER TABLE test1 DROP COLUMN IF EXISTS zzz;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0053-alter-table-test1-drop-column"},
 				},
 				{
 					// TODO: Even though we're setting IF EXISTS, this query still fails with an
 					//       error about the table not existing.
-					Skip:     true,
-					Query:    "ALTER TABLE IF EXISTS doesNotExist DROP COLUMN z;",
-					Expected: []sql.Row{},
+					Skip:  true,
+					Query: "ALTER TABLE IF EXISTS doesNotExist DROP COLUMN z;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0054-alter-table-if-exists-doesnotexist"},
 				},
 			},
 		},
@@ -412,12 +374,10 @@ func TestAlterTable(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "ALTER TABLE test1 RENAME COLUMN c to jjj;",
-					Expected: []sql.Row{},
+					Query: "ALTER TABLE test1 RENAME COLUMN c to jjj;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0055-alter-table-test1-rename-column"},
 				},
 				{
-					Query:    "select * from test1 where jjj=3;",
-					Expected: []sql.Row{{1, 2, 3, 4}},
+					Query: "select * from test1 where jjj=3;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0056-select-*-from-test1-where"},
 				},
 			},
 		},
@@ -428,40 +388,31 @@ func TestAlterTable(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "ALTER TABLE test1 ALTER COLUMN c SET DEFAULT 43;",
-					Expected: []sql.Row{},
+					Query: "ALTER TABLE test1 ALTER COLUMN c SET DEFAULT 43;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0057-alter-table-test1-alter-column"},
 				},
 				{
-					Query:    "INSERT INTO test1 (a) VALUES (1);",
-					Expected: []sql.Row{},
+					Query: "INSERT INTO test1 (a) VALUES (1);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0058-insert-into-test1-a-values"},
 				},
 				{
-					Query:    "SELECT * FROM test1;",
-					Expected: []sql.Row{{1, 42, 43}},
+					Query: "SELECT * FROM test1;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0059-select-*-from-test1"},
 				},
 				{
-					Query:    "ALTER TABLE test1 ALTER COLUMN b DROP DEFAULT;",
-					Expected: []sql.Row{},
+					Query: "ALTER TABLE test1 ALTER COLUMN b DROP DEFAULT;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0060-alter-table-test1-alter-column"},
 				},
 				{
-					Query:    "INSERT INTO test1 (a) VALUES (2);",
-					Expected: []sql.Row{},
+					Query: "INSERT INTO test1 (a) VALUES (2);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0061-insert-into-test1-a-values"},
 				},
 				{
-					Query:    "SELECT * FROM test1 where a = 2;",
-					Expected: []sql.Row{{2, nil, 43}},
+					Query: "SELECT * FROM test1 where a = 2;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0062-select-*-from-test1-where"},
 				},
 				{
-					Query:    "ALTER TABLE test1 ALTER COLUMN c SET DEFAULT length('hello world');",
-					Expected: []sql.Row{},
+					Query: "ALTER TABLE test1 ALTER COLUMN c SET DEFAULT length('hello world');", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0063-alter-table-test1-alter-column"},
 				},
 				{
-					Query:    "INSERT INTO test1 (a) VALUES (3);",
-					Expected: []sql.Row{},
+					Query: "INSERT INTO test1 (a) VALUES (3);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0064-insert-into-test1-a-values"},
 				},
 				{
-					Query:    "SELECT * FROM test1 where a = 3;",
-					Expected: []sql.Row{{3, nil, 11}},
+					Query: "SELECT * FROM test1 where a = 3;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0065-select-*-from-test1-where"},
 				},
 			},
 		},
@@ -472,28 +423,22 @@ func TestAlterTable(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "ALTER TABLE test1 ALTER COLUMN b SET NOT NULL;",
-					Expected: []sql.Row{},
+					Query: "ALTER TABLE test1 ALTER COLUMN b SET NOT NULL;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0066-alter-table-test1-alter-column"},
 				},
 				{
-					Query:       "INSERT INTO test1 VALUES (1, NULL);",
-					ExpectedErr: "column name 'b' is non-nullable",
+					Query: "INSERT INTO test1 VALUES (1, NULL);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0067-insert-into-test1-values-1", Compare: "sqlstate"},
 				},
 				{
-					Query:    "ALTER TABLE test1 ALTER COLUMN b DROP NOT NULL;",
-					Expected: []sql.Row{},
+					Query: "ALTER TABLE test1 ALTER COLUMN b DROP NOT NULL;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0068-alter-table-test1-alter-column"},
 				},
 				{
-					Query:    "INSERT INTO test1 VALUES (2, NULL);",
-					Expected: []sql.Row{},
+					Query: "INSERT INTO test1 VALUES (2, NULL);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0069-insert-into-test1-values-2"},
 				},
 				{
-					Query:    "SELECT * FROM test1 where a = 2;",
-					Expected: []sql.Row{{2, nil}},
+					Query: "SELECT * FROM test1 where a = 2;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0070-select-*-from-test1-where"},
 				},
 				{
-					Query:       "ALTER TABLE test1 ALTER COLUMN b SET NOT NULL;",
-					ExpectedErr: "'b' is non-nullable but attempted to set a value of null",
+					Query: "ALTER TABLE test1 ALTER COLUMN b SET NOT NULL;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0071-alter-table-test1-alter-column", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -504,26 +449,21 @@ func TestAlterTable(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       "INSERT INTO test1 VALUES (1, 32769);",
-					ExpectedErr: "smallint out of range",
+					Query: "INSERT INTO test1 VALUES (1, 32769);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0072-insert-into-test1-values-1", Compare: "sqlstate"},
 				},
 				{
-					Query:    "ALTER TABLE test1 ALTER COLUMN b TYPE INT;",
-					Expected: []sql.Row{},
+					Query: "ALTER TABLE test1 ALTER COLUMN b TYPE INT;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0073-alter-table-test1-alter-column"},
 				},
 				{
-					Query:    "INSERT INTO test1 VALUES (1, 32769);",
-					Expected: []sql.Row{},
+					Query: "INSERT INTO test1 VALUES (1, 32769);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0074-insert-into-test1-values-1"},
 				},
 				{
-					Query:    "SELECT * FROM test1;",
-					Expected: []sql.Row{{1, 32769}},
+					Query: "SELECT * FROM test1;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0075-select-*-from-test1"},
 				},
 				{
 					// Attempting to change to a smaller type that doesn't support the values in the
 					// column results in an error instead of changing the type.
-					Query:       "ALTER TABLE test1 ALTER COLUMN b TYPE smallint;",
-					ExpectedErr: "smallint out of range",
+					Query: "ALTER TABLE test1 ALTER COLUMN b TYPE smallint;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0076-alter-table-test1-alter-column", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -537,20 +477,16 @@ func TestAlterTable(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "ALTER TABLE t1 ALTER COLUMN c1 SET NOT NULL;",
-					Expected: []sql.Row{},
+					Query: "ALTER TABLE t1 ALTER COLUMN c1 SET NOT NULL;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0077-alter-table-t1-alter-column"},
 				},
 				{
-					Query:    "ALTER TABLE t2 ALTER COLUMN c1 TYPE VARCHAR(50);",
-					Expected: []sql.Row{},
+					Query: "ALTER TABLE t2 ALTER COLUMN c1 TYPE VARCHAR(50);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0078-alter-table-t2-alter-column"},
 				},
 				{
-					Query:    "ALTER TABLE t3 ALTER COLUMN c1 DROP NOT NULL;",
-					Expected: []sql.Row{},
+					Query: "ALTER TABLE t3 ALTER COLUMN c1 DROP NOT NULL;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0079-alter-table-t3-alter-column"},
 				},
 				{
-					Query:    "ALTER TABLE t4 RENAME COLUMN c1 TO ccc1;",
-					Expected: []sql.Row{},
+					Query: "ALTER TABLE t4 RENAME COLUMN c1 TO ccc1;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0080-alter-table-t4-rename-column"},
 				},
 			},
 		},
@@ -562,16 +498,13 @@ func TestAlterTable(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "ALTER TABLE t ADD COLUMN c1 int REFERENCES parent(id);",
-					Expected: []sql.Row{},
+					Query: "ALTER TABLE t ADD COLUMN c1 int REFERENCES parent(id);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0081-alter-table-t-add-column"},
 				},
 				{
-					Query:    "SELECT conname AS constraint_name, pg_get_constraintdef(oid) AS constraint_definition FROM pg_constraint WHERE conrelid = 't'::regclass AND contype='f';",
-					Expected: []sql.Row{{"t_c1_fkey", "FOREIGN KEY (c1) REFERENCES parent(id)"}},
+					Query: "SELECT conname AS constraint_name, pg_get_constraintdef(oid) AS constraint_definition FROM pg_constraint WHERE conrelid = 't'::regclass AND contype='f';", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0082-select-conname-as-constraint_name-pg_get_constraintdef"},
 				},
 				{
-					Query:       "INSERT INTO t VALUES ('abc', 123);",
-					ExpectedErr: "Foreign key violation on fk: `t_c1_fkey`",
+					Query: "INSERT INTO t VALUES ('abc', 123);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0083-insert-into-t-values-abc", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -589,17 +522,13 @@ func TestAlterTable(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       "ALTER TABLE doesnotexist RENAME TO t3;",
-					ExpectedErr: "not found",
+					Query: "ALTER TABLE doesnotexist RENAME TO t3;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0084-alter-table-doesnotexist-rename-to", Compare: "sqlstate"},
 				},
 				{
 					Query: "ALTER TABLE t1 RENAME TO t3;",
 				},
 				{
-					Query: "SELECT * FROM t3;",
-					Expected: []sql.Row{
-						{1, 2},
-					},
+					Query: "SELECT * FROM t3;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0085-select-*-from-t3"},
 				},
 				{
 					Query: "SELECT * FROM public.t3;",
@@ -706,13 +635,11 @@ func TestAlterTable(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "ALTER TABLE t1 DROP CONSTRAINT t1_pkey;",
-					Expected: []sql.Row{},
+					Query: "ALTER TABLE t1 DROP CONSTRAINT t1_pkey;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0096-alter-table-t1-drop-constraint"},
 				},
 				{
 					// Assert that the constraint is gone
-					Query:    "INSERT INTO t1 VALUES (1), (2);",
-					Expected: []sql.Row{},
+					Query: "INSERT INTO t1 VALUES (1), (2);", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0097-insert-into-t1-values-1"},
 				},
 			},
 		},
@@ -726,41 +653,25 @@ func TestAlterTable(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM t2;`,
-					Expected: []sql.Row{
-						{1, "(1,abc)", "(abc,1)"},
-					},
+					Query: `SELECT * FROM t2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0098-select-*-from-t2"},
 				},
 				{
-					Query:    `ALTER TABLE t1a RENAME TO t1x;`,
-					Expected: []sql.Row{},
+					Query: `ALTER TABLE t1a RENAME TO t1x;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0099-alter-table-t1a-rename-to"},
 				},
 				{
-					Query:    `INSERT INTO t2 VALUES (2, ROW(2, 'def'), ROW('def', 2));`,
-					Expected: []sql.Row{},
+					Query: `INSERT INTO t2 VALUES (2, ROW(2, 'def'), ROW('def', 2));`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0100-insert-into-t2-values-2"},
 				},
 				{
-					Query: `SELECT * FROM t2;`,
-					Expected: []sql.Row{
-						{1, "(1,abc)", "(abc,1)"},
-						{2, "(2,def)", "(def,2)"},
-					},
+					Query: `SELECT * FROM t2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0101-select-*-from-t2"},
 				},
 				{
-					Query:    `ALTER TABLE t1x RENAME TO t1y;`,
-					Expected: []sql.Row{},
+					Query: `ALTER TABLE t1x RENAME TO t1y;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0102-alter-table-t1x-rename-to"},
 				},
 				{
-					Query:    `INSERT INTO t2 VALUES (3, ROW(4, 'ghi'), ROW('kjl', 5));`,
-					Expected: []sql.Row{},
+					Query: `INSERT INTO t2 VALUES (3, ROW(4, 'ghi'), ROW('kjl', 5));`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0103-insert-into-t2-values-3"},
 				},
 				{
-					Query: `SELECT * FROM t2;`,
-					Expected: []sql.Row{
-						{1, "(1,abc)", "(abc,1)"},
-						{2, "(2,def)", "(def,2)"},
-						{3, "(4,ghi)", "(kjl,5)"},
-					},
+					Query: `SELECT * FROM t2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0104-select-*-from-t2"},
 				},
 			},
 		},
@@ -774,24 +685,16 @@ func TestAlterTable(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM t2;`,
-					Expected: []sql.Row{
-						{1, "(2,abc)", "(def,3)"},
-					},
+					Query: `SELECT * FROM t2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0105-select-*-from-t2"},
 				},
 				{
-					Query:    `ALTER TABLE t1a RENAME COLUMN a TO x;`,
-					Expected: []sql.Row{},
+					Query: `ALTER TABLE t1a RENAME COLUMN a TO x;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0106-alter-table-t1a-rename-column"},
 				},
 				{
-					Query:       `SELECT (t1a).a FROM t2;`,
-					ExpectedErr: "not found",
+					Query: `SELECT (t1a).a FROM t2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0107-select-t1a-.a-from-t2", Compare: "sqlstate"},
 				},
 				{
-					Query: `SELECT (t1a).x, (t1a).@1 FROM t2;`,
-					Expected: []sql.Row{
-						{2, 2},
-					},
+					Query: `SELECT (t1a).x, (t1a).@1 FROM t2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0108-select-t1a-.x-t1a-.@1", Compare: "sqlstate"},
 				},
 				{
 					Query:    `ALTER TABLE t1b RENAME COLUMN b TO bb;`,
@@ -830,29 +733,19 @@ func TestAlterTable(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM t2;`,
-					Expected: []sql.Row{
-						{1, "(2,abc)", "(def,3)"},
-					},
+					Query: `SELECT * FROM t2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0114-select-*-from-t2"},
 				},
 				{
-					Query:    `ALTER TABLE t1a ALTER COLUMN a SET DEFAULT 55;`,
-					Expected: []sql.Row{},
+					Query: `ALTER TABLE t1a ALTER COLUMN a SET DEFAULT 55;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0115-alter-table-t1a-alter-column"},
 				},
 				{
-					Query:    `ALTER TABLE t1b ALTER COLUMN b SET DEFAULT 77, ALTER COLUMN a SET DEFAULT 'hi';`,
-					Expected: []sql.Row{},
+					Query: `ALTER TABLE t1b ALTER COLUMN b SET DEFAULT 77, ALTER COLUMN a SET DEFAULT 'hi';`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0116-alter-table-t1b-alter-column"},
 				},
 				{
-					Query:    `INSERT INTO t2 VALUES (4, ROW(5, 'ghi'), ROW('kjl', 6));`,
-					Expected: []sql.Row{},
+					Query: `INSERT INTO t2 VALUES (4, ROW(5, 'ghi'), ROW('kjl', 6));`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0117-insert-into-t2-values-4"},
 				},
 				{
-					Query: `SELECT * FROM t2;`,
-					Expected: []sql.Row{
-						{1, "(2,abc)", "(def,3)"},
-						{4, "(5,ghi)", "(kjl,6)"},
-					},
+					Query: `SELECT * FROM t2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0118-select-*-from-t2"},
 				},
 			},
 		},
@@ -866,29 +759,19 @@ func TestAlterTable(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM t2;`,
-					Expected: []sql.Row{
-						{1, "(2,abc)", "(def,3)"},
-					},
+					Query: `SELECT * FROM t2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0119-select-*-from-t2"},
 				},
 				{
-					Query:    `ALTER TABLE t1a ALTER COLUMN a DROP DEFAULT;`,
-					Expected: []sql.Row{},
+					Query: `ALTER TABLE t1a ALTER COLUMN a DROP DEFAULT;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0120-alter-table-t1a-alter-column"},
 				},
 				{
-					Query:    `ALTER TABLE t1a ALTER COLUMN b DROP DEFAULT, ALTER COLUMN a DROP DEFAULT;`,
-					Expected: []sql.Row{},
+					Query: `ALTER TABLE t1a ALTER COLUMN b DROP DEFAULT, ALTER COLUMN a DROP DEFAULT;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0121-alter-table-t1a-alter-column"},
 				},
 				{
-					Query:    `INSERT INTO t2 VALUES (4, ROW(5, 'ghi'), ROW('kjl', 6));`,
-					Expected: []sql.Row{},
+					Query: `INSERT INTO t2 VALUES (4, ROW(5, 'ghi'), ROW('kjl', 6));`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0122-insert-into-t2-values-4"},
 				},
 				{
-					Query: `SELECT * FROM t2;`,
-					Expected: []sql.Row{
-						{1, "(2,abc)", "(def,3)"},
-						{4, "(5,ghi)", "(kjl,6)"},
-					},
+					Query: `SELECT * FROM t2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0123-select-*-from-t2"},
 				},
 			},
 		},
@@ -902,33 +785,30 @@ func TestAlterTable(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM t2;`,
-					Expected: []sql.Row{
-						{1, "(2,abc)", "(def,3)"},
-					},
+					Query: `SELECT * FROM t2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0124-select-*-from-t2"},
 				},
 				{ // Different data type
-					Query:       `ALTER TABLE t1a ALTER COLUMN a SET DATA TYPE INT8;`,
-					ExpectedErr: `cannot alter table "t1a" because column "t2.t1a" uses its row type`,
-				},
-				{ // Same data type, still restricted
-					Query:       `ALTER TABLE t1a ALTER COLUMN a SET DATA TYPE INT4;`,
-					Skip:        true, // TODO: we can't just analyze ModifyColumn for changes, we need to know the original statement
-					ExpectedErr: `cannot alter table "t1a" because column "t2.t1a" uses its row type`,
+					Query: `ALTER TABLE t1a ALTER COLUMN a SET DATA TYPE INT8;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0125-alter-table-t1a-alter-column",
+
+						// Same data type, still restricted
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `ALTER TABLE t2 DROP COLUMN t1a;`,
-					Expected: []sql.Row{},
-				},
-				{ // Dependency removed
-					Query:    `ALTER TABLE t1a ALTER COLUMN a SET DATA TYPE INT8, ALTER COLUMN b SET DATA TYPE TEXT;`,
-					Expected: []sql.Row{},
+					Query: `ALTER TABLE t1a ALTER COLUMN a SET DATA TYPE INT4;`,
+					Skip:  true, PostgresOracle: // TODO: we can't just analyze ModifyColumn for changes, we need to know the original statement
+					ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0126-alter-table-t1a-alter-column", Compare: "sqlstate"},
 				},
 				{
-					Query: `SELECT * FROM t2;`,
-					Expected: []sql.Row{
-						{1, "(def,3)"},
-					},
+					Query: `ALTER TABLE t2 DROP COLUMN t1a;`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Dependency removed
+					"alter-table-test-testaltertable-0127-alter-table-t2-drop-column"},
+				},
+				{
+					Query: `ALTER TABLE t1a ALTER COLUMN a SET DATA TYPE INT8, ALTER COLUMN b SET DATA TYPE TEXT;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0128-alter-table-t1a-alter-column"},
+				},
+				{
+					Query: `SELECT * FROM t2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0129-select-*-from-t2"},
 				},
 			},
 		},
@@ -942,44 +822,31 @@ func TestAlterTable(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM t2;`,
-					Expected: []sql.Row{
-						{1, "(2,abc)", "(def,3)"},
-					},
+					Query: `SELECT * FROM t2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0130-select-*-from-t2"},
 				},
 				{
-					Query:    `ALTER TABLE t1a ALTER COLUMN a SET NOT NULL;`,
-					Expected: []sql.Row{},
+					Query: `ALTER TABLE t1a ALTER COLUMN a SET NOT NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0131-alter-table-t1a-alter-column"},
 				},
 				{
-					Query:    `ALTER TABLE t1b ALTER COLUMN b SET NOT NULL, ALTER COLUMN a SET NOT NULL;`,
-					Expected: []sql.Row{},
+					Query: `ALTER TABLE t1b ALTER COLUMN b SET NOT NULL, ALTER COLUMN a SET NOT NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0132-alter-table-t1b-alter-column"},
 				},
 				{
-					Query:       `INSERT INTO t1a VALUES (NULL, 'hi');`,
-					ExpectedErr: "non-nullable",
-				},
-				{ // The original table's NOT NULL doesn't affect columns that use the table's type
-					Query:    `INSERT INTO t2 VALUES (4, ROW(NULL, 'ghi'), ROW(NULL, 6));`,
-					Expected: []sql.Row{},
+					Query: `INSERT INTO t1a VALUES (NULL, 'hi');`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0133-insert-into-t1a-values-null",
+
+						// The original table's NOT NULL doesn't affect columns that use the table's type
+						Compare: "sqlstate"},
 				},
 				{
-					Query: `SELECT * FROM t2;`,
-					Expected: []sql.Row{
-						{1, "(2,abc)", "(def,3)"},
-						{4, "(,ghi)", "(,6)"},
-					},
+					Query: `INSERT INTO t2 VALUES (4, ROW(NULL, 'ghi'), ROW(NULL, 6));`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0134-insert-into-t2-values-4"},
 				},
 				{
-					Query:    `ALTER TABLE t1b ALTER COLUMN b DROP NOT NULL, ALTER COLUMN a DROP NOT NULL;`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM t2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0135-select-*-from-t2"},
 				},
 				{
-					Query: `SELECT * FROM t2;`,
-					Expected: []sql.Row{
-						{1, "(2,abc)", "(def,3)"},
-						{4, "(,ghi)", "(,6)"},
-					},
+					Query: `ALTER TABLE t1b ALTER COLUMN b DROP NOT NULL, ALTER COLUMN a DROP NOT NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0136-alter-table-t1b-alter-column"},
+				},
+				{
+					Query: `SELECT * FROM t2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0137-select-*-from-t2"},
 				},
 			},
 		},
@@ -1007,8 +874,7 @@ func TestAlterTable(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `ALTER TABLE attmp_view RENAME TO attmp_view_new;`,
-					Expected: []sql.Row{},
+					Query: `ALTER TABLE attmp_view RENAME TO attmp_view_new;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0138-alter-table-attmp_view-rename-to"},
 				},
 			},
 		},
@@ -1016,8 +882,7 @@ func TestAlterTable(t *testing.T) {
 			Name: "ALTER TABLE IF EXISTS",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `ALTER TABLE IF EXISTS t1a ALTER COLUMN a SET NOT NULL;`,
-					Expected: []sql.Row{},
+					Query: `ALTER TABLE IF EXISTS t1a ALTER COLUMN a SET NOT NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0139-alter-table-if-exists-t1a"},
 				},
 			},
 		},
@@ -1041,8 +906,7 @@ func TestAlterTable(t *testing.T) {
 
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `ALTER TABLE ONLY grassroots.users ADD CONSTRAINT users_email_key UNIQUE (email);`,
-					Expected: []sql.Row{},
+					Query: `ALTER TABLE ONLY grassroots.users ADD CONSTRAINT users_email_key UNIQUE (email);`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0140-alter-table-only-grassroots.users-add"},
 				},
 			},
 		},
@@ -1108,16 +972,13 @@ func TestAlterTable(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `ALTER TABLE ONLY pages_links ALTER COLUMN "idRefferer" SET DEFAULT nextval('pages_links_idrefferer_seq'::regclass);`,
-					Expected: []sql.Row{},
+					Query: `ALTER TABLE ONLY pages_links ALTER COLUMN "idRefferer" SET DEFAULT nextval('pages_links_idrefferer_seq'::regclass);`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0143-alter-table-only-pages_links-alter"},
 				},
 				{
-					Query:    `INSERT INTO pages_links ("idDestination") VALUES (1);`,
-					Expected: []sql.Row{},
+					Query: `INSERT INTO pages_links ("idDestination") VALUES (1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0144-insert-into-pages_links-iddestination-values"},
 				},
 				{
-					Query:    `SELECT "idRefferer"::text, "idDestination"::text FROM pages_links;`,
-					Expected: []sql.Row{{"1", "1"}},
+					Query: `SELECT "idRefferer"::text, "idDestination"::text FROM pages_links;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0145-select-idrefferer-::text-iddestination-::text"},
 				},
 			},
 		},

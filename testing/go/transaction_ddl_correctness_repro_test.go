@@ -80,8 +80,7 @@ func TestDropTableRollbackRestoresTableGuard(t *testing.T) {
 					Query: `ROLLBACK;`,
 				},
 				{
-					Query:    `SELECT id, label FROM tx_drop_rollback_items;`,
-					Expected: []sql.Row{{1, "kept"}},
+					Query: `SELECT id, label FROM tx_drop_rollback_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-correctness-repro-test-testdroptablerollbackrestorestableguard-0001-select-id-label-from-tx_drop_rollback_items"},
 				},
 			},
 		},
@@ -156,8 +155,7 @@ func TestCreateIndexRollbackRemovesIndexGuard(t *testing.T) {
 				{
 					Query: `SELECT count(*)
 						FROM pg_catalog.pg_class
-						WHERE relname = 'tx_index_rollback_items_label_idx';`,
-					Expected: []sql.Row{{int64(0)}},
+						WHERE relname = 'tx_index_rollback_items_label_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-correctness-repro-test-testcreateindexrollbackremovesindexguard-0001-select-count-*-from-pg_catalog.pg_class"},
 				},
 			},
 		},
@@ -206,8 +204,7 @@ func TestDdlSavepointRollbackRestoresStateGuard(t *testing.T) {
 				{Query: `ROLLBACK TO SAVEPOINT ddl_sp;`},
 				{Query: `COMMIT;`},
 				{
-					Query:    `SELECT id, label FROM sp_drop_rollback_items;`,
-					Expected: []sql.Row{{1, "kept"}},
+					Query: `SELECT id, label FROM sp_drop_rollback_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-correctness-repro-test-testddlsavepointrollbackrestoresstateguard-0002-select-id-label-from-sp_drop_rollback_items"},
 				},
 			},
 		},
@@ -257,8 +254,7 @@ func TestDdlSavepointRollbackRestoresStateGuard(t *testing.T) {
 				{
 					Query: `SELECT count(*)
 						FROM pg_catalog.pg_class
-						WHERE relname = 'sp_index_rollback_items_label_idx';`,
-					Expected: []sql.Row{{int64(0)}},
+						WHERE relname = 'sp_index_rollback_items_label_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-ddl-correctness-repro-test-testddlsavepointrollbackrestoresstateguard-0004-select-count-*-from-pg_catalog.pg_class"},
 				},
 			},
 		},

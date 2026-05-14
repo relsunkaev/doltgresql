@@ -1,0 +1,1377 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map record_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/record_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/record_test.go:TestRecords#0001",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 1,
+      "scriptName": "Record cannot be used as column type",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0001-create-table-t-pk-int",
+      "suggestedId": "record-test-testrecords-0001-create-table-t-pk-int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P16",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TABLE t (pk INT PRIMARY KEY, r RECORD);",
+      "querySha256": "577f6c379b77b56892daaf65cf7dec33afcf186067e8c5fe97bb5bc007589315",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0002",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 2,
+      "scriptName": "Record cannot be used as column type",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0002-alter-table-t2-add-column",
+      "suggestedId": "record-test-testrecords-0002-alter-table-t2-add-column",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P16",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE t2 ADD COLUMN c2 RECORD;",
+      "querySha256": "2c35c8745e88925dff3ba27d771619e12ad76423bd49656f8b7e1acba8575f9f",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0003",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 3,
+      "scriptName": "Record cannot be used as column type",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0003-alter-table-t2-alter-column",
+      "suggestedId": "record-test-testrecords-0003-alter-table-t2-alter-column",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P16",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE t2 ALTER COLUMN c1 TYPE RECORD;",
+      "querySha256": "853514a22ba72e211cfe9c95497826bb53d635e70b050a945f4c9f52e63b66fa",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0004",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 4,
+      "scriptName": "Record cannot be used as column type",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0004-create-domain-my_domain-as-record",
+      "suggestedId": "record-test-testrecords-0004-create-domain-my_domain-as-record",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42804",
+      "errorSeverity": "ERROR",
+      "query": "CREATE DOMAIN my_domain AS record;",
+      "querySha256": "d1619fbc86d3a1dd14ad442be0f9d16684984070de9de3a82b5867aa0ecdcbf8",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0005",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 5,
+      "scriptName": "Record cannot be used as column type",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0005-create-sequence-my_seq-as-record",
+      "suggestedId": "record-test-testrecords-0005-create-sequence-my_seq-as-record",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "CREATE SEQUENCE my_seq AS record;",
+      "querySha256": "02aec4712f3721a1201cbc9eee46c6ef07756aa5d510228c198b625d3989b9b0",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0006",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 6,
+      "scriptName": "Record cannot be used as column type",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0006-create-type-outer_type-as-id",
+      "suggestedId": "record-test-testrecords-0006-create-type-outer_type-as-id",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P16",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TYPE outer_type AS (id int, payload record);",
+      "querySha256": "39e4dc384a6073ebdc5f6d41b4894a4907059186e59176bbdb64981852252924",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0007",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 7,
+      "scriptName": "Casting to record",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0007-select-row-1-1-::record",
+      "suggestedId": "record-test-testrecords-0007-select-row-1-1-::record",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select row(1, 1)::record;",
+      "querySha256": "cd175e49884ab7a553a424cf11a9b25579bb34de54c2c9c1698053b1d077f3fc",
+      "expectedRows": [
+        [
+          {
+            "value": "(1,1)"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0008",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 8,
+      "scriptName": "ROW() wrapping table rows",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0008-select-row-p-from-users",
+      "suggestedId": "record-test-testrecords-0008-select-row-p-from-users",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select row(p) from users p;",
+      "querySha256": "0d9f787e640054e254e0f2947dc24698ede65042143ba95062217ac375aa24c5",
+      "expectedRows": [
+        [
+          {
+            "value": "(\"(jason,SEA,42)\")"
+          }
+        ],
+        [
+          {
+            "value": "(\"(max,SFO,31)\")"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0009",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 9,
+      "scriptName": "ROW() wrapping table rows",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0009-select-row-p.*-42-from",
+      "suggestedId": "record-test-testrecords-0009-select-row-p.*-42-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select row(p.*, 42) from users p;",
+      "querySha256": "8f0bb26f9db35a42d8d2e0f5edd75a676e7eb515cce83ae4bb3114a7ccf679f0",
+      "expectedRows": [
+        [
+          {
+            "value": "(jason,SEA,42,42)"
+          }
+        ],
+        [
+          {
+            "value": "(max,SFO,31,42)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0010",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 10,
+      "scriptName": "ROW() wrapping table rows",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0010-select-u-.location-from-users",
+      "suggestedId": "record-test-testrecords-0010-select-u-.location-from-users",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT (u).location FROM users u;",
+      "querySha256": "74c6412e17b6264cb7252bba6e5883a02e9c894fe977c2639dafd5995c0aaa4c",
+      "expectedRows": [
+        [
+          {
+            "value": "SEA"
+          }
+        ],
+        [
+          {
+            "value": "SFO"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0011",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 11,
+      "scriptName": "ROW() wrapping values",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0011-select-row-1-2-3",
+      "suggestedId": "record-test-testrecords-0011-select-row-1-2-3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(1, 2, 3) as myRow;",
+      "querySha256": "a7e534e0674264616dbad76a9affcad094f327ea1a328a78b565d2765ace4b02",
+      "expectedRows": [
+        [
+          {
+            "value": "(1,2,3)"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0012",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 12,
+      "scriptName": "ROW() wrapping values",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0012-select-4-5-6-as",
+      "suggestedId": "record-test-testrecords-0012-select-4-5-6-as",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT (4, 5, 6) as myRow;",
+      "querySha256": "bb68f5662f2ce0e3bc47040acfbf7d6887738b430ea50f340049ffed4f2771c6",
+      "expectedRows": [
+        [
+          {
+            "value": "(4,5,6)"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0013",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 13,
+      "scriptName": "ROW() wrapping values",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0013-select-null-foo-null-as",
+      "suggestedId": "record-test-testrecords-0013-select-null-foo-null-as",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT (NULL, 'foo', NULL) as myRow;",
+      "querySha256": "dc4457bac552cbea257b572e82e9b0896e50f0f9ba2486e64aaad0d8d6c4e68b",
+      "expectedRows": [
+        [
+          {
+            "value": "(,foo,)"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0014",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 14,
+      "scriptName": "ROW() wrapping values",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0014-select-null-1->-0",
+      "suggestedId": "record-test-testrecords-0014-select-null-1->-0",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT (NULL, (1 > 0), 'baz') as myRow;",
+      "querySha256": "c21dbd58b1a753c01abee18564a2526f6128da13009f750523d9fe99669eb39d",
+      "expectedRows": [
+        [
+          {
+            "value": "(,t,baz)"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0015",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 15,
+      "scriptName": "ROW() equality and comparison",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0015-select-row-1-x-=",
+      "suggestedId": "record-test-testrecords-0015-select-row-1-x-=",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(1, 'x') = ROW(1, 'x');",
+      "querySha256": "5b0750fc0378ffaba85c835471a8d733387874ac87c987dd8ce0d73fa722de37",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0016",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 16,
+      "scriptName": "ROW() equality and comparison",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0016-select-row-1-x-=",
+      "suggestedId": "record-test-testrecords-0016-select-row-1-x-=",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(1, 'x') = ROW(1, 'y');",
+      "querySha256": "c8918ee3997899d87af14d56f7db4655c8bfbe30e67348b56cf4c5233ad4e4ba",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0017",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 17,
+      "scriptName": "ROW() equality and comparison",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0017-select-row-1-null-=",
+      "suggestedId": "record-test-testrecords-0017-select-row-1-null-=",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(1, NULL) = ROW(1, 1);",
+      "querySha256": "dc286d755b31da3eded6de0702d6bfdbf98bfdc0d3e4ab3c63629dbbb3469b74",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0018",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 18,
+      "scriptName": "ROW() equality and comparison",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0018-select-row-1-2-<",
+      "suggestedId": "record-test-testrecords-0018-select-row-1-2-<",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(1, 2) < ROW(1, 3);",
+      "querySha256": "7ae333588096c66b48e42a4ebf0ce9a67b0487434e7412e4d15e564f7ab24f57",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0019",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 19,
+      "scriptName": "ROW() equality and comparison",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0019-select-row-1-2-<",
+      "suggestedId": "record-test-testrecords-0019-select-row-1-2-<",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(1, 2) < ROW(2, NULL);",
+      "querySha256": "fb7535293f0a6149f4788871f75b71b80b7b56ae90a2e05aa70593c7a24278fe",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0020",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 20,
+      "scriptName": "ROW() equality and comparison",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0020-select-row-2-2-<",
+      "suggestedId": "record-test-testrecords-0020-select-row-2-2-<",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(2, 2) < ROW(2, NULL);",
+      "querySha256": "07796776974fec79e31629306b8d93a03641eb62f7b5543c4d172679e44ae30e",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0021",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 21,
+      "scriptName": "ROW() equality and comparison",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0021-select-row-2-2-1",
+      "suggestedId": "record-test-testrecords-0021-select-row-2-2-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(2, 2, 1) < ROW(2, NULL, 2);",
+      "querySha256": "1fffa2c9100eb8b0b7653ba670c85b37ab8b06a57a75b02541b2e3d860b5e6d4",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0022",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 22,
+      "scriptName": "ROW() equality and comparison",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0022-select-row-1-2-<",
+      "suggestedId": "record-test-testrecords-0022-select-row-1-2-<",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(1, 2) < ROW(NULL, 3);",
+      "querySha256": "4d48dc4490ac86ca5c29ef2aa9642783de80ba8790cb416d080a3d4a021ed70c",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0023",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 23,
+      "scriptName": "ROW() equality and comparison",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0023-select-row-null-null-null",
+      "suggestedId": "record-test-testrecords-0023-select-row-null-null-null",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(NULL, NULL, NULL) < ROW(NULL, NULL, NULL);",
+      "querySha256": "93e27ec2201f63d9fb91a011a4072d86c3d8709a6fff2edc65ce3c24d2e914df",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0024",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 24,
+      "scriptName": "ROW() equality and comparison",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0024-select-row-1-2-<=",
+      "suggestedId": "record-test-testrecords-0024-select-row-1-2-<=",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(1, 2) <= ROW(1, 3);",
+      "querySha256": "eb9dd7adecf7b2939e0b8960a8e9a7ccbf9fc47e5a06b5e0bb73172a941cc6ee",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0025",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 25,
+      "scriptName": "ROW() equality and comparison",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0025-select-row-1-2-<=",
+      "suggestedId": "record-test-testrecords-0025-select-row-1-2-<=",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(1, 2) <= ROW(1, 2);",
+      "querySha256": "bfedd4b8f2b1ae646ae1488738ab2b7e4949cadbb269fd47ce6335e048d8faa2",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0026",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 26,
+      "scriptName": "ROW() equality and comparison",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0026-select-row-1-null-<=",
+      "suggestedId": "record-test-testrecords-0026-select-row-1-null-<=",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(1, NULL) <= ROW(1, 2);",
+      "querySha256": "7582e253f8640bfd8933fd8636548f18376a51343d79ae78e514dd1e3809f101",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0027",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 27,
+      "scriptName": "ROW() equality and comparison",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0027-select-row-2-1->",
+      "suggestedId": "record-test-testrecords-0027-select-row-2-1->",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(2, 1) > ROW(1, 999);",
+      "querySha256": "129d73994a2369f50a571c5930fa3b15c330a0945accf35e8e9a70433cc488ae",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0028",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 28,
+      "scriptName": "ROW() equality and comparison",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0028-select-row-2-1->",
+      "suggestedId": "record-test-testrecords-0028-select-row-2-1->",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(2, 1) > ROW(1, NULL);",
+      "querySha256": "34fb3b876d9eef9e965a2992fcdde8fdf98ed0c55a154280a2a2126f1efcaf04",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0029",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 29,
+      "scriptName": "ROW() equality and comparison",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0029-select-row-2-1->=",
+      "suggestedId": "record-test-testrecords-0029-select-row-2-1->=",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(2, 1) >= ROW(1, 999);",
+      "querySha256": "503285d2d570081c9633c4e06ea2f1afc49ad3a66dbffecf41697773465ae0cc",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0030",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 30,
+      "scriptName": "ROW() equality and comparison",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0030-select-row-2-1->=",
+      "suggestedId": "record-test-testrecords-0030-select-row-2-1->=",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(2, 1) >= ROW(2, 1);",
+      "querySha256": "c1d6d4164c572bf375278eb08ae37e6d6b209d0bbb11e55d7ace998dc235ad3b",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0031",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 31,
+      "scriptName": "ROW() equality and comparison",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0031-select-row-null-1->=",
+      "suggestedId": "record-test-testrecords-0031-select-row-null-1->=",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(NULL, 1) >= ROW(2, 1);",
+      "querySha256": "138a4516e537ea6036d3f1190cea3728337692a8949d90065fd95ce880d147b7",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0032",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 32,
+      "scriptName": "ROW() equality and comparison",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0032-select-row-1-2-!=",
+      "suggestedId": "record-test-testrecords-0032-select-row-1-2-!=",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(1, 2) != ROW(3, 4);",
+      "querySha256": "9a84ea992ac8d23ee0303f3ceda2b0c3e452ac197b16a738e56ab6e3889837bc",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0033",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 33,
+      "scriptName": "ROW() equality and comparison",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0033-select-row-1-2-!=",
+      "suggestedId": "record-test-testrecords-0033-select-row-1-2-!=",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(1, 2) != ROW(NULL, 4);",
+      "querySha256": "309429527b2a434ec9d5803117fd1192f1bdefe0e015a6ecc085d8bc3458d47b",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0034",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 34,
+      "scriptName": "ROW() equality and comparison",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0034-select-row-null-4-!=",
+      "suggestedId": "record-test-testrecords-0034-select-row-null-4-!=",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(NULL, 4) != ROW(NULL, 4);",
+      "querySha256": "0f95c9cbc72edcff6df1c674031253d2eb7249c21ba8cc1837137e5d484afa43",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0035",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 35,
+      "scriptName": "ROW() equality and comparison",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0035-select-row-1-null-is",
+      "suggestedId": "record-test-testrecords-0035-select-row-1-null-is",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(1, NULL) IS NOT DISTINCT FROM ROW(1, NULL);",
+      "querySha256": "ae5bc5175557b29d49fa42dfd5f750c7ad753c33d347ae004613d395f475eb20",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0036",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 36,
+      "scriptName": "ROW() equality and comparison",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0036-select-row-1-2-=",
+      "suggestedId": "record-test-testrecords-0036-select-row-1-2-=",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(1, '2') = ROW(1, 2::TEXT);",
+      "querySha256": "d2c322716172ac34017a0e9059b5c09c57a3da205f231aa11475805eec30159a",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0037",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 37,
+      "scriptName": "ROW() use inserting and selecting composite rows",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0037-insert-into-accounts-values-row",
+      "suggestedId": "record-test-testrecords-0037-insert-into-accounts-values-row",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO accounts VALUES (ROW(1, 'alice', 'a@example.com'));",
+      "querySha256": "152f858f51d2835b6519813c33bfa8793e6453d1622eb074bd82fbcc0159c4ff",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0038",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 38,
+      "scriptName": "ROW() use inserting and selecting composite rows",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0038-select-info-from-accounts",
+      "suggestedId": "record-test-testrecords-0038-select-info-from-accounts",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT info FROM accounts;",
+      "querySha256": "eeac57138582b91e14649d568579ab754b221b52bd55af7e3cd3ab0b62e7213e",
+      "expectedRows": [
+        [
+          {
+            "value": "(1,alice,a@example.com)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0039",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 39,
+      "scriptName": "ROW() use inserting and selecting composite rows",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0039-select-a.info-.name-from-accounts",
+      "suggestedId": "record-test-testrecords-0039-select-a.info-.name-from-accounts",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT (a.info).name FROM accounts a;",
+      "querySha256": "b20f21edaa96a471d234a08b7ab7fde72b7827e150ac5f1aedfaa3ffb8cff721",
+      "expectedRows": [
+        [
+          {
+            "value": "alice"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0040",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 40,
+      "scriptName": "ROW() use in WHERE clause",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0040-select-*-from-users-where",
+      "suggestedId": "record-test-testrecords-0040-select-*-from-users-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM users WHERE ROW(id, name, email) = ROW(1, 'John', 'j@a.com');",
+      "querySha256": "656a90e73858453adbc4e5118022f642d03aedfceb19729db5b157af7aeba64d",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "John"
+          },
+          {
+            "value": "j@a.com"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0041",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 41,
+      "scriptName": "ROW() use in WHERE clause",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0041-select-*-from-users-where",
+      "suggestedId": "record-test-testrecords-0041-select-*-from-users-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM users WHERE ROW(id, name) IS NOT DISTINCT FROM ROW(2, 'Jane');",
+      "querySha256": "e9638097ab81f409b78dfab5717578abaac7fc94085b4ed73aa153a65c721140",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0042",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 42,
+      "scriptName": "ROW() casting and type inference",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0042-select-row-1-a-::record",
+      "suggestedId": "record-test-testrecords-0042-select-row-1-a-::record",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(1, 'a')::record;",
+      "querySha256": "3f6bfcb0e82356ba709380ec11e9a1a9e08ea4a079f999f5cce90769a55e07d6",
+      "expectedRows": [
+        [
+          {
+            "value": "(1,a)"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0043",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 43,
+      "scriptName": "ROW() casting and type inference",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0043-select-row-1-2-=",
+      "suggestedId": "record-test-testrecords-0043-select-row-1-2-=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22P02",
+      "errorSeverity": "ERROR",
+      "query": "SELECT ROW(1, 2) = ROW(1, 'two');",
+      "querySha256": "79fd4e03d38461a5161d8e0c552cd8e9024d54bdc7019e1fe8ba5dabe4612d7d",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0044",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 44,
+      "scriptName": "ROW() casting and type inference",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0044-select-row-1-2-=",
+      "suggestedId": "record-test-testrecords-0044-select-row-1-2-=",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(1, 2) = ROW(1, '2');",
+      "querySha256": "2ca9dc005c8bc897dbbfea8fcf3ccec2d6ded77024b02a8332835f918014302c",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0045",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 45,
+      "scriptName": "ROW() error cases and edge conditions",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0045-select-row-1-2-=",
+      "suggestedId": "record-test-testrecords-0045-select-row-1-2-=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "SELECT ROW(1, 2) = ROW(1);",
+      "querySha256": "a47f2b3f02e95ffed30877dc90aff0eee9b425cdbf054fa04a3c47cb5dfb3711",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0046",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 46,
+      "scriptName": "ROW() error cases and edge conditions",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0046-select-row-1-2-=",
+      "suggestedId": "record-test-testrecords-0046-select-row-1-2-=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "SELECT ROW(1, 2) = ROW(1, 2, 3);",
+      "querySha256": "eb33df6311137dc7ba96e7f7b8e9d27d285b94d078ffb9273876f9e696be9fc1",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0047",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 47,
+      "scriptName": "ROW() error cases and edge conditions",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0047-select-row-1-2-<",
+      "suggestedId": "record-test-testrecords-0047-select-row-1-2-<",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "SELECT ROW(1, 2) < ROW(1);",
+      "querySha256": "7301d2c49913947cb537ee64ff06dacfe80be3c0e24c980fb32a2c28766cf30c",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0048",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 48,
+      "scriptName": "ROW() error cases and edge conditions",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0048-select-row-1-2-<=",
+      "suggestedId": "record-test-testrecords-0048-select-row-1-2-<=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "SELECT ROW(1, 2) <= ROW(1);",
+      "querySha256": "c9515e1ffb9ff24592907a559e2595a6fb86aaa615e5dc3fc86f50db0fda2d70",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0049",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 49,
+      "scriptName": "ROW() error cases and edge conditions",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0049-select-row-1-2->",
+      "suggestedId": "record-test-testrecords-0049-select-row-1-2->",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "SELECT ROW(1, 2) > ROW(1);",
+      "querySha256": "1cae066f07fdd024218e93442e64a5f0989d28a5b4e6fc1c60b0d44177bd199c",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0050",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 50,
+      "scriptName": "ROW() error cases and edge conditions",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0050-select-row-1-2->=",
+      "suggestedId": "record-test-testrecords-0050-select-row-1-2->=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "SELECT ROW(1, 2) >= ROW(1);",
+      "querySha256": "7fee8d23cc19f689f89f44c33926eb8ae59f07c3d1cf1714b618e2c86d4afd89",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0051",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 51,
+      "scriptName": "ROW() error cases and edge conditions",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0051-select-row-1-2-!=",
+      "suggestedId": "record-test-testrecords-0051-select-row-1-2-!=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "SELECT ROW(1, 2) != ROW(1);",
+      "querySha256": "29eb4843f9a2a7563c4218a00b12c7be7cee7b1c3bdc6eb003c9db91fafd263e",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0052",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 52,
+      "scriptName": "ROW() error cases and edge conditions",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0052-select-null::record-is-null",
+      "suggestedId": "record-test-testrecords-0052-select-null::record-is-null",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT NULL::record IS NULL",
+      "querySha256": "6e2388963461f2bc88aab6694d89ea6d994b9403281b9dabc5a073ba1846a934",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0053",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 53,
+      "scriptName": "ROW() error cases and edge conditions",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0053-select-row-null-is-null",
+      "suggestedId": "record-test-testrecords-0053-select-row-null-is-null",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(NULL) IS NULL",
+      "querySha256": "98cf03a33bf23064e8bdb96c92d02421377b46b5dc2328abf178e285e8b2f8a1",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0054",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 54,
+      "scriptName": "ROW() error cases and edge conditions",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0054-select-row-null-null-null",
+      "suggestedId": "record-test-testrecords-0054-select-row-null-null-null",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(NULL, NULL, NULL) IS NULL;",
+      "querySha256": "2d5a9340fbb52efc025d388574e2494cf4fbc5025197ca7a2728ab19df1fd2c4",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0055",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 55,
+      "scriptName": "ROW() error cases and edge conditions",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0055-select-row-null-42-null",
+      "suggestedId": "record-test-testrecords-0055-select-row-null-42-null",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(NULL, 42, NULL) IS NULL;",
+      "querySha256": "89ded8ba598b50919b4326ca994b0ccc7add17ca1e7e3ea779aa73c1cac07a30",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0056",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 56,
+      "scriptName": "ROW() error cases and edge conditions",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0056-select-row-42-is-null",
+      "suggestedId": "record-test-testrecords-0056-select-row-42-is-null",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(42) IS NULL",
+      "querySha256": "67040990face651ef59ab8132af9b3f55b66db6155504fbef5ab232d077419c2",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0057",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 57,
+      "scriptName": "ROW() error cases and edge conditions",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0057-select-row-null-is-not",
+      "suggestedId": "record-test-testrecords-0057-select-row-null-is-not",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(NULL) IS NOT NULL;",
+      "querySha256": "11dc3471633e5b6d41510df58c79aa4876fcb6c2d1388183b90396fddc643916",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0058",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 58,
+      "scriptName": "ROW() error cases and edge conditions",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0058-select-row-null-null-is",
+      "suggestedId": "record-test-testrecords-0058-select-row-null-null-is",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(NULL, NULL) IS NOT NULL;",
+      "querySha256": "60f99b3ab219a89203ab1b2e4d5ae7e3a74d5f86e512fcd02225afeaa02995c8",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0059",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 59,
+      "scriptName": "ROW() error cases and edge conditions",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0059-select-row-null-1-is",
+      "suggestedId": "record-test-testrecords-0059-select-row-null-1-is",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(NULL, 1) IS NOT NULL;",
+      "querySha256": "a80bf23ddc3898229c6eeed942ef0efddbab5fa1d7f3a2380bacf73216dfa2fe",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0060",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 60,
+      "scriptName": "ROW() error cases and edge conditions",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0060-select-row-1-1-is",
+      "suggestedId": "record-test-testrecords-0060-select-row-1-1-is",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(1, 1) IS NOT NULL;",
+      "querySha256": "f8f60a60169124139a56edce4b977780a1dc8076130212e3f69566cf7b6adea1",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0061",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 61,
+      "scriptName": "ROW() error cases and edge conditions",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0061-select-row-42-is-not",
+      "suggestedId": "record-test-testrecords-0061-select-row-42-is-not",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(42) IS NOT NULL;",
+      "querySha256": "bdf507f65c07eacc0293bf25083a3333b6f2e78f84b270f0fe1d13ba65b5157f",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0062",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 62,
+      "scriptName": "ROW() error cases and edge conditions",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0062-select-row-id-name-count",
+      "suggestedId": "record-test-testrecords-0062-select-row-id-name-count",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(id, name), COUNT(*) FROM users GROUP BY ROW(id, name);",
+      "querySha256": "9a79ee90313d4e5cd9da9c9fe4b0de43827309b44a3d08c553d4824ea14f720d",
+      "expectedRows": [
+        [
+          {
+            "value": "(1,John)"
+          },
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "(2,Joe)"
+          },
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/record_test.go:TestRecords#0063",
+      "source": "testing/go/record_test.go:TestRecords",
+      "ordinal": 63,
+      "scriptName": "ROW() nesting",
+      "oracle": "postgres",
+      "postgresId": "record-test-testrecords-0063-select-row-row-1-x",
+      "suggestedId": "record-test-testrecords-0063-select-row-row-1-x",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(ROW(1, 'x'), true);",
+      "querySha256": "cc88636ab815950368901dc5f438c5ebb909dc35f5eafd9d37b12948661cf3c3",
+      "expectedRows": [
+        [
+          {
+            "value": "(\"(1,x)\",t)"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

@@ -1,0 +1,168 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map pg18_constraint_catalog_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres18/pg18_constraint_catalog_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/postgres18/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres18/pg18_constraint_catalog_repro_test.go:TestPostgres18NotNullConstraintCatalogRepro#0001",
+      "source": "testing/go/postgres18/pg18_constraint_catalog_repro_test.go:TestPostgres18NotNullConstraintCatalogRepro",
+      "ordinal": 1,
+      "scriptName": "pg_constraint exposes NOT NULL constraints",
+      "oracle": "postgres",
+      "postgresId": "postgres18/pg18-constraint-catalog-repro-test-testpostgres18notnullconstraintcatalogrepro-0001-select-contype-conkey::text-connoinherit-from",
+      "suggestedId": "postgres18/pg18-constraint-catalog-repro-test-testpostgres18notnullconstraintcatalogrepro-0001-select-contype-conkey::text-connoinherit-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT contype, conkey::text, connoinherit\n\t\t\t\t\t\tFROM pg_catalog.pg_constraint\n\t\t\t\t\t\tWHERE conrelid = 'pg18_not_null_constraint_items'::regclass\n\t\t\t\t\t\t\tAND contype = 'n';",
+      "querySha256": "6587dc5cf3be31b27e4117b9de1451f301b96ae992dcece4d9433c65a2851387",
+      "expectedRows": [
+        [
+          {
+            "value": "n"
+          },
+          {
+            "value": "{1}"
+          },
+          {
+            "value": "f"
+          }
+        ],
+        [
+          {
+            "value": "n"
+          },
+          {
+            "value": "{2}"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres18/pg18_constraint_catalog_repro_test.go:TestPostgres18TableNotNullConstraintSyntaxRepro#0001",
+      "source": "testing/go/postgres18/pg18_constraint_catalog_repro_test.go:TestPostgres18TableNotNullConstraintSyntaxRepro",
+      "ordinal": 1,
+      "scriptName": "table constraint NOT NULL column syntax",
+      "oracle": "postgres",
+      "postgresId": "postgres18/pg18-constraint-catalog-repro-test-testpostgres18tablenotnullconstraintsyntaxrepro-0001-select-conname-contype-conkey::text-from",
+      "suggestedId": "postgres18/pg18-constraint-catalog-repro-test-testpostgres18tablenotnullconstraintsyntaxrepro-0001-select-conname-contype-conkey::text-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT conname, contype, conkey::text\n\t\t\t\t\t\tFROM pg_catalog.pg_constraint\n\t\t\t\t\t\tWHERE conrelid = 'pg18_table_not_null_constraint_items'::regclass\n\t\t\t\t\t\t\tAND conname = 'label_required';",
+      "querySha256": "fd74eb53cbddc1cb6da32a45e73b23a854bc3f7f2a9c92fc7f76f75a37ca858b",
+      "expectedRows": [
+        [
+          {
+            "value": "label_required"
+          },
+          {
+            "value": "n"
+          },
+          {
+            "value": "{2}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres18/pg18_constraint_catalog_repro_test.go:TestPostgres18TableNotNullConstraintSyntaxRepro#0002",
+      "source": "testing/go/postgres18/pg18_constraint_catalog_repro_test.go:TestPostgres18TableNotNullConstraintSyntaxRepro",
+      "ordinal": 2,
+      "scriptName": "table constraint NOT NULL column syntax",
+      "oracle": "postgres",
+      "postgresId": "postgres18/pg18-constraint-catalog-repro-test-testpostgres18tablenotnullconstraintsyntaxrepro-0002-insert-into-pg18_table_not_null_constraint_items-values-1",
+      "suggestedId": "postgres18/pg18-constraint-catalog-repro-test-testpostgres18tablenotnullconstraintsyntaxrepro-0002-insert-into-pg18_table_not_null_constraint_items-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23502",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO pg18_table_not_null_constraint_items VALUES (1, NULL);",
+      "querySha256": "5cdd7eb08c81bb046d01790046cc6d6c592d2e932c9de21ecc5f631d49b94567",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres18/pg18_constraint_catalog_repro_test.go:TestPostgres18AlterNotNullConstraintInheritanceRepro#0001",
+      "source": "testing/go/postgres18/pg18_constraint_catalog_repro_test.go:TestPostgres18AlterNotNullConstraintInheritanceRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER CONSTRAINT changes NOT NULL inheritance",
+      "oracle": "postgres",
+      "postgresId": "postgres18/pg18-constraint-catalog-repro-test-testpostgres18alternotnullconstraintinheritancerepro-0001-select-conname-connoinherit-from-pg_catalog.pg_constraint",
+      "suggestedId": "postgres18/pg18-constraint-catalog-repro-test-testpostgres18alternotnullconstraintinheritancerepro-0001-select-conname-connoinherit-from-pg_catalog.pg_constraint",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT conname, connoinherit\n\t\t\t\t\t\tFROM pg_catalog.pg_constraint\n\t\t\t\t\t\tWHERE conrelid = 'pg18_not_null_inherit_items'::regclass\n\t\t\t\t\t\t\tAND conname = 'label_required';",
+      "querySha256": "50294fc09a44ba99bd2f807ebf439c010fb1e3c2d160939fdacc2f06e4d15a6d",
+      "expectedRows": [
+        [
+          {
+            "value": "label_required"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres18/pg18_constraint_catalog_repro_test.go:TestPostgres18AlterNotNullConstraintInheritanceRepro#0002",
+      "source": "testing/go/postgres18/pg18_constraint_catalog_repro_test.go:TestPostgres18AlterNotNullConstraintInheritanceRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER CONSTRAINT changes NOT NULL inheritance",
+      "oracle": "postgres",
+      "postgresId": "postgres18/pg18-constraint-catalog-repro-test-testpostgres18alternotnullconstraintinheritancerepro-0002-select-conname-connoinherit-from-pg_catalog.pg_constraint",
+      "suggestedId": "postgres18/pg18-constraint-catalog-repro-test-testpostgres18alternotnullconstraintinheritancerepro-0002-select-conname-connoinherit-from-pg_catalog.pg_constraint",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT conname, connoinherit\n\t\t\t\t\t\tFROM pg_catalog.pg_constraint\n\t\t\t\t\t\tWHERE conrelid = 'pg18_not_null_inherit_items'::regclass\n\t\t\t\t\t\t\tAND conname = 'label_required';",
+      "querySha256": "50294fc09a44ba99bd2f807ebf439c010fb1e3c2d160939fdacc2f06e4d15a6d",
+      "expectedRows": [
+        [
+          {
+            "value": "label_required"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres18/pg18_constraint_catalog_repro_test.go:TestPostgres18AlterNotNullConstraintInheritanceRepro#0003",
+      "source": "testing/go/postgres18/pg18_constraint_catalog_repro_test.go:TestPostgres18AlterNotNullConstraintInheritanceRepro",
+      "ordinal": 3,
+      "scriptName": "ALTER CONSTRAINT changes NOT NULL inheritance",
+      "oracle": "postgres",
+      "postgresId": "postgres18/pg18-constraint-catalog-repro-test-testpostgres18alternotnullconstraintinheritancerepro-0003-insert-into-pg18_not_null_inherit_items-values-1",
+      "suggestedId": "postgres18/pg18-constraint-catalog-repro-test-testpostgres18alternotnullconstraintinheritancerepro-0003-insert-into-pg18_not_null_inherit_items-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23502",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO pg18_not_null_inherit_items VALUES (1, NULL);",
+      "querySha256": "6a014e9e24839f3580bcb7f7fd9779b978d3cb912c4ab46d7123d41c95992f42",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

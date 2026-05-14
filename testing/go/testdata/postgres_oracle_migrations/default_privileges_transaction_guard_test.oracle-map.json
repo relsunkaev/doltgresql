@@ -1,0 +1,47 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map default_privileges_transaction_guard_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/default_privileges_transaction_guard_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/default_privileges_transaction_guard_test.go:TestRollbackRevertsAlterDefaultPrivileges#0001",
+      "source": "testing/go/default_privileges_transaction_guard_test.go:TestRollbackRevertsAlterDefaultPrivileges",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK reverts default table privileges",
+      "oracle": "internal",
+      "suggestedId": "default-privileges-transaction-guard-test-testrollbackrevertsalterdefaultprivileges-0001-select-count-*-from-pg_catalog.pg_default_acl",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_default_acl\n\t\t\t\t\t\tWHERE defaclnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')\n\t\t\t\t\t\t\tAND defaclobjtype = 'r';",
+      "querySha256": "b9b964c21784a085a1ec6db8e639c2d8b9474ab1fc4ce71ec1f73c4e62cd0129",
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/default_privileges_transaction_guard_test.go:TestRollbackRevertsAlterDefaultPrivileges#0002",
+      "source": "testing/go/default_privileges_transaction_guard_test.go:TestRollbackRevertsAlterDefaultPrivileges",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK reverts default table privileges",
+      "oracle": "internal",
+      "suggestedId": "default-privileges-transaction-guard-test-testrollbackrevertsalterdefaultprivileges-0002-select-id-secret-from-rollback_default_private",
+      "expectedKind": "error",
+      "username": "rollback_default_reader",
+      "query": "SELECT id, secret FROM rollback_default_private;",
+      "querySha256": "e155e1c993573da4b402b38c9452291994cc5aaaffe16c0b8e1974d4e9cd821b",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    }
+  ]
+}

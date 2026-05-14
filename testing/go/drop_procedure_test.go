@@ -26,12 +26,10 @@ func TestDropProcedure(t *testing.T) {
 			Name: "Procedure does not exist",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       "DROP PROCEDURE doesnotexist;",
-					ExpectedErr: "does not exist",
+					Query: "DROP PROCEDURE doesnotexist;", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-procedure-test-testdropprocedure-0001-drop-procedure-doesnotexist", Compare: "sqlstate"},
 				},
 				{
-					Query:    "DROP PROCEDURE IF EXISTS doesnotexist;",
-					Expected: []sql.Row{},
+					Query: "DROP PROCEDURE IF EXISTS doesnotexist;", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-procedure-test-testdropprocedure-0002-drop-procedure-if-exists-doesnotexist"},
 				},
 			},
 		},
@@ -43,28 +41,22 @@ func TestDropProcedure(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "CALL proc1();",
-					Expected: []sql.Row{},
+					Query: "CALL proc1();", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-procedure-test-testdropprocedure-0003-call-proc1"},
 				},
 				{
-					Query:    "CALL proc2(99);",
-					Expected: []sql.Row{},
+					Query: "CALL proc2(99);", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-procedure-test-testdropprocedure-0004-call-proc2-99"},
 				},
 				{
-					Query:    "DROP PROCEDURE proc1;",
-					Expected: []sql.Row{},
+					Query: "DROP PROCEDURE proc1;", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-procedure-test-testdropprocedure-0005-drop-procedure-proc1"},
 				},
 				{
-					Query:    "DROP PROCEDURE proc2(INT);",
-					Expected: []sql.Row{},
+					Query: "DROP PROCEDURE proc2(INT);", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-procedure-test-testdropprocedure-0006-drop-procedure-proc2-int"},
 				},
 				{
-					Query:       "CALL proc1();",
-					ExpectedErr: "does not exist",
+					Query: "CALL proc1();", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-procedure-test-testdropprocedure-0007-call-proc1", Compare: "sqlstate"},
 				},
 				{
-					Query:       "CALL proc2(99);",
-					ExpectedErr: "does not exist",
+					Query: "CALL proc2(99);", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-procedure-test-testdropprocedure-0008-call-proc2-99", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -79,64 +71,49 @@ func TestDropProcedure(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "CALL proc1();",
-					Expected: []sql.Row{},
+					Query: "CALL proc1();", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-procedure-test-testdropprocedure-0009-call-proc1"},
 				},
 				{
-					Query:    "CALL proc2();",
-					Expected: []sql.Row{},
+					Query: "CALL proc2();", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-procedure-test-testdropprocedure-0010-call-proc2"},
 				},
 				{
-					Query:    "CALL proc3(1);",
-					Expected: []sql.Row{},
+					Query: "CALL proc3(1);", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-procedure-test-testdropprocedure-0011-call-proc3-1"},
 				},
 				{
-					Query:    "CALL proc4(2);",
-					Expected: []sql.Row{},
+					Query: "CALL proc4(2);", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-procedure-test-testdropprocedure-0012-call-proc4-2"},
 				},
 				{
-					Query:    "CALL proc5(3, 'abc');",
-					Expected: []sql.Row{},
+					Query: "CALL proc5(3, 'abc');", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-procedure-test-testdropprocedure-0013-call-proc5-3-abc"},
 				},
 				{
-					Query:    "DROP PROCEDURE proc1(OUT TEXT);",
-					Expected: []sql.Row{},
+					Query: "DROP PROCEDURE proc1(OUT TEXT);", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-procedure-test-testdropprocedure-0014-drop-procedure-proc1-out-text"},
 				},
 				{
-					Query:    "DROP PROCEDURE proc2(OUT paramname TEXT);",
-					Expected: []sql.Row{},
+					Query: "DROP PROCEDURE proc2(OUT paramname TEXT);", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-procedure-test-testdropprocedure-0015-drop-procedure-proc2-out-paramname"},
 				},
 				{
-					Query:    "DROP PROCEDURE proc3(paramname INT);",
-					Expected: []sql.Row{},
+					Query: "DROP PROCEDURE proc3(paramname INT);", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-procedure-test-testdropprocedure-0016-drop-procedure-proc3-paramname-int"},
 				},
 				{
-					Query:    "DROP PROCEDURE proc4(IN paramname INT);",
-					Expected: []sql.Row{},
+					Query: "DROP PROCEDURE proc4(IN paramname INT);", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-procedure-test-testdropprocedure-0017-drop-procedure-proc4-in-paramname"},
 				},
 				{
-					Query:    "DROP PROCEDURE proc5(IN paramname INT, IN paramname TEXT);",
-					Expected: []sql.Row{},
+					Query: "DROP PROCEDURE proc5(IN paramname INT, IN paramname TEXT);", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-procedure-test-testdropprocedure-0018-drop-procedure-proc5-in-paramname"},
 				},
 				{
-					Query:       "CALL proc1();",
-					ExpectedErr: "does not exist",
+					Query: "CALL proc1();", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-procedure-test-testdropprocedure-0019-call-proc1", Compare: "sqlstate"},
 				},
 				{
-					Query:       "CALL proc2();",
-					ExpectedErr: "does not exist",
+					Query: "CALL proc2();", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-procedure-test-testdropprocedure-0020-call-proc2", Compare: "sqlstate"},
 				},
 				{
-					Query:       "CALL proc3(1);",
-					ExpectedErr: "does not exist",
+					Query: "CALL proc3(1);", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-procedure-test-testdropprocedure-0021-call-proc3-1", Compare: "sqlstate"},
 				},
 				{
-					Query:       "CALL proc4(2);",
-					ExpectedErr: "does not exist",
+					Query: "CALL proc4(2);", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-procedure-test-testdropprocedure-0022-call-proc4-2", Compare: "sqlstate"},
 				},
 				{
-					Query:       "CALL proc5(3, 'abc');",
-					ExpectedErr: "does not exist",
+					Query: "CALL proc5(3, 'abc');", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-procedure-test-testdropprocedure-0023-call-proc5-3-abc", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -148,20 +125,16 @@ func TestDropProcedure(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "SELECT current_schema(), current_database();",
-					Expected: []sql.Row{{"public", "postgres"}},
+					Query: "SELECT current_schema(), current_database();", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-procedure-test-testdropprocedure-0024-select-current_schema-current_database", ColumnModes: []string{"schema"}},
 				},
 				{
-					Query:    "CALL proc1();",
-					Expected: []sql.Row{},
+					Query: "CALL proc1();", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-procedure-test-testdropprocedure-0025-call-proc1"},
 				},
 				{
-					Query:    "CALL proc2('foo');",
-					Expected: []sql.Row{},
+					Query: "CALL proc2('foo');", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-procedure-test-testdropprocedure-0026-call-proc2-foo"},
 				},
 				{
-					Query:    "DROP PROCEDURE public.proc1;",
-					Expected: []sql.Row{},
+					Query: "DROP PROCEDURE public.proc1;", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-procedure-test-testdropprocedure-0027-drop-procedure-public.proc1", Compare: "sqlstate"},
 				},
 				{
 					Query:       "CALL proc1();",
@@ -188,16 +161,13 @@ func TestDropProcedure(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "DROP PROCEDURE proc1;",
-					Expected: []sql.Row{},
+					Query: "DROP PROCEDURE proc1;", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-procedure-test-testdropprocedure-0031-drop-procedure-proc1"},
 				},
 				{
-					Query:       "DROP PROCEDURE proc2;",
-					ExpectedErr: "is not unique",
+					Query: "DROP PROCEDURE proc2;", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-procedure-test-testdropprocedure-0032-drop-procedure-proc2", Compare: "sqlstate"},
 				},
 				{
-					Query:    "DROP PROCEDURE proc3;",
-					Expected: []sql.Row{},
+					Query: "DROP PROCEDURE proc3;", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-procedure-test-testdropprocedure-0033-drop-procedure-proc3", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -209,32 +179,25 @@ func TestDropProcedure(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "CALL proc2('foo');",
-					Expected: []sql.Row{},
+					Query: "CALL proc2('foo');", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-procedure-test-testdropprocedure-0034-call-proc2-foo"},
 				},
 				{
-					Query:    "CALL proc2(42);",
-					Expected: []sql.Row{},
+					Query: "CALL proc2(42);", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-procedure-test-testdropprocedure-0035-call-proc2-42"},
 				},
 				{
-					Query:    "DROP PROCEDURE proc2(TEXT);",
-					Expected: []sql.Row{},
+					Query: "DROP PROCEDURE proc2(TEXT);", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-procedure-test-testdropprocedure-0036-drop-procedure-proc2-text"},
 				},
 				{
-					Query:       "CALL proc2('foo'::text);",
-					ExpectedErr: "does not exist",
+					Query: "CALL proc2('foo'::text);", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-procedure-test-testdropprocedure-0037-call-proc2-foo-::text", Compare: "sqlstate"},
 				},
 				{
-					Query:    "CALL proc2(42);",
-					Expected: []sql.Row{},
+					Query: "CALL proc2(42);", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-procedure-test-testdropprocedure-0038-call-proc2-42"},
 				},
 				{
-					Query:    "DROP PROCEDURE proc2(INT);",
-					Expected: []sql.Row{},
+					Query: "DROP PROCEDURE proc2(INT);", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-procedure-test-testdropprocedure-0039-drop-procedure-proc2-int"},
 				},
 				{
-					Query:       "CALL proc2(42);",
-					ExpectedErr: "does not exist",
+					Query: "CALL proc2(42);", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-procedure-test-testdropprocedure-0040-call-proc2-42", Compare: "sqlstate"},
 				},
 			},
 		},

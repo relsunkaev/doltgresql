@@ -48,18 +48,20 @@ func TestSelectForUpdateRequiresUpdatePrivilegeRepro(t *testing.T) {
 						FROM for_update_privilege_private
 						WHERE id = 1
 						FOR UPDATE;`,
-					ExpectedErr: `permission denied`,
-					Username:    `for_update_select_only`,
-					Password:    `reader`,
+
+					Username: `for_update_select_only`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestSelectForUpdateRejectsNonLockableQueryShapesRepro reproduces a row-lock
+						// correctness bug: PostgreSQL rejects FOR UPDATE when result rows cannot be
+						// mapped directly back to lockable base-table rows.
+						ID: "select-for-update-repro-test-testselectforupdaterequiresupdateprivilegerepro-0001-select-id-balance-from-for_update_privilege_private", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestSelectForUpdateRejectsNonLockableQueryShapesRepro reproduces a row-lock
-// correctness bug: PostgreSQL rejects FOR UPDATE when result rows cannot be
-// mapped directly back to lockable base-table rows.
 func TestSelectForUpdateRejectsNonLockableQueryShapesRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -73,35 +75,33 @@ func TestSelectForUpdateRejectsNonLockableQueryShapesRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT count(*) FROM for_update_shape_items FOR UPDATE;`,
-					ExpectedErr: `FOR UPDATE`,
+					Query: `SELECT count(*) FROM for_update_shape_items FOR UPDATE;`, PostgresOracle: ScriptTestPostgresOracle{ID: "select-for-update-repro-test-testselectforupdaterejectsnonlockablequeryshapesrepro-0001-select-count-*-from-for_update_shape_items", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT grp, count(*)
 						FROM for_update_shape_items
 						GROUP BY grp
-						FOR UPDATE;`,
-					ExpectedErr: `FOR UPDATE`,
+						FOR UPDATE;`, PostgresOracle: ScriptTestPostgresOracle{ID: "select-for-update-repro-test-testselectforupdaterejectsnonlockablequeryshapesrepro-0002-select-grp-count-*-from", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SELECT DISTINCT grp FROM for_update_shape_items FOR UPDATE;`,
-					ExpectedErr: `FOR UPDATE`,
+					Query: `SELECT DISTINCT grp FROM for_update_shape_items FOR UPDATE;`, PostgresOracle: ScriptTestPostgresOracle{ID: "select-for-update-repro-test-testselectforupdaterejectsnonlockablequeryshapesrepro-0003-select-distinct-grp-from-for_update_shape_items", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id FROM for_update_shape_items
 						UNION
 						SELECT id FROM for_update_shape_items
-						FOR UPDATE;`,
-					ExpectedErr: `FOR UPDATE`,
+						FOR UPDATE;`, PostgresOracle: ScriptTestPostgresOracle{ID: "select-for-update-repro-test-testselectforupdaterejectsnonlockablequeryshapesrepro-0004-select-id-from-for_update_shape_items-union",
+
+						// TestSelectForUpdateBlocksConcurrentWritersRepro reproduces a data consistency
+						// bug: Doltgres accepts SELECT ... FOR UPDATE, but concurrent writers do not
+						// block behind the held row lock.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestSelectForUpdateBlocksConcurrentWritersRepro reproduces a data consistency
-// bug: Doltgres accepts SELECT ... FOR UPDATE, but concurrent writers do not
-// block behind the held row lock.
 func TestSelectForUpdateBlocksConcurrentWritersRepro(t *testing.T) {
 	port, err := sql.GetEmptyPort()
 	require.NoError(t, err)

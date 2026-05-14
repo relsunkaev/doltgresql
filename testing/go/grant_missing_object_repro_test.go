@@ -31,16 +31,17 @@ func TestGrantOnMissingTableRequiresExistingRelationRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `GRANT SELECT ON TABLE missing_grant_table TO missing_table_grantee;`,
-					ExpectedErr: `does not exist`,
+					Query: `GRANT SELECT ON TABLE missing_grant_table TO missing_table_grantee;`, PostgresOracle: ScriptTestPostgresOracle{ID: "grant-missing-object-repro-test-testgrantonmissingtablerequiresexistingrelationrepro-0001-grant-select-on-table-missing_grant_table",
+
+						// TestGrantOnMissingSchemaRequiresExistingSchemaRepro reproduces an ACL
+						// consistency bug: Doltgres accepts GRANT on a missing schema.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestGrantOnMissingSchemaRequiresExistingSchemaRepro reproduces an ACL
-// consistency bug: Doltgres accepts GRANT on a missing schema.
 func TestGrantOnMissingSchemaRequiresExistingSchemaRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -50,16 +51,17 @@ func TestGrantOnMissingSchemaRequiresExistingSchemaRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `GRANT USAGE ON SCHEMA missing_grant_schema TO missing_schema_grantee;`,
-					ExpectedErr: `does not exist`,
+					Query: `GRANT USAGE ON SCHEMA missing_grant_schema TO missing_schema_grantee;`, PostgresOracle: ScriptTestPostgresOracle{ID: "grant-missing-object-repro-test-testgrantonmissingschemarequiresexistingschemarepro-0001-grant-usage-on-schema-missing_grant_schema",
+
+						// TestGrantOnMissingDatabaseRequiresExistingDatabaseRepro reproduces an ACL
+						// consistency bug: Doltgres accepts GRANT on a missing database.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestGrantOnMissingDatabaseRequiresExistingDatabaseRepro reproduces an ACL
-// consistency bug: Doltgres accepts GRANT on a missing database.
 func TestGrantOnMissingDatabaseRequiresExistingDatabaseRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -69,16 +71,17 @@ func TestGrantOnMissingDatabaseRequiresExistingDatabaseRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `GRANT CONNECT ON DATABASE missing_grant_database TO missing_database_grantee;`,
-					ExpectedErr: `does not exist`,
+					Query: `GRANT CONNECT ON DATABASE missing_grant_database TO missing_database_grantee;`, PostgresOracle: ScriptTestPostgresOracle{ID: "grant-missing-object-repro-test-testgrantonmissingdatabaserequiresexistingdatabaserepro-0001-grant-connect-on-database-missing_grant_database",
+
+						// TestGrantOnMissingSequenceRequiresExistingSequenceRepro reproduces an ACL
+						// consistency bug: Doltgres accepts GRANT on a missing sequence.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestGrantOnMissingSequenceRequiresExistingSequenceRepro reproduces an ACL
-// consistency bug: Doltgres accepts GRANT on a missing sequence.
 func TestGrantOnMissingSequenceRequiresExistingSequenceRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -88,16 +91,17 @@ func TestGrantOnMissingSequenceRequiresExistingSequenceRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `GRANT USAGE ON SEQUENCE missing_grant_sequence TO missing_sequence_grantee;`,
-					ExpectedErr: `does not exist`,
+					Query: `GRANT USAGE ON SEQUENCE missing_grant_sequence TO missing_sequence_grantee;`, PostgresOracle: ScriptTestPostgresOracle{ID: "grant-missing-object-repro-test-testgrantonmissingsequencerequiresexistingsequencerepro-0001-grant-usage-on-sequence-missing_grant_sequence",
+
+						// TestGrantOnMissingFunctionRequiresExistingRoutineRepro reproduces an ACL
+						// consistency bug: Doltgres accepts GRANT on a missing function.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestGrantOnMissingFunctionRequiresExistingRoutineRepro reproduces an ACL
-// consistency bug: Doltgres accepts GRANT on a missing function.
 func TestGrantOnMissingFunctionRequiresExistingRoutineRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -107,16 +111,17 @@ func TestGrantOnMissingFunctionRequiresExistingRoutineRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `GRANT EXECUTE ON FUNCTION missing_grant_function() TO missing_function_grantee;`,
-					ExpectedErr: `does not exist`,
+					Query: `GRANT EXECUTE ON FUNCTION missing_grant_function() TO missing_function_grantee;`, PostgresOracle: ScriptTestPostgresOracle{ID: "grant-missing-object-repro-test-testgrantonmissingfunctionrequiresexistingroutinerepro-0001-grant-execute-on-function-missing_grant_function",
+
+						// TestGrantOnMissingProcedureRequiresExistingRoutineRepro reproduces an ACL
+						// consistency bug: Doltgres accepts GRANT on a missing procedure.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestGrantOnMissingProcedureRequiresExistingRoutineRepro reproduces an ACL
-// consistency bug: Doltgres accepts GRANT on a missing procedure.
 func TestGrantOnMissingProcedureRequiresExistingRoutineRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -126,16 +131,17 @@ func TestGrantOnMissingProcedureRequiresExistingRoutineRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `GRANT EXECUTE ON PROCEDURE missing_grant_procedure() TO missing_procedure_grantee;`,
-					ExpectedErr: `does not exist`,
+					Query: `GRANT EXECUTE ON PROCEDURE missing_grant_procedure() TO missing_procedure_grantee;`, PostgresOracle: ScriptTestPostgresOracle{ID: "grant-missing-object-repro-test-testgrantonmissingprocedurerequiresexistingroutinerepro-0001-grant-execute-on-procedure-missing_grant_procedure",
+
+						// TestGrantOnMissingRoutineRequiresExistingRoutineRepro reproduces an ACL
+						// consistency bug: Doltgres accepts GRANT on a missing routine.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestGrantOnMissingRoutineRequiresExistingRoutineRepro reproduces an ACL
-// consistency bug: Doltgres accepts GRANT on a missing routine.
 func TestGrantOnMissingRoutineRequiresExistingRoutineRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -145,17 +151,18 @@ func TestGrantOnMissingRoutineRequiresExistingRoutineRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `GRANT EXECUTE ON ROUTINE missing_grant_routine() TO missing_routine_grantee;`,
-					ExpectedErr: `does not exist`,
+					Query: `GRANT EXECUTE ON ROUTINE missing_grant_routine() TO missing_routine_grantee;`, PostgresOracle: ScriptTestPostgresOracle{ID: "grant-missing-object-repro-test-testgrantonmissingroutinerequiresexistingroutinerepro-0001-grant-execute-on-routine-missing_grant_routine",
+
+						// TestGrantOnMissingForeignDataWrapperRequiresExistingWrapperRepro reproduces
+						// an ACL consistency bug: PostgreSQL validates that the named foreign-data
+						// wrapper exists before granting privileges on it.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestGrantOnMissingForeignDataWrapperRequiresExistingWrapperRepro reproduces
-// an ACL consistency bug: PostgreSQL validates that the named foreign-data
-// wrapper exists before granting privileges on it.
 func TestGrantOnMissingForeignDataWrapperRequiresExistingWrapperRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -165,17 +172,18 @@ func TestGrantOnMissingForeignDataWrapperRequiresExistingWrapperRepro(t *testing
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `GRANT USAGE ON FOREIGN DATA WRAPPER missing_grant_fdw TO missing_fdw_grantee;`,
-					ExpectedErr: `does not exist`,
+					Query: `GRANT USAGE ON FOREIGN DATA WRAPPER missing_grant_fdw TO missing_fdw_grantee;`, PostgresOracle: ScriptTestPostgresOracle{ID: "grant-missing-object-repro-test-testgrantonmissingforeigndatawrapperrequiresexistingwrapperrepro-0001-grant-usage-on-foreign-data",
+
+						// TestGrantOnMissingForeignServerRequiresExistingServerRepro reproduces an ACL
+						// consistency bug: PostgreSQL validates that the named foreign server exists
+						// before granting privileges on it.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestGrantOnMissingForeignServerRequiresExistingServerRepro reproduces an ACL
-// consistency bug: PostgreSQL validates that the named foreign server exists
-// before granting privileges on it.
 func TestGrantOnMissingForeignServerRequiresExistingServerRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -185,16 +193,17 @@ func TestGrantOnMissingForeignServerRequiresExistingServerRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `GRANT USAGE ON FOREIGN SERVER missing_grant_server TO missing_foreign_server_grantee;`,
-					ExpectedErr: `does not exist`,
+					Query: `GRANT USAGE ON FOREIGN SERVER missing_grant_server TO missing_foreign_server_grantee;`, PostgresOracle: ScriptTestPostgresOracle{ID: "grant-missing-object-repro-test-testgrantonmissingforeignserverrequiresexistingserverrepro-0001-grant-usage-on-foreign-server",
+
+						// TestRevokeOnMissingTableRequiresExistingRelationRepro reproduces an ACL
+						// consistency bug: Doltgres accepts REVOKE on a missing table.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestRevokeOnMissingTableRequiresExistingRelationRepro reproduces an ACL
-// consistency bug: Doltgres accepts REVOKE on a missing table.
 func TestRevokeOnMissingTableRequiresExistingRelationRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -204,16 +213,17 @@ func TestRevokeOnMissingTableRequiresExistingRelationRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `REVOKE SELECT ON TABLE missing_revoke_table FROM missing_table_revokee;`,
-					ExpectedErr: `does not exist`,
+					Query: `REVOKE SELECT ON TABLE missing_revoke_table FROM missing_table_revokee;`, PostgresOracle: ScriptTestPostgresOracle{ID: "grant-missing-object-repro-test-testrevokeonmissingtablerequiresexistingrelationrepro-0001-revoke-select-on-table-missing_revoke_table",
+
+						// TestRevokeOnMissingSchemaRequiresExistingSchemaRepro reproduces an ACL
+						// consistency bug: Doltgres accepts REVOKE on a missing schema.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestRevokeOnMissingSchemaRequiresExistingSchemaRepro reproduces an ACL
-// consistency bug: Doltgres accepts REVOKE on a missing schema.
 func TestRevokeOnMissingSchemaRequiresExistingSchemaRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -223,16 +233,17 @@ func TestRevokeOnMissingSchemaRequiresExistingSchemaRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `REVOKE USAGE ON SCHEMA missing_revoke_schema FROM missing_schema_revokee;`,
-					ExpectedErr: `does not exist`,
+					Query: `REVOKE USAGE ON SCHEMA missing_revoke_schema FROM missing_schema_revokee;`, PostgresOracle: ScriptTestPostgresOracle{ID: "grant-missing-object-repro-test-testrevokeonmissingschemarequiresexistingschemarepro-0001-revoke-usage-on-schema-missing_revoke_schema",
+
+						// TestRevokeOnMissingDatabaseRequiresExistingDatabaseRepro reproduces an ACL
+						// consistency bug: Doltgres accepts REVOKE on a missing database.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestRevokeOnMissingDatabaseRequiresExistingDatabaseRepro reproduces an ACL
-// consistency bug: Doltgres accepts REVOKE on a missing database.
 func TestRevokeOnMissingDatabaseRequiresExistingDatabaseRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -242,16 +253,17 @@ func TestRevokeOnMissingDatabaseRequiresExistingDatabaseRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `REVOKE CONNECT ON DATABASE missing_revoke_database FROM missing_database_revokee;`,
-					ExpectedErr: `does not exist`,
+					Query: `REVOKE CONNECT ON DATABASE missing_revoke_database FROM missing_database_revokee;`, PostgresOracle: ScriptTestPostgresOracle{ID: "grant-missing-object-repro-test-testrevokeonmissingdatabaserequiresexistingdatabaserepro-0001-revoke-connect-on-database-missing_revoke_database",
+
+						// TestRevokeOnMissingSequenceRequiresExistingSequenceRepro reproduces an ACL
+						// consistency bug: Doltgres accepts REVOKE on a missing sequence.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestRevokeOnMissingSequenceRequiresExistingSequenceRepro reproduces an ACL
-// consistency bug: Doltgres accepts REVOKE on a missing sequence.
 func TestRevokeOnMissingSequenceRequiresExistingSequenceRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -261,16 +273,17 @@ func TestRevokeOnMissingSequenceRequiresExistingSequenceRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `REVOKE USAGE ON SEQUENCE missing_revoke_sequence FROM missing_sequence_revokee;`,
-					ExpectedErr: `does not exist`,
+					Query: `REVOKE USAGE ON SEQUENCE missing_revoke_sequence FROM missing_sequence_revokee;`, PostgresOracle: ScriptTestPostgresOracle{ID: "grant-missing-object-repro-test-testrevokeonmissingsequencerequiresexistingsequencerepro-0001-revoke-usage-on-sequence-missing_revoke_sequence",
+
+						// TestRevokeOnMissingFunctionRequiresExistingRoutineRepro reproduces an ACL
+						// consistency bug: Doltgres accepts REVOKE on a missing function.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestRevokeOnMissingFunctionRequiresExistingRoutineRepro reproduces an ACL
-// consistency bug: Doltgres accepts REVOKE on a missing function.
 func TestRevokeOnMissingFunctionRequiresExistingRoutineRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -280,16 +293,17 @@ func TestRevokeOnMissingFunctionRequiresExistingRoutineRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `REVOKE EXECUTE ON FUNCTION missing_revoke_function() FROM missing_function_revokee;`,
-					ExpectedErr: `does not exist`,
+					Query: `REVOKE EXECUTE ON FUNCTION missing_revoke_function() FROM missing_function_revokee;`, PostgresOracle: ScriptTestPostgresOracle{ID: "grant-missing-object-repro-test-testrevokeonmissingfunctionrequiresexistingroutinerepro-0001-revoke-execute-on-function-missing_revoke_function",
+
+						// TestRevokeOnMissingProcedureRequiresExistingRoutineRepro reproduces an ACL
+						// consistency bug: Doltgres accepts REVOKE on a missing procedure.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestRevokeOnMissingProcedureRequiresExistingRoutineRepro reproduces an ACL
-// consistency bug: Doltgres accepts REVOKE on a missing procedure.
 func TestRevokeOnMissingProcedureRequiresExistingRoutineRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -299,16 +313,17 @@ func TestRevokeOnMissingProcedureRequiresExistingRoutineRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `REVOKE EXECUTE ON PROCEDURE missing_revoke_procedure() FROM missing_procedure_revokee;`,
-					ExpectedErr: `does not exist`,
+					Query: `REVOKE EXECUTE ON PROCEDURE missing_revoke_procedure() FROM missing_procedure_revokee;`, PostgresOracle: ScriptTestPostgresOracle{ID: "grant-missing-object-repro-test-testrevokeonmissingprocedurerequiresexistingroutinerepro-0001-revoke-execute-on-procedure-missing_revoke_procedure",
+
+						// TestRevokeOnMissingRoutineRequiresExistingRoutineRepro reproduces an ACL
+						// consistency bug: Doltgres accepts REVOKE on a missing routine.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestRevokeOnMissingRoutineRequiresExistingRoutineRepro reproduces an ACL
-// consistency bug: Doltgres accepts REVOKE on a missing routine.
 func TestRevokeOnMissingRoutineRequiresExistingRoutineRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -318,17 +333,18 @@ func TestRevokeOnMissingRoutineRequiresExistingRoutineRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `REVOKE EXECUTE ON ROUTINE missing_revoke_routine() FROM missing_routine_revokee;`,
-					ExpectedErr: `does not exist`,
+					Query: `REVOKE EXECUTE ON ROUTINE missing_revoke_routine() FROM missing_routine_revokee;`, PostgresOracle: ScriptTestPostgresOracle{ID: "grant-missing-object-repro-test-testrevokeonmissingroutinerequiresexistingroutinerepro-0001-revoke-execute-on-routine-missing_revoke_routine",
+
+						// TestRevokeOnMissingForeignDataWrapperRequiresExistingWrapperRepro reproduces
+						// an ACL consistency bug: PostgreSQL validates that the named foreign-data
+						// wrapper exists before revoking privileges on it.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestRevokeOnMissingForeignDataWrapperRequiresExistingWrapperRepro reproduces
-// an ACL consistency bug: PostgreSQL validates that the named foreign-data
-// wrapper exists before revoking privileges on it.
 func TestRevokeOnMissingForeignDataWrapperRequiresExistingWrapperRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -338,17 +354,18 @@ func TestRevokeOnMissingForeignDataWrapperRequiresExistingWrapperRepro(t *testin
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `REVOKE USAGE ON FOREIGN DATA WRAPPER missing_revoke_fdw FROM missing_fdw_revokee;`,
-					ExpectedErr: `does not exist`,
+					Query: `REVOKE USAGE ON FOREIGN DATA WRAPPER missing_revoke_fdw FROM missing_fdw_revokee;`, PostgresOracle: ScriptTestPostgresOracle{ID: "grant-missing-object-repro-test-testrevokeonmissingforeigndatawrapperrequiresexistingwrapperrepro-0001-revoke-usage-on-foreign-data",
+
+						// TestRevokeOnMissingForeignServerRequiresExistingServerRepro reproduces an ACL
+						// consistency bug: PostgreSQL validates that the named foreign server exists
+						// before revoking privileges on it.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestRevokeOnMissingForeignServerRequiresExistingServerRepro reproduces an ACL
-// consistency bug: PostgreSQL validates that the named foreign server exists
-// before revoking privileges on it.
 func TestRevokeOnMissingForeignServerRequiresExistingServerRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -358,17 +375,18 @@ func TestRevokeOnMissingForeignServerRequiresExistingServerRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `REVOKE USAGE ON FOREIGN SERVER missing_revoke_server FROM missing_foreign_server_revokee;`,
-					ExpectedErr: `does not exist`,
+					Query: `REVOKE USAGE ON FOREIGN SERVER missing_revoke_server FROM missing_foreign_server_revokee;`, PostgresOracle: ScriptTestPostgresOracle{ID: "grant-missing-object-repro-test-testrevokeonmissingforeignserverrequiresexistingserverrepro-0001-revoke-usage-on-foreign-server",
+
+						// TestGrantOnAllTablesInMissingSchemaRequiresExistingSchemaRepro reproduces an
+						// ACL consistency bug: Doltgres accepts GRANT ON ALL TABLES IN SCHEMA for a
+						// missing schema.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestGrantOnAllTablesInMissingSchemaRequiresExistingSchemaRepro reproduces an
-// ACL consistency bug: Doltgres accepts GRANT ON ALL TABLES IN SCHEMA for a
-// missing schema.
 func TestGrantOnAllTablesInMissingSchemaRequiresExistingSchemaRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -378,17 +396,18 @@ func TestGrantOnAllTablesInMissingSchemaRequiresExistingSchemaRepro(t *testing.T
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `GRANT SELECT ON ALL TABLES IN SCHEMA missing_all_tables_schema TO missing_all_tables_grantee;`,
-					ExpectedErr: `does not exist`,
+					Query: `GRANT SELECT ON ALL TABLES IN SCHEMA missing_all_tables_schema TO missing_all_tables_grantee;`, PostgresOracle: ScriptTestPostgresOracle{ID: "grant-missing-object-repro-test-testgrantonalltablesinmissingschemarequiresexistingschemarepro-0001-grant-select-on-all-tables",
+
+						// TestGrantOnAllSequencesInMissingSchemaRequiresExistingSchemaRepro reproduces
+						// an ACL consistency bug: Doltgres accepts GRANT ON ALL SEQUENCES IN SCHEMA for
+						// a missing schema.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestGrantOnAllSequencesInMissingSchemaRequiresExistingSchemaRepro reproduces
-// an ACL consistency bug: Doltgres accepts GRANT ON ALL SEQUENCES IN SCHEMA for
-// a missing schema.
 func TestGrantOnAllSequencesInMissingSchemaRequiresExistingSchemaRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -398,17 +417,18 @@ func TestGrantOnAllSequencesInMissingSchemaRequiresExistingSchemaRepro(t *testin
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `GRANT USAGE ON ALL SEQUENCES IN SCHEMA missing_all_sequences_schema TO missing_all_sequences_grantee;`,
-					ExpectedErr: `does not exist`,
+					Query: `GRANT USAGE ON ALL SEQUENCES IN SCHEMA missing_all_sequences_schema TO missing_all_sequences_grantee;`, PostgresOracle: ScriptTestPostgresOracle{ID: "grant-missing-object-repro-test-testgrantonallsequencesinmissingschemarequiresexistingschemarepro-0001-grant-usage-on-all-sequences",
+
+						// TestGrantOnAllFunctionsInMissingSchemaRequiresExistingSchemaRepro reproduces
+						// an ACL consistency bug: Doltgres accepts GRANT ON ALL FUNCTIONS IN SCHEMA for
+						// a missing schema.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestGrantOnAllFunctionsInMissingSchemaRequiresExistingSchemaRepro reproduces
-// an ACL consistency bug: Doltgres accepts GRANT ON ALL FUNCTIONS IN SCHEMA for
-// a missing schema.
 func TestGrantOnAllFunctionsInMissingSchemaRequiresExistingSchemaRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -418,17 +438,18 @@ func TestGrantOnAllFunctionsInMissingSchemaRequiresExistingSchemaRepro(t *testin
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA missing_all_functions_schema TO missing_all_functions_grantee;`,
-					ExpectedErr: `does not exist`,
+					Query: `GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA missing_all_functions_schema TO missing_all_functions_grantee;`, PostgresOracle: ScriptTestPostgresOracle{ID: "grant-missing-object-repro-test-testgrantonallfunctionsinmissingschemarequiresexistingschemarepro-0001-grant-execute-on-all-functions",
+
+						// TestRevokeOnAllTablesInMissingSchemaRequiresExistingSchemaRepro reproduces an
+						// ACL consistency bug: Doltgres accepts REVOKE ON ALL TABLES IN SCHEMA for a
+						// missing schema.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestRevokeOnAllTablesInMissingSchemaRequiresExistingSchemaRepro reproduces an
-// ACL consistency bug: Doltgres accepts REVOKE ON ALL TABLES IN SCHEMA for a
-// missing schema.
 func TestRevokeOnAllTablesInMissingSchemaRequiresExistingSchemaRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -438,17 +459,18 @@ func TestRevokeOnAllTablesInMissingSchemaRequiresExistingSchemaRepro(t *testing.
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `REVOKE SELECT ON ALL TABLES IN SCHEMA missing_revoke_all_tables_schema FROM missing_all_tables_revokee;`,
-					ExpectedErr: `does not exist`,
+					Query: `REVOKE SELECT ON ALL TABLES IN SCHEMA missing_revoke_all_tables_schema FROM missing_all_tables_revokee;`, PostgresOracle: ScriptTestPostgresOracle{ID: "grant-missing-object-repro-test-testrevokeonalltablesinmissingschemarequiresexistingschemarepro-0001-revoke-select-on-all-tables",
+
+						// TestRevokeOnAllSequencesInMissingSchemaRequiresExistingSchemaRepro reproduces
+						// an ACL consistency bug: Doltgres accepts REVOKE ON ALL SEQUENCES IN SCHEMA
+						// for a missing schema.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestRevokeOnAllSequencesInMissingSchemaRequiresExistingSchemaRepro reproduces
-// an ACL consistency bug: Doltgres accepts REVOKE ON ALL SEQUENCES IN SCHEMA
-// for a missing schema.
 func TestRevokeOnAllSequencesInMissingSchemaRequiresExistingSchemaRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -458,17 +480,18 @@ func TestRevokeOnAllSequencesInMissingSchemaRequiresExistingSchemaRepro(t *testi
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `REVOKE USAGE ON ALL SEQUENCES IN SCHEMA missing_revoke_all_sequences_schema FROM missing_all_sequences_revokee;`,
-					ExpectedErr: `does not exist`,
+					Query: `REVOKE USAGE ON ALL SEQUENCES IN SCHEMA missing_revoke_all_sequences_schema FROM missing_all_sequences_revokee;`, PostgresOracle: ScriptTestPostgresOracle{ID: "grant-missing-object-repro-test-testrevokeonallsequencesinmissingschemarequiresexistingschemarepro-0001-revoke-usage-on-all-sequences",
+
+						// TestRevokeOnAllFunctionsInMissingSchemaRequiresExistingSchemaRepro reproduces
+						// an ACL consistency bug: Doltgres accepts REVOKE ON ALL FUNCTIONS IN SCHEMA
+						// for a missing schema.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestRevokeOnAllFunctionsInMissingSchemaRequiresExistingSchemaRepro reproduces
-// an ACL consistency bug: Doltgres accepts REVOKE ON ALL FUNCTIONS IN SCHEMA
-// for a missing schema.
 func TestRevokeOnAllFunctionsInMissingSchemaRequiresExistingSchemaRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -478,17 +501,18 @@ func TestRevokeOnAllFunctionsInMissingSchemaRequiresExistingSchemaRepro(t *testi
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `REVOKE EXECUTE ON ALL FUNCTIONS IN SCHEMA missing_revoke_all_functions_schema FROM missing_all_functions_revokee;`,
-					ExpectedErr: `does not exist`,
+					Query: `REVOKE EXECUTE ON ALL FUNCTIONS IN SCHEMA missing_revoke_all_functions_schema FROM missing_all_functions_revokee;`, PostgresOracle: ScriptTestPostgresOracle{ID: "grant-missing-object-repro-test-testrevokeonallfunctionsinmissingschemarequiresexistingschemarepro-0001-revoke-execute-on-all-functions",
+
+						// TestRevokeAllTablesInSchemaDoesNotAffectOtherSchemasRepro reproduces an ACL
+						// consistency bug: REVOKE ON ALL TABLES IN SCHEMA should remove only the named
+						// schema's all-tables privilege.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestRevokeAllTablesInSchemaDoesNotAffectOtherSchemasRepro reproduces an ACL
-// consistency bug: REVOKE ON ALL TABLES IN SCHEMA should remove only the named
-// schema's all-tables privilege.
 func TestRevokeAllTablesInSchemaDoesNotAffectOtherSchemasRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{

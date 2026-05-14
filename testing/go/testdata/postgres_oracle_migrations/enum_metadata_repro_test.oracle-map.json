@@ -1,0 +1,515 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map enum_metadata_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/enum_metadata_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/enum_metadata_repro_test.go:TestCreateEnumPopulatesPgEnumRepro#0001",
+      "source": "testing/go/enum_metadata_repro_test.go:TestCreateEnumPopulatesPgEnumRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE TYPE AS ENUM populates pg_enum labels",
+      "oracle": "postgres",
+      "postgresId": "enum-metadata-repro-test-testcreateenumpopulatespgenumrepro-0001-select-enumlabel-from-pg_catalog.pg_enum-where",
+      "suggestedId": "enum-metadata-repro-test-testcreateenumpopulatespgenumrepro-0001-select-enumlabel-from-pg_catalog.pg_enum-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT enumlabel\n\t\t\t\t\t\tFROM pg_catalog.pg_enum\n\t\t\t\t\t\tWHERE enumtypid = (SELECT oid FROM pg_type WHERE typname = 'enum_catalog_target')\n\t\t\t\t\t\tORDER BY enumsortorder;",
+      "querySha256": "c8997c22782cfb418a3a0a624f41651f32749cf206123b1d80b9b985d5599dba",
+      "expectedRows": [
+        [
+          {
+            "value": "sad"
+          }
+        ],
+        [
+          {
+            "value": "ok"
+          }
+        ],
+        [
+          {
+            "value": "happy"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/enum_metadata_repro_test.go:TestEnumLabelsAreCaseSensitive#0001",
+      "source": "testing/go/enum_metadata_repro_test.go:TestEnumLabelsAreCaseSensitive",
+      "ordinal": 1,
+      "scriptName": "enum labels remain case-sensitive",
+      "oracle": "postgres",
+      "postgresId": "enum-metadata-repro-test-testenumlabelsarecasesensitive-0001-insert-into-enum_label_case_items-values-1",
+      "suggestedId": "enum-metadata-repro-test-testenumlabelsarecasesensitive-0001-insert-into-enum_label_case_items-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO enum_label_case_items VALUES (1, 'Open'), (2, 'open');",
+      "querySha256": "98324a57fcf07a7dde413195414689a9e3743fb7a0791dda621376b610439c69",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/enum_metadata_repro_test.go:TestEnumLabelsAreCaseSensitive#0002",
+      "source": "testing/go/enum_metadata_repro_test.go:TestEnumLabelsAreCaseSensitive",
+      "ordinal": 2,
+      "scriptName": "enum labels remain case-sensitive",
+      "oracle": "postgres",
+      "postgresId": "enum-metadata-repro-test-testenumlabelsarecasesensitive-0002-select-id-status::text-from-enum_label_case_items",
+      "suggestedId": "enum-metadata-repro-test-testenumlabelsarecasesensitive-0002-select-id-status::text-from-enum_label_case_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, status::text\n\t\t\t\t\t\tFROM enum_label_case_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "933f46d11f3da4446188319e85bc3ba2330e62ade27d27bf7ba381cba3c53683",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "Open"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "open"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/enum_metadata_repro_test.go:TestEnumOrderingUsesDeclarationOrderRepro#0001",
+      "source": "testing/go/enum_metadata_repro_test.go:TestEnumOrderingUsesDeclarationOrderRepro",
+      "ordinal": 1,
+      "scriptName": "enum comparisons and ORDER BY use declaration order",
+      "oracle": "postgres",
+      "postgresId": "enum-metadata-repro-test-testenumorderingusesdeclarationorderrepro-0001-select-alpha-::enum_declared_order->-beta",
+      "suggestedId": "enum-metadata-repro-test-testenumorderingusesdeclarationorderrepro-0001-select-alpha-::enum_declared_order->-beta",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 'alpha'::enum_declared_order > 'beta'::enum_declared_order,\n\t\t\t\t\t\t\t'beta'::enum_declared_order < 'gamma'::enum_declared_order;",
+      "querySha256": "486190cb225898b2164b0d684a5165a17ebba21fe26a6353c043180c48af17b4",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/enum_metadata_repro_test.go:TestEnumOrderingUsesDeclarationOrderRepro#0002",
+      "source": "testing/go/enum_metadata_repro_test.go:TestEnumOrderingUsesDeclarationOrderRepro",
+      "ordinal": 2,
+      "scriptName": "enum comparisons and ORDER BY use declaration order",
+      "oracle": "postgres",
+      "postgresId": "enum-metadata-repro-test-testenumorderingusesdeclarationorderrepro-0002-select-status::text-from-enum_declared_order_items-order",
+      "suggestedId": "enum-metadata-repro-test-testenumorderingusesdeclarationorderrepro-0002-select-status::text-from-enum_declared_order_items-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT status::text\n\t\t\t\t\t\tFROM enum_declared_order_items\n\t\t\t\t\t\tORDER BY enum_declared_order_items.status;",
+      "querySha256": "f202f99d365f9b4d9e70c3999832e4dc8c2f5a3bdf872e11ad327194286bd3e5",
+      "expectedRows": [
+        [
+          {
+            "value": "beta"
+          }
+        ],
+        [
+          {
+            "value": "alpha"
+          }
+        ],
+        [
+          {
+            "value": "gamma"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/enum_metadata_repro_test.go:TestEnumOrderingUsesDeclarationOrderRepro#0003",
+      "source": "testing/go/enum_metadata_repro_test.go:TestEnumOrderingUsesDeclarationOrderRepro",
+      "ordinal": 3,
+      "scriptName": "enum comparisons and ORDER BY use declaration order",
+      "oracle": "postgres",
+      "postgresId": "enum-metadata-repro-test-testenumorderingusesdeclarationorderrepro-0003-select-status::text-from-enum_declared_order_items-order",
+      "suggestedId": "enum-metadata-repro-test-testenumorderingusesdeclarationorderrepro-0003-select-status::text-from-enum_declared_order_items-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT status::text\n\t\t\t\t\t\tFROM enum_declared_order_items\n\t\t\t\t\t\tORDER BY status;",
+      "querySha256": "f722585c22202dc0803b581c615ba07e967611f5cb35027dfb281ce3f4ee5806",
+      "expectedRows": [
+        [
+          {
+            "value": "alpha"
+          }
+        ],
+        [
+          {
+            "value": "beta"
+          }
+        ],
+        [
+          {
+            "value": "gamma"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/enum_metadata_repro_test.go:TestEnumMinMaxUseDeclarationOrder#0001",
+      "source": "testing/go/enum_metadata_repro_test.go:TestEnumMinMaxUseDeclarationOrder",
+      "ordinal": 1,
+      "scriptName": "enum min and max use declaration order",
+      "oracle": "postgres",
+      "postgresId": "enum-metadata-repro-test-testenumminmaxusedeclarationorder-0001-select-min-status-::text-max",
+      "suggestedId": "enum-metadata-repro-test-testenumminmaxusedeclarationorder-0001-select-min-status-::text-max",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT min(status)::text, max(status)::text\n\t\t\t\t\t\tFROM enum_minmax_items;",
+      "querySha256": "0392dd9dac6341432c6a8129ceb51bc22beb2daa3ab851fa1e9a51c22e8e57e7",
+      "expectedRows": [
+        [
+          {
+            "value": "beta"
+          },
+          {
+            "value": "gamma"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/enum_metadata_repro_test.go:TestEnumArrayColumnRoundTripsValuesRepro#0001",
+      "source": "testing/go/enum_metadata_repro_test.go:TestEnumArrayColumnRoundTripsValuesRepro",
+      "ordinal": 1,
+      "scriptName": "enum array column round trips values",
+      "oracle": "postgres",
+      "postgresId": "enum-metadata-repro-test-testenumarraycolumnroundtripsvaluesrepro-0001-select-id-moods-moods[2]::text-sad",
+      "suggestedId": "enum-metadata-repro-test-testenumarraycolumnroundtripsvaluesrepro-0001-select-id-moods-moods[2]::text-sad",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, moods, moods[2]::text, 'sad'::enum_array_mood = ANY (moods)\n\t\t\t\t\t\tFROM enum_array_items;",
+      "querySha256": "e261fe2fba1eb11e397a9f6b4720816958a5c7c585c2332803a1a4da774907a6",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "{sad,happy}"
+          },
+          {
+            "value": "happy"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/enum_metadata_repro_test.go:TestDropEnumTypeUsedByTableRequiresCascadeRepro#0001",
+      "source": "testing/go/enum_metadata_repro_test.go:TestDropEnumTypeUsedByTableRequiresCascadeRepro",
+      "ordinal": 1,
+      "scriptName": "DROP TYPE rejects table column dependencies",
+      "oracle": "postgres",
+      "postgresId": "enum-metadata-repro-test-testdropenumtypeusedbytablerequirescascaderepro-0001-drop-type-enum_dependency_mood",
+      "suggestedId": "enum-metadata-repro-test-testdropenumtypeusedbytablerequirescascaderepro-0001-drop-type-enum_dependency_mood",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "2BP01",
+      "errorSeverity": "ERROR",
+      "query": "DROP TYPE enum_dependency_mood;",
+      "querySha256": "4bbe23e3b8b4e8c26625bd67523e2371c41b02845b30a4581f9acc73097d37e4",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/enum_metadata_repro_test.go:TestDropEnumTypeUsedByColumnDefaultRequiresCascadeRepro#0001",
+      "source": "testing/go/enum_metadata_repro_test.go:TestDropEnumTypeUsedByColumnDefaultRequiresCascadeRepro",
+      "ordinal": 1,
+      "scriptName": "DROP TYPE rejects column default expression dependencies",
+      "oracle": "postgres",
+      "postgresId": "enum-metadata-repro-test-testdropenumtypeusedbycolumndefaultrequirescascaderepro-0001-drop-type-enum_default_dependency_status",
+      "suggestedId": "enum-metadata-repro-test-testdropenumtypeusedbycolumndefaultrequirescascaderepro-0001-drop-type-enum_default_dependency_status",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "2BP01",
+      "errorSeverity": "ERROR",
+      "query": "DROP TYPE enum_default_dependency_status;",
+      "querySha256": "a1a5186367e89b0b3181bac9e3c5973439ad1cce33ea7b212aed23fb849588f4",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/enum_metadata_repro_test.go:TestDropEnumTypeUsedByColumnDefaultRequiresCascadeRepro#0002",
+      "source": "testing/go/enum_metadata_repro_test.go:TestDropEnumTypeUsedByColumnDefaultRequiresCascadeRepro",
+      "ordinal": 2,
+      "scriptName": "DROP TYPE rejects column default expression dependencies",
+      "oracle": "postgres",
+      "postgresId": "enum-metadata-repro-test-testdropenumtypeusedbycolumndefaultrequirescascaderepro-0002-select-id::text-status-from-enum_default_dependency_items",
+      "suggestedId": "enum-metadata-repro-test-testdropenumtypeusedbycolumndefaultrequirescascaderepro-0002-select-id::text-status-from-enum_default_dependency_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id::text, status\n\t\t\t\t\t\tFROM enum_default_dependency_items;",
+      "querySha256": "8cfece679f975444f5e424e069adcf095c072220fa6c9045e035b07e486b91be",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "new"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/enum_metadata_repro_test.go:TestDropEnumTypeUsedByCheckConstraintRequiresCascadeRepro#0001",
+      "source": "testing/go/enum_metadata_repro_test.go:TestDropEnumTypeUsedByCheckConstraintRequiresCascadeRepro",
+      "ordinal": 1,
+      "scriptName": "DROP TYPE rejects check constraint expression dependencies",
+      "oracle": "postgres",
+      "postgresId": "enum-metadata-repro-test-testdropenumtypeusedbycheckconstraintrequirescascaderepro-0001-drop-type-enum_check_dependency_status",
+      "suggestedId": "enum-metadata-repro-test-testdropenumtypeusedbycheckconstraintrequirescascaderepro-0001-drop-type-enum_check_dependency_status",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "2BP01",
+      "errorSeverity": "ERROR",
+      "query": "DROP TYPE enum_check_dependency_status;",
+      "querySha256": "2b59a17496adbc2124aff1e7749227bbd8a3e0cc2398267a1feb935337bf2d27",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/enum_metadata_repro_test.go:TestDropEnumTypeUsedByCheckConstraintRequiresCascadeRepro#0002",
+      "source": "testing/go/enum_metadata_repro_test.go:TestDropEnumTypeUsedByCheckConstraintRequiresCascadeRepro",
+      "ordinal": 2,
+      "scriptName": "DROP TYPE rejects check constraint expression dependencies",
+      "oracle": "postgres",
+      "postgresId": "enum-metadata-repro-test-testdropenumtypeusedbycheckconstraintrequirescascaderepro-0002-insert-into-enum_check_dependency_items-values-2",
+      "suggestedId": "enum-metadata-repro-test-testdropenumtypeusedbycheckconstraintrequirescascaderepro-0002-insert-into-enum_check_dependency_items-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO enum_check_dependency_items VALUES (2, 'done');",
+      "querySha256": "67165b6c1cc0741f50ef6f1ca8958142adfc9a0913e0890f7b06feec04e96525",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/enum_metadata_repro_test.go:TestDropEnumTypeUsedByGeneratedColumnRequiresCascadeRepro#0001",
+      "source": "testing/go/enum_metadata_repro_test.go:TestDropEnumTypeUsedByGeneratedColumnRequiresCascadeRepro",
+      "ordinal": 1,
+      "scriptName": "DROP TYPE rejects generated column expression dependencies",
+      "oracle": "internal",
+      "suggestedId": "enum-metadata-repro-test-testdropenumtypeusedbygeneratedcolumnrequirescascaderepro-0001-drop-type-enum_generated_dependency_status",
+      "expectedKind": "error",
+      "query": "DROP TYPE enum_generated_dependency_status;",
+      "querySha256": "05320d5ace1a69a557e7bde5081206616f9bdb87ad33f6d5ff0541fd7070eef1",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/enum_metadata_repro_test.go:TestDropEnumTypeUsedByGeneratedColumnRequiresCascadeRepro#0002",
+      "source": "testing/go/enum_metadata_repro_test.go:TestDropEnumTypeUsedByGeneratedColumnRequiresCascadeRepro",
+      "ordinal": 2,
+      "scriptName": "DROP TYPE rejects generated column expression dependencies",
+      "oracle": "internal",
+      "suggestedId": "enum-metadata-repro-test-testdropenumtypeusedbygeneratedcolumnrequirescascaderepro-0002-select-id::text-status-normalized-from",
+      "expectedKind": "rows",
+      "query": "SELECT id::text, status, normalized\n\t\t\t\t\t\tFROM enum_generated_dependency_items;",
+      "querySha256": "9e14df857c54e1265184aa64897474dd3e681bccacad6453a3c4ef72fa93b73b",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/enum_metadata_repro_test.go:TestDropEnumTypeUsedByExpressionIndexRequiresCascadeRepro#0001",
+      "source": "testing/go/enum_metadata_repro_test.go:TestDropEnumTypeUsedByExpressionIndexRequiresCascadeRepro",
+      "ordinal": 1,
+      "scriptName": "DROP TYPE rejects expression index dependencies",
+      "oracle": "internal",
+      "suggestedId": "enum-metadata-repro-test-testdropenumtypeusedbyexpressionindexrequirescascaderepro-0001-drop-type-enum_index_dependency_status",
+      "expectedKind": "error",
+      "query": "DROP TYPE enum_index_dependency_status;",
+      "querySha256": "822b8a5bbb244530a134487faf261ffc5988d07b104ca918a3ab0f3eeba0939d",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/enum_metadata_repro_test.go:TestDropEnumTypeUsedByExpressionIndexRequiresCascadeRepro#0002",
+      "source": "testing/go/enum_metadata_repro_test.go:TestDropEnumTypeUsedByExpressionIndexRequiresCascadeRepro",
+      "ordinal": 2,
+      "scriptName": "DROP TYPE rejects expression index dependencies",
+      "oracle": "internal",
+      "suggestedId": "enum-metadata-repro-test-testdropenumtypeusedbyexpressionindexrequirescascaderepro-0002-select-id::text-status-from-enum_index_dependency_items",
+      "expectedKind": "rows",
+      "query": "SELECT id::text, status\n\t\t\t\t\t\tFROM enum_index_dependency_items;",
+      "querySha256": "901d9cab7e86ce453f0fd64c41c48158cfe46f2b323e961c8767ffe474d4b92e",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/enum_metadata_repro_test.go:TestDropEnumTypeUsedByViewRequiresCascadeRepro#0001",
+      "source": "testing/go/enum_metadata_repro_test.go:TestDropEnumTypeUsedByViewRequiresCascadeRepro",
+      "ordinal": 1,
+      "scriptName": "DROP TYPE rejects view expression dependencies",
+      "oracle": "postgres",
+      "postgresId": "enum-metadata-repro-test-testdropenumtypeusedbyviewrequirescascaderepro-0001-drop-type-enum_view_dependency_status",
+      "suggestedId": "enum-metadata-repro-test-testdropenumtypeusedbyviewrequirescascaderepro-0001-drop-type-enum_view_dependency_status",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "2BP01",
+      "errorSeverity": "ERROR",
+      "query": "DROP TYPE enum_view_dependency_status;",
+      "querySha256": "40b8fb82553a2fc7e2dff99f25e048c3afa7a3cdc8851f9ba314ea54b03032fc",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/enum_metadata_repro_test.go:TestDropEnumTypeUsedByFunctionRequiresCascadeRepro#0001",
+      "source": "testing/go/enum_metadata_repro_test.go:TestDropEnumTypeUsedByFunctionRequiresCascadeRepro",
+      "ordinal": 1,
+      "scriptName": "DROP TYPE rejects function signature dependencies",
+      "oracle": "postgres",
+      "postgresId": "enum-metadata-repro-test-testdropenumtypeusedbyfunctionrequirescascaderepro-0001-drop-type-enum_function_dependency_status",
+      "suggestedId": "enum-metadata-repro-test-testdropenumtypeusedbyfunctionrequirescascaderepro-0001-drop-type-enum_function_dependency_status",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "2BP01",
+      "errorSeverity": "ERROR",
+      "query": "DROP TYPE enum_function_dependency_status;",
+      "querySha256": "3ce3b717836346919c57fae9552d8f81d6fed51275dc7ab31d713817f312b363",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/enum_metadata_repro_test.go:TestAlterEnumAddValuePersistsUsableLabelRepro#0001",
+      "source": "testing/go/enum_metadata_repro_test.go:TestAlterEnumAddValuePersistsUsableLabelRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER TYPE ADD VALUE persists usable enum label",
+      "oracle": "postgres",
+      "postgresId": "enum-metadata-repro-test-testalterenumaddvaluepersistsusablelabelrepro-0001-select-enumlabel-from-pg_catalog.pg_enum-where",
+      "suggestedId": "enum-metadata-repro-test-testalterenumaddvaluepersistsusablelabelrepro-0001-select-enumlabel-from-pg_catalog.pg_enum-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT enumlabel\n\t\t\t\t\t\tFROM pg_catalog.pg_enum\n\t\t\t\t\t\tWHERE enumtypid = 'enum_alter_status'::regtype\n\t\t\t\t\t\tORDER BY enumsortorder;",
+      "querySha256": "12033620d9cfa1d06d298de10c6ad28f8c0ccc9d7299dfb28b8ecb0fbf565e25",
+      "expectedRows": [
+        [
+          {
+            "value": "new"
+          }
+        ],
+        [
+          {
+            "value": "archived"
+          }
+        ],
+        [
+          {
+            "value": "done"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/enum_metadata_repro_test.go:TestAlterEnumAddValuePersistsUsableLabelRepro#0002",
+      "source": "testing/go/enum_metadata_repro_test.go:TestAlterEnumAddValuePersistsUsableLabelRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER TYPE ADD VALUE persists usable enum label",
+      "oracle": "postgres",
+      "postgresId": "enum-metadata-repro-test-testalterenumaddvaluepersistsusablelabelrepro-0002-select-status::text-from-enum_alter_items",
+      "suggestedId": "enum-metadata-repro-test-testalterenumaddvaluepersistsusablelabelrepro-0002-select-status::text-from-enum_alter_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT status::text\n\t\t\t\t\t\tFROM enum_alter_items;",
+      "querySha256": "802f844657cfe6a71628a530126917fde97b03a0c1c7674e8b0a22da8fe56aa1",
+      "expectedRows": [
+        [
+          {
+            "value": "archived"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/enum_metadata_repro_test.go:TestAlterEnumRenameValueUpdatesStoredRowsRepro#0001",
+      "source": "testing/go/enum_metadata_repro_test.go:TestAlterEnumRenameValueUpdatesStoredRowsRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER TYPE RENAME VALUE updates stored enum labels",
+      "oracle": "postgres",
+      "postgresId": "enum-metadata-repro-test-testalterenumrenamevalueupdatesstoredrowsrepro-0001-select-status::text-from-enum_rename_items",
+      "suggestedId": "enum-metadata-repro-test-testalterenumrenamevalueupdatesstoredrowsrepro-0001-select-status::text-from-enum_rename_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT status::text\n\t\t\t\t\t\tFROM enum_rename_items;",
+      "querySha256": "7563fb1f086afca6ca8f6b2eb0717dd1eef3640d966345746ca700673f6238f8",
+      "expectedRows": [
+        [
+          {
+            "value": "open"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/enum_metadata_repro_test.go:TestAlterEnumRenameValueUpdatesStoredRowsRepro#0002",
+      "source": "testing/go/enum_metadata_repro_test.go:TestAlterEnumRenameValueUpdatesStoredRowsRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER TYPE RENAME VALUE updates stored enum labels",
+      "oracle": "postgres",
+      "postgresId": "enum-metadata-repro-test-testalterenumrenamevalueupdatesstoredrowsrepro-0002-insert-into-enum_rename_items-values-2",
+      "suggestedId": "enum-metadata-repro-test-testalterenumrenamevalueupdatesstoredrowsrepro-0002-insert-into-enum_rename_items-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22P02",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO enum_rename_items VALUES (2, 'new');",
+      "querySha256": "361890f79903e6a29e80661404a3448c0c19bcc984e6fc66a871f1d0a83e6088",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

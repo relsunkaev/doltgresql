@@ -31,8 +31,7 @@ func TestCreateTemporaryViewRoundTripRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT id FROM temp_view_roundtrip;`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT id FROM temp_view_roundtrip;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testcreatetemporaryviewroundtriprepro-0001-select-id-from-temp_view_roundtrip"},
 				},
 				{
 					Query: `SELECT table_schema LIKE 'pg_temp_%'
@@ -59,8 +58,7 @@ func TestCreateRecursiveViewRoundTripRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT n FROM recursive_nums ORDER BY n;`,
-					Expected: []sql.Row{{1}, {2}, {3}},
+					Query: `SELECT n FROM recursive_nums ORDER BY n;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testcreaterecursiveviewroundtriprepro-0001-select-n-from-recursive_nums-order"},
 				},
 			},
 		},
@@ -85,8 +83,7 @@ func TestCreateViewFromOrderedUnionSubqueriesGuard(t *testing.T) {
 						(SELECT pk FROM ordered_union_view_source ORDER BY pk LIMIT 1);`,
 				},
 				{
-					Query:    `SELECT pk FROM ordered_union_view ORDER BY pk;`,
-					Expected: []sql.Row{{1}, {4}},
+					Query: `SELECT pk FROM ordered_union_view ORDER BY pk;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testcreateviewfromorderedunionsubqueriesguard-0001-select-pk-from-ordered_union_view-order"},
 				},
 			},
 		},
@@ -110,16 +107,14 @@ func TestCreateViewTextDomainTypmodExposesCoercedValuesRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT v, length(v), c = 'ab '::CHARACTER(3), octet_length(c), pg_typeof(v)::text, pg_typeof(c)::text
-						FROM view_text_domain_typmod_reader;`,
-					Expected: []sql.Row{{"abc", 3, true, 3, "varchar3_view_domain", "char3_view_domain"}},
+						FROM view_text_domain_typmod_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testcreateviewtextdomaintypmodexposescoercedvaluesrepro-0001-select-v-length-v-c"},
 				},
 				{
 					Query: `SELECT format_type(atttypid, atttypmod)
 						FROM pg_attribute
 						WHERE attrelid = 'view_text_domain_typmod_reader'::regclass
 							AND attnum > 0
-						ORDER BY attnum;`,
-					Expected: []sql.Row{{"varchar3_view_domain"}, {"char3_view_domain"}},
+						ORDER BY attnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testcreateviewtextdomaintypmodexposescoercedvaluesrepro-0002-select-format_type-atttypid-atttypmod-from"},
 				},
 			},
 		},
@@ -149,21 +144,21 @@ func TestAlterViewRenameToRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT id, label
-						FROM alter_view_renamed_reader;`,
-					Expected: []sql.Row{{1, "renamed"}},
+						FROM alter_view_renamed_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testalterviewrenametorepro-0001-select-id-label-from-alter_view_renamed_reader"},
 				},
 				{
-					Query:       `SELECT id, label FROM alter_view_rename_reader;`,
-					ExpectedErr: `not found`,
+					Query: `SELECT id, label FROM alter_view_rename_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testalterviewrenametorepro-0002-select-id-label-from-alter_view_rename_reader",
+
+						// TestCreateOrReplaceViewRejectsColumnRenameRepro reproduces a view DDL
+						// correctness bug: PostgreSQL rejects CREATE OR REPLACE VIEW when an existing
+						// output column would be renamed.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateOrReplaceViewRejectsColumnRenameRepro reproduces a view DDL
-// correctness bug: PostgreSQL rejects CREATE OR REPLACE VIEW when an existing
-// output column would be renamed.
 func TestCreateOrReplaceViewRejectsColumnRenameRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -175,12 +170,10 @@ func TestCreateOrReplaceViewRejectsColumnRenameRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `CREATE OR REPLACE VIEW replace_view_column_name AS
-						SELECT 1 AS id, 'new'::text AS renamed_label;`,
-					ExpectedErr: `cannot change name of view column`,
+						SELECT 1 AS id, 'new'::text AS renamed_label;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testcreateorreplaceviewrejectscolumnrenamerepro-0001-create-or-replace-view-replace_view_column_name", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT id, label FROM replace_view_column_name;`,
-					Expected: []sql.Row{{1, "old"}},
+					Query: `SELECT id, label FROM replace_view_column_name;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testcreateorreplaceviewrejectscolumnrenamerepro-0002-select-id-label-from-replace_view_column_name"},
 				},
 			},
 		},
@@ -201,12 +194,10 @@ func TestCreateOrReplaceViewRejectsColumnTypeChangeRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `CREATE OR REPLACE VIEW replace_view_column_type AS
-						SELECT 1 AS id, 7 AS label;`,
-					ExpectedErr: `cannot change data type of view column`,
+						SELECT 1 AS id, 7 AS label;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testcreateorreplaceviewrejectscolumntypechangerepro-0001-create-or-replace-view-replace_view_column_type", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT id, label FROM replace_view_column_type;`,
-					Expected: []sql.Row{{1, "old"}},
+					Query: `SELECT id, label FROM replace_view_column_type;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testcreateorreplaceviewrejectscolumntypechangerepro-0002-select-id-label-from-replace_view_column_type"},
 				},
 			},
 		},
@@ -227,12 +218,10 @@ func TestCreateOrReplaceViewRejectsColumnDropRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `CREATE OR REPLACE VIEW replace_view_column_drop AS
-						SELECT 1 AS id;`,
-					ExpectedErr: `cannot drop columns from view`,
+						SELECT 1 AS id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testcreateorreplaceviewrejectscolumndroprepro-0001-create-or-replace-view-replace_view_column_drop", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT id, label FROM replace_view_column_drop;`,
-					Expected: []sql.Row{{1, "old"}},
+					Query: `SELECT id, label FROM replace_view_column_drop;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testcreateorreplaceviewrejectscolumndroprepro-0002-select-id-label-from-replace_view_column_drop"},
 				},
 			},
 		},
@@ -253,12 +242,10 @@ func TestCreateOrReplaceViewRejectsColumnReorderRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `CREATE OR REPLACE VIEW replace_view_column_reorder AS
-						SELECT 'old'::text AS label, 1 AS id;`,
-					ExpectedErr: `cannot change name of view column`,
+						SELECT 'old'::text AS label, 1 AS id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testcreateorreplaceviewrejectscolumnreorderrepro-0001-create-or-replace-view-replace_view_column_reorder", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT id, label FROM replace_view_column_reorder;`,
-					Expected: []sql.Row{{1, "old"}},
+					Query: `SELECT id, label FROM replace_view_column_reorder;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testcreateorreplaceviewrejectscolumnreorderrepro-0002-select-id-label-from-replace_view_column_reorder"},
 				},
 			},
 		},
@@ -283,8 +270,7 @@ func TestCreateOrReplaceViewAllowsAppendingColumnsGuard(t *testing.T) {
 				},
 				{
 					Query: `SELECT id, label, active
-						FROM replace_view_append_column;`,
-					Expected: []sql.Row{{1, "old", "t"}},
+						FROM replace_view_append_column;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testcreateorreplaceviewallowsappendingcolumnsguard-0001-select-id-label-active-from"},
 				},
 			},
 		},
@@ -339,8 +325,7 @@ func TestCreateMaterializedViewWithDataGuard(t *testing.T) {
 				{
 					Query: `SELECT id, label
 						FROM matview_with_data_reader
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, "one"}, {2, "two"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testcreatematerializedviewwithdataguard-0001-select-id-label-from-matview_with_data_reader"},
 				},
 			},
 		},
@@ -362,15 +347,13 @@ func TestCreateMaterializedViewTimetzTypmodMaterializesRoundedValueRepro(t *test
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT tz::text
-						FROM matview_timetz_typmod_reader;`,
-					Expected: []sql.Row{{"21:43:57+00"}},
+						FROM matview_timetz_typmod_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testcreatematerializedviewtimetztypmodmaterializesroundedvaluerepro-0001-select-tz::text-from-matview_timetz_typmod_reader"},
 				},
 				{
 					Query: `SELECT format_type(a.atttypid, a.atttypmod)
 						FROM pg_catalog.pg_attribute a
 						WHERE a.attrelid = 'matview_timetz_typmod_reader'::regclass
-							AND a.attname = 'tz';`,
-					Expected: []sql.Row{{"time(0) with time zone"}},
+							AND a.attname = 'tz';`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testcreatematerializedviewtimetztypmodmaterializesroundedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from"},
 				},
 			},
 		},
@@ -391,15 +374,13 @@ func TestCreateMaterializedViewTimeTypmodMaterializesRoundedValueGuard(t *testin
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT t::text
-						FROM matview_time_typmod_reader;`,
-					Expected: []sql.Row{{"21:43:57"}},
+						FROM matview_time_typmod_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testcreatematerializedviewtimetypmodmaterializesroundedvalueguard-0001-select-t::text-from-matview_time_typmod_reader"},
 				},
 				{
 					Query: `SELECT format_type(a.atttypid, a.atttypmod)
 						FROM pg_catalog.pg_attribute a
 						WHERE a.attrelid = 'matview_time_typmod_reader'::regclass
-							AND a.attname = 't';`,
-					Expected: []sql.Row{{"time(0) without time zone"}},
+							AND a.attname = 't';`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testcreatematerializedviewtimetypmodmaterializesroundedvalueguard-0002-select-format_type-a.atttypid-a.atttypmod-from"},
 				},
 			},
 		},
@@ -421,15 +402,13 @@ func TestCreateMaterializedViewTimestampTypmodMaterializesRoundedValueRepro(t *t
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT ts::text
-						FROM matview_timestamp_typmod_reader;`,
-					Expected: []sql.Row{{"2021-09-15 21:43:57"}},
+						FROM matview_timestamp_typmod_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testcreatematerializedviewtimestamptypmodmaterializesroundedvaluerepro-0001-select-ts::text-from-matview_timestamp_typmod_reader"},
 				},
 				{
 					Query: `SELECT format_type(a.atttypid, a.atttypmod)
 						FROM pg_catalog.pg_attribute a
 						WHERE a.attrelid = 'matview_timestamp_typmod_reader'::regclass
-							AND a.attname = 'ts';`,
-					Expected: []sql.Row{{"timestamp(0) without time zone"}},
+							AND a.attname = 'ts';`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testcreatematerializedviewtimestamptypmodmaterializesroundedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from"},
 				},
 			},
 		},
@@ -452,15 +431,13 @@ func TestCreateMaterializedViewTimestamptzTypmodMaterializesRoundedValueRepro(t 
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT ts::text
-						FROM matview_timestamptz_typmod_reader;`,
-					Expected: []sql.Row{{"2021-09-15 21:43:57+00"}},
+						FROM matview_timestamptz_typmod_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testcreatematerializedviewtimestamptztypmodmaterializesroundedvaluerepro-0001-select-ts::text-from-matview_timestamptz_typmod_reader"},
 				},
 				{
 					Query: `SELECT format_type(a.atttypid, a.atttypmod)
 						FROM pg_catalog.pg_attribute a
 						WHERE a.attrelid = 'matview_timestamptz_typmod_reader'::regclass
-							AND a.attname = 'ts';`,
-					Expected: []sql.Row{{"timestamp(0) with time zone"}},
+							AND a.attname = 'ts';`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testcreatematerializedviewtimestamptztypmodmaterializesroundedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from"},
 				},
 			},
 		},
@@ -482,15 +459,13 @@ func TestCreateMaterializedViewIntervalTypmodMaterializesRestrictedValueRepro(t 
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT ds::text
-						FROM matview_interval_typmod_reader;`,
-					Expected: []sql.Row{{"3 days 04:05:07"}},
+						FROM matview_interval_typmod_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testcreatematerializedviewintervaltypmodmaterializesrestrictedvaluerepro-0001-select-ds::text-from-matview_interval_typmod_reader"},
 				},
 				{
 					Query: `SELECT format_type(a.atttypid, a.atttypmod)
 						FROM pg_catalog.pg_attribute a
 						WHERE a.attrelid = 'matview_interval_typmod_reader'::regclass
-							AND a.attname = 'ds';`,
-					Expected: []sql.Row{{"interval day to second(0)"}},
+							AND a.attname = 'ds';`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testcreatematerializedviewintervaltypmodmaterializesrestrictedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from"},
 				},
 			},
 		},
@@ -511,15 +486,13 @@ func TestCreateMaterializedViewVarcharTypmodMaterializesTruncatedValueGuard(t *t
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT label
-						FROM matview_varchar_typmod_reader;`,
-					Expected: []sql.Row{{"abc"}},
+						FROM matview_varchar_typmod_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testcreatematerializedviewvarchartypmodmaterializestruncatedvalueguard-0001-select-label-from-matview_varchar_typmod_reader"},
 				},
 				{
 					Query: `SELECT format_type(a.atttypid, a.atttypmod)
 						FROM pg_catalog.pg_attribute a
 						WHERE a.attrelid = 'matview_varchar_typmod_reader'::regclass
-							AND a.attname = 'label';`,
-					Expected: []sql.Row{{"character varying(3)"}},
+							AND a.attname = 'label';`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testcreatematerializedviewvarchartypmodmaterializestruncatedvalueguard-0002-select-format_type-a.atttypid-a.atttypmod-from"},
 				},
 			},
 		},
@@ -541,15 +514,13 @@ func TestCreateMaterializedViewCharacterTypmodMaterializesPaddedValueRepro(t *te
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT octet_length(label)
-						FROM matview_character_typmod_reader;`,
-					Expected: []sql.Row{{3}},
+						FROM matview_character_typmod_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testcreatematerializedviewcharactertypmodmaterializespaddedvaluerepro-0001-select-octet_length-label-from-matview_character_typmod_reader"},
 				},
 				{
 					Query: `SELECT format_type(a.atttypid, a.atttypmod)
 						FROM pg_catalog.pg_attribute a
 						WHERE a.attrelid = 'matview_character_typmod_reader'::regclass
-							AND a.attname = 'label';`,
-					Expected: []sql.Row{{"character(3)"}},
+							AND a.attname = 'label';`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testcreatematerializedviewcharactertypmodmaterializespaddedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from"},
 				},
 			},
 		},
@@ -574,16 +545,14 @@ func TestCreateMaterializedViewTextDomainTypmodMaterializesCoercedValueRepro(t *
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT v, length(v), c = 'ab '::CHARACTER(3), octet_length(c), pg_typeof(v)::text, pg_typeof(c)::text
-						FROM matview_text_domain_typmod_reader;`,
-					Expected: []sql.Row{{"abc", 3, true, 3, "varchar3_matview_domain", "char3_matview_domain"}},
+						FROM matview_text_domain_typmod_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testcreatematerializedviewtextdomaintypmodmaterializescoercedvaluerepro-0001-select-v-length-v-c"},
 				},
 				{
 					Query: `SELECT format_type(atttypid, atttypmod)
 						FROM pg_attribute
 						WHERE attrelid = 'matview_text_domain_typmod_reader'::regclass
 							AND attnum > 0
-						ORDER BY attnum;`,
-					Expected: []sql.Row{{"varchar3_matview_domain"}, {"char3_matview_domain"}},
+						ORDER BY attnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testcreatematerializedviewtextdomaintypmodmaterializescoercedvaluerepro-0002-select-format_type-atttypid-atttypmod-from"},
 				},
 			},
 		},
@@ -615,16 +584,14 @@ func TestRefreshMaterializedViewTimetzTypmodMaterializesRoundedValueRepro(t *tes
 					Query: `SELECT format_type(a.atttypid, a.atttypmod)
 						FROM pg_catalog.pg_attribute a
 						WHERE a.attrelid = 'matview_refresh_timetz_typmod_reader'::regclass
-							AND a.attname = 'tz';`,
-					Expected: []sql.Row{{"time(0) with time zone"}},
+							AND a.attname = 'tz';`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testrefreshmaterializedviewtimetztypmodmaterializesroundedvaluerepro-0001-select-format_type-a.atttypid-a.atttypmod-from"},
 				},
 				{
 					Query: `REFRESH MATERIALIZED VIEW matview_refresh_timetz_typmod_reader;`,
 				},
 				{
 					Query: `SELECT tz::text
-						FROM matview_refresh_timetz_typmod_reader;`,
-					Expected: []sql.Row{{"21:43:57+00"}},
+						FROM matview_refresh_timetz_typmod_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testrefreshmaterializedviewtimetztypmodmaterializesroundedvaluerepro-0002-select-tz::text-from-matview_refresh_timetz_typmod_reader"},
 				},
 			},
 		},
@@ -655,16 +622,14 @@ func TestRefreshMaterializedViewTimeTypmodMaterializesRoundedValueGuard(t *testi
 					Query: `SELECT format_type(a.atttypid, a.atttypmod)
 						FROM pg_catalog.pg_attribute a
 						WHERE a.attrelid = 'matview_refresh_time_typmod_reader'::regclass
-							AND a.attname = 't';`,
-					Expected: []sql.Row{{"time(0) without time zone"}},
+							AND a.attname = 't';`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testrefreshmaterializedviewtimetypmodmaterializesroundedvalueguard-0001-select-format_type-a.atttypid-a.atttypmod-from"},
 				},
 				{
 					Query: `REFRESH MATERIALIZED VIEW matview_refresh_time_typmod_reader;`,
 				},
 				{
 					Query: `SELECT t::text
-						FROM matview_refresh_time_typmod_reader;`,
-					Expected: []sql.Row{{"21:43:57"}},
+						FROM matview_refresh_time_typmod_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testrefreshmaterializedviewtimetypmodmaterializesroundedvalueguard-0002-select-t::text-from-matview_refresh_time_typmod_reader"},
 				},
 			},
 		},
@@ -696,16 +661,14 @@ func TestRefreshMaterializedViewTimestampTypmodMaterializesRoundedValueRepro(t *
 					Query: `SELECT format_type(a.atttypid, a.atttypmod)
 						FROM pg_catalog.pg_attribute a
 						WHERE a.attrelid = 'matview_refresh_timestamp_typmod_reader'::regclass
-							AND a.attname = 'ts';`,
-					Expected: []sql.Row{{"timestamp(0) without time zone"}},
+							AND a.attname = 'ts';`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testrefreshmaterializedviewtimestamptypmodmaterializesroundedvaluerepro-0001-select-format_type-a.atttypid-a.atttypmod-from"},
 				},
 				{
 					Query: `REFRESH MATERIALIZED VIEW matview_refresh_timestamp_typmod_reader;`,
 				},
 				{
 					Query: `SELECT ts::text
-						FROM matview_refresh_timestamp_typmod_reader;`,
-					Expected: []sql.Row{{"2021-09-15 21:43:57"}},
+						FROM matview_refresh_timestamp_typmod_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testrefreshmaterializedviewtimestamptypmodmaterializesroundedvaluerepro-0002-select-ts::text-from-matview_refresh_timestamp_typmod_reader"},
 				},
 			},
 		},
@@ -738,16 +701,14 @@ func TestRefreshMaterializedViewTimestamptzTypmodMaterializesRoundedValueRepro(t
 					Query: `SELECT format_type(a.atttypid, a.atttypmod)
 						FROM pg_catalog.pg_attribute a
 						WHERE a.attrelid = 'matview_refresh_timestamptz_typmod_reader'::regclass
-							AND a.attname = 'ts';`,
-					Expected: []sql.Row{{"timestamp(0) with time zone"}},
+							AND a.attname = 'ts';`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testrefreshmaterializedviewtimestamptztypmodmaterializesroundedvaluerepro-0001-select-format_type-a.atttypid-a.atttypmod-from"},
 				},
 				{
 					Query: `REFRESH MATERIALIZED VIEW matview_refresh_timestamptz_typmod_reader;`,
 				},
 				{
 					Query: `SELECT ts::text
-						FROM matview_refresh_timestamptz_typmod_reader;`,
-					Expected: []sql.Row{{"2021-09-15 21:43:57+00"}},
+						FROM matview_refresh_timestamptz_typmod_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testrefreshmaterializedviewtimestamptztypmodmaterializesroundedvaluerepro-0002-select-ts::text-from"},
 				},
 			},
 		},
@@ -779,16 +740,14 @@ func TestRefreshMaterializedViewIntervalTypmodMaterializesRestrictedValueRepro(t
 					Query: `SELECT format_type(a.atttypid, a.atttypmod)
 						FROM pg_catalog.pg_attribute a
 						WHERE a.attrelid = 'matview_refresh_interval_typmod_reader'::regclass
-							AND a.attname = 'ds';`,
-					Expected: []sql.Row{{"interval day to second(0)"}},
+							AND a.attname = 'ds';`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testrefreshmaterializedviewintervaltypmodmaterializesrestrictedvaluerepro-0001-select-format_type-a.atttypid-a.atttypmod-from"},
 				},
 				{
 					Query: `REFRESH MATERIALIZED VIEW matview_refresh_interval_typmod_reader;`,
 				},
 				{
 					Query: `SELECT ds::text
-						FROM matview_refresh_interval_typmod_reader;`,
-					Expected: []sql.Row{{"3 days 04:05:07"}},
+						FROM matview_refresh_interval_typmod_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testrefreshmaterializedviewintervaltypmodmaterializesrestrictedvaluerepro-0002-select-ds::text-from-matview_refresh_interval_typmod_reader"},
 				},
 			},
 		},
@@ -820,16 +779,14 @@ func TestRefreshMaterializedViewCharacterTypmodMaterializesPaddedValueRepro(t *t
 					Query: `SELECT format_type(a.atttypid, a.atttypmod)
 						FROM pg_catalog.pg_attribute a
 						WHERE a.attrelid = 'matview_refresh_character_typmod_reader'::regclass
-							AND a.attname = 'label';`,
-					Expected: []sql.Row{{"character(3)"}},
+							AND a.attname = 'label';`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testrefreshmaterializedviewcharactertypmodmaterializespaddedvaluerepro-0001-select-format_type-a.atttypid-a.atttypmod-from"},
 				},
 				{
 					Query: `REFRESH MATERIALIZED VIEW matview_refresh_character_typmod_reader;`,
 				},
 				{
 					Query: `SELECT octet_length(label)
-						FROM matview_refresh_character_typmod_reader;`,
-					Expected: []sql.Row{{3}},
+						FROM matview_refresh_character_typmod_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testrefreshmaterializedviewcharactertypmodmaterializespaddedvaluerepro-0002-select-octet_length-label-from-matview_refresh_character_typmod_reader"},
 				},
 			},
 		},
@@ -865,16 +822,14 @@ func TestRefreshMaterializedViewTextDomainTypmodMaterializesCoercedValueRepro(t 
 						FROM pg_attribute
 						WHERE attrelid = 'matview_refresh_text_domain_reader'::regclass
 							AND attnum > 0
-						ORDER BY attnum;`,
-					Expected: []sql.Row{{"varchar3_refresh_domain"}, {"char3_refresh_domain"}},
+						ORDER BY attnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testrefreshmaterializedviewtextdomaintypmodmaterializescoercedvaluerepro-0001-select-format_type-atttypid-atttypmod-from"},
 				},
 				{
 					Query: `REFRESH MATERIALIZED VIEW matview_refresh_text_domain_reader;`,
 				},
 				{
 					Query: `SELECT v, length(v), c = 'ab '::CHARACTER(3), octet_length(c), pg_typeof(v)::text, pg_typeof(c)::text
-						FROM matview_refresh_text_domain_reader;`,
-					Expected: []sql.Row{{"abc", 3, true, 3, "varchar3_refresh_domain", "char3_refresh_domain"}},
+						FROM matview_refresh_text_domain_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testrefreshmaterializedviewtextdomaintypmodmaterializescoercedvaluerepro-0002-select-v-length-v-c"},
 				},
 			},
 		},
@@ -912,15 +867,13 @@ func TestRefreshMaterializedViewConcurrentlyTimetzTypmodMaterializesRoundedValue
 				},
 				{
 					Query: `SELECT tz::text
-						FROM matview_concurrently_timetz_typmod_reader;`,
-					Expected: []sql.Row{{"21:43:57+00"}},
+						FROM matview_concurrently_timetz_typmod_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testrefreshmaterializedviewconcurrentlytimetztypmodmaterializesroundedvaluerepro-0001-select-tz::text-from"},
 				},
 				{
 					Query: `SELECT format_type(a.atttypid, a.atttypmod)
 						FROM pg_catalog.pg_attribute a
 						WHERE a.attrelid = 'matview_concurrently_timetz_typmod_reader'::regclass
-							AND a.attname = 'tz';`,
-					Expected: []sql.Row{{"time(0) with time zone"}},
+							AND a.attname = 'tz';`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testrefreshmaterializedviewconcurrentlytimetztypmodmaterializesroundedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from"},
 				},
 			},
 		},
@@ -957,15 +910,13 @@ func TestRefreshMaterializedViewConcurrentlyTimeTypmodMaterializesRoundedValueGu
 				},
 				{
 					Query: `SELECT t::text
-						FROM matview_concurrently_time_typmod_reader;`,
-					Expected: []sql.Row{{"21:43:57"}},
+						FROM matview_concurrently_time_typmod_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testrefreshmaterializedviewconcurrentlytimetypmodmaterializesroundedvalueguard-0001-select-t::text-from-matview_concurrently_time_typmod_reader"},
 				},
 				{
 					Query: `SELECT format_type(a.atttypid, a.atttypmod)
 						FROM pg_catalog.pg_attribute a
 						WHERE a.attrelid = 'matview_concurrently_time_typmod_reader'::regclass
-							AND a.attname = 't';`,
-					Expected: []sql.Row{{"time(0) without time zone"}},
+							AND a.attname = 't';`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testrefreshmaterializedviewconcurrentlytimetypmodmaterializesroundedvalueguard-0002-select-format_type-a.atttypid-a.atttypmod-from"},
 				},
 			},
 		},
@@ -1003,15 +954,13 @@ func TestRefreshMaterializedViewConcurrentlyTimestampTypmodMaterializesRoundedVa
 				},
 				{
 					Query: `SELECT ts::text
-						FROM matview_concurrently_timestamp_typmod_reader;`,
-					Expected: []sql.Row{{"2021-09-15 21:43:57"}},
+						FROM matview_concurrently_timestamp_typmod_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testrefreshmaterializedviewconcurrentlytimestamptypmodmaterializesroundedvaluerepro-0001-select-ts::text-from"},
 				},
 				{
 					Query: `SELECT format_type(a.atttypid, a.atttypmod)
 						FROM pg_catalog.pg_attribute a
 						WHERE a.attrelid = 'matview_concurrently_timestamp_typmod_reader'::regclass
-							AND a.attname = 'ts';`,
-					Expected: []sql.Row{{"timestamp(0) without time zone"}},
+							AND a.attname = 'ts';`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testrefreshmaterializedviewconcurrentlytimestamptypmodmaterializesroundedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from"},
 				},
 			},
 		},
@@ -1050,15 +999,13 @@ func TestRefreshMaterializedViewConcurrentlyTimestamptzTypmodMaterializesRounded
 				},
 				{
 					Query: `SELECT ts::text
-						FROM matview_concurrently_timestamptz_typmod_reader;`,
-					Expected: []sql.Row{{"2021-09-15 21:43:57+00"}},
+						FROM matview_concurrently_timestamptz_typmod_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testrefreshmaterializedviewconcurrentlytimestamptztypmodmaterializesroundedvaluerepro-0001-select-ts::text-from"},
 				},
 				{
 					Query: `SELECT format_type(a.atttypid, a.atttypmod)
 						FROM pg_catalog.pg_attribute a
 						WHERE a.attrelid = 'matview_concurrently_timestamptz_typmod_reader'::regclass
-							AND a.attname = 'ts';`,
-					Expected: []sql.Row{{"timestamp(0) with time zone"}},
+							AND a.attname = 'ts';`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testrefreshmaterializedviewconcurrentlytimestamptztypmodmaterializesroundedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from"},
 				},
 			},
 		},
@@ -1096,15 +1043,13 @@ func TestRefreshMaterializedViewConcurrentlyIntervalTypmodMaterializesRestricted
 				},
 				{
 					Query: `SELECT ds::text
-						FROM matview_concurrently_interval_typmod_reader;`,
-					Expected: []sql.Row{{"3 days 04:05:07"}},
+						FROM matview_concurrently_interval_typmod_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testrefreshmaterializedviewconcurrentlyintervaltypmodmaterializesrestrictedvaluerepro-0001-select-ds::text-from"},
 				},
 				{
 					Query: `SELECT format_type(a.atttypid, a.atttypmod)
 						FROM pg_catalog.pg_attribute a
 						WHERE a.attrelid = 'matview_concurrently_interval_typmod_reader'::regclass
-							AND a.attname = 'ds';`,
-					Expected: []sql.Row{{"interval day to second(0)"}},
+							AND a.attname = 'ds';`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testrefreshmaterializedviewconcurrentlyintervaltypmodmaterializesrestrictedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from"},
 				},
 			},
 		},
@@ -1142,15 +1087,13 @@ func TestRefreshMaterializedViewConcurrentlyCharacterTypmodMaterializesPaddedVal
 				},
 				{
 					Query: `SELECT octet_length(label)
-						FROM matview_concurrently_character_typmod_reader;`,
-					Expected: []sql.Row{{3}},
+						FROM matview_concurrently_character_typmod_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testrefreshmaterializedviewconcurrentlycharactertypmodmaterializespaddedvaluerepro-0001-select-octet_length-label-from"},
 				},
 				{
 					Query: `SELECT format_type(a.atttypid, a.atttypmod)
 						FROM pg_catalog.pg_attribute a
 						WHERE a.attrelid = 'matview_concurrently_character_typmod_reader'::regclass
-							AND a.attname = 'label';`,
-					Expected: []sql.Row{{"character(3)"}},
+							AND a.attname = 'label';`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testrefreshmaterializedviewconcurrentlycharactertypmodmaterializespaddedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from"},
 				},
 			},
 		},
@@ -1192,8 +1135,7 @@ func TestRefreshMaterializedViewConcurrentlyTextDomainTypmodMaterializesCoercedV
 				},
 				{
 					Query: `SELECT id, v, length(v), c = 'ab '::CHARACTER(3), octet_length(c)
-						FROM matview_concurrent_refresh_text_domain_reader;`,
-					Expected: []sql.Row{{1, "abc", 3, true, 3}},
+						FROM matview_concurrent_refresh_text_domain_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testrefreshmaterializedviewconcurrentlytextdomaintypmodmaterializescoercedvaluerepro-0001-select-id-v-length-v"},
 				},
 			},
 		},
@@ -1213,8 +1155,7 @@ func TestCreateMaterializedViewDefaultTablespaceRepro(t *testing.T) {
 						SELECT 1 AS id;`,
 				},
 				{
-					Query:    `SELECT id FROM matview_default_tablespace_reader;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT id FROM matview_default_tablespace_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testcreatematerializedviewdefaulttablespacerepro-0001-select-id-from-matview_default_tablespace_reader"},
 				},
 			},
 		},
@@ -1235,8 +1176,7 @@ func TestCreateMaterializedViewUsingHeapRepro(t *testing.T) {
 						SELECT 1 AS id;`,
 				},
 				{
-					Query:    `SELECT id FROM matview_using_heap_reader;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT id FROM matview_using_heap_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testcreatematerializedviewusingheaprepro-0001-select-id-from-matview_using_heap_reader"},
 				},
 			},
 		},
@@ -1259,8 +1199,7 @@ func TestCreateMaterializedViewStorageParamsRepro(t *testing.T) {
 				{
 					Query: `SELECT CAST(reloptions AS TEXT)
 						FROM pg_catalog.pg_class
-						WHERE oid = 'matview_storage_params_reader'::regclass;`,
-					Expected: []sql.Row{{"{fillfactor=70,autovacuum_enabled=false}"}},
+						WHERE oid = 'matview_storage_params_reader'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testcreatematerializedviewstorageparamsrepro-0001-select-cast-reloptions-as-text"},
 				},
 			},
 		},
@@ -1283,8 +1222,7 @@ func TestAlterMaterializedViewSetDefaultTablespaceRepro(t *testing.T) {
 						SET TABLESPACE pg_default;`,
 				},
 				{
-					Query:    `SELECT id FROM alter_matview_default_tablespace_reader;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT id FROM alter_matview_default_tablespace_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testaltermaterializedviewsetdefaulttablespacerepro-0001-select-id-from-alter_matview_default_tablespace_reader"},
 				},
 			},
 		},
@@ -1307,8 +1245,7 @@ func TestAlterMaterializedViewSetHeapAccessMethodRepro(t *testing.T) {
 						SET ACCESS METHOD heap;`,
 				},
 				{
-					Query:    `SELECT id FROM alter_matview_access_method_reader;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT id FROM alter_matview_access_method_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testaltermaterializedviewsetheapaccessmethodrepro-0001-select-id-from-alter_matview_access_method_reader"},
 				},
 			},
 		},
@@ -1334,8 +1271,7 @@ func TestAlterMaterializedViewReloptionsPersistRepro(t *testing.T) {
 				{
 					Query: `SELECT CAST(reloptions AS TEXT)
 						FROM pg_catalog.pg_class
-						WHERE oid = 'alter_matview_reloptions_reader'::regclass;`,
-					Expected: []sql.Row{{"{fillfactor=80,autovacuum_enabled=false}"}},
+						WHERE oid = 'alter_matview_reloptions_reader'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testaltermaterializedviewreloptionspersistrepro-0001-select-cast-reloptions-as-text"},
 				},
 			},
 		},
@@ -1371,8 +1307,7 @@ func TestCreateMaterializedViewWithNoDataGuard(t *testing.T) {
 				{
 					Query: `SELECT id, label
 						FROM matview_no_data_reader
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, "one"}, {2, "two"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testcreatematerializedviewwithnodataguard-0001-select-id-label-from-matview_no_data_reader"},
 				},
 			},
 		},
@@ -1393,21 +1328,21 @@ func TestCreateMaterializedViewWithNoDataDoesNotEvaluateQueryRepro(t *testing.T)
 						WITH NO DATA;`,
 				},
 				{
-					Query:       `SELECT value FROM matview_no_data_error;`,
-					ExpectedErr: `has not been populated`,
+					Query: `SELECT value FROM matview_no_data_error;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testcreatematerializedviewwithnodatadoesnotevaluatequeryrepro-0001-select-value-from-matview_no_data_error", Compare:
+
+					// TestRefreshMaterializedViewWithNoDataGuard covers materialized-view refresh
+					// semantics: PostgreSQL REFRESH ... WITH NO DATA discards the stored snapshot
+					// and marks the materialized view unscannable until a later refresh with data.
+					"sqlstate"},
 				},
 				{
-					Query:       `REFRESH MATERIALIZED VIEW matview_no_data_error;`,
-					ExpectedErr: `division by zero`,
+					Query: `REFRESH MATERIALIZED VIEW matview_no_data_error;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testcreatematerializedviewwithnodatadoesnotevaluatequeryrepro-0002-refresh-materialized-view-matview_no_data_error", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestRefreshMaterializedViewWithNoDataGuard covers materialized-view refresh
-// semantics: PostgreSQL REFRESH ... WITH NO DATA discards the stored snapshot
-// and marks the materialized view unscannable until a later refresh with data.
 func TestRefreshMaterializedViewWithNoDataGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1427,8 +1362,7 @@ func TestRefreshMaterializedViewWithNoDataGuard(t *testing.T) {
 					Query: `REFRESH MATERIALIZED VIEW matview_refresh_no_data_reader WITH NO DATA;`,
 				},
 				{
-					Query:       `SELECT id, label FROM matview_refresh_no_data_reader;`,
-					ExpectedErr: `has not been populated`,
+					Query: `SELECT id, label FROM matview_refresh_no_data_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testrefreshmaterializedviewwithnodataguard-0001-select-id-label-from-matview_refresh_no_data_reader", Compare: "sqlstate"},
 				},
 				{
 					Query: `REFRESH MATERIALIZED VIEW matview_refresh_no_data_reader WITH DATA;`,
@@ -1436,8 +1370,7 @@ func TestRefreshMaterializedViewWithNoDataGuard(t *testing.T) {
 				{
 					Query: `SELECT id, label
 						FROM matview_refresh_no_data_reader
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, "one"}, {2, "two"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testrefreshmaterializedviewwithnodataguard-0002-select-id-label-from-matview_refresh_no_data_reader"},
 				},
 			},
 		},

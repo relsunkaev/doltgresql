@@ -50,18 +50,15 @@ func TestAuthTests(t *testing.T) {
 					ExpectedErr: `authentication failed`,
 				},
 				{
-					Query:    `CREATE USER user1 PASSWORD 'hello';`,
-					Expected: []sql.Row{},
+					Query: `CREATE USER user1 PASSWORD 'hello';`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0002-create-user-user1-password-hello"},
 				},
 				{
 					Query:    `SELECT 2;`,
 					Username: `user1`,
-					Password: `hello`,
-					Expected: []sql.Row{{2}},
+					Password: `hello`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0003-select-2"},
 				},
 				{
-					Query:    `DROP USER user1;`,
-					Expected: []sql.Row{},
+					Query: `DROP USER user1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0004-drop-user-user1"},
 				},
 				{
 					Query:       `SELECT 3;`,
@@ -75,62 +72,52 @@ func TestAuthTests(t *testing.T) {
 			Name: `ALTER PASSWORD`,
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `CREATE USER user1 PASSWORD 'something';`,
-					Expected: []sql.Row{},
+					Query: `CREATE USER user1 PASSWORD 'something';`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0006-create-user-user1-password-something"},
 				},
 				{
 					Query:    `SELECT 1;`,
 					Username: `user1`,
-					Password: `something`,
-					Expected: []sql.Row{{1}},
+					Password: `something`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0007-select-1"},
 				},
 				{
-					Query:    `ALTER USER user1 PASSWORD 'another_thing';`,
-					Expected: []sql.Row{},
+					Query: `ALTER USER user1 PASSWORD 'another_thing';`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0008-alter-user-user1-password-another_thing"},
 				},
 				{
-					Query:       `SELECT 2;`,
-					Username:    `user1`,
-					Password:    `something`,
-					ExpectedErr: `authentication failed`,
+					Query:    `SELECT 2;`,
+					Username: `user1`,
+					Password: `something`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0009-select-2"},
 				},
 				{
 					Query:    `SELECT 3;`,
 					Username: `user1`,
-					Password: `another_thing`,
-					Expected: []sql.Row{{3}},
+					Password: `another_thing`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0010-select-3"},
 				},
 				{ // No password will work, the user is effectively unable to be accessed with password-based auth
-					Query:    `ALTER USER user1 WITH PASSWORD NULL;`,
-					Expected: []sql.Row{},
+					Query: `ALTER USER user1 WITH PASSWORD NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0011-alter-user-user1-with-password"},
 				},
 				{
-					Query:       `SELECT 4;`,
-					Username:    `user1`,
-					Password:    `something`,
-					ExpectedErr: `authentication failed`,
+					Query:    `SELECT 4;`,
+					Username: `user1`,
+					Password: `something`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0012-select-4"},
 				},
 				{
-					Query:       `SELECT 5;`,
-					Username:    `user1`,
-					Password:    `another_thing`,
-					ExpectedErr: `authentication failed`,
+					Query:    `SELECT 5;`,
+					Username: `user1`,
+					Password: `another_thing`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0013-select-5"},
 				},
 				{
-					Query:       `SELECT 6;`,
-					Username:    `user1`,
-					Password:    ``, // Even the empty password won't work
-					ExpectedErr: `authentication failed`,
+					Query:    `SELECT 6;`,
+					Username: `user1`,
+					Password: ``, PostgresOracle: // Even the empty password won't work
+					ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0014-select-6"},
 				},
 				{
-					Query:    `ALTER USER user1 PASSWORD 'different484';`,
-					Expected: []sql.Row{},
+					Query: `ALTER USER user1 PASSWORD 'different484';`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0015-alter-user-user1-password-different484"},
 				},
 				{
 					Query:    `SELECT 7;`,
 					Username: `user1`,
-					Password: `different484`,
-					Expected: []sql.Row{{7}},
+					Password: `different484`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0016-select-7"},
 				},
 			},
 		},
@@ -138,64 +125,61 @@ func TestAuthTests(t *testing.T) {
 			Name: `ALTER LOGIN`,
 			Assertions: []ScriptTestAssertion{
 				{ // By default, roles cannot be logged into
-					Query:    `CREATE ROLE user1 PASSWORD 'pass1';`,
-					Expected: []sql.Row{},
-				},
-				{ // Users can be logged into by default, this is the only difference between roles and users
-					Query:    `CREATE USER user2 PASSWORD 'pass2';`,
-					Expected: []sql.Row{},
-				},
-				{ // A role with LOGIN defined is exactly equivalent to a default user
-					Query:    `CREATE ROLE user3 PASSWORD 'pass3' LOGIN;`,
-					Expected: []sql.Row{},
-				},
-				{ // A user with NOLOGIN defined is exactly equivalent to a default role
-					Query:    `CREATE USER user4 PASSWORD 'pass4' NOLOGIN;`,
-					Expected: []sql.Row{},
+					Query: `CREATE ROLE user1 PASSWORD 'pass1';`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// Users can be logged into by default, this is the only difference between roles and users
+					"auth-test-testauthtests-0017-create-role-user1-password-pass1"},
 				},
 				{
-					Query:       `SELECT 1;`,
-					Username:    `user1`,
-					Password:    `pass1`,
-					ExpectedErr: `authentication failed`,
+					Query: `CREATE USER user2 PASSWORD 'pass2';`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// A role with LOGIN defined is exactly equivalent to a default user
+					"auth-test-testauthtests-0018-create-user-user2-password-pass2"},
+				},
+				{
+					Query: `CREATE ROLE user3 PASSWORD 'pass3' LOGIN;`, PostgresOracle: ScriptTestPostgresOracle{ID:
+
+					// A user with NOLOGIN defined is exactly equivalent to a default role
+					"auth-test-testauthtests-0019-create-role-user3-password-pass3"},
+				},
+				{
+					Query: `CREATE USER user4 PASSWORD 'pass4' NOLOGIN;`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0020-create-user-user4-password-pass4"},
+				},
+				{
+					Query:    `SELECT 1;`,
+					Username: `user1`,
+					Password: `pass1`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0021-select-1"},
 				},
 				{
 					Query:    `SELECT 2;`,
 					Username: `user2`,
-					Password: `pass2`,
-					Expected: []sql.Row{{2}},
+					Password: `pass2`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0022-select-2"},
 				},
 				{
 					Query:    `SELECT 3;`,
 					Username: `user3`,
-					Password: `pass3`,
-					Expected: []sql.Row{{3}},
+					Password: `pass3`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0023-select-3"},
 				},
 				{
-					Query:       `SELECT 4;`,
-					Username:    `user4`,
-					Password:    `pass4`,
-					ExpectedErr: `authentication failed`,
+					Query:    `SELECT 4;`,
+					Username: `user4`,
+					Password: `pass4`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0024-select-4"},
 				},
 				{ // We'll flip LOGIN/NOLOGIN statuses
-					Query:    `ALTER USER user1 WITH LOGIN;`,
-					Expected: []sql.Row{},
+					Query: `ALTER USER user1 WITH LOGIN;`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0025-alter-user-user1-with-login"},
 				},
 				{
-					Query:    `ALTER USER user2 WITH NOLOGIN;`,
-					Expected: []sql.Row{},
+					Query: `ALTER USER user2 WITH NOLOGIN;`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0026-alter-user-user2-with-nologin"},
 				},
 				{
 					Query:    `SELECT 5;`,
 					Username: `user1`,
-					Password: `pass1`,
-					Expected: []sql.Row{{5}},
+					Password: `pass1`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0027-select-5"},
 				},
 				{
-					Query:       `SELECT 6;`,
-					Username:    `user2`,
-					Password:    `pass2`,
-					ExpectedErr: `authentication failed`,
+					Query:    `SELECT 6;`,
+					Username: `user2`,
+					Password: `pass2`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0028-select-6"},
 				},
 			},
 		},
@@ -209,16 +193,13 @@ func TestAuthTests(t *testing.T) {
 					ExpectedErr: `authentication failed`,
 				},
 				{
-					Query:    `CREATE USER user1 PASSWORD 'hello1';`,
-					Expected: []sql.Row{},
+					Query: `CREATE USER user1 PASSWORD 'hello1';`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0030-create-user-user1-password-hello1"},
 				},
 				{
-					Query:       `CREATE USER user1 PASSWORD 'hello2';`,
-					ExpectedErr: `already exists`,
+					Query: `CREATE USER user1 PASSWORD 'hello2';`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0031-create-user-user1-password-hello2", Compare: "sqlstate"},
 				},
 				{
-					Query:    `CREATE USER IF NOT EXISTS user1 PASSWORD 'hello3';`,
-					Expected: []sql.Row{},
+					Query: `CREATE USER IF NOT EXISTS user1 PASSWORD 'hello3';`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0032-create-user-if-not-exists", Compare: "sqlstate"},
 				},
 				{
 					Query:    `SELECT 2;`,
@@ -250,36 +231,29 @@ func TestAuthTests(t *testing.T) {
 			Name: `DROP USER IF EXISTS`,
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `CREATE USER user1 PASSWORD 'hello1';`,
-					Expected: []sql.Row{},
+					Query: `CREATE USER user1 PASSWORD 'hello1';`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0038-create-user-user1-password-hello1"},
 				},
 				{
-					Query:    `CREATE USER user2 PASSWORD 'hello2';`,
-					Expected: []sql.Row{},
+					Query: `CREATE USER user2 PASSWORD 'hello2';`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0039-create-user-user2-password-hello2"},
 				},
 				{
 					Query:    `SELECT 1;`,
 					Username: `user1`,
-					Password: `hello1`,
-					Expected: []sql.Row{{1}},
+					Password: `hello1`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0040-select-1"},
 				},
 				{
 					Query:    `SELECT 2;`,
 					Username: `user2`,
-					Password: `hello2`,
-					Expected: []sql.Row{{2}},
+					Password: `hello2`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0041-select-2"},
 				},
 				{
-					Query:    `DROP USER user1;`,
-					Expected: []sql.Row{},
+					Query: `DROP USER user1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0042-drop-user-user1"},
 				},
 				{
-					Query:       `DROP USER user1;`,
-					ExpectedErr: `does not exist`,
+					Query: `DROP USER user1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0043-drop-user-user1", Compare: "sqlstate"},
 				},
 				{
-					Query:    `DROP USER IF EXISTS user1;`,
-					Expected: []sql.Row{},
+					Query: `DROP USER IF EXISTS user1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0044-drop-user-if-exists-user1"},
 				},
 				{
 					Query:       `SELECT 3;`,
@@ -288,16 +262,13 @@ func TestAuthTests(t *testing.T) {
 					ExpectedErr: `authentication failed`,
 				},
 				{
-					Query:    `DROP ROLE IF EXISTS user2;`,
-					Expected: []sql.Row{},
+					Query: `DROP ROLE IF EXISTS user2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0046-drop-role-if-exists-user2"},
 				},
 				{
-					Query:       `DROP ROLE user2;`,
-					ExpectedErr: `does not exist`,
+					Query: `DROP ROLE user2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0047-drop-role-user2", Compare: "sqlstate"},
 				},
 				{
-					Query:    `DROP ROLE IF EXISTS user2;`,
-					Expected: []sql.Row{},
+					Query: `DROP ROLE IF EXISTS user2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0048-drop-role-if-exists-user2"},
 				},
 				{
 					Query:       `SELECT 4;`,
@@ -311,38 +282,31 @@ func TestAuthTests(t *testing.T) {
 			Name: `DROP USER with multiple users`,
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `CREATE USER user1 PASSWORD 'hello1';`,
-					Expected: []sql.Row{},
+					Query: `CREATE USER user1 PASSWORD 'hello1';`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0050-create-user-user1-password-hello1"},
 				},
 				{
-					Query:    `CREATE USER user2 PASSWORD 'hello2';`,
-					Expected: []sql.Row{},
+					Query: `CREATE USER user2 PASSWORD 'hello2';`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0051-create-user-user2-password-hello2"},
 				},
 				{
-					Query:    `CREATE USER user3 PASSWORD 'hello3';`,
-					Expected: []sql.Row{},
+					Query: `CREATE USER user3 PASSWORD 'hello3';`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0052-create-user-user3-password-hello3"},
 				},
 				{
 					Query:    `SELECT 1;`,
 					Username: `user1`,
-					Password: `hello1`,
-					Expected: []sql.Row{{1}},
+					Password: `hello1`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0053-select-1"},
 				},
 				{
 					Query:    `SELECT 2;`,
 					Username: `user2`,
-					Password: `hello2`,
-					Expected: []sql.Row{{2}},
+					Password: `hello2`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0054-select-2"},
 				},
 				{
 					Query:    `SELECT 3;`,
 					Username: `user3`,
-					Password: `hello3`,
-					Expected: []sql.Row{{3}},
+					Password: `hello3`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0055-select-3"},
 				},
 				{
-					Query:    `DROP USER user1, user3;`,
-					Expected: []sql.Row{},
+					Query: `DROP USER user1, user3;`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0056-drop-user-user1-user3"},
 				},
 				{
 					Query:       `SELECT 4;`,
@@ -353,8 +317,7 @@ func TestAuthTests(t *testing.T) {
 				{
 					Query:    `SELECT 5;`,
 					Username: `user2`,
-					Password: `hello2`,
-					Expected: []sql.Row{{5}},
+					Password: `hello2`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0058-select-5"},
 				},
 				{
 					Query:       `SELECT 6;`,
@@ -377,62 +340,52 @@ func TestAuthTests(t *testing.T) {
 				{
 					Query:    `CREATE TABLE test (pk INT4 PRIMARY KEY);`,
 					Username: `user1`,
-					Password: `a`,
-					Expected: []sql.Row{},
+					Password: `a`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0060-create-table-test-pk-int4"},
 				},
 				{
 					Query:    `INSERT INTO test VALUES (1), (5), (6);`,
 					Username: `user1`,
-					Password: `a`,
-					Expected: []sql.Row{},
+					Password: `a`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0061-insert-into-test-values-1", Compare: "sqlstate"},
 				},
 				{
 					Query:    `SELECT * FROM test ORDER BY pk`,
 					Username: `user1`,
-					Password: `a`,
-					Expected: []sql.Row{{1}, {5}, {6}},
+					Password: `a`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0062-select-*-from-test-order", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SELECT * FROM test ORDER BY pk`,
-					Username:    `user2`,
-					Password:    `b`,
-					ExpectedErr: `denied`,
+					Query:    `SELECT * FROM test ORDER BY pk`,
+					Username: `user2`,
+					Password: `b`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0063-select-*-from-test-order", Compare: "sqlstate"},
 				},
 				{
 					Query:    `GRANT SELECT ON test TO user2;`,
 					Username: `user1`,
-					Password: `a`,
-					Expected: []sql.Row{},
+					Password: `a`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0064-grant-select-on-test-to", Compare: "sqlstate"},
 				},
 				{
 					Query:    `SELECT * FROM test ORDER BY pk`,
 					Username: `user2`,
-					Password: `b`,
-					Expected: []sql.Row{{1}, {5}, {6}},
+					Password: `b`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0065-select-*-from-test-order"},
 				},
 				{
 					Query:    `REVOKE SELECT ON test FROM user2;`,
 					Username: `user1`,
-					Password: `a`,
-					Expected: []sql.Row{},
-				},
-				{
-					Query:       `SELECT * FROM test ORDER BY pk`,
-					Username:    `user2`,
-					Password:    `b`,
-					ExpectedErr: `denied`,
-				},
-				{
-					Query:    `GRANT SELECT ON test TO PUBLIC;`,
-					Username: `user1`,
-					Password: `a`,
-					Expected: []sql.Row{},
+					Password: `a`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0066-revoke-select-on-test-from", Compare: "sqlstate"},
 				},
 				{
 					Query:    `SELECT * FROM test ORDER BY pk`,
 					Username: `user2`,
-					Password: `b`,
-					Expected: []sql.Row{{1}, {5}, {6}},
+					Password: `b`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0067-select-*-from-test-order", Compare: "sqlstate"},
+				},
+				{
+					Query:    `GRANT SELECT ON test TO PUBLIC;`,
+					Username: `user1`,
+					Password: `a`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0068-grant-select-on-test-to", Compare: "sqlstate"},
+				},
+				{
+					Query:    `SELECT * FROM test ORDER BY pk`,
+					Username: `user2`,
+					Password: `b`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0069-select-*-from-test-order"},
 				},
 			},
 		},
@@ -445,107 +398,93 @@ func TestAuthTests(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT * FROM test ORDER BY pk;`,
-					Username:    `user1`,
-					Password:    `a`,
-					ExpectedErr: `denied`,
-				},
-				{
-					Query:       `WITH cte AS (SELECT * FROM test ORDER BY pk) SELECT * FROM cte;`,
-					Username:    `user1`,
-					Password:    `a`,
-					ExpectedErr: `denied`,
-				},
-				{
-					Query:       `INSERT INTO test VALUES (10);`,
-					Username:    `user1`,
-					Password:    `a`,
-					ExpectedErr: `denied`,
-				},
-				{
-					Query:       `UPDATE test SET pk=pk+20;`,
-					Username:    `user1`,
-					Password:    `a`,
-					ExpectedErr: `denied`,
-				},
-				{
-					Query:       `DELETE FROM test WHERE pk > 3;`,
-					Username:    `user1`,
-					Password:    `a`,
-					ExpectedErr: `denied`,
-				},
-				{
-					Query:    `GRANT SELECT, INSERT, UPDATE, DELETE ON test TO user1;`,
-					Username: `postgres`,
-					Password: `password`,
-					Expected: []sql.Row{},
-				},
-				{
 					Query:    `SELECT * FROM test ORDER BY pk;`,
 					Username: `user1`,
-					Password: `a`,
-					Expected: []sql.Row{{1}, {6}, {7}},
+					Password: `a`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0070-select-*-from-test-order", Compare: "sqlstate"},
 				},
 				{
-					Skip:     true, // CTEs are seen as different tables
 					Query:    `WITH cte AS (SELECT * FROM test ORDER BY pk) SELECT * FROM cte;`,
 					Username: `user1`,
-					Password: `a`,
-					Expected: []sql.Row{{1}, {6}, {7}},
+					Password: `a`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0071-with-cte-as-select-*", Compare: "sqlstate"},
 				},
 				{
 					Query:    `INSERT INTO test VALUES (10);`,
 					Username: `user1`,
-					Password: `a`,
-					Expected: []sql.Row{},
+					Password: `a`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0072-insert-into-test-values-10", Compare: "sqlstate"},
 				},
 				{
 					Query:    `UPDATE test SET pk=pk+20;`,
 					Username: `user1`,
-					Password: `a`,
-					Expected: []sql.Row{},
+					Password: `a`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0073-update-test-set-pk=pk+20", Compare: "sqlstate"},
 				},
 				{
-					Query:    `DELETE FROM test WHERE pk = 21;`,
+					Query:    `DELETE FROM test WHERE pk > 3;`,
 					Username: `user1`,
-					Password: `a`,
-					Expected: []sql.Row{},
+					Password: `a`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0074-delete-from-test-where-pk", Compare: "sqlstate"},
+				},
+				{
+					Query:    `GRANT SELECT, INSERT, UPDATE, DELETE ON test TO user1;`,
+					Username: `postgres`,
+					Password: `password`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0075-grant-select-insert-update-delete"},
 				},
 				{
 					Query:    `SELECT * FROM test ORDER BY pk;`,
 					Username: `user1`,
-					Password: `a`,
-					Expected: []sql.Row{{26}, {27}, {30}},
+					Password: `a`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0076-select-*-from-test-order",
+
+						// CTEs are seen as different tables
+						Compare: "sqlstate"},
+				},
+				{
+					Skip:     true,
+					Query:    `WITH cte AS (SELECT * FROM test ORDER BY pk) SELECT * FROM cte;`,
+					Username: `user1`,
+					Password: `a`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0077-with-cte-as-select-*", Compare: "sqlstate"},
+				},
+				{
+					Query:    `INSERT INTO test VALUES (10);`,
+					Username: `user1`,
+					Password: `a`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0078-insert-into-test-values-10", Compare: "sqlstate"},
+				},
+				{
+					Query:    `UPDATE test SET pk=pk+20;`,
+					Username: `user1`,
+					Password: `a`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0079-update-test-set-pk=pk+20", Compare: "sqlstate"},
+				},
+				{
+					Query:    `DELETE FROM test WHERE pk = 21;`,
+					Username: `user1`,
+					Password: `a`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0080-delete-from-test-where-pk", Compare: "sqlstate"},
+				},
+				{
+					Query:    `SELECT * FROM test ORDER BY pk;`,
+					Username: `user1`,
+					Password: `a`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0081-select-*-from-test-order", Compare: "sqlstate"},
 				},
 				{
 					Query:    `REVOKE SELECT, INSERT, UPDATE, DELETE ON test FROM user1;`,
 					Username: `postgres`,
-					Password: `password`,
-					Expected: []sql.Row{},
+					Password: `password`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0082-revoke-select-insert-update-delete"},
 				},
 				{
-					Query:       `SELECT * FROM test ORDER BY pk;`,
-					Username:    `user1`,
-					Password:    `a`,
-					ExpectedErr: `denied`,
+					Query:    `SELECT * FROM test ORDER BY pk;`,
+					Username: `user1`,
+					Password: `a`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0083-select-*-from-test-order", Compare: "sqlstate"},
 				},
 				{
-					Query:       `INSERT INTO test VALUES (100);`,
-					Username:    `user1`,
-					Password:    `a`,
-					ExpectedErr: `denied`,
+					Query:    `INSERT INTO test VALUES (100);`,
+					Username: `user1`,
+					Password: `a`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0084-insert-into-test-values-100", Compare: "sqlstate"},
 				},
 				{
-					Query:       `UPDATE test SET pk=pk+200;`,
-					Username:    `user1`,
-					Password:    `a`,
-					ExpectedErr: `denied`,
+					Query:    `UPDATE test SET pk=pk+200;`,
+					Username: `user1`,
+					Password: `a`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0085-update-test-set-pk=pk+200", Compare: "sqlstate"},
 				},
 				{
-					Query:       `DELETE FROM test WHERE pk > 3;`,
-					Username:    `user1`,
-					Password:    `a`,
-					ExpectedErr: `denied`,
+					Query:    `DELETE FROM test WHERE pk > 3;`,
+					Username: `user1`,
+					Password: `a`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0086-delete-from-test-where-pk", Compare: "sqlstate"},
 				},
 			},
 		},

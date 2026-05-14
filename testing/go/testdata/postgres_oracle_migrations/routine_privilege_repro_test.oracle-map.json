@@ -1,0 +1,75 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map routine_privilege_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/routine_privilege_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/routine_privilege_repro_test.go:TestFunctionExecuteGrantDoesNotApplyToOtherOverloadsRepro#0001",
+      "source": "testing/go/routine_privilege_repro_test.go:TestFunctionExecuteGrantDoesNotApplyToOtherOverloadsRepro",
+      "ordinal": 1,
+      "scriptName": "function EXECUTE grant is overload-specific",
+      "oracle": "postgres",
+      "postgresId": "routine-privilege-repro-test-testfunctionexecutegrantdoesnotapplytootheroverloadsrepro-0001-select-overload_secret-hidden-::text",
+      "suggestedId": "routine-privilege-repro-test-testfunctionexecutegrantdoesnotapplytootheroverloadsrepro-0001-select-overload_secret-hidden-::text",
+      "compare": "structural",
+      "expectedKind": "error",
+      "username": "function_overload_user",
+      "query": "SELECT overload_secret('hidden'::TEXT);",
+      "querySha256": "6728911ca8694087829b528373ddaebdb8bccf5706d6b9c0ce98477b8e737f8e",
+      "expectedRows": [
+        [
+          {
+            "value": "hidden-secret"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/routine_privilege_repro_test.go:TestProcedureExecuteGrantDoesNotApplyToOtherOverloadsRepro#0001",
+      "source": "testing/go/routine_privilege_repro_test.go:TestProcedureExecuteGrantDoesNotApplyToOtherOverloadsRepro",
+      "ordinal": 1,
+      "scriptName": "procedure EXECUTE grant is overload-specific",
+      "oracle": "postgres",
+      "postgresId": "routine-privilege-repro-test-testprocedureexecutegrantdoesnotapplytootheroverloadsrepro-0001-call-overload_secret_proc-hidden-::text",
+      "suggestedId": "routine-privilege-repro-test-testprocedureexecutegrantdoesnotapplytootheroverloadsrepro-0001-call-overload_secret_proc-hidden-::text",
+      "compare": "structural",
+      "expectedKind": "error",
+      "username": "procedure_overload_user",
+      "query": "CALL overload_secret_proc('hidden'::TEXT);",
+      "querySha256": "a6949edfb381c0a289f72eabe53c31f3e8b00e306f2aed26d25b2d4f41260f31",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/routine_privilege_repro_test.go:TestCreateFunctionLeakproofRequiresSuperuserRepro#0001",
+      "source": "testing/go/routine_privilege_repro_test.go:TestCreateFunctionLeakproofRequiresSuperuserRepro",
+      "ordinal": 1,
+      "scriptName": "LEAKPROOF function creation requires superuser",
+      "oracle": "postgres",
+      "postgresId": "routine-privilege-repro-test-testcreatefunctionleakproofrequiressuperuserrepro-0001-create-function-leakproof_user_func-input-int",
+      "suggestedId": "routine-privilege-repro-test-testcreatefunctionleakproofrequiressuperuserrepro-0001-create-function-leakproof_user_func-input-int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "leakproof_function_user",
+      "query": "CREATE FUNCTION leakproof_user_func(input INT)\n\t\t\t\t\t\tRETURNS BOOL\n\t\t\t\t\t\tLANGUAGE SQL\n\t\t\t\t\t\tLEAKPROOF\n\t\t\t\t\t\tAS $$ SELECT input > 0 $$;",
+      "querySha256": "c1279c8ec89060e16e4e6a5a1a1ffab35975cad9c909b01ca3ed932eec754178",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

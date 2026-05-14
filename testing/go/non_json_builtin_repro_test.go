@@ -28,8 +28,7 @@ func TestIntegerBaseFormattingBuiltinsRepro(t *testing.T) {
 			Name: "to_bin and to_oct format integers",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT to_bin(10);`,
-					Expected: []sql.Row{{"1010"}},
+					Query: `SELECT to_bin(10);`, PostgresOracle: ScriptTestPostgresOracle{ID: "non-json-builtin-repro-test-testintegerbaseformattingbuiltinsrepro-0001-select-to_bin-10", Compare: "sqlstate"},
 				},
 				{
 					Query:    `SELECT to_oct(10);`,
@@ -49,8 +48,7 @@ func TestUuidExtractionBuiltinsRepro(t *testing.T) {
 			Name: "uuid_extract_version and uuid_extract_timestamp inspect UUIDs",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT uuid_extract_version('41db1265-8bc1-4ab3-992f-885799a4af1d'::uuid)::text;`,
-					Expected: []sql.Row{{"4"}},
+					Query: `SELECT uuid_extract_version('41db1265-8bc1-4ab3-992f-885799a4af1d'::uuid)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "non-json-builtin-repro-test-testuuidextractionbuiltinsrepro-0001-select-uuid_extract_version-41db1265-8bc1-4ab3-992f-885799a4af1d-::uuid-::text", Compare: "sqlstate"},
 				},
 				{
 					Query:    `SELECT uuid_extract_timestamp('41db1265-8bc1-4ab3-992f-885799a4af1d'::uuid) IS NULL;`,
@@ -73,8 +71,7 @@ func TestTypeMetadataBuiltinsRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT pg_basetype('non_json_builtin_domain'::regtype)::text;`,
-					Expected: []sql.Row{{"text"}},
+					Query: `SELECT pg_basetype('non_json_builtin_domain'::regtype)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "non-json-builtin-repro-test-testtypemetadatabuiltinsrepro-0001-select-pg_basetype-non_json_builtin_domain-::regtype-::text", Compare: "sqlstate"},
 				},
 				{
 					Query:    `SELECT format_type(to_regtype('varchar(32)'), to_regtypemod('varchar(32)'));`,
@@ -94,8 +91,7 @@ func TestUnicodeInformationBuiltinsRepro(t *testing.T) {
 			Name: "unicode_assigned and unicode_version report Unicode metadata",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT unicode_assigned('abc');`,
-					Expected: []sql.Row{{true}},
+					Query: `SELECT unicode_assigned('abc');`, PostgresOracle: ScriptTestPostgresOracle{ID: "non-json-builtin-repro-test-testunicodeinformationbuiltinsrepro-0001-select-unicode_assigned-abc", Compare: "sqlstate"},
 				},
 				{
 					Query:    `SELECT unicode_version() IS NOT NULL;`,
@@ -115,12 +111,10 @@ func TestPostgres16InputValidationBuiltinsRepro(t *testing.T) {
 			Name: "pg_input_is_valid and pg_input_error_info report soft input errors",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT pg_input_is_valid('42', 'integer'), pg_input_is_valid('42000000000', 'integer');`,
-					Expected: []sql.Row{{true, false}},
+					Query: `SELECT pg_input_is_valid('42', 'integer'), pg_input_is_valid('42000000000', 'integer');`, PostgresOracle: ScriptTestPostgresOracle{ID: "non-json-builtin-repro-test-testpostgres16inputvalidationbuiltinsrepro-0001-select-pg_input_is_valid-42-integer-pg_input_is_valid"},
 				},
 				{
-					Query:    `SELECT (pg_input_error_info('42000000000', 'integer')).sql_error_code;`,
-					Expected: []sql.Row{{"22003"}},
+					Query: `SELECT (pg_input_error_info('42000000000', 'integer')).sql_error_code;`, PostgresOracle: ScriptTestPostgresOracle{ID: "non-json-builtin-repro-test-testpostgres16inputvalidationbuiltinsrepro-0002-select-pg_input_error_info-42000000000-integer-.sql_error_code"},
 				},
 			},
 		},
@@ -136,12 +130,10 @@ func TestPostgres16ArrayRandomBuiltinsRepro(t *testing.T) {
 			Name: "array_sample and array_shuffle preserve requested cardinality",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT array_length(array_sample(ARRAY[1,2,3,4], 2), 1);`,
-					Expected: []sql.Row{{2}},
+					Query: `SELECT array_length(array_sample(ARRAY[1,2,3,4], 2), 1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "non-json-builtin-repro-test-testpostgres16arrayrandombuiltinsrepro-0001-select-array_length-array_sample-array[1-2"},
 				},
 				{
-					Query:    `SELECT array_length(array_shuffle(ARRAY[1,2,3,4]), 1);`,
-					Expected: []sql.Row{{4}},
+					Query: `SELECT array_length(array_shuffle(ARRAY[1,2,3,4]), 1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "non-json-builtin-repro-test-testpostgres16arrayrandombuiltinsrepro-0002-select-array_length-array_shuffle-array[1-2"},
 				},
 			},
 		},
@@ -160,19 +152,16 @@ func TestPostgres16DateAndRandomBuiltinsRepro(t *testing.T) {
 					Query: `SELECT date_add(
 						'2024-01-01 00:00:00+00'::timestamptz,
 						'1 day'::interval,
-						'UTC') = '2024-01-02 00:00:00+00'::timestamptz;`,
-					Expected: []sql.Row{{true}},
+						'UTC') = '2024-01-02 00:00:00+00'::timestamptz;`, PostgresOracle: ScriptTestPostgresOracle{ID: "non-json-builtin-repro-test-testpostgres16dateandrandombuiltinsrepro-0001-select-date_add-2024-01-01-00:00:00+00-::timestamptz"},
 				},
 				{
 					Query: `SELECT date_subtract(
 						'2024-01-02 00:00:00+00'::timestamptz,
 						'1 day'::interval,
-						'UTC') = '2024-01-01 00:00:00+00'::timestamptz;`,
-					Expected: []sql.Row{{true}},
+						'UTC') = '2024-01-01 00:00:00+00'::timestamptz;`, PostgresOracle: ScriptTestPostgresOracle{ID: "non-json-builtin-repro-test-testpostgres16dateandrandombuiltinsrepro-0002-select-date_subtract-2024-01-02-00:00:00+00-::timestamptz"},
 				},
 				{
-					Query:    `SELECT random_normal(0.0, 1.0) IS NOT NULL;`,
-					Expected: []sql.Row{{true}},
+					Query: `SELECT random_normal(0.0, 1.0) IS NOT NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "non-json-builtin-repro-test-testpostgres16dateandrandombuiltinsrepro-0003-select-random_normal-0.0-1.0-is"},
 				},
 			},
 		},
@@ -188,91 +177,10 @@ func TestPostgres16AnyValueAndSystemUserRepro(t *testing.T) {
 			Name: "ANY_VALUE and SYSTEM_USER evaluate",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT any_value(v) FROM (VALUES (NULL::text), ('picked')) AS t(v);`,
-					Expected: []sql.Row{{"picked"}},
+					Query: `SELECT any_value(v) FROM (VALUES (NULL::text), ('picked')) AS t(v);`, PostgresOracle: ScriptTestPostgresOracle{ID: "non-json-builtin-repro-test-testpostgres16anyvalueandsystemuserrepro-0001-select-any_value-v-from-values"},
 				},
 				{
-					Query:    `SELECT system_user IS NOT NULL;`,
-					Expected: []sql.Row{{true}},
-				},
-			},
-		},
-	})
-}
-
-// TestPostgres18UuidAndMathBuiltinsRepro reproduces PostgreSQL 18
-// compatibility gaps: uuidv7, gamma, and lgamma should be available as
-// built-in functions.
-func TestPostgres18UuidAndMathBuiltinsRepro(t *testing.T) {
-	RunScripts(t, []ScriptTest{
-		{
-			Name: "uuidv7, gamma, and lgamma evaluate",
-			Assertions: []ScriptTestAssertion{
-				{
-					Query:    `SELECT uuidv7() IS NOT NULL;`,
-					Expected: []sql.Row{{true}},
-				},
-				{
-					Query:    `SELECT gamma(6::double precision)::text;`,
-					Expected: []sql.Row{{"120"}},
-				},
-				{
-					Query:    `SELECT lgamma(6::double precision) > 4.7 AND lgamma(6::double precision) < 4.8;`,
-					Expected: []sql.Row{{true}},
-				},
-			},
-		},
-	})
-}
-
-// TestPostgres18ArrayAndStringBuiltinsRepro reproduces PostgreSQL 18
-// compatibility gaps: array_sort, array_reverse, and casefold should be
-// available as built-in functions.
-func TestPostgres18ArrayAndStringBuiltinsRepro(t *testing.T) {
-	RunScripts(t, []ScriptTest{
-		{
-			Name: "array_sort, array_reverse, and casefold evaluate",
-			Assertions: []ScriptTestAssertion{
-				{
-					Query:    `SELECT array_to_string(array_sort(ARRAY[3,1,2]), ',');`,
-					Expected: []sql.Row{{"1,2,3"}},
-				},
-				{
-					Query:    `SELECT array_to_string(array_reverse(ARRAY[1,2,3]), ',');`,
-					Expected: []sql.Row{{"3,2,1"}},
-				},
-				{
-					Query:    `SELECT casefold('HELLO');`,
-					Expected: []sql.Row{{"hello"}},
-				},
-			},
-		},
-	})
-}
-
-// TestPostgres18BinaryStringBuiltinsRepro reproduces PostgreSQL 18
-// compatibility gaps: bytea CRC helpers, bytea reverse, and integer-bytea
-// casts should be available.
-func TestPostgres18BinaryStringBuiltinsRepro(t *testing.T) {
-	RunScripts(t, []ScriptTest{
-		{
-			Name: "bytea CRC helpers, reverse, and integer casts evaluate",
-			Assertions: []ScriptTestAssertion{
-				{
-					Query:    `SELECT crc32('abc'::bytea)::text, crc32c('abc'::bytea)::text;`,
-					Expected: []sql.Row{{"891568578", "910901175"}},
-				},
-				{
-					Query:    `SELECT encode(reverse('\xabcd'::bytea), 'hex');`,
-					Expected: []sql.Row{{"cdab"}},
-				},
-				{
-					Query:    `SELECT encode(1234::integer::bytea, 'hex');`,
-					Expected: []sql.Row{{"000004d2"}},
-				},
-				{
-					Query:    `SELECT '\x8000'::bytea::smallint::text;`,
-					Expected: []sql.Row{{"-32768"}},
+					Query: `SELECT system_user IS NOT NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "non-json-builtin-repro-test-testpostgres16anyvalueandsystemuserrepro-0002-select-system_user-is-not-null"},
 				},
 			},
 		},

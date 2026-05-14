@@ -1,5 +1,5 @@
 {
-  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map dml_returning_correctness_repro_test.go --oracle-test-name TestDmlReturningCanProjectTableoidRepro --force-postgres-oracle",
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map dml_returning_correctness_repro_test.go --force-postgres-oracle",
   "sourceFile": "testing/go/dml_returning_correctness_repro_test.go",
   "defaultOracle": "internal",
   "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",

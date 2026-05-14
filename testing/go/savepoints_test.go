@@ -62,10 +62,7 @@ func TestSavepoints(t *testing.T) {
 				{Query: "INSERT INTO sp_release VALUES (3, 300);"},
 				{Query: "COMMIT;"},
 				{
-					Query: "SELECT id, v FROM sp_release ORDER BY id;",
-					Expected: []gms.Row{
-						{1, 100}, {2, 200}, {3, 300},
-					},
+					Query: "SELECT id, v FROM sp_release ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "savepoints-test-testsavepoints-0001-select-id-v-from-sp_release"},
 				},
 			},
 		},
@@ -83,10 +80,7 @@ func TestSavepoints(t *testing.T) {
 				{Query: "ROLLBACK TO SAVEPOINT sp1;"},
 				{Query: "COMMIT;"},
 				{
-					Query: "SELECT id, v FROM sp_rollback ORDER BY id;",
-					Expected: []gms.Row{
-						{1, 100},
-					},
+					Query: "SELECT id, v FROM sp_rollback ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "savepoints-test-testsavepoints-0002-select-id-v-from-sp_rollback"},
 				},
 			},
 		},
@@ -110,10 +104,7 @@ func TestSavepoints(t *testing.T) {
 				{Query: "INSERT INTO sp_nested VALUES (5, 5);"},
 				{Query: "COMMIT;"},
 				{
-					Query: "SELECT id, v FROM sp_nested ORDER BY id;",
-					Expected: []gms.Row{
-						{1, 1}, {5, 5},
-					},
+					Query: "SELECT id, v FROM sp_nested ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "savepoints-test-testsavepoints-0003-select-id-v-from-sp_nested"},
 				},
 			},
 		},
@@ -136,8 +127,7 @@ func TestSavepoints(t *testing.T) {
 				// to the released name must error.
 				{Query: "RELEASE SAVEPOINT sp1;"},
 				{
-					Query:       "ROLLBACK TO SAVEPOINT sp1;",
-					ExpectedErr: "SAVEPOINT sp1 does not exist",
+					Query: "ROLLBACK TO SAVEPOINT sp1;", PostgresOracle: ScriptTestPostgresOracle{ID: "savepoints-test-testsavepoints-0004-rollback-to-savepoint-sp1", Compare: "sqlstate"},
 				},
 				{Query: "ROLLBACK;"},
 				{

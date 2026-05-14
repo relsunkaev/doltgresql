@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestGrantOnConfigurationParameterRepro reproduces an admin ACL correctness
@@ -93,8 +91,7 @@ func TestHasParameterPrivilegeHelperRepro(t *testing.T) {
 			Name: "has_parameter_privilege reports parameter privileges",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT has_parameter_privilege('work_mem', 'SET');`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT has_parameter_privilege('work_mem', 'SET');`, PostgresOracle: ScriptTestPostgresOracle{ID: "parameter-privilege-repro-test-testhasparameterprivilegehelperrepro-0001-select-has_parameter_privilege-work_mem-set"},
 				},
 			},
 		},
@@ -113,16 +110,16 @@ func TestSetSuperuserOnlyParameterRequiresSuperuserRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SET session_preload_libraries = 'unsafe_library';`,
-					ExpectedErr: `permission denied`,
-					Username:    `parameter_superuser_intruder`,
-					Password:    `pw`,
+					Query: `SET session_preload_libraries = 'unsafe_library';`,
+
+					Username: `parameter_superuser_intruder`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{ID: "parameter-privilege-repro-test-testsetsuperuseronlyparameterrequiressuperuserrepro-0001-set-session_preload_libraries-=-unsafe_library", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT current_setting('session_preload_libraries');`,
-					Expected: []sql.Row{{""}},
+					Query: `SELECT current_setting('session_preload_libraries');`,
+
 					Username: `parameter_superuser_intruder`,
-					Password: `pw`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{ID: "parameter-privilege-repro-test-testsetsuperuseronlyparameterrequiressuperuserrepro-0002-select-current_setting-session_preload_libraries", Compare: "sqlstate"},
 				},
 			},
 		},

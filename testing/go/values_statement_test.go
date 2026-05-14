@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 func TestValuesStatement(t *testing.T) {
@@ -29,26 +27,13 @@ var ValuesStatementTests = []ScriptTest{
 		Name: "basic values statements",
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: `SELECT * FROM (VALUES (1), (2), (3)) sqa;`,
-				Expected: []sql.Row{
-					{1},
-					{2},
-					{3},
-				},
+				Query: `SELECT * FROM (VALUES (1), (2), (3)) sqa;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0001-select-*-from-values-1"},
 			},
 			{
-				Query: `SELECT * FROM (VALUES (1, 2), (3, 4)) sqa;`,
-				Expected: []sql.Row{
-					{1, 2},
-					{3, 4},
-				},
+				Query: `SELECT * FROM (VALUES (1, 2), (3, 4)) sqa;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0002-select-*-from-values-1"},
 			},
 			{
-				Query: `SELECT i * 10, j * 100 FROM (VALUES (1, 2), (3, 4)) sqa(i, j);`,
-				Expected: []sql.Row{
-					{10, 200},
-					{30, 400},
-				},
+				Query: `SELECT i * 10, j * 100 FROM (VALUES (1, 2), (3, 4)) sqa(i, j);`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0003-select-i-*-10-j"},
 			},
 		},
 	},
@@ -57,36 +42,23 @@ var ValuesStatementTests = []ScriptTest{
 		Assertions: []ScriptTestAssertion{
 			{
 				// Integer first, then decimal - should resolve to numeric
-				Query: `SELECT * FROM (VALUES(1),(2.01),(3)) v(n);`,
-				Expected: []sql.Row{
-					{Numeric("1")},
-					{Numeric("2.01")},
-					{Numeric("3")},
-				},
+				Query: `SELECT * FROM (VALUES(1),(2.01),(3)) v(n);`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0004-select-*-from-values-1"},
 			},
 			{
 				// Decimal first, then integers - should resolve to numeric
-				Query: `SELECT * FROM (VALUES(1.01),(2),(3)) v(n);`,
-				Expected: []sql.Row{
-					{Numeric("1.01")},
-					{Numeric("2")},
-					{Numeric("3")},
-				},
+				Query: `SELECT * FROM (VALUES(1.01),(2),(3)) v(n);`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0005-select-*-from-values-1.01"},
 			},
 			{
 				// SUM should work directly now that VALUES has correct type
-				Query:    `SELECT SUM(n) FROM (VALUES(1),(2.01),(3)) v(n);`,
-				Expected: []sql.Row{{Numeric("6.01")}},
+				Query: `SELECT SUM(n) FROM (VALUES(1),(2.01),(3)) v(n);`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0006-select-sum-n-from-values"},
 			},
 			{
 				// Exact repro from issue #1648: integer first, explicit cast to numeric
-				Query:    `SELECT SUM(n::numeric) FROM (VALUES(1),(2.01),(3)) v(n);`,
-				Expected: []sql.Row{{Numeric("6.01")}},
+				Query: `SELECT SUM(n::numeric) FROM (VALUES(1),(2.01),(3)) v(n);`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0007-select-sum-n::numeric-from-values"},
 			},
 			{
 				// Exact repro from issue #1648: decimal first, explicit cast to numeric
-				Query:    `SELECT SUM(n::numeric) FROM (VALUES(1.01),(2),(3)) v(n);`,
-				Expected: []sql.Row{{Numeric("6.01")}},
+				Query: `SELECT SUM(n::numeric) FROM (VALUES(1.01),(2),(3)) v(n);`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0008-select-sum-n::numeric-from-values"},
 			},
 		},
 	},
@@ -94,11 +66,7 @@ var ValuesStatementTests = []ScriptTest{
 		Name: "VALUES with multiple columns mixed types",
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: `SELECT * FROM (VALUES(1, 'a'), (2.5, 'b')) v(num, str);`,
-				Expected: []sql.Row{
-					{Numeric("1"), "a"},
-					{Numeric("2.5"), "b"},
-				},
+				Query: `SELECT * FROM (VALUES(1, 'a'), (2.5, 'b')) v(num, str);`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0009-select-*-from-values-1"},
 			},
 		},
 	},
@@ -107,20 +75,11 @@ var ValuesStatementTests = []ScriptTest{
 		Assertions: []ScriptTestAssertion{
 			{
 				// GROUP BY on mixed type VALUES - tests that GetField types are updated correctly
-				Query: `SELECT n, COUNT(*) FROM (VALUES(1),(2.5),(1),(3.5),(2.5)) v(n) GROUP BY n ORDER BY n;`,
-				Expected: []sql.Row{
-					{Numeric("1"), int64(2)},
-					{Numeric("2.5"), int64(2)},
-					{Numeric("3.5"), int64(1)},
-				},
+				Query: `SELECT n, COUNT(*) FROM (VALUES(1),(2.5),(1),(3.5),(2.5)) v(n) GROUP BY n ORDER BY n;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0010-select-n-count-*-from"},
 			},
 			{
 				// SUM with GROUP BY
-				Query: `SELECT category, SUM(amount) FROM (VALUES('a', 1),('b', 2.5),('a', 3),('b', 4.5)) v(category, amount) GROUP BY category ORDER BY category;`,
-				Expected: []sql.Row{
-					{"a", Numeric("4")},
-					{"b", Numeric("7.0")},
-				},
+				Query: `SELECT category, SUM(amount) FROM (VALUES('a', 1),('b', 2.5),('a', 3),('b', 4.5)) v(category, amount) GROUP BY category ORDER BY category;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0011-select-category-sum-amount-from"},
 			},
 		},
 	},
@@ -129,12 +88,7 @@ var ValuesStatementTests = []ScriptTest{
 		Assertions: []ScriptTestAssertion{
 			{
 				// DISTINCT on mixed type VALUES
-				Query: `SELECT DISTINCT n FROM (VALUES(1),(2.5),(1),(2.5),(3)) v(n) ORDER BY n;`,
-				Expected: []sql.Row{
-					{Numeric("1")},
-					{Numeric("2.5")},
-					{Numeric("3")},
-				},
+				Query: `SELECT DISTINCT n FROM (VALUES(1),(2.5),(1),(2.5),(3)) v(n) ORDER BY n;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0012-select-distinct-n-from-values"},
 			},
 		},
 	},
@@ -143,20 +97,11 @@ var ValuesStatementTests = []ScriptTest{
 		Assertions: []ScriptTestAssertion{
 			{
 				// LIMIT on mixed type VALUES
-				Query: `SELECT * FROM (VALUES(1),(2.5),(3),(4.5),(5)) v(n) LIMIT 3;`,
-				Expected: []sql.Row{
-					{Numeric("1")},
-					{Numeric("2.5")},
-					{Numeric("3")},
-				},
+				Query: `SELECT * FROM (VALUES(1),(2.5),(3),(4.5),(5)) v(n) LIMIT 3;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0013-select-*-from-values-1"},
 			},
 			{
 				// LIMIT with OFFSET
-				Query: `SELECT * FROM (VALUES(1),(2.5),(3),(4.5),(5)) v(n) LIMIT 2 OFFSET 2;`,
-				Expected: []sql.Row{
-					{Numeric("3")},
-					{Numeric("4.5")},
-				},
+				Query: `SELECT * FROM (VALUES(1),(2.5),(3),(4.5),(5)) v(n) LIMIT 2 OFFSET 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0014-select-*-from-values-1"},
 			},
 		},
 	},
@@ -165,23 +110,11 @@ var ValuesStatementTests = []ScriptTest{
 		Assertions: []ScriptTestAssertion{
 			{
 				// ORDER BY on mixed type VALUES - ascending
-				Query: `SELECT * FROM (VALUES(3),(1.5),(2),(4.5)) v(n) ORDER BY n;`,
-				Expected: []sql.Row{
-					{Numeric("1.5")},
-					{Numeric("2")},
-					{Numeric("3")},
-					{Numeric("4.5")},
-				},
+				Query: `SELECT * FROM (VALUES(3),(1.5),(2),(4.5)) v(n) ORDER BY n;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0015-select-*-from-values-3"},
 			},
 			{
 				// ORDER BY descending
-				Query: `SELECT * FROM (VALUES(3),(1.5),(2),(4.5)) v(n) ORDER BY n DESC;`,
-				Expected: []sql.Row{
-					{Numeric("4.5")},
-					{Numeric("3")},
-					{Numeric("2")},
-					{Numeric("1.5")},
-				},
+				Query: `SELECT * FROM (VALUES(3),(1.5),(2),(4.5)) v(n) ORDER BY n DESC;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0016-select-*-from-values-3"},
 			},
 		},
 	},
@@ -189,27 +122,13 @@ var ValuesStatementTests = []ScriptTest{
 		Name: "VALUES in subquery",
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: `SELECT * FROM (SELECT n * 2 AS doubled FROM (VALUES(1),(2.5),(3)) v(n)) sub;`,
-				Expected: []sql.Row{
-					{Numeric("2")},
-					{Numeric("5.0")},
-					{Numeric("6")},
-				},
+				Query: `SELECT * FROM (SELECT n * 2 AS doubled FROM (VALUES(1),(2.5),(3)) v(n)) sub;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0017-select-*-from-select-n"},
 			},
 			{
-				Query: `SELECT * FROM (SELECT * FROM (VALUES(1),(2.5),(3),(4.5)) v(n) LIMIT 2) sub;`,
-				Expected: []sql.Row{
-					{Numeric("1")},
-					{Numeric("2.5")},
-				},
+				Query: `SELECT * FROM (SELECT * FROM (VALUES(1),(2.5),(3),(4.5)) v(n) LIMIT 2) sub;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0018-select-*-from-select-*"},
 			},
 			{
-				Query: `SELECT * FROM (SELECT * FROM (VALUES(3),(1.5),(2)) v(n) ORDER BY n) sub;`,
-				Expected: []sql.Row{
-					{Numeric("1.5")},
-					{Numeric("2")},
-					{Numeric("3")},
-				},
+				Query: `SELECT * FROM (SELECT * FROM (VALUES(3),(1.5),(2)) v(n) ORDER BY n) sub;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0019-select-*-from-select-*"},
 			},
 		},
 	},
@@ -218,21 +137,11 @@ var ValuesStatementTests = []ScriptTest{
 		Assertions: []ScriptTestAssertion{
 			{
 				// Filter on mixed type VALUES
-				Query: `SELECT * FROM (VALUES(1),(2.5),(3),(4.5),(5)) v(n) WHERE n > 2;`,
-				Expected: []sql.Row{
-					{Numeric("2.5")},
-					{Numeric("3")},
-					{Numeric("4.5")},
-					{Numeric("5")},
-				},
+				Query: `SELECT * FROM (VALUES(1),(2.5),(3),(4.5),(5)) v(n) WHERE n > 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0020-select-*-from-values-1"},
 			},
 			{
 				// Filter with multiple conditions
-				Query: `SELECT * FROM (VALUES(1),(2.5),(3),(4.5),(5)) v(n) WHERE n > 1 AND n < 4.5;`,
-				Expected: []sql.Row{
-					{Numeric("2.5")},
-					{Numeric("3")},
-				},
+				Query: `SELECT * FROM (VALUES(1),(2.5),(3),(4.5),(5)) v(n) WHERE n > 1 AND n < 4.5;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0021-select-*-from-values-1"},
 			},
 		},
 	},
@@ -241,19 +150,14 @@ var ValuesStatementTests = []ScriptTest{
 		Assertions: []ScriptTestAssertion{
 			{
 				// AVG on mixed types
-				Query:    `SELECT AVG(n) FROM (VALUES(1),(2),(3),(4)) v(n);`,
-				Expected: []sql.Row{{Numeric("2.5")}},
+				Query: `SELECT AVG(n) FROM (VALUES(1),(2),(3),(4)) v(n);`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0022-select-avg-n-from-values"},
 			},
 			{
-				Query:    `SELECT pg_typeof(AVG(n)) FROM (VALUES(1),(2),(3),(4)) v(n);`,
-				Expected: []sql.Row{{"numeric"}},
+				Query: `SELECT pg_typeof(AVG(n)) FROM (VALUES(1),(2),(3),(4)) v(n);`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0023-select-pg_typeof-avg-n-from"},
 			},
 			{
 				// MIN/MAX on mixed types
-				Query: `SELECT MIN(n), MAX(n) FROM (VALUES(1),(2.5),(3),(0.5)) v(n);`,
-				Expected: []sql.Row{
-					{Numeric("0.5"), Numeric("3")},
-				},
+				Query: `SELECT MIN(n), MAX(n) FROM (VALUES(1),(2.5),(3),(0.5)) v(n);`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0024-select-min-n-max-n"},
 			},
 		},
 	},
@@ -262,28 +166,15 @@ var ValuesStatementTests = []ScriptTest{
 		Assertions: []ScriptTestAssertion{
 			{
 				// GROUP BY + ORDER BY + LIMIT
-				Query: `SELECT n, COUNT(*) as cnt FROM (VALUES(1),(2.5),(1),(2.5),(3),(1)) v(n) GROUP BY n ORDER BY cnt DESC LIMIT 2;`,
-				Expected: []sql.Row{
-					{Numeric("1"), int64(3)},
-					{Numeric("2.5"), int64(2)},
-				},
+				Query: `SELECT n, COUNT(*) as cnt FROM (VALUES(1),(2.5),(1),(2.5),(3),(1)) v(n) GROUP BY n ORDER BY cnt DESC LIMIT 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0025-select-n-count-*-as"},
 			},
 			{
 				// DISTINCT + ORDER BY + LIMIT
-				Query: `SELECT DISTINCT n FROM (VALUES(1),(2.5),(1),(3),(2.5),(4)) v(n) ORDER BY n DESC LIMIT 3;`,
-				Expected: []sql.Row{
-					{Numeric("4")},
-					{Numeric("3")},
-					{Numeric("2.5")},
-				},
+				Query: `SELECT DISTINCT n FROM (VALUES(1),(2.5),(1),(3),(2.5),(4)) v(n) ORDER BY n DESC LIMIT 3;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0026-select-distinct-n-from-values"},
 			},
 			{
 				// WHERE + ORDER BY + LIMIT
-				Query: `SELECT * FROM (VALUES(1),(2.5),(3),(4.5),(5)) v(n) WHERE n > 1 ORDER BY n DESC LIMIT 2;`,
-				Expected: []sql.Row{
-					{Numeric("5")},
-					{Numeric("4.5")},
-				},
+				Query: `SELECT * FROM (VALUES(1),(2.5),(3),(4.5),(5)) v(n) WHERE n > 1 ORDER BY n DESC LIMIT 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0027-select-*-from-values-1"},
 			},
 		},
 	},
@@ -292,17 +183,11 @@ var ValuesStatementTests = []ScriptTest{
 		Assertions: []ScriptTestAssertion{
 			{
 				// Single row should pass through unchanged
-				Query: `SELECT * FROM (VALUES(42)) v(n);`,
-				Expected: []sql.Row{
-					{int32(42)},
-				},
+				Query: `SELECT * FROM (VALUES(42)) v(n);`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0028-select-*-from-values-42"},
 			},
 			{
 				// Single row with decimal
-				Query: `SELECT * FROM (VALUES(3.14)) v(n);`,
-				Expected: []sql.Row{
-					{Numeric("3.14")},
-				},
+				Query: `SELECT * FROM (VALUES(3.14)) v(n);`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0029-select-*-from-values-3.14"},
 			},
 		},
 	},
@@ -311,38 +196,19 @@ var ValuesStatementTests = []ScriptTest{
 		Assertions: []ScriptTestAssertion{
 			{
 				// NULL mixed with integers - should resolve to integer, NULL stays NULL
-				Query: `SELECT * FROM (VALUES(1),(NULL),(3)) v(n);`,
-				Expected: []sql.Row{
-					{int32(1)},
-					{nil},
-					{int32(3)},
-				},
+				Query: `SELECT * FROM (VALUES(1),(NULL),(3)) v(n);`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0030-select-*-from-values-1"},
 			},
 			{
 				// NULL mixed with decimals - should resolve to numeric
-				Query: `SELECT * FROM (VALUES(1.5),(NULL),(3.5)) v(n);`,
-				Expected: []sql.Row{
-					{Numeric("1.5")},
-					{nil},
-					{Numeric("3.5")},
-				},
+				Query: `SELECT * FROM (VALUES(1.5),(NULL),(3.5)) v(n);`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0031-select-*-from-values-1.5"},
 			},
 			{
 				// NULL mixed with int and decimal - should resolve to numeric
-				Query: `SELECT * FROM (VALUES(1),(NULL),(2.5)) v(n);`,
-				Expected: []sql.Row{
-					{Numeric("1")},
-					{nil},
-					{Numeric("2.5")},
-				},
+				Query: `SELECT * FROM (VALUES(1),(NULL),(2.5)) v(n);`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0032-select-*-from-values-1"},
 			},
 			{
 				// All NULLs - should resolve to text (PostgreSQL behavior)
-				Query: `SELECT * FROM (VALUES(NULL),(NULL)) v(n);`,
-				Expected: []sql.Row{
-					{nil},
-					{nil},
-				},
+				Query: `SELECT * FROM (VALUES(NULL),(NULL)) v(n);`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0033-select-*-from-values-null"},
 			},
 		},
 	},
@@ -353,13 +219,14 @@ var ValuesStatementTests = []ScriptTest{
 				// Integer and unknown('text'): FindCommonType resolves to int4 (the non-unknown type),
 				// then the I/O cast from 'text' to int4 fails at execution time. This matches PostgreSQL behavior:
 				// psql returns "invalid input syntax for type integer: "text""
-				Query:       `SELECT * FROM (VALUES(1),('text'),(3)) v(n);`,
-				ExpectedErr: "invalid input syntax for type int4",
+				Query: `SELECT * FROM (VALUES(1),('text'),(3)) v(n);`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0034-select-*-from-values-1",
+
+					// Boolean and integer cannot be matched
+					Compare: "sqlstate"},
 			},
 			{
-				// Boolean and integer cannot be matched
-				Query:       `SELECT * FROM (VALUES(true),(1),(false)) v(n);`,
-				ExpectedErr: "cannot be matched",
+
+				Query: `SELECT * FROM (VALUES(true),(1),(false)) v(n);`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0035-select-*-from-values-true", Compare: "sqlstate"},
 			},
 		},
 	},
@@ -368,20 +235,11 @@ var ValuesStatementTests = []ScriptTest{
 		Assertions: []ScriptTestAssertion{
 			{
 				// All string literals should resolve to text
-				Query: `SELECT * FROM (VALUES('a'),('b'),('c')) v(n);`,
-				Expected: []sql.Row{
-					{"a"},
-					{"b"},
-					{"c"},
-				},
+				Query: `SELECT * FROM (VALUES('a'),('b'),('c')) v(n);`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0036-select-*-from-values-a"},
 			},
 			{
 				// String literals with operations
-				Query: `SELECT n || '!' FROM (VALUES('hello'),('world')) v(n);`,
-				Expected: []sql.Row{
-					{"hello!"},
-					{"world!"},
-				},
+				Query: `SELECT n || '!' FROM (VALUES('hello'),('world')) v(n);`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0037-select-n-||-!-from"},
 			},
 		},
 	},
@@ -390,19 +248,11 @@ var ValuesStatementTests = []ScriptTest{
 		Assertions: []ScriptTestAssertion{
 			{
 				// Integer arrays: doltgresql returns arrays in text format over the wire
-				Query: `SELECT * FROM (VALUES(ARRAY[1,2]),(ARRAY[3,4])) v(arr);`,
-				Expected: []sql.Row{
-					{"{1,2}"},
-					{"{3,4}"},
-				},
+				Query: `SELECT * FROM (VALUES(ARRAY[1,2]),(ARRAY[3,4])) v(arr);`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0038-select-*-from-values-array[1"},
 			},
 			{
 				// Text arrays: doltgresql returns arrays in text format over the wire
-				Query: `SELECT * FROM (VALUES(ARRAY['a','b']),(ARRAY['c','d'])) v(arr);`,
-				Expected: []sql.Row{
-					{"{a,b}"},
-					{"{c,d}"},
-				},
+				Query: `SELECT * FROM (VALUES(ARRAY['a','b']),(ARRAY['c','d'])) v(arr);`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0039-select-*-from-values-array["},
 			},
 		},
 	},
@@ -411,30 +261,15 @@ var ValuesStatementTests = []ScriptTest{
 		Assertions: []ScriptTestAssertion{
 			{
 				// All integers
-				Query: `SELECT * FROM (VALUES(1),(2),(3)) v(n);`,
-				Expected: []sql.Row{
-					{int32(1)},
-					{int32(2)},
-					{int32(3)},
-				},
+				Query: `SELECT * FROM (VALUES(1),(2),(3)) v(n);`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0040-select-*-from-values-1"},
 			},
 			{
 				// All decimals
-				Query: `SELECT * FROM (VALUES(1.5),(2.5),(3.5)) v(n);`,
-				Expected: []sql.Row{
-					{Numeric("1.5")},
-					{Numeric("2.5")},
-					{Numeric("3.5")},
-				},
+				Query: `SELECT * FROM (VALUES(1.5),(2.5),(3.5)) v(n);`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0041-select-*-from-values-1.5"},
 			},
 			{
 				// All text
-				Query: `SELECT * FROM (VALUES('x'),('y'),('z')) v(n);`,
-				Expected: []sql.Row{
-					{"x"},
-					{"y"},
-					{"z"},
-				},
+				Query: `SELECT * FROM (VALUES('x'),('y'),('z')) v(n);`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0042-select-*-from-values-x"},
 			},
 		},
 	},
@@ -443,21 +278,11 @@ var ValuesStatementTests = []ScriptTest{
 		Assertions: []ScriptTestAssertion{
 			{
 				// Only first column needs cast
-				Query: `SELECT * FROM (VALUES(1, 'a'),(2.5, 'b'),(3, 'c')) v(num, str);`,
-				Expected: []sql.Row{
-					{Numeric("1"), "a"},
-					{Numeric("2.5"), "b"},
-					{Numeric("3"), "c"},
-				},
+				Query: `SELECT * FROM (VALUES(1, 'a'),(2.5, 'b'),(3, 'c')) v(num, str);`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0043-select-*-from-values-1"},
 			},
 			{
 				// Only second column needs cast
-				Query: `SELECT * FROM (VALUES(1, 10),(2, 20.5),(3, 30)) v(a, b);`,
-				Expected: []sql.Row{
-					{int32(1), Numeric("10")},
-					{int32(2), Numeric("20.5")},
-					{int32(3), Numeric("30")},
-				},
+				Query: `SELECT * FROM (VALUES(1, 10),(2, 20.5),(3, 30)) v(a, b);`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0044-select-*-from-values-1"},
 			},
 		},
 	},
@@ -466,17 +291,11 @@ var ValuesStatementTests = []ScriptTest{
 		Assertions: []ScriptTestAssertion{
 			{
 				// Mixed types via CTE
-				Query: `WITH nums AS (SELECT * FROM (VALUES(1),(2.5),(3)) v(n)) SELECT * FROM nums;`,
-				Expected: []sql.Row{
-					{Numeric("1")},
-					{Numeric("2.5")},
-					{Numeric("3")},
-				},
+				Query: `WITH nums AS (SELECT * FROM (VALUES(1),(2.5),(3)) v(n)) SELECT * FROM nums;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0045-with-nums-as-select-*"},
 			},
 			{
 				// SUM over CTE
-				Query:    `WITH nums AS (SELECT * FROM (VALUES(1),(2.5),(3)) v(n)) SELECT SUM(n) FROM nums;`,
-				Expected: []sql.Row{{Numeric("6.5")}},
+				Query: `WITH nums AS (SELECT * FROM (VALUES(1),(2.5),(3)) v(n)) SELECT SUM(n) FROM nums;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0046-with-nums-as-select-*"},
 			},
 		},
 	},
@@ -484,20 +303,11 @@ var ValuesStatementTests = []ScriptTest{
 		Name: "VALUES with JOIN",
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: `SELECT a.n, b.label FROM (VALUES(1),(2),(3)) a(n) JOIN (VALUES(1, 'one'),(2, 'two'),(3, 'three')) b(id, label) ON a.n = b.id;`,
-				Expected: []sql.Row{
-					{int32(1), "one"},
-					{int32(2), "two"},
-					{int32(3), "three"},
-				},
+				Query: `SELECT a.n, b.label FROM (VALUES(1),(2),(3)) a(n) JOIN (VALUES(1, 'one'),(2, 'two'),(3, 'three')) b(id, label) ON a.n = b.id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0047-select-a.n-b.label-from-values"},
 			},
 			{
 				// Mixed types in one of the joined VALUES
-				Query: `SELECT a.n, b.label FROM (VALUES(1),(2.5),(3)) a(n) JOIN (VALUES(1, 'one'),(3, 'three')) b(id, label) ON a.n = b.id;`,
-				Expected: []sql.Row{
-					{Numeric("1"), "one"},
-					{Numeric("3"), "three"},
-				},
+				Query: `SELECT a.n, b.label FROM (VALUES(1),(2.5),(3)) a(n) JOIN (VALUES(1, 'one'),(3, 'three')) b(id, label) ON a.n = b.id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0048-select-a.n-b.label-from-values"},
 			},
 		},
 	},
@@ -506,20 +316,11 @@ var ValuesStatementTests = []ScriptTest{
 		Assertions: []ScriptTestAssertion{
 			{
 				// All booleans, returned as "t"/"f" over the wire
-				Query: `SELECT * FROM (VALUES(true),(false),(true)) v(b);`,
-				Expected: []sql.Row{
-					{"t"},
-					{"f"},
-					{"t"},
-				},
+				Query: `SELECT * FROM (VALUES(true),(false),(true)) v(b);`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0049-select-*-from-values-true"},
 			},
 			{
 				// Boolean WHERE filter
-				Query: `SELECT * FROM (VALUES(true),(false),(true),(false)) v(b) WHERE b = true;`,
-				Expected: []sql.Row{
-					{"t"},
-					{"t"},
-				},
+				Query: `SELECT * FROM (VALUES(true),(false),(true),(false)) v(b) WHERE b = true;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0050-select-*-from-values-true"},
 			},
 		},
 	},
@@ -528,24 +329,15 @@ var ValuesStatementTests = []ScriptTest{
 		Assertions: []ScriptTestAssertion{
 			{
 				// Column names w/ quotes preserve case; unquoted are lowercased by the parser
-				Query: `SELECT "ColA", "colb" FROM (VALUES(1, 2),(3.5, 4.5)) v("ColA", "colb");`,
-				Expected: []sql.Row{
-					{Numeric("1"), Numeric("2")},
-					{Numeric("3.5"), Numeric("4.5")},
-				},
+				Query: `SELECT "ColA", "colb" FROM (VALUES(1, 2),(3.5, 4.5)) v("ColA", "colb");`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0051-select-cola-colb-from-values"},
 			},
 			{
 				// Mixed case: one quoted (preserved), one unquoted (lowered)
-				Query: `SELECT "MixedCase", plain FROM (VALUES(1, 'a'),(2.5, 'b')) v("MixedCase", plain);`,
-				Expected: []sql.Row{
-					{Numeric("1"), "a"},
-					{Numeric("2.5"), "b"},
-				},
+				Query: `SELECT "MixedCase", plain FROM (VALUES(1, 'a'),(2.5, 'b')) v("MixedCase", plain);`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0052-select-mixedcase-plain-from-values"},
 			},
 			{
 				// SUM with quoted column name
-				Query:    `SELECT SUM("Val") FROM (VALUES(1),(2.5),(3)) v("Val");`,
-				Expected: []sql.Row{{Numeric("6.5")}},
+				Query: `SELECT SUM("Val") FROM (VALUES(1),(2.5),(3)) v("Val");`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0053-select-sum-val-from-values"},
 			},
 		},
 	},
@@ -558,10 +350,7 @@ var ValuesStatementTests = []ScriptTest{
 				// Columns "Val" and "val" both become "val" after
 				// strings.ToLower, so their aggregates match the wrong column.
 				Skip:  true,
-				Query: `SELECT SUM("Val"), SUM("val") FROM (VALUES(1, 10),(2.5, 20)) v("Val", "val");`,
-				Expected: []sql.Row{
-					{Numeric("3.5"), int64(30)},
-				},
+				Query: `SELECT SUM("Val"), SUM("val") FROM (VALUES(1, 10),(2.5, 20)) v("Val", "val");`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0054-select-sum-val-sum-val"},
 			},
 		},
 	},
@@ -569,20 +358,10 @@ var ValuesStatementTests = []ScriptTest{
 		Name: "values inside subquery preserves projections",
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: `SELECT * FROM (SELECT n * 2 AS doubled FROM (VALUES (1), (2), (3)) v(n)) sub;`,
-				Expected: []sql.Row{
-					{2},
-					{4},
-					{6},
-				},
+				Query: `SELECT * FROM (SELECT n * 2 AS doubled FROM (VALUES (1), (2), (3)) v(n)) sub;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0055-select-*-from-select-n"},
 			},
 			{
-				Query: `SELECT * FROM (SELECT n * 2 AS doubled FROM (VALUES (1), (2.5), (3)) v(n)) sub;`,
-				Expected: []sql.Row{
-					{Numeric("2")},
-					{Numeric("5.0")},
-					{Numeric("6")},
-				},
+				Query: `SELECT * FROM (SELECT n * 2 AS doubled FROM (VALUES (1), (2.5), (3)) v(n)) sub;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0056-select-*-from-select-n"},
 			},
 		},
 	},
@@ -590,18 +369,10 @@ var ValuesStatementTests = []ScriptTest{
 		Name: "values inside subquery preserves LIMIT",
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: `SELECT * FROM (SELECT * FROM (VALUES (1), (2), (3), (4)) v(n) LIMIT 2) sub;`,
-				Expected: []sql.Row{
-					{1},
-					{2},
-				},
+				Query: `SELECT * FROM (SELECT * FROM (VALUES (1), (2), (3), (4)) v(n) LIMIT 2) sub;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0057-select-*-from-select-*"},
 			},
 			{
-				Query: `SELECT * FROM (SELECT * FROM (VALUES (1), (2.5), (3), (4.5)) v(n) LIMIT 2) sub;`,
-				Expected: []sql.Row{
-					{Numeric("1")},
-					{Numeric("2.5")},
-				},
+				Query: `SELECT * FROM (SELECT * FROM (VALUES (1), (2.5), (3), (4.5)) v(n) LIMIT 2) sub;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0058-select-*-from-select-*"},
 			},
 		},
 	},
@@ -609,20 +380,10 @@ var ValuesStatementTests = []ScriptTest{
 		Name: "values inside subquery preserves ORDER BY",
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: `SELECT * FROM (SELECT * FROM (VALUES (3), (1), (2)) v(n) ORDER BY n) sub;`,
-				Expected: []sql.Row{
-					{1},
-					{2},
-					{3},
-				},
+				Query: `SELECT * FROM (SELECT * FROM (VALUES (3), (1), (2)) v(n) ORDER BY n) sub;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0059-select-*-from-select-*"},
 			},
 			{
-				Query: `SELECT * FROM (SELECT * FROM (VALUES (3), (1.5), (2)) v(n) ORDER BY n) sub;`,
-				Expected: []sql.Row{
-					{Numeric("1.5")},
-					{Numeric("2")},
-					{Numeric("3")},
-				},
+				Query: `SELECT * FROM (SELECT * FROM (VALUES (3), (1.5), (2)) v(n) ORDER BY n) sub;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0060-select-*-from-select-*"},
 			},
 		},
 	},
@@ -630,20 +391,10 @@ var ValuesStatementTests = []ScriptTest{
 		Name: "values inside subquery preserves DISTINCT",
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: `SELECT * FROM (SELECT DISTINCT * FROM (VALUES (1), (1), (2), (2), (3)) v(n)) sub;`,
-				Expected: []sql.Row{
-					{1},
-					{2},
-					{3},
-				},
+				Query: `SELECT * FROM (SELECT DISTINCT * FROM (VALUES (1), (1), (2), (2), (3)) v(n)) sub;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0061-select-*-from-select-distinct"},
 			},
 			{
-				Query: `SELECT * FROM (SELECT DISTINCT * FROM (VALUES (1), (1), (2.5), (2.5), (3)) v(n)) sub;`,
-				Expected: []sql.Row{
-					{Numeric("1")},
-					{Numeric("2.5")},
-					{Numeric("3")},
-				},
+				Query: `SELECT * FROM (SELECT DISTINCT * FROM (VALUES (1), (1), (2.5), (2.5), (3)) v(n)) sub;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0062-select-*-from-select-distinct"},
 			},
 		},
 	},
@@ -651,18 +402,10 @@ var ValuesStatementTests = []ScriptTest{
 		Name: "values inside subquery preserves WHERE",
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: `SELECT * FROM (SELECT * FROM (VALUES (1), (2), (3), (4), (5)) v(n) WHERE n > 3) sub;`,
-				Expected: []sql.Row{
-					{4},
-					{5},
-				},
+				Query: `SELECT * FROM (SELECT * FROM (VALUES (1), (2), (3), (4), (5)) v(n) WHERE n > 3) sub;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0063-select-*-from-select-*"},
 			},
 			{
-				Query: `SELECT * FROM (SELECT * FROM (VALUES (1), (2.5), (3), (4.5), (5)) v(n) WHERE n > 3) sub;`,
-				Expected: []sql.Row{
-					{Numeric("4.5")},
-					{Numeric("5")},
-				},
+				Query: `SELECT * FROM (SELECT * FROM (VALUES (1), (2.5), (3), (4.5), (5)) v(n) WHERE n > 3) sub;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0064-select-*-from-select-*"},
 			},
 		},
 	},
@@ -670,32 +413,16 @@ var ValuesStatementTests = []ScriptTest{
 		Name: "values inside subquery preserves OFFSET",
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: `SELECT * FROM (SELECT * FROM (VALUES (10), (20), (30)) v(n) OFFSET 1) sub;`,
-				Expected: []sql.Row{
-					{20},
-					{30},
-				},
+				Query: `SELECT * FROM (SELECT * FROM (VALUES (10), (20), (30)) v(n) OFFSET 1) sub;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0065-select-*-from-select-*"},
 			},
 			{
-				Query: `SELECT * FROM (SELECT * FROM (VALUES (10), (20), (30), (40), (50)) v(n) LIMIT 2 OFFSET 1) sub;`,
-				Expected: []sql.Row{
-					{20},
-					{30},
-				},
+				Query: `SELECT * FROM (SELECT * FROM (VALUES (10), (20), (30), (40), (50)) v(n) LIMIT 2 OFFSET 1) sub;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0066-select-*-from-select-*"},
 			},
 			{
-				Query: `SELECT * FROM (SELECT * FROM (VALUES (10), (20.5), (30)) v(n) OFFSET 1) sub;`,
-				Expected: []sql.Row{
-					{Numeric("20.5")},
-					{Numeric("30")},
-				},
+				Query: `SELECT * FROM (SELECT * FROM (VALUES (10), (20.5), (30)) v(n) OFFSET 1) sub;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0067-select-*-from-select-*"},
 			},
 			{
-				Query: `SELECT * FROM (SELECT * FROM (VALUES (10), (20.5), (30), (40.5), (50)) v(n) LIMIT 2 OFFSET 1) sub;`,
-				Expected: []sql.Row{
-					{Numeric("20.5")},
-					{Numeric("30")},
-				},
+				Query: `SELECT * FROM (SELECT * FROM (VALUES (10), (20.5), (30), (40.5), (50)) v(n) LIMIT 2 OFFSET 1) sub;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0068-select-*-from-select-*"},
 			},
 		},
 	},
@@ -703,20 +430,10 @@ var ValuesStatementTests = []ScriptTest{
 		Name: "values inside subquery preserves ORDER BY with LIMIT",
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: `SELECT * FROM (SELECT * FROM (VALUES (5), (3), (1), (4), (2)) v(n) ORDER BY n LIMIT 3) sub;`,
-				Expected: []sql.Row{
-					{1},
-					{2},
-					{3},
-				},
+				Query: `SELECT * FROM (SELECT * FROM (VALUES (5), (3), (1), (4), (2)) v(n) ORDER BY n LIMIT 3) sub;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0069-select-*-from-select-*"},
 			},
 			{
-				Query: `SELECT * FROM (SELECT * FROM (VALUES (5), (3.5), (1), (4), (2.5)) v(n) ORDER BY n LIMIT 3) sub;`,
-				Expected: []sql.Row{
-					{Numeric("1")},
-					{Numeric("2.5")},
-					{Numeric("3.5")},
-				},
+				Query: `SELECT * FROM (SELECT * FROM (VALUES (5), (3.5), (1), (4), (2.5)) v(n) ORDER BY n LIMIT 3) sub;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0070-select-*-from-select-*"},
 			},
 		},
 	},
@@ -724,20 +441,10 @@ var ValuesStatementTests = []ScriptTest{
 		Name: "values inside subquery preserves GROUP BY with aggregate",
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: `SELECT * FROM (SELECT n, count(*) AS cnt FROM (VALUES (1), (1), (2), (2), (2), (3)) v(n) GROUP BY n ORDER BY n) sub;`,
-				Expected: []sql.Row{
-					{1, int64(2)},
-					{2, int64(3)},
-					{3, int64(1)},
-				},
+				Query: `SELECT * FROM (SELECT n, count(*) AS cnt FROM (VALUES (1), (1), (2), (2), (2), (3)) v(n) GROUP BY n ORDER BY n) sub;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0071-select-*-from-select-n"},
 			},
 			{
-				Query: `SELECT * FROM (SELECT n, count(*) AS cnt FROM (VALUES (1), (1), (2.5), (2.5), (2.5), (3)) v(n) GROUP BY n ORDER BY n) sub;`,
-				Expected: []sql.Row{
-					{Numeric("1"), int64(2)},
-					{Numeric("2.5"), int64(3)},
-					{Numeric("3"), int64(1)},
-				},
+				Query: `SELECT * FROM (SELECT n, count(*) AS cnt FROM (VALUES (1), (1), (2.5), (2.5), (2.5), (3)) v(n) GROUP BY n ORDER BY n) sub;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0072-select-*-from-select-n"},
 			},
 		},
 	},
@@ -745,18 +452,10 @@ var ValuesStatementTests = []ScriptTest{
 		Name: "values inside subquery preserves HAVING",
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: `SELECT * FROM (SELECT n, count(*) AS cnt FROM (VALUES (1), (1), (2), (2), (2), (3)) v(n) GROUP BY n HAVING count(*) > 1 ORDER BY n) sub;`,
-				Expected: []sql.Row{
-					{1, int64(2)},
-					{2, int64(3)},
-				},
+				Query: `SELECT * FROM (SELECT n, count(*) AS cnt FROM (VALUES (1), (1), (2), (2), (2), (3)) v(n) GROUP BY n HAVING count(*) > 1 ORDER BY n) sub;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0073-select-*-from-select-n"},
 			},
 			{
-				Query: `SELECT * FROM (SELECT n, count(*) AS cnt FROM (VALUES (1), (1), (2.5), (2.5), (2.5), (3)) v(n) GROUP BY n HAVING count(*) > 1 ORDER BY n) sub;`,
-				Expected: []sql.Row{
-					{Numeric("1"), int64(2)},
-					{Numeric("2.5"), int64(3)},
-				},
+				Query: `SELECT * FROM (SELECT n, count(*) AS cnt FROM (VALUES (1), (1), (2.5), (2.5), (2.5), (3)) v(n) GROUP BY n HAVING count(*) > 1 ORDER BY n) sub;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0074-select-*-from-select-n"},
 			},
 		},
 	},
@@ -764,20 +463,10 @@ var ValuesStatementTests = []ScriptTest{
 		Name: "values inside subquery preserves column aliasing",
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: `SELECT * FROM (SELECT n AS val, n * 10 AS tenfold FROM (VALUES (1), (2), (3)) v(n)) sub;`,
-				Expected: []sql.Row{
-					{1, 10},
-					{2, 20},
-					{3, 30},
-				},
+				Query: `SELECT * FROM (SELECT n AS val, n * 10 AS tenfold FROM (VALUES (1), (2), (3)) v(n)) sub;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0075-select-*-from-select-n"},
 			},
 			{
-				Query: `SELECT * FROM (SELECT n AS val, n * 10 AS tenfold FROM (VALUES (1), (2.5), (3)) v(n)) sub;`,
-				Expected: []sql.Row{
-					{Numeric("1"), Numeric("10")},
-					{Numeric("2.5"), Numeric("25.0")},
-					{Numeric("3"), Numeric("30")},
-				},
+				Query: `SELECT * FROM (SELECT n AS val, n * 10 AS tenfold FROM (VALUES (1), (2.5), (3)) v(n)) sub;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0076-select-*-from-select-n"},
 			},
 		},
 	},
@@ -785,12 +474,7 @@ var ValuesStatementTests = []ScriptTest{
 		Name: "values inside subquery preserves column subset selection",
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: `SELECT * FROM (SELECT a FROM (VALUES (1, 10), (2, 20), (3, 30)) v(a, b)) sub;`,
-				Expected: []sql.Row{
-					{1},
-					{2},
-					{3},
-				},
+				Query: `SELECT * FROM (SELECT a FROM (VALUES (1, 10), (2, 20), (3, 30)) v(a, b)) sub;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0077-select-*-from-select-a"},
 			},
 		},
 	},
@@ -798,12 +482,7 @@ var ValuesStatementTests = []ScriptTest{
 		Name: "values subquery trivial SELECT * still unwraps correctly",
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: `SELECT * FROM (SELECT * FROM (VALUES (1), (2), (3)) v(n)) sub;`,
-				Expected: []sql.Row{
-					{1},
-					{2},
-					{3},
-				},
+				Query: `SELECT * FROM (SELECT * FROM (VALUES (1), (2), (3)) v(n)) sub;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0078-select-*-from-select-*"},
 			},
 		},
 	},
@@ -811,18 +490,10 @@ var ValuesStatementTests = []ScriptTest{
 		Name: "values inside subquery with multiple combined clauses",
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: `SELECT * FROM (SELECT DISTINCT n FROM (VALUES (3), (1), (1), (2), (2), (3)) v(n) ORDER BY n LIMIT 2) sub;`,
-				Expected: []sql.Row{
-					{1},
-					{2},
-				},
+				Query: `SELECT * FROM (SELECT DISTINCT n FROM (VALUES (3), (1), (1), (2), (2), (3)) v(n) ORDER BY n LIMIT 2) sub;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0079-select-*-from-select-distinct"},
 			},
 			{
-				Query: `SELECT * FROM (SELECT DISTINCT n FROM (VALUES (3), (1.5), (1.5), (2), (2), (3)) v(n) ORDER BY n LIMIT 2) sub;`,
-				Expected: []sql.Row{
-					{Numeric("1.5")},
-					{Numeric("2")},
-				},
+				Query: `SELECT * FROM (SELECT DISTINCT n FROM (VALUES (3), (1.5), (1.5), (2), (2), (3)) v(n) ORDER BY n LIMIT 2) sub;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0080-select-*-from-select-distinct"},
 			},
 		},
 	},
@@ -830,18 +501,10 @@ var ValuesStatementTests = []ScriptTest{
 		Name: "values in JOIN preserves inner subquery semantics",
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: `SELECT a.n, b.m FROM (VALUES (1), (2)) a(n) JOIN (SELECT m * 10 AS m FROM (VALUES (1), (2)) v(m)) b ON a.n = b.m / 10;`,
-				Expected: []sql.Row{
-					{1, 10},
-					{2, 20},
-				},
+				Query: `SELECT a.n, b.m FROM (VALUES (1), (2)) a(n) JOIN (SELECT m * 10 AS m FROM (VALUES (1), (2)) v(m)) b ON a.n = b.m / 10;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0081-select-a.n-b.m-from-values"},
 			},
 			{
-				Query: `SELECT a.n, b.m FROM (VALUES (1), (2.5)) a(n) JOIN (SELECT m * 10 AS m FROM (VALUES (1), (2.5)) v(m)) b ON a.n = b.m / 10;`,
-				Expected: []sql.Row{
-					{Numeric("1"), Numeric("10")},
-					{Numeric("2.5"), Numeric("25.0")},
-				},
+				Query: `SELECT a.n, b.m FROM (VALUES (1), (2.5)) a(n) JOIN (SELECT m * 10 AS m FROM (VALUES (1), (2.5)) v(m)) b ON a.n = b.m / 10;`, PostgresOracle: ScriptTestPostgresOracle{ID: "values-statement-test-testvaluesstatement-0082-select-a.n-b.m-from-values"},
 			},
 		},
 	},

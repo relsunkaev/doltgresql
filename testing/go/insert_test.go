@@ -37,11 +37,7 @@ func TestInsert(t *testing.T) {
 					SkipResultsCheck: true,
 				},
 				{
-					Query: "SELECT * FROM mytable order by id",
-					Expected: []sql.Row{
-						{1, "hello"},
-						{2, "world"},
-					},
+					Query: "SELECT * FROM mytable order by id", PostgresOracle: ScriptTestPostgresOracle{ID: "insert-test-testinsert-0001-select-*-from-mytable-order"},
 				},
 			},
 		},
@@ -60,11 +56,7 @@ func TestInsert(t *testing.T) {
 					SkipResultsCheck: true,
 				},
 				{
-					Query: "SELECT * FROM mytable order by id",
-					Expected: []sql.Row{
-						{1, "hello"},
-						{2, "world"},
-					},
+					Query: "SELECT * FROM mytable order by id", PostgresOracle: ScriptTestPostgresOracle{ID: "insert-test-testinsert-0002-select-*-from-mytable-order"},
 				},
 			},
 		},
@@ -97,11 +89,7 @@ func TestInsert(t *testing.T) {
 					Query: "INSERT INTO mytable (ID, naME) VALUES (1, 'not inserted') ON CONFLICT (id) DO NOTHING",
 				},
 				{
-					Query: "SELECT * FROM mytable order by id",
-					Expected: []sql.Row{
-						{1, "world"},
-						{2, "conflict"},
-					},
+					Query: "SELECT * FROM mytable order by id", PostgresOracle: ScriptTestPostgresOracle{ID: "insert-test-testinsert-0003-select-*-from-mytable-order"},
 				},
 				{
 					Query: "INSERT INTO mytable (ID, naME) VALUES (1, 'hello') ON CONFLICT (id) DO UPDATE set name = concat('new', name)",
@@ -209,10 +197,7 @@ ON CONFLICT (id) do update set c1 = $4`,
 					SkipResultsCheck: true,
 				},
 				{
-					Query: "SELECT * FROM t",
-					Expected: []sql.Row{
-						{nil, nil},
-					},
+					Query: "SELECT * FROM t", PostgresOracle: ScriptTestPostgresOracle{ID: "insert-test-testinsert-0010-select-*-from-t"},
 				},
 			},
 		},
@@ -227,10 +212,7 @@ ON CONFLICT (id) do update set c1 = $4`,
 					SkipResultsCheck: true,
 				},
 				{
-					Query: "SELECT * FROM t",
-					Expected: []sql.Row{
-						{123, 456},
-					},
+					Query: "SELECT * FROM t", PostgresOracle: ScriptTestPostgresOracle{ID: "insert-test-testinsert-0011-select-*-from-t"},
 				},
 			},
 		},
@@ -244,10 +226,7 @@ ON CONFLICT (id) do update set c1 = $4`,
 					Query: `insert into child values (1, 2, 3, 4.5, 6.7, 'hello', 'world', 'text', '{"a": 1}', '2021-01-01 00:00:00');`,
 				},
 				{
-					Query: `select * from child;`,
-					Expected: []sql.Row{
-						{int16(1), int32(2), int64(3), float32(4.5), float64(6.7), "hello", "world", "text", `{"a": 1}`, "2021-01-01 00:00:00"},
-					},
+					Query: `select * from child;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-test-testinsert-0012-select-*-from-child"},
 				},
 			},
 		},
@@ -262,55 +241,31 @@ ON CONFLICT (id) do update set c1 = $4`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "INSERT INTO t (j) VALUES (5), (6), (7) RETURNING i",
-					Expected: []sql.Row{
-						{1}, {2}, {3},
-					},
+					Query: "INSERT INTO t (j) VALUES (5), (6), (7) RETURNING i", PostgresOracle: ScriptTestPostgresOracle{ID: "insert-test-testinsert-0013-insert-into-t-j-values"},
 				},
 				{
-					Query: "INSERT INTO t (j) VALUES (5), (6), (7) RETURNING i+3",
-					Expected: []sql.Row{
-						{7}, {8}, {9},
-					},
+					Query: "INSERT INTO t (j) VALUES (5), (6), (7) RETURNING i+3", PostgresOracle: ScriptTestPostgresOracle{ID: "insert-test-testinsert-0014-insert-into-t-j-values"},
 				},
 				{
-					Query: "INSERT INTO t (j) VALUES (5), (6), (7) RETURNING i+j, j-3*i",
-					Expected: []sql.Row{
-						{12, -16}, {14, -18}, {16, -20},
-					},
+					Query: "INSERT INTO t (j) VALUES (5), (6), (7) RETURNING i+j, j-3*i", PostgresOracle: ScriptTestPostgresOracle{ID: "insert-test-testinsert-0015-insert-into-t-j-values"},
 				},
 				{
-					Query: "INSERT INTO u (j) VALUES (5), (6), (7) RETURNING u",
-					Expected: []sql.Row{
-						{"ac1f3e2d-1e4b-4d3e-8b1f-2b7f1e7f0e3d"}, {"ac1f3e2d-1e4b-4d3e-8b1f-2b7f1e7f0e3d"}, {"ac1f3e2d-1e4b-4d3e-8b1f-2b7f1e7f0e3d"},
-					},
+					Query: "INSERT INTO u (j) VALUES (5), (6), (7) RETURNING u", PostgresOracle: ScriptTestPostgresOracle{ID: "insert-test-testinsert-0016-insert-into-u-j-values"},
 				},
 				{
-					Query: "INSERT INTO s (v2) VALUES (' a') RETURNING concat(v1, v2)",
-					Expected: []sql.Row{
-						{"hello a"},
-					},
+					Query: "INSERT INTO s (v2) VALUES (' a') RETURNING concat(v1, v2)", PostgresOracle: ScriptTestPostgresOracle{ID: "insert-test-testinsert-0017-insert-into-s-v2-values"},
 				},
 				{
-					Query: "INSERT INTO s (v1) VALUES ('sup ') RETURNING concat(v1, v2)",
-					Expected: []sql.Row{
-						{"sup world"},
-					},
+					Query: "INSERT INTO s (v1) VALUES ('sup ') RETURNING concat(v1, v2)", PostgresOracle: ScriptTestPostgresOracle{ID: "insert-test-testinsert-0018-insert-into-s-v1-values"},
 				},
 				{
-					Query: "INSERT INTO s (v2, v1) VALUES ('def', 'abc'), ('xyz', 'uvw') RETURNING concat(v1, v2), concat(v2, v1), 100",
-					Expected: []sql.Row{
-						{"abcdef", "defabc", 100},
-						{"uvwxyz", "xyzuvw", 100},
-					},
+					Query: "INSERT INTO s (v2, v1) VALUES ('def', 'abc'), ('xyz', 'uvw') RETURNING concat(v1, v2), concat(v2, v1), 100", PostgresOracle: ScriptTestPostgresOracle{ID: "insert-test-testinsert-0019-insert-into-s-v2-v1"},
 				},
 				{
-					Query:       "INSERT INTO t (j) VALUES (5), (6), (7) RETURNING i, doesnotexist",
-					ExpectedErr: "could not be found",
+					Query: "INSERT INTO t (j) VALUES (5), (6), (7) RETURNING i, doesnotexist", PostgresOracle: ScriptTestPostgresOracle{ID: "insert-test-testinsert-0020-insert-into-t-j-values", Compare: "sqlstate"},
 				},
 				{
-					Query:       "INSERT INTO t (j) VALUES (5), (6), (7) RETURNING i, doesnotexist(j)",
-					ExpectedErr: "function: 'doesnotexist' not found",
+					Query: "INSERT INTO t (j) VALUES (5), (6), (7) RETURNING i, doesnotexist(j)", PostgresOracle: ScriptTestPostgresOracle{ID: "insert-test-testinsert-0021-insert-into-t-j-values", Compare: "sqlstate"},
 				},
 				{
 					Query:    "INSERT INTO public.t (j) VALUES (8) RETURNING t.j",
@@ -348,8 +303,7 @@ ON CONFLICT (id) do update set c1 = $4`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `INSERT INTO "django_migrations" ("app", "name", "applied") VALUES ('contenttypes', '0001_initial', '2025-03-24T19:21:59.690479+00:00'::timestamptz) RETURNING "django_migrations"."id"`,
-					Expected: []sql.Row{{1}},
+					Query: `INSERT INTO "django_migrations" ("app", "name", "applied") VALUES ('contenttypes', '0001_initial', '2025-03-24T19:21:59.690479+00:00'::timestamptz) RETURNING "django_migrations"."id"`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-test-testinsert-0028-insert-into-django_migrations-app-name"},
 				},
 			},
 		},

@@ -36,8 +36,7 @@ func TestCreateViewSecurityBarrierPersistsReloptionRepro(t *testing.T) {
 				{
 					Query: `SELECT CAST(reloptions AS TEXT)
 						FROM pg_catalog.pg_class
-						WHERE relname = 'security_barrier_view';`,
-					Expected: []sql.Row{{"{security_barrier=true}"}},
+						WHERE relname = 'security_barrier_view';`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-option-correctness-repro-test-testcreateviewsecuritybarrierpersistsreloptionrepro-0001-select-cast-reloptions-as-text"},
 				},
 			},
 		},
@@ -60,8 +59,7 @@ func TestCreateViewSecurityInvokerPersistsReloptionRepro(t *testing.T) {
 				{
 					Query: `SELECT CAST(reloptions AS TEXT)
 						FROM pg_catalog.pg_class
-						WHERE relname = 'security_invoker_metadata_view';`,
-					Expected: []sql.Row{{"{security_invoker=true}"}},
+						WHERE relname = 'security_invoker_metadata_view';`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-option-correctness-repro-test-testcreateviewsecurityinvokerpersistsreloptionrepro-0001-select-cast-reloptions-as-text"},
 				},
 			},
 		},
@@ -91,11 +89,7 @@ func TestCreateViewBareSecurityOptionsPersistTrueReloptionsRepro(t *testing.T) {
 							'bare_security_barrier_view',
 							'bare_security_invoker_view'
 						)
-						ORDER BY relname;`,
-					Expected: []sql.Row{
-						{"bare_security_barrier_view", "{security_barrier=true}"},
-						{"bare_security_invoker_view", "{security_invoker=true}"},
-					},
+						ORDER BY relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-option-correctness-repro-test-testcreateviewbaresecurityoptionspersisttruereloptionsrepro-0001-select-relname-cast-reloptions-as"},
 				},
 			},
 		},
@@ -120,8 +114,7 @@ func TestCreateOrReplaceViewSecurityInvokerPersistsReloptionRepro(t *testing.T) 
 				{
 					Query: `SELECT CAST(reloptions AS TEXT)
 						FROM pg_catalog.pg_class
-						WHERE relname = 'replace_invoker_metadata_view';`,
-					Expected: []sql.Row{{"{security_invoker=true}"}},
+						WHERE relname = 'replace_invoker_metadata_view';`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-option-correctness-repro-test-testcreateorreplaceviewsecurityinvokerpersistsreloptionrepro-0001-select-cast-reloptions-as-text"},
 				},
 			},
 		},

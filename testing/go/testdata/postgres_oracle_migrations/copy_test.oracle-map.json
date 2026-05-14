@@ -1,0 +1,464 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map copy_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/copy_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/copy_test.go:TestCopy#0001",
+      "source": "testing/go/copy_test.go:TestCopy",
+      "ordinal": 1,
+      "scriptName": "tab delimited with header",
+      "oracle": "postgres",
+      "postgresId": "copy-test-testcopy-0001-select-*-from-test_info-order",
+      "suggestedId": "copy-test-testcopy-0001-select-*-from-test_info-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test_info order by 1;",
+      "querySha256": "a3ec3f876311f2592e0a95f3166171bf22e9be8049a7bf1b3025f17c9e440e90",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/copy_test.go:TestCopy#0002",
+      "source": "testing/go/copy_test.go:TestCopy",
+      "ordinal": 2,
+      "scriptName": "tab delimited with header and column names",
+      "oracle": "postgres",
+      "postgresId": "copy-test-testcopy-0002-select-*-from-test_info-order",
+      "suggestedId": "copy-test-testcopy-0002-select-*-from-test_info-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test_info order by 1;",
+      "querySha256": "a3ec3f876311f2592e0a95f3166171bf22e9be8049a7bf1b3025f17c9e440e90",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/copy_test.go:TestCopy#0003",
+      "source": "testing/go/copy_test.go:TestCopy",
+      "ordinal": 3,
+      "scriptName": "tab delimited with quoted column names",
+      "oracle": "postgres",
+      "postgresId": "copy-test-testcopy-0003-select-id-code-capital-name",
+      "suggestedId": "copy-test-testcopy-0003-select-id-code-capital-name",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT \"Id\", \"Code\", \"Capital\", \"Name\" FROM regions ORDER BY \"Id\";",
+      "querySha256": "55b131941b231264a79c07666dac201fc1319b868964483849c2f099c64b552f",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/copy_test.go:TestCopy#0004",
+      "source": "testing/go/copy_test.go:TestCopy",
+      "ordinal": 4,
+      "scriptName": "timestamp columns",
+      "oracle": "postgres",
+      "postgresId": "copy-test-testcopy-0004-select-*-from-tbl1-order",
+      "suggestedId": "copy-test-testcopy-0004-select-*-from-tbl1-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from tbl1 order by pk;",
+      "querySha256": "3f7a941fdafc184fc0b817b267fb4767d52fe61cc5b5bdd726c468a34802ed36",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/copy_test.go:TestCopy#0005",
+      "source": "testing/go/copy_test.go:TestCopy",
+      "ordinal": 5,
+      "scriptName": "basic csv",
+      "oracle": "postgres",
+      "postgresId": "copy-test-testcopy-0005-select-*-from-tbl1-where",
+      "suggestedId": "copy-test-testcopy-0005-select-*-from-tbl1-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from tbl1 where pk = 6 order by pk;",
+      "querySha256": "2aa31132d67963fcef02fd7b8bfd173322250366d012da2593a8bca60bf42a50",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/copy_test.go:TestCopy#0006",
+      "source": "testing/go/copy_test.go:TestCopy",
+      "ordinal": 6,
+      "scriptName": "basic csv",
+      "oracle": "postgres",
+      "postgresId": "copy-test-testcopy-0006-select-*-from-tbl1-where",
+      "suggestedId": "copy-test-testcopy-0006-select-*-from-tbl1-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from tbl1 where pk = 9;",
+      "querySha256": "c5ef956b51df2add2ff97171f461a9bea1eec6a4af7ded2b71dc56061e34cf4a",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/copy_test.go:TestCopy#0007",
+      "source": "testing/go/copy_test.go:TestCopy",
+      "ordinal": 7,
+      "scriptName": "csv with header",
+      "oracle": "postgres",
+      "postgresId": "copy-test-testcopy-0007-select-*-from-tbl1-where",
+      "suggestedId": "copy-test-testcopy-0007-select-*-from-tbl1-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from tbl1 where pk = 6 order by pk;",
+      "querySha256": "2aa31132d67963fcef02fd7b8bfd173322250366d012da2593a8bca60bf42a50",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/copy_test.go:TestCopy#0008",
+      "source": "testing/go/copy_test.go:TestCopy",
+      "ordinal": 8,
+      "scriptName": "generated column",
+      "oracle": "postgres",
+      "postgresId": "copy-test-testcopy-0008-select-*-from-tbl1-where",
+      "suggestedId": "copy-test-testcopy-0008-select-*-from-tbl1-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from tbl1 where pk = 6 order by pk;",
+      "querySha256": "2aa31132d67963fcef02fd7b8bfd173322250366d012da2593a8bca60bf42a50",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/copy_test.go:TestCopy#0009",
+      "source": "testing/go/copy_test.go:TestCopy",
+      "ordinal": 9,
+      "scriptName": "generated column",
+      "oracle": "postgres",
+      "postgresId": "copy-test-testcopy-0009-select-*-from-tbl1-where",
+      "suggestedId": "copy-test-testcopy-0009-select-*-from-tbl1-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from tbl1 where pk = 9;",
+      "querySha256": "c5ef956b51df2add2ff97171f461a9bea1eec6a4af7ded2b71dc56061e34cf4a",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/copy_test.go:TestCopy#0010",
+      "source": "testing/go/copy_test.go:TestCopy",
+      "ordinal": 10,
+      "scriptName": "load multiple chunks",
+      "oracle": "postgres",
+      "postgresId": "copy-test-testcopy-0010-select-*-from-tbl1-where",
+      "suggestedId": "copy-test-testcopy-0010-select-*-from-tbl1-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from tbl1 where pk = 99 order by pk;",
+      "querySha256": "975127be23807a15b1be4f3686a86a18a70114765e193aecb3e969b1e540a66b",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/copy_test.go:TestCopy#0011",
+      "source": "testing/go/copy_test.go:TestCopy",
+      "ordinal": 11,
+      "scriptName": "load psv with headers",
+      "oracle": "postgres",
+      "postgresId": "copy-test-testcopy-0011-select-*-from-test_info-order",
+      "suggestedId": "copy-test-testcopy-0011-select-*-from-test_info-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test_info order by 1;",
+      "querySha256": "a3ec3f876311f2592e0a95f3166171bf22e9be8049a7bf1b3025f17c9e440e90",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/copy_test.go:TestCopy#0012",
+      "source": "testing/go/copy_test.go:TestCopy",
+      "ordinal": 12,
+      "scriptName": "csv from file",
+      "oracle": "postgres",
+      "postgresId": "copy-test-testcopy-0012-select-*-from-tbl1-where",
+      "suggestedId": "copy-test-testcopy-0012-select-*-from-tbl1-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from tbl1 where pk = 6 order by pk;",
+      "querySha256": "2aa31132d67963fcef02fd7b8bfd173322250366d012da2593a8bca60bf42a50",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/copy_test.go:TestCopy#0013",
+      "source": "testing/go/copy_test.go:TestCopy",
+      "ordinal": 13,
+      "scriptName": "csv from file",
+      "oracle": "postgres",
+      "postgresId": "copy-test-testcopy-0013-select-*-from-tbl1-where",
+      "suggestedId": "copy-test-testcopy-0013-select-*-from-tbl1-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from tbl1 where pk = 9;",
+      "querySha256": "c5ef956b51df2add2ff97171f461a9bea1eec6a4af7ded2b71dc56061e34cf4a",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/copy_test.go:TestCopy#0014",
+      "source": "testing/go/copy_test.go:TestCopy",
+      "ordinal": 14,
+      "scriptName": "csv from file with column names",
+      "oracle": "postgres",
+      "postgresId": "copy-test-testcopy-0014-select-*-from-tbl1-where",
+      "suggestedId": "copy-test-testcopy-0014-select-*-from-tbl1-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from tbl1 where pk = 6 order by pk;",
+      "querySha256": "2aa31132d67963fcef02fd7b8bfd173322250366d012da2593a8bca60bf42a50",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/copy_test.go:TestCopy#0015",
+      "source": "testing/go/copy_test.go:TestCopy",
+      "ordinal": 15,
+      "scriptName": "csv from file with column names",
+      "oracle": "postgres",
+      "postgresId": "copy-test-testcopy-0015-select-*-from-tbl1-where",
+      "suggestedId": "copy-test-testcopy-0015-select-*-from-tbl1-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from tbl1 where pk = 9;",
+      "querySha256": "c5ef956b51df2add2ff97171f461a9bea1eec6a4af7ded2b71dc56061e34cf4a",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/copy_test.go:TestCopy#0016",
+      "source": "testing/go/copy_test.go:TestCopy",
+      "ordinal": 16,
+      "scriptName": "tab delimited with header from file",
+      "oracle": "postgres",
+      "postgresId": "copy-test-testcopy-0016-select-*-from-test_info-order",
+      "suggestedId": "copy-test-testcopy-0016-select-*-from-test_info-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test_info order by 1;",
+      "querySha256": "a3ec3f876311f2592e0a95f3166171bf22e9be8049a7bf1b3025f17c9e440e90",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/copy_test.go:TestCopy#0017",
+      "source": "testing/go/copy_test.go:TestCopy",
+      "ordinal": 17,
+      "scriptName": "tab delimited with uuid values",
+      "oracle": "internal",
+      "suggestedId": "copy-test-testcopy-0017-select-*-from-uuid_table-order",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM uuid_table order by id;",
+      "querySha256": "29a269899003458f9c078f999f35bc950d7da981caff811f8c737b27d96e7bf0",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/copy_test.go:TestCopy#0018",
+      "source": "testing/go/copy_test.go:TestCopy",
+      "ordinal": 18,
+      "scriptName": "file not found",
+      "oracle": "internal",
+      "suggestedId": "copy-test-testcopy-0018",
+      "expectedKind": "error",
+      "nonLiteral": [
+        "Query"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/copy_test.go:TestCopy#0019",
+      "source": "testing/go/copy_test.go:TestCopy",
+      "ordinal": 19,
+      "scriptName": "wrong columns",
+      "oracle": "internal",
+      "suggestedId": "copy-test-testcopy-0019",
+      "expectedKind": "error",
+      "nonLiteral": [
+        "Query"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/copy_test.go:TestCopy#0020",
+      "source": "testing/go/copy_test.go:TestCopy",
+      "ordinal": 20,
+      "scriptName": "wrong columns",
+      "oracle": "internal",
+      "suggestedId": "copy-test-testcopy-0020",
+      "expectedKind": "error",
+      "nonLiteral": [
+        "Query"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/copy_test.go:TestCopy#0021",
+      "source": "testing/go/copy_test.go:TestCopy",
+      "ordinal": 21,
+      "scriptName": "table not found",
+      "oracle": "internal",
+      "suggestedId": "copy-test-testcopy-0021",
+      "expectedKind": "error",
+      "nonLiteral": [
+        "Query"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/copy_test.go:TestCopy#0022",
+      "source": "testing/go/copy_test.go:TestCopy",
+      "ordinal": 22,
+      "scriptName": "read only table",
+      "oracle": "internal",
+      "suggestedId": "copy-test-testcopy-0022",
+      "expectedKind": "error",
+      "nonLiteral": [
+        "Query"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/copy_test.go:TestCopy#0023",
+      "source": "testing/go/copy_test.go:TestCopy",
+      "ordinal": 23,
+      "scriptName": "bad data rows",
+      "oracle": "internal",
+      "suggestedId": "copy-test-testcopy-0023",
+      "expectedKind": "error",
+      "nonLiteral": [
+        "Query"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/copy_test.go:TestCopy#0024",
+      "source": "testing/go/copy_test.go:TestCopy",
+      "ordinal": 24,
+      "scriptName": "bad data rows",
+      "oracle": "postgres",
+      "postgresId": "copy-test-testcopy-0024-select-count-*-from-tbl1",
+      "suggestedId": "copy-test-testcopy-0024-select-count-*-from-tbl1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select count(*) from tbl1;",
+      "querySha256": "70343b26c7643cdf77a423350650b9ab88b7278ec5f702d8d0b05c745808551a",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/copy_test.go:TestCopy#0025",
+      "source": "testing/go/copy_test.go:TestCopy",
+      "ordinal": 25,
+      "scriptName": "bad data rows",
+      "oracle": "internal",
+      "suggestedId": "copy-test-testcopy-0025",
+      "expectedKind": "error",
+      "nonLiteral": [
+        "Query"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/copy_test.go:TestCopy#0026",
+      "source": "testing/go/copy_test.go:TestCopy",
+      "ordinal": 26,
+      "scriptName": "bad data rows",
+      "oracle": "postgres",
+      "postgresId": "copy-test-testcopy-0026-select-count-*-from-tbl1",
+      "suggestedId": "copy-test-testcopy-0026-select-count-*-from-tbl1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select count(*) from tbl1;",
+      "querySha256": "70343b26c7643cdf77a423350650b9ab88b7278ec5f702d8d0b05c745808551a",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/copy_test.go:TestCopy#0027",
+      "source": "testing/go/copy_test.go:TestCopy",
+      "ordinal": 27,
+      "scriptName": "bad data rows",
+      "oracle": "internal",
+      "suggestedId": "copy-test-testcopy-0027",
+      "expectedKind": "error",
+      "nonLiteral": [
+        "Query"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/copy_test.go:TestCopy#0028",
+      "source": "testing/go/copy_test.go:TestCopy",
+      "ordinal": 28,
+      "scriptName": "bad data rows",
+      "oracle": "postgres",
+      "postgresId": "copy-test-testcopy-0028-select-count-*-from-tbl1",
+      "suggestedId": "copy-test-testcopy-0028-select-count-*-from-tbl1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select count(*) from tbl1;",
+      "querySha256": "70343b26c7643cdf77a423350650b9ab88b7278ec5f702d8d0b05c745808551a",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

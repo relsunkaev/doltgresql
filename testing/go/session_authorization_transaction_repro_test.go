@@ -35,8 +35,7 @@ func TestSetSessionAuthorizationRejectedInTransactionRepro(t *testing.T) {
 					Query: `BEGIN;`,
 				},
 				{
-					Query:       `SET SESSION AUTHORIZATION txn_session_auth_target;`,
-					ExpectedErr: `transaction`,
+					Query: `SET SESSION AUTHORIZATION txn_session_auth_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "session-authorization-transaction-repro-test-testsetsessionauthorizationrejectedintransactionrepro-0001-set-session-authorization-txn_session_auth_target"},
 				},
 				{
 					Query: `ROLLBACK;`,

@@ -43,10 +43,7 @@ func TestSQLPreparedStatements(t *testing.T) {
 					Query: "PREPARE sql_add(int, int) AS SELECT $1::int + $2::int AS sum;",
 				},
 				{
-					Query: "EXECUTE sql_add(2, 5);",
-					Expected: []sql.Row{
-						{7},
-					},
+					Query: "EXECUTE sql_add(2, 5);", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testsqlpreparedstatements-0001-execute-sql_add-2-5"},
 				},
 				{
 					Query: "SELECT name, from_sql, generic_plans, custom_plans FROM pg_catalog.pg_prepared_statements WHERE name = 'sql_add';",
@@ -123,8 +120,7 @@ func TestSQLPreparedStatements(t *testing.T) {
 					Query: "PREPARE sql_dup AS SELECT 1;",
 				},
 				{
-					Query:       "PREPARE sql_dup AS SELECT 2;",
-					ExpectedErr: "already exists",
+					Query: "PREPARE sql_dup AS SELECT 2;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testsqlpreparedstatements-0010-prepare-sql_dup-as-select-2", Compare: "sqlstate"},
 				},
 				{
 					Query:       "EXECUTE sql_missing;",
@@ -1354,13 +1350,7 @@ var preparedStatementTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "SELECT * FROM t_bytea ORDER BY id;",
-				Expected: []sql.Row{
-					{1, []byte{0xDE, 0xAD, 0xBE, 0xEF}},
-					{2, []byte{0xC0, 0xFF, 0xEE}},
-					{3, []byte{}},
-					{4, nil},
-				},
+				Query: "SELECT * FROM t_bytea ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0105-select-*-from-t_bytea-order", ColumnModes: []string{"structural", "bytea"}},
 			},
 			{
 				Query:    "SELECT * FROM t_bytea WHERE v1 = $1 ORDER BY id;",
@@ -1386,12 +1376,7 @@ var preparedStatementTests = []ScriptTest{
 				BindVars: []any{[]byte{0xDE, 0xAD, 0xBE, 0xEF}},
 			},
 			{
-				Query: "SELECT * FROM t_bytea ORDER BY id;",
-				Expected: []sql.Row{
-					{2, []byte{0xC0, 0xFF, 0xEE}},
-					{3, []byte{}},
-					{4, []byte{0xC0, 0xFF, 0xEE}},
-				},
+				Query: "SELECT * FROM t_bytea ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0108-select-*-from-t_bytea-order", ColumnModes: []string{"structural", "bytea"}},
 			},
 			{
 				Query:    "INSERT INTO t_bytea VALUES ($1, $2) returning *;",

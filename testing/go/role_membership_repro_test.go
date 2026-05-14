@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestGrantRoleRejectsCircularMembershipRepro reproduces a security/availability
@@ -33,17 +31,18 @@ func TestGrantRoleRejectsCircularMembershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `GRANT circular_role_b TO circular_role_a;`,
-					ExpectedErr: `role memberships cannot be circular`,
+					Query: `GRANT circular_role_b TO circular_role_a;`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-membership-repro-test-testgrantrolerejectscircularmembershiprepro-0001-grant-circular_role_b-to-circular_role_a",
+
+						// TestGrantSuperuserRoleDoesNotTripCircularMembershipRepro reproduces a role
+						// membership bug: the superuser's virtual membership in every role should not
+						// make GRANTing the superuser role look circular.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestGrantSuperuserRoleDoesNotTripCircularMembershipRepro reproduces a role
-// membership bug: the superuser's virtual membership in every role should not
-// make GRANTing the superuser role look circular.
 func TestGrantSuperuserRoleDoesNotTripCircularMembershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -59,8 +58,7 @@ func TestGrantSuperuserRoleDoesNotTripCircularMembershipRepro(t *testing.T) {
 					Query: `SELECT pg_get_userbyid(roleid), pg_get_userbyid(member)
 						FROM pg_catalog.pg_auth_members
 						WHERE pg_get_userbyid(roleid) = 'postgres'
-							AND pg_get_userbyid(member) = 'grant_superuser_member';`,
-					Expected: []sql.Row{{"postgres", "grant_superuser_member"}},
+							AND pg_get_userbyid(member) = 'grant_superuser_member';`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-membership-repro-test-testgrantsuperuserroledoesnottripcircularmembershiprepro-0001-select-pg_get_userbyid-roleid-pg_get_userbyid-member"},
 				},
 			},
 		},
@@ -79,17 +77,18 @@ func TestGrantRoleRejectsSelfMembershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `GRANT self_member_role TO self_member_role;`,
-					ExpectedErr: `role cannot be a member of itself`,
+					Query: `GRANT self_member_role TO self_member_role;`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-membership-repro-test-testgrantrolerejectsselfmembershiprepro-0001-grant-self_member_role-to-self_member_role",
+
+						// TestGrantRolePopulatesPgAuthMembersRepro reproduces a catalog persistence
+						// bug: Doltgres accepts role membership grants but pg_auth_members does not
+						// expose the membership row.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestGrantRolePopulatesPgAuthMembersRepro reproduces a catalog persistence
-// bug: Doltgres accepts role membership grants but pg_auth_members does not
-// expose the membership row.
 func TestGrantRolePopulatesPgAuthMembersRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -104,8 +103,7 @@ func TestGrantRolePopulatesPgAuthMembersRepro(t *testing.T) {
 					Query: `SELECT pg_get_userbyid(roleid), pg_get_userbyid(member), admin_option
 						FROM pg_catalog.pg_auth_members
 						WHERE pg_get_userbyid(roleid) = 'catalog_parent_role'
-							AND pg_get_userbyid(member) = 'catalog_child_role';`,
-					Expected: []sql.Row{{"catalog_parent_role", "catalog_child_role", false}},
+							AND pg_get_userbyid(member) = 'catalog_child_role';`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-membership-repro-test-testgrantrolepopulatespgauthmembersrepro-0001-select-pg_get_userbyid-roleid-pg_get_userbyid-member"},
 				},
 			},
 		},
@@ -127,8 +125,7 @@ func TestGrantRolePopulatesPgGroupRepro(t *testing.T) {
 				{
 					Query: `SELECT groname, grolist IS NOT NULL
 						FROM pg_catalog.pg_group
-						WHERE groname = 'group_catalog_role';`,
-					Expected: []sql.Row{{"group_catalog_role", "t"}},
+						WHERE groname = 'group_catalog_role';`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-membership-repro-test-testgrantrolepopulatespggrouprepro-0001-select-groname-grolist-is-not"},
 				},
 			},
 		},
@@ -152,8 +149,7 @@ func TestCreateRoleInRoleGrantsMembershipRepro(t *testing.T) {
 							'create_in_role_member',
 							'create_in_role_parent',
 							'member'
-						);`,
-					Expected: []sql.Row{{"t"}},
+						);`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-membership-repro-test-testcreateroleinrolegrantsmembershiprepro-0001-select-pg_has_role-create_in_role_member-create_in_role_parent-member"},
 				},
 			},
 		},
@@ -177,8 +173,7 @@ func TestCreateRoleRoleOptionAddsMembersRepro(t *testing.T) {
 							'create_role_option_member',
 							'create_role_option_group',
 							'member'
-						);`,
-					Expected: []sql.Row{{"t"}},
+						);`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-membership-repro-test-testcreateroleroleoptionaddsmembersrepro-0001-select-pg_has_role-create_role_option_member-create_role_option_group-member"},
 				},
 			},
 		},
@@ -208,8 +203,7 @@ func TestCreateRoleAdminOptionGrantsAdminMembershipRepro(t *testing.T) {
 							'create_admin_option_target',
 							'create_admin_option_group',
 							'member'
-						);`,
-					Expected: []sql.Row{{"t"}},
+						);`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-membership-repro-test-testcreateroleadminoptiongrantsadminmembershiprepro-0001-select-pg_has_role-create_admin_option_target-create_admin_option_group-member"},
 				},
 			},
 		},
@@ -230,18 +224,20 @@ func TestGrantRoleRequiresAdminOptionGuard(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `GRANT delegated_role TO delegated_target;`,
-					ExpectedErr: `does not have permission`,
-					Username:    `delegated_member`,
-					Password:    `pw`,
+					Query: `GRANT delegated_role TO delegated_target;`,
+
+					Username: `delegated_member`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestGrantRoleAdminOptionAllowsDelegationGuard guards that WITH ADMIN OPTION
+						// allows a role member to grant that role onward.
+						ID: "role-membership-repro-test-testgrantrolerequiresadminoptionguard-0001-grant-delegated_role-to-delegated_target", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestGrantRoleAdminOptionAllowsDelegationGuard guards that WITH ADMIN OPTION
-// allows a role member to grant that role onward.
 func TestGrantRoleAdminOptionAllowsDelegationGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -306,8 +302,7 @@ func TestRevokeRoleOnlyRemovesNamedGrantorMembershipRepro(t *testing.T) {
 							'member'
 						)
 						FROM pg_catalog.pg_roles
-						WHERE rolname = 'role_multi_group';`,
-					Expected: []sql.Row{{"t"}},
+						WHERE rolname = 'role_multi_group';`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-membership-repro-test-testrevokeroleonlyremovesnamedgrantormembershiprepro-0001-select-pg_has_role-role_multi_member-oid-member"},
 				},
 			},
 		},
@@ -364,8 +359,7 @@ func TestRevokeAdminOptionOnlyRemovesNamedGrantorMembershipRepro(t *testing.T) {
 							'member'
 						)
 						FROM pg_catalog.pg_roles
-						WHERE rolname = 'role_multi_option_group';`,
-					Expected: []sql.Row{{"t"}},
+						WHERE rolname = 'role_multi_option_group';`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-membership-repro-test-testrevokeadminoptiononlyremovesnamedgrantormembershiprepro-0001-select-pg_has_role-role_multi_option_delegate-oid-member"},
 				},
 			},
 		},
@@ -404,9 +398,9 @@ func TestRevokeAdminOptionRestrictRejectsDependentRoleGrantRepro(t *testing.T) {
 				{
 					Query: `REVOKE ADMIN OPTION FOR revoke_role_restrict_group
 						FROM revoke_role_restrict_middle RESTRICT;`,
-					ExpectedErr: `dependent privileges exist`,
-					Username:    `revoke_role_restrict_admin`,
-					Password:    `admin`,
+
+					Username: `revoke_role_restrict_admin`,
+					Password: `admin`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-membership-repro-test-testrevokeadminoptionrestrictrejectsdependentrolegrantrepro-0001-revoke-admin-option-for-revoke_role_restrict_group"},
 				},
 				{
 					Query: `GRANT revoke_role_restrict_group
@@ -421,8 +415,7 @@ func TestRevokeAdminOptionRestrictRejectsDependentRoleGrantRepro(t *testing.T) {
 							'member'
 						)
 						FROM pg_catalog.pg_roles
-						WHERE rolname = 'revoke_role_restrict_group';`,
-					Expected: []sql.Row{{"t"}},
+						WHERE rolname = 'revoke_role_restrict_group';`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-membership-repro-test-testrevokeadminoptionrestrictrejectsdependentrolegrantrepro-0002-select-pg_has_role-revoke_role_restrict_delegate-oid-member"},
 				},
 			},
 		},
@@ -471,8 +464,7 @@ func TestRevokeAdminOptionCascadeRemovesDependentRoleGrantRepro(t *testing.T) {
 							'member'
 						)
 						FROM pg_catalog.pg_roles
-						WHERE rolname = 'revoke_role_cascade_group';`,
-					Expected: []sql.Row{{"f"}},
+						WHERE rolname = 'revoke_role_cascade_group';`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-membership-repro-test-testrevokeadminoptioncascaderemovesdependentrolegrantrepro-0001-select-pg_has_role-revoke_role_cascade_leaf-oid-member"},
 				},
 				{
 					Query: `SELECT pg_has_role(
@@ -481,24 +473,25 @@ func TestRevokeAdminOptionCascadeRemovesDependentRoleGrantRepro(t *testing.T) {
 							'member'
 						)
 						FROM pg_catalog.pg_roles
-						WHERE rolname = 'revoke_role_cascade_group';`,
-					Expected: []sql.Row{{"t"}},
+						WHERE rolname = 'revoke_role_cascade_group';`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-membership-repro-test-testrevokeadminoptioncascaderemovesdependentrolegrantrepro-0002-select-pg_has_role-revoke_role_cascade_middle-oid-member"},
 				},
 				{
 					Query: `GRANT revoke_role_cascade_group
 						TO revoke_role_cascade_delegate;`,
-					ExpectedErr: `does not have permission`,
-					Username:    `revoke_role_cascade_middle`,
-					Password:    `middle`,
+
+					Username: `revoke_role_cascade_middle`,
+					Password: `middle`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestRevokeRoleRestrictRejectsDependentRoleGrantRepro reproduces a role
+						// membership dependency bug: REVOKE role ... RESTRICT should reject removing a
+						// membership that has dependent role grants.
+						ID: "role-membership-repro-test-testrevokeadminoptioncascaderemovesdependentrolegrantrepro-0003-grant-revoke_role_cascade_group-to-revoke_role_cascade_delegate", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestRevokeRoleRestrictRejectsDependentRoleGrantRepro reproduces a role
-// membership dependency bug: REVOKE role ... RESTRICT should reject removing a
-// membership that has dependent role grants.
 func TestRevokeRoleRestrictRejectsDependentRoleGrantRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -528,9 +521,9 @@ func TestRevokeRoleRestrictRejectsDependentRoleGrantRepro(t *testing.T) {
 				{
 					Query: `REVOKE revoke_role_full_restrict_group
 						FROM revoke_role_full_restrict_middle RESTRICT;`,
-					ExpectedErr: `dependent privileges exist`,
-					Username:    `revoke_role_full_restrict_admin`,
-					Password:    `admin`,
+
+					Username: `revoke_role_full_restrict_admin`,
+					Password: `admin`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-membership-repro-test-testrevokerolerestrictrejectsdependentrolegrantrepro-0001-revoke-revoke_role_full_restrict_group-from-revoke_role_full_restrict_middle-restrict"},
 				},
 				{
 					Query: `GRANT revoke_role_full_restrict_group
@@ -545,8 +538,7 @@ func TestRevokeRoleRestrictRejectsDependentRoleGrantRepro(t *testing.T) {
 							'member'
 						)
 						FROM pg_catalog.pg_roles
-						WHERE rolname = 'revoke_role_full_restrict_group';`,
-					Expected: []sql.Row{{"t"}},
+						WHERE rolname = 'revoke_role_full_restrict_group';`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-membership-repro-test-testrevokerolerestrictrejectsdependentrolegrantrepro-0002-select-pg_has_role-revoke_role_full_restrict_middle-oid-member"},
 				},
 				{
 					Query: `SELECT pg_has_role(
@@ -555,8 +547,7 @@ func TestRevokeRoleRestrictRejectsDependentRoleGrantRepro(t *testing.T) {
 							'member'
 						)
 						FROM pg_catalog.pg_roles
-						WHERE rolname = 'revoke_role_full_restrict_group';`,
-					Expected: []sql.Row{{"t"}},
+						WHERE rolname = 'revoke_role_full_restrict_group';`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-membership-repro-test-testrevokerolerestrictrejectsdependentrolegrantrepro-0003-select-pg_has_role-revoke_role_full_restrict_delegate-oid-member"},
 				},
 			},
 		},
@@ -605,8 +596,7 @@ func TestRevokeRoleCascadeRemovesDependentRoleGrantRepro(t *testing.T) {
 							'member'
 						)
 						FROM pg_catalog.pg_roles
-						WHERE rolname = 'revoke_role_full_cascade_group';`,
-					Expected: []sql.Row{{"f"}},
+						WHERE rolname = 'revoke_role_full_cascade_group';`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-membership-repro-test-testrevokerolecascaderemovesdependentrolegrantrepro-0001-select-pg_has_role-revoke_role_full_cascade_middle-oid-member"},
 				},
 				{
 					Query: `SELECT pg_has_role(
@@ -615,23 +605,24 @@ func TestRevokeRoleCascadeRemovesDependentRoleGrantRepro(t *testing.T) {
 							'member'
 						)
 						FROM pg_catalog.pg_roles
-						WHERE rolname = 'revoke_role_full_cascade_group';`,
-					Expected: []sql.Row{{"f"}},
+						WHERE rolname = 'revoke_role_full_cascade_group';`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-membership-repro-test-testrevokerolecascaderemovesdependentrolegrantrepro-0002-select-pg_has_role-revoke_role_full_cascade_leaf-oid-member"},
 				},
 				{
 					Query: `GRANT revoke_role_full_cascade_group
 						TO revoke_role_full_cascade_delegate;`,
-					ExpectedErr: `does not have permission`,
-					Username:    `revoke_role_full_cascade_middle`,
-					Password:    `middle`,
+
+					Username: `revoke_role_full_cascade_middle`,
+					Password: `middle`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestInheritedRolePrivilegesApplyGuard guards that login roles inherit
+						// member-role privileges by default.
+						ID: "role-membership-repro-test-testrevokerolecascaderemovesdependentrolegrantrepro-0003-grant-revoke_role_full_cascade_group-to-revoke_role_full_cascade_delegate", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestInheritedRolePrivilegesApplyGuard guards that login roles inherit
-// member-role privileges by default.
 func TestInheritedRolePrivilegesApplyGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -652,18 +643,20 @@ func TestInheritedRolePrivilegesApplyGuard(t *testing.T) {
 				{
 					Query: `SELECT id, secret
 						FROM inherited_role_private_items;`,
-					Expected: []sql.Row{{1, "visible through inherited role"}},
+
 					Username: `inherited_role_user`,
-					Password: `pw`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestGrantRoleWithInheritFalseDoesNotApplyPrivilegesRepro reproduces a role
+						// membership security gap: PostgreSQL lets a membership grant explicitly disable
+						// privilege inheritance even when the member role itself has INHERIT enabled.
+						ID: "role-membership-repro-test-testinheritedroleprivilegesapplyguard-0001-select-id-secret-from-inherited_role_private_items"},
 				},
 			},
 		},
 	})
 }
 
-// TestGrantRoleWithInheritFalseDoesNotApplyPrivilegesRepro reproduces a role
-// membership security gap: PostgreSQL lets a membership grant explicitly disable
-// privilege inheritance even when the member role itself has INHERIT enabled.
 func TestGrantRoleWithInheritFalseDoesNotApplyPrivilegesRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -684,18 +677,20 @@ func TestGrantRoleWithInheritFalseDoesNotApplyPrivilegesRepro(t *testing.T) {
 				{
 					Query: `SELECT id, secret
 						FROM grant_inherit_false_private_items;`,
-					ExpectedErr: `permission denied`,
-					Username:    `grant_inherit_false_user`,
-					Password:    `pw`,
+
+					Username: `grant_inherit_false_user`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestGrantRoleWithInheritFalsePopulatesPgAuthMembersRepro reproduces a role
+						// membership catalog gap: pg_auth_members should record per-membership inherit
+						// and set options independently from the member role's default attributes.
+						ID: "role-membership-repro-test-testgrantrolewithinheritfalsedoesnotapplyprivilegesrepro-0001-select-id-secret-from-grant_inherit_false_private_items", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestGrantRoleWithInheritFalsePopulatesPgAuthMembersRepro reproduces a role
-// membership catalog gap: pg_auth_members should record per-membership inherit
-// and set options independently from the member role's default attributes.
 func TestGrantRoleWithInheritFalsePopulatesPgAuthMembersRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -711,8 +706,7 @@ func TestGrantRoleWithInheritFalsePopulatesPgAuthMembersRepro(t *testing.T) {
 					Query: `SELECT inherit_option, set_option
 						FROM pg_catalog.pg_auth_members
 						WHERE pg_get_userbyid(roleid) = 'grant_option_catalog_parent'
-							AND pg_get_userbyid(member) = 'grant_option_catalog_child';`,
-					Expected: []sql.Row{{"f", "t"}},
+							AND pg_get_userbyid(member) = 'grant_option_catalog_child';`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-membership-repro-test-testgrantrolewithinheritfalsepopulatespgauthmembersrepro-0001-select-inherit_option-set_option-from-pg_catalog.pg_auth_members"},
 				},
 			},
 		},
@@ -737,8 +731,7 @@ func TestGrantRoleWithSetFalsePopulatesPgAuthMembersRepro(t *testing.T) {
 					Query: `SELECT inherit_option, set_option
 						FROM pg_catalog.pg_auth_members
 						WHERE pg_get_userbyid(roleid) = 'grant_set_option_catalog_parent'
-							AND pg_get_userbyid(member) = 'grant_set_option_catalog_child';`,
-					Expected: []sql.Row{{"t", "f"}},
+							AND pg_get_userbyid(member) = 'grant_set_option_catalog_child';`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-membership-repro-test-testgrantrolewithsetfalsepopulatespgauthmembersrepro-0001-select-inherit_option-set_option-from-pg_catalog.pg_auth_members"},
 				},
 			},
 		},
@@ -767,18 +760,20 @@ func TestNoInheritRolePrivilegesDoNotApplyGuard(t *testing.T) {
 				{
 					Query: `SELECT id, secret
 						FROM noinherit_role_private_items;`,
-					ExpectedErr: `permission denied`,
-					Username:    `noinherit_role_user`,
-					Password:    `pw`,
+
+					Username: `noinherit_role_user`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestPgHasRoleSupportsRoleNameArgumentsRepro reproduces a role-introspection
+						// correctness bug: PostgreSQL supports pg_has_role role-name and regrole
+						// argument forms, but Doltgres only registers the text/oid/text variant.
+						ID: "role-membership-repro-test-testnoinheritroleprivilegesdonotapplyguard-0001-select-id-secret-from-noinherit_role_private_items", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestPgHasRoleSupportsRoleNameArgumentsRepro reproduces a role-introspection
-// correctness bug: PostgreSQL supports pg_has_role role-name and regrole
-// argument forms, but Doltgres only registers the text/oid/text variant.
 func TestPgHasRoleSupportsRoleNameArgumentsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -794,20 +789,17 @@ func TestPgHasRoleSupportsRoleNameArgumentsRepro(t *testing.T) {
 							'has_role_catalog_member',
 							'has_role_catalog_group',
 							'member'
-						);`,
-					Expected: []sql.Row{{"t"}},
+						);`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-membership-repro-test-testpghasrolesupportsrolenameargumentsrepro-0001-select-pg_has_role-has_role_catalog_member-has_role_catalog_group-member"},
 				},
 				{
 					Query: `SELECT pg_has_role(
 							'has_role_catalog_member'::regrole,
 							'has_role_catalog_group'::regrole,
 							'member'
-						);`,
-					Expected: []sql.Row{{"t"}},
+						);`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-membership-repro-test-testpghasrolesupportsrolenameargumentsrepro-0002-select-pg_has_role-has_role_catalog_member-::regrole-has_role_catalog_group"},
 				},
 				{
-					Query:    `SELECT pg_has_role('has_role_catalog_group', 'member');`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT pg_has_role('has_role_catalog_group', 'member');`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-membership-repro-test-testpghasrolesupportsrolenameargumentsrepro-0003-select-pg_has_role-has_role_catalog_group-member"},
 				},
 			},
 		},
@@ -832,14 +824,12 @@ func TestPgHasRoleUsageHonorsIntermediateNoInheritRepro(t *testing.T) {
 				{
 					Query: `SELECT pg_has_role('usage_chain_leaf', oid, 'member')
 						FROM pg_catalog.pg_roles
-						WHERE rolname = 'usage_chain_top';`,
-					Expected: []sql.Row{{"t"}},
+						WHERE rolname = 'usage_chain_top';`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-membership-repro-test-testpghasroleusagehonorsintermediatenoinheritrepro-0001-select-pg_has_role-usage_chain_leaf-oid-member"},
 				},
 				{
 					Query: `SELECT pg_has_role('usage_chain_leaf', oid, 'usage')
 						FROM pg_catalog.pg_roles
-						WHERE rolname = 'usage_chain_top';`,
-					Expected: []sql.Row{{"f"}},
+						WHERE rolname = 'usage_chain_top';`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-membership-repro-test-testpghasroleusagehonorsintermediatenoinheritrepro-0002-select-pg_has_role-usage_chain_leaf-oid-usage"},
 				},
 			},
 		},
@@ -874,9 +864,9 @@ func TestSetRoleUsesGrantedRolePrivilegesRepro(t *testing.T) {
 				{
 					Query: `SELECT id, secret
 						FROM set_role_private_items;`,
-					Expected: []sql.Row{{1, "visible through granted role"}},
+
 					Username: `set_role_switcher`,
-					Password: `pw`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-membership-repro-test-testsetroleusesgrantedroleprivilegesrepro-0001-select-id-secret-from-set_role_private_items", Compare: "sqlstate"},
 				},
 			},
 		},

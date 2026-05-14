@@ -33,20 +33,20 @@ func TestDomainCastEnforcesConstraintsGuard(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT (-1)::positive_cast_domain;`,
-					ExpectedErr: `positive_cast_domain_check`,
+					Query: `SELECT (-1)::positive_cast_domain;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdomaincastenforcesconstraintsguard-0001-select-1-::positive_cast_domain", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SELECT NULL::not_null_cast_domain;`,
-					ExpectedErr: `not_null_cast_domain`,
+					Query: `SELECT NULL::not_null_cast_domain;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdomaincastenforcesconstraintsguard-0002-select-null::not_null_cast_domain",
+
+						// TestDomainValueCastsToBaseTypeRepro reproduces a domain correctness bug:
+						// PostgreSQL allows a domain value to be cast back to its base type.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDomainValueCastsToBaseTypeRepro reproduces a domain correctness bug:
-// PostgreSQL allows a domain value to be cast back to its base type.
 func TestDomainValueCastsToBaseTypeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -57,8 +57,7 @@ func TestDomainValueCastsToBaseTypeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT 7::base_cast_domain::integer;`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT 7::base_cast_domain::integer;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdomainvaluecaststobasetyperepro-0001-select-7::base_cast_domain::integer"},
 				},
 			},
 		},
@@ -78,24 +77,19 @@ func TestDomainValuesUseBaseTypeOperatorsRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT 7::operator_domain + 5;`,
-					Expected: []sql.Row{{12}},
+					Query: `SELECT 7::operator_domain + 5;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdomainvaluesusebasetypeoperatorsrepro-0001-select-7::operator_domain-+-5"},
 				},
 				{
-					Query:    `SELECT 5 + 7::operator_domain;`,
-					Expected: []sql.Row{{12}},
+					Query: `SELECT 5 + 7::operator_domain;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdomainvaluesusebasetypeoperatorsrepro-0002-select-5-+-7::operator_domain"},
 				},
 				{
-					Query:    `SELECT 7::operator_domain + '5';`,
-					Expected: []sql.Row{{12}},
+					Query: `SELECT 7::operator_domain + '5';`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdomainvaluesusebasetypeoperatorsrepro-0003-select-7::operator_domain-+-5"},
 				},
 				{
-					Query:    `SELECT 7::operator_domain = 7;`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT 7::operator_domain = 7;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdomainvaluesusebasetypeoperatorsrepro-0004-select-7::operator_domain-=-7"},
 				},
 				{
-					Query:    `SELECT 7::operator_domain = 7::operator_domain;`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT 7::operator_domain = 7::operator_domain;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdomainvaluesusebasetypeoperatorsrepro-0005-select-7::operator_domain-=-7::operator_domain"},
 				},
 			},
 		},
@@ -126,8 +120,7 @@ func TestTemporalDomainTypmodsRoundStoredValuesRepro(t *testing.T) {
 				{
 					Query: `SELECT ts::text, ds::text
 						FROM temporal_domain_typmod_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"2021-09-15 21:43:57", "3 days 04:05:07"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testtemporaldomaintypmodsroundstoredvaluesrepro-0001-select-ts::text-ds::text-from-temporal_domain_typmod_items"},
 				},
 			},
 		},
@@ -154,12 +147,10 @@ func TestTimetzDomainTypmodsRoundValuesRepro(t *testing.T) {
 				{
 					Query: `SELECT tz::text
 						FROM timetz_domain_typmod_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"21:43:57+00"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testtimetzdomaintypmodsroundvaluesrepro-0001-select-tz::text-from-timetz_domain_typmod_items-order"},
 				},
 				{
-					Query:    `SELECT '21:43:56.789+00'::timetz::timetz0_domain::text;`,
-					Expected: []sql.Row{{"21:43:57+00"}},
+					Query: `SELECT '21:43:56.789+00'::timetz::timetz0_domain::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testtimetzdomaintypmodsroundvaluesrepro-0002-select-21:43:56.789+00-::timetz::timetz0_domain::text"},
 				},
 			},
 		},
@@ -188,8 +179,7 @@ func TestTextDomainTypmodsCoerceValuesRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT v, length(v), c = 'ab '::CHARACTER(3), octet_length(c), pg_typeof(v)::text, pg_typeof(c)::text
-						FROM text_domain_typmod_items;`,
-					Expected: []sql.Row{{"abc", 3, true, 3, "varchar3_domain_items", "char3_domain_items"}},
+						FROM text_domain_typmod_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testtextdomaintypmodscoercevaluesrepro-0001-select-v-length-v-c"},
 				},
 			},
 		},
@@ -204,8 +194,7 @@ func TestTextDomainTypmodsCoerceValuesRepro(t *testing.T) {
 					Query: `SELECT 'abc   '::varchar3_domain_casts::text,
 						length('abc   '::varchar3_domain_casts),
 						'ab'::char3_domain_casts = 'ab '::CHARACTER(3),
-						octet_length('ab'::char3_domain_casts);`,
-					Expected: []sql.Row{{"abc", 3, true, 3}},
+						octet_length('ab'::char3_domain_casts);`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testtextdomaintypmodscoercevaluesrepro-0002-select-abc-::varchar3_domain_casts::text-length-abc"},
 				},
 			},
 		},
@@ -233,21 +222,21 @@ func TestNumericDomainTypmodsRoundStoredValuesRepro(t *testing.T) {
 				{
 					Query: `SELECT amount::text
 						FROM numeric_domain_typmod_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"123.46"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testnumericdomaintypmodsroundstoredvaluesrepro-0001-select-amount::text-from-numeric_domain_typmod_items-order"},
 				},
 				{
-					Query:       `INSERT INTO numeric_domain_typmod_items VALUES (2, 999.995);`,
-					ExpectedErr: `numeric field overflow`,
+					Query: `INSERT INTO numeric_domain_typmod_items VALUES (2, 999.995);`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testnumericdomaintypmodsroundstoredvaluesrepro-0002-insert-into-numeric_domain_typmod_items-values-2",
+
+						// TestDomainTypmodCastsUseCoercedValueRepro reproduces a correctness bug:
+						// PostgreSQL applies a domain's base-type typmod when a value is explicitly
+						// cast to that domain.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDomainTypmodCastsUseCoercedValueRepro reproduces a correctness bug:
-// PostgreSQL applies a domain's base-type typmod when a value is explicitly
-// cast to that domain.
 func TestDomainTypmodCastsUseCoercedValueRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -258,12 +247,10 @@ func TestDomainTypmodCastsUseCoercedValueRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT 123.456::num52_cast_domain::text;`,
-					Expected: []sql.Row{{"123.46"}},
+					Query: `SELECT 123.456::num52_cast_domain::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdomaintypmodcastsusecoercedvaluerepro-0001-select-123.456::num52_cast_domain::text"},
 				},
 				{
-					Query:    `SELECT timestamp '2021-09-15 21:43:56.789'::ts0_cast_domain::text;`,
-					Expected: []sql.Row{{"2021-09-15 21:43:57"}},
+					Query: `SELECT timestamp '2021-09-15 21:43:56.789'::ts0_cast_domain::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdomaintypmodcastsusecoercedvaluerepro-0002-select-timestamp-2021-09-15-21:43:56.789-::ts0_cast_domain::text"},
 				},
 			},
 		},
@@ -289,12 +276,10 @@ func TestDomainTypmodSqlFunctionReturnUsesCoercedValueRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT domain_typmod_return_numeric()::text;`,
-					Expected: []sql.Row{{"123.46"}},
+					Query: `SELECT domain_typmod_return_numeric()::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdomaintypmodsqlfunctionreturnusescoercedvaluerepro-0001-select-domain_typmod_return_numeric-::text"},
 				},
 				{
-					Query:    `SELECT domain_typmod_return_timestamp()::text;`,
-					Expected: []sql.Row{{"2021-09-15 21:43:57"}},
+					Query: `SELECT domain_typmod_return_timestamp()::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdomaintypmodsqlfunctionreturnusescoercedvaluerepro-0002-select-domain_typmod_return_timestamp-::text"},
 				},
 			},
 		},
@@ -325,8 +310,7 @@ func TestTextDomainTypmodSqlFunctionReturnUsesCoercedValueRepro(t *testing.T) {
 						text_domain_return_c() = 'ab '::CHARACTER(3),
 						octet_length(text_domain_return_c()),
 						pg_typeof(text_domain_return_v())::text,
-						pg_typeof(text_domain_return_c())::text;`,
-					Expected: []sql.Row{{"abc", 3, true, 3, "varchar3_return_domain", "char3_return_domain"}},
+						pg_typeof(text_domain_return_c())::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testtextdomaintypmodsqlfunctionreturnusescoercedvaluerepro-0001-select-text_domain_return_v-::text-length-text_domain_return_v"},
 				},
 			},
 		},
@@ -350,14 +334,12 @@ func TestDomainTypmodUniqueUsesCoercedValuesRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `INSERT INTO numeric_domain_unique_items VALUES (2, 1.234);`,
-					ExpectedErr: `duplicate`,
+					Query: `INSERT INTO numeric_domain_unique_items VALUES (2, 1.234);`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdomaintypmoduniqueusescoercedvaluesrepro-0001-insert-into-numeric_domain_unique_items-values-2", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, amount::text
 						FROM numeric_domain_unique_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, "1.23"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdomaintypmoduniqueusescoercedvaluesrepro-0002-select-id-amount::text-from-numeric_domain_unique_items"},
 				},
 			},
 		},
@@ -375,14 +357,12 @@ func TestDomainTypmodUniqueUsesCoercedValuesRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `INSERT INTO timestamp_domain_unique_items VALUES
-						(2, '2021-09-15 21:43:56.700');`,
-					ExpectedErr: `duplicate`,
+						(2, '2021-09-15 21:43:56.700');`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdomaintypmoduniqueusescoercedvaluesrepro-0003-insert-into-timestamp_domain_unique_items-values-2", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, ts::text
 						FROM timestamp_domain_unique_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, "2021-09-15 21:43:57"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdomaintypmoduniqueusescoercedvaluesrepro-0004-select-id-ts::text-from-timestamp_domain_unique_items"},
 				},
 			},
 		},
@@ -406,14 +386,12 @@ func TestTextDomainTypmodUniqueUsesCoercedValuesRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `INSERT INTO varchar_domain_unique_items VALUES (2, 'abc   ');`,
-					ExpectedErr: `duplicate`,
+					Query: `INSERT INTO varchar_domain_unique_items VALUES (2, 'abc   ');`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testtextdomaintypmoduniqueusescoercedvaluesrepro-0001-insert-into-varchar_domain_unique_items-values-2", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, label, length(label)
 						FROM varchar_domain_unique_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, "abc", 3}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testtextdomaintypmoduniqueusescoercedvaluesrepro-0002-select-id-label-length-label"},
 				},
 			},
 		},
@@ -429,14 +407,12 @@ func TestTextDomainTypmodUniqueUsesCoercedValuesRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `INSERT INTO char_domain_unique_items VALUES (2, 'a  ');`,
-					ExpectedErr: `duplicate`,
+					Query: `INSERT INTO char_domain_unique_items VALUES (2, 'a  ');`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testtextdomaintypmoduniqueusescoercedvaluesrepro-0003-insert-into-char_domain_unique_items-values-2", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, label = 'a  '::CHARACTER(3), octet_length(label)
 						FROM char_domain_unique_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, true, 3}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testtextdomaintypmoduniqueusescoercedvaluesrepro-0004-select-id-label-=-a"},
 				},
 			},
 		},
@@ -463,8 +439,7 @@ func TestDomainTypmodGeneratedColumnUsesCoercedValueRepro(t *testing.T) {
 				{
 					Query: `SELECT amount::text, amount_text
 						FROM domain_typmod_generated_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"123.46", "123.46"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdomaintypmodgeneratedcolumnusescoercedvaluerepro-0001-select-amount::text-amount_text-from-domain_typmod_generated_items"},
 				},
 			},
 		},
@@ -496,8 +471,7 @@ func TestTextDomainTypmodGeneratedColumnUsesCoercedValueRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT v, v_len, c = 'ab '::CHARACTER(3), c_octets, pg_typeof(v)::text, pg_typeof(c)::text
-						FROM text_domain_generated_items;`,
-					Expected: []sql.Row{{"abc", 3, true, 3, "varchar3_generated_domain", "char3_generated_domain"}},
+						FROM text_domain_generated_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testtextdomaintypmodgeneratedcolumnusescoercedvaluerepro-0001-select-v-v_len-c-="},
 				},
 			},
 		},
@@ -523,8 +497,7 @@ func TestDomainTypmodDefaultUsesCoercedValueRepro(t *testing.T) {
 				{
 					Query: `SELECT amount::text
 						FROM domain_typmod_default_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"123.46"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdomaintypmoddefaultusescoercedvaluerepro-0001-select-amount::text-from-domain_typmod_default_items-order"},
 				},
 			},
 		},
@@ -551,8 +524,7 @@ func TestTextDomainTypmodDefaultUsesCoercedValueRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT label, length(label), pg_typeof(label)::text
-						FROM varchar_domain_default_items;`,
-					Expected: []sql.Row{{"abc", 3, "varchar3_default_domain"}},
+						FROM varchar_domain_default_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testtextdomaintypmoddefaultusescoercedvaluerepro-0001-select-label-length-label-pg_typeof"},
 				},
 			},
 		},
@@ -571,8 +543,7 @@ func TestTextDomainTypmodDefaultUsesCoercedValueRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT label = 'ab '::CHARACTER(3), octet_length(label), pg_typeof(label)::text
-						FROM char_domain_default_items;`,
-					Expected: []sql.Row{{true, 3, "char3_default_domain"}},
+						FROM char_domain_default_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testtextdomaintypmoddefaultusescoercedvaluerepro-0002-select-label-=-ab-::character"},
 				},
 			},
 		},
@@ -596,12 +567,10 @@ func TestDomainTypmodCheckUsesCoercedValueRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `INSERT INTO domain_typmod_check_items VALUES (1, 123.456);`,
-					ExpectedErr: `num52_check_domain_check`,
+					Query: `INSERT INTO domain_typmod_check_items VALUES (1, 123.456);`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdomaintypmodcheckusescoercedvaluerepro-0001-insert-into-domain_typmod_check_items-values-1", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM domain_typmod_check_items;`,
-					Expected: []sql.Row{{0}},
+					Query: `SELECT count(*) FROM domain_typmod_check_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdomaintypmodcheckusescoercedvaluerepro-0002-select-count-*-from-domain_typmod_check_items"},
 				},
 			},
 		},
@@ -632,8 +601,7 @@ func TestTextDomainTypmodCheckUsesCoercedValueRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT v, length(v), c = 'ab '::CHARACTER(3), octet_length(c)
-						FROM text_domain_check_items;`,
-					Expected: []sql.Row{{"abc", 3, true, 3}},
+						FROM text_domain_check_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testtextdomaintypmodcheckusescoercedvaluerepro-0001-select-v-length-v-c"},
 				},
 			},
 		},
@@ -656,12 +624,10 @@ func TestDomainTypmodTableCheckUsesCoercedValueRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `INSERT INTO domain_typmod_table_check_items VALUES (1, 123.456);`,
-					ExpectedErr: `domain_typmod_table_check_items_amount_check`,
+					Query: `INSERT INTO domain_typmod_table_check_items VALUES (1, 123.456);`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdomaintypmodtablecheckusescoercedvaluerepro-0001-insert-into-domain_typmod_table_check_items-values-1", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM domain_typmod_table_check_items;`,
-					Expected: []sql.Row{{0}},
+					Query: `SELECT count(*) FROM domain_typmod_table_check_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdomaintypmodtablecheckusescoercedvaluerepro-0002-select-count-*-from-domain_typmod_table_check_items"},
 				},
 			},
 		},
@@ -690,8 +656,7 @@ func TestTextDomainTypmodTableCheckUsesCoercedValueRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT v, length(v), c = 'ab '::CHARACTER(3), octet_length(c)
-						FROM text_domain_table_check_items;`,
-					Expected: []sql.Row{{"abc", 3, true, 3}},
+						FROM text_domain_table_check_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testtextdomaintypmodtablecheckusescoercedvaluerepro-0001-select-v-length-v-c"},
 				},
 			},
 		},
@@ -752,8 +717,7 @@ func TestDomainTypmodUpdateUsesCoercedValueRepro(t *testing.T) {
 				{
 					Query: `SELECT amount::text
 						FROM domain_typmod_update_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"123.46"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdomaintypmodupdateusescoercedvaluerepro-0001-select-amount::text-from-domain_typmod_update_items-order"},
 				},
 			},
 		},
@@ -783,8 +747,7 @@ func TestDomainTypmodOnConflictUpdateUsesCoercedValueRepro(t *testing.T) {
 				{
 					Query: `SELECT amount::text
 						FROM domain_typmod_upsert_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"123.46"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdomaintypmodonconflictupdateusescoercedvaluerepro-0001-select-amount::text-from-domain_typmod_upsert_items-order"},
 				},
 			},
 		},
@@ -818,8 +781,7 @@ func TestDomainTypmodInsertSelectUsesCoercedValueRepro(t *testing.T) {
 				{
 					Query: `SELECT amount::text
 						FROM domain_typmod_insert_select_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"123.46"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdomaintypmodinsertselectusescoercedvaluerepro-0001-select-amount::text-from-domain_typmod_insert_select_items-order"},
 				},
 			},
 		},
@@ -856,8 +818,7 @@ func TestDomainTypmodUpdateFromUsesCoercedValueRepro(t *testing.T) {
 				{
 					Query: `SELECT amount::text
 						FROM domain_typmod_update_from_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"123.46"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdomaintypmodupdatefromusescoercedvaluerepro-0001-select-amount::text-from-domain_typmod_update_from_items-order"},
 				},
 			},
 		},
@@ -921,8 +882,7 @@ func TestTextDomainTypmodDmlUsesCoercedValuesRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT v, length(v), c = 'ab '::CHARACTER(3), octet_length(c)
-						FROM text_domain_update_items;`,
-					Expected: []sql.Row{{"abc", 3, true, 3}},
+						FROM text_domain_update_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testtextdomaintypmoddmlusescoercedvaluesrepro-0001-select-v-length-v-c"},
 				},
 			},
 		},
@@ -950,8 +910,7 @@ func TestTextDomainTypmodDmlUsesCoercedValuesRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT v, length(v), c = 'ab '::CHARACTER(3), octet_length(c)
-						FROM text_domain_insert_select_items;`,
-					Expected: []sql.Row{{"abc", 3, true, 3}},
+						FROM text_domain_insert_select_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testtextdomaintypmoddmlusescoercedvaluesrepro-0002-select-v-length-v-c"},
 				},
 			},
 		},
@@ -974,8 +933,7 @@ func TestTextDomainTypmodDmlUsesCoercedValuesRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT v, length(v), c = 'ab '::CHARACTER(3), octet_length(c)
-						FROM text_domain_upsert_items;`,
-					Expected: []sql.Row{{"abc", 3, true, 3}},
+						FROM text_domain_upsert_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testtextdomaintypmoddmlusescoercedvaluesrepro-0003-select-v-length-v-c"},
 				},
 			},
 		},
@@ -1045,8 +1003,7 @@ func TestTextDomainTypmodBulkWritesUseCoercedValuesRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT v, length(v), c = 'ab '::CHARACTER(3), octet_length(c)
-						FROM text_domain_update_from_items;`,
-					Expected: []sql.Row{{"abc", 3, true, 3}},
+						FROM text_domain_update_from_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testtextdomaintypmodbulkwritesusecoercedvaluesrepro-0001-select-v-length-v-c"},
 				},
 			},
 		},
@@ -1086,8 +1043,7 @@ func TestDomainCheckRejectsNonScalarExpressionsRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `CREATE DOMAIN domain_check_subquery AS integer
-						CHECK (VALUE > (SELECT 0));`,
-					ExpectedErr: `cannot use subquery in check constraint`,
+						CHECK (VALUE > (SELECT 0));`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdomaincheckrejectsnonscalarexpressionsrepro-0001-create-domain-domain_check_subquery-as-integer", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1096,8 +1052,7 @@ func TestDomainCheckRejectsNonScalarExpressionsRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `CREATE DOMAIN domain_check_aggregate AS integer
-						CHECK (avg(VALUE) > 0);`,
-					ExpectedErr: `aggregate functions are not allowed in check constraints`,
+						CHECK (avg(VALUE) > 0);`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdomaincheckrejectsnonscalarexpressionsrepro-0002-create-domain-domain_check_aggregate-as-integer", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1106,8 +1061,7 @@ func TestDomainCheckRejectsNonScalarExpressionsRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `CREATE DOMAIN domain_check_window AS integer
-						CHECK (row_number() OVER () > 0);`,
-					ExpectedErr: `window functions are not allowed in check constraints`,
+						CHECK (row_number() OVER () > 0);`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdomaincheckrejectsnonscalarexpressionsrepro-0003-create-domain-domain_check_window-as-integer", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1116,17 +1070,18 @@ func TestDomainCheckRejectsNonScalarExpressionsRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `CREATE DOMAIN domain_check_srf AS integer
-						CHECK (generate_series(1, 2) > 0);`,
-					ExpectedErr: `set-returning functions are not allowed in check constraints`,
+						CHECK (generate_series(1, 2) > 0);`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdomaincheckrejectsnonscalarexpressionsrepro-0004-create-domain-domain_check_srf-as-integer",
+
+						// TestDomainCheckAllowsUserDefinedFunctionRepro guards PostgreSQL parity:
+						// domain CHECK constraints may call user-defined validation functions and
+						// enforce their result.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDomainCheckAllowsUserDefinedFunctionRepro guards PostgreSQL parity:
-// domain CHECK constraints may call user-defined validation functions and
-// enforce their result.
 func TestDomainCheckAllowsUserDefinedFunctionRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1144,12 +1099,10 @@ func TestDomainCheckAllowsUserDefinedFunctionRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `INSERT INTO dg_domain_fn_items VALUES (1, -5);`,
-					ExpectedErr: `Check constraint`,
+					Query: `INSERT INTO dg_domain_fn_items VALUES (1, -5);`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdomaincheckallowsuserdefinedfunctionrepro-0001-insert-into-dg_domain_fn_items-values-1", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM dg_domain_fn_items;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM dg_domain_fn_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdomaincheckallowsuserdefinedfunctionrepro-0002-select-count-*-from-dg_domain_fn_items"},
 				},
 			},
 		},
@@ -1183,21 +1136,21 @@ func TestSchemaQualifiedDomainCheckFunctionUsesExplicitSchemaRepro(t *testing.T)
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `INSERT INTO dg_domain_lookup_items VALUES (1, 5);`,
-					ExpectedErr: `Check constraint`,
+					Query: `INSERT INTO dg_domain_lookup_items VALUES (1, 5);`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testschemaqualifieddomaincheckfunctionusesexplicitschemarepro-0001-insert-into-dg_domain_lookup_items-values-1",
+
+						// TestDomainDefaultFunctionEvaluatesOnInsertRepro reproduces a correctness bug:
+						// PostgreSQL evaluates a domain default that calls a user-defined function when
+						// inserting into a domain-typed column.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM dg_domain_lookup_items;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM dg_domain_lookup_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testschemaqualifieddomaincheckfunctionusesexplicitschemarepro-0002-select-count-*-from-dg_domain_lookup_items"},
 				},
 			},
 		},
 	})
 }
 
-// TestDomainDefaultFunctionEvaluatesOnInsertRepro reproduces a correctness bug:
-// PostgreSQL evaluates a domain default that calls a user-defined function when
-// inserting into a domain-typed column.
 func TestDomainDefaultFunctionEvaluatesOnInsertRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1215,8 +1168,7 @@ func TestDomainDefaultFunctionEvaluatesOnInsertRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `INSERT INTO dg_domain_default_items (id) VALUES (1) RETURNING value;`,
-					Expected: []sql.Row{{2}},
+					Query: `INSERT INTO dg_domain_default_items (id) VALUES (1) RETURNING value;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdomaindefaultfunctionevaluatesoninsertrepro-0001-insert-into-dg_domain_default_items-id-values"},
 				},
 			},
 		},
@@ -1241,23 +1193,19 @@ func TestArrayDomainAcceptsValidValuesRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT ARRAY[1, 2]::int_pair_domain;`,
-					Expected: []sql.Row{{"{1,2}"}},
+					Query: `SELECT ARRAY[1, 2]::int_pair_domain;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testarraydomainacceptsvalidvaluesrepro-0001-select-array[1-2]::int_pair_domain"},
 				},
 				{
-					Query:       `SELECT ARRAY[1, 2, 3]::int_pair_domain;`,
-					ExpectedErr: `int_pair_domain_check`,
+					Query: `SELECT ARRAY[1, 2, 3]::int_pair_domain;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testarraydomainacceptsvalidvaluesrepro-0002-select-array[1-2-3]::int_pair_domain", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO array_domain_items VALUES (1, ARRAY[1, 2]);`,
 				},
 				{
-					Query:       `INSERT INTO array_domain_items VALUES (2, ARRAY[1, 2, 3]);`,
-					ExpectedErr: `int_pair_domain_check`,
+					Query: `INSERT INTO array_domain_items VALUES (2, ARRAY[1, 2, 3]);`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testarraydomainacceptsvalidvaluesrepro-0003-insert-into-array_domain_items-values-2", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT id, pair FROM array_domain_items;`,
-					Expected: []sql.Row{{1, "{1,2}"}},
+					Query: `SELECT id, pair FROM array_domain_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testarraydomainacceptsvalidvaluesrepro-0004-select-id-pair-from-array_domain_items"},
 				},
 			},
 		},
@@ -1286,12 +1234,10 @@ func TestArrayOverDomainEnforcesElementConstraintsRepro(t *testing.T) {
 				},
 				{
 					Query: `INSERT INTO array_over_domain_items VALUES
-						(2, ARRAY[1, -2]::positive_array_element_domain[]);`,
-					ExpectedErr: `positive_array_element_domain_check`,
+						(2, ARRAY[1, -2]::positive_array_element_domain[]);`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testarrayoverdomainenforceselementconstraintsrepro-0001-insert-into-array_over_domain_items-values-2", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT id, values_int FROM array_over_domain_items;`,
-					Expected: []sql.Row{{1, "{1,2}"}},
+					Query: `SELECT id, values_int FROM array_over_domain_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testarrayoverdomainenforceselementconstraintsrepro-0002-select-id-values_int-from-array_over_domain_items"},
 				},
 			},
 		},
@@ -1320,13 +1266,11 @@ func TestEnumDomainEnforcesConstraintsRepro(t *testing.T) {
 					ExpectedTag: "INSERT 0 1",
 				},
 				{
-					Query:       `INSERT INTO enum_domain_items VALUES (2, 'sad');`,
-					ExpectedErr: `enum_domain_happyish_check`,
+					Query: `INSERT INTO enum_domain_items VALUES (2, 'sad');`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testenumdomainenforcesconstraintsrepro-0002-insert-into-enum_domain_items-values-2", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, mood::text
-						FROM enum_domain_items;`,
-					Expected: []sql.Row{{1, "ok"}},
+						FROM enum_domain_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testenumdomainenforcesconstraintsrepro-0003-select-id-mood::text-from-enum_domain_items"},
 				},
 			},
 		},
@@ -1353,12 +1297,10 @@ func TestCompositeTypeDomainFieldEnforcesConstraintsRepro(t *testing.T) {
 					ExpectedTag: "INSERT 0 1",
 				},
 				{
-					Query:       `INSERT INTO composite_field_items VALUES (ROW(-1));`,
-					ExpectedErr: `composite_field_positive_check`,
+					Query: `INSERT INTO composite_field_items VALUES (ROW(-1));`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testcompositetypedomainfieldenforcesconstraintsrepro-0002-insert-into-composite_field_items-values-row", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT item::text FROM composite_field_items;`,
-					Expected: []sql.Row{{"(1)"}},
+					Query: `SELECT item::text FROM composite_field_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testcompositetypedomainfieldenforcesconstraintsrepro-0003-select-item::text-from-composite_field_items"},
 				},
 			},
 		},
@@ -1392,12 +1334,10 @@ func TestCompositeDomainAcceptsValidValuesRepro(t *testing.T) {
 				},
 				{
 					Query: `INSERT INTO composite_domain_items VALUES
-						(2, ROW(3, 2)::composite_domain_ordered_pair);`,
-					ExpectedErr: `composite_domain_ordered_pair_check`,
+						(2, ROW(3, 2)::composite_domain_ordered_pair);`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testcompositedomainacceptsvalidvaluesrepro-0002-insert-into-composite_domain_items-values-2", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT id, pair::text FROM composite_domain_items;`,
-					Expected: []sql.Row{{1, "(1,2)"}},
+					Query: `SELECT id, pair::text FROM composite_domain_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testcompositedomainacceptsvalidvaluesrepro-0003-select-id-pair::text-from-composite_domain_items"},
 				},
 			},
 		},
@@ -1423,21 +1363,21 @@ func TestSqlFunctionReturnEnforcesDomainConstraintsRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT function_return_valid_domain();`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT function_return_valid_domain();`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testsqlfunctionreturnenforcesdomainconstraintsrepro-0001-select-function_return_valid_domain"},
 				},
 				{
-					Query:       `SELECT function_return_invalid_domain();`,
-					ExpectedErr: `function_return_positive_domain_check`,
+					Query: `SELECT function_return_invalid_domain();`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testsqlfunctionreturnenforcesdomainconstraintsrepro-0002-select-function_return_invalid_domain",
+
+						// TestPlpgsqlFunctionReturnDomainValueRepro reproduces a correctness bug:
+						// PL/pgSQL functions returning a domain reject a valid base-type return value
+						// instead of coercing it to the domain.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestPlpgsqlFunctionReturnDomainValueRepro reproduces a correctness bug:
-// PL/pgSQL functions returning a domain reject a valid base-type return value
-// instead of coercing it to the domain.
 func TestPlpgsqlFunctionReturnDomainValueRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1454,8 +1394,7 @@ func TestPlpgsqlFunctionReturnDomainValueRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT plpgsql_return_valid_domain();`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT plpgsql_return_valid_domain();`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testplpgsqlfunctionreturndomainvaluerepro-0001-select-plpgsql_return_valid_domain"},
 				},
 			},
 		},
@@ -1478,8 +1417,7 @@ func TestSqlFunctionArgumentResolvesDomainInputRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT function_arg_identity(7);`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT function_arg_identity(7);`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testsqlfunctionargumentresolvesdomaininputrepro-0001-select-function_arg_identity-7"},
 				},
 			},
 		},
@@ -1507,8 +1445,7 @@ func TestDomainDefaultAppliesToColumnRepro(t *testing.T) {
 					Query: `INSERT INTO defaulted_domain_items (id) VALUES (1);`,
 				},
 				{
-					Query:    `SELECT id, amount FROM defaulted_domain_items;`,
-					Expected: []sql.Row{{1, 7}},
+					Query: `SELECT id, amount FROM defaulted_domain_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdomaindefaultappliestocolumnrepro-0001-select-id-amount-from-defaulted_domain_items"},
 				},
 			},
 		},
@@ -1539,8 +1476,7 @@ func TestUpdateSetDefaultUsesDomainDefaultRepro(t *testing.T) {
 						WHERE id = 1;`,
 				},
 				{
-					Query:    `SELECT id, amount FROM update_defaulted_domain_items;`,
-					Expected: []sql.Row{{1, 7}},
+					Query: `SELECT id, amount FROM update_defaulted_domain_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testupdatesetdefaultusesdomaindefaultrepro-0001-select-id-amount-from-update_defaulted_domain_items"},
 				},
 			},
 		},
@@ -1570,8 +1506,7 @@ func TestAlterDomainSetDefaultAppliesToColumnsRepro(t *testing.T) {
 					Query: `INSERT INTO alter_defaulted_domain_items (id) VALUES (1);`,
 				},
 				{
-					Query:    `SELECT id, amount FROM alter_defaulted_domain_items;`,
-					Expected: []sql.Row{{1, 11}},
+					Query: `SELECT id, amount FROM alter_defaulted_domain_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testalterdomainsetdefaultappliestocolumnsrepro-0001-select-id-amount-from-alter_defaulted_domain_items"},
 				},
 			},
 		},
@@ -1598,8 +1533,7 @@ func TestDomainTypedColumnAcceptsValidColumnDefaultRepro(t *testing.T) {
 					Query: `INSERT INTO column_default_domain_items (id) VALUES (1);`,
 				},
 				{
-					Query:    `SELECT id, amount FROM column_default_domain_items;`,
-					Expected: []sql.Row{{1, 5}},
+					Query: `SELECT id, amount FROM column_default_domain_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdomaintypedcolumnacceptsvalidcolumndefaultrepro-0001-select-id-amount-from-column_default_domain_items"},
 				},
 			},
 		},
@@ -1629,12 +1563,10 @@ func TestInsertSelectEnforcesDomainConstraintsGuard(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `INSERT INTO insert_select_domain_items
-						SELECT id, amount FROM insert_select_domain_source ORDER BY id;`,
-					ExpectedErr: `insert_select_positive_domain_check`,
+						SELECT id, amount FROM insert_select_domain_source ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testinsertselectenforcesdomainconstraintsguard-0001-insert-into-insert_select_domain_items-select-id", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM insert_select_domain_items;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM insert_select_domain_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testinsertselectenforcesdomainconstraintsguard-0002-select-count-*-from-insert_select_domain_items"},
 				},
 			},
 		},
@@ -1661,17 +1593,12 @@ func TestUpdateAliasEnforcesDomainConstraintsRepro(t *testing.T) {
 				{
 					Query: `UPDATE update_alias_domain_items AS t
 						SET amount = -1
-						WHERE id = 1;`,
-					ExpectedErr: `update_alias_positive_domain_check`,
+						WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testupdatealiasenforcesdomainconstraintsrepro-0001-update-update_alias_domain_items-as-t-set", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, amount
 						FROM update_alias_domain_items
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, 1},
-						{2, 2},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testupdatealiasenforcesdomainconstraintsrepro-0002-select-id-amount-from-update_alias_domain_items"},
 				},
 			},
 		},
@@ -1701,8 +1628,7 @@ func TestUpdateAliasDomainColumnValidAssignmentRepro(t *testing.T) {
 						WHERE id = 1;`,
 				},
 				{
-					Query:    `SELECT id, amount FROM update_alias_valid_domain_items;`,
-					Expected: []sql.Row{{1, 10}},
+					Query: `SELECT id, amount FROM update_alias_valid_domain_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testupdatealiasdomaincolumnvalidassignmentrepro-0001-select-id-amount-from-update_alias_valid_domain_items"},
 				},
 			},
 		},
@@ -1735,17 +1661,12 @@ func TestUpdateFromEnforcesDomainConstraintsRepro(t *testing.T) {
 					Query: `UPDATE update_from_domain_items AS t
 						SET amount = s.new_amount
 						FROM update_from_domain_source AS s
-						WHERE t.id = s.id;`,
-					ExpectedErr: `update_from_positive_domain_check`,
+						WHERE t.id = s.id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testupdatefromenforcesdomainconstraintsrepro-0001-update-update_from_domain_items-as-t-set", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, amount
 						FROM update_from_domain_items
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, 1},
-						{2, 2},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testupdatefromenforcesdomainconstraintsrepro-0002-select-id-amount-from-update_from_domain_items"},
 				},
 			},
 		},
@@ -1771,12 +1692,10 @@ func TestOnConflictUpdateEnforcesDomainConstraintsRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `INSERT INTO on_conflict_domain_items VALUES (1, 2)
-						ON CONFLICT (id) DO UPDATE SET amount = -1;`,
-					ExpectedErr: `on_conflict_positive_domain_check`,
+						ON CONFLICT (id) DO UPDATE SET amount = -1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testonconflictupdateenforcesdomainconstraintsrepro-0001-insert-into-on_conflict_domain_items-values-1", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT id, amount FROM on_conflict_domain_items;`,
-					Expected: []sql.Row{{1, 1}},
+					Query: `SELECT id, amount FROM on_conflict_domain_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testonconflictupdateenforcesdomainconstraintsrepro-0002-select-id-amount-from-on_conflict_domain_items"},
 				},
 			},
 		},
@@ -1801,12 +1720,10 @@ func TestOnConflictUpdateEnforcesDomainNotNullRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `INSERT INTO on_conflict_domain_not_null_items VALUES (1, 2)
-						ON CONFLICT (id) DO UPDATE SET amount = NULL;`,
-					ExpectedErr: `on_conflict_required_domain`,
+						ON CONFLICT (id) DO UPDATE SET amount = NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testonconflictupdateenforcesdomainnotnullrepro-0001-insert-into-on_conflict_domain_not_null_items-values-1", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT id, amount FROM on_conflict_domain_not_null_items;`,
-					Expected: []sql.Row{{1, 1}},
+					Query: `SELECT id, amount FROM on_conflict_domain_not_null_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testonconflictupdateenforcesdomainnotnullrepro-0002-select-id-amount-from-on_conflict_domain_not_null_items"},
 				},
 			},
 		},
@@ -1831,21 +1748,21 @@ func TestAlterTableAddDomainColumnValidatesDefaultGuard(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `ALTER TABLE add_column_domain_items
-						ADD COLUMN amount add_column_positive_domain DEFAULT -1;`,
-					ExpectedErr: `add_column_positive_domain`,
+						ADD COLUMN amount add_column_positive_domain DEFAULT -1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testaltertableadddomaincolumnvalidatesdefaultguard-0001-alter-table-add_column_domain_items-add-column",
+
+						// TestAlterTableAddDomainColumnValidDefaultRepro reproduces a correctness bug:
+						// adding a domain-typed column with a valid base-type default is rejected
+						// instead of backfilling existing rows with that default.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT * FROM add_column_domain_items;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT * FROM add_column_domain_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testaltertableadddomaincolumnvalidatesdefaultguard-0002-select-*-from-add_column_domain_items"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterTableAddDomainColumnValidDefaultRepro reproduces a correctness bug:
-// adding a domain-typed column with a valid base-type default is rejected
-// instead of backfilling existing rows with that default.
 func TestAlterTableAddDomainColumnValidDefaultRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1864,8 +1781,7 @@ func TestAlterTableAddDomainColumnValidDefaultRepro(t *testing.T) {
 						ADD COLUMN amount add_column_valid_default_domain DEFAULT 5;`,
 				},
 				{
-					Query:    `SELECT id, amount FROM add_column_valid_default_items;`,
-					Expected: []sql.Row{{1, 5}},
+					Query: `SELECT id, amount FROM add_column_valid_default_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testaltertableadddomaincolumnvaliddefaultrepro-0001-select-id-amount-from-add_column_valid_default_items"},
 				},
 			},
 		},
@@ -1889,21 +1805,21 @@ func TestAlterTableAddDomainNotNullColumnValidatesExistingRowsRepro(t *testing.T
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `ALTER TABLE add_required_domain_items
-						ADD COLUMN amount add_column_required_domain;`,
-					ExpectedErr: `add_column_required_domain`,
+						ADD COLUMN amount add_column_required_domain;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testaltertableadddomainnotnullcolumnvalidatesexistingrowsrepro-0001-alter-table-add_required_domain_items-add-column",
+
+						// TestAlterColumnTypeToDomainPreservesAndEnforcesDomainGuard guards that
+						// changing a column's type to a domain preserves stored valid values and uses
+						// the domain for later assignments.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT * FROM add_required_domain_items;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT * FROM add_required_domain_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testaltertableadddomainnotnullcolumnvalidatesexistingrowsrepro-0002-select-*-from-add_required_domain_items"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterColumnTypeToDomainPreservesAndEnforcesDomainGuard guards that
-// changing a column's type to a domain preserves stored valid values and uses
-// the domain for later assignments.
 func TestAlterColumnTypeToDomainPreservesAndEnforcesDomainGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1923,12 +1839,10 @@ func TestAlterColumnTypeToDomainPreservesAndEnforcesDomainGuard(t *testing.T) {
 						ALTER COLUMN amount TYPE alter_type_positive_domain;`,
 				},
 				{
-					Query:       `INSERT INTO alter_type_domain_items VALUES (2, -1);`,
-					ExpectedErr: `alter_type_positive_domain_check`,
+					Query: `INSERT INTO alter_type_domain_items VALUES (2, -1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testaltercolumntypetodomainpreservesandenforcesdomainguard-0001-insert-into-alter_type_domain_items-values-2", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT id, amount FROM alter_type_domain_items;`,
-					Expected: []sql.Row{{1, 10}},
+					Query: `SELECT id, amount FROM alter_type_domain_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testaltercolumntypetodomainpreservesandenforcesdomainguard-0002-select-id-amount-from-alter_type_domain_items"},
 				},
 			},
 		},
@@ -1954,12 +1868,10 @@ func TestAlterColumnTypeToDomainValidatesExistingRowsRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `ALTER TABLE alter_type_existing_domain_items
-						ALTER COLUMN amount TYPE alter_type_existing_positive_domain;`,
-					ExpectedErr: `alter_type_existing_positive_domain_check`,
+						ALTER COLUMN amount TYPE alter_type_existing_positive_domain;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testaltercolumntypetodomainvalidatesexistingrowsrepro-0001-alter-table-alter_type_existing_domain_items-alter-column", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT id, amount FROM alter_type_existing_domain_items;`,
-					Expected: []sql.Row{{1, -1}},
+					Query: `SELECT id, amount FROM alter_type_existing_domain_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testaltercolumntypetodomainvalidatesexistingrowsrepro-0002-select-id-amount-from-alter_type_existing_domain_items"},
 				},
 			},
 		},
@@ -1984,21 +1896,21 @@ func TestAlterColumnTypeToNotNullDomainValidatesExistingRowsRepro(t *testing.T) 
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `ALTER TABLE alter_type_required_domain_items
-						ALTER COLUMN amount TYPE alter_type_required_domain;`,
-					ExpectedErr: `alter_type_required_domain`,
+						ALTER COLUMN amount TYPE alter_type_required_domain;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testaltercolumntypetonotnulldomainvalidatesexistingrowsrepro-0001-alter-table-alter_type_required_domain_items-alter-column",
+
+						// TestNestedDomainEnforcesBaseDomainConstraintsRepro reproduces a domain
+						// integrity bug: domains built on top of another domain should enforce both
+						// the base domain's constraints and their own constraints.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT id, amount FROM alter_type_required_domain_items;`,
-					Expected: []sql.Row{{1, nil}},
+					Query: `SELECT id, amount FROM alter_type_required_domain_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testaltercolumntypetonotnulldomainvalidatesexistingrowsrepro-0002-select-id-amount-from-alter_type_required_domain_items"},
 				},
 			},
 		},
 	})
 }
 
-// TestNestedDomainEnforcesBaseDomainConstraintsRepro reproduces a domain
-// integrity bug: domains built on top of another domain should enforce both
-// the base domain's constraints and their own constraints.
 func TestNestedDomainEnforcesBaseDomainConstraintsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -2011,25 +1923,24 @@ func TestNestedDomainEnforcesBaseDomainConstraintsRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT 5::nested_small_positive;`,
-					Expected: []sql.Row{{5}},
+					Query: `SELECT 5::nested_small_positive;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testnesteddomainenforcesbasedomainconstraintsrepro-0001-select-5::nested_small_positive"},
 				},
 				{
-					Query:       `SELECT (-1)::nested_small_positive;`,
-					ExpectedErr: `nested_base_positive_check`,
+					Query: `SELECT (-1)::nested_small_positive;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testnesteddomainenforcesbasedomainconstraintsrepro-0002-select-1-::nested_small_positive", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SELECT 11::nested_small_positive;`,
-					ExpectedErr: `nested_small_positive_check`,
+					Query: `SELECT 11::nested_small_positive;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testnesteddomainenforcesbasedomainconstraintsrepro-0003-select-11::nested_small_positive",
+
+						// TestAlterDomainAddConstraintValidatesExistingRowsRepro reproduces a domain
+						// integrity bug: PostgreSQL validates existing domain-typed columns before
+						// accepting a new domain CHECK constraint.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterDomainAddConstraintValidatesExistingRowsRepro reproduces a domain
-// integrity bug: PostgreSQL validates existing domain-typed columns before
-// accepting a new domain CHECK constraint.
 func TestAlterDomainAddConstraintValidatesExistingRowsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -2045,17 +1956,18 @@ func TestAlterDomainAddConstraintValidatesExistingRowsRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `ALTER DOMAIN alter_domain_positive
-						ADD CONSTRAINT alter_domain_positive_check CHECK (VALUE > 0);`,
-					ExpectedErr: `violates`,
+						ADD CONSTRAINT alter_domain_positive_check CHECK (VALUE > 0);`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testalterdomainaddconstraintvalidatesexistingrowsrepro-0001-alter-domain-alter_domain_positive-add-constraint",
+
+						// TestAlterDomainSetNotNullValidatesExistingRowsRepro reproduces a domain
+						// integrity bug: PostgreSQL validates existing domain-typed columns before
+						// accepting ALTER DOMAIN ... SET NOT NULL.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterDomainSetNotNullValidatesExistingRowsRepro reproduces a domain
-// integrity bug: PostgreSQL validates existing domain-typed columns before
-// accepting ALTER DOMAIN ... SET NOT NULL.
 func TestAlterDomainSetNotNullValidatesExistingRowsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -2070,17 +1982,18 @@ func TestAlterDomainSetNotNullValidatesExistingRowsRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER DOMAIN alter_domain_required SET NOT NULL;`,
-					ExpectedErr: `contains null values`,
+					Query: `ALTER DOMAIN alter_domain_required SET NOT NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testalterdomainsetnotnullvalidatesexistingrowsrepro-0001-alter-domain-alter_domain_required-set-not",
+
+						// TestDropDomainUsedByViewRequiresCascadeRepro reproduces a dependency bug:
+						// PostgreSQL rejects dropping a domain referenced by a view unless CASCADE is
+						// requested.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropDomainUsedByViewRequiresCascadeRepro reproduces a dependency bug:
-// PostgreSQL rejects dropping a domain referenced by a view unless CASCADE is
-// requested.
 func TestDropDomainUsedByViewRequiresCascadeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -2093,17 +2006,18 @@ func TestDropDomainUsedByViewRequiresCascadeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP DOMAIN domain_view_dependency_positive;`,
-					ExpectedErr: `other objects depend on it`,
+					Query: `DROP DOMAIN domain_view_dependency_positive;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdropdomainusedbyviewrequirescascaderepro-0001-drop-domain-domain_view_dependency_positive",
+
+						// TestDropDomainUsedByFunctionRequiresCascadeRepro reproduces a dependency
+						// bug: PostgreSQL rejects dropping a domain referenced by a function signature
+						// unless CASCADE is requested.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropDomainUsedByFunctionRequiresCascadeRepro reproduces a dependency
-// bug: PostgreSQL rejects dropping a domain referenced by a function signature
-// unless CASCADE is requested.
 func TestDropDomainUsedByFunctionRequiresCascadeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -2118,17 +2032,18 @@ func TestDropDomainUsedByFunctionRequiresCascadeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP DOMAIN domain_function_dependency_positive;`,
-					ExpectedErr: `other objects depend on it`,
+					Query: `DROP DOMAIN domain_function_dependency_positive;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdropdomainusedbyfunctionrequirescascaderepro-0001-drop-domain-domain_function_dependency_positive",
+
+						// TestDropDomainUsedByColumnDefaultRequiresCascadeRepro reproduces a
+						// dependency bug: PostgreSQL rejects dropping a domain referenced by a column
+						// default unless CASCADE is requested.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropDomainUsedByColumnDefaultRequiresCascadeRepro reproduces a
-// dependency bug: PostgreSQL rejects dropping a domain referenced by a column
-// default unless CASCADE is requested.
 func TestDropDomainUsedByColumnDefaultRequiresCascadeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -2143,8 +2058,7 @@ func TestDropDomainUsedByColumnDefaultRequiresCascadeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP DOMAIN domain_default_dependency_positive;`,
-					ExpectedErr: `other objects depend on it`,
+					Query: `DROP DOMAIN domain_default_dependency_positive;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdropdomainusedbycolumndefaultrequirescascaderepro-0001-drop-domain-domain_default_dependency_positive", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO domain_default_dependency_items (id)
@@ -2152,8 +2066,7 @@ func TestDropDomainUsedByColumnDefaultRequiresCascadeRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT id, amount
-						FROM domain_default_dependency_items;`,
-					Expected: []sql.Row{{1, 1}},
+						FROM domain_default_dependency_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdropdomainusedbycolumndefaultrequirescascaderepro-0002-select-id-amount-from-domain_default_dependency_items"},
 				},
 			},
 		},
@@ -2179,8 +2092,12 @@ func TestDropDomainUsedByCheckConstraintRequiresCascadeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP DOMAIN domain_check_dependency_positive;`,
-					ExpectedErr: `other objects depend on it`,
+					Query: `DROP DOMAIN domain_check_dependency_positive;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdropdomainusedbycheckconstraintrequirescascaderepro-0001-drop-domain-domain_check_dependency_positive",
+
+						// TestDropDomainUsedByGeneratedColumnRequiresCascadeRepro reproduces a
+						// dependency bug: PostgreSQL rejects dropping a domain referenced by a stored
+						// generated column unless CASCADE is requested.
+						Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO domain_check_dependency_items
@@ -2191,9 +2108,6 @@ func TestDropDomainUsedByCheckConstraintRequiresCascadeRepro(t *testing.T) {
 	})
 }
 
-// TestDropDomainUsedByGeneratedColumnRequiresCascadeRepro reproduces a
-// dependency bug: PostgreSQL rejects dropping a domain referenced by a stored
-// generated column unless CASCADE is requested.
 func TestDropDomainUsedByGeneratedColumnRequiresCascadeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -2211,8 +2125,7 @@ func TestDropDomainUsedByGeneratedColumnRequiresCascadeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP DOMAIN domain_generated_dependency_positive;`,
-					ExpectedErr: `other objects depend on it`,
+					Query: `DROP DOMAIN domain_generated_dependency_positive;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdropdomainusedbygeneratedcolumnrequirescascaderepro-0001-drop-domain-domain_generated_dependency_positive", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO domain_generated_dependency_items (id, amount)
@@ -2220,8 +2133,7 @@ func TestDropDomainUsedByGeneratedColumnRequiresCascadeRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT id, amount, normalized
-						FROM domain_generated_dependency_items;`,
-					Expected: []sql.Row{{1, 7, 7}},
+						FROM domain_generated_dependency_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdropdomainusedbygeneratedcolumnrequirescascaderepro-0002-select-id-amount-normalized-from"},
 				},
 			},
 		},
@@ -2247,8 +2159,7 @@ func TestDropDomainUsedByExpressionIndexRequiresCascadeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP DOMAIN domain_index_dependency_positive;`,
-					ExpectedErr: `other objects depend on it`,
+					Query: `DROP DOMAIN domain_index_dependency_positive;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdropdomainusedbyexpressionindexrequirescascaderepro-0001-drop-domain-domain_index_dependency_positive", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO domain_index_dependency_items
@@ -2256,8 +2167,7 @@ func TestDropDomainUsedByExpressionIndexRequiresCascadeRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT id, amount
-						FROM domain_index_dependency_items;`,
-					Expected: []sql.Row{{1, 7}},
+						FROM domain_index_dependency_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdropdomainusedbyexpressionindexrequirescascaderepro-0002-select-id-amount-from-domain_index_dependency_items"},
 				},
 			},
 		},
@@ -2293,13 +2203,11 @@ func TestDropDomainDependencyChecksSchemaQualifiedDomainRepro(t *testing.T) {
 						JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace
 						WHERE n.nspname IN ('drop_domain_schema_a', 'drop_domain_schema_b')
 							AND t.typname = 'same_named_domain'
-						ORDER BY n.nspname;`,
-					Expected: []sql.Row{{"drop_domain_schema_b", "same_named_domain"}},
+						ORDER BY n.nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdropdomaindependencychecksschemaqualifieddomainrepro-0001-select-n.nspname-t.typname-from-pg_catalog.pg_type"},
 				},
 				{
 					Query: `SELECT id
-						FROM drop_domain_schema_uses_b;`,
-					Expected: []sql.Row{{1}},
+						FROM drop_domain_schema_uses_b;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdropdomaindependencychecksschemaqualifieddomainrepro-0002-select-id-from-drop_domain_schema_uses_b"},
 				},
 			},
 		},
@@ -2325,8 +2233,7 @@ func TestDropDomainCascadeWithoutDependentsRepro(t *testing.T) {
 						FROM pg_catalog.pg_type t
 						JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace
 						WHERE n.nspname = 'public'
-							AND t.typname = 'drop_domain_cascade_unused';`,
-					Expected: []sql.Row{},
+							AND t.typname = 'drop_domain_cascade_unused';`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testdropdomaincascadewithoutdependentsrepro-0001-select-t.typname-from-pg_catalog.pg_type-t"},
 				},
 			},
 		},

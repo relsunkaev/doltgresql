@@ -1,0 +1,79 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map info_schema_collation_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/info_schema_collation_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/info_schema_collation_test.go:TestInformationSchemaColumnsCollationName#0001",
+      "source": "testing/go/info_schema_collation_test.go:TestInformationSchemaColumnsCollationName",
+      "ordinal": 1,
+      "scriptName": "collation_name is NULL for default-collated strings and non-strings",
+      "oracle": "internal",
+      "suggestedId": "info-schema-collation-test-testinformationschemacolumnscollationname-0001-select-column_name-collation_name-from-information_schema.columns",
+      "expectedKind": "rows",
+      "query": "SELECT column_name, collation_name\nFROM information_schema.columns\nWHERE table_name = 'coll_default' AND table_schema = 'public'\nORDER BY ordinal_position;",
+      "querySha256": "70a97c7f9a2b2b7732e83fd0328a06977b32e297ffda67b42a3bb6fb5fde3817",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/info_schema_collation_test.go:TestInformationSchemaColumnsCollationName#0002",
+      "source": "testing/go/info_schema_collation_test.go:TestInformationSchemaColumnsCollationName",
+      "ordinal": 2,
+      "scriptName": "explicit COLLATE surfaces collation_name in information_schema.columns",
+      "oracle": "postgres",
+      "postgresId": "info-schema-collation-test-testinformationschemacolumnscollationname-0002-select-column_name-collation_name-from-information_schema.columns",
+      "suggestedId": "info-schema-collation-test-testinformationschemacolumnscollationname-0002-select-column_name-collation_name-from-information_schema.columns",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT column_name, collation_name\nFROM information_schema.columns\nWHERE table_name = 'coll_explicit' AND column_name IN ('a', 'b', 'def', 'plain')\nORDER BY column_name;",
+      "querySha256": "50962136146ccd583831247c5ed822f949cf8c8bc2ed80720622c99b0b9d6a8d",
+      "expectedRows": [
+        [
+          {
+            "value": "a"
+          },
+          {
+            "value": "C"
+          }
+        ],
+        [
+          {
+            "value": "b"
+          },
+          {
+            "value": "POSIX"
+          }
+        ],
+        [
+          {
+            "value": "def"
+          },
+          {
+            "null": true
+          }
+        ],
+        [
+          {
+            "value": "plain"
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

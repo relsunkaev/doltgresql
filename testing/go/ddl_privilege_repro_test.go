@@ -38,18 +38,20 @@ func TestCreateTableForeignKeyRequiresReferencesPrivilegeRepro(t *testing.T) {
 						id INT PRIMARY KEY,
 						parent_id INT REFERENCES fk_parent_private(id)
 					);`,
-					ExpectedErr: `permission denied`,
-					Username:    `fk_creator`,
-					Password:    `creator`,
+
+					Username: `fk_creator`,
+					Password: `creator`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCreateTableForeignKeyRequiresReferencesOnReferencedColumnRepro reproduces
+						// a security bug: Doltgres ignores which parent columns were covered by a
+						// column-scoped REFERENCES grant when creating a foreign key.
+						ID: "ddl-privilege-repro-test-testcreatetableforeignkeyrequiresreferencesprivilegerepro-0001-create-table-fk_child_private-id-int", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateTableForeignKeyRequiresReferencesOnReferencedColumnRepro reproduces
-// a security bug: Doltgres ignores which parent columns were covered by a
-// column-scoped REFERENCES grant when creating a foreign key.
 func TestCreateTableForeignKeyRequiresReferencesOnReferencedColumnRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -69,13 +71,12 @@ func TestCreateTableForeignKeyRequiresReferencesOnReferencedColumnRepro(t *testi
 						id INT PRIMARY KEY,
 						parent_id INT REFERENCES fk_column_scope_parent_private(id)
 					);`,
-					ExpectedErr: `permission denied`,
-					Username:    `fk_column_scope_creator`,
-					Password:    `creator`,
+
+					Username: `fk_column_scope_creator`,
+					Password: `creator`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testcreatetableforeignkeyrequiresreferencesonreferencedcolumnrepro-0001-create-table-fk_column_scope_child_private-id-int", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT to_regclass('fk_column_scope_child_private')::text;`,
-					Expected: []sql.Row{{nil}},
+					Query: `SELECT to_regclass('fk_column_scope_child_private')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testcreatetableforeignkeyrequiresreferencesonreferencedcolumnrepro-0002-select-to_regclass-fk_column_scope_child_private-::text"},
 				},
 				{
 					Query: `CREATE TABLE fk_column_scope_child_allowed (
@@ -86,8 +87,7 @@ func TestCreateTableForeignKeyRequiresReferencesOnReferencedColumnRepro(t *testi
 					Password: `creator`,
 				},
 				{
-					Query:    `SELECT to_regclass('fk_column_scope_child_allowed')::text;`,
-					Expected: []sql.Row{{"fk_column_scope_child_allowed"}},
+					Query: `SELECT to_regclass('fk_column_scope_child_allowed')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testcreatetableforeignkeyrequiresreferencesonreferencedcolumnrepro-0003-select-to_regclass-fk_column_scope_child_allowed-::text"},
 				},
 			},
 		},
@@ -119,18 +119,20 @@ func TestAlterTableAddForeignKeyRequiresReferencesPrivilegeRepro(t *testing.T) {
 					Query: `ALTER TABLE alter_fk_child_private
 						ADD CONSTRAINT alter_fk_child_private_parent_fk
 						FOREIGN KEY (parent_id) REFERENCES alter_fk_parent_private(id);`,
-					ExpectedErr: `permission denied`,
-					Username:    `alter_fk_creator`,
-					Password:    `creator`,
+
+					Username: `alter_fk_creator`,
+					Password: `creator`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestAlterTableAddForeignKeyRequiresReferencesOnReferencedColumnRepro
+						// reproduces a security bug: Doltgres ignores which parent columns were
+						// covered by a column-scoped REFERENCES grant when adding a foreign key.
+						ID: "ddl-privilege-repro-test-testaltertableaddforeignkeyrequiresreferencesprivilegerepro-0001-alter-table-alter_fk_child_private-add-constraint", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterTableAddForeignKeyRequiresReferencesOnReferencedColumnRepro
-// reproduces a security bug: Doltgres ignores which parent columns were
-// covered by a column-scoped REFERENCES grant when adding a foreign key.
 func TestAlterTableAddForeignKeyRequiresReferencesOnReferencedColumnRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -157,16 +159,15 @@ func TestAlterTableAddForeignKeyRequiresReferencesOnReferencedColumnRepro(t *tes
 					Query: `ALTER TABLE alter_fk_column_scope_child_private
 						ADD CONSTRAINT alter_fk_column_scope_child_parent_fk
 						FOREIGN KEY (parent_id) REFERENCES alter_fk_column_scope_parent_private(id);`,
-					ExpectedErr: `permission denied`,
-					Username:    `alter_fk_column_scope_creator`,
-					Password:    `creator`,
+
+					Username: `alter_fk_column_scope_creator`,
+					Password: `creator`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testaltertableaddforeignkeyrequiresreferencesonreferencedcolumnrepro-0001-alter-table-alter_fk_column_scope_child_private-add-constraint", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT count(*)
 						FROM information_schema.table_constraints
 						WHERE table_name = 'alter_fk_column_scope_child_private'
-							AND constraint_type = 'FOREIGN KEY';`,
-					Expected: []sql.Row{{int64(0)}},
+							AND constraint_type = 'FOREIGN KEY';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testaltertableaddforeignkeyrequiresreferencesonreferencedcolumnrepro-0002-select-count-*-from-information_schema.table_constraints"},
 				},
 				{
 					Query: `ALTER TABLE alter_fk_column_scope_child_private
@@ -179,8 +180,7 @@ func TestAlterTableAddForeignKeyRequiresReferencesOnReferencedColumnRepro(t *tes
 					Query: `SELECT count(*)
 						FROM information_schema.table_constraints
 						WHERE table_name = 'alter_fk_column_scope_child_private'
-							AND constraint_type = 'FOREIGN KEY';`,
-					Expected: []sql.Row{{int64(1)}},
+							AND constraint_type = 'FOREIGN KEY';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testaltertableaddforeignkeyrequiresreferencesonreferencedcolumnrepro-0003-select-count-*-from-information_schema.table_constraints"},
 				},
 			},
 		},
@@ -210,19 +210,21 @@ func TestAlterTableAddColumnReferencesRequiresReferencesPrivilegeRepro(t *testin
 				{
 					Query: `ALTER TABLE alter_column_fk_child_private
 						ADD COLUMN parent_id INT REFERENCES alter_column_fk_parent_private(id);`,
-					ExpectedErr: `permission denied`,
-					Username:    `alter_column_fk_creator`,
-					Password:    `creator`,
+
+					Username: `alter_column_fk_creator`,
+					Password: `creator`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestAlterTableAddColumnReferencesRequiresReferencesOnReferencedColumnRepro
+						// reproduces a security bug: Doltgres ignores which parent columns were
+						// covered by a column-scoped REFERENCES grant when adding a column with an
+						// inline foreign key.
+						ID: "ddl-privilege-repro-test-testaltertableaddcolumnreferencesrequiresreferencesprivilegerepro-0001-alter-table-alter_column_fk_child_private-add-column", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterTableAddColumnReferencesRequiresReferencesOnReferencedColumnRepro
-// reproduces a security bug: Doltgres ignores which parent columns were
-// covered by a column-scoped REFERENCES grant when adding a column with an
-// inline foreign key.
 func TestAlterTableAddColumnReferencesRequiresReferencesOnReferencedColumnRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -247,16 +249,15 @@ func TestAlterTableAddColumnReferencesRequiresReferencesOnReferencedColumnRepro(
 				{
 					Query: `ALTER TABLE alter_column_fk_scope_child_private
 						ADD COLUMN parent_id INT REFERENCES alter_column_fk_scope_parent_private(id);`,
-					ExpectedErr: `permission denied`,
-					Username:    `alter_column_fk_scope_creator`,
-					Password:    `creator`,
+
+					Username: `alter_column_fk_scope_creator`,
+					Password: `creator`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testaltertableaddcolumnreferencesrequiresreferencesonreferencedcolumnrepro-0001-alter-table-alter_column_fk_scope_child_private-add-column", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT count(*)
 						FROM information_schema.columns
 						WHERE table_name = 'alter_column_fk_scope_child_private'
-							AND column_name = 'parent_id';`,
-					Expected: []sql.Row{{int64(0)}},
+							AND column_name = 'parent_id';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testaltertableaddcolumnreferencesrequiresreferencesonreferencedcolumnrepro-0002-select-count-*-from-information_schema.columns"},
 				},
 				{
 					Query: `ALTER TABLE alter_column_fk_scope_child_private
@@ -268,8 +269,7 @@ func TestAlterTableAddColumnReferencesRequiresReferencesOnReferencedColumnRepro(
 					Query: `SELECT count(*)
 						FROM information_schema.columns
 						WHERE table_name = 'alter_column_fk_scope_child_private'
-							AND column_name = 'parent_other_id';`,
-					Expected: []sql.Row{{int64(1)}},
+							AND column_name = 'parent_other_id';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testaltertableaddcolumnreferencesrequiresreferencesonreferencedcolumnrepro-0003-select-count-*-from-information_schema.columns"},
 				},
 			},
 		},
@@ -288,19 +288,21 @@ func TestPublicSchemaDefaultCreateRequiresExplicitGrantGuard(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CREATE TABLE public_schema_default_private (id INT PRIMARY KEY);`,
-					ExpectedErr: `permission denied for schema public`,
-					Username:    `public_schema_creator`,
-					Password:    `creator`,
+					Query: `CREATE TABLE public_schema_default_private (id INT PRIMARY KEY);`,
+
+					Username: `public_schema_creator`,
+					Password: `creator`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCreateAggregateRequiresSchemaCreatePrivilegeGuard covers CREATE
+						// AGGREGATE authorization: the creator must have CREATE privilege on the target
+						// schema.
+						ID: "ddl-privilege-repro-test-testpublicschemadefaultcreaterequiresexplicitgrantguard-0001-create-table-public_schema_default_private-id-int", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateAggregateRequiresSchemaCreatePrivilegeGuard covers CREATE
-// AGGREGATE authorization: the creator must have CREATE privilege on the target
-// schema.
 func TestCreateAggregateRequiresSchemaCreatePrivilegeGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -321,18 +323,20 @@ func TestCreateAggregateRequiresSchemaCreatePrivilegeGuard(t *testing.T) {
 						STYPE = INT,
 						INITCOND = '0'
 					);`,
-					ExpectedErr: `permission denied for schema public`,
-					Username:    `aggregate_creator`,
-					Password:    `creator`,
+
+					Username: `aggregate_creator`,
+					Password: `creator`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCreateOperatorRequiresSchemaCreatePrivilegeRepro reproduces a security
+						// bug: Doltgres allows a role without CREATE privilege on the target schema to
+						// create an operator in that schema.
+						ID: "ddl-privilege-repro-test-testcreateaggregaterequiresschemacreateprivilegeguard-0001-create-aggregate-create_aggregate_private-int-sfunc", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateOperatorRequiresSchemaCreatePrivilegeRepro reproduces a security
-// bug: Doltgres allows a role without CREATE privilege on the target schema to
-// create an operator in that schema.
 func TestCreateOperatorRequiresSchemaCreatePrivilegeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -353,18 +357,20 @@ func TestCreateOperatorRequiresSchemaCreatePrivilegeRepro(t *testing.T) {
 						RIGHTARG = INT,
 						PROCEDURE = create_operator_private_func
 					);`,
-					ExpectedErr: `permission denied for schema public`,
-					Username:    `operator_creator`,
-					Password:    `creator`,
+
+					Username: `operator_creator`,
+					Password: `creator`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCreateOperatorRequiresFunctionExecutePrivilegeRepro reproduces a
+						// security bug: Doltgres allows a role without EXECUTE privilege on the
+						// underlying function to create an operator backed by it.
+						ID: "ddl-privilege-repro-test-testcreateoperatorrequiresschemacreateprivilegerepro-0001-create-operator-===-leftarg-=", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateOperatorRequiresFunctionExecutePrivilegeRepro reproduces a
-// security bug: Doltgres allows a role without EXECUTE privilege on the
-// underlying function to create an operator backed by it.
 func TestCreateOperatorRequiresFunctionExecutePrivilegeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -386,18 +392,20 @@ func TestCreateOperatorRequiresFunctionExecutePrivilegeRepro(t *testing.T) {
 						RIGHTARG = INT,
 						PROCEDURE = create_operator_execute_private_func
 					);`,
-					ExpectedErr: `permission denied`,
-					Username:    `operator_function_user`,
-					Password:    `creator`,
+
+					Username: `operator_function_user`,
+					Password: `creator`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCreateOperatorUsesQualifiedSchemaRepro reproduces a security and catalog
+						// bug: a schema-qualified CREATE OPERATOR should check CREATE on the named
+						// schema instead of creating an operator in the current schema.
+						ID: "ddl-privilege-repro-test-testcreateoperatorrequiresfunctionexecuteprivilegerepro-0001-create-operator-===-leftarg-=", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateOperatorUsesQualifiedSchemaRepro reproduces a security and catalog
-// bug: a schema-qualified CREATE OPERATOR should check CREATE on the named
-// schema instead of creating an operator in the current schema.
 func TestCreateOperatorUsesQualifiedSchemaRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -422,17 +430,16 @@ func TestCreateOperatorUsesQualifiedSchemaRepro(t *testing.T) {
 						RIGHTARG = INT,
 						PROCEDURE = operator_qualified_func
 					);`,
-					ExpectedErr: `permission denied for schema operator_private`,
-					Username:    `operator_qualified_creator`,
-					Password:    `creator`,
+
+					Username: `operator_qualified_creator`,
+					Password: `creator`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testcreateoperatorusesqualifiedschemarepro-0001-create-operator-operator_private.===-leftarg-=", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT n.nspname, o.oprname
 						FROM pg_catalog.pg_operator o
 						JOIN pg_catalog.pg_namespace n ON n.oid = o.oprnamespace
 						WHERE o.oprname IN ('===', 'operator_private.===')
-						ORDER BY n.nspname, o.oprname;`,
-					Expected: []sql.Row{},
+						ORDER BY n.nspname, o.oprname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testcreateoperatorusesqualifiedschemarepro-0002-select-n.nspname-o.oprname-from-pg_catalog.pg_operator"},
 				},
 			},
 		},
@@ -460,18 +467,20 @@ func TestCreateCastRequiresTypeOwnershipRepro(t *testing.T) {
 				{
 					Query: `CREATE CAST (INT AS cast_private_color)
 						WITH FUNCTION int_to_cast_private_color(INT);`,
-					ExpectedErr: `must be owner`,
-					Username:    `cast_creator`,
-					Password:    `creator`,
+
+					Username: `cast_creator`,
+					Password: `creator`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCreateCastRequiresFunctionExecutePrivilegeRepro reproduces a security
+						// bug: Doltgres allows a role without EXECUTE privilege on the cast function to
+						// create a cast backed by it.
+						ID: "ddl-privilege-repro-test-testcreatecastrequirestypeownershiprepro-0001-create-cast-int-as-cast_private_color", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateCastRequiresFunctionExecutePrivilegeRepro reproduces a security
-// bug: Doltgres allows a role without EXECUTE privilege on the cast function to
-// create a cast backed by it.
 func TestCreateCastRequiresFunctionExecutePrivilegeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -500,17 +509,19 @@ func TestCreateCastRequiresFunctionExecutePrivilegeRepro(t *testing.T) {
 				{
 					Query: `CREATE CAST (INT AS cast_execute_color)
 						WITH FUNCTION int_to_cast_execute_color(INT);`,
-					ExpectedErr: `permission denied`,
-					Username:    `cast_function_creator`,
-					Password:    `creator`,
+
+					Username: `cast_function_creator`,
+					Password: `creator`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestDropCastRequiresTypeOwnershipRepro reproduces a security bug: Doltgres
+						// allows a role that owns neither side of a cast to drop it.
+						ID: "ddl-privilege-repro-test-testcreatecastrequiresfunctionexecuteprivilegerepro-0001-create-cast-int-as-cast_execute_color", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropCastRequiresTypeOwnershipRepro reproduces a security bug: Doltgres
-// allows a role that owns neither side of a cast to drop it.
 func TestDropCastRequiresTypeOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -529,23 +540,24 @@ func TestDropCastRequiresTypeOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP CAST (INT AS drop_cast_private_color);`,
-					ExpectedErr: `must be owner`,
-					Username:    `cast_dropper`,
-					Password:    `dropper`,
+					Query: `DROP CAST (INT AS drop_cast_private_color);`,
+
+					Username: `cast_dropper`,
+					Password: `dropper`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testdropcastrequirestypeownershiprepro-0001-drop-cast-int-as-drop_cast_private_color",
+
+						// TestCreateTextSearchConfigurationRequiresSchemaCreatePrivilegeRepro
+						// reproduces a security bug: Doltgres allows a role without CREATE privilege on
+						// the target schema to create a text-search configuration in that schema.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT ((1)::drop_cast_private_color)::text;`,
-					Expected: []sql.Row{{"red"}},
+					Query: `SELECT ((1)::drop_cast_private_color)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testdropcastrequirestypeownershiprepro-0002-select-1-::drop_cast_private_color-::text"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateTextSearchConfigurationRequiresSchemaCreatePrivilegeRepro
-// reproduces a security bug: Doltgres allows a role without CREATE privilege on
-// the target schema to create a text-search configuration in that schema.
 func TestCreateTextSearchConfigurationRequiresSchemaCreatePrivilegeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -556,20 +568,22 @@ func TestCreateTextSearchConfigurationRequiresSchemaCreatePrivilegeRepro(t *test
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CREATE TEXT SEARCH CONFIGURATION unauthorized_ts_config (COPY = pg_catalog.simple);`,
-					ExpectedErr: `permission denied for schema public`,
-					Username:    `ts_config_creator`,
-					Password:    `creator`,
+					Query: `CREATE TEXT SEARCH CONFIGURATION unauthorized_ts_config (COPY = pg_catalog.simple);`,
+
+					Username: `ts_config_creator`,
+					Password: `creator`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCreateTextSearchConfigurationUsesQualifiedSchemaRepro reproduces a
+						// security and catalog bug: a schema-qualified CREATE TEXT SEARCH
+						// CONFIGURATION should check CREATE on the named schema instead of silently
+						// creating the configuration in the current schema.
+						ID: "ddl-privilege-repro-test-testcreatetextsearchconfigurationrequiresschemacreateprivilegerepro-0001-create-text-search-configuration-unauthorized_ts_config", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateTextSearchConfigurationUsesQualifiedSchemaRepro reproduces a
-// security and catalog bug: a schema-qualified CREATE TEXT SEARCH
-// CONFIGURATION should check CREATE on the named schema instead of silently
-// creating the configuration in the current schema.
 func TestCreateTextSearchConfigurationUsesQualifiedSchemaRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -584,17 +598,16 @@ func TestCreateTextSearchConfigurationUsesQualifiedSchemaRepro(t *testing.T) {
 				{
 					Query: `CREATE TEXT SEARCH CONFIGURATION ts_config_private.qualified_ts_config
 						(COPY = pg_catalog.simple);`,
-					ExpectedErr: `permission denied for schema ts_config_private`,
-					Username:    `ts_qualified_creator`,
-					Password:    `creator`,
+
+					Username: `ts_qualified_creator`,
+					Password: `creator`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testcreatetextsearchconfigurationusesqualifiedschemarepro-0001-create-text-search-configuration-ts_config_private.qualified_ts_config", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT n.nspname, c.cfgname
 						FROM pg_catalog.pg_ts_config c
 						JOIN pg_catalog.pg_namespace n ON n.oid = c.cfgnamespace
 						WHERE c.cfgname = 'qualified_ts_config'
-						ORDER BY n.nspname;`,
-					Expected: []sql.Row{},
+						ORDER BY n.nspname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testcreatetextsearchconfigurationusesqualifiedschemarepro-0002-select-n.nspname-c.cfgname-from-pg_catalog.pg_ts_config"},
 				},
 			},
 		},
@@ -612,24 +625,25 @@ func TestCreateAccessMethodRequiresSuperuserRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CREATE ACCESS METHOD unauthorized_table_am TYPE TABLE HANDLER heap_tableam_handler;`,
-					ExpectedErr: `superuser`,
-					Username:    `access_method_creator`,
-					Password:    `creator`,
+					Query: `CREATE ACCESS METHOD unauthorized_table_am TYPE TABLE HANDLER heap_tableam_handler;`,
+
+					Username: `access_method_creator`,
+					Password: `creator`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testcreateaccessmethodrequiressuperuserrepro-0001-create-access-method-unauthorized_table_am-type", Compare:
+
+					// TestDropAccessMethodRequiresSuperuserRepro reproduces a security bug:
+					// Doltgres allows a non-superuser to drop a user-defined access method.
+					"sqlstate"},
 				},
 				{
 					Query: `SELECT count(*)
 						FROM pg_catalog.pg_am
-						WHERE amname = 'unauthorized_table_am';`,
-					Expected: []sql.Row{{0}},
+						WHERE amname = 'unauthorized_table_am';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testcreateaccessmethodrequiressuperuserrepro-0002-select-count-*-from-pg_catalog.pg_am"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropAccessMethodRequiresSuperuserRepro reproduces a security bug:
-// Doltgres allows a non-superuser to drop a user-defined access method.
 func TestDropAccessMethodRequiresSuperuserRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -640,10 +654,10 @@ func TestDropAccessMethodRequiresSuperuserRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP ACCESS METHOD private_drop_am;`,
-					ExpectedErr: `superuser`,
-					Username:    `access_method_dropper`,
-					Password:    `dropper`,
+					Query: `DROP ACCESS METHOD private_drop_am;`,
+
+					Username: `access_method_dropper`,
+					Password: `dropper`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testdropaccessmethodrequiressuperuserrepro-0001-drop-access-method-private_drop_am", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT count(*)
@@ -670,19 +684,21 @@ func TestCreateTableAsRequiresSelectOnSourceTableGuard(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CREATE TABLE ctas_leak AS SELECT id, secret FROM ctas_source_private;`,
-					ExpectedErr: `permission denied`,
-					Username:    `ctas_user`,
-					Password:    `ctas`,
+					Query: `CREATE TABLE ctas_leak AS SELECT id, secret FROM ctas_source_private;`,
+
+					Username: `ctas_user`,
+					Password: `ctas`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestGrantWithoutGrantOptionDoesNotErrorRepro reproduces a GRANT correctness
+						// bug: PostgreSQL permits a grantee without grant option to attempt delegation
+						// with a warning, but grants no privileges onward.
+						ID: "ddl-privilege-repro-test-testcreatetableasrequiresselectonsourcetableguard-0001-create-table-ctas_leak-as-select", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestGrantWithoutGrantOptionDoesNotErrorRepro reproduces a GRANT correctness
-// bug: PostgreSQL permits a grantee without grant option to attempt delegation
-// with a warning, but grants no privileges onward.
 func TestGrantWithoutGrantOptionDoesNotErrorRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -705,19 +721,21 @@ func TestGrantWithoutGrantOptionDoesNotErrorRepro(t *testing.T) {
 					Password: `plain`,
 				},
 				{
-					Query:       `SELECT secret FROM grant_option_private;`,
-					ExpectedErr: `permission denied`,
-					Username:    `grant_option_recipient`,
-					Password:    `recipient`,
+					Query: `SELECT secret FROM grant_option_private;`,
+
+					Username: `grant_option_recipient`,
+					Password: `recipient`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCreateTableAsRequiresSchemaCreatePrivilegeGuard covers target-schema
+						// authorization: CREATE TABLE AS must require CREATE on the schema where the
+						// durable result table is created.
+						ID: "ddl-privilege-repro-test-testgrantwithoutgrantoptiondoesnoterrorrepro-0001-select-secret-from-grant_option_private"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateTableAsRequiresSchemaCreatePrivilegeGuard covers target-schema
-// authorization: CREATE TABLE AS must require CREATE on the schema where the
-// durable result table is created.
 func TestCreateTableAsRequiresSchemaCreatePrivilegeGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -734,13 +752,12 @@ func TestCreateTableAsRequiresSchemaCreatePrivilegeGuard(t *testing.T) {
 				{
 					Query: `CREATE TABLE ctas_private_schema.created_without_create AS
 						SELECT id, label FROM ctas_schema_source;`,
-					ExpectedErr: `permission denied`,
-					Username:    `ctas_schema_creator`,
-					Password:    `ctas`,
+
+					Username: `ctas_schema_creator`,
+					Password: `ctas`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testcreatetableasrequiresschemacreateprivilegeguard-0001-create-table-as-select-id", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT to_regclass('ctas_private_schema.created_without_create')::text;`,
-					Expected: []sql.Row{{nil}},
+					Query: `SELECT to_regclass('ctas_private_schema.created_without_create')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testcreatetableasrequiresschemacreateprivilegeguard-0002-select-to_regclass-::text"},
 				},
 			},
 		},
@@ -769,22 +786,23 @@ func TestCreateTableLikeRequiresSchemaCreatePrivilegeGuard(t *testing.T) {
 					Query: `CREATE TABLE like_private_schema.created_without_create (
 						LIKE like_schema_source
 					);`,
-					ExpectedErr: `permission denied`,
-					Username:    `like_schema_creator`,
-					Password:    `like`,
+
+					Username: `like_schema_creator`,
+					Password: `like`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testcreatetablelikerequiresschemacreateprivilegeguard-0001-create-table-like-like_schema_source",
+
+						// TestCreateTypedTableRequiresSchemaCreatePrivilegeRepro reproduces a CREATE
+						// TABLE OF authorization bug: the typed-table path bypasses the target
+						// schema's CREATE privilege check.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT to_regclass('like_private_schema.created_without_create')::text;`,
-					Expected: []sql.Row{{nil}},
+					Query: `SELECT to_regclass('like_private_schema.created_without_create')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testcreatetablelikerequiresschemacreateprivilegeguard-0002-select-to_regclass-::text"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateTypedTableRequiresSchemaCreatePrivilegeRepro reproduces a CREATE
-// TABLE OF authorization bug: the typed-table path bypasses the target
-// schema's CREATE privilege check.
 func TestCreateTypedTableRequiresSchemaCreatePrivilegeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -800,22 +818,23 @@ func TestCreateTypedTableRequiresSchemaCreatePrivilegeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CREATE TABLE typed_table_private_schema.created_without_create OF typed_table_private_row;`,
-					ExpectedErr: `permission denied`,
-					Username:    `typed_table_schema_creator`,
-					Password:    `typed`,
+					Query: `CREATE TABLE typed_table_private_schema.created_without_create OF typed_table_private_row;`,
+
+					Username: `typed_table_schema_creator`,
+					Password: `typed`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testcreatetypedtablerequiresschemacreateprivilegerepro-0001-create-table-of-typed_table_private_row",
+
+						// TestSelectIntoCreatesTableRepro reproduces a DDL/query correctness gap:
+						// PostgreSQL SELECT ... INTO creates a table from the query result.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT to_regclass('typed_table_private_schema.created_without_create')::text;`,
-					Expected: []sql.Row{{nil}},
+					Query: `SELECT to_regclass('typed_table_private_schema.created_without_create')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testcreatetypedtablerequiresschemacreateprivilegerepro-0002-select-to_regclass-::text"},
 				},
 			},
 		},
 	})
 }
 
-// TestSelectIntoCreatesTableRepro reproduces a DDL/query correctness gap:
-// PostgreSQL SELECT ... INTO creates a table from the query result.
 func TestSelectIntoCreatesTableRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -835,8 +854,7 @@ func TestSelectIntoCreatesTableRepro(t *testing.T) {
 						WHERE id = 2;`,
 				},
 				{
-					Query:    `SELECT id, label FROM select_into_created;`,
-					Expected: []sql.Row{{2, "two"}},
+					Query: `SELECT id, label FROM select_into_created;`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testselectintocreatestablerepro-0001-select-id-label-from-select_into_created"},
 				},
 				{
 					Query: `SELECT label
@@ -845,8 +863,7 @@ func TestSelectIntoCreatesTableRepro(t *testing.T) {
 						WHERE id = 1;`,
 				},
 				{
-					Query:    `SELECT label FROM select_into_table_keyword;`,
-					Expected: []sql.Row{{"one"}},
+					Query: `SELECT label FROM select_into_table_keyword;`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testselectintocreatestablerepro-0002-select-label-from-select_into_table_keyword"},
 				},
 			},
 		},
@@ -866,18 +883,20 @@ func TestAlterTableAddColumnRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER TABLE alter_add_column_private ADD COLUMN label TEXT;`,
-					ExpectedErr: `permission denied`,
-					Username:    `table_column_adder`,
-					Password:    `adder`,
+					Query: `ALTER TABLE alter_add_column_private ADD COLUMN label TEXT;`,
+
+					Username: `table_column_adder`,
+					Password: `adder`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestAlterTableDropColumnRequiresOwnershipRepro reproduces a security bug:
+						// Doltgres allows a role that does not own a table to drop a column from it.
+						ID: "ddl-privilege-repro-test-testaltertableaddcolumnrequiresownershiprepro-0001-alter-table-alter_add_column_private-add-column", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterTableDropColumnRequiresOwnershipRepro reproduces a security bug:
-// Doltgres allows a role that does not own a table to drop a column from it.
 func TestAlterTableDropColumnRequiresOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -889,19 +908,21 @@ func TestAlterTableDropColumnRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER TABLE alter_drop_column_private DROP COLUMN label;`,
-					ExpectedErr: `permission denied`,
-					Username:    `table_column_dropper`,
-					Password:    `dropper`,
+					Query: `ALTER TABLE alter_drop_column_private DROP COLUMN label;`,
+
+					Username: `table_column_dropper`,
+					Password: `dropper`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestAlterTableAlterColumnTypeRequiresOwnershipRepro reproduces a security
+						// bug: Doltgres allows a role that does not own a table to change a column's
+						// stored type.
+						ID: "ddl-privilege-repro-test-testaltertabledropcolumnrequiresownershiprepro-0001-alter-table-alter_drop_column_private-drop-column", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterTableAlterColumnTypeRequiresOwnershipRepro reproduces a security
-// bug: Doltgres allows a role that does not own a table to change a column's
-// stored type.
 func TestAlterTableAlterColumnTypeRequiresOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -918,16 +939,15 @@ func TestAlterTableAlterColumnTypeRequiresOwnershipRepro(t *testing.T) {
 				{
 					Query: `ALTER TABLE alter_column_type_private
 						ALTER COLUMN amount TYPE BIGINT;`,
-					ExpectedErr: `permission denied`,
-					Username:    `table_column_type_alterer`,
-					Password:    `alterer`,
+
+					Username: `table_column_type_alterer`,
+					Password: `alterer`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testaltertablealtercolumntyperequiresownershiprepro-0001-alter-table-alter_column_type_private-alter-column", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT data_type
 						FROM information_schema.columns
 						WHERE table_name = 'alter_column_type_private'
-							AND column_name = 'amount';`,
-					Expected: []sql.Row{{"integer"}},
+							AND column_name = 'amount';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testaltertablealtercolumntyperequiresownershiprepro-0002-select-data_type-from-information_schema.columns-where"},
 				},
 			},
 		},
@@ -953,16 +973,15 @@ func TestAlterTableAlterColumnSetDefaultRequiresOwnershipRepro(t *testing.T) {
 				{
 					Query: `ALTER TABLE alter_column_default_private
 						ALTER COLUMN amount SET DEFAULT 7;`,
-					ExpectedErr: `permission denied`,
-					Username:    `table_column_default_alterer`,
-					Password:    `alterer`,
+
+					Username: `table_column_default_alterer`,
+					Password: `alterer`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testaltertablealtercolumnsetdefaultrequiresownershiprepro-0001-alter-table-alter_column_default_private-alter-column", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO alter_column_default_private (id) VALUES (1);`,
 				},
 				{
-					Query:    `SELECT id, amount FROM alter_column_default_private;`,
-					Expected: []sql.Row{{1, nil}},
+					Query: `SELECT id, amount FROM alter_column_default_private;`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testaltertablealtercolumnsetdefaultrequiresownershiprepro-0002-select-id-amount-from-alter_column_default_private"},
 				},
 			},
 		},
@@ -988,16 +1007,15 @@ func TestAlterTableAlterColumnDropDefaultRequiresOwnershipRepro(t *testing.T) {
 				{
 					Query: `ALTER TABLE alter_column_drop_default_private
 						ALTER COLUMN amount DROP DEFAULT;`,
-					ExpectedErr: `permission denied`,
-					Username:    `table_column_default_dropper`,
-					Password:    `dropper`,
+
+					Username: `table_column_default_dropper`,
+					Password: `dropper`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testaltertablealtercolumndropdefaultrequiresownershiprepro-0001-alter-table-alter_column_drop_default_private-alter-column", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO alter_column_drop_default_private (id) VALUES (1);`,
 				},
 				{
-					Query:    `SELECT id, amount FROM alter_column_drop_default_private;`,
-					Expected: []sql.Row{{1, 7}},
+					Query: `SELECT id, amount FROM alter_column_drop_default_private;`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testaltertablealtercolumndropdefaultrequiresownershiprepro-0002-select-id-amount-from-alter_column_drop_default_private"},
 				},
 			},
 		},
@@ -1023,16 +1041,15 @@ func TestAlterTableAlterColumnSetNotNullRequiresOwnershipRepro(t *testing.T) {
 				{
 					Query: `ALTER TABLE alter_column_not_null_private
 						ALTER COLUMN amount SET NOT NULL;`,
-					ExpectedErr: `permission denied`,
-					Username:    `table_column_not_null_alterer`,
-					Password:    `alterer`,
+
+					Username: `table_column_not_null_alterer`,
+					Password: `alterer`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testaltertablealtercolumnsetnotnullrequiresownershiprepro-0001-alter-table-alter_column_not_null_private-alter-column", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO alter_column_not_null_private VALUES (1, NULL);`,
 				},
 				{
-					Query:    `SELECT id, amount FROM alter_column_not_null_private;`,
-					Expected: []sql.Row{{1, nil}},
+					Query: `SELECT id, amount FROM alter_column_not_null_private;`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testaltertablealtercolumnsetnotnullrequiresownershiprepro-0002-select-id-amount-from-alter_column_not_null_private"},
 				},
 			},
 		},
@@ -1058,25 +1075,25 @@ func TestAlterTableAlterColumnDropNotNullRequiresOwnershipRepro(t *testing.T) {
 				{
 					Query: `ALTER TABLE alter_column_drop_not_null_private
 						ALTER COLUMN amount DROP NOT NULL;`,
-					ExpectedErr: `permission denied`,
-					Username:    `table_column_not_null_dropper`,
-					Password:    `dropper`,
+
+					Username: `table_column_not_null_dropper`,
+					Password: `dropper`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testaltertablealtercolumndropnotnullrequiresownershiprepro-0001-alter-table-alter_column_drop_not_null_private-alter-column", Compare: "sqlstate"},
 				},
 				{
-					Query:       `INSERT INTO alter_column_drop_not_null_private VALUES (1, NULL);`,
-					ExpectedErr: `non-nullable`,
+					Query: `INSERT INTO alter_column_drop_not_null_private VALUES (1, NULL);`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testaltertablealtercolumndropnotnullrequiresownershiprepro-0002-insert-into-alter_column_drop_not_null_private-values-1",
+
+						// TestTruncateRequiresTablePrivilegeGuard guards destructive table-operation
+						// authorization for TRUNCATE.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM alter_column_drop_not_null_private;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM alter_column_drop_not_null_private;`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testaltertablealtercolumndropnotnullrequiresownershiprepro-0003-select-count-*-from-alter_column_drop_not_null_private"},
 				},
 			},
 		},
 	})
 }
 
-// TestTruncateRequiresTablePrivilegeGuard guards destructive table-operation
-// authorization for TRUNCATE.
 func TestTruncateRequiresTablePrivilegeGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1089,23 +1106,24 @@ func TestTruncateRequiresTablePrivilegeGuard(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `TRUNCATE truncate_private;`,
-					ExpectedErr: `permission denied`,
-					Username:    `table_truncater`,
-					Password:    `truncater`,
+					Query: `TRUNCATE truncate_private;`,
+
+					Username: `table_truncater`,
+					Password: `truncater`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testtruncaterequirestableprivilegeguard-0001-truncate-truncate_private",
+
+						// TestAlterTableRenameColumnRequiresOwnershipRepro reproduces a security bug:
+						// Doltgres allows a role that does not own a table to rename one of its
+						// columns.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT COUNT(*) FROM truncate_private;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT COUNT(*) FROM truncate_private;`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testtruncaterequirestableprivilegeguard-0002-select-count-*-from-truncate_private"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterTableRenameColumnRequiresOwnershipRepro reproduces a security bug:
-// Doltgres allows a role that does not own a table to rename one of its
-// columns.
 func TestAlterTableRenameColumnRequiresOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1117,18 +1135,20 @@ func TestAlterTableRenameColumnRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER TABLE alter_rename_column_private RENAME COLUMN label TO renamed_label;`,
-					ExpectedErr: `permission denied`,
-					Username:    `table_column_renamer`,
-					Password:    `renamer`,
+					Query: `ALTER TABLE alter_rename_column_private RENAME COLUMN label TO renamed_label;`,
+
+					Username: `table_column_renamer`,
+					Password: `renamer`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestAlterTableAddConstraintRequiresOwnershipRepro reproduces a security bug:
+						// Doltgres allows a role that does not own a table to add a constraint to it.
+						ID: "ddl-privilege-repro-test-testaltertablerenamecolumnrequiresownershiprepro-0001-alter-table-alter_rename_column_private-rename-column", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterTableAddConstraintRequiresOwnershipRepro reproduces a security bug:
-// Doltgres allows a role that does not own a table to add a constraint to it.
 func TestAlterTableAddConstraintRequiresOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1140,19 +1160,21 @@ func TestAlterTableAddConstraintRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER TABLE alter_add_constraint_private ADD CONSTRAINT value_positive CHECK (value > 0);`,
-					ExpectedErr: `permission denied`,
-					Username:    `table_constraint_adder`,
-					Password:    `adder`,
+					Query: `ALTER TABLE alter_add_constraint_private ADD CONSTRAINT value_positive CHECK (value > 0);`,
+
+					Username: `table_constraint_adder`,
+					Password: `adder`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestAlterTableDropConstraintRequiresOwnershipRepro reproduces a security
+						// bug: Doltgres allows a role that does not own a table to drop a constraint
+						// from it.
+						ID: "ddl-privilege-repro-test-testaltertableaddconstraintrequiresownershiprepro-0001-alter-table-alter_add_constraint_private-add-constraint", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterTableDropConstraintRequiresOwnershipRepro reproduces a security
-// bug: Doltgres allows a role that does not own a table to drop a constraint
-// from it.
 func TestAlterTableDropConstraintRequiresOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1167,19 +1189,21 @@ func TestAlterTableDropConstraintRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER TABLE alter_drop_constraint_private DROP CONSTRAINT value_positive;`,
-					ExpectedErr: `permission denied`,
-					Username:    `table_constraint_dropper`,
-					Password:    `dropper`,
+					Query: `ALTER TABLE alter_drop_constraint_private DROP CONSTRAINT value_positive;`,
+
+					Username: `table_constraint_dropper`,
+					Password: `dropper`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestAlterTableReplicaIdentityRequiresOwnershipRepro reproduces a security bug:
+						// Doltgres allows a role that does not own a table to change its logical
+						// replication identity.
+						ID: "ddl-privilege-repro-test-testaltertabledropconstraintrequiresownershiprepro-0001-alter-table-alter_drop_constraint_private-drop-constraint", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterTableReplicaIdentityRequiresOwnershipRepro reproduces a security bug:
-// Doltgres allows a role that does not own a table to change its logical
-// replication identity.
 func TestAlterTableReplicaIdentityRequiresOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1194,24 +1218,25 @@ func TestAlterTableReplicaIdentityRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER TABLE replica_identity_owner_private REPLICA IDENTITY FULL;`,
-					ExpectedErr: `must be owner`,
-					Username:    `table_replica_identity_editor`,
-					Password:    `editor`,
+					Query: `ALTER TABLE replica_identity_owner_private REPLICA IDENTITY FULL;`,
+
+					Username: `table_replica_identity_editor`,
+					Password: `editor`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testaltertablereplicaidentityrequiresownershiprepro-0001-alter-table-replica_identity_owner_private-replica-identity", Compare:
+
+					// TestAlterTableRowLevelSecurityRequiresOwnershipRepro reproduces a security
+					// bug: PostgreSQL only allows a table owner to change row-level security modes.
+					"sqlstate"},
 				},
 				{
 					Query: `SELECT relreplident
 						FROM pg_catalog.pg_class
-						WHERE relname = 'replica_identity_owner_private';`,
-					Expected: []sql.Row{{"d"}},
+						WHERE relname = 'replica_identity_owner_private';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testaltertablereplicaidentityrequiresownershiprepro-0002-select-relreplident-from-pg_catalog.pg_class-where"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterTableRowLevelSecurityRequiresOwnershipRepro reproduces a security
-// bug: PostgreSQL only allows a table owner to change row-level security modes.
 func TestAlterTableRowLevelSecurityRequiresOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1225,16 +1250,15 @@ func TestAlterTableRowLevelSecurityRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER TABLE rls_mode_owner_private ENABLE ROW LEVEL SECURITY;`,
-					ExpectedErr: `must be owner`,
-					Username:    `rls_mode_editor`,
-					Password:    `editor`,
+					Query: `ALTER TABLE rls_mode_owner_private ENABLE ROW LEVEL SECURITY;`,
+
+					Username: `rls_mode_editor`,
+					Password: `editor`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testaltertablerowlevelsecurityrequiresownershiprepro-0001-alter-table-rls_mode_owner_private-enable-row", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT relrowsecurity
 						FROM pg_catalog.pg_class
-						WHERE oid = 'rls_mode_owner_private'::regclass;`,
-					Expected: []sql.Row{{"f"}},
+						WHERE oid = 'rls_mode_owner_private'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testaltertablerowlevelsecurityrequiresownershiprepro-0002-select-relrowsecurity-from-pg_catalog.pg_class-where"},
 				},
 			},
 		},
@@ -1262,18 +1286,20 @@ func TestCreatePolicyRequiresTableOwnershipRepro(t *testing.T) {
 						ON policy_private_docs
 						FOR SELECT
 						USING (owner_name = current_user);`,
-					ExpectedErr: `must be owner`,
-					Username:    `policy_creator`,
-					Password:    `creator`,
+
+					Username: `policy_creator`,
+					Password: `creator`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCreateRuleRequiresTableOwnershipRepro reproduces a security bug:
+						// Doltgres allows a role that does not own a table to create a rewrite rule on
+						// it when the role has enough privileges for Doltgres' trigger-based rewrite.
+						ID: "ddl-privilege-repro-test-testcreatepolicyrequirestableownershiprepro-0001-create-policy-policy_private_docs_select-on-policy_private_docs", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateRuleRequiresTableOwnershipRepro reproduces a security bug:
-// Doltgres allows a role that does not own a table to create a rewrite rule on
-// it when the role has enough privileges for Doltgres' trigger-based rewrite.
 func TestCreateRuleRequiresTableOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1298,17 +1324,19 @@ func TestCreateRuleRequiresTableOwnershipRepro(t *testing.T) {
 						ON INSERT TO rule_private_source
 						DO ALSO
 						INSERT INTO rule_private_audit VALUES (NEW.id, NEW.label);`,
-					ExpectedErr: `must be owner`,
-					Username:    `rule_creator`,
-					Password:    `creator`,
+
+					Username: `rule_creator`,
+					Password: `creator`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestRenameTableRequiresOwnershipRepro reproduces a security bug: Doltgres
+						// allows a role that does not own a table to rename it.
+						ID: "ddl-privilege-repro-test-testcreaterulerequirestableownershiprepro-0001-create-rule-rule_private_source_audit-as-on", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestRenameTableRequiresOwnershipRepro reproduces a security bug: Doltgres
-// allows a role that does not own a table to rename it.
 func TestRenameTableRequiresOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1320,18 +1348,20 @@ func TestRenameTableRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER TABLE rename_table_private RENAME TO rename_table_private_new;`,
-					ExpectedErr: `permission denied`,
-					Username:    `table_renamer`,
-					Password:    `renamer`,
+					Query: `ALTER TABLE rename_table_private RENAME TO rename_table_private_new;`,
+
+					Username: `table_renamer`,
+					Password: `renamer`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestAlterTableOwnerToRequiresOwnershipRepro reproduces a security bug:
+						// Doltgres allows a role that does not own a table to transfer its ownership.
+						ID: "ddl-privilege-repro-test-testrenametablerequiresownershiprepro-0001-alter-table-rename_table_private-rename-to", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterTableOwnerToRequiresOwnershipRepro reproduces a security bug:
-// Doltgres allows a role that does not own a table to transfer its ownership.
 func TestAlterTableOwnerToRequiresOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1343,16 +1373,15 @@ func TestAlterTableOwnerToRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER TABLE owner_to_table_private OWNER TO table_owner_hijacker;`,
-					ExpectedErr: `must be owner`,
-					Username:    `table_owner_hijacker`,
-					Password:    `hijacker`,
+					Query: `ALTER TABLE owner_to_table_private OWNER TO table_owner_hijacker;`,
+
+					Username: `table_owner_hijacker`,
+					Password: `hijacker`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testaltertableownertorequiresownershiprepro-0001-alter-table-owner_to_table_private-owner-to", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT pg_get_userbyid(relowner)
 						FROM pg_catalog.pg_class
-						WHERE oid = 'owner_to_table_private'::regclass;`,
-					Expected: []sql.Row{{"postgres"}},
+						WHERE oid = 'owner_to_table_private'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testaltertableownertorequiresownershiprepro-0002-select-pg_get_userbyid-relowner-from-pg_catalog.pg_class"},
 				},
 			},
 		},
@@ -1374,16 +1403,15 @@ func TestAlterViewOwnerToRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER VIEW owner_to_view_private OWNER TO view_owner_hijacker;`,
-					ExpectedErr: `must be owner`,
-					Username:    `view_owner_hijacker`,
-					Password:    `hijacker`,
+					Query: `ALTER VIEW owner_to_view_private OWNER TO view_owner_hijacker;`,
+
+					Username: `view_owner_hijacker`,
+					Password: `hijacker`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testalterviewownertorequiresownershiprepro-0001-alter-view-owner_to_view_private-owner-to", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT pg_get_userbyid(relowner)
 						FROM pg_catalog.pg_class
-						WHERE oid = 'owner_to_view_private'::regclass;`,
-					Expected: []sql.Row{{"postgres"}},
+						WHERE oid = 'owner_to_view_private'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testalterviewownertorequiresownershiprepro-0002-select-pg_get_userbyid-relowner-from-pg_catalog.pg_class"},
 				},
 			},
 		},
@@ -1414,18 +1442,20 @@ func TestCreateTriggerRequiresTriggerPrivilegeRepro(t *testing.T) {
 						BEFORE INSERT ON trigger_private
 						FOR EACH ROW
 						EXECUTE FUNCTION trigger_noop();`,
-					ExpectedErr: `permission denied`,
-					Username:    `trigger_creator`,
-					Password:    `creator`,
+
+					Username: `trigger_creator`,
+					Password: `creator`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestDropTriggerRequiresTableOwnershipRepro reproduces a security bug:
+						// Doltgres allows a role that does not own the target table to drop its
+						// trigger.
+						ID: "ddl-privilege-repro-test-testcreatetriggerrequirestriggerprivilegerepro-0001-create-trigger-trigger_private_before_insert-before-insert", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropTriggerRequiresTableOwnershipRepro reproduces a security bug:
-// Doltgres allows a role that does not own the target table to drop its
-// trigger.
 func TestDropTriggerRequiresTableOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1446,18 +1476,20 @@ func TestDropTriggerRequiresTableOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP TRIGGER drop_trigger_private_before_insert ON drop_trigger_private;`,
-					ExpectedErr: `permission denied`,
-					Username:    `trigger_dropper`,
-					Password:    `dropper`,
+					Query: `DROP TRIGGER drop_trigger_private_before_insert ON drop_trigger_private;`,
+
+					Username: `trigger_dropper`,
+					Password: `dropper`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestDropFunctionRequiresOwnershipRepro reproduces a security bug: Doltgres
+						// allows a role that does not own a function to drop it.
+						ID: "ddl-privilege-repro-test-testdroptriggerrequirestableownershiprepro-0001-drop-trigger-drop_trigger_private_before_insert-on-drop_trigger_private", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropFunctionRequiresOwnershipRepro reproduces a security bug: Doltgres
-// allows a role that does not own a function to drop it.
 func TestDropFunctionRequiresOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1471,19 +1503,21 @@ func TestDropFunctionRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP FUNCTION drop_function_private();`,
-					ExpectedErr: `permission denied`,
-					Username:    `function_dropper`,
-					Password:    `dropper`,
+					Query: `DROP FUNCTION drop_function_private();`,
+
+					Username: `function_dropper`,
+					Password: `dropper`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestDropFunctionRequiresOwnershipDespiteAllPrivilegesRepro reproduces a
+						// PostgreSQL authorization bug: GRANT ALL PRIVILEGES ON FUNCTION does not
+						// transfer ownership and should not allow the grantee to DROP the function.
+						ID: "ddl-privilege-repro-test-testdropfunctionrequiresownershiprepro-0001-drop-function-drop_function_private", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropFunctionRequiresOwnershipDespiteAllPrivilegesRepro reproduces a
-// PostgreSQL authorization bug: GRANT ALL PRIVILEGES ON FUNCTION does not
-// transfer ownership and should not allow the grantee to DROP the function.
 func TestDropFunctionRequiresOwnershipDespiteAllPrivilegesRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1498,22 +1532,23 @@ func TestDropFunctionRequiresOwnershipDespiteAllPrivilegesRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP FUNCTION drop_function_all_private();`,
-					ExpectedErr: `must be owner`,
-					Username:    `drop_function_intruder`,
-					Password:    `dropper`,
+					Query: `DROP FUNCTION drop_function_all_private();`,
+
+					Username: `drop_function_intruder`,
+					Password: `dropper`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testdropfunctionrequiresownershipdespiteallprivilegesrepro-0001-drop-function-drop_function_all_private",
+
+						// TestDropAggregateRequiresOwnershipRepro reproduces a security bug: Doltgres
+						// allows a role that does not own an aggregate to drop it.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT drop_function_all_private();`,
-					Expected: []sql.Row{{int32(1)}},
+					Query: `SELECT drop_function_all_private();`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testdropfunctionrequiresownershipdespiteallprivilegesrepro-0002-select-drop_function_all_private"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropAggregateRequiresOwnershipRepro reproduces a security bug: Doltgres
-// allows a role that does not own an aggregate to drop it.
 func TestDropAggregateRequiresOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1534,19 +1569,21 @@ func TestDropAggregateRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP AGGREGATE drop_aggregate_private(INT);`,
-					ExpectedErr: `permission denied`,
-					Username:    `aggregate_dropper`,
-					Password:    `dropper`,
+					Query: `DROP AGGREGATE drop_aggregate_private(INT);`,
+
+					Username: `aggregate_dropper`,
+					Password: `dropper`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCreateOrReplaceAggregateRequiresOwnershipRepro reproduces a security
+						// bug: Doltgres allows a role that does not own an existing aggregate to
+						// replace it.
+						ID: "ddl-privilege-repro-test-testdropaggregaterequiresownershiprepro-0001-drop-aggregate-drop_aggregate_private-int", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateOrReplaceAggregateRequiresOwnershipRepro reproduces a security
-// bug: Doltgres allows a role that does not own an existing aggregate to
-// replace it.
 func TestCreateOrReplaceAggregateRequiresOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1572,17 +1609,19 @@ func TestCreateOrReplaceAggregateRequiresOwnershipRepro(t *testing.T) {
 						STYPE = INT,
 						INITCOND = '1'
 					);`,
-					ExpectedErr: `permission denied`,
-					Username:    `aggregate_replacer`,
-					Password:    `replacer`,
+
+					Username: `aggregate_replacer`,
+					Password: `replacer`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestAlterAggregateOwnerToRequiresOwnershipRepro reproduces a security bug:
+						// Doltgres allows a role that does not own an aggregate to transfer ownership.
+						ID: "ddl-privilege-repro-test-testcreateorreplaceaggregaterequiresownershiprepro-0001-create-or-replace-aggregate-replace_aggregate_private", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterAggregateOwnerToRequiresOwnershipRepro reproduces a security bug:
-// Doltgres allows a role that does not own an aggregate to transfer ownership.
 func TestAlterAggregateOwnerToRequiresOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1603,16 +1642,15 @@ func TestAlterAggregateOwnerToRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER AGGREGATE owner_to_aggregate_private(INT) OWNER TO aggregate_owner_to_hijacker;`,
-					ExpectedErr: `must be owner`,
-					Username:    `aggregate_owner_to_hijacker`,
-					Password:    `hijacker`,
+					Query: `ALTER AGGREGATE owner_to_aggregate_private(INT) OWNER TO aggregate_owner_to_hijacker;`,
+
+					Username: `aggregate_owner_to_hijacker`,
+					Password: `hijacker`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testalteraggregateownertorequiresownershiprepro-0001-alter-aggregate-owner_to_aggregate_private-int-owner", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT pg_get_userbyid(proowner)
 						FROM pg_catalog.pg_proc
-						WHERE proname = 'owner_to_aggregate_private';`,
-					Expected: []sql.Row{{"postgres"}},
+						WHERE proname = 'owner_to_aggregate_private';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testalteraggregateownertorequiresownershiprepro-0002-select-pg_get_userbyid-proowner-from-pg_catalog.pg_proc"},
 				},
 			},
 		},
@@ -1641,16 +1679,15 @@ func TestAlterAggregateRenameRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER AGGREGATE rename_aggregate_private_old(INT) RENAME TO rename_aggregate_private_new;`,
-					ExpectedErr: `must be owner`,
-					Username:    `aggregate_renamer`,
-					Password:    `renamer`,
+					Query: `ALTER AGGREGATE rename_aggregate_private_old(INT) RENAME TO rename_aggregate_private_new;`,
+
+					Username: `aggregate_renamer`,
+					Password: `renamer`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testalteraggregaterenamerequiresownershiprepro-0001-alter-aggregate-rename_aggregate_private_old-int-rename", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT count(*)
 						FROM pg_catalog.pg_proc
-						WHERE proname = 'rename_aggregate_private_old';`,
-					Expected: []sql.Row{{int64(1)}},
+						WHERE proname = 'rename_aggregate_private_old';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testalteraggregaterenamerequiresownershiprepro-0002-select-count-*-from-pg_catalog.pg_proc"},
 				},
 			},
 		},
@@ -1682,25 +1719,26 @@ func TestAlterAggregateSetSchemaRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER AGGREGATE set_schema_aggregate_private(INT) SET SCHEMA aggregate_private_target;`,
-					ExpectedErr: `must be owner`,
-					Username:    `aggregate_schema_mover`,
-					Password:    `mover`,
+					Query: `ALTER AGGREGATE set_schema_aggregate_private(INT) SET SCHEMA aggregate_private_target;`,
+
+					Username: `aggregate_schema_mover`,
+					Password: `mover`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testalteraggregatesetschemarequiresownershiprepro-0001-alter-aggregate-set_schema_aggregate_private-int-set", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT n.nspname
 						FROM pg_catalog.pg_proc p
 						JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace
-						WHERE p.proname = 'set_schema_aggregate_private';`,
-					Expected: []sql.Row{{"public"}},
+						WHERE p.proname = 'set_schema_aggregate_private';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testalteraggregatesetschemarequiresownershiprepro-0002-select-n.nspname-from-pg_catalog.pg_proc-p",
+
+						// TestAlterFunctionOwnerToRequiresOwnershipRepro reproduces a security bug:
+						// Doltgres allows a role that does not own a function to transfer ownership.
+						ColumnModes: []string{"schema"}},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterFunctionOwnerToRequiresOwnershipRepro reproduces a security bug:
-// Doltgres allows a role that does not own a function to transfer ownership.
 func TestAlterFunctionOwnerToRequiresOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1714,16 +1752,15 @@ func TestAlterFunctionOwnerToRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER FUNCTION owner_to_function_private() OWNER TO function_owner_to_hijacker;`,
-					ExpectedErr: `must be owner`,
-					Username:    `function_owner_to_hijacker`,
-					Password:    `hijacker`,
+					Query: `ALTER FUNCTION owner_to_function_private() OWNER TO function_owner_to_hijacker;`,
+
+					Username: `function_owner_to_hijacker`,
+					Password: `hijacker`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testalterfunctionownertorequiresownershiprepro-0001-alter-function-owner_to_function_private-owner-to", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT pg_get_userbyid(proowner)
 						FROM pg_catalog.pg_proc
-						WHERE proname = 'owner_to_function_private';`,
-					Expected: []sql.Row{{"postgres"}},
+						WHERE proname = 'owner_to_function_private';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testalterfunctionownertorequiresownershiprepro-0002-select-pg_get_userbyid-proowner-from-pg_catalog.pg_proc"},
 				},
 			},
 		},
@@ -1748,17 +1785,19 @@ func TestCreateOrReplaceFunctionRequiresOwnershipRepro(t *testing.T) {
 					Query: `CREATE OR REPLACE FUNCTION replace_function_private() RETURNS INT
 						LANGUAGE SQL
 						AS $$ SELECT 2 $$;`,
-					ExpectedErr: `permission denied`,
-					Username:    `function_replacer`,
-					Password:    `replacer`,
+
+					Username: `function_replacer`,
+					Password: `replacer`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestDropProcedureRequiresOwnershipRepro reproduces a security bug: Doltgres
+						// allows a role that does not own a procedure to drop it.
+						ID: "ddl-privilege-repro-test-testcreateorreplacefunctionrequiresownershiprepro-0001-create-or-replace-function-replace_function_private", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropProcedureRequiresOwnershipRepro reproduces a security bug: Doltgres
-// allows a role that does not own a procedure to drop it.
 func TestDropProcedureRequiresOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1775,18 +1814,20 @@ func TestDropProcedureRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP PROCEDURE drop_procedure_private();`,
-					ExpectedErr: `permission denied`,
-					Username:    `procedure_dropper`,
-					Password:    `dropper`,
+					Query: `DROP PROCEDURE drop_procedure_private();`,
+
+					Username: `procedure_dropper`,
+					Password: `dropper`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestAlterProcedureOwnerToRequiresOwnershipRepro reproduces a security bug:
+						// Doltgres allows a role that does not own a procedure to transfer ownership.
+						ID: "ddl-privilege-repro-test-testdropprocedurerequiresownershiprepro-0001-drop-procedure-drop_procedure_private", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterProcedureOwnerToRequiresOwnershipRepro reproduces a security bug:
-// Doltgres allows a role that does not own a procedure to transfer ownership.
 func TestAlterProcedureOwnerToRequiresOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1800,16 +1841,15 @@ func TestAlterProcedureOwnerToRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER PROCEDURE owner_to_procedure_private() OWNER TO procedure_owner_to_hijacker;`,
-					ExpectedErr: `must be owner`,
-					Username:    `procedure_owner_to_hijacker`,
-					Password:    `hijacker`,
+					Query: `ALTER PROCEDURE owner_to_procedure_private() OWNER TO procedure_owner_to_hijacker;`,
+
+					Username: `procedure_owner_to_hijacker`,
+					Password: `hijacker`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testalterprocedureownertorequiresownershiprepro-0001-alter-procedure-owner_to_procedure_private-owner-to", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT pg_get_userbyid(proowner)
 						FROM pg_catalog.pg_proc
-						WHERE proname = 'owner_to_procedure_private';`,
-					Expected: []sql.Row{{"postgres"}},
+						WHERE proname = 'owner_to_procedure_private';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testalterprocedureownertorequiresownershiprepro-0002-select-pg_get_userbyid-proowner-from-pg_catalog.pg_proc"},
 				},
 			},
 		},
@@ -1835,19 +1875,21 @@ func TestCreateOrReplaceProcedureRequiresOwnershipRepro(t *testing.T) {
 					Query: `CREATE OR REPLACE PROCEDURE replace_procedure_private()
 						LANGUAGE SQL
 						AS $$ SELECT 2 $$;`,
-					ExpectedErr: `permission denied`,
-					Username:    `procedure_replacer`,
-					Password:    `replacer`,
+
+					Username: `procedure_replacer`,
+					Password: `replacer`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCreateTypeAndDomainRequireSchemaCreatePrivilegeRepro reproduces schema
+						// security bugs: creating types and domains should require CREATE on the target
+						// schema. The adjacent function, procedure, and sequence checks guard object
+						// classes that already enforce the boundary.
+						ID: "ddl-privilege-repro-test-testcreateorreplaceprocedurerequiresownershiprepro-0001-create-or-replace-procedure-replace_procedure_private", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateTypeAndDomainRequireSchemaCreatePrivilegeRepro reproduces schema
-// security bugs: creating types and domains should require CREATE on the target
-// schema. The adjacent function, procedure, and sequence checks guard object
-// classes that already enforce the boundary.
 func TestCreateTypeAndDomainRequireSchemaCreatePrivilegeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1863,43 +1905,45 @@ func TestCreateTypeAndDomainRequireSchemaCreatePrivilegeRepro(t *testing.T) {
 						RETURNS INT
 						LANGUAGE SQL
 						AS $$ SELECT 1 $$;`,
-					ExpectedErr: `permission denied`,
-					Username:    `schema_object_creator`,
-					Password:    `creator`,
+
+					Username: `schema_object_creator`,
+					Password: `creator`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testcreatetypeanddomainrequireschemacreateprivilegerepro-0001-create-function-returns-int-language", Compare: "sqlstate"},
 				},
 				{
 					Query: `CREATE PROCEDURE create_object_private.created_without_create_procedure()
 						LANGUAGE SQL
 						AS $$ SELECT 1 $$;`,
-					ExpectedErr: `permission denied`,
-					Username:    `schema_object_creator`,
-					Password:    `creator`,
+
+					Username: `schema_object_creator`,
+					Password: `creator`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testcreatetypeanddomainrequireschemacreateprivilegerepro-0002-create-procedure-language-sql-as", Compare: "sqlstate"},
 				},
 				{
-					Query:       `CREATE TYPE create_object_private.created_without_create_type AS ENUM ('one');`,
-					ExpectedErr: `permission denied`,
-					Username:    `schema_object_creator`,
-					Password:    `creator`,
+					Query: `CREATE TYPE create_object_private.created_without_create_type AS ENUM ('one');`,
+
+					Username: `schema_object_creator`,
+					Password: `creator`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testcreatetypeanddomainrequireschemacreateprivilegerepro-0003-create-type-as-enum-one", Compare: "sqlstate"},
 				},
 				{
-					Query:       `CREATE DOMAIN create_object_private.created_without_create_domain AS INT;`,
-					ExpectedErr: `permission denied`,
-					Username:    `schema_object_creator`,
-					Password:    `creator`,
+					Query: `CREATE DOMAIN create_object_private.created_without_create_domain AS INT;`,
+
+					Username: `schema_object_creator`,
+					Password: `creator`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testcreatetypeanddomainrequireschemacreateprivilegerepro-0004-create-domain-as-int", Compare: "sqlstate"},
 				},
 				{
-					Query:       `CREATE SEQUENCE create_object_private.created_without_create_sequence;`,
-					ExpectedErr: `permission denied`,
-					Username:    `schema_object_creator`,
-					Password:    `creator`,
+					Query: `CREATE SEQUENCE create_object_private.created_without_create_sequence;`,
+
+					Username: `schema_object_creator`,
+					Password: `creator`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestDropSequenceRequiresOwnershipRepro reproduces a security bug: Doltgres
+						// allows a role that does not own a sequence to drop it.
+						ID: "ddl-privilege-repro-test-testcreatetypeanddomainrequireschemacreateprivilegerepro-0005-create-sequence", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropSequenceRequiresOwnershipRepro reproduces a security bug: Doltgres
-// allows a role that does not own a sequence to drop it.
 func TestDropSequenceRequiresOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1911,19 +1955,21 @@ func TestDropSequenceRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP SEQUENCE drop_sequence_private;`,
-					ExpectedErr: `permission denied`,
-					Username:    `sequence_dropper`,
-					Password:    `dropper`,
+					Query: `DROP SEQUENCE drop_sequence_private;`,
+
+					Username: `sequence_dropper`,
+					Password: `dropper`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestDropSequenceRequiresOwnershipDespiteAllPrivilegesRepro reproduces a
+						// PostgreSQL authorization bug: GRANT ALL PRIVILEGES ON SEQUENCE does not
+						// transfer ownership and should not allow the grantee to DROP the sequence.
+						ID: "ddl-privilege-repro-test-testdropsequencerequiresownershiprepro-0001-drop-sequence-drop_sequence_private", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropSequenceRequiresOwnershipDespiteAllPrivilegesRepro reproduces a
-// PostgreSQL authorization bug: GRANT ALL PRIVILEGES ON SEQUENCE does not
-// transfer ownership and should not allow the grantee to DROP the sequence.
 func TestDropSequenceRequiresOwnershipDespiteAllPrivilegesRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1936,22 +1982,23 @@ func TestDropSequenceRequiresOwnershipDespiteAllPrivilegesRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP SEQUENCE drop_sequence_all_private;`,
-					ExpectedErr: `must be owner`,
-					Username:    `drop_sequence_intruder`,
-					Password:    `dropper`,
+					Query: `DROP SEQUENCE drop_sequence_all_private;`,
+
+					Username: `drop_sequence_intruder`,
+					Password: `dropper`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testdropsequencerequiresownershipdespiteallprivilegesrepro-0001-drop-sequence-drop_sequence_all_private",
+
+						// TestCreateSequenceOwnedByRequiresTableOwnershipRepro reproduces a security
+						// bug: Doltgres lets a role create a sequence owned by a table it does not own.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT to_regclass('drop_sequence_all_private')::text;`,
-					Expected: []sql.Row{{"drop_sequence_all_private"}},
+					Query: `SELECT to_regclass('drop_sequence_all_private')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testdropsequencerequiresownershipdespiteallprivilegesrepro-0002-select-to_regclass-drop_sequence_all_private-::text"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateSequenceOwnedByRequiresTableOwnershipRepro reproduces a security
-// bug: Doltgres lets a role create a sequence owned by a table it does not own.
 func TestCreateSequenceOwnedByRequiresTableOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1963,19 +2010,21 @@ func TestCreateSequenceOwnedByRequiresTableOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CREATE SEQUENCE sequence_owner_hijacked OWNED BY sequence_owner_private.id;`,
-					ExpectedErr: `permission denied`,
-					Username:    `sequence_owner_hijacker`,
-					Password:    `hijacker`,
+					Query: `CREATE SEQUENCE sequence_owner_hijacked OWNED BY sequence_owner_private.id;`,
+
+					Username: `sequence_owner_hijacker`,
+					Password: `hijacker`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestAlterSequenceOwnedByRequiresTableOwnershipRepro reproduces a security
+						// bug: Doltgres lets a role change sequence ownership metadata to point at a
+						// table it does not own.
+						ID: "ddl-privilege-repro-test-testcreatesequenceownedbyrequirestableownershiprepro-0001-create-sequence-sequence_owner_hijacked-owned-by", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterSequenceOwnedByRequiresTableOwnershipRepro reproduces a security
-// bug: Doltgres lets a role change sequence ownership metadata to point at a
-// table it does not own.
 func TestAlterSequenceOwnedByRequiresTableOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1989,19 +2038,21 @@ func TestAlterSequenceOwnedByRequiresTableOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER SEQUENCE alter_sequence_owned OWNED BY alter_sequence_owner_private.id;`,
-					ExpectedErr: `permission denied`,
-					Username:    `sequence_owner_alterer`,
-					Password:    `alterer`,
+					Query: `ALTER SEQUENCE alter_sequence_owned OWNED BY alter_sequence_owner_private.id;`,
+
+					Username: `sequence_owner_alterer`,
+					Password: `alterer`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestAlterSequenceRequiresSequenceOwnershipRepro reproduces a security bug:
+						// Doltgres lets a role that does not own a sequence change its ownership
+						// dependency metadata.
+						ID: "ddl-privilege-repro-test-testaltersequenceownedbyrequirestableownershiprepro-0001-alter-sequence-alter_sequence_owned-owned-by", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterSequenceRequiresSequenceOwnershipRepro reproduces a security bug:
-// Doltgres lets a role that does not own a sequence change its ownership
-// dependency metadata.
 func TestAlterSequenceRequiresSequenceOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -2016,25 +2067,26 @@ func TestAlterSequenceRequiresSequenceOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER SEQUENCE alter_sequence_private OWNED BY NONE;`,
-					ExpectedErr: `permission denied`,
-					Username:    `sequence_alterer`,
-					Password:    `alterer`,
+					Query: `ALTER SEQUENCE alter_sequence_private OWNED BY NONE;`,
+
+					Username: `sequence_alterer`,
+					Password: `alterer`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testaltersequencerequiressequenceownershiprepro-0001-alter-sequence-alter_sequence_private-owned-by", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT pg_get_serial_sequence(
 							'alter_sequence_owner_items',
 							'id'
-						);`,
-					Expected: []sql.Row{{"public.alter_sequence_private"}},
+						);`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testaltersequencerequiressequenceownershiprepro-0002-select-pg_get_serial_sequence-alter_sequence_owner_items-id",
+
+						// TestAlterSequenceOwnerToRequiresOwnershipRepro reproduces a security bug:
+						// Doltgres allows a role that does not own a sequence to transfer ownership.
+						ColumnModes: []string{"schema"}},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterSequenceOwnerToRequiresOwnershipRepro reproduces a security bug:
-// Doltgres allows a role that does not own a sequence to transfer ownership.
 func TestAlterSequenceOwnerToRequiresOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -2046,16 +2098,15 @@ func TestAlterSequenceOwnerToRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER SEQUENCE owner_to_sequence_private OWNER TO sequence_owner_to_hijacker;`,
-					ExpectedErr: `must be owner`,
-					Username:    `sequence_owner_to_hijacker`,
-					Password:    `hijacker`,
+					Query: `ALTER SEQUENCE owner_to_sequence_private OWNER TO sequence_owner_to_hijacker;`,
+
+					Username: `sequence_owner_to_hijacker`,
+					Password: `hijacker`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testaltersequenceownertorequiresownershiprepro-0001-alter-sequence-owner_to_sequence_private-owner-to", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT pg_get_userbyid(relowner)
 						FROM pg_catalog.pg_class
-						WHERE oid = 'owner_to_sequence_private'::regclass;`,
-					Expected: []sql.Row{{"postgres"}},
+						WHERE oid = 'owner_to_sequence_private'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testaltersequenceownertorequiresownershiprepro-0002-select-pg_get_userbyid-relowner-from-pg_catalog.pg_class"},
 				},
 			},
 		},
@@ -2075,19 +2126,21 @@ func TestDropTypeRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP TYPE drop_type_private;`,
-					ExpectedErr: `permission denied`,
-					Username:    `type_dropper`,
-					Password:    `dropper`,
+					Query: `DROP TYPE drop_type_private;`,
+
+					Username: `type_dropper`,
+					Password: `dropper`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestDropTypeRequiresOwnershipDespiteAllPrivilegesGuard guards that GRANT ALL
+						// PRIVILEGES ON TYPE does not transfer ownership and does not allow the grantee
+						// to DROP the type.
+						ID: "ddl-privilege-repro-test-testdroptyperequiresownershiprepro-0001-drop-type-drop_type_private", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropTypeRequiresOwnershipDespiteAllPrivilegesGuard guards that GRANT ALL
-// PRIVILEGES ON TYPE does not transfer ownership and does not allow the grantee
-// to DROP the type.
 func TestDropTypeRequiresOwnershipDespiteAllPrivilegesGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -2100,22 +2153,23 @@ func TestDropTypeRequiresOwnershipDespiteAllPrivilegesGuard(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP TYPE drop_type_all_private;`,
-					ExpectedErr: `must be owner`,
-					Username:    `drop_type_intruder`,
-					Password:    `dropper`,
+					Query: `DROP TYPE drop_type_all_private;`,
+
+					Username: `drop_type_intruder`,
+					Password: `dropper`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testdroptyperequiresownershipdespiteallprivilegesguard-0001-drop-type-drop_type_all_private",
+
+						// TestAlterTypeOwnerToRequiresOwnershipRepro reproduces a security bug:
+						// Doltgres allows a role that does not own a type to transfer ownership.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT 'one'::drop_type_all_private::text;`,
-					Expected: []sql.Row{{"one"}},
+					Query: `SELECT 'one'::drop_type_all_private::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testdroptyperequiresownershipdespiteallprivilegesguard-0002-select-one-::drop_type_all_private::text"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterTypeOwnerToRequiresOwnershipRepro reproduces a security bug:
-// Doltgres allows a role that does not own a type to transfer ownership.
 func TestAlterTypeOwnerToRequiresOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -2127,16 +2181,15 @@ func TestAlterTypeOwnerToRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER TYPE owner_to_type_private OWNER TO type_owner_to_hijacker;`,
-					ExpectedErr: `must be owner`,
-					Username:    `type_owner_to_hijacker`,
-					Password:    `hijacker`,
+					Query: `ALTER TYPE owner_to_type_private OWNER TO type_owner_to_hijacker;`,
+
+					Username: `type_owner_to_hijacker`,
+					Password: `hijacker`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testaltertypeownertorequiresownershiprepro-0001-alter-type-owner_to_type_private-owner-to", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT pg_get_userbyid(typowner)
 						FROM pg_catalog.pg_type
-						WHERE typname = 'owner_to_type_private';`,
-					Expected: []sql.Row{{"postgres"}},
+						WHERE typname = 'owner_to_type_private';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testaltertypeownertorequiresownershiprepro-0002-select-pg_get_userbyid-typowner-from-pg_catalog.pg_type"},
 				},
 			},
 		},
@@ -2159,21 +2212,22 @@ func TestAlterTypeRenameAttributeRequiresOwnershipRepro(t *testing.T) {
 				{
 					Query: `ALTER TYPE rename_attr_owner_private
 						RENAME ATTRIBUTE old_name TO new_name;`,
-					ExpectedErr: `must be owner`,
-					Username:    `type_attr_renamer`,
-					Password:    `renamer`,
+
+					Username: `type_attr_renamer`,
+					Password: `renamer`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testaltertyperenameattributerequiresownershiprepro-0001-alter-type-rename_attr_owner_private-rename-attribute",
+
+						// TestDropDomainRequiresOwnershipRepro reproduces a security bug: Doltgres
+						// allows a role that does not own a domain to drop it.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT (ROW(7)::rename_attr_owner_private).old_name;`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT (ROW(7)::rename_attr_owner_private).old_name;`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testaltertyperenameattributerequiresownershiprepro-0002-select-row-7-::rename_attr_owner_private-.old_name"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropDomainRequiresOwnershipRepro reproduces a security bug: Doltgres
-// allows a role that does not own a domain to drop it.
 func TestDropDomainRequiresOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -2185,19 +2239,21 @@ func TestDropDomainRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP DOMAIN drop_domain_private;`,
-					ExpectedErr: `permission denied`,
-					Username:    `domain_dropper`,
-					Password:    `dropper`,
+					Query: `DROP DOMAIN drop_domain_private;`,
+
+					Username: `domain_dropper`,
+					Password: `dropper`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestDropDomainRequiresOwnershipDespiteAllPrivilegesGuard guards that GRANT
+						// ALL PRIVILEGES ON TYPE for a domain does not transfer ownership and does not
+						// allow the grantee to DROP the domain.
+						ID: "ddl-privilege-repro-test-testdropdomainrequiresownershiprepro-0001-drop-domain-drop_domain_private", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropDomainRequiresOwnershipDespiteAllPrivilegesGuard guards that GRANT
-// ALL PRIVILEGES ON TYPE for a domain does not transfer ownership and does not
-// allow the grantee to DROP the domain.
 func TestDropDomainRequiresOwnershipDespiteAllPrivilegesGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -2210,22 +2266,23 @@ func TestDropDomainRequiresOwnershipDespiteAllPrivilegesGuard(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP DOMAIN drop_domain_all_private;`,
-					ExpectedErr: `must be owner`,
-					Username:    `drop_domain_intruder`,
-					Password:    `dropper`,
+					Query: `DROP DOMAIN drop_domain_all_private;`,
+
+					Username: `drop_domain_intruder`,
+					Password: `dropper`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testdropdomainrequiresownershipdespiteallprivilegesguard-0001-drop-domain-drop_domain_all_private",
+
+						// TestAlterDomainOwnerToRequiresOwnershipRepro reproduces a security bug:
+						// Doltgres allows a role that does not own a domain to transfer ownership.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT 1::drop_domain_all_private::int;`,
-					Expected: []sql.Row{{int32(1)}},
+					Query: `SELECT 1::drop_domain_all_private::int;`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testdropdomainrequiresownershipdespiteallprivilegesguard-0002-select-1::drop_domain_all_private::int"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterDomainOwnerToRequiresOwnershipRepro reproduces a security bug:
-// Doltgres allows a role that does not own a domain to transfer ownership.
 func TestAlterDomainOwnerToRequiresOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -2237,16 +2294,15 @@ func TestAlterDomainOwnerToRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER DOMAIN owner_to_domain_private OWNER TO domain_owner_to_hijacker;`,
-					ExpectedErr: `must be owner`,
-					Username:    `domain_owner_to_hijacker`,
-					Password:    `hijacker`,
+					Query: `ALTER DOMAIN owner_to_domain_private OWNER TO domain_owner_to_hijacker;`,
+
+					Username: `domain_owner_to_hijacker`,
+					Password: `hijacker`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testalterdomainownertorequiresownershiprepro-0001-alter-domain-owner_to_domain_private-owner-to", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT pg_get_userbyid(typowner)
 						FROM pg_catalog.pg_type
-						WHERE typname = 'owner_to_domain_private';`,
-					Expected: []sql.Row{{"postgres"}},
+						WHERE typname = 'owner_to_domain_private';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testalterdomainownertorequiresownershiprepro-0002-select-pg_get_userbyid-typowner-from-pg_catalog.pg_type"},
 				},
 			},
 		},
@@ -2266,16 +2322,15 @@ func TestAlterSchemaOwnerToRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER SCHEMA owner_to_schema_private OWNER TO schema_owner_to_hijacker;`,
-					ExpectedErr: `must be owner`,
-					Username:    `schema_owner_to_hijacker`,
-					Password:    `hijacker`,
+					Query: `ALTER SCHEMA owner_to_schema_private OWNER TO schema_owner_to_hijacker;`,
+
+					Username: `schema_owner_to_hijacker`,
+					Password: `hijacker`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testalterschemaownertorequiresownershiprepro-0001-alter-schema-owner_to_schema_private-owner-to", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT pg_get_userbyid(nspowner)
 						FROM pg_catalog.pg_namespace
-						WHERE nspname = 'owner_to_schema_private';`,
-					Expected: []sql.Row{{"postgres"}},
+						WHERE nspname = 'owner_to_schema_private';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testalterschemaownertorequiresownershiprepro-0002-select-pg_get_userbyid-nspowner-from-pg_catalog.pg_namespace"},
 				},
 			},
 		},
@@ -2296,19 +2351,21 @@ func TestDropIndexRequiresTableOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP INDEX drop_index_private_label_idx;`,
-					ExpectedErr: `permission denied`,
-					Username:    `index_dropper`,
-					Password:    `dropper`,
+					Query: `DROP INDEX drop_index_private_label_idx;`,
+
+					Username: `index_dropper`,
+					Password: `dropper`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCreateExtensionRequiresCreatePrivilegeRepro reproduces a security bug:
+						// Doltgres allows a normal role without database CREATE privilege to install an
+						// extension.
+						ID: "ddl-privilege-repro-test-testdropindexrequirestableownershiprepro-0001-drop-index-drop_index_private_label_idx", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateExtensionRequiresCreatePrivilegeRepro reproduces a security bug:
-// Doltgres allows a normal role without database CREATE privilege to install an
-// extension.
 func TestCreateExtensionRequiresCreatePrivilegeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -2318,18 +2375,20 @@ func TestCreateExtensionRequiresCreatePrivilegeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CREATE EXTENSION "uuid-ossp";`,
-					ExpectedErr: `permission denied`,
-					Username:    `extension_creator`,
-					Password:    `creator`,
+					Query: `CREATE EXTENSION "uuid-ossp";`,
+
+					Username: `extension_creator`,
+					Password: `creator`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestDropExtensionRequiresOwnershipRepro reproduces a security bug: Doltgres
+						// allows a normal role to drop an extension it does not own.
+						ID: "ddl-privilege-repro-test-testcreateextensionrequirescreateprivilegerepro-0001-create-extension-uuid-ossp", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropExtensionRequiresOwnershipRepro reproduces a security bug: Doltgres
-// allows a normal role to drop an extension it does not own.
 func TestDropExtensionRequiresOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -2365,19 +2424,21 @@ func TestCreateExtensionWithSchemaRequiresSchemaCreatePrivilegeRepro(t *testing.
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CREATE EXTENSION hstore WITH SCHEMA extension_private_schema;`,
-					ExpectedErr: `permission denied`,
-					Username:    `extension_schema_intruder`,
-					Password:    `intruder`,
+					Query: `CREATE EXTENSION hstore WITH SCHEMA extension_private_schema;`,
+
+					Username: `extension_schema_intruder`,
+					Password: `intruder`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestDropTableRequiresOwnershipDespiteAllPrivilegesRepro reproduces a
+						// PostgreSQL authorization bug: GRANT ALL PRIVILEGES ON TABLE does not transfer
+						// ownership and should not allow the grantee to DROP the table.
+						ID: "ddl-privilege-repro-test-testcreateextensionwithschemarequiresschemacreateprivilegerepro-0001-create-extension-hstore-with-schema", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropTableRequiresOwnershipDespiteAllPrivilegesRepro reproduces a
-// PostgreSQL authorization bug: GRANT ALL PRIVILEGES ON TABLE does not transfer
-// ownership and should not allow the grantee to DROP the table.
 func TestDropTableRequiresOwnershipDespiteAllPrivilegesRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -2390,23 +2451,24 @@ func TestDropTableRequiresOwnershipDespiteAllPrivilegesRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP TABLE drop_table_private;`,
-					ExpectedErr: `must be owner`,
-					Username:    `drop_table_intruder`,
-					Password:    `dropper`,
+					Query: `DROP TABLE drop_table_private;`,
+
+					Username: `drop_table_intruder`,
+					Password: `dropper`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testdroptablerequiresownershipdespiteallprivilegesrepro-0001-drop-table-drop_table_private",
+
+						// TestDropTableAllowsMemberOfOwningRoleRepro reproduces a PostgreSQL
+						// authorization bug: table ownership checks should accept members of the owning
+						// role, not only sessions running as the literal owner role.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT to_regclass('drop_table_private')::text;`,
-					Expected: []sql.Row{{"drop_table_private"}},
+					Query: `SELECT to_regclass('drop_table_private')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testdroptablerequiresownershipdespiteallprivilegesrepro-0002-select-to_regclass-drop_table_private-::text"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropTableAllowsMemberOfOwningRoleRepro reproduces a PostgreSQL
-// authorization bug: table ownership checks should accept members of the owning
-// role, not only sessions running as the literal owner role.
 func TestDropTableAllowsMemberOfOwningRoleRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -2426,8 +2488,7 @@ func TestDropTableAllowsMemberOfOwningRoleRepro(t *testing.T) {
 					Password: `dropper`,
 				},
 				{
-					Query:    `SELECT to_regclass('drop_table_owner_member_private') IS NULL;`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT to_regclass('drop_table_owner_member_private') IS NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testdroptableallowsmemberofowningrolerepro-0001-select-to_regclass-drop_table_owner_member_private-is-null"},
 				},
 			},
 		},
@@ -2447,18 +2508,20 @@ func TestCreateViewRequiresSchemaCreatePrivilegeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CREATE VIEW view_private_schema.created_without_create AS SELECT 1 AS id;`,
-					ExpectedErr: `permission denied`,
-					Username:    `view_creator`,
-					Password:    `creator`,
+					Query: `CREATE VIEW view_private_schema.created_without_create AS SELECT 1 AS id;`,
+
+					Username: `view_creator`,
+					Password: `creator`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCreateViewRequiresSelectOnSourceTableGuard covers a sensitive privilege
+						// boundary: creating a view over a table requires SELECT on that source table.
+						ID: "ddl-privilege-repro-test-testcreateviewrequiresschemacreateprivilegerepro-0001-create-view-as-select-1", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateViewRequiresSelectOnSourceTableGuard covers a sensitive privilege
-// boundary: creating a view over a table requires SELECT on that source table.
 func TestCreateViewRequiresSelectOnSourceTableGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -2470,18 +2533,20 @@ func TestCreateViewRequiresSelectOnSourceTableGuard(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CREATE VIEW view_from_private_source AS SELECT id FROM view_source_private;`,
-					ExpectedErr: `permission denied`,
-					Username:    `view_source_reader`,
-					Password:    `reader`,
+					Query: `CREATE VIEW view_from_private_source AS SELECT id FROM view_source_private;`,
+
+					Username: `view_source_reader`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestDropViewRequiresOwnershipRepro reproduces a security bug: Doltgres
+						// allows a role that does not own a view to drop it.
+						ID: "ddl-privilege-repro-test-testcreateviewrequiresselectonsourcetableguard-0001-create-view-view_from_private_source-as-select", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropViewRequiresOwnershipRepro reproduces a security bug: Doltgres
-// allows a role that does not own a view to drop it.
 func TestDropViewRequiresOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -2493,19 +2558,21 @@ func TestDropViewRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP VIEW drop_view_private;`,
-					ExpectedErr: `permission denied`,
-					Username:    `view_dropper`,
-					Password:    `dropper`,
+					Query: `DROP VIEW drop_view_private;`,
+
+					Username: `view_dropper`,
+					Password: `dropper`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestDropViewRequiresOwnershipDespiteAllPrivilegesRepro reproduces a
+						// PostgreSQL authorization bug: GRANT ALL PRIVILEGES on a view does not
+						// transfer ownership and should not allow the grantee to DROP the view.
+						ID: "ddl-privilege-repro-test-testdropviewrequiresownershiprepro-0001-drop-view-drop_view_private", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropViewRequiresOwnershipDespiteAllPrivilegesRepro reproduces a
-// PostgreSQL authorization bug: GRANT ALL PRIVILEGES on a view does not
-// transfer ownership and should not allow the grantee to DROP the view.
 func TestDropViewRequiresOwnershipDespiteAllPrivilegesRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -2518,22 +2585,23 @@ func TestDropViewRequiresOwnershipDespiteAllPrivilegesRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP VIEW drop_view_all_private;`,
-					ExpectedErr: `must be owner`,
-					Username:    `drop_view_intruder`,
-					Password:    `dropper`,
+					Query: `DROP VIEW drop_view_all_private;`,
+
+					Username: `drop_view_intruder`,
+					Password: `dropper`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testdropviewrequiresownershipdespiteallprivilegesrepro-0001-drop-view-drop_view_all_private",
+
+						// TestRefreshMaterializedViewRequiresOwnershipRepro reproduces a security bug:
+						// Doltgres allows a role that does not own a materialized view to refresh it.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT to_regclass('drop_view_all_private')::text;`,
-					Expected: []sql.Row{{"drop_view_all_private"}},
+					Query: `SELECT to_regclass('drop_view_all_private')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testdropviewrequiresownershipdespiteallprivilegesrepro-0002-select-to_regclass-drop_view_all_private-::text"},
 				},
 			},
 		},
 	})
 }
 
-// TestRefreshMaterializedViewRequiresOwnershipRepro reproduces a security bug:
-// Doltgres allows a role that does not own a materialized view to refresh it.
 func TestRefreshMaterializedViewRequiresOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -2550,20 +2618,22 @@ func TestRefreshMaterializedViewRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `REFRESH MATERIALIZED VIEW refresh_mv_private;`,
-					ExpectedErr: `permission denied`,
-					Username:    `mv_refresher`,
-					Password:    `refresher`,
+					Query: `REFRESH MATERIALIZED VIEW refresh_mv_private;`,
+
+					Username: `mv_refresher`,
+					Password: `refresher`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestDropMaterializedViewRequiresOwnershipDespiteAllPrivilegesRepro
+						// reproduces a PostgreSQL authorization bug: GRANT ALL PRIVILEGES on a
+						// materialized view does not transfer ownership and should not allow the
+						// grantee to DROP it.
+						ID: "ddl-privilege-repro-test-testrefreshmaterializedviewrequiresownershiprepro-0001-refresh-materialized-view-refresh_mv_private", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropMaterializedViewRequiresOwnershipDespiteAllPrivilegesRepro
-// reproduces a PostgreSQL authorization bug: GRANT ALL PRIVILEGES on a
-// materialized view does not transfer ownership and should not allow the
-// grantee to DROP it.
 func TestDropMaterializedViewRequiresOwnershipDespiteAllPrivilegesRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -2576,23 +2646,24 @@ func TestDropMaterializedViewRequiresOwnershipDespiteAllPrivilegesRepro(t *testi
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP MATERIALIZED VIEW drop_matview_all_private;`,
-					ExpectedErr: `must be owner`,
-					Username:    `drop_matview_intruder`,
-					Password:    `dropper`,
+					Query: `DROP MATERIALIZED VIEW drop_matview_all_private;`,
+
+					Username: `drop_matview_intruder`,
+					Password: `dropper`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testdropmaterializedviewrequiresownershipdespiteallprivilegesrepro-0001-drop-materialized-view-drop_matview_all_private",
+
+						// TestAlterMaterializedViewRenameColumnRequiresOwnershipRepro reproduces a
+						// security bug: Doltgres allows a role that does not own a materialized view to
+						// rename one of its columns.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT to_regclass('drop_matview_all_private')::text;`,
-					Expected: []sql.Row{{"drop_matview_all_private"}},
+					Query: `SELECT to_regclass('drop_matview_all_private')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testdropmaterializedviewrequiresownershipdespiteallprivilegesrepro-0002-select-to_regclass-drop_matview_all_private-::text"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterMaterializedViewRenameColumnRequiresOwnershipRepro reproduces a
-// security bug: Doltgres allows a role that does not own a materialized view to
-// rename one of its columns.
 func TestAlterMaterializedViewRenameColumnRequiresOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -2607,19 +2678,21 @@ func TestAlterMaterializedViewRenameColumnRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER MATERIALIZED VIEW rename_mv_private RENAME COLUMN label TO renamed_label;`,
-					ExpectedErr: `permission denied`,
-					Username:    `mv_column_renamer`,
-					Password:    `renamer`,
+					Query: `ALTER MATERIALIZED VIEW rename_mv_private RENAME COLUMN label TO renamed_label;`,
+
+					Username: `mv_column_renamer`,
+					Password: `renamer`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestAlterMaterializedViewRenameToRequiresOwnershipRepro reproduces a security
+						// bug: Doltgres allows a role that does not own a materialized view to rename
+						// the relation itself.
+						ID: "ddl-privilege-repro-test-testaltermaterializedviewrenamecolumnrequiresownershiprepro-0001-alter-materialized-view-rename_mv_private-rename", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterMaterializedViewRenameToRequiresOwnershipRepro reproduces a security
-// bug: Doltgres allows a role that does not own a materialized view to rename
-// the relation itself.
 func TestAlterMaterializedViewRenameToRequiresOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -2635,19 +2708,21 @@ func TestAlterMaterializedViewRenameToRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER MATERIALIZED VIEW rename_to_mv_private RENAME TO renamed_by_non_owner;`,
-					ExpectedErr: `permission denied`,
-					Username:    `mv_relation_renamer`,
-					Password:    `renamer`,
+					Query: `ALTER MATERIALIZED VIEW rename_to_mv_private RENAME TO renamed_by_non_owner;`,
+
+					Username: `mv_relation_renamer`,
+					Password: `renamer`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCreateMaterializedViewRequiresSchemaCreatePrivilegeGuard covers
+						// materialized-view creation authorization: creating the destination relation
+						// requires CREATE on the target schema.
+						ID: "ddl-privilege-repro-test-testaltermaterializedviewrenametorequiresownershiprepro-0001-alter-materialized-view-rename_to_mv_private-rename", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateMaterializedViewRequiresSchemaCreatePrivilegeGuard covers
-// materialized-view creation authorization: creating the destination relation
-// requires CREATE on the target schema.
 func TestCreateMaterializedViewRequiresSchemaCreatePrivilegeGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -2659,19 +2734,21 @@ func TestCreateMaterializedViewRequiresSchemaCreatePrivilegeGuard(t *testing.T) 
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CREATE MATERIALIZED VIEW mv_private_schema.created_without_create AS SELECT 1 AS id;`,
-					ExpectedErr: `permission denied`,
-					Username:    `mv_creator`,
-					Password:    `creator`,
+					Query: `CREATE MATERIALIZED VIEW mv_private_schema.created_without_create AS SELECT 1 AS id;`,
+
+					Username: `mv_creator`,
+					Password: `creator`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCreateMaterializedViewRequiresSelectOnSourceTableGuard covers a
+						// sensitive privilege boundary: creating a materialized view over a table
+						// requires SELECT on that source table.
+						ID: "ddl-privilege-repro-test-testcreatematerializedviewrequiresschemacreateprivilegeguard-0001-create-materialized-view-mv_private_schema.created_without_create-as", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateMaterializedViewRequiresSelectOnSourceTableGuard covers a
-// sensitive privilege boundary: creating a materialized view over a table
-// requires SELECT on that source table.
 func TestCreateMaterializedViewRequiresSelectOnSourceTableGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -2684,18 +2761,20 @@ func TestCreateMaterializedViewRequiresSelectOnSourceTableGuard(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CREATE MATERIALIZED VIEW mv_from_private_source AS SELECT id, secret FROM mv_create_source_private;`,
-					ExpectedErr: `permission denied`,
-					Username:    `mv_source_reader`,
-					Password:    `reader`,
+					Query: `CREATE MATERIALIZED VIEW mv_from_private_source AS SELECT id, secret FROM mv_create_source_private;`,
+
+					Username: `mv_source_reader`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCreateIndexRequiresTableOwnershipRepro reproduces a security bug:
+						// Doltgres allows a role that does not own a table to create an index on it.
+						ID: "ddl-privilege-repro-test-testcreatematerializedviewrequiresselectonsourcetableguard-0001-create-materialized-view-mv_from_private_source-as", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateIndexRequiresTableOwnershipRepro reproduces a security bug:
-// Doltgres allows a role that does not own a table to create an index on it.
 func TestCreateIndexRequiresTableOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -2707,19 +2786,21 @@ func TestCreateIndexRequiresTableOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CREATE INDEX create_index_private_label_idx ON create_index_private (label);`,
-					ExpectedErr: `permission denied`,
-					Username:    `index_creator`,
-					Password:    `creator`,
+					Query: `CREATE INDEX create_index_private_label_idx ON create_index_private (label);`,
+
+					Username: `index_creator`,
+					Password: `creator`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestAlterIndexRequiresTableOwnershipRepro reproduces a security bug:
+						// Doltgres allows a role that does not own the indexed table to alter index
+						// storage metadata.
+						ID: "ddl-privilege-repro-test-testcreateindexrequirestableownershiprepro-0001-create-index-create_index_private_label_idx-on-create_index_private", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterIndexRequiresTableOwnershipRepro reproduces a security bug:
-// Doltgres allows a role that does not own the indexed table to alter index
-// storage metadata.
 func TestAlterIndexRequiresTableOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -2732,19 +2813,21 @@ func TestAlterIndexRequiresTableOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER INDEX alter_index_private_label_idx SET (fillfactor = 80);`,
-					ExpectedErr: `permission denied`,
-					Username:    `index_alterer`,
-					Password:    `alterer`,
+					Query: `ALTER INDEX alter_index_private_label_idx SET (fillfactor = 80);`,
+
+					Username: `index_alterer`,
+					Password: `alterer`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestRenameIndexRequiresTableOwnershipRepro reproduces a security bug:
+						// Doltgres allows a role that does not own the indexed table to rename an
+						// index.
+						ID: "ddl-privilege-repro-test-testalterindexrequirestableownershiprepro-0001-alter-index-alter_index_private_label_idx-set-fillfactor", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestRenameIndexRequiresTableOwnershipRepro reproduces a security bug:
-// Doltgres allows a role that does not own the indexed table to rename an
-// index.
 func TestRenameIndexRequiresTableOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -2757,19 +2840,21 @@ func TestRenameIndexRequiresTableOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER INDEX rename_index_private_label_idx RENAME TO rename_index_private_label_renamed_idx;`,
-					ExpectedErr: `permission denied`,
-					Username:    `index_renamer`,
-					Password:    `renamer`,
+					Query: `ALTER INDEX rename_index_private_label_idx RENAME TO rename_index_private_label_renamed_idx;`,
+
+					Username: `index_renamer`,
+					Password: `renamer`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestClusterRequiresTableOwnershipRepro reproduces a security bug: Doltgres
+						// allows a role that does not own the indexed table to mark one of its indexes
+						// as clustered.
+						ID: "ddl-privilege-repro-test-testrenameindexrequirestableownershiprepro-0001-alter-index-rename_index_private_label_idx-rename-to", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestClusterRequiresTableOwnershipRepro reproduces a security bug: Doltgres
-// allows a role that does not own the indexed table to mark one of its indexes
-// as clustered.
 func TestClusterRequiresTableOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -2782,17 +2867,16 @@ func TestClusterRequiresTableOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CLUSTER cluster_private_label_idx ON cluster_private;`,
-					ExpectedErr: `permission denied`,
-					Username:    `cluster_user`,
-					Password:    `clusterer`,
+					Query: `CLUSTER cluster_private_label_idx ON cluster_private;`,
+
+					Username: `cluster_user`,
+					Password: `clusterer`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testclusterrequirestableownershiprepro-0001-cluster-cluster_private_label_idx-on-cluster_private", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT i.indisclustered
 						FROM pg_catalog.pg_index i
 						JOIN pg_catalog.pg_class c ON c.oid = i.indexrelid
-						WHERE c.relname = 'cluster_private_label_idx';`,
-					Expected: []sql.Row{{"f"}},
+						WHERE c.relname = 'cluster_private_label_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testclusterrequirestableownershiprepro-0002-select-i.indisclustered-from-pg_catalog.pg_index-i"},
 				},
 			},
 		},
@@ -2813,19 +2897,21 @@ func TestReindexTableRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `REINDEX TABLE reindex_table_private;`,
-					ExpectedErr: `permission denied`,
-					Username:    `reindex_table_user`,
-					Password:    `reindexer`,
+					Query: `REINDEX TABLE reindex_table_private;`,
+
+					Username: `reindex_table_user`,
+					Password: `reindexer`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestReindexIndexRequiresTableOwnershipRepro reproduces a security bug:
+						// Doltgres allows a role that does not own the indexed table to REINDEX one of
+						// its indexes.
+						ID: "ddl-privilege-repro-test-testreindextablerequiresownershiprepro-0001-reindex-table-reindex_table_private", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestReindexIndexRequiresTableOwnershipRepro reproduces a security bug:
-// Doltgres allows a role that does not own the indexed table to REINDEX one of
-// its indexes.
 func TestReindexIndexRequiresTableOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -2838,18 +2924,20 @@ func TestReindexIndexRequiresTableOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `REINDEX INDEX reindex_index_private_label_idx;`,
-					ExpectedErr: `permission denied`,
-					Username:    `reindex_index_user`,
-					Password:    `reindexer`,
+					Query: `REINDEX INDEX reindex_index_private_label_idx;`,
+
+					Username: `reindex_index_user`,
+					Password: `reindexer`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCreatePublicationRequiresTableOwnershipRepro reproduces a security bug:
+						// Doltgres allows a role that does not own a table to publish it.
+						ID: "ddl-privilege-repro-test-testreindexindexrequirestableownershiprepro-0001-reindex-index-reindex_index_private_label_idx", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreatePublicationRequiresTableOwnershipRepro reproduces a security bug:
-// Doltgres allows a role that does not own a table to publish it.
 func TestCreatePublicationRequiresTableOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -2861,19 +2949,21 @@ func TestCreatePublicationRequiresTableOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CREATE PUBLICATION publication_private_pub FOR TABLE publication_private;`,
-					ExpectedErr: `permission denied`,
-					Username:    `publication_creator`,
-					Password:    `creator`,
+					Query: `CREATE PUBLICATION publication_private_pub FOR TABLE publication_private;`,
+
+					Username: `publication_creator`,
+					Password: `creator`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestAlterPublicationAddTableRequiresTableOwnershipRepro reproduces a
+						// security bug: Doltgres allows a publication owner to add a table they do not
+						// own to the publication.
+						ID: "ddl-privilege-repro-test-testcreatepublicationrequirestableownershiprepro-0001-create-publication-publication_private_pub-for-table", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterPublicationAddTableRequiresTableOwnershipRepro reproduces a
-// security bug: Doltgres allows a publication owner to add a table they do not
-// own to the publication.
 func TestAlterPublicationAddTableRequiresTableOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -2891,16 +2981,15 @@ func TestAlterPublicationAddTableRequiresTableOwnershipRepro(t *testing.T) {
 					Password: `adder`,
 				},
 				{
-					Query:       `ALTER PUBLICATION publication_add_pub ADD TABLE publication_add_private;`,
-					ExpectedErr: `owner of table`,
-					Username:    `publication_table_adder`,
-					Password:    `adder`,
+					Query: `ALTER PUBLICATION publication_add_pub ADD TABLE publication_add_private;`,
+
+					Username: `publication_table_adder`,
+					Password: `adder`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testalterpublicationaddtablerequirestableownershiprepro-0001-alter-publication-publication_add_pub-add-table", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT count(*)
 						FROM pg_catalog.pg_publication_tables
-						WHERE pubname = 'publication_add_pub';`,
-					Expected: []sql.Row{{0}},
+						WHERE pubname = 'publication_add_pub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testalterpublicationaddtablerequirestableownershiprepro-0002-select-count-*-from-pg_catalog.pg_publication_tables"},
 				},
 			},
 		},
@@ -2927,16 +3016,15 @@ func TestAlterPublicationSetTableRequiresTableOwnershipRepro(t *testing.T) {
 					Password: `setter`,
 				},
 				{
-					Query:       `ALTER PUBLICATION publication_set_pub SET TABLE publication_set_private;`,
-					ExpectedErr: `owner of table`,
-					Username:    `publication_table_setter`,
-					Password:    `setter`,
+					Query: `ALTER PUBLICATION publication_set_pub SET TABLE publication_set_private;`,
+
+					Username: `publication_table_setter`,
+					Password: `setter`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testalterpublicationsettablerequirestableownershiprepro-0001-alter-publication-publication_set_pub-set-table", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT count(*)
 						FROM pg_catalog.pg_publication_tables
-						WHERE pubname = 'publication_set_pub';`,
-					Expected: []sql.Row{{0}},
+						WHERE pubname = 'publication_set_pub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testalterpublicationsettablerequirestableownershiprepro-0002-select-count-*-from-pg_catalog.pg_publication_tables"},
 				},
 			},
 		},
@@ -2955,26 +3043,27 @@ func TestCreatePublicationForAllTablesRequiresSuperuserRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CREATE PUBLICATION publication_all_tables_pub FOR ALL TABLES;`,
-					ExpectedErr: `superuser`,
-					Username:    `publication_all_tables_user`,
-					Password:    `alltables`,
+					Query: `CREATE PUBLICATION publication_all_tables_pub FOR ALL TABLES;`,
+
+					Username: `publication_all_tables_user`,
+					Password: `alltables`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testcreatepublicationforalltablesrequiressuperuserrepro-0001-create-publication-publication_all_tables_pub-for-all", Compare:
+
+					// TestCreatePublicationForTablesInSchemaRequiresSuperuserRepro reproduces a
+					// security bug: PostgreSQL restricts FOR TABLES IN SCHEMA publications to
+					// superusers because they implicitly publish all current and future tables in
+					// the named schemas.
+					"sqlstate"},
 				},
 				{
 					Query: `SELECT count(*)
 						FROM pg_catalog.pg_publication
-						WHERE pubname = 'publication_all_tables_pub';`,
-					Expected: []sql.Row{{0}},
+						WHERE pubname = 'publication_all_tables_pub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testcreatepublicationforalltablesrequiressuperuserrepro-0002-select-count-*-from-pg_catalog.pg_publication"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreatePublicationForTablesInSchemaRequiresSuperuserRepro reproduces a
-// security bug: PostgreSQL restricts FOR TABLES IN SCHEMA publications to
-// superusers because they implicitly publish all current and future tables in
-// the named schemas.
 func TestCreatePublicationForTablesInSchemaRequiresSuperuserRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -3098,19 +3187,21 @@ func TestAlterPublicationRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER PUBLICATION publication_alter_pub RENAME TO publication_alter_renamed_pub;`,
-					ExpectedErr: `permission denied`,
-					Username:    `publication_alterer`,
-					Password:    `alterer`,
+					Query: `ALTER PUBLICATION publication_alter_pub RENAME TO publication_alter_renamed_pub;`,
+
+					Username: `publication_alterer`,
+					Password: `alterer`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestAlterPublicationOwnerToUpdatesCatalogRepro reproduces a PostgreSQL
+						// compatibility gap: ALTER PUBLICATION OWNER TO should be accepted and update
+						// pg_publication.pubowner.
+						ID: "ddl-privilege-repro-test-testalterpublicationrequiresownershiprepro-0001-alter-publication-publication_alter_pub-rename-to", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterPublicationOwnerToUpdatesCatalogRepro reproduces a PostgreSQL
-// compatibility gap: ALTER PUBLICATION OWNER TO should be accepted and update
-// pg_publication.pubowner.
 func TestAlterPublicationOwnerToUpdatesCatalogRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -3127,8 +3218,7 @@ func TestAlterPublicationOwnerToUpdatesCatalogRepro(t *testing.T) {
 				{
 					Query: `SELECT pg_get_userbyid(pubowner)
 						FROM pg_catalog.pg_publication
-						WHERE pubname = 'publication_owner_to_pub';`,
-					Expected: []sql.Row{{"publication_owner_target"}},
+						WHERE pubname = 'publication_owner_to_pub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testalterpublicationownertoupdatescatalogrepro-0001-select-pg_get_userbyid-pubowner-from-pg_catalog.pg_publication"},
 				},
 			},
 		},
@@ -3148,18 +3238,20 @@ func TestDropPublicationRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP PUBLICATION publication_drop_pub;`,
-					ExpectedErr: `permission denied`,
-					Username:    `publication_dropper`,
-					Password:    `dropper`,
+					Query: `DROP PUBLICATION publication_drop_pub;`,
+
+					Username: `publication_dropper`,
+					Password: `dropper`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCreateSubscriptionRequiresSuperuserRepro reproduces a security bug:
+						// Doltgres allows a normal role to create subscription metadata.
+						ID: "ddl-privilege-repro-test-testdroppublicationrequiresownershiprepro-0001-drop-publication-publication_drop_pub", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateSubscriptionRequiresSuperuserRepro reproduces a security bug:
-// Doltgres allows a normal role to create subscription metadata.
 func TestCreateSubscriptionRequiresSuperuserRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -3175,17 +3267,19 @@ func TestCreateSubscriptionRequiresSuperuserRepro(t *testing.T) {
 						CONNECTION 'host=127.0.0.1 dbname=postgres'
 						PUBLICATION subscription_pub
 						WITH (connect = false, enabled = false, create_slot = false, slot_name = NONE);`,
-					ExpectedErr: `permission denied`,
-					Username:    `subscription_creator`,
-					Password:    `creator`,
+
+					Username: `subscription_creator`,
+					Password: `creator`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCreateSubscriptionSetsOwnerCatalogRepro reproduces a subscription
+						// ownership catalog bug: PostgreSQL records the creating role as subowner.
+						ID: "ddl-privilege-repro-test-testcreatesubscriptionrequiressuperuserrepro-0001-create-subscription-subscription_created-connection-host=127.0.0.1", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateSubscriptionSetsOwnerCatalogRepro reproduces a subscription
-// ownership catalog bug: PostgreSQL records the creating role as subowner.
 func TestCreateSubscriptionSetsOwnerCatalogRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -3205,8 +3299,7 @@ func TestCreateSubscriptionSetsOwnerCatalogRepro(t *testing.T) {
 				{
 					Query: `SELECT pg_get_userbyid(subowner)
 						FROM pg_catalog.pg_subscription
-						WHERE subname = 'subscription_owner_created';`,
-					Expected: []sql.Row{{"subscription_owner_creator"}},
+						WHERE subname = 'subscription_owner_created';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testcreatesubscriptionsetsownercatalogrepro-0001-select-pg_get_userbyid-subowner-from-pg_catalog.pg_subscription"},
 				},
 			},
 		},
@@ -3239,8 +3332,7 @@ func TestAlterSubscriptionOwnerUpdatesCatalogRepro(t *testing.T) {
 				{
 					Query: `SELECT pg_get_userbyid(subowner)
 						FROM pg_catalog.pg_subscription
-						WHERE subname = 'subscription_owner_transfer';`,
-					Expected: []sql.Row{{"subscription_owner_to"}},
+						WHERE subname = 'subscription_owner_transfer';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testaltersubscriptionownerupdatescatalogrepro-0001-select-pg_get_userbyid-subowner-from-pg_catalog.pg_subscription"},
 				},
 			},
 		},
@@ -3262,14 +3354,12 @@ func TestAlterSubscriptionOwnerRejectsMissingRoleRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `ALTER SUBSCRIPTION subscription_missing_owner
-						OWNER TO missing_subscription_owner;`,
-					ExpectedErr: `does not exist`,
+						OWNER TO missing_subscription_owner;`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testaltersubscriptionownerrejectsmissingrolerepro-0001-alter-subscription-subscription_missing_owner-owner-to", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT count(*)
 						FROM pg_catalog.pg_subscription
-						WHERE subname = 'subscription_missing_owner';`,
-					Expected: []sql.Row{{1}},
+						WHERE subname = 'subscription_missing_owner';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testaltersubscriptionownerrejectsmissingrolerepro-0002-select-count-*-from-pg_catalog.pg_subscription"},
 				},
 			},
 		},
@@ -3293,18 +3383,20 @@ func TestAlterSubscriptionRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER SUBSCRIPTION subscription_alter_sub RENAME TO subscription_alter_renamed_sub;`,
-					ExpectedErr: `permission denied`,
-					Username:    `subscription_alterer`,
-					Password:    `alterer`,
+					Query: `ALTER SUBSCRIPTION subscription_alter_sub RENAME TO subscription_alter_renamed_sub;`,
+
+					Username: `subscription_alterer`,
+					Password: `alterer`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestDropSubscriptionRequiresOwnershipRepro reproduces a security bug:
+						// Doltgres allows a role that does not own a subscription to drop it.
+						ID: "ddl-privilege-repro-test-testaltersubscriptionrequiresownershiprepro-0001-alter-subscription-subscription_alter_sub-rename-to", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropSubscriptionRequiresOwnershipRepro reproduces a security bug:
-// Doltgres allows a role that does not own a subscription to drop it.
 func TestDropSubscriptionRequiresOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -3320,10 +3412,10 @@ func TestDropSubscriptionRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP SUBSCRIPTION subscription_drop_sub;`,
-					ExpectedErr: `permission denied`,
-					Username:    `subscription_dropper`,
-					Password:    `dropper`,
+					Query: `DROP SUBSCRIPTION subscription_drop_sub;`,
+
+					Username: `subscription_dropper`,
+					Password: `dropper`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testdropsubscriptionrequiresownershiprepro-0001-drop-subscription-subscription_drop_sub", Compare: "sqlstate"},
 				},
 			},
 		},

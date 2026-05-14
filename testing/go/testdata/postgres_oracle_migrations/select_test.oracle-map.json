@@ -28,9 +28,6 @@
       "expectedRows": [
         []
       ],
-      "nonLiteral": [
-        "Expected"
-      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },

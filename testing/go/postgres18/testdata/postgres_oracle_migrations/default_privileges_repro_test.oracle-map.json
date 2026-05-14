@@ -1,0 +1,39 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map default_privileges_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres18/default_privileges_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/postgres18/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres18/default_privileges_repro_test.go:TestPostgres18LargeObjectDefaultPrivilegesRepro#0001",
+      "source": "testing/go/postgres18/default_privileges_repro_test.go:TestPostgres18LargeObjectDefaultPrivilegesRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER DEFAULT PRIVILEGES supports large objects",
+      "oracle": "postgres",
+      "postgresId": "postgres18/default-privileges-repro-test-testpostgres18largeobjectdefaultprivilegesrepro-0001-select-defaclobjtype-from-pg_catalog.pg_default_acl-where",
+      "suggestedId": "postgres18/default-privileges-repro-test-testpostgres18largeobjectdefaultprivilegesrepro-0001-select-defaclobjtype-from-pg_catalog.pg_default_acl-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT defaclobjtype\n\t\t\t\t\t\tFROM pg_catalog.pg_default_acl\n\t\t\t\t\t\tWHERE defaclnamespace = 0\n\t\t\t\t\t\t\tAND defaclobjtype = 'L';",
+      "querySha256": "d42a0164c716f24785345f4fea238e3eaff3d50de5af978a89c97e297f60d022",
+      "expectedRows": [
+        [
+          {
+            "value": "L"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

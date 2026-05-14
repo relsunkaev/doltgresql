@@ -36,12 +36,14 @@ func TestSetTransactionIsolationAfterQueryRejectedRepro(t *testing.T) {
 					Query: `BEGIN;`,
 				},
 				{
-					Query:    `SELECT 1;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-isolation-repro-test-testsettransactionisolationafterqueryrejectedrepro-0001-select-1"},
 				},
 				{
-					Query:       `SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;`,
-					ExpectedErr: `must be called before any query`,
+					Query: `SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-isolation-repro-test-testsettransactionisolationafterqueryrejectedrepro-0002-set-transaction-isolation-level-serializable",
+
+						// TestSetTransactionSnapshotValidationRepro reproduces snapshot-import
+						// validation bugs around SET TRANSACTION SNAPSHOT.
+						Compare: "sqlstate"},
 				},
 				{
 					Query: `ROLLBACK;`,
@@ -51,8 +53,6 @@ func TestSetTransactionIsolationAfterQueryRejectedRepro(t *testing.T) {
 	})
 }
 
-// TestSetTransactionSnapshotValidationRepro reproduces snapshot-import
-// validation bugs around SET TRANSACTION SNAPSHOT.
 func TestSetTransactionSnapshotValidationRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{

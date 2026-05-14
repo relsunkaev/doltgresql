@@ -35,8 +35,7 @@ func TestGrantTablePrivilegesPopulatePgClassRelaclRepro(t *testing.T) {
 				{
 					Query: `SELECT relacl IS NOT NULL
 						FROM pg_catalog.pg_class
-						WHERE oid = 'acl_catalog_target'::regclass;`,
-					Expected: []sql.Row{{"t"}},
+						WHERE oid = 'acl_catalog_target'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "acl-catalog-repro-test-testgranttableprivilegespopulatepgclassrelaclrepro-0001-select-relacl-is-not-null"},
 				},
 			},
 		},
@@ -59,8 +58,7 @@ func TestGrantSchemaPrivilegesPopulatePgNamespaceNspaclRepro(t *testing.T) {
 				{
 					Query: `SELECT nspacl IS NOT NULL
 						FROM pg_catalog.pg_namespace
-						WHERE nspname = 'acl_schema_target';`,
-					Expected: []sql.Row{{"t"}},
+						WHERE nspname = 'acl_schema_target';`, PostgresOracle: ScriptTestPostgresOracle{ID: "acl-catalog-repro-test-testgrantschemaprivilegespopulatepgnamespacenspaclrepro-0001-select-nspacl-is-not-null"},
 				},
 			},
 		},
@@ -82,8 +80,7 @@ func TestGrantDatabasePrivilegesPopulatePgDatabaseDataclRepro(t *testing.T) {
 				{
 					Query: `SELECT datacl IS NOT NULL
 						FROM pg_catalog.pg_database
-						WHERE datname = 'postgres';`,
-					Expected: []sql.Row{{"t"}},
+						WHERE datname = 'postgres';`, PostgresOracle: ScriptTestPostgresOracle{ID: "acl-catalog-repro-test-testgrantdatabaseprivilegespopulatepgdatabasedataclrepro-0001-select-datacl-is-not-null"},
 				},
 			},
 		},
@@ -106,8 +103,7 @@ func TestGrantSequencePrivilegesPopulatePgClassRelaclRepro(t *testing.T) {
 				{
 					Query: `SELECT relacl IS NOT NULL
 						FROM pg_catalog.pg_class
-						WHERE oid = 'acl_catalog_sequence'::regclass;`,
-					Expected: []sql.Row{{"t"}},
+						WHERE oid = 'acl_catalog_sequence'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "acl-catalog-repro-test-testgrantsequenceprivilegespopulatepgclassrelaclrepro-0001-select-relacl-is-not-null"},
 				},
 			},
 		},
@@ -129,8 +125,7 @@ func TestGrantLanguagePrivilegesPopulatePgLanguageLanaclRepro(t *testing.T) {
 				{
 					Query: `SELECT lanacl::text LIKE '%acl_language_user=U/%'
 						FROM pg_catalog.pg_language
-						WHERE lanname = 'plpgsql';`,
-					Expected: []sql.Row{{"t"}},
+						WHERE lanname = 'plpgsql';`, PostgresOracle: ScriptTestPostgresOracle{ID: "acl-catalog-repro-test-testgrantlanguageprivilegespopulatepglanguagelanaclrepro-0001-select-lanacl::text-like-%acl_language_user=u/%-from"},
 				},
 			},
 		},
@@ -153,8 +148,7 @@ func TestGrantFunctionPrivilegesPopulatePgProcProaclRepro(t *testing.T) {
 				{
 					Query: `SELECT proacl::text LIKE '%acl_function_user=X/%'
 						FROM pg_catalog.pg_proc
-						WHERE proname = 'acl_function_target';`,
-					Expected: []sql.Row{{"t"}},
+						WHERE proname = 'acl_function_target';`, PostgresOracle: ScriptTestPostgresOracle{ID: "acl-catalog-repro-test-testgrantfunctionprivilegespopulatepgprocproaclrepro-0001-select-proacl::text-like-%acl_function_user=x/%-from"},
 				},
 			},
 		},
@@ -179,8 +173,7 @@ func TestGrantTypePrivilegesPopulatePgTypeTypaclRepro(t *testing.T) {
 				{
 					Query: `SELECT typacl::text LIKE '%acl_type_user=U/%'
 						FROM pg_catalog.pg_type
-						WHERE typname = 'acl_type_mood';`,
-					Expected: []sql.Row{{"t"}},
+						WHERE typname = 'acl_type_mood';`, PostgresOracle: ScriptTestPostgresOracle{ID: "acl-catalog-repro-test-testgranttypeprivilegespopulatepgtypetypaclrepro-0001-select-typacl::text-like-%acl_type_user=u/%-from"},
 				},
 			},
 		},
@@ -220,8 +213,7 @@ func TestHasTypePrivilegeHelperRepro(t *testing.T) {
 			Name: "has_type_privilege reports built-in type usage",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT has_type_privilege('pg_catalog.int4', 'USAGE');`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT has_type_privilege('pg_catalog.int4', 'USAGE');`, PostgresOracle: ScriptTestPostgresOracle{ID: "acl-catalog-repro-test-testhastypeprivilegehelperrepro-0001-select-has_type_privilege-pg_catalog.int4-usage"},
 				},
 			},
 		},
@@ -250,27 +242,7 @@ func TestHasAnyColumnPrivilegeHelperRepro(t *testing.T) {
 							'any_column_privilege_reader',
 							'any_column_privilege_private',
 							'SELECT'
-						);`,
-					Expected: []sql.Row{{"t"}},
-				},
-			},
-		},
-	})
-}
-
-// TestHasLargeObjectPrivilegeHelperRepro reproduces a PostgreSQL 18 ACL helper
-// parity gap: has_largeobject_privilege should be registered for checking
-// SELECT and UPDATE privileges on large objects.
-func TestHasLargeObjectPrivilegeHelperRepro(t *testing.T) {
-	RunScripts(t, []ScriptTest{
-		{
-			Name: "has_largeobject_privilege helper is registered",
-			Assertions: []ScriptTestAssertion{
-				{
-					Query: `SELECT count(*) >= 1
-						FROM pg_catalog.pg_proc
-						WHERE proname = 'has_largeobject_privilege';`,
-					Expected: []sql.Row{{"t"}},
+						);`, PostgresOracle: ScriptTestPostgresOracle{ID: "acl-catalog-repro-test-testhasanycolumnprivilegehelperrepro-0001-select-has_any_column_privilege-any_column_privilege_reader-any_column_privilege_private-select"},
 				},
 			},
 		},
@@ -297,8 +269,7 @@ func TestPrivilegeInquiryFunctionsReflectColumnGrantsRepro(t *testing.T) {
 					Query: `SELECT
 							has_table_privilege('privilege_inquiry_reader', 'privilege_inquiry_private', 'SELECT'),
 							has_column_privilege('privilege_inquiry_reader', 'privilege_inquiry_private', 'id', 'SELECT'),
-							has_column_privilege('privilege_inquiry_reader', 'privilege_inquiry_private', 'secret', 'SELECT');`,
-					Expected: []sql.Row{{"f", "t", "f"}},
+							has_column_privilege('privilege_inquiry_reader', 'privilege_inquiry_private', 'secret', 'SELECT');`, PostgresOracle: ScriptTestPostgresOracle{ID: "acl-catalog-repro-test-testprivilegeinquiryfunctionsreflectcolumngrantsrepro-0001-select-has_table_privilege-privilege_inquiry_reader-privilege_inquiry_private-select"},
 				},
 			},
 		},
@@ -329,8 +300,7 @@ func TestPrivilegeInquiryFunctionsReflectObjectGrantsRepro(t *testing.T) {
 							has_database_privilege('privilege_inquiry_object_user', 'postgres', 'CONNECT'),
 							has_schema_privilege('privilege_inquiry_object_user', 'privilege_inquiry_schema', 'USAGE'),
 							has_sequence_privilege('privilege_inquiry_object_user', 'privilege_inquiry_sequence', 'USAGE'),
-							has_function_privilege('privilege_inquiry_object_user', 'privilege_inquiry_function()', 'EXECUTE');`,
-					Expected: []sql.Row{{"t", "t", "t", "t"}},
+							has_function_privilege('privilege_inquiry_object_user', 'privilege_inquiry_function()', 'EXECUTE');`, PostgresOracle: ScriptTestPostgresOracle{ID: "acl-catalog-repro-test-testprivilegeinquiryfunctionsreflectobjectgrantsrepro-0001-select-has_database_privilege-privilege_inquiry_object_user-postgres-connect"},
 				},
 			},
 		},

@@ -1,0 +1,240 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map non_json_builtin_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres18/non_json_builtin_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/postgres18/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres18/non_json_builtin_repro_test.go:TestPostgres18UuidAndMathBuiltinsRepro#0001",
+      "source": "testing/go/postgres18/non_json_builtin_repro_test.go:TestPostgres18UuidAndMathBuiltinsRepro",
+      "ordinal": 1,
+      "scriptName": "uuidv7, gamma, and lgamma evaluate",
+      "oracle": "postgres",
+      "postgresId": "postgres18/non-json-builtin-repro-test-testpostgres18uuidandmathbuiltinsrepro-0001-select-uuidv7-is-not-null",
+      "suggestedId": "postgres18/non-json-builtin-repro-test-testpostgres18uuidandmathbuiltinsrepro-0001-select-uuidv7-is-not-null",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT uuidv7() IS NOT NULL;",
+      "querySha256": "111f1af05d6ba2916e8f759e026e185e2625d9bdcabe40db5c7d6b4f4349ec52",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres18/non_json_builtin_repro_test.go:TestPostgres18UuidAndMathBuiltinsRepro#0002",
+      "source": "testing/go/postgres18/non_json_builtin_repro_test.go:TestPostgres18UuidAndMathBuiltinsRepro",
+      "ordinal": 2,
+      "scriptName": "uuidv7, gamma, and lgamma evaluate",
+      "oracle": "postgres",
+      "postgresId": "postgres18/non-json-builtin-repro-test-testpostgres18uuidandmathbuiltinsrepro-0002-select-gamma-6::double-precision-::text",
+      "suggestedId": "postgres18/non-json-builtin-repro-test-testpostgres18uuidandmathbuiltinsrepro-0002-select-gamma-6::double-precision-::text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT gamma(6::double precision)::text;",
+      "querySha256": "480f0c6c29b267b7c1877fad1088bdccec5137e27991c11815c0b291dca697cc",
+      "expectedRows": [
+        [
+          {
+            "value": "120"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres18/non_json_builtin_repro_test.go:TestPostgres18UuidAndMathBuiltinsRepro#0003",
+      "source": "testing/go/postgres18/non_json_builtin_repro_test.go:TestPostgres18UuidAndMathBuiltinsRepro",
+      "ordinal": 3,
+      "scriptName": "uuidv7, gamma, and lgamma evaluate",
+      "oracle": "postgres",
+      "postgresId": "postgres18/non-json-builtin-repro-test-testpostgres18uuidandmathbuiltinsrepro-0003-select-lgamma-6::double-precision->",
+      "suggestedId": "postgres18/non-json-builtin-repro-test-testpostgres18uuidandmathbuiltinsrepro-0003-select-lgamma-6::double-precision->",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT lgamma(6::double precision) > 4.7 AND lgamma(6::double precision) < 4.8;",
+      "querySha256": "281b7b5a2b05510a32e78049e50bedcb1d7ea4c39633b78583b94f28554bb1f1",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres18/non_json_builtin_repro_test.go:TestPostgres18ArrayAndStringBuiltinsRepro#0001",
+      "source": "testing/go/postgres18/non_json_builtin_repro_test.go:TestPostgres18ArrayAndStringBuiltinsRepro",
+      "ordinal": 1,
+      "scriptName": "array_sort, array_reverse, and casefold evaluate",
+      "oracle": "postgres",
+      "postgresId": "postgres18/non-json-builtin-repro-test-testpostgres18arrayandstringbuiltinsrepro-0001-select-array_to_string-array_sort-array[3-1",
+      "suggestedId": "postgres18/non-json-builtin-repro-test-testpostgres18arrayandstringbuiltinsrepro-0001-select-array_to_string-array_sort-array[3-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT array_to_string(array_sort(ARRAY[3,1,2]), ',');",
+      "querySha256": "38d4430664091b2519c5843ac6c0ecec95f12f89d26aab1a5d26ad1ade4e76cc",
+      "expectedRows": [
+        [
+          {
+            "value": "1,2,3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres18/non_json_builtin_repro_test.go:TestPostgres18ArrayAndStringBuiltinsRepro#0002",
+      "source": "testing/go/postgres18/non_json_builtin_repro_test.go:TestPostgres18ArrayAndStringBuiltinsRepro",
+      "ordinal": 2,
+      "scriptName": "array_sort, array_reverse, and casefold evaluate",
+      "oracle": "postgres",
+      "postgresId": "postgres18/non-json-builtin-repro-test-testpostgres18arrayandstringbuiltinsrepro-0002-select-array_to_string-array_reverse-array[1-2",
+      "suggestedId": "postgres18/non-json-builtin-repro-test-testpostgres18arrayandstringbuiltinsrepro-0002-select-array_to_string-array_reverse-array[1-2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT array_to_string(array_reverse(ARRAY[1,2,3]), ',');",
+      "querySha256": "b3afdead5361f4f0940a168bb25292969c6b4ec2ff1c86738fe6e36489a6903b",
+      "expectedRows": [
+        [
+          {
+            "value": "3,2,1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres18/non_json_builtin_repro_test.go:TestPostgres18ArrayAndStringBuiltinsRepro#0003",
+      "source": "testing/go/postgres18/non_json_builtin_repro_test.go:TestPostgres18ArrayAndStringBuiltinsRepro",
+      "ordinal": 3,
+      "scriptName": "array_sort, array_reverse, and casefold evaluate",
+      "oracle": "postgres",
+      "postgresId": "postgres18/non-json-builtin-repro-test-testpostgres18arrayandstringbuiltinsrepro-0003-select-casefold-hello",
+      "suggestedId": "postgres18/non-json-builtin-repro-test-testpostgres18arrayandstringbuiltinsrepro-0003-select-casefold-hello",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT casefold('HELLO');",
+      "querySha256": "2ac34b33f759eccf0dc1f929463a7ee124cd21fcc409a7600b5814d1d9ff6ac8",
+      "expectedRows": [
+        [
+          {
+            "value": "hello"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres18/non_json_builtin_repro_test.go:TestPostgres18BinaryStringBuiltinsRepro#0001",
+      "source": "testing/go/postgres18/non_json_builtin_repro_test.go:TestPostgres18BinaryStringBuiltinsRepro",
+      "ordinal": 1,
+      "scriptName": "bytea CRC helpers, reverse, and integer casts evaluate",
+      "oracle": "postgres",
+      "postgresId": "postgres18/non-json-builtin-repro-test-testpostgres18binarystringbuiltinsrepro-0001-select-crc32-abc-::bytea-::text",
+      "suggestedId": "postgres18/non-json-builtin-repro-test-testpostgres18binarystringbuiltinsrepro-0001-select-crc32-abc-::bytea-::text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT crc32('abc'::bytea)::text, crc32c('abc'::bytea)::text;",
+      "querySha256": "e1305bbd1955e8a93821b373a5395a36200c4b9b146fd40ae2b7423b6c10a258",
+      "expectedRows": [
+        [
+          {
+            "value": "891568578"
+          },
+          {
+            "value": "910901175"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres18/non_json_builtin_repro_test.go:TestPostgres18BinaryStringBuiltinsRepro#0002",
+      "source": "testing/go/postgres18/non_json_builtin_repro_test.go:TestPostgres18BinaryStringBuiltinsRepro",
+      "ordinal": 2,
+      "scriptName": "bytea CRC helpers, reverse, and integer casts evaluate",
+      "oracle": "postgres",
+      "postgresId": "postgres18/non-json-builtin-repro-test-testpostgres18binarystringbuiltinsrepro-0002-select-encode-reverse-\\xabcd-::bytea",
+      "suggestedId": "postgres18/non-json-builtin-repro-test-testpostgres18binarystringbuiltinsrepro-0002-select-encode-reverse-\\xabcd-::bytea",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT encode(reverse('\\xabcd'::bytea), 'hex');",
+      "querySha256": "ffc09078157fa5270c26a9f5032dec0e7bfe2e79bd4157a3bd1d34253d0b51c0",
+      "expectedRows": [
+        [
+          {
+            "value": "cdab"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres18/non_json_builtin_repro_test.go:TestPostgres18BinaryStringBuiltinsRepro#0003",
+      "source": "testing/go/postgres18/non_json_builtin_repro_test.go:TestPostgres18BinaryStringBuiltinsRepro",
+      "ordinal": 3,
+      "scriptName": "bytea CRC helpers, reverse, and integer casts evaluate",
+      "oracle": "postgres",
+      "postgresId": "postgres18/non-json-builtin-repro-test-testpostgres18binarystringbuiltinsrepro-0003-select-encode-1234::integer::bytea-hex",
+      "suggestedId": "postgres18/non-json-builtin-repro-test-testpostgres18binarystringbuiltinsrepro-0003-select-encode-1234::integer::bytea-hex",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT encode(1234::integer::bytea, 'hex');",
+      "querySha256": "11658dd3051e4ac1dcdd2046cb3e70f1b58f2953f8db8e209c0480f1a9f73d15",
+      "expectedRows": [
+        [
+          {
+            "value": "000004d2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres18/non_json_builtin_repro_test.go:TestPostgres18BinaryStringBuiltinsRepro#0004",
+      "source": "testing/go/postgres18/non_json_builtin_repro_test.go:TestPostgres18BinaryStringBuiltinsRepro",
+      "ordinal": 4,
+      "scriptName": "bytea CRC helpers, reverse, and integer casts evaluate",
+      "oracle": "postgres",
+      "postgresId": "postgres18/non-json-builtin-repro-test-testpostgres18binarystringbuiltinsrepro-0004-select-\\x8000-::bytea::smallint::text",
+      "suggestedId": "postgres18/non-json-builtin-repro-test-testpostgres18binarystringbuiltinsrepro-0004-select-\\x8000-::bytea::smallint::text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT '\\x8000'::bytea::smallint::text;",
+      "querySha256": "401e392203dbfc07ff4e76ce8bb78d6394b209dc4e048620a9616728584b3ae5",
+      "expectedRows": [
+        [
+          {
+            "value": "-32768"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

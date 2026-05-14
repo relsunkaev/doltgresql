@@ -1,0 +1,133 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map sql_json_standard_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres17/sql_json_standard_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/postgres17/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres17/sql_json_standard_repro_test.go:TestPostgres17SqlJsonConstructorFunctionsRepro#0001",
+      "source": "testing/go/postgres17/sql_json_standard_repro_test.go:TestPostgres17SqlJsonConstructorFunctionsRepro",
+      "ordinal": 1,
+      "scriptName": "PostgreSQL 17 SQL/JSON constructor functions evaluate JSON values",
+      "oracle": "postgres",
+      "postgresId": "postgres17/sql-json-standard-repro-test-testpostgres17sqljsonconstructorfunctionsrepro-0001-select-json_scalar-plain-::text-::text",
+      "suggestedId": "postgres17/sql-json-standard-repro-test-testpostgres17sqljsonconstructorfunctionsrepro-0001-select-json_scalar-plain-::text-::text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT JSON_SCALAR('plain'::text)::text, JSON_SCALAR(123.45)::text, JSON_SCALAR(NULL::text)::text;",
+      "querySha256": "a2e2e74eeca513edd25ae867c0a40c1c8d8d3acda21d513a70a7ab0f39446b47",
+      "expectedRows": [
+        [
+          {
+            "value": "\"plain\""
+          },
+          {
+            "value": "123.45"
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres17/sql_json_standard_repro_test.go:TestPostgres17SqlJsonConstructorFunctionsRepro#0002",
+      "source": "testing/go/postgres17/sql_json_standard_repro_test.go:TestPostgres17SqlJsonConstructorFunctionsRepro",
+      "ordinal": 2,
+      "scriptName": "PostgreSQL 17 SQL/JSON constructor functions evaluate JSON values",
+      "oracle": "postgres",
+      "postgresId": "postgres17/sql-json-standard-repro-test-testpostgres17sqljsonconstructorfunctionsrepro-0002-select-json_serialize-{-a-:1}",
+      "suggestedId": "postgres17/sql-json-standard-repro-test-testpostgres17sqljsonconstructorfunctionsrepro-0002-select-json_serialize-{-a-:1}",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT JSON_SERIALIZE('{\"a\":1}' RETURNING text);",
+      "querySha256": "cab86f2b98b6d8d17971ee8a888cd4fd9ff12761d9a5c1a157a479581f6bb142",
+      "expectedRows": [
+        [
+          {
+            "value": "{\"a\":1}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres17/sql_json_standard_repro_test.go:TestPostgres17SqlJsonQueryFunctionsRepro#0001",
+      "source": "testing/go/postgres17/sql_json_standard_repro_test.go:TestPostgres17SqlJsonQueryFunctionsRepro",
+      "ordinal": 1,
+      "scriptName": "PostgreSQL 17 SQL/JSON query functions evaluate jsonpath expressions",
+      "oracle": "postgres",
+      "postgresId": "postgres17/sql-json-standard-repro-test-testpostgres17sqljsonqueryfunctionsrepro-0001-select-json_exists-{-key1-:[1",
+      "suggestedId": "postgres17/sql-json-standard-repro-test-testpostgres17sqljsonqueryfunctionsrepro-0001-select-json_exists-{-key1-:[1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT JSON_EXISTS(\n\t\t\t\t\t\t'{\"key1\":[1,2,3]}'::jsonb,\n\t\t\t\t\t\t'strict $.key1[*] ? (@ > $x)' PASSING 2 AS x);",
+      "querySha256": "9902bbb04f34d6247d4d2dd94dae2d2bc365d5391d4edc164b46816f3e488a1d",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres17/sql_json_standard_repro_test.go:TestPostgres17SqlJsonQueryFunctionsRepro#0002",
+      "source": "testing/go/postgres17/sql_json_standard_repro_test.go:TestPostgres17SqlJsonQueryFunctionsRepro",
+      "ordinal": 2,
+      "scriptName": "PostgreSQL 17 SQL/JSON query functions evaluate jsonpath expressions",
+      "oracle": "postgres",
+      "postgresId": "postgres17/sql-json-standard-repro-test-testpostgres17sqljsonqueryfunctionsrepro-0002-select-json_value-{-a-:123}",
+      "suggestedId": "postgres17/sql-json-standard-repro-test-testpostgres17sqljsonqueryfunctionsrepro-0002-select-json_value-{-a-:123}",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT JSON_VALUE(\n\t\t\t\t\t\t'{\"a\":123}'::jsonb,\n\t\t\t\t\t\t'$.a' RETURNING int);",
+      "querySha256": "9ca186a8e16eeaf7c42772b980741e1c99b90da2bd6ec05e833a6063672b857e",
+      "expectedRows": [
+        [
+          {
+            "value": "123"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres17/sql_json_standard_repro_test.go:TestPostgres17SqlJsonQueryFunctionsRepro#0003",
+      "source": "testing/go/postgres17/sql_json_standard_repro_test.go:TestPostgres17SqlJsonQueryFunctionsRepro",
+      "ordinal": 3,
+      "scriptName": "PostgreSQL 17 SQL/JSON query functions evaluate jsonpath expressions",
+      "oracle": "postgres",
+      "postgresId": "postgres17/sql-json-standard-repro-test-testpostgres17sqljsonqueryfunctionsrepro-0003-select-json_query-{-a-:[1",
+      "suggestedId": "postgres17/sql-json-standard-repro-test-testpostgres17sqljsonqueryfunctionsrepro-0003-select-json_query-{-a-:[1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT JSON_QUERY(\n\t\t\t\t\t\t'{\"a\":[1,2]}'::jsonb,\n\t\t\t\t\t\t'$.a')::text;",
+      "querySha256": "991408ae3e69084431cfb0a8bde07d6159e7ed89af231002234a364ad8c15a27",
+      "expectedRows": [
+        [
+          {
+            "value": "[1, 2]"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

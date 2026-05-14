@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestPgReadAllDataRoleIncludesSchemaUsageRepro reproduces a predefined-role
@@ -41,18 +39,20 @@ func TestPgReadAllDataRoleIncludesSchemaUsageRepro(t *testing.T) {
 				{
 					Query: `SELECT id, secret
 						FROM read_all_private_schema.private_items;`,
-					Expected: []sql.Row{{1, "visible without schema grant"}},
+
 					Username: `read_all_schema_user`,
-					Password: `pw`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestPgWriteAllDataRoleIncludesSchemaUsageRepro reproduces a predefined-role
+						// privilege bug: pg_write_all_data should include USAGE on every schema, so a
+						// member can write private-schema tables without a separate schema grant.
+						ID: "predefined-all-data-role-repro-test-testpgreadalldataroleincludesschemausagerepro-0001-select-id-secret-from-read_all_private_schema.private_items"},
 				},
 			},
 		},
 	})
 }
 
-// TestPgWriteAllDataRoleIncludesSchemaUsageRepro reproduces a predefined-role
-// privilege bug: pg_write_all_data should include USAGE on every schema, so a
-// member can write private-schema tables without a separate schema grant.
 func TestPgWriteAllDataRoleIncludesSchemaUsageRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -75,8 +75,7 @@ func TestPgWriteAllDataRoleIncludesSchemaUsageRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT id, secret
-						FROM write_all_private_schema.private_items;`,
-					Expected: []sql.Row{{1, "written without schema grant"}},
+						FROM write_all_private_schema.private_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "predefined-all-data-role-repro-test-testpgwritealldataroleincludesschemausagerepro-0001-select-id-secret-from-write_all_private_schema.private_items"},
 				},
 			},
 		},
@@ -100,18 +99,20 @@ func TestPgReadAllDataRoleAllowsSequenceReadsRepro(t *testing.T) {
 				{
 					Query: `SELECT last_value::text
 						FROM read_all_sequence_schema.private_seq;`,
-					Expected: []sql.Row{{"50"}},
+
 					Username: `read_all_sequence_user`,
-					Password: `pw`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestPgWriteAllDataRoleAllowsSequenceWritesRepro reproduces a predefined-role
+						// privilege bug: pg_write_all_data should grant write access to sequences, so a
+						// member can advance a private sequence without a per-sequence grant.
+						ID: "predefined-all-data-role-repro-test-testpgreadalldataroleallowssequencereadsrepro-0001-select-last_value::text-from-read_all_sequence_schema.private_seq"},
 				},
 			},
 		},
 	})
 }
 
-// TestPgWriteAllDataRoleAllowsSequenceWritesRepro reproduces a predefined-role
-// privilege bug: pg_write_all_data should grant write access to sequences, so a
-// member can advance a private sequence without a per-sequence grant.
 func TestPgWriteAllDataRoleAllowsSequenceWritesRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -124,10 +125,10 @@ func TestPgWriteAllDataRoleAllowsSequenceWritesRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT nextval('write_all_sequence_schema.private_seq')::text;`,
-					Expected: []sql.Row{{"70"}},
+					Query: `SELECT nextval('write_all_sequence_schema.private_seq')::text;`,
+
 					Username: `write_all_sequence_user`,
-					Password: `pw`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{ID: "predefined-all-data-role-repro-test-testpgwritealldataroleallowssequencewritesrepro-0001-select-nextval-write_all_sequence_schema.private_seq-::text"},
 				},
 			},
 		},

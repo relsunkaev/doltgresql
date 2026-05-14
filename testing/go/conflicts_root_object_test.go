@@ -27,10 +27,7 @@ func TestConflictsRootObject(t *testing.T) {
 			SetUpScript: []string{`CREATE FUNCTION interpreted_example(input TEXT) RETURNS TEXT AS $$ BEGIN RETURN '1' || input; END; $$ LANGUAGE plpgsql;`},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT interpreted_example('12');",
-					Expected: []sql.Row{
-						{"112"},
-					},
+					Query: "SELECT interpreted_example('12');", PostgresOracle: ScriptTestPostgresOracle{ID: "conflicts-root-object-test-testconflictsrootobject-0001-select-interpreted_example-12"},
 				},
 				{
 					Query:    `SELECT dolt_add('.');`,
@@ -129,10 +126,7 @@ func TestConflictsRootObject(t *testing.T) {
 			SetUpScript: []string{`CREATE FUNCTION interpreted_example(input TEXT) RETURNS TEXT AS $$ BEGIN RETURN '1' || input; END; $$ LANGUAGE plpgsql;`},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT interpreted_example('12');",
-					Expected: []sql.Row{
-						{"112"},
-					},
+					Query: "SELECT interpreted_example('12');", PostgresOracle: ScriptTestPostgresOracle{ID: "conflicts-root-object-test-testconflictsrootobject-0021-select-interpreted_example-12"},
 				},
 				{
 					Query:    `SELECT dolt_add('.');`,
@@ -235,10 +229,7 @@ func TestConflictsRootObject(t *testing.T) {
 			SetUpScript: []string{`CREATE FUNCTION interpreted_example(input TEXT) RETURNS TEXT AS $$ BEGIN RETURN '1' || input; END; $$ LANGUAGE plpgsql;`},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT interpreted_example('12');",
-					Expected: []sql.Row{
-						{"112"},
-					},
+					Query: "SELECT interpreted_example('12');", PostgresOracle: ScriptTestPostgresOracle{ID: "conflicts-root-object-test-testconflictsrootobject-0042-select-interpreted_example-12"},
 				},
 				{
 					Query:    `SELECT dolt_add('.');`,
@@ -341,10 +332,7 @@ func TestConflictsRootObject(t *testing.T) {
 			SetUpScript: []string{`CREATE FUNCTION interpreted_example(input TEXT) RETURNS TEXT AS $$ BEGIN RETURN '1' || input; END; $$ LANGUAGE plpgsql;`},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT interpreted_example('12');",
-					Expected: []sql.Row{
-						{"112"},
-					},
+					Query: "SELECT interpreted_example('12');", PostgresOracle: ScriptTestPostgresOracle{ID: "conflicts-root-object-test-testconflictsrootobject-0063-select-interpreted_example-12"},
 				},
 				{
 					Query:    `SELECT dolt_add('.');`,
@@ -447,10 +435,7 @@ func TestConflictsRootObject(t *testing.T) {
 			SetUpScript: []string{`CREATE FUNCTION interpreted_example(input TEXT) RETURNS INT4 AS $$ BEGIN RETURN input || ''; END; $$ LANGUAGE plpgsql;`},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT interpreted_example('12');",
-					Expected: []sql.Row{
-						{12},
-					},
+					Query: "SELECT interpreted_example('12');", PostgresOracle: ScriptTestPostgresOracle{ID: "conflicts-root-object-test-testconflictsrootobject-0084-select-interpreted_example-12"},
 				},
 				{
 					Query:    `SELECT dolt_add('.');`,

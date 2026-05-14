@@ -1,0 +1,172 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map savepoints_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/savepoints_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/savepoints_test.go:TestSavepoints#0001",
+      "source": "testing/go/savepoints_test.go:TestSavepoints",
+      "ordinal": 1,
+      "scriptName": "release after insert preserves work",
+      "oracle": "postgres",
+      "postgresId": "savepoints-test-testsavepoints-0001-select-id-v-from-sp_release",
+      "suggestedId": "savepoints-test-testsavepoints-0001-select-id-v-from-sp_release",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, v FROM sp_release ORDER BY id;",
+      "querySha256": "e5841be8a62101b7c0cd80f62e609f2992a804de7ca2ac7f7cee4168d839a7a8",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "100"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "200"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "300"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/savepoints_test.go:TestSavepoints#0002",
+      "source": "testing/go/savepoints_test.go:TestSavepoints",
+      "ordinal": 2,
+      "scriptName": "rollback to discards post-savepoint work",
+      "oracle": "postgres",
+      "postgresId": "savepoints-test-testsavepoints-0002-select-id-v-from-sp_rollback",
+      "suggestedId": "savepoints-test-testsavepoints-0002-select-id-v-from-sp_rollback",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, v FROM sp_rollback ORDER BY id;",
+      "querySha256": "786d92a56fc8fd314ba7fe0cb45d04453742fcf4632ac237e9bdc89481c6291f",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "100"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/savepoints_test.go:TestSavepoints#0003",
+      "source": "testing/go/savepoints_test.go:TestSavepoints",
+      "ordinal": 3,
+      "scriptName": "nested savepoints",
+      "oracle": "postgres",
+      "postgresId": "savepoints-test-testsavepoints-0003-select-id-v-from-sp_nested",
+      "suggestedId": "savepoints-test-testsavepoints-0003-select-id-v-from-sp_nested",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, v FROM sp_nested ORDER BY id;",
+      "querySha256": "c72adae91f28e6375fd1bdd7d4307acb712338c7e6087012cfc06382fced9c3c",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "5"
+          },
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/savepoints_test.go:TestSavepoints#0004",
+      "source": "testing/go/savepoints_test.go:TestSavepoints",
+      "ordinal": 4,
+      "scriptName": "rollback to is repeatable; release destroys the name",
+      "oracle": "postgres",
+      "postgresId": "savepoints-test-testsavepoints-0004-rollback-to-savepoint-sp1",
+      "suggestedId": "savepoints-test-testsavepoints-0004-rollback-to-savepoint-sp1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "3B001",
+      "errorSeverity": "ERROR",
+      "query": "ROLLBACK TO SAVEPOINT sp1;",
+      "querySha256": "17a02d8bbee2ab7818f45eacd08723a6bfd2c5facec6e579f3146daf22f1873d",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/savepoints_test.go:TestSavepoints#0005",
+      "source": "testing/go/savepoints_test.go:TestSavepoints",
+      "ordinal": 5,
+      "scriptName": "rollback to is repeatable; release destroys the name",
+      "oracle": "internal",
+      "suggestedId": "savepoints-test-testsavepoints-0005-select-count-*-from-sp_repeat",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM sp_repeat;",
+      "querySha256": "d0fadc4c47db07f20ecd85e6abd11e1f84bd8acfaa7895596abfdd83c12b499f",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/savepoints_test.go:TestSavepoints#0006",
+      "source": "testing/go/savepoints_test.go:TestSavepoints",
+      "ordinal": 6,
+      "scriptName": "case-insensitive savepoint names",
+      "oracle": "internal",
+      "suggestedId": "savepoints-test-testsavepoints-0006-select-id-from-sp_case-order",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM sp_case ORDER BY id;",
+      "querySha256": "8e69476782db850634e1182f474286a9783deebfb9cd193b00903bb2b6aadf01",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/savepoints_test.go:TestSavepoints#0007",
+      "source": "testing/go/savepoints_test.go:TestSavepoints",
+      "ordinal": 7,
+      "scriptName": "rollback to unknown savepoint errors",
+      "oracle": "internal",
+      "suggestedId": "savepoints-test-testsavepoints-0007-rollback-to-savepoint-nothere",
+      "expectedKind": "error",
+      "query": "ROLLBACK TO SAVEPOINT nothere;",
+      "querySha256": "3ebbfc049c68a5d6abe1e7fe7a7bbf47b37fb82577781022636979830db25659",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    }
+  ]
+}

@@ -1,0 +1,711 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map create_index_concurrently_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/create_index_concurrently_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently#0001",
+      "source": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently",
+      "ordinal": 1,
+      "scriptName": "CREATE INDEX CONCURRENTLY single-column",
+      "oracle": "postgres",
+      "postgresId": "create-index-concurrently-test-testcreateindexconcurrently-0001-select-indexname-from-pg_catalog.pg_indexes-where",
+      "suggestedId": "create-index-concurrently-test-testcreateindexconcurrently-0001-select-indexname-from-pg_catalog.pg_indexes-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT indexname FROM pg_catalog.pg_indexes WHERE tablename = 't' ORDER BY indexname;",
+      "querySha256": "3be23b31af4adf1362d149c3645c39e2946f80b5908210dba4f41efbcc38c403",
+      "expectedRows": [
+        [
+          {
+            "value": "t_pkey"
+          }
+        ],
+        [
+          {
+            "value": "t_pkey"
+          }
+        ],
+        [
+          {
+            "value": "t_v_idx"
+          }
+        ],
+        [
+          {
+            "value": "t_v_idx"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently#0002",
+      "source": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently",
+      "ordinal": 2,
+      "scriptName": "CREATE INDEX CONCURRENTLY single-column",
+      "oracle": "postgres",
+      "postgresId": "create-index-concurrently-test-testcreateindexconcurrently-0002-select-id-from-t-where",
+      "suggestedId": "create-index-concurrently-test-testcreateindexconcurrently-0002-select-id-from-t-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM t WHERE v = 20;",
+      "querySha256": "db0ec7b1efb16ee67e186a85474402080ac450b94bed9e18f251fc2c34015fec",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently#0003",
+      "source": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently",
+      "ordinal": 3,
+      "scriptName": "CREATE UNIQUE INDEX CONCURRENTLY enforces uniqueness",
+      "oracle": "postgres",
+      "postgresId": "create-index-concurrently-test-testcreateindexconcurrently-0003-insert-into-u-values-3",
+      "suggestedId": "create-index-concurrently-test-testcreateindexconcurrently-0003-insert-into-u-values-3",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO u VALUES (3, 'a');",
+      "querySha256": "6f284b48512d826f9e8eda394e916f6ae18ba48c92720ae92dcf03f8aab63425",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently#0004",
+      "source": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently",
+      "ordinal": 4,
+      "scriptName": "CREATE INDEX CONCURRENTLY IF NOT EXISTS",
+      "oracle": "postgres",
+      "postgresId": "create-index-concurrently-test-testcreateindexconcurrently-0004-create-index-concurrently-if_not_exists_idx-on",
+      "suggestedId": "create-index-concurrently-test-testcreateindexconcurrently-0004-create-index-concurrently-if_not_exists_idx-on",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P07",
+      "errorSeverity": "ERROR",
+      "query": "CREATE INDEX CONCURRENTLY if_not_exists_idx ON if_not_exists_t (v);",
+      "querySha256": "a76a4c498ea12746343aba4235dc05586cce730688060562f04ceb6dcbb81840",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently#0005",
+      "source": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently",
+      "ordinal": 5,
+      "scriptName": "CREATE INDEX CONCURRENTLY multi-column",
+      "oracle": "postgres",
+      "postgresId": "create-index-concurrently-test-testcreateindexconcurrently-0005-select-id-from-multi_t-where",
+      "suggestedId": "create-index-concurrently-test-testcreateindexconcurrently-0005-select-id-from-multi_t-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM multi_t WHERE a = 10 AND b = 100;",
+      "querySha256": "7dbe1c03e4370ab0e1f8d3e4f176315cdc423dc73178501a5a592689bcd086e1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently#0006",
+      "source": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently",
+      "ordinal": 6,
+      "scriptName": "CREATE INDEX CONCURRENTLY metadata-backed btree shapes",
+      "oracle": "postgres",
+      "postgresId": "create-index-concurrently-test-testcreateindexconcurrently-0006-select-indexname-indexdef-from-pg_catalog.pg_indexes",
+      "suggestedId": "create-index-concurrently-test-testcreateindexconcurrently-0006-select-indexname-indexdef-from-pg_catalog.pg_indexes",
+      "compare": "structural",
+      "columnModes": [
+        "structural",
+        "schema"
+      ],
+      "expectedKind": "rows",
+      "query": "SELECT indexname, indexdef\n\t\t\t\t\t\tFROM pg_catalog.pg_indexes\n\t\t\t\t\t\tWHERE tablename = 'meta_t' AND indexname LIKE 'meta_t_%_idx'\n\t\t\t\t\t\tORDER BY indexname;",
+      "querySha256": "78571786635d271d9e58a7483995a9fb0ab4af1a2ed938f06b484d815385e493",
+      "expectedRows": [
+        [
+          {
+            "value": "meta_t_active_idx"
+          },
+          {
+            "value": "CREATE INDEX meta_t_active_idx ON {{schema}}.meta_t USING btree (tenant_id) WHERE active"
+          }
+        ],
+        [
+          {
+            "value": "meta_t_tenant_cover_idx"
+          },
+          {
+            "value": "CREATE INDEX meta_t_tenant_cover_idx ON {{schema}}.meta_t USING btree (tenant_id) INCLUDE (amount)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently#0007",
+      "source": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently",
+      "ordinal": 7,
+      "scriptName": "CREATE INDEX CONCURRENTLY metadata-backed btree shapes",
+      "oracle": "postgres",
+      "postgresId": "create-index-concurrently-test-testcreateindexconcurrently-0007-select-c.relname-i.indisready-i.indisvalid-from",
+      "suggestedId": "create-index-concurrently-test-testcreateindexconcurrently-0007-select-c.relname-i.indisready-i.indisvalid-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT c.relname, i.indisready, i.indisvalid\n\t\t\t\t\t\tFROM pg_catalog.pg_index i\n\t\t\t\t\t\tJOIN pg_catalog.pg_class c ON i.indexrelid = c.oid\n\t\t\t\t\t\tWHERE c.relname IN ('meta_t_tenant_cover_idx', 'meta_t_active_idx')\n\t\t\t\t\t\tORDER BY c.relname;",
+      "querySha256": "2a1770cdc686a786754542ae1bbc748df399621f7b67ba993b334e769a200549",
+      "expectedRows": [
+        [
+          {
+            "value": "meta_t_active_idx"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ],
+        [
+          {
+            "value": "meta_t_tenant_cover_idx"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently#0008",
+      "source": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently",
+      "ordinal": 8,
+      "scriptName": "CREATE INDEX CONCURRENTLY metadata-backed btree shapes",
+      "oracle": "postgres",
+      "postgresId": "create-index-concurrently-test-testcreateindexconcurrently-0008-select-id-from-meta_t-where",
+      "suggestedId": "create-index-concurrently-test-testcreateindexconcurrently-0008-select-id-from-meta_t-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM meta_t WHERE tenant_id = 10 AND active ORDER BY id;",
+      "querySha256": "265695a10bcb3ab524294fb8d7307eeb2f9b3408f52d258f5acfd8d5b321efae",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently#0009",
+      "source": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently",
+      "ordinal": 9,
+      "scriptName": "CREATE UNIQUE INDEX CONCURRENTLY partial predicate",
+      "oracle": "postgres",
+      "postgresId": "create-index-concurrently-test-testcreateindexconcurrently-0009-select-indexdef-from-pg_catalog.pg_indexes-where",
+      "suggestedId": "create-index-concurrently-test-testcreateindexconcurrently-0009-select-indexdef-from-pg_catalog.pg_indexes-where",
+      "compare": "structural",
+      "columnModes": [
+        "schema"
+      ],
+      "expectedKind": "rows",
+      "query": "SELECT indexdef\n\t\t\t\t\t\tFROM pg_catalog.pg_indexes\n\t\t\t\t\t\tWHERE tablename = 'partial_unique_concurrent_t' AND indexname = 'puc_tenant_active_idx';",
+      "querySha256": "ccbce7214a896019aeb47a03ad7ba78fb9f7afb8470c7fd43d6e2b14a4521943",
+      "expectedRows": [
+        [
+          {
+            "value": "CREATE UNIQUE INDEX puc_tenant_active_idx ON {{schema}}.partial_unique_concurrent_t USING btree (tenant_id) WHERE active"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently#0010",
+      "source": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently",
+      "ordinal": 10,
+      "scriptName": "CREATE UNIQUE INDEX CONCURRENTLY partial predicate",
+      "oracle": "postgres",
+      "postgresId": "create-index-concurrently-test-testcreateindexconcurrently-0010-select-i.indisready-i.indisvalid-from-pg_catalog.pg_index",
+      "suggestedId": "create-index-concurrently-test-testcreateindexconcurrently-0010-select-i.indisready-i.indisvalid-from-pg_catalog.pg_index",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT i.indisready, i.indisvalid\n\t\t\t\t\t\tFROM pg_catalog.pg_index i\n\t\t\t\t\t\tJOIN pg_catalog.pg_class c ON i.indexrelid = c.oid\n\t\t\t\t\t\tWHERE c.relname = 'puc_tenant_active_idx';",
+      "querySha256": "bc30af23ebbad32d65bcf5ee99a9f1f651b6674198641157afd7d6917e42b14f",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently#0011",
+      "source": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently",
+      "ordinal": 11,
+      "scriptName": "CREATE UNIQUE INDEX CONCURRENTLY partial predicate",
+      "oracle": "postgres",
+      "postgresId": "create-index-concurrently-test-testcreateindexconcurrently-0011-insert-into-partial_unique_concurrent_t-values-3",
+      "suggestedId": "create-index-concurrently-test-testcreateindexconcurrently-0011-insert-into-partial_unique_concurrent_t-values-3",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO partial_unique_concurrent_t VALUES (3, 10, true);",
+      "querySha256": "7d804feedb52e538d92363e5aa491f3db27b992e150b0af958ae4e5783d76af5",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently#0012",
+      "source": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently",
+      "ordinal": 12,
+      "scriptName": "CREATE INDEX CONCURRENTLY expression",
+      "oracle": "postgres",
+      "postgresId": "create-index-concurrently-test-testcreateindexconcurrently-0012-select-indexdef-from-pg_catalog.pg_indexes-where",
+      "suggestedId": "create-index-concurrently-test-testcreateindexconcurrently-0012-select-indexdef-from-pg_catalog.pg_indexes-where",
+      "compare": "structural",
+      "columnModes": [
+        "schema"
+      ],
+      "expectedKind": "rows",
+      "query": "SELECT indexdef\n\t\t\t\t\t\tFROM pg_catalog.pg_indexes\n\t\t\t\t\t\tWHERE tablename = 'expr_concurrent_t' AND indexname = 'expr_concurrent_lower_email_idx';",
+      "querySha256": "b2cd9b411d0a7ed3112f1c9f74156a888e604ff63116983bbf06c002c0758ab4",
+      "expectedRows": [
+        [
+          {
+            "value": "CREATE INDEX expr_concurrent_lower_email_idx ON {{schema}}.expr_concurrent_t USING btree (lower(email))"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently#0013",
+      "source": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently",
+      "ordinal": 13,
+      "scriptName": "CREATE INDEX CONCURRENTLY expression",
+      "oracle": "postgres",
+      "postgresId": "create-index-concurrently-test-testcreateindexconcurrently-0013-select-i.indisready-i.indisvalid-from-pg_catalog.pg_index",
+      "suggestedId": "create-index-concurrently-test-testcreateindexconcurrently-0013-select-i.indisready-i.indisvalid-from-pg_catalog.pg_index",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT i.indisready, i.indisvalid\n\t\t\t\t\t\tFROM pg_catalog.pg_index i\n\t\t\t\t\t\tJOIN pg_catalog.pg_class c ON i.indexrelid = c.oid\n\t\t\t\t\t\tWHERE c.relname = 'expr_concurrent_lower_email_idx';",
+      "querySha256": "4845301f5cb470ab8f9e0da4924563699a7a421be42de4cf3486d59366832139",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently#0014",
+      "source": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently",
+      "ordinal": 14,
+      "scriptName": "CREATE INDEX CONCURRENTLY expression",
+      "oracle": "postgres",
+      "postgresId": "create-index-concurrently-test-testcreateindexconcurrently-0014-select-id-from-expr_concurrent_t-where",
+      "suggestedId": "create-index-concurrently-test-testcreateindexconcurrently-0014-select-id-from-expr_concurrent_t-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM expr_concurrent_t WHERE lower(email) = 'bob@x';",
+      "querySha256": "da95e09249f2e6f62080b84fa69de9852c01a43b73edfb10c0973d4488a331aa",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently#0015",
+      "source": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently",
+      "ordinal": 15,
+      "scriptName": "CREATE UNIQUE INDEX CONCURRENTLY expression",
+      "oracle": "postgres",
+      "postgresId": "create-index-concurrently-test-testcreateindexconcurrently-0015-select-indexdef-from-pg_catalog.pg_indexes-where",
+      "suggestedId": "create-index-concurrently-test-testcreateindexconcurrently-0015-select-indexdef-from-pg_catalog.pg_indexes-where",
+      "compare": "structural",
+      "columnModes": [
+        "schema"
+      ],
+      "expectedKind": "rows",
+      "query": "SELECT indexdef\n\t\t\t\t\t\tFROM pg_catalog.pg_indexes\n\t\t\t\t\t\tWHERE tablename = 'unique_expr_concurrent_t' AND indexname = 'unique_expr_concurrent_lower_email_idx';",
+      "querySha256": "605e39d2b71e09d77d7cf7fb5ace3a634f8889810bcab4fb1568097c07be958f",
+      "expectedRows": [
+        [
+          {
+            "value": "CREATE UNIQUE INDEX unique_expr_concurrent_lower_email_idx ON {{schema}}.unique_expr_concurrent_t USING btree (lower(email))"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently#0016",
+      "source": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently",
+      "ordinal": 16,
+      "scriptName": "CREATE UNIQUE INDEX CONCURRENTLY expression",
+      "oracle": "postgres",
+      "postgresId": "create-index-concurrently-test-testcreateindexconcurrently-0016-select-i.indisready-i.indisvalid-from-pg_catalog.pg_index",
+      "suggestedId": "create-index-concurrently-test-testcreateindexconcurrently-0016-select-i.indisready-i.indisvalid-from-pg_catalog.pg_index",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT i.indisready, i.indisvalid\n\t\t\t\t\t\tFROM pg_catalog.pg_index i\n\t\t\t\t\t\tJOIN pg_catalog.pg_class c ON i.indexrelid = c.oid\n\t\t\t\t\t\tWHERE c.relname = 'unique_expr_concurrent_lower_email_idx';",
+      "querySha256": "7edfa9237575e2fcd5d31d0a2751bbbb5bffc09b86c12eb8d842c4108c3d49b6",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently#0017",
+      "source": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently",
+      "ordinal": 17,
+      "scriptName": "CREATE UNIQUE INDEX CONCURRENTLY expression",
+      "oracle": "postgres",
+      "postgresId": "create-index-concurrently-test-testcreateindexconcurrently-0017-insert-into-unique_expr_concurrent_t-values-3",
+      "suggestedId": "create-index-concurrently-test-testcreateindexconcurrently-0017-insert-into-unique_expr_concurrent_t-values-3",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO unique_expr_concurrent_t VALUES (3, 'ALICE@x');",
+      "querySha256": "d9a58b9f0cc67c9c82f8f293857f17422b3226f8310caae7faa03a21e6b4bd19",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently#0018",
+      "source": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently",
+      "ordinal": 18,
+      "scriptName": "CREATE UNIQUE INDEX CONCURRENTLY expression on duplicate data fails cleanly",
+      "oracle": "postgres",
+      "postgresId": "create-index-concurrently-test-testcreateindexconcurrently-0018-create-unique-index-concurrently-unique_expr_dup_lower_email_idx",
+      "suggestedId": "create-index-concurrently-test-testcreateindexconcurrently-0018-create-unique-index-concurrently-unique_expr_dup_lower_email_idx",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "CREATE UNIQUE INDEX CONCURRENTLY unique_expr_dup_lower_email_idx ON unique_expr_dup_t ((lower(email)));",
+      "querySha256": "e8dd1ed6f0352b8eeadce292b5516c9db97e54c69b8eae6fc92366f06230b644",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently#0019",
+      "source": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently",
+      "ordinal": 19,
+      "scriptName": "CREATE UNIQUE INDEX CONCURRENTLY expression on duplicate data fails cleanly",
+      "oracle": "postgres",
+      "postgresId": "create-index-concurrently-test-testcreateindexconcurrently-0019-select-count-*-from-pg_catalog.pg_indexes",
+      "suggestedId": "create-index-concurrently-test-testcreateindexconcurrently-0019-select-count-*-from-pg_catalog.pg_indexes",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM pg_catalog.pg_indexes WHERE indexname = 'unique_expr_dup_lower_email_idx';",
+      "querySha256": "d0a375de0e303409cd15ffdc26dd98d3a7c22d27119729c5b7c77aaae9106dd3",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently#0020",
+      "source": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently",
+      "ordinal": 20,
+      "scriptName": "CREATE INDEX CONCURRENTLY JSONB GIN",
+      "oracle": "postgres",
+      "postgresId": "create-index-concurrently-test-testcreateindexconcurrently-0020-select-indexdef-from-pg_catalog.pg_indexes-where",
+      "suggestedId": "create-index-concurrently-test-testcreateindexconcurrently-0020-select-indexdef-from-pg_catalog.pg_indexes-where",
+      "compare": "structural",
+      "columnModes": [
+        "schema"
+      ],
+      "expectedKind": "rows",
+      "query": "SELECT indexdef\n\t\t\t\t\t\tFROM pg_catalog.pg_indexes\n\t\t\t\t\t\tWHERE tablename = 'gin_t' AND indexname = 'gin_t_doc_idx';",
+      "querySha256": "f742d8b54699c83e1096de38d10b2089d3fc08fd734dbb7f57e95d6a5d3cc2eb",
+      "expectedRows": [
+        [
+          {
+            "value": "CREATE INDEX gin_t_doc_idx ON {{schema}}.gin_t USING gin (doc jsonb_path_ops)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently#0021",
+      "source": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently",
+      "ordinal": 21,
+      "scriptName": "CREATE INDEX CONCURRENTLY JSONB GIN",
+      "oracle": "postgres",
+      "postgresId": "create-index-concurrently-test-testcreateindexconcurrently-0021-select-i.indisready-i.indisvalid-from-pg_catalog.pg_index",
+      "suggestedId": "create-index-concurrently-test-testcreateindexconcurrently-0021-select-i.indisready-i.indisvalid-from-pg_catalog.pg_index",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT i.indisready, i.indisvalid\n\t\t\t\t\t\tFROM pg_catalog.pg_index i\n\t\t\t\t\t\tJOIN pg_catalog.pg_class c ON i.indexrelid = c.oid\n\t\t\t\t\t\tWHERE c.relname = 'gin_t_doc_idx';",
+      "querySha256": "03f6f98037304895d0a8c5e5abb0fd1e6413b76b1bedf7f636cfa45f728c8093",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently#0022",
+      "source": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently",
+      "ordinal": 22,
+      "scriptName": "CREATE INDEX CONCURRENTLY JSONB GIN",
+      "oracle": "postgres",
+      "postgresId": "create-index-concurrently-test-testcreateindexconcurrently-0022-select-id-from-gin_t-where",
+      "suggestedId": "create-index-concurrently-test-testcreateindexconcurrently-0022-select-id-from-gin_t-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM gin_t WHERE doc @> '{\"kind\":\"click\"}' ORDER BY id;",
+      "querySha256": "7e998351866866fd425000d0c418089cc593eb32488af6d37748c22d58ce8178",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently#0023",
+      "source": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently",
+      "ordinal": 23,
+      "scriptName": "CREATE INDEX CONCURRENTLY rejects unsupported methods cleanly",
+      "oracle": "internal",
+      "suggestedId": "create-index-concurrently-test-testcreateindexconcurrently-0023-create-index-concurrently-unsupported_concurrent_gist_idx-on",
+      "expectedKind": "error",
+      "query": "CREATE INDEX CONCURRENTLY unsupported_concurrent_gist_idx ON unsupported_concurrent_t USING gist (v);",
+      "querySha256": "315b951e6265aa007b8fa06c5b87c89cbd27371afb5b6d5bd24ade5818b0e8ec",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently#0024",
+      "source": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently",
+      "ordinal": 24,
+      "scriptName": "CREATE INDEX CONCURRENTLY rejects unsupported methods cleanly",
+      "oracle": "internal",
+      "suggestedId": "create-index-concurrently-test-testcreateindexconcurrently-0024-create-index-concurrently-unsupported_concurrent_hnsw_idx-on",
+      "expectedKind": "error",
+      "query": "CREATE INDEX CONCURRENTLY unsupported_concurrent_hnsw_idx ON unsupported_concurrent_t USING hnsw (embedding vector_l2_ops);",
+      "querySha256": "911abdbcce72b904438a647f8016dd4f4d133d0f368889fd1574d797d78e8a32",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently#0025",
+      "source": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently",
+      "ordinal": 25,
+      "scriptName": "CREATE INDEX CONCURRENTLY rejects unsupported methods cleanly",
+      "oracle": "internal",
+      "suggestedId": "create-index-concurrently-test-testcreateindexconcurrently-0025-select-indexname-from-pg_catalog.pg_indexes-where",
+      "expectedKind": "rows",
+      "query": "SELECT indexname\n\t\t\t\t\t\tFROM pg_catalog.pg_indexes\n\t\t\t\t\t\tWHERE tablename = 'unsupported_concurrent_t'\n\t\t\t\t\t\t\tAND indexname IN ('unsupported_concurrent_gist_idx', 'unsupported_concurrent_hnsw_idx')\n\t\t\t\t\t\tORDER BY indexname;",
+      "querySha256": "e46446b35978485f34eeb73fb8b7d9e6d8509abfb93841041d1b595fad0f6201",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently#0026",
+      "source": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently",
+      "ordinal": 26,
+      "scriptName": "DROP INDEX CONCURRENTLY",
+      "oracle": "postgres",
+      "postgresId": "create-index-concurrently-test-testcreateindexconcurrently-0026-select-count-*-from-pg_catalog.pg_indexes",
+      "suggestedId": "create-index-concurrently-test-testcreateindexconcurrently-0026-select-count-*-from-pg_catalog.pg_indexes",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM pg_catalog.pg_indexes WHERE indexname = 'drop_t_idx';",
+      "querySha256": "42b924d1af834f7fb801b9e13c7e542130c4279a169b4579b100b23c7c904c8c",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently#0027",
+      "source": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently",
+      "ordinal": 27,
+      "scriptName": "DROP INDEX CONCURRENTLY",
+      "oracle": "postgres",
+      "postgresId": "create-index-concurrently-test-testcreateindexconcurrently-0027-drop-index-concurrently-drop_t_idx",
+      "suggestedId": "create-index-concurrently-test-testcreateindexconcurrently-0027-drop-index-concurrently-drop_t_idx",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42704",
+      "errorSeverity": "ERROR",
+      "query": "DROP INDEX CONCURRENTLY drop_t_idx;",
+      "querySha256": "05cc533aa2bfbb6ef835df4f451b5950b4a34336e6712207d74e3312d031d534",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently#0028",
+      "source": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently",
+      "ordinal": 28,
+      "scriptName": "CREATE INDEX CONCURRENTLY ends in indisready=true, indisvalid=true",
+      "oracle": "postgres",
+      "postgresId": "create-index-concurrently-test-testcreateindexconcurrently-0028-select-i.indisready-i.indisvalid-from-pg_catalog.pg_index",
+      "suggestedId": "create-index-concurrently-test-testcreateindexconcurrently-0028-select-i.indisready-i.indisvalid-from-pg_catalog.pg_index",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT i.indisready, i.indisvalid FROM pg_catalog.pg_index i JOIN pg_catalog.pg_class c ON i.indexrelid = c.oid WHERE c.relname = 'state_t_v_idx';",
+      "querySha256": "b0361c0344da23bb2a42b30ef470b835387538d4a076e2570bbd88c54811f8d2",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently#0029",
+      "source": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently",
+      "ordinal": 29,
+      "scriptName": "CREATE UNIQUE INDEX CONCURRENTLY on duplicate data fails cleanly",
+      "oracle": "postgres",
+      "postgresId": "create-index-concurrently-test-testcreateindexconcurrently-0029-create-unique-index-concurrently-dup_t_idx",
+      "suggestedId": "create-index-concurrently-test-testcreateindexconcurrently-0029-create-unique-index-concurrently-dup_t_idx",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "CREATE UNIQUE INDEX CONCURRENTLY dup_t_idx ON dup_t (code);",
+      "querySha256": "76b6a25c52d23a6f0d4c3a6dade5abefa78c5704671b10e2ddb844c1a4c317bd",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently#0030",
+      "source": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently",
+      "ordinal": 30,
+      "scriptName": "CREATE UNIQUE INDEX CONCURRENTLY on duplicate data fails cleanly",
+      "oracle": "postgres",
+      "postgresId": "create-index-concurrently-test-testcreateindexconcurrently-0030-select-count-*-from-pg_catalog.pg_indexes",
+      "suggestedId": "create-index-concurrently-test-testcreateindexconcurrently-0030-select-count-*-from-pg_catalog.pg_indexes",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM pg_catalog.pg_indexes WHERE indexname = 'dup_t_idx';",
+      "querySha256": "2cfccce049c4d8dd36785b1c07035d8983516e0e71fa0ada1cc69771baf0cff2",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently#0031",
+      "source": "testing/go/create_index_concurrently_test.go:TestCreateIndexConcurrently",
+      "ordinal": 31,
+      "scriptName": "REINDEX CONCURRENTLY",
+      "oracle": "postgres",
+      "postgresId": "create-index-concurrently-test-testcreateindexconcurrently-0031-select-id-from-rt-where",
+      "suggestedId": "create-index-concurrently-test-testcreateindexconcurrently-0031-select-id-from-rt-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM rt WHERE v = 10;",
+      "querySha256": "58c8c355e0913f805fbb0aeb55eed0e1073e825f3465523a1fb21a75df1d6435",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

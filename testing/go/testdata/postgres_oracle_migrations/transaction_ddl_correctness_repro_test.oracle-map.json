@@ -1,0 +1,194 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map transaction_ddl_correctness_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/transaction_ddl_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/transaction_ddl_correctness_repro_test.go:TestCreateTableRollbackRemovesTableGuard#0001",
+      "source": "testing/go/transaction_ddl_correctness_repro_test.go:TestCreateTableRollbackRemovesTableGuard",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLE rolls back with transaction",
+      "oracle": "internal",
+      "suggestedId": "transaction-ddl-correctness-repro-test-testcreatetablerollbackremovestableguard-0001-select-count-*-from-information_schema.tables",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM information_schema.tables\n\t\t\t\t\t\tWHERE table_schema = 'public'\n\t\t\t\t\t\t\tAND table_name = 'tx_create_rollback_items';",
+      "querySha256": "48adaedf5907304c1185f8dde5ea448ab4284f2e882620533a8783906b195981",
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_correctness_repro_test.go:TestDropTableRollbackRestoresTableGuard#0001",
+      "source": "testing/go/transaction_ddl_correctness_repro_test.go:TestDropTableRollbackRestoresTableGuard",
+      "ordinal": 1,
+      "scriptName": "DROP TABLE rolls back with transaction",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-correctness-repro-test-testdroptablerollbackrestorestableguard-0001-select-id-label-from-tx_drop_rollback_items",
+      "suggestedId": "transaction-ddl-correctness-repro-test-testdroptablerollbackrestorestableguard-0001-select-id-label-from-tx_drop_rollback_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label FROM tx_drop_rollback_items;",
+      "querySha256": "8c8b029ee8fc0fc1d582de3d36105d609bde4c1ae9fff7c5c9423d2391a10ae1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "kept"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_correctness_repro_test.go:TestAlterTableAddColumnRollbackRestoresSchemaGuard#0001",
+      "source": "testing/go/transaction_ddl_correctness_repro_test.go:TestAlterTableAddColumnRollbackRestoresSchemaGuard",
+      "ordinal": 1,
+      "scriptName": "ALTER TABLE ADD COLUMN rolls back with transaction",
+      "oracle": "internal",
+      "suggestedId": "transaction-ddl-correctness-repro-test-testaltertableaddcolumnrollbackrestoresschemaguard-0001-select-count-*-from-information_schema.columns",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM information_schema.columns\n\t\t\t\t\t\tWHERE table_schema = 'public'\n\t\t\t\t\t\t\tAND table_name = 'tx_alter_rollback_items'\n\t\t\t\t\t\t\tAND column_name = 'leaked';",
+      "querySha256": "3f7f64c683830d0a215bf4dbe7b6befafd71d23061bf32284be71467238ad9f1",
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_correctness_repro_test.go:TestAlterTableAddColumnRollbackRestoresSchemaGuard#0002",
+      "source": "testing/go/transaction_ddl_correctness_repro_test.go:TestAlterTableAddColumnRollbackRestoresSchemaGuard",
+      "ordinal": 2,
+      "scriptName": "ALTER TABLE ADD COLUMN rolls back with transaction",
+      "oracle": "internal",
+      "suggestedId": "transaction-ddl-correctness-repro-test-testaltertableaddcolumnrollbackrestoresschemaguard-0002-select-id-label-from-tx_alter_rollback_items",
+      "expectedKind": "rows",
+      "query": "SELECT id, label FROM tx_alter_rollback_items;",
+      "querySha256": "0aec698bcc6fdaaee19eae13890ab0367dfe291adbada4388cd1709206c7ed66",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_correctness_repro_test.go:TestCreateIndexRollbackRemovesIndexGuard#0001",
+      "source": "testing/go/transaction_ddl_correctness_repro_test.go:TestCreateIndexRollbackRemovesIndexGuard",
+      "ordinal": 1,
+      "scriptName": "CREATE INDEX rolls back with transaction",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-correctness-repro-test-testcreateindexrollbackremovesindexguard-0001-select-count-*-from-pg_catalog.pg_class",
+      "suggestedId": "transaction-ddl-correctness-repro-test-testcreateindexrollbackremovesindexguard-0001-select-count-*-from-pg_catalog.pg_class",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE relname = 'tx_index_rollback_items_label_idx';",
+      "querySha256": "30cd216fcf17f16747bd10e28174698211620997e41e2d6eb65c74f325d945e5",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_correctness_repro_test.go:TestDdlSavepointRollbackRestoresStateGuard#0001",
+      "source": "testing/go/transaction_ddl_correctness_repro_test.go:TestDdlSavepointRollbackRestoresStateGuard",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLE rolls back to savepoint",
+      "oracle": "internal",
+      "suggestedId": "transaction-ddl-correctness-repro-test-testddlsavepointrollbackrestoresstateguard-0001-select-count-*-from-information_schema.tables",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM information_schema.tables\n\t\t\t\t\t\tWHERE table_schema = 'public'\n\t\t\t\t\t\t\tAND table_name = 'sp_create_rollback_items';",
+      "querySha256": "0acf994adf14b5b6aef81ce0983fa2454cf801aa334b6d41b9fa163e8535b617",
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_correctness_repro_test.go:TestDdlSavepointRollbackRestoresStateGuard#0002",
+      "source": "testing/go/transaction_ddl_correctness_repro_test.go:TestDdlSavepointRollbackRestoresStateGuard",
+      "ordinal": 2,
+      "scriptName": "DROP TABLE rolls back to savepoint",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-correctness-repro-test-testddlsavepointrollbackrestoresstateguard-0002-select-id-label-from-sp_drop_rollback_items",
+      "suggestedId": "transaction-ddl-correctness-repro-test-testddlsavepointrollbackrestoresstateguard-0002-select-id-label-from-sp_drop_rollback_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label FROM sp_drop_rollback_items;",
+      "querySha256": "a4da7b13778d7b2f5940ee173a9c1570aeac754579d9c50ce6b73538a2094fc3",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "kept"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_correctness_repro_test.go:TestDdlSavepointRollbackRestoresStateGuard#0003",
+      "source": "testing/go/transaction_ddl_correctness_repro_test.go:TestDdlSavepointRollbackRestoresStateGuard",
+      "ordinal": 3,
+      "scriptName": "ALTER TABLE ADD COLUMN rolls back to savepoint",
+      "oracle": "internal",
+      "suggestedId": "transaction-ddl-correctness-repro-test-testddlsavepointrollbackrestoresstateguard-0003-select-count-*-from-information_schema.columns",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM information_schema.columns\n\t\t\t\t\t\tWHERE table_schema = 'public'\n\t\t\t\t\t\t\tAND table_name = 'sp_alter_rollback_items'\n\t\t\t\t\t\t\tAND column_name = 'leaked';",
+      "querySha256": "a48f5e0b8589352e58e1b4070d2d331e0c552aee4cc5a8713a49e707cbf91ef2",
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/transaction_ddl_correctness_repro_test.go:TestDdlSavepointRollbackRestoresStateGuard#0004",
+      "source": "testing/go/transaction_ddl_correctness_repro_test.go:TestDdlSavepointRollbackRestoresStateGuard",
+      "ordinal": 4,
+      "scriptName": "CREATE INDEX rolls back to savepoint",
+      "oracle": "postgres",
+      "postgresId": "transaction-ddl-correctness-repro-test-testddlsavepointrollbackrestoresstateguard-0004-select-count-*-from-pg_catalog.pg_class",
+      "suggestedId": "transaction-ddl-correctness-repro-test-testddlsavepointrollbackrestoresstateguard-0004-select-count-*-from-pg_catalog.pg_class",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE relname = 'sp_index_rollback_items_label_idx';",
+      "querySha256": "e58544cf581155ef4dea971b1544e02f9a80844eac86bf365895488c35546716",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

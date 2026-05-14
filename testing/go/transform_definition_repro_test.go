@@ -62,9 +62,9 @@ func TestCreateTransformRequiresTypeOwnershipRepro(t *testing.T) {
 						FROM SQL WITH FUNCTION prsd_lextype(internal),
 						TO SQL WITH FUNCTION int4recv(internal)
 					);`,
-					ExpectedErr: `must be owner`,
-					Username:    `transform_creator`,
-					Password:    `pw`,
+
+					Username: `transform_creator`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{ID: "transform-definition-repro-test-testcreatetransformrequirestypeownershiprepro-0001-create-transform-for-int-language", Compare: "sqlstate"},
 				},
 			},
 		},

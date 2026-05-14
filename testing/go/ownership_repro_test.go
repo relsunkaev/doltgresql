@@ -40,8 +40,7 @@ func TestCreateTableOwnerUpdatesCatalogRepro(t *testing.T) {
 				{
 					Query: `SELECT pg_get_userbyid(relowner)
 						FROM pg_class
-						WHERE relname = 'created_table_catalog';`,
-					Expected: []sql.Row{{"table_catalog_creator"}},
+						WHERE relname = 'created_table_catalog';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ownership-repro-test-testcreatetableownerupdatescatalogrepro-0001-select-pg_get_userbyid-relowner-from-pg_class"},
 				},
 			},
 		},
@@ -71,19 +70,21 @@ func TestTableOwnerCanUseCreatedTableRepro(t *testing.T) {
 					Password: `pw`,
 				},
 				{
-					Query:    `SELECT id, label FROM owner_created_table;`,
-					Expected: []sql.Row{{1, "owned"}},
+					Query: `SELECT id, label FROM owner_created_table;`,
+
 					Username: `table_owner_user`,
-					Password: `pw`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCreateSequenceOwnerUpdatesCatalogRepro reproduces a security/catalog bug:
+						// Doltgres creates sequences for non-superuser roles but pg_class.relowner
+						// remains postgres instead of the creating role.
+						ID: "ownership-repro-test-testtableownercanusecreatedtablerepro-0001-select-id-label-from-owner_created_table", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateSequenceOwnerUpdatesCatalogRepro reproduces a security/catalog bug:
-// Doltgres creates sequences for non-superuser roles but pg_class.relowner
-// remains postgres instead of the creating role.
 func TestCreateSequenceOwnerUpdatesCatalogRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -101,8 +102,7 @@ func TestCreateSequenceOwnerUpdatesCatalogRepro(t *testing.T) {
 				{
 					Query: `SELECT pg_get_userbyid(relowner)
 						FROM pg_class
-						WHERE relname = 'created_sequence_catalog';`,
-					Expected: []sql.Row{{"sequence_catalog_creator"}},
+						WHERE relname = 'created_sequence_catalog';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ownership-repro-test-testcreatesequenceownerupdatescatalogrepro-0001-select-pg_get_userbyid-relowner-from-pg_class"},
 				},
 			},
 		},
@@ -131,8 +131,7 @@ func TestCreateViewOwnerUpdatesCatalogRepro(t *testing.T) {
 				{
 					Query: `SELECT pg_get_userbyid(relowner)
 						FROM pg_class
-						WHERE relname = 'created_view_catalog';`,
-					Expected: []sql.Row{{"view_catalog_creator"}},
+						WHERE relname = 'created_view_catalog';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ownership-repro-test-testcreateviewownerupdatescatalogrepro-0001-select-pg_get_userbyid-relowner-from-pg_class"},
 				},
 			},
 		},
@@ -160,19 +159,21 @@ func TestViewOwnerCanUseCreatedViewRepro(t *testing.T) {
 					Password: `pw`,
 				},
 				{
-					Query:    `SELECT id, label FROM owner_created_view;`,
-					Expected: []sql.Row{{1, "visible"}},
+					Query: `SELECT id, label FROM owner_created_view;`,
+
 					Username: `view_owner_user`,
-					Password: `pw`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCreateMaterializedViewOwnerUpdatesCatalogRepro reproduces a
+						// security/catalog bug: Doltgres creates materialized views for non-superuser
+						// roles but pg_class.relowner remains postgres instead of the creating role.
+						ID: "ownership-repro-test-testviewownercanusecreatedviewrepro-0001-select-id-label-from-owner_created_view", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateMaterializedViewOwnerUpdatesCatalogRepro reproduces a
-// security/catalog bug: Doltgres creates materialized views for non-superuser
-// roles but pg_class.relowner remains postgres instead of the creating role.
 func TestCreateMaterializedViewOwnerUpdatesCatalogRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -193,8 +194,7 @@ func TestCreateMaterializedViewOwnerUpdatesCatalogRepro(t *testing.T) {
 				{
 					Query: `SELECT pg_get_userbyid(relowner)
 						FROM pg_class
-						WHERE relname = 'created_materialized_view_catalog';`,
-					Expected: []sql.Row{{"materialized_view_catalog_creator"}},
+						WHERE relname = 'created_materialized_view_catalog';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ownership-repro-test-testcreatematerializedviewownerupdatescatalogrepro-0001-select-pg_get_userbyid-relowner-from-pg_class"},
 				},
 			},
 		},
@@ -223,10 +223,15 @@ func TestMaterializedViewOwnerCanUseCreatedMaterializedViewRepro(t *testing.T) {
 					Password: `pw`,
 				},
 				{
-					Query:    `SELECT id, label FROM owner_created_materialized_view;`,
-					Expected: []sql.Row{{1, "initial"}},
+					Query: `SELECT id, label FROM owner_created_materialized_view;`,
+
 					Username: `materialized_view_owner_user`,
-					Password: `pw`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{ID: "ownership-repro-test-testmaterializedviewownercanusecreatedmaterializedviewrepro-0001-select-id-label-from-owner_created_materialized_view", Compare:
+
+					// TestCreateSchemaOwnerUpdatesCatalogRepro reproduces a security/catalog bug:
+					// Doltgres creates schemas for non-superuser roles but pg_namespace.nspowner
+					// remains postgres instead of the creating role.
+					"sqlstate"},
 				},
 				{
 					Query:    `REFRESH MATERIALIZED VIEW owner_created_materialized_view;`,
@@ -238,9 +243,6 @@ func TestMaterializedViewOwnerCanUseCreatedMaterializedViewRepro(t *testing.T) {
 	})
 }
 
-// TestCreateSchemaOwnerUpdatesCatalogRepro reproduces a security/catalog bug:
-// Doltgres creates schemas for non-superuser roles but pg_namespace.nspowner
-// remains postgres instead of the creating role.
 func TestCreateSchemaOwnerUpdatesCatalogRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -258,8 +260,7 @@ func TestCreateSchemaOwnerUpdatesCatalogRepro(t *testing.T) {
 				{
 					Query: `SELECT pg_get_userbyid(nspowner)
 						FROM pg_namespace
-						WHERE nspname = 'created_schema_catalog';`,
-					Expected: []sql.Row{{"schema_catalog_creator"}},
+						WHERE nspname = 'created_schema_catalog';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ownership-repro-test-testcreateschemaownerupdatescatalogrepro-0001-select-pg_get_userbyid-nspowner-from-pg_namespace"},
 				},
 			},
 		},
@@ -294,19 +295,21 @@ func TestSchemaOwnerCanUseCreatedSchemaRepro(t *testing.T) {
 					Password: `pw`,
 				},
 				{
-					Query:    `SELECT id FROM owner_created_schema.owned_schema_table;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT id FROM owner_created_schema.owned_schema_table;`,
+
 					Username: `schema_owner_user`,
-					Password: `pw`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCreateTypeOwnerUpdatesCatalogRepro reproduces a security/catalog bug:
+						// Doltgres creates types for non-superuser roles but pg_type.typowner remains
+						// postgres instead of the creating role.
+						ID: "ownership-repro-test-testschemaownercanusecreatedschemarepro-0001-select-id-from-owner_created_schema.owned_schema_table", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateTypeOwnerUpdatesCatalogRepro reproduces a security/catalog bug:
-// Doltgres creates types for non-superuser roles but pg_type.typowner remains
-// postgres instead of the creating role.
 func TestCreateTypeOwnerUpdatesCatalogRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -324,8 +327,7 @@ func TestCreateTypeOwnerUpdatesCatalogRepro(t *testing.T) {
 				{
 					Query: `SELECT pg_get_userbyid(typowner)
 						FROM pg_type
-						WHERE typname = 'created_enum_catalog';`,
-					Expected: []sql.Row{{"type_catalog_creator"}},
+						WHERE typname = 'created_enum_catalog';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ownership-repro-test-testcreatetypeownerupdatescatalogrepro-0001-select-pg_get_userbyid-typowner-from-pg_type"},
 				},
 			},
 		},
@@ -349,19 +351,21 @@ func TestTypeOwnerCanUseCreatedTypeGuard(t *testing.T) {
 					Password: `pw`,
 				},
 				{
-					Query:    `SELECT 'one'::owner_created_enum::text;`,
-					Expected: []sql.Row{{"one"}},
+					Query: `SELECT 'one'::owner_created_enum::text;`,
+
 					Username: `type_owner_user`,
-					Password: `pw`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCreateDomainOwnerUpdatesCatalogRepro reproduces a security/catalog bug:
+						// Doltgres creates domains for non-superuser roles but pg_type.typowner remains
+						// postgres instead of the creating role.
+						ID: "ownership-repro-test-testtypeownercanusecreatedtypeguard-0001-select-one-::owner_created_enum::text"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateDomainOwnerUpdatesCatalogRepro reproduces a security/catalog bug:
-// Doltgres creates domains for non-superuser roles but pg_type.typowner remains
-// postgres instead of the creating role.
 func TestCreateDomainOwnerUpdatesCatalogRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -379,8 +383,7 @@ func TestCreateDomainOwnerUpdatesCatalogRepro(t *testing.T) {
 				{
 					Query: `SELECT pg_get_userbyid(typowner)
 						FROM pg_type
-						WHERE typname = 'created_domain_catalog';`,
-					Expected: []sql.Row{{"domain_catalog_creator"}},
+						WHERE typname = 'created_domain_catalog';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ownership-repro-test-testcreatedomainownerupdatescatalogrepro-0001-select-pg_get_userbyid-typowner-from-pg_type"},
 				},
 			},
 		},
@@ -405,19 +408,21 @@ func TestDomainOwnerCanUseCreatedDomainGuard(t *testing.T) {
 					Password: `pw`,
 				},
 				{
-					Query:    `SELECT 7::owner_created_domain;`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT 7::owner_created_domain;`,
+
 					Username: `domain_owner_user`,
-					Password: `pw`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestAlterTableOwnerUpdatesCatalogRepro reproduces a security/catalog bug:
+						// Doltgres accepts ALTER TABLE ... OWNER TO, but pg_class.relowner remains the
+						// original owner instead of the requested role.
+						ID: "ownership-repro-test-testdomainownercanusecreateddomainguard-0001-select-7::owner_created_domain"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterTableOwnerUpdatesCatalogRepro reproduces a security/catalog bug:
-// Doltgres accepts ALTER TABLE ... OWNER TO, but pg_class.relowner remains the
-// original owner instead of the requested role.
 func TestAlterTableOwnerUpdatesCatalogRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -433,8 +438,7 @@ func TestAlterTableOwnerUpdatesCatalogRepro(t *testing.T) {
 				{
 					Query: `SELECT pg_get_userbyid(relowner)
 						FROM pg_class
-						WHERE relname = 'owned_catalog';`,
-					Expected: []sql.Row{{"new_owner"}},
+						WHERE relname = 'owned_catalog';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ownership-repro-test-testaltertableownerupdatescatalogrepro-0001-select-pg_get_userbyid-relowner-from-pg_class"},
 				},
 			},
 		},
@@ -463,19 +467,21 @@ func TestAlterTableOwnerCanUseTransferredTableRepro(t *testing.T) {
 					Password: `pw`,
 				},
 				{
-					Query:    `SELECT id, label FROM transferred_table_runtime;`,
-					Expected: []sql.Row{{1, "owned"}},
+					Query: `SELECT id, label FROM transferred_table_runtime;`,
+
 					Username: `transferred_table_owner`,
-					Password: `pw`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCreateDatabaseOwnerUpdatesCatalogRepro reproduces a security/catalog bug:
+						// Doltgres accepts CREATE DATABASE ... OWNER, but pg_database.datdba does not
+						// record the requested owner.
+						ID: "ownership-repro-test-testaltertableownercanusetransferredtablerepro-0001-select-id-label-from-transferred_table_runtime"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateDatabaseOwnerUpdatesCatalogRepro reproduces a security/catalog bug:
-// Doltgres accepts CREATE DATABASE ... OWNER, but pg_database.datdba does not
-// record the requested owner.
 func TestCreateDatabaseOwnerUpdatesCatalogRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -490,8 +496,7 @@ func TestCreateDatabaseOwnerUpdatesCatalogRepro(t *testing.T) {
 				{
 					Query: `SELECT pg_get_userbyid(datdba)
 						FROM pg_database
-						WHERE datname = 'owned_database_catalog';`,
-					Expected: []sql.Row{{"db_catalog_owner"}},
+						WHERE datname = 'owned_database_catalog';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ownership-repro-test-testcreatedatabaseownerupdatescatalogrepro-0001-select-pg_get_userbyid-datdba-from-pg_database"},
 				},
 			},
 		},
@@ -507,17 +512,18 @@ func TestCreateDatabaseOwnerRequiresExistingRoleRepro(t *testing.T) {
 			Name: "CREATE DATABASE OWNER requires existing role",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CREATE DATABASE missing_owner_database OWNER = missing_database_owner;`,
-					ExpectedErr: `does not exist`,
+					Query: `CREATE DATABASE missing_owner_database OWNER = missing_database_owner;`, PostgresOracle: ScriptTestPostgresOracle{ID: "ownership-repro-test-testcreatedatabaseownerrequiresexistingrolerepro-0001-create-database-missing_owner_database-owner-=",
+
+						// TestAlterDatabaseOwnerUpdatesCatalogRepro reproduces a security/catalog bug:
+						// Doltgres accepts ALTER DATABASE ... OWNER TO, but pg_database.datdba does not
+						// record the requested owner.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterDatabaseOwnerUpdatesCatalogRepro reproduces a security/catalog bug:
-// Doltgres accepts ALTER DATABASE ... OWNER TO, but pg_database.datdba does not
-// record the requested owner.
 func TestAlterDatabaseOwnerUpdatesCatalogRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -533,8 +539,7 @@ func TestAlterDatabaseOwnerUpdatesCatalogRepro(t *testing.T) {
 				{
 					Query: `SELECT pg_get_userbyid(datdba)
 						FROM pg_database
-						WHERE datname = 'alter_owned_database_catalog';`,
-					Expected: []sql.Row{{"db_alter_catalog_owner"}},
+						WHERE datname = 'alter_owned_database_catalog';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ownership-repro-test-testalterdatabaseownerupdatescatalogrepro-0001-select-pg_get_userbyid-datdba-from-pg_database"},
 				},
 			},
 		},
@@ -560,8 +565,7 @@ func TestAlterViewOwnerUpdatesCatalogRepro(t *testing.T) {
 				{
 					Query: `SELECT pg_get_userbyid(relowner)
 						FROM pg_class
-						WHERE relname = 'owned_view_catalog';`,
-					Expected: []sql.Row{{"view_owner"}},
+						WHERE relname = 'owned_view_catalog';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ownership-repro-test-testalterviewownerupdatescatalogrepro-0001-select-pg_get_userbyid-relowner-from-pg_class"},
 				},
 			},
 		},
@@ -589,18 +593,20 @@ func TestAlterViewOwnerCanUseTransferredViewRepro(t *testing.T) {
 					Query: `ALTER VIEW transferred_view_runtime OWNER TO transferred_view_owner;`,
 				},
 				{
-					Query:    `SELECT id, label FROM transferred_view_runtime;`,
-					Expected: []sql.Row{{1, "visible"}},
+					Query: `SELECT id, label FROM transferred_view_runtime;`,
+
 					Username: `transferred_view_owner`,
-					Password: `pw`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestAlterOwnerRequiresExistingRoleRepro reproduces owner-validation bugs:
+						// PostgreSQL rejects ALTER ... OWNER TO when the target role does not exist.
+						ID: "ownership-repro-test-testalterviewownercanusetransferredviewrepro-0001-select-id-label-from-transferred_view_runtime"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterOwnerRequiresExistingRoleRepro reproduces owner-validation bugs:
-// PostgreSQL rejects ALTER ... OWNER TO when the target role does not exist.
 func TestAlterOwnerRequiresExistingRoleRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -613,29 +619,27 @@ func TestAlterOwnerRequiresExistingRoleRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER TABLE missing_owner_table OWNER TO missing_alter_owner;`,
-					ExpectedErr: `does not exist`,
+					Query: `ALTER TABLE missing_owner_table OWNER TO missing_alter_owner;`, PostgresOracle: ScriptTestPostgresOracle{ID: "ownership-repro-test-testalterownerrequiresexistingrolerepro-0001-alter-table-missing_owner_table-owner-to", Compare: "sqlstate"},
 				},
 				{
-					Query:       `ALTER VIEW missing_owner_view OWNER TO missing_alter_owner;`,
-					ExpectedErr: `does not exist`,
+					Query: `ALTER VIEW missing_owner_view OWNER TO missing_alter_owner;`, PostgresOracle: ScriptTestPostgresOracle{ID: "ownership-repro-test-testalterownerrequiresexistingrolerepro-0002-alter-view-missing_owner_view-owner-to", Compare: "sqlstate"},
 				},
 				{
-					Query:       `ALTER SEQUENCE missing_owner_sequence OWNER TO missing_alter_owner;`,
-					ExpectedErr: `does not exist`,
+					Query: `ALTER SEQUENCE missing_owner_sequence OWNER TO missing_alter_owner;`, PostgresOracle: ScriptTestPostgresOracle{ID: "ownership-repro-test-testalterownerrequiresexistingrolerepro-0003-alter-sequence-missing_owner_sequence-owner-to", Compare: "sqlstate"},
 				},
 				{
-					Query:       `ALTER SCHEMA missing_owner_schema OWNER TO missing_alter_owner;`,
-					ExpectedErr: `does not exist`,
+					Query: `ALTER SCHEMA missing_owner_schema OWNER TO missing_alter_owner;`, PostgresOracle: ScriptTestPostgresOracle{ID: "ownership-repro-test-testalterownerrequiresexistingrolerepro-0004-alter-schema-missing_owner_schema-owner-to",
+
+						// TestDropOwnedRevokesGrantedPrivilegesRepro reproduces a privilege-cleanup
+						// bug: PostgreSQL's DROP OWNED BY also revokes privileges granted to the target
+						// role on objects it does not own.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropOwnedRevokesGrantedPrivilegesRepro reproduces a privilege-cleanup
-// bug: PostgreSQL's DROP OWNED BY also revokes privileges granted to the target
-// role on objects it does not own.
 func TestDropOwnedRevokesGrantedPrivilegesRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -648,28 +652,30 @@ func TestDropOwnedRevokesGrantedPrivilegesRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT id FROM drop_owned_grants;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT id FROM drop_owned_grants;`,
+
 					Username: `drop_owned_grantee`,
-					Password: `pw`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{ID: "ownership-repro-test-testdropownedrevokesgrantedprivilegesrepro-0001-select-id-from-drop_owned_grants", Compare: "sqlstate"},
 				},
 				{
 					Query: `DROP OWNED BY drop_owned_grantee;`,
 				},
 				{
-					Query:       `SELECT id FROM drop_owned_grants;`,
-					ExpectedErr: `permission denied`,
-					Username:    `drop_owned_grantee`,
-					Password:    `pw`,
+					Query: `SELECT id FROM drop_owned_grants;`,
+
+					Username: `drop_owned_grantee`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestReassignOwnedByEmptyRoleRepro reproduces an ownership-admin correctness
+						// bug: PostgreSQL accepts REASSIGN OWNED BY even when the source role currently
+						// owns no objects.
+						ID: "ownership-repro-test-testdropownedrevokesgrantedprivilegesrepro-0002-select-id-from-drop_owned_grants", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestReassignOwnedByEmptyRoleRepro reproduces an ownership-admin correctness
-// bug: PostgreSQL accepts REASSIGN OWNED BY even when the source role currently
-// owns no objects.
 func TestReassignOwnedByEmptyRoleRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -709,8 +715,7 @@ func TestAlterMaterializedViewOwnerUpdatesCatalogRepro(t *testing.T) {
 				{
 					Query: `SELECT pg_get_userbyid(relowner)
 						FROM pg_class
-						WHERE relname = 'owned_materialized_view_catalog';`,
-					Expected: []sql.Row{{"materialized_view_owner"}},
+						WHERE relname = 'owned_materialized_view_catalog';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ownership-repro-test-testaltermaterializedviewownerupdatescatalogrepro-0001-select-pg_get_userbyid-relowner-from-pg_class"},
 				},
 			},
 		},
@@ -735,8 +740,7 @@ func TestAlterSequenceOwnerUpdatesCatalogRepro(t *testing.T) {
 				{
 					Query: `SELECT pg_get_userbyid(relowner)
 						FROM pg_class
-						WHERE relname = 'owned_sequence_catalog';`,
-					Expected: []sql.Row{{"sequence_owner"}},
+						WHERE relname = 'owned_sequence_catalog';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ownership-repro-test-testaltersequenceownerupdatescatalogrepro-0001-select-pg_get_userbyid-relowner-from-pg_class"},
 				},
 			},
 		},
@@ -760,19 +764,21 @@ func TestAlterSequenceOwnerCanUseTransferredSequenceRepro(t *testing.T) {
 					Query: `ALTER SEQUENCE transferred_sequence_runtime OWNER TO transferred_sequence_owner;`,
 				},
 				{
-					Query:    `SELECT nextval('transferred_sequence_runtime');`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT nextval('transferred_sequence_runtime');`,
+
 					Username: `transferred_sequence_owner`,
-					Password: `pw`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestAlterSchemaOwnerUpdatesCatalogRepro reproduces a security/catalog bug:
+						// Doltgres accepts ALTER SCHEMA ... OWNER TO, but pg_namespace.nspowner remains
+						// the original owner instead of the requested role.
+						ID: "ownership-repro-test-testaltersequenceownercanusetransferredsequencerepro-0001-select-nextval-transferred_sequence_runtime"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterSchemaOwnerUpdatesCatalogRepro reproduces a security/catalog bug:
-// Doltgres accepts ALTER SCHEMA ... OWNER TO, but pg_namespace.nspowner remains
-// the original owner instead of the requested role.
 func TestAlterSchemaOwnerUpdatesCatalogRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -788,8 +794,7 @@ func TestAlterSchemaOwnerUpdatesCatalogRepro(t *testing.T) {
 				{
 					Query: `SELECT pg_get_userbyid(nspowner)
 						FROM pg_namespace
-						WHERE nspname = 'owned_schema_catalog';`,
-					Expected: []sql.Row{{"schema_owner"}},
+						WHERE nspname = 'owned_schema_catalog';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ownership-repro-test-testalterschemaownerupdatescatalogrepro-0001-select-pg_get_userbyid-nspowner-from-pg_namespace"},
 				},
 			},
 		},
@@ -822,19 +827,21 @@ func TestAlterSchemaOwnerCanUseTransferredSchemaRepro(t *testing.T) {
 					Password: `pw`,
 				},
 				{
-					Query:    `SELECT id FROM transferred_schema_runtime.owned_schema_table;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT id FROM transferred_schema_runtime.owned_schema_table;`,
+
 					Username: `transferred_schema_owner`,
-					Password: `pw`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCreateSchemaAuthorizationUpdatesCatalogRepro reproduces a
+						// security/catalog bug: Doltgres accepts CREATE SCHEMA AUTHORIZATION, but
+						// pg_namespace.nspowner remains postgres instead of the authorized role.
+						ID: "ownership-repro-test-testalterschemaownercanusetransferredschemarepro-0001-select-id-from", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateSchemaAuthorizationUpdatesCatalogRepro reproduces a
-// security/catalog bug: Doltgres accepts CREATE SCHEMA AUTHORIZATION, but
-// pg_namespace.nspowner remains postgres instead of the authorized role.
 func TestCreateSchemaAuthorizationUpdatesCatalogRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -892,8 +899,7 @@ func TestAlterTypeOwnerUpdatesCatalogRepro(t *testing.T) {
 				{
 					Query: `SELECT pg_get_userbyid(typowner)
 						FROM pg_type
-						WHERE typname = 'owned_enum_catalog';`,
-					Expected: []sql.Row{{"type_owner"}},
+						WHERE typname = 'owned_enum_catalog';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ownership-repro-test-testaltertypeownerupdatescatalogrepro-0001-select-pg_get_userbyid-typowner-from-pg_type"},
 				},
 			},
 		},
@@ -918,8 +924,7 @@ func TestAlterDomainOwnerUpdatesCatalogRepro(t *testing.T) {
 				{
 					Query: `SELECT pg_get_userbyid(typowner)
 						FROM pg_type
-						WHERE typname = 'owned_domain_catalog';`,
-					Expected: []sql.Row{{"domain_owner"}},
+						WHERE typname = 'owned_domain_catalog';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ownership-repro-test-testalterdomainownerupdatescatalogrepro-0001-select-pg_get_userbyid-typowner-from-pg_type"},
 				},
 			},
 		},
@@ -944,8 +949,7 @@ func TestFunctionOwnerCatalogEntryRepro(t *testing.T) {
 				{
 					Query: `SELECT pg_get_userbyid(proowner)
 						FROM pg_proc
-						WHERE proname = 'owned_function_catalog';`,
-					Expected: []sql.Row{{"function_owner"}},
+						WHERE proname = 'owned_function_catalog';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ownership-repro-test-testfunctionownercatalogentryrepro-0001-select-pg_get_userbyid-proowner-from-pg_proc"},
 				},
 			},
 		},
@@ -971,19 +975,21 @@ func TestFunctionOwnerCanExecuteCreatedFunctionRepro(t *testing.T) {
 					Password: `pw`,
 				},
 				{
-					Query:    `SELECT owner_created_function();`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT owner_created_function();`,
+
 					Username: `function_owner_user`,
-					Password: `pw`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCreateOrReplaceFunctionPreservesOwnerRepro reproduces an ownership
+						// persistence bug: PostgreSQL preserves the existing function owner during
+						// CREATE OR REPLACE FUNCTION.
+						ID: "ownership-repro-test-testfunctionownercanexecutecreatedfunctionrepro-0001-select-owner_created_function"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateOrReplaceFunctionPreservesOwnerRepro reproduces an ownership
-// persistence bug: PostgreSQL preserves the existing function owner during
-// CREATE OR REPLACE FUNCTION.
 func TestCreateOrReplaceFunctionPreservesOwnerRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1006,8 +1012,7 @@ func TestCreateOrReplaceFunctionPreservesOwnerRepro(t *testing.T) {
 				{
 					Query: `SELECT pg_get_userbyid(proowner)
 						FROM pg_catalog.pg_proc
-						WHERE proname = 'replace_owner_function';`,
-					Expected: []sql.Row{{"replace_function_owner"}},
+						WHERE proname = 'replace_owner_function';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ownership-repro-test-testcreateorreplacefunctionpreservesownerrepro-0001-select-pg_get_userbyid-proowner-from-pg_catalog.pg_proc"},
 				},
 			},
 		},
@@ -1037,8 +1042,7 @@ func TestProcedureOwnerCatalogEntryRepro(t *testing.T) {
 				{
 					Query: `SELECT pg_get_userbyid(proowner)
 						FROM pg_proc
-						WHERE proname = 'owned_procedure_catalog';`,
-					Expected: []sql.Row{{"procedure_owner"}},
+						WHERE proname = 'owned_procedure_catalog';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ownership-repro-test-testprocedureownercatalogentryrepro-0001-select-pg_get_userbyid-proowner-from-pg_proc"},
 				},
 			},
 		},
@@ -1068,19 +1072,21 @@ func TestProcedureOwnerCanCallCreatedProcedureRepro(t *testing.T) {
 					Password: `pw`,
 				},
 				{
-					Query:    `CALL owner_created_procedure();`,
-					Expected: []sql.Row{},
+					Query: `CALL owner_created_procedure();`,
+
 					Username: `procedure_owner_user`,
-					Password: `pw`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCreateOrReplaceProcedurePreservesOwnerRepro reproduces an ownership
+						// persistence bug: PostgreSQL preserves the existing procedure owner during
+						// CREATE OR REPLACE PROCEDURE.
+						ID: "ownership-repro-test-testprocedureownercancallcreatedprocedurerepro-0001-call-owner_created_procedure"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateOrReplaceProcedurePreservesOwnerRepro reproduces an ownership
-// persistence bug: PostgreSQL preserves the existing procedure owner during
-// CREATE OR REPLACE PROCEDURE.
 func TestCreateOrReplaceProcedurePreservesOwnerRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1111,8 +1117,7 @@ func TestCreateOrReplaceProcedurePreservesOwnerRepro(t *testing.T) {
 				{
 					Query: `SELECT pg_get_userbyid(proowner)
 						FROM pg_catalog.pg_proc
-						WHERE proname = 'replace_owner_procedure';`,
-					Expected: []sql.Row{{"replace_procedure_owner"}},
+						WHERE proname = 'replace_owner_procedure';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ownership-repro-test-testcreateorreplaceprocedurepreservesownerrepro-0001-select-pg_get_userbyid-proowner-from-pg_catalog.pg_proc"},
 				},
 			},
 		},
@@ -1159,8 +1164,7 @@ func TestCreateOrReplaceAggregatePreservesOwnerRepro(t *testing.T) {
 				{
 					Query: `SELECT pg_get_userbyid(proowner)
 						FROM pg_catalog.pg_proc
-						WHERE proname = 'replace_owner_aggregate';`,
-					Expected: []sql.Row{{"replace_aggregate_owner"}},
+						WHERE proname = 'replace_owner_aggregate';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ownership-repro-test-testcreateorreplaceaggregatepreservesownerrepro-0001-select-pg_get_userbyid-proowner-from-pg_catalog.pg_proc"},
 				},
 			},
 		},

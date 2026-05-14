@@ -1,0 +1,893 @@
+{
+  "generatedBy": "go generate ./testing/go/postgres18",
+  "version": 1,
+  "canonicalPostgresMajor": 18,
+  "normalizationProfile": "pg18-structural-v1",
+  "defaultOracle": "internal",
+  "inventory": {
+    "scope": "testing/go/postgres18/*_test.go ScriptTest expectation literals",
+    "assertionsDefaultOracle": "internal",
+    "postgresOverrides": "entries where oracle == postgres",
+    "assertionFields": [
+      "Expected",
+      "ExpectedRaw",
+      "ExpectedErr",
+      "ExpectedTag",
+      "ExpectedColNames",
+      "ExpectedColTypes",
+      "ExpectedNotices"
+    ]
+  },
+  "entries": [
+    {
+      "id": "postgres18/acl-catalog-repro-test-testhaslargeobjectprivilegehelperrepro-0001-select-count-*->=-1",
+      "source": "testing/go/postgres18/acl_catalog_repro_test.go:TestHasLargeObjectPrivilegeHelperRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT count(*) >= 1\n\t\t\t\t\t\tFROM pg_catalog.pg_proc\n\t\t\t\t\t\tWHERE proname = 'has_largeobject_privilege';",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "postgres18/catalog-correctness-repro-test-testpostgres18pgaioscatalogshaperepro-0001-select-count-*-=-15",
+      "source": "testing/go/postgres18/catalog_correctness_repro_test.go:TestPostgres18PgAiosCatalogShapeRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT count(*) = 15\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute\n\t\t\t\t\t\tWHERE attrelid = 'pg_catalog.pg_aios'::regclass\n\t\t\t\t\t\t\tAND NOT attisdropped\n\t\t\t\t\t\t\tAND attname IN (\n\t\t\t\t\t\t\t\t'pid', 'io_id', 'io_generation', 'state', 'operation',\n\t\t\t\t\t\t\t\t'off', 'length', 'target', 'handle_data_len', 'raw_result',\n\t\t\t\t\t\t\t\t'result', 'target_desc', 'f_sync', 'f_localmem', 'f_buffered'\n\t\t\t\t\t\t\t);",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "postgres18/catalog-correctness-repro-test-testpostgres18pgaioscatalogshaperepro-0002-select-count-*->=-0",
+      "source": "testing/go/postgres18/catalog_correctness_repro_test.go:TestPostgres18PgAiosCatalogShapeRepro",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT count(*) = 15\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute\n\t\t\t\t\t\tWHERE attrelid = 'pg_catalog.pg_aios'::regclass\n\t\t\t\t\t\t\tAND NOT attisdropped\n\t\t\t\t\t\t\tAND attname IN (\n\t\t\t\t\t\t\t\t'pid', 'io_id', 'io_generation', 'state', 'operation',\n\t\t\t\t\t\t\t\t'off', 'length', 'target', 'handle_data_len', 'raw_result',\n\t\t\t\t\t\t\t\t'result', 'target_desc', 'f_sync', 'f_localmem', 'f_buffered'\n\t\t\t\t\t\t\t);"
+      ],
+      "query": "SELECT count(*) >= 0\n\t\t\t\t\t\tFROM pg_catalog.pg_aios;",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "postgres18/constraint-enforcement-repro-test-testpostgres18checkconstraintnotenforcedrepro-0001-select-qty-from-check_not_enforced_items-where",
+      "source": "testing/go/postgres18/constraint_enforcement_repro_test.go:TestPostgres18CheckConstraintNotEnforcedRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE check_not_enforced_items (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tqty INT,\n\t\t\t\t\tCONSTRAINT qty_positive CHECK (qty > 0) NOT ENFORCED\n\t\t\t\t);",
+        "INSERT INTO check_not_enforced_items VALUES (1, -5);"
+      ],
+      "query": "SELECT qty FROM check_not_enforced_items WHERE id = 1;",
+      "expectedRows": [
+        [
+          {
+            "value": "-5"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "postgres18/constraint-enforcement-repro-test-testpostgres18checkconstraintnotenforcedrepro-0002-select-pg_get_constraintdef-oid-from-pg_constraint",
+      "source": "testing/go/postgres18/constraint_enforcement_repro_test.go:TestPostgres18CheckConstraintNotEnforcedRepro",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE check_not_enforced_items (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tqty INT,\n\t\t\t\t\tCONSTRAINT qty_positive CHECK (qty > 0) NOT ENFORCED\n\t\t\t\t);",
+        "INSERT INTO check_not_enforced_items VALUES (1, -5);",
+        "SELECT qty FROM check_not_enforced_items WHERE id = 1;"
+      ],
+      "query": "SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conname = 'qty_positive';",
+      "expectedRows": [
+        [
+          {
+            "value": "CHECK ((qty > 0)) NOT ENFORCED"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "postgres18/constraint-enforcement-repro-test-testpostgres18checkconstraintnotenforcedrepro-0003-insert-into-mixed_check_enforcement_items-values-2",
+      "source": "testing/go/postgres18/constraint_enforcement_repro_test.go:TestPostgres18CheckConstraintNotEnforcedRepro",
+      "ordinal": 3,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE mixed_check_enforcement_items (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tqty INT,\n\t\t\t\t\tCONSTRAINT qty_positive_metadata CHECK (qty > 0) NOT ENFORCED,\n\t\t\t\t\tCONSTRAINT qty_floor CHECK (qty > -10)\n\t\t\t\t);",
+        "INSERT INTO mixed_check_enforcement_items VALUES (1, -5);"
+      ],
+      "query": "INSERT INTO mixed_check_enforcement_items VALUES (2, -20);",
+      "expectedSqlstate": "23514",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "postgres18/constraint-enforcement-repro-test-testpostgres18checkconstraintnotenforcedrepro-0004-select-qty-from-alter_check_not_enforced_items-order",
+      "source": "testing/go/postgres18/constraint_enforcement_repro_test.go:TestPostgres18CheckConstraintNotEnforcedRepro",
+      "ordinal": 4,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE alter_check_not_enforced_items (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tqty INT\n\t\t\t\t);",
+        "INSERT INTO alter_check_not_enforced_items VALUES (1, -5);",
+        "ALTER TABLE alter_check_not_enforced_items\n\t\t\t\t\tADD CONSTRAINT alter_qty_positive CHECK (qty > 0) NOT ENFORCED;",
+        "INSERT INTO alter_check_not_enforced_items VALUES (2, -10);"
+      ],
+      "query": "SELECT qty FROM alter_check_not_enforced_items ORDER BY id;",
+      "expectedRows": [
+        [
+          {
+            "value": "-5"
+          }
+        ],
+        [
+          {
+            "value": "-10"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "postgres18/constraint-enforcement-repro-test-testpostgres18checkconstraintnotenforcedrepro-0005-select-pg_get_constraintdef-oid-from-pg_constraint",
+      "source": "testing/go/postgres18/constraint_enforcement_repro_test.go:TestPostgres18CheckConstraintNotEnforcedRepro",
+      "ordinal": 5,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE alter_check_not_enforced_items (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tqty INT\n\t\t\t\t);",
+        "INSERT INTO alter_check_not_enforced_items VALUES (1, -5);",
+        "ALTER TABLE alter_check_not_enforced_items\n\t\t\t\t\tADD CONSTRAINT alter_qty_positive CHECK (qty > 0) NOT ENFORCED;",
+        "INSERT INTO alter_check_not_enforced_items VALUES (2, -10);",
+        "SELECT qty FROM alter_check_not_enforced_items ORDER BY id;"
+      ],
+      "query": "SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conname = 'alter_qty_positive';",
+      "expectedRows": [
+        [
+          {
+            "value": "CHECK ((qty > 0)) NOT ENFORCED"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "postgres18/default-privileges-repro-test-testpostgres18largeobjectdefaultprivilegesrepro-0001-select-defaclobjtype-from-pg_catalog.pg_default_acl-where",
+      "source": "testing/go/postgres18/default_privileges_repro_test.go:TestPostgres18LargeObjectDefaultPrivilegesRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE ROLE default_large_object_reader;",
+        "ALTER DEFAULT PRIVILEGES\n\t\t\t\t\tGRANT SELECT ON LARGE OBJECTS TO default_large_object_reader;"
+      ],
+      "query": "SELECT defaclobjtype\n\t\t\t\t\t\tFROM pg_catalog.pg_default_acl\n\t\t\t\t\t\tWHERE defaclnamespace = 0\n\t\t\t\t\t\t\tAND defaclobjtype = 'L';",
+      "expectedRows": [
+        [
+          {
+            "value": "L"
+          }
+        ]
+      ],
+      "cleanup": [
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'default_large_object_reader') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('default_large_object_reader'); END IF; END $$",
+        "DROP ROLE IF EXISTS default_large_object_reader",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "postgres18/dml-returning-correctness-repro-test-testpostgres18insertdeletereturningoldnewaliasesrepro-0001-insert-into-returning_insert_delete_old_new_items-values-2",
+      "source": "testing/go/postgres18/dml_returning_correctness_repro_test.go:TestPostgres18InsertDeleteReturningOldNewAliasesRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE returning_insert_delete_old_new_items (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tv INT NOT NULL\n\t\t\t\t);",
+        "INSERT INTO returning_insert_delete_old_new_items VALUES (1, 10);"
+      ],
+      "query": "INSERT INTO returning_insert_delete_old_new_items VALUES (2, 20)\n\t\t\t\t\t\tRETURNING old.v IS NULL, new.v;",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "20"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "postgres18/dml-returning-correctness-repro-test-testpostgres18insertdeletereturningoldnewaliasesrepro-0002-delete-from-returning_insert_delete_old_new_items-where-id",
+      "source": "testing/go/postgres18/dml_returning_correctness_repro_test.go:TestPostgres18InsertDeleteReturningOldNewAliasesRepro",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE returning_insert_delete_old_new_items (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tv INT NOT NULL\n\t\t\t\t);",
+        "INSERT INTO returning_insert_delete_old_new_items VALUES (1, 10);",
+        "INSERT INTO returning_insert_delete_old_new_items VALUES (2, 20)\n\t\t\t\t\t\tRETURNING old.v IS NULL, new.v;"
+      ],
+      "query": "DELETE FROM returning_insert_delete_old_new_items\n\t\t\t\t\t\tWHERE id = 1\n\t\t\t\t\t\tRETURNING old.v, new.v IS NULL;",
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "postgres18/dml-returning-correctness-repro-test-testpostgres18updatereturningoldnewaliasesrepro-0001-update-returning_old_new_items-set-v-=",
+      "source": "testing/go/postgres18/dml_returning_correctness_repro_test.go:TestPostgres18UpdateReturningOldNewAliasesRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE returning_old_new_items (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tv INT NOT NULL\n\t\t\t\t);",
+        "INSERT INTO returning_old_new_items VALUES (1, 10);"
+      ],
+      "query": "UPDATE returning_old_new_items\n\t\t\t\t\t\tSET v = v + 5\n\t\t\t\t\t\tWHERE id = 1\n\t\t\t\t\t\tRETURNING old.v, new.v;",
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          },
+          {
+            "value": "15"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "postgres18/generated-column-correctness-repro-test-testpostgres18virtualgeneratedcolumnrepro-0001-select-area-from-generated_virtual_items-where",
+      "source": "testing/go/postgres18/generated_column_correctness_repro_test.go:TestPostgres18VirtualGeneratedColumnRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE generated_virtual_items (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\twidth INT NOT NULL,\n\t\t\t\t\theight INT NOT NULL,\n\t\t\t\t\tarea INT GENERATED ALWAYS AS (width * height) VIRTUAL\n\t\t\t\t);",
+        "INSERT INTO generated_virtual_items (id, width, height) VALUES (1, 3, 4);"
+      ],
+      "query": "SELECT area FROM generated_virtual_items WHERE id = 1;",
+      "expectedRows": [
+        [
+          {
+            "value": "12"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "postgres18/generated-column-correctness-repro-test-testpostgres18virtualgeneratedcolumnrepro-0002-select-area-from-generated_virtual_items-where",
+      "source": "testing/go/postgres18/generated_column_correctness_repro_test.go:TestPostgres18VirtualGeneratedColumnRepro",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE generated_virtual_items (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\twidth INT NOT NULL,\n\t\t\t\t\theight INT NOT NULL,\n\t\t\t\t\tarea INT GENERATED ALWAYS AS (width * height) VIRTUAL\n\t\t\t\t);",
+        "INSERT INTO generated_virtual_items (id, width, height) VALUES (1, 3, 4);",
+        "SELECT area FROM generated_virtual_items WHERE id = 1;",
+        "UPDATE generated_virtual_items\n\t\t\t\t\t\tSET width = 5\n\t\t\t\t\t\tWHERE id = 1;"
+      ],
+      "query": "SELECT area FROM generated_virtual_items WHERE id = 1;",
+      "expectedRows": [
+        [
+          {
+            "value": "20"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "postgres18/json-correctness-repro-test-testpostgres18jsonstripnullsstripinarraysrepro-0001-select-json_strip_nulls-[1-null-{",
+      "source": "testing/go/postgres18/json_correctness_repro_test.go:TestPostgres18JsonStripNullsStripInArraysRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT json_strip_nulls('[1,null,{\"a\":null,\"b\":2}]'::json, true)::text;",
+      "expectedRows": [
+        [
+          {
+            "value": "[1,{\"b\":2}]"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "postgres18/json-correctness-repro-test-testpostgres18jsonstripnullsstripinarraysrepro-0002-select-jsonb_strip_nulls-[1-null-{",
+      "source": "testing/go/postgres18/json_correctness_repro_test.go:TestPostgres18JsonStripNullsStripInArraysRepro",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT json_strip_nulls('[1,null,{\"a\":null,\"b\":2}]'::json, true)::text;"
+      ],
+      "query": "SELECT jsonb_strip_nulls('[1,null,{\"a\":null,\"b\":2}]'::jsonb, true)::text;",
+      "expectedRows": [
+        [
+          {
+            "value": "[1, {\"b\": 2}]"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "postgres18/json-correctness-repro-test-testpostgres18jsonstripnullsstripinarraysrepro-0003-select-jsonb_strip_nulls-[1-null-{",
+      "source": "testing/go/postgres18/json_correctness_repro_test.go:TestPostgres18JsonStripNullsStripInArraysRepro",
+      "ordinal": 3,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT json_strip_nulls('[1,null,{\"a\":null,\"b\":2}]'::json, true)::text;",
+        "SELECT jsonb_strip_nulls('[1,null,{\"a\":null,\"b\":2}]'::jsonb, true)::text;"
+      ],
+      "query": "SELECT jsonb_strip_nulls('[1,null,{\"a\":null,\"b\":2}]'::jsonb, false)::text;",
+      "expectedRows": [
+        [
+          {
+            "value": "[1, null, {\"b\": 2}]"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "postgres18/json-correctness-repro-test-testpostgres18jsonstripnullsstripinarraysrepro-0004-select-json_strip_nulls-null-::json-true",
+      "source": "testing/go/postgres18/json_correctness_repro_test.go:TestPostgres18JsonStripNullsStripInArraysRepro",
+      "ordinal": 4,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT json_strip_nulls('[1,null,{\"a\":null,\"b\":2}]'::json, true)::text;",
+        "SELECT jsonb_strip_nulls('[1,null,{\"a\":null,\"b\":2}]'::jsonb, true)::text;",
+        "SELECT jsonb_strip_nulls('[1,null,{\"a\":null,\"b\":2}]'::jsonb, false)::text;"
+      ],
+      "query": "SELECT json_strip_nulls('null'::json, true)::text, jsonb_strip_nulls('null'::jsonb, true)::text;",
+      "expectedRows": [
+        [
+          {
+            "value": "null"
+          },
+          {
+            "value": "null"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "postgres18/json-correctness-repro-test-testpostgres18jsonbnullcaststosqlnullrepro-0001-select-null-::jsonb-::int4-is",
+      "source": "testing/go/postgres18/json_correctness_repro_test.go:TestPostgres18JsonbNullCastsToSqlNullRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT\n\t\t\t\t\t\t(('null'::jsonb)::int4 IS NULL)::text,\n\t\t\t\t\t\t(('null'::jsonb)::bool IS NULL)::text,\n\t\t\t\t\t\t(('null'::jsonb)::numeric IS NULL)::text;",
+      "expectedRows": [
+        [
+          {
+            "value": "true"
+          },
+          {
+            "value": "true"
+          },
+          {
+            "value": "true"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "postgres18/non-json-builtin-repro-test-testpostgres18uuidandmathbuiltinsrepro-0001-select-uuidv7-is-not-null",
+      "source": "testing/go/postgres18/non_json_builtin_repro_test.go:TestPostgres18UuidAndMathBuiltinsRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT uuidv7() IS NOT NULL;",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "postgres18/non-json-builtin-repro-test-testpostgres18uuidandmathbuiltinsrepro-0002-select-gamma-6::double-precision-::text",
+      "source": "testing/go/postgres18/non_json_builtin_repro_test.go:TestPostgres18UuidAndMathBuiltinsRepro",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT uuidv7() IS NOT NULL;"
+      ],
+      "query": "SELECT gamma(6::double precision)::text;",
+      "expectedRows": [
+        [
+          {
+            "value": "120"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "postgres18/non-json-builtin-repro-test-testpostgres18uuidandmathbuiltinsrepro-0003-select-lgamma-6::double-precision->",
+      "source": "testing/go/postgres18/non_json_builtin_repro_test.go:TestPostgres18UuidAndMathBuiltinsRepro",
+      "ordinal": 3,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT uuidv7() IS NOT NULL;",
+        "SELECT gamma(6::double precision)::text;"
+      ],
+      "query": "SELECT lgamma(6::double precision) > 4.7 AND lgamma(6::double precision) < 4.8;",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "postgres18/non-json-builtin-repro-test-testpostgres18arrayandstringbuiltinsrepro-0001-select-array_to_string-array_sort-array[3-1",
+      "source": "testing/go/postgres18/non_json_builtin_repro_test.go:TestPostgres18ArrayAndStringBuiltinsRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT array_to_string(array_sort(ARRAY[3,1,2]), ',');",
+      "expectedRows": [
+        [
+          {
+            "value": "1,2,3"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "postgres18/non-json-builtin-repro-test-testpostgres18arrayandstringbuiltinsrepro-0002-select-array_to_string-array_reverse-array[1-2",
+      "source": "testing/go/postgres18/non_json_builtin_repro_test.go:TestPostgres18ArrayAndStringBuiltinsRepro",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT array_to_string(array_sort(ARRAY[3,1,2]), ',');"
+      ],
+      "query": "SELECT array_to_string(array_reverse(ARRAY[1,2,3]), ',');",
+      "expectedRows": [
+        [
+          {
+            "value": "3,2,1"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "postgres18/non-json-builtin-repro-test-testpostgres18arrayandstringbuiltinsrepro-0003-select-casefold-hello",
+      "source": "testing/go/postgres18/non_json_builtin_repro_test.go:TestPostgres18ArrayAndStringBuiltinsRepro",
+      "ordinal": 3,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT array_to_string(array_sort(ARRAY[3,1,2]), ',');",
+        "SELECT array_to_string(array_reverse(ARRAY[1,2,3]), ',');"
+      ],
+      "query": "SELECT casefold('HELLO');",
+      "expectedRows": [
+        [
+          {
+            "value": "hello"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "postgres18/non-json-builtin-repro-test-testpostgres18binarystringbuiltinsrepro-0001-select-crc32-abc-::bytea-::text",
+      "source": "testing/go/postgres18/non_json_builtin_repro_test.go:TestPostgres18BinaryStringBuiltinsRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT crc32('abc'::bytea)::text, crc32c('abc'::bytea)::text;",
+      "expectedRows": [
+        [
+          {
+            "value": "891568578"
+          },
+          {
+            "value": "910901175"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "postgres18/non-json-builtin-repro-test-testpostgres18binarystringbuiltinsrepro-0002-select-encode-reverse-\\xabcd-::bytea",
+      "source": "testing/go/postgres18/non_json_builtin_repro_test.go:TestPostgres18BinaryStringBuiltinsRepro",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT crc32('abc'::bytea)::text, crc32c('abc'::bytea)::text;"
+      ],
+      "query": "SELECT encode(reverse('\\xabcd'::bytea), 'hex');",
+      "expectedRows": [
+        [
+          {
+            "value": "cdab"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "postgres18/non-json-builtin-repro-test-testpostgres18binarystringbuiltinsrepro-0003-select-encode-1234::integer::bytea-hex",
+      "source": "testing/go/postgres18/non_json_builtin_repro_test.go:TestPostgres18BinaryStringBuiltinsRepro",
+      "ordinal": 3,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT crc32('abc'::bytea)::text, crc32c('abc'::bytea)::text;",
+        "SELECT encode(reverse('\\xabcd'::bytea), 'hex');"
+      ],
+      "query": "SELECT encode(1234::integer::bytea, 'hex');",
+      "expectedRows": [
+        [
+          {
+            "value": "000004d2"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "postgres18/non-json-builtin-repro-test-testpostgres18binarystringbuiltinsrepro-0004-select-\\x8000-::bytea::smallint::text",
+      "source": "testing/go/postgres18/non_json_builtin_repro_test.go:TestPostgres18BinaryStringBuiltinsRepro",
+      "ordinal": 4,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT crc32('abc'::bytea)::text, crc32c('abc'::bytea)::text;",
+        "SELECT encode(reverse('\\xabcd'::bytea), 'hex');",
+        "SELECT encode(1234::integer::bytea, 'hex');"
+      ],
+      "query": "SELECT '\\x8000'::bytea::smallint::text;",
+      "expectedRows": [
+        [
+          {
+            "value": "-32768"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "postgres18/pg18-constraint-catalog-repro-test-testpostgres18notnullconstraintcatalogrepro-0001-select-contype-conkey::text-connoinherit-from",
+      "source": "testing/go/postgres18/pg18_constraint_catalog_repro_test.go:TestPostgres18NotNullConstraintCatalogRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE pg18_not_null_constraint_items (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tlabel TEXT NOT NULL\n\t\t\t\t);"
+      ],
+      "query": "SELECT contype, conkey::text, connoinherit\n\t\t\t\t\t\tFROM pg_catalog.pg_constraint\n\t\t\t\t\t\tWHERE conrelid = 'pg18_not_null_constraint_items'::regclass\n\t\t\t\t\t\t\tAND contype = 'n';",
+      "expectedRows": [
+        [
+          {
+            "value": "n"
+          },
+          {
+            "value": "{1}"
+          },
+          {
+            "value": "f"
+          }
+        ],
+        [
+          {
+            "value": "n"
+          },
+          {
+            "value": "{2}"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "postgres18/pg18-constraint-catalog-repro-test-testpostgres18tablenotnullconstraintsyntaxrepro-0001-select-conname-contype-conkey::text-from",
+      "source": "testing/go/postgres18/pg18_constraint_catalog_repro_test.go:TestPostgres18TableNotNullConstraintSyntaxRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE pg18_table_not_null_constraint_items (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tlabel TEXT,\n\t\t\t\t\tCONSTRAINT label_required NOT NULL label\n\t\t\t\t);"
+      ],
+      "query": "SELECT conname, contype, conkey::text\n\t\t\t\t\t\tFROM pg_catalog.pg_constraint\n\t\t\t\t\t\tWHERE conrelid = 'pg18_table_not_null_constraint_items'::regclass\n\t\t\t\t\t\t\tAND conname = 'label_required';",
+      "expectedRows": [
+        [
+          {
+            "value": "label_required"
+          },
+          {
+            "value": "n"
+          },
+          {
+            "value": "{2}"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "postgres18/pg18-constraint-catalog-repro-test-testpostgres18tablenotnullconstraintsyntaxrepro-0002-insert-into-pg18_table_not_null_constraint_items-values-1",
+      "source": "testing/go/postgres18/pg18_constraint_catalog_repro_test.go:TestPostgres18TableNotNullConstraintSyntaxRepro",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE pg18_table_not_null_constraint_items (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tlabel TEXT,\n\t\t\t\t\tCONSTRAINT label_required NOT NULL label\n\t\t\t\t);",
+        "SELECT conname, contype, conkey::text\n\t\t\t\t\t\tFROM pg_catalog.pg_constraint\n\t\t\t\t\t\tWHERE conrelid = 'pg18_table_not_null_constraint_items'::regclass\n\t\t\t\t\t\t\tAND conname = 'label_required';"
+      ],
+      "query": "INSERT INTO pg18_table_not_null_constraint_items VALUES (1, NULL);",
+      "expectedSqlstate": "23502",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "postgres18/pg18-constraint-catalog-repro-test-testpostgres18alternotnullconstraintinheritancerepro-0001-select-conname-connoinherit-from-pg_catalog.pg_constraint",
+      "source": "testing/go/postgres18/pg18_constraint_catalog_repro_test.go:TestPostgres18AlterNotNullConstraintInheritanceRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE pg18_not_null_inherit_items (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tlabel TEXT CONSTRAINT label_required NOT NULL NO INHERIT\n\t\t\t\t);"
+      ],
+      "query": "SELECT conname, connoinherit\n\t\t\t\t\t\tFROM pg_catalog.pg_constraint\n\t\t\t\t\t\tWHERE conrelid = 'pg18_not_null_inherit_items'::regclass\n\t\t\t\t\t\t\tAND conname = 'label_required';",
+      "expectedRows": [
+        [
+          {
+            "value": "label_required"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "postgres18/pg18-constraint-catalog-repro-test-testpostgres18alternotnullconstraintinheritancerepro-0002-select-conname-connoinherit-from-pg_catalog.pg_constraint",
+      "source": "testing/go/postgres18/pg18_constraint_catalog_repro_test.go:TestPostgres18AlterNotNullConstraintInheritanceRepro",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE pg18_not_null_inherit_items (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tlabel TEXT CONSTRAINT label_required NOT NULL NO INHERIT\n\t\t\t\t);",
+        "SELECT conname, connoinherit\n\t\t\t\t\t\tFROM pg_catalog.pg_constraint\n\t\t\t\t\t\tWHERE conrelid = 'pg18_not_null_inherit_items'::regclass\n\t\t\t\t\t\t\tAND conname = 'label_required';",
+        "ALTER TABLE pg18_not_null_inherit_items\n\t\t\t\t\t\tALTER CONSTRAINT label_required INHERIT;"
+      ],
+      "query": "SELECT conname, connoinherit\n\t\t\t\t\t\tFROM pg_catalog.pg_constraint\n\t\t\t\t\t\tWHERE conrelid = 'pg18_not_null_inherit_items'::regclass\n\t\t\t\t\t\t\tAND conname = 'label_required';",
+      "expectedRows": [
+        [
+          {
+            "value": "label_required"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "postgres18/pg18-constraint-catalog-repro-test-testpostgres18alternotnullconstraintinheritancerepro-0003-insert-into-pg18_not_null_inherit_items-values-1",
+      "source": "testing/go/postgres18/pg18_constraint_catalog_repro_test.go:TestPostgres18AlterNotNullConstraintInheritanceRepro",
+      "ordinal": 3,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE pg18_not_null_inherit_items (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tlabel TEXT CONSTRAINT label_required NOT NULL NO INHERIT\n\t\t\t\t);",
+        "SELECT conname, connoinherit\n\t\t\t\t\t\tFROM pg_catalog.pg_constraint\n\t\t\t\t\t\tWHERE conrelid = 'pg18_not_null_inherit_items'::regclass\n\t\t\t\t\t\t\tAND conname = 'label_required';",
+        "ALTER TABLE pg18_not_null_inherit_items\n\t\t\t\t\t\tALTER CONSTRAINT label_required INHERIT;",
+        "SELECT conname, connoinherit\n\t\t\t\t\t\tFROM pg_catalog.pg_constraint\n\t\t\t\t\t\tWHERE conrelid = 'pg18_not_null_inherit_items'::regclass\n\t\t\t\t\t\t\tAND conname = 'label_required';"
+      ],
+      "query": "INSERT INTO pg18_not_null_inherit_items VALUES (1, NULL);",
+      "expectedSqlstate": "23502",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "postgres18/temporal-constraint-repro-test-testpostgres18withoutoverlapstemporaluniquerepro-0001-insert-into-temporal_unique_bookings-values-1",
+      "source": "testing/go/postgres18/temporal_constraint_repro_test.go:TestPostgres18WithoutOverlapsTemporalUniqueRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE EXTENSION btree_gist;",
+        "CREATE TABLE temporal_unique_bookings (\n\t\t\t\t\troom_id INT NOT NULL,\n\t\t\t\t\tbooked daterange NOT NULL,\n\t\t\t\t\tUNIQUE (room_id, booked WITHOUT OVERLAPS)\n\t\t\t\t);",
+        "INSERT INTO temporal_unique_bookings VALUES\n\t\t\t\t\t(1, '[2026-01-01,2026-02-01)'::daterange),\n\t\t\t\t\t(1, '[2026-02-01,2026-03-01)'::daterange);"
+      ],
+      "query": "INSERT INTO temporal_unique_bookings VALUES (1, '[2026-01-15,2026-01-20)'::daterange);",
+      "expectedSqlstate": "23P01",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS btree_gist CASCADE",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "postgres18/temporal-constraint-repro-test-testpostgres18temporalforeignkeyperiodrepro-0001-insert-into-temporal_fk_child-values-1",
+      "source": "testing/go/postgres18/temporal_constraint_repro_test.go:TestPostgres18TemporalForeignKeyPeriodRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE EXTENSION btree_gist;",
+        "CREATE TABLE temporal_fk_parent (\n\t\t\t\t\tproduct_id INT NOT NULL,\n\t\t\t\t\tavailable daterange NOT NULL,\n\t\t\t\t\tPRIMARY KEY (product_id, available WITHOUT OVERLAPS)\n\t\t\t\t);",
+        "CREATE TABLE temporal_fk_child (\n\t\t\t\t\tproduct_id INT NOT NULL,\n\t\t\t\t\trequested daterange NOT NULL,\n\t\t\t\t\tFOREIGN KEY (product_id, PERIOD requested)\n\t\t\t\t\t\tREFERENCES temporal_fk_parent (product_id, PERIOD available)\n\t\t\t\t);",
+        "INSERT INTO temporal_fk_parent VALUES\n\t\t\t\t\t(1, '[2026-01-01,2026-02-01)'::daterange),\n\t\t\t\t\t(1, '[2026-02-01,2026-03-01)'::daterange);",
+        "INSERT INTO temporal_fk_child VALUES\n\t\t\t\t\t\t(1, '[2026-01-15,2026-02-15)'::daterange);"
+      ],
+      "query": "INSERT INTO temporal_fk_child VALUES (1, '[2026-03-01,2026-04-01)'::daterange);",
+      "expectedSqlstate": "23503",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS btree_gist CASCADE",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    }
+  ]
+}

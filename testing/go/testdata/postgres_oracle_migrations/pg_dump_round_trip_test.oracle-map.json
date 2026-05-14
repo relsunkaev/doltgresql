@@ -1,0 +1,101 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map pg_dump_round_trip_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/pg_dump_round_trip_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/pg_dump_round_trip_test.go:TestPgDumpPartitionedTableOpclassProbe#0001",
+      "source": "testing/go/pg_dump_round_trip_test.go:TestPgDumpPartitionedTableOpclassProbe",
+      "ordinal": 1,
+      "scriptName": "pg_dump partitioned table opclass probe resolves regnamespace in scalar subquery",
+      "oracle": "postgres",
+      "postgresId": "pg-dump-round-trip-test-testpgdumppartitionedtableopclassprobe-0001-select-partrelid-from-pg_catalog.pg_partitioned_table-where",
+      "suggestedId": "pg-dump-round-trip-test-testpgdumppartitionedtableopclassprobe-0001-select-partrelid-from-pg_catalog.pg_partitioned_table-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT partrelid FROM pg_catalog.pg_partitioned_table WHERE\n(SELECT c.oid FROM pg_catalog.pg_opclass c JOIN pg_catalog.pg_am a ON c.opcmethod = a.oid\nWHERE opcname = 'enum_ops' AND opcnamespace = 'pg_catalog'::regnamespace AND amname = 'hash') = ANY(partclass);",
+      "querySha256": "ce317fa990925df27b556bee2e3dfcc08173a93480e643be17288593d58e8890",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_dump_round_trip_test.go:TestPgDumpAlterColumnSetStorageProbe#0001",
+      "source": "testing/go/pg_dump_round_trip_test.go:TestPgDumpAlterColumnSetStorageProbe",
+      "ordinal": 1,
+      "scriptName": "pg_dump column storage metadata is accepted",
+      "oracle": "internal",
+      "suggestedId": "pg-dump-round-trip-test-testpgdumpaltercolumnsetstorageprobe-0001-alter-table-only-public.storage_probe-alter",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE ONLY public.storage_probe ALTER COLUMN payload SET STORAGE EXTENDED;",
+      "querySha256": "b80590b15ac44ea12c95b0e81eed1cd96478b4da4cf1f7da17844d9c0b92fece",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_dump_round_trip_test.go:TestPgDumpAlterColumnSetStorageProbe#0002",
+      "source": "testing/go/pg_dump_round_trip_test.go:TestPgDumpAlterColumnSetStorageProbe",
+      "ordinal": 2,
+      "scriptName": "pg_dump column storage metadata is accepted",
+      "oracle": "internal",
+      "suggestedId": "pg-dump-round-trip-test-testpgdumpaltercolumnsetstorageprobe-0002-insert-into-storage_probe-values-1",
+      "expectedKind": "rows",
+      "query": "INSERT INTO storage_probe VALUES (1, 'ok');",
+      "querySha256": "ba10232744e07589b09792feaddb6687679388795039b53d8836bb5a3ec9a15f",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_dump_round_trip_test.go:TestPgDumpAlterColumnSetStorageProbe#0003",
+      "source": "testing/go/pg_dump_round_trip_test.go:TestPgDumpAlterColumnSetStorageProbe",
+      "ordinal": 3,
+      "scriptName": "pg_dump column storage metadata is accepted",
+      "oracle": "internal",
+      "suggestedId": "pg-dump-round-trip-test-testpgdumpaltercolumnsetstorageprobe-0003-select-payload-from-storage_probe-where",
+      "expectedKind": "rows",
+      "query": "SELECT payload FROM storage_probe WHERE id = 1;",
+      "querySha256": "9129b1eaea659adb8b0056990fb95b8b686313dbef51cdae23e8931bbca0e3fd",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_dump_round_trip_test.go:TestPgDependViewTableDependencies#0001",
+      "source": "testing/go/pg_dump_round_trip_test.go:TestPgDependViewTableDependencies",
+      "ordinal": 1,
+      "scriptName": "pg_depend exposes view dependencies on referenced tables",
+      "oracle": "postgres",
+      "postgresId": "pg-dump-round-trip-test-testpgdependviewtabledependencies-0001-select-view_class.relname-ref_class.relname-d.deptype-from",
+      "suggestedId": "pg-dump-round-trip-test-testpgdependviewtabledependencies-0001-select-view_class.relname-ref_class.relname-d.deptype-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT view_class.relname, ref_class.relname, d.deptype\nFROM pg_catalog.pg_depend d\nJOIN pg_catalog.pg_class view_class ON view_class.oid = d.objid\nJOIN pg_catalog.pg_class ref_class ON ref_class.oid = d.refobjid\nWHERE d.classid = 'pg_class'::regclass\n\tAND d.refclassid = 'pg_class'::regclass\n\tAND view_class.relname = 'dep_active_projects'\nORDER BY ref_class.relname;",
+      "querySha256": "38299883eb263644b78def96ed5ee4a1d0b064b531be4adc540278f6e4b0dbcf",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_dump_round_trip_test.go:TestPgDependViewTableDependencies#0002",
+      "source": "testing/go/pg_dump_round_trip_test.go:TestPgDependViewTableDependencies",
+      "ordinal": 2,
+      "scriptName": "pg_depend exposes view dependencies on referenced tables",
+      "oracle": "internal",
+      "suggestedId": "pg-dump-round-trip-test-testpgdependviewtabledependencies-0002-select-strpos-pg_get_viewdef-dep_active_projects-::regclass",
+      "expectedKind": "rows",
+      "query": "SELECT\n\tstrpos(pg_get_viewdef('dep_active_projects'::regclass), 'public.dep_projects') > 0,\n\tstrpos(pg_get_viewdef('dep_active_projects'::regclass), 'public.dep_accounts') > 0;",
+      "querySha256": "e7865cbbe8a3b4e73803366a731718aa648ee243a16cf49cfba6d6c8cdb2b81a",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    }
+  ]
+}

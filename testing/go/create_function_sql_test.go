@@ -27,12 +27,10 @@ func TestCreateFunctionsLanguageSQL(t *testing.T) {
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `CREATE FUNCTION alt_func1(int) RETURNS int LANGUAGE sql AS 'SELECT $1 + 1';`,
-					Expected: []sql.Row{},
+					Query: `CREATE FUNCTION alt_func1(int) RETURNS int LANGUAGE sql AS 'SELECT $1 + 1';`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0001-create-function-alt_func1-int-returns", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT alt_func1(3);`,
-					Expected: []sql.Row{{4}},
+					Query: `SELECT alt_func1(3);`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0002-select-alt_func1-3"},
 				},
 			},
 		},
@@ -41,20 +39,16 @@ func TestCreateFunctionsLanguageSQL(t *testing.T) {
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `CREATE FUNCTION alt_func1(x int) RETURNS int LANGUAGE sql AS 'SELECT x + 1';`,
-					Expected: []sql.Row{},
+					Query: `CREATE FUNCTION alt_func1(x int) RETURNS int LANGUAGE sql AS 'SELECT x + 1';`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0003-create-function-alt_func1-x-int", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT alt_func1(3);`,
-					Expected: []sql.Row{{4}},
+					Query: `SELECT alt_func1(3);`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0004-select-alt_func1-3"},
 				},
 				{
-					Query:    `CREATE FUNCTION sub_numbers(x int, y int) RETURNS int LANGUAGE sql AS 'SELECT y - x';`,
-					Expected: []sql.Row{},
+					Query: `CREATE FUNCTION sub_numbers(x int, y int) RETURNS int LANGUAGE sql AS 'SELECT y - x';`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0005-create-function-sub_numbers-x-int"},
 				},
 				{
-					Query:    `SELECT sub_numbers(1, 2);`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT sub_numbers(1, 2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0006-select-sub_numbers-1-2"},
 				},
 			},
 		},
@@ -74,16 +68,13 @@ func TestCreateFunctionsLanguageSQL(t *testing.T) {
 										WHEN score >= 50 THEN 'Average'
 									ELSE 'Fail'
 									END;
-							$$;`,
-					Expected: []sql.Row{},
+							$$;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0007-create-function-get_grade_description-score-int", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT get_grade_description(92);`,
-					Expected: []sql.Row{{"Excellent"}},
+					Query: `SELECT get_grade_description(92);`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0008-select-get_grade_description-92"},
 				},
 				{
-					Query:    `SELECT get_grade_description(65);`,
-					Expected: []sql.Row{{"Average"}},
+					Query: `SELECT get_grade_description(65);`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0009-select-get_grade_description-65"},
 				},
 			},
 		},
@@ -97,13 +88,12 @@ func TestCreateFunctionsLanguageSQL(t *testing.T) {
 							LANGUAGE SQL
 							AS $$
 								SELECT add_numbers(x, y) * 2;
-							$$;`,
+							$$;`, PostgresOracle:
 					// TODO: error message should be:  function add_numbers(integer, integer) does not exist
-					ExpectedErr: "function: 'add_numbers' not found",
+					ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0010-create-function-calculate_double_sum-x-int", Compare: "sqlstate"},
 				},
 				{
-					Query:    `CREATE FUNCTION add_numbers(int, int) RETURNS int LANGUAGE sql AS 'SELECT $1 + $2';`,
-					Expected: []sql.Row{},
+					Query: `CREATE FUNCTION add_numbers(int, int) RETURNS int LANGUAGE sql AS 'SELECT $1 + $2';`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0011-create-function-add_numbers-int-int", Compare: "sqlstate"},
 				},
 				{
 					Query: `CREATE FUNCTION calculate_double_sum(x INT, y INT)
@@ -111,12 +101,10 @@ func TestCreateFunctionsLanguageSQL(t *testing.T) {
 							LANGUAGE SQL
 							AS $$
 								SELECT add_numbers(x, y) * 2;
-							$$;`,
-					Expected: []sql.Row{},
+							$$;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0012-create-function-calculate_double_sum-x-int"},
 				},
 				{
-					Query:    `SELECT calculate_double_sum(1, 2);`,
-					Expected: []sql.Row{{6}},
+					Query: `SELECT calculate_double_sum(1, 2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0013-select-calculate_double_sum-1-2"},
 				},
 			},
 		},
@@ -124,12 +112,10 @@ func TestCreateFunctionsLanguageSQL(t *testing.T) {
 			Name: "function returning multiple rows",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `CREATE FUNCTION gen(a int) RETURNS SETOF INT LANGUAGE SQL AS $$ SELECT generate_series(1, a) $$ STABLE;`,
-					Expected: []sql.Row{},
+					Query: `CREATE FUNCTION gen(a int) RETURNS SETOF INT LANGUAGE SQL AS $$ SELECT generate_series(1, a) $$ STABLE;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0014-create-function-gen-a-int", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT * FROM gen(3);`,
-					Expected: []sql.Row{{1}, {2}, {3}},
+					Query: `SELECT * FROM gen(3);`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0015-select-*-from-gen-3"},
 				},
 			},
 		},
@@ -142,8 +128,7 @@ func TestCreateFunctionsLanguageSQL(t *testing.T) {
 							AS $$
 								CREATE OR REPLACE VIEW public.view_bathymetry_layer AS
 								SELECT 1;
-							$$;`,
-					Expected: []sql.Row{},
+							$$;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0016-create-function-public.sp_build_view_bathymetry_layer-returns-void", Compare: "sqlstate"},
 				},
 				{
 					Query:    `SELECT public.sp_build_view_bathymetry_layer()`,
@@ -240,16 +225,13 @@ func TestCreateFunctionsLanguageSQL(t *testing.T) {
 									state = w
 								RETURNING
 									id;
-							';`,
-					Expected: []sql.Row{},
+							';`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0024-create-function-d-w-text"},
 				},
 				{
-					Query:    `SELECT * FROM test;`,
-					Expected: []sql.Row{{1, "sched"}, {2, "busy"}},
+					Query: `SELECT * FROM test;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0025-select-*-from-test"},
 				},
 				{
-					Query:    `SELECT d('sched');`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT d('sched');`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0026-select-d-sched", Compare: "sqlstate"},
 				},
 				{
 					Query:    `SELECT * FROM test;`,
@@ -272,28 +254,22 @@ func TestCreateFunctionsLanguageSQL(t *testing.T) {
 								AS $$
 							DROP VIEW test1;
 							DROP VIEW test2;
-							$$;`,
-					Expected: []sql.Row{},
+							$$;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0028-create-function-drop_views-returns-void"},
 				},
 				{
-					Query:    `SELECT * FROM test1`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT * FROM test1`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0029-select-*-from-test1"},
 				},
 				{
-					Query:    `SELECT * FROM test2`,
-					Expected: []sql.Row{{2}},
+					Query: `SELECT * FROM test2`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0030-select-*-from-test2"},
 				},
 				{
-					Query:    `SELECT drop_views();`,
-					Expected: []sql.Row{{nil}},
+					Query: `SELECT drop_views();`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0031-select-drop_views"},
 				},
 				{
-					Query:       `SELECT * FROM test1`,
-					ExpectedErr: `not found`,
+					Query: `SELECT * FROM test1`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0032-select-*-from-test1"},
 				},
 				{
-					Query:       `SELECT * FROM test2`,
-					ExpectedErr: `not found`,
+					Query: `SELECT * FROM test2`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0033-select-*-from-test2", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -309,8 +285,7 @@ func TestCreateFunctionsLanguageSQL(t *testing.T) {
 							AS $$
 								INSERT INTO cp_test VALUES(e+f, d);
 								SELECT a FROM cp_test WHERE b = d;
-							$$;`,
-					Expected: []sql.Row{},
+							$$;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0034-create-or-replace-function-dfunc"},
 				},
 				{
 					Query: `CREATE OR REPLACE FUNCTION dfunc(e int, f int default 100)
@@ -318,32 +293,25 @@ func TestCreateFunctionsLanguageSQL(t *testing.T) {
 							AS $$
 								INSERT INTO cp_test VALUES(e+f, 'seconddfunc');
 								SELECT a FROM cp_test WHERE b = 'seconddfunc';
-							$$;`,
-					Expected: []sql.Row{},
+							$$;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0035-create-or-replace-function-dfunc"},
 				},
 				{
-					Query:    `SELECT * FROM dfunc(10, 'Hello', 20);`,
-					Expected: []sql.Row{{30}},
+					Query: `SELECT * FROM dfunc(10, 'Hello', 20);`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0036-select-*-from-dfunc-10"},
 				},
 				{
-					Query:    `SELECT * FROM cp_test`,
-					Expected: []sql.Row{{30, "Hello"}},
+					Query: `SELECT * FROM cp_test`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0037-select-*-from-cp_test"},
 				},
 				{
-					Query:    `SELECT * FROM dfunc(50, 'Bye');`,
-					Expected: []sql.Row{{150}},
+					Query: `SELECT * FROM dfunc(50, 'Bye');`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0038-select-*-from-dfunc-50"},
 				},
 				{
-					Query:    `SELECT * FROM cp_test`,
-					Expected: []sql.Row{{30, "Hello"}, {150, "Bye"}},
+					Query: `SELECT * FROM cp_test`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0039-select-*-from-cp_test"},
 				},
 				{
-					Query:    `SELECT dfunc(2, 'After');`,
-					Expected: []sql.Row{{102}},
+					Query: `SELECT dfunc(2, 'After');`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0040-select-dfunc-2-after"},
 				},
 				{
-					Query:    `SELECT * FROM cp_test`,
-					Expected: []sql.Row{{30, "Hello"}, {150, "Bye"}, {102, "After"}},
+					Query: `SELECT * FROM cp_test`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0041-select-*-from-cp_test"},
 				},
 				{
 					Query: `CREATE OR REPLACE FUNCTION dfunc(e int, f text default '100')
@@ -351,12 +319,10 @@ func TestCreateFunctionsLanguageSQL(t *testing.T) {
 							AS $$
 								INSERT INTO cp_test VALUES(e, f);
 								SELECT a FROM cp_test WHERE b = f;
-							$$;`,
-					Expected: []sql.Row{},
+							$$;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0042-create-or-replace-function-dfunc"},
 				},
 				{
-					Query:       `SELECT dfunc(50);`,
-					ExpectedErr: `not unique`,
+					Query: `SELECT dfunc(50);`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0043-select-dfunc-50", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -369,8 +335,7 @@ func TestCreateFunctionsLanguageSQL(t *testing.T) {
             LANGUAGE sql
             BEGIN ATOMIC 
 				SELECT jsonb_build_object('k', 6, 'm', 2048, 'include_original', true, 'tokenizer', json_build_object('kind', 'ngram', 'token_length', 3), 'token_filters', json_build_array(json_build_object('kind', 'downcase'))) AS jsonb_build_object; 
-			END;`,
-					Expected: []sql.Row{},
+			END;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0044-create-function-match_default-returns-jsonb"},
 				},
 				{
 					Skip:     true, // TODO support json_build_object() function
@@ -400,12 +365,10 @@ func TestCreateFunctionsLanguageSQL(t *testing.T) {
             LANGUAGE sql
             BEGIN ATOMIC 
 				RETURN 1::text || 'one'; 
-			END;`,
-					Expected: []sql.Row{},
+			END;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0048-create-function-return1-returns-text"},
 				},
 				{
-					Query:    `SELECT return1();`,
-					Expected: []sql.Row{{"1one"}},
+					Query: `SELECT return1();`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0049-select-return1"},
 				},
 			},
 		},

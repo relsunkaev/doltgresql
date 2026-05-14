@@ -31,11 +31,7 @@ var SchemaTests = []ScriptTest{
 				Query: "INSERT INTO employees VALUES (1, 'John', 'Doe'), (2, 'Jane', 'Doe');",
 			},
 			{
-				Query: "SELECT * FROM employees;",
-				Expected: []sql.Row{
-					{1, "John", "Doe"},
-					{2, "Jane", "Doe"},
-				},
+				Query: "SELECT * FROM employees;", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0001-select-*-from-employees"},
 			},
 			{
 				Query: "SELECT * FROM public.employees;",
@@ -171,16 +167,14 @@ var SchemaTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query:       "CREATE TABLE test (pk BIGINT PRIMARY KEY, v1 BIGINT);",
-				ExpectedErr: "no schema has been selected to create in",
+				Query: "CREATE TABLE test (pk BIGINT PRIMARY KEY, v1 BIGINT);", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0010-create-table-test-pk-bigint", Compare: "sqlstate"},
 			},
 			{
 				Query: `set search_path to '"$user"'`,
 			},
 			{
 				// only available schema doesn't exist
-				Query:       "CREATE TABLE test (pk BIGINT PRIMARY KEY, v1 BIGINT);",
-				ExpectedErr: "no schema has been selected to create in",
+				Query: "CREATE TABLE test (pk BIGINT PRIMARY KEY, v1 BIGINT);", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0011-create-table-test-pk-bigint", Compare: "sqlstate"},
 			},
 			{
 				Query: `create schema postgres`,
@@ -334,18 +328,10 @@ var SchemaTests = []ScriptTest{
 				Query: "insert into otherSchema.test values (3,3), (4,4)",
 			},
 			{
-				Query: "SELECT * FROM mySchema.test;",
-				Expected: []sql.Row{
-					{1, 1},
-					{2, 2},
-				},
+				Query: "SELECT * FROM mySchema.test;", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0025-select-*-from-myschema.test"},
 			},
 			{
-				Query: "SELECT * FROM otherSchema.test;",
-				Expected: []sql.Row{
-					{3, 3},
-					{4, 4},
-				},
+				Query: "SELECT * FROM otherSchema.test;", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0026-select-*-from-otherschema.test"},
 			},
 		},
 	},
@@ -391,8 +377,7 @@ var SchemaTests = []ScriptTest{
 				Query: "create schema mySchema",
 			},
 			{
-				Query:       "create schema MYSCHEMA",
-				ExpectedErr: "can't create schema myschema; schema exists",
+				Query: "create schema MYSCHEMA", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0030-create-schema-myschema", Compare: "sqlstate"},
 			},
 		},
 	},
@@ -409,29 +394,19 @@ var SchemaTests = []ScriptTest{
 				Query: "CREATE TABLE mySchema.test (pk BIGINT PRIMARY KEY, v1 BIGINT);",
 			},
 			{
-				Query:    "insert into mySchema.test values (1,1), (2,2)",
-				Expected: []sql.Row{},
+				Query: "insert into mySchema.test values (1,1), (2,2)", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0031-insert-into-myschema.test-values-1"},
 			},
 			{
-				Query: "SELECT * FROM mySchema.test;",
-				Expected: []sql.Row{
-					{1, 1},
-					{2, 2},
-				},
+				Query: "SELECT * FROM mySchema.test;", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0032-select-*-from-myschema.test"},
 			},
 			{
 				Query: "CREATE TABLE otherSchema.test (pk BIGINT PRIMARY KEY, v1 BIGINT);",
 			},
 			{
-				Query:    "insert into otherSchema.test values (3,3), (4,4)",
-				Expected: []sql.Row{},
+				Query: "insert into otherSchema.test values (3,3), (4,4)", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0033-insert-into-otherschema.test-values-3"},
 			},
 			{
-				Query: "SELECT * FROM otherSchema.test;",
-				Expected: []sql.Row{
-					{3, 3},
-					{4, 4},
-				},
+				Query: "SELECT * FROM otherSchema.test;", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0034-select-*-from-otherschema.test"},
 			},
 		},
 	},
@@ -454,8 +429,7 @@ var SchemaTests = []ScriptTest{
 				Query: "insert into mySchema.test values (1,1), (2,2)",
 			},
 			{
-				Query:    "insert into otherSchema.test values (3,3), (4,4)",
-				Expected: []sql.Row{},
+				Query: "insert into otherSchema.test values (3,3), (4,4)", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0035-insert-into-otherschema.test-values-3"},
 			},
 			{
 				Query: "update mySchema.test set v1 = 3 where pk = 1",
@@ -470,16 +444,10 @@ var SchemaTests = []ScriptTest{
 				Query: "delete from otherSchema.test where pk = 4",
 			},
 			{
-				Query: "SELECT * FROM mySchema.test;",
-				Expected: []sql.Row{
-					{1, 3},
-				},
+				Query: "SELECT * FROM mySchema.test;", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0036-select-*-from-myschema.test"},
 			},
 			{
-				Query: "SELECT * FROM otherSchema.test;",
-				Expected: []sql.Row{
-					{3, 4},
-				},
+				Query: "SELECT * FROM otherSchema.test;", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0037-select-*-from-otherschema.test"},
 			},
 		},
 	},
@@ -493,26 +461,19 @@ var SchemaTests = []ScriptTest{
 				Query: "CREATE TABLE mySchema.test (pk BIGINT PRIMARY KEY, v1 BIGINT);",
 			},
 			{
-				Query:       "CREATE TABLE otherSchema.test (pk BIGINT PRIMARY KEY, v1 BIGINT);",
-				ExpectedErr: "database schema not found",
+				Query: "CREATE TABLE otherSchema.test (pk BIGINT PRIMARY KEY, v1 BIGINT);", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0038-create-table-otherschema.test-pk-bigint", Compare: "sqlstate"},
 			},
 			{
 				Query: "insert into mySchema.test values (1,1), (2,2)",
 			},
 			{
-				Query:       "insert into otherSchema.test values (3,3), (4,4)",
-				ExpectedErr: "table not found",
+				Query: "insert into otherSchema.test values (3,3), (4,4)", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0039-insert-into-otherschema.test-values-3", Compare: "sqlstate"},
 			},
 			{
-				Query: "SELECT * FROM mySchema.test;",
-				Expected: []sql.Row{
-					{1, 1},
-					{2, 2},
-				},
+				Query: "SELECT * FROM mySchema.test;", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0040-select-*-from-myschema.test"},
 			},
 			{
-				Query:       "SELECT * FROM otherSchema.test;",
-				ExpectedErr: "table not found",
+				Query: "SELECT * FROM otherSchema.test;", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0041-select-*-from-otherschema.test", Compare: "sqlstate"},
 			},
 		},
 	},
@@ -554,20 +515,13 @@ var SchemaTests = []ScriptTest{
 				Query: "INSERT INTO dgzero_0.version_history VALUES (1);",
 			},
 			{
-				Query: "SELECT * FROM dgzero_0.version_history;",
-				Expected: []sql.Row{
-					{1},
-				},
+				Query: "SELECT * FROM dgzero_0.version_history;", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0043-select-*-from-dgzero_0.version_history"},
 			},
 			{
-				Query:    "SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'dgzero' ORDER BY tablename;",
-				Expected: []sql.Row{},
+				Query: "SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'dgzero' ORDER BY tablename;", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0044-select-tablename-from-pg_catalog.pg_tables-where"},
 			},
 			{
-				Query: "SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'dgzero_0' ORDER BY tablename;",
-				Expected: []sql.Row{
-					{"version_history"},
-				},
+				Query: "SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'dgzero_0' ORDER BY tablename;", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0045-select-tablename-from-pg_catalog.pg_tables-where"},
 			},
 		},
 	},
@@ -583,30 +537,19 @@ var SchemaTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query:    "SHOW search_path",
-				Expected: []sql.Row{{`"$user", public`}},
+				Query: "SHOW search_path", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0046-show-search_path"},
 			},
 			{
-				Query:       "SELECT * FROM mytbl;",
-				ExpectedErr: "table not found",
+				Query: "SELECT * FROM mytbl;", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0047-select-*-from-mytbl", Compare: "sqlstate"},
 			},
 			{
-				Query:       "SELECT * FROM myvw;",
-				ExpectedErr: "table not found",
+				Query: "SELECT * FROM myvw;", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0048-select-*-from-myvw", Compare: "sqlstate"},
 			},
 			{
-				Query: "SELECT * FROM myschema.mytbl;",
-				Expected: []sql.Row{
-					{1, 1},
-					{2, 2},
-				},
+				Query: "SELECT * FROM myschema.mytbl;", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0049-select-*-from-myschema.mytbl"},
 			},
 			{
-				Query: "SELECT * FROM myschema.myvw;",
-				Expected: []sql.Row{
-					{4, 1},
-					{5, 2},
-				},
+				Query: "SELECT * FROM myschema.myvw;", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0050-select-*-from-myschema.myvw"},
 			},
 		},
 	},
@@ -912,15 +855,7 @@ var SchemaTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query: "Show schemas",
-				Expected: []sql.Row{
-					{"dolt"},
-					{"dropme"},
-					{"hasTables"},
-					{"pg_catalog"},
-					{"public"},
-					{"information_schema"},
-				},
+				Query: "Show schemas", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0087-show-schemas", Compare: "sqlstate"},
 			},
 			{
 				Query:    "DROP SCHEMA dropme;",

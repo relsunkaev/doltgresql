@@ -1,0 +1,1375 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map create_table_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/create_table_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0001",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 1,
+      "scriptName": "create table with UTF8 identifiers",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0001-create-table-foo😏-data🍆-text",
+      "suggestedId": "create-table-test-testcreatetable-0001-create-table-foo😏-data🍆-text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE TABLE foo😏(data🍆 TEXT);",
+      "querySha256": "d14ca9bf511e043660115768d59e7a77d47666811850b92fd14e8f12df90d179",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0002",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 2,
+      "scriptName": "create table with UTF8 identifiers",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0002-create-index-idx🍤-on-foo😏",
+      "suggestedId": "create-table-test-testcreatetable-0002-create-index-idx🍤-on-foo😏",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE INDEX idx🍤 ON foo😏(data🍆);",
+      "querySha256": "1fe59adf92abb07aa2ea79a1bae1518f8bbfb20901c05ef9f1ab93282e32229b",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0003",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 3,
+      "scriptName": "create table with UTF8 identifiers",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0003-insert-into-foo😏-data🍆-values",
+      "suggestedId": "create-table-test-testcreatetable-0003-insert-into-foo😏-data🍆-values",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "Insert into foo😏 (data🍆) VALUES ('foo');",
+      "querySha256": "533f8b9b0a5781f4c4c78e2fc90e4db3970c013b26b0fb7ae00cf44076d45668",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0004",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 4,
+      "scriptName": "create table with UTF8 identifiers",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0004-select-data🍆-from-foo😏",
+      "suggestedId": "create-table-test-testcreatetable-0004-select-data🍆-from-foo😏",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT data🍆 FROM foo😏;",
+      "querySha256": "9607cd998b6d22d05915ccc52b6311a7fb724e835724afa282adac3069d055f9",
+      "expectedRows": [
+        [
+          {
+            "value": "foo"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0005",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 5,
+      "scriptName": "create table with primary key",
+      "oracle": "internal",
+      "suggestedId": "create-table-test-testcreatetable-0005-select-*-from-employees",
+      "expectedKind": "rows",
+      "query": "select * from employees;",
+      "querySha256": "0452d7335b83a024f849ae195bd27d44925dad1c336da11d6cda143b1293bf1f",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0006",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 6,
+      "scriptName": "create table with primary key",
+      "oracle": "internal",
+      "suggestedId": "create-table-test-testcreatetable-0006-select-conname-from-pg_constraint-where",
+      "expectedKind": "rows",
+      "query": "SELECT conname FROM pg_constraint WHERE conrelid = 'employees'::regclass AND contype = 'p';",
+      "querySha256": "ac8f7e0771d8a4d223904990c65c0b8d91213bbc6b770b45b13f4cc78f4ec155",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0007",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 7,
+      "scriptName": "create table with primary key",
+      "oracle": "internal",
+      "suggestedId": "create-table-test-testcreatetable-0007-alter-table-employees-drop-constraint",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE employees DROP CONSTRAINT employees_pkey;",
+      "querySha256": "04236d935d69a7829eb8570b8bdc87e71d61a5bfb88b5fd843a6b5d4b2f93a74",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0008",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 8,
+      "scriptName": "create table with primary key, using custom constraint name",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0008-select-conname-from-pg_constraint-where",
+      "suggestedId": "create-table-test-testcreatetable-0008-select-conname-from-pg_constraint-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT conname FROM pg_constraint WHERE conrelid = 'users'::regclass AND contype = 'p';",
+      "querySha256": "c834a1cef184ead610b433280279b1cdf80c3d7fe16bdf93e85a863cfda8601f",
+      "expectedRows": [
+        [
+          {
+            "value": "users_primary_key"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0009",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 9,
+      "scriptName": "create table with primary key, using custom constraint name",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0009-alter-table-users-drop-constraint",
+      "suggestedId": "create-table-test-testcreatetable-0009-alter-table-users-drop-constraint",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE users DROP CONSTRAINT users_primary_key;",
+      "querySha256": "5ae58507308f1f5fdcfe5858b567985bea1505fb469d9908be116be29f7c1745",
+      "expectedRows": [],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0010",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 10,
+      "scriptName": "Create table with column default expression using function",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0010-create-table-t1-pk-int",
+      "suggestedId": "create-table-test-testcreatetable-0010-create-table-t1-pk-int",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "create table t1 (pk int primary key, c1 TEXT default length('Hello World!'));",
+      "querySha256": "ecd7cbdd488acab1ee282a316de65e7a4508f6ec046b6a6083a7ab2eac73c39d",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0011",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 11,
+      "scriptName": "Create table with column default expression using function",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0011-insert-into-t1-pk-values",
+      "suggestedId": "create-table-test-testcreatetable-0011-insert-into-t1-pk-values",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "insert into t1(pk) values (1);",
+      "querySha256": "404b6e2038b63d67ebbfece24b42d7a76eb6a0c92425d89620911c06d9ed994a",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0012",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 12,
+      "scriptName": "Create table with column default expression using function",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0012-select-*-from-t1",
+      "suggestedId": "create-table-test-testcreatetable-0012-select-*-from-t1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from t1;",
+      "querySha256": "19eece05bd9f71ef7fb0660101d6747c09ec4aacdd3fddbd090c0ee75f5e64a6",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "12"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0013",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 13,
+      "scriptName": "Create table with named default column constraint",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0013-create-table-zero_version_history-dataversion-int",
+      "suggestedId": "create-table-test-testcreatetable-0013-create-table-zero_version_history-dataversion-int",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE TABLE zero_version_history (\n\t\t\t\t\t\t\"dataVersion\" int NOT NULL,\n\t\t\t\t\t\tlock char(1) NOT NULL CONSTRAINT DF_schema_meta_lock DEFAULT 'v',\n\t\t\t\t\t\tCONSTRAINT CK_schema_meta_lock CHECK (lock='v')\n\t\t\t\t\t);",
+      "querySha256": "c9768d9ce02abe02a1f04e4428998fa1da4777953a2270c5ead1b2dab47ef282",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0014",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 14,
+      "scriptName": "Create table with named default column constraint",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0014-insert-into-zero_version_history-dataversion-values",
+      "suggestedId": "create-table-test-testcreatetable-0014-insert-into-zero_version_history-dataversion-values",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO zero_version_history (\"dataVersion\") VALUES (1);",
+      "querySha256": "c9a249b691779ecbfb0d4b22dfb9510daeb9ffb5ca70c9800ec88cf2a6e15129",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0015",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 15,
+      "scriptName": "Create table with named default column constraint",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0015-select-dataversion-lock-from-zero_version_history",
+      "suggestedId": "create-table-test-testcreatetable-0015-select-dataversion-lock-from-zero_version_history",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT \"dataVersion\", lock FROM zero_version_history;",
+      "querySha256": "dcb4f77d283e88bc5e6ca190633688da08a56bb75c1a6b72436d2958820de78d",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "v"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0016",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 16,
+      "scriptName": "Create table with named default column constraint",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0016-insert-into-zero_version_history-dataversion-lock",
+      "suggestedId": "create-table-test-testcreatetable-0016-insert-into-zero_version_history-dataversion-lock",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO zero_version_history (\"dataVersion\", lock) VALUES (2, 'x');",
+      "querySha256": "33bae5270f6d59b9788a8dce5aa8a68e742919c4a75e7c2e199aee5cb5c55d3f",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0017",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 17,
+      "scriptName": "Create table with table check constraint",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0017-create-table-products-name-text",
+      "suggestedId": "create-table-test-testcreatetable-0017-create-table-products-name-text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE TABLE products (name text, price numeric, discounted_price numeric, CHECK (price > discounted_price));",
+      "querySha256": "43667c8deb36ad0d5df0e9f8c4b73894231444dc2d8f7fb43f649f25c90001f4",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0018",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 18,
+      "scriptName": "Create table with table check constraint",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0018-insert-into-products-values-apple",
+      "suggestedId": "create-table-test-testcreatetable-0018-insert-into-products-values-apple",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "insert into products values ('apple', 1.20, 0.80);",
+      "querySha256": "fd26292953dcf43c95445d0caad856f6c8a58c59876bfbe71a6247fc006a6069",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0019",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 19,
+      "scriptName": "Create table with table check constraint",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0019-insert-into-products-values-peach",
+      "suggestedId": "create-table-test-testcreatetable-0019-insert-into-products-values-peach",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "insert into products values ('peach', 1.20, 1.80);",
+      "querySha256": "8fbabd1e9c272e614ee935fb2d18e1c2e6d199d4fc748af9d5fd9c63adc4e89a",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0020",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 20,
+      "scriptName": "Create table with table check constraint",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0020-select-*-from-products",
+      "suggestedId": "create-table-test-testcreatetable-0020-select-*-from-products",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from products;",
+      "querySha256": "4b36d7e1bff81daadab50d1858a0953286cd016e5d03014d5fdfe06f3eec4381",
+      "expectedRows": [
+        [
+          {
+            "value": "apple"
+          },
+          {
+            "value": "1.2"
+          },
+          {
+            "value": "0.8"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0021",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 21,
+      "scriptName": "Create table with column check constraint",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0021-create-table-mytbl-pk-int",
+      "suggestedId": "create-table-test-testcreatetable-0021-create-table-mytbl-pk-int",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "create table mytbl (pk int, v1 int constraint v1constraint check (v1 < 100));",
+      "querySha256": "2cb5d6ab1fa2d4482f354d90f778d7d7701fc5f94ad487e3a7f7bfdadd99aad9",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0022",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 22,
+      "scriptName": "Create table with column check constraint",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0022-insert-into-mytbl-values-1",
+      "suggestedId": "create-table-test-testcreatetable-0022-insert-into-mytbl-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "insert into mytbl values (1, 20);",
+      "querySha256": "968114183155e8cc965f5c29fa8dd0870bf940b593add6b36b6ca8b8944ea9e1",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0023",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 23,
+      "scriptName": "Create table with column check constraint",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0023-insert-into-mytbl-values-2",
+      "suggestedId": "create-table-test-testcreatetable-0023-insert-into-mytbl-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "insert into mytbl values (2, 200);",
+      "querySha256": "5aaa03badf8b3b95a8e702b74451afc6544880a09536e8eecc9ae3685662119d",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0024",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 24,
+      "scriptName": "Create table with column check constraint",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0024-select-*-from-mytbl",
+      "suggestedId": "create-table-test-testcreatetable-0024-select-*-from-mytbl",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from mytbl;",
+      "querySha256": "c73ac45f153ba8cd009773cdb7b327f92bd5c50a8101f22751641d231f54b578",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "20"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0025",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 25,
+      "scriptName": "check constraint with a function",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0025-create-table-mytbl-a-text",
+      "suggestedId": "create-table-test-testcreatetable-0025-create-table-mytbl-a-text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE TABLE mytbl (a text CHECK (length(a) > 2) PRIMARY KEY, b text);",
+      "querySha256": "159fcf800d8e036c5d658ffbbec4e0c809e87136b1f363891001a10fac9301cb",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0026",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 26,
+      "scriptName": "check constraint with a function",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0026-insert-into-mytbl-values-abc",
+      "suggestedId": "create-table-test-testcreatetable-0026-insert-into-mytbl-values-abc",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "insert into mytbl values ('abc', 'def');",
+      "querySha256": "6b9e0e169b3c2a343a443ef2e9987df868093f21c14b4fe2ec45689834b1f6e6",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0027",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 27,
+      "scriptName": "check constraint with a function",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0027-insert-into-mytbl-values-de",
+      "suggestedId": "create-table-test-testcreatetable-0027-insert-into-mytbl-values-de",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "insert into mytbl values ('de', 'abc');",
+      "querySha256": "8f70b8849567005762cd58ba1e4ad4a007068085f71da8e03b08986183d3e23d",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0028",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 28,
+      "scriptName": "check constraint with a function",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0028-select-*-from-mytbl",
+      "suggestedId": "create-table-test-testcreatetable-0028-select-*-from-mytbl",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from mytbl;",
+      "querySha256": "c73ac45f153ba8cd009773cdb7b327f92bd5c50a8101f22751641d231f54b578",
+      "expectedRows": [
+        [
+          {
+            "value": "abc"
+          },
+          {
+            "value": "def"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0029",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 29,
+      "scriptName": "check constraint with JSONB cast expression",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0029-create-table-json_checks-payload-jsonb",
+      "suggestedId": "create-table-test-testcreatetable-0029-create-table-json_checks-payload-jsonb",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE TABLE json_checks (payload jsonb CHECK (((payload->>'amount')::int) > 0));",
+      "querySha256": "251fea5232098a59f8449bc2ba00bbf0f5656463840c70e1b7382bacc2133985",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0030",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 30,
+      "scriptName": "check constraint with JSONB cast expression",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0030-insert-into-json_checks-values-{",
+      "suggestedId": "create-table-test-testcreatetable-0030-insert-into-json_checks-values-{",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO json_checks VALUES ('{\"amount\": 3}'::jsonb);",
+      "querySha256": "ebd6cbaaeee7b389f779f41a593915c533be927e6326efd4fd883ba5d6a8d2c3",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0031",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 31,
+      "scriptName": "check constraint with JSONB cast expression",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0031-insert-into-json_checks-values-{",
+      "suggestedId": "create-table-test-testcreatetable-0031-insert-into-json_checks-values-{",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO json_checks VALUES ('{\"amount\": -1}'::jsonb);",
+      "querySha256": "b7784e2bcf71e67a5df323b36ce9edbb38811a3f7ccb13d34fee7952990e3f1d",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0032",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 32,
+      "scriptName": "check constraint with JSONB cast expression",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0032-select-payload-from-json_checks",
+      "suggestedId": "create-table-test-testcreatetable-0032-select-payload-from-json_checks",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT payload FROM json_checks;",
+      "querySha256": "e64f29a942caee9d99d2512f3b2e9c129ec89af061adccdf8c8963cb251abbc7",
+      "expectedRows": [
+        [
+          {
+            "value": "{\"amount\":3}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0033",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 33,
+      "scriptName": "Create table with multiple check constraints on a single column",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0033-create-table-mytbl-pk-int",
+      "suggestedId": "create-table-test-testcreatetable-0033-create-table-mytbl-pk-int",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "create table mytbl (pk int, v1 int constraint v1constraint check (v1 < 100) check (v1 > 10));",
+      "querySha256": "6e96265b09c803c0b92e5ee2b6fec62e593dedbf35962dd603de98eac733d6e9",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0034",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 34,
+      "scriptName": "Create table with multiple check constraints on a single column",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0034-insert-into-mytbl-values-1",
+      "suggestedId": "create-table-test-testcreatetable-0034-insert-into-mytbl-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "insert into mytbl values (1, 20);",
+      "querySha256": "968114183155e8cc965f5c29fa8dd0870bf940b593add6b36b6ca8b8944ea9e1",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0035",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 35,
+      "scriptName": "Create table with multiple check constraints on a single column",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0035-insert-into-mytbl-values-2",
+      "suggestedId": "create-table-test-testcreatetable-0035-insert-into-mytbl-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "insert into mytbl values (2, 200);",
+      "querySha256": "5aaa03badf8b3b95a8e702b74451afc6544880a09536e8eecc9ae3685662119d",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0036",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 36,
+      "scriptName": "Create table with multiple check constraints on a single column",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0036-insert-into-mytbl-values-3",
+      "suggestedId": "create-table-test-testcreatetable-0036-insert-into-mytbl-values-3",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "insert into mytbl values (3, 5);",
+      "querySha256": "34baac6b01792d0963fa69041e520049188ee16225fe418fd89464f0bc6f3bb8",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0037",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 37,
+      "scriptName": "Create table with multiple check constraints on a single column",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0037-select-*-from-mytbl",
+      "suggestedId": "create-table-test-testcreatetable-0037-select-*-from-mytbl",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from mytbl;",
+      "querySha256": "c73ac45f153ba8cd009773cdb7b327f92bd5c50a8101f22751641d231f54b578",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "20"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0038",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 38,
+      "scriptName": "Create table with a check constraints on a single column and a table check constraint",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0038-create-table-mytbl-pk-int",
+      "suggestedId": "create-table-test-testcreatetable-0038-create-table-mytbl-pk-int",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "create table mytbl (pk int, v1 int constraint v1constraint check (v1 < 100), check (v1 > 10));",
+      "querySha256": "22008464be462b83c3755c943170d48d52130a0a4516e4074b26af791dfd9e94",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0039",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 39,
+      "scriptName": "Create table with a check constraints on a single column and a table check constraint",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0039-insert-into-mytbl-values-1",
+      "suggestedId": "create-table-test-testcreatetable-0039-insert-into-mytbl-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "insert into mytbl values (1, 20);",
+      "querySha256": "968114183155e8cc965f5c29fa8dd0870bf940b593add6b36b6ca8b8944ea9e1",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0040",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 40,
+      "scriptName": "Create table with a check constraints on a single column and a table check constraint",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0040-insert-into-mytbl-values-2",
+      "suggestedId": "create-table-test-testcreatetable-0040-insert-into-mytbl-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "insert into mytbl values (2, 200);",
+      "querySha256": "5aaa03badf8b3b95a8e702b74451afc6544880a09536e8eecc9ae3685662119d",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0041",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 41,
+      "scriptName": "Create table with a check constraints on a single column and a table check constraint",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0041-insert-into-mytbl-values-3",
+      "suggestedId": "create-table-test-testcreatetable-0041-insert-into-mytbl-values-3",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "insert into mytbl values (3, 5);",
+      "querySha256": "34baac6b01792d0963fa69041e520049188ee16225fe418fd89464f0bc6f3bb8",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0042",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 42,
+      "scriptName": "Create table with a check constraints on a single column and a table check constraint",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0042-select-*-from-mytbl",
+      "suggestedId": "create-table-test-testcreatetable-0042-select-*-from-mytbl",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from mytbl;",
+      "querySha256": "c73ac45f153ba8cd009773cdb7b327f92bd5c50a8101f22751641d231f54b578",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "20"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0043",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 43,
+      "scriptName": "create table with generated column",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0043-select-*-from-t1",
+      "suggestedId": "create-table-test-testcreatetable-0043-select-*-from-t1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from t1;",
+      "querySha256": "19eece05bd9f71ef7fb0660101d6747c09ec4aacdd3fddbd090c0ee75f5e64a6",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0044",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 44,
+      "scriptName": "create table with generated column",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0044-select-*-from-t2",
+      "suggestedId": "create-table-test-testcreatetable-0044-select-*-from-t2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from t2;",
+      "querySha256": "7af5095a3ce290b2ea4d87a7cf263422738f7393616a5b9f061b7c483b62a283",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "20"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0045",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 45,
+      "scriptName": "create table with function in generated column",
+      "oracle": "internal",
+      "suggestedId": "create-table-test-testcreatetable-0045-select-*-from-t1",
+      "expectedKind": "rows",
+      "query": "select * from t1;",
+      "querySha256": "19eece05bd9f71ef7fb0660101d6747c09ec4aacdd3fddbd090c0ee75f5e64a6",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0046",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 46,
+      "scriptName": "generated column with complex expression",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0046-select-*-from-t1",
+      "suggestedId": "create-table-test-testcreatetable-0046-select-*-from-t1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from t1;",
+      "querySha256": "19eece05bd9f71ef7fb0660101d6747c09ec4aacdd3fddbd090c0ee75f5e64a6",
+      "expectedRows": [
+        [
+          {
+            "value": " foo "
+          },
+          {
+            "value": "foo foo"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0047",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 47,
+      "scriptName": "generated column with reference to another column",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0047-select-*-from-t1-order",
+      "suggestedId": "create-table-test-testcreatetable-0047-select-*-from-t1-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from t1 order by a;",
+      "querySha256": "961b130bbedff333a535080554796835dacb4848ff21ea4c7c070e9b0c309e5c",
+      "expectedRows": [
+        [
+          {
+            "value": "foo"
+          },
+          {
+            "value": "bar"
+          },
+          {
+            "value": "t"
+          }
+        ],
+        [
+          {
+            "value": "foo2"
+          },
+          {
+            "null": true
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0048",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 48,
+      "scriptName": "generated column with space in column name",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0048-select-*-from-t1-order",
+      "suggestedId": "create-table-test-testcreatetable-0048-select-*-from-t1-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from t1 order by a;",
+      "querySha256": "961b130bbedff333a535080554796835dacb4848ff21ea4c7c070e9b0c309e5c",
+      "expectedRows": [
+        [
+          {
+            "value": "foo"
+          },
+          {
+            "value": "bar"
+          },
+          {
+            "value": "t"
+          }
+        ],
+        [
+          {
+            "value": "foo2"
+          },
+          {
+            "null": true
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0049",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 49,
+      "scriptName": "primary key GENERATED ALWAYS AS IDENTITY",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0049-insert-into-t1-b-values",
+      "suggestedId": "create-table-test-testcreatetable-0049-insert-into-t1-b-values",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "insert into t1 (b) values ('foo') returning a;",
+      "querySha256": "143aa23a06e5a9e6b1709a82e42b44f06c6aa23477aa031911d9358492f6c231",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0050",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 50,
+      "scriptName": "primary key GENERATED ALWAYS AS IDENTITY",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0050-insert-into-t1-a-b",
+      "suggestedId": "create-table-test-testcreatetable-0050-insert-into-t1-a-b",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "428C9",
+      "errorSeverity": "ERROR",
+      "query": "insert into t1 (a, b) values (2, 'foo') returning a;",
+      "querySha256": "bac264cccc60a65ee703c8684e7c0cbea5014133a100f5aa4a1530ae56052c2f",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0051",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 51,
+      "scriptName": "create table with default value",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0051-select-*-from-t1",
+      "suggestedId": "create-table-test-testcreatetable-0051-select-*-from-t1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from t1;",
+      "querySha256": "19eece05bd9f71ef7fb0660101d6747c09ec4aacdd3fddbd090c0ee75f5e64a6",
+      "expectedRows": [
+        [
+          {
+            "value": "abc"
+          },
+          {
+            "value": "foobar"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0052",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 52,
+      "scriptName": "create table with collation",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0052-select-*-from-collate_test1",
+      "suggestedId": "create-table-test-testcreatetable-0052-select-*-from-collate_test1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from collate_test1;",
+      "querySha256": "6ef9898b12e5f10b9d820415a429cf862374216e1be76b1a63296b1a8bd66daf",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "foo"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0053",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 53,
+      "scriptName": "create temporary table with serial column",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0053-create-temp-table-temp-id",
+      "suggestedId": "create-table-test-testcreatetable-0053-create-temp-table-temp-id",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE TEMP TABLE temp (id serial primary key)",
+      "querySha256": "237c742ae21509b8b8b9a39fb111d99e8cee7325e1995aad6428b4bcec68adba",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0054",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 54,
+      "scriptName": "create temporary table with serial column",
+      "oracle": "internal",
+      "suggestedId": "create-table-test-testcreatetable-0054-insert-into-temp-default-values",
+      "expectedKind": "rows",
+      "query": "INSERT INTO temp DEFAULT VALUES",
+      "querySha256": "b21444c46adca193e9a4bcb338fa542bfab9cff0eaebfc573b4006760788085d",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0055",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 55,
+      "scriptName": "create temporary table with serial column",
+      "oracle": "internal",
+      "suggestedId": "create-table-test-testcreatetable-0055-insert-into-temp-default-values",
+      "expectedKind": "rows",
+      "query": "INSERT INTO temp DEFAULT VALUES",
+      "querySha256": "b21444c46adca193e9a4bcb338fa542bfab9cff0eaebfc573b4006760788085d",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0056",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 56,
+      "scriptName": "create temporary table with serial column",
+      "oracle": "internal",
+      "suggestedId": "create-table-test-testcreatetable-0056-select-id-from-temp-order",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM temp ORDER BY id",
+      "querySha256": "929853bf269b1f149f8e7e3d4ee057b93d593b4c552185702dc138be8ae6d3a2",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0057",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 57,
+      "scriptName": "table with check constraint with ANY expression",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0057-insert-into-location-values-1",
+      "suggestedId": "create-table-test-testcreatetable-0057-insert-into-location-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "insert into location values (1, 'Склад Москва', 'Внутренни'), (2, 'Склад Спб', null);",
+      "querySha256": "fd24bc95cb0ab23ab60aad1bcf286a19d770895820e0d5ad88227a827683da84",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTable#0058",
+      "source": "testing/go/create_table_test.go:TestCreateTable",
+      "ordinal": 58,
+      "scriptName": "table with check constraint with ANY expression",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0058-select-*-from-location",
+      "suggestedId": "create-table-test-testcreatetable-0058-select-*-from-location",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM location;",
+      "querySha256": "bfe82090be44c2d527aa8da51c47307eb3c88c2e3e3e6154c24f8a8456e161dd",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "Склад Москва"
+          },
+          {
+            "value": "Внутренни"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "Склад Спб"
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTableInherit#0001",
+      "source": "testing/go/create_table_test.go:TestCreateTableInherit",
+      "ordinal": 1,
+      "scriptName": "Create table with inheritance",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetableinherit-0001-create-table-t4-d-int",
+      "suggestedId": "create-table-test-testcreatetableinherit-0001-create-table-t4-d-int",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "create table t4 (d int) inherits (t1, t2, t3);",
+      "querySha256": "2bf8f83d7f0ac43c6f63d523b6b017aeb7a7e55da3d31fdbf1fe4fe18816a00a",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTableInherit#0002",
+      "source": "testing/go/create_table_test.go:TestCreateTableInherit",
+      "ordinal": 2,
+      "scriptName": "Create table with inheritance",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetableinherit-0002-insert-into-t4-a-b",
+      "suggestedId": "create-table-test-testcreatetableinherit-0002-insert-into-t4-a-b",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "insert into t4(a, b, c, d) values (1, 2, 3, 4);",
+      "querySha256": "adbfe4bb7b862fc994264f7fa7806a1d2fedb8eb1b82b6aabfec2d944d7996fd",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTableInherit#0003",
+      "source": "testing/go/create_table_test.go:TestCreateTableInherit",
+      "ordinal": 3,
+      "scriptName": "Create table with inheritance",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetableinherit-0003-select-*-from-t4",
+      "suggestedId": "create-table-test-testcreatetableinherit-0003-select-*-from-t4",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from t4;",
+      "querySha256": "0410be791295ccece1b0c3170fc51caf2ec65928fc3cd4ccdd3c5e9946490e87",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTableInherit#0004",
+      "source": "testing/go/create_table_test.go:TestCreateTableInherit",
+      "ordinal": 4,
+      "scriptName": "Create table with inheritance",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetableinherit-0004-create-table-t111-inherits-t1",
+      "suggestedId": "create-table-test-testcreatetableinherit-0004-create-table-t111-inherits-t1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "create table t111 () inherits (t1, t11);",
+      "querySha256": "7b338e1f337ac1730c3b5fa95a85327992165388ec3543a503b02bb04314af5f",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTableInherit#0005",
+      "source": "testing/go/create_table_test.go:TestCreateTableInherit",
+      "ordinal": 5,
+      "scriptName": "Create table with inheritance",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetableinherit-0005-insert-into-t111-a-values",
+      "suggestedId": "create-table-test-testcreatetableinherit-0005-insert-into-t111-a-values",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "insert into t111(a) values (1);",
+      "querySha256": "115dbeb894a894eb8b3f5cf4a314c1e3467bbac30b287b964b660409ef2a5f9d",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTableInherit#0006",
+      "source": "testing/go/create_table_test.go:TestCreateTableInherit",
+      "ordinal": 6,
+      "scriptName": "Create table with inheritance",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetableinherit-0006-select-*-from-t111",
+      "suggestedId": "create-table-test-testcreatetableinherit-0006-select-*-from-t111",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from t111;",
+      "querySha256": "8a8b8a6748ce92e54041e7dbf442fb48cd6987c1a0e28c1b403f4e5e3ecd4898",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTableInherit#0007",
+      "source": "testing/go/create_table_test.go:TestCreateTableInherit",
+      "ordinal": 7,
+      "scriptName": "Create table with inheritance",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetableinherit-0007-create-table-t1t1-a-int",
+      "suggestedId": "create-table-test-testcreatetableinherit-0007-create-table-t1t1-a-int",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "create table t1t1 (a int) inherits (t1);",
+      "querySha256": "392e5c556a1e4c01bd45678348a4d3e48b78de7e63299e1d1ae18dfb31c5e6e9",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTableInherit#0008",
+      "source": "testing/go/create_table_test.go:TestCreateTableInherit",
+      "ordinal": 8,
+      "scriptName": "Create table with inheritance",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetableinherit-0008-insert-into-t1t1-a-values",
+      "suggestedId": "create-table-test-testcreatetableinherit-0008-insert-into-t1t1-a-values",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "insert into t1t1(a) values (1);",
+      "querySha256": "020ed86a69624e3020fd55a05c65df41b9499240eb8fdddd6d5410e5558198b0",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTableInherit#0009",
+      "source": "testing/go/create_table_test.go:TestCreateTableInherit",
+      "ordinal": 9,
+      "scriptName": "Create table with inheritance",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetableinherit-0009-select-*-from-t1t1",
+      "suggestedId": "create-table-test-testcreatetableinherit-0009-select-*-from-t1t1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from t1t1;",
+      "querySha256": "c32ce35998be8264bf4d28027ffbf2128df9a06f6a63bc2c891568b151eb8f1d",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTableInherit#0010",
+      "source": "testing/go/create_table_test.go:TestCreateTableInherit",
+      "ordinal": 10,
+      "scriptName": "Create table with inheritance",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetableinherit-0010-create-table-tt1t1-a-int",
+      "suggestedId": "create-table-test-testcreatetableinherit-0010-create-table-tt1t1-a-int",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "create table TT1t1 (A int) inherits (t1);",
+      "querySha256": "7c1d954e360f2593f4919891b1309fe68cebc6c928a164e4e99c457fd1422aba",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTableInherit#0011",
+      "source": "testing/go/create_table_test.go:TestCreateTableInherit",
+      "ordinal": 11,
+      "scriptName": "Create table with inheritance",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetableinherit-0011-insert-into-tt1t1-a-values",
+      "suggestedId": "create-table-test-testcreatetableinherit-0011-insert-into-tt1t1-a-values",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "insert into TT1t1(a) values (1);",
+      "querySha256": "2f3e881f175c5bceab4806bb5d820114363d5c17c3535d9ca1bc40e49ea7a750",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_test.go:TestCreateTableInherit#0012",
+      "source": "testing/go/create_table_test.go:TestCreateTableInherit",
+      "ordinal": 12,
+      "scriptName": "Create table with inheritance",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetableinherit-0012-select-*-from-tt1t1",
+      "suggestedId": "create-table-test-testcreatetableinherit-0012-select-*-from-tt1t1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from TT1t1;",
+      "querySha256": "3b0dc14f67c81004134880f553abe9050265c7338693dee83fdcede8ce18620c",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

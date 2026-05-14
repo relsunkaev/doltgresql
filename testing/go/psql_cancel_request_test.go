@@ -37,11 +37,11 @@ import (
 // does exactly the same thing.
 //
 // The harness:
-//   1. Starts a doltgres instance.
-//   2. Spawns the real psql client and runs `SELECT pg_sleep(20)`.
-//   3. Sends SIGINT to psql once we see the query started.
-//   4. Asserts psql exits within ~3s and the message that comes
-//      back includes a cancel-style notice.
+//  1. Starts a doltgres instance.
+//  2. Spawns the real psql client and runs `SELECT pg_sleep(20)`.
+//  3. Sends SIGINT to psql once we see the query started.
+//  4. Asserts psql exits within ~3s and the message that comes
+//     back includes a cancel-style notice.
 //
 // If the wire-level handshake / registry handling were wrong, psql
 // would hang for the full 20s before ^C broke it, or the server

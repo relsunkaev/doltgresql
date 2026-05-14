@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 func TestDefaultPublicDatabaseConnectAllowsNewSessionRepro(t *testing.T) {
@@ -29,19 +27,21 @@ func TestDefaultPublicDatabaseConnectAllowsNewSessionRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT 1;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT 1;`,
+
 					Username: `default_connect`,
-					Password: `pw`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestRevokedDatabaseConnectPreventsNewSessionRepro reproduces a security bug:
+						// revoking CONNECT on the database from PUBLIC does not prevent a normal user
+						// from opening a new session and querying that database.
+						ID: "database-connect-privilege-repro-test-testdefaultpublicdatabaseconnectallowsnewsessionrepro-0001-select-1"},
 				},
 			},
 		},
 	})
 }
 
-// TestRevokedDatabaseConnectPreventsNewSessionRepro reproduces a security bug:
-// revoking CONNECT on the database from PUBLIC does not prevent a normal user
-// from opening a new session and querying that database.
 func TestRevokedDatabaseConnectPreventsNewSessionRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -52,10 +52,10 @@ func TestRevokedDatabaseConnectPreventsNewSessionRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT 1;`,
-					ExpectedErr: `permission denied`,
-					Username:    `no_connect`,
-					Password:    `pw`,
+					Query: `SELECT 1;`,
+
+					Username: `no_connect`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{ID: "database-connect-privilege-repro-test-testrevokeddatabaseconnectpreventsnewsessionrepro-0001-select-1"},
 				},
 			},
 		},
@@ -73,10 +73,10 @@ func TestGrantedDatabaseConnectAllowsNewSessionRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT 1;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT 1;`,
+
 					Username: `can_connect`,
-					Password: `pw`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{ID: "database-connect-privilege-repro-test-testgranteddatabaseconnectallowsnewsessionrepro-0001-select-1"},
 				},
 			},
 		},

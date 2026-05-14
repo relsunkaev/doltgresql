@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestRollbackRevertsCreatePolicyRepro reproduces a transaction consistency
@@ -58,9 +56,9 @@ func TestRollbackRevertsCreatePolicyRepro(t *testing.T) {
 					Query: `SELECT id, label
 						FROM rollback_policy_docs
 						ORDER BY id;`,
-					Expected: []sql.Row{},
+
 					Username: `rollback_policy_reader`,
-					Password: `reader`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{ID: "row-level-security-policy-transaction-repro-test-testrollbackrevertscreatepolicyrepro-0001-select-id-label-from-rollback_policy_docs"},
 				},
 			},
 		},

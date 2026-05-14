@@ -32,12 +32,10 @@ var StatsTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query:    "ANALYZE;",
-				Expected: []sql.Row{},
+				Query: "ANALYZE;", PostgresOracle: ScriptTestPostgresOracle{ID: "stats-test-teststats-0001-analyze"},
 			},
 			{
-				Query:    "ANALYZE t;",
-				Expected: []sql.Row{},
+				Query: "ANALYZE t;", PostgresOracle: ScriptTestPostgresOracle{ID: "stats-test-teststats-0002-analyze-t"},
 			},
 			{
 				Query:    "ANALYZE public.t;",
@@ -62,8 +60,7 @@ var StatsTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query:    "ANALYZE stats_provider_plan;",
-				Expected: []sql.Row{},
+				Query: "ANALYZE stats_provider_plan;", PostgresOracle: ScriptTestPostgresOracle{ID: "stats-test-teststats-0006-analyze-stats_provider_plan"},
 			},
 			{
 				Query: `SELECT index_name, columns, row_count, distinct_count, null_count

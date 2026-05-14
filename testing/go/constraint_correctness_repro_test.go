@@ -17,7 +17,6 @@ package _go
 import (
 	"testing"
 
-	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/stretchr/testify/require"
 )
 
@@ -39,8 +38,7 @@ func TestPgGetConstraintdefCheckOmitsConstraintNameRepro(t *testing.T) {
 					Query: `SELECT pg_get_constraintdef(oid)
 						FROM pg_catalog.pg_constraint
 						WHERE conrelid = 'constraintdef_check_items'::regclass
-							AND conname = 'amount_positive';`,
-					Expected: []sql.Row{{"CHECK ((amount > 0))"}},
+							AND conname = 'amount_positive';`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testpggetconstraintdefcheckomitsconstraintnamerepro-0001-select-pg_get_constraintdef-oid-from-pg_catalog.pg_constraint"},
 				},
 			},
 		},
@@ -73,10 +71,7 @@ func TestPgGetConstraintdefForeignKeyActionsRepro(t *testing.T) {
 					Query: `SELECT pg_get_constraintdef(oid)
 						FROM pg_catalog.pg_constraint
 						WHERE conrelid = 'constraintdef_fk_child'::regclass
-							AND conname = 'constraintdef_fk_child_parent_fkey';`,
-					Expected: []sql.Row{{
-						"FOREIGN KEY (parent_id) REFERENCES constraintdef_fk_parent(id) ON UPDATE CASCADE ON DELETE SET NULL",
-					}},
+							AND conname = 'constraintdef_fk_child_parent_fkey';`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testpggetconstraintdefforeignkeyactionsrepro-0001-select-pg_get_constraintdef-oid-from-pg_catalog.pg_constraint"},
 				},
 			},
 		},
@@ -101,8 +96,7 @@ func TestPgGetConstraintdefQuotesColumnNamesRepro(t *testing.T) {
 					Query: `SELECT pg_get_constraintdef(oid)
 						FROM pg_catalog.pg_constraint
 						WHERE conrelid = 'constraintdef_quote_items'::regclass
-							AND conname = 'constraintdef_quote_items_pkey';`,
-					Expected: []sql.Row{{`PRIMARY KEY ("CaseColumn")`}},
+							AND conname = 'constraintdef_quote_items_pkey';`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testpggetconstraintdefquotescolumnnamesrepro-0001-select-pg_get_constraintdef-oid-from-pg_catalog.pg_constraint"},
 				},
 			},
 		},
@@ -133,10 +127,7 @@ func TestUniqueConstraintIncludeColumnsRepro(t *testing.T) {
 					Query: `SELECT indexdef
 						FROM pg_catalog.pg_indexes
 						WHERE tablename = 'unique_constraint_include_items'
-							AND indexname <> 'unique_constraint_include_items_pkey';`,
-					Expected: []sql.Row{{
-						"CREATE UNIQUE INDEX unique_constraint_include_items_code_label_key ON public.unique_constraint_include_items USING btree (code) INCLUDE (label)",
-					}},
+							AND indexname <> 'unique_constraint_include_items_pkey';`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testuniqueconstraintincludecolumnsrepro-0001-select-indexdef-from-pg_catalog.pg_indexes-where", ColumnModes: []string{"schema"}},
 				},
 			},
 		},
@@ -162,10 +153,7 @@ func TestUniqueConstraintStorageParamsRepro(t *testing.T) {
 					Query: `SELECT indexdef
 						FROM pg_catalog.pg_indexes
 						WHERE tablename = 'unique_constraint_storage_items'
-							AND indexname <> 'unique_constraint_storage_items_pkey';`,
-					Expected: []sql.Row{{
-						"CREATE UNIQUE INDEX unique_constraint_storage_items_code_key ON public.unique_constraint_storage_items USING btree (code) WITH (fillfactor='70')",
-					}},
+							AND indexname <> 'unique_constraint_storage_items_pkey';`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testuniqueconstraintstorageparamsrepro-0001-select-indexdef-from-pg_catalog.pg_indexes-where", ColumnModes: []string{"schema"}},
 				},
 			},
 		},
@@ -189,8 +177,7 @@ func TestUniqueConstraintDefaultTablespaceRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT code FROM unique_constraint_tablespace_items;`,
-					Expected: []sql.Row{{10}},
+					Query: `SELECT code FROM unique_constraint_tablespace_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testuniqueconstraintdefaulttablespacerepro-0001-select-code-from-unique_constraint_tablespace_items"},
 				},
 			},
 		},
@@ -215,10 +202,7 @@ func TestPrimaryKeyConstraintIncludeColumnsRepro(t *testing.T) {
 				{
 					Query: `SELECT indexdef
 						FROM pg_catalog.pg_indexes
-						WHERE tablename = 'primary_key_constraint_include_items';`,
-					Expected: []sql.Row{{
-						"CREATE UNIQUE INDEX primary_key_constraint_include_items_pkey ON public.primary_key_constraint_include_items USING btree (id) INCLUDE (label)",
-					}},
+						WHERE tablename = 'primary_key_constraint_include_items';`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testprimarykeyconstraintincludecolumnsrepro-0001-select-indexdef-from-pg_catalog.pg_indexes-where", ColumnModes: []string{"schema"}},
 				},
 			},
 		},
@@ -242,10 +226,7 @@ func TestPrimaryKeyConstraintStorageParamsRepro(t *testing.T) {
 				{
 					Query: `SELECT indexdef
 						FROM pg_catalog.pg_indexes
-						WHERE tablename = 'primary_key_constraint_storage_items';`,
-					Expected: []sql.Row{{
-						"CREATE UNIQUE INDEX primary_key_constraint_storage_items_pkey ON public.primary_key_constraint_storage_items USING btree (id) WITH (fillfactor='70')",
-					}},
+						WHERE tablename = 'primary_key_constraint_storage_items';`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testprimarykeyconstraintstorageparamsrepro-0001-select-indexdef-from-pg_catalog.pg_indexes-where", ColumnModes: []string{"schema"}},
 				},
 			},
 		},
@@ -268,8 +249,7 @@ func TestPrimaryKeyConstraintDefaultTablespaceRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT id FROM primary_key_constraint_tablespace_items;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT id FROM primary_key_constraint_tablespace_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testprimarykeyconstraintdefaulttablespacerepro-0001-select-id-from-primary_key_constraint_tablespace_items"},
 				},
 			},
 		},
@@ -298,19 +278,18 @@ func TestTypedTableUniqueConstraintIncludeColumnsRepro(t *testing.T) {
 				{
 					Query: `SELECT indexdef
 						FROM pg_catalog.pg_indexes
-						WHERE tablename = 'typed_unique_include_items';`,
-					Expected: []sql.Row{{
-						"CREATE UNIQUE INDEX typed_unique_include_items_code_id_key ON public.typed_unique_include_items USING btree (code) INCLUDE (id)",
-					}},
+						WHERE tablename = 'typed_unique_include_items';`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testtypedtableuniqueconstraintincludecolumnsrepro-0001-select-indexdef-from-pg_catalog.pg_indexes-where", ColumnModes: []string{
+
+						// TestTypedTablePrimaryKeyConstraintIncludeColumnsRepro reproduces a typed-table
+						// schema correctness bug: PostgreSQL accepts INCLUDE columns on PRIMARY KEY
+						// constraints in CREATE TABLE OF definitions.
+						"schema"}},
 				},
 			},
 		},
 	})
 }
 
-// TestTypedTablePrimaryKeyConstraintIncludeColumnsRepro reproduces a typed-table
-// schema correctness bug: PostgreSQL accepts INCLUDE columns on PRIMARY KEY
-// constraints in CREATE TABLE OF definitions.
 func TestTypedTablePrimaryKeyConstraintIncludeColumnsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -330,19 +309,18 @@ func TestTypedTablePrimaryKeyConstraintIncludeColumnsRepro(t *testing.T) {
 				{
 					Query: `SELECT indexdef
 						FROM pg_catalog.pg_indexes
-						WHERE tablename = 'typed_primary_key_include_items';`,
-					Expected: []sql.Row{{
-						"CREATE UNIQUE INDEX typed_primary_key_include_items_pkey ON public.typed_primary_key_include_items USING btree (id) INCLUDE (label)",
-					}},
+						WHERE tablename = 'typed_primary_key_include_items';`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testtypedtableprimarykeyconstraintincludecolumnsrepro-0001-select-indexdef-from-pg_catalog.pg_indexes-where", ColumnModes: []string{
+
+						// TestTypedTableUniqueConstraintStorageParamsRepro reproduces a typed-table
+						// schema/catalog correctness bug: PostgreSQL accepts index storage parameters
+						// on UNIQUE constraints in CREATE TABLE OF definitions.
+						"schema"}},
 				},
 			},
 		},
 	})
 }
 
-// TestTypedTableUniqueConstraintStorageParamsRepro reproduces a typed-table
-// schema/catalog correctness bug: PostgreSQL accepts index storage parameters
-// on UNIQUE constraints in CREATE TABLE OF definitions.
 func TestTypedTableUniqueConstraintStorageParamsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -361,10 +339,7 @@ func TestTypedTableUniqueConstraintStorageParamsRepro(t *testing.T) {
 				{
 					Query: `SELECT indexdef
 						FROM pg_catalog.pg_indexes
-						WHERE tablename = 'typed_unique_storage_items';`,
-					Expected: []sql.Row{{
-						"CREATE UNIQUE INDEX typed_unique_storage_items_code_key ON public.typed_unique_storage_items USING btree (code) WITH (fillfactor='70')",
-					}},
+						WHERE tablename = 'typed_unique_storage_items';`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testtypedtableuniqueconstraintstorageparamsrepro-0001-select-indexdef-from-pg_catalog.pg_indexes-where", ColumnModes: []string{"schema"}},
 				},
 			},
 		},
@@ -392,10 +367,7 @@ func TestTypedTablePrimaryKeyConstraintStorageParamsRepro(t *testing.T) {
 				{
 					Query: `SELECT indexdef
 						FROM pg_catalog.pg_indexes
-						WHERE tablename = 'typed_primary_key_storage_items';`,
-					Expected: []sql.Row{{
-						"CREATE UNIQUE INDEX typed_primary_key_storage_items_pkey ON public.typed_primary_key_storage_items USING btree (id) WITH (fillfactor='70')",
-					}},
+						WHERE tablename = 'typed_primary_key_storage_items';`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testtypedtableprimarykeyconstraintstorageparamsrepro-0001-select-indexdef-from-pg_catalog.pg_indexes-where", ColumnModes: []string{"schema"}},
 				},
 			},
 		},
@@ -422,8 +394,7 @@ func TestTypedTableUniqueConstraintDefaultTablespaceRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT code FROM typed_unique_tablespace_items;`,
-					Expected: []sql.Row{{10}},
+					Query: `SELECT code FROM typed_unique_tablespace_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testtypedtableuniqueconstraintdefaulttablespacerepro-0001-select-code-from-typed_unique_tablespace_items"},
 				},
 			},
 		},
@@ -450,8 +421,7 @@ func TestTypedTablePrimaryKeyConstraintDefaultTablespaceRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT id FROM typed_primary_key_tablespace_items;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT id FROM typed_primary_key_tablespace_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testtypedtableprimarykeyconstraintdefaulttablespacerepro-0001-select-id-from-typed_primary_key_tablespace_items"},
 				},
 			},
 		},
@@ -485,11 +455,7 @@ func TestDeferrableUniqueConstraintCanBeFixedBeforeCommitRepro(t *testing.T) {
 					Query: `COMMIT;`,
 				},
 				{
-					Query: `SELECT id, code FROM deferred_unique_items ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, 10},
-						{2, 20},
-					},
+					Query: `SELECT id, code FROM deferred_unique_items ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testdeferrableuniqueconstraintcanbefixedbeforecommitrepro-0001-select-id-code-from-deferred_unique_items"},
 				},
 			},
 		},
@@ -529,11 +495,7 @@ func TestDeferrablePrimaryKeyConstraintCanBeFixedBeforeCommitRepro(t *testing.T)
 				{
 					Query: `SELECT id, label
 						FROM deferred_primary_key_items
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, "first"},
-						{2, "second"},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testdeferrableprimarykeyconstraintcanbefixedbeforecommitrepro-0001-select-id-label-from-deferred_primary_key_items"},
 				},
 			},
 		},
@@ -570,11 +532,7 @@ func TestSetConstraintsDefersUniqueConstraintRepro(t *testing.T) {
 					Query: `COMMIT;`,
 				},
 				{
-					Query: `SELECT id, code FROM set_constraints_unique_items ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, 10},
-						{2, 20},
-					},
+					Query: `SELECT id, code FROM set_constraints_unique_items ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testsetconstraintsdefersuniqueconstraintrepro-0001-select-id-code-from-set_constraints_unique_items"},
 				},
 			},
 		},
@@ -601,17 +559,18 @@ func TestDeferrableUniqueConstraintViolationCheckedAtCommitRepro(t *testing.T) {
 					Query: `INSERT INTO deferred_unique_commit_items VALUES (1, 10), (2, 10);`,
 				},
 				{
-					Query:       `COMMIT;`,
-					ExpectedErr: `duplicate unique key`,
+					Query: `COMMIT;`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testdeferrableuniqueconstraintviolationcheckedatcommitrepro-0001-commit",
+
+						// TestSetConstraintsImmediateChecksDeferredUniqueConstraintRepro guards that
+						// SET CONSTRAINTS IMMEDIATE validates pending unique constraints before
+						// changing their timing.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestSetConstraintsImmediateChecksDeferredUniqueConstraintRepro guards that
-// SET CONSTRAINTS IMMEDIATE validates pending unique constraints before
-// changing their timing.
 func TestSetConstraintsImmediateChecksDeferredUniqueConstraintRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -630,16 +589,17 @@ func TestSetConstraintsImmediateChecksDeferredUniqueConstraintRepro(t *testing.T
 					Query: `INSERT INTO immediate_check_unique_items VALUES (1, 10), (2, 10);`,
 				},
 				{
-					Query:       `SET CONSTRAINTS ALL IMMEDIATE;`,
-					ExpectedErr: `duplicate unique key`,
+					Query: `SET CONSTRAINTS ALL IMMEDIATE;`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testsetconstraintsimmediatechecksdeferreduniqueconstraintrepro-0001-set-constraints-all-immediate",
+
+						// TestDeferrableForeignKeyCanBeFixedBeforeCommitRepro guards DEFERRABLE
+						// INITIALLY DEFERRED foreign keys repaired before COMMIT.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDeferrableForeignKeyCanBeFixedBeforeCommitRepro guards DEFERRABLE
-// INITIALLY DEFERRED foreign keys repaired before COMMIT.
 func TestDeferrableForeignKeyCanBeFixedBeforeCommitRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -665,8 +625,7 @@ func TestDeferrableForeignKeyCanBeFixedBeforeCommitRepro(t *testing.T) {
 					Query: `COMMIT;`,
 				},
 				{
-					Query:    `SELECT id, parent_id FROM deferred_fk_children;`,
-					Expected: []sql.Row{{1, 42}},
+					Query: `SELECT id, parent_id FROM deferred_fk_children;`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testdeferrableforeignkeycanbefixedbeforecommitrepro-0001-select-id-parent_id-from-deferred_fk_children"},
 				},
 			},
 		},
@@ -695,17 +654,18 @@ func TestSetConstraintsImmediateChecksDeferredForeignKeyRepro(t *testing.T) {
 					Query: `INSERT INTO immediate_check_fk_children VALUES (1, 42);`,
 				},
 				{
-					Query:       `SET CONSTRAINTS ALL IMMEDIATE;`,
-					ExpectedErr: `Foreign key violation`,
+					Query: `SET CONSTRAINTS ALL IMMEDIATE;`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testsetconstraintsimmediatechecksdeferredforeignkeyrepro-0001-set-constraints-all-immediate",
+
+						// TestSetConstraintsDefersInitiallyImmediateForeignKeyRepro guards that SET
+						// CONSTRAINTS DEFERRED allows an initially immediate deferrable foreign-key
+						// violation to be repaired before commit.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestSetConstraintsDefersInitiallyImmediateForeignKeyRepro guards that SET
-// CONSTRAINTS DEFERRED allows an initially immediate deferrable foreign-key
-// violation to be repaired before commit.
 func TestSetConstraintsDefersInitiallyImmediateForeignKeyRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -734,8 +694,7 @@ func TestSetConstraintsDefersInitiallyImmediateForeignKeyRepro(t *testing.T) {
 					Query: `COMMIT;`,
 				},
 				{
-					Query:    `SELECT id, parent_id FROM deferred_immediate_fk_children;`,
-					Expected: []sql.Row{{1, 42}},
+					Query: `SELECT id, parent_id FROM deferred_immediate_fk_children;`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testsetconstraintsdefersinitiallyimmediateforeignkeyrepro-0001-select-id-parent_id-from-deferred_immediate_fk_children"},
 				},
 			},
 		},
@@ -773,8 +732,7 @@ func TestRollbackToSavepointClearsDeferredForeignKeyViolationRepro(t *testing.T)
 					Query: `COMMIT;`,
 				},
 				{
-					Query:    `SELECT COUNT(*) FROM deferred_savepoint_fk_children;`,
-					Expected: []sql.Row{{0}},
+					Query: `SELECT COUNT(*) FROM deferred_savepoint_fk_children;`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testrollbacktosavepointclearsdeferredforeignkeyviolationrepro-0001-select-count-*-from-deferred_savepoint_fk_children"},
 				},
 			},
 		},
@@ -816,8 +774,7 @@ func TestAlterForeignKeyConstraintDeferrabilityRepro(t *testing.T) {
 					Query: `COMMIT;`,
 				},
 				{
-					Query:    `SELECT id, parent_id FROM alter_fk_deferrability_children;`,
-					Expected: []sql.Row{{1, 42}},
+					Query: `SELECT id, parent_id FROM alter_fk_deferrability_children;`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testalterforeignkeyconstraintdeferrabilityrepro-0001-select-id-parent_id-from-alter_fk_deferrability_children"},
 				},
 			},
 		},
@@ -854,12 +811,10 @@ func TestDeferredForeignKeyParentDeleteCanBeRepairedBeforeCommitRepro(t *testing
 					Query: `COMMIT;`,
 				},
 				{
-					Query:    `SELECT COUNT(*) FROM deferred_delete_fk_parents;`,
-					Expected: []sql.Row{{0}},
+					Query: `SELECT COUNT(*) FROM deferred_delete_fk_parents;`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testdeferredforeignkeyparentdeletecanberepairedbeforecommitrepro-0001-select-count-*-from-deferred_delete_fk_parents"},
 				},
 				{
-					Query:    `SELECT COUNT(*) FROM deferred_delete_fk_children;`,
-					Expected: []sql.Row{{0}},
+					Query: `SELECT COUNT(*) FROM deferred_delete_fk_children;`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testdeferredforeignkeyparentdeletecanberepairedbeforecommitrepro-0002-select-count-*-from-deferred_delete_fk_children"},
 				},
 			},
 		},
@@ -896,12 +851,10 @@ func TestDeferredForeignKeyParentUpdateCanBeRepairedBeforeCommitRepro(t *testing
 					Query: `COMMIT;`,
 				},
 				{
-					Query:    `SELECT id FROM deferred_update_fk_parents;`,
-					Expected: []sql.Row{{2}},
+					Query: `SELECT id FROM deferred_update_fk_parents;`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testdeferredforeignkeyparentupdatecanberepairedbeforecommitrepro-0001-select-id-from-deferred_update_fk_parents"},
 				},
 				{
-					Query:    `SELECT parent_id FROM deferred_update_fk_children;`,
-					Expected: []sql.Row{{2}},
+					Query: `SELECT parent_id FROM deferred_update_fk_children;`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testdeferredforeignkeyparentupdatecanberepairedbeforecommitrepro-0002-select-parent_id-from-deferred_update_fk_children"},
 				},
 			},
 		},
@@ -963,17 +916,18 @@ func TestAddCheckConstraintValidatesExistingRowsRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `ALTER TABLE check_existing_items
-						ADD CONSTRAINT amount_positive CHECK (amount > 0);`,
-					ExpectedErr: `Check constraint`,
+						ADD CONSTRAINT amount_positive CHECK (amount > 0);`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testaddcheckconstraintvalidatesexistingrowsrepro-0001-alter-table-check_existing_items-add-constraint",
+
+						// TestAddForeignKeyConstraintValidatesExistingRowsRepro guards data
+						// consistency: adding a foreign key should validate existing rows before
+						// accepting the new constraint.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAddForeignKeyConstraintValidatesExistingRowsRepro guards data
-// consistency: adding a foreign key should validate existing rows before
-// accepting the new constraint.
 func TestAddForeignKeyConstraintValidatesExistingRowsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -990,16 +944,17 @@ func TestAddForeignKeyConstraintValidatesExistingRowsRepro(t *testing.T) {
 				{
 					Query: `ALTER TABLE fk_existing_children
 						ADD CONSTRAINT fk_existing_parent_fk
-						FOREIGN KEY (parent_id) REFERENCES fk_existing_parents(id);`,
-					ExpectedErr: `Foreign key violation`,
+						FOREIGN KEY (parent_id) REFERENCES fk_existing_parents(id);`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testaddforeignkeyconstraintvalidatesexistingrowsrepro-0001-alter-table-fk_existing_children-add-constraint",
+
+						// TestAddUniqueConstraintValidatesExistingRowsRepro guards data consistency:
+						// adding a unique constraint should reject existing duplicate values.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAddUniqueConstraintValidatesExistingRowsRepro guards data consistency:
-// adding a unique constraint should reject existing duplicate values.
 func TestAddUniqueConstraintValidatesExistingRowsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1014,17 +969,18 @@ func TestAddUniqueConstraintValidatesExistingRowsRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `ALTER TABLE unique_existing_items
-						ADD CONSTRAINT unique_existing_code_key UNIQUE (code);`,
-					ExpectedErr: `duplicate`,
+						ADD CONSTRAINT unique_existing_code_key UNIQUE (code);`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testadduniqueconstraintvalidatesexistingrowsrepro-0001-alter-table-unique_existing_items-add-constraint",
+
+						// TestUniqueConstraintNullsNotDistinctRejectsDuplicateNullsRepro guards
+						// PostgreSQL UNIQUE constraints declared NULLS NOT DISTINCT treating null key
+						// values as equal for uniqueness.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestUniqueConstraintNullsNotDistinctRejectsDuplicateNullsRepro guards
-// PostgreSQL UNIQUE constraints declared NULLS NOT DISTINCT treating null key
-// values as equal for uniqueness.
 func TestUniqueConstraintNullsNotDistinctRejectsDuplicateNullsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1042,14 +998,12 @@ func TestUniqueConstraintNullsNotDistinctRejectsDuplicateNullsRepro(t *testing.T
 					Query: `INSERT INTO unique_constraint_nulls_not_distinct_items VALUES (1, NULL);`,
 				},
 				{
-					Query:       `INSERT INTO unique_constraint_nulls_not_distinct_items VALUES (2, NULL);`,
-					ExpectedErr: `duplicate`,
+					Query: `INSERT INTO unique_constraint_nulls_not_distinct_items VALUES (2, NULL);`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testuniqueconstraintnullsnotdistinctrejectsduplicatenullsrepro-0001-insert-into-values-2-null", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, code
 						FROM unique_constraint_nulls_not_distinct_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, nil}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testuniqueconstraintnullsnotdistinctrejectsduplicatenullsrepro-0002-select-id-code-from-order"},
 				},
 			},
 		},
@@ -1076,15 +1030,13 @@ func TestAddUniqueConstraintNullsNotDistinctRejectsExistingDuplicateNullsRepro(t
 				{
 					Query: `ALTER TABLE add_nulls_not_distinct_existing_items
 						ADD CONSTRAINT add_nulls_not_distinct_existing_code_key
-						UNIQUE NULLS NOT DISTINCT (code);`,
-					ExpectedErr: `duplicate`,
+						UNIQUE NULLS NOT DISTINCT (code);`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testadduniqueconstraintnullsnotdistinctrejectsexistingduplicatenullsrepro-0001-alter-table-add_nulls_not_distinct_existing_items-add-constraint", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT count(*)
 						FROM information_schema.table_constraints
 						WHERE table_name = 'add_nulls_not_distinct_existing_items'
-							AND constraint_name = 'add_nulls_not_distinct_existing_code_key';`,
-					Expected: []sql.Row{{int64(0)}},
+							AND constraint_name = 'add_nulls_not_distinct_existing_code_key';`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testadduniqueconstraintnullsnotdistinctrejectsexistingduplicatenullsrepro-0002-select-count-*-from-information_schema.table_constraints"},
 				},
 			},
 		},
@@ -1108,15 +1060,13 @@ func TestAddPrimaryKeyRejectsExistingNullsGuard(t *testing.T) {
 				{
 					Query: `ALTER TABLE add_primary_key_existing_null_items
 						ADD CONSTRAINT add_primary_key_existing_null_items_pkey
-						PRIMARY KEY (id);`,
-					ExpectedErr: `null`,
+						PRIMARY KEY (id);`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testaddprimarykeyrejectsexistingnullsguard-0001-alter-table-add_primary_key_existing_null_items-add-constraint", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT count(*)
 						FROM information_schema.table_constraints
 						WHERE table_name = 'add_primary_key_existing_null_items'
-							AND constraint_type = 'PRIMARY KEY';`,
-					Expected: []sql.Row{{int64(0)}},
+							AND constraint_type = 'PRIMARY KEY';`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testaddprimarykeyrejectsexistingnullsguard-0002-select-count-*-from-information_schema.table_constraints"},
 				},
 			},
 		},
@@ -1143,15 +1093,13 @@ func TestAddPrimaryKeyRejectsExistingDuplicatesRepro(t *testing.T) {
 				{
 					Query: `ALTER TABLE add_primary_key_existing_duplicate_items
 						ADD CONSTRAINT add_primary_key_existing_duplicate_items_pkey
-						PRIMARY KEY (id);`,
-					ExpectedErr: `duplicate`,
+						PRIMARY KEY (id);`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testaddprimarykeyrejectsexistingduplicatesrepro-0001-alter-table-add_primary_key_existing_duplicate_items-add-constraint", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT count(*)
 						FROM information_schema.table_constraints
 						WHERE table_name = 'add_primary_key_existing_duplicate_items'
-							AND constraint_type = 'PRIMARY KEY';`,
-					Expected: []sql.Row{{int64(0)}},
+							AND constraint_type = 'PRIMARY KEY';`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testaddprimarykeyrejectsexistingduplicatesrepro-0002-select-count-*-from-information_schema.table_constraints"},
 				},
 			},
 		},
@@ -1238,23 +1186,23 @@ func TestAddUniqueColumnWithDuplicateDefaultValidatesExistingRowsGuard(t *testin
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `ALTER TABLE add_unique_default_existing_items
-						ADD COLUMN code INT UNIQUE DEFAULT 7;`,
-					ExpectedErr: `duplicate`,
+						ADD COLUMN code INT UNIQUE DEFAULT 7;`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testadduniquecolumnwithduplicatedefaultvalidatesexistingrowsguard-0001-alter-table-add_unique_default_existing_items-add-column",
+
+						// TestAlterColumnSetNotNullValidatesExistingRowsRepro guards that tightening
+						// an existing column to NOT NULL scans existing rows and rejects persisted
+						// nulls.
+						Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id
 						FROM add_unique_default_existing_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{1}, {2}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testadduniquecolumnwithduplicatedefaultvalidatesexistingrowsguard-0002-select-id-from-add_unique_default_existing_items-order"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterColumnSetNotNullValidatesExistingRowsRepro guards that tightening
-// an existing column to NOT NULL scans existing rows and rejects persisted
-// nulls.
 func TestAlterColumnSetNotNullValidatesExistingRowsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1269,17 +1217,18 @@ func TestAlterColumnSetNotNullValidatesExistingRowsRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `ALTER TABLE set_not_null_existing_items
-						ALTER COLUMN required_value SET NOT NULL;`,
-					ExpectedErr: `non-nullable`,
+						ALTER COLUMN required_value SET NOT NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testaltercolumnsetnotnullvalidatesexistingrowsrepro-0001-alter-table-set_not_null_existing_items-alter-column",
+
+						// TestAddColumnCheckConstraintValidatesBackfilledRowsRepro guards that adding
+						// a column with a default and a CHECK constraint validates the values
+						// backfilled into existing rows.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAddColumnCheckConstraintValidatesBackfilledRowsRepro guards that adding
-// a column with a default and a CHECK constraint validates the values
-// backfilled into existing rows.
 func TestAddColumnCheckConstraintValidatesBackfilledRowsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1293,17 +1242,18 @@ func TestAddColumnCheckConstraintValidatesBackfilledRowsRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `ALTER TABLE add_check_column_existing_items
-						ADD COLUMN amount INT DEFAULT -1 CHECK (amount > 0);`,
-					ExpectedErr: `Check constraint`,
+						ADD COLUMN amount INT DEFAULT -1 CHECK (amount > 0);`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testaddcolumncheckconstraintvalidatesbackfilledrowsrepro-0001-alter-table-add_check_column_existing_items-add-column",
+
+						// TestAddColumnForeignKeyValidatesBackfilledDefaultGuard guards that adding a
+						// column with a default and a REFERENCES clause validates the values backfilled
+						// into existing rows before accepting the new column and foreign key.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAddColumnForeignKeyValidatesBackfilledDefaultGuard guards that adding a
-// column with a default and a REFERENCES clause validates the values backfilled
-// into existing rows before accepting the new column and foreign key.
 func TestAddColumnForeignKeyValidatesBackfilledDefaultGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1321,15 +1271,13 @@ func TestAddColumnForeignKeyValidatesBackfilledDefaultGuard(t *testing.T) {
 				{
 					Query: `ALTER TABLE add_fk_column_default_children
 						ADD COLUMN parent_id INT DEFAULT 42
-						REFERENCES add_fk_column_default_parents(id);`,
-					ExpectedErr: `Foreign key violation`,
+						REFERENCES add_fk_column_default_parents(id);`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testaddcolumnforeignkeyvalidatesbackfilleddefaultguard-0001-alter-table-add_fk_column_default_children-add-column", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT count(*)
 						FROM information_schema.columns
 						WHERE table_name = 'add_fk_column_default_children'
-							AND column_name = 'parent_id';`,
-					Expected: []sql.Row{{int64(0)}},
+							AND column_name = 'parent_id';`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testaddcolumnforeignkeyvalidatesbackfilleddefaultguard-0002-select-count-*-from-information_schema.columns"},
 				},
 			},
 		},
@@ -1347,8 +1295,7 @@ func TestCheckConstraintsRejectNonScalarExpressionsRepro(t *testing.T) {
 				{
 					Query: `CREATE TABLE check_subquery_items (
 						id INT CHECK (id > (SELECT 0))
-					);`,
-					ExpectedErr: `ERROR`,
+					);`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testcheckconstraintsrejectnonscalarexpressionsrepro-0001-create-table-check_subquery_items-id-int", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1358,8 +1305,7 @@ func TestCheckConstraintsRejectNonScalarExpressionsRepro(t *testing.T) {
 				{
 					Query: `CREATE TABLE check_aggregate_items (
 						id INT CHECK (avg(id) > 0)
-					);`,
-					ExpectedErr: `ERROR`,
+					);`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testcheckconstraintsrejectnonscalarexpressionsrepro-0002-create-table-check_aggregate_items-id-int", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1369,8 +1315,7 @@ func TestCheckConstraintsRejectNonScalarExpressionsRepro(t *testing.T) {
 				{
 					Query: `CREATE TABLE check_window_items (
 						id INT CHECK (row_number() OVER () > 0)
-					);`,
-					ExpectedErr: `ERROR`,
+					);`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testcheckconstraintsrejectnonscalarexpressionsrepro-0003-create-table-check_window_items-id-int", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1380,8 +1325,7 @@ func TestCheckConstraintsRejectNonScalarExpressionsRepro(t *testing.T) {
 				{
 					Query: `CREATE TABLE check_srf_items (
 						id INT CHECK (generate_series(1, 2) > 0)
-					);`,
-					ExpectedErr: `set-returning functions are not allowed in check constraints`,
+					);`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testcheckconstraintsrejectnonscalarexpressionsrepro-0004-create-table-check_srf_items-id-int", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1393,17 +1337,18 @@ func TestCheckConstraintsRejectNonScalarExpressionsRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `ALTER TABLE alter_check_srf_items
-						ADD CONSTRAINT alter_check_srf_check CHECK (generate_series(1, 2) > 0);`,
-					ExpectedErr: `set-returning functions are not allowed in check constraints`,
+						ADD CONSTRAINT alter_check_srf_check CHECK (generate_series(1, 2) > 0);`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testcheckconstraintsrejectnonscalarexpressionsrepro-0005-alter-table-alter_check_srf_items-add-constraint",
+
+						// TestMultipleColumnCheckConstraintsAreEnforcedRepro reproduces a data
+						// consistency bug: PostgreSQL allows multiple column-level CHECK constraints,
+						// and each one must be stored and enforced independently.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestMultipleColumnCheckConstraintsAreEnforcedRepro reproduces a data
-// consistency bug: PostgreSQL allows multiple column-level CHECK constraints,
-// and each one must be stored and enforced independently.
 func TestMultipleColumnCheckConstraintsAreEnforcedRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1419,24 +1364,23 @@ func TestMultipleColumnCheckConstraintsAreEnforcedRepro(t *testing.T) {
 					Query: `INSERT INTO multi_check_items VALUES (1, 20);`,
 				},
 				{
-					Query:       `INSERT INTO multi_check_items VALUES (2, 200);`,
-					ExpectedErr: `Check constraint "amount_below_100" violated`,
+					Query: `INSERT INTO multi_check_items VALUES (2, 200);`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testmultiplecolumncheckconstraintsareenforcedrepro-0001-insert-into-multi_check_items-values-2", Compare: "sqlstate"},
 				},
 				{
-					Query:       `INSERT INTO multi_check_items VALUES (3, 5);`,
-					ExpectedErr: `Check constraint`,
+					Query: `INSERT INTO multi_check_items VALUES (3, 5);`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testmultiplecolumncheckconstraintsareenforcedrepro-0002-insert-into-multi_check_items-values-3",
+
+						// TestCreateTableCheckConstraintNoInheritGuard keeps the supported CREATE TABLE
+						// path explicit while adjacent ALTER TABLE and CREATE TABLE OF paths are broken.
+						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT id, amount FROM multi_check_items;`,
-					Expected: []sql.Row{{1, 20}},
+					Query: `SELECT id, amount FROM multi_check_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testmultiplecolumncheckconstraintsareenforcedrepro-0003-select-id-amount-from-multi_check_items"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateTableCheckConstraintNoInheritGuard keeps the supported CREATE TABLE
-// path explicit while adjacent ALTER TABLE and CREATE TABLE OF paths are broken.
 func TestCreateTableCheckConstraintNoInheritGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1452,21 +1396,21 @@ func TestCreateTableCheckConstraintNoInheritGuard(t *testing.T) {
 				{
 					Query: `SELECT conname, connoinherit
 						FROM pg_catalog.pg_constraint
-						WHERE conname = 'check_no_inherit_positive';`,
-					Expected: []sql.Row{{"check_no_inherit_positive", "t"}},
+						WHERE conname = 'check_no_inherit_positive';`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testcreatetablecheckconstraintnoinheritguard-0001-select-conname-connoinherit-from-pg_catalog.pg_constraint"},
 				},
 				{
-					Query:       `INSERT INTO check_no_inherit_items VALUES (-1);`,
-					ExpectedErr: `Check constraint "check_no_inherit_positive" violated`,
+					Query: `INSERT INTO check_no_inherit_items VALUES (-1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testcreatetablecheckconstraintnoinheritguard-0002-insert-into-check_no_inherit_items-values-1",
+
+						// TestAlterTableAddCheckConstraintNoInheritRepro reproduces a schema
+						// correctness bug: PostgreSQL accepts CHECK constraints marked NO INHERIT when
+						// added to an existing table.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterTableAddCheckConstraintNoInheritRepro reproduces a schema
-// correctness bug: PostgreSQL accepts CHECK constraints marked NO INHERIT when
-// added to an existing table.
 func TestAlterTableAddCheckConstraintNoInheritRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1481,21 +1425,21 @@ func TestAlterTableAddCheckConstraintNoInheritRepro(t *testing.T) {
 				{
 					Query: `SELECT conname, connoinherit
 						FROM pg_catalog.pg_constraint
-						WHERE conname = 'alter_check_no_inherit_positive';`,
-					Expected: []sql.Row{{"alter_check_no_inherit_positive", "t"}},
+						WHERE conname = 'alter_check_no_inherit_positive';`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testaltertableaddcheckconstraintnoinheritrepro-0001-select-conname-connoinherit-from-pg_catalog.pg_constraint"},
 				},
 				{
-					Query:       `INSERT INTO alter_check_no_inherit_items VALUES (-1);`,
-					ExpectedErr: `Check constraint "alter_check_no_inherit_positive" violated`,
+					Query: `INSERT INTO alter_check_no_inherit_items VALUES (-1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testaltertableaddcheckconstraintnoinheritrepro-0002-insert-into-alter_check_no_inherit_items-values-1",
+
+						// TestTypedTableCheckConstraintNoInheritRepro reproduces a typed-table schema
+						// correctness bug: PostgreSQL accepts CHECK constraints marked NO INHERIT in
+						// CREATE TABLE OF definitions.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestTypedTableCheckConstraintNoInheritRepro reproduces a typed-table schema
-// correctness bug: PostgreSQL accepts CHECK constraints marked NO INHERIT in
-// CREATE TABLE OF definitions.
 func TestTypedTableCheckConstraintNoInheritRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1514,21 +1458,21 @@ func TestTypedTableCheckConstraintNoInheritRepro(t *testing.T) {
 				{
 					Query: `SELECT conname, connoinherit
 						FROM pg_catalog.pg_constraint
-						WHERE conname = 'typed_check_no_inherit_positive';`,
-					Expected: []sql.Row{{"typed_check_no_inherit_positive", "t"}},
+						WHERE conname = 'typed_check_no_inherit_positive';`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testtypedtablecheckconstraintnoinheritrepro-0001-select-conname-connoinherit-from-pg_catalog.pg_constraint"},
 				},
 				{
-					Query:       `INSERT INTO typed_check_no_inherit_items VALUES (-1, 'bad');`,
-					ExpectedErr: `Check constraint "typed_check_no_inherit_positive" violated`,
+					Query: `INSERT INTO typed_check_no_inherit_items VALUES (-1, 'bad');`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testtypedtablecheckconstraintnoinheritrepro-0002-insert-into-typed_check_no_inherit_items-values-1",
+
+						// TestCheckConstraintAcceptsImmutableFunctionRepro reproduces a correctness
+						// bug: PostgreSQL allows CHECK constraints to call immutable functions and then
+						// enforces the function result for writes.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCheckConstraintAcceptsImmutableFunctionRepro reproduces a correctness
-// bug: PostgreSQL allows CHECK constraints to call immutable functions and then
-// enforces the function result for writes.
 func TestCheckConstraintAcceptsImmutableFunctionRepro(t *testing.T) {
 	ctx, conn, controller := CreateServer(t, "postgres")
 	t.Cleanup(func() {
@@ -1581,12 +1525,10 @@ func TestNotValidCheckConstraintEnforcesNewRowsRepro(t *testing.T) {
 						ADD CONSTRAINT amount_positive CHECK (amount > 0) NOT VALID;`,
 				},
 				{
-					Query:       `INSERT INTO not_valid_check_items VALUES (2, -2);`,
-					ExpectedErr: `Check constraint "amount_positive" violated`,
+					Query: `INSERT INTO not_valid_check_items VALUES (2, -2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testnotvalidcheckconstraintenforcesnewrowsrepro-0001-insert-into-not_valid_check_items-values-2", Compare: "sqlstate"},
 				},
 				{
-					Query:       `ALTER TABLE not_valid_check_items VALIDATE CONSTRAINT amount_positive;`,
-					ExpectedErr: `Check constraint "amount_positive" violated`,
+					Query: `ALTER TABLE not_valid_check_items VALIDATE CONSTRAINT amount_positive;`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testnotvalidcheckconstraintenforcesnewrowsrepro-0002-alter-table-not_valid_check_items-validate-constraint", Compare: "sqlstate"},
 				},
 				{
 					Query: `UPDATE not_valid_check_items SET amount = 1 WHERE id = 1;`,
@@ -1600,8 +1542,7 @@ func TestNotValidCheckConstraintEnforcesNewRowsRepro(t *testing.T) {
 				{
 					Query: `SELECT id, amount
 						FROM not_valid_check_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, 1}, {3, 3}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testnotvalidcheckconstraintenforcesnewrowsrepro-0003-select-id-amount-from-not_valid_check_items"},
 				},
 			},
 		},
@@ -1633,13 +1574,11 @@ func TestNotValidForeignKeyConstraintEnforcesNewRowsRepro(t *testing.T) {
 						NOT VALID;`,
 				},
 				{
-					Query:       `INSERT INTO not_valid_fk_children VALUES (2, 43);`,
-					ExpectedErr: `Foreign key violation`,
+					Query: `INSERT INTO not_valid_fk_children VALUES (2, 43);`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testnotvalidforeignkeyconstraintenforcesnewrowsrepro-0001-insert-into-not_valid_fk_children-values-2", Compare: "sqlstate"},
 				},
 				{
 					Query: `ALTER TABLE not_valid_fk_children
-						VALIDATE CONSTRAINT not_valid_fk_children_parent_fk;`,
-					ExpectedErr: `Foreign key violation`,
+						VALIDATE CONSTRAINT not_valid_fk_children_parent_fk;`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testnotvalidforeignkeyconstraintenforcesnewrowsrepro-0002-alter-table-not_valid_fk_children-validate-constraint", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO not_valid_fk_parents VALUES (42);`,
@@ -1654,8 +1593,7 @@ func TestNotValidForeignKeyConstraintEnforcesNewRowsRepro(t *testing.T) {
 				{
 					Query: `SELECT id, parent_id
 						FROM not_valid_fk_children
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, 42}, {3, 42}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testnotvalidforeignkeyconstraintenforcesnewrowsrepro-0003-select-id-parent_id-from-not_valid_fk_children"},
 				},
 			},
 		},
@@ -1677,17 +1615,18 @@ func TestSetConstraintsRejectsNonDeferrableConstraintRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SET CONSTRAINTS set_constraints_nondeferrable_code_key DEFERRED;`,
-					ExpectedErr: `is not deferrable`,
+					Query: `SET CONSTRAINTS set_constraints_nondeferrable_code_key DEFERRED;`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testsetconstraintsrejectsnondeferrableconstraintrepro-0001-set-constraints-set_constraints_nondeferrable_code_key-deferred",
+
+						// TestSetConstraintsRejectsNonDeferrableForeignKeyRepro reproduces a
+						// correctness bug: PostgreSQL rejects SET CONSTRAINTS DEFERRED for a named
+						// non-deferrable foreign-key constraint.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestSetConstraintsRejectsNonDeferrableForeignKeyRepro reproduces a
-// correctness bug: PostgreSQL rejects SET CONSTRAINTS DEFERRED for a named
-// non-deferrable foreign-key constraint.
 func TestSetConstraintsRejectsNonDeferrableForeignKeyRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1707,17 +1646,18 @@ func TestSetConstraintsRejectsNonDeferrableForeignKeyRepro(t *testing.T) {
 					Query: `BEGIN;`,
 				},
 				{
-					Query:       `SET CONSTRAINTS set_constraints_nondeferrable_fk DEFERRED;`,
-					ExpectedErr: `is not deferrable`,
+					Query: `SET CONSTRAINTS set_constraints_nondeferrable_fk DEFERRED;`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testsetconstraintsrejectsnondeferrableforeignkeyrepro-0001-set-constraints-set_constraints_nondeferrable_fk-deferred",
+
+						// TestSetConstraintsRejectsMissingConstraintRepro reproduces a correctness
+						// bug: PostgreSQL rejects SET CONSTRAINTS for a name that does not resolve to
+						// any constraint.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestSetConstraintsRejectsMissingConstraintRepro reproduces a correctness
-// bug: PostgreSQL rejects SET CONSTRAINTS for a name that does not resolve to
-// any constraint.
 func TestSetConstraintsRejectsMissingConstraintRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1730,16 +1670,17 @@ func TestSetConstraintsRejectsMissingConstraintRepro(t *testing.T) {
 					Query: `BEGIN;`,
 				},
 				{
-					Query:       `SET CONSTRAINTS set_constraints_missing_name DEFERRED;`,
-					ExpectedErr: `constraint "set_constraints_missing_name" does not exist`,
+					Query: `SET CONSTRAINTS set_constraints_missing_name DEFERRED;`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testsetconstraintsrejectsmissingconstraintrepro-0001-set-constraints-set_constraints_missing_name-deferred",
+
+						// TestExclusionConstraintRejectsConflictingRowsRepro reproduces a data
+						// consistency bug: PostgreSQL exclusion constraints prevent conflicting rows.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestExclusionConstraintRejectsConflictingRowsRepro reproduces a data
-// consistency bug: PostgreSQL exclusion constraints prevent conflicting rows.
 func TestExclusionConstraintRejectsConflictingRowsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1756,8 +1697,7 @@ func TestExclusionConstraintRejectsConflictingRowsRepro(t *testing.T) {
 					Query: `INSERT INTO exclusion_items VALUES (1, 10);`,
 				},
 				{
-					Query:       `INSERT INTO exclusion_items VALUES (2, 10);`,
-					ExpectedErr: `conflicting key value violates exclusion constraint`,
+					Query: `INSERT INTO exclusion_items VALUES (2, 10);`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testexclusionconstraintrejectsconflictingrowsrepro-0001-insert-into-exclusion_items-values-2", Compare: "sqlstate"},
 				},
 				{
 					Query: `INSERT INTO exclusion_items VALUES (3, 11);`,
@@ -1765,8 +1705,7 @@ func TestExclusionConstraintRejectsConflictingRowsRepro(t *testing.T) {
 				{
 					Query: `SELECT id, resource_id
 						FROM exclusion_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, 10}, {3, 11}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-correctness-repro-test-testexclusionconstraintrejectsconflictingrowsrepro-0002-select-id-resource_id-from-exclusion_items"},
 				},
 			},
 		},

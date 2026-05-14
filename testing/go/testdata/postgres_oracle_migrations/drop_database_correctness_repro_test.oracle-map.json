@@ -1,0 +1,59 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map drop_database_correctness_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/drop_database_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/drop_database_correctness_repro_test.go:TestDropDatabaseWithForceDropsIdleDatabase#0001",
+      "source": "testing/go/drop_database_correctness_repro_test.go:TestDropDatabaseWithForceDropsIdleDatabase",
+      "ordinal": 1,
+      "scriptName": "DROP DATABASE WITH FORCE drops an idle database",
+      "oracle": "postgres",
+      "postgresId": "drop-database-correctness-repro-test-testdropdatabasewithforcedropsidledatabase-0001-select-datname-from-pg_database-where",
+      "suggestedId": "drop-database-correctness-repro-test-testdropdatabasewithforcedropsidledatabase-0001-select-datname-from-pg_database-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT datname\n\t\t\t\t\t\tFROM pg_database\n\t\t\t\t\t\tWHERE datname = 'force_drop_database_idle';",
+      "querySha256": "4e5bac695e132c98e574700219585dc356b2ccfea9615b02c38407c74663ad90",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/drop_database_correctness_repro_test.go:TestDropCurrentDatabaseRejectedRepro#0001",
+      "source": "testing/go/drop_database_correctness_repro_test.go:TestDropCurrentDatabaseRejectedRepro",
+      "ordinal": 1,
+      "scriptName": "DROP DATABASE rejects current database",
+      "oracle": "internal",
+      "suggestedId": "drop-database-correctness-repro-test-testdropcurrentdatabaserejectedrepro-0001-drop-database-current_drop_database_repro",
+      "expectedKind": "error",
+      "query": "DROP DATABASE current_drop_database_repro;",
+      "querySha256": "68e08222cfe34e25b34e223b6bc9808982a44fa279a68fc2721dd202870aae1d",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/drop_database_correctness_repro_test.go:TestDropCurrentDatabaseRejectedRepro#0002",
+      "source": "testing/go/drop_database_correctness_repro_test.go:TestDropCurrentDatabaseRejectedRepro",
+      "ordinal": 2,
+      "scriptName": "DROP DATABASE rejects current database",
+      "oracle": "internal",
+      "suggestedId": "drop-database-correctness-repro-test-testdropcurrentdatabaserejectedrepro-0002-select-datname-from-pg_database-where",
+      "expectedKind": "rows",
+      "query": "SELECT datname\n\t\t\t\t\t\tFROM pg_database\n\t\t\t\t\t\tWHERE datname = 'current_drop_database_repro';",
+      "querySha256": "0c19a7d79829e3f665e27b5fa7d54e9c9bb9662de68c0a2ec5aa980736d18841",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    }
+  ]
+}

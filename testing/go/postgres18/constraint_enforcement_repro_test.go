@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package _go
+package postgres18
 
 import (
-	"testing"
+	. "github.com/dolthub/doltgresql/testing/go"
 
-	"github.com/dolthub/go-mysql-server/sql"
+	"testing"
 )
 
 // TestPostgres18CheckConstraintNotEnforcedRepro reproduces a PostgreSQL 18
@@ -39,12 +39,10 @@ func TestPostgres18CheckConstraintNotEnforcedRepro(t *testing.T) {
 					Query: `INSERT INTO check_not_enforced_items VALUES (1, -5);`,
 				},
 				{
-					Query:    `SELECT qty FROM check_not_enforced_items WHERE id = 1;`,
-					Expected: []sql.Row{{-5}},
+					Query: `SELECT qty FROM check_not_enforced_items WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "postgres18/constraint-enforcement-repro-test-testpostgres18checkconstraintnotenforcedrepro-0001-select-qty-from-check_not_enforced_items-where"},
 				},
 				{
-					Query:    `SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conname = 'qty_positive';`,
-					Expected: []sql.Row{{"CHECK ((qty > 0)) NOT ENFORCED"}},
+					Query: `SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conname = 'qty_positive';`, PostgresOracle: ScriptTestPostgresOracle{ID: "postgres18/constraint-enforcement-repro-test-testpostgres18checkconstraintnotenforcedrepro-0002-select-pg_get_constraintdef-oid-from-pg_constraint"},
 				},
 			},
 		},
@@ -63,8 +61,7 @@ func TestPostgres18CheckConstraintNotEnforcedRepro(t *testing.T) {
 					Query: `INSERT INTO mixed_check_enforcement_items VALUES (1, -5);`,
 				},
 				{
-					Query:       `INSERT INTO mixed_check_enforcement_items VALUES (2, -20);`,
-					ExpectedErr: `Check constraint "qty_floor" violated`,
+					Query: `INSERT INTO mixed_check_enforcement_items VALUES (2, -20);`, PostgresOracle: ScriptTestPostgresOracle{ID: "postgres18/constraint-enforcement-repro-test-testpostgres18checkconstraintnotenforcedrepro-0003-insert-into-mixed_check_enforcement_items-values-2", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -84,12 +81,10 @@ func TestPostgres18CheckConstraintNotEnforcedRepro(t *testing.T) {
 					Query: `INSERT INTO alter_check_not_enforced_items VALUES (2, -10);`,
 				},
 				{
-					Query:    `SELECT qty FROM alter_check_not_enforced_items ORDER BY id;`,
-					Expected: []sql.Row{{-5}, {-10}},
+					Query: `SELECT qty FROM alter_check_not_enforced_items ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "postgres18/constraint-enforcement-repro-test-testpostgres18checkconstraintnotenforcedrepro-0004-select-qty-from-alter_check_not_enforced_items-order"},
 				},
 				{
-					Query:    `SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conname = 'alter_qty_positive';`,
-					Expected: []sql.Row{{"CHECK ((qty > 0)) NOT ENFORCED"}},
+					Query: `SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conname = 'alter_qty_positive';`, PostgresOracle: ScriptTestPostgresOracle{ID: "postgres18/constraint-enforcement-repro-test-testpostgres18checkconstraintnotenforcedrepro-0005-select-pg_get_constraintdef-oid-from-pg_constraint"},
 				},
 			},
 		},

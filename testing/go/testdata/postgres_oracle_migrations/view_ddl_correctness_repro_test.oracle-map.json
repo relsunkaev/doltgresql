@@ -1,0 +1,1693 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map view_ddl_correctness_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/view_ddl_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateTemporaryViewRoundTripRepro#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateTemporaryViewRoundTripRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE TEMPORARY VIEW round trips from temp schema",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testcreatetemporaryviewroundtriprepro-0001-select-id-from-temp_view_roundtrip",
+      "suggestedId": "view-ddl-correctness-repro-test-testcreatetemporaryviewroundtriprepro-0001-select-id-from-temp_view_roundtrip",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM temp_view_roundtrip;",
+      "querySha256": "54587732fad9c526ca5969f6c222db28bf52522f57c51ee5fb240f717cc0667c",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateTemporaryViewRoundTripRepro#0002",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateTemporaryViewRoundTripRepro",
+      "ordinal": 2,
+      "scriptName": "CREATE TEMPORARY VIEW round trips from temp schema",
+      "oracle": "internal",
+      "suggestedId": "view-ddl-correctness-repro-test-testcreatetemporaryviewroundtriprepro-0002-select-table_schema-like-pg_temp_%-from",
+      "expectedKind": "rows",
+      "query": "SELECT table_schema LIKE 'pg_temp_%'\n\t\t\t\t\t\tFROM information_schema.views\n\t\t\t\t\t\tWHERE table_name = 'temp_view_roundtrip';",
+      "querySha256": "816703d1ad361d7be1b170f5cea821ef83b3ec3c577d8b024af40d405f26e55e",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateRecursiveViewRoundTripRepro#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateRecursiveViewRoundTripRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE RECURSIVE VIEW evaluates recursive definition",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testcreaterecursiveviewroundtriprepro-0001-select-n-from-recursive_nums-order",
+      "suggestedId": "view-ddl-correctness-repro-test-testcreaterecursiveviewroundtriprepro-0001-select-n-from-recursive_nums-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT n FROM recursive_nums ORDER BY n;",
+      "querySha256": "64a810374e85c96928abc71d0f92b9cbad7865b3dc5633fa42925e4383ea9c5b",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateViewFromOrderedUnionSubqueriesGuard#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateViewFromOrderedUnionSubqueriesGuard",
+      "ordinal": 1,
+      "scriptName": "CREATE VIEW from ordered UNION subqueries",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testcreateviewfromorderedunionsubqueriesguard-0001-select-pk-from-ordered_union_view-order",
+      "suggestedId": "view-ddl-correctness-repro-test-testcreateviewfromorderedunionsubqueriesguard-0001-select-pk-from-ordered_union_view-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pk FROM ordered_union_view ORDER BY pk;",
+      "querySha256": "26689889a33ef0769241bdcf37f6a45bb1b1886f6b2b1899c7828bc112b8908b",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateViewTextDomainTypmodExposesCoercedValuesRepro#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateViewTextDomainTypmodExposesCoercedValuesRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE VIEW text domain typmod exposes coerced values",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testcreateviewtextdomaintypmodexposescoercedvaluesrepro-0001-select-v-length-v-c",
+      "suggestedId": "view-ddl-correctness-repro-test-testcreateviewtextdomaintypmodexposescoercedvaluesrepro-0001-select-v-length-v-c",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT v, length(v), c = 'ab '::CHARACTER(3), octet_length(c), pg_typeof(v)::text, pg_typeof(c)::text\n\t\t\t\t\t\tFROM view_text_domain_typmod_reader;",
+      "querySha256": "15a919380319228e6e8258be23ff2160bdcddd109530d072e8bb07f2f0e52786",
+      "expectedRows": [
+        [
+          {
+            "value": "abc"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "varchar3_view_domain"
+          },
+          {
+            "value": "char3_view_domain"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateViewTextDomainTypmodExposesCoercedValuesRepro#0002",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateViewTextDomainTypmodExposesCoercedValuesRepro",
+      "ordinal": 2,
+      "scriptName": "CREATE VIEW text domain typmod exposes coerced values",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testcreateviewtextdomaintypmodexposescoercedvaluesrepro-0002-select-format_type-atttypid-atttypmod-from",
+      "suggestedId": "view-ddl-correctness-repro-test-testcreateviewtextdomaintypmodexposescoercedvaluesrepro-0002-select-format_type-atttypid-atttypmod-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT format_type(atttypid, atttypmod)\n\t\t\t\t\t\tFROM pg_attribute\n\t\t\t\t\t\tWHERE attrelid = 'view_text_domain_typmod_reader'::regclass\n\t\t\t\t\t\t\tAND attnum > 0\n\t\t\t\t\t\tORDER BY attnum;",
+      "querySha256": "4c278dba1f5be540a647209d8b3b8a9552784b44aa13b2f52b5183929da40895",
+      "expectedRows": [
+        [
+          {
+            "value": "varchar3_view_domain"
+          }
+        ],
+        [
+          {
+            "value": "char3_view_domain"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestAlterViewRenameToRepro#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestAlterViewRenameToRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER VIEW RENAME TO moves view name",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testalterviewrenametorepro-0001-select-id-label-from-alter_view_renamed_reader",
+      "suggestedId": "view-ddl-correctness-repro-test-testalterviewrenametorepro-0001-select-id-label-from-alter_view_renamed_reader",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM alter_view_renamed_reader;",
+      "querySha256": "d75e32beafe8688ccd73992d414d4650288cf062344623bdb29df512fb7dbf49",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "renamed"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestAlterViewRenameToRepro#0002",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestAlterViewRenameToRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER VIEW RENAME TO moves view name",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testalterviewrenametorepro-0002-select-id-label-from-alter_view_rename_reader",
+      "suggestedId": "view-ddl-correctness-repro-test-testalterviewrenametorepro-0002-select-id-label-from-alter_view_rename_reader",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
+      "query": "SELECT id, label FROM alter_view_rename_reader;",
+      "querySha256": "60ea7e3634d66bafce3fcb831189ad51a9a3289fdcf45c6fc516a1e8769ae5c0",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnRenameRepro#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnRenameRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE OR REPLACE VIEW rejects column rename",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testcreateorreplaceviewrejectscolumnrenamerepro-0001-create-or-replace-view-replace_view_column_name",
+      "suggestedId": "view-ddl-correctness-repro-test-testcreateorreplaceviewrejectscolumnrenamerepro-0001-create-or-replace-view-replace_view_column_name",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P16",
+      "errorSeverity": "ERROR",
+      "query": "CREATE OR REPLACE VIEW replace_view_column_name AS\n\t\t\t\t\t\tSELECT 1 AS id, 'new'::text AS renamed_label;",
+      "querySha256": "c9e173e80b136fd8b81c7789322542265ae63bb0f8910e16870063ee5ce2fbd6",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnRenameRepro#0002",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnRenameRepro",
+      "ordinal": 2,
+      "scriptName": "CREATE OR REPLACE VIEW rejects column rename",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testcreateorreplaceviewrejectscolumnrenamerepro-0002-select-id-label-from-replace_view_column_name",
+      "suggestedId": "view-ddl-correctness-repro-test-testcreateorreplaceviewrejectscolumnrenamerepro-0002-select-id-label-from-replace_view_column_name",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label FROM replace_view_column_name;",
+      "querySha256": "543b7d0088e7b8416a0ac265b613e5e3ad781914b99302f3112310e17abe336a",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "old"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnTypeChangeRepro#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnTypeChangeRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE OR REPLACE VIEW rejects column type change",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testcreateorreplaceviewrejectscolumntypechangerepro-0001-create-or-replace-view-replace_view_column_type",
+      "suggestedId": "view-ddl-correctness-repro-test-testcreateorreplaceviewrejectscolumntypechangerepro-0001-create-or-replace-view-replace_view_column_type",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P16",
+      "errorSeverity": "ERROR",
+      "query": "CREATE OR REPLACE VIEW replace_view_column_type AS\n\t\t\t\t\t\tSELECT 1 AS id, 7 AS label;",
+      "querySha256": "faeff682f5847e2a408a5a7410c11cf24f78dfc5de80efe907f3b1a1f7db3b89",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnTypeChangeRepro#0002",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnTypeChangeRepro",
+      "ordinal": 2,
+      "scriptName": "CREATE OR REPLACE VIEW rejects column type change",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testcreateorreplaceviewrejectscolumntypechangerepro-0002-select-id-label-from-replace_view_column_type",
+      "suggestedId": "view-ddl-correctness-repro-test-testcreateorreplaceviewrejectscolumntypechangerepro-0002-select-id-label-from-replace_view_column_type",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label FROM replace_view_column_type;",
+      "querySha256": "0d9506073475bdbb97a33426436cb173285278708ba34ceb7551289cc12c12cc",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "old"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnDropRepro#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnDropRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE OR REPLACE VIEW rejects column drop",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testcreateorreplaceviewrejectscolumndroprepro-0001-create-or-replace-view-replace_view_column_drop",
+      "suggestedId": "view-ddl-correctness-repro-test-testcreateorreplaceviewrejectscolumndroprepro-0001-create-or-replace-view-replace_view_column_drop",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P16",
+      "errorSeverity": "ERROR",
+      "query": "CREATE OR REPLACE VIEW replace_view_column_drop AS\n\t\t\t\t\t\tSELECT 1 AS id;",
+      "querySha256": "8a36cf2a81799311607b8efd3b6c67568ce4df24cb30bb1f562c4f69aa5e3e37",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnDropRepro#0002",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnDropRepro",
+      "ordinal": 2,
+      "scriptName": "CREATE OR REPLACE VIEW rejects column drop",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testcreateorreplaceviewrejectscolumndroprepro-0002-select-id-label-from-replace_view_column_drop",
+      "suggestedId": "view-ddl-correctness-repro-test-testcreateorreplaceviewrejectscolumndroprepro-0002-select-id-label-from-replace_view_column_drop",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label FROM replace_view_column_drop;",
+      "querySha256": "75e16898e8c66c81219087e6645f46a4a95fa0666766d00b7d878ec1111d2db9",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "old"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnReorderRepro#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnReorderRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE OR REPLACE VIEW rejects column reorder",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testcreateorreplaceviewrejectscolumnreorderrepro-0001-create-or-replace-view-replace_view_column_reorder",
+      "suggestedId": "view-ddl-correctness-repro-test-testcreateorreplaceviewrejectscolumnreorderrepro-0001-create-or-replace-view-replace_view_column_reorder",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P16",
+      "errorSeverity": "ERROR",
+      "query": "CREATE OR REPLACE VIEW replace_view_column_reorder AS\n\t\t\t\t\t\tSELECT 'old'::text AS label, 1 AS id;",
+      "querySha256": "af26a6f0c4c2dcdd8d25daf9cece151069732aa7485dd784365042587714c743",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnReorderRepro#0002",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewRejectsColumnReorderRepro",
+      "ordinal": 2,
+      "scriptName": "CREATE OR REPLACE VIEW rejects column reorder",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testcreateorreplaceviewrejectscolumnreorderrepro-0002-select-id-label-from-replace_view_column_reorder",
+      "suggestedId": "view-ddl-correctness-repro-test-testcreateorreplaceviewrejectscolumnreorderrepro-0002-select-id-label-from-replace_view_column_reorder",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label FROM replace_view_column_reorder;",
+      "querySha256": "1ce27734c08e2148b2637657e1378a6157ea43ab6368fdef57d70bea6c24b036",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "old"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewAllowsAppendingColumnsGuard#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewAllowsAppendingColumnsGuard",
+      "ordinal": 1,
+      "scriptName": "CREATE OR REPLACE VIEW allows appending columns",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testcreateorreplaceviewallowsappendingcolumnsguard-0001-select-id-label-active-from",
+      "suggestedId": "view-ddl-correctness-repro-test-testcreateorreplaceviewallowsappendingcolumnsguard-0001-select-id-label-active-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label, active\n\t\t\t\t\t\tFROM replace_view_append_column;",
+      "querySha256": "4976ed2ac40dc81247d2847c53679dc72a0ca6dfc2d342e47ed86ca518cbd4da",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "old"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewWithDataGuard#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewWithDataGuard",
+      "ordinal": 1,
+      "scriptName": "CREATE MATERIALIZED VIEW WITH DATA populates rows",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testcreatematerializedviewwithdataguard-0001-select-id-label-from-matview_with_data_reader",
+      "suggestedId": "view-ddl-correctness-repro-test-testcreatematerializedviewwithdataguard-0001-select-id-label-from-matview_with_data_reader",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM matview_with_data_reader\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "1e0d39c38c12b6649798429a3ec9f821ba7504c5c9fbfa1fecb162de77388941",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "one"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "two"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimetzTypmodMaterializesRoundedValueRepro#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimetzTypmodMaterializesRoundedValueRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE MATERIALIZED VIEW timetz typmod materializes rounded value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testcreatematerializedviewtimetztypmodmaterializesroundedvaluerepro-0001-select-tz::text-from-matview_timetz_typmod_reader",
+      "suggestedId": "view-ddl-correctness-repro-test-testcreatematerializedviewtimetztypmodmaterializesroundedvaluerepro-0001-select-tz::text-from-matview_timetz_typmod_reader",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT tz::text\n\t\t\t\t\t\tFROM matview_timetz_typmod_reader;",
+      "querySha256": "c88bbd354ca9861a59f90c983d9009fc3728be8e2582fe39a6e05b244a362133",
+      "expectedRows": [
+        [
+          {
+            "value": "21:43:57+00"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimetzTypmodMaterializesRoundedValueRepro#0002",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimetzTypmodMaterializesRoundedValueRepro",
+      "ordinal": 2,
+      "scriptName": "CREATE MATERIALIZED VIEW timetz typmod materializes rounded value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testcreatematerializedviewtimetztypmodmaterializesroundedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "suggestedId": "view-ddl-correctness-repro-test-testcreatematerializedviewtimetztypmodmaterializesroundedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT format_type(a.atttypid, a.atttypmod)\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute a\n\t\t\t\t\t\tWHERE a.attrelid = 'matview_timetz_typmod_reader'::regclass\n\t\t\t\t\t\t\tAND a.attname = 'tz';",
+      "querySha256": "ff3477ff38af80f4cde966dc6cd18e8b6340e218a8bcbc40f49999c91914a52c",
+      "expectedRows": [
+        [
+          {
+            "value": "time(0) with time zone"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimeTypmodMaterializesRoundedValueGuard#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimeTypmodMaterializesRoundedValueGuard",
+      "ordinal": 1,
+      "scriptName": "CREATE MATERIALIZED VIEW time typmod materializes rounded value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testcreatematerializedviewtimetypmodmaterializesroundedvalueguard-0001-select-t::text-from-matview_time_typmod_reader",
+      "suggestedId": "view-ddl-correctness-repro-test-testcreatematerializedviewtimetypmodmaterializesroundedvalueguard-0001-select-t::text-from-matview_time_typmod_reader",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT t::text\n\t\t\t\t\t\tFROM matview_time_typmod_reader;",
+      "querySha256": "97ae372a4129761d20df6ea2b58e404672f2f7bc6afaae50a1c319f8177a2884",
+      "expectedRows": [
+        [
+          {
+            "value": "21:43:57"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimeTypmodMaterializesRoundedValueGuard#0002",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimeTypmodMaterializesRoundedValueGuard",
+      "ordinal": 2,
+      "scriptName": "CREATE MATERIALIZED VIEW time typmod materializes rounded value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testcreatematerializedviewtimetypmodmaterializesroundedvalueguard-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "suggestedId": "view-ddl-correctness-repro-test-testcreatematerializedviewtimetypmodmaterializesroundedvalueguard-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT format_type(a.atttypid, a.atttypmod)\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute a\n\t\t\t\t\t\tWHERE a.attrelid = 'matview_time_typmod_reader'::regclass\n\t\t\t\t\t\t\tAND a.attname = 't';",
+      "querySha256": "45efdcd2a07f1a16d4ccf4f0eea75630b073b3ef4d24962493d177cb76b5739e",
+      "expectedRows": [
+        [
+          {
+            "value": "time(0) without time zone"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimestampTypmodMaterializesRoundedValueRepro#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimestampTypmodMaterializesRoundedValueRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE MATERIALIZED VIEW timestamp typmod materializes rounded value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testcreatematerializedviewtimestamptypmodmaterializesroundedvaluerepro-0001-select-ts::text-from-matview_timestamp_typmod_reader",
+      "suggestedId": "view-ddl-correctness-repro-test-testcreatematerializedviewtimestamptypmodmaterializesroundedvaluerepro-0001-select-ts::text-from-matview_timestamp_typmod_reader",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ts::text\n\t\t\t\t\t\tFROM matview_timestamp_typmod_reader;",
+      "querySha256": "a9cd5b60b58f52e8f50c31ceff1f47e4a18bacb949344db9176e5653ff75e8fa",
+      "expectedRows": [
+        [
+          {
+            "value": "2021-09-15 21:43:57"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimestampTypmodMaterializesRoundedValueRepro#0002",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimestampTypmodMaterializesRoundedValueRepro",
+      "ordinal": 2,
+      "scriptName": "CREATE MATERIALIZED VIEW timestamp typmod materializes rounded value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testcreatematerializedviewtimestamptypmodmaterializesroundedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "suggestedId": "view-ddl-correctness-repro-test-testcreatematerializedviewtimestamptypmodmaterializesroundedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT format_type(a.atttypid, a.atttypmod)\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute a\n\t\t\t\t\t\tWHERE a.attrelid = 'matview_timestamp_typmod_reader'::regclass\n\t\t\t\t\t\t\tAND a.attname = 'ts';",
+      "querySha256": "7cd67ea73182dfd9b32ed1d2c97ef1b20f99dfb7ceb6a4867e23a70adc3e5ae7",
+      "expectedRows": [
+        [
+          {
+            "value": "timestamp(0) without time zone"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimestamptzTypmodMaterializesRoundedValueRepro#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimestamptzTypmodMaterializesRoundedValueRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE MATERIALIZED VIEW timestamptz typmod materializes rounded value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testcreatematerializedviewtimestamptztypmodmaterializesroundedvaluerepro-0001-select-ts::text-from-matview_timestamptz_typmod_reader",
+      "suggestedId": "view-ddl-correctness-repro-test-testcreatematerializedviewtimestamptztypmodmaterializesroundedvaluerepro-0001-select-ts::text-from-matview_timestamptz_typmod_reader",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ts::text\n\t\t\t\t\t\tFROM matview_timestamptz_typmod_reader;",
+      "querySha256": "eb81807496c07a9d5474a84fa8de99cb03447aae55255a3d82559a9bc710845e",
+      "expectedRows": [
+        [
+          {
+            "value": "2021-09-15 21:43:57+00"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimestamptzTypmodMaterializesRoundedValueRepro#0002",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTimestamptzTypmodMaterializesRoundedValueRepro",
+      "ordinal": 2,
+      "scriptName": "CREATE MATERIALIZED VIEW timestamptz typmod materializes rounded value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testcreatematerializedviewtimestamptztypmodmaterializesroundedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "suggestedId": "view-ddl-correctness-repro-test-testcreatematerializedviewtimestamptztypmodmaterializesroundedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT format_type(a.atttypid, a.atttypmod)\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute a\n\t\t\t\t\t\tWHERE a.attrelid = 'matview_timestamptz_typmod_reader'::regclass\n\t\t\t\t\t\t\tAND a.attname = 'ts';",
+      "querySha256": "90c26079c99c78aad43aba78af42869579ddc105cfcb646ac3c99199673f0a2d",
+      "expectedRows": [
+        [
+          {
+            "value": "timestamp(0) with time zone"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewIntervalTypmodMaterializesRestrictedValueRepro#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewIntervalTypmodMaterializesRestrictedValueRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE MATERIALIZED VIEW interval typmod materializes restricted value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testcreatematerializedviewintervaltypmodmaterializesrestrictedvaluerepro-0001-select-ds::text-from-matview_interval_typmod_reader",
+      "suggestedId": "view-ddl-correctness-repro-test-testcreatematerializedviewintervaltypmodmaterializesrestrictedvaluerepro-0001-select-ds::text-from-matview_interval_typmod_reader",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ds::text\n\t\t\t\t\t\tFROM matview_interval_typmod_reader;",
+      "querySha256": "7fdfa709235409c03af4497bb267080e25c54645ccaf0971761c270324e69416",
+      "expectedRows": [
+        [
+          {
+            "value": "3 days 04:05:07"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewIntervalTypmodMaterializesRestrictedValueRepro#0002",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewIntervalTypmodMaterializesRestrictedValueRepro",
+      "ordinal": 2,
+      "scriptName": "CREATE MATERIALIZED VIEW interval typmod materializes restricted value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testcreatematerializedviewintervaltypmodmaterializesrestrictedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "suggestedId": "view-ddl-correctness-repro-test-testcreatematerializedviewintervaltypmodmaterializesrestrictedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT format_type(a.atttypid, a.atttypmod)\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute a\n\t\t\t\t\t\tWHERE a.attrelid = 'matview_interval_typmod_reader'::regclass\n\t\t\t\t\t\t\tAND a.attname = 'ds';",
+      "querySha256": "45df81e47e8a478f8ecb2c126cee3e1d807496b0d36b0f802afe47a994b51f6f",
+      "expectedRows": [
+        [
+          {
+            "value": "interval day to second(0)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewVarcharTypmodMaterializesTruncatedValueGuard#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewVarcharTypmodMaterializesTruncatedValueGuard",
+      "ordinal": 1,
+      "scriptName": "CREATE MATERIALIZED VIEW varchar typmod materializes truncated value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testcreatematerializedviewvarchartypmodmaterializestruncatedvalueguard-0001-select-label-from-matview_varchar_typmod_reader",
+      "suggestedId": "view-ddl-correctness-repro-test-testcreatematerializedviewvarchartypmodmaterializestruncatedvalueguard-0001-select-label-from-matview_varchar_typmod_reader",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT label\n\t\t\t\t\t\tFROM matview_varchar_typmod_reader;",
+      "querySha256": "fa01b7fa51d5a0dfa9079eec48ed4432213573666479053be567889e0c159284",
+      "expectedRows": [
+        [
+          {
+            "value": "abc"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewVarcharTypmodMaterializesTruncatedValueGuard#0002",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewVarcharTypmodMaterializesTruncatedValueGuard",
+      "ordinal": 2,
+      "scriptName": "CREATE MATERIALIZED VIEW varchar typmod materializes truncated value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testcreatematerializedviewvarchartypmodmaterializestruncatedvalueguard-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "suggestedId": "view-ddl-correctness-repro-test-testcreatematerializedviewvarchartypmodmaterializestruncatedvalueguard-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT format_type(a.atttypid, a.atttypmod)\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute a\n\t\t\t\t\t\tWHERE a.attrelid = 'matview_varchar_typmod_reader'::regclass\n\t\t\t\t\t\t\tAND a.attname = 'label';",
+      "querySha256": "f645bbb559f6c93e1a8212675256bca59d79811931043270e899daac0e5691d7",
+      "expectedRows": [
+        [
+          {
+            "value": "character varying(3)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewCharacterTypmodMaterializesPaddedValueRepro#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewCharacterTypmodMaterializesPaddedValueRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE MATERIALIZED VIEW character typmod materializes padded value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testcreatematerializedviewcharactertypmodmaterializespaddedvaluerepro-0001-select-octet_length-label-from-matview_character_typmod_reader",
+      "suggestedId": "view-ddl-correctness-repro-test-testcreatematerializedviewcharactertypmodmaterializespaddedvaluerepro-0001-select-octet_length-label-from-matview_character_typmod_reader",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT octet_length(label)\n\t\t\t\t\t\tFROM matview_character_typmod_reader;",
+      "querySha256": "bbbf248f9c20d7ae197e350cb3583dda9bc3096e5f975610a22a42289350c295",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewCharacterTypmodMaterializesPaddedValueRepro#0002",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewCharacterTypmodMaterializesPaddedValueRepro",
+      "ordinal": 2,
+      "scriptName": "CREATE MATERIALIZED VIEW character typmod materializes padded value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testcreatematerializedviewcharactertypmodmaterializespaddedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "suggestedId": "view-ddl-correctness-repro-test-testcreatematerializedviewcharactertypmodmaterializespaddedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT format_type(a.atttypid, a.atttypmod)\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute a\n\t\t\t\t\t\tWHERE a.attrelid = 'matview_character_typmod_reader'::regclass\n\t\t\t\t\t\t\tAND a.attname = 'label';",
+      "querySha256": "e5e34fda3eeb47c80a127ef43dd82fff761f0e2e1a3d88aa3c76ca1e4cea7110",
+      "expectedRows": [
+        [
+          {
+            "value": "character(3)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTextDomainTypmodMaterializesCoercedValueRepro#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTextDomainTypmodMaterializesCoercedValueRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE MATERIALIZED VIEW text domain typmod materializes coerced value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testcreatematerializedviewtextdomaintypmodmaterializescoercedvaluerepro-0001-select-v-length-v-c",
+      "suggestedId": "view-ddl-correctness-repro-test-testcreatematerializedviewtextdomaintypmodmaterializescoercedvaluerepro-0001-select-v-length-v-c",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT v, length(v), c = 'ab '::CHARACTER(3), octet_length(c), pg_typeof(v)::text, pg_typeof(c)::text\n\t\t\t\t\t\tFROM matview_text_domain_typmod_reader;",
+      "querySha256": "be8ac55096dcc0f50e3fef00f23a7801ff7ded2a4b375b8340986d67fe2300f9",
+      "expectedRows": [
+        [
+          {
+            "value": "abc"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "varchar3_matview_domain"
+          },
+          {
+            "value": "char3_matview_domain"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTextDomainTypmodMaterializesCoercedValueRepro#0002",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewTextDomainTypmodMaterializesCoercedValueRepro",
+      "ordinal": 2,
+      "scriptName": "CREATE MATERIALIZED VIEW text domain typmod materializes coerced value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testcreatematerializedviewtextdomaintypmodmaterializescoercedvaluerepro-0002-select-format_type-atttypid-atttypmod-from",
+      "suggestedId": "view-ddl-correctness-repro-test-testcreatematerializedviewtextdomaintypmodmaterializescoercedvaluerepro-0002-select-format_type-atttypid-atttypmod-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT format_type(atttypid, atttypmod)\n\t\t\t\t\t\tFROM pg_attribute\n\t\t\t\t\t\tWHERE attrelid = 'matview_text_domain_typmod_reader'::regclass\n\t\t\t\t\t\t\tAND attnum > 0\n\t\t\t\t\t\tORDER BY attnum;",
+      "querySha256": "34e942915ab633a1eef317c4bf372e9c5e025d7dac21865dc0cf211a19fec9f4",
+      "expectedRows": [
+        [
+          {
+            "value": "varchar3_matview_domain"
+          }
+        ],
+        [
+          {
+            "value": "char3_matview_domain"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimetzTypmodMaterializesRoundedValueRepro#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimetzTypmodMaterializesRoundedValueRepro",
+      "ordinal": 1,
+      "scriptName": "REFRESH MATERIALIZED VIEW timetz typmod materializes rounded value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewtimetztypmodmaterializesroundedvaluerepro-0001-select-format_type-a.atttypid-a.atttypmod-from",
+      "suggestedId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewtimetztypmodmaterializesroundedvaluerepro-0001-select-format_type-a.atttypid-a.atttypmod-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT format_type(a.atttypid, a.atttypmod)\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute a\n\t\t\t\t\t\tWHERE a.attrelid = 'matview_refresh_timetz_typmod_reader'::regclass\n\t\t\t\t\t\t\tAND a.attname = 'tz';",
+      "querySha256": "cfc1e252988b6d57280b85bacd6c82b05ac9a7ed88d4ddc0f199e85357260bd8",
+      "expectedRows": [
+        [
+          {
+            "value": "time(0) with time zone"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimetzTypmodMaterializesRoundedValueRepro#0002",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimetzTypmodMaterializesRoundedValueRepro",
+      "ordinal": 2,
+      "scriptName": "REFRESH MATERIALIZED VIEW timetz typmod materializes rounded value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewtimetztypmodmaterializesroundedvaluerepro-0002-select-tz::text-from-matview_refresh_timetz_typmod_reader",
+      "suggestedId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewtimetztypmodmaterializesroundedvaluerepro-0002-select-tz::text-from-matview_refresh_timetz_typmod_reader",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT tz::text\n\t\t\t\t\t\tFROM matview_refresh_timetz_typmod_reader;",
+      "querySha256": "79a66e1f8e7c9af4339968a6df51f66849147e70ef4fb19ba73ca8e25047744d",
+      "expectedRows": [
+        [
+          {
+            "value": "21:43:57+00"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimeTypmodMaterializesRoundedValueGuard#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimeTypmodMaterializesRoundedValueGuard",
+      "ordinal": 1,
+      "scriptName": "REFRESH MATERIALIZED VIEW time typmod materializes rounded value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewtimetypmodmaterializesroundedvalueguard-0001-select-format_type-a.atttypid-a.atttypmod-from",
+      "suggestedId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewtimetypmodmaterializesroundedvalueguard-0001-select-format_type-a.atttypid-a.atttypmod-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT format_type(a.atttypid, a.atttypmod)\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute a\n\t\t\t\t\t\tWHERE a.attrelid = 'matview_refresh_time_typmod_reader'::regclass\n\t\t\t\t\t\t\tAND a.attname = 't';",
+      "querySha256": "0884ca2da4f3b25a919179683f047adfc80182ee623ae848c13195476e647b2b",
+      "expectedRows": [
+        [
+          {
+            "value": "time(0) without time zone"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimeTypmodMaterializesRoundedValueGuard#0002",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimeTypmodMaterializesRoundedValueGuard",
+      "ordinal": 2,
+      "scriptName": "REFRESH MATERIALIZED VIEW time typmod materializes rounded value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewtimetypmodmaterializesroundedvalueguard-0002-select-t::text-from-matview_refresh_time_typmod_reader",
+      "suggestedId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewtimetypmodmaterializesroundedvalueguard-0002-select-t::text-from-matview_refresh_time_typmod_reader",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT t::text\n\t\t\t\t\t\tFROM matview_refresh_time_typmod_reader;",
+      "querySha256": "7f3f639f21002509f451c5fdae236c855431c8b8f4e232d5326db1ba0a11032a",
+      "expectedRows": [
+        [
+          {
+            "value": "21:43:57"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimestampTypmodMaterializesRoundedValueRepro#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimestampTypmodMaterializesRoundedValueRepro",
+      "ordinal": 1,
+      "scriptName": "REFRESH MATERIALIZED VIEW timestamp typmod materializes rounded value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewtimestamptypmodmaterializesroundedvaluerepro-0001-select-format_type-a.atttypid-a.atttypmod-from",
+      "suggestedId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewtimestamptypmodmaterializesroundedvaluerepro-0001-select-format_type-a.atttypid-a.atttypmod-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT format_type(a.atttypid, a.atttypmod)\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute a\n\t\t\t\t\t\tWHERE a.attrelid = 'matview_refresh_timestamp_typmod_reader'::regclass\n\t\t\t\t\t\t\tAND a.attname = 'ts';",
+      "querySha256": "faa4f7fffbcc88723cb53c2ba8b75681033f11a4ddc81aa36891b5174ba2a947",
+      "expectedRows": [
+        [
+          {
+            "value": "timestamp(0) without time zone"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimestampTypmodMaterializesRoundedValueRepro#0002",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimestampTypmodMaterializesRoundedValueRepro",
+      "ordinal": 2,
+      "scriptName": "REFRESH MATERIALIZED VIEW timestamp typmod materializes rounded value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewtimestamptypmodmaterializesroundedvaluerepro-0002-select-ts::text-from-matview_refresh_timestamp_typmod_reader",
+      "suggestedId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewtimestamptypmodmaterializesroundedvaluerepro-0002-select-ts::text-from-matview_refresh_timestamp_typmod_reader",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ts::text\n\t\t\t\t\t\tFROM matview_refresh_timestamp_typmod_reader;",
+      "querySha256": "a3e9a91e69254354da3dab60bf49476b5c124068ea890876ea7a1ddff3f9d25b",
+      "expectedRows": [
+        [
+          {
+            "value": "2021-09-15 21:43:57"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimestamptzTypmodMaterializesRoundedValueRepro#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimestamptzTypmodMaterializesRoundedValueRepro",
+      "ordinal": 1,
+      "scriptName": "REFRESH MATERIALIZED VIEW timestamptz typmod materializes rounded value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewtimestamptztypmodmaterializesroundedvaluerepro-0001-select-format_type-a.atttypid-a.atttypmod-from",
+      "suggestedId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewtimestamptztypmodmaterializesroundedvaluerepro-0001-select-format_type-a.atttypid-a.atttypmod-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT format_type(a.atttypid, a.atttypmod)\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute a\n\t\t\t\t\t\tWHERE a.attrelid = 'matview_refresh_timestamptz_typmod_reader'::regclass\n\t\t\t\t\t\t\tAND a.attname = 'ts';",
+      "querySha256": "c163f89c5fcb9f03eb549e97a14c7216fd2040fd50cede828f238e6e915db73c",
+      "expectedRows": [
+        [
+          {
+            "value": "timestamp(0) with time zone"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimestamptzTypmodMaterializesRoundedValueRepro#0002",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTimestamptzTypmodMaterializesRoundedValueRepro",
+      "ordinal": 2,
+      "scriptName": "REFRESH MATERIALIZED VIEW timestamptz typmod materializes rounded value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewtimestamptztypmodmaterializesroundedvaluerepro-0002-select-ts::text-from",
+      "suggestedId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewtimestamptztypmodmaterializesroundedvaluerepro-0002-select-ts::text-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ts::text\n\t\t\t\t\t\tFROM matview_refresh_timestamptz_typmod_reader;",
+      "querySha256": "a9cc2a06e49475eb37b4f023f967be968c15c318f21fbcc6307c28f89be00a33",
+      "expectedRows": [
+        [
+          {
+            "value": "2021-09-15 21:43:57+00"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewIntervalTypmodMaterializesRestrictedValueRepro#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewIntervalTypmodMaterializesRestrictedValueRepro",
+      "ordinal": 1,
+      "scriptName": "REFRESH MATERIALIZED VIEW interval typmod materializes restricted value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewintervaltypmodmaterializesrestrictedvaluerepro-0001-select-format_type-a.atttypid-a.atttypmod-from",
+      "suggestedId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewintervaltypmodmaterializesrestrictedvaluerepro-0001-select-format_type-a.atttypid-a.atttypmod-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT format_type(a.atttypid, a.atttypmod)\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute a\n\t\t\t\t\t\tWHERE a.attrelid = 'matview_refresh_interval_typmod_reader'::regclass\n\t\t\t\t\t\t\tAND a.attname = 'ds';",
+      "querySha256": "c9c214ab9d89a46903d477a48314e8f6020ce264a7948f04261e43d9e3d24156",
+      "expectedRows": [
+        [
+          {
+            "value": "interval day to second(0)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewIntervalTypmodMaterializesRestrictedValueRepro#0002",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewIntervalTypmodMaterializesRestrictedValueRepro",
+      "ordinal": 2,
+      "scriptName": "REFRESH MATERIALIZED VIEW interval typmod materializes restricted value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewintervaltypmodmaterializesrestrictedvaluerepro-0002-select-ds::text-from-matview_refresh_interval_typmod_reader",
+      "suggestedId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewintervaltypmodmaterializesrestrictedvaluerepro-0002-select-ds::text-from-matview_refresh_interval_typmod_reader",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ds::text\n\t\t\t\t\t\tFROM matview_refresh_interval_typmod_reader;",
+      "querySha256": "583a7709baa4d6afd5ae239e5f5bfc9f65768cf92832eebc2858393e059af4e6",
+      "expectedRows": [
+        [
+          {
+            "value": "3 days 04:05:07"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewCharacterTypmodMaterializesPaddedValueRepro#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewCharacterTypmodMaterializesPaddedValueRepro",
+      "ordinal": 1,
+      "scriptName": "REFRESH MATERIALIZED VIEW character typmod materializes padded value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewcharactertypmodmaterializespaddedvaluerepro-0001-select-format_type-a.atttypid-a.atttypmod-from",
+      "suggestedId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewcharactertypmodmaterializespaddedvaluerepro-0001-select-format_type-a.atttypid-a.atttypmod-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT format_type(a.atttypid, a.atttypmod)\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute a\n\t\t\t\t\t\tWHERE a.attrelid = 'matview_refresh_character_typmod_reader'::regclass\n\t\t\t\t\t\t\tAND a.attname = 'label';",
+      "querySha256": "fc9091392f83e59f2e44e4f73a527967dcc9c482ff61f99792f3a791408a7198",
+      "expectedRows": [
+        [
+          {
+            "value": "character(3)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewCharacterTypmodMaterializesPaddedValueRepro#0002",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewCharacterTypmodMaterializesPaddedValueRepro",
+      "ordinal": 2,
+      "scriptName": "REFRESH MATERIALIZED VIEW character typmod materializes padded value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewcharactertypmodmaterializespaddedvaluerepro-0002-select-octet_length-label-from-matview_refresh_character_typmod_reader",
+      "suggestedId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewcharactertypmodmaterializespaddedvaluerepro-0002-select-octet_length-label-from-matview_refresh_character_typmod_reader",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT octet_length(label)\n\t\t\t\t\t\tFROM matview_refresh_character_typmod_reader;",
+      "querySha256": "2424456da66f6a6a796c0f439c3c0974d3db17b06b424d81dfea5cb010460e60",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTextDomainTypmodMaterializesCoercedValueRepro#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTextDomainTypmodMaterializesCoercedValueRepro",
+      "ordinal": 1,
+      "scriptName": "REFRESH MATERIALIZED VIEW text domain typmod materializes coerced value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewtextdomaintypmodmaterializescoercedvaluerepro-0001-select-format_type-atttypid-atttypmod-from",
+      "suggestedId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewtextdomaintypmodmaterializescoercedvaluerepro-0001-select-format_type-atttypid-atttypmod-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT format_type(atttypid, atttypmod)\n\t\t\t\t\t\tFROM pg_attribute\n\t\t\t\t\t\tWHERE attrelid = 'matview_refresh_text_domain_reader'::regclass\n\t\t\t\t\t\t\tAND attnum > 0\n\t\t\t\t\t\tORDER BY attnum;",
+      "querySha256": "85314189fb5cddf2f76415b2b12508fdf4b4268ecbb3c3c384505c160cbdc403",
+      "expectedRows": [
+        [
+          {
+            "value": "varchar3_refresh_domain"
+          }
+        ],
+        [
+          {
+            "value": "char3_refresh_domain"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTextDomainTypmodMaterializesCoercedValueRepro#0002",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewTextDomainTypmodMaterializesCoercedValueRepro",
+      "ordinal": 2,
+      "scriptName": "REFRESH MATERIALIZED VIEW text domain typmod materializes coerced value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewtextdomaintypmodmaterializescoercedvaluerepro-0002-select-v-length-v-c",
+      "suggestedId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewtextdomaintypmodmaterializescoercedvaluerepro-0002-select-v-length-v-c",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT v, length(v), c = 'ab '::CHARACTER(3), octet_length(c), pg_typeof(v)::text, pg_typeof(c)::text\n\t\t\t\t\t\tFROM matview_refresh_text_domain_reader;",
+      "querySha256": "66dfde423a492df701c64b08507042d32ddaddcfa5eca1899f45c3cc52906a59",
+      "expectedRows": [
+        [
+          {
+            "value": "abc"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "varchar3_refresh_domain"
+          },
+          {
+            "value": "char3_refresh_domain"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimetzTypmodMaterializesRoundedValueRepro#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimetzTypmodMaterializesRoundedValueRepro",
+      "ordinal": 1,
+      "scriptName": "REFRESH MATERIALIZED VIEW CONCURRENTLY timetz typmod materializes rounded value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewconcurrentlytimetztypmodmaterializesroundedvaluerepro-0001-select-tz::text-from",
+      "suggestedId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewconcurrentlytimetztypmodmaterializesroundedvaluerepro-0001-select-tz::text-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT tz::text\n\t\t\t\t\t\tFROM matview_concurrently_timetz_typmod_reader;",
+      "querySha256": "7bc45a93c8d16162c4c98e978a4ec4fee5996c9bd2c5e15de69e7a3824f4f9bf",
+      "expectedRows": [
+        [
+          {
+            "value": "21:43:57+00"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimetzTypmodMaterializesRoundedValueRepro#0002",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimetzTypmodMaterializesRoundedValueRepro",
+      "ordinal": 2,
+      "scriptName": "REFRESH MATERIALIZED VIEW CONCURRENTLY timetz typmod materializes rounded value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewconcurrentlytimetztypmodmaterializesroundedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "suggestedId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewconcurrentlytimetztypmodmaterializesroundedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT format_type(a.atttypid, a.atttypmod)\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute a\n\t\t\t\t\t\tWHERE a.attrelid = 'matview_concurrently_timetz_typmod_reader'::regclass\n\t\t\t\t\t\t\tAND a.attname = 'tz';",
+      "querySha256": "a9de7711045e57079f2fda06edba4bd78b216ccea09085538517c1589e4344d8",
+      "expectedRows": [
+        [
+          {
+            "value": "time(0) with time zone"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimeTypmodMaterializesRoundedValueGuard#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimeTypmodMaterializesRoundedValueGuard",
+      "ordinal": 1,
+      "scriptName": "REFRESH MATERIALIZED VIEW CONCURRENTLY time typmod materializes rounded value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewconcurrentlytimetypmodmaterializesroundedvalueguard-0001-select-t::text-from-matview_concurrently_time_typmod_reader",
+      "suggestedId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewconcurrentlytimetypmodmaterializesroundedvalueguard-0001-select-t::text-from-matview_concurrently_time_typmod_reader",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT t::text\n\t\t\t\t\t\tFROM matview_concurrently_time_typmod_reader;",
+      "querySha256": "91604525dff4aaa90f9d71e126cf4b068aae75fd809de7e672f0f22036370251",
+      "expectedRows": [
+        [
+          {
+            "value": "21:43:57"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimeTypmodMaterializesRoundedValueGuard#0002",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimeTypmodMaterializesRoundedValueGuard",
+      "ordinal": 2,
+      "scriptName": "REFRESH MATERIALIZED VIEW CONCURRENTLY time typmod materializes rounded value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewconcurrentlytimetypmodmaterializesroundedvalueguard-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "suggestedId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewconcurrentlytimetypmodmaterializesroundedvalueguard-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT format_type(a.atttypid, a.atttypmod)\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute a\n\t\t\t\t\t\tWHERE a.attrelid = 'matview_concurrently_time_typmod_reader'::regclass\n\t\t\t\t\t\t\tAND a.attname = 't';",
+      "querySha256": "458b42b57ed58d035bcb0d0aa4851677d20045733029ce0eb994acb694f90857",
+      "expectedRows": [
+        [
+          {
+            "value": "time(0) without time zone"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimestampTypmodMaterializesRoundedValueRepro#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimestampTypmodMaterializesRoundedValueRepro",
+      "ordinal": 1,
+      "scriptName": "REFRESH MATERIALIZED VIEW CONCURRENTLY timestamp typmod materializes rounded value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewconcurrentlytimestamptypmodmaterializesroundedvaluerepro-0001-select-ts::text-from",
+      "suggestedId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewconcurrentlytimestamptypmodmaterializesroundedvaluerepro-0001-select-ts::text-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ts::text\n\t\t\t\t\t\tFROM matview_concurrently_timestamp_typmod_reader;",
+      "querySha256": "e889bacdee82fe0f9b07ed6bbffb1d561c74dc4c261b72e90c119ae41f9227e3",
+      "expectedRows": [
+        [
+          {
+            "value": "2021-09-15 21:43:57"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimestampTypmodMaterializesRoundedValueRepro#0002",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimestampTypmodMaterializesRoundedValueRepro",
+      "ordinal": 2,
+      "scriptName": "REFRESH MATERIALIZED VIEW CONCURRENTLY timestamp typmod materializes rounded value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewconcurrentlytimestamptypmodmaterializesroundedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "suggestedId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewconcurrentlytimestamptypmodmaterializesroundedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT format_type(a.atttypid, a.atttypmod)\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute a\n\t\t\t\t\t\tWHERE a.attrelid = 'matview_concurrently_timestamp_typmod_reader'::regclass\n\t\t\t\t\t\t\tAND a.attname = 'ts';",
+      "querySha256": "6659083bdb7a8b06290a1dbe88c7233fba8950f16640f9928a213e91601ced9b",
+      "expectedRows": [
+        [
+          {
+            "value": "timestamp(0) without time zone"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimestamptzTypmodMaterializesRoundedValueRepro#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimestamptzTypmodMaterializesRoundedValueRepro",
+      "ordinal": 1,
+      "scriptName": "REFRESH MATERIALIZED VIEW CONCURRENTLY timestamptz typmod materializes rounded value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewconcurrentlytimestamptztypmodmaterializesroundedvaluerepro-0001-select-ts::text-from",
+      "suggestedId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewconcurrentlytimestamptztypmodmaterializesroundedvaluerepro-0001-select-ts::text-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ts::text\n\t\t\t\t\t\tFROM matview_concurrently_timestamptz_typmod_reader;",
+      "querySha256": "2698dfc0587e8ba0f12671d563185cf21adbb8f285b07bf4e8432e4e75da3084",
+      "expectedRows": [
+        [
+          {
+            "value": "2021-09-15 21:43:57+00"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimestamptzTypmodMaterializesRoundedValueRepro#0002",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTimestamptzTypmodMaterializesRoundedValueRepro",
+      "ordinal": 2,
+      "scriptName": "REFRESH MATERIALIZED VIEW CONCURRENTLY timestamptz typmod materializes rounded value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewconcurrentlytimestamptztypmodmaterializesroundedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "suggestedId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewconcurrentlytimestamptztypmodmaterializesroundedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT format_type(a.atttypid, a.atttypmod)\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute a\n\t\t\t\t\t\tWHERE a.attrelid = 'matview_concurrently_timestamptz_typmod_reader'::regclass\n\t\t\t\t\t\t\tAND a.attname = 'ts';",
+      "querySha256": "52d7b51565d1fab610c1ece8882967bdef736d2533ea768454249f0ad6c5ba58",
+      "expectedRows": [
+        [
+          {
+            "value": "timestamp(0) with time zone"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyIntervalTypmodMaterializesRestrictedValueRepro#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyIntervalTypmodMaterializesRestrictedValueRepro",
+      "ordinal": 1,
+      "scriptName": "REFRESH MATERIALIZED VIEW CONCURRENTLY interval typmod materializes restricted value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewconcurrentlyintervaltypmodmaterializesrestrictedvaluerepro-0001-select-ds::text-from",
+      "suggestedId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewconcurrentlyintervaltypmodmaterializesrestrictedvaluerepro-0001-select-ds::text-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ds::text\n\t\t\t\t\t\tFROM matview_concurrently_interval_typmod_reader;",
+      "querySha256": "9e3dca446e0d600921f09e5d3d7596aeb076a9965bf6455655f5aceead76fb30",
+      "expectedRows": [
+        [
+          {
+            "value": "3 days 04:05:07"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyIntervalTypmodMaterializesRestrictedValueRepro#0002",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyIntervalTypmodMaterializesRestrictedValueRepro",
+      "ordinal": 2,
+      "scriptName": "REFRESH MATERIALIZED VIEW CONCURRENTLY interval typmod materializes restricted value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewconcurrentlyintervaltypmodmaterializesrestrictedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "suggestedId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewconcurrentlyintervaltypmodmaterializesrestrictedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT format_type(a.atttypid, a.atttypmod)\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute a\n\t\t\t\t\t\tWHERE a.attrelid = 'matview_concurrently_interval_typmod_reader'::regclass\n\t\t\t\t\t\t\tAND a.attname = 'ds';",
+      "querySha256": "a286dda8711f4f8908bc4ca015aac9886cbfb7ff2a88d34574b95ffec9892371",
+      "expectedRows": [
+        [
+          {
+            "value": "interval day to second(0)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyCharacterTypmodMaterializesPaddedValueRepro#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyCharacterTypmodMaterializesPaddedValueRepro",
+      "ordinal": 1,
+      "scriptName": "REFRESH MATERIALIZED VIEW CONCURRENTLY character typmod materializes padded value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewconcurrentlycharactertypmodmaterializespaddedvaluerepro-0001-select-octet_length-label-from",
+      "suggestedId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewconcurrentlycharactertypmodmaterializespaddedvaluerepro-0001-select-octet_length-label-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT octet_length(label)\n\t\t\t\t\t\tFROM matview_concurrently_character_typmod_reader;",
+      "querySha256": "687fdcc3fd3e3759b1312d429df006c20b264b98a71732bbb0c6afa36e0dd71f",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyCharacterTypmodMaterializesPaddedValueRepro#0002",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyCharacterTypmodMaterializesPaddedValueRepro",
+      "ordinal": 2,
+      "scriptName": "REFRESH MATERIALIZED VIEW CONCURRENTLY character typmod materializes padded value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewconcurrentlycharactertypmodmaterializespaddedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "suggestedId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewconcurrentlycharactertypmodmaterializespaddedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT format_type(a.atttypid, a.atttypmod)\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute a\n\t\t\t\t\t\tWHERE a.attrelid = 'matview_concurrently_character_typmod_reader'::regclass\n\t\t\t\t\t\t\tAND a.attname = 'label';",
+      "querySha256": "72da45bd4047ef5b5c112a38790e9a7b4789871853a0aaebfe79406524f767f6",
+      "expectedRows": [
+        [
+          {
+            "value": "character(3)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTextDomainTypmodMaterializesCoercedValueRepro#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewConcurrentlyTextDomainTypmodMaterializesCoercedValueRepro",
+      "ordinal": 1,
+      "scriptName": "REFRESH MATERIALIZED VIEW CONCURRENTLY text domain typmod materializes coerced value",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewconcurrentlytextdomaintypmodmaterializescoercedvaluerepro-0001-select-id-v-length-v",
+      "suggestedId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewconcurrentlytextdomaintypmodmaterializescoercedvaluerepro-0001-select-id-v-length-v",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, v, length(v), c = 'ab '::CHARACTER(3), octet_length(c)\n\t\t\t\t\t\tFROM matview_concurrent_refresh_text_domain_reader;",
+      "querySha256": "a6e27bbe4e6edb7257a18bafb982eeb08d5079c873f208542a7f0c28bfc6667a",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "abc"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewDefaultTablespaceRepro#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewDefaultTablespaceRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE MATERIALIZED VIEW with default tablespace",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testcreatematerializedviewdefaulttablespacerepro-0001-select-id-from-matview_default_tablespace_reader",
+      "suggestedId": "view-ddl-correctness-repro-test-testcreatematerializedviewdefaulttablespacerepro-0001-select-id-from-matview_default_tablespace_reader",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM matview_default_tablespace_reader;",
+      "querySha256": "f5955de01daa59c179d97a6f7d9c3f78f45b31d0875aab7ebbaa8301019991d7",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewUsingHeapRepro#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewUsingHeapRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE MATERIALIZED VIEW using heap access method",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testcreatematerializedviewusingheaprepro-0001-select-id-from-matview_using_heap_reader",
+      "suggestedId": "view-ddl-correctness-repro-test-testcreatematerializedviewusingheaprepro-0001-select-id-from-matview_using_heap_reader",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM matview_using_heap_reader;",
+      "querySha256": "a7b8724a26cfa9d78cc19021ff769e89d3354b082487d29f2bb2d493f8c9d1c0",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewStorageParamsRepro#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewStorageParamsRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE MATERIALIZED VIEW storage parameters persist",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testcreatematerializedviewstorageparamsrepro-0001-select-cast-reloptions-as-text",
+      "suggestedId": "view-ddl-correctness-repro-test-testcreatematerializedviewstorageparamsrepro-0001-select-cast-reloptions-as-text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT CAST(reloptions AS TEXT)\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE oid = 'matview_storage_params_reader'::regclass;",
+      "querySha256": "792d77fa14482be5e7203b59700d627a445ae928e1fc8f4cc3c6c9e2406e1d4f",
+      "expectedRows": [
+        [
+          {
+            "value": "{fillfactor=70,autovacuum_enabled=false}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestAlterMaterializedViewSetDefaultTablespaceRepro#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestAlterMaterializedViewSetDefaultTablespaceRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER MATERIALIZED VIEW SET TABLESPACE pg_default",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testaltermaterializedviewsetdefaulttablespacerepro-0001-select-id-from-alter_matview_default_tablespace_reader",
+      "suggestedId": "view-ddl-correctness-repro-test-testaltermaterializedviewsetdefaulttablespacerepro-0001-select-id-from-alter_matview_default_tablespace_reader",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM alter_matview_default_tablespace_reader;",
+      "querySha256": "70e07bd2a2054cb2dc9079bd338001127fd5e6206af1adc02ac16bf00109e7d1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestAlterMaterializedViewSetHeapAccessMethodRepro#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestAlterMaterializedViewSetHeapAccessMethodRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER MATERIALIZED VIEW SET ACCESS METHOD heap",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testaltermaterializedviewsetheapaccessmethodrepro-0001-select-id-from-alter_matview_access_method_reader",
+      "suggestedId": "view-ddl-correctness-repro-test-testaltermaterializedviewsetheapaccessmethodrepro-0001-select-id-from-alter_matview_access_method_reader",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM alter_matview_access_method_reader;",
+      "querySha256": "9aefd3fafe9b70f6c2c4fb037bc3ddf2f8f335770ffea338019860e0968cc4a5",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestAlterMaterializedViewReloptionsPersistRepro#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestAlterMaterializedViewReloptionsPersistRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER MATERIALIZED VIEW storage parameters persist",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testaltermaterializedviewreloptionspersistrepro-0001-select-cast-reloptions-as-text",
+      "suggestedId": "view-ddl-correctness-repro-test-testaltermaterializedviewreloptionspersistrepro-0001-select-cast-reloptions-as-text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT CAST(reloptions AS TEXT)\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE oid = 'alter_matview_reloptions_reader'::regclass;",
+      "querySha256": "9a147d5b33ff9aba6a38d915b436797c8764372d9ae85f4f8976980e3a3fa5ab",
+      "expectedRows": [
+        [
+          {
+            "value": "{fillfactor=80,autovacuum_enabled=false}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewWithNoDataGuard#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewWithNoDataGuard",
+      "ordinal": 1,
+      "scriptName": "CREATE MATERIALIZED VIEW WITH NO DATA defers population",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testcreatematerializedviewwithnodataguard-0001-select-id-label-from-matview_no_data_reader",
+      "suggestedId": "view-ddl-correctness-repro-test-testcreatematerializedviewwithnodataguard-0001-select-id-label-from-matview_no_data_reader",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM matview_no_data_reader\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "815cf4e6fcc80117924371b8e2c2ce5bfc1b74f5d7e4f5445e68dfffc74fb6e8",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "one"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "two"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewWithNoDataDoesNotEvaluateQueryRepro#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewWithNoDataDoesNotEvaluateQueryRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE MATERIALIZED VIEW WITH NO DATA does not evaluate query",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testcreatematerializedviewwithnodatadoesnotevaluatequeryrepro-0001-select-value-from-matview_no_data_error",
+      "suggestedId": "view-ddl-correctness-repro-test-testcreatematerializedviewwithnodatadoesnotevaluatequeryrepro-0001-select-value-from-matview_no_data_error",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "55000",
+      "errorSeverity": "ERROR",
+      "query": "SELECT value FROM matview_no_data_error;",
+      "querySha256": "65a0d9e1dd0318258a7ece4ae730a0322958aa2a0f4045a19d624796780dffbb",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewWithNoDataDoesNotEvaluateQueryRepro#0002",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateMaterializedViewWithNoDataDoesNotEvaluateQueryRepro",
+      "ordinal": 2,
+      "scriptName": "CREATE MATERIALIZED VIEW WITH NO DATA does not evaluate query",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testcreatematerializedviewwithnodatadoesnotevaluatequeryrepro-0002-refresh-materialized-view-matview_no_data_error",
+      "suggestedId": "view-ddl-correctness-repro-test-testcreatematerializedviewwithnodatadoesnotevaluatequeryrepro-0002-refresh-materialized-view-matview_no_data_error",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22012",
+      "errorSeverity": "ERROR",
+      "query": "REFRESH MATERIALIZED VIEW matview_no_data_error;",
+      "querySha256": "ac9b441e648f8ba784672fb8b1c36ae8ae5f02e87ad317bea2f0c24ea018e63a",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewWithNoDataGuard#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewWithNoDataGuard",
+      "ordinal": 1,
+      "scriptName": "REFRESH MATERIALIZED VIEW WITH NO DATA clears populated snapshot",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewwithnodataguard-0001-select-id-label-from-matview_refresh_no_data_reader",
+      "suggestedId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewwithnodataguard-0001-select-id-label-from-matview_refresh_no_data_reader",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "55000",
+      "errorSeverity": "ERROR",
+      "query": "SELECT id, label FROM matview_refresh_no_data_reader;",
+      "querySha256": "3d2c0f8f5a184bc2de02a072ff366f926c76fd20647757c655401682177fced4",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewWithNoDataGuard#0002",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestRefreshMaterializedViewWithNoDataGuard",
+      "ordinal": 2,
+      "scriptName": "REFRESH MATERIALIZED VIEW WITH NO DATA clears populated snapshot",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewwithnodataguard-0002-select-id-label-from-matview_refresh_no_data_reader",
+      "suggestedId": "view-ddl-correctness-repro-test-testrefreshmaterializedviewwithnodataguard-0002-select-id-label-from-matview_refresh_no_data_reader",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM matview_refresh_no_data_reader\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "f454f69b1be6b408c165949ac36540134dabf721c59d7a9a20fca8bcd998d245",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "one"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "two"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

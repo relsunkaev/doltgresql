@@ -25,17 +25,18 @@ func TestCreateRoleRejectsInvalidConnectionLimitRepro(t *testing.T) {
 			Name: "CREATE ROLE rejects invalid connection limit",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CREATE ROLE invalid_create_conn_limit CONNECTION LIMIT -2;`,
-					ExpectedErr: `invalid connection limit`,
+					Query: `CREATE ROLE invalid_create_conn_limit CONNECTION LIMIT -2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-option-correctness-repro-test-testcreaterolerejectsinvalidconnectionlimitrepro-0001-create-role-invalid_create_conn_limit-connection-limit",
+
+					// TestAlterRoleRejectsInvalidConnectionLimitRepro reproduces a role metadata
+					// correctness bug: ALTER ROLE should reject connection limits below -1 instead
+					// of persisting invalid role metadata.
+					Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterRoleRejectsInvalidConnectionLimitRepro reproduces a role metadata
-// correctness bug: ALTER ROLE should reject connection limits below -1 instead
-// of persisting invalid role metadata.
 func TestAlterRoleRejectsInvalidConnectionLimitRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -45,8 +46,7 @@ func TestAlterRoleRejectsInvalidConnectionLimitRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER ROLE invalid_alter_conn_limit CONNECTION LIMIT -2;`,
-					ExpectedErr: `invalid connection limit`,
+					Query: `ALTER ROLE invalid_alter_conn_limit CONNECTION LIMIT -2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-option-correctness-repro-test-testalterrolerejectsinvalidconnectionlimitrepro-0001-alter-role-invalid_alter_conn_limit-connection-limit", Compare: "sqlstate"},
 				},
 			},
 		},

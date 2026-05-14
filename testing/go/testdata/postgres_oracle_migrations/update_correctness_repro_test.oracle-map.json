@@ -1,0 +1,711 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map update_correctness_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/update_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/update_correctness_repro_test.go:TestUpdateSetImplicitNullDefaultRepro#0001",
+      "source": "testing/go/update_correctness_repro_test.go:TestUpdateSetImplicitNullDefaultRepro",
+      "ordinal": 1,
+      "scriptName": "UPDATE SET DEFAULT uses implicit NULL default",
+      "oracle": "internal",
+      "suggestedId": "update-correctness-repro-test-testupdatesetimplicitnulldefaultrepro-0001-select-i-from-update_default_items",
+      "expectedKind": "rows",
+      "query": "SELECT i FROM update_default_items;",
+      "querySha256": "a30a27a871cfa5a6d2cd402f64b26f91feb133d50184c1ed31f0daad78545b48",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/update_correctness_repro_test.go:TestUpdateAssignmentsUseOriginalRowValuesRepro#0001",
+      "source": "testing/go/update_correctness_repro_test.go:TestUpdateAssignmentsUseOriginalRowValuesRepro",
+      "ordinal": 1,
+      "scriptName": "UPDATE assignments read original row values",
+      "oracle": "postgres",
+      "postgresId": "update-correctness-repro-test-testupdateassignmentsuseoriginalrowvaluesrepro-0001-select-a-b-from-update_assignment_items",
+      "suggestedId": "update-correctness-repro-test-testupdateassignmentsuseoriginalrowvaluesrepro-0001-select-a-b-from-update_assignment_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT a, b FROM update_assignment_items WHERE id = 1;",
+      "querySha256": "e79fb5c793a92084b9b627c0a9f30df42a58fbbed4fa3bcd5e330e083e8467b6",
+      "expectedRows": [
+        [
+          {
+            "value": "20"
+          },
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/update_correctness_repro_test.go:TestUpdateMultiAssignmentFromSubqueryRepro#0001",
+      "source": "testing/go/update_correctness_repro_test.go:TestUpdateMultiAssignmentFromSubqueryRepro",
+      "ordinal": 1,
+      "scriptName": "UPDATE multi-assignment reads values from subquery",
+      "oracle": "postgres",
+      "postgresId": "update-correctness-repro-test-testupdatemultiassignmentfromsubqueryrepro-0001-select-id-a-b-from",
+      "suggestedId": "update-correctness-repro-test-testupdatemultiassignmentfromsubqueryrepro-0001-select-id-a-b-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, a, b FROM update_multi_assignment_items ORDER BY id;",
+      "querySha256": "27f6aec13cda205cb2e075c651badefd6d43f9cef9c8e957d846e91f6e8e2cef",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "20"
+          },
+          {
+            "value": "10"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "30"
+          },
+          {
+            "value": "40"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/update_correctness_repro_test.go:TestUpdateMultiAssignmentEmptySubquerySetsNullsRepro#0001",
+      "source": "testing/go/update_correctness_repro_test.go:TestUpdateMultiAssignmentEmptySubquerySetsNullsRepro",
+      "ordinal": 1,
+      "scriptName": "UPDATE multi-assignment empty subquery sets NULLs",
+      "oracle": "postgres",
+      "postgresId": "update-correctness-repro-test-testupdatemultiassignmentemptysubquerysetsnullsrepro-0001-select-id-a-b-from",
+      "suggestedId": "update-correctness-repro-test-testupdatemultiassignmentemptysubquerysetsnullsrepro-0001-select-id-a-b-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, a, b\n\t\t\t\t\t\tFROM update_multi_assignment_empty_items;",
+      "querySha256": "2823a4b7f1ea736927fa889854c6f762523be24486a8db7061c8bc9a881cb406",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/update_correctness_repro_test.go:TestUpdateMultiAssignmentRejectsDuplicateColumnsRepro#0001",
+      "source": "testing/go/update_correctness_repro_test.go:TestUpdateMultiAssignmentRejectsDuplicateColumnsRepro",
+      "ordinal": 1,
+      "scriptName": "UPDATE multi-assignment rejects duplicate target columns",
+      "oracle": "postgres",
+      "postgresId": "update-correctness-repro-test-testupdatemultiassignmentrejectsduplicatecolumnsrepro-0001-update-update_duplicate_assignment_items-set-a-a",
+      "suggestedId": "update-correctness-repro-test-testupdatemultiassignmentrejectsduplicatecolumnsrepro-0001-update-update_duplicate_assignment_items-set-a-a",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "UPDATE update_duplicate_assignment_items\n\t\t\t\t\t\tSET (a, a) = (1, 2)\n\t\t\t\t\t\tWHERE id = 1;",
+      "querySha256": "503b4cf02baeab5b1abb097782fb835e4988f13ac112c2121a1f98704c40c3b5",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/update_correctness_repro_test.go:TestUpdateMultiAssignmentRejectsDuplicateColumnsRepro#0002",
+      "source": "testing/go/update_correctness_repro_test.go:TestUpdateMultiAssignmentRejectsDuplicateColumnsRepro",
+      "ordinal": 2,
+      "scriptName": "UPDATE multi-assignment rejects duplicate target columns",
+      "oracle": "postgres",
+      "postgresId": "update-correctness-repro-test-testupdatemultiassignmentrejectsduplicatecolumnsrepro-0002-select-a-b-from-update_duplicate_assignment_items",
+      "suggestedId": "update-correctness-repro-test-testupdatemultiassignmentrejectsduplicatecolumnsrepro-0002-select-a-b-from-update_duplicate_assignment_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT a, b\n\t\t\t\t\t\tFROM update_duplicate_assignment_items\n\t\t\t\t\t\tWHERE id = 1;",
+      "querySha256": "7fdc366339f8208a3f7691823877789b7ce5b3158417029ecbdce2be3a899e24",
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          },
+          {
+            "value": "20"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/update_correctness_repro_test.go:TestUpdateScalarAssignmentRejectsDuplicateColumnsRepro#0001",
+      "source": "testing/go/update_correctness_repro_test.go:TestUpdateScalarAssignmentRejectsDuplicateColumnsRepro",
+      "ordinal": 1,
+      "scriptName": "UPDATE scalar assignment rejects duplicate target columns",
+      "oracle": "postgres",
+      "postgresId": "update-correctness-repro-test-testupdatescalarassignmentrejectsduplicatecolumnsrepro-0001-update-update_duplicate_scalar_items-set-a-=",
+      "suggestedId": "update-correctness-repro-test-testupdatescalarassignmentrejectsduplicatecolumnsrepro-0001-update-update_duplicate_scalar_items-set-a-=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "UPDATE update_duplicate_scalar_items\n\t\t\t\t\t\tSET a = 1, a = 2\n\t\t\t\t\t\tWHERE id = 1;",
+      "querySha256": "eebd0252365e906d89fd7882441a1fd20651a0d59f89a3958249b87f1383d990",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/update_correctness_repro_test.go:TestUpdateScalarAssignmentRejectsDuplicateColumnsRepro#0002",
+      "source": "testing/go/update_correctness_repro_test.go:TestUpdateScalarAssignmentRejectsDuplicateColumnsRepro",
+      "ordinal": 2,
+      "scriptName": "UPDATE scalar assignment rejects duplicate target columns",
+      "oracle": "postgres",
+      "postgresId": "update-correctness-repro-test-testupdatescalarassignmentrejectsduplicatecolumnsrepro-0002-select-a-b-from-update_duplicate_scalar_items",
+      "suggestedId": "update-correctness-repro-test-testupdatescalarassignmentrejectsduplicatecolumnsrepro-0002-select-a-b-from-update_duplicate_scalar_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT a, b\n\t\t\t\t\t\tFROM update_duplicate_scalar_items\n\t\t\t\t\t\tWHERE id = 1;",
+      "querySha256": "900ddc1a33e6c85f694d580f7843c9a5ccbdebf912951d55d870b81a504dbf08",
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          },
+          {
+            "value": "20"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/update_correctness_repro_test.go:TestUpdateSelfReferentialSubqueryUsesStatementSnapshotGuard#0001",
+      "source": "testing/go/update_correctness_repro_test.go:TestUpdateSelfReferentialSubqueryUsesStatementSnapshotGuard",
+      "ordinal": 1,
+      "scriptName": "UPDATE self-referential subquery uses statement snapshot",
+      "oracle": "postgres",
+      "postgresId": "update-correctness-repro-test-testupdateselfreferentialsubqueryusesstatementsnapshotguard-0001-select-id-amount-from-update_self_subquery_items",
+      "suggestedId": "update-correctness-repro-test-testupdateselfreferentialsubqueryusesstatementsnapshotguard-0001-select-id-amount-from-update_self_subquery_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, amount\n\t\t\t\t\t\tFROM update_self_subquery_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "51d8e8697cc9794a492cea45a1db71df8380677945e2ce4c7cbf986d2a40ce52",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "30"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "30"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "30"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/update_correctness_repro_test.go:TestOnConflictUpdateAssignmentsUseOriginalRowValuesRepro#0001",
+      "source": "testing/go/update_correctness_repro_test.go:TestOnConflictUpdateAssignmentsUseOriginalRowValuesRepro",
+      "ordinal": 1,
+      "scriptName": "ON CONFLICT UPDATE assignments read original target row values",
+      "oracle": "internal",
+      "suggestedId": "update-correctness-repro-test-testonconflictupdateassignmentsuseoriginalrowvaluesrepro-0001-select-c1-c2-from-on_conflict_assignment_items",
+      "expectedKind": "rows",
+      "query": "SELECT c1, c2 FROM on_conflict_assignment_items WHERE id = 1;",
+      "querySha256": "f1db6587d7e30074aa3a921edb88f835d6b5729dbf3d2c009f2632661f781b18",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/update_correctness_repro_test.go:TestOnConflictUpdateRejectsDuplicateTargetColumnsRepro#0001",
+      "source": "testing/go/update_correctness_repro_test.go:TestOnConflictUpdateRejectsDuplicateTargetColumnsRepro",
+      "ordinal": 1,
+      "scriptName": "ON CONFLICT UPDATE rejects duplicate target columns",
+      "oracle": "postgres",
+      "postgresId": "update-correctness-repro-test-testonconflictupdaterejectsduplicatetargetcolumnsrepro-0001-insert-into-on_conflict_duplicate_assignment_items-values-1",
+      "suggestedId": "update-correctness-repro-test-testonconflictupdaterejectsduplicatetargetcolumnsrepro-0001-insert-into-on_conflict_duplicate_assignment_items-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO on_conflict_duplicate_assignment_items\n\t\t\t\t\t\tVALUES (1, 30, 40)\n\t\t\t\t\t\tON CONFLICT (id) DO UPDATE\n\t\t\t\t\t\tSET a = 1, a = 2;",
+      "querySha256": "daa108430ce3147e5d0ba4472c13ce9f6fe1132cf78841b163cdde6da8d4003c",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/update_correctness_repro_test.go:TestOnConflictUpdateRejectsDuplicateTargetColumnsRepro#0002",
+      "source": "testing/go/update_correctness_repro_test.go:TestOnConflictUpdateRejectsDuplicateTargetColumnsRepro",
+      "ordinal": 2,
+      "scriptName": "ON CONFLICT UPDATE rejects duplicate target columns",
+      "oracle": "postgres",
+      "postgresId": "update-correctness-repro-test-testonconflictupdaterejectsduplicatetargetcolumnsrepro-0002-select-a-b-from-on_conflict_duplicate_assignment_items",
+      "suggestedId": "update-correctness-repro-test-testonconflictupdaterejectsduplicatetargetcolumnsrepro-0002-select-a-b-from-on_conflict_duplicate_assignment_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT a, b\n\t\t\t\t\t\tFROM on_conflict_duplicate_assignment_items\n\t\t\t\t\t\tWHERE id = 1;",
+      "querySha256": "74346f3d16f3d11d5595a56885c2ba897616be11f1c2846cf31808bc861a9e46",
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          },
+          {
+            "value": "20"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/update_correctness_repro_test.go:TestOnConflictUpdateFunctionArgumentCanReferenceExcludedRepro#0001",
+      "source": "testing/go/update_correctness_repro_test.go:TestOnConflictUpdateFunctionArgumentCanReferenceExcludedRepro",
+      "ordinal": 1,
+      "scriptName": "ON CONFLICT UPDATE function argument can reference EXCLUDED",
+      "oracle": "postgres",
+      "postgresId": "update-correctness-repro-test-testonconflictupdatefunctionargumentcanreferenceexcludedrepro-0001-select-id-label-from-on_conflict_excluded_function_items",
+      "suggestedId": "update-correctness-repro-test-testonconflictupdatefunctionargumentcanreferenceexcludedrepro-0001-select-id-label-from-on_conflict_excluded_function_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label FROM on_conflict_excluded_function_items;",
+      "querySha256": "20f6506e53139cb458ac014aadd19e3a5422f2efc7bdae4cf6f544a57ccf7971",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "new-fn"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/update_correctness_repro_test.go:TestOnConflictUpdateMultiAssignmentFromSubqueryRepro#0001",
+      "source": "testing/go/update_correctness_repro_test.go:TestOnConflictUpdateMultiAssignmentFromSubqueryRepro",
+      "ordinal": 1,
+      "scriptName": "ON CONFLICT UPDATE multi-assignment reads values from subquery",
+      "oracle": "postgres",
+      "postgresId": "update-correctness-repro-test-testonconflictupdatemultiassignmentfromsubqueryrepro-0001-select-a-b-from-on_conflict_multi_assignment_items",
+      "suggestedId": "update-correctness-repro-test-testonconflictupdatemultiassignmentfromsubqueryrepro-0001-select-a-b-from-on_conflict_multi_assignment_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT a, b FROM on_conflict_multi_assignment_items WHERE id = 1;",
+      "querySha256": "b7c383c64413aacc1770e95c957ff083786b20cb8602c4cbb45033d5410a38c4",
+      "expectedRows": [
+        [
+          {
+            "value": "100"
+          },
+          {
+            "value": "200"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/update_correctness_repro_test.go:TestOnConflictUpdateRejectsDuplicateTargetRowsRepro#0001",
+      "source": "testing/go/update_correctness_repro_test.go:TestOnConflictUpdateRejectsDuplicateTargetRowsRepro",
+      "ordinal": 1,
+      "scriptName": "ON CONFLICT DO UPDATE rejects duplicate target rows",
+      "oracle": "postgres",
+      "postgresId": "update-correctness-repro-test-testonconflictupdaterejectsduplicatetargetrowsrepro-0001-insert-into-on_conflict_duplicate_items-values-1",
+      "suggestedId": "update-correctness-repro-test-testonconflictupdaterejectsduplicatetargetrowsrepro-0001-insert-into-on_conflict_duplicate_items-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "21000",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO on_conflict_duplicate_items VALUES\n\t\t\t\t\t\t\t(1, 'first'),\n\t\t\t\t\t\t\t(1, 'second')\n\t\t\t\t\t\tON CONFLICT (id) DO UPDATE SET v = EXCLUDED.v;",
+      "querySha256": "e4379ca7c5f1fbe0e2690dfbd4dd783c28b3d89da5b55f97f146f39c4b318325",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/update_correctness_repro_test.go:TestOnConflictUpdateRejectsDuplicateTargetRowsRepro#0002",
+      "source": "testing/go/update_correctness_repro_test.go:TestOnConflictUpdateRejectsDuplicateTargetRowsRepro",
+      "ordinal": 2,
+      "scriptName": "ON CONFLICT DO UPDATE rejects duplicate target rows",
+      "oracle": "postgres",
+      "postgresId": "update-correctness-repro-test-testonconflictupdaterejectsduplicatetargetrowsrepro-0002-select-v-from-on_conflict_duplicate_items-where",
+      "suggestedId": "update-correctness-repro-test-testonconflictupdaterejectsduplicatetargetrowsrepro-0002-select-v-from-on_conflict_duplicate_items-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT v FROM on_conflict_duplicate_items WHERE id = 1;",
+      "querySha256": "b566bc43e946dc8fe07ad463fcf8c0f97eec8f4f94406546a4014aa91af0988b",
+      "expectedRows": [
+        [
+          {
+            "value": "original"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/update_correctness_repro_test.go:TestOnConflictUpdateEnforcesCheckConstraintsGuard#0001",
+      "source": "testing/go/update_correctness_repro_test.go:TestOnConflictUpdateEnforcesCheckConstraintsGuard",
+      "ordinal": 1,
+      "scriptName": "ON CONFLICT DO UPDATE enforces CHECK constraints",
+      "oracle": "postgres",
+      "postgresId": "update-correctness-repro-test-testonconflictupdateenforcescheckconstraintsguard-0001-insert-into-on_conflict_check_items-values-1",
+      "suggestedId": "update-correctness-repro-test-testonconflictupdateenforcescheckconstraintsguard-0001-insert-into-on_conflict_check_items-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO on_conflict_check_items VALUES (1, 2)\n\t\t\t\t\t\tON CONFLICT (id) DO UPDATE SET amount = -1;",
+      "querySha256": "00c02ffcfb20a00c6c2625f6c35a13933153d15a0b37f75d8a9cc46b01e17aa5",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/update_correctness_repro_test.go:TestOnConflictUpdateEnforcesCheckConstraintsGuard#0002",
+      "source": "testing/go/update_correctness_repro_test.go:TestOnConflictUpdateEnforcesCheckConstraintsGuard",
+      "ordinal": 2,
+      "scriptName": "ON CONFLICT DO UPDATE enforces CHECK constraints",
+      "oracle": "postgres",
+      "postgresId": "update-correctness-repro-test-testonconflictupdateenforcescheckconstraintsguard-0002-select-id-amount-from-on_conflict_check_items",
+      "suggestedId": "update-correctness-repro-test-testonconflictupdateenforcescheckconstraintsguard-0002-select-id-amount-from-on_conflict_check_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, amount FROM on_conflict_check_items;",
+      "querySha256": "62c7e67c94f5ed9d1f7aa53369075727d27ba0dc063b289c42382e6eff37b588",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/update_correctness_repro_test.go:TestUpdateFromReturningSourceColumnsGuard#0001",
+      "source": "testing/go/update_correctness_repro_test.go:TestUpdateFromReturningSourceColumnsGuard",
+      "ordinal": 1,
+      "scriptName": "UPDATE FROM RETURNING can reference source columns",
+      "oracle": "postgres",
+      "postgresId": "update-correctness-repro-test-testupdatefromreturningsourcecolumnsguard-0001-update-update_returning_employees-as-e-set",
+      "suggestedId": "update-correctness-repro-test-testupdatefromreturningsourcecolumnsguard-0001-update-update_returning_employees-as-e-set",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "UPDATE update_returning_employees AS e\n\t\t\t\t\t\tSET salary = salary + d.bonus\n\t\t\t\t\t\tFROM update_returning_departments AS d\n\t\t\t\t\t\tWHERE e.department_id = d.id\n\t\t\t\t\t\tRETURNING e.id, e.salary, d.bonus;",
+      "querySha256": "48b14872a02889cf7c044a3eb944542a8129f5917a1eb26455b848e536bb54df",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "51000"
+          },
+          {
+            "value": "1000"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "45500"
+          },
+          {
+            "value": "500"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/update_correctness_repro_test.go:TestOnConflictUpdateWhereFalseReturningSkipsRowsGuard#0001",
+      "source": "testing/go/update_correctness_repro_test.go:TestOnConflictUpdateWhereFalseReturningSkipsRowsGuard",
+      "ordinal": 1,
+      "scriptName": "ON CONFLICT DO UPDATE WHERE false returns no rows",
+      "oracle": "postgres",
+      "postgresId": "update-correctness-repro-test-testonconflictupdatewherefalsereturningskipsrowsguard-0001-insert-into-on_conflict_where_false_returning_items-values-1",
+      "suggestedId": "update-correctness-repro-test-testonconflictupdatewherefalsereturningskipsrowsguard-0001-insert-into-on_conflict_where_false_returning_items-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO on_conflict_where_false_returning_items VALUES (1, 'new')\n\t\t\t\t\t\tON CONFLICT (id) DO UPDATE SET v = EXCLUDED.v\n\t\t\t\t\t\tWHERE false\n\t\t\t\t\t\tRETURNING id, v;",
+      "querySha256": "ed093b92fd74115fc4c599b73f9077e9e3536f3360907f9973e87ec40fa5bab4",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/update_correctness_repro_test.go:TestOnConflictUpdateWhereFalseReturningSkipsRowsGuard#0002",
+      "source": "testing/go/update_correctness_repro_test.go:TestOnConflictUpdateWhereFalseReturningSkipsRowsGuard",
+      "ordinal": 2,
+      "scriptName": "ON CONFLICT DO UPDATE WHERE false returns no rows",
+      "oracle": "postgres",
+      "postgresId": "update-correctness-repro-test-testonconflictupdatewherefalsereturningskipsrowsguard-0002-select-id-v-from-on_conflict_where_false_returning_items",
+      "suggestedId": "update-correctness-repro-test-testonconflictupdatewherefalsereturningskipsrowsguard-0002-select-id-v-from-on_conflict_where_false_returning_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, v FROM on_conflict_where_false_returning_items;",
+      "querySha256": "62ce64506897513b9cbb5fff3110ba436c6b00d9609712ef2016736af6df1414",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "old"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/update_correctness_repro_test.go:TestOnConflictUpdateNoopReturningIncludesRowsGuard#0001",
+      "source": "testing/go/update_correctness_repro_test.go:TestOnConflictUpdateNoopReturningIncludesRowsGuard",
+      "ordinal": 1,
+      "scriptName": "ON CONFLICT DO UPDATE no-op returns updated row",
+      "oracle": "postgres",
+      "postgresId": "update-correctness-repro-test-testonconflictupdatenoopreturningincludesrowsguard-0001-insert-into-on_conflict_noop_returning_items-values-1",
+      "suggestedId": "update-correctness-repro-test-testonconflictupdatenoopreturningincludesrowsguard-0001-insert-into-on_conflict_noop_returning_items-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO on_conflict_noop_returning_items VALUES (1, 'new')\n\t\t\t\t\t\tON CONFLICT (id) DO UPDATE SET v = on_conflict_noop_returning_items.v\n\t\t\t\t\t\tWHERE true\n\t\t\t\t\t\tRETURNING id, v;",
+      "querySha256": "6d4d369f8a872b9ae282171eeb1c53b85c1b70deb17a495ea14172836e681ba5",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "old"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/update_correctness_repro_test.go:TestOnConflictUpdateNoopReturningIncludesRowsGuard#0002",
+      "source": "testing/go/update_correctness_repro_test.go:TestOnConflictUpdateNoopReturningIncludesRowsGuard",
+      "ordinal": 2,
+      "scriptName": "ON CONFLICT DO UPDATE no-op returns updated row",
+      "oracle": "postgres",
+      "postgresId": "update-correctness-repro-test-testonconflictupdatenoopreturningincludesrowsguard-0002-select-id-v-from-on_conflict_noop_returning_items",
+      "suggestedId": "update-correctness-repro-test-testonconflictupdatenoopreturningincludesrowsguard-0002-select-id-v-from-on_conflict_noop_returning_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, v FROM on_conflict_noop_returning_items;",
+      "querySha256": "388f3602c7396c7e60ddd6614a452213f5638dd7da06660e0174d0866e420640",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "old"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/update_correctness_repro_test.go:TestOnConflictUpdateWhereVolatilePredicateEvaluatesOnceRepro#0001",
+      "source": "testing/go/update_correctness_repro_test.go:TestOnConflictUpdateWhereVolatilePredicateEvaluatesOnceRepro",
+      "ordinal": 1,
+      "scriptName": "ON CONFLICT DO UPDATE WHERE volatile predicate evaluates once",
+      "oracle": "postgres",
+      "postgresId": "update-correctness-repro-test-testonconflictupdatewherevolatilepredicateevaluatesoncerepro-0001-insert-into-on_conflict_where_volatile_items-values-1",
+      "suggestedId": "update-correctness-repro-test-testonconflictupdatewherevolatilepredicateevaluatesoncerepro-0001-insert-into-on_conflict_where_volatile_items-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO on_conflict_where_volatile_items VALUES (1, 10, 20)\n\t\t\t\t\t\tON CONFLICT (id) DO UPDATE\n\t\t\t\t\t\tSET a = EXCLUDED.a,\n\t\t\t\t\t\t\tb = EXCLUDED.b\n\t\t\t\t\t\tWHERE nextval('on_conflict_where_volatile_seq') = 1\n\t\t\t\t\t\tRETURNING id, a, b;",
+      "querySha256": "9bd4912385ac6a00b3437969f55de358ae07aa427e74c156ddeaea05c65fc9b6",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "10"
+          },
+          {
+            "value": "20"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/update_correctness_repro_test.go:TestOnConflictUpdateWhereVolatilePredicateEvaluatesOnceRepro#0002",
+      "source": "testing/go/update_correctness_repro_test.go:TestOnConflictUpdateWhereVolatilePredicateEvaluatesOnceRepro",
+      "ordinal": 2,
+      "scriptName": "ON CONFLICT DO UPDATE WHERE volatile predicate evaluates once",
+      "oracle": "postgres",
+      "postgresId": "update-correctness-repro-test-testonconflictupdatewherevolatilepredicateevaluatesoncerepro-0002-select-id-a-b-from",
+      "suggestedId": "update-correctness-repro-test-testonconflictupdatewherevolatilepredicateevaluatesoncerepro-0002-select-id-a-b-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, a, b FROM on_conflict_where_volatile_items;",
+      "querySha256": "0c433abe85fd7e393b379ff17483dcb5338206d29069b5c2150b5986b1624709",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "10"
+          },
+          {
+            "value": "20"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/update_correctness_repro_test.go:TestOnConflictUpdateWhereVolatilePredicateEvaluatesOnceRepro#0003",
+      "source": "testing/go/update_correctness_repro_test.go:TestOnConflictUpdateWhereVolatilePredicateEvaluatesOnceRepro",
+      "ordinal": 3,
+      "scriptName": "ON CONFLICT DO UPDATE WHERE volatile predicate evaluates once",
+      "oracle": "postgres",
+      "postgresId": "update-correctness-repro-test-testonconflictupdatewherevolatilepredicateevaluatesoncerepro-0003-select-nextval-on_conflict_where_volatile_seq",
+      "suggestedId": "update-correctness-repro-test-testonconflictupdatewherevolatilepredicateevaluatesoncerepro-0003-select-nextval-on_conflict_where_volatile_seq",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('on_conflict_where_volatile_seq');",
+      "querySha256": "81673c34131b62c6a6cc0746d8274ca0f53b6f870f0828f6fba3976dcd4f9e5f",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/update_correctness_repro_test.go:TestOnConflictReturningCannotReferenceExcludedGuard#0001",
+      "source": "testing/go/update_correctness_repro_test.go:TestOnConflictReturningCannotReferenceExcludedGuard",
+      "ordinal": 1,
+      "scriptName": "ON CONFLICT RETURNING cannot reference excluded",
+      "oracle": "postgres",
+      "postgresId": "update-correctness-repro-test-testonconflictreturningcannotreferenceexcludedguard-0001-insert-into-on_conflict_returning_excluded_items-values-1",
+      "suggestedId": "update-correctness-repro-test-testonconflictreturningcannotreferenceexcludedguard-0001-insert-into-on_conflict_returning_excluded_items-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO on_conflict_returning_excluded_items VALUES (1, 'new')\n\t\t\t\t\t\tON CONFLICT (id) DO UPDATE SET v = EXCLUDED.v\n\t\t\t\t\t\tRETURNING EXCLUDED.v;",
+      "querySha256": "cc56be53c0c340bf0b93c8c2dc30ba2aceec2439d6dc7a36948d877ade93667d",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/update_correctness_repro_test.go:TestUpdateFromDuplicateSourceRowsUpdatesTargetOnceRepro#0001",
+      "source": "testing/go/update_correctness_repro_test.go:TestUpdateFromDuplicateSourceRowsUpdatesTargetOnceRepro",
+      "ordinal": 1,
+      "scriptName": "UPDATE FROM duplicate source rows updates target once",
+      "oracle": "postgres",
+      "postgresId": "update-correctness-repro-test-testupdatefromduplicatesourcerowsupdatestargetoncerepro-0001-update-update_from_duplicate_source_target-as-t-set",
+      "suggestedId": "update-correctness-repro-test-testupdatefromduplicatesourcerowsupdatestargetoncerepro-0001-update-update_from_duplicate_source_target-as-t-set",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "UPDATE update_from_duplicate_source_target AS t\n\t\t\t\t\t\tSET amount = amount + 1\n\t\t\t\t\t\tFROM update_from_duplicate_source_rows AS s\n\t\t\t\t\t\tWHERE t.id = s.id\n\t\t\t\t\t\tRETURNING t.id, t.amount;",
+      "querySha256": "176dd39f862d8a4bd6c165a2361699cfb3b6d067c1ad0c78ec7b1ce0ee443633",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "11"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/update_correctness_repro_test.go:TestUpdateFromDuplicateSourceRowsUpdatesTargetOnceRepro#0002",
+      "source": "testing/go/update_correctness_repro_test.go:TestUpdateFromDuplicateSourceRowsUpdatesTargetOnceRepro",
+      "ordinal": 2,
+      "scriptName": "UPDATE FROM duplicate source rows updates target once",
+      "oracle": "postgres",
+      "postgresId": "update-correctness-repro-test-testupdatefromduplicatesourcerowsupdatestargetoncerepro-0002-select-id-amount-from-update_from_duplicate_source_target",
+      "suggestedId": "update-correctness-repro-test-testupdatefromduplicatesourcerowsupdatestargetoncerepro-0002-select-id-amount-from-update_from_duplicate_source_target",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, amount\n\t\t\t\t\t\tFROM update_from_duplicate_source_target;",
+      "querySha256": "6388f784efa2b0f15b4b1f3ee1ea65dd15e46e60a917b94e9c71610534ae40a5",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "11"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

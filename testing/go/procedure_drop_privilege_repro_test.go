@@ -52,10 +52,10 @@ func TestDropProcedureClearsExecutePrivilegeRepro(t *testing.T) {
 					Query: `REVOKE ALL ON PROCEDURE drop_recreate_acl_proc() FROM PUBLIC;`,
 				},
 				{
-					Query:       `CALL drop_recreate_acl_proc();`,
-					ExpectedErr: `permission denied`,
-					Username:    `drop_recreate_procedure_user`,
-					Password:    `procedure`,
+					Query: `CALL drop_recreate_acl_proc();`,
+
+					Username: `drop_recreate_procedure_user`,
+					Password: `procedure`, PostgresOracle: ScriptTestPostgresOracle{ID: "procedure-drop-privilege-repro-test-testdropprocedureclearsexecuteprivilegerepro-0001-call-drop_recreate_acl_proc", Compare: "sqlstate"},
 				},
 			},
 		},

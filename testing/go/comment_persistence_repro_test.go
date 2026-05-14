@@ -35,8 +35,7 @@ func TestCommentOnColumnPersistsDescriptionRepro(t *testing.T) {
 					Query: `COMMENT ON COLUMN comment_target.label IS 'visible label comment';`,
 				},
 				{
-					Query:    `SELECT col_description('comment_target'::regclass, 2);`,
-					Expected: []sql.Row{{"visible label comment"}},
+					Query: `SELECT col_description('comment_target'::regclass, 2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentoncolumnpersistsdescriptionrepro-0001-select-col_description-comment_target-::regclass-2"},
 				},
 			},
 		},
@@ -57,8 +56,7 @@ func TestCommentOnTablePersistsDescriptionRepro(t *testing.T) {
 					Query: `COMMENT ON TABLE table_comment_target IS 'visible table comment';`,
 				},
 				{
-					Query:    `SELECT obj_description('table_comment_target'::regclass);`,
-					Expected: []sql.Row{{"visible table comment"}},
+					Query: `SELECT obj_description('table_comment_target'::regclass);`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentontablepersistsdescriptionrepro-0001-select-obj_description-table_comment_target-::regclass"},
 				},
 			},
 		},
@@ -84,8 +82,7 @@ func TestCommentOnTablePopulatesPgDescriptionRepro(t *testing.T) {
 						FROM pg_catalog.pg_description
 						WHERE objoid = 'pg_description_table_target'::regclass
 							AND classoid = 'pg_class'::regclass
-							AND objsubid = 0;`,
-					Expected: []sql.Row{{"visible pg_description comment"}},
+							AND objsubid = 0;`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentontablepopulatespgdescriptionrepro-0001-select-description-from-pg_catalog.pg_description-where"},
 				},
 			},
 		},
@@ -124,12 +121,7 @@ func TestCommentOnRelationKindsPersistsDescriptionRepro(t *testing.T) {
 					Query: `SELECT
 							obj_description('view_comment_target'::regclass),
 							obj_description('matview_comment_target'::regclass),
-							obj_description('sequence_comment_target'::regclass);`,
-					Expected: []sql.Row{{
-						"visible view comment",
-						"visible materialized view comment",
-						"visible sequence comment",
-					}},
+							obj_description('sequence_comment_target'::regclass);`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentonrelationkindspersistsdescriptionrepro-0001-select-obj_description-view_comment_target-::regclass-obj_description"},
 				},
 			},
 		},
@@ -179,12 +171,7 @@ func TestCommentOnIndexConstraintTriggerPersistsDescriptionRepro(t *testing.T) {
 							obj_description(
 								(SELECT oid FROM pg_trigger
 								 WHERE tgname = 'comment_metadata_before_insert'),
-								'pg_trigger');`,
-					Expected: []sql.Row{{
-						"visible index comment",
-						"visible constraint comment",
-						"visible trigger comment",
-					}},
+								'pg_trigger');`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentonindexconstrainttriggerpersistsdescriptionrepro-0001-select-obj_description-comment_metadata_v_idx-::regclass-obj_description"},
 				},
 			},
 		},
@@ -208,8 +195,7 @@ func TestCommentOnSchemaPersistsDescriptionRepro(t *testing.T) {
 				{
 					Query: `SELECT obj_description(
 						(SELECT oid FROM pg_namespace WHERE nspname = 'schema_comment_target'),
-						'pg_namespace');`,
-					Expected: []sql.Row{{"visible schema comment"}},
+						'pg_namespace');`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentonschemapersistsdescriptionrepro-0001-select-obj_description-select-oid-from"},
 				},
 			},
 		},
@@ -230,8 +216,7 @@ func TestCommentOnDatabasePersistsDescriptionRepro(t *testing.T) {
 				{
 					Query: `SELECT shobj_description(
 						(SELECT oid FROM pg_database WHERE datname = 'postgres'),
-						'pg_database');`,
-					Expected: []sql.Row{{"visible database comment"}},
+						'pg_database');`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentondatabasepersistsdescriptionrepro-0001-select-shobj_description-select-oid-from"},
 				},
 			},
 		},
@@ -253,8 +238,7 @@ func TestCommentOnDatabasePopulatesPgShdescriptionRepro(t *testing.T) {
 					Query: `SELECT description
 						FROM pg_catalog.pg_shdescription
 						WHERE objoid = (SELECT oid FROM pg_database WHERE datname = 'postgres')
-							AND classoid = 'pg_database'::regclass;`,
-					Expected: []sql.Row{{"visible pg_shdescription comment"}},
+							AND classoid = 'pg_database'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentondatabasepopulatespgshdescriptionrepro-0001-select-description-from-pg_catalog.pg_shdescription-where"},
 				},
 			},
 		},
@@ -278,8 +262,7 @@ func TestCommentOnFunctionPersistsDescriptionRepro(t *testing.T) {
 				{
 					Query: `SELECT obj_description(
 						(SELECT oid FROM pg_proc WHERE proname = 'comment_function_target'),
-						'pg_proc');`,
-					Expected: []sql.Row{{"visible function comment"}},
+						'pg_proc');`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentonfunctionpersistsdescriptionrepro-0001-select-obj_description-select-oid-from"},
 				},
 			},
 		},
@@ -314,8 +297,7 @@ func TestCommentOnAggregatePersistsDescriptionRepro(t *testing.T) {
 					Query: `SELECT obj_description(
 						(SELECT oid FROM pg_proc
 						 WHERE proname = 'comment_aggregate_target'),
-						'pg_proc');`,
-					Expected: []sql.Row{{"visible aggregate comment"}},
+						'pg_proc');`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentonaggregatepersistsdescriptionrepro-0001-select-obj_description-select-oid-from"},
 				},
 			},
 		},
@@ -338,8 +320,7 @@ func TestCommentOnTypePersistsDescriptionRepro(t *testing.T) {
 				{
 					Query: `SELECT obj_description(
 						(SELECT oid FROM pg_type WHERE typname = 'comment_enum_target'),
-						'pg_type');`,
-					Expected: []sql.Row{{"visible type comment"}},
+						'pg_type');`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentontypepersistsdescriptionrepro-0001-select-obj_description-select-oid-from"},
 				},
 			},
 		},
@@ -432,13 +413,7 @@ func TestCommentOnProcedureRoutineDomainLanguagePersistsDescriptionRepro(t *test
 							obj_description(
 								(SELECT oid FROM pg_language
 								 WHERE lanname = 'plpgsql'),
-								'pg_language');`,
-					Expected: []sql.Row{{
-						"visible procedure comment",
-						"visible routine comment",
-						"visible domain comment",
-						"visible language comment",
-					}},
+								'pg_language');`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentonprocedureroutinedomainlanguagepersistsdescriptionrepro-0001-select-obj_description-select-oid-from"},
 				},
 			},
 		},
@@ -473,11 +448,7 @@ func TestCommentOnCollationAndOperatorPersistsDescriptionRepro(t *testing.T) {
 								   AND oprleft = 'integer'::regtype
 								   AND oprright = 'integer'::regtype
 								   AND oprnamespace = 'pg_catalog'::regnamespace),
-								'pg_operator');`,
-					Expected: []sql.Row{{
-						"visible collation comment",
-						"visible operator comment",
-					}},
+								'pg_operator');`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentoncollationandoperatorpersistsdescriptionrepro-0001-select-obj_description-select-oid-from"},
 				},
 			},
 		},
@@ -498,8 +469,7 @@ func TestCommentOnAccessMethodPersistsDescriptionRepro(t *testing.T) {
 				{
 					Query: `SELECT obj_description(
 						(SELECT oid FROM pg_am WHERE amname = 'btree'),
-						'pg_am');`,
-					Expected: []sql.Row{{"visible access method comment"}},
+						'pg_am');`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentonaccessmethodpersistsdescriptionrepro-0001-select-obj_description-select-oid-from"},
 				},
 			},
 		},
@@ -523,8 +493,7 @@ func TestCommentOnPublicationPersistsDescriptionRepro(t *testing.T) {
 				{
 					Query: `SELECT obj_description(
 						(SELECT oid FROM pg_publication WHERE pubname = 'comment_publication_target'),
-						'pg_publication');`,
-					Expected: []sql.Row{{"visible publication comment"}},
+						'pg_publication');`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentonpublicationpersistsdescriptionrepro-0001-select-obj_description-select-oid-from"},
 				},
 			},
 		},
@@ -552,8 +521,7 @@ func TestCommentOnSubscriptionPersistsDescriptionRepro(t *testing.T) {
 				{
 					Query: `SELECT obj_description(
 						(SELECT oid FROM pg_subscription WHERE subname = 'comment_subscription_target'),
-						'pg_subscription');`,
-					Expected: []sql.Row{{"visible subscription comment"}},
+						'pg_subscription');`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentonsubscriptionpersistsdescriptionrepro-0001-select-obj_description-select-oid-from"},
 				},
 			},
 		},
@@ -604,13 +572,7 @@ func TestCommentOnTextSearchObjectsPersistsDescriptionRepro(t *testing.T) {
 								(SELECT oid FROM pg_ts_template
 								 WHERE tmplname = 'simple'
 								   AND tmplnamespace = 'pg_catalog'::regnamespace),
-								'pg_ts_template');`,
-					Expected: []sql.Row{{
-						"visible text search config comment",
-						"visible text search dictionary comment",
-						"visible text search parser comment",
-						"visible text search template comment",
-					}},
+								'pg_ts_template');`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentontextsearchobjectspersistsdescriptionrepro-0001-select-obj_description-select-oid-from"},
 				},
 			},
 		},
@@ -626,77 +588,64 @@ func TestCommentOnMissingTargetsRequiresExistingObjectRepro(t *testing.T) {
 			Name: "COMMENT ON missing targets errors",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `COMMENT ON TABLE missing_comment_table IS 'ghost table';`,
-					ExpectedErr: `does not exist`,
+					Query: `COMMENT ON TABLE missing_comment_table IS 'ghost table';`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentonmissingtargetsrequiresexistingobjectrepro-0001-comment-on-table-missing_comment_table-is", Compare: "sqlstate"},
 				},
 				{
-					Query:       `COMMENT ON COLUMN missing_comment_table.value IS 'ghost column';`,
-					ExpectedErr: `does not exist`,
+					Query: `COMMENT ON COLUMN missing_comment_table.value IS 'ghost column';`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentonmissingtargetsrequiresexistingobjectrepro-0002-comment-on-column-missing_comment_table.value-is", Compare: "sqlstate"},
 				},
 				{
-					Query:       `COMMENT ON FUNCTION missing_comment_function() IS 'ghost function';`,
-					ExpectedErr: `does not exist`,
+					Query: `COMMENT ON FUNCTION missing_comment_function() IS 'ghost function';`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentonmissingtargetsrequiresexistingobjectrepro-0003-comment-on-function-missing_comment_function-is", Compare: "sqlstate"},
 				},
 				{
-					Query:       `COMMENT ON ROLE missing_comment_role IS 'ghost role';`,
-					ExpectedErr: `does not exist`,
+					Query: `COMMENT ON ROLE missing_comment_role IS 'ghost role';`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentonmissingtargetsrequiresexistingobjectrepro-0004-comment-on-role-missing_comment_role-is", Compare: "sqlstate"},
 				},
 				{
-					Query:       `COMMENT ON EXTENSION missing_comment_extension IS 'ghost extension';`,
-					ExpectedErr: `does not exist`,
+					Query: `COMMENT ON EXTENSION missing_comment_extension IS 'ghost extension';`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentonmissingtargetsrequiresexistingobjectrepro-0005-comment-on-extension-missing_comment_extension-is", Compare: "sqlstate"},
 				},
 				{
-					Query:       `COMMENT ON PROCEDURE missing_comment_procedure() IS 'ghost procedure';`,
-					ExpectedErr: `does not exist`,
+					Query: `COMMENT ON PROCEDURE missing_comment_procedure() IS 'ghost procedure';`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentonmissingtargetsrequiresexistingobjectrepro-0006-comment-on-procedure-missing_comment_procedure-is", Compare: "sqlstate"},
 				},
 				{
-					Query:       `COMMENT ON ROUTINE missing_comment_routine() IS 'ghost routine';`,
-					ExpectedErr: `does not exist`,
+					Query: `COMMENT ON ROUTINE missing_comment_routine() IS 'ghost routine';`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentonmissingtargetsrequiresexistingobjectrepro-0007-comment-on-routine-missing_comment_routine-is", Compare: "sqlstate"},
 				},
 				{
-					Query:       `COMMENT ON DOMAIN missing_comment_domain IS 'ghost domain';`,
-					ExpectedErr: `does not exist`,
+					Query: `COMMENT ON DOMAIN missing_comment_domain IS 'ghost domain';`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentonmissingtargetsrequiresexistingobjectrepro-0008-comment-on-domain-missing_comment_domain-is", Compare: "sqlstate"},
 				},
 				{
-					Query:       `COMMENT ON LANGUAGE missing_comment_language IS 'ghost language';`,
-					ExpectedErr: `does not exist`,
+					Query: `COMMENT ON LANGUAGE missing_comment_language IS 'ghost language';`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentonmissingtargetsrequiresexistingobjectrepro-0009-comment-on-language-missing_comment_language-is", Compare: "sqlstate"},
 				},
 				{
-					Query:       `COMMENT ON COLLATION missing_comment_collation IS 'ghost collation';`,
-					ExpectedErr: `does not exist`,
+					Query: `COMMENT ON COLLATION missing_comment_collation IS 'ghost collation';`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentonmissingtargetsrequiresexistingobjectrepro-0010-comment-on-collation-missing_comment_collation-is", Compare: "sqlstate"},
 				},
 				{
-					Query:       `COMMENT ON OPERATOR + (integer, boolean) IS 'ghost operator';`,
-					ExpectedErr: `does not exist`,
+					Query: `COMMENT ON OPERATOR + (integer, boolean) IS 'ghost operator';`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentonmissingtargetsrequiresexistingobjectrepro-0011-comment-on-operator-+-integer", Compare: "sqlstate"},
 				},
 				{
 					Query: `COMMENT ON TEXT SEARCH CONFIGURATION missing_comment_ts_config
-						IS 'ghost text search config';`,
-					ExpectedErr: `does not exist`,
+						IS 'ghost text search config';`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentonmissingtargetsrequiresexistingobjectrepro-0012-comment-on-text-search-configuration", Compare: "sqlstate"},
 				},
 				{
 					Query: `COMMENT ON TEXT SEARCH DICTIONARY missing_comment_ts_dict
-						IS 'ghost text search dictionary';`,
-					ExpectedErr: `does not exist`,
+						IS 'ghost text search dictionary';`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentonmissingtargetsrequiresexistingobjectrepro-0013-comment-on-text-search-dictionary", Compare: "sqlstate"},
 				},
 				{
 					Query: `COMMENT ON TEXT SEARCH PARSER missing_comment_ts_parser
-						IS 'ghost text search parser';`,
-					ExpectedErr: `does not exist`,
+						IS 'ghost text search parser';`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentonmissingtargetsrequiresexistingobjectrepro-0014-comment-on-text-search-parser", Compare: "sqlstate"},
 				},
 				{
 					Query: `COMMENT ON TEXT SEARCH TEMPLATE missing_comment_ts_template
-						IS 'ghost text search template';`,
-					ExpectedErr: `does not exist`,
+						IS 'ghost text search template';`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentonmissingtargetsrequiresexistingobjectrepro-0015-comment-on-text-search-template",
+
+						// TestCommentOnMissingAccessMethodRequiresExistingObjectRepro reproduces a
+						// correctness bug: COMMENT ON ACCESS METHOD should validate that the named
+						// access method exists.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCommentOnMissingAccessMethodRequiresExistingObjectRepro reproduces a
-// correctness bug: COMMENT ON ACCESS METHOD should validate that the named
-// access method exists.
 func TestCommentOnMissingAccessMethodRequiresExistingObjectRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -704,17 +653,18 @@ func TestCommentOnMissingAccessMethodRequiresExistingObjectRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `COMMENT ON ACCESS METHOD missing_comment_am
-						IS 'ghost access method';`,
-					ExpectedErr: `does not exist`,
+						IS 'ghost access method';`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentonmissingaccessmethodrequiresexistingobjectrepro-0001-comment-on-access-method-missing_comment_am",
+
+						// TestCommentOnMissingPublicationRequiresExistingObjectRepro reproduces a
+						// correctness bug: COMMENT ON PUBLICATION should validate that the named
+						// publication exists.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCommentOnMissingPublicationRequiresExistingObjectRepro reproduces a
-// correctness bug: COMMENT ON PUBLICATION should validate that the named
-// publication exists.
 func TestCommentOnMissingPublicationRequiresExistingObjectRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -722,17 +672,18 @@ func TestCommentOnMissingPublicationRequiresExistingObjectRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `COMMENT ON PUBLICATION missing_comment_publication
-						IS 'ghost publication';`,
-					ExpectedErr: `does not exist`,
+						IS 'ghost publication';`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentonmissingpublicationrequiresexistingobjectrepro-0001-comment-on-publication-missing_comment_publication-is",
+
+						// TestCommentOnMissingSubscriptionRequiresExistingObjectRepro reproduces a
+						// correctness bug: COMMENT ON SUBSCRIPTION should validate that the named
+						// subscription exists.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCommentOnMissingSubscriptionRequiresExistingObjectRepro reproduces a
-// correctness bug: COMMENT ON SUBSCRIPTION should validate that the named
-// subscription exists.
 func TestCommentOnMissingSubscriptionRequiresExistingObjectRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -740,17 +691,18 @@ func TestCommentOnMissingSubscriptionRequiresExistingObjectRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `COMMENT ON SUBSCRIPTION missing_comment_subscription
-						IS 'ghost subscription';`,
-					ExpectedErr: `does not exist`,
+						IS 'ghost subscription';`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentonmissingsubscriptionrequiresexistingobjectrepro-0001-comment-on-subscription-missing_comment_subscription-is",
+
+						// TestCommentOnMissingPolicyRequiresExistingObjectRepro reproduces a
+						// correctness bug: COMMENT ON POLICY should validate that the named policy
+						// exists on the target table.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCommentOnMissingPolicyRequiresExistingObjectRepro reproduces a
-// correctness bug: COMMENT ON POLICY should validate that the named policy
-// exists on the target table.
 func TestCommentOnMissingPolicyRequiresExistingObjectRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -761,50 +713,53 @@ func TestCommentOnMissingPolicyRequiresExistingObjectRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `COMMENT ON POLICY missing_comment_policy
-						ON comment_policy_target IS 'ghost policy';`,
-					ExpectedErr: `does not exist`,
+						ON comment_policy_target IS 'ghost policy';`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentonmissingpolicyrequiresexistingobjectrepro-0001-comment-on-policy-missing_comment_policy-on",
+
+						// TestCommentOnMissingLargeObjectRequiresExistingObjectRepro reproduces a
+						// correctness bug: COMMENT ON LARGE OBJECT should validate that the large
+						// object exists.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCommentOnMissingLargeObjectRequiresExistingObjectRepro reproduces a
-// correctness bug: COMMENT ON LARGE OBJECT should validate that the large
-// object exists.
 func TestCommentOnMissingLargeObjectRequiresExistingObjectRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "COMMENT ON missing large object errors",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `COMMENT ON LARGE OBJECT 987654321 IS 'ghost large object';`,
-					ExpectedErr: `does not exist`,
+					Query: `COMMENT ON LARGE OBJECT 987654321 IS 'ghost large object';`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentonmissinglargeobjectrequiresexistingobjectrepro-0001-comment-on-large-object-987654321",
+
+						// TestCommentOnMissingTablespaceRequiresExistingObjectRepro reproduces a
+						// correctness bug: COMMENT ON TABLESPACE should validate that the named
+						// tablespace exists.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCommentOnMissingTablespaceRequiresExistingObjectRepro reproduces a
-// correctness bug: COMMENT ON TABLESPACE should validate that the named
-// tablespace exists.
 func TestCommentOnMissingTablespaceRequiresExistingObjectRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "COMMENT ON missing tablespace errors",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `COMMENT ON TABLESPACE missing_comment_tablespace IS 'ghost tablespace';`,
-					ExpectedErr: `does not exist`,
+					Query: `COMMENT ON TABLESPACE missing_comment_tablespace IS 'ghost tablespace';`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentonmissingtablespacerequiresexistingobjectrepro-0001-comment-on-tablespace-missing_comment_tablespace-is",
+
+						// TestCommentOnTableRequiresOwnershipRepro reproduces a security bug:
+						// Doltgres accepts COMMENT ON TABLE from a role that does not own the table.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCommentOnTableRequiresOwnershipRepro reproduces a security bug:
-// Doltgres accepts COMMENT ON TABLE from a role that does not own the table.
 func TestCommentOnTableRequiresOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -816,18 +771,20 @@ func TestCommentOnTableRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `COMMENT ON TABLE comment_private IS 'unauthorized comment';`,
-					ExpectedErr: `permission denied`,
-					Username:    `comment_intruder`,
-					Password:    `intruder`,
+					Query: `COMMENT ON TABLE comment_private IS 'unauthorized comment';`,
+
+					Username: `comment_intruder`,
+					Password: `intruder`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCommentOnColumnRequiresOwnershipRepro reproduces a security bug:
+						// Doltgres accepts COMMENT ON COLUMN from a role that does not own the table.
+						ID: "comment-persistence-repro-test-testcommentontablerequiresownershiprepro-0001-comment-on-table-comment_private-is", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCommentOnColumnRequiresOwnershipRepro reproduces a security bug:
-// Doltgres accepts COMMENT ON COLUMN from a role that does not own the table.
 func TestCommentOnColumnRequiresOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -839,19 +796,21 @@ func TestCommentOnColumnRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `COMMENT ON COLUMN comment_column_private.secret IS 'unauthorized column comment';`,
-					ExpectedErr: `permission denied`,
-					Username:    `column_comment_intruder`,
-					Password:    `intruder`,
+					Query: `COMMENT ON COLUMN comment_column_private.secret IS 'unauthorized column comment';`,
+
+					Username: `column_comment_intruder`,
+					Password: `intruder`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCommentOnRelationKindsRequiresOwnershipRepro reproduces the same
+						// security bug for other relation kinds: Doltgres accepts COMMENT ON VIEW,
+						// COMMENT ON MATERIALIZED VIEW, and COMMENT ON SEQUENCE from a non-owner.
+						ID: "comment-persistence-repro-test-testcommentoncolumnrequiresownershiprepro-0001-comment-on-column-comment_column_private.secret-is", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCommentOnRelationKindsRequiresOwnershipRepro reproduces the same
-// security bug for other relation kinds: Doltgres accepts COMMENT ON VIEW,
-// COMMENT ON MATERIALIZED VIEW, and COMMENT ON SEQUENCE from a non-owner.
 func TestCommentOnRelationKindsRequiresOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -868,31 +827,33 @@ func TestCommentOnRelationKindsRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `COMMENT ON VIEW comment_private_view IS 'unauthorized view comment';`,
-					ExpectedErr: `permission denied`,
-					Username:    `relation_comment_intruder`,
-					Password:    `intruder`,
+					Query: `COMMENT ON VIEW comment_private_view IS 'unauthorized view comment';`,
+
+					Username: `relation_comment_intruder`,
+					Password: `intruder`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentonrelationkindsrequiresownershiprepro-0001-comment-on-view-comment_private_view-is", Compare: "sqlstate"},
 				},
 				{
 					Query: `COMMENT ON MATERIALIZED VIEW comment_private_matview
 						IS 'unauthorized materialized view comment';`,
-					ExpectedErr: `permission denied`,
-					Username:    `relation_comment_intruder`,
-					Password:    `intruder`,
+
+					Username: `relation_comment_intruder`,
+					Password: `intruder`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentonrelationkindsrequiresownershiprepro-0002-comment-on-materialized-view-comment_private_matview", Compare: "sqlstate"},
 				},
 				{
-					Query:       `COMMENT ON SEQUENCE comment_private_sequence IS 'unauthorized sequence comment';`,
-					ExpectedErr: `permission denied`,
-					Username:    `relation_comment_intruder`,
-					Password:    `intruder`,
+					Query: `COMMENT ON SEQUENCE comment_private_sequence IS 'unauthorized sequence comment';`,
+
+					Username: `relation_comment_intruder`,
+					Password: `intruder`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCommentOnIndexConstraintTriggerRequiresOwnershipRepro reproduces the same
+						// security bug for indexes, constraints, and triggers.
+						ID: "comment-persistence-repro-test-testcommentonrelationkindsrequiresownershiprepro-0003-comment-on-sequence-comment_private_sequence-is", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCommentOnIndexConstraintTriggerRequiresOwnershipRepro reproduces the same
-// security bug for indexes, constraints, and triggers.
 func TestCommentOnIndexConstraintTriggerRequiresOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -916,32 +877,34 @@ func TestCommentOnIndexConstraintTriggerRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `COMMENT ON INDEX comment_metadata_private_v_idx IS 'unauthorized index comment';`,
-					ExpectedErr: `permission denied`,
-					Username:    `metadata_comment_intruder`,
-					Password:    `intruder`,
+					Query: `COMMENT ON INDEX comment_metadata_private_v_idx IS 'unauthorized index comment';`,
+
+					Username: `metadata_comment_intruder`,
+					Password: `intruder`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentonindexconstrainttriggerrequiresownershiprepro-0001-comment-on-index-comment_metadata_private_v_idx-is", Compare: "sqlstate"},
 				},
 				{
 					Query: `COMMENT ON CONSTRAINT comment_metadata_private_v_positive
 						ON comment_metadata_private IS 'unauthorized constraint comment';`,
-					ExpectedErr: `permission denied`,
-					Username:    `metadata_comment_intruder`,
-					Password:    `intruder`,
+
+					Username: `metadata_comment_intruder`,
+					Password: `intruder`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentonindexconstrainttriggerrequiresownershiprepro-0002-comment-on-constraint-comment_metadata_private_v_positive-on", Compare: "sqlstate"},
 				},
 				{
 					Query: `COMMENT ON TRIGGER comment_metadata_private_before_insert
 						ON comment_metadata_private IS 'unauthorized trigger comment';`,
-					ExpectedErr: `permission denied`,
-					Username:    `metadata_comment_intruder`,
-					Password:    `intruder`,
+
+					Username: `metadata_comment_intruder`,
+					Password: `intruder`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCommentOnSchemaRequiresOwnershipRepro reproduces a security bug:
+						// Doltgres accepts COMMENT ON SCHEMA from a role that does not own the schema.
+						ID: "comment-persistence-repro-test-testcommentonindexconstrainttriggerrequiresownershiprepro-0003-comment-on-trigger-comment_metadata_private_before_insert-on", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCommentOnSchemaRequiresOwnershipRepro reproduces a security bug:
-// Doltgres accepts COMMENT ON SCHEMA from a role that does not own the schema.
 func TestCommentOnSchemaRequiresOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -953,19 +916,21 @@ func TestCommentOnSchemaRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `COMMENT ON SCHEMA comment_private_schema IS 'unauthorized schema comment';`,
-					ExpectedErr: `permission denied`,
-					Username:    `schema_comment_intruder`,
-					Password:    `intruder`,
+					Query: `COMMENT ON SCHEMA comment_private_schema IS 'unauthorized schema comment';`,
+
+					Username: `schema_comment_intruder`,
+					Password: `intruder`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCommentOnDatabaseRequiresOwnershipRepro reproduces a security bug:
+						// Doltgres accepts COMMENT ON DATABASE from a role that does not own the
+						// database.
+						ID: "comment-persistence-repro-test-testcommentonschemarequiresownershiprepro-0001-comment-on-schema-comment_private_schema-is", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCommentOnDatabaseRequiresOwnershipRepro reproduces a security bug:
-// Doltgres accepts COMMENT ON DATABASE from a role that does not own the
-// database.
 func TestCommentOnDatabaseRequiresOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -975,19 +940,21 @@ func TestCommentOnDatabaseRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `COMMENT ON DATABASE postgres IS 'unauthorized database comment';`,
-					ExpectedErr: `permission denied`,
-					Username:    `database_comment_intruder`,
-					Password:    `intruder`,
+					Query: `COMMENT ON DATABASE postgres IS 'unauthorized database comment';`,
+
+					Username: `database_comment_intruder`,
+					Password: `intruder`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCommentOnFunctionRequiresOwnershipRepro reproduces a security bug:
+						// Doltgres accepts COMMENT ON FUNCTION from a role that does not own the
+						// function.
+						ID: "comment-persistence-repro-test-testcommentondatabaserequiresownershiprepro-0001-comment-on-database-postgres-is", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCommentOnFunctionRequiresOwnershipRepro reproduces a security bug:
-// Doltgres accepts COMMENT ON FUNCTION from a role that does not own the
-// function.
 func TestCommentOnFunctionRequiresOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -998,18 +965,20 @@ func TestCommentOnFunctionRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `COMMENT ON FUNCTION comment_private_function() IS 'unauthorized function comment';`,
-					ExpectedErr: `permission denied`,
-					Username:    `function_comment_intruder`,
-					Password:    `intruder`,
+					Query: `COMMENT ON FUNCTION comment_private_function() IS 'unauthorized function comment';`,
+
+					Username: `function_comment_intruder`,
+					Password: `intruder`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCommentOnTypeRequiresOwnershipRepro reproduces a security bug: Doltgres
+						// accepts COMMENT ON TYPE from a role that does not own the type.
+						ID: "comment-persistence-repro-test-testcommentonfunctionrequiresownershiprepro-0001-comment-on-function-comment_private_function-is", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCommentOnTypeRequiresOwnershipRepro reproduces a security bug: Doltgres
-// accepts COMMENT ON TYPE from a role that does not own the type.
 func TestCommentOnTypeRequiresOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1020,18 +989,20 @@ func TestCommentOnTypeRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `COMMENT ON TYPE comment_private_type IS 'unauthorized type comment';`,
-					ExpectedErr: `permission denied`,
-					Username:    `type_comment_intruder`,
-					Password:    `intruder`,
+					Query: `COMMENT ON TYPE comment_private_type IS 'unauthorized type comment';`,
+
+					Username: `type_comment_intruder`,
+					Password: `intruder`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCommentOnRoleAndExtensionRequiresPrivilegeRepro reproduces the same
+						// security bug for roles and extensions.
+						ID: "comment-persistence-repro-test-testcommentontyperequiresownershiprepro-0001-comment-on-type-comment_private_type-is", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCommentOnRoleAndExtensionRequiresPrivilegeRepro reproduces the same
-// security bug for roles and extensions.
 func TestCommentOnRoleAndExtensionRequiresPrivilegeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1082,37 +1053,39 @@ func TestCommentOnProcedureRoutineDomainLanguageRequiresOwnershipRepro(t *testin
 				{
 					Query: `COMMENT ON PROCEDURE comment_private_procedure()
 						IS 'unauthorized procedure comment';`,
-					ExpectedErr: `must be owner`,
-					Username:    `routine_comment_intruder`,
-					Password:    `intruder`,
+
+					Username: `routine_comment_intruder`,
+					Password: `intruder`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentonprocedureroutinedomainlanguagerequiresownershiprepro-0001-comment-on-procedure-comment_private_procedure-is", Compare: "sqlstate"},
 				},
 				{
 					Query: `COMMENT ON ROUTINE comment_private_routine()
 						IS 'unauthorized routine comment';`,
-					ExpectedErr: `must be owner`,
-					Username:    `routine_comment_intruder`,
-					Password:    `intruder`,
+
+					Username: `routine_comment_intruder`,
+					Password: `intruder`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentonprocedureroutinedomainlanguagerequiresownershiprepro-0002-comment-on-routine-comment_private_routine-is", Compare: "sqlstate"},
 				},
 				{
 					Query: `COMMENT ON DOMAIN comment_private_domain
 						IS 'unauthorized domain comment';`,
-					ExpectedErr: `must be owner`,
-					Username:    `routine_comment_intruder`,
-					Password:    `intruder`,
+
+					Username: `routine_comment_intruder`,
+					Password: `intruder`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentonprocedureroutinedomainlanguagerequiresownershiprepro-0003-comment-on-domain-comment_private_domain-is", Compare: "sqlstate"},
 				},
 				{
-					Query:       `COMMENT ON LANGUAGE plpgsql IS 'unauthorized language comment';`,
-					ExpectedErr: `must be owner`,
-					Username:    `routine_comment_intruder`,
-					Password:    `intruder`,
+					Query: `COMMENT ON LANGUAGE plpgsql IS 'unauthorized language comment';`,
+
+					Username: `routine_comment_intruder`,
+					Password: `intruder`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCommentOnCollationAndOperatorRequiresOwnershipRepro reproduces the same
+						// security bug for built-in collations and operators.
+						ID: "comment-persistence-repro-test-testcommentonprocedureroutinedomainlanguagerequiresownershiprepro-0004-comment-on-language-plpgsql-is", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCommentOnCollationAndOperatorRequiresOwnershipRepro reproduces the same
-// security bug for built-in collations and operators.
 func TestCommentOnCollationAndOperatorRequiresOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1124,24 +1097,26 @@ func TestCommentOnCollationAndOperatorRequiresOwnershipRepro(t *testing.T) {
 				{
 					Query: `COMMENT ON COLLATION pg_catalog."C"
 						IS 'unauthorized collation comment';`,
-					ExpectedErr: `must be owner`,
-					Username:    `catalog_comment_intruder`,
-					Password:    `intruder`,
+
+					Username: `catalog_comment_intruder`,
+					Password: `intruder`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentoncollationandoperatorrequiresownershiprepro-0001-comment-on-collation-pg_catalog.-c", Compare: "sqlstate"},
 				},
 				{
 					Query: `COMMENT ON OPERATOR + (integer, integer)
 						IS 'unauthorized operator comment';`,
-					ExpectedErr: `must be owner`,
-					Username:    `catalog_comment_intruder`,
-					Password:    `intruder`,
+
+					Username: `catalog_comment_intruder`,
+					Password: `intruder`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCommentOnTextSearchObjectsRequiresOwnershipRepro reproduces the same
+						// security bug for text-search catalog objects.
+						ID: "comment-persistence-repro-test-testcommentoncollationandoperatorrequiresownershiprepro-0002-comment-on-operator-+-integer", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCommentOnTextSearchObjectsRequiresOwnershipRepro reproduces the same
-// security bug for text-search catalog objects.
 func TestCommentOnTextSearchObjectsRequiresOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1153,30 +1128,30 @@ func TestCommentOnTextSearchObjectsRequiresOwnershipRepro(t *testing.T) {
 				{
 					Query: `COMMENT ON TEXT SEARCH CONFIGURATION simple
 						IS 'unauthorized text search config comment';`,
-					ExpectedErr: `must be owner`,
-					Username:    `text_search_comment_intruder`,
-					Password:    `intruder`,
+
+					Username: `text_search_comment_intruder`,
+					Password: `intruder`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentontextsearchobjectsrequiresownershiprepro-0001-comment-on-text-search-configuration", Compare: "sqlstate"},
 				},
 				{
 					Query: `COMMENT ON TEXT SEARCH DICTIONARY simple
 						IS 'unauthorized text search dictionary comment';`,
-					ExpectedErr: `must be owner`,
-					Username:    `text_search_comment_intruder`,
-					Password:    `intruder`,
+
+					Username: `text_search_comment_intruder`,
+					Password: `intruder`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentontextsearchobjectsrequiresownershiprepro-0002-comment-on-text-search-dictionary", Compare: "sqlstate"},
 				},
 				{
 					Query: `COMMENT ON TEXT SEARCH PARSER "default"
 						IS 'unauthorized text search parser comment';`,
-					ExpectedErr: `must be superuser`,
-					Username:    `text_search_comment_intruder`,
-					Password:    `intruder`,
+
+					Username: `text_search_comment_intruder`,
+					Password: `intruder`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentontextsearchobjectsrequiresownershiprepro-0003-comment-on-text-search-parser", Compare: "sqlstate"},
 				},
 				{
 					Query: `COMMENT ON TEXT SEARCH TEMPLATE simple
 						IS 'unauthorized text search template comment';`,
-					ExpectedErr: `must be superuser`,
-					Username:    `text_search_comment_intruder`,
-					Password:    `intruder`,
+
+					Username: `text_search_comment_intruder`,
+					Password: `intruder`, PostgresOracle: ScriptTestPostgresOracle{ID: "comment-persistence-repro-test-testcommentontextsearchobjectsrequiresownershiprepro-0004-comment-on-text-search-template", Compare: "sqlstate"},
 				},
 			},
 		},

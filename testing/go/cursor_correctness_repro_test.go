@@ -42,8 +42,7 @@ func TestCursorWithHoldSurvivesCommitRepro(t *testing.T) {
 					SkipResultsCheck: true,
 				},
 				{
-					Query:    `FETCH NEXT FROM hold_cur;`,
-					Expected: []sql.Row{{1}},
+					Query: `FETCH NEXT FROM hold_cur;`, PostgresOracle: ScriptTestPostgresOracle{ID: "cursor-correctness-repro-test-testcursorwithholdsurvivescommitrepro-0001-fetch-next-from-hold_cur"},
 				},
 				{
 					Query:            `COMMIT;`,

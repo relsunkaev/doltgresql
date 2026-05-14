@@ -1,0 +1,5451 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map sequences_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/sequences_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0001",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 1,
+      "scriptName": "Basic CREATE SEQUENCE and DROP SEQUENCE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0001-create-sequence-test",
+      "suggestedId": "sequences-test-testsequences-0001-create-sequence-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE SEQUENCE test;",
+      "querySha256": "f74fe81ce10c411c938e8747bf623c4e4f26391cd69962602486c21bb79a714d",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0002",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 2,
+      "scriptName": "Basic CREATE SEQUENCE and DROP SEQUENCE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0002-select-nextval-test",
+      "suggestedId": "sequences-test-testsequences-0002-select-nextval-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test');",
+      "querySha256": "d5f1fb418a606de5b5772da91b39404f653a1e93a108b5b17d821d76e26a1a70",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0003",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 3,
+      "scriptName": "Basic CREATE SEQUENCE and DROP SEQUENCE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0003-select-nextval-test",
+      "suggestedId": "sequences-test-testsequences-0003-select-nextval-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test');",
+      "querySha256": "d5f1fb418a606de5b5772da91b39404f653a1e93a108b5b17d821d76e26a1a70",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0004",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 4,
+      "scriptName": "Basic CREATE SEQUENCE and DROP SEQUENCE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0004-select-nextval-test",
+      "suggestedId": "sequences-test-testsequences-0004-select-nextval-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test');",
+      "querySha256": "d5f1fb418a606de5b5772da91b39404f653a1e93a108b5b17d821d76e26a1a70",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0005",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 5,
+      "scriptName": "Basic CREATE SEQUENCE and DROP SEQUENCE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0005-select-nextval-test-::regclass",
+      "suggestedId": "sequences-test-testsequences-0005-select-nextval-test-::regclass",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test'::regclass);",
+      "querySha256": "c30f7c1345e58ff43bf4abdeba1cbac3abca1979bdefed182bb431eaab5cd1c0",
+      "expectedRows": [
+        [
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0006",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 6,
+      "scriptName": "Basic CREATE SEQUENCE and DROP SEQUENCE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0006-select-nextval-doesnotexist-::regclass",
+      "suggestedId": "sequences-test-testsequences-0006-select-nextval-doesnotexist-::regclass",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
+      "query": "SELECT nextval('doesnotexist'::regclass);",
+      "querySha256": "dbbbc892f851d95fd8cb271a0a03d204cf133ee97b3a302fff128db59f570411",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0007",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 7,
+      "scriptName": "Basic CREATE SEQUENCE and DROP SEQUENCE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0007-drop-sequence-test",
+      "suggestedId": "sequences-test-testsequences-0007-drop-sequence-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "DROP SEQUENCE test;",
+      "querySha256": "490cb8de65abc633d6f12cc0713b63a37776e43ca5fca16dfe7576fe69358078",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0008",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 8,
+      "scriptName": "Basic CREATE SEQUENCE and DROP SEQUENCE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0008-select-nextval-test",
+      "suggestedId": "sequences-test-testsequences-0008-select-nextval-test",
+      "compare": "structural",
+      "expectedKind": "error",
+      "query": "SELECT nextval('test');",
+      "querySha256": "d5f1fb418a606de5b5772da91b39404f653a1e93a108b5b17d821d76e26a1a70",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0009",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 9,
+      "scriptName": "CREATE SEQUENCE IF NOT EXISTS",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0009-create-sequence-test1",
+      "suggestedId": "sequences-test-testsequences-0009-create-sequence-test1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE SEQUENCE test1;",
+      "querySha256": "79b1bc7ad1f24f487e470cb28a398c982f508f8a9447b33a8abe5cc1f813841b",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0010",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 10,
+      "scriptName": "CREATE SEQUENCE IF NOT EXISTS",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0010-create-sequence-test1",
+      "suggestedId": "sequences-test-testsequences-0010-create-sequence-test1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P07",
+      "errorSeverity": "ERROR",
+      "query": "CREATE SEQUENCE test1;",
+      "querySha256": "79b1bc7ad1f24f487e470cb28a398c982f508f8a9447b33a8abe5cc1f813841b",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0011",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 11,
+      "scriptName": "CREATE SEQUENCE IF NOT EXISTS",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0011-select-nextval-test1",
+      "suggestedId": "sequences-test-testsequences-0011-select-nextval-test1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test1');",
+      "querySha256": "c68d074c18d486b995d66917b0ed3d0bb9c917a7cdfa742f8b6cc8645fa612b9",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0012",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 12,
+      "scriptName": "CREATE SEQUENCE IF NOT EXISTS",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0012-create-sequence-if-not-exists",
+      "suggestedId": "sequences-test-testsequences-0012-create-sequence-if-not-exists",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE SEQUENCE IF NOT EXISTS test1;",
+      "querySha256": "2f4916e75722a804ccbc9610c97828cfadfcd3f287eae1c74a8a4ff56c0ecbac",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0013",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 13,
+      "scriptName": "CREATE SEQUENCE IF NOT EXISTS",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0013-select-nextval-test1",
+      "suggestedId": "sequences-test-testsequences-0013-select-nextval-test1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test1');",
+      "querySha256": "c68d074c18d486b995d66917b0ed3d0bb9c917a7cdfa742f8b6cc8645fa612b9",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0014",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 14,
+      "scriptName": "CREATE SEQUENCE IF NOT EXISTS",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0014-create-sequence-if-not-exists",
+      "suggestedId": "sequences-test-testsequences-0014-create-sequence-if-not-exists",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE SEQUENCE IF NOT EXISTS test2;",
+      "querySha256": "5ce1f8befd709914ab3e854fd965959ae6cde7b06f2b0092b2c4a587d6e41c35",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0015",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 15,
+      "scriptName": "CREATE SEQUENCE IF NOT EXISTS",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0015-select-nextval-test2",
+      "suggestedId": "sequences-test-testsequences-0015-select-nextval-test2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test2');",
+      "querySha256": "2efef27f13cf239b6cf37424167f83c52c96032c8b2d642534362532d764d708",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0016",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 16,
+      "scriptName": "CREATE SEQUENCE IF NOT EXISTS",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0016-create-sequence-if-not-exists",
+      "suggestedId": "sequences-test-testsequences-0016-create-sequence-if-not-exists",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE SEQUENCE IF NOT EXISTS test2;",
+      "querySha256": "5ce1f8befd709914ab3e854fd965959ae6cde7b06f2b0092b2c4a587d6e41c35",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0017",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 17,
+      "scriptName": "CREATE SEQUENCE IF NOT EXISTS",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0017-select-nextval-test2",
+      "suggestedId": "sequences-test-testsequences-0017-select-nextval-test2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test2');",
+      "querySha256": "2efef27f13cf239b6cf37424167f83c52c96032c8b2d642534362532d764d708",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0018",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 18,
+      "scriptName": "DROP SEQUENCE IF NOT EXISTS",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0018-create-sequence-test1",
+      "suggestedId": "sequences-test-testsequences-0018-create-sequence-test1",
+      "compare": "sqlstate",
+      "expectedKind": "rows",
+      "sqlstate": "42P07",
+      "errorSeverity": "ERROR",
+      "query": "CREATE SEQUENCE test1;",
+      "querySha256": "79b1bc7ad1f24f487e470cb28a398c982f508f8a9447b33a8abe5cc1f813841b",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0019",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 19,
+      "scriptName": "DROP SEQUENCE IF NOT EXISTS",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0019-create-sequence-test2",
+      "suggestedId": "sequences-test-testsequences-0019-create-sequence-test2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE SEQUENCE test2;",
+      "querySha256": "3c08b2452e1d79806634659db86764821fcc8227f90901c7a2575a1944ceac62",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0020",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 20,
+      "scriptName": "DROP SEQUENCE IF NOT EXISTS",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0020-select-nextval-test1",
+      "suggestedId": "sequences-test-testsequences-0020-select-nextval-test1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test1');",
+      "querySha256": "c68d074c18d486b995d66917b0ed3d0bb9c917a7cdfa742f8b6cc8645fa612b9",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0021",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 21,
+      "scriptName": "DROP SEQUENCE IF NOT EXISTS",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0021-select-nextval-test2",
+      "suggestedId": "sequences-test-testsequences-0021-select-nextval-test2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test2');",
+      "querySha256": "2efef27f13cf239b6cf37424167f83c52c96032c8b2d642534362532d764d708",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0022",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 22,
+      "scriptName": "DROP SEQUENCE IF NOT EXISTS",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0022-drop-sequence-test1",
+      "suggestedId": "sequences-test-testsequences-0022-drop-sequence-test1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "DROP SEQUENCE test1;",
+      "querySha256": "c0600fb76472e5f8b0832b264538ea2d10e98bfe4b5ebe63dcf27aa7faccfc9b",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0023",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 23,
+      "scriptName": "DROP SEQUENCE IF NOT EXISTS",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0023-drop-sequence-test1",
+      "suggestedId": "sequences-test-testsequences-0023-drop-sequence-test1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
+      "query": "DROP SEQUENCE test1;",
+      "querySha256": "c0600fb76472e5f8b0832b264538ea2d10e98bfe4b5ebe63dcf27aa7faccfc9b",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0024",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 24,
+      "scriptName": "DROP SEQUENCE IF NOT EXISTS",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0024-drop-sequence-if-exists-test1",
+      "suggestedId": "sequences-test-testsequences-0024-drop-sequence-if-exists-test1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "DROP SEQUENCE IF EXISTS test1;",
+      "querySha256": "2de65ca565c1e74572512ae928de88b0c433e05ce38fdc352c8efc0b469b38b6",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0025",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 25,
+      "scriptName": "DROP SEQUENCE IF NOT EXISTS",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0025-select-nextval-test1",
+      "suggestedId": "sequences-test-testsequences-0025-select-nextval-test1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
+      "query": "SELECT nextval('test1');",
+      "querySha256": "c68d074c18d486b995d66917b0ed3d0bb9c917a7cdfa742f8b6cc8645fa612b9",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0026",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 26,
+      "scriptName": "DROP SEQUENCE IF NOT EXISTS",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0026-select-nextval-test2",
+      "suggestedId": "sequences-test-testsequences-0026-select-nextval-test2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test2');",
+      "querySha256": "2efef27f13cf239b6cf37424167f83c52c96032c8b2d642534362532d764d708",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0027",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 27,
+      "scriptName": "DROP SEQUENCE IF NOT EXISTS",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0027-drop-sequence-if-exists-test2",
+      "suggestedId": "sequences-test-testsequences-0027-drop-sequence-if-exists-test2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "DROP SEQUENCE IF EXISTS test2;",
+      "querySha256": "44e4c84c880bc5e3f422b7f0d69f6300a1a28da84d66618da4ed785cdf150fe4",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0028",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 28,
+      "scriptName": "DROP SEQUENCE IF NOT EXISTS",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0028-select-nextval-test2",
+      "suggestedId": "sequences-test-testsequences-0028-select-nextval-test2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
+      "query": "SELECT nextval('test2');",
+      "querySha256": "2efef27f13cf239b6cf37424167f83c52c96032c8b2d642534362532d764d708",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0029",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 29,
+      "scriptName": "DROP SEQUENCE IF NOT EXISTS",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0029-drop-sequence-if-exists-test2",
+      "suggestedId": "sequences-test-testsequences-0029-drop-sequence-if-exists-test2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "DROP SEQUENCE IF EXISTS test2;",
+      "querySha256": "44e4c84c880bc5e3f422b7f0d69f6300a1a28da84d66618da4ed785cdf150fe4",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0030",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 30,
+      "scriptName": "MINVALUE and MAXVALUE with DATA TYPE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0030-create-sequence-test1-as-smallint",
+      "suggestedId": "sequences-test-testsequences-0030-create-sequence-test1-as-smallint",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE SEQUENCE test1 AS SMALLINT MINVALUE -32768;",
+      "querySha256": "35127010e2583e03eff7f1f95733ced9acae748043734f1cc49c097024af5854",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0031",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 31,
+      "scriptName": "MINVALUE and MAXVALUE with DATA TYPE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0031-create-sequence-test2-as-smallint",
+      "suggestedId": "sequences-test-testsequences-0031-create-sequence-test2-as-smallint",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "CREATE SEQUENCE test2 AS SMALLINT MINVALUE -32769;",
+      "querySha256": "ac313fc9b55123b69aa8e84ce56bdffe8e414db36f671d8fda17dbb6d8c7e55b",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0032",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 32,
+      "scriptName": "MINVALUE and MAXVALUE with DATA TYPE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0032-create-sequence-test3-as-smallint",
+      "suggestedId": "sequences-test-testsequences-0032-create-sequence-test3-as-smallint",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE SEQUENCE test3 AS SMALLINT MAXVALUE 32767;",
+      "querySha256": "9fac914cc43d364d020740731e4b03e56aca40e5cca518f2e36757982479ec6e",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0033",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 33,
+      "scriptName": "MINVALUE and MAXVALUE with DATA TYPE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0033-create-sequence-test4-as-smallint",
+      "suggestedId": "sequences-test-testsequences-0033-create-sequence-test4-as-smallint",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "CREATE SEQUENCE test4 AS SMALLINT MINVALUE 32768;",
+      "querySha256": "eb1c49a35587405f569fac44d5310f8b58f7beaa102dfc3577df3ce9fde3760e",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0034",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 34,
+      "scriptName": "MINVALUE and MAXVALUE with DATA TYPE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0034-create-sequence-test5-as-integer",
+      "suggestedId": "sequences-test-testsequences-0034-create-sequence-test5-as-integer",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE SEQUENCE test5 AS INTEGER MINVALUE -2147483648;",
+      "querySha256": "9491320d287f9d790e67a73fb6a9833f901a52ed7cbcca8514155366c3ccae8d",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0035",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 35,
+      "scriptName": "MINVALUE and MAXVALUE with DATA TYPE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0035-create-sequence-test6-as-integer",
+      "suggestedId": "sequences-test-testsequences-0035-create-sequence-test6-as-integer",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "CREATE SEQUENCE test6 AS INTEGER MINVALUE -2147483649;",
+      "querySha256": "daa6a3384d8e09d72ce96cbca9299970a23d2d0820ea19b141185a5ccedf59a6",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0036",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 36,
+      "scriptName": "MINVALUE and MAXVALUE with DATA TYPE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0036-create-sequence-test7-as-integer",
+      "suggestedId": "sequences-test-testsequences-0036-create-sequence-test7-as-integer",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE SEQUENCE test7 AS INTEGER MAXVALUE 2147483647;",
+      "querySha256": "fa43a0d1ad7be9f99673fcf95390e83c689ee75902f6c3365dffc1f12c9e3cff",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0037",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 37,
+      "scriptName": "MINVALUE and MAXVALUE with DATA TYPE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0037-create-sequence-test8-as-integer",
+      "suggestedId": "sequences-test-testsequences-0037-create-sequence-test8-as-integer",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "CREATE SEQUENCE test8 AS INTEGER MINVALUE 2147483648;",
+      "querySha256": "d02287b22be01f7e4b92f5e692abbf9db48dec57f5591cf987098c5a8349c2af",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0038",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 38,
+      "scriptName": "MINVALUE and MAXVALUE with DATA TYPE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0038-create-sequence-test9-as-bigint",
+      "suggestedId": "sequences-test-testsequences-0038-create-sequence-test9-as-bigint",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE SEQUENCE test9 AS BIGINT MINVALUE -9223372036854775808;",
+      "querySha256": "928bb3bda1def0d89d5f22a91771e45e5c7827d0d9be13b50acfd06bf5a6fc71",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0039",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 39,
+      "scriptName": "MINVALUE and MAXVALUE with DATA TYPE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0039-create-sequence-test10-as-bigint",
+      "suggestedId": "sequences-test-testsequences-0039-create-sequence-test10-as-bigint",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22003",
+      "errorSeverity": "ERROR",
+      "query": "CREATE SEQUENCE test10 AS BIGINT MINVALUE -9223372036854775809;",
+      "querySha256": "f5db5d9ef13b4e1e754c7f4e4ceaaa38db1fc4b0aca5c393ff1f6a548a2d81a3",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0040",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 40,
+      "scriptName": "MINVALUE and MAXVALUE with DATA TYPE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0040-create-sequence-test11-as-bigint",
+      "suggestedId": "sequences-test-testsequences-0040-create-sequence-test11-as-bigint",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE SEQUENCE test11 AS BIGINT MAXVALUE 9223372036854775807;",
+      "querySha256": "20f88715b34b7214f8a19aa26223d35b489b6a0c82aac6b87f439a13b0a28de3",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0041",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 41,
+      "scriptName": "MINVALUE and MAXVALUE with DATA TYPE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0041-create-sequence-test12-as-bigint",
+      "suggestedId": "sequences-test-testsequences-0041-create-sequence-test12-as-bigint",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22003",
+      "errorSeverity": "ERROR",
+      "query": "CREATE SEQUENCE test12 AS BIGINT MINVALUE 9223372036854775808;",
+      "querySha256": "e8f456b1082c248f6bb5184b29767d1885558d97707aeb3216b529f85e67c07e",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0042",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 42,
+      "scriptName": "CREATE SEQUENCE START",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0042-create-sequence-test1-start-39",
+      "suggestedId": "sequences-test-testsequences-0042-create-sequence-test1-start-39",
+      "compare": "sqlstate",
+      "expectedKind": "rows",
+      "sqlstate": "42P07",
+      "errorSeverity": "ERROR",
+      "query": "CREATE SEQUENCE test1 START 39;",
+      "querySha256": "1855fd3c3e77051263b356fe12980cd0971e6cc64fe74bcb0a24c603ffef82cb",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0043",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 43,
+      "scriptName": "CREATE SEQUENCE START",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0043-select-nextval-test1",
+      "suggestedId": "sequences-test-testsequences-0043-select-nextval-test1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test1');",
+      "querySha256": "c68d074c18d486b995d66917b0ed3d0bb9c917a7cdfa742f8b6cc8645fa612b9",
+      "expectedRows": [
+        [
+          {
+            "value": "39"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0044",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 44,
+      "scriptName": "CREATE SEQUENCE START",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0044-create-sequence-test2-start-0",
+      "suggestedId": "sequences-test-testsequences-0044-create-sequence-test2-start-0",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "CREATE SEQUENCE test2 START 0;",
+      "querySha256": "a5da027048510658e75467ef4269bd60b00d3e8a238a7089a43334fd408211ba",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0045",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 45,
+      "scriptName": "CREATE SEQUENCE START",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0045-create-sequence-test2-minvalue-0",
+      "suggestedId": "sequences-test-testsequences-0045-create-sequence-test2-minvalue-0",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE SEQUENCE test2 MINVALUE 0 START 0;",
+      "querySha256": "d68af172155f9fc70f59caef6b61f23bdbf60ac60e8b16ccb7e5e3b359491a22",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0046",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 46,
+      "scriptName": "CREATE SEQUENCE START",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0046-select-nextval-test2",
+      "suggestedId": "sequences-test-testsequences-0046-select-nextval-test2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test2');",
+      "querySha256": "2efef27f13cf239b6cf37424167f83c52c96032c8b2d642534362532d764d708",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0047",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 47,
+      "scriptName": "CREATE SEQUENCE START",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0047-create-sequence-test3-minvalue-100",
+      "suggestedId": "sequences-test-testsequences-0047-create-sequence-test3-minvalue-100",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE SEQUENCE test3 MINVALUE -100 START -7;",
+      "querySha256": "91f80c4e34fbde1bcacb59d395e90f6fca67c15ec8f524ba01a506c238487ffd",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0048",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 48,
+      "scriptName": "CREATE SEQUENCE START",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0048-select-nextval-test3",
+      "suggestedId": "sequences-test-testsequences-0048-select-nextval-test3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test3');",
+      "querySha256": "057080201d5be260e20d3c2ac8c150a9a9c9eaed5c83ad540ffc4490ca285ee2",
+      "expectedRows": [
+        [
+          {
+            "value": "-7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0049",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 49,
+      "scriptName": "CREATE SEQUENCE START",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0049-create-sequence-test4-start-5",
+      "suggestedId": "sequences-test-testsequences-0049-create-sequence-test4-start-5",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "CREATE SEQUENCE test4 START -5 INCREMENT 1;",
+      "querySha256": "f5343af746318d6b1f6cac5cfdc48f907cebb8b6fedb352e1ae676d121ca2a5b",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0050",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 50,
+      "scriptName": "CREATE SEQUENCE START",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0050-create-sequence-test4-start-5",
+      "suggestedId": "sequences-test-testsequences-0050-create-sequence-test4-start-5",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE SEQUENCE test4 START -5 INCREMENT -1;",
+      "querySha256": "673743d93c7e5a544bca232bc701eca38ba20a12f9d2671bc9c8feaa0fb6d10b",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0051",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 51,
+      "scriptName": "CREATE SEQUENCE START",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0051-select-nextval-test4",
+      "suggestedId": "sequences-test-testsequences-0051-select-nextval-test4",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test4');",
+      "querySha256": "ae99bbc8d49ec4939b421d5429a6d4c99993429c3c78cfe714304102b250f3f9",
+      "expectedRows": [
+        [
+          {
+            "value": "-5"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0052",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 52,
+      "scriptName": "CREATE SEQUENCE START",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0052-create-sequence-test5-start-25",
+      "suggestedId": "sequences-test-testsequences-0052-create-sequence-test5-start-25",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "CREATE SEQUENCE test5 START 25 INCREMENT -1;",
+      "querySha256": "5372acac4c1cf9da14867f7312c4f0bb76ae0b83a8b047a6080deb3581786fb5",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0053",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 53,
+      "scriptName": "CREATE SEQUENCE START",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0053-create-sequence-test5-start-25",
+      "suggestedId": "sequences-test-testsequences-0053-create-sequence-test5-start-25",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE SEQUENCE test5 START 25 MAXVALUE 25 INCREMENT -1;",
+      "querySha256": "9266a3b598dd87197a2aec7b189ab74d81405102d3c1cac5042d24e5a4d9b55d",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0054",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 54,
+      "scriptName": "CREATE SEQUENCE START",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0054-select-nextval-test5",
+      "suggestedId": "sequences-test-testsequences-0054-select-nextval-test5",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test5');",
+      "querySha256": "4a9ca7269827540979674ab57bd1f007164d84d5391e62b86b6733ad94291c05",
+      "expectedRows": [
+        [
+          {
+            "value": "25"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0055",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 55,
+      "scriptName": "CREATE SEQUENCE START",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0055-select-nextval-test5",
+      "suggestedId": "sequences-test-testsequences-0055-select-nextval-test5",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test5');",
+      "querySha256": "4a9ca7269827540979674ab57bd1f007164d84d5391e62b86b6733ad94291c05",
+      "expectedRows": [
+        [
+          {
+            "value": "24"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0056",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 56,
+      "scriptName": "CYCLE and NO CYCLE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0056-create-sequence-test1-minvalue-0",
+      "suggestedId": "sequences-test-testsequences-0056-create-sequence-test1-minvalue-0",
+      "compare": "sqlstate",
+      "expectedKind": "rows",
+      "sqlstate": "42P07",
+      "errorSeverity": "ERROR",
+      "query": "CREATE SEQUENCE test1 MINVALUE 0 MAXVALUE 3 START 2 INCREMENT 1 NO CYCLE;",
+      "querySha256": "4401dd562358d44d4588c6803e89d7f68a2f6898faf739f66e540ecf4299076f",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0057",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 57,
+      "scriptName": "CYCLE and NO CYCLE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0057-select-nextval-test1",
+      "suggestedId": "sequences-test-testsequences-0057-select-nextval-test1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test1');",
+      "querySha256": "c68d074c18d486b995d66917b0ed3d0bb9c917a7cdfa742f8b6cc8645fa612b9",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0058",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 58,
+      "scriptName": "CYCLE and NO CYCLE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0058-select-nextval-test1",
+      "suggestedId": "sequences-test-testsequences-0058-select-nextval-test1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test1');",
+      "querySha256": "c68d074c18d486b995d66917b0ed3d0bb9c917a7cdfa742f8b6cc8645fa612b9",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0059",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 59,
+      "scriptName": "CYCLE and NO CYCLE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0059-select-nextval-test1",
+      "suggestedId": "sequences-test-testsequences-0059-select-nextval-test1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "2200H",
+      "errorSeverity": "ERROR",
+      "query": "SELECT nextval('test1');",
+      "querySha256": "c68d074c18d486b995d66917b0ed3d0bb9c917a7cdfa742f8b6cc8645fa612b9",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0060",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 60,
+      "scriptName": "CYCLE and NO CYCLE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0060-create-sequence-test2-minvalue-0",
+      "suggestedId": "sequences-test-testsequences-0060-create-sequence-test2-minvalue-0",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE SEQUENCE test2 MINVALUE 0 MAXVALUE 3 START 2 INCREMENT 1 CYCLE;",
+      "querySha256": "f11fff9ba65f6fca1947da1e849abbc95136764af55d4d8d4c2600dcac802eb7",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0061",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 61,
+      "scriptName": "CYCLE and NO CYCLE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0061-select-nextval-test2",
+      "suggestedId": "sequences-test-testsequences-0061-select-nextval-test2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test2');",
+      "querySha256": "2efef27f13cf239b6cf37424167f83c52c96032c8b2d642534362532d764d708",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0062",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 62,
+      "scriptName": "CYCLE and NO CYCLE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0062-select-nextval-test2",
+      "suggestedId": "sequences-test-testsequences-0062-select-nextval-test2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test2');",
+      "querySha256": "2efef27f13cf239b6cf37424167f83c52c96032c8b2d642534362532d764d708",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0063",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 63,
+      "scriptName": "CYCLE and NO CYCLE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0063-select-nextval-test2",
+      "suggestedId": "sequences-test-testsequences-0063-select-nextval-test2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test2');",
+      "querySha256": "2efef27f13cf239b6cf37424167f83c52c96032c8b2d642534362532d764d708",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0064",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 64,
+      "scriptName": "CYCLE and NO CYCLE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0064-create-sequence-test3-minvalue-0",
+      "suggestedId": "sequences-test-testsequences-0064-create-sequence-test3-minvalue-0",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE SEQUENCE test3 MINVALUE 0 MAXVALUE 3 START 1 INCREMENT -1 NO CYCLE;",
+      "querySha256": "708589bf1b38d35dc776f5aba0cd7b2f50a25485c608241ec666d6fb94d8ed57",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0065",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 65,
+      "scriptName": "CYCLE and NO CYCLE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0065-select-nextval-test3",
+      "suggestedId": "sequences-test-testsequences-0065-select-nextval-test3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test3');",
+      "querySha256": "057080201d5be260e20d3c2ac8c150a9a9c9eaed5c83ad540ffc4490ca285ee2",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0066",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 66,
+      "scriptName": "CYCLE and NO CYCLE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0066-select-nextval-test3",
+      "suggestedId": "sequences-test-testsequences-0066-select-nextval-test3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test3');",
+      "querySha256": "057080201d5be260e20d3c2ac8c150a9a9c9eaed5c83ad540ffc4490ca285ee2",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0067",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 67,
+      "scriptName": "CYCLE and NO CYCLE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0067-select-nextval-test3",
+      "suggestedId": "sequences-test-testsequences-0067-select-nextval-test3",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "2200H",
+      "errorSeverity": "ERROR",
+      "query": "SELECT nextval('test3');",
+      "querySha256": "057080201d5be260e20d3c2ac8c150a9a9c9eaed5c83ad540ffc4490ca285ee2",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0068",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 68,
+      "scriptName": "CYCLE and NO CYCLE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0068-create-sequence-test4-minvalue-0",
+      "suggestedId": "sequences-test-testsequences-0068-create-sequence-test4-minvalue-0",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE SEQUENCE test4 MINVALUE 0 MAXVALUE 3 START 1 INCREMENT -1 CYCLE;",
+      "querySha256": "81c5a136518a575d9f5a1b4c2740d992da2b70a8829da0f459d1c2eb9fe2a842",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0069",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 69,
+      "scriptName": "CYCLE and NO CYCLE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0069-select-nextval-test4",
+      "suggestedId": "sequences-test-testsequences-0069-select-nextval-test4",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test4');",
+      "querySha256": "ae99bbc8d49ec4939b421d5429a6d4c99993429c3c78cfe714304102b250f3f9",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0070",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 70,
+      "scriptName": "CYCLE and NO CYCLE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0070-select-nextval-test4",
+      "suggestedId": "sequences-test-testsequences-0070-select-nextval-test4",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test4');",
+      "querySha256": "ae99bbc8d49ec4939b421d5429a6d4c99993429c3c78cfe714304102b250f3f9",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0071",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 71,
+      "scriptName": "CYCLE and NO CYCLE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0071-select-nextval-test4",
+      "suggestedId": "sequences-test-testsequences-0071-select-nextval-test4",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test4');",
+      "querySha256": "ae99bbc8d49ec4939b421d5429a6d4c99993429c3c78cfe714304102b250f3f9",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0072",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 72,
+      "scriptName": "CYCLE and NO CYCLE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0072-create-sequence-test5-minvalue-1",
+      "suggestedId": "sequences-test-testsequences-0072-create-sequence-test5-minvalue-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE SEQUENCE test5 MINVALUE 1 MAXVALUE 7 START 1 INCREMENT 5 CYCLE;",
+      "querySha256": "aa131b857a4cd811e0ecd19293a2d63cd6dab36a74c215452b6db824c0c19b9d",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0073",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 73,
+      "scriptName": "CYCLE and NO CYCLE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0073-select-nextval-test5",
+      "suggestedId": "sequences-test-testsequences-0073-select-nextval-test5",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test5');",
+      "querySha256": "4a9ca7269827540979674ab57bd1f007164d84d5391e62b86b6733ad94291c05",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0074",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 74,
+      "scriptName": "CYCLE and NO CYCLE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0074-select-nextval-test5",
+      "suggestedId": "sequences-test-testsequences-0074-select-nextval-test5",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test5');",
+      "querySha256": "4a9ca7269827540979674ab57bd1f007164d84d5391e62b86b6733ad94291c05",
+      "expectedRows": [
+        [
+          {
+            "value": "6"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0075",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 75,
+      "scriptName": "CYCLE and NO CYCLE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0075-select-nextval-test5",
+      "suggestedId": "sequences-test-testsequences-0075-select-nextval-test5",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test5');",
+      "querySha256": "4a9ca7269827540979674ab57bd1f007164d84d5391e62b86b6733ad94291c05",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0076",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 76,
+      "scriptName": "CYCLE and NO CYCLE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0076-create-sequence-test6-minvalue-1",
+      "suggestedId": "sequences-test-testsequences-0076-create-sequence-test6-minvalue-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE SEQUENCE test6 MINVALUE 1 MAXVALUE 7 START 6 INCREMENT -5 CYCLE;",
+      "querySha256": "527c598a6bcf422b8981bc8c6ede9d5f0250af84af7034423baaadfd750a90ec",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0077",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 77,
+      "scriptName": "CYCLE and NO CYCLE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0077-select-nextval-test6",
+      "suggestedId": "sequences-test-testsequences-0077-select-nextval-test6",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test6');",
+      "querySha256": "0c67669edc5ccc507811b57ae72c26f82e3ccdb1b2948d5bf6fdfd3a03250f3c",
+      "expectedRows": [
+        [
+          {
+            "value": "6"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0078",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 78,
+      "scriptName": "CYCLE and NO CYCLE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0078-select-nextval-test6",
+      "suggestedId": "sequences-test-testsequences-0078-select-nextval-test6",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test6');",
+      "querySha256": "0c67669edc5ccc507811b57ae72c26f82e3ccdb1b2948d5bf6fdfd3a03250f3c",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0079",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 79,
+      "scriptName": "CYCLE and NO CYCLE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0079-select-nextval-test6",
+      "suggestedId": "sequences-test-testsequences-0079-select-nextval-test6",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test6');",
+      "querySha256": "0c67669edc5ccc507811b57ae72c26f82e3ccdb1b2948d5bf6fdfd3a03250f3c",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0080",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 80,
+      "scriptName": "CYCLE and NO CYCLE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0080-select-nextval-test6",
+      "suggestedId": "sequences-test-testsequences-0080-select-nextval-test6",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test6');",
+      "querySha256": "0c67669edc5ccc507811b57ae72c26f82e3ccdb1b2948d5bf6fdfd3a03250f3c",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0081",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 81,
+      "scriptName": "nextval() over multiple rows/columns",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0081-create-table-test-v1-integer",
+      "expectedKind": "rows",
+      "query": "CREATE TABLE test (v1 INTEGER, v2 INTEGER);",
+      "querySha256": "9270d48900eb33f179910dc83676f86b3080b2cefd05da92a231fb6c798fd3e6",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0082",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 82,
+      "scriptName": "nextval() over multiple rows/columns",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0082-create-sequence-seq1",
+      "suggestedId": "sequences-test-testsequences-0082-create-sequence-seq1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE SEQUENCE seq1;",
+      "querySha256": "3847df866cc74df5a032eeaf78cd8c3417decf8d089aa56460702d61fd4c4eaf",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0083",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 83,
+      "scriptName": "nextval() over multiple rows/columns",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0083-insert-into-test-values-nextval",
+      "suggestedId": "sequences-test-testsequences-0083-insert-into-test-values-nextval",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO test VALUES (nextval('seq1'), 7), (nextval('seq1'), 11), (nextval('seq1'), 17);",
+      "querySha256": "8dfc30179050b60b00cf291b78be7890cca7c1a3d6ce24d7357565780ab92e40",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0084",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 84,
+      "scriptName": "nextval() over multiple rows/columns",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0084-select-*-from-test-order",
+      "suggestedId": "sequences-test-testsequences-0084-select-*-from-test-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test ORDER BY v1;",
+      "querySha256": "68261379d3df18469a92078e7a93f9dcbd8f60e1574e7e5d8579d72af2d335fd",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "7"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "11"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "17"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0085",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 85,
+      "scriptName": "nextval() over multiple rows/columns",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0085-insert-into-test-values-nextval",
+      "suggestedId": "sequences-test-testsequences-0085-insert-into-test-values-nextval",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO test VALUES (nextval('seq1'), nextval('seq1')), (nextval('seq1'), nextval('seq1'));",
+      "querySha256": "1cb80f1799cdda0f518343db7f116f6b26b4595de9810a544dfa94c8f2eecf76",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0086",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 86,
+      "scriptName": "nextval() over multiple rows/columns",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0086-select-*-from-test-order",
+      "suggestedId": "sequences-test-testsequences-0086-select-*-from-test-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test ORDER BY v1;",
+      "querySha256": "68261379d3df18469a92078e7a93f9dcbd8f60e1574e7e5d8579d72af2d335fd",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "7"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "11"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "17"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "5"
+          }
+        ],
+        [
+          {
+            "value": "6"
+          },
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0087",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 87,
+      "scriptName": "nextval() with double-quoted identifiers",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0087-select-nextval-test_sequence",
+      "suggestedId": "sequences-test-testsequences-0087-select-nextval-test_sequence",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test_sequence');",
+      "querySha256": "32c91e70471881b33bbd5e47d2700e65ae631009fd1e889cf032f9404fe72fda",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0088",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 88,
+      "scriptName": "nextval() with double-quoted identifiers",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0088-select-nextval-public.test_sequence",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('public.test_sequence');",
+      "querySha256": "4f39298d18b7a209ed27aa099a204d35f3844c07bd7c18748e570a6d9ec2e554",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0089",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 89,
+      "scriptName": "nextval() with double-quoted identifiers",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0089-select-nextval-test_sequence",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('\"test_sequence\"');",
+      "querySha256": "67f7c17ef03f21878e4bcb3e99708a806063d8b6b32b2522855cdb41e3361182",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0090",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 90,
+      "scriptName": "nextval() with double-quoted identifiers",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0090-select-nextval-public.-test_sequence",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('public.\"test_sequence\"');",
+      "querySha256": "38798f78547d3d705f279dfe774bf777788a465e46309b98e69958a8747b1085",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0091",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 91,
+      "scriptName": "nextval() in filter",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0091-select-*-from-test_serial-where",
+      "suggestedId": "sequences-test-testsequences-0091-select-*-from-test_serial-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test_serial WHERE nextval('test_serial_v1_seq') = v2 ORDER BY v1;",
+      "querySha256": "9cc77dfa091fb2f5d206009a5cd59e7468b4f9782622c9ef76bef7bbb49a8661",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "4"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "5"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "6"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0092",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 92,
+      "scriptName": "nextval() in filter",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0092-select-nextval-test_serial_v1_seq",
+      "suggestedId": "sequences-test-testsequences-0092-select-nextval-test_serial_v1_seq",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test_serial_v1_seq');",
+      "querySha256": "35284e920389de7820887d19cef123977ae87835efece5f226bfd5d4c422c6dc",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0093",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 93,
+      "scriptName": "nextval() in filter",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0093-select-*-from-test_seq-where",
+      "suggestedId": "sequences-test-testsequences-0093-select-*-from-test_seq-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test_seq WHERE nextval('test_sequence') = v2 ORDER BY v1;",
+      "querySha256": "a7e54b56653036012f9d128c3811cf239479b7cf6149f70af4e99b798e2ee895",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "4"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "5"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "6"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0094",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 94,
+      "scriptName": "nextval() in filter",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0094-select-nextval-test_sequence",
+      "suggestedId": "sequences-test-testsequences-0094-select-nextval-test_sequence",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test_sequence');",
+      "querySha256": "32c91e70471881b33bbd5e47d2700e65ae631009fd1e889cf032f9404fe72fda",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0095",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 95,
+      "scriptName": "setval()",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0095-create-sequence-test1-minvalue-1",
+      "suggestedId": "sequences-test-testsequences-0095-create-sequence-test1-minvalue-1",
+      "compare": "sqlstate",
+      "expectedKind": "rows",
+      "sqlstate": "42P07",
+      "errorSeverity": "ERROR",
+      "query": "CREATE SEQUENCE test1 MINVALUE 1 MAXVALUE 10 START 5 INCREMENT 1;",
+      "querySha256": "71fa00295a78e554f24e706c5fc89f029b3f3f26c611817694a7cf1d5ee631f6",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0096",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 96,
+      "scriptName": "setval()",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0096-create-sequence-test2-minvalue-1",
+      "suggestedId": "sequences-test-testsequences-0096-create-sequence-test2-minvalue-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE SEQUENCE test2 MINVALUE 1 MAXVALUE 10 START 5 INCREMENT -1;",
+      "querySha256": "8c5181b4ee94ed2025d21882f330e60da96340562a43b4c82b0a45e2a3d31906",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0097",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 97,
+      "scriptName": "setval()",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0097-select-setval-test1-2",
+      "suggestedId": "sequences-test-testsequences-0097-select-setval-test1-2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT setval('test1', 2);",
+      "querySha256": "2e2423cb1cda2321d70710e918f266449546271e71a0ffab593258b6ecd2ad03",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0098",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 98,
+      "scriptName": "setval()",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0098-select-nextval-test1",
+      "suggestedId": "sequences-test-testsequences-0098-select-nextval-test1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test1');",
+      "querySha256": "c68d074c18d486b995d66917b0ed3d0bb9c917a7cdfa742f8b6cc8645fa612b9",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0099",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 99,
+      "scriptName": "setval()",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0099-select-setval-test1-10",
+      "suggestedId": "sequences-test-testsequences-0099-select-setval-test1-10",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT setval('test1', 10);",
+      "querySha256": "60eec588a78e48a4a90bffcf6c52f6baf3f0d288abb52aae10f381577f9e3b6d",
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0100",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 100,
+      "scriptName": "setval()",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0100-select-nextval-test1",
+      "suggestedId": "sequences-test-testsequences-0100-select-nextval-test1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "2200H",
+      "errorSeverity": "ERROR",
+      "query": "SELECT nextval('test1');",
+      "querySha256": "c68d074c18d486b995d66917b0ed3d0bb9c917a7cdfa742f8b6cc8645fa612b9",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0101",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 101,
+      "scriptName": "setval()",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0101-select-setval-test1-10-false",
+      "suggestedId": "sequences-test-testsequences-0101-select-setval-test1-10-false",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT setval('test1', 10, false);",
+      "querySha256": "24e79038d71a97afe56404da8dc87260e908f5b609028c9e14f47f0ea1883e55",
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0102",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 102,
+      "scriptName": "setval()",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0102-select-nextval-test1",
+      "suggestedId": "sequences-test-testsequences-0102-select-nextval-test1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test1');",
+      "querySha256": "c68d074c18d486b995d66917b0ed3d0bb9c917a7cdfa742f8b6cc8645fa612b9",
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0103",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 103,
+      "scriptName": "setval()",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0103-select-setval-test1-10-true",
+      "suggestedId": "sequences-test-testsequences-0103-select-setval-test1-10-true",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT setval('test1', 10, true);",
+      "querySha256": "c81f914c3751d10f8b09f997c0d7f83bc3803b9e11118e74622f29a98a64f9a8",
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0104",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 104,
+      "scriptName": "setval()",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0104-select-nextval-test1",
+      "suggestedId": "sequences-test-testsequences-0104-select-nextval-test1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "2200H",
+      "errorSeverity": "ERROR",
+      "query": "SELECT nextval('test1');",
+      "querySha256": "c68d074c18d486b995d66917b0ed3d0bb9c917a7cdfa742f8b6cc8645fa612b9",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0105",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 105,
+      "scriptName": "setval()",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0105-select-setval-test2-9",
+      "suggestedId": "sequences-test-testsequences-0105-select-setval-test2-9",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT setval('test2', 9);",
+      "querySha256": "d0c8ee0b9923a365cc4d40746dfcf1078caf1f520a60a097acfebcbf1b0268aa",
+      "expectedRows": [
+        [
+          {
+            "value": "9"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0106",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 106,
+      "scriptName": "setval()",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0106-select-nextval-test2",
+      "suggestedId": "sequences-test-testsequences-0106-select-nextval-test2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test2');",
+      "querySha256": "2efef27f13cf239b6cf37424167f83c52c96032c8b2d642534362532d764d708",
+      "expectedRows": [
+        [
+          {
+            "value": "8"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0107",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 107,
+      "scriptName": "setval()",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0107-select-setval-test2-1",
+      "suggestedId": "sequences-test-testsequences-0107-select-setval-test2-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT setval('test2', 1);",
+      "querySha256": "eafeccfc3fb7fccf0cb402a02c3c4f8940d66ccf0ee79492d36302bb96faf522",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0108",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 108,
+      "scriptName": "setval()",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0108-select-nextval-test2",
+      "suggestedId": "sequences-test-testsequences-0108-select-nextval-test2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "2200H",
+      "errorSeverity": "ERROR",
+      "query": "SELECT nextval('test2');",
+      "querySha256": "2efef27f13cf239b6cf37424167f83c52c96032c8b2d642534362532d764d708",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0109",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 109,
+      "scriptName": "setval()",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0109-select-setval-test2-1-false",
+      "suggestedId": "sequences-test-testsequences-0109-select-setval-test2-1-false",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT setval('test2', 1, false);",
+      "querySha256": "96940ab97555e4ee95b0587f7cad7dcc3cc32d106dfbf3dcf078a121fd3eccd0",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0110",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 110,
+      "scriptName": "setval()",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0110-select-nextval-test2",
+      "suggestedId": "sequences-test-testsequences-0110-select-nextval-test2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test2');",
+      "querySha256": "2efef27f13cf239b6cf37424167f83c52c96032c8b2d642534362532d764d708",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0111",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 111,
+      "scriptName": "setval()",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0111-select-setval-test2-1-true",
+      "suggestedId": "sequences-test-testsequences-0111-select-setval-test2-1-true",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT setval('test2', 1, true);",
+      "querySha256": "610f9a84b1528a4498161d63063616bd764b97ff7fd002b624aab0fb65076fee",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0112",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 112,
+      "scriptName": "setval()",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0112-select-nextval-test2",
+      "suggestedId": "sequences-test-testsequences-0112-select-nextval-test2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "2200H",
+      "errorSeverity": "ERROR",
+      "query": "SELECT nextval('test2');",
+      "querySha256": "2efef27f13cf239b6cf37424167f83c52c96032c8b2d642534362532d764d708",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0113",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 113,
+      "scriptName": "setval()",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0113-create-sequence-test3-minvalue-3",
+      "suggestedId": "sequences-test-testsequences-0113-create-sequence-test3-minvalue-3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE SEQUENCE test3 MINVALUE 3 MAXVALUE 7 START 5 INCREMENT 1 CYCLE;",
+      "querySha256": "c6e7fa2a1947cdca7ca139768cee3e7af4e6f1c3aecd8627696f1f8b8ac12c5a",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0114",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 114,
+      "scriptName": "setval()",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0114-create-sequence-test4-minvalue-3",
+      "suggestedId": "sequences-test-testsequences-0114-create-sequence-test4-minvalue-3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE SEQUENCE test4 MINVALUE 3 MAXVALUE 7 START 5 INCREMENT -1 CYCLE;",
+      "querySha256": "9a67e532517da03761c91a66e6cfa35e7b78e72bb68a85f890c0103fb0783aae",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0115",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 115,
+      "scriptName": "setval()",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0115-select-setval-test3-7-true",
+      "suggestedId": "sequences-test-testsequences-0115-select-setval-test3-7-true",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT setval('test3', 7, true);",
+      "querySha256": "bb5fa5c3d937994433f501a5815598d8e7e3a1f4ef7b802e0462493508d5e695",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0116",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 116,
+      "scriptName": "setval()",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0116-select-nextval-test3",
+      "suggestedId": "sequences-test-testsequences-0116-select-nextval-test3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test3');",
+      "querySha256": "057080201d5be260e20d3c2ac8c150a9a9c9eaed5c83ad540ffc4490ca285ee2",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0117",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 117,
+      "scriptName": "setval()",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0117-select-setval-test4-3-true",
+      "suggestedId": "sequences-test-testsequences-0117-select-setval-test4-3-true",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT setval('test4', 3, true);",
+      "querySha256": "55371e825b6116229fd65ca055e483284a74750300ca187500b62e01afed0ba4",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0118",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 118,
+      "scriptName": "setval()",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0118-select-nextval-test4",
+      "suggestedId": "sequences-test-testsequences-0118-select-nextval-test4",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test4');",
+      "querySha256": "ae99bbc8d49ec4939b421d5429a6d4c99993429c3c78cfe714304102b250f3f9",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0119",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 119,
+      "scriptName": "setval()",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0119-create-sequence-test5",
+      "suggestedId": "sequences-test-testsequences-0119-create-sequence-test5",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE SEQUENCE test5;",
+      "querySha256": "926eefeb7a5a207a711b123099c6fbcf5ccafa8ef0e2bb54652eabd8d1fb9389",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0120",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 120,
+      "scriptName": "setval()",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0120-select-setval-public.-test5-100",
+      "expectedKind": "rows",
+      "query": "SELECT setval('public.\"test5\"', 100, true);",
+      "querySha256": "28052a203f8eb4a5ec71de04800e7159bbb777da2ab7984816b6606c217c55e6",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0121",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 121,
+      "scriptName": "setval()",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0121-select-nextval-test5",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test5');",
+      "querySha256": "4a9ca7269827540979674ab57bd1f007164d84d5391e62b86b6733ad94291c05",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0122",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 122,
+      "scriptName": "SERIAL",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0122-create-table-test-pk-serial",
+      "expectedKind": "rows",
+      "query": "CREATE TABLE test (pk SERIAL PRIMARY KEY, v1 INTEGER);",
+      "querySha256": "4f139fa40f7761225de41ed98f66fc6a4b392e6f156bedb570346e611f6fddd1",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0123",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 123,
+      "scriptName": "SERIAL",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0123-create-table-test_small-pk-smallserial",
+      "suggestedId": "sequences-test-testsequences-0123-create-table-test_small-pk-smallserial",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE TABLE test_small (pk SMALLSERIAL PRIMARY KEY, v1 INTEGER);",
+      "querySha256": "b5535295bbe83939a4927e6f7f52190e4e69d3c4dfeed039b8fe94d499433621",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0124",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 124,
+      "scriptName": "SERIAL",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0124-create-table-test_big-pk-bigserial",
+      "suggestedId": "sequences-test-testsequences-0124-create-table-test_big-pk-bigserial",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE TABLE test_big (pk BIGSERIAL PRIMARY KEY, v1 INTEGER);",
+      "querySha256": "0dcd19e1d83d66bdf0699b296b0bcd22661da8b9f71ce6400efe81d3e69b4653",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0125",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 125,
+      "scriptName": "SERIAL",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0125-insert-into-test-v1-values",
+      "suggestedId": "sequences-test-testsequences-0125-insert-into-test-v1-values",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO test (v1) VALUES (2), (3), (5), (7), (11);",
+      "querySha256": "f4e8df73dc43b74cc4bc2be9d006cd6046ec0957a25108ae0aaedcac717c65cb",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0126",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 126,
+      "scriptName": "SERIAL",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0126-insert-into-test_small-v1-values",
+      "suggestedId": "sequences-test-testsequences-0126-insert-into-test_small-v1-values",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO test_small (v1) VALUES (2), (3), (5), (7), (11);",
+      "querySha256": "4674d3c9ae17be5f7a1d603a9721841d1c4dee5d56060ba91c20fcde4b5acb84",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0127",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 127,
+      "scriptName": "SERIAL",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0127-insert-into-test_big-v1-values",
+      "suggestedId": "sequences-test-testsequences-0127-insert-into-test_big-v1-values",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO test_big (v1) VALUES (2), (3), (5), (7), (11);",
+      "querySha256": "16f1d5552b8a51e8c21f2f1102063753338ef67005ed56c63821b03e25b9b358",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0128",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 128,
+      "scriptName": "SERIAL",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0128-select-*-from-test",
+      "suggestedId": "sequences-test-testsequences-0128-select-*-from-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test;",
+      "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "5"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "7"
+          }
+        ],
+        [
+          {
+            "value": "5"
+          },
+          {
+            "value": "11"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0129",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 129,
+      "scriptName": "SERIAL",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0129-select-*-from-test_small",
+      "suggestedId": "sequences-test-testsequences-0129-select-*-from-test_small",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test_small;",
+      "querySha256": "42ffc762fff0030a262fac6f7f409dc65398b74d78f83cfd2757aa78133d0577",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "5"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "7"
+          }
+        ],
+        [
+          {
+            "value": "5"
+          },
+          {
+            "value": "11"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0130",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 130,
+      "scriptName": "SERIAL",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0130-select-*-from-test_big",
+      "suggestedId": "sequences-test-testsequences-0130-select-*-from-test_big",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test_big;",
+      "querySha256": "fcb92b896efcc35ea9008f8f7c78346d6993b7f1b83f4c80df5f95049048f84e",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "5"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "7"
+          }
+        ],
+        [
+          {
+            "value": "5"
+          },
+          {
+            "value": "11"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0131",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 131,
+      "scriptName": "SERIAL type created in table of different schema",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0131-create-table-myschema.test-pk-serial",
+      "suggestedId": "sequences-test-testsequences-0131-create-table-myschema.test-pk-serial",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE TABLE myschema.test (pk SERIAL PRIMARY KEY, v1 INTEGER);",
+      "querySha256": "aa2f8b32225c858b8c3fc2066b5c01384e2a2b2151e2d427c23997bb6899b2ff",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0132",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 132,
+      "scriptName": "SERIAL type created in table of different schema",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0132-insert-into-myschema.test-v1-values",
+      "suggestedId": "sequences-test-testsequences-0132-insert-into-myschema.test-v1-values",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO myschema.test (v1) VALUES (2), (3), (5), (7), (11);",
+      "querySha256": "15c57a4a626e8df159528d4190b5f2a948a8c62e07823105b578b04011271731",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0133",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 133,
+      "scriptName": "SERIAL type created in table of different schema",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0133-select-*-from-myschema.test",
+      "suggestedId": "sequences-test-testsequences-0133-select-*-from-myschema.test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM myschema.test;",
+      "querySha256": "ecb0070dc7a3615a7dfbeb1d2eba98381e2d819ea8594195293b5ec9b7d7125b",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "5"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "7"
+          }
+        ],
+        [
+          {
+            "value": "5"
+          },
+          {
+            "value": "11"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0134",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 134,
+      "scriptName": "SERIAL type created in table of different schema",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0134-select-nextval-test_pk_seq",
+      "suggestedId": "sequences-test-testsequences-0134-select-nextval-test_pk_seq",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
+      "query": "SELECT nextval('test_pk_seq');",
+      "querySha256": "c92ff8b1542d739300e539aacf1cc6cf7900a971bb63dbd88a0aaebb9b5d394c",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0135",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 135,
+      "scriptName": "SERIAL type created in table of different schema",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0135-select-nextval-myschema.test_pk_seq",
+      "suggestedId": "sequences-test-testsequences-0135-select-nextval-myschema.test_pk_seq",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('myschema.test_pk_seq');",
+      "querySha256": "ceea1447badd98cb54a3be90e505e409bfd44739d3a86efae9c6c02b08b6c45b",
+      "expectedRows": [
+        [
+          {
+            "value": "6"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0136",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 136,
+      "scriptName": "SERIAL type created in table of different schema",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0136-select-nextval-postgres.myschema.test_pk_seq",
+      "suggestedId": "sequences-test-testsequences-0136-select-nextval-postgres.myschema.test_pk_seq",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('postgres.myschema.test_pk_seq');",
+      "querySha256": "9f0a12879d212ab6f7ea800d42b84fee47f2c9c31b819ccc8337e223ca299a79",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0137",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 137,
+      "scriptName": "Default emulating SERIAL",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0137-create-sequence-seq1",
+      "suggestedId": "sequences-test-testsequences-0137-create-sequence-seq1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE SEQUENCE seq1;",
+      "querySha256": "3847df866cc74df5a032eeaf78cd8c3417decf8d089aa56460702d61fd4c4eaf",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0138",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 138,
+      "scriptName": "Default emulating SERIAL",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0138-create-table-test-pk-integer",
+      "suggestedId": "sequences-test-testsequences-0138-create-table-test-pk-integer",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE TABLE test (pk INTEGER DEFAULT (nextval('seq1')), v1 INTEGER);",
+      "querySha256": "fb339bf2479d28e2bbbbe101f9a61a21d6a03f157b949da3b82c3e3940833af4",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0139",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 139,
+      "scriptName": "Default emulating SERIAL",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0139-insert-into-test-v1-values",
+      "suggestedId": "sequences-test-testsequences-0139-insert-into-test-v1-values",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO test (v1) VALUES (2), (3), (5), (7), (11);",
+      "querySha256": "f4e8df73dc43b74cc4bc2be9d006cd6046ec0957a25108ae0aaedcac717c65cb",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0140",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 140,
+      "scriptName": "Default emulating SERIAL",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0140-select-*-from-test-order",
+      "suggestedId": "sequences-test-testsequences-0140-select-*-from-test-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test ORDER BY v1;",
+      "querySha256": "68261379d3df18469a92078e7a93f9dcbd8f60e1574e7e5d8579d72af2d335fd",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "5"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "7"
+          }
+        ],
+        [
+          {
+            "value": "5"
+          },
+          {
+            "value": "11"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0141",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 141,
+      "scriptName": "Default emulating SERIAL in non default schema",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0141-create-sequence-myschema.seq1",
+      "suggestedId": "sequences-test-testsequences-0141-create-sequence-myschema.seq1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE SEQUENCE myschema.seq1;",
+      "querySha256": "f3feb6742b13ccb1b1ef7b03dfa2e2f26fa9123273e1c9fd4d1e776041a48241",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0142",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 142,
+      "scriptName": "Default emulating SERIAL in non default schema",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0142-create-table-myschema.test-pk-integer",
+      "suggestedId": "sequences-test-testsequences-0142-create-table-myschema.test-pk-integer",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE TABLE myschema.test (pk INTEGER DEFAULT (nextval('seq1')), v1 INTEGER);",
+      "querySha256": "b66302238be8a5c313f974f1d579d6b49cd3afc26e45f46861002c57a7ec506c",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0143",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 143,
+      "scriptName": "Default emulating SERIAL in non default schema",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0143-insert-into-myschema.test-v1-values",
+      "suggestedId": "sequences-test-testsequences-0143-insert-into-myschema.test-v1-values",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO myschema.test (v1) VALUES (2), (3), (5), (7), (11);",
+      "querySha256": "15c57a4a626e8df159528d4190b5f2a948a8c62e07823105b578b04011271731",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0144",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 144,
+      "scriptName": "Default emulating SERIAL in non default schema",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0144-select-*-from-myschema.test-order",
+      "suggestedId": "sequences-test-testsequences-0144-select-*-from-myschema.test-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM myschema.test ORDER BY v1;",
+      "querySha256": "c21c01e070f5f5090042644fe8108c4d71e4edff881a07c35746cc2abf0de0c2",
+      "expectedRows": [
+        [
+          {
+            "value": "6"
+          },
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "7"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "8"
+          },
+          {
+            "value": "5"
+          }
+        ],
+        [
+          {
+            "value": "9"
+          },
+          {
+            "value": "7"
+          }
+        ],
+        [
+          {
+            "value": "10"
+          },
+          {
+            "value": "11"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0145",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 145,
+      "scriptName": "pg_sequence",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0145-select-*-from-pg_catalog-.",
+      "suggestedId": "sequences-test-testsequences-0145-select-*-from-pg_catalog-.",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM \"pg_catalog\".\"pg_sequence\";",
+      "querySha256": "286f35b1a1b993548f166a62e29305f416766d91fd74f454ba6b5fc04c37aceb",
+      "expectedRows": [
+        [
+          {
+            "value": "31876"
+          },
+          {
+            "value": "20"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "9223372036854775807"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "f"
+          }
+        ],
+        [
+          {
+            "value": "31945"
+          },
+          {
+            "value": "21"
+          },
+          {
+            "value": "-32768"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "32767"
+          },
+          {
+            "value": "-32768"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "f"
+          }
+        ],
+        [
+          {
+            "value": "32542"
+          },
+          {
+            "value": "20"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "9223372036854775807"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0146",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 146,
+      "scriptName": "pg_sequence",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0146-select-*-from-pg_catalog-.",
+      "suggestedId": "sequences-test-testsequences-0146-select-*-from-pg_catalog-.",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
+      "query": "SELECT * FROM \"PG_catalog\".\"pg_sequence\";",
+      "querySha256": "20b1e53ec56ec01b5e2b6055ec23d5782e977da0fe3eecd38f78607824571d8b",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0147",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 147,
+      "scriptName": "pg_sequence",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0147-select-*-from-pg_catalog-.",
+      "suggestedId": "sequences-test-testsequences-0147-select-*-from-pg_catalog-.",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
+      "query": "SELECT * FROM \"pg_catalog\".\"PG_sequence\";",
+      "querySha256": "0619edec6ee4de6c0f18029228ac2a41d35698f3ad086ce8879a9996dce00466",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0148",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 148,
+      "scriptName": "pg_sequence",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0148-create-sequence-some_sequence",
+      "suggestedId": "sequences-test-testsequences-0148-create-sequence-some_sequence",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE SEQUENCE some_sequence;",
+      "querySha256": "84ae168d0b91e462a731445d331ea075f8e0b313e46a814400bff130c98ce528",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0149",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 149,
+      "scriptName": "pg_sequence",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0149-create-sequence-another_sequence-increment-3",
+      "suggestedId": "sequences-test-testsequences-0149-create-sequence-another_sequence-increment-3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE SEQUENCE another_sequence INCREMENT 3 CYCLE;",
+      "querySha256": "1345bf974de202e6e01ae873cbe40ad0beb046bee1df10d74250afbce53030ee",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0150",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 150,
+      "scriptName": "pg_sequence",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0150-select-*-from-pg_catalog.pg_sequence-order",
+      "suggestedId": "sequences-test-testsequences-0150-select-*-from-pg_catalog.pg_sequence-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM pg_catalog.pg_sequence ORDER BY seqrelid;",
+      "querySha256": "63af02d8fe02261dd6ce562c11923f3869932e5a39d814fddb21a4c52e41f749",
+      "expectedRows": [
+        [
+          {
+            "value": "31876"
+          },
+          {
+            "value": "20"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "9223372036854775807"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "f"
+          }
+        ],
+        [
+          {
+            "value": "31945"
+          },
+          {
+            "value": "21"
+          },
+          {
+            "value": "-32768"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "32767"
+          },
+          {
+            "value": "-32768"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "f"
+          }
+        ],
+        [
+          {
+            "value": "32542"
+          },
+          {
+            "value": "20"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "9223372036854775807"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "f"
+          }
+        ],
+        [
+          {
+            "value": "32593"
+          },
+          {
+            "value": "20"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "9223372036854775807"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "f"
+          }
+        ],
+        [
+          {
+            "value": "32594"
+          },
+          {
+            "value": "20"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "9223372036854775807"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0151",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 151,
+      "scriptName": "pg_sequence",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0151-select-*-from-pg_catalog.pg_sequence-order",
+      "suggestedId": "sequences-test-testsequences-0151-select-*-from-pg_catalog.pg_sequence-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM PG_catalog.pg_SEQUENCE ORDER BY seqrelid;",
+      "querySha256": "52070cef14d594d912f371342d327c91617fe45d8c5d7c242250f022db29ac3b",
+      "expectedRows": [
+        [
+          {
+            "value": "31876"
+          },
+          {
+            "value": "20"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "9223372036854775807"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "f"
+          }
+        ],
+        [
+          {
+            "value": "31945"
+          },
+          {
+            "value": "21"
+          },
+          {
+            "value": "-32768"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "32767"
+          },
+          {
+            "value": "-32768"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "f"
+          }
+        ],
+        [
+          {
+            "value": "32542"
+          },
+          {
+            "value": "20"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "9223372036854775807"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "f"
+          }
+        ],
+        [
+          {
+            "value": "32596"
+          },
+          {
+            "value": "20"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "9223372036854775807"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "f"
+          }
+        ],
+        [
+          {
+            "value": "32597"
+          },
+          {
+            "value": "20"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "9223372036854775807"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0152",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 152,
+      "scriptName": "pg_sequence",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0152-select-*-from-pg_catalog.pg_sequence-where",
+      "suggestedId": "sequences-test-testsequences-0152-select-*-from-pg_catalog.pg_sequence-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM pg_catalog.pg_sequence WHERE seqrelid = 'some_sequence'::regclass;",
+      "querySha256": "0119a44750a00e3dbe17a82e7279d5e8269da73136b1401d26d5ab55dfb42b0d",
+      "expectedRows": [
+        [
+          {
+            "value": "32599"
+          },
+          {
+            "value": "20"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "9223372036854775807"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0153",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 153,
+      "scriptName": "pg_sequence",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0153-select-*-from-pg_catalog.pg_sequence-where",
+      "suggestedId": "sequences-test-testsequences-0153-select-*-from-pg_catalog.pg_sequence-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM pg_catalog.pg_sequence WHERE seqrelid = 'another_sequence'::regclass;",
+      "querySha256": "e792d6e63b505baabde31019ceeae6e74589da52f8cb3045052f9eee5d386644",
+      "expectedRows": [
+        [
+          {
+            "value": "32603"
+          },
+          {
+            "value": "20"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "9223372036854775807"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0154",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 154,
+      "scriptName": "pg_sequence",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0154-select-nextval-another_sequence",
+      "suggestedId": "sequences-test-testsequences-0154-select-nextval-another_sequence",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('another_sequence');",
+      "querySha256": "f9adf296c0f1331f0e1fbf0a1fa7e88bc2a063b96061e76d657c05744a2c2926",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0155",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 155,
+      "scriptName": "pg_sequence",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0155-select-nextval-another_sequence",
+      "suggestedId": "sequences-test-testsequences-0155-select-nextval-another_sequence",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('another_sequence');",
+      "querySha256": "f9adf296c0f1331f0e1fbf0a1fa7e88bc2a063b96061e76d657c05744a2c2926",
+      "expectedRows": [
+        [
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0156",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 156,
+      "scriptName": "sequence relation scans",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0156-select-last_value-is_called-from-public.dump_seq",
+      "expectedKind": "rows",
+      "query": "SELECT last_value, is_called FROM public.dump_seq;",
+      "querySha256": "d26ac61949be1f41f0373217188435c6ec705b3f4d2a96ff84e534dbc844817e",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0157",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 157,
+      "scriptName": "sequence relation scans",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0157-select-nextval-public.dump_seq",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('public.dump_seq');",
+      "querySha256": "3018a7d871ff93e0f4e0160647f75909c6942e35a77a919775a03769a5718b36",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0158",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 158,
+      "scriptName": "sequence relation scans",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0158-select-last_value-is_called-from-public.dump_seq",
+      "expectedKind": "rows",
+      "query": "SELECT last_value, is_called FROM public.dump_seq;",
+      "querySha256": "d26ac61949be1f41f0373217188435c6ec705b3f4d2a96ff84e534dbc844817e",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0159",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 159,
+      "scriptName": "sequence relation scans",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0159-select-setval-public.dump_seq-11-false",
+      "expectedKind": "rows",
+      "query": "SELECT setval('public.dump_seq', 11, false);",
+      "querySha256": "595f726947dbc84b4c20cc989878763b9be79a43d64bc8635849be6ee482c36b",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0160",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 160,
+      "scriptName": "sequence relation scans",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0160-select-last_value-is_called-from-public.dump_seq",
+      "expectedKind": "rows",
+      "query": "SELECT last_value, is_called FROM public.dump_seq;",
+      "querySha256": "d26ac61949be1f41f0373217188435c6ec705b3f4d2a96ff84e534dbc844817e",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0161",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 161,
+      "scriptName": "sequence relation scans",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0161-select-nextval-public.dump_seq",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('public.dump_seq');",
+      "querySha256": "3018a7d871ff93e0f4e0160647f75909c6942e35a77a919775a03769a5718b36",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0162",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 162,
+      "scriptName": "sequence relation scans",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0162-select-last_value-is_called-from-public.dump_seq",
+      "expectedKind": "rows",
+      "query": "SELECT last_value, is_called FROM public.dump_seq;",
+      "querySha256": "d26ac61949be1f41f0373217188435c6ec705b3f4d2a96ff84e534dbc844817e",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0163",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 163,
+      "scriptName": "DROP TABLE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0163-select-*-from-test",
+      "suggestedId": "sequences-test-testsequences-0163-select-*-from-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test;",
+      "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "5"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "7"
+          }
+        ],
+        [
+          {
+            "value": "5"
+          },
+          {
+            "value": "11"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0164",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 164,
+      "scriptName": "DROP TABLE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0164-select-*-from-pg_catalog.pg_sequence",
+      "suggestedId": "sequences-test-testsequences-0164-select-*-from-pg_catalog.pg_sequence",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM pg_catalog.pg_sequence;",
+      "querySha256": "1d6ceb5023b64b89173970d88d16b1c52b060e6c26666d8626ab0670b017b0f4",
+      "expectedRows": [
+        [
+          {
+            "value": "31876"
+          },
+          {
+            "value": "20"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "9223372036854775807"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "f"
+          }
+        ],
+        [
+          {
+            "value": "31945"
+          },
+          {
+            "value": "21"
+          },
+          {
+            "value": "-32768"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "32767"
+          },
+          {
+            "value": "-32768"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "f"
+          }
+        ],
+        [
+          {
+            "value": "32542"
+          },
+          {
+            "value": "20"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "9223372036854775807"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "f"
+          }
+        ],
+        [
+          {
+            "value": "32619"
+          },
+          {
+            "value": "23"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "2147483647"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0165",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 165,
+      "scriptName": "DROP TABLE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0165-drop-table-test",
+      "suggestedId": "sequences-test-testsequences-0165-drop-table-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "DROP TABLE test;",
+      "querySha256": "1920399cfd616e85ebc13909f0c90d706ae089e80890732293d7db85b79da2df",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0166",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 166,
+      "scriptName": "DROP TABLE",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0166-select-*-from-pg_catalog.pg_sequence",
+      "suggestedId": "sequences-test-testsequences-0166-select-*-from-pg_catalog.pg_sequence",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM pg_catalog.pg_sequence;",
+      "querySha256": "1d6ceb5023b64b89173970d88d16b1c52b060e6c26666d8626ab0670b017b0f4",
+      "expectedRows": [
+        [
+          {
+            "value": "31876"
+          },
+          {
+            "value": "20"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "9223372036854775807"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "f"
+          }
+        ],
+        [
+          {
+            "value": "31945"
+          },
+          {
+            "value": "21"
+          },
+          {
+            "value": "-32768"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "32767"
+          },
+          {
+            "value": "-32768"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "f"
+          }
+        ],
+        [
+          {
+            "value": "32542"
+          },
+          {
+            "value": "20"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "9223372036854775807"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0167",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 167,
+      "scriptName": "seq name generation",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0167-select-nextval-my_table_id_seq1",
+      "suggestedId": "sequences-test-testsequences-0167-select-nextval-my_table_id_seq1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select nextval('my_table_id_seq1');",
+      "querySha256": "11ab7ef1e35fa6daf6539d20f71371633e1d59bed2fea5ce33366c770a4342dd",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0168",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 168,
+      "scriptName": "seq name generation",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0168-select-count-*-from-pg_catalog.pg_sequence",
+      "suggestedId": "sequences-test-testsequences-0168-select-count-*-from-pg_catalog.pg_sequence",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "Select count(*) from pg_catalog.pg_sequence where seqrelid = 'my_table_id_seq1'::regclass;",
+      "querySha256": "727d203d55f0cc577f0973a955f7a24e85d99549b881c740d95d984c879b382e",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0169",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 169,
+      "scriptName": "identity generated by default",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0169-insert-into-django_migrations-app-name",
+      "suggestedId": "sequences-test-testsequences-0169-insert-into-django_migrations-app-name",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO \"django_migrations\" (\"app\", \"name\", \"applied\") VALUES ('contenttypes', '0001_initial', '2025-03-25T17:45:54.794344+00:00'::timestamptz) RETURNING \"django_migrations\".\"id\"",
+      "querySha256": "77f5fe2dbdb61823c554787a7b1e77e76f6a31b6819d4b549d767f1d4c9e3504",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0170",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 170,
+      "scriptName": "identity generated by default",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0170-insert-into-django_migrations-app-name",
+      "suggestedId": "sequences-test-testsequences-0170-insert-into-django_migrations-app-name",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO \"django_migrations\" (\"app\", \"name\", \"applied\") VALUES ('contenttypes', '0001_initial', '2025-03-25T17:45:54.794344+00:00'::timestamptz) RETURNING \"django_migrations\".\"id\"",
+      "querySha256": "77f5fe2dbdb61823c554787a7b1e77e76f6a31b6819d4b549d767f1d4c9e3504",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0171",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 171,
+      "scriptName": "identity generated by default",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0171-insert-into-django_migrations-id-app",
+      "suggestedId": "sequences-test-testsequences-0171-insert-into-django_migrations-id-app",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO \"django_migrations\" (\"id\", \"app\", \"name\", \"applied\") VALUES (100, 'contenttypes', '0001_initial', '2025-03-25T17:45:54.794344+00:00'::timestamptz) RETURNING \"django_migrations\".\"id\"",
+      "querySha256": "99cec228253300dd7371b1767f5768e1b6b86d89ce50cbbd0b5a4cf88274f020",
+      "expectedRows": [
+        [
+          {
+            "value": "100"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0172",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 172,
+      "scriptName": "identity generated by default with sequence options",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0172-insert-into-django_migrations-app-name",
+      "suggestedId": "sequences-test-testsequences-0172-insert-into-django_migrations-app-name",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO \"django_migrations\" (\"app\", \"name\", \"applied\") VALUES ('contenttypes', '0001_initial', '2025-03-25T17:45:54.794344+00:00'::timestamptz) RETURNING \"django_migrations\".\"id\"",
+      "querySha256": "77f5fe2dbdb61823c554787a7b1e77e76f6a31b6819d4b549d767f1d4c9e3504",
+      "expectedRows": [
+        [
+          {
+            "value": "100"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0173",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 173,
+      "scriptName": "identity generated by default with sequence options",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0173-insert-into-django_migrations-app-name",
+      "suggestedId": "sequences-test-testsequences-0173-insert-into-django_migrations-app-name",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO \"django_migrations\" (\"app\", \"name\", \"applied\") VALUES ('contenttypes', '0001_initial', '2025-03-25T17:45:54.794344+00:00'::timestamptz) RETURNING \"django_migrations\".\"id\"",
+      "querySha256": "77f5fe2dbdb61823c554787a7b1e77e76f6a31b6819d4b549d767f1d4c9e3504",
+      "expectedRows": [
+        [
+          {
+            "value": "102"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0174",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 174,
+      "scriptName": "insert on a different branch",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0174-select-pk-from-test-order",
+      "expectedKind": "rows",
+      "query": "SELECT pk FROM test ORDER BY v1;",
+      "querySha256": "6f95c08bae1c41335bc2dbdef5a214ab9fa05da33035ce1ae2b973ab717a7f48",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0175",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 175,
+      "scriptName": "insert on a different branch",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0175-select-pk-from-postgres/b1-.public.test2",
+      "expectedKind": "rows",
+      "query": "SELECT pk FROM \"postgres/b1\".public.test2 ORDER BY v1;",
+      "querySha256": "d5b20820f1a044ca02b24aa5e72da5dddb8f21f2c900c2fa062a67a0c4e44c0d",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0176",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 176,
+      "scriptName": "dolt_add, dolt_branch, dolt_checkout, dolt_commit, dolt_reset",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0176-create-sequence-test",
+      "suggestedId": "sequences-test-testsequences-0176-create-sequence-test",
+      "compare": "sqlstate",
+      "expectedKind": "rows",
+      "sqlstate": "42P07",
+      "errorSeverity": "ERROR",
+      "query": "CREATE SEQUENCE test;",
+      "querySha256": "f74fe81ce10c411c938e8747bf623c4e4f26391cd69962602486c21bb79a714d",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0177",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 177,
+      "scriptName": "dolt_add, dolt_branch, dolt_checkout, dolt_commit, dolt_reset",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0177-select-setval-test-10",
+      "suggestedId": "sequences-test-testsequences-0177-select-setval-test-10",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT setval('test', 10);",
+      "querySha256": "155b8ac58c7be12a9866c42e8e5b4d1fbcfa3fe3b271e715b0ebb515f23479bd",
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0178",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 178,
+      "scriptName": "dolt_add, dolt_branch, dolt_checkout, dolt_commit, dolt_reset",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0178-select-nextval-test",
+      "suggestedId": "sequences-test-testsequences-0178-select-nextval-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test');",
+      "querySha256": "d5f1fb418a606de5b5772da91b39404f653a1e93a108b5b17d821d76e26a1a70",
+      "expectedRows": [
+        [
+          {
+            "value": "11"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0179",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 179,
+      "scriptName": "dolt_add, dolt_branch, dolt_checkout, dolt_commit, dolt_reset",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0179-select-*-from-dolt_diff_summary-head",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM dolt_diff_summary('HEAD', 'WORKING')",
+      "querySha256": "46a75cf3374b91e37116d907ee4762bc63f32b9414b0264de3dc6ba40f8189df",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0180",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 180,
+      "scriptName": "dolt_add, dolt_branch, dolt_checkout, dolt_commit, dolt_reset",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0180-select-dolt_add-test",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('test');",
+      "querySha256": "ebb39447a4cce82f255e5b0dd8127d349039dcb7c46189e825df494430f07735",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0181",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 181,
+      "scriptName": "dolt_add, dolt_branch, dolt_checkout, dolt_commit, dolt_reset",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0181-select-length-dolt_commit-m-initial",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'initial')::text) = 34;",
+      "querySha256": "05355d06ae2e762642620d5304c1ece579bc1553fba6c5a09d424dd252967f25",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0182",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 182,
+      "scriptName": "dolt_add, dolt_branch, dolt_checkout, dolt_commit, dolt_reset",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0182-select-dolt_branch-other",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_branch('other');",
+      "querySha256": "cd9f8b6505f3d64ef3a74d07fbc519d148b399da88075ddca0e683bffdce0a6a",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0183",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 183,
+      "scriptName": "dolt_add, dolt_branch, dolt_checkout, dolt_commit, dolt_reset",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0183-select-setval-test-20",
+      "expectedKind": "rows",
+      "query": "SELECT setval('test', 20);",
+      "querySha256": "2f11d19cb899e0130a099ac21d0a7a56fface39428644d7c417e29ee52a69a42",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0184",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 184,
+      "scriptName": "dolt_add, dolt_branch, dolt_checkout, dolt_commit, dolt_reset",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0184-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0185",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 185,
+      "scriptName": "dolt_add, dolt_branch, dolt_checkout, dolt_commit, dolt_reset",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0185-select-length-dolt_commit-m-next",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'next')::text) = 34;",
+      "querySha256": "840e7eea67afb6c6baf7febbef5dc424607d512b23dd069027b0e422d3242a17",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0186",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 186,
+      "scriptName": "dolt_add, dolt_branch, dolt_checkout, dolt_commit, dolt_reset",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0186-select-nextval-test",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test');",
+      "querySha256": "d5f1fb418a606de5b5772da91b39404f653a1e93a108b5b17d821d76e26a1a70",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0187",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 187,
+      "scriptName": "dolt_add, dolt_branch, dolt_checkout, dolt_commit, dolt_reset",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0187-select-dolt_checkout-other",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_checkout('other');",
+      "querySha256": "02320ec483af8ea26a11148f56aa8b0bb6752f9f76f12de7d8e25d7338cb88bd",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0188",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 188,
+      "scriptName": "dolt_add, dolt_branch, dolt_checkout, dolt_commit, dolt_reset",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0188-select-nextval-test",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test');",
+      "querySha256": "d5f1fb418a606de5b5772da91b39404f653a1e93a108b5b17d821d76e26a1a70",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0189",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 189,
+      "scriptName": "dolt_add, dolt_branch, dolt_checkout, dolt_commit, dolt_reset",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0189-select-dolt_reset-hard",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_reset('--hard');",
+      "querySha256": "653c8f9640362e7917830ec41ad728bfae4417fc73695103866a801a8dcd13fb",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0190",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 190,
+      "scriptName": "dolt_add, dolt_branch, dolt_checkout, dolt_commit, dolt_reset",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0190-select-nextval-test",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test');",
+      "querySha256": "d5f1fb418a606de5b5772da91b39404f653a1e93a108b5b17d821d76e26a1a70",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0191",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 191,
+      "scriptName": "dolt_clean",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0191-create-sequence-test1",
+      "suggestedId": "sequences-test-testsequences-0191-create-sequence-test1",
+      "compare": "sqlstate",
+      "expectedKind": "rows",
+      "sqlstate": "42P07",
+      "errorSeverity": "ERROR",
+      "query": "CREATE SEQUENCE test1;",
+      "querySha256": "79b1bc7ad1f24f487e470cb28a398c982f508f8a9447b33a8abe5cc1f813841b",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0192",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 192,
+      "scriptName": "dolt_clean",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0192-create-sequence-test2",
+      "suggestedId": "sequences-test-testsequences-0192-create-sequence-test2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE SEQUENCE test2;",
+      "querySha256": "3c08b2452e1d79806634659db86764821fcc8227f90901c7a2575a1944ceac62",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0193",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 193,
+      "scriptName": "dolt_clean",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0193-select-setval-test1-10",
+      "suggestedId": "sequences-test-testsequences-0193-select-setval-test1-10",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT setval('test1', 10);",
+      "querySha256": "60eec588a78e48a4a90bffcf6c52f6baf3f0d288abb52aae10f381577f9e3b6d",
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0194",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 194,
+      "scriptName": "dolt_clean",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0194-select-nextval-test1",
+      "suggestedId": "sequences-test-testsequences-0194-select-nextval-test1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test1');",
+      "querySha256": "c68d074c18d486b995d66917b0ed3d0bb9c917a7cdfa742f8b6cc8645fa612b9",
+      "expectedRows": [
+        [
+          {
+            "value": "11"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0195",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 195,
+      "scriptName": "dolt_clean",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0195-select-setval-test2-10",
+      "suggestedId": "sequences-test-testsequences-0195-select-setval-test2-10",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT setval('test2', 10);",
+      "querySha256": "e8cc4bee7184312980aee18d0fd0d4b8259a3e4352187cc3a647f291e3655398",
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0196",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 196,
+      "scriptName": "dolt_clean",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0196-select-nextval-test2",
+      "suggestedId": "sequences-test-testsequences-0196-select-nextval-test2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test2');",
+      "querySha256": "2efef27f13cf239b6cf37424167f83c52c96032c8b2d642534362532d764d708",
+      "expectedRows": [
+        [
+          {
+            "value": "11"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0197",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 197,
+      "scriptName": "dolt_clean",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0197-select-dolt_add-test1",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('test1');",
+      "querySha256": "eaf2af8687fbe313d34d91310239ace21fb30b8577d4bc9d101a6e0a85d5d3f7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0198",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 198,
+      "scriptName": "dolt_clean",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0198-select-*-from-dolt.status",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM dolt.status;",
+      "querySha256": "bba7c7453dbb1e3733ae3f524ae8310b736523a814b6456ea7bf1bb307b15556",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0199",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 199,
+      "scriptName": "dolt_clean",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0199-select-dolt_clean-test2",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_clean('test2');",
+      "querySha256": "ebd98819dd363276ed66ed1cd3be7680a35a995470034291e04ecad67db18773",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0200",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 200,
+      "scriptName": "dolt_clean",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0200-select-*-from-dolt.status",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM dolt.status;",
+      "querySha256": "bba7c7453dbb1e3733ae3f524ae8310b736523a814b6456ea7bf1bb307b15556",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0201",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 201,
+      "scriptName": "dolt_merge",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0201-create-sequence-test",
+      "suggestedId": "sequences-test-testsequences-0201-create-sequence-test",
+      "compare": "sqlstate",
+      "expectedKind": "rows",
+      "sqlstate": "42P07",
+      "errorSeverity": "ERROR",
+      "query": "CREATE SEQUENCE test;",
+      "querySha256": "f74fe81ce10c411c938e8747bf623c4e4f26391cd69962602486c21bb79a714d",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0202",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 202,
+      "scriptName": "dolt_merge",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0202-select-setval-test-10",
+      "suggestedId": "sequences-test-testsequences-0202-select-setval-test-10",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT setval('test', 10);",
+      "querySha256": "155b8ac58c7be12a9866c42e8e5b4d1fbcfa3fe3b271e715b0ebb515f23479bd",
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0203",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 203,
+      "scriptName": "dolt_merge",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0203-select-length-dolt_commit-am-initial",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-Am', 'initial')::text) = 34;",
+      "querySha256": "0ff0b9b9ed54219c02fad54bdaaf17255d0bc22fa972418562acd59132cf839e",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0204",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 204,
+      "scriptName": "dolt_merge",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0204-select-dolt_branch-other",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_branch('other');",
+      "querySha256": "cd9f8b6505f3d64ef3a74d07fbc519d148b399da88075ddca0e683bffdce0a6a",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0205",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 205,
+      "scriptName": "dolt_merge",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0205-select-setval-test-20",
+      "expectedKind": "rows",
+      "query": "SELECT setval('test', 20);",
+      "querySha256": "2f11d19cb899e0130a099ac21d0a7a56fface39428644d7c417e29ee52a69a42",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0206",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 206,
+      "scriptName": "dolt_merge",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0206-select-length-dolt_commit-am-next",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-am', 'next')::text) = 34;",
+      "querySha256": "ef6507bf8b2ecf9185d0329fb20db06ce0c37b763ad4549ea0a207d3dd4676bb",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0207",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 207,
+      "scriptName": "dolt_merge",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0207-select-dolt_checkout-other",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_checkout('other');",
+      "querySha256": "02320ec483af8ea26a11148f56aa8b0bb6752f9f76f12de7d8e25d7338cb88bd",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0208",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 208,
+      "scriptName": "dolt_merge",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0208-select-setval-test-30",
+      "expectedKind": "rows",
+      "query": "SELECT setval('test', 30);",
+      "querySha256": "3dddfebd393b4a87dfabe3b2b64f51ea0ac8d919ac82e6b7b1f4aafd7385e05a",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0209",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 209,
+      "scriptName": "dolt_merge",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0209-select-length-dolt_commit-am-next2",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-am', 'next2')::text) = 34;",
+      "querySha256": "db31b018c4eadf9db9c9533cf643993d516dd0ea641dcac14ef8ea114597cb25",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0210",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 210,
+      "scriptName": "dolt_merge",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0210-select-dolt_checkout-main",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_checkout('main');",
+      "querySha256": "eb29e55178b24d0198df0fadf7ecd1299037a505888e185cf8dbe4731841da92",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0211",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 211,
+      "scriptName": "dolt_merge",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0211-select-nextval-test",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test');",
+      "querySha256": "d5f1fb418a606de5b5772da91b39404f653a1e93a108b5b17d821d76e26a1a70",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0212",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 212,
+      "scriptName": "dolt_merge",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0212-select-dolt_reset-hard",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_reset('--hard');",
+      "querySha256": "653c8f9640362e7917830ec41ad728bfae4417fc73695103866a801a8dcd13fb",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0213",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 213,
+      "scriptName": "dolt_merge",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0213-select-strpos-dolt_merge-other-::text",
+      "expectedKind": "rows",
+      "query": "SELECT strpos(dolt_merge('other')::text, 'merge successful') > 32;",
+      "querySha256": "3153c945f0fb6b0149dd7e23fba751191570deda9d313e233899dce5fa3f0c44",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0214",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 214,
+      "scriptName": "dolt_merge",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0214-select-nextval-test",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test');",
+      "querySha256": "d5f1fb418a606de5b5772da91b39404f653a1e93a108b5b17d821d76e26a1a70",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0215",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 215,
+      "scriptName": "Information Schema & DIFF_STAT regression testing",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0215-create-table-user-id-bigint",
+      "suggestedId": "sequences-test-testsequences-0215-create-table-user-id-bigint",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE TABLE \"user\" (\"id\" bigint NOT NULL GENERATED BY DEFAULT AS IDENTITY, PRIMARY KEY (\"id\"));",
+      "querySha256": "aaeba99fb9be83cae95b6398205af82c123fca597843a403f72fb009bd752aaa",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0216",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 216,
+      "scriptName": "Information Schema & DIFF_STAT regression testing",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0216-create-table-call-id-bigint",
+      "suggestedId": "sequences-test-testsequences-0216-create-table-call-id-bigint",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE TABLE \"call\" (\n  \"id\" bigint NOT NULL GENERATED BY DEFAULT AS IDENTITY,\n  \"state\" character varying NOT NULL,\n  \"content\" jsonb NOT NULL,\n  \"created_at\" timestamptz NOT NULL,\n  \"updated_at\" timestamptz NOT NULL,\n  \"ended_at\" timestamptz NULL,\n  \"user\" bigint NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"call_user_user_fk\" FOREIGN KEY (\"user\") REFERENCES \"user\" (\"id\") ON DELETE NO ACTION\n);",
+      "querySha256": "fd7ff9eb5bd29974b0e0c240383d35dfa76b6f28f906cbb0c0c2818916003608",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0217",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 217,
+      "scriptName": "Information Schema & DIFF_STAT regression testing",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0217-select-*-from-information_schema.key_column_usage-where",
+      "suggestedId": "sequences-test-testsequences-0217-select-*-from-information_schema.key_column_usage-where",
+      "compare": "structural",
+      "columnModes": [
+        "structural",
+        "schema",
+        "structural",
+        "structural",
+        "schema"
+      ],
+      "expectedKind": "rows",
+      "query": "SELECT * FROM information_schema.key_column_usage where constraint_schema <> 'pg_catalog';",
+      "querySha256": "16c7d63e3afd688c560878295ee35e3eaefb7682bb7eb60476b54b9ceb4769b7",
+      "expectedRows": [
+        [
+          {
+            "value": "postgres"
+          },
+          {
+            "value": "{{schema}}"
+          },
+          {
+            "value": "jsonb_gin_dml_pkey"
+          },
+          {
+            "value": "postgres"
+          },
+          {
+            "value": "{{schema}}"
+          },
+          {
+            "value": "jsonb_gin_dml"
+          },
+          {
+            "value": "id"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "null": true
+          }
+        ],
+        [
+          {
+            "value": "postgres"
+          },
+          {
+            "value": "{{schema}}"
+          },
+          {
+            "value": "jsonb_gin_txn_pkey"
+          },
+          {
+            "value": "postgres"
+          },
+          {
+            "value": "{{schema}}"
+          },
+          {
+            "value": "jsonb_gin_txn"
+          },
+          {
+            "value": "id"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "null": true
+          }
+        ],
+        [
+          {
+            "value": "postgres"
+          },
+          {
+            "value": "{{schema}}"
+          },
+          {
+            "value": "immediate_check_unique_items_pkey"
+          },
+          {
+            "value": "postgres"
+          },
+          {
+            "value": "{{schema}}"
+          },
+          {
+            "value": "immediate_check_unique_items"
+          },
+          {
+            "value": "id"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "null": true
+          }
+        ],
+        [
+          {
+            "value": "postgres"
+          },
+          {
+            "value": "{{schema}}"
+          },
+          {
+            "value": "immediate_check_unique_items_code_key"
+          },
+          {
+            "value": "postgres"
+          },
+          {
+            "value": "{{schema}}"
+          },
+          {
+            "value": "immediate_check_unique_items"
+          },
+          {
+            "value": "code"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "null": true
+          }
+        ],
+        [
+          {
+            "value": "postgres"
+          },
+          {
+            "value": "{{schema}}"
+          },
+          {
+            "value": "user_pkey"
+          },
+          {
+            "value": "postgres"
+          },
+          {
+            "value": "{{schema}}"
+          },
+          {
+            "value": "user"
+          },
+          {
+            "value": "id"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "null": true
+          }
+        ],
+        [
+          {
+            "value": "postgres"
+          },
+          {
+            "value": "{{schema}}"
+          },
+          {
+            "value": "call_pkey"
+          },
+          {
+            "value": "postgres"
+          },
+          {
+            "value": "{{schema}}"
+          },
+          {
+            "value": "call"
+          },
+          {
+            "value": "id"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "null": true
+          }
+        ],
+        [
+          {
+            "value": "postgres"
+          },
+          {
+            "value": "{{schema}}"
+          },
+          {
+            "value": "call_user_user_fk"
+          },
+          {
+            "value": "postgres"
+          },
+          {
+            "value": "{{schema}}"
+          },
+          {
+            "value": "call"
+          },
+          {
+            "value": "user"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0218",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 218,
+      "scriptName": "Information Schema & DIFF_STAT regression testing",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0218-select-*-from-dolt_diff_stat-head",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM DOLT_DIFF_STAT('HEAD', 'WORKING');",
+      "querySha256": "6d38f8729b576b0a4b06072cf8271f8eb4899c1c1b5dccb9459b4895151c3ad0",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0219",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 219,
+      "scriptName": "Information Schema & DIFF_STAT regression testing",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0219-select-n.nspname-as-schema-c.relname",
+      "expectedKind": "rows",
+      "query": "SELECT n.nspname as \"Schema\",\n  c.relname as \"Name\",\n  CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence' WHEN 't' THEN 'TOAST table' WHEN 'f' THEN 'foreign table' WHEN 'p' THEN 'partitioned table' WHEN 'I' THEN 'partitioned index' END as \"Type\",\n  pg_catalog.pg_get_userbyid(c.relowner) as \"Owner\"\nFROM pg_catalog.pg_class c\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n     LEFT JOIN pg_catalog.pg_am am ON am.oid = c.relam\nWHERE c.relkind IN ('r','p','v','m','S','f','')\n      AND n.nspname <> 'pg_catalog'\n      AND n.nspname !~ '^pg_toast'\n      AND n.nspname <> 'information_schema'\n  AND pg_catalog.pg_table_is_visible(c.oid)\nORDER BY 1,2;",
+      "querySha256": "dcaf8780907fd61bbb589126aaa8ac57cb03d4b160fc1a00873d10e2c6894fcc",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0220",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 220,
+      "scriptName": "ALTER COLUMN ADD GENERATED BY DEFAULT",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0220-alter-table-public.test1-alter-column",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE public.test1 ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (SEQUENCE NAME public.test1_id_seq START WITH 1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1);",
+      "querySha256": "69e6afedb4e161459848dfede3f5b366d6c878170c433b371a324c291c7a660a",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0221",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 221,
+      "scriptName": "ALTER COLUMN ADD GENERATED BY DEFAULT",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0221-alter-table-public.test2-alter-column",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE public.test2 ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (SEQUENCE NAME public.test2_id_seq START WITH 10 INCREMENT BY 5);",
+      "querySha256": "590ae340c97cd03949cf7f452b638d7556f010170ec90a6e0d2e0ab492252713",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0222",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 222,
+      "scriptName": "ALTER COLUMN ADD GENERATED BY DEFAULT",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0222-alter-table-public.test3-alter-column",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE public.test3 ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (SEQUENCE NAME public.test3_id_seq START WITH 100 INCREMENT BY -1 MAXVALUE 100);",
+      "querySha256": "387155f8c0b566ecd250dbb083d8c070168bcb8d42fd75a457bbb22db9bab67a",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0223",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 223,
+      "scriptName": "ALTER COLUMN ADD GENERATED BY DEFAULT",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0223-insert-into-public.test1-name-values",
+      "expectedKind": "rows",
+      "query": "INSERT INTO public.test1 (name) VALUES ('abc'), ('def');",
+      "querySha256": "2a506e4f455682b23ff3bbcfc2b5c993ef66d8a5daf2ce8b61fcf55e65ac58b6",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0224",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 224,
+      "scriptName": "ALTER COLUMN ADD GENERATED BY DEFAULT",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0224-insert-into-public.test2-name-values",
+      "expectedKind": "rows",
+      "query": "INSERT INTO public.test2 (name) VALUES ('abc'), ('def');",
+      "querySha256": "ab15fcc80d14e4c1368f4ef2c0d2af386a8058d89a1dfd190c3a8a9cf0d92f87",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0225",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 225,
+      "scriptName": "ALTER COLUMN ADD GENERATED BY DEFAULT",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0225-insert-into-public.test3-name-values",
+      "expectedKind": "rows",
+      "query": "INSERT INTO public.test3 (name) VALUES ('abc'), ('def');",
+      "querySha256": "6e4447167f33bc404dd067d7251796e49437e79c1d80908bebb3e5018c8577ec",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0226",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 226,
+      "scriptName": "ALTER COLUMN ADD GENERATED BY DEFAULT",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0226-select-*-from-public.test1",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM public.test1;",
+      "querySha256": "96119439ea8ce0e2b21e3b659dc72c9cc32bf58089e24a573e3c4eb07fddf820",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0227",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 227,
+      "scriptName": "ALTER COLUMN ADD GENERATED BY DEFAULT",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0227-select-*-from-public.test2",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM public.test2;",
+      "querySha256": "3365b7bc758df58e6786ffd7dad9651b5d1fb695ff2e7e1e70e27d4b8b3b1db8",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0228",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 228,
+      "scriptName": "ALTER COLUMN ADD GENERATED BY DEFAULT",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0228-select-*-from-public.test3",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM public.test3;",
+      "querySha256": "25a9c0fd8e4ba84f172b26289f166b7b3dc8a03c2329e8f6c10c99641ab09165",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0229",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 229,
+      "scriptName": "ALTER SEQUENCE OWNED BY",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0229-select-nextval-seq1",
+      "suggestedId": "sequences-test-testsequences-0229-select-nextval-seq1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('seq1');",
+      "querySha256": "a18664fb30dd3f35b5fb3554fd544c2ab3c109ed5acbc4adadaae10ba1032563",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0230",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 230,
+      "scriptName": "ALTER SEQUENCE OWNED BY",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0230-select-nextval-seq2",
+      "suggestedId": "sequences-test-testsequences-0230-select-nextval-seq2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('seq2');",
+      "querySha256": "d9e88d3323c2a3badd785caa21dd2a78ffb56f88a4a1bec96e0ff27ce6975aa5",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0231",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 231,
+      "scriptName": "ALTER SEQUENCE OWNED BY",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0231-alter-sequence-seq1-owned-by",
+      "suggestedId": "sequences-test-testsequences-0231-alter-sequence-seq1-owned-by",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42703",
+      "errorSeverity": "ERROR",
+      "query": "ALTER SEQUENCE seq1 OWNED BY test.non_existent;",
+      "querySha256": "be2052f3ed0b1fa71e9b7fac5f231ea2e72e0c533c04138cec57384af933ef39",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0232",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 232,
+      "scriptName": "ALTER SEQUENCE OWNED BY",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0232-alter-sequence-public.seq1-owned-by",
+      "suggestedId": "sequences-test-testsequences-0232-alter-sequence-public.seq1-owned-by",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "55000",
+      "errorSeverity": "ERROR",
+      "query": "ALTER SEQUENCE public.seq1 OWNED BY other.test.non_existent;",
+      "querySha256": "a13067f32eccf8ba004be9cdeff97df41aac4307cf732ce55ee134c6a8696782",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0233",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 233,
+      "scriptName": "ALTER SEQUENCE OWNED BY",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0233-alter-sequence-seq1-owned-by",
+      "suggestedId": "sequences-test-testsequences-0233-alter-sequence-seq1-owned-by",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "ALTER SEQUENCE seq1 OWNED BY test;",
+      "querySha256": "3f2249f5ab0c90874344c4ce4c18a86723c40e9037c6a9f5e5cbaabe506960e8",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0234",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 234,
+      "scriptName": "ALTER SEQUENCE OWNED BY",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0234-alter-sequence-seq1-owned-by",
+      "suggestedId": "sequences-test-testsequences-0234-alter-sequence-seq1-owned-by",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
+      "query": "ALTER SEQUENCE seq1 OWNED BY trig_trigger.trig;",
+      "querySha256": "505e2198f128d166b5ba455d914c032eaaebe81c1979f424b1fe13d8bca6f871",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0235",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 235,
+      "scriptName": "ALTER SEQUENCE OWNED BY",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0235-alter-sequence-seq1-owned-by",
+      "suggestedId": "sequences-test-testsequences-0235-alter-sequence-seq1-owned-by",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER SEQUENCE seq1 OWNED BY test.id;",
+      "querySha256": "1c7c03778a4ad7bf579f09e841298febc77414e865e5a80a1bbcc5a56300391f",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0236",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 236,
+      "scriptName": "ALTER SEQUENCE OWNED BY",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0236-alter-sequence-seq2-owned-by",
+      "suggestedId": "sequences-test-testsequences-0236-alter-sequence-seq2-owned-by",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER SEQUENCE seq2 OWNED BY test.id;",
+      "querySha256": "478bf707e0ceaf70e34536ee35af49886807d48fd6e4d6bef03f6f811b2af28c",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0237",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 237,
+      "scriptName": "ALTER SEQUENCE OWNED BY",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0237-alter-sequence-seq2-owned-by",
+      "suggestedId": "sequences-test-testsequences-0237-alter-sequence-seq2-owned-by",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER SEQUENCE seq2 OWNED BY NONE;",
+      "querySha256": "8dca759dcfef2641bf12ee82f4409624757194bd1b4b6289c75600fa895a19d9",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0238",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 238,
+      "scriptName": "ALTER SEQUENCE OWNED BY",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0238-drop-table-test",
+      "suggestedId": "sequences-test-testsequences-0238-drop-table-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "DROP TABLE test;",
+      "querySha256": "1920399cfd616e85ebc13909f0c90d706ae089e80890732293d7db85b79da2df",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0239",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 239,
+      "scriptName": "ALTER SEQUENCE OWNED BY",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0239-select-nextval-seq1",
+      "suggestedId": "sequences-test-testsequences-0239-select-nextval-seq1",
+      "compare": "structural",
+      "expectedKind": "error",
+      "query": "SELECT nextval('seq1');",
+      "querySha256": "a18664fb30dd3f35b5fb3554fd544c2ab3c109ed5acbc4adadaae10ba1032563",
+      "expectedRows": [
+        [
+          {
+            "value": "12"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0240",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 240,
+      "scriptName": "ALTER SEQUENCE OWNED BY",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0240-select-nextval-seq2",
+      "suggestedId": "sequences-test-testsequences-0240-select-nextval-seq2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('seq2');",
+      "querySha256": "d9e88d3323c2a3badd785caa21dd2a78ffb56f88a4a1bec96e0ff27ce6975aa5",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequences_test.go:TestSequences#0241",
+      "source": "testing/go/sequences_test.go:TestSequences",
+      "ordinal": 241,
+      "scriptName": "sequence collection loaded independently with multiple databases",
+      "oracle": "internal",
+      "suggestedId": "sequences-test-testsequences-0241-select-nextval-seq_in_postgres-testdb2.public.seq_in_testdb2-::regclass",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('seq_in_postgres'), 'testdb2.public.seq_in_testdb2'::regclass IS NOT NULL",
+      "querySha256": "d5a6773782dc304206bf32cec1abf7a86be5d6f193261fe715cb56093f33f426",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    }
+  ]
+}

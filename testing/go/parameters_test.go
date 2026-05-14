@@ -26,8 +26,7 @@ func TestParameters(t *testing.T) {
 			Name: "default_with_oids",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "SELECT default_with_oids;",
-					Expected: []sql.Row{{0}},
+					Query: "SELECT default_with_oids;", PostgresOracle: ScriptTestPostgresOracle{ID: "parameters-test-testparameters-0001-select-default_with_oids", Compare: "sqlstate"},
 				},
 				{
 					Query:    "SET default_with_oids = false;",
@@ -39,20 +38,16 @@ func TestParameters(t *testing.T) {
 			Name: "DateStyle",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "SHOW DateStyle;",
-					Expected: []sql.Row{{"ISO, MDY"}},
+					Query: "SHOW DateStyle;", PostgresOracle: ScriptTestPostgresOracle{ID: "parameters-test-testparameters-0003-show-datestyle"},
 				},
 				{
-					Query:    "SELECT timestamp '2001/02/04 04:05:06.789';",
-					Expected: []sql.Row{{"2001-02-04 04:05:06.789"}},
+					Query: "SELECT timestamp '2001/02/04 04:05:06.789';", PostgresOracle: ScriptTestPostgresOracle{ID: "parameters-test-testparameters-0004-select-timestamp-2001/02/04-04:05:06.789"},
 				},
 				{
-					Query:    "SET datestyle = 'german';",
-					Expected: []sql.Row{},
+					Query: "SET datestyle = 'german';", PostgresOracle: ScriptTestPostgresOracle{ID: "parameters-test-testparameters-0005-set-datestyle-=-german"},
 				},
 				{
-					Query:    "SHOW DateStyle;",
-					Expected: []sql.Row{{"German, DMY"}},
+					Query: "SHOW DateStyle;", PostgresOracle: ScriptTestPostgresOracle{ID: "parameters-test-testparameters-0006-show-datestyle"},
 				},
 				{
 					Skip:     true, // TODO: the test passes but pgx cannot parse the result
@@ -60,20 +55,16 @@ func TestParameters(t *testing.T) {
 					Expected: []sql.Row{{"04.02.2001 04:05:06.789"}},
 				},
 				{
-					Query:    "SET datestyle = 'YMD';",
-					Expected: []sql.Row{},
+					Query: "SET datestyle = 'YMD';", PostgresOracle: ScriptTestPostgresOracle{ID: "parameters-test-testparameters-0008-set-datestyle-=-ymd"},
 				},
 				{
-					Query:    "SHOW DateStyle;",
-					Expected: []sql.Row{{"German, YMD"}},
+					Query: "SHOW DateStyle;", PostgresOracle: ScriptTestPostgresOracle{ID: "parameters-test-testparameters-0009-show-datestyle"},
 				},
 				{
-					Query:    "SET datestyle = 'sQl';",
-					Expected: []sql.Row{},
+					Query: "SET datestyle = 'sQl';", PostgresOracle: ScriptTestPostgresOracle{ID: "parameters-test-testparameters-0010-set-datestyle-=-sql"},
 				},
 				{
-					Query:    "SHOW DateStyle;",
-					Expected: []sql.Row{{"SQL, YMD"}},
+					Query: "SHOW DateStyle;", PostgresOracle: ScriptTestPostgresOracle{ID: "parameters-test-testparameters-0011-show-datestyle"},
 				},
 				{
 					Skip:     true, // TODO: the test passes but pgx cannot parse the result
@@ -81,12 +72,10 @@ func TestParameters(t *testing.T) {
 					Expected: []sql.Row{{"02/04/2001 04:05:06.789"}},
 				},
 				{
-					Query:    "SET datestyle = 'postgreS';",
-					Expected: []sql.Row{},
+					Query: "SET datestyle = 'postgreS';", PostgresOracle: ScriptTestPostgresOracle{ID: "parameters-test-testparameters-0013-set-datestyle-=-postgres"},
 				},
 				{
-					Query:    "SHOW DateStyle;",
-					Expected: []sql.Row{{"Postgres, YMD"}},
+					Query: "SHOW DateStyle;", PostgresOracle: ScriptTestPostgresOracle{ID: "parameters-test-testparameters-0014-show-datestyle"},
 				},
 				{
 					Skip:     true, // TODO: the test passes but pgx cannot parse the result
@@ -94,16 +83,13 @@ func TestParameters(t *testing.T) {
 					Expected: []sql.Row{{"Sun Feb 04 04:05:06.789 2001"}},
 				},
 				{
-					Query:    "RESET datestyle;",
-					Expected: []sql.Row{},
+					Query: "RESET datestyle;", PostgresOracle: ScriptTestPostgresOracle{ID: "parameters-test-testparameters-0016-reset-datestyle"},
 				},
 				{
-					Query:    "SHOW DateStyle;",
-					Expected: []sql.Row{{"ISO, MDY"}},
+					Query: "SHOW DateStyle;", PostgresOracle: ScriptTestPostgresOracle{ID: "parameters-test-testparameters-0017-show-datestyle"},
 				},
 				{
-					Query:       "SET datestyle = 'unknown';",
-					ExpectedErr: `invalid value for parameter "DateStyle": "unknown"`,
+					Query: "SET datestyle = 'unknown';", PostgresOracle: ScriptTestPostgresOracle{ID: "parameters-test-testparameters-0018-set-datestyle-=-unknown", Compare: "sqlstate"},
 				},
 			},
 		},

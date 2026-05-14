@@ -1,0 +1,2676 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map values_statement_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/values_statement_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0001",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 1,
+      "scriptName": "basic values statements",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0001-select-*-from-values-1",
+      "suggestedId": "values-statement-test-testvaluesstatement-0001-select-*-from-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (VALUES (1), (2), (3)) sqa;",
+      "querySha256": "215c9b92166fffa4a52c1dbf4c17eb0a32b8e2eaaa86801f1d0f6d648947a4f8",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0002",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 2,
+      "scriptName": "basic values statements",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0002-select-*-from-values-1",
+      "suggestedId": "values-statement-test-testvaluesstatement-0002-select-*-from-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (VALUES (1, 2), (3, 4)) sqa;",
+      "querySha256": "658da510c16fe708057541c18dc52afdd5d60559921c37a14dcc4305a727173c",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0003",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 3,
+      "scriptName": "basic values statements",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0003-select-i-*-10-j",
+      "suggestedId": "values-statement-test-testvaluesstatement-0003-select-i-*-10-j",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT i * 10, j * 100 FROM (VALUES (1, 2), (3, 4)) sqa(i, j);",
+      "querySha256": "bcef87cd4d4e1c7a9f8692883089bec4fc9e61d60a5f27b87170ce08891c1e37",
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          },
+          {
+            "value": "200"
+          }
+        ],
+        [
+          {
+            "value": "30"
+          },
+          {
+            "value": "400"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0004",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 4,
+      "scriptName": "VALUES with mixed int and decimal",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0004-select-*-from-values-1",
+      "suggestedId": "values-statement-test-testvaluesstatement-0004-select-*-from-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (VALUES(1),(2.01),(3)) v(n);",
+      "querySha256": "cd1f56ae171d79e92926a3eb3608738e44c0659923f60e110afa54c2094a0176",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2.01"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0005",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 5,
+      "scriptName": "VALUES with mixed int and decimal",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0005-select-*-from-values-1.01",
+      "suggestedId": "values-statement-test-testvaluesstatement-0005-select-*-from-values-1.01",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (VALUES(1.01),(2),(3)) v(n);",
+      "querySha256": "1a1057c637215c519b02c567261d6a4d9ad3cc89cb37a06c2f5bf846900f0e55",
+      "expectedRows": [
+        [
+          {
+            "value": "1.01"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0006",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 6,
+      "scriptName": "VALUES with mixed int and decimal",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0006-select-sum-n-from-values",
+      "suggestedId": "values-statement-test-testvaluesstatement-0006-select-sum-n-from-values",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT SUM(n) FROM (VALUES(1),(2.01),(3)) v(n);",
+      "querySha256": "7b209b4efd379c86c43e9b0eb5feaa0be960077b86918bea06faa5fff77e4006",
+      "expectedRows": [
+        [
+          {
+            "value": "6.01"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0007",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 7,
+      "scriptName": "VALUES with mixed int and decimal",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0007-select-sum-n::numeric-from-values",
+      "suggestedId": "values-statement-test-testvaluesstatement-0007-select-sum-n::numeric-from-values",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT SUM(n::numeric) FROM (VALUES(1),(2.01),(3)) v(n);",
+      "querySha256": "e21b5bdd8ffd0c5331b2947fdf78f48eccd9e3454a16a7dd22472f04a095c90d",
+      "expectedRows": [
+        [
+          {
+            "value": "6.01"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0008",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 8,
+      "scriptName": "VALUES with mixed int and decimal",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0008-select-sum-n::numeric-from-values",
+      "suggestedId": "values-statement-test-testvaluesstatement-0008-select-sum-n::numeric-from-values",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT SUM(n::numeric) FROM (VALUES(1.01),(2),(3)) v(n);",
+      "querySha256": "aee1520ece086243b1d2bf027a53a83995965eecec3d4a6f5d89f9a6f8b42602",
+      "expectedRows": [
+        [
+          {
+            "value": "6.01"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0009",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 9,
+      "scriptName": "VALUES with multiple columns mixed types",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0009-select-*-from-values-1",
+      "suggestedId": "values-statement-test-testvaluesstatement-0009-select-*-from-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (VALUES(1, 'a'), (2.5, 'b')) v(num, str);",
+      "querySha256": "c3ea333a6eba1cebe05bc2a8bd54f154065dae98f47719cd0717e8313e299fc0",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "a"
+          }
+        ],
+        [
+          {
+            "value": "2.5"
+          },
+          {
+            "value": "b"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0010",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 10,
+      "scriptName": "VALUES with GROUP BY",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0010-select-n-count-*-from",
+      "suggestedId": "values-statement-test-testvaluesstatement-0010-select-n-count-*-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT n, COUNT(*) FROM (VALUES(1),(2.5),(1),(3.5),(2.5)) v(n) GROUP BY n ORDER BY n;",
+      "querySha256": "36c27d31f5c283017605f89683d2eaa8e349f128388d76f4e5de16f8fb9af96f",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "2.5"
+          },
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "3.5"
+          },
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0011",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 11,
+      "scriptName": "VALUES with GROUP BY",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0011-select-category-sum-amount-from",
+      "suggestedId": "values-statement-test-testvaluesstatement-0011-select-category-sum-amount-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT category, SUM(amount) FROM (VALUES('a', 1),('b', 2.5),('a', 3),('b', 4.5)) v(category, amount) GROUP BY category ORDER BY category;",
+      "querySha256": "3544dddb9fcb3e886c5ff439e4e8ef2ee1ecf989358adb7b23722956456f0f5d",
+      "expectedRows": [
+        [
+          {
+            "value": "a"
+          },
+          {
+            "value": "4"
+          }
+        ],
+        [
+          {
+            "value": "b"
+          },
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0012",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 12,
+      "scriptName": "VALUES with DISTINCT",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0012-select-distinct-n-from-values",
+      "suggestedId": "values-statement-test-testvaluesstatement-0012-select-distinct-n-from-values",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT DISTINCT n FROM (VALUES(1),(2.5),(1),(2.5),(3)) v(n) ORDER BY n;",
+      "querySha256": "c882940d88466bb1bb259bc4fd94485218a9239249d7590b858b9a7506576d1e",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2.5"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0013",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 13,
+      "scriptName": "VALUES with LIMIT and OFFSET",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0013-select-*-from-values-1",
+      "suggestedId": "values-statement-test-testvaluesstatement-0013-select-*-from-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (VALUES(1),(2.5),(3),(4.5),(5)) v(n) LIMIT 3;",
+      "querySha256": "e6617286a153dbc12aed4661de11087605e5b49d024b6b8502864275f444c4c0",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2.5"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0014",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 14,
+      "scriptName": "VALUES with LIMIT and OFFSET",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0014-select-*-from-values-1",
+      "suggestedId": "values-statement-test-testvaluesstatement-0014-select-*-from-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (VALUES(1),(2.5),(3),(4.5),(5)) v(n) LIMIT 2 OFFSET 2;",
+      "querySha256": "fc24ddf4c42cfd9d21e2f84c42037e5cae824da07293dd7bf90a858c3460e0ad",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "4.5"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0015",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 15,
+      "scriptName": "VALUES with ORDER BY",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0015-select-*-from-values-3",
+      "suggestedId": "values-statement-test-testvaluesstatement-0015-select-*-from-values-3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (VALUES(3),(1.5),(2),(4.5)) v(n) ORDER BY n;",
+      "querySha256": "162de94eb2cf648e215ef35525314d42c7c22859eadfa3b0737311fddf6335f1",
+      "expectedRows": [
+        [
+          {
+            "value": "1.5"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "4.5"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0016",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 16,
+      "scriptName": "VALUES with ORDER BY",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0016-select-*-from-values-3",
+      "suggestedId": "values-statement-test-testvaluesstatement-0016-select-*-from-values-3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (VALUES(3),(1.5),(2),(4.5)) v(n) ORDER BY n DESC;",
+      "querySha256": "dd1a385408b17d62739d5bd16e08751fe988d18a09a4e81e60013c245e794ab8",
+      "expectedRows": [
+        [
+          {
+            "value": "4.5"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "1.5"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0017",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 17,
+      "scriptName": "VALUES in subquery",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0017-select-*-from-select-n",
+      "suggestedId": "values-statement-test-testvaluesstatement-0017-select-*-from-select-n",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (SELECT n * 2 AS doubled FROM (VALUES(1),(2.5),(3)) v(n)) sub;",
+      "querySha256": "f647f1e1ffa5d292bc6f6a07f2ddcb3a1c30ebdd316a5b3ee9526575f292df2e",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "5"
+          }
+        ],
+        [
+          {
+            "value": "6"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0018",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 18,
+      "scriptName": "VALUES in subquery",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0018-select-*-from-select-*",
+      "suggestedId": "values-statement-test-testvaluesstatement-0018-select-*-from-select-*",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (SELECT * FROM (VALUES(1),(2.5),(3),(4.5)) v(n) LIMIT 2) sub;",
+      "querySha256": "22f66d02f6a9469fba329bc6b69d96d90fa412f43fc215d8b73e8f8ec3067d56",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2.5"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0019",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 19,
+      "scriptName": "VALUES in subquery",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0019-select-*-from-select-*",
+      "suggestedId": "values-statement-test-testvaluesstatement-0019-select-*-from-select-*",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (SELECT * FROM (VALUES(3),(1.5),(2)) v(n) ORDER BY n) sub;",
+      "querySha256": "e792955cc9bf92f2bbf62b3c810f216d4640ab184c4734a395267697a8875aec",
+      "expectedRows": [
+        [
+          {
+            "value": "1.5"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0020",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 20,
+      "scriptName": "VALUES with WHERE clause (Filter node)",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0020-select-*-from-values-1",
+      "suggestedId": "values-statement-test-testvaluesstatement-0020-select-*-from-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (VALUES(1),(2.5),(3),(4.5),(5)) v(n) WHERE n > 2;",
+      "querySha256": "90de2e38667e02c9f4cbf82444e82f69473deb5f75b5faa9d4772fef063419fe",
+      "expectedRows": [
+        [
+          {
+            "value": "2.5"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "4.5"
+          }
+        ],
+        [
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0021",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 21,
+      "scriptName": "VALUES with WHERE clause (Filter node)",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0021-select-*-from-values-1",
+      "suggestedId": "values-statement-test-testvaluesstatement-0021-select-*-from-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (VALUES(1),(2.5),(3),(4.5),(5)) v(n) WHERE n > 1 AND n < 4.5;",
+      "querySha256": "1b32be6ba3f0bf47a8e3388b7519d8935b5ee721d1c3642d62a6ea75a5f9a058",
+      "expectedRows": [
+        [
+          {
+            "value": "2.5"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0022",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 22,
+      "scriptName": "VALUES with aggregate functions",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0022-select-avg-n-from-values",
+      "suggestedId": "values-statement-test-testvaluesstatement-0022-select-avg-n-from-values",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT AVG(n) FROM (VALUES(1),(2),(3),(4)) v(n);",
+      "querySha256": "50672d35d47988ee00b0f7e0d9fee821c0e31e7407959248376ff621775376fb",
+      "expectedRows": [
+        [
+          {
+            "value": "2.5"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0023",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 23,
+      "scriptName": "VALUES with aggregate functions",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0023-select-pg_typeof-avg-n-from",
+      "suggestedId": "values-statement-test-testvaluesstatement-0023-select-pg_typeof-avg-n-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_typeof(AVG(n)) FROM (VALUES(1),(2),(3),(4)) v(n);",
+      "querySha256": "5d951c93579bdaf774376988cca690576307ef0c6977646cd325dd10f562d41a",
+      "expectedRows": [
+        [
+          {
+            "value": "numeric"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0024",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 24,
+      "scriptName": "VALUES with aggregate functions",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0024-select-min-n-max-n",
+      "suggestedId": "values-statement-test-testvaluesstatement-0024-select-min-n-max-n",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT MIN(n), MAX(n) FROM (VALUES(1),(2.5),(3),(0.5)) v(n);",
+      "querySha256": "434a18c00525aac27f0d83e924c0dc040f933103448bd58777a927fccee8e5a0",
+      "expectedRows": [
+        [
+          {
+            "value": "0.5"
+          },
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0025",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 25,
+      "scriptName": "VALUES combined operations",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0025-select-n-count-*-as",
+      "suggestedId": "values-statement-test-testvaluesstatement-0025-select-n-count-*-as",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT n, COUNT(*) as cnt FROM (VALUES(1),(2.5),(1),(2.5),(3),(1)) v(n) GROUP BY n ORDER BY cnt DESC LIMIT 2;",
+      "querySha256": "98dae5bb2bf5617882fbc02c8c03fb1cd0090a2fe947d6b38102935b444a6d3c",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "2.5"
+          },
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0026",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 26,
+      "scriptName": "VALUES combined operations",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0026-select-distinct-n-from-values",
+      "suggestedId": "values-statement-test-testvaluesstatement-0026-select-distinct-n-from-values",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT DISTINCT n FROM (VALUES(1),(2.5),(1),(3),(2.5),(4)) v(n) ORDER BY n DESC LIMIT 3;",
+      "querySha256": "245cf48469bf4bc370ec54a4570ecac3dc9d5a9f38cdd60439a82a06d1562eb8",
+      "expectedRows": [
+        [
+          {
+            "value": "4"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "2.5"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0027",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 27,
+      "scriptName": "VALUES combined operations",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0027-select-*-from-values-1",
+      "suggestedId": "values-statement-test-testvaluesstatement-0027-select-*-from-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (VALUES(1),(2.5),(3),(4.5),(5)) v(n) WHERE n > 1 ORDER BY n DESC LIMIT 2;",
+      "querySha256": "d8a34fd6566f497d070ad87cdef8f5cb0731dd6a12b67e4f32c18a4745a4cae1",
+      "expectedRows": [
+        [
+          {
+            "value": "5"
+          }
+        ],
+        [
+          {
+            "value": "4.5"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0028",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 28,
+      "scriptName": "VALUES with single row (no type unification needed)",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0028-select-*-from-values-42",
+      "suggestedId": "values-statement-test-testvaluesstatement-0028-select-*-from-values-42",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (VALUES(42)) v(n);",
+      "querySha256": "82317d733af6d9d6c2e69e88ec03c57f3a64b236ae987d54b051b5e9dbeec63a",
+      "expectedRows": [
+        [
+          {
+            "value": "42"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0029",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 29,
+      "scriptName": "VALUES with single row (no type unification needed)",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0029-select-*-from-values-3.14",
+      "suggestedId": "values-statement-test-testvaluesstatement-0029-select-*-from-values-3.14",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (VALUES(3.14)) v(n);",
+      "querySha256": "4b2a2a99d39f203bc4cbf118ddd03eb08bfe628fe0b3fdf104986abd74300936",
+      "expectedRows": [
+        [
+          {
+            "value": "3.14"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0030",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 30,
+      "scriptName": "VALUES with NULL values",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0030-select-*-from-values-1",
+      "suggestedId": "values-statement-test-testvaluesstatement-0030-select-*-from-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (VALUES(1),(NULL),(3)) v(n);",
+      "querySha256": "c4c7aae599a7255ec108045e6d0b92be7acde3cfaef66787c3e69436e10c397a",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "null": true
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0031",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 31,
+      "scriptName": "VALUES with NULL values",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0031-select-*-from-values-1.5",
+      "suggestedId": "values-statement-test-testvaluesstatement-0031-select-*-from-values-1.5",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (VALUES(1.5),(NULL),(3.5)) v(n);",
+      "querySha256": "2d723a43b584210a4c8d50cf0b617c88fb455a72d55a995194b6d4d8967d204f",
+      "expectedRows": [
+        [
+          {
+            "value": "1.5"
+          }
+        ],
+        [
+          {
+            "null": true
+          }
+        ],
+        [
+          {
+            "value": "3.5"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0032",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 32,
+      "scriptName": "VALUES with NULL values",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0032-select-*-from-values-1",
+      "suggestedId": "values-statement-test-testvaluesstatement-0032-select-*-from-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (VALUES(1),(NULL),(2.5)) v(n);",
+      "querySha256": "0768bc80469b1c5e8b8547db6fed78e8c8eb13d1a9571ad3aed8562db05dfbce",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "null": true
+          }
+        ],
+        [
+          {
+            "value": "2.5"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0033",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 33,
+      "scriptName": "VALUES with NULL values",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0033-select-*-from-values-null",
+      "suggestedId": "values-statement-test-testvaluesstatement-0033-select-*-from-values-null",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (VALUES(NULL),(NULL)) v(n);",
+      "querySha256": "11bf64153fe1ff45c949ae1bec1e0268da688d7f1a2a9514d0b1de4d18e5c26e",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ],
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0034",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 34,
+      "scriptName": "VALUES type mismatch errors",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0034-select-*-from-values-1",
+      "suggestedId": "values-statement-test-testvaluesstatement-0034-select-*-from-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22P02",
+      "errorSeverity": "ERROR",
+      "query": "SELECT * FROM (VALUES(1),('text'),(3)) v(n);",
+      "querySha256": "17b72dac5c01d4d0f738abf3d3096b15ab59dd3bf264d9990a44503345b2dc83",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0035",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 35,
+      "scriptName": "VALUES type mismatch errors",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0035-select-*-from-values-true",
+      "suggestedId": "values-statement-test-testvaluesstatement-0035-select-*-from-values-true",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42804",
+      "errorSeverity": "ERROR",
+      "query": "SELECT * FROM (VALUES(true),(1),(false)) v(n);",
+      "querySha256": "abb42802b48b9d179a3d4dda4674813c8a12b93a18e22b3f02f4337df3d8c161",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0036",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 36,
+      "scriptName": "VALUES with all unknown types (string literals)",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0036-select-*-from-values-a",
+      "suggestedId": "values-statement-test-testvaluesstatement-0036-select-*-from-values-a",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (VALUES('a'),('b'),('c')) v(n);",
+      "querySha256": "61f34d01554103538b1a76f277948c44ec03f3ee19772c9ee805db7c2a068bf9",
+      "expectedRows": [
+        [
+          {
+            "value": "a"
+          }
+        ],
+        [
+          {
+            "value": "b"
+          }
+        ],
+        [
+          {
+            "value": "c"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0037",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 37,
+      "scriptName": "VALUES with all unknown types (string literals)",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0037-select-n-||-!-from",
+      "suggestedId": "values-statement-test-testvaluesstatement-0037-select-n-||-!-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT n || '!' FROM (VALUES('hello'),('world')) v(n);",
+      "querySha256": "b74006010a59a5e8e682cb5f7dad1323b0420732ba4d8de7a18a6481ce84533f",
+      "expectedRows": [
+        [
+          {
+            "value": "hello!"
+          }
+        ],
+        [
+          {
+            "value": "world!"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0038",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 38,
+      "scriptName": "VALUES with array types",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0038-select-*-from-values-array[1",
+      "suggestedId": "values-statement-test-testvaluesstatement-0038-select-*-from-values-array[1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (VALUES(ARRAY[1,2]),(ARRAY[3,4])) v(arr);",
+      "querySha256": "18adb62c5f01a618857c1778760abc6fbc68385c95b2316260dcea39d4f74926",
+      "expectedRows": [
+        [
+          {
+            "value": "{1,2}"
+          }
+        ],
+        [
+          {
+            "value": "{3,4}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0039",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 39,
+      "scriptName": "VALUES with array types",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0039-select-*-from-values-array[",
+      "suggestedId": "values-statement-test-testvaluesstatement-0039-select-*-from-values-array[",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (VALUES(ARRAY['a','b']),(ARRAY['c','d'])) v(arr);",
+      "querySha256": "97727cd92ac76a58b52a28ff023b514c3c254670ee8ce9bff485ce26caf04e68",
+      "expectedRows": [
+        [
+          {
+            "value": "{a,b}"
+          }
+        ],
+        [
+          {
+            "value": "{c,d}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0040",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 40,
+      "scriptName": "VALUES with all same type multi-row (no casts needed)",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0040-select-*-from-values-1",
+      "suggestedId": "values-statement-test-testvaluesstatement-0040-select-*-from-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (VALUES(1),(2),(3)) v(n);",
+      "querySha256": "5ab9f593acced8963cfba3c113506dd45e666f5142e8c2c2d4f9409d3b7d62d9",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0041",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 41,
+      "scriptName": "VALUES with all same type multi-row (no casts needed)",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0041-select-*-from-values-1.5",
+      "suggestedId": "values-statement-test-testvaluesstatement-0041-select-*-from-values-1.5",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (VALUES(1.5),(2.5),(3.5)) v(n);",
+      "querySha256": "689f583e327662f1a07a8b355be7ebd19b5eaded5a6914f1f4390c6001b15950",
+      "expectedRows": [
+        [
+          {
+            "value": "1.5"
+          }
+        ],
+        [
+          {
+            "value": "2.5"
+          }
+        ],
+        [
+          {
+            "value": "3.5"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0042",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 42,
+      "scriptName": "VALUES with all same type multi-row (no casts needed)",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0042-select-*-from-values-x",
+      "suggestedId": "values-statement-test-testvaluesstatement-0042-select-*-from-values-x",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (VALUES('x'),('y'),('z')) v(n);",
+      "querySha256": "f00723dd79d97f618a193827f61a6fb450d77fcec1aaa2b0ab6c9abae106da9c",
+      "expectedRows": [
+        [
+          {
+            "value": "x"
+          }
+        ],
+        [
+          {
+            "value": "y"
+          }
+        ],
+        [
+          {
+            "value": "z"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0043",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 43,
+      "scriptName": "VALUES with multi-column partial cast",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0043-select-*-from-values-1",
+      "suggestedId": "values-statement-test-testvaluesstatement-0043-select-*-from-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (VALUES(1, 'a'),(2.5, 'b'),(3, 'c')) v(num, str);",
+      "querySha256": "4a6e8f17a2adca22fe5834bb9e0d44c1c1b3cbf90b50df0cd7399bf9f786c28d",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "a"
+          }
+        ],
+        [
+          {
+            "value": "2.5"
+          },
+          {
+            "value": "b"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "c"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0044",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 44,
+      "scriptName": "VALUES with multi-column partial cast",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0044-select-*-from-values-1",
+      "suggestedId": "values-statement-test-testvaluesstatement-0044-select-*-from-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (VALUES(1, 10),(2, 20.5),(3, 30)) v(a, b);",
+      "querySha256": "615a1729fe82e434d32ab39d41e0e5a9abbca179f0f2ed2dcae45d9519c6bb24",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "10"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "20.5"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "30"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0045",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 45,
+      "scriptName": "VALUES in CTE (WITH clause)",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0045-with-nums-as-select-*",
+      "suggestedId": "values-statement-test-testvaluesstatement-0045-with-nums-as-select-*",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "WITH nums AS (SELECT * FROM (VALUES(1),(2.5),(3)) v(n)) SELECT * FROM nums;",
+      "querySha256": "2c94ef8ba3a82d5c5ebdfb8fe2c6f6d710df49c54ce9fb6e09c66196b0ce0af4",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2.5"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0046",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 46,
+      "scriptName": "VALUES in CTE (WITH clause)",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0046-with-nums-as-select-*",
+      "suggestedId": "values-statement-test-testvaluesstatement-0046-with-nums-as-select-*",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "WITH nums AS (SELECT * FROM (VALUES(1),(2.5),(3)) v(n)) SELECT SUM(n) FROM nums;",
+      "querySha256": "99e157eb67857e81977e91afb571ccb16d525bb8fa6cb88b3101bc25fde86ece",
+      "expectedRows": [
+        [
+          {
+            "value": "6.5"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0047",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 47,
+      "scriptName": "VALUES with JOIN",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0047-select-a.n-b.label-from-values",
+      "suggestedId": "values-statement-test-testvaluesstatement-0047-select-a.n-b.label-from-values",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT a.n, b.label FROM (VALUES(1),(2),(3)) a(n) JOIN (VALUES(1, 'one'),(2, 'two'),(3, 'three')) b(id, label) ON a.n = b.id;",
+      "querySha256": "3eb80356375ef6d196c2350f33f5eb71908573115c5ac4c7cadf4633df88e110",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "one"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "two"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "three"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0048",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 48,
+      "scriptName": "VALUES with JOIN",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0048-select-a.n-b.label-from-values",
+      "suggestedId": "values-statement-test-testvaluesstatement-0048-select-a.n-b.label-from-values",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT a.n, b.label FROM (VALUES(1),(2.5),(3)) a(n) JOIN (VALUES(1, 'one'),(3, 'three')) b(id, label) ON a.n = b.id;",
+      "querySha256": "1f300a9daa790d5c7069a21c6117cb079f9cbf5d3fa0dc80f9614faeac1fcc9b",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "one"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "three"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0049",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 49,
+      "scriptName": "VALUES with same-type booleans",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0049-select-*-from-values-true",
+      "suggestedId": "values-statement-test-testvaluesstatement-0049-select-*-from-values-true",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (VALUES(true),(false),(true)) v(b);",
+      "querySha256": "2dbf80e49e39ba87590cbc86ba9559427cf11f9ad1791f4465f386e0defadd88",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ],
+        [
+          {
+            "value": "f"
+          }
+        ],
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0050",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 50,
+      "scriptName": "VALUES with same-type booleans",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0050-select-*-from-values-true",
+      "suggestedId": "values-statement-test-testvaluesstatement-0050-select-*-from-values-true",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (VALUES(true),(false),(true),(false)) v(b) WHERE b = true;",
+      "querySha256": "12a5728ae53bd66a36d252cc4630173044eb5d229762e85803ebf49ae98c2f92",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ],
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0051",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 51,
+      "scriptName": "VALUES with case-sensitive quoted column names",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0051-select-cola-colb-from-values",
+      "suggestedId": "values-statement-test-testvaluesstatement-0051-select-cola-colb-from-values",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT \"ColA\", \"colb\" FROM (VALUES(1, 2),(3.5, 4.5)) v(\"ColA\", \"colb\");",
+      "querySha256": "5dcb1e587217513051ed87b8d57964b02d4d83b69b521029e7c48a82726ee5e3",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "3.5"
+          },
+          {
+            "value": "4.5"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0052",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 52,
+      "scriptName": "VALUES with case-sensitive quoted column names",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0052-select-mixedcase-plain-from-values",
+      "suggestedId": "values-statement-test-testvaluesstatement-0052-select-mixedcase-plain-from-values",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT \"MixedCase\", plain FROM (VALUES(1, 'a'),(2.5, 'b')) v(\"MixedCase\", plain);",
+      "querySha256": "2a2e4ef87c6153eda9bb2a41d2d91a25a16c5bfa3083cdec1e1d2e3965abd863",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "a"
+          }
+        ],
+        [
+          {
+            "value": "2.5"
+          },
+          {
+            "value": "b"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0053",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 53,
+      "scriptName": "VALUES with case-sensitive quoted column names",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0053-select-sum-val-from-values",
+      "suggestedId": "values-statement-test-testvaluesstatement-0053-select-sum-val-from-values",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT SUM(\"Val\") FROM (VALUES(1),(2.5),(3)) v(\"Val\");",
+      "querySha256": "8d57a4465e2197ac161e016837ed67dbfe9559f0fb2e935c828c5a62d6b5a75c",
+      "expectedRows": [
+        [
+          {
+            "value": "6.5"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0054",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 54,
+      "scriptName": "VALUES with case-differing quoted columns and aggregates",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0054-select-sum-val-sum-val",
+      "suggestedId": "values-statement-test-testvaluesstatement-0054-select-sum-val-sum-val",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT SUM(\"Val\"), SUM(\"val\") FROM (VALUES(1, 10),(2.5, 20)) v(\"Val\", \"val\");",
+      "querySha256": "0e599239b5a67d339a713fe87c9d57ef8ec9cccb6009ec44916bb59cc1fb058f",
+      "expectedRows": [
+        [
+          {
+            "value": "3.5"
+          },
+          {
+            "value": "30"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0055",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 55,
+      "scriptName": "values inside subquery preserves projections",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0055-select-*-from-select-n",
+      "suggestedId": "values-statement-test-testvaluesstatement-0055-select-*-from-select-n",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (SELECT n * 2 AS doubled FROM (VALUES (1), (2), (3)) v(n)) sub;",
+      "querySha256": "4c68485bbd6376f502c10196df3626b7fc83f3e74fb6f56aeab57663674a84d0",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          }
+        ],
+        [
+          {
+            "value": "6"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0056",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 56,
+      "scriptName": "values inside subquery preserves projections",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0056-select-*-from-select-n",
+      "suggestedId": "values-statement-test-testvaluesstatement-0056-select-*-from-select-n",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (SELECT n * 2 AS doubled FROM (VALUES (1), (2.5), (3)) v(n)) sub;",
+      "querySha256": "fb6b06440a56ba8b06a058a9f7ef83770cf83163aa1218c26715d68e9c7ed618",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "5"
+          }
+        ],
+        [
+          {
+            "value": "6"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0057",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 57,
+      "scriptName": "values inside subquery preserves LIMIT",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0057-select-*-from-select-*",
+      "suggestedId": "values-statement-test-testvaluesstatement-0057-select-*-from-select-*",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (SELECT * FROM (VALUES (1), (2), (3), (4)) v(n) LIMIT 2) sub;",
+      "querySha256": "6b00dca1ce17bce8043c5e5db4de54f4f74a29ef0155ef0c498a15180a670ed0",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0058",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 58,
+      "scriptName": "values inside subquery preserves LIMIT",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0058-select-*-from-select-*",
+      "suggestedId": "values-statement-test-testvaluesstatement-0058-select-*-from-select-*",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (SELECT * FROM (VALUES (1), (2.5), (3), (4.5)) v(n) LIMIT 2) sub;",
+      "querySha256": "a12056732ded3954412ed5df248b780557dcb1f2a441505275d47f2da21eb981",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2.5"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0059",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 59,
+      "scriptName": "values inside subquery preserves ORDER BY",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0059-select-*-from-select-*",
+      "suggestedId": "values-statement-test-testvaluesstatement-0059-select-*-from-select-*",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (SELECT * FROM (VALUES (3), (1), (2)) v(n) ORDER BY n) sub;",
+      "querySha256": "1e2f7e4ea4251ba70a5e0c9c7d440248d60972d7b5598b34031d29d2806c4409",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0060",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 60,
+      "scriptName": "values inside subquery preserves ORDER BY",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0060-select-*-from-select-*",
+      "suggestedId": "values-statement-test-testvaluesstatement-0060-select-*-from-select-*",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (SELECT * FROM (VALUES (3), (1.5), (2)) v(n) ORDER BY n) sub;",
+      "querySha256": "694fa44bfdb0da2fe1f26258fad8bf5d75f5d0319a624e42dc54fd7a9720617b",
+      "expectedRows": [
+        [
+          {
+            "value": "1.5"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0061",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 61,
+      "scriptName": "values inside subquery preserves DISTINCT",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0061-select-*-from-select-distinct",
+      "suggestedId": "values-statement-test-testvaluesstatement-0061-select-*-from-select-distinct",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (SELECT DISTINCT * FROM (VALUES (1), (1), (2), (2), (3)) v(n)) sub;",
+      "querySha256": "f76620e6b6dec3e19911dc682361c384a9f6e11208ae1e342298cd18e2b5eaa7",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0062",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 62,
+      "scriptName": "values inside subquery preserves DISTINCT",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0062-select-*-from-select-distinct",
+      "suggestedId": "values-statement-test-testvaluesstatement-0062-select-*-from-select-distinct",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (SELECT DISTINCT * FROM (VALUES (1), (1), (2.5), (2.5), (3)) v(n)) sub;",
+      "querySha256": "d7e023d5b6aa801f132b467a263a5c195d835bd45536bfad55ccc6da6438ad7a",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "2.5"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0063",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 63,
+      "scriptName": "values inside subquery preserves WHERE",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0063-select-*-from-select-*",
+      "suggestedId": "values-statement-test-testvaluesstatement-0063-select-*-from-select-*",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (SELECT * FROM (VALUES (1), (2), (3), (4), (5)) v(n) WHERE n > 3) sub;",
+      "querySha256": "dc4dd7491e26a0de7c17e2381b60aefbd76c7d29440e81a5955e918b006a33af",
+      "expectedRows": [
+        [
+          {
+            "value": "4"
+          }
+        ],
+        [
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0064",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 64,
+      "scriptName": "values inside subquery preserves WHERE",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0064-select-*-from-select-*",
+      "suggestedId": "values-statement-test-testvaluesstatement-0064-select-*-from-select-*",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (SELECT * FROM (VALUES (1), (2.5), (3), (4.5), (5)) v(n) WHERE n > 3) sub;",
+      "querySha256": "1a585e9f94b09b346930e7ef273d5043a49534a27f7387822d64ea5ea02160f3",
+      "expectedRows": [
+        [
+          {
+            "value": "4.5"
+          }
+        ],
+        [
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0065",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 65,
+      "scriptName": "values inside subquery preserves OFFSET",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0065-select-*-from-select-*",
+      "suggestedId": "values-statement-test-testvaluesstatement-0065-select-*-from-select-*",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (SELECT * FROM (VALUES (10), (20), (30)) v(n) OFFSET 1) sub;",
+      "querySha256": "7ceb1fe6bb6c03702d30ea8074846bb3b79edefb6a09c30c0967009beafbd297",
+      "expectedRows": [
+        [
+          {
+            "value": "20"
+          }
+        ],
+        [
+          {
+            "value": "30"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0066",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 66,
+      "scriptName": "values inside subquery preserves OFFSET",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0066-select-*-from-select-*",
+      "suggestedId": "values-statement-test-testvaluesstatement-0066-select-*-from-select-*",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (SELECT * FROM (VALUES (10), (20), (30), (40), (50)) v(n) LIMIT 2 OFFSET 1) sub;",
+      "querySha256": "b7e1964032123ee8d44c1af280499d517a1d137e535b0b4d8565425e7daba451",
+      "expectedRows": [
+        [
+          {
+            "value": "20"
+          }
+        ],
+        [
+          {
+            "value": "30"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0067",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 67,
+      "scriptName": "values inside subquery preserves OFFSET",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0067-select-*-from-select-*",
+      "suggestedId": "values-statement-test-testvaluesstatement-0067-select-*-from-select-*",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (SELECT * FROM (VALUES (10), (20.5), (30)) v(n) OFFSET 1) sub;",
+      "querySha256": "f26677c96886cc1bea0a8cfa31106de2e7203c0060ae5f0a617cbcdb9cb0ed0f",
+      "expectedRows": [
+        [
+          {
+            "value": "20.5"
+          }
+        ],
+        [
+          {
+            "value": "30"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0068",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 68,
+      "scriptName": "values inside subquery preserves OFFSET",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0068-select-*-from-select-*",
+      "suggestedId": "values-statement-test-testvaluesstatement-0068-select-*-from-select-*",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (SELECT * FROM (VALUES (10), (20.5), (30), (40.5), (50)) v(n) LIMIT 2 OFFSET 1) sub;",
+      "querySha256": "f24d92b83f8109bc2940b83c3400f5ce682cc14a98594ad60e90fe3798c74f68",
+      "expectedRows": [
+        [
+          {
+            "value": "20.5"
+          }
+        ],
+        [
+          {
+            "value": "30"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0069",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 69,
+      "scriptName": "values inside subquery preserves ORDER BY with LIMIT",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0069-select-*-from-select-*",
+      "suggestedId": "values-statement-test-testvaluesstatement-0069-select-*-from-select-*",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (SELECT * FROM (VALUES (5), (3), (1), (4), (2)) v(n) ORDER BY n LIMIT 3) sub;",
+      "querySha256": "064c048cb975c9218025cbcee14d1e8eca5e859d223812e06f736bbc7238b7e6",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0070",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 70,
+      "scriptName": "values inside subquery preserves ORDER BY with LIMIT",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0070-select-*-from-select-*",
+      "suggestedId": "values-statement-test-testvaluesstatement-0070-select-*-from-select-*",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (SELECT * FROM (VALUES (5), (3.5), (1), (4), (2.5)) v(n) ORDER BY n LIMIT 3) sub;",
+      "querySha256": "732b40aab9507350d7d50586eac7bc02115b8920124599ae215f5a9258470f3b",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2.5"
+          }
+        ],
+        [
+          {
+            "value": "3.5"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0071",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 71,
+      "scriptName": "values inside subquery preserves GROUP BY with aggregate",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0071-select-*-from-select-n",
+      "suggestedId": "values-statement-test-testvaluesstatement-0071-select-*-from-select-n",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (SELECT n, count(*) AS cnt FROM (VALUES (1), (1), (2), (2), (2), (3)) v(n) GROUP BY n ORDER BY n) sub;",
+      "querySha256": "cf5488e72da6c81fa6659883d1580d50992536033f9ad56ee50ea9e31e7c76f2",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0072",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 72,
+      "scriptName": "values inside subquery preserves GROUP BY with aggregate",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0072-select-*-from-select-n",
+      "suggestedId": "values-statement-test-testvaluesstatement-0072-select-*-from-select-n",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (SELECT n, count(*) AS cnt FROM (VALUES (1), (1), (2.5), (2.5), (2.5), (3)) v(n) GROUP BY n ORDER BY n) sub;",
+      "querySha256": "770188c2542ef470514cf7087f55b68eecace8fcb663ff3d08d5e3b041c85be7",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "2.5"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0073",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 73,
+      "scriptName": "values inside subquery preserves HAVING",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0073-select-*-from-select-n",
+      "suggestedId": "values-statement-test-testvaluesstatement-0073-select-*-from-select-n",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (SELECT n, count(*) AS cnt FROM (VALUES (1), (1), (2), (2), (2), (3)) v(n) GROUP BY n HAVING count(*) > 1 ORDER BY n) sub;",
+      "querySha256": "eeb0210fbabe09a50d5453c0677886710db99019d3a905489774c8faf5da43a0",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0074",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 74,
+      "scriptName": "values inside subquery preserves HAVING",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0074-select-*-from-select-n",
+      "suggestedId": "values-statement-test-testvaluesstatement-0074-select-*-from-select-n",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (SELECT n, count(*) AS cnt FROM (VALUES (1), (1), (2.5), (2.5), (2.5), (3)) v(n) GROUP BY n HAVING count(*) > 1 ORDER BY n) sub;",
+      "querySha256": "58da988f2e8169acf6a1f42711e43ce4f8682ced1d28267d3e49351bcf9470eb",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "2.5"
+          },
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0075",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 75,
+      "scriptName": "values inside subquery preserves column aliasing",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0075-select-*-from-select-n",
+      "suggestedId": "values-statement-test-testvaluesstatement-0075-select-*-from-select-n",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (SELECT n AS val, n * 10 AS tenfold FROM (VALUES (1), (2), (3)) v(n)) sub;",
+      "querySha256": "113c9702684aa53029480d00f8229f935a54dd24b43149c87e74e1a8762a6bd5",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "10"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "20"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "30"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0076",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 76,
+      "scriptName": "values inside subquery preserves column aliasing",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0076-select-*-from-select-n",
+      "suggestedId": "values-statement-test-testvaluesstatement-0076-select-*-from-select-n",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (SELECT n AS val, n * 10 AS tenfold FROM (VALUES (1), (2.5), (3)) v(n)) sub;",
+      "querySha256": "004cce9e00bdc12c4a189abb7c44ba0c921cd4c06d9cd8d821e8bfd806269a35",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "10"
+          }
+        ],
+        [
+          {
+            "value": "2.5"
+          },
+          {
+            "value": "25"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "30"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0077",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 77,
+      "scriptName": "values inside subquery preserves column subset selection",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0077-select-*-from-select-a",
+      "suggestedId": "values-statement-test-testvaluesstatement-0077-select-*-from-select-a",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (SELECT a FROM (VALUES (1, 10), (2, 20), (3, 30)) v(a, b)) sub;",
+      "querySha256": "62a25f29e38b2d4cb62631bd68278b23b39ac4fc9eec23caa4727d70ffe813a1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0078",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 78,
+      "scriptName": "values subquery trivial SELECT * still unwraps correctly",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0078-select-*-from-select-*",
+      "suggestedId": "values-statement-test-testvaluesstatement-0078-select-*-from-select-*",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (SELECT * FROM (VALUES (1), (2), (3)) v(n)) sub;",
+      "querySha256": "3055e3e6736265e0aa96dd1f8dac2e4086c8af5ee1e35e3fc72a614cd15264f3",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0079",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 79,
+      "scriptName": "values inside subquery with multiple combined clauses",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0079-select-*-from-select-distinct",
+      "suggestedId": "values-statement-test-testvaluesstatement-0079-select-*-from-select-distinct",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (SELECT DISTINCT n FROM (VALUES (3), (1), (1), (2), (2), (3)) v(n) ORDER BY n LIMIT 2) sub;",
+      "querySha256": "3ff35f24864972b5028f235664de0972a38790a08268403f865e664da64ff368",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0080",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 80,
+      "scriptName": "values inside subquery with multiple combined clauses",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0080-select-*-from-select-distinct",
+      "suggestedId": "values-statement-test-testvaluesstatement-0080-select-*-from-select-distinct",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (SELECT DISTINCT n FROM (VALUES (3), (1.5), (1.5), (2), (2), (3)) v(n) ORDER BY n LIMIT 2) sub;",
+      "querySha256": "964e5b06d118c6fe8d1f8cb37c95786c9a4371f5f236d220e649a7c643b8d00f",
+      "expectedRows": [
+        [
+          {
+            "value": "1.5"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0081",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 81,
+      "scriptName": "values in JOIN preserves inner subquery semantics",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0081-select-a.n-b.m-from-values",
+      "suggestedId": "values-statement-test-testvaluesstatement-0081-select-a.n-b.m-from-values",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT a.n, b.m FROM (VALUES (1), (2)) a(n) JOIN (SELECT m * 10 AS m FROM (VALUES (1), (2)) v(m)) b ON a.n = b.m / 10;",
+      "querySha256": "d0d55edc6542b44f3c7c58bb74f6cf93551fe80bf035c828cfdf9881f6684574",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "10"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "20"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/values_statement_test.go:TestValuesStatement#0082",
+      "source": "testing/go/values_statement_test.go:TestValuesStatement",
+      "ordinal": 82,
+      "scriptName": "values in JOIN preserves inner subquery semantics",
+      "oracle": "postgres",
+      "postgresId": "values-statement-test-testvaluesstatement-0082-select-a.n-b.m-from-values",
+      "suggestedId": "values-statement-test-testvaluesstatement-0082-select-a.n-b.m-from-values",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT a.n, b.m FROM (VALUES (1), (2.5)) a(n) JOIN (SELECT m * 10 AS m FROM (VALUES (1), (2.5)) v(m)) b ON a.n = b.m / 10;",
+      "querySha256": "67880eb2d3c5aae2158d8c503a315682690ce9a0ebc8db6ba5735c41c7a2ed81",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "10"
+          }
+        ],
+        [
+          {
+            "value": "2.5"
+          },
+          {
+            "value": "25"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

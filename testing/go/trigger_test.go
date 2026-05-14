@@ -36,15 +36,10 @@ func TestCreateTrigger(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "INSERT INTO test VALUES (1, 'hi'), (2, 'there');",
-					Expected: []sql.Row{},
+					Query: "INSERT INTO test VALUES (1, 'hi'), (2, 'there');", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0001-insert-into-test-values-1"},
 				},
 				{
-					Query: "SELECT * FROM test;",
-					Expected: []sql.Row{
-						{1, "hi_1"},
-						{2, "there_2"},
-					},
+					Query: "SELECT * FROM test;", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0002-select-*-from-test"},
 				},
 			},
 		},
@@ -63,15 +58,10 @@ func TestCreateTrigger(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "UPDATE test SET v1 = v1 || '|' WHERE pk IN (1, 2);",
-					Expected: []sql.Row{},
+					Query: "UPDATE test SET v1 = v1 || '|' WHERE pk IN (1, 2);", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0003-update-test-set-v1-="},
 				},
 				{
-					Query: "SELECT * FROM test;",
-					Expected: []sql.Row{
-						{1, "hi|_1"},
-						{2, "there|_2"},
-					},
+					Query: "SELECT * FROM test;", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0004-select-*-from-test"},
 				},
 			},
 		},
@@ -91,31 +81,19 @@ func TestCreateTrigger(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT * FROM test;",
-					Expected: []sql.Row{
-						{1, "hi"},
-						{2, "there"},
-					},
+					Query: "SELECT * FROM test;", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0005-select-*-from-test"},
 				},
 				{
-					Query:    "SELECT * FROM test2;",
-					Expected: []sql.Row{},
+					Query: "SELECT * FROM test2;", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0006-select-*-from-test2"},
 				},
 				{
-					Query:    "DELETE FROM test WHERE pk = 1;",
-					Expected: []sql.Row{},
+					Query: "DELETE FROM test WHERE pk = 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0007-delete-from-test-where-pk"},
 				},
 				{
-					Query: "SELECT * FROM test;",
-					Expected: []sql.Row{
-						{2, "there"},
-					},
+					Query: "SELECT * FROM test;", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0008-select-*-from-test"},
 				},
 				{
-					Query: "SELECT * FROM test2;",
-					Expected: []sql.Row{
-						{1, "hi"},
-					},
+					Query: "SELECT * FROM test2;", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0009-select-*-from-test2"},
 				},
 			},
 		},
@@ -136,22 +114,13 @@ func TestCreateTrigger(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "INSERT INTO test VALUES (1, 'hi'), (2, 'there');",
-					Expected: []sql.Row{},
+					Query: "INSERT INTO test VALUES (1, 'hi'), (2, 'there');", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0010-insert-into-test-values-1"},
 				},
 				{
-					Query: "SELECT * FROM test;",
-					Expected: []sql.Row{
-						{1, "hi"},
-						{2, "there"},
-					},
+					Query: "SELECT * FROM test;", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0011-select-*-from-test"},
 				},
 				{
-					Query: "SELECT * FROM test2;",
-					Expected: []sql.Row{
-						{1, "hi_1"},
-						{2, "there_2"},
-					},
+					Query: "SELECT * FROM test2;", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0012-select-*-from-test2"},
 				},
 			},
 		},
@@ -172,22 +141,13 @@ func TestCreateTrigger(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "UPDATE test SET v1 = v1 || '|' WHERE pk IN (1, 2);",
-					Expected: []sql.Row{},
+					Query: "UPDATE test SET v1 = v1 || '|' WHERE pk IN (1, 2);", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0013-update-test-set-v1-="},
 				},
 				{
-					Query: "SELECT * FROM test;",
-					Expected: []sql.Row{
-						{1, "hi"},
-						{2, "there"},
-					},
+					Query: "SELECT * FROM test;", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0014-select-*-from-test"},
 				},
 				{
-					Query: "SELECT * FROM test2;",
-					Expected: []sql.Row{
-						{1, "hi|_1"},
-						{2, "there|_2"},
-					},
+					Query: "SELECT * FROM test2;", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0015-select-*-from-test2"},
 				},
 			},
 		},
@@ -207,32 +167,19 @@ func TestCreateTrigger(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT * FROM test;",
-					Expected: []sql.Row{
-						{1, "hi"},
-						{2, "there"},
-					},
+					Query: "SELECT * FROM test;", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0016-select-*-from-test"},
 				},
 				{
-					Query:    "SELECT * FROM test2;",
-					Expected: []sql.Row{},
+					Query: "SELECT * FROM test2;", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0017-select-*-from-test2"},
 				},
 				{
-					Query:    "DELETE FROM test WHERE pk = 1;",
-					Expected: []sql.Row{},
+					Query: "DELETE FROM test WHERE pk = 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0018-delete-from-test-where-pk"},
 				},
 				{
-					Query: "SELECT * FROM test;",
-					Expected: []sql.Row{
-						{1, "hi"},
-						{2, "there"},
-					},
+					Query: "SELECT * FROM test;", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0019-select-*-from-test"},
 				},
 				{
-					Query: "SELECT * FROM test2;",
-					Expected: []sql.Row{
-						{1, "hi"},
-					},
+					Query: "SELECT * FROM test2;", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0020-select-*-from-test2"},
 				},
 			},
 		},
@@ -252,29 +199,19 @@ func TestCreateTrigger(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT * FROM test;",
-					Expected: []sql.Row{
-						{1, "hi"},
-						{2, "there"},
-					},
+					Query: "SELECT * FROM test;", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0021-select-*-from-test"},
 				},
 				{
-					Query:    "SELECT * FROM test2;",
-					Expected: []sql.Row{},
+					Query: "SELECT * FROM test2;", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0022-select-*-from-test2"},
 				},
 				{
-					Query:    "DELETE FROM test WHERE pk = 1;",
-					Expected: []sql.Row{},
+					Query: "DELETE FROM test WHERE pk = 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0023-delete-from-test-where-pk"},
 				},
 				{
-					Query: "SELECT * FROM test;",
-					Expected: []sql.Row{
-						{2, "there"},
-					},
+					Query: "SELECT * FROM test;", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0024-select-*-from-test"},
 				},
 				{
-					Query:    "SELECT * FROM test2;",
-					Expected: []sql.Row{},
+					Query: "SELECT * FROM test2;", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0025-select-*-from-test2"},
 				},
 			},
 		},
@@ -294,22 +231,13 @@ func TestCreateTrigger(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "INSERT INTO test VALUES (1, 'hi'), (2, 'there');",
-					Expected: []sql.Row{},
+					Query: "INSERT INTO test VALUES (1, 'hi'), (2, 'there');", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0026-insert-into-test-values-1"},
 				},
 				{
-					Query: "SELECT * FROM test;",
-					Expected: []sql.Row{
-						{1, "hi"},
-						{2, "there"},
-					},
+					Query: "SELECT * FROM test;", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0027-select-*-from-test"},
 				},
 				{
-					Query: "SELECT * FROM test2;",
-					Expected: []sql.Row{
-						{1, "hi_1"},
-						{2, "there_2"},
-					},
+					Query: "SELECT * FROM test2;", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0028-select-*-from-test2"},
 				},
 			},
 		},
@@ -330,22 +258,13 @@ func TestCreateTrigger(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "UPDATE test SET v1 = v1 || '|' WHERE pk IN (1, 2);",
-					Expected: []sql.Row{},
+					Query: "UPDATE test SET v1 = v1 || '|' WHERE pk IN (1, 2);", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0029-update-test-set-v1-="},
 				},
 				{
-					Query: "SELECT * FROM test;",
-					Expected: []sql.Row{
-						{1, "hi|"},
-						{2, "there|"},
-					},
+					Query: "SELECT * FROM test;", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0030-select-*-from-test"},
 				},
 				{
-					Query: "SELECT * FROM test2;",
-					Expected: []sql.Row{
-						{1, "hi|_1"},
-						{2, "there|_2"},
-					},
+					Query: "SELECT * FROM test2;", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0031-select-*-from-test2"},
 				},
 			},
 		},
@@ -365,31 +284,19 @@ func TestCreateTrigger(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT * FROM test;",
-					Expected: []sql.Row{
-						{1, "hi"},
-						{2, "there"},
-					},
+					Query: "SELECT * FROM test;", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0032-select-*-from-test"},
 				},
 				{
-					Query:    "SELECT * FROM test2;",
-					Expected: []sql.Row{},
+					Query: "SELECT * FROM test2;", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0033-select-*-from-test2"},
 				},
 				{
-					Query:    "DELETE FROM test WHERE pk = 1;",
-					Expected: []sql.Row{},
+					Query: "DELETE FROM test WHERE pk = 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0034-delete-from-test-where-pk"},
 				},
 				{
-					Query: "SELECT * FROM test;",
-					Expected: []sql.Row{
-						{2, "there"},
-					},
+					Query: "SELECT * FROM test;", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0035-select-*-from-test"},
 				},
 				{
-					Query: "SELECT * FROM test2;",
-					Expected: []sql.Row{
-						{1, "hi"},
-					},
+					Query: "SELECT * FROM test2;", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0036-select-*-from-test2"},
 				},
 			},
 		},
@@ -416,31 +323,19 @@ $$ LANGUAGE plpgsql;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT * FROM test;",
-					Expected: []sql.Row{
-						{1, "hi"},
-						{2, "there"},
-					},
+					Query: "SELECT * FROM test;", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0037-select-*-from-test"},
 				},
 				{
-					Query:    "SELECT * FROM test2;",
-					Expected: []sql.Row{},
+					Query: "SELECT * FROM test2;", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0038-select-*-from-test2"},
 				},
 				{
-					Query:    "DELETE FROM test WHERE pk = 1;",
-					Expected: []sql.Row{},
+					Query: "DELETE FROM test WHERE pk = 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0039-delete-from-test-where-pk"},
 				},
 				{
-					Query: "SELECT * FROM test;",
-					Expected: []sql.Row{
-						{2, "there"},
-					},
+					Query: "SELECT * FROM test;", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0040-select-*-from-test"},
 				},
 				{
-					Query: "SELECT * FROM test2;",
-					Expected: []sql.Row{
-						{101, "hi"},
-					},
+					Query: "SELECT * FROM test2;", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0041-select-*-from-test2"},
 				},
 			},
 		},
@@ -465,16 +360,12 @@ $$ LANGUAGE plpgsql;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "INSERT INTO test VALUES (1, 'hi'), (2, 'there');",
-					Expected: []sql.Row{},
+					Query: "INSERT INTO test VALUES (1, 'hi'), (2, 'there');", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0042-insert-into-test-values-1"},
 				},
 				{
 					Query: "SELECT * FROM test ORDER BY pk;",
-					Skip:  true, // TODO: the UPDATE cannot see the table's contents until the INSERT has completely finished
-					Expected: []sql.Row{
-						{1, "hi2_u"},
-						{2, "there"},
-					},
+					Skip:  true, PostgresOracle: // TODO: the UPDATE cannot see the table's contents until the INSERT has completely finished
+					ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0043-select-*-from-test-order"},
 				},
 			},
 		},
@@ -506,15 +397,10 @@ $$ LANGUAGE plpgsql;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "INSERT INTO test VALUES (1, 'hi'), (2, 'there');",
-					Expected: []sql.Row{},
+					Query: "INSERT INTO test VALUES (1, 'hi'), (2, 'there');", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0044-insert-into-test-values-1"},
 				},
 				{
-					Query: "SELECT * FROM test ORDER BY pk;",
-					Expected: []sql.Row{
-						{1, "hiabc"},
-						{2, "thereabc"},
-					},
+					Query: "SELECT * FROM test ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0045-select-*-from-test-order"},
 				},
 			},
 		},
@@ -540,9 +426,9 @@ $$ LANGUAGE plpgsql;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       "INSERT INTO test VALUES (1, 'hi'), (2, 'there');",
-					Skip:        true, // TODO: currently we'll just run until we run out of memory, need to abort before that
-					ExpectedErr: "stack depth limit exceeded",
+					Query: "INSERT INTO test VALUES (1, 'hi'), (2, 'there');",
+					Skip:  true, PostgresOracle: // TODO: currently we'll just run until we run out of memory, need to abort before that
+					ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0046-insert-into-test-values-1", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -561,28 +447,22 @@ $$ LANGUAGE plpgsql;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       "CREATE TRIGGER test_trigger BEFORE INSERT ON test FOR EACH ROW EXECUTE FUNCTION trigger_func();",
-					ExpectedErr: "already exists",
+					Query: "CREATE TRIGGER test_trigger BEFORE INSERT ON test FOR EACH ROW EXECUTE FUNCTION trigger_func();", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0047-create-trigger-test_trigger-before-insert", Compare: "sqlstate"},
 				},
 				{
-					Query:       "CREATE TRIGGER test_trigger2 BEFORE UPDATE ON test FOR EACH ROW EXECUTE FUNCTION trigger_func();",
-					ExpectedErr: "already exists",
+					Query: "CREATE TRIGGER test_trigger2 BEFORE UPDATE ON test FOR EACH ROW EXECUTE FUNCTION trigger_func();", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0048-create-trigger-test_trigger2-before-update", Compare: "sqlstate"},
 				},
 				{
-					Query:    "DROP TABLE test;",
-					Expected: []sql.Row{},
+					Query: "DROP TABLE test;", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0049-drop-table-test"},
 				},
 				{
-					Query:    "CREATE TABLE test (pk INT PRIMARY KEY, v1 TEXT);",
-					Expected: []sql.Row{},
+					Query: "CREATE TABLE test (pk INT PRIMARY KEY, v1 TEXT);", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0050-create-table-test-pk-int"},
 				},
 				{
-					Query:    "CREATE TRIGGER test_trigger BEFORE INSERT ON test FOR EACH ROW EXECUTE FUNCTION trigger_func();",
-					Expected: []sql.Row{},
+					Query: "CREATE TRIGGER test_trigger BEFORE INSERT ON test FOR EACH ROW EXECUTE FUNCTION trigger_func();", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0051-create-trigger-test_trigger-before-insert"},
 				},
 				{
-					Query:    "CREATE TRIGGER test_trigger2 BEFORE UPDATE ON test FOR EACH ROW EXECUTE FUNCTION trigger_func();",
-					Expected: []sql.Row{},
+					Query: "CREATE TRIGGER test_trigger2 BEFORE UPDATE ON test FOR EACH ROW EXECUTE FUNCTION trigger_func();", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0052-create-trigger-test_trigger2-before-update"},
 				},
 			},
 		},
@@ -603,42 +483,28 @@ $$ LANGUAGE plpgsql;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CREATE TRIGGER row_truncate BEFORE TRUNCATE ON test FOR EACH ROW EXECUTE FUNCTION truncate_trigger_func();`,
-					ExpectedErr: "TRUNCATE triggers must be FOR EACH STATEMENT",
+					Query: `CREATE TRIGGER row_truncate BEFORE TRUNCATE ON test FOR EACH ROW EXECUTE FUNCTION truncate_trigger_func();`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0053-create-trigger-row_truncate-before-truncate", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT tgname, tgtype::int
 						FROM pg_trigger
 						WHERE tgname IN ('before_truncate', 'after_truncate')
-						ORDER BY tgname;`,
-					Expected: []sql.Row{
-						{"after_truncate", 32},
-						{"before_truncate", 34},
-					},
+						ORDER BY tgname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0054-select-tgname-tgtype::int-from-pg_trigger"},
 				},
 				{
 					Query: `SELECT event_manipulation, action_timing, action_orientation
 						FROM information_schema.triggers
 						WHERE trigger_name IN ('before_truncate', 'after_truncate')
-						ORDER BY trigger_name;`,
-					Expected: []sql.Row{
-						{"TRUNCATE", "AFTER", "STATEMENT"},
-						{"TRUNCATE", "BEFORE", "STATEMENT"},
-					},
+						ORDER BY trigger_name;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0055-select-event_manipulation-action_timing-action_orientation-from"},
 				},
 				{
 					Query: `TRUNCATE test;`,
 				},
 				{
-					Query:    `SELECT * FROM test;`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM test;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0056-select-*-from-test"},
 				},
 				{
-					Query: `SELECT seq, entry, op, table_name FROM trigger_log ORDER BY seq;`,
-					Expected: []sql.Row{
-						{1, "BEFORE STATEMENT", "TRUNCATE", "test"},
-						{2, "AFTER STATEMENT", "TRUNCATE", "test"},
-					},
+					Query: `SELECT seq, entry, op, table_name FROM trigger_log ORDER BY seq;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0057-select-seq-entry-op-table_name"},
 				},
 			},
 		},
@@ -663,16 +529,10 @@ $$ LANGUAGE plpgsql;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "INSERT INTO test VALUES (0, 'hi'), (1, 'there'), (2, 'dude');",
-					Expected: []sql.Row{},
+					Query: "INSERT INTO test VALUES (0, 'hi'), (1, 'there'), (2, 'dude');", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0058-insert-into-test-values-0"},
 				},
 				{
-					Query: "SELECT * FROM test;",
-					Expected: []sql.Row{
-						{0, "0_hi"},
-						{1, "there"},
-						{2, "dude_2"},
-					},
+					Query: "SELECT * FROM test;", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0059-select-*-from-test"},
 				},
 			},
 		},
@@ -715,14 +575,9 @@ END; $$ LANGUAGE plpgsql;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `INSERT INTO test VALUES (1, 'apple', 3, 2.5), (2, 'banana', -5, -1.2);`,
-					Expected: []sql.Row{},
+					Query: `INSERT INTO test VALUES (1, 'apple', 3, 2.5), (2, 'banana', -5, -1.2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0061-insert-into-test-values-1"},
 				}, {
-					Query: `SELECT * FROM test;`,
-					Expected: []sql.Row{
-						{1, "apple", 3, 2.5},
-						{2, "banana", 5, -1.2},
-					},
+					Query: `SELECT * FROM test;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0062-select-*-from-test"},
 				},
 			},
 		},
@@ -763,8 +618,7 @@ $$ LANGUAGE plpgsql;`,
 				{
 					Query: `CREATE TRIGGER update_collection
 				AFTER INSERT OR DELETE ON public."CollectionItems"
-				FOR EACH ROW EXECUTE PROCEDURE update_collections();`,
-					Expected: []sql.Row{},
+				FOR EACH ROW EXECUTE PROCEDURE update_collections();`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0064-create-trigger-update_collection-after-insert"},
 				},
 				{
 					Query:    `INSERT INTO public."CollectionItems" (collection_id, track_id) VALUES ('550e8400-e29b-41d4-a716-446655440000', 101);`,
@@ -790,12 +644,10 @@ $$ LANGUAGE plpgsql;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "DROP TRIGGER test_trigger ON test;",
-					Expected: []sql.Row{},
+					Query: "DROP TRIGGER test_trigger ON test;", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0067-drop-trigger-test_trigger-on-test"},
 				},
 				{
-					Query:    "DROP TRIGGER IF EXISTS test_trigger ON test;",
-					Expected: []sql.Row{},
+					Query: "DROP TRIGGER IF EXISTS test_trigger ON test;", PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-testcreatetrigger-0068-drop-trigger-if-exists-test_trigger"},
 				},
 			},
 		},
@@ -831,15 +683,10 @@ func TestStatementTriggerTransitionTables(t *testing.T) {
 					Query: `INSERT INTO plain_target VALUES (1), (2);`,
 				},
 				{
-					Query: `SELECT phase, seen_count FROM plain_audit ORDER BY seq;`,
-					Expected: []sql.Row{
-						{"BEFORE:STATEMENT:INSERT", int64(1)},
-						{"AFTER:STATEMENT:INSERT", int64(1)},
-					},
+					Query: `SELECT phase, seen_count FROM plain_audit ORDER BY seq;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-teststatementtriggertransitiontables-0001-select-phase-seen_count-from-plain_audit"},
 				},
 				{
-					Query:    `SELECT count(*) FROM plain_target;`,
-					Expected: []sql.Row{{int64(2)}},
+					Query: `SELECT count(*) FROM plain_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-teststatementtriggertransitiontables-0002-select-count-*-from-plain_target"},
 				},
 			},
 		},
@@ -927,13 +774,7 @@ func TestStatementTriggerTransitionTables(t *testing.T) {
 				},
 				{
 					Query: `SELECT tg_name, tg_when, tg_level, tg_op, old_count, new_count, old_sum, new_sum
-						FROM statement_audit ORDER BY seq;`,
-					Expected: []sql.Row{
-						{"audit_insert", "AFTER", "STATEMENT", "INSERT", int64(0), int64(3), int64(0), int64(60)},
-						{"audit_update", "AFTER", "STATEMENT", "UPDATE", int64(2), int64(2), int64(30), int64(32)},
-						{"audit_update", "AFTER", "STATEMENT", "UPDATE", int64(0), int64(0), int64(0), int64(0)},
-						{"audit_delete", "AFTER", "STATEMENT", "DELETE", int64(1), int64(0), int64(30), int64(0)},
-					},
+						FROM statement_audit ORDER BY seq;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-teststatementtriggertransitiontables-0003-select-tg_name-tg_when-tg_level-tg_op"},
 				},
 			},
 		},
@@ -979,12 +820,7 @@ func TestStatementTriggerTransitionTables(t *testing.T) {
 					Query: `DELETE FROM self_query_target WHERE id = 3;`,
 				},
 				{
-					Query: `SELECT op, row_count, value_sum FROM self_query_audit ORDER BY seq;`,
-					Expected: []sql.Row{
-						{"INSERT", int64(3), int64(60)},
-						{"UPDATE", int64(3), int64(62)},
-						{"DELETE", int64(2), int64(32)},
-					},
+					Query: `SELECT op, row_count, value_sum FROM self_query_audit ORDER BY seq;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-teststatementtriggertransitiontables-0004-select-op-row_count-value_sum-from"},
 				},
 			},
 		},
@@ -1064,15 +900,7 @@ func TestStatementTriggerTransitionTables(t *testing.T) {
 				},
 				{
 					Query: `SELECT op, row_id, old_count, new_count, old_sum, new_sum
-						FROM row_transition_audit ORDER BY seq;`,
-					Expected: []sql.Row{
-						{"INSERT", 1, int64(0), int64(3), int64(0), int64(60)},
-						{"INSERT", 2, int64(0), int64(3), int64(0), int64(60)},
-						{"INSERT", 3, int64(0), int64(3), int64(0), int64(60)},
-						{"UPDATE", 1, int64(2), int64(2), int64(30), int64(32)},
-						{"UPDATE", 2, int64(2), int64(2), int64(30), int64(32)},
-						{"DELETE", 3, int64(1), int64(0), int64(30), int64(0)},
-					},
+						FROM row_transition_audit ORDER BY seq;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-test-teststatementtriggertransitiontables-0005-select-op-row_id-old_count-new_count"},
 				},
 			},
 		},

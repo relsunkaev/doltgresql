@@ -1,0 +1,181 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map functions_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres17/functions_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/postgres17/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres17/functions_test.go:TestPostgres17JsonTableRepro#0001",
+      "source": "testing/go/postgres17/functions_test.go:TestPostgres17JsonTableRepro",
+      "ordinal": 1,
+      "scriptName": "JSON_TABLE",
+      "oracle": "postgres",
+      "postgresId": "postgres17/functions-test-testpostgres17jsontablerepro-0001-select-*-from-json_table-[{",
+      "suggestedId": "postgres17/functions-test-testpostgres17jsontablerepro-0001-select-*-from-json_table-[{",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM JSON_TABLE('[{\"a\":1,\"b\":\"x\"},{\"a\":2}]'::jsonb, '$[*]' COLUMNS (a int PATH '$.a', b text PATH '$.b')) AS jt ORDER BY a;",
+      "querySha256": "8db169fc141224007d747e0555182745818983bd944b39be87f43917f8083c60",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "x"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres17/functions_test.go:TestPostgres17JsonTableRepro#0002",
+      "source": "testing/go/postgres17/functions_test.go:TestPostgres17JsonTableRepro",
+      "ordinal": 2,
+      "scriptName": "JSON_TABLE",
+      "oracle": "postgres",
+      "postgresId": "postgres17/functions-test-testpostgres17jsontablerepro-0002-select-*-from-json_table-{",
+      "suggestedId": "postgres17/functions-test-testpostgres17jsontablerepro-0002-select-*-from-json_table-{",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM JSON_TABLE('{\"items\":[{\"a\":1},{\"a\":2}]}'::jsonb, '$.items[*]' COLUMNS (n FOR ORDINALITY, a int PATH '$.a')) AS jt;",
+      "querySha256": "390fbc24dd5b80f6bd9c8b13a25f4957df3e3224b70d99d015e95f3496d46a31",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres17/functions_test.go:TestPostgres17JsonTableRepro#0003",
+      "source": "testing/go/postgres17/functions_test.go:TestPostgres17JsonTableRepro",
+      "ordinal": 3,
+      "scriptName": "JSON_TABLE",
+      "oracle": "postgres",
+      "postgresId": "postgres17/functions-test-testpostgres17jsontablerepro-0003-select-*-from-json_table-[{",
+      "suggestedId": "postgres17/functions-test-testpostgres17jsontablerepro-0003-select-*-from-json_table-[{",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM JSON_TABLE('[{\"a\":\"3\"},{\"b\":2}]'::jsonb, '$[*]' COLUMNS (a int)) AS jt;",
+      "querySha256": "72849411bafff1ec84271ab93c7dff8686f26383b571a2800a1fa4843daebdbb",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres17/functions_test.go:TestPostgres17JsonTableRepro#0004",
+      "source": "testing/go/postgres17/functions_test.go:TestPostgres17JsonTableRepro",
+      "ordinal": 4,
+      "scriptName": "JSON_TABLE",
+      "oracle": "postgres",
+      "postgresId": "postgres17/functions-test-testpostgres17jsontablerepro-0004-select-*-from-json_table-[1",
+      "suggestedId": "postgres17/functions-test-testpostgres17jsontablerepro-0004-select-*-from-json_table-[1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM JSON_TABLE('[1,2]'::jsonb, '$[*]' COLUMNS (v int PATH '$')) AS jt;",
+      "querySha256": "0e5e313aa459bb521b7322d8e8075ba80cca900401cad1d83097ab862438deff",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres17/functions_test.go:TestPostgres17JsonTableRepro#0005",
+      "source": "testing/go/postgres17/functions_test.go:TestPostgres17JsonTableRepro",
+      "ordinal": 5,
+      "scriptName": "JSON_TABLE",
+      "oracle": "postgres",
+      "postgresId": "postgres17/functions-test-testpostgres17jsontablerepro-0005-select-count-*-from-json_table",
+      "suggestedId": "postgres17/functions-test-testpostgres17jsontablerepro-0005-select-count-*-from-json_table",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) FROM JSON_TABLE(NULL::jsonb, '$[*]' COLUMNS (a int PATH '$.a')) AS jt;",
+      "querySha256": "a79e08e776066c027a72b659432048999dcb0be19863805b67cf36d3d9501bc7",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres17/functions_test.go:TestPostgres17JsonTableRepro#0006",
+      "source": "testing/go/postgres17/functions_test.go:TestPostgres17JsonTableRepro",
+      "ordinal": 6,
+      "scriptName": "JSON_TABLE",
+      "oracle": "postgres",
+      "postgresId": "postgres17/functions-test-testpostgres17jsontablerepro-0006-select-*-from-json_table-[{",
+      "suggestedId": "postgres17/functions-test-testpostgres17jsontablerepro-0006-select-*-from-json_table-[{",
+      "compare": "structural",
+      "expectedKind": "error",
+      "query": "SELECT * FROM JSON_TABLE('[{\"a\":\"bad\"}]'::jsonb, '$[*]' COLUMNS (a int PATH '$.a')) AS jt;",
+      "querySha256": "52698ab0e0c46248356030621605eac1c844244c6146953c4b0ec77437e91cfa",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

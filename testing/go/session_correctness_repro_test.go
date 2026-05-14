@@ -38,8 +38,7 @@ func TestDiscardAllRejectedInsideTransaction(t *testing.T) {
 					Query: `BEGIN;`,
 				},
 				{
-					Query:       `DISCARD ALL;`,
-					ExpectedErr: `DISCARD ALL cannot run inside a transaction block`,
+					Query: `DISCARD ALL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "session-correctness-repro-test-testdiscardallrejectedinsidetransaction-0001-discard-all", Compare: "sqlstate"},
 				},
 				{
 					Query: `ROLLBACK;`,

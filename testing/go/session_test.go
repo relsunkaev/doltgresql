@@ -16,10 +16,7 @@ func TestDiscard(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "select * from test",
-					Expected: []sql.Row{
-						{1},
-					},
+					Query: "select * from test", PostgresOracle: ScriptTestPostgresOracle{ID: "session-test-testdiscard-0001-select-*-from-test"},
 				},
 				{
 					Query:    "DISCARD ALL",

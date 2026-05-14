@@ -35,8 +35,7 @@ func TestCreateTableAsWithNoDataDoesNotEvaluateQuery(t *testing.T) {
 						WITH NO DATA;`,
 				},
 				{
-					Query:    `SELECT value FROM ctas_no_data_error;`,
-					Expected: []sql.Row{},
+					Query: `SELECT value FROM ctas_no_data_error;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-as-correctness-repro-test-testcreatetableaswithnodatadoesnotevaluatequery-0001-select-value-from-ctas_no_data_error"},
 				},
 			},
 		},
@@ -59,22 +58,22 @@ func TestCreateTableAsWithNoDataPreservesColumnSchema(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT id, label FROM ctas_no_data_schema;`,
-					Expected: []sql.Row{{int32(1), "hello"}},
+					Query: `SELECT id, label FROM ctas_no_data_schema;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-as-correctness-repro-test-testcreatetableaswithnodatapreservescolumnschema-0001-select-id-label-from-ctas_no_data_schema"},
 				},
 				{
-					Query:       `SELECT missing_col FROM ctas_no_data_schema;`,
-					ExpectedErr: `missing_col`,
+					Query: `SELECT missing_col FROM ctas_no_data_schema;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-as-correctness-repro-test-testcreatetableaswithnodatapreservescolumnschema-0002-select-missing_col-from-ctas_no_data_schema",
+
+						// TestCreateTableAsWithNoDataAcceptsUnionSource guards that WITH NO DATA
+						// works when the source query is a set operation rather than a bare SELECT,
+						// so the LIMIT 0 transform applied to suppress evaluation also threads
+						// through UNION/INTERSECT/EXCEPT.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateTableAsWithNoDataAcceptsUnionSource guards that WITH NO DATA
-// works when the source query is a set operation rather than a bare SELECT,
-// so the LIMIT 0 transform applied to suppress evaluation also threads
-// through UNION/INTERSECT/EXCEPT.
 func TestCreateTableAsWithNoDataAcceptsUnionSource(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -88,8 +87,7 @@ func TestCreateTableAsWithNoDataAcceptsUnionSource(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT value FROM ctas_no_data_union;`,
-					Expected: []sql.Row{},
+					Query: `SELECT value FROM ctas_no_data_union;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-as-correctness-repro-test-testcreatetableaswithnodataacceptsunionsource-0001-select-value-from-ctas_no_data_union"},
 				},
 			},
 		},
@@ -109,8 +107,7 @@ func TestCreateTableAsWithDataClauseRepro(t *testing.T) {
 						WITH DATA;`,
 				},
 				{
-					Query:    `SELECT value FROM ctas_with_data;`,
-					Expected: []sql.Row{{42}},
+					Query: `SELECT value FROM ctas_with_data;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-as-correctness-repro-test-testcreatetableaswithdataclauserepro-0001-select-value-from-ctas_with_data"},
 				},
 			},
 		},
@@ -133,8 +130,7 @@ func TestCreateTableAsIfNotExistsDoesNotEvaluateQueryRepro(t *testing.T) {
 						SELECT 1 / 0 AS value;`,
 				},
 				{
-					Query:    `SELECT value FROM ctas_if_not_exists_error;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT value FROM ctas_if_not_exists_error;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-as-correctness-repro-test-testcreatetableasifnotexistsdoesnotevaluatequeryrepro-0001-select-value-from-ctas_if_not_exists_error"},
 				},
 			},
 		},
@@ -161,11 +157,7 @@ func TestCreateTableAsDoesNotCopyDefaultsRepro(t *testing.T) {
 					Query: `INSERT INTO ctas_default_copy (id) VALUES (2);`,
 				},
 				{
-					Query: `SELECT id, label FROM ctas_default_copy ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, "source row"},
-						{2, nil},
-					},
+					Query: `SELECT id, label FROM ctas_default_copy ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-as-correctness-repro-test-testcreatetableasdoesnotcopydefaultsrepro-0001-select-id-label-from-ctas_default_copy"},
 				},
 			},
 		},
@@ -192,11 +184,7 @@ func TestCreateTableAsDoesNotCopyCheckConstraintsRepro(t *testing.T) {
 					Query: `INSERT INTO ctas_check_copy VALUES (2, -10);`,
 				},
 				{
-					Query: `SELECT id, amount FROM ctas_check_copy ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, 10},
-						{2, -10},
-					},
+					Query: `SELECT id, amount FROM ctas_check_copy ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-as-correctness-repro-test-testcreatetableasdoesnotcopycheckconstraintsrepro-0001-select-id-amount-from-ctas_check_copy"},
 				},
 			},
 		},
@@ -223,11 +211,7 @@ func TestCreateTableAsDoesNotCopyUniqueIndexesRepro(t *testing.T) {
 					Query: `INSERT INTO ctas_unique_copy VALUES (2, 7);`,
 				},
 				{
-					Query: `SELECT id, code FROM ctas_unique_copy ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, 7},
-						{2, 7},
-					},
+					Query: `SELECT id, code FROM ctas_unique_copy ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-as-correctness-repro-test-testcreatetableasdoesnotcopyuniqueindexesrepro-0001-select-id-code-from-ctas_unique_copy"},
 				},
 			},
 		},
@@ -254,14 +238,12 @@ func TestCreateTableAsPreservesDomainColumnTypesGuard(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `INSERT INTO ctas_domain_copy VALUES (2, -1);`,
-					ExpectedErr: `ctas_positive_domain_check`,
+					Query: `INSERT INTO ctas_domain_copy VALUES (2, -1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-as-correctness-repro-test-testcreatetableaspreservesdomaincolumntypesguard-0001-insert-into-ctas_domain_copy-values-2", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, amount
 						FROM ctas_domain_copy
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, 10}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-as-correctness-repro-test-testcreatetableaspreservesdomaincolumntypesguard-0002-select-id-amount-from-ctas_domain_copy"},
 				},
 			},
 		},
@@ -285,16 +267,14 @@ func TestCreateTableAsTextDomainTypmodMaterializesCoercedValueRepro(t *testing.T
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT v, length(v), c = 'ab '::CHARACTER(3), octet_length(c), pg_typeof(v)::text, pg_typeof(c)::text
-						FROM ctas_text_domain_typmod_items;`,
-					Expected: []sql.Row{{"abc", 3, true, 3, "varchar3_ctas_domain", "char3_ctas_domain"}},
+						FROM ctas_text_domain_typmod_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-as-correctness-repro-test-testcreatetableastextdomaintypmodmaterializescoercedvaluerepro-0001-select-v-length-v-c"},
 				},
 				{
 					Query: `SELECT format_type(atttypid, atttypmod)
 						FROM pg_attribute
 						WHERE attrelid = 'ctas_text_domain_typmod_items'::regclass
 							AND attnum > 0
-						ORDER BY attnum;`,
-					Expected: []sql.Row{{"varchar3_ctas_domain"}, {"char3_ctas_domain"}},
+						ORDER BY attnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-as-correctness-repro-test-testcreatetableastextdomaintypmodmaterializescoercedvaluerepro-0002-select-format_type-atttypid-atttypmod-from"},
 				},
 			},
 		},
@@ -315,15 +295,13 @@ func TestCreateTableAsTimetzTypmodMaterializesRoundedValueRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT tz::text
-						FROM ctas_timetz_typmod_items;`,
-					Expected: []sql.Row{{"21:43:57+00"}},
+						FROM ctas_timetz_typmod_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-as-correctness-repro-test-testcreatetableastimetztypmodmaterializesroundedvaluerepro-0001-select-tz::text-from-ctas_timetz_typmod_items"},
 				},
 				{
 					Query: `SELECT format_type(a.atttypid, a.atttypmod)
 						FROM pg_catalog.pg_attribute a
 						WHERE a.attrelid = 'ctas_timetz_typmod_items'::regclass
-							AND a.attname = 'tz';`,
-					Expected: []sql.Row{{"time(0) with time zone"}},
+							AND a.attname = 'tz';`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-as-correctness-repro-test-testcreatetableastimetztypmodmaterializesroundedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from"},
 				},
 			},
 		},
@@ -344,15 +322,13 @@ func TestCreateTableAsTimeTypmodMaterializesRoundedValueGuard(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT t::text
-						FROM ctas_time_typmod_items;`,
-					Expected: []sql.Row{{"21:43:57"}},
+						FROM ctas_time_typmod_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-as-correctness-repro-test-testcreatetableastimetypmodmaterializesroundedvalueguard-0001-select-t::text-from-ctas_time_typmod_items"},
 				},
 				{
 					Query: `SELECT format_type(a.atttypid, a.atttypmod)
 						FROM pg_catalog.pg_attribute a
 						WHERE a.attrelid = 'ctas_time_typmod_items'::regclass
-							AND a.attname = 't';`,
-					Expected: []sql.Row{{"time(0) without time zone"}},
+							AND a.attname = 't';`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-as-correctness-repro-test-testcreatetableastimetypmodmaterializesroundedvalueguard-0002-select-format_type-a.atttypid-a.atttypmod-from"},
 				},
 			},
 		},
@@ -373,15 +349,13 @@ func TestCreateTableAsNumericTypmodMaterializesRoundedValueGuard(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT amount::text
-						FROM ctas_numeric_typmod_items;`,
-					Expected: []sql.Row{{"123.46"}},
+						FROM ctas_numeric_typmod_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-as-correctness-repro-test-testcreatetableasnumerictypmodmaterializesroundedvalueguard-0001-select-amount::text-from-ctas_numeric_typmod_items"},
 				},
 				{
 					Query: `SELECT format_type(a.atttypid, a.atttypmod)
 						FROM pg_catalog.pg_attribute a
 						WHERE a.attrelid = 'ctas_numeric_typmod_items'::regclass
-							AND a.attname = 'amount';`,
-					Expected: []sql.Row{{"numeric(5,2)"}},
+							AND a.attname = 'amount';`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-as-correctness-repro-test-testcreatetableasnumerictypmodmaterializesroundedvalueguard-0002-select-format_type-a.atttypid-a.atttypmod-from"},
 				},
 			},
 		},
@@ -402,15 +376,13 @@ func TestCreateTableAsTimestampTypmodMaterializesRoundedValueRepro(t *testing.T)
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT ts::text
-						FROM ctas_timestamp_typmod_items;`,
-					Expected: []sql.Row{{"2021-09-15 21:43:57"}},
+						FROM ctas_timestamp_typmod_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-as-correctness-repro-test-testcreatetableastimestamptypmodmaterializesroundedvaluerepro-0001-select-ts::text-from-ctas_timestamp_typmod_items"},
 				},
 				{
 					Query: `SELECT format_type(a.atttypid, a.atttypmod)
 						FROM pg_catalog.pg_attribute a
 						WHERE a.attrelid = 'ctas_timestamp_typmod_items'::regclass
-							AND a.attname = 'ts';`,
-					Expected: []sql.Row{{"timestamp(0) without time zone"}},
+							AND a.attname = 'ts';`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-as-correctness-repro-test-testcreatetableastimestamptypmodmaterializesroundedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from"},
 				},
 			},
 		},
@@ -432,15 +404,13 @@ func TestCreateTableAsTimestamptzTypmodMaterializesRoundedValueRepro(t *testing.
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT ts::text
-						FROM ctas_timestamptz_typmod_items;`,
-					Expected: []sql.Row{{"2021-09-15 21:43:57+00"}},
+						FROM ctas_timestamptz_typmod_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-as-correctness-repro-test-testcreatetableastimestamptztypmodmaterializesroundedvaluerepro-0001-select-ts::text-from-ctas_timestamptz_typmod_items"},
 				},
 				{
 					Query: `SELECT format_type(a.atttypid, a.atttypmod)
 						FROM pg_catalog.pg_attribute a
 						WHERE a.attrelid = 'ctas_timestamptz_typmod_items'::regclass
-							AND a.attname = 'ts';`,
-					Expected: []sql.Row{{"timestamp(0) with time zone"}},
+							AND a.attname = 'ts';`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-as-correctness-repro-test-testcreatetableastimestamptztypmodmaterializesroundedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from"},
 				},
 			},
 		},
@@ -461,15 +431,13 @@ func TestCreateTableAsIntervalTypmodMaterializesRestrictedValueRepro(t *testing.
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT ds::text
-						FROM ctas_interval_typmod_items;`,
-					Expected: []sql.Row{{"3 days 04:05:07"}},
+						FROM ctas_interval_typmod_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-as-correctness-repro-test-testcreatetableasintervaltypmodmaterializesrestrictedvaluerepro-0001-select-ds::text-from-ctas_interval_typmod_items"},
 				},
 				{
 					Query: `SELECT format_type(a.atttypid, a.atttypmod)
 						FROM pg_catalog.pg_attribute a
 						WHERE a.attrelid = 'ctas_interval_typmod_items'::regclass
-							AND a.attname = 'ds';`,
-					Expected: []sql.Row{{"interval day to second(0)"}},
+							AND a.attname = 'ds';`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-as-correctness-repro-test-testcreatetableasintervaltypmodmaterializesrestrictedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from"},
 				},
 			},
 		},
@@ -490,15 +458,13 @@ func TestCreateTableAsVarcharTypmodMaterializesTruncatedValueGuard(t *testing.T)
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT label
-						FROM ctas_varchar_typmod_items;`,
-					Expected: []sql.Row{{"abc"}},
+						FROM ctas_varchar_typmod_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-as-correctness-repro-test-testcreatetableasvarchartypmodmaterializestruncatedvalueguard-0001-select-label-from-ctas_varchar_typmod_items"},
 				},
 				{
 					Query: `SELECT format_type(a.atttypid, a.atttypmod)
 						FROM pg_catalog.pg_attribute a
 						WHERE a.attrelid = 'ctas_varchar_typmod_items'::regclass
-							AND a.attname = 'label';`,
-					Expected: []sql.Row{{"character varying(3)"}},
+							AND a.attname = 'label';`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-as-correctness-repro-test-testcreatetableasvarchartypmodmaterializestruncatedvalueguard-0002-select-format_type-a.atttypid-a.atttypmod-from"},
 				},
 			},
 		},
@@ -519,15 +485,13 @@ func TestCreateTableAsCharacterTypmodMaterializesPaddedValueRepro(t *testing.T) 
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT octet_length(label)
-						FROM ctas_character_typmod_items;`,
-					Expected: []sql.Row{{3}},
+						FROM ctas_character_typmod_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-as-correctness-repro-test-testcreatetableascharactertypmodmaterializespaddedvaluerepro-0001-select-octet_length-label-from-ctas_character_typmod_items"},
 				},
 				{
 					Query: `SELECT format_type(a.atttypid, a.atttypmod)
 						FROM pg_catalog.pg_attribute a
 						WHERE a.attrelid = 'ctas_character_typmod_items'::regclass
-							AND a.attname = 'label';`,
-					Expected: []sql.Row{{"character(3)"}},
+							AND a.attname = 'label';`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-as-correctness-repro-test-testcreatetableascharactertypmodmaterializespaddedvaluerepro-0002-select-format_type-a.atttypid-a.atttypmod-from"},
 				},
 			},
 		},

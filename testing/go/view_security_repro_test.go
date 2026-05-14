@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestSecurityInvokerViewRequiresBaseTablePrivilegesGuard covers a sensitive
@@ -37,19 +35,21 @@ func TestSecurityInvokerViewRequiresBaseTablePrivilegesGuard(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT id, secret FROM invoker_view ORDER BY id;`,
-					ExpectedErr: `denied`,
-					Username:    `view_reader`,
-					Password:    `reader`,
+					Query: `SELECT id, secret FROM invoker_view ORDER BY id;`,
+
+					Username: `view_reader`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestAlterViewSecurityInvokerRequiresBaseTablePrivilegesRepro verifies that
+						// ALTER VIEW SET (security_invoker = true) changes the view privilege boundary
+						// for future reads.
+						ID: "view-security-repro-test-testsecurityinvokerviewrequiresbasetableprivilegesguard-0001-select-id-secret-from-invoker_view", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterViewSecurityInvokerRequiresBaseTablePrivilegesRepro verifies that
-// ALTER VIEW SET (security_invoker = true) changes the view privilege boundary
-// for future reads.
 func TestAlterViewSecurityInvokerRequiresBaseTablePrivilegesRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -69,19 +69,21 @@ func TestAlterViewSecurityInvokerRequiresBaseTablePrivilegesRepro(t *testing.T) 
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT id, secret FROM alter_invoker_view ORDER BY id;`,
-					ExpectedErr: `denied`,
-					Username:    `alter_view_reader`,
-					Password:    `reader`,
+					Query: `SELECT id, secret FROM alter_invoker_view ORDER BY id;`,
+
+					Username: `alter_view_reader`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestDefaultViewGrantUsesViewOwnerPrivilegesRepro reproduces a view privilege
+						// bug: PostgreSQL's default security-definer view boundary lets a grantee read
+						// through the view without direct SELECT on the base table.
+						ID: "view-security-repro-test-testalterviewsecurityinvokerrequiresbasetableprivilegesrepro-0001-select-id-secret-from-alter_invoker_view", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDefaultViewGrantUsesViewOwnerPrivilegesRepro reproduces a view privilege
-// bug: PostgreSQL's default security-definer view boundary lets a grantee read
-// through the view without direct SELECT on the base table.
 func TestDefaultViewGrantUsesViewOwnerPrivilegesRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -102,18 +104,20 @@ func TestDefaultViewGrantUsesViewOwnerPrivilegesRepro(t *testing.T) {
 				{
 					Query: `SELECT id, label
 						FROM default_view_grant_reader;`,
-					Expected: []sql.Row{{1, "visible"}},
+
 					Username: `default_view_reader`,
-					Password: `reader`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCreateOrReplaceViewPreservesGrantedPrivilegesGuard covers view ACL
+						// persistence: PostgreSQL keeps existing view grants when CREATE OR REPLACE
+						// VIEW updates a compatible view definition.
+						ID: "view-security-repro-test-testdefaultviewgrantusesviewownerprivilegesrepro-0001-select-id-label-from-default_view_grant_reader"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateOrReplaceViewPreservesGrantedPrivilegesGuard covers view ACL
-// persistence: PostgreSQL keeps existing view grants when CREATE OR REPLACE
-// VIEW updates a compatible view definition.
 func TestCreateOrReplaceViewPreservesGrantedPrivilegesGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -137,9 +141,9 @@ func TestCreateOrReplaceViewPreservesGrantedPrivilegesGuard(t *testing.T) {
 				{
 					Query: `SELECT id, label
 						FROM replace_view_acl_reader;`,
-					Expected: []sql.Row{{2, "new"}},
+
 					Username: `replace_view_acl_user`,
-					Password: `reader`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-security-repro-test-testcreateorreplaceviewpreservesgrantedprivilegesguard-0001-select-id-label-from-replace_view_acl_reader"},
 				},
 			},
 		},

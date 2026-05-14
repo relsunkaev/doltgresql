@@ -1,5 +1,5 @@
 {
-  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map query_correctness_repro_test.go --oracle-test-name TestVarcharColumnComparedToBlankPaddedCharRepro,TestVarcharComparedToBlankPaddedCharRepro --force-postgres-oracle",
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map query_correctness_repro_test.go --force-postgres-oracle",
   "sourceFile": "testing/go/query_correctness_repro_test.go",
   "defaultOracle": "internal",
   "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
@@ -13,6 +13,1264 @@
     "ExpectedNotices"
   ],
   "assertions": [
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestValuesQuotedCaseDistinctAggregateColumnsRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestValuesQuotedCaseDistinctAggregateColumnsRepro",
+      "ordinal": 1,
+      "scriptName": "quoted VALUES aliases remain case-distinct inside aggregates",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testvaluesquotedcasedistinctaggregatecolumnsrepro-0001-select-sum-val-sum-val",
+      "suggestedId": "query-correctness-repro-test-testvaluesquotedcasedistinctaggregatecolumnsrepro-0001-select-sum-val-sum-val",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT SUM(\"Val\"), SUM(\"val\")\n\t\t\t\t\t\tFROM (VALUES(1, 10), (2.5, 20)) v(\"Val\", \"val\");",
+      "querySha256": "a9e9be42cfbb6720cb121c5cf2ca144e6287b44ac139d9b3e47404c9c30ecd95",
+      "expectedRows": [
+        [
+          {
+            "value": "3.5"
+          },
+          {
+            "value": "30"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestValuesQuotedCaseDistinctAggregateColumnsRepro#0002",
+      "source": "testing/go/query_correctness_repro_test.go:TestValuesQuotedCaseDistinctAggregateColumnsRepro",
+      "ordinal": 2,
+      "scriptName": "quoted VALUES aliases remain case-distinct inside aggregates",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testvaluesquotedcasedistinctaggregatecolumnsrepro-0002-select-sum-v.-val-sum",
+      "suggestedId": "query-correctness-repro-test-testvaluesquotedcasedistinctaggregatecolumnsrepro-0002-select-sum-v.-val-sum",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT SUM(v.\"Val\"), SUM(v.\"val\")\n\t\t\t\t\t\tFROM (VALUES(1, 10), (2.5, 20)) v(\"Val\", \"val\");",
+      "querySha256": "4f757f77dbe6c345157f3d59b2635bc07e390a78ec07118d09963182206af67a",
+      "expectedRows": [
+        [
+          {
+            "value": "3.5"
+          },
+          {
+            "value": "30"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestWholeRowReferenceAllowsDuplicateFieldNamesRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestWholeRowReferenceAllowsDuplicateFieldNamesRepro",
+      "ordinal": 1,
+      "scriptName": "whole-row references allow duplicate field names",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testwholerowreferenceallowsduplicatefieldnamesrepro-0001-select-r::text-row_to_json-r-::text",
+      "suggestedId": "query-correctness-repro-test-testwholerowreferenceallowsduplicatefieldnamesrepro-0001-select-r::text-row_to_json-r-::text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT r::text,\n\t\t\t\t\t\trow_to_json(r)::text\n\t\t\t\t\t\tFROM (SELECT 1 AS a, 2 AS a) AS r;",
+      "querySha256": "aa05b6bfd23f0f9663e3bc1e79e6b75d72d85336a34e40fea651d190c6a8be64",
+      "expectedRows": [
+        [
+          {
+            "value": "(1,2)"
+          },
+          {
+            "value": "{\"a\":1,\"a\":2}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestNumericPowerFractionalExponentRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestNumericPowerFractionalExponentRepro",
+      "ordinal": 1,
+      "scriptName": "numeric power supports fractional exponents",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testnumericpowerfractionalexponentrepro-0001-select-power-2::numeric-0.5::numeric-::float8",
+      "suggestedId": "query-correctness-repro-test-testnumericpowerfractionalexponentrepro-0001-select-power-2::numeric-0.5::numeric-::float8",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT power(2::numeric, 0.5::numeric)::float8;",
+      "querySha256": "6cb5c29ae7edf2d63d40ee93dfab82d8a9e6c6336dba292808640f850497b0e2",
+      "expectedRows": [
+        [
+          {
+            "value": "1.414213562373095"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestSqrtNumericMatchesPostgresPrecisionRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestSqrtNumericMatchesPostgresPrecisionRepro",
+      "ordinal": 1,
+      "scriptName": "numeric sqrt preserves PostgreSQL precision",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testsqrtnumericmatchespostgresprecisionrepro-0001-select-sqrt-2::numeric-::text",
+      "suggestedId": "query-correctness-repro-test-testsqrtnumericmatchespostgresprecisionrepro-0001-select-sqrt-2::numeric-::text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT sqrt(2::numeric)::text;",
+      "querySha256": "5485ea0e5c5edf3d99c15d7071556a0844cb2444b0450339c8369c2c311ff3c8",
+      "expectedRows": [
+        [
+          {
+            "value": "1.414213562373095"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestSqrtNumericMatchesPostgresPrecisionRepro#0002",
+      "source": "testing/go/query_correctness_repro_test.go:TestSqrtNumericMatchesPostgresPrecisionRepro",
+      "ordinal": 2,
+      "scriptName": "numeric sqrt preserves PostgreSQL precision",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testsqrtnumericmatchespostgresprecisionrepro-0002-select-sqrt-::text",
+      "suggestedId": "query-correctness-repro-test-testsqrtnumericmatchespostgresprecisionrepro-0002-select-sqrt-::text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT sqrt(10000000000000000000000000000000000000000000000000000000000000000::numeric)::text;",
+      "querySha256": "674c35851e3173bf19f06e2419e9356bbfba529a7e9b7f1aa34b94818fbf4ebf",
+      "expectedRows": [
+        [
+          {
+            "value": "100000000000000000000000000000000"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestNumericLogarithmsPreserveSmallDeltasRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestNumericLogarithmsPreserveSmallDeltasRepro",
+      "ordinal": 1,
+      "scriptName": "numeric logarithms preserve small deltas",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testnumericlogarithmspreservesmalldeltasrepro-0001-select-ln-1.0000000000000000000001::numeric-::text",
+      "suggestedId": "query-correctness-repro-test-testnumericlogarithmspreservesmalldeltasrepro-0001-select-ln-1.0000000000000000000001::numeric-::text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ln(1.0000000000000000000001::numeric)::text;",
+      "querySha256": "971b0b0459a974c70053af71506ec6acfe47aecfbd7463fea307486b2285a4c9",
+      "expectedRows": [
+        [
+          {
+            "value": "0.00000000000000000000010000000000000000"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestNumericLogarithmsPreserveSmallDeltasRepro#0002",
+      "source": "testing/go/query_correctness_repro_test.go:TestNumericLogarithmsPreserveSmallDeltasRepro",
+      "ordinal": 2,
+      "scriptName": "numeric logarithms preserve small deltas",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testnumericlogarithmspreservesmalldeltasrepro-0002-select-log-1.0000000000000000000001::numeric-::text",
+      "suggestedId": "query-correctness-repro-test-testnumericlogarithmspreservesmalldeltasrepro-0002-select-log-1.0000000000000000000001::numeric-::text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT log(1.0000000000000000000001::numeric)::text;",
+      "querySha256": "eb487b5e8dbffa9d446d7c53ce97420134c37be630728a5672fa9ec95188a62f",
+      "expectedRows": [
+        [
+          {
+            "value": "0.00000000000000000000004342944819032518"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestNumericLogarithmsPreserveSmallDeltasRepro#0003",
+      "source": "testing/go/query_correctness_repro_test.go:TestNumericLogarithmsPreserveSmallDeltasRepro",
+      "ordinal": 3,
+      "scriptName": "numeric logarithms preserve small deltas",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testnumericlogarithmspreservesmalldeltasrepro-0003-select-log-1.0000000000000000000001::numeric-1.0000000000000000000003::numeric-::text",
+      "suggestedId": "query-correctness-repro-test-testnumericlogarithmspreservesmalldeltasrepro-0003-select-log-1.0000000000000000000001::numeric-1.0000000000000000000003::numeric-::text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT log(1.0000000000000000000001::numeric, 1.0000000000000000000003::numeric)::text;",
+      "querySha256": "fad97a143d7772cbc3d91b632cf04813b5d30d0b0f3695773232ec559d91459e",
+      "expectedRows": [
+        [
+          {
+            "value": "2.9999999999999999999997"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestWidthBucketReversedBoundsUnderflowGuard#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestWidthBucketReversedBoundsUnderflowGuard",
+      "ordinal": 1,
+      "scriptName": "width_bucket reversed bounds underflow",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testwidthbucketreversedboundsunderflowguard-0001-select-width_bucket-1-::float8-10::float8",
+      "suggestedId": "query-correctness-repro-test-testwidthbucketreversedboundsunderflowguard-0001-select-width_bucket-1-::float8-10::float8",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT width_bucket((-1)::float8, 10::float8, 0::float8, 5)::text;",
+      "querySha256": "4cb8ea175be89dd522b7e733ddd2edef46050a1ae3aa6ad2540b00c957498291",
+      "expectedRows": [
+        [
+          {
+            "value": "6"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestWidthBucketReversedBoundsUnderflowGuard#0002",
+      "source": "testing/go/query_correctness_repro_test.go:TestWidthBucketReversedBoundsUnderflowGuard",
+      "ordinal": 2,
+      "scriptName": "width_bucket reversed bounds underflow",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testwidthbucketreversedboundsunderflowguard-0002-select-width_bucket-1-::numeric-10::numeric",
+      "suggestedId": "query-correctness-repro-test-testwidthbucketreversedboundsunderflowguard-0002-select-width_bucket-1-::numeric-10::numeric",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT width_bucket((-1)::numeric, 10::numeric, 0::numeric, 5)::text;",
+      "querySha256": "7a391e676ad3b0b7926b561c09064a7545d0b186a9e10e40894d3cebd1acabee",
+      "expectedRows": [
+        [
+          {
+            "value": "6"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestCaseExpressionShortCircuitsRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestCaseExpressionShortCircuitsRepro",
+      "ordinal": 1,
+      "scriptName": "CASE expression short-circuits unselected branches",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testcaseexpressionshortcircuitsrepro-0001-select-case-when-id-=",
+      "suggestedId": "query-correctness-repro-test-testcaseexpressionshortcircuitsrepro-0001-select-case-when-id-=",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT CASE\n\t\t\t\t\t\t\tWHEN id = 1 THEN 42\n\t\t\t\t\t\t\tELSE 1 / (id - id)\n\t\t\t\t\t\tEND\n\t\t\t\t\t\tFROM case_short_circuit_items;",
+      "querySha256": "8eee34b57d763789401b06f04497822a90de6d78d915ece180168715b622caf2",
+      "expectedRows": [
+        [
+          {
+            "value": "42"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestCoalesceShortCircuitsRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestCoalesceShortCircuitsRepro",
+      "ordinal": 1,
+      "scriptName": "COALESCE short-circuits after first non-null argument",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testcoalesceshortcircuitsrepro-0001-select-coalesce-value-1-/",
+      "suggestedId": "query-correctness-repro-test-testcoalesceshortcircuitsrepro-0001-select-coalesce-value-1-/",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COALESCE(value, 1 / (id - id))\n\t\t\t\t\t\tFROM coalesce_short_circuit_items;",
+      "querySha256": "7c1c0edc6bf5f0b977fe34b38879a2dd9f3a1b3eecbd01e91b6501157ece49af",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestNumericToIntegerCastRoundsRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestNumericToIntegerCastRoundsRepro",
+      "ordinal": 1,
+      "scriptName": "numeric to int4 casts round instead of truncate",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testnumerictointegercastroundsrepro-0001-select-37.89::int4-37.89-::int4",
+      "suggestedId": "query-correctness-repro-test-testnumerictointegercastroundsrepro-0001-select-37.89::int4-37.89-::int4",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 37.89::int4, (-37.89)::int4;",
+      "querySha256": "e37d8c41ae40fb862e79404fb8c8377a109011ff6d828bc8af7fe54ed7a798fe",
+      "expectedRows": [
+        [
+          {
+            "value": "38"
+          },
+          {
+            "value": "-38"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestArrayToStringUsesRoundedIntegerCastsRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestArrayToStringUsesRoundedIntegerCastsRepro",
+      "ordinal": 1,
+      "scriptName": "array element integer casts round numeric inputs",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testarraytostringusesroundedintegercastsrepro-0001-select-array_to_string-array[37.89::int4-1.2::int4]",
+      "suggestedId": "query-correctness-repro-test-testarraytostringusesroundedintegercastsrepro-0001-select-array_to_string-array[37.89::int4-1.2::int4]",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT array_to_string(ARRAY[37.89::int4, 1.2::int4], '_');",
+      "querySha256": "1d28714080f3db2791f8f76c92c70a9869635e45e7dff2c884a335edc5d60479",
+      "expectedRows": [
+        [
+          {
+            "value": "38_1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestByteaArrayCastToTextUsesPostgresEscapingRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestByteaArrayCastToTextUsesPostgresEscapingRepro",
+      "ordinal": 1,
+      "scriptName": "bytea array cast to text array uses PostgreSQL escaping",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testbyteaarraycasttotextusespostgresescapingrepro-0001-select-{-\\x68656c6c6f-\\x776f726c64-\\x6578616d706c65",
+      "suggestedId": "query-correctness-repro-test-testbyteaarraycasttotextusespostgresescapingrepro-0001-select-{-\\x68656c6c6f-\\x776f726c64-\\x6578616d706c65",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT '{\"\\x68656c6c6f\", \"\\x776f726c64\", \"\\x6578616d706c65\"}'::bytea[]::text[];",
+      "querySha256": "d77f84bfaae79668be4629266600b9dd877391363c0424f02fea45c89bf2187d",
+      "expectedRows": [
+        [
+          {
+            "value": "{\\x7836383635366336633666,\\x7837373666373236633634,\\x783635373836313664373036633635}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestByteaArrayCastToTextUsesPostgresEscapingRepro#0002",
+      "source": "testing/go/query_correctness_repro_test.go:TestByteaArrayCastToTextUsesPostgresEscapingRepro",
+      "ordinal": 2,
+      "scriptName": "bytea array cast to text array uses PostgreSQL escaping",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testbyteaarraycasttotextusespostgresescapingrepro-0002-select-{-\\\\x68656c6c6f-\\\\x776f726c64-\\\\x6578616d706c65",
+      "suggestedId": "query-correctness-repro-test-testbyteaarraycasttotextusespostgresescapingrepro-0002-select-{-\\\\x68656c6c6f-\\\\x776f726c64-\\\\x6578616d706c65",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT '{\"\\\\x68656c6c6f\", \"\\\\x776f726c64\", \"\\\\x6578616d706c65\"}'::bytea[]::text[];",
+      "querySha256": "84da9c4184dad41ef7ec38daafc0c13081655fc2c302a153529afa08fa17abd1",
+      "expectedRows": [
+        [
+          {
+            "value": "{\\x68656c6c6f,\\x776f726c64,\\x6578616d706c65}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestArrayAggOverArrayColumnReturnsHigherDimensionalArrayRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestArrayAggOverArrayColumnReturnsHigherDimensionalArrayRepro",
+      "ordinal": 1,
+      "scriptName": "array_agg over array input returns higher-dimensional array",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testarrayaggoverarraycolumnreturnshigherdimensionalarrayrepro-0001-select-array_agg-vals-from-array_agg_array_items",
+      "suggestedId": "query-correctness-repro-test-testarrayaggoverarraycolumnreturnshigherdimensionalarrayrepro-0001-select-array_agg-vals-from-array_agg_array_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT array_agg(vals)\n\t\t\t\t\t\tFROM array_agg_array_items\n\t\t\t\t\t\tORDER BY min(id);",
+      "querySha256": "153dd9485e4adf3edc031c7506a0b2ce9cc659428e075e317444903fab38ea62",
+      "expectedRows": [
+        [
+          {
+            "value": "{1,2,3,4,5,6}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestIntegerPrimaryKeyComparedToFractionalFloatRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestIntegerPrimaryKeyComparedToFractionalFloatRepro",
+      "ordinal": 1,
+      "scriptName": "integer primary key comparison with fractional float literal",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testintegerprimarykeycomparedtofractionalfloatrepro-0001-select-i-from-int_float_predicate_items-where",
+      "suggestedId": "query-correctness-repro-test-testintegerprimarykeycomparedtofractionalfloatrepro-0001-select-i-from-int_float_predicate_items-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT i\n\t\t\t\t\t\tFROM int_float_predicate_items\n\t\t\t\t\t\tWHERE i > 0.1 OR i >= 0.1\n\t\t\t\t\t\tORDER BY i;",
+      "querySha256": "85443f332b220a94dc20a763f39709aa15ab60c8003e666e47979177e5b13368",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestIntegerPrimaryKeyComparedToFractionalFloatRepro#0002",
+      "source": "testing/go/query_correctness_repro_test.go:TestIntegerPrimaryKeyComparedToFractionalFloatRepro",
+      "ordinal": 2,
+      "scriptName": "integer primary key comparison with fractional float literal",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testintegerprimarykeycomparedtofractionalfloatrepro-0002-select-i-from-int_float_predicate_items-where",
+      "suggestedId": "query-correctness-repro-test-testintegerprimarykeycomparedtofractionalfloatrepro-0002-select-i-from-int_float_predicate_items-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT i\n\t\t\t\t\t\tFROM int_float_predicate_items\n\t\t\t\t\t\tWHERE i < 0.1\n\t\t\t\t\t\tORDER BY i;",
+      "querySha256": "54e3a6e721300a0b065b66dc01209bf1c50df4614015eae1b218b4e9296cb146",
+      "expectedRows": [
+        [
+          {
+            "value": "-1"
+          }
+        ],
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestFloatInListMatchesExplicitFloatCastRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestFloatInListMatchesExplicitFloatCastRepro",
+      "ordinal": 1,
+      "scriptName": "float IN-list comparison with explicit float cast",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testfloatinlistmatchesexplicitfloatcastrepro-0001-select-count-*-from-float_in_list_items",
+      "suggestedId": "query-correctness-repro-test-testfloatinlistmatchesexplicitfloatcastrepro-0001-select-count-*-from-float_in_list_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM float_in_list_items\n\t\t\t\t\t\tWHERE f IN (NULL, CAST(0.8 AS FLOAT));",
+      "querySha256": "c1ce25f8ed674dab02d8188bb175c9057313b2c4ac24ad022deb9454c20351fe",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestIntersectAllPreservesDuplicateCountsRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestIntersectAllPreservesDuplicateCountsRepro",
+      "ordinal": 1,
+      "scriptName": "INTERSECT ALL preserves duplicate counts",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testintersectallpreservesduplicatecountsrepro-0001-select-x-from-values-1",
+      "suggestedId": "query-correctness-repro-test-testintersectallpreservesduplicatecountsrepro-0001-select-x-from-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT x FROM (VALUES (1), (1), (2), (3)) AS lhs(x)\n\t\t\t\t\t\tINTERSECT ALL\n\t\t\t\t\t\tSELECT x FROM (VALUES (1), (1), (1), (3), (4)) AS rhs(x)\n\t\t\t\t\t\tORDER BY x;",
+      "querySha256": "f19632db70aca5901f25b990f2ec35802df8c3ca7f4ed1c62b830e08b0dc729c",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestExceptAllPreservesDuplicateCountsRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestExceptAllPreservesDuplicateCountsRepro",
+      "ordinal": 1,
+      "scriptName": "EXCEPT ALL preserves duplicate counts",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testexceptallpreservesduplicatecountsrepro-0001-select-x-from-values-1",
+      "suggestedId": "query-correctness-repro-test-testexceptallpreservesduplicatecountsrepro-0001-select-x-from-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT x FROM (VALUES (1), (1), (1), (2), (3)) AS lhs(x)\n\t\t\t\t\t\tEXCEPT ALL\n\t\t\t\t\t\tSELECT x FROM (VALUES (1), (3), (4)) AS rhs(x)\n\t\t\t\t\t\tORDER BY x;",
+      "querySha256": "1622a5c6754157973e8f76c0c0900e199ee5e0cf6538e9a928d515529d094b1c",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestInSubqueryReturnsBooleanForEmptyResultRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestInSubqueryReturnsBooleanForEmptyResultRepro",
+      "ordinal": 1,
+      "scriptName": "IN subquery returns boolean false for empty result",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testinsubqueryreturnsbooleanforemptyresultrepro-0001-select-1-in-select-x",
+      "suggestedId": "query-correctness-repro-test-testinsubqueryreturnsbooleanforemptyresultrepro-0001-select-1-in-select-x",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 1 IN (SELECT x + y FROM in_subquery_left, in_subquery_right);",
+      "querySha256": "90ed0bf4e165257cc2b1ad7e3d6ebdb94ad8208d19a94a5144fdd527c16e5bb3",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestAnySubqueryRejectsMultipleColumnsRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestAnySubqueryRejectsMultipleColumnsRepro",
+      "ordinal": 1,
+      "scriptName": "ANY subquery rejects multiple columns",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testanysubqueryrejectsmultiplecolumnsrepro-0001-select-1-=-any-select",
+      "suggestedId": "query-correctness-repro-test-testanysubqueryrejectsmultiplecolumnsrepro-0001-select-1-=-any-select",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "SELECT 1 = ANY (SELECT 1, 2);",
+      "querySha256": "4606cc8a5409fea5d307949be8e4057c8f9c71cabfab3aa8578e4ad494e42378",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestAllSubqueryRejectsMultipleColumnsRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestAllSubqueryRejectsMultipleColumnsRepro",
+      "ordinal": 1,
+      "scriptName": "ALL subquery rejects multiple columns",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testallsubqueryrejectsmultiplecolumnsrepro-0001-select-1-=-all-select",
+      "suggestedId": "query-correctness-repro-test-testallsubqueryrejectsmultiplecolumnsrepro-0001-select-1-=-all-select",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "SELECT 1 = ALL (SELECT 1, 2);",
+      "querySha256": "5511baa02dc82effcc9f3508446c91db98734d1d2efa92a32862a3464dd7b7ee",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestInSubqueryRejectsMultipleColumnsRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestInSubqueryRejectsMultipleColumnsRepro",
+      "ordinal": 1,
+      "scriptName": "IN subquery rejects multiple columns",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testinsubqueryrejectsmultiplecolumnsrepro-0001-select-1-in-select-1",
+      "suggestedId": "query-correctness-repro-test-testinsubqueryrejectsmultiplecolumnsrepro-0001-select-1-in-select-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "SELECT 1 IN (SELECT 1, 2);",
+      "querySha256": "ed32178ab41a7a7ddfd66f152997e6a930b5a489211f17e72eec4ea23f9e7e0a",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestRowInSubqueryAcceptsMultipleColumnsRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestRowInSubqueryAcceptsMultipleColumnsRepro",
+      "ordinal": 1,
+      "scriptName": "row IN subquery accepts matching multiple columns",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testrowinsubqueryacceptsmultiplecolumnsrepro-0001-select-row-1-2-in",
+      "suggestedId": "query-correctness-repro-test-testrowinsubqueryacceptsmultiplecolumnsrepro-0001-select-row-1-2-in",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(1, 2) IN (SELECT 1, 2);",
+      "querySha256": "029a3f329cdb1b1a7cb16374767d28274fc66b64304b499e153c870084bb6585",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestRowInSubqueryAcceptsMultipleColumnsRepro#0002",
+      "source": "testing/go/query_correctness_repro_test.go:TestRowInSubqueryAcceptsMultipleColumnsRepro",
+      "ordinal": 2,
+      "scriptName": "row IN subquery accepts matching multiple columns",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testrowinsubqueryacceptsmultiplecolumnsrepro-0002-select-row-1-3-in",
+      "suggestedId": "query-correctness-repro-test-testrowinsubqueryacceptsmultiplecolumnsrepro-0002-select-row-1-3-in",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(1, 3) IN (SELECT 1, 2);",
+      "querySha256": "ca0c4e27232ad9acce5f0a1cbb20d3f6d8f1997d5054918c190480398848ab19",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestRowConstructorExpandsTableAliasStarRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestRowConstructorExpandsTableAliasStarRepro",
+      "ordinal": 1,
+      "scriptName": "ROW constructor expands table alias star",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testrowconstructorexpandstablealiasstarrepro-0001-select-row-p.*-99-::text",
+      "suggestedId": "query-correctness-repro-test-testrowconstructorexpandstablealiasstarrepro-0001-select-row-p.*-99-::text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(p.*, 99)::text\n\t\t\t\t\t\tFROM row_alias_users p\n\t\t\t\t\t\tORDER BY name;",
+      "querySha256": "50082a858da91abcb5f4e9a4a3010bbe5bcfcc6b7f2b4bee71eecf03ab89d5f1",
+      "expectedRows": [
+        [
+          {
+            "value": "(jason,SEA,42,99)"
+          }
+        ],
+        [
+          {
+            "value": "(max,SFO,31,99)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestTableAliasCompositeFieldSelectionGuard#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestTableAliasCompositeFieldSelectionGuard",
+      "ordinal": 1,
+      "scriptName": "table alias composite field selection",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testtablealiascompositefieldselectionguard-0001-select-p-.location-from-row_field_users",
+      "suggestedId": "query-correctness-repro-test-testtablealiascompositefieldselectionguard-0001-select-p-.location-from-row_field_users",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT (p).location\n\t\t\t\t\t\tFROM row_field_users p\n\t\t\t\t\t\tORDER BY name;",
+      "querySha256": "17385d8d72290c54376cf2938b0a265586c512681c6e93d0ab7858ab67e20055",
+      "expectedRows": [
+        [
+          {
+            "value": "SEA"
+          }
+        ],
+        [
+          {
+            "value": "SFO"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestInSubqueryCrossTypeEqualityRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestInSubqueryCrossTypeEqualityRepro",
+      "ordinal": 1,
+      "scriptName": "IN subquery cross-type equality",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testinsubquerycrosstypeequalityrepro-0001-select-1::int8-in-select-1::numeric",
+      "suggestedId": "query-correctness-repro-test-testinsubquerycrosstypeequalityrepro-0001-select-1::int8-in-select-1::numeric",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 1::int8 IN (SELECT 1::numeric);",
+      "querySha256": "eeeb2578e4ced68c734a189d0f34abb3962217888b8399afd73752d6df3b921a",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestInSubqueryCrossTypeEqualityRepro#0002",
+      "source": "testing/go/query_correctness_repro_test.go:TestInSubqueryCrossTypeEqualityRepro",
+      "ordinal": 2,
+      "scriptName": "IN subquery cross-type equality",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testinsubquerycrosstypeequalityrepro-0002-select-1::numeric-in-select-1::int8",
+      "suggestedId": "query-correctness-repro-test-testinsubquerycrosstypeequalityrepro-0002-select-1::numeric-in-select-1::int8",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 1::numeric IN (SELECT 1::int8);",
+      "querySha256": "fcaf88330d9f8c96f7f741143924de63c23a9b92ea8b096fe1217ad0419adabf",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestInSubqueryCrossTypeEqualityRepro#0003",
+      "source": "testing/go/query_correctness_repro_test.go:TestInSubqueryCrossTypeEqualityRepro",
+      "ordinal": 3,
+      "scriptName": "IN subquery cross-type equality",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testinsubquerycrosstypeequalityrepro-0003-select-1::int4-in-select-1.0::float8",
+      "suggestedId": "query-correctness-repro-test-testinsubquerycrosstypeequalityrepro-0003-select-1::int4-in-select-1.0::float8",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 1::int4 IN (SELECT 1.0::float8);",
+      "querySha256": "c059c6da1fd3816c2f5835cb79384efd97745beb23fc40625a568cda1893ab85",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestScalarSubqueryEqualityGuard#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestScalarSubqueryEqualityGuard",
+      "ordinal": 1,
+      "scriptName": "scalar subquery equality",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testscalarsubqueryequalityguard-0001-select-select-id-from-scalar_subquery_equality_items",
+      "suggestedId": "query-correctness-repro-test-testscalarsubqueryequalityguard-0001-select-select-id-from-scalar_subquery_equality_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT\n\t\t\t\t\t\t(SELECT id FROM scalar_subquery_equality_items WHERE id = 2) =\n\t\t\t\t\t\t\t(SELECT id FROM scalar_subquery_equality_items WHERE id = 2),\n\t\t\t\t\t\t(SELECT label FROM scalar_subquery_equality_items WHERE id = 2) =\n\t\t\t\t\t\t\t(SELECT label FROM scalar_subquery_equality_items WHERE id = 3),\n\t\t\t\t\t\t(SELECT label FROM scalar_subquery_equality_items WHERE id = 1) =\n\t\t\t\t\t\t\t(SELECT label FROM scalar_subquery_equality_items WHERE id = 2);",
+      "querySha256": "aba66d2e57bded75b3e9daf79ee2093b37f33089eb7af88aa4554177665fbdac",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestScalarSubqueryRejectsMultipleRowsInDmlRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestScalarSubqueryRejectsMultipleRowsInDmlRepro",
+      "ordinal": 1,
+      "scriptName": "INSERT scalar subquery rejects multiple rows",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testscalarsubqueryrejectsmultiplerowsindmlrepro-0001-insert-into-scalar_subquery_insert_target-values-1",
+      "suggestedId": "query-correctness-repro-test-testscalarsubqueryrejectsmultiplerowsindmlrepro-0001-insert-into-scalar_subquery_insert_target-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "21000",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO scalar_subquery_insert_target\n\t\t\t\t\t\tVALUES (1, (SELECT value FROM scalar_subquery_insert_source ORDER BY value));",
+      "querySha256": "8500d496e8358af3072357f000c1d835fb4c62e23b4121b777f41c44159d963b",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestScalarSubqueryRejectsMultipleRowsInDmlRepro#0002",
+      "source": "testing/go/query_correctness_repro_test.go:TestScalarSubqueryRejectsMultipleRowsInDmlRepro",
+      "ordinal": 2,
+      "scriptName": "INSERT scalar subquery rejects multiple rows",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testscalarsubqueryrejectsmultiplerowsindmlrepro-0002-select-count-*-from-scalar_subquery_insert_target",
+      "suggestedId": "query-correctness-repro-test-testscalarsubqueryrejectsmultiplerowsindmlrepro-0002-select-count-*-from-scalar_subquery_insert_target",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) FROM scalar_subquery_insert_target;",
+      "querySha256": "ba86de4d5e1272a46148dfab1350dd34b9bb39fd69f646c476a4618f0e688f21",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestScalarSubqueryRejectsMultipleRowsInDmlRepro#0003",
+      "source": "testing/go/query_correctness_repro_test.go:TestScalarSubqueryRejectsMultipleRowsInDmlRepro",
+      "ordinal": 3,
+      "scriptName": "UPDATE scalar subquery rejects multiple rows",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testscalarsubqueryrejectsmultiplerowsindmlrepro-0003-update-scalar_subquery_update_target-set-value-=",
+      "suggestedId": "query-correctness-repro-test-testscalarsubqueryrejectsmultiplerowsindmlrepro-0003-update-scalar_subquery_update_target-set-value-=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "21000",
+      "errorSeverity": "ERROR",
+      "query": "UPDATE scalar_subquery_update_target\n\t\t\t\t\t\tSET value = (\n\t\t\t\t\t\t\tSELECT value FROM scalar_subquery_update_source ORDER BY value\n\t\t\t\t\t\t)\n\t\t\t\t\t\tWHERE id = 1;",
+      "querySha256": "0f4353fa69904180c235712e24f993662c91c01ab2f733020d8b497e9a18c188",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestScalarSubqueryRejectsMultipleRowsInDmlRepro#0004",
+      "source": "testing/go/query_correctness_repro_test.go:TestScalarSubqueryRejectsMultipleRowsInDmlRepro",
+      "ordinal": 4,
+      "scriptName": "UPDATE scalar subquery rejects multiple rows",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testscalarsubqueryrejectsmultiplerowsindmlrepro-0004-select-value-from-scalar_subquery_update_target-where",
+      "suggestedId": "query-correctness-repro-test-testscalarsubqueryrejectsmultiplerowsindmlrepro-0004-select-value-from-scalar_subquery_update_target-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT value FROM scalar_subquery_update_target WHERE id = 1;",
+      "querySha256": "edb26271b12eecf2a81f289e188d7e755917902cf4797aa166bd33eaf09b528c",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestRowIsNotDistinctFromHandlesNullsRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestRowIsNotDistinctFromHandlesNullsRepro",
+      "ordinal": 1,
+      "scriptName": "row IS NOT DISTINCT FROM handles NULL fields",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testrowisnotdistinctfromhandlesnullsrepro-0001-select-row-1-null-is",
+      "suggestedId": "query-correctness-repro-test-testrowisnotdistinctfromhandlesnullsrepro-0001-select-row-1-null-is",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(1, NULL) IS NOT DISTINCT FROM ROW(1, NULL);",
+      "querySha256": "ae5bc5175557b29d49fa42dfd5f750c7ad753c33d347ae004613d395f475eb20",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestRowIsNotDistinctFromHandlesNullsRepro#0002",
+      "source": "testing/go/query_correctness_repro_test.go:TestRowIsNotDistinctFromHandlesNullsRepro",
+      "ordinal": 2,
+      "scriptName": "row IS NOT DISTINCT FROM handles NULL fields",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testrowisnotdistinctfromhandlesnullsrepro-0002-select-row-null-4-is",
+      "suggestedId": "query-correctness-repro-test-testrowisnotdistinctfromhandlesnullsrepro-0002-select-row-null-4-is",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(NULL, 4) IS DISTINCT FROM ROW(NULL, 4);",
+      "querySha256": "478186e059d397fbfd39988b471cb686de661919fcb2d755c15b753fc1676ab4",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestRowValueComparisonsUseLexicographicSemanticsRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestRowValueComparisonsUseLexicographicSemanticsRepro",
+      "ordinal": 1,
+      "scriptName": "row value comparisons use lexicographic semantics",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testrowvaluecomparisonsuselexicographicsemanticsrepro-0001-select-row-1-2-<",
+      "suggestedId": "query-correctness-repro-test-testrowvaluecomparisonsuselexicographicsemanticsrepro-0001-select-row-1-2-<",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(1, 2) < ROW(1, 3);",
+      "querySha256": "7ae333588096c66b48e42a4ebf0ce9a67b0487434e7412e4d15e564f7ab24f57",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestRowValueComparisonsUseLexicographicSemanticsRepro#0002",
+      "source": "testing/go/query_correctness_repro_test.go:TestRowValueComparisonsUseLexicographicSemanticsRepro",
+      "ordinal": 2,
+      "scriptName": "row value comparisons use lexicographic semantics",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testrowvaluecomparisonsuselexicographicsemanticsrepro-0002-select-row-2-1->",
+      "suggestedId": "query-correctness-repro-test-testrowvaluecomparisonsuselexicographicsemanticsrepro-0002-select-row-2-1->",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(2, 1) > ROW(1, 999);",
+      "querySha256": "129d73994a2369f50a571c5930fa3b15c330a0945accf35e8e9a70433cc488ae",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestRowValueComparisonsUseLexicographicSemanticsRepro#0003",
+      "source": "testing/go/query_correctness_repro_test.go:TestRowValueComparisonsUseLexicographicSemanticsRepro",
+      "ordinal": 3,
+      "scriptName": "row value comparisons use lexicographic semantics",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testrowvaluecomparisonsuselexicographicsemanticsrepro-0003-select-row-1-2-<=",
+      "suggestedId": "query-correctness-repro-test-testrowvaluecomparisonsuselexicographicsemanticsrepro-0003-select-row-1-2-<=",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(1, 2) <= ROW(1, 2);",
+      "querySha256": "bfedd4b8f2b1ae646ae1488738ab2b7e4949cadbb269fd47ce6335e048d8faa2",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestRowValueComparisonsHandleNullsRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestRowValueComparisonsHandleNullsRepro",
+      "ordinal": 1,
+      "scriptName": "row value comparisons handle NULL fields",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testrowvaluecomparisonshandlenullsrepro-0001-select-row-1-2-<",
+      "suggestedId": "query-correctness-repro-test-testrowvaluecomparisonshandlenullsrepro-0001-select-row-1-2-<",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(1, 2) < ROW(1, NULL);",
+      "querySha256": "b3087868801705d35eeffb2f268333e50fac76e5d901ed670e33e35af32b15c2",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestRowValueComparisonsHandleNullsRepro#0002",
+      "source": "testing/go/query_correctness_repro_test.go:TestRowValueComparisonsHandleNullsRepro",
+      "ordinal": 2,
+      "scriptName": "row value comparisons handle NULL fields",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testrowvaluecomparisonshandlenullsrepro-0002-select-row-1-2-3",
+      "suggestedId": "query-correctness-repro-test-testrowvaluecomparisonshandlenullsrepro-0002-select-row-1-2-3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(1, 2, 3) < ROW(1, 3, NULL);",
+      "querySha256": "bda3b024fb9ab204c6d7ba7da739423e1ce678f77418a97d8205cb93c7b2aa40",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestRowValueComparisonsHandleNullsRepro#0003",
+      "source": "testing/go/query_correctness_repro_test.go:TestRowValueComparisonsHandleNullsRepro",
+      "ordinal": 3,
+      "scriptName": "row value comparisons handle NULL fields",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testrowvaluecomparisonshandlenullsrepro-0003-select-row-1-2-3",
+      "suggestedId": "query-correctness-repro-test-testrowvaluecomparisonshandlenullsrepro-0003-select-row-1-2-3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(1, 2, 3) = ROW(1, NULL, 4);",
+      "querySha256": "3a4fb6e4d6c3e4c63ea9e6eac11347e16777686a1367f53a2c8ffca86e92236e",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestRowValueComparisonsHandleNullsRepro#0004",
+      "source": "testing/go/query_correctness_repro_test.go:TestRowValueComparisonsHandleNullsRepro",
+      "ordinal": 4,
+      "scriptName": "row value comparisons handle NULL fields",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testrowvaluecomparisonshandlenullsrepro-0004-select-row-1-2-3",
+      "suggestedId": "query-correctness-repro-test-testrowvaluecomparisonshandlenullsrepro-0004-select-row-1-2-3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(1, 2, 3) <> ROW(1, NULL, 4);",
+      "querySha256": "1fadca45574bc412b799e2d5bc6bc2f8988242ec8e24486f5b6453fcec2269a0",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestOrderByUsesPostgresNullOrderingRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestOrderByUsesPostgresNullOrderingRepro",
+      "ordinal": 1,
+      "scriptName": "ORDER BY uses PostgreSQL NULL ordering defaults",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testorderbyusespostgresnullorderingrepro-0001-select-id-v-from-order_by_null_items",
+      "suggestedId": "query-correctness-repro-test-testorderbyusespostgresnullorderingrepro-0001-select-id-v-from-order_by_null_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, v\n\t\t\t\t\t\tFROM order_by_null_items\n\t\t\t\t\t\tORDER BY v ASC;",
+      "querySha256": "e12cf5840115c5a12f6e3386c28743127e9a7cc4644726bcce267667dfc5f42e",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "10"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "20"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestOrderByUsesPostgresNullOrderingRepro#0002",
+      "source": "testing/go/query_correctness_repro_test.go:TestOrderByUsesPostgresNullOrderingRepro",
+      "ordinal": 2,
+      "scriptName": "ORDER BY uses PostgreSQL NULL ordering defaults",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testorderbyusespostgresnullorderingrepro-0002-select-id-v-from-order_by_null_items",
+      "suggestedId": "query-correctness-repro-test-testorderbyusespostgresnullorderingrepro-0002-select-id-v-from-order_by_null_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, v\n\t\t\t\t\t\tFROM order_by_null_items\n\t\t\t\t\t\tORDER BY v DESC;",
+      "querySha256": "faed6b27708f587eb6f457bc3542593583a11343cd164760b705558cf9f418a3",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "null": true
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "20"
+          }
+        ],
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestOrderByUsingOperatorRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestOrderByUsingOperatorRepro",
+      "ordinal": 1,
+      "scriptName": "ORDER BY USING operator controls sort direction",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testorderbyusingoperatorrepro-0001-select-v-from-values-1",
+      "suggestedId": "query-correctness-repro-test-testorderbyusingoperatorrepro-0001-select-v-from-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT v\n\t\t\t\t\t\tFROM (VALUES (1), (3), (2), (NULL)) AS t(v)\n\t\t\t\t\t\tORDER BY v USING > NULLS LAST;",
+      "querySha256": "6ddb748894bca59a2ddb717096919c546ccef5e28b4004441cf23d0fa42e26ba",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestOrderByUsingOperatorRepro#0002",
+      "source": "testing/go/query_correctness_repro_test.go:TestOrderByUsingOperatorRepro",
+      "ordinal": 2,
+      "scriptName": "ORDER BY USING operator controls sort direction",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testorderbyusingoperatorrepro-0002-select-v-from-values-1",
+      "suggestedId": "query-correctness-repro-test-testorderbyusingoperatorrepro-0002-select-v-from-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT v\n\t\t\t\t\t\tFROM (VALUES (1), (3), (2), (NULL)) AS t(v)\n\t\t\t\t\t\tORDER BY v USING < NULLS FIRST;",
+      "querySha256": "59a171b77f112043a6248bf603fbb82de8886a6f96811773a2771fca50708794",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ],
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
     {
       "key": "testing/go/query_correctness_repro_test.go:TestVarcharComparedToBlankPaddedCharRepro#0001",
       "source": "testing/go/query_correctness_repro_test.go:TestVarcharComparedToBlankPaddedCharRepro",
@@ -144,6 +1402,1708 @@
         [
           {
             "value": "ghi"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestBooleanInPredicateWithIndexedBooleanColumnRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestBooleanInPredicateWithIndexedBooleanColumnRepro",
+      "ordinal": 1,
+      "scriptName": "boolean IN predicate does not panic with boolean indexes present",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testbooleaninpredicatewithindexedbooleancolumnrepro-0001-select-*-from-bool_in_scan_items-where",
+      "suggestedId": "query-correctness-repro-test-testbooleaninpredicatewithindexedbooleancolumnrepro-0001-select-*-from-bool_in_scan_items-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM bool_in_scan_items WHERE b IN (false);",
+      "querySha256": "fa4418da325826a1ca47cdd6e40e0ca99ba38d41d96421c741cabafd77ee7e74",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestBooleanInPredicateWithIndexedBooleanColumnRepro#0002",
+      "source": "testing/go/query_correctness_repro_test.go:TestBooleanInPredicateWithIndexedBooleanColumnRepro",
+      "ordinal": 2,
+      "scriptName": "boolean IN predicate does not panic with boolean indexes present",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testbooleaninpredicatewithindexedbooleancolumnrepro-0002-select-*-from-bool_in_index_items-where",
+      "suggestedId": "query-correctness-repro-test-testbooleaninpredicatewithindexedbooleancolumnrepro-0002-select-*-from-bool_in_index_items-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM bool_in_index_items WHERE b IN (false);",
+      "querySha256": "8c6ae354d4a6bfc566ab48407f26d8f147e3d7dc012345585645fc53d0c23eb9",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestDistinctOnRequiresMatchingLeadingOrderByRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestDistinctOnRequiresMatchingLeadingOrderByRepro",
+      "ordinal": 1,
+      "scriptName": "DISTINCT ON requires matching leading ORDER BY expressions",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testdistinctonrequiresmatchingleadingorderbyrepro-0001-select-distinct-on-account_id-account_id",
+      "suggestedId": "query-correctness-repro-test-testdistinctonrequiresmatchingleadingorderbyrepro-0001-select-distinct-on-account_id-account_id",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P10",
+      "errorSeverity": "ERROR",
+      "query": "SELECT DISTINCT ON (account_id) account_id, id\n\t\t\t\t\t\tFROM distinct_on_order_items\n\t\t\t\t\t\tORDER BY created_at DESC;",
+      "querySha256": "88c44da4313b5a69c0e59a2d0d9c7836d29b6a5f38694f3a42780a7a486a4a22",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestFetchFirstWithTiesIncludesPeerRowsRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestFetchFirstWithTiesIncludesPeerRowsRepro",
+      "ordinal": 1,
+      "scriptName": "FETCH FIRST WITH TIES includes peer rows",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testfetchfirstwithtiesincludespeerrowsrepro-0001-select-id-score-from-fetch_ties_items",
+      "suggestedId": "query-correctness-repro-test-testfetchfirstwithtiesincludespeerrowsrepro-0001-select-id-score-from-fetch_ties_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, score\n\t\t\t\t\t\tFROM fetch_ties_items\n\t\t\t\t\t\tORDER BY score\n\t\t\t\t\t\tFETCH FIRST 2 ROWS WITH TIES;",
+      "querySha256": "b652e4ccd485832ebac442e4616ea795f9b0d89af93e72d13b1b8dd30ad09241",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "10"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "20"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "20"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestFetchFirstWithTiesIncludesPeerRowsRepro#0002",
+      "source": "testing/go/query_correctness_repro_test.go:TestFetchFirstWithTiesIncludesPeerRowsRepro",
+      "ordinal": 2,
+      "scriptName": "FETCH FIRST WITH TIES includes peer rows",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testfetchfirstwithtiesincludespeerrowsrepro-0002-select-id-score-from-fetch_ties_items",
+      "suggestedId": "query-correctness-repro-test-testfetchfirstwithtiesincludespeerrowsrepro-0002-select-id-score-from-fetch_ties_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, score\n\t\t\t\t\t\tFROM fetch_ties_items\n\t\t\t\t\t\tORDER BY score\n\t\t\t\t\t\tOFFSET 1 ROW\n\t\t\t\t\t\tFETCH FIRST 1 ROW WITH TIES;",
+      "querySha256": "fc94bf0958c3abb5de0ed4ec4a86238e791df84c214155d6732c66deee0a26dd",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "20"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "20"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestFetchFirstWithTiesIncludesPeerRowsRepro#0003",
+      "source": "testing/go/query_correctness_repro_test.go:TestFetchFirstWithTiesIncludesPeerRowsRepro",
+      "ordinal": 3,
+      "scriptName": "FETCH FIRST WITH TIES includes peer rows",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testfetchfirstwithtiesincludespeerrowsrepro-0003-select-id-from-fetch_ties_items-fetch",
+      "suggestedId": "query-correctness-repro-test-testfetchfirstwithtiesincludespeerrowsrepro-0003-select-id-from-fetch_ties_items-fetch",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "SELECT id FROM fetch_ties_items FETCH FIRST 1 ROW WITH TIES;",
+      "querySha256": "ff308eef953cff4f0475de8a419ed98e19adbefb12772a3e86cf684f3a8be99f",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestTableSampleSystemHundredReturnsAllRowsRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestTableSampleSystemHundredReturnsAllRowsRepro",
+      "ordinal": 1,
+      "scriptName": "TABLESAMPLE SYSTEM 100 returns all rows",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testtablesamplesystemhundredreturnsallrowsrepro-0001-select-count-*-from-tablesample_items",
+      "suggestedId": "query-correctness-repro-test-testtablesamplesystemhundredreturnsallrowsrepro-0001-select-count-*-from-tablesample_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) FROM tablesample_items TABLESAMPLE SYSTEM (100);",
+      "querySha256": "36db543a5b633065b888c198b523c4d1ea780c37479bc80fbf340130e1d93908",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestRecursiveCteSearchClauseRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestRecursiveCteSearchClauseRepro",
+      "ordinal": 1,
+      "scriptName": "WITH RECURSIVE supports SEARCH clause",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testrecursivectesearchclauserepro-0001-with-recursive-tree-id-parent_id",
+      "suggestedId": "query-correctness-repro-test-testrecursivectesearchclauserepro-0001-with-recursive-tree-id-parent_id",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "WITH RECURSIVE tree(id, parent_id) AS (\n\t\t\t\t\t\t\tVALUES (1, NULL::INT)\n\t\t\t\t\t\t\tUNION ALL\n\t\t\t\t\t\t\tSELECT child.id, child.parent_id\n\t\t\t\t\t\t\tFROM (VALUES (2, 1), (3, 1)) AS child(id, parent_id)\n\t\t\t\t\t\t\tJOIN tree ON child.parent_id = tree.id\n\t\t\t\t\t\t) SEARCH BREADTH FIRST BY id SET bfs_order\n\t\t\t\t\t\tSELECT id FROM tree ORDER BY bfs_order;",
+      "querySha256": "410a99ba40aafc250f1e13ccd7fbf0ce62a667f87803d609ebdffa599ad64cf0",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestRecursiveCteCycleClauseRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestRecursiveCteCycleClauseRepro",
+      "ordinal": 1,
+      "scriptName": "WITH RECURSIVE supports CYCLE clause",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testrecursivectecycleclauserepro-0001-with-recursive-nums-n-as",
+      "suggestedId": "query-correctness-repro-test-testrecursivectecycleclauserepro-0001-with-recursive-nums-n-as",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "WITH RECURSIVE nums(n) AS (\n\t\t\t\t\t\t\tVALUES (1)\n\t\t\t\t\t\t\tUNION ALL\n\t\t\t\t\t\t\tSELECT n + 1 FROM nums WHERE n < 3\n\t\t\t\t\t\t) CYCLE n SET is_cycle USING path\n\t\t\t\t\t\tSELECT n, is_cycle FROM nums ORDER BY n;",
+      "querySha256": "09f9245c4740ae8e3c11a1c980f1a3b00d659db9f7563863c6d6a9bbf83ff04c",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "f"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "f"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestSelectCanProjectTableoidRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestSelectCanProjectTableoidRepro",
+      "ordinal": 1,
+      "scriptName": "SELECT can project tableoid",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testselectcanprojecttableoidrepro-0001-select-tableoid::regclass::text-id-from-select_tableoid_items",
+      "suggestedId": "query-correctness-repro-test-testselectcanprojecttableoidrepro-0001-select-tableoid::regclass::text-id-from-select_tableoid_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT tableoid::regclass::text, id\n\t\t\t\t\t\tFROM select_tableoid_items;",
+      "querySha256": "c3c0a2462625698fe6bb97977ecbe229f13c6a399753022ffe01067bb6d9c195",
+      "expectedRows": [
+        [
+          {
+            "value": "select_tableoid_items"
+          },
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestRowsFromMultipleSetReturningFunctionsRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestRowsFromMultipleSetReturningFunctionsRepro",
+      "ordinal": 1,
+      "scriptName": "ROWS FROM pads shorter set-returning functions",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testrowsfrommultiplesetreturningfunctionsrepro-0001-select-*-from-rows-from",
+      "suggestedId": "query-correctness-repro-test-testrowsfrommultiplesetreturningfunctionsrepro-0001-select-*-from-rows-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT *\n\t\t\t\t\t\tFROM ROWS FROM (\n\t\t\t\t\t\t\tgenerate_series(1, 2),\n\t\t\t\t\t\t\tunnest(ARRAY['a','b','c'])\n\t\t\t\t\t\t) AS t(n, label);",
+      "querySha256": "50edfc785e24d630c92f97d3a43c1c19b1fc6d1d669bf52f64793be5d938858b",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "a"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "b"
+          }
+        ],
+        [
+          {
+            "null": true
+          },
+          {
+            "value": "c"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestUnnestMultipleArraysPadsShorterInputsRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestUnnestMultipleArraysPadsShorterInputsRepro",
+      "ordinal": 1,
+      "scriptName": "multi-array unnest pads shorter arrays",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testunnestmultiplearrayspadsshorterinputsrepro-0001-select-*-from-unnest-array[10",
+      "suggestedId": "query-correctness-repro-test-testunnestmultiplearrayspadsshorterinputsrepro-0001-select-*-from-unnest-array[10",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT *\n\t\t\t\t\t\tFROM unnest(\n\t\t\t\t\t\t\tARRAY[10, 20],\n\t\t\t\t\t\t\tARRAY['foo', 'bar', 'baz']\n\t\t\t\t\t\t) AS u(n, label);",
+      "querySha256": "a5a06cb38ea181a403dcc3d38e123ea58c95bb13289b149217cd21d0d535ac09",
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          },
+          {
+            "value": "foo"
+          }
+        ],
+        [
+          {
+            "value": "20"
+          },
+          {
+            "value": "bar"
+          }
+        ],
+        [
+          {
+            "null": true
+          },
+          {
+            "value": "baz"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestGenerateSeriesWithOrdinalityRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestGenerateSeriesWithOrdinalityRepro",
+      "ordinal": 1,
+      "scriptName": "generate_series supports WITH ORDINALITY",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testgenerateserieswithordinalityrepro-0001-select-v-ord-from-generate_series",
+      "suggestedId": "query-correctness-repro-test-testgenerateserieswithordinalityrepro-0001-select-v-ord-from-generate_series",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT v, ord\n\t\t\t\t\t\tFROM generate_series(4, 8, 2) WITH ORDINALITY AS g(v, ord);",
+      "querySha256": "a9eae5a7a65568c6af7b05f00864854b4bfaae142110c32d08ad14f57dbaf9b8",
+      "expectedRows": [
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "6"
+          },
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "8"
+          },
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestGenerateSeriesTimestampUnknownStepGuard#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestGenerateSeriesTimestampUnknownStepGuard",
+      "ordinal": 1,
+      "scriptName": "timestamp generate_series coerces unknown step to interval",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testgenerateseriestimestampunknownstepguard-0001-select-*-from-generate_series-2008-03-02",
+      "suggestedId": "query-correctness-repro-test-testgenerateseriestimestampunknownstepguard-0001-select-*-from-generate_series-2008-03-02",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT *\n\t\t\t\t\t\tFROM generate_series(\n\t\t\t\t\t\t\t'2008-03-02 12:00'::timestamp,\n\t\t\t\t\t\t\t'2008-03-01 00:00'::timestamp,\n\t\t\t\t\t\t\t'-10 hours'\n\t\t\t\t\t\t);",
+      "querySha256": "8f0efceabf4fa11b212deec0a0b23e1c1db450dfddc46a602245b20b0bec7226",
+      "expectedRows": [
+        [
+          {
+            "value": "2008-03-02T12:00:00"
+          }
+        ],
+        [
+          {
+            "value": "2008-03-02T02:00:00"
+          }
+        ],
+        [
+          {
+            "value": "2008-03-01T16:00:00"
+          }
+        ],
+        [
+          {
+            "value": "2008-03-01T06:00:00"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestWindowFrameExcludeCurrentRowRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestWindowFrameExcludeCurrentRowRepro",
+      "ordinal": 1,
+      "scriptName": "window frame EXCLUDE CURRENT ROW excludes current row",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testwindowframeexcludecurrentrowrepro-0001-with-items-id-v-as",
+      "suggestedId": "query-correctness-repro-test-testwindowframeexcludecurrentrowrepro-0001-with-items-id-v-as",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "WITH items(id, v) AS (VALUES (1, 10), (2, 20), (3, 30))\n\t\t\t\t\t\tSELECT id, sum(v) OVER (\n\t\t\t\t\t\t\tORDER BY id\n\t\t\t\t\t\t\tROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING\n\t\t\t\t\t\t\tEXCLUDE CURRENT ROW\n\t\t\t\t\t\t)\n\t\t\t\t\t\tFROM items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "01434c2d7d7f469de7cc0d8c24bb1f45089695a28c9b9a7f485a095603ed5c8b",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "50"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "40"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "30"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestWindowFrameGroupsRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestWindowFrameGroupsRepro",
+      "ordinal": 1,
+      "scriptName": "window frame GROUPS computes peer-group frame",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testwindowframegroupsrepro-0001-with-items-id-v-as",
+      "suggestedId": "query-correctness-repro-test-testwindowframegroupsrepro-0001-with-items-id-v-as",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "WITH items(id, v) AS (VALUES (1, 10), (2, 20), (3, 30), (4, 40))\n\t\t\t\t\t\tSELECT id, sum(v) OVER (\n\t\t\t\t\t\t\tORDER BY id\n\t\t\t\t\t\t\tGROUPS BETWEEN 1 PRECEDING AND CURRENT ROW\n\t\t\t\t\t\t)\n\t\t\t\t\t\tFROM items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "8fbbe1acc8f0c75b5b14f981166fafd1db870e0a44347360ba50c76279aa5693",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "10"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "30"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "50"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "70"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestWindowFrameExcludeGroupRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestWindowFrameExcludeGroupRepro",
+      "ordinal": 1,
+      "scriptName": "window frame EXCLUDE GROUP excludes peer group",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testwindowframeexcludegrouprepro-0001-with-items-id-score-v",
+      "suggestedId": "query-correctness-repro-test-testwindowframeexcludegrouprepro-0001-with-items-id-score-v",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "WITH items(id, score, v) AS (\n\t\t\t\t\t\t\tVALUES (1, 10, 1), (2, 20, 2), (3, 20, 3), (4, 30, 4)\n\t\t\t\t\t\t)\n\t\t\t\t\t\tSELECT id, sum(v) OVER (\n\t\t\t\t\t\t\tORDER BY score\n\t\t\t\t\t\t\tROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING\n\t\t\t\t\t\t\tEXCLUDE GROUP\n\t\t\t\t\t\t)\n\t\t\t\t\t\tFROM items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "41b8b44c716d91b13e5c91a4ef6d759143fe46fdae9dc92a12bd8a3b0fa7c0c1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "9"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "5"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "5"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "6"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestWindowFrameExcludeTiesRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestWindowFrameExcludeTiesRepro",
+      "ordinal": 1,
+      "scriptName": "window frame EXCLUDE TIES excludes peer rows",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testwindowframeexcludetiesrepro-0001-with-items-id-score-v",
+      "suggestedId": "query-correctness-repro-test-testwindowframeexcludetiesrepro-0001-with-items-id-score-v",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "WITH items(id, score, v) AS (\n\t\t\t\t\t\t\tVALUES (1, 10, 1), (2, 20, 2), (3, 20, 3), (4, 30, 4)\n\t\t\t\t\t\t)\n\t\t\t\t\t\tSELECT id, sum(v) OVER (\n\t\t\t\t\t\t\tORDER BY score\n\t\t\t\t\t\t\tROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING\n\t\t\t\t\t\t\tEXCLUDE TIES\n\t\t\t\t\t\t)\n\t\t\t\t\t\tFROM items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "e72c5c01449892bd99e1525dbcdcbc8d2d35b5c3c8a832f221605e85c767c88e",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "10"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "7"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "8"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestWindowFrameRangeOffsetRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestWindowFrameRangeOffsetRepro",
+      "ordinal": 1,
+      "scriptName": "window frame RANGE offset computes value-distance frame",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testwindowframerangeoffsetrepro-0001-select-id-sum-v-over",
+      "suggestedId": "query-correctness-repro-test-testwindowframerangeoffsetrepro-0001-select-id-sum-v-over",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, sum(v) OVER (\n\t\t\t\t\t\t\tORDER BY id\n\t\t\t\t\t\t\tRANGE BETWEEN 1 PRECEDING AND CURRENT ROW\n\t\t\t\t\t\t)\n\t\t\t\t\t\tFROM window_range_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "5342878e7fbd537b4b4b7f997def34664baa4d3480a41ae97449bf88ea88c06a",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "10"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "30"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "40"
+          }
+        ],
+        [
+          {
+            "value": "5"
+          },
+          {
+            "value": "90"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestCumeDistWindowFunctionRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestCumeDistWindowFunctionRepro",
+      "ordinal": 1,
+      "scriptName": "cume_dist window function",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testcumedistwindowfunctionrepro-0001-with-scores-id-score-as",
+      "suggestedId": "query-correctness-repro-test-testcumedistwindowfunctionrepro-0001-with-scores-id-score-as",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "WITH scores(id, score) AS (\n\t\t\t\t\t\t\tVALUES (1, 10), (2, 20), (3, 20), (4, 30)\n\t\t\t\t\t\t)\n\t\t\t\t\t\tSELECT id, cume_dist() OVER (ORDER BY score)\n\t\t\t\t\t\tFROM scores\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "f343ea834eb2e8795712602a0f45d80550a6c839481a839f5fe44fcf43400643",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "0.25"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "0.75"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "0.75"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestNthValueWindowFunctionRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestNthValueWindowFunctionRepro",
+      "ordinal": 1,
+      "scriptName": "nth_value window function",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testnthvaluewindowfunctionrepro-0001-with-items-id-v-as",
+      "suggestedId": "query-correctness-repro-test-testnthvaluewindowfunctionrepro-0001-with-items-id-v-as",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "WITH items(id, v) AS (VALUES (1, 10), (2, 20), (3, 30))\n\t\t\t\t\t\tSELECT id, nth_value(v, 2) OVER (\n\t\t\t\t\t\t\tORDER BY id\n\t\t\t\t\t\t\tROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING\n\t\t\t\t\t\t)\n\t\t\t\t\t\tFROM items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "ac5c27e2f8992c3281bfc56deae62b3215c510ba205b8519f2b91ed3a575d356",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "20"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "20"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "20"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestWindowAggregateFilterReturnsNullForEmptyFrameRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestWindowAggregateFilterReturnsNullForEmptyFrameRepro",
+      "ordinal": 1,
+      "scriptName": "window aggregate FILTER returns NULL for empty filtered frame",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testwindowaggregatefilterreturnsnullforemptyframerepro-0001-with-items-id-grp-v",
+      "suggestedId": "query-correctness-repro-test-testwindowaggregatefilterreturnsnullforemptyframerepro-0001-with-items-id-grp-v",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "WITH items(id, grp, v, paid) AS (\n\t\t\t\t\t\t\tVALUES\n\t\t\t\t\t\t\t\t(1, 'a', 10, true),\n\t\t\t\t\t\t\t\t(2, 'a', 20, false),\n\t\t\t\t\t\t\t\t(3, 'a', 30, true),\n\t\t\t\t\t\t\t\t(4, 'b', 40, false)\n\t\t\t\t\t\t)\n\t\t\t\t\t\tSELECT id, sum(v) FILTER (WHERE paid) OVER (\n\t\t\t\t\t\t\tPARTITION BY grp\n\t\t\t\t\t\t\tORDER BY id\n\t\t\t\t\t\t\tROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW\n\t\t\t\t\t\t)\n\t\t\t\t\t\tFROM items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "8de175a030460ebe30cab7db023b6132a6da2b8dd624165d6a80214a55a62fc3",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "10"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "10"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "40"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestAvgWindowAggregateFilterReturnsNullForEmptyFrameRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestAvgWindowAggregateFilterReturnsNullForEmptyFrameRepro",
+      "ordinal": 1,
+      "scriptName": "window avg FILTER returns NULL for empty filtered frame",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testavgwindowaggregatefilterreturnsnullforemptyframerepro-0001-with-items-id-grp-v",
+      "suggestedId": "query-correctness-repro-test-testavgwindowaggregatefilterreturnsnullforemptyframerepro-0001-with-items-id-grp-v",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "WITH items(id, grp, v, paid) AS (\n\t\t\t\t\t\t\tVALUES\n\t\t\t\t\t\t\t\t(1, 'a', 10, true),\n\t\t\t\t\t\t\t\t(2, 'a', 20, false),\n\t\t\t\t\t\t\t\t(3, 'b', 30, false)\n\t\t\t\t\t\t)\n\t\t\t\t\t\tSELECT id, avg(v) FILTER (WHERE paid) OVER (\n\t\t\t\t\t\t\tPARTITION BY grp\n\t\t\t\t\t\t\tORDER BY id\n\t\t\t\t\t\t\tROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW\n\t\t\t\t\t\t)\n\t\t\t\t\t\tFROM items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "eab07608981c8ed32d4e981c6a1ce4ba922406257462e6f4bea21d56bfcc3b19",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "10"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "10"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestBooleanAggregatesCanBeWindowFunctionsRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestBooleanAggregatesCanBeWindowFunctionsRepro",
+      "ordinal": 1,
+      "scriptName": "boolean aggregates can be window functions",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testbooleanaggregatescanbewindowfunctionsrepro-0001-with-items-id-grp-paid",
+      "suggestedId": "query-correctness-repro-test-testbooleanaggregatescanbewindowfunctionsrepro-0001-with-items-id-grp-paid",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "WITH items(id, grp, paid) AS (\n\t\t\t\t\t\t\tVALUES\n\t\t\t\t\t\t\t\t(1, 'a', true),\n\t\t\t\t\t\t\t\t(2, 'a', false),\n\t\t\t\t\t\t\t\t(3, 'b', false)\n\t\t\t\t\t\t)\n\t\t\t\t\t\tSELECT id,\n\t\t\t\t\t\t\tbool_or(paid) OVER (\n\t\t\t\t\t\t\t\tPARTITION BY grp\n\t\t\t\t\t\t\t\tORDER BY id\n\t\t\t\t\t\t\t\tROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW\n\t\t\t\t\t\t\t),\n\t\t\t\t\t\t\tbool_and(paid) OVER (\n\t\t\t\t\t\t\t\tPARTITION BY grp\n\t\t\t\t\t\t\t\tORDER BY id\n\t\t\t\t\t\t\t\tROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW\n\t\t\t\t\t\t\t)\n\t\t\t\t\t\tFROM items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "1a3b5084e67fd864b86c5af7879869868c7028bce7ecbdb7d2a8987af6d59a97",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "f"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestArrayAggCanBeWindowFunctionRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestArrayAggCanBeWindowFunctionRepro",
+      "ordinal": 1,
+      "scriptName": "array_agg can be a window function",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testarrayaggcanbewindowfunctionrepro-0001-with-items-id-grp-label",
+      "suggestedId": "query-correctness-repro-test-testarrayaggcanbewindowfunctionrepro-0001-with-items-id-grp-label",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "WITH items(id, grp, label) AS (\n\t\t\t\t\t\t\tVALUES\n\t\t\t\t\t\t\t\t(1, 'a', 'x'::text),\n\t\t\t\t\t\t\t\t(2, 'a', 'y'::text),\n\t\t\t\t\t\t\t\t(3, 'b', 'z'::text)\n\t\t\t\t\t\t)\n\t\t\t\t\t\tSELECT id,\n\t\t\t\t\t\t\tarray_agg(label) OVER (\n\t\t\t\t\t\t\t\tPARTITION BY grp\n\t\t\t\t\t\t\t\tORDER BY id\n\t\t\t\t\t\t\t\tROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW\n\t\t\t\t\t\t\t)\n\t\t\t\t\t\tFROM items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "d5d5a44d23d24abfd1bae69d16148384ea281582e79e237b38940d18526f5426",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "{x}"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "{x,y}"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "{z}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestLagLeadConstantOffsetAndDefaultRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestLagLeadConstantOffsetAndDefaultRepro",
+      "ordinal": 1,
+      "scriptName": "lag and lead accept constant offset and default",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testlagleadconstantoffsetanddefaultrepro-0001-select-id-lag-v-2",
+      "suggestedId": "query-correctness-repro-test-testlagleadconstantoffsetanddefaultrepro-0001-select-id-lag-v-2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id,\n\t\t\t\t\t\t\tlag(v, 2, 0) OVER (ORDER BY id),\n\t\t\t\t\t\t\tlead(v, 2, 99) OVER (ORDER BY id)\n\t\t\t\t\t\tFROM lag_lead_constant_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "2694358cc6def8b17607811e896fa9e6161af5caf4b694e093e376e8dc415163",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "0"
+          },
+          {
+            "value": "30"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "0"
+          },
+          {
+            "value": "40"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "10"
+          },
+          {
+            "value": "99"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "20"
+          },
+          {
+            "value": "99"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestLagLeadDynamicOffsetRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestLagLeadDynamicOffsetRepro",
+      "ordinal": 1,
+      "scriptName": "lag and lead accept dynamic row offsets",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testlagleaddynamicoffsetrepro-0001-select-id-lag-v-off",
+      "suggestedId": "query-correctness-repro-test-testlagleaddynamicoffsetrepro-0001-select-id-lag-v-off",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id,\n\t\t\t\t\t\t\tlag(v, off, -1) OVER (ORDER BY id),\n\t\t\t\t\t\t\tlead(v, off, -2) OVER (ORDER BY id)\n\t\t\t\t\t\tFROM lag_lead_dynamic_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "dee6c6973eb469164f358d98edb323fc4cbdb93c0a2ef58c53d4709a70fad5c6",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "-1"
+          },
+          {
+            "value": "20"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "-1"
+          },
+          {
+            "value": "40"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "20"
+          },
+          {
+            "value": "40"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "20"
+          },
+          {
+            "value": "-2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestNtileDynamicBucketCountRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestNtileDynamicBucketCountRepro",
+      "ordinal": 1,
+      "scriptName": "ntile accepts dynamic bucket count",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testntiledynamicbucketcountrepro-0001-select-id-ntile-buckets-over",
+      "suggestedId": "query-correctness-repro-test-testntiledynamicbucketcountrepro-0001-select-id-ntile-buckets-over",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, ntile(buckets) OVER (ORDER BY id)\n\t\t\t\t\t\tFROM ntile_dynamic_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "e3041f6210987cb7a3b1464b2ae3d90a840b1fb766515ad4cd02f409ba7bd6de",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestCompositeStarArgumentToFunctionRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestCompositeStarArgumentToFunctionRepro",
+      "ordinal": 1,
+      "scriptName": "table star passes composite row to function argument",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testcompositestarargumenttofunctionrepro-0001-select-composite_star_score-composite_star_items.*-from-composite_star_items",
+      "suggestedId": "query-correctness-repro-test-testcompositestarargumenttofunctionrepro-0001-select-composite_star_score-composite_star_items.*-from-composite_star_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT composite_star_score(composite_star_items.*)\n\t\t\t\t\t\tFROM composite_star_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "729d721e2f30e56df437835caa46fd182d6592283f08bd5aaf0abd71d346995d",
+      "expectedRows": [
+        [
+          {
+            "value": "4"
+          }
+        ],
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestUuidEqualityAfterPrimaryKeyRewriteRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestUuidEqualityAfterPrimaryKeyRewriteRepro",
+      "ordinal": 1,
+      "scriptName": "UUID equality works after adding primary key",
+      "oracle": "internal",
+      "suggestedId": "query-correctness-repro-test-testuuidequalityafterprimarykeyrewriterepro-0001-select-select-uid-from-uuid_equality_items",
+      "expectedKind": "rows",
+      "query": "SELECT\n\t\t\t\t\t\t\t(SELECT uid FROM uuid_equality_items WHERE id = 2) =\n\t\t\t\t\t\t\t(SELECT uid FROM uuid_equality_items WHERE id = 1);",
+      "querySha256": "ec8d6c7601dc359bf922660c2d748fed2af092a9debba2eca9f6f04b9301bc10",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestSubstringForCountSyntaxRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestSubstringForCountSyntaxRepro",
+      "ordinal": 1,
+      "scriptName": "substring for count syntax",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testsubstringforcountsyntaxrepro-0001-select-substring-hello-for-3",
+      "suggestedId": "query-correctness-repro-test-testsubstringforcountsyntaxrepro-0001-select-substring-hello-for-3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT substring('hello' for 3);",
+      "querySha256": "a8be7098cb9eb6215d526c9d3ce4f2413bbe8f58417a293db1dd63d9d21fd3ea",
+      "expectedRows": [
+        [
+          {
+            "value": "hel"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestSubstringSimilarEscapeSyntaxRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestSubstringSimilarEscapeSyntaxRepro",
+      "ordinal": 1,
+      "scriptName": "substring similar escape syntax",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testsubstringsimilarescapesyntaxrepro-0001-select-substring-hello.-similar-hello#.",
+      "suggestedId": "query-correctness-repro-test-testsubstringsimilarescapesyntaxrepro-0001-select-substring-hello.-similar-hello#.",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT substring('hello.' similar 'hello#.' escape '#');",
+      "querySha256": "a7604a3eeffe6091405cf10f619e7087ef5bfefb719975f3e5154e9873f74435",
+      "expectedRows": [
+        [
+          {
+            "value": "hello."
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestSubstringSimilarEscapeSyntaxRepro#0002",
+      "source": "testing/go/query_correctness_repro_test.go:TestSubstringSimilarEscapeSyntaxRepro",
+      "ordinal": 2,
+      "scriptName": "substring similar escape syntax",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testsubstringsimilarescapesyntaxrepro-0002-select-substring-thomas-similar-%#",
+      "suggestedId": "query-correctness-repro-test-testsubstringsimilarescapesyntaxrepro-0002-select-substring-thomas-similar-%#",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT substring('Thomas' similar '%#\"o_a#\"_' escape '#');",
+      "querySha256": "ac05a70b4455315eebb9a009bbd7b46b0157d7b3e96c4cfbcc527ed43c4e71ca",
+      "expectedRows": [
+        [
+          {
+            "value": "oma"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestRegexpMatchesSupportedFlagsRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestRegexpMatchesSupportedFlagsRepro",
+      "ordinal": 1,
+      "scriptName": "regexp_matches supports PostgreSQL regex flags",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testregexpmatchessupportedflagsrepro-0001-select-regexp_matches-ab-a-b",
+      "suggestedId": "query-correctness-repro-test-testregexpmatchessupportedflagsrepro-0001-select-regexp_matches-ab-a-b",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT regexp_matches('ab', 'a b', 'x');",
+      "querySha256": "ac9f6649fc75fd338b1ef6b03c00ed5bf43405e80a553d32fcab9c1e1d066655",
+      "expectedRows": [
+        [
+          {
+            "value": "{ab}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestRegexpMatchesSupportedFlagsRepro#0002",
+      "source": "testing/go/query_correctness_repro_test.go:TestRegexpMatchesSupportedFlagsRepro",
+      "ordinal": 2,
+      "scriptName": "regexp_matches supports PostgreSQL regex flags",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testregexpmatchessupportedflagsrepro-0002-select-regexp_matches-e-a\\nb-^b",
+      "suggestedId": "query-correctness-repro-test-testregexpmatchessupportedflagsrepro-0002-select-regexp_matches-e-a\\nb-^b",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT regexp_matches(E'a\\nb', '^b', 'n');",
+      "querySha256": "424d0934400452f1cafc9c90b5bd681ce427fd423a2732aef9a0538752db581b",
+      "expectedRows": [
+        [
+          {
+            "value": "{b}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestRegexpReplaceReplacesMatchesRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestRegexpReplaceReplacesMatchesRepro",
+      "ordinal": 1,
+      "scriptName": "regexp_replace replaces matches",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testregexpreplacereplacesmatchesrepro-0001-select-regexp_replace-foobarbaz-b..-x",
+      "suggestedId": "query-correctness-repro-test-testregexpreplacereplacesmatchesrepro-0001-select-regexp_replace-foobarbaz-b..-x",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT regexp_replace('foobarbaz', 'b..', 'X'),\n\t\t\t\t\t\t\tregexp_replace('foobarbaz', 'b..', 'X', 'g');",
+      "querySha256": "b3519904c9ecb1845b0ed139f6639a5b0876708cc8334c7c724f1faa47f761f0",
+      "expectedRows": [
+        [
+          {
+            "value": "fooXbaz"
+          },
+          {
+            "value": "fooXX"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestRegexpSplitToArraySplitsTextRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestRegexpSplitToArraySplitsTextRepro",
+      "ordinal": 1,
+      "scriptName": "regexp_split_to_array splits text",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testregexpsplittoarraysplitstextrepro-0001-select-regexp_split_to_array-a-b-c",
+      "suggestedId": "query-correctness-repro-test-testregexpsplittoarraysplitstextrepro-0001-select-regexp_split_to_array-a-b-c",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT regexp_split_to_array('a,b,c', ',');",
+      "querySha256": "ff2963850663019d954d10feab6147d6975466446724f213e955584d66ca75a8",
+      "expectedRows": [
+        [
+          {
+            "value": "{a,b,c}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestRegexpLikeReturnsBooleanRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestRegexpLikeReturnsBooleanRepro",
+      "ordinal": 1,
+      "scriptName": "regexp_like returns boolean",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testregexplikereturnsbooleanrepro-0001-select-regexp_like-abc-^a",
+      "suggestedId": "query-correctness-repro-test-testregexplikereturnsbooleanrepro-0001-select-regexp_like-abc-^a",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT regexp_like('abc', '^a');",
+      "querySha256": "6214e5feff0f895866be6b6bb448854e9779c4dca6d8992ef5af3ef082c4f1ea",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestRegexpCountCountsMatchesRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestRegexpCountCountsMatchesRepro",
+      "ordinal": 1,
+      "scriptName": "regexp_count counts matches",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testregexpcountcountsmatchesrepro-0001-select-regexp_count-abcabc-a",
+      "suggestedId": "query-correctness-repro-test-testregexpcountcountsmatchesrepro-0001-select-regexp_count-abcabc-a",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT regexp_count('abcabc', 'a');",
+      "querySha256": "f0dd2f52e50592bfef9aa50463c4fab40fb5ca37437c8ffa3bb11dce4da8ac48",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestRegexpSubstrReturnsMatchGuard#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestRegexpSubstrReturnsMatchGuard",
+      "ordinal": 1,
+      "scriptName": "regexp_substr returns match",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testregexpsubstrreturnsmatchguard-0001-select-regexp_substr-abcabc-b.",
+      "suggestedId": "query-correctness-repro-test-testregexpsubstrreturnsmatchguard-0001-select-regexp_substr-abcabc-b.",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT regexp_substr('abcabc', 'b.');",
+      "querySha256": "f52b1ba25a2fc71a82b9ad3fdc9ea8c775b1510a52af2f57a5b152b2092d1c17",
+      "expectedRows": [
+        [
+          {
+            "value": "bc"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestRegexpInstrReturnsPositionGuard#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestRegexpInstrReturnsPositionGuard",
+      "ordinal": 1,
+      "scriptName": "regexp_instr returns position",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testregexpinstrreturnspositionguard-0001-select-regexp_instr-abcabc-b.",
+      "suggestedId": "query-correctness-repro-test-testregexpinstrreturnspositionguard-0001-select-regexp_instr-abcabc-b.",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT regexp_instr('abcabc', 'b.');",
+      "querySha256": "bca9afd9620c254fa5572816555531f9fc0dbce44c9a224ee575d84d6101aac7",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestConcatWsSkipsNullsRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestConcatWsSkipsNullsRepro",
+      "ordinal": 1,
+      "scriptName": "concat_ws skips null arguments",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testconcatwsskipsnullsrepro-0001-select-concat_ws-10-20-null",
+      "suggestedId": "query-correctness-repro-test-testconcatwsskipsnullsrepro-0001-select-concat_ws-10-20-null",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT concat_ws(',', 10, 20, NULL, 30),\n\t\t\t\t\t\t\tconcat_ws('', 10, 20, NULL, 30),\n\t\t\t\t\t\t\tconcat_ws(NULL, 10, 20) IS NULL;",
+      "querySha256": "d0bf39f1bbd93ca1d7a6305c23db8560b41b9ae4815b580b96856b56205fc81e",
+      "expectedRows": [
+        [
+          {
+            "value": "10,20,30"
+          },
+          {
+            "value": "102030"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestFormatDynamicWidthRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestFormatDynamicWidthRepro",
+      "ordinal": 1,
+      "scriptName": "format dynamic width arguments",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testformatdynamicwidthrepro-0001-select-format-%*s|%*s-5-x",
+      "suggestedId": "query-correctness-repro-test-testformatdynamicwidthrepro-0001-select-format-%*s|%*s-5-x",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT format('%*s|%*s', 5, 'x', -5, 'y');",
+      "querySha256": "de42c6addedc5ff0a4c84de8dbfd73f511cbbfc1c8a8255d3ce192180313f924",
+      "expectedRows": [
+        [
+          {
+            "value": "    x|y    "
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestParseIdentSplitsQualifiedNamesRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestParseIdentSplitsQualifiedNamesRepro",
+      "ordinal": 1,
+      "scriptName": "parse_ident splits qualified identifiers",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testparseidentsplitsqualifiednamesrepro-0001-select-parse_ident-schemax.tabley-::text[]-parse_ident",
+      "suggestedId": "query-correctness-repro-test-testparseidentsplitsqualifiednamesrepro-0001-select-parse_ident-schemax.tabley-::text[]-parse_ident",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT parse_ident('Schemax.Tabley')::text[],\n\t\t\t\t\t\t\tparse_ident('\"SchemaX\".\"TableY\"')::text[],\n\t\t\t\t\t\t\tparse_ident('foo.boo[]', false)::text[];",
+      "querySha256": "a7d13d44a79274fd6adb0c3a19dce4f9190120e0f69d0d4ce2fbcb1dc5fb82cb",
+      "expectedRows": [
+        [
+          {
+            "value": "{schemax,tabley}"
+          },
+          {
+            "value": "{SchemaX,TableY}"
+          },
+          {
+            "value": "{foo,boo}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestStringToTableSplitsRowsRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestStringToTableSplitsRowsRepro",
+      "ordinal": 1,
+      "scriptName": "string_to_table splits text into rows",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-teststringtotablesplitsrowsrepro-0001-select-v-v-is-null",
+      "suggestedId": "query-correctness-repro-test-teststringtotablesplitsrowsrepro-0001-select-v-v-is-null",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT v, v IS NULL\n\t\t\t\t\t\tFROM string_to_table('1|2|3', '|') AS g(v);",
+      "querySha256": "16fbfb9b08b782626db1effc2c1920ced86f04877cfe1e7a3cdc36d9e3e73627",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "f"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "f"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestFunctionNamedArgumentNotationRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestFunctionNamedArgumentNotationRepro",
+      "ordinal": 1,
+      "scriptName": "named argument notation",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testfunctionnamedargumentnotationrepro-0001-select-make_date-year-=>-2026",
+      "suggestedId": "query-correctness-repro-test-testfunctionnamedargumentnotationrepro-0001-select-make_date-year-=>-2026",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT make_date(year => 2026, month => 5, day => 10)::text,\n\t\t\t\t\t\t\tmake_date(2026, day => 10, month => 5)::text;",
+      "querySha256": "42137fb176e8923b44289e3b37da23fb59a490a20bd39149cc7893be92c08001",
+      "expectedRows": [
+        [
+          {
+            "value": "2026-05-10"
+          },
+          {
+            "value": "2026-05-10"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestCurrentCatalogColumnNameRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestCurrentCatalogColumnNameRepro",
+      "ordinal": 1,
+      "scriptName": "current_catalog column name",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testcurrentcatalogcolumnnamerepro-0001-select-current_catalog",
+      "suggestedId": "query-correctness-repro-test-testcurrentcatalogcolumnnamerepro-0001-select-current_catalog",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT current_catalog;",
+      "querySha256": "8cc73c4d267fc20757410d050ffa1326e7b7fb51a95b31158d876f08264b13fd",
+      "expectedRows": [
+        [
+          {
+            "value": "postgres"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestCurrentSchemaColumnNameRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestCurrentSchemaColumnNameRepro",
+      "ordinal": 1,
+      "scriptName": "current_schema column name",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testcurrentschemacolumnnamerepro-0001-select-current_schema",
+      "suggestedId": "query-correctness-repro-test-testcurrentschemacolumnnamerepro-0001-select-current_schema",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT current_schema();",
+      "querySha256": "55cd8015872791240d7c4073889d46ed4137ca36af039565bf6b53cca6608aa4",
+      "expectedRows": [
+        [
+          {
+            "value": "public"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestCurrentDatabaseFromFunctionGuard#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestCurrentDatabaseFromFunctionGuard",
+      "ordinal": 1,
+      "scriptName": "current_database function in FROM",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testcurrentdatabasefromfunctionguard-0001-select-*-from-current_database",
+      "suggestedId": "query-correctness-repro-test-testcurrentdatabasefromfunctionguard-0001-select-*-from-current_database",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM current_database();",
+      "querySha256": "9f0c0dcb8953ee5228f3c0fd7d5d3f952f2593a8b1dfac6497ab03879f76816a",
+      "expectedRows": [
+        [
+          {
+            "value": "postgres"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestCurrentCatalogFromExpressionGuard#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestCurrentCatalogFromExpressionGuard",
+      "ordinal": 1,
+      "scriptName": "current_catalog expression in FROM",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testcurrentcatalogfromexpressionguard-0001-select-*-from-current_catalog",
+      "suggestedId": "query-correctness-repro-test-testcurrentcatalogfromexpressionguard-0001-select-*-from-current_catalog",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM current_catalog;",
+      "querySha256": "ac1fe9197d5406d12f7663f19fdbdcab5bbead9aebb8565b854f4b542506992e",
+      "expectedRows": [
+        [
+          {
+            "value": "postgres"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestCurrentSchemaFromFunctionGuard#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestCurrentSchemaFromFunctionGuard",
+      "ordinal": 1,
+      "scriptName": "current_schema function in FROM",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testcurrentschemafromfunctionguard-0001-select-*-from-current_schema",
+      "suggestedId": "query-correctness-repro-test-testcurrentschemafromfunctionguard-0001-select-*-from-current_schema",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM current_schema();",
+      "querySha256": "28a5b42ea2a5110c5912875f18e70f0a1f0286b7d3ad311a78cc3654c4c84ca2",
+      "expectedRows": [
+        [
+          {
+            "value": "public"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestXmlWellFormedFunctionsRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestXmlWellFormedFunctionsRepro",
+      "ordinal": 1,
+      "scriptName": "XML well-formedness predicates",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testxmlwellformedfunctionsrepro-0001-select-xml_is_well_formed-<a/>-xml_is_well_formed-<a>",
+      "suggestedId": "query-correctness-repro-test-testxmlwellformedfunctionsrepro-0001-select-xml_is_well_formed-<a/>-xml_is_well_formed-<a>",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT xml_is_well_formed('<a/>'),\n\t\t\t\t\t\t\txml_is_well_formed('<a>'),\n\t\t\t\t\t\t\txml_is_well_formed_document('<a/>'),\n\t\t\t\t\t\t\txml_is_well_formed_content('plain text');",
+      "querySha256": "4d4686c4bfe621f0f399e1efba00879a2dba635206a03149830f0df625829d87",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
           }
         ]
       ],

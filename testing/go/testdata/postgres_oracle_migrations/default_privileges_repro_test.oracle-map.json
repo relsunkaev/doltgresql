@@ -1,0 +1,95 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map default_privileges_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/default_privileges_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/default_privileges_repro_test.go:TestAlterDefaultPrivilegesGrantAppliesToFutureTablesRepro#0001",
+      "source": "testing/go/default_privileges_repro_test.go:TestAlterDefaultPrivilegesGrantAppliesToFutureTablesRepro",
+      "ordinal": 1,
+      "scriptName": "default SELECT grant applies to future tables",
+      "oracle": "internal",
+      "suggestedId": "default-privileges-repro-test-testalterdefaultprivilegesgrantappliestofuturetablesrepro-0001-select-id-label-from-default_priv_items",
+      "expectedKind": "rows",
+      "username": "default_reader",
+      "query": "SELECT id, label FROM default_priv_items ORDER BY id;",
+      "querySha256": "fc937547e32e66522eeb6df71b32bec4de234429350b6c98711353b046991c2e",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/default_privileges_repro_test.go:TestAlterDefaultPrivilegesDoesNotGrantExistingTablesRepro#0001",
+      "source": "testing/go/default_privileges_repro_test.go:TestAlterDefaultPrivilegesDoesNotGrantExistingTablesRepro",
+      "ordinal": 1,
+      "scriptName": "default SELECT grant does not apply to existing tables",
+      "oracle": "internal",
+      "suggestedId": "default-privileges-repro-test-testalterdefaultprivilegesdoesnotgrantexistingtablesrepro-0001-select-id-from-default_priv_existing",
+      "expectedKind": "error",
+      "username": "default_existing_reader",
+      "query": "SELECT id FROM default_priv_existing;",
+      "querySha256": "c0e3fded1a75ca4ce12e173656ffee7d5540b92cd8130a760fe39533600c07f1",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/default_privileges_repro_test.go:TestAlterDefaultPrivilegesGrantAppliesToFutureSequencesRepro#0001",
+      "source": "testing/go/default_privileges_repro_test.go:TestAlterDefaultPrivilegesGrantAppliesToFutureSequencesRepro",
+      "ordinal": 1,
+      "scriptName": "default USAGE grant applies to future sequences",
+      "oracle": "internal",
+      "suggestedId": "default-privileges-repro-test-testalterdefaultprivilegesgrantappliestofuturesequencesrepro-0001-select-nextval-default_priv_sequence",
+      "expectedKind": "rows",
+      "username": "default_sequence_user",
+      "query": "SELECT nextval('default_priv_sequence');",
+      "querySha256": "3fc0e80e92cee9a0366562450d06767ad75408167713857065537dba94817320",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/default_privileges_repro_test.go:TestAlterDefaultPrivilegesGrantAppliesToFutureFunctionsRepro#0001",
+      "source": "testing/go/default_privileges_repro_test.go:TestAlterDefaultPrivilegesGrantAppliesToFutureFunctionsRepro",
+      "ordinal": 1,
+      "scriptName": "default EXECUTE grant applies to future functions",
+      "oracle": "postgres",
+      "postgresId": "default-privileges-repro-test-testalterdefaultprivilegesgrantappliestofuturefunctionsrepro-0001-select-default_priv_function",
+      "suggestedId": "default-privileges-repro-test-testalterdefaultprivilegesgrantappliestofuturefunctionsrepro-0001-select-default_priv_function",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "default_function_user",
+      "query": "SELECT default_priv_function();",
+      "querySha256": "52076ddc926797a41a0e291f9a32846538c735b243104f24b93c6a8251e94666",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/default_privileges_repro_test.go:TestAlterDefaultPrivilegesPopulatesPgDefaultAclRepro#0001",
+      "source": "testing/go/default_privileges_repro_test.go:TestAlterDefaultPrivilegesPopulatesPgDefaultAclRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER DEFAULT PRIVILEGES populates pg_default_acl",
+      "oracle": "internal",
+      "suggestedId": "default-privileges-repro-test-testalterdefaultprivilegespopulatespgdefaultaclrepro-0001-select-defaclobjtype-from-pg_catalog.pg_default_acl-where",
+      "expectedKind": "rows",
+      "query": "SELECT defaclobjtype\n\t\t\t\t\t\tFROM pg_catalog.pg_default_acl\n\t\t\t\t\t\tWHERE defaclnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public');",
+      "querySha256": "c87ad267bc1814da32356500ef116e9f0db5c3f5c7366efac93d17c9493ab95c",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    }
+  ]
+}

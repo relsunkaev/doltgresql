@@ -35,8 +35,7 @@ func TestAlterEnumRenameValueRepro(t *testing.T) {
 					Query: `SELECT enumlabel
 						FROM pg_catalog.pg_enum
 						WHERE enumtypid = 'rename_enum_status'::regtype
-						ORDER BY enumsortorder;`,
-					Expected: []sql.Row{{"new"}, {"archived"}},
+						ORDER BY enumsortorder;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-type-rename-repro-test-testalterenumrenamevaluerepro-0001-select-enumlabel-from-pg_catalog.pg_enum-where"},
 				},
 			},
 		},
@@ -56,21 +55,21 @@ func TestAlterCompositeTypeRenameAttribute(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT (ROW(7)::rename_composite_item).new_name;`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT (ROW(7)::rename_composite_item).new_name;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-type-rename-repro-test-testaltercompositetyperenameattribute-0001-select-row-7-::rename_composite_item-.new_name"},
 				},
 				{
-					Query:       `SELECT (ROW(7)::rename_composite_item).old_name;`,
-					ExpectedErr: `old_name`,
+					Query: `SELECT (ROW(7)::rename_composite_item).old_name;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-type-rename-repro-test-testaltercompositetyperenameattribute-0002-select-row-7-::rename_composite_item-.old_name",
+
+						// TestAlterCompositeTypeRenameAttributeMultipleFields guards that renaming
+						// one attribute on a multi-attribute composite type leaves every other
+						// attribute readable under its original name.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterCompositeTypeRenameAttributeMultipleFields guards that renaming
-// one attribute on a multi-attribute composite type leaves every other
-// attribute readable under its original name.
 func TestAlterCompositeTypeRenameAttributeMultipleFields(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -81,16 +80,13 @@ func TestAlterCompositeTypeRenameAttributeMultipleFields(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT (ROW(1, 'kept', 3)::rename_attr_multi).a;`,
-					Expected: []sql.Row{{int32(1)}},
+					Query: `SELECT (ROW(1, 'kept', 3)::rename_attr_multi).a;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-type-rename-repro-test-testaltercompositetyperenameattributemultiplefields-0001-select-row-1-kept-3"},
 				},
 				{
-					Query:    `SELECT (ROW(1, 'kept', 3)::rename_attr_multi).renamed_b;`,
-					Expected: []sql.Row{{"kept"}},
+					Query: `SELECT (ROW(1, 'kept', 3)::rename_attr_multi).renamed_b;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-type-rename-repro-test-testaltercompositetyperenameattributemultiplefields-0002-select-row-1-kept-3"},
 				},
 				{
-					Query:    `SELECT (ROW(1, 'kept', 3)::rename_attr_multi).c;`,
-					Expected: []sql.Row{{int32(3)}},
+					Query: `SELECT (ROW(1, 'kept', 3)::rename_attr_multi).c;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-type-rename-repro-test-testaltercompositetyperenameattributemultiplefields-0003-select-row-1-kept-3"},
 				},
 			},
 		},
@@ -109,18 +105,19 @@ func TestAlterCompositeTypeRenameAttributeMissingErrors(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER TYPE rename_attr_missing RENAME ATTRIBUTE not_a_field TO new_field;`,
-					ExpectedErr: `column "not_a_field" of relation "rename_attr_missing" does not exist`,
+					Query: `ALTER TYPE rename_attr_missing RENAME ATTRIBUTE not_a_field TO new_field;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-type-rename-repro-test-testaltercompositetyperenameattributemissingerrors-0001-alter-type-rename_attr_missing-rename-attribute",
+
+						// TestAlterCompositeTypeRenameAttributeCollisionErrors guards that renaming an
+						// attribute to a name already used by another attribute on the same composite
+						// type errors with PostgreSQL's "already exists" message rather than silently
+						// shadowing the existing attribute.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterCompositeTypeRenameAttributeCollisionErrors guards that renaming an
-// attribute to a name already used by another attribute on the same composite
-// type errors with PostgreSQL's "already exists" message rather than silently
-// shadowing the existing attribute.
 func TestAlterCompositeTypeRenameAttributeCollisionErrors(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -130,17 +127,18 @@ func TestAlterCompositeTypeRenameAttributeCollisionErrors(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER TYPE rename_attr_collision RENAME ATTRIBUTE a TO b;`,
-					ExpectedErr: `column "b" of relation "rename_attr_collision" already exists`,
+					Query: `ALTER TYPE rename_attr_collision RENAME ATTRIBUTE a TO b;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-type-rename-repro-test-testaltercompositetyperenameattributecollisionerrors-0001-alter-type-rename_attr_collision-rename-attribute",
+
+						// TestAlterCompositeTypeRenameAttributeNonComposite guards that RENAME
+						// ATTRIBUTE is rejected when applied to a non-composite user type (enum here)
+						// so that the operation does not silently corrupt enum metadata.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterCompositeTypeRenameAttributeNonComposite guards that RENAME
-// ATTRIBUTE is rejected when applied to a non-composite user type (enum here)
-// so that the operation does not silently corrupt enum metadata.
 func TestAlterCompositeTypeRenameAttributeNonComposite(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -150,17 +148,18 @@ func TestAlterCompositeTypeRenameAttributeNonComposite(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER TYPE rename_attr_enum RENAME ATTRIBUTE a TO renamed_a;`,
-					ExpectedErr: `is not a composite type`,
+					Query: `ALTER TYPE rename_attr_enum RENAME ATTRIBUTE a TO renamed_a;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-type-rename-repro-test-testaltercompositetyperenameattributenoncomposite-0001-alter-type-rename_attr_enum-rename-attribute",
+
+						// TestAlterCompositeTypeRenameAttributeSchemaQualified guards that the
+						// schema-qualified ALTER TYPE form resolves the type through the search path
+						// and renames the attribute in that schema's namespace.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterCompositeTypeRenameAttributeSchemaQualified guards that the
-// schema-qualified ALTER TYPE form resolves the type through the search path
-// and renames the attribute in that schema's namespace.
 func TestAlterCompositeTypeRenameAttributeSchemaQualified(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -172,8 +171,7 @@ func TestAlterCompositeTypeRenameAttributeSchemaQualified(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT (ROW(42)::rename_attr_schema.qualified_item).new_field;`,
-					Expected: []sql.Row{{42}},
+					Query: `SELECT (ROW(42)::rename_attr_schema.qualified_item).new_field;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-type-rename-repro-test-testaltercompositetyperenameattributeschemaqualified-0001-select-row-42-::rename_attr_schema.qualified_item-.new_field"},
 				},
 			},
 		},
@@ -201,21 +199,21 @@ func TestAlterCompositeTypeRenameAttributeUpdatesStoredColumnsRepro(t *testing.T
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT (payload).new_name
-						FROM rename_attr_stored_items;`,
-					Expected: []sql.Row{{int32(7)}},
+						FROM rename_attr_stored_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-type-rename-repro-test-testaltercompositetyperenameattributeupdatesstoredcolumnsrepro-0001-select-payload-.new_name-from-rename_attr_stored_items"},
 				},
 				{
-					Query:       `SELECT (payload).old_name FROM rename_attr_stored_items;`,
-					ExpectedErr: `old_name`,
+					Query: `SELECT (payload).old_name FROM rename_attr_stored_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-type-rename-repro-test-testaltercompositetyperenameattributeupdatesstoredcolumnsrepro-0002-select-payload-.old_name-from-rename_attr_stored_items",
+
+						// TestAlterCompositeTypeRenameAttributeUpdatesViewMetadataRepro reproduces a
+						// catalog persistence bug: renaming a composite type attribute should update
+						// views that reference that attribute.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterCompositeTypeRenameAttributeUpdatesViewMetadataRepro reproduces a
-// catalog persistence bug: renaming a composite type attribute should update
-// views that reference that attribute.
 func TestAlterCompositeTypeRenameAttributeUpdatesViewMetadataRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -229,12 +227,10 @@ func TestAlterCompositeTypeRenameAttributeUpdatesViewMetadataRepro(t *testing.T)
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT value FROM rename_attr_view_reader;`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT value FROM rename_attr_view_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-type-rename-repro-test-testaltercompositetyperenameattributeupdatesviewmetadatarepro-0001-select-value-from-rename_attr_view_reader"},
 				},
 				{
-					Query:    `SELECT (ROW(7)::rename_attr_view_item).new_name;`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT (ROW(7)::rename_attr_view_item).new_name;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-type-rename-repro-test-testaltercompositetyperenameattributeupdatesviewmetadatarepro-0002-select-row-7-::rename_attr_view_item-.new_name"},
 				},
 			},
 		},
@@ -258,15 +254,13 @@ func TestAlterCompositeTypeRenameAttributeUpdatesMaterializedViewMetadataRepro(t
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT value FROM rename_attr_matview_reader;`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT value FROM rename_attr_matview_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-type-rename-repro-test-testaltercompositetyperenameattributeupdatesmaterializedviewmetadatarepro-0001-select-value-from-rename_attr_matview_reader"},
 				},
 				{
 					Query: `REFRESH MATERIALIZED VIEW rename_attr_matview_reader;`,
 				},
 				{
-					Query:    `SELECT value FROM rename_attr_matview_reader;`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT value FROM rename_attr_matview_reader;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-type-rename-repro-test-testaltercompositetyperenameattributeupdatesmaterializedviewmetadatarepro-0002-select-value-from-rename_attr_matview_reader"},
 				},
 			},
 		},
@@ -301,8 +295,7 @@ func TestAlterCompositeTypeRenameAttributeUpdatesGeneratedColumnMetadataRepro(t 
 				{
 					Query: `SELECT id, (payload).new_name, extracted
 						FROM rename_attr_generated_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, 7, 7}, {2, 11, 11}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-type-rename-repro-test-testaltercompositetyperenameattributeupdatesgeneratedcolumnmetadatarepro-0001-select-id-payload-.new_name-extracted"},
 				},
 			},
 		},
@@ -328,8 +321,12 @@ func TestAlterCompositeTypeRenameAttributeUpdatesFunctionBodyMetadataRepro(t *te
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT rename_attr_function_value();`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT rename_attr_function_value();`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-type-rename-repro-test-testaltercompositetyperenameattributeupdatesfunctionbodymetadatarepro-0001-select-rename_attr_function_value",
+
+						// PostgreSQL can rename type and domain objects in place. Doltgres should
+						// update type lookup metadata so the old name disappears and the new name is
+						// usable.
+						Compare: "sqlstate"},
 				},
 				{
 					Query:    `SELECT (ROW(7)::rename_attr_function_item).new_name;`,
@@ -340,9 +337,6 @@ func TestAlterCompositeTypeRenameAttributeUpdatesFunctionBodyMetadataRepro(t *te
 	})
 }
 
-// PostgreSQL can rename type and domain objects in place. Doltgres should
-// update type lookup metadata so the old name disappears and the new name is
-// usable.
 func TestAlterTypeAndDomainRenameToRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -355,8 +349,7 @@ func TestAlterTypeAndDomainRenameToRepro(t *testing.T) {
 				{
 					Query: `SELECT
 							to_regtype('rename_enum_object')::text,
-							to_regtype('renamed_enum_object')::text;`,
-					Expected: []sql.Row{{nil, "renamed_enum_object"}},
+							to_regtype('renamed_enum_object')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-type-rename-repro-test-testaltertypeanddomainrenametorepro-0001-select-to_regtype-rename_enum_object-::text-to_regtype"},
 				},
 			},
 		},
@@ -370,8 +363,7 @@ func TestAlterTypeAndDomainRenameToRepro(t *testing.T) {
 				{
 					Query: `SELECT
 							to_regtype('rename_domain_object')::text,
-							to_regtype('renamed_domain_object')::text;`,
-					Expected: []sql.Row{{nil, "renamed_domain_object"}},
+							to_regtype('renamed_domain_object')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-type-rename-repro-test-testaltertypeanddomainrenametorepro-0002-select-to_regtype-rename_domain_object-::text-to_regtype"},
 				},
 			},
 		},
@@ -403,8 +395,7 @@ func TestAlterTypeRenameUpdatesExistingColumnMetadataRepro(t *testing.T) {
 				{
 					Query: `SELECT id, status::text
 						FROM rename_column_status_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{int32(1), "new"}, {int32(2), "done"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-type-rename-repro-test-testaltertyperenameupdatesexistingcolumnmetadatarepro-0001-select-id-status::text-from-rename_column_status_items"},
 				},
 			},
 		},
@@ -425,14 +416,12 @@ func TestAlterTypeRenameUpdatesExistingColumnMetadataRepro(t *testing.T) {
 						VALUES (2, 20::renamed_column_domain);`,
 				},
 				{
-					Query:       `INSERT INTO rename_column_domain_items VALUES (3, -1);`,
-					ExpectedErr: `rename_column_domain`,
+					Query: `INSERT INTO rename_column_domain_items VALUES (3, -1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-type-rename-repro-test-testaltertyperenameupdatesexistingcolumnmetadatarepro-0002-insert-into-rename_column_domain_items-values-3", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, amount
 						FROM rename_column_domain_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{int32(1), int32(10)}, {int32(2), int32(20)}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-type-rename-repro-test-testaltertyperenameupdatesexistingcolumnmetadatarepro-0003-select-id-amount-from-rename_column_domain_items"},
 				},
 			},
 		},
@@ -462,8 +451,7 @@ func TestAlterTypeRenameUpdatesColumnDefaultMetadataRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT id::text, status::text, pg_typeof(status)::text
-						FROM rename_default_status_items;`,
-					Expected: []sql.Row{{"1", "new", "renamed_default_status"}},
+						FROM rename_default_status_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-type-rename-repro-test-testaltertyperenameupdatescolumndefaultmetadatarepro-0001-select-id::text-status::text-pg_typeof-status"},
 				},
 			},
 		},
@@ -493,13 +481,11 @@ func TestAlterTypeRenameUpdatesCheckConstraintMetadataRepro(t *testing.T) {
 						VALUES (1, 'new');`,
 				},
 				{
-					Query:       `INSERT INTO rename_check_status_items VALUES (2, 'done');`,
-					ExpectedErr: `rename_check_not_done`,
+					Query: `INSERT INTO rename_check_status_items VALUES (2, 'done');`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-type-rename-repro-test-testaltertyperenameupdatescheckconstraintmetadatarepro-0001-insert-into-rename_check_status_items-values-2", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id::text, status
-						FROM rename_check_status_items;`,
-					Expected: []sql.Row{{"1", "new"}},
+						FROM rename_check_status_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-type-rename-repro-test-testaltertyperenameupdatescheckconstraintmetadatarepro-0002-select-id::text-status-from-rename_check_status_items"},
 				},
 			},
 		},
@@ -594,12 +580,10 @@ func TestAlterTypeRenameUpdatesFunctionSignatureMetadataRepro(t *testing.T) {
 				{
 					Query: `SELECT to_regprocedure(
 							'rename_function_status_echo(renamed_function_status)'
-						)::text;`,
-					Expected: []sql.Row{{"rename_function_status_echo(renamed_function_status)"}},
+						)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-type-rename-repro-test-testaltertyperenameupdatesfunctionsignaturemetadatarepro-0001-select-to_regprocedure-rename_function_status_echo-renamed_function_status-::text"},
 				},
 				{
-					Query:    `SELECT rename_function_status_echo('done'::renamed_function_status)::text;`,
-					Expected: []sql.Row{{"done"}},
+					Query: `SELECT rename_function_status_echo('done'::renamed_function_status)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-type-rename-repro-test-testaltertyperenameupdatesfunctionsignaturemetadatarepro-0002-select-rename_function_status_echo-done-::renamed_function_status-::text"},
 				},
 			},
 		},
@@ -621,13 +605,11 @@ func TestAlterTypeRenameUpdatesViewMetadataRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT status::text FROM rename_view_status_view;`,
-					Expected: []sql.Row{{"done"}},
+					Query: `SELECT status::text FROM rename_view_status_view;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-type-rename-repro-test-testaltertyperenameupdatesviewmetadatarepro-0001-select-status::text-from-rename_view_status_view"},
 				},
 				{
 					Query: `SELECT pg_typeof(status)::text
-						FROM rename_view_status_view;`,
-					Expected: []sql.Row{{"renamed_view_status"}},
+						FROM rename_view_status_view;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-type-rename-repro-test-testaltertyperenameupdatesviewmetadatarepro-0002-select-pg_typeof-status-::text-from"},
 				},
 			},
 		},
@@ -650,20 +632,17 @@ func TestAlterTypeRenameUpdatesMaterializedViewMetadataRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT status::text FROM rename_matview_status_view;`,
-					Expected: []sql.Row{{"done"}},
+					Query: `SELECT status::text FROM rename_matview_status_view;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-type-rename-repro-test-testaltertyperenameupdatesmaterializedviewmetadatarepro-0001-select-status::text-from-rename_matview_status_view"},
 				},
 				{
 					Query: `SELECT pg_typeof(status)::text
-						FROM rename_matview_status_view;`,
-					Expected: []sql.Row{{"renamed_matview_status"}},
+						FROM rename_matview_status_view;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-type-rename-repro-test-testaltertyperenameupdatesmaterializedviewmetadatarepro-0002-select-pg_typeof-status-::text-from"},
 				},
 				{
 					Query: `REFRESH MATERIALIZED VIEW rename_matview_status_view;`,
 				},
 				{
-					Query:    `SELECT status::text FROM rename_matview_status_view;`,
-					Expected: []sql.Row{{"done"}},
+					Query: `SELECT status::text FROM rename_matview_status_view;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-type-rename-repro-test-testaltertyperenameupdatesmaterializedviewmetadatarepro-0003-select-status::text-from-rename_matview_status_view"},
 				},
 			},
 		},

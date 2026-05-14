@@ -30,15 +30,13 @@ func TestCreateExtensionVersionOptionRepro(t *testing.T) {
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CREATE EXTENSION hstore VERSION "999.0";`,
-					ExpectedErr: `has no installation script`,
+					Query: `CREATE EXTENSION hstore VERSION "999.0";`, PostgresOracle: ScriptTestPostgresOracle{ID: "extension-dependency-repro-test-testcreateextensionversionoptionrepro-0001-create-extension-hstore-version-999.0", Compare: "sqlstate"},
 				},
 				{
 					Query: `CREATE EXTENSION hstore VERSION "1.8";`,
 				},
 				{
-					Query:    `SELECT extversion FROM pg_catalog.pg_extension WHERE extname = 'hstore';`,
-					Expected: []sql.Row{{"1.8"}},
+					Query: `SELECT extversion FROM pg_catalog.pg_extension WHERE extname = 'hstore';`, PostgresOracle: ScriptTestPostgresOracle{ID: "extension-dependency-repro-test-testcreateextensionversionoptionrepro-0002-select-extversion-from-pg_catalog.pg_extension-where"},
 				},
 			},
 		},
@@ -63,16 +61,13 @@ func TestCreateExtensionHstoreWithSchemaQualifiesRuntimeObjectsRepro(t *testing.
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT to_regtype('extensions.hstore')::text;`,
-					Expected: []sql.Row{{"extensions.hstore"}},
+					Query: `SELECT to_regtype('extensions.hstore')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "extension-dependency-repro-test-testcreateextensionhstorewithschemaqualifiesruntimeobjectsrepro-0001-select-to_regtype-extensions.hstore-::text"},
 				},
 				{
-					Query:    `SELECT attrs::text, extensions.fetchval(attrs, 'A') FROM hstore_schema_qualified_items;`,
-					Expected: []sql.Row{{`"A"=>"2", "B"=>"5"`, "2"}},
+					Query: `SELECT attrs::text, extensions.fetchval(attrs, 'A') FROM hstore_schema_qualified_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "extension-dependency-repro-test-testcreateextensionhstorewithschemaqualifiesruntimeobjectsrepro-0002-select-attrs::text-extensions.fetchval-attrs-a"},
 				},
 				{
-					Query:    `SELECT attrs OPERATOR(extensions.?) 'B' FROM hstore_schema_qualified_items;`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT attrs OPERATOR(extensions.?) 'B' FROM hstore_schema_qualified_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "extension-dependency-repro-test-testcreateextensionhstorewithschemaqualifiesruntimeobjectsrepro-0003-select-attrs-operator-extensions.?-b"},
 				},
 			},
 		},
@@ -97,25 +92,24 @@ func TestCreateExtensionCitextWithSchemaRegtypeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT to_regtype('extensions.citext')::text;`,
-					Expected: []sql.Row{{"extensions.citext"}},
+					Query: `SELECT to_regtype('extensions.citext')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "extension-dependency-repro-test-testcreateextensioncitextwithschemaregtyperepro-0001-select-to_regtype-extensions.citext-::text"},
 				},
 				{
-					Query:    `SELECT id FROM citext_schema_qualified_items WHERE email = 'alice@example.com'::extensions.citext;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT id FROM citext_schema_qualified_items WHERE email = 'alice@example.com'::extensions.citext;`, PostgresOracle: ScriptTestPostgresOracle{ID: "extension-dependency-repro-test-testcreateextensioncitextwithschemaregtyperepro-0002-select-id-from-citext_schema_qualified_items-where"},
 				},
 				{
-					Query:       `INSERT INTO citext_schema_qualified_items VALUES (2, 'ALICE@example.com');`,
-					ExpectedErr: `duplicate`,
+					Query: `INSERT INTO citext_schema_qualified_items VALUES (2, 'ALICE@example.com');`, PostgresOracle: ScriptTestPostgresOracle{ID: "extension-dependency-repro-test-testcreateextensioncitextwithschemaregtyperepro-0003-insert-into-citext_schema_qualified_items-values-2",
+
+						// TestCreateExtensionVectorWithSchemaQualifiesTypesRepro reproduces an
+						// extension schema relocation gap: pgvector member types should be created in
+						// the extension's target schema.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateExtensionVectorWithSchemaQualifiesTypesRepro reproduces an
-// extension schema relocation gap: pgvector member types should be created in
-// the extension's target schema.
 func TestCreateExtensionVectorWithSchemaQualifiesTypesRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -368,15 +362,13 @@ func TestCreateExtensionRejectsSchemaForNonRelocatableExtensionRepro(t *testing.
 			Name: "CREATE EXTENSION rejects explicit schema for non-relocatable extension",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CREATE EXTENSION plpgsql WITH SCHEMA public;`,
-					ExpectedErr: `schema`,
+					Query: `CREATE EXTENSION plpgsql WITH SCHEMA public;`, PostgresOracle: ScriptTestPostgresOracle{ID: "extension-dependency-repro-test-testcreateextensionrejectsschemafornonrelocatableextensionrepro-0001-create-extension-plpgsql-with-schema", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT n.nspname
 						FROM pg_catalog.pg_extension e
 						JOIN pg_catalog.pg_namespace n ON n.oid = e.extnamespace
-						WHERE e.extname = 'plpgsql';`,
-					Expected: []sql.Row{},
+						WHERE e.extname = 'plpgsql';`, PostgresOracle: ScriptTestPostgresOracle{ID: "extension-dependency-repro-test-testcreateextensionrejectsschemafornonrelocatableextensionrepro-0002-select-n.nspname-from-pg_catalog.pg_extension-e"},
 				},
 			},
 		},

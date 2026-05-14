@@ -28,17 +28,18 @@ func TestCreateDatabaseRejectsInvalidEncodingRepro(t *testing.T) {
 			Name: "CREATE DATABASE rejects invalid encoding",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CREATE DATABASE invalid_encoding_db ENCODING notexist;`,
-					ExpectedErr: `not a valid encoding name`,
+					Query: `CREATE DATABASE invalid_encoding_db ENCODING notexist;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-database-correctness-repro-test-testcreatedatabaserejectsinvalidencodingrepro-0001-create-database-invalid_encoding_db-encoding-notexist",
+
+						// TestCreateDatabaseDefaultTablespace guards that CREATE DATABASE accepts
+						// TABLESPACE pg_default, since that is the only tablespace Doltgres exposes
+						// and PostgreSQL allows spelling out the default.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateDatabaseDefaultTablespace guards that CREATE DATABASE accepts
-// TABLESPACE pg_default, since that is the only tablespace Doltgres exposes
-// and PostgreSQL allows spelling out the default.
 func TestCreateDatabaseDefaultTablespace(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -64,17 +65,18 @@ func TestCreateDatabaseUnknownTablespaceErrors(t *testing.T) {
 			Name: "CREATE DATABASE rejects unknown tablespace",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CREATE DATABASE bad_tablespace_db TABLESPACE custom_space;`,
-					ExpectedErr: `tablespace "custom_space" does not exist`,
+					Query: `CREATE DATABASE bad_tablespace_db TABLESPACE custom_space;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-database-correctness-repro-test-testcreatedatabaseunknowntablespaceerrors-0001-create-database-bad_tablespace_db-tablespace-custom_space",
+
+						// TestCreateDatabaseCatalogOptionsRepro reproduces database DDL correctness
+						// bugs: PostgreSQL accepts CREATE DATABASE catalog options and stores them in
+						// pg_database.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateDatabaseCatalogOptionsRepro reproduces database DDL correctness
-// bugs: PostgreSQL accepts CREATE DATABASE catalog options and stores them in
-// pg_database.
 func TestCreateDatabaseCatalogOptionsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -86,8 +88,7 @@ func TestCreateDatabaseCatalogOptionsRepro(t *testing.T) {
 				{
 					Query: `SELECT datallowconn
 						FROM pg_database
-						WHERE datname = 'no_connections_db';`,
-					Expected: []sql.Row{{false}},
+						WHERE datname = 'no_connections_db';`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-database-correctness-repro-test-testcreatedatabasecatalogoptionsrepro-0001-select-datallowconn-from-pg_database-where"},
 				},
 			},
 		},
@@ -100,8 +101,7 @@ func TestCreateDatabaseCatalogOptionsRepro(t *testing.T) {
 				{
 					Query: `SELECT datconnlimit
 						FROM pg_database
-						WHERE datname = 'connection_limit_db';`,
-					Expected: []sql.Row{{int32(0)}},
+						WHERE datname = 'connection_limit_db';`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-database-correctness-repro-test-testcreatedatabasecatalogoptionsrepro-0002-select-datconnlimit-from-pg_database-where"},
 				},
 			},
 		},
@@ -114,8 +114,7 @@ func TestCreateDatabaseCatalogOptionsRepro(t *testing.T) {
 				{
 					Query: `SELECT datistemplate
 						FROM pg_database
-						WHERE datname = 'template_option_db';`,
-					Expected: []sql.Row{{true}},
+						WHERE datname = 'template_option_db';`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-database-correctness-repro-test-testcreatedatabasecatalogoptionsrepro-0003-select-datistemplate-from-pg_database-where"},
 				},
 			},
 		},
@@ -195,8 +194,7 @@ func TestCreateDatabaseOidOptionPersistsCatalogRepro(t *testing.T) {
 				{
 					Query: `SELECT oid::INT
 						FROM pg_database
-						WHERE datname = 'oid_option_db';`,
-					Expected: []sql.Row{{987654}},
+						WHERE datname = 'oid_option_db';`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-database-correctness-repro-test-testcreatedatabaseoidoptionpersistscatalogrepro-0001-select-oid::int-from-pg_database-where"},
 				},
 			},
 		},
@@ -247,8 +245,7 @@ func TestCreateDatabaseLocaleCatalogRepro(t *testing.T) {
 				{
 					Query: `SELECT datcollate, datctype
 						FROM pg_database
-						WHERE datname = 'locale_catalog_db';`,
-					Expected: []sql.Row{{"C", "C"}},
+						WHERE datname = 'locale_catalog_db';`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-database-correctness-repro-test-testcreatedatabaselocalecatalogrepro-0001-select-datcollate-datctype-from-pg_database"},
 				},
 			},
 		},
@@ -270,8 +267,7 @@ func TestCreateDatabaseCollationVersionRepro(t *testing.T) {
 				{
 					Query: `SELECT datcollversion
 						FROM pg_database
-						WHERE datname = 'collation_version_db';`,
-					Expected: []sql.Row{{"1"}},
+						WHERE datname = 'collation_version_db';`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-database-correctness-repro-test-testcreatedatabasecollationversionrepro-0001-select-datcollversion-from-pg_database-where"},
 				},
 			},
 		},

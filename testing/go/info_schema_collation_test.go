@@ -82,13 +82,7 @@ ORDER BY ordinal_position;`,
 					Query: `SELECT column_name, collation_name
 FROM information_schema.columns
 WHERE table_name = 'coll_explicit' AND column_name IN ('a', 'b', 'def', 'plain')
-ORDER BY column_name;`,
-					Expected: []sql.Row{
-						{"a", "C"},
-						{"b", "POSIX"},
-						{"def", nil},
-						{"plain", nil},
-					},
+ORDER BY column_name;`, PostgresOracle: ScriptTestPostgresOracle{ID: "info-schema-collation-test-testinformationschemacolumnscollationname-0002-select-column_name-collation_name-from-information_schema.columns"},
 				},
 			},
 		},

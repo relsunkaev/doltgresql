@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestDropMaterializedViewClearsPrivilegesRepro reproduces an ACL persistence
@@ -44,9 +42,9 @@ func TestDropMaterializedViewClearsPrivilegesRepro(t *testing.T) {
 				{
 					Query: `SELECT id, label
 						FROM drop_recreate_mv_target;`,
-					Expected: []sql.Row{{1, "new sensitive"}},
+
 					Username: `drop_recreate_mv_reader`,
-					Password: `reader`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{ID: "materialized-view-drop-privilege-repro-test-testdropmaterializedviewclearsprivilegesrepro-0001-select-id-label-from-drop_recreate_mv_target"},
 				},
 				{
 					Query: `DROP MATERIALIZED VIEW drop_recreate_mv_target;`,
@@ -56,10 +54,10 @@ func TestDropMaterializedViewClearsPrivilegesRepro(t *testing.T) {
 						SELECT id, label FROM drop_recreate_mv_source;`,
 				},
 				{
-					Query:       `SELECT id, label FROM drop_recreate_mv_target;`,
-					ExpectedErr: `permission denied`,
-					Username:    `drop_recreate_mv_reader`,
-					Password:    `reader`,
+					Query: `SELECT id, label FROM drop_recreate_mv_target;`,
+
+					Username: `drop_recreate_mv_reader`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{ID: "materialized-view-drop-privilege-repro-test-testdropmaterializedviewclearsprivilegesrepro-0002-select-id-label-from-drop_recreate_mv_target", Compare: "sqlstate"},
 				},
 			},
 		},

@@ -1,0 +1,659 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map insert_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/insert_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/insert_test.go:TestInsert#0001",
+      "source": "testing/go/insert_test.go:TestInsert",
+      "ordinal": 1,
+      "scriptName": "simple insert",
+      "oracle": "postgres",
+      "postgresId": "insert-test-testinsert-0001-select-*-from-mytable-order",
+      "suggestedId": "insert-test-testinsert-0001-select-*-from-mytable-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM mytable order by id",
+      "querySha256": "6085dcd34c4b4b0130b6faa589fdbf56543bf9e8d5f6e0bffdc2755ae74982ae",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "hello"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "world"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/insert_test.go:TestInsert#0002",
+      "source": "testing/go/insert_test.go:TestInsert",
+      "ordinal": 2,
+      "scriptName": "keyless insert",
+      "oracle": "postgres",
+      "postgresId": "insert-test-testinsert-0002-select-*-from-mytable-order",
+      "suggestedId": "insert-test-testinsert-0002-select-*-from-mytable-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM mytable order by id",
+      "querySha256": "6085dcd34c4b4b0130b6faa589fdbf56543bf9e8d5f6e0bffdc2755ae74982ae",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "hello"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "world"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/insert_test.go:TestInsert#0003",
+      "source": "testing/go/insert_test.go:TestInsert",
+      "ordinal": 3,
+      "scriptName": "on conflict clause",
+      "oracle": "postgres",
+      "postgresId": "insert-test-testinsert-0003-select-*-from-mytable-order",
+      "suggestedId": "insert-test-testinsert-0003-select-*-from-mytable-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM mytable order by id",
+      "querySha256": "6085dcd34c4b4b0130b6faa589fdbf56543bf9e8d5f6e0bffdc2755ae74982ae",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "world"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "conflict"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/insert_test.go:TestInsert#0004",
+      "source": "testing/go/insert_test.go:TestInsert",
+      "ordinal": 4,
+      "scriptName": "on conflict clause",
+      "oracle": "internal",
+      "suggestedId": "insert-test-testinsert-0004-select-*-from-mytable-order",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM mytable order by id",
+      "querySha256": "6085dcd34c4b4b0130b6faa589fdbf56543bf9e8d5f6e0bffdc2755ae74982ae",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/insert_test.go:TestInsert#0005",
+      "source": "testing/go/insert_test.go:TestInsert",
+      "ordinal": 5,
+      "scriptName": "on conflict clause",
+      "oracle": "internal",
+      "suggestedId": "insert-test-testinsert-0005-select-*-from-t2-order",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM t2 order by id",
+      "querySha256": "2a5316ebeba074cd8b8860f08645719c7646b1c7d1597bd56d56e8dbdf068390",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/insert_test.go:TestInsert#0006",
+      "source": "testing/go/insert_test.go:TestInsert",
+      "ordinal": 6,
+      "scriptName": "on conflict clause",
+      "oracle": "internal",
+      "suggestedId": "insert-test-testinsert-0006-insert-into-mytable-id-name",
+      "expectedKind": "error",
+      "query": "INSERT INTO mytable (id, name) VALUES (3, 'bad target') ON CONFLICT (name) DO UPDATE SET name = 'not applied'",
+      "querySha256": "40e2c8fc735dd0d8db62613b2bc1a41cd413faef95d832882ff3a627dbe91158",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/insert_test.go:TestInsert#0007",
+      "source": "testing/go/insert_test.go:TestInsert",
+      "ordinal": 7,
+      "scriptName": "on conflict clause",
+      "oracle": "internal",
+      "suggestedId": "insert-test-testinsert-0007-insert-into-conflict_arbiters-values-3",
+      "expectedKind": "error",
+      "query": "INSERT INTO conflict_arbiters VALUES (3, 'a@example.com', 'wrong update') ON CONFLICT (id) DO UPDATE SET name = 'wrong update'",
+      "querySha256": "be4b7543a930c56ea3bb4ed20b7da904f57734923945762f90db929c871bf71d",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/insert_test.go:TestInsert#0008",
+      "source": "testing/go/insert_test.go:TestInsert",
+      "ordinal": 8,
+      "scriptName": "on conflict clause",
+      "oracle": "internal",
+      "suggestedId": "insert-test-testinsert-0008-insert-into-conflict_arbiters-values-3",
+      "expectedKind": "error",
+      "query": "INSERT INTO conflict_arbiters VALUES (3, 'a@example.com', 'wrong ignore') ON CONFLICT (id) DO NOTHING",
+      "querySha256": "f170189b33c9fba0e26ed58b7b28e9eb8ebece64d7300a0cb1987770a6c33104",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/insert_test.go:TestInsert#0009",
+      "source": "testing/go/insert_test.go:TestInsert",
+      "ordinal": 9,
+      "scriptName": "on conflict clause",
+      "oracle": "internal",
+      "suggestedId": "insert-test-testinsert-0009-select-*-from-conflict_arbiters-order",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM conflict_arbiters ORDER BY id",
+      "querySha256": "44914294f79634b36cbd9bc8f09966edc540edc159baab492587b80ad3a7717e",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/insert_test.go:TestInsert#0010",
+      "source": "testing/go/insert_test.go:TestInsert",
+      "ordinal": 10,
+      "scriptName": "null and unspecified default values",
+      "oracle": "postgres",
+      "postgresId": "insert-test-testinsert-0010-select-*-from-t",
+      "suggestedId": "insert-test-testinsert-0010-select-*-from-t",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM t",
+      "querySha256": "bdd379b02821e0bc9d5bab29094f054ce781e1cd351e51bd8f6329c0799638d4",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/insert_test.go:TestInsert#0011",
+      "source": "testing/go/insert_test.go:TestInsert",
+      "ordinal": 11,
+      "scriptName": "implicit default values",
+      "oracle": "postgres",
+      "postgresId": "insert-test-testinsert-0011-select-*-from-t",
+      "suggestedId": "insert-test-testinsert-0011-select-*-from-t",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM t",
+      "querySha256": "bdd379b02821e0bc9d5bab29094f054ce781e1cd351e51bd8f6329c0799638d4",
+      "expectedRows": [
+        [
+          {
+            "value": "123"
+          },
+          {
+            "value": "456"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/insert_test.go:TestInsert#0012",
+      "source": "testing/go/insert_test.go:TestInsert",
+      "ordinal": 12,
+      "scriptName": "types",
+      "oracle": "postgres",
+      "postgresId": "insert-test-testinsert-0012-select-*-from-child",
+      "suggestedId": "insert-test-testinsert-0012-select-*-from-child",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from child;",
+      "querySha256": "5a44f22d1ddbd5054ad071e2c47995c5e925b38751885bb446ebff633cda239a",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "4.5"
+          },
+          {
+            "value": "6.7"
+          },
+          {
+            "value": "hello"
+          },
+          {
+            "value": "world"
+          },
+          {
+            "value": "text"
+          },
+          {
+            "value": "{\"a\":1}"
+          },
+          {
+            "value": "2021-01-01T00:00:00"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/insert_test.go:TestInsert#0013",
+      "source": "testing/go/insert_test.go:TestInsert",
+      "ordinal": 13,
+      "scriptName": "insert returning",
+      "oracle": "postgres",
+      "postgresId": "insert-test-testinsert-0013-insert-into-t-j-values",
+      "suggestedId": "insert-test-testinsert-0013-insert-into-t-j-values",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO t (j) VALUES (5), (6), (7) RETURNING i",
+      "querySha256": "f438780e1ebc6420abea8abe08b803e77db7fe9b6b0bd5ad926350bbe080a7b8",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/insert_test.go:TestInsert#0014",
+      "source": "testing/go/insert_test.go:TestInsert",
+      "ordinal": 14,
+      "scriptName": "insert returning",
+      "oracle": "postgres",
+      "postgresId": "insert-test-testinsert-0014-insert-into-t-j-values",
+      "suggestedId": "insert-test-testinsert-0014-insert-into-t-j-values",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO t (j) VALUES (5), (6), (7) RETURNING i+3",
+      "querySha256": "9dc167b82496d2e9eefdd9e9a578a7c487022c7d0d4b1f73bdd346bddeb178ed",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          }
+        ],
+        [
+          {
+            "value": "8"
+          }
+        ],
+        [
+          {
+            "value": "9"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/insert_test.go:TestInsert#0015",
+      "source": "testing/go/insert_test.go:TestInsert",
+      "ordinal": 15,
+      "scriptName": "insert returning",
+      "oracle": "postgres",
+      "postgresId": "insert-test-testinsert-0015-insert-into-t-j-values",
+      "suggestedId": "insert-test-testinsert-0015-insert-into-t-j-values",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO t (j) VALUES (5), (6), (7) RETURNING i+j, j-3*i",
+      "querySha256": "f8084225658a38adeabc11edee5250bbee6000a150bf4f26716fe9c4f5a7a316",
+      "expectedRows": [
+        [
+          {
+            "value": "12"
+          },
+          {
+            "value": "-16"
+          }
+        ],
+        [
+          {
+            "value": "14"
+          },
+          {
+            "value": "-18"
+          }
+        ],
+        [
+          {
+            "value": "16"
+          },
+          {
+            "value": "-20"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/insert_test.go:TestInsert#0016",
+      "source": "testing/go/insert_test.go:TestInsert",
+      "ordinal": 16,
+      "scriptName": "insert returning",
+      "oracle": "postgres",
+      "postgresId": "insert-test-testinsert-0016-insert-into-u-j-values",
+      "suggestedId": "insert-test-testinsert-0016-insert-into-u-j-values",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO u (j) VALUES (5), (6), (7) RETURNING u",
+      "querySha256": "b157c7e86dfd17274155be3b651ceb93b60e5e27a40d1886bac9875a8ed02ed1",
+      "expectedRows": [
+        [
+          {
+            "value": "[172 31 62 45 30 75 77 62 139 31 43 127 30 127 14 61]"
+          }
+        ],
+        [
+          {
+            "value": "[172 31 62 45 30 75 77 62 139 31 43 127 30 127 14 61]"
+          }
+        ],
+        [
+          {
+            "value": "[172 31 62 45 30 75 77 62 139 31 43 127 30 127 14 61]"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/insert_test.go:TestInsert#0017",
+      "source": "testing/go/insert_test.go:TestInsert",
+      "ordinal": 17,
+      "scriptName": "insert returning",
+      "oracle": "postgres",
+      "postgresId": "insert-test-testinsert-0017-insert-into-s-v2-values",
+      "suggestedId": "insert-test-testinsert-0017-insert-into-s-v2-values",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO s (v2) VALUES (' a') RETURNING concat(v1, v2)",
+      "querySha256": "68b1e67069e261fcb6b3845d40d2a401d7bcf7209b550dde1ecea2359118b59d",
+      "expectedRows": [
+        [
+          {
+            "value": "hello a"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/insert_test.go:TestInsert#0018",
+      "source": "testing/go/insert_test.go:TestInsert",
+      "ordinal": 18,
+      "scriptName": "insert returning",
+      "oracle": "postgres",
+      "postgresId": "insert-test-testinsert-0018-insert-into-s-v1-values",
+      "suggestedId": "insert-test-testinsert-0018-insert-into-s-v1-values",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO s (v1) VALUES ('sup ') RETURNING concat(v1, v2)",
+      "querySha256": "f4a703fcca25aae938e96e7351d843e4626bcde3334845d7cf4105dc321199a5",
+      "expectedRows": [
+        [
+          {
+            "value": "sup world"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/insert_test.go:TestInsert#0019",
+      "source": "testing/go/insert_test.go:TestInsert",
+      "ordinal": 19,
+      "scriptName": "insert returning",
+      "oracle": "postgres",
+      "postgresId": "insert-test-testinsert-0019-insert-into-s-v2-v1",
+      "suggestedId": "insert-test-testinsert-0019-insert-into-s-v2-v1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO s (v2, v1) VALUES ('def', 'abc'), ('xyz', 'uvw') RETURNING concat(v1, v2), concat(v2, v1), 100",
+      "querySha256": "173fcb60b142c78b2d1854d1b64a3f0ac15c526c9826cca85e44d8e321acb3bd",
+      "expectedRows": [
+        [
+          {
+            "value": "abcdef"
+          },
+          {
+            "value": "defabc"
+          },
+          {
+            "value": "100"
+          }
+        ],
+        [
+          {
+            "value": "uvwxyz"
+          },
+          {
+            "value": "xyzuvw"
+          },
+          {
+            "value": "100"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/insert_test.go:TestInsert#0020",
+      "source": "testing/go/insert_test.go:TestInsert",
+      "ordinal": 20,
+      "scriptName": "insert returning",
+      "oracle": "postgres",
+      "postgresId": "insert-test-testinsert-0020-insert-into-t-j-values",
+      "suggestedId": "insert-test-testinsert-0020-insert-into-t-j-values",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42703",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO t (j) VALUES (5), (6), (7) RETURNING i, doesnotexist",
+      "querySha256": "884b089d7ba895126c444e4c643fd23f1e235a45158c3229fafdf3e119ba2459",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/insert_test.go:TestInsert#0021",
+      "source": "testing/go/insert_test.go:TestInsert",
+      "ordinal": 21,
+      "scriptName": "insert returning",
+      "oracle": "postgres",
+      "postgresId": "insert-test-testinsert-0021-insert-into-t-j-values",
+      "suggestedId": "insert-test-testinsert-0021-insert-into-t-j-values",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42883",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO t (j) VALUES (5), (6), (7) RETURNING i, doesnotexist(j)",
+      "querySha256": "ca91f28adc35fc2d47787f9a1444c059c5cce0f1f128cd76f0c8bc26f9bfd15c",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/insert_test.go:TestInsert#0022",
+      "source": "testing/go/insert_test.go:TestInsert",
+      "ordinal": 22,
+      "scriptName": "insert returning",
+      "oracle": "internal",
+      "suggestedId": "insert-test-testinsert-0022-insert-into-public.t-j-values",
+      "expectedKind": "rows",
+      "query": "INSERT INTO public.t (j) VALUES (8) RETURNING t.j",
+      "querySha256": "d39213058761587b97686bd5170e169422424817ac34f349d1dd43f62943ac55",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/insert_test.go:TestInsert#0023",
+      "source": "testing/go/insert_test.go:TestInsert",
+      "ordinal": 23,
+      "scriptName": "insert returning",
+      "oracle": "internal",
+      "suggestedId": "insert-test-testinsert-0023-insert-into-public.t-j-values",
+      "expectedKind": "rows",
+      "query": "INSERT INTO public.t (j) VALUES (9) RETURNING public.t.j",
+      "querySha256": "77214c179738f0333abf4582d386494d3388a7acaef28e4a6c1a77949fd66fa4",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/insert_test.go:TestInsert#0024",
+      "source": "testing/go/insert_test.go:TestInsert",
+      "ordinal": 24,
+      "scriptName": "insert returning",
+      "oracle": "internal",
+      "suggestedId": "insert-test-testinsert-0024-insert-into-ts.t-j-values",
+      "expectedKind": "rows",
+      "query": "INSERT INTO ts.t (j) VALUES (10) RETURNING ts.t.j",
+      "querySha256": "b201ca0b45b2fe7f8ca8edd464a3ba82ea9b0ef7cbb22992a22f78de681db3d8",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/insert_test.go:TestInsert#0025",
+      "source": "testing/go/insert_test.go:TestInsert",
+      "ordinal": 25,
+      "scriptName": "insert returning",
+      "oracle": "internal",
+      "suggestedId": "insert-test-testinsert-0025-insert-into-public.t-j-values",
+      "expectedKind": "rows",
+      "query": "INSERT INTO public.t (j) VALUES ($1) RETURNING j;",
+      "querySha256": "c44595ed039827684a27c98b4b4b2b95575da672ff45f9857621838499e136d0",
+      "nonLiteral": [
+        "BindVars"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/insert_test.go:TestInsert#0026",
+      "source": "testing/go/insert_test.go:TestInsert",
+      "ordinal": 26,
+      "scriptName": "insert returning",
+      "oracle": "internal",
+      "suggestedId": "insert-test-testinsert-0026-insert-into-public.t-j-values",
+      "expectedKind": "rows",
+      "query": "INSERT INTO public.t (j) VALUES ($1) RETURNING t.j;",
+      "querySha256": "fc089840530947f7f95c2783d13e1cb9a3c550ec990beb4d7d4a93eba58dcd1b",
+      "nonLiteral": [
+        "BindVars"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/insert_test.go:TestInsert#0027",
+      "source": "testing/go/insert_test.go:TestInsert",
+      "ordinal": 27,
+      "scriptName": "insert returning",
+      "oracle": "internal",
+      "suggestedId": "insert-test-testinsert-0027-insert-into-public.t-j-values",
+      "expectedKind": "rows",
+      "query": "INSERT INTO public.t (j) VALUES ($1) RETURNING public.t.j;",
+      "querySha256": "b5d6f89cd88fef2905aebe2b5cd01ef29b989888f3934c618513eb74532b12ba",
+      "nonLiteral": [
+        "BindVars"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/insert_test.go:TestInsert#0028",
+      "source": "testing/go/insert_test.go:TestInsert",
+      "ordinal": 28,
+      "scriptName": "insert iso8601 timestamptz literal",
+      "oracle": "postgres",
+      "postgresId": "insert-test-testinsert-0028-insert-into-django_migrations-app-name",
+      "suggestedId": "insert-test-testinsert-0028-insert-into-django_migrations-app-name",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO \"django_migrations\" (\"app\", \"name\", \"applied\") VALUES ('contenttypes', '0001_initial', '2025-03-24T19:21:59.690479+00:00'::timestamptz) RETURNING \"django_migrations\".\"id\"",
+      "querySha256": "d82f8ccc58c8dbe6f8693e0a8a18f67911bb794852108ac91a01c22d4a025a34",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

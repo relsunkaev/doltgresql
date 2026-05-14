@@ -1,0 +1,917 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map subscription_correctness_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/subscription_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionAddPublicationNamesAreCaseSensitiveRepro#0001",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionAddPublicationNamesAreCaseSensitiveRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER SUBSCRIPTION ADD PUBLICATION is case-sensitive",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testsubscriptionaddpublicationnamesarecasesensitiverepro-0001-select-array_to_string-subpublications-from-pg_catalog.pg_subscription",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptionaddpublicationnamesarecasesensitiverepro-0001-select-array_to_string-subpublications-from-pg_catalog.pg_subscription",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT array_to_string(subpublications, ',')\n\t\t\t\t\t\tFROM pg_catalog.pg_subscription\n\t\t\t\t\t\tWHERE subname = 'subscription_case_add_sub';",
+      "querySha256": "c8b36eb653308872bf76c2dc958f2c9f3e5ac9a358812a993b80ede4f2e1c6ff",
+      "expectedRows": [
+        [
+          {
+            "value": "CasePublication,casepublication"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionAddPublicationRefreshFalseRepro#0001",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionAddPublicationRefreshFalseRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER SUBSCRIPTION ADD PUBLICATION accepts refresh false",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testsubscriptionaddpublicationrefreshfalserepro-0001-select-array_to_string-subpublications-from-pg_catalog.pg_subscription",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptionaddpublicationrefreshfalserepro-0001-select-array_to_string-subpublications-from-pg_catalog.pg_subscription",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT array_to_string(subpublications, ',')\n\t\t\t\t\t\tFROM pg_catalog.pg_subscription\n\t\t\t\t\t\tWHERE subname = 'subscription_add_refresh_sub';",
+      "querySha256": "4d92a1625070805314a69ee0977be0237924f992ab9cd8f73f9b59472f0125b8",
+      "expectedRows": [
+        [
+          {
+            "value": "add_refresh_pub1,add_refresh_pub2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionSetPublicationRefreshFalseRepro#0001",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionSetPublicationRefreshFalseRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER SUBSCRIPTION SET PUBLICATION accepts refresh false",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testsubscriptionsetpublicationrefreshfalserepro-0001-select-array_to_string-subpublications-from-pg_catalog.pg_subscription",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptionsetpublicationrefreshfalserepro-0001-select-array_to_string-subpublications-from-pg_catalog.pg_subscription",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT array_to_string(subpublications, ',')\n\t\t\t\t\t\tFROM pg_catalog.pg_subscription\n\t\t\t\t\t\tWHERE subname = 'subscription_set_refresh_sub';",
+      "querySha256": "1df53490e2d9c28cc8b63cf80b210a0abf694d35343b3924ded64eee7c46459c",
+      "expectedRows": [
+        [
+          {
+            "value": "set_refresh_pub2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionDropPublicationRefreshFalseRepro#0001",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionDropPublicationRefreshFalseRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER SUBSCRIPTION DROP PUBLICATION accepts refresh false",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testsubscriptiondroppublicationrefreshfalserepro-0001-select-array_to_string-subpublications-from-pg_catalog.pg_subscription",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptiondroppublicationrefreshfalserepro-0001-select-array_to_string-subpublications-from-pg_catalog.pg_subscription",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT array_to_string(subpublications, ',')\n\t\t\t\t\t\tFROM pg_catalog.pg_subscription\n\t\t\t\t\t\tWHERE subname = 'subscription_case_drop_sub';",
+      "querySha256": "a958f2fc127c7d3d5db54dbbfe1129bfd924d2d14edb018174c00e782dffdd0e",
+      "expectedRows": [
+        [
+          {
+            "value": "CasePublication"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionSetSlotNameNoneRequiresDisabledRepro#0001",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionSetSlotNameNoneRequiresDisabledRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER SUBSCRIPTION SET slot_name none requires disabled subscription",
+      "oracle": "internal",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptionsetslotnamenonerequiresdisabledrepro-0001-alter-subscription-subscription_enabled_slot_guard-set-slot_name",
+      "expectedKind": "error",
+      "query": "ALTER SUBSCRIPTION subscription_enabled_slot_guard\n\t\t\t\t\t\tSET (slot_name = NONE);",
+      "querySha256": "aacd603232549167c8dfaffd66faee1e8e4175109852b36690a80be23430ad82",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionSetSlotNameNoneRequiresDisabledRepro#0002",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionSetSlotNameNoneRequiresDisabledRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER SUBSCRIPTION SET slot_name none requires disabled subscription",
+      "oracle": "internal",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptionsetslotnamenonerequiresdisabledrepro-0002-select-subenabled-subslotname-from-pg_catalog.pg_subscription",
+      "expectedKind": "rows",
+      "query": "SELECT subenabled, subslotname\n\t\t\t\t\t\tFROM pg_catalog.pg_subscription\n\t\t\t\t\t\tWHERE subname = 'subscription_enabled_slot_guard';",
+      "querySha256": "0793af9c7c954fc7efdf44abb8d07902fc48e1c9a3861dc2cf22c5a553d6a2af",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionCreatePreservesPublicationOrderRepro#0001",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionCreatePreservesPublicationOrderRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE SUBSCRIPTION preserves publication order",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testsubscriptioncreatepreservespublicationorderrepro-0001-select-array_to_string-subpublications-from-pg_catalog.pg_subscription",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptioncreatepreservespublicationorderrepro-0001-select-array_to_string-subpublications-from-pg_catalog.pg_subscription",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT array_to_string(subpublications, ',')\n\t\t\t\t\t\tFROM pg_catalog.pg_subscription\n\t\t\t\t\t\tWHERE subname = 'subscription_create_order_sub';",
+      "querySha256": "21917eb6db79518161b1e9eb38746513ed94e91ea036611f5a1bbe3a25b04c5a",
+      "expectedRows": [
+        [
+          {
+            "value": "z_pub_order,a_pub_order"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionCreateRejectsDuplicatePublicationRepro#0001",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionCreateRejectsDuplicatePublicationRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE SUBSCRIPTION rejects duplicate publications",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testsubscriptioncreaterejectsduplicatepublicationrepro-0001-create-subscription-subscription_duplicate_create_sub-connection-host=127.0.0.1",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptioncreaterejectsduplicatepublicationrepro-0001-create-subscription-subscription_duplicate_create_sub-connection-host=127.0.0.1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42710",
+      "errorSeverity": "ERROR",
+      "query": "CREATE SUBSCRIPTION subscription_duplicate_create_sub\n\t\t\t\t\t\tCONNECTION 'host=127.0.0.1 dbname=postgres'\n\t\t\t\t\t\tPUBLICATION duplicate_pub, duplicate_pub\n\t\t\t\t\t\tWITH (connect = false, enabled = false, create_slot = false, slot_name = NONE);",
+      "querySha256": "6fe4a30473cc9540d487d8bb2376fe48ae713fa99d5b64ed81a82d66b5284e75",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionCreateRejectsDuplicateConnectOptionRepro#0001",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionCreateRejectsDuplicateConnectOptionRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE SUBSCRIPTION rejects duplicate connect options",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testsubscriptioncreaterejectsduplicateconnectoptionrepro-0001-create-subscription-connection-host=127.0.0.1-dbname=postgres",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptioncreaterejectsduplicateconnectoptionrepro-0001-create-subscription-connection-host=127.0.0.1-dbname=postgres",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "CREATE SUBSCRIPTION subscription_duplicate_connect_option_sub\n\t\t\t\t\t\tCONNECTION 'host=127.0.0.1 dbname=postgres'\n\t\t\t\t\t\tPUBLICATION duplicate_connect_pub\n\t\t\t\t\t\tWITH (connect = false, connect = false,\n\t\t\t\t\t\t\tenabled = false, create_slot = false, slot_name = NONE);",
+      "querySha256": "7214dd98bb361a31f7a476dd51c2d40964535952bbfef211cfd2269632381761",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionCreateRejectsDuplicateConnectOptionRepro#0002",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionCreateRejectsDuplicateConnectOptionRepro",
+      "ordinal": 2,
+      "scriptName": "CREATE SUBSCRIPTION rejects duplicate connect options",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testsubscriptioncreaterejectsduplicateconnectoptionrepro-0002-select-count-*-from-pg_catalog.pg_subscription",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptioncreaterejectsduplicateconnectoptionrepro-0002-select-count-*-from-pg_catalog.pg_subscription",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_subscription\n\t\t\t\t\t\tWHERE subname = 'subscription_duplicate_connect_option_sub';",
+      "querySha256": "0fb4fafcf72d59b3d1bc54da40172b641f643b86d4351a66bda64d865d0bcfd3",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionCreateRejectsDuplicateEnabledOptionRepro#0001",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionCreateRejectsDuplicateEnabledOptionRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE SUBSCRIPTION rejects duplicate enabled options",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testsubscriptioncreaterejectsduplicateenabledoptionrepro-0001-create-subscription-connection-host=127.0.0.1-dbname=postgres",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptioncreaterejectsduplicateenabledoptionrepro-0001-create-subscription-connection-host=127.0.0.1-dbname=postgres",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "CREATE SUBSCRIPTION subscription_duplicate_enabled_option_sub\n\t\t\t\t\t\tCONNECTION 'host=127.0.0.1 dbname=postgres'\n\t\t\t\t\t\tPUBLICATION duplicate_enabled_pub\n\t\t\t\t\t\tWITH (connect = false, enabled = false, enabled = false,\n\t\t\t\t\t\t\tcreate_slot = false, slot_name = NONE);",
+      "querySha256": "9ab3542aa9c6dac8b7b8cf7a5953230388a5becbf639828cf0cfea61e11dbb9b",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionCreateRejectsDuplicateEnabledOptionRepro#0002",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionCreateRejectsDuplicateEnabledOptionRepro",
+      "ordinal": 2,
+      "scriptName": "CREATE SUBSCRIPTION rejects duplicate enabled options",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testsubscriptioncreaterejectsduplicateenabledoptionrepro-0002-select-count-*-from-pg_catalog.pg_subscription",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptioncreaterejectsduplicateenabledoptionrepro-0002-select-count-*-from-pg_catalog.pg_subscription",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_subscription\n\t\t\t\t\t\tWHERE subname = 'subscription_duplicate_enabled_option_sub';",
+      "querySha256": "92cd4c9b6dae676afcbca47a3a88dc0e9078791243640b91ff03c6b7f42fb17b",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionAlterRejectsDuplicateSynchronousCommitOptionRepro#0001",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionAlterRejectsDuplicateSynchronousCommitOptionRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER SUBSCRIPTION rejects duplicate synchronous_commit options",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testsubscriptionalterrejectsduplicatesynchronouscommitoptionrepro-0001-alter-subscription-subscription_duplicate_sync_commit_sub-set-synchronous_commit",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptionalterrejectsduplicatesynchronouscommitoptionrepro-0001-alter-subscription-subscription_duplicate_sync_commit_sub-set-synchronous_commit",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "ALTER SUBSCRIPTION subscription_duplicate_sync_commit_sub\n\t\t\t\t\t\tSET (synchronous_commit = 'off',\n\t\t\t\t\t\t\tsynchronous_commit = 'local');",
+      "querySha256": "e204d108936187537130833c0fd0b77809a330ce6c04b0d50e1bcd9df9a71b6a",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionAlterRejectsDuplicateSynchronousCommitOptionRepro#0002",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionAlterRejectsDuplicateSynchronousCommitOptionRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER SUBSCRIPTION rejects duplicate synchronous_commit options",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testsubscriptionalterrejectsduplicatesynchronouscommitoptionrepro-0002-select-subsynccommit-from-pg_catalog.pg_subscription-where",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptionalterrejectsduplicatesynchronouscommitoptionrepro-0002-select-subsynccommit-from-pg_catalog.pg_subscription-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT subsynccommit\n\t\t\t\t\t\tFROM pg_catalog.pg_subscription\n\t\t\t\t\t\tWHERE subname = 'subscription_duplicate_sync_commit_sub';",
+      "querySha256": "cc3aaad1da01268e62219b3cf3eb157262f494f9a17101fb87d80ab73ca89bf3",
+      "expectedRows": [
+        [
+          {
+            "value": "off"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionCreateRejectsDuplicateSlotNameOptionRepro#0001",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionCreateRejectsDuplicateSlotNameOptionRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE SUBSCRIPTION rejects duplicate slot_name options",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testsubscriptioncreaterejectsduplicateslotnameoptionrepro-0001-create-subscription-connection-host=127.0.0.1-dbname=postgres",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptioncreaterejectsduplicateslotnameoptionrepro-0001-create-subscription-connection-host=127.0.0.1-dbname=postgres",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "CREATE SUBSCRIPTION subscription_duplicate_slot_name_create_sub\n\t\t\t\t\t\tCONNECTION 'host=127.0.0.1 dbname=postgres'\n\t\t\t\t\t\tPUBLICATION duplicate_slot_name_create_pub\n\t\t\t\t\t\tWITH (connect = false, enabled = false, create_slot = false,\n\t\t\t\t\t\t\tslot_name = NONE, slot_name = 'kept_slot');",
+      "querySha256": "8f9eb21beed9b4545f6cf2c52a0ed6813905b69a34182913d482da8d765e25b8",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionCreateRejectsDuplicateSlotNameOptionRepro#0002",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionCreateRejectsDuplicateSlotNameOptionRepro",
+      "ordinal": 2,
+      "scriptName": "CREATE SUBSCRIPTION rejects duplicate slot_name options",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testsubscriptioncreaterejectsduplicateslotnameoptionrepro-0002-select-count-*-from-pg_catalog.pg_subscription",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptioncreaterejectsduplicateslotnameoptionrepro-0002-select-count-*-from-pg_catalog.pg_subscription",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_subscription\n\t\t\t\t\t\tWHERE subname = 'subscription_duplicate_slot_name_create_sub';",
+      "querySha256": "6f82f98a647ed6d59040e874dad011aee22b60090d99d49a329bd9071bc69051",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionAlterRejectsDuplicateSlotNameOptionRepro#0001",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionAlterRejectsDuplicateSlotNameOptionRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER SUBSCRIPTION rejects duplicate slot_name options",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testsubscriptionalterrejectsduplicateslotnameoptionrepro-0001-alter-subscription-set-slot_name-=",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptionalterrejectsduplicateslotnameoptionrepro-0001-alter-subscription-set-slot_name-=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "ALTER SUBSCRIPTION subscription_duplicate_slot_name_alter_sub\n\t\t\t\t\t\tSET (slot_name = 'original_slot', slot_name = NONE);",
+      "querySha256": "7e7440d59a6d0d58aca76d35fc14540754bb57b3858837b0c5aa71eb248d9e4d",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionAlterRejectsDuplicateSlotNameOptionRepro#0002",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionAlterRejectsDuplicateSlotNameOptionRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER SUBSCRIPTION rejects duplicate slot_name options",
+      "oracle": "internal",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptionalterrejectsduplicateslotnameoptionrepro-0002-select-subslotname-from-pg_catalog.pg_subscription-where",
+      "expectedKind": "rows",
+      "query": "SELECT subslotname\n\t\t\t\t\t\tFROM pg_catalog.pg_subscription\n\t\t\t\t\t\tWHERE subname = 'subscription_duplicate_slot_name_alter_sub';",
+      "querySha256": "6ef8333facd6d0428a244c0bfc8f6d478b8ce7e5557405522a5c47f8bb453910",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionCreateRejectsDuplicateSynchronousCommitOptionRepro#0001",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionCreateRejectsDuplicateSynchronousCommitOptionRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE SUBSCRIPTION rejects duplicate synchronous_commit options",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testsubscriptioncreaterejectsduplicatesynchronouscommitoptionrepro-0001-create-subscription-connection-host=127.0.0.1-dbname=postgres",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptioncreaterejectsduplicatesynchronouscommitoptionrepro-0001-create-subscription-connection-host=127.0.0.1-dbname=postgres",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "CREATE SUBSCRIPTION subscription_duplicate_sync_commit_create_sub\n\t\t\t\t\t\tCONNECTION 'host=127.0.0.1 dbname=postgres'\n\t\t\t\t\t\tPUBLICATION duplicate_sync_commit_create_pub\n\t\t\t\t\t\tWITH (connect = false, enabled = false, create_slot = false,\n\t\t\t\t\t\t\tslot_name = NONE, synchronous_commit = 'off',\n\t\t\t\t\t\t\tsynchronous_commit = 'local');",
+      "querySha256": "e2b0f60349750bb663d5eec6f83ceda374a335413853791d3b9ce14919cd6d20",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionCreateRejectsDuplicateSynchronousCommitOptionRepro#0002",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionCreateRejectsDuplicateSynchronousCommitOptionRepro",
+      "ordinal": 2,
+      "scriptName": "CREATE SUBSCRIPTION rejects duplicate synchronous_commit options",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testsubscriptioncreaterejectsduplicatesynchronouscommitoptionrepro-0002-select-count-*-from-pg_catalog.pg_subscription",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptioncreaterejectsduplicatesynchronouscommitoptionrepro-0002-select-count-*-from-pg_catalog.pg_subscription",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_subscription\n\t\t\t\t\t\tWHERE subname = 'subscription_duplicate_sync_commit_create_sub';",
+      "querySha256": "283c9bf041f79b8cad2bdf562c1993ecacc53c34a55c60586de9bca6f9a721d2",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionAlterRejectsDuplicateBinaryOptionRepro#0001",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionAlterRejectsDuplicateBinaryOptionRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER SUBSCRIPTION rejects duplicate binary options",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testsubscriptionalterrejectsduplicatebinaryoptionrepro-0001-alter-subscription-subscription_duplicate_binary_alter_sub-set-binary",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptionalterrejectsduplicatebinaryoptionrepro-0001-alter-subscription-subscription_duplicate_binary_alter_sub-set-binary",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "ALTER SUBSCRIPTION subscription_duplicate_binary_alter_sub\n\t\t\t\t\t\tSET (binary = false, binary = true);",
+      "querySha256": "2a87190bfa613cd0ff7b1f97cea5469aa1f70f5517d337b46ae2934ba230eb55",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionAlterRejectsDuplicateBinaryOptionRepro#0002",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionAlterRejectsDuplicateBinaryOptionRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER SUBSCRIPTION rejects duplicate binary options",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testsubscriptionalterrejectsduplicatebinaryoptionrepro-0002-select-subbinary-from-pg_catalog.pg_subscription-where",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptionalterrejectsduplicatebinaryoptionrepro-0002-select-subbinary-from-pg_catalog.pg_subscription-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT subbinary\n\t\t\t\t\t\tFROM pg_catalog.pg_subscription\n\t\t\t\t\t\tWHERE subname = 'subscription_duplicate_binary_alter_sub';",
+      "querySha256": "c0fb9ca791476c165603a585c0d1c1d366d0c67e43882b4454510d6d88a2eaf6",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionCreateRejectsEmptySlotNameRepro#0001",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionCreateRejectsEmptySlotNameRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE SUBSCRIPTION rejects empty slot name",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testsubscriptioncreaterejectsemptyslotnamerepro-0001-create-subscription-subscription_empty_slot_create_sub-connection-host=127.0.0.1",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptioncreaterejectsemptyslotnamerepro-0001-create-subscription-subscription_empty_slot_create_sub-connection-host=127.0.0.1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42602",
+      "errorSeverity": "ERROR",
+      "query": "CREATE SUBSCRIPTION subscription_empty_slot_create_sub\n\t\t\t\t\t\tCONNECTION 'host=127.0.0.1 dbname=postgres'\n\t\t\t\t\t\tPUBLICATION empty_slot_pub\n\t\t\t\t\t\tWITH (connect = false, enabled = false, create_slot = false, slot_name = '');",
+      "querySha256": "cd2f9eaec802ed402e9c9c6b07220cda228ee8153d5af75d095d8b0664abdf04",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionAlterRejectsEmptySlotNameRepro#0001",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionAlterRejectsEmptySlotNameRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER SUBSCRIPTION rejects empty slot name",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testsubscriptionalterrejectsemptyslotnamerepro-0001-alter-subscription-subscription_empty_slot_alter_sub-set-slot_name",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptionalterrejectsemptyslotnamerepro-0001-alter-subscription-subscription_empty_slot_alter_sub-set-slot_name",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42602",
+      "errorSeverity": "ERROR",
+      "query": "ALTER SUBSCRIPTION subscription_empty_slot_alter_sub\n\t\t\t\t\t\tSET (slot_name = '');",
+      "querySha256": "afa9ad39d07f78bd07f3dd3fb8fd98046a3f1956352c2256724b06e968288366",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionAlterRejectsEmptySlotNameRepro#0002",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionAlterRejectsEmptySlotNameRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER SUBSCRIPTION rejects empty slot name",
+      "oracle": "internal",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptionalterrejectsemptyslotnamerepro-0002-select-subslotname-from-pg_catalog.pg_subscription-where",
+      "expectedKind": "rows",
+      "query": "SELECT subslotname\n\t\t\t\t\t\tFROM pg_catalog.pg_subscription\n\t\t\t\t\t\tWHERE subname = 'subscription_empty_slot_alter_sub';",
+      "querySha256": "560301caab56f3738f666bf83d5f2d21c35a02227c48c93be003cae2af8476a7",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionCreateRejectsInvalidStreamingOptionRepro#0001",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionCreateRejectsInvalidStreamingOptionRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE SUBSCRIPTION rejects invalid streaming option",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testsubscriptioncreaterejectsinvalidstreamingoptionrepro-0001-create-subscription-connection-host=127.0.0.1-dbname=postgres",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptioncreaterejectsinvalidstreamingoptionrepro-0001-create-subscription-connection-host=127.0.0.1-dbname=postgres",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "CREATE SUBSCRIPTION subscription_invalid_streaming_create_sub\n\t\t\t\t\t\tCONNECTION 'host=127.0.0.1 dbname=postgres'\n\t\t\t\t\t\tPUBLICATION invalid_streaming_pub\n\t\t\t\t\t\tWITH (connect = false, enabled = false, create_slot = false, slot_name = NONE, streaming = definitely_invalid);",
+      "querySha256": "cf9a818ac9f179f3fc39f2b5fd0d8f48b69743d8c61f87831fa9adead8c77a90",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionAlterRejectsInvalidStreamingOptionRepro#0001",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionAlterRejectsInvalidStreamingOptionRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER SUBSCRIPTION rejects invalid streaming option",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testsubscriptionalterrejectsinvalidstreamingoptionrepro-0001-alter-subscription-subscription_invalid_streaming_alter_sub-set-streaming",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptionalterrejectsinvalidstreamingoptionrepro-0001-alter-subscription-subscription_invalid_streaming_alter_sub-set-streaming",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "ALTER SUBSCRIPTION subscription_invalid_streaming_alter_sub\n\t\t\t\t\t\tSET (streaming = definitely_invalid);",
+      "querySha256": "966116eb549cd65e9180dece54b0cbe86818552e7cdf8135e4663945e49aec38",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionAlterRejectsInvalidStreamingOptionRepro#0002",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionAlterRejectsInvalidStreamingOptionRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER SUBSCRIPTION rejects invalid streaming option",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testsubscriptionalterrejectsinvalidstreamingoptionrepro-0002-select-substream-from-pg_catalog.pg_subscription-where",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptionalterrejectsinvalidstreamingoptionrepro-0002-select-substream-from-pg_catalog.pg_subscription-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT substream\n\t\t\t\t\t\tFROM pg_catalog.pg_subscription\n\t\t\t\t\t\tWHERE subname = 'subscription_invalid_streaming_alter_sub';",
+      "querySha256": "49eef9acf9a55c99e72a0ca6ed81e4fa3fdbafef80b5933574e1fc2149066714",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionAlterRejectsInvalidSynchronousCommitRepro#0001",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionAlterRejectsInvalidSynchronousCommitRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER SUBSCRIPTION rejects invalid synchronous_commit",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testsubscriptionalterrejectsinvalidsynchronouscommitrepro-0001-alter-subscription-set-synchronous_commit-=",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptionalterrejectsinvalidsynchronouscommitrepro-0001-alter-subscription-set-synchronous_commit-=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "ALTER SUBSCRIPTION subscription_invalid_synccommit_alter_sub\n\t\t\t\t\t\tSET (synchronous_commit = 'definitely_invalid');",
+      "querySha256": "a9455c295c7b5c1408e150acecee1953a9af7397b26ff89066196703d66ee3c0",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionAlterRejectsInvalidSynchronousCommitRepro#0002",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionAlterRejectsInvalidSynchronousCommitRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER SUBSCRIPTION rejects invalid synchronous_commit",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testsubscriptionalterrejectsinvalidsynchronouscommitrepro-0002-select-subsynccommit-from-pg_catalog.pg_subscription-where",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptionalterrejectsinvalidsynchronouscommitrepro-0002-select-subsynccommit-from-pg_catalog.pg_subscription-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT subsynccommit\n\t\t\t\t\t\tFROM pg_catalog.pg_subscription\n\t\t\t\t\t\tWHERE subname = 'subscription_invalid_synccommit_alter_sub';",
+      "querySha256": "9c292d8db382fc31337191026afd3d5f0d45970fba615d2ef326af4b2156b7ce",
+      "expectedRows": [
+        [
+          {
+            "value": "remote_apply"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionCreateRejectsInvalidSynchronousCommitRepro#0001",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionCreateRejectsInvalidSynchronousCommitRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE SUBSCRIPTION rejects invalid synchronous_commit",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testsubscriptioncreaterejectsinvalidsynchronouscommitrepro-0001-create-subscription-connection-host=127.0.0.1-dbname=postgres",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptioncreaterejectsinvalidsynchronouscommitrepro-0001-create-subscription-connection-host=127.0.0.1-dbname=postgres",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "CREATE SUBSCRIPTION subscription_invalid_synccommit_create_sub\n\t\t\t\t\t\tCONNECTION 'host=127.0.0.1 dbname=postgres'\n\t\t\t\t\t\tPUBLICATION invalid_synccommit_pub\n\t\t\t\t\t\tWITH (connect = false, enabled = false, create_slot = false, slot_name = NONE, synchronous_commit = 'definitely_invalid');",
+      "querySha256": "d15b8be992e41606e64472cb47fdba85545f0d9d7f84306f7e2c0db0356efb05",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionAlterRejectsTwoPhaseOptionRepro#0001",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionAlterRejectsTwoPhaseOptionRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER SUBSCRIPTION rejects two_phase option",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testsubscriptionalterrejectstwophaseoptionrepro-0001-alter-subscription-subscription_two_phase_alter_sub-set-two_phase",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptionalterrejectstwophaseoptionrepro-0001-alter-subscription-subscription_two_phase_alter_sub-set-two_phase",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "ALTER SUBSCRIPTION subscription_two_phase_alter_sub\n\t\t\t\t\t\tSET (two_phase = false);",
+      "querySha256": "72d319933f0bbd358bc75d18cc03b35eda2b60d3465de853395dbb875f7e7329",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionAlterRejectsTwoPhaseOptionRepro#0002",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionAlterRejectsTwoPhaseOptionRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER SUBSCRIPTION rejects two_phase option",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testsubscriptionalterrejectstwophaseoptionrepro-0002-select-subtwophasestate-from-pg_catalog.pg_subscription-where",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptionalterrejectstwophaseoptionrepro-0002-select-subtwophasestate-from-pg_catalog.pg_subscription-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT subtwophasestate\n\t\t\t\t\t\tFROM pg_catalog.pg_subscription\n\t\t\t\t\t\tWHERE subname = 'subscription_two_phase_alter_sub';",
+      "querySha256": "34775a05639635a7e466eff5e707bd9b70bea3d83dd2b8182f307287109f3e16",
+      "expectedRows": [
+        [
+          {
+            "value": "p"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionSkipLsnNoneClearsSkipLsnRepro#0001",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionSkipLsnNoneClearsSkipLsnRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER SUBSCRIPTION SKIP lsn none clears skip lsn",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testsubscriptionskiplsnnoneclearsskiplsnrepro-0001-select-subskiplsn::text-from-pg_catalog.pg_subscription-where",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptionskiplsnnoneclearsskiplsnrepro-0001-select-subskiplsn::text-from-pg_catalog.pg_subscription-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT subskiplsn::text\n\t\t\t\t\t\tFROM pg_catalog.pg_subscription\n\t\t\t\t\t\tWHERE subname = 'subscription_skip_lsn_none_sub';",
+      "querySha256": "a0f2255407f92bfc5b80c0196c63118dff081c3b48125175bc825cf6e09953e5",
+      "expectedRows": [
+        [
+          {
+            "value": "0/0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionAddPublicationRejectsInvalidCopyDataRepro#0001",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionAddPublicationRejectsInvalidCopyDataRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER SUBSCRIPTION ADD PUBLICATION rejects invalid copy_data",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testsubscriptionaddpublicationrejectsinvalidcopydatarepro-0001-alter-subscription-subscription_add_copy_data_invalid_sub-add-publication",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptionaddpublicationrejectsinvalidcopydatarepro-0001-alter-subscription-subscription_add_copy_data_invalid_sub-add-publication",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "ALTER SUBSCRIPTION subscription_add_copy_data_invalid_sub\n\t\t\t\t\t\tADD PUBLICATION add_copy_data_pub2\n\t\t\t\t\t\tWITH (copy_data = definitely_invalid);",
+      "querySha256": "6bd073b85a23f63c7ae931d37d46ead7984c9e789fd0c49fb990664211653e06",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionAddPublicationRejectsInvalidCopyDataRepro#0002",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionAddPublicationRejectsInvalidCopyDataRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER SUBSCRIPTION ADD PUBLICATION rejects invalid copy_data",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testsubscriptionaddpublicationrejectsinvalidcopydatarepro-0002-select-array_to_string-subpublications-from-pg_catalog.pg_subscription",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptionaddpublicationrejectsinvalidcopydatarepro-0002-select-array_to_string-subpublications-from-pg_catalog.pg_subscription",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT array_to_string(subpublications, ',')\n\t\t\t\t\t\tFROM pg_catalog.pg_subscription\n\t\t\t\t\t\tWHERE subname = 'subscription_add_copy_data_invalid_sub';",
+      "querySha256": "03156451e9fe089caf7dbb843e6ec7cb2f276cebfc5b94da593825549fe340f1",
+      "expectedRows": [
+        [
+          {
+            "value": "add_copy_data_pub1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionSetPublicationRejectsInvalidCopyDataRepro#0001",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionSetPublicationRejectsInvalidCopyDataRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER SUBSCRIPTION SET PUBLICATION rejects invalid copy_data",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testsubscriptionsetpublicationrejectsinvalidcopydatarepro-0001-alter-subscription-subscription_set_copy_data_invalid_sub-set-publication",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptionsetpublicationrejectsinvalidcopydatarepro-0001-alter-subscription-subscription_set_copy_data_invalid_sub-set-publication",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "ALTER SUBSCRIPTION subscription_set_copy_data_invalid_sub\n\t\t\t\t\t\tSET PUBLICATION set_copy_data_pub2\n\t\t\t\t\t\tWITH (copy_data = definitely_invalid);",
+      "querySha256": "e56af4f19f75975f187371441b0f84c8177a39b6c4e164957e78345f6279df95",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionSetPublicationRejectsInvalidCopyDataRepro#0002",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionSetPublicationRejectsInvalidCopyDataRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER SUBSCRIPTION SET PUBLICATION rejects invalid copy_data",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testsubscriptionsetpublicationrejectsinvalidcopydatarepro-0002-select-array_to_string-subpublications-from-pg_catalog.pg_subscription",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptionsetpublicationrejectsinvalidcopydatarepro-0002-select-array_to_string-subpublications-from-pg_catalog.pg_subscription",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT array_to_string(subpublications, ',')\n\t\t\t\t\t\tFROM pg_catalog.pg_subscription\n\t\t\t\t\t\tWHERE subname = 'subscription_set_copy_data_invalid_sub';",
+      "querySha256": "34ffcfc4b218ab99b34107c433bc8f92ec3f7a94eead3ee73d26487c5bc89613",
+      "expectedRows": [
+        [
+          {
+            "value": "set_copy_data_pub1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionDropPublicationRejectsInvalidCopyDataRepro#0001",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionDropPublicationRejectsInvalidCopyDataRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER SUBSCRIPTION DROP PUBLICATION rejects invalid copy_data",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testsubscriptiondroppublicationrejectsinvalidcopydatarepro-0001-alter-subscription-subscription_drop_copy_data_invalid_sub-drop-publication",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptiondroppublicationrejectsinvalidcopydatarepro-0001-alter-subscription-subscription_drop_copy_data_invalid_sub-drop-publication",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "ALTER SUBSCRIPTION subscription_drop_copy_data_invalid_sub\n\t\t\t\t\t\tDROP PUBLICATION drop_copy_data_pub2\n\t\t\t\t\t\tWITH (copy_data = definitely_invalid);",
+      "querySha256": "9db3bed4778e8a5124de196ea7db7435dc6fd04d023760493073ac52dbd90de9",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionDropPublicationRejectsInvalidCopyDataRepro#0002",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionDropPublicationRejectsInvalidCopyDataRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER SUBSCRIPTION DROP PUBLICATION rejects invalid copy_data",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testsubscriptiondroppublicationrejectsinvalidcopydatarepro-0002-select-array_to_string-subpublications-from-pg_catalog.pg_subscription",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptiondroppublicationrejectsinvalidcopydatarepro-0002-select-array_to_string-subpublications-from-pg_catalog.pg_subscription",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT array_to_string(subpublications, ',')\n\t\t\t\t\t\tFROM pg_catalog.pg_subscription\n\t\t\t\t\t\tWHERE subname = 'subscription_drop_copy_data_invalid_sub';",
+      "querySha256": "d690f2d62219f458dec281b4a7c7355572ef8b594765c3b2dd5f7aba09750b58",
+      "expectedRows": [
+        [
+          {
+            "value": "drop_copy_data_pub1,drop_copy_data_pub2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionSetPublicationRejectsDuplicatePublicationRepro#0001",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionSetPublicationRejectsDuplicatePublicationRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER SUBSCRIPTION SET PUBLICATION rejects duplicate publications",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testsubscriptionsetpublicationrejectsduplicatepublicationrepro-0001-alter-subscription-subscription_set_duplicate_pub_sub-set-publication",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptionsetpublicationrejectsduplicatepublicationrepro-0001-alter-subscription-subscription_set_duplicate_pub_sub-set-publication",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42710",
+      "errorSeverity": "ERROR",
+      "query": "ALTER SUBSCRIPTION subscription_set_duplicate_pub_sub\n\t\t\t\t\t\tSET PUBLICATION set_dup_pub, set_dup_pub;",
+      "querySha256": "f9a62dc30df27f7a7d6fff540ea9e336fa0ffe48b19f33bb9a86840725fc7f24",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionSetPublicationRejectsDuplicatePublicationRepro#0002",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionSetPublicationRejectsDuplicatePublicationRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER SUBSCRIPTION SET PUBLICATION rejects duplicate publications",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testsubscriptionsetpublicationrejectsduplicatepublicationrepro-0002-select-array_to_string-subpublications-from-pg_catalog.pg_subscription",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptionsetpublicationrejectsduplicatepublicationrepro-0002-select-array_to_string-subpublications-from-pg_catalog.pg_subscription",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT array_to_string(subpublications, ',')\n\t\t\t\t\t\tFROM pg_catalog.pg_subscription\n\t\t\t\t\t\tWHERE subname = 'subscription_set_duplicate_pub_sub';",
+      "querySha256": "fb27023bcbe57185e415f8035232a0a0063293377848155cf8916076c2be9d64",
+      "expectedRows": [
+        [
+          {
+            "value": "set_dup_original"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionCreateRejectsInvalidOriginOptionRepro#0001",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionCreateRejectsInvalidOriginOptionRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE SUBSCRIPTION rejects invalid origin option",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testsubscriptioncreaterejectsinvalidoriginoptionrepro-0001-create-subscription-subscription_invalid_origin_sub-connection-host=127.0.0.1",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptioncreaterejectsinvalidoriginoptionrepro-0001-create-subscription-subscription_invalid_origin_sub-connection-host=127.0.0.1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "CREATE SUBSCRIPTION subscription_invalid_origin_sub\n\t\t\t\t\t\tCONNECTION 'host=127.0.0.1 dbname=postgres'\n\t\t\t\t\t\tPUBLICATION invalid_origin_pub\n\t\t\t\t\t\tWITH (connect = false, enabled = false, create_slot = false, slot_name = NONE, origin = definitely_invalid);",
+      "querySha256": "564a4ebf64ac190faaa15517ca39b12b8f6a137e68bb1b2d8675a0430b5399e3",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionCreateRejectsInvalidPasswordRequiredOptionRepro#0001",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionCreateRejectsInvalidPasswordRequiredOptionRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE SUBSCRIPTION rejects invalid password_required option",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testsubscriptioncreaterejectsinvalidpasswordrequiredoptionrepro-0001-create-subscription-connection-host=127.0.0.1-dbname=postgres",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptioncreaterejectsinvalidpasswordrequiredoptionrepro-0001-create-subscription-connection-host=127.0.0.1-dbname=postgres",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "CREATE SUBSCRIPTION subscription_invalid_password_required_sub\n\t\t\t\t\t\tCONNECTION 'host=127.0.0.1 dbname=postgres'\n\t\t\t\t\t\tPUBLICATION invalid_password_required_pub\n\t\t\t\t\t\tWITH (connect = false, enabled = false, create_slot = false, slot_name = NONE, password_required = definitely_invalid);",
+      "querySha256": "86b6370805cbede6783fddc32bf2fd45b8569938b8f0ec444cd5f4dcf60c6969",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionCreateRejectsInvalidRunAsOwnerOptionRepro#0001",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestSubscriptionCreateRejectsInvalidRunAsOwnerOptionRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE SUBSCRIPTION rejects invalid run_as_owner option",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testsubscriptioncreaterejectsinvalidrunasowneroptionrepro-0001-create-subscription-subscription_invalid_run_as_owner_sub-connection-host=127.0.0.1",
+      "suggestedId": "subscription-correctness-repro-test-testsubscriptioncreaterejectsinvalidrunasowneroptionrepro-0001-create-subscription-subscription_invalid_run_as_owner_sub-connection-host=127.0.0.1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "CREATE SUBSCRIPTION subscription_invalid_run_as_owner_sub\n\t\t\t\t\t\tCONNECTION 'host=127.0.0.1 dbname=postgres'\n\t\t\t\t\t\tPUBLICATION invalid_run_as_owner_pub\n\t\t\t\t\t\tWITH (connect = false, enabled = false, create_slot = false, slot_name = NONE, run_as_owner = definitely_invalid);",
+      "querySha256": "3d6ac3ef70a64e03138587bee126eb6e0e661669c60af0412f445d3f88403a45",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestDropSubscriptionWithSlotInsideTransactionRejectedRepro#0001",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestDropSubscriptionWithSlotInsideTransactionRejectedRepro",
+      "ordinal": 1,
+      "scriptName": "DROP SUBSCRIPTION with slot is rejected inside transaction",
+      "oracle": "postgres",
+      "postgresId": "subscription-correctness-repro-test-testdropsubscriptionwithslotinsidetransactionrejectedrepro-0001-drop-subscription-subscription_drop_xact_slot_sub",
+      "suggestedId": "subscription-correctness-repro-test-testdropsubscriptionwithslotinsidetransactionrejectedrepro-0001-drop-subscription-subscription_drop_xact_slot_sub",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "25001",
+      "errorSeverity": "ERROR",
+      "query": "DROP SUBSCRIPTION subscription_drop_xact_slot_sub;",
+      "querySha256": "d83401f066340bb3b4f7aa6e5e1bca4b957d51be6933166c08f6ffc2131cbdc2",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestDropSubscriptionWithSlotInsideTransactionRejectedRepro#0002",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestDropSubscriptionWithSlotInsideTransactionRejectedRepro",
+      "ordinal": 2,
+      "scriptName": "DROP SUBSCRIPTION with slot is rejected inside transaction",
+      "oracle": "internal",
+      "suggestedId": "subscription-correctness-repro-test-testdropsubscriptionwithslotinsidetransactionrejectedrepro-0002-select-subslotname-from-pg_catalog.pg_subscription-where",
+      "expectedKind": "rows",
+      "query": "SELECT subslotname\n\t\t\t\t\t\tFROM pg_catalog.pg_subscription\n\t\t\t\t\t\tWHERE subname = 'subscription_drop_xact_slot_sub';",
+      "querySha256": "7a8f1a29a62d2e35939521bd5359fb84ed1e5be5594658a049a4f0adc7a6304e",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestDropSubscriptionWithMissingRemoteSlotPreservesCatalogRepro#0001",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestDropSubscriptionWithMissingRemoteSlotPreservesCatalogRepro",
+      "ordinal": 1,
+      "scriptName": "DROP SUBSCRIPTION preserves catalog when remote slot drop fails",
+      "oracle": "internal",
+      "suggestedId": "subscription-correctness-repro-test-testdropsubscriptionwithmissingremoteslotpreservescatalogrepro-0001-drop-subscription-subscription_drop_missing_slot_sub",
+      "expectedKind": "error",
+      "query": "DROP SUBSCRIPTION subscription_drop_missing_slot_sub;",
+      "querySha256": "fcaedb084591c9962c362d94c6ab7e466ba1cab5a8f2fd550952626a0fe5db5c",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_correctness_repro_test.go:TestDropSubscriptionWithMissingRemoteSlotPreservesCatalogRepro#0002",
+      "source": "testing/go/subscription_correctness_repro_test.go:TestDropSubscriptionWithMissingRemoteSlotPreservesCatalogRepro",
+      "ordinal": 2,
+      "scriptName": "DROP SUBSCRIPTION preserves catalog when remote slot drop fails",
+      "oracle": "internal",
+      "suggestedId": "subscription-correctness-repro-test-testdropsubscriptionwithmissingremoteslotpreservescatalogrepro-0002-select-subslotname-from-pg_catalog.pg_subscription-where",
+      "expectedKind": "rows",
+      "query": "SELECT subslotname\n\t\t\t\t\t\tFROM pg_catalog.pg_subscription\n\t\t\t\t\t\tWHERE subname = 'subscription_drop_missing_slot_sub';",
+      "querySha256": "019e3bbc9672d9118d8fabd25f7740043645d60446ee1b615878cc32ec0d2eee",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    }
+  ]
+}

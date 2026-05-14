@@ -30,18 +30,20 @@ func TestCreateTemporaryTableRequiresDatabaseTemporaryPrivilegeRepro(t *testing.
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CREATE TEMPORARY TABLE temp_privilege_denied (id INT);`,
-					ExpectedErr: `permission denied`,
-					Username:    `temp_table_user`,
-					Password:    `temp`,
+					Query: `CREATE TEMPORARY TABLE temp_privilege_denied (id INT);`,
+
+					Username: `temp_table_user`,
+					Password: `temp`, PostgresOracle: ScriptTestPostgresOracle{
+
+					// TestCreateTemporaryTableAsRequiresDatabaseTemporaryPrivilegeRepro reproduces
+					// the same database privilege bug through the CTAS temporary-table path.
+					ID: "database-temp-privilege-repro-test-testcreatetemporarytablerequiresdatabasetemporaryprivilegerepro-0001-create-temporary-table-temp_privilege_denied-id", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCreateTemporaryTableAsRequiresDatabaseTemporaryPrivilegeRepro reproduces
-// the same database privilege bug through the CTAS temporary-table path.
 func TestCreateTemporaryTableAsRequiresDatabaseTemporaryPrivilegeRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -53,10 +55,10 @@ func TestCreateTemporaryTableAsRequiresDatabaseTemporaryPrivilegeRepro(t *testin
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CREATE TEMPORARY TABLE temp_ctas_privilege_denied AS SELECT 1 AS id;`,
-					ExpectedErr: `permission denied`,
-					Username:    `temp_table_as_user`,
-					Password:    `temp`,
+					Query: `CREATE TEMPORARY TABLE temp_ctas_privilege_denied AS SELECT 1 AS id;`,
+
+					Username: `temp_table_as_user`,
+					Password: `temp`, PostgresOracle: ScriptTestPostgresOracle{ID: "database-temp-privilege-repro-test-testcreatetemporarytableasrequiresdatabasetemporaryprivilegerepro-0001-create-temporary-table-temp_ctas_privilege_denied-as", Compare: "sqlstate"},
 				},
 			},
 		},

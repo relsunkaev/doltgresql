@@ -1,0 +1,161 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map sequence_metadata_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/sequence_metadata_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/sequence_metadata_repro_test.go:TestCreateSequencePopulatesPgSequencesRepro#0001",
+      "source": "testing/go/sequence_metadata_repro_test.go:TestCreateSequencePopulatesPgSequencesRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE SEQUENCE populates pg_sequences",
+      "oracle": "postgres",
+      "postgresId": "sequence-metadata-repro-test-testcreatesequencepopulatespgsequencesrepro-0001-select-schemaname-sequencename-from-pg_catalog.pg_sequences",
+      "suggestedId": "sequence-metadata-repro-test-testcreatesequencepopulatespgsequencesrepro-0001-select-schemaname-sequencename-from-pg_catalog.pg_sequences",
+      "compare": "structural",
+      "columnModes": [
+        "schema"
+      ],
+      "expectedKind": "rows",
+      "query": "SELECT schemaname, sequencename\n\t\t\t\t\t\tFROM pg_catalog.pg_sequences\n\t\t\t\t\t\tWHERE sequencename = 'sequence_catalog_target';",
+      "querySha256": "1bdbf21cf8d41bd97f6c0b5d123cd5c6dc40582d8077f94045a24da9b6af5165",
+      "expectedRows": [
+        [
+          {
+            "value": "{{schema}}"
+          },
+          {
+            "value": "sequence_catalog_target"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequence_metadata_repro_test.go:TestCreateSequencePopulatesPgStatioSequenceViewsRepro#0001",
+      "source": "testing/go/sequence_metadata_repro_test.go:TestCreateSequencePopulatesPgStatioSequenceViewsRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE SEQUENCE populates pg_statio sequence views",
+      "oracle": "internal",
+      "suggestedId": "sequence-metadata-repro-test-testcreatesequencepopulatespgstatiosequenceviewsrepro-0001-select-exists-select-1-from",
+      "expectedKind": "rows",
+      "query": "SELECT\n\t\t\t\t\t\t\tEXISTS (\n\t\t\t\t\t\t\t\tSELECT 1\n\t\t\t\t\t\t\t\tFROM pg_catalog.pg_statio_user_sequences\n\t\t\t\t\t\t\t\tWHERE schemaname = 'public'\n\t\t\t\t\t\t\t\t\tAND relname = 'statio_sequence_catalog_target'\n\t\t\t\t\t\t\t\t\tAND blks_read >= 0\n\t\t\t\t\t\t\t),\n\t\t\t\t\t\t\tEXISTS (\n\t\t\t\t\t\t\t\tSELECT 1\n\t\t\t\t\t\t\t\tFROM pg_catalog.pg_statio_all_sequences\n\t\t\t\t\t\t\t\tWHERE schemaname = 'public'\n\t\t\t\t\t\t\t\t\tAND relname = 'statio_sequence_catalog_target'\n\t\t\t\t\t\t\t\t\tAND blks_read >= 0\n\t\t\t\t\t\t\t);",
+      "querySha256": "b5c24d85cd93efe1b403190ec16815411a06ef7843f0047c13124cf33c910478",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequence_metadata_repro_test.go:TestCreateTemporarySequenceRepro#0001",
+      "source": "testing/go/sequence_metadata_repro_test.go:TestCreateTemporarySequenceRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE TEMPORARY SEQUENCE creates a usable temp sequence",
+      "oracle": "postgres",
+      "postgresId": "sequence-metadata-repro-test-testcreatetemporarysequencerepro-0001-select-nextval-temp_sequence_target",
+      "suggestedId": "sequence-metadata-repro-test-testcreatetemporarysequencerepro-0001-select-nextval-temp_sequence_target",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('temp_sequence_target');",
+      "querySha256": "b74e9281307d174024a9faeac56324c175e27b17277b0b3ae117ba2987581ecd",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequence_metadata_repro_test.go:TestSequenceRelationTracksIsCalledRepro#0001",
+      "source": "testing/go/sequence_metadata_repro_test.go:TestSequenceRelationTracksIsCalledRepro",
+      "ordinal": 1,
+      "scriptName": "sequence relation tracks is_called",
+      "oracle": "postgres",
+      "postgresId": "sequence-metadata-repro-test-testsequencerelationtracksiscalledrepro-0001-select-last_value-is_called-from-sequence_is_called_target",
+      "suggestedId": "sequence-metadata-repro-test-testsequencerelationtracksiscalledrepro-0001-select-last_value-is_called-from-sequence_is_called_target",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT last_value, is_called FROM sequence_is_called_target;",
+      "querySha256": "d05c2b6fa933b411f190862127a094de521bbef1e3e8734b4eecd6c53a9b8bc8",
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequence_metadata_repro_test.go:TestSequenceRelationTracksIsCalledRepro#0002",
+      "source": "testing/go/sequence_metadata_repro_test.go:TestSequenceRelationTracksIsCalledRepro",
+      "ordinal": 2,
+      "scriptName": "sequence relation tracks is_called",
+      "oracle": "postgres",
+      "postgresId": "sequence-metadata-repro-test-testsequencerelationtracksiscalledrepro-0002-select-nextval-sequence_is_called_target",
+      "suggestedId": "sequence-metadata-repro-test-testsequencerelationtracksiscalledrepro-0002-select-nextval-sequence_is_called_target",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('sequence_is_called_target');",
+      "querySha256": "f2a59b9a3323fb13098c2addce22f94306252907954da5c1cfcc01921c8fe788",
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/sequence_metadata_repro_test.go:TestSequenceRelationTracksIsCalledRepro#0003",
+      "source": "testing/go/sequence_metadata_repro_test.go:TestSequenceRelationTracksIsCalledRepro",
+      "ordinal": 3,
+      "scriptName": "sequence relation tracks is_called",
+      "oracle": "postgres",
+      "postgresId": "sequence-metadata-repro-test-testsequencerelationtracksiscalledrepro-0003-select-last_value-is_called-from-sequence_is_called_target",
+      "suggestedId": "sequence-metadata-repro-test-testsequencerelationtracksiscalledrepro-0003-select-last_value-is_called-from-sequence_is_called_target",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT last_value, is_called FROM sequence_is_called_target;",
+      "querySha256": "d05c2b6fa933b411f190862127a094de521bbef1e3e8734b4eecd6c53a9b8bc8",
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

@@ -1,0 +1,3667 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map conflicts_root_object_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/conflicts_root_object_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0001",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 1,
+      "scriptName": "Function delete \"definition\" conflict without modification",
+      "oracle": "postgres",
+      "postgresId": "conflicts-root-object-test-testconflictsrootobject-0001-select-interpreted_example-12",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0001-select-interpreted_example-12",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_example('12');",
+      "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "expectedRows": [
+        [
+          {
+            "value": "112"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0002",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 2,
+      "scriptName": "Function delete \"definition\" conflict without modification",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0002-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0003",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 3,
+      "scriptName": "Function delete \"definition\" conflict without modification",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0003-select-length-dolt_commit-m-initial",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'initial')::text) = 34;",
+      "querySha256": "05355d06ae2e762642620d5304c1ece579bc1553fba6c5a09d424dd252967f25",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0004",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 4,
+      "scriptName": "Function delete \"definition\" conflict without modification",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0004-select-dolt_checkout-b-other",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_checkout('-b', 'other')",
+      "querySha256": "eb1ba66170764046947aad49472a195661fcfa082f2e8cf8fd66ad1edbf87dda",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0005",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 5,
+      "scriptName": "Function delete \"definition\" conflict without modification",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0005-create-or-replace-function-interpreted_example",
+      "expectedKind": "rows",
+      "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS TEXT AS $$ BEGIN RETURN '3' || input; END; $$ LANGUAGE plpgsql;",
+      "querySha256": "5c477601720ebd8638b62e193824322f5dd62714e7b18c629e4e67299e2d4db8",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0006",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 6,
+      "scriptName": "Function delete \"definition\" conflict without modification",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0006-select-interpreted_example-12",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_example('12');",
+      "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0007",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 7,
+      "scriptName": "Function delete \"definition\" conflict without modification",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0007-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0008",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 8,
+      "scriptName": "Function delete \"definition\" conflict without modification",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0008-select-length-dolt_commit-m-other",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'other')::text) = 34;",
+      "querySha256": "53d52365dbf173391f2c8e198e94f4930cc0d2cbfd13305fdfddc59a9d4b7fa7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0009",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 9,
+      "scriptName": "Function delete \"definition\" conflict without modification",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0009-select-dolt_checkout-main",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_checkout('main')",
+      "querySha256": "692db5c3d58a12710a4b2b6513b13d4a2d2b71c46bf68a6d288ec3caf5cc26bc",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0010",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 10,
+      "scriptName": "Function delete \"definition\" conflict without modification",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0010-create-or-replace-function-interpreted_example",
+      "expectedKind": "rows",
+      "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS INT2 AS $$ BEGIN RETURN '2' || input; END; $$ LANGUAGE plpgsql;",
+      "querySha256": "13d521f91eb5d7dd800d948a999c0c5da191ca7ef4a66be72c080c004469adcf",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0011",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 11,
+      "scriptName": "Function delete \"definition\" conflict without modification",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0011-select-interpreted_example-12",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_example('12');",
+      "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0012",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 12,
+      "scriptName": "Function delete \"definition\" conflict without modification",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0012-select-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM dolt_status;",
+      "querySha256": "3a62c5ecfad60168f3dfd28c111378a310fc9109fcf2b68d10ad1c5465683819",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0013",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 13,
+      "scriptName": "Function delete \"definition\" conflict without modification",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0013-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0014",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 14,
+      "scriptName": "Function delete \"definition\" conflict without modification",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0014-select-length-dolt_commit-m-next",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'next')::text) = 34;",
+      "querySha256": "840e7eea67afb6c6baf7febbef5dc424607d512b23dd069027b0e422d3242a17",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0015",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 15,
+      "scriptName": "Function delete \"definition\" conflict without modification",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0015-select-dolt_merge-other",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_merge('other');",
+      "querySha256": "e5f2c3db8c87868caacec9968f41b4c6c77b51d482aac4071f04bf13405ac771",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0016",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 16,
+      "scriptName": "Function delete \"definition\" conflict without modification",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0016-select-*-from-dolt_conflicts",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM dolt_conflicts;",
+      "querySha256": "54d0fd024cb4ff877fe959db169e680d51d47d59723ff377281d7a5170d4a98a",
+      "nonLiteral": [
+        "DoltSpecific",
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0017",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 17,
+      "scriptName": "Function delete \"definition\" conflict without modification",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0017-select-base_value-our_value-our_diff_type-their_value",
+      "expectedKind": "rows",
+      "query": "SELECT base_value, our_value, our_diff_type, their_value, their_diff_type, dolt_conflict_id FROM \"dolt_conflicts_interpreted_example(text)\";",
+      "querySha256": "dbf584630de9a9f6f86bf26170171dee60ba601f2a015b456991715f04bbd3bd",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0018",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 18,
+      "scriptName": "Function delete \"definition\" conflict without modification",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0018-delete-from-dolt_conflicts_interpreted_example-text-where",
+      "expectedKind": "rows",
+      "query": "DELETE FROM \"dolt_conflicts_interpreted_example(text)\" WHERE dolt_conflict_id = 'definition';",
+      "querySha256": "fd08e5bd825c1491c0dbcb826109bce60a6a223fe4b44e38f01c39b5cc0da480",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0019",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 19,
+      "scriptName": "Function delete \"definition\" conflict without modification",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0019-select-*-from-dolt_conflicts_interpreted_example-text",
+      "expectedKind": "error",
+      "query": "SELECT * FROM \"dolt_conflicts_interpreted_example(text)\";",
+      "querySha256": "f0f6bea3a7a2c0f2605f0822c36a06aabaaa388148da04e9f106b4e127ab1e12",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0020",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 20,
+      "scriptName": "Function delete \"definition\" conflict without modification",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0020-select-interpreted_example-12",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_example('12');",
+      "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0021",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 21,
+      "scriptName": "Function update \"definition\" with custom body",
+      "oracle": "postgres",
+      "postgresId": "conflicts-root-object-test-testconflictsrootobject-0021-select-interpreted_example-12",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0021-select-interpreted_example-12",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_example('12');",
+      "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "expectedRows": [
+        [
+          {
+            "value": "112"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0022",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 22,
+      "scriptName": "Function update \"definition\" with custom body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0022-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0023",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 23,
+      "scriptName": "Function update \"definition\" with custom body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0023-select-length-dolt_commit-m-initial",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'initial')::text) = 34;",
+      "querySha256": "05355d06ae2e762642620d5304c1ece579bc1553fba6c5a09d424dd252967f25",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0024",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 24,
+      "scriptName": "Function update \"definition\" with custom body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0024-select-dolt_checkout-b-other",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_checkout('-b', 'other')",
+      "querySha256": "eb1ba66170764046947aad49472a195661fcfa082f2e8cf8fd66ad1edbf87dda",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0025",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 25,
+      "scriptName": "Function update \"definition\" with custom body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0025-create-or-replace-function-interpreted_example",
+      "expectedKind": "rows",
+      "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS TEXT AS $$ BEGIN RETURN '3' || input; END; $$ LANGUAGE plpgsql;",
+      "querySha256": "5c477601720ebd8638b62e193824322f5dd62714e7b18c629e4e67299e2d4db8",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0026",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 26,
+      "scriptName": "Function update \"definition\" with custom body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0026-select-interpreted_example-12",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_example('12');",
+      "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0027",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 27,
+      "scriptName": "Function update \"definition\" with custom body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0027-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0028",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 28,
+      "scriptName": "Function update \"definition\" with custom body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0028-select-length-dolt_commit-m-other",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'other')::text) = 34;",
+      "querySha256": "53d52365dbf173391f2c8e198e94f4930cc0d2cbfd13305fdfddc59a9d4b7fa7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0029",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 29,
+      "scriptName": "Function update \"definition\" with custom body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0029-select-dolt_checkout-main",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_checkout('main')",
+      "querySha256": "692db5c3d58a12710a4b2b6513b13d4a2d2b71c46bf68a6d288ec3caf5cc26bc",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0030",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 30,
+      "scriptName": "Function update \"definition\" with custom body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0030-create-or-replace-function-interpreted_example",
+      "expectedKind": "rows",
+      "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS TEXT AS $$ BEGIN RETURN '2' || input; END; $$ LANGUAGE plpgsql;",
+      "querySha256": "00e951432f51de50fef0b200c9e5afdf28edc791a71fdb39d03b4802a722b180",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0031",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 31,
+      "scriptName": "Function update \"definition\" with custom body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0031-select-interpreted_example-12",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_example('12');",
+      "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0032",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 32,
+      "scriptName": "Function update \"definition\" with custom body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0032-select-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM dolt_status;",
+      "querySha256": "3a62c5ecfad60168f3dfd28c111378a310fc9109fcf2b68d10ad1c5465683819",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0033",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 33,
+      "scriptName": "Function update \"definition\" with custom body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0033-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0034",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 34,
+      "scriptName": "Function update \"definition\" with custom body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0034-select-length-dolt_commit-m-next",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'next')::text) = 34;",
+      "querySha256": "840e7eea67afb6c6baf7febbef5dc424607d512b23dd069027b0e422d3242a17",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0035",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 35,
+      "scriptName": "Function update \"definition\" with custom body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0035-select-dolt_merge-other",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_merge('other');",
+      "querySha256": "e5f2c3db8c87868caacec9968f41b4c6c77b51d482aac4071f04bf13405ac771",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0036",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 36,
+      "scriptName": "Function update \"definition\" with custom body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0036-select-*-from-dolt_conflicts",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM dolt_conflicts;",
+      "querySha256": "54d0fd024cb4ff877fe959db169e680d51d47d59723ff377281d7a5170d4a98a",
+      "nonLiteral": [
+        "DoltSpecific",
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0037",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 37,
+      "scriptName": "Function update \"definition\" with custom body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0037-select-base_value-our_value-our_diff_type-their_value",
+      "expectedKind": "rows",
+      "query": "SELECT base_value, our_value, our_diff_type, their_value, their_diff_type, dolt_conflict_id FROM \"dolt_conflicts_interpreted_example(text)\";",
+      "querySha256": "dbf584630de9a9f6f86bf26170171dee60ba601f2a015b456991715f04bbd3bd",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0038",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 38,
+      "scriptName": "Function update \"definition\" with custom body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0038-update-dolt_conflicts_interpreted_example-text-set-our_value",
+      "expectedKind": "rows",
+      "query": "UPDATE \"dolt_conflicts_interpreted_example(text)\" SET our_value = 'BEGIN RETURN ''7'' || input; END;' WHERE dolt_conflict_id = 'definition';",
+      "querySha256": "aaf741adee400e468bbc0302d4e18e559802b9578a0006998c3224b8338f3b98",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0039",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 39,
+      "scriptName": "Function update \"definition\" with custom body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0039-delete-from-dolt_conflicts_interpreted_example-text-where",
+      "expectedKind": "rows",
+      "query": "DELETE FROM \"dolt_conflicts_interpreted_example(text)\" WHERE dolt_conflict_id = 'definition';",
+      "querySha256": "fd08e5bd825c1491c0dbcb826109bce60a6a223fe4b44e38f01c39b5cc0da480",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0040",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 40,
+      "scriptName": "Function update \"definition\" with custom body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0040-select-*-from-dolt_conflicts_interpreted_example-text",
+      "expectedKind": "error",
+      "query": "SELECT * FROM \"dolt_conflicts_interpreted_example(text)\";",
+      "querySha256": "f0f6bea3a7a2c0f2605f0822c36a06aabaaa388148da04e9f106b4e127ab1e12",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0041",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 41,
+      "scriptName": "Function update \"definition\" with custom body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0041-select-interpreted_example-12",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_example('12');",
+      "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0042",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 42,
+      "scriptName": "Function update \"definition\" with \"theirs\" body",
+      "oracle": "postgres",
+      "postgresId": "conflicts-root-object-test-testconflictsrootobject-0042-select-interpreted_example-12",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0042-select-interpreted_example-12",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_example('12');",
+      "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "expectedRows": [
+        [
+          {
+            "value": "112"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0043",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 43,
+      "scriptName": "Function update \"definition\" with \"theirs\" body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0043-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0044",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 44,
+      "scriptName": "Function update \"definition\" with \"theirs\" body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0044-select-length-dolt_commit-m-initial",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'initial')::text) = 34;",
+      "querySha256": "05355d06ae2e762642620d5304c1ece579bc1553fba6c5a09d424dd252967f25",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0045",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 45,
+      "scriptName": "Function update \"definition\" with \"theirs\" body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0045-select-dolt_checkout-b-other",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_checkout('-b', 'other')",
+      "querySha256": "eb1ba66170764046947aad49472a195661fcfa082f2e8cf8fd66ad1edbf87dda",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0046",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 46,
+      "scriptName": "Function update \"definition\" with \"theirs\" body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0046-create-or-replace-function-interpreted_example",
+      "expectedKind": "rows",
+      "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS TEXT AS $$ BEGIN RETURN '3' || input; END; $$ LANGUAGE plpgsql;",
+      "querySha256": "5c477601720ebd8638b62e193824322f5dd62714e7b18c629e4e67299e2d4db8",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0047",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 47,
+      "scriptName": "Function update \"definition\" with \"theirs\" body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0047-select-interpreted_example-12",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_example('12');",
+      "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0048",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 48,
+      "scriptName": "Function update \"definition\" with \"theirs\" body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0048-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0049",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 49,
+      "scriptName": "Function update \"definition\" with \"theirs\" body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0049-select-length-dolt_commit-m-other",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'other')::text) = 34;",
+      "querySha256": "53d52365dbf173391f2c8e198e94f4930cc0d2cbfd13305fdfddc59a9d4b7fa7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0050",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 50,
+      "scriptName": "Function update \"definition\" with \"theirs\" body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0050-select-dolt_checkout-main",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_checkout('main')",
+      "querySha256": "692db5c3d58a12710a4b2b6513b13d4a2d2b71c46bf68a6d288ec3caf5cc26bc",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0051",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 51,
+      "scriptName": "Function update \"definition\" with \"theirs\" body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0051-create-or-replace-function-interpreted_example",
+      "expectedKind": "rows",
+      "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS TEXT AS $$ BEGIN RETURN '2' || input; END; $$ LANGUAGE plpgsql;",
+      "querySha256": "00e951432f51de50fef0b200c9e5afdf28edc791a71fdb39d03b4802a722b180",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0052",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 52,
+      "scriptName": "Function update \"definition\" with \"theirs\" body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0052-select-interpreted_example-12",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_example('12');",
+      "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0053",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 53,
+      "scriptName": "Function update \"definition\" with \"theirs\" body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0053-select-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM dolt_status;",
+      "querySha256": "3a62c5ecfad60168f3dfd28c111378a310fc9109fcf2b68d10ad1c5465683819",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0054",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 54,
+      "scriptName": "Function update \"definition\" with \"theirs\" body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0054-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0055",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 55,
+      "scriptName": "Function update \"definition\" with \"theirs\" body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0055-select-length-dolt_commit-m-next",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'next')::text) = 34;",
+      "querySha256": "840e7eea67afb6c6baf7febbef5dc424607d512b23dd069027b0e422d3242a17",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0056",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 56,
+      "scriptName": "Function update \"definition\" with \"theirs\" body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0056-select-dolt_merge-other",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_merge('other');",
+      "querySha256": "e5f2c3db8c87868caacec9968f41b4c6c77b51d482aac4071f04bf13405ac771",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0057",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 57,
+      "scriptName": "Function update \"definition\" with \"theirs\" body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0057-select-*-from-dolt_conflicts",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM dolt_conflicts;",
+      "querySha256": "54d0fd024cb4ff877fe959db169e680d51d47d59723ff377281d7a5170d4a98a",
+      "nonLiteral": [
+        "DoltSpecific",
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0058",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 58,
+      "scriptName": "Function update \"definition\" with \"theirs\" body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0058-select-base_value-our_value-our_diff_type-their_value",
+      "expectedKind": "rows",
+      "query": "SELECT base_value, our_value, our_diff_type, their_value, their_diff_type, dolt_conflict_id FROM \"dolt_conflicts_interpreted_example(text)\";",
+      "querySha256": "dbf584630de9a9f6f86bf26170171dee60ba601f2a015b456991715f04bbd3bd",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0059",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 59,
+      "scriptName": "Function update \"definition\" with \"theirs\" body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0059-update-dolt_conflicts_interpreted_example-text-set-our_value",
+      "expectedKind": "rows",
+      "query": "UPDATE \"dolt_conflicts_interpreted_example(text)\" SET our_value = their_value WHERE dolt_conflict_id = 'definition';",
+      "querySha256": "d8d9b6c12293b81bbf480db7723b46472d91314ebc8bcce39a692a6a733b6c6a",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0060",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 60,
+      "scriptName": "Function update \"definition\" with \"theirs\" body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0060-delete-from-dolt_conflicts_interpreted_example-text-where",
+      "expectedKind": "error",
+      "query": "DELETE FROM \"dolt_conflicts_interpreted_example(text)\" WHERE dolt_conflict_id = 'definition';",
+      "querySha256": "fd08e5bd825c1491c0dbcb826109bce60a6a223fe4b44e38f01c39b5cc0da480",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0061",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 61,
+      "scriptName": "Function update \"definition\" with \"theirs\" body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0061-select-*-from-dolt_conflicts_interpreted_example-text",
+      "expectedKind": "error",
+      "query": "SELECT * FROM \"dolt_conflicts_interpreted_example(text)\";",
+      "querySha256": "f0f6bea3a7a2c0f2605f0822c36a06aabaaa388148da04e9f106b4e127ab1e12",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0062",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 62,
+      "scriptName": "Function update \"definition\" with \"theirs\" body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0062-select-interpreted_example-12",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_example('12');",
+      "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0063",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 63,
+      "scriptName": "Function update \"definition\" with \"ancestor\" body",
+      "oracle": "postgres",
+      "postgresId": "conflicts-root-object-test-testconflictsrootobject-0063-select-interpreted_example-12",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0063-select-interpreted_example-12",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_example('12');",
+      "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "expectedRows": [
+        [
+          {
+            "value": "112"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0064",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 64,
+      "scriptName": "Function update \"definition\" with \"ancestor\" body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0064-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0065",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 65,
+      "scriptName": "Function update \"definition\" with \"ancestor\" body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0065-select-length-dolt_commit-m-initial",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'initial')::text) = 34;",
+      "querySha256": "05355d06ae2e762642620d5304c1ece579bc1553fba6c5a09d424dd252967f25",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0066",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 66,
+      "scriptName": "Function update \"definition\" with \"ancestor\" body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0066-select-dolt_checkout-b-other",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_checkout('-b', 'other')",
+      "querySha256": "eb1ba66170764046947aad49472a195661fcfa082f2e8cf8fd66ad1edbf87dda",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0067",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 67,
+      "scriptName": "Function update \"definition\" with \"ancestor\" body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0067-create-or-replace-function-interpreted_example",
+      "expectedKind": "rows",
+      "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS TEXT AS $$ BEGIN RETURN '3' || input; END; $$ LANGUAGE plpgsql;",
+      "querySha256": "5c477601720ebd8638b62e193824322f5dd62714e7b18c629e4e67299e2d4db8",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0068",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 68,
+      "scriptName": "Function update \"definition\" with \"ancestor\" body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0068-select-interpreted_example-12",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_example('12');",
+      "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0069",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 69,
+      "scriptName": "Function update \"definition\" with \"ancestor\" body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0069-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0070",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 70,
+      "scriptName": "Function update \"definition\" with \"ancestor\" body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0070-select-length-dolt_commit-m-other",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'other')::text) = 34;",
+      "querySha256": "53d52365dbf173391f2c8e198e94f4930cc0d2cbfd13305fdfddc59a9d4b7fa7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0071",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 71,
+      "scriptName": "Function update \"definition\" with \"ancestor\" body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0071-select-dolt_checkout-main",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_checkout('main')",
+      "querySha256": "692db5c3d58a12710a4b2b6513b13d4a2d2b71c46bf68a6d288ec3caf5cc26bc",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0072",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 72,
+      "scriptName": "Function update \"definition\" with \"ancestor\" body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0072-create-or-replace-function-interpreted_example",
+      "expectedKind": "rows",
+      "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS TEXT AS $$ BEGIN RETURN '2' || input; END; $$ LANGUAGE plpgsql;",
+      "querySha256": "00e951432f51de50fef0b200c9e5afdf28edc791a71fdb39d03b4802a722b180",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0073",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 73,
+      "scriptName": "Function update \"definition\" with \"ancestor\" body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0073-select-interpreted_example-12",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_example('12');",
+      "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0074",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 74,
+      "scriptName": "Function update \"definition\" with \"ancestor\" body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0074-select-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM dolt_status;",
+      "querySha256": "3a62c5ecfad60168f3dfd28c111378a310fc9109fcf2b68d10ad1c5465683819",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0075",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 75,
+      "scriptName": "Function update \"definition\" with \"ancestor\" body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0075-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0076",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 76,
+      "scriptName": "Function update \"definition\" with \"ancestor\" body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0076-select-length-dolt_commit-m-next",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'next')::text) = 34;",
+      "querySha256": "840e7eea67afb6c6baf7febbef5dc424607d512b23dd069027b0e422d3242a17",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0077",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 77,
+      "scriptName": "Function update \"definition\" with \"ancestor\" body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0077-select-dolt_merge-other",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_merge('other');",
+      "querySha256": "e5f2c3db8c87868caacec9968f41b4c6c77b51d482aac4071f04bf13405ac771",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0078",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 78,
+      "scriptName": "Function update \"definition\" with \"ancestor\" body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0078-select-*-from-dolt_conflicts",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM dolt_conflicts;",
+      "querySha256": "54d0fd024cb4ff877fe959db169e680d51d47d59723ff377281d7a5170d4a98a",
+      "nonLiteral": [
+        "DoltSpecific",
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0079",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 79,
+      "scriptName": "Function update \"definition\" with \"ancestor\" body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0079-select-base_value-our_value-our_diff_type-their_value",
+      "expectedKind": "rows",
+      "query": "SELECT base_value, our_value, our_diff_type, their_value, their_diff_type, dolt_conflict_id FROM \"dolt_conflicts_interpreted_example(text)\";",
+      "querySha256": "dbf584630de9a9f6f86bf26170171dee60ba601f2a015b456991715f04bbd3bd",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0080",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 80,
+      "scriptName": "Function update \"definition\" with \"ancestor\" body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0080-update-dolt_conflicts_interpreted_example-text-set-our_value",
+      "expectedKind": "rows",
+      "query": "UPDATE \"dolt_conflicts_interpreted_example(text)\" SET our_value = base_value WHERE dolt_conflict_id = 'definition';",
+      "querySha256": "4d69ef24060b4d826d3775f39d8e4d98a7d58e04f28f815f5775e08d9fe9c824",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0081",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 81,
+      "scriptName": "Function update \"definition\" with \"ancestor\" body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0081-delete-from-dolt_conflicts_interpreted_example-text-where",
+      "expectedKind": "error",
+      "query": "DELETE FROM \"dolt_conflicts_interpreted_example(text)\" WHERE dolt_conflict_id = 'definition';",
+      "querySha256": "fd08e5bd825c1491c0dbcb826109bce60a6a223fe4b44e38f01c39b5cc0da480",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0082",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 82,
+      "scriptName": "Function update \"definition\" with \"ancestor\" body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0082-select-*-from-dolt_conflicts_interpreted_example-text",
+      "expectedKind": "error",
+      "query": "SELECT * FROM \"dolt_conflicts_interpreted_example(text)\";",
+      "querySha256": "f0f6bea3a7a2c0f2605f0822c36a06aabaaa388148da04e9f106b4e127ab1e12",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0083",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 83,
+      "scriptName": "Function update \"definition\" with \"ancestor\" body",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0083-select-interpreted_example-12",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_example('12');",
+      "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0084",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 84,
+      "scriptName": "Function update \"return_type\" with custom type",
+      "oracle": "postgres",
+      "postgresId": "conflicts-root-object-test-testconflictsrootobject-0084-select-interpreted_example-12",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0084-select-interpreted_example-12",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_example('12');",
+      "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "expectedRows": [
+        [
+          {
+            "value": "12"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0085",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 85,
+      "scriptName": "Function update \"return_type\" with custom type",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0085-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0086",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 86,
+      "scriptName": "Function update \"return_type\" with custom type",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0086-select-length-dolt_commit-m-initial",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'initial')::text) = 34;",
+      "querySha256": "05355d06ae2e762642620d5304c1ece579bc1553fba6c5a09d424dd252967f25",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0087",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 87,
+      "scriptName": "Function update \"return_type\" with custom type",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0087-select-dolt_checkout-b-other",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_checkout('-b', 'other')",
+      "querySha256": "eb1ba66170764046947aad49472a195661fcfa082f2e8cf8fd66ad1edbf87dda",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0088",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 88,
+      "scriptName": "Function update \"return_type\" with custom type",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0088-create-or-replace-function-interpreted_example",
+      "expectedKind": "rows",
+      "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS INT8 AS $$ BEGIN RETURN input || ''; END; $$ LANGUAGE plpgsql;",
+      "querySha256": "11a519d8c8cb26cbfdb921456f33406d086b42cbb8e9743a84f31fe0b0a2113a",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0089",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 89,
+      "scriptName": "Function update \"return_type\" with custom type",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0089-select-interpreted_example-12",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_example('12');",
+      "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0090",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 90,
+      "scriptName": "Function update \"return_type\" with custom type",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0090-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0091",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 91,
+      "scriptName": "Function update \"return_type\" with custom type",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0091-select-length-dolt_commit-m-other",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'other')::text) = 34;",
+      "querySha256": "53d52365dbf173391f2c8e198e94f4930cc0d2cbfd13305fdfddc59a9d4b7fa7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0092",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 92,
+      "scriptName": "Function update \"return_type\" with custom type",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0092-select-dolt_checkout-main",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_checkout('main')",
+      "querySha256": "692db5c3d58a12710a4b2b6513b13d4a2d2b71c46bf68a6d288ec3caf5cc26bc",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0093",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 93,
+      "scriptName": "Function update \"return_type\" with custom type",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0093-create-or-replace-function-interpreted_example",
+      "expectedKind": "rows",
+      "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS FLOAT AS $$ BEGIN RETURN input || ''; END; $$ LANGUAGE plpgsql;",
+      "querySha256": "09d3722e0cb18102dacdf670a100a701b65fe3126f3178d4f0ef5e0bbac29e47",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0094",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 94,
+      "scriptName": "Function update \"return_type\" with custom type",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0094-select-interpreted_example-12",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_example('12');",
+      "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0095",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 95,
+      "scriptName": "Function update \"return_type\" with custom type",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0095-select-*-from-dolt_status",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM dolt_status;",
+      "querySha256": "3a62c5ecfad60168f3dfd28c111378a310fc9109fcf2b68d10ad1c5465683819",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0096",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 96,
+      "scriptName": "Function update \"return_type\" with custom type",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0096-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0097",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 97,
+      "scriptName": "Function update \"return_type\" with custom type",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0097-select-length-dolt_commit-m-next",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'next')::text) = 34;",
+      "querySha256": "840e7eea67afb6c6baf7febbef5dc424607d512b23dd069027b0e422d3242a17",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0098",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 98,
+      "scriptName": "Function update \"return_type\" with custom type",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0098-select-dolt_merge-other",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_merge('other');",
+      "querySha256": "e5f2c3db8c87868caacec9968f41b4c6c77b51d482aac4071f04bf13405ac771",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0099",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 99,
+      "scriptName": "Function update \"return_type\" with custom type",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0099-select-*-from-dolt_conflicts",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM dolt_conflicts;",
+      "querySha256": "54d0fd024cb4ff877fe959db169e680d51d47d59723ff377281d7a5170d4a98a",
+      "nonLiteral": [
+        "DoltSpecific",
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0100",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 100,
+      "scriptName": "Function update \"return_type\" with custom type",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0100-select-base_value-our_value-our_diff_type-their_value",
+      "expectedKind": "rows",
+      "query": "SELECT base_value, our_value, our_diff_type, their_value, their_diff_type, dolt_conflict_id FROM \"dolt_conflicts_interpreted_example(text)\";",
+      "querySha256": "dbf584630de9a9f6f86bf26170171dee60ba601f2a015b456991715f04bbd3bd",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0101",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 101,
+      "scriptName": "Function update \"return_type\" with custom type",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0101-update-dolt_conflicts_interpreted_example-text-set-our_value",
+      "expectedKind": "rows",
+      "query": "UPDATE \"dolt_conflicts_interpreted_example(text)\" SET our_value = 'int2' WHERE dolt_conflict_id = 'return_type';",
+      "querySha256": "ae72499c0ba69189fae1e562d62958a91e4f5f851f8d634c21a97a087f7de055",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0102",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 102,
+      "scriptName": "Function update \"return_type\" with custom type",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0102-select-base_value-our_value-our_diff_type-their_value",
+      "expectedKind": "rows",
+      "query": "SELECT base_value, our_value, our_diff_type, their_value, their_diff_type, dolt_conflict_id FROM \"dolt_conflicts_interpreted_example(text)\";",
+      "querySha256": "dbf584630de9a9f6f86bf26170171dee60ba601f2a015b456991715f04bbd3bd",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0103",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 103,
+      "scriptName": "Function update \"return_type\" with custom type",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0103-delete-from-dolt_conflicts_interpreted_example-text-where",
+      "expectedKind": "rows",
+      "query": "DELETE FROM \"dolt_conflicts_interpreted_example(text)\" WHERE dolt_conflict_id = 'return_type';",
+      "querySha256": "3cdbb65d7606237e0268742839fa8f2cb9519c28cd6622a439bd96753403abdd",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0104",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 104,
+      "scriptName": "Function update \"return_type\" with custom type",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0104-select-*-from-dolt_conflicts_interpreted_example-text",
+      "expectedKind": "error",
+      "query": "SELECT * FROM \"dolt_conflicts_interpreted_example(text)\";",
+      "querySha256": "f0f6bea3a7a2c0f2605f0822c36a06aabaaa388148da04e9f106b4e127ab1e12",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0105",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 105,
+      "scriptName": "Function update \"return_type\" with custom type",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0105-select-interpreted_example-12",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_example('12');",
+      "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0106",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 106,
+      "scriptName": "Function update \"return_type\" with custom type",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0106-select-interpreted_example-123456",
+      "expectedKind": "error",
+      "query": "SELECT interpreted_example('123456');",
+      "querySha256": "11a369768035f2aaa3779b5e435000398b0aef43ea1a0af0fcfa4c4eee8d219d",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0107",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 107,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ours\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0107-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0108",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 108,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ours\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0108-select-length-dolt_commit-m-initial",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'initial')::text) = 34;",
+      "querySha256": "05355d06ae2e762642620d5304c1ece579bc1553fba6c5a09d424dd252967f25",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0109",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 109,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ours\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0109-select-dolt_checkout-b-other",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_checkout('-b', 'other')",
+      "querySha256": "eb1ba66170764046947aad49472a195661fcfa082f2e8cf8fd66ad1edbf87dda",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0110",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 110,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ours\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0110-create-or-replace-function-interpreted_example",
+      "expectedKind": "rows",
+      "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS TEXT AS $$ BEGIN RETURN '3' || input; END; $$ LANGUAGE plpgsql;",
+      "querySha256": "5c477601720ebd8638b62e193824322f5dd62714e7b18c629e4e67299e2d4db8",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0111",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 111,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ours\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0111-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0112",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 112,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ours\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0112-select-length-dolt_commit-m-other",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'other')::text) = 34;",
+      "querySha256": "53d52365dbf173391f2c8e198e94f4930cc0d2cbfd13305fdfddc59a9d4b7fa7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0113",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 113,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ours\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0113-select-dolt_checkout-main",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_checkout('main')",
+      "querySha256": "692db5c3d58a12710a4b2b6513b13d4a2d2b71c46bf68a6d288ec3caf5cc26bc",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0114",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 114,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ours\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0114-drop-function-interpreted_example-input-text",
+      "expectedKind": "rows",
+      "query": "DROP FUNCTION interpreted_example(input TEXT);",
+      "querySha256": "92742bf0bbced11b7c2e99bf469c99d7926502766fd20acd028a7c8cb46a2581",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0115",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 115,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ours\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0115-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0116",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 116,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ours\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0116-select-length-dolt_commit-m-next",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'next')::text) = 34;",
+      "querySha256": "840e7eea67afb6c6baf7febbef5dc424607d512b23dd069027b0e422d3242a17",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0117",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 117,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ours\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0117-select-dolt_merge-other",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_merge('other');",
+      "querySha256": "e5f2c3db8c87868caacec9968f41b4c6c77b51d482aac4071f04bf13405ac771",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0118",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 118,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ours\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0118-select-*-from-dolt_conflicts",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM dolt_conflicts;",
+      "querySha256": "54d0fd024cb4ff877fe959db169e680d51d47d59723ff377281d7a5170d4a98a",
+      "nonLiteral": [
+        "DoltSpecific",
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0119",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 119,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ours\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0119-select-base_value-our_value-our_diff_type-their_value",
+      "expectedKind": "rows",
+      "query": "SELECT base_value, our_value, our_diff_type, their_value, their_diff_type, dolt_conflict_id FROM \"dolt_conflicts_interpreted_example(text)\";",
+      "querySha256": "dbf584630de9a9f6f86bf26170171dee60ba601f2a015b456991715f04bbd3bd",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0120",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 120,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ours\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0120-update-dolt_conflicts_interpreted_example-text-set-our_value",
+      "expectedKind": "rows",
+      "query": "UPDATE \"dolt_conflicts_interpreted_example(text)\" SET our_value = 'ours';",
+      "querySha256": "0bf72d26ac7a49c690a3e83cff746606f55b8cf73fe130dcb4369701bf8c0d9a",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0121",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 121,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ours\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0121-delete-from-dolt_conflicts_interpreted_example-text",
+      "expectedKind": "error",
+      "query": "DELETE FROM \"dolt_conflicts_interpreted_example(text)\";",
+      "querySha256": "dc45db6d7dda095154b10fc91585394d734c9d83bdf967e3f3dee7096bcf4db7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0122",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 122,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ours\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0122-select-interpreted_example-12",
+      "expectedKind": "error",
+      "query": "SELECT interpreted_example('12');",
+      "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0123",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 123,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"theirs\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0123-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0124",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 124,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"theirs\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0124-select-length-dolt_commit-m-initial",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'initial')::text) = 34;",
+      "querySha256": "05355d06ae2e762642620d5304c1ece579bc1553fba6c5a09d424dd252967f25",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0125",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 125,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"theirs\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0125-select-dolt_checkout-b-other",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_checkout('-b', 'other')",
+      "querySha256": "eb1ba66170764046947aad49472a195661fcfa082f2e8cf8fd66ad1edbf87dda",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0126",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 126,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"theirs\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0126-create-or-replace-function-interpreted_example",
+      "expectedKind": "rows",
+      "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS TEXT AS $$ BEGIN RETURN '3' || input; END; $$ LANGUAGE plpgsql;",
+      "querySha256": "5c477601720ebd8638b62e193824322f5dd62714e7b18c629e4e67299e2d4db8",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0127",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 127,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"theirs\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0127-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0128",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 128,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"theirs\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0128-select-length-dolt_commit-m-other",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'other')::text) = 34;",
+      "querySha256": "53d52365dbf173391f2c8e198e94f4930cc0d2cbfd13305fdfddc59a9d4b7fa7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0129",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 129,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"theirs\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0129-select-dolt_checkout-main",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_checkout('main')",
+      "querySha256": "692db5c3d58a12710a4b2b6513b13d4a2d2b71c46bf68a6d288ec3caf5cc26bc",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0130",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 130,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"theirs\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0130-drop-function-interpreted_example-input-text",
+      "expectedKind": "rows",
+      "query": "DROP FUNCTION interpreted_example(input TEXT);",
+      "querySha256": "92742bf0bbced11b7c2e99bf469c99d7926502766fd20acd028a7c8cb46a2581",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0131",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 131,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"theirs\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0131-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0132",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 132,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"theirs\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0132-select-length-dolt_commit-m-next",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'next')::text) = 34;",
+      "querySha256": "840e7eea67afb6c6baf7febbef5dc424607d512b23dd069027b0e422d3242a17",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0133",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 133,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"theirs\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0133-select-dolt_merge-other",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_merge('other');",
+      "querySha256": "e5f2c3db8c87868caacec9968f41b4c6c77b51d482aac4071f04bf13405ac771",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0134",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 134,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"theirs\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0134-select-*-from-dolt_conflicts",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM dolt_conflicts;",
+      "querySha256": "54d0fd024cb4ff877fe959db169e680d51d47d59723ff377281d7a5170d4a98a",
+      "nonLiteral": [
+        "DoltSpecific",
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0135",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 135,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"theirs\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0135-select-base_value-our_value-our_diff_type-their_value",
+      "expectedKind": "rows",
+      "query": "SELECT base_value, our_value, our_diff_type, their_value, their_diff_type, dolt_conflict_id FROM \"dolt_conflicts_interpreted_example(text)\";",
+      "querySha256": "dbf584630de9a9f6f86bf26170171dee60ba601f2a015b456991715f04bbd3bd",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0136",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 136,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"theirs\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0136-update-dolt_conflicts_interpreted_example-text-set-our_value",
+      "expectedKind": "rows",
+      "query": "UPDATE \"dolt_conflicts_interpreted_example(text)\" SET our_value = 'theirs';",
+      "querySha256": "7a78c3ebbcdaefdbfa4f3a790c82eeea7b46f28a6f51878934ae48db711f4f04",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0137",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 137,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"theirs\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0137-delete-from-dolt_conflicts_interpreted_example-text",
+      "expectedKind": "error",
+      "query": "DELETE FROM \"dolt_conflicts_interpreted_example(text)\";",
+      "querySha256": "dc45db6d7dda095154b10fc91585394d734c9d83bdf967e3f3dee7096bcf4db7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0138",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 138,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"theirs\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0138-select-interpreted_example-12",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_example('12');",
+      "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0139",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 139,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ancestor\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0139-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0140",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 140,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ancestor\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0140-select-length-dolt_commit-m-initial",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'initial')::text) = 34;",
+      "querySha256": "05355d06ae2e762642620d5304c1ece579bc1553fba6c5a09d424dd252967f25",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0141",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 141,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ancestor\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0141-select-dolt_checkout-b-other",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_checkout('-b', 'other')",
+      "querySha256": "eb1ba66170764046947aad49472a195661fcfa082f2e8cf8fd66ad1edbf87dda",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0142",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 142,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ancestor\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0142-create-or-replace-function-interpreted_example",
+      "expectedKind": "rows",
+      "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS TEXT AS $$ BEGIN RETURN '3' || input; END; $$ LANGUAGE plpgsql;",
+      "querySha256": "5c477601720ebd8638b62e193824322f5dd62714e7b18c629e4e67299e2d4db8",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0143",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 143,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ancestor\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0143-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0144",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 144,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ancestor\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0144-select-length-dolt_commit-m-other",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'other')::text) = 34;",
+      "querySha256": "53d52365dbf173391f2c8e198e94f4930cc0d2cbfd13305fdfddc59a9d4b7fa7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0145",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 145,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ancestor\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0145-select-dolt_checkout-main",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_checkout('main')",
+      "querySha256": "692db5c3d58a12710a4b2b6513b13d4a2d2b71c46bf68a6d288ec3caf5cc26bc",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0146",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 146,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ancestor\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0146-drop-function-interpreted_example-input-text",
+      "expectedKind": "rows",
+      "query": "DROP FUNCTION interpreted_example(input TEXT);",
+      "querySha256": "92742bf0bbced11b7c2e99bf469c99d7926502766fd20acd028a7c8cb46a2581",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0147",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 147,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ancestor\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0147-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0148",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 148,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ancestor\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0148-select-length-dolt_commit-m-next",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'next')::text) = 34;",
+      "querySha256": "840e7eea67afb6c6baf7febbef5dc424607d512b23dd069027b0e422d3242a17",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0149",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 149,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ancestor\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0149-select-dolt_merge-other",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_merge('other');",
+      "querySha256": "e5f2c3db8c87868caacec9968f41b4c6c77b51d482aac4071f04bf13405ac771",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0150",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 150,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ancestor\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0150-select-*-from-dolt_conflicts",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM dolt_conflicts;",
+      "querySha256": "54d0fd024cb4ff877fe959db169e680d51d47d59723ff377281d7a5170d4a98a",
+      "nonLiteral": [
+        "DoltSpecific",
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0151",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 151,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ancestor\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0151-select-base_value-our_value-our_diff_type-their_value",
+      "expectedKind": "rows",
+      "query": "SELECT base_value, our_value, our_diff_type, their_value, their_diff_type, dolt_conflict_id FROM \"dolt_conflicts_interpreted_example(text)\";",
+      "querySha256": "dbf584630de9a9f6f86bf26170171dee60ba601f2a015b456991715f04bbd3bd",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0152",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 152,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ancestor\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0152-update-dolt_conflicts_interpreted_example-text-set-our_value",
+      "expectedKind": "rows",
+      "query": "UPDATE \"dolt_conflicts_interpreted_example(text)\" SET our_value = 'ancestor';",
+      "querySha256": "73dad0033cc55aac634368c791b3adf6b9e1fcc554e74b036c8459f728b77463",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0153",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 153,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ancestor\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0153-delete-from-dolt_conflicts_interpreted_example-text",
+      "expectedKind": "error",
+      "query": "DELETE FROM \"dolt_conflicts_interpreted_example(text)\";",
+      "querySha256": "dc45db6d7dda095154b10fc91585394d734c9d83bdf967e3f3dee7096bcf4db7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0154",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 154,
+      "scriptName": "Function deleted \"ours\" updated \"theirs\", chose \"ancestor\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0154-select-interpreted_example-12",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_example('12');",
+      "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0155",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 155,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ours\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0155-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0156",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 156,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ours\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0156-select-length-dolt_commit-m-initial",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'initial')::text) = 34;",
+      "querySha256": "05355d06ae2e762642620d5304c1ece579bc1553fba6c5a09d424dd252967f25",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0157",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 157,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ours\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0157-select-dolt_checkout-b-other",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_checkout('-b', 'other')",
+      "querySha256": "eb1ba66170764046947aad49472a195661fcfa082f2e8cf8fd66ad1edbf87dda",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0158",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 158,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ours\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0158-drop-function-interpreted_example-input-text",
+      "expectedKind": "rows",
+      "query": "DROP FUNCTION interpreted_example(input TEXT);",
+      "querySha256": "92742bf0bbced11b7c2e99bf469c99d7926502766fd20acd028a7c8cb46a2581",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0159",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 159,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ours\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0159-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0160",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 160,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ours\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0160-select-length-dolt_commit-m-other",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'other')::text) = 34;",
+      "querySha256": "53d52365dbf173391f2c8e198e94f4930cc0d2cbfd13305fdfddc59a9d4b7fa7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0161",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 161,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ours\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0161-select-dolt_checkout-main",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_checkout('main')",
+      "querySha256": "692db5c3d58a12710a4b2b6513b13d4a2d2b71c46bf68a6d288ec3caf5cc26bc",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0162",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 162,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ours\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0162-create-or-replace-function-interpreted_example",
+      "expectedKind": "rows",
+      "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS TEXT AS $$ BEGIN RETURN '2' || input; END; $$ LANGUAGE plpgsql;",
+      "querySha256": "00e951432f51de50fef0b200c9e5afdf28edc791a71fdb39d03b4802a722b180",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0163",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 163,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ours\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0163-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0164",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 164,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ours\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0164-select-length-dolt_commit-m-next",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'next')::text) = 34;",
+      "querySha256": "840e7eea67afb6c6baf7febbef5dc424607d512b23dd069027b0e422d3242a17",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0165",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 165,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ours\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0165-select-dolt_merge-other",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_merge('other');",
+      "querySha256": "e5f2c3db8c87868caacec9968f41b4c6c77b51d482aac4071f04bf13405ac771",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0166",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 166,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ours\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0166-select-*-from-dolt_conflicts",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM dolt_conflicts;",
+      "querySha256": "54d0fd024cb4ff877fe959db169e680d51d47d59723ff377281d7a5170d4a98a",
+      "nonLiteral": [
+        "DoltSpecific",
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0167",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 167,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ours\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0167-select-base_value-our_value-our_diff_type-their_value",
+      "expectedKind": "rows",
+      "query": "SELECT base_value, our_value, our_diff_type, their_value, their_diff_type, dolt_conflict_id FROM \"dolt_conflicts_interpreted_example(text)\";",
+      "querySha256": "dbf584630de9a9f6f86bf26170171dee60ba601f2a015b456991715f04bbd3bd",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0168",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 168,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ours\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0168-update-dolt_conflicts_interpreted_example-text-set-our_value",
+      "expectedKind": "rows",
+      "query": "UPDATE \"dolt_conflicts_interpreted_example(text)\" SET our_value = 'ours';",
+      "querySha256": "0bf72d26ac7a49c690a3e83cff746606f55b8cf73fe130dcb4369701bf8c0d9a",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0169",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 169,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ours\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0169-delete-from-dolt_conflicts_interpreted_example-text",
+      "expectedKind": "rows",
+      "query": "DELETE FROM \"dolt_conflicts_interpreted_example(text)\";",
+      "querySha256": "dc45db6d7dda095154b10fc91585394d734c9d83bdf967e3f3dee7096bcf4db7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0170",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 170,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ours\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0170-select-interpreted_example-12",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_example('12');",
+      "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0171",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 171,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"theirs\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0171-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0172",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 172,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"theirs\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0172-select-length-dolt_commit-m-initial",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'initial')::text) = 34;",
+      "querySha256": "05355d06ae2e762642620d5304c1ece579bc1553fba6c5a09d424dd252967f25",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0173",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 173,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"theirs\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0173-select-dolt_checkout-b-other",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_checkout('-b', 'other')",
+      "querySha256": "eb1ba66170764046947aad49472a195661fcfa082f2e8cf8fd66ad1edbf87dda",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0174",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 174,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"theirs\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0174-drop-function-interpreted_example-input-text",
+      "expectedKind": "rows",
+      "query": "DROP FUNCTION interpreted_example(input TEXT);",
+      "querySha256": "92742bf0bbced11b7c2e99bf469c99d7926502766fd20acd028a7c8cb46a2581",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0175",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 175,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"theirs\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0175-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0176",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 176,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"theirs\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0176-select-length-dolt_commit-m-other",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'other')::text) = 34;",
+      "querySha256": "53d52365dbf173391f2c8e198e94f4930cc0d2cbfd13305fdfddc59a9d4b7fa7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0177",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 177,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"theirs\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0177-select-dolt_checkout-main",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_checkout('main')",
+      "querySha256": "692db5c3d58a12710a4b2b6513b13d4a2d2b71c46bf68a6d288ec3caf5cc26bc",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0178",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 178,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"theirs\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0178-create-or-replace-function-interpreted_example",
+      "expectedKind": "rows",
+      "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS TEXT AS $$ BEGIN RETURN '2' || input; END; $$ LANGUAGE plpgsql;",
+      "querySha256": "00e951432f51de50fef0b200c9e5afdf28edc791a71fdb39d03b4802a722b180",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0179",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 179,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"theirs\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0179-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0180",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 180,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"theirs\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0180-select-length-dolt_commit-m-next",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'next')::text) = 34;",
+      "querySha256": "840e7eea67afb6c6baf7febbef5dc424607d512b23dd069027b0e422d3242a17",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0181",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 181,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"theirs\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0181-select-dolt_merge-other",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_merge('other');",
+      "querySha256": "e5f2c3db8c87868caacec9968f41b4c6c77b51d482aac4071f04bf13405ac771",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0182",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 182,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"theirs\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0182-select-*-from-dolt_conflicts",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM dolt_conflicts;",
+      "querySha256": "54d0fd024cb4ff877fe959db169e680d51d47d59723ff377281d7a5170d4a98a",
+      "nonLiteral": [
+        "DoltSpecific",
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0183",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 183,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"theirs\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0183-select-base_value-our_value-our_diff_type-their_value",
+      "expectedKind": "rows",
+      "query": "SELECT base_value, our_value, our_diff_type, their_value, their_diff_type, dolt_conflict_id FROM \"dolt_conflicts_interpreted_example(text)\";",
+      "querySha256": "dbf584630de9a9f6f86bf26170171dee60ba601f2a015b456991715f04bbd3bd",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0184",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 184,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"theirs\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0184-update-dolt_conflicts_interpreted_example-text-set-our_value",
+      "expectedKind": "rows",
+      "query": "UPDATE \"dolt_conflicts_interpreted_example(text)\" SET our_value = 'theirs';",
+      "querySha256": "7a78c3ebbcdaefdbfa4f3a790c82eeea7b46f28a6f51878934ae48db711f4f04",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0185",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 185,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"theirs\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0185-delete-from-dolt_conflicts_interpreted_example-text",
+      "expectedKind": "error",
+      "query": "DELETE FROM \"dolt_conflicts_interpreted_example(text)\";",
+      "querySha256": "dc45db6d7dda095154b10fc91585394d734c9d83bdf967e3f3dee7096bcf4db7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0186",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 186,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"theirs\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0186-select-interpreted_example-12",
+      "expectedKind": "error",
+      "query": "SELECT interpreted_example('12');",
+      "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0187",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 187,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ancestor\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0187-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0188",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 188,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ancestor\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0188-select-length-dolt_commit-m-initial",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'initial')::text) = 34;",
+      "querySha256": "05355d06ae2e762642620d5304c1ece579bc1553fba6c5a09d424dd252967f25",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0189",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 189,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ancestor\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0189-select-dolt_checkout-b-other",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_checkout('-b', 'other')",
+      "querySha256": "eb1ba66170764046947aad49472a195661fcfa082f2e8cf8fd66ad1edbf87dda",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0190",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 190,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ancestor\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0190-drop-function-interpreted_example-input-text",
+      "expectedKind": "rows",
+      "query": "DROP FUNCTION interpreted_example(input TEXT);",
+      "querySha256": "92742bf0bbced11b7c2e99bf469c99d7926502766fd20acd028a7c8cb46a2581",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0191",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 191,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ancestor\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0191-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0192",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 192,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ancestor\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0192-select-length-dolt_commit-m-other",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'other')::text) = 34;",
+      "querySha256": "53d52365dbf173391f2c8e198e94f4930cc0d2cbfd13305fdfddc59a9d4b7fa7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0193",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 193,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ancestor\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0193-select-dolt_checkout-main",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_checkout('main')",
+      "querySha256": "692db5c3d58a12710a4b2b6513b13d4a2d2b71c46bf68a6d288ec3caf5cc26bc",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0194",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 194,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ancestor\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0194-create-or-replace-function-interpreted_example",
+      "expectedKind": "rows",
+      "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS TEXT AS $$ BEGIN RETURN '2' || input; END; $$ LANGUAGE plpgsql;",
+      "querySha256": "00e951432f51de50fef0b200c9e5afdf28edc791a71fdb39d03b4802a722b180",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0195",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 195,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ancestor\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0195-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0196",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 196,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ancestor\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0196-select-length-dolt_commit-m-next",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'next')::text) = 34;",
+      "querySha256": "840e7eea67afb6c6baf7febbef5dc424607d512b23dd069027b0e422d3242a17",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0197",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 197,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ancestor\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0197-select-dolt_merge-other",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_merge('other');",
+      "querySha256": "e5f2c3db8c87868caacec9968f41b4c6c77b51d482aac4071f04bf13405ac771",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0198",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 198,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ancestor\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0198-select-*-from-dolt_conflicts",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM dolt_conflicts;",
+      "querySha256": "54d0fd024cb4ff877fe959db169e680d51d47d59723ff377281d7a5170d4a98a",
+      "nonLiteral": [
+        "DoltSpecific",
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0199",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 199,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ancestor\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0199-select-base_value-our_value-our_diff_type-their_value",
+      "expectedKind": "rows",
+      "query": "SELECT base_value, our_value, our_diff_type, their_value, their_diff_type, dolt_conflict_id FROM \"dolt_conflicts_interpreted_example(text)\";",
+      "querySha256": "dbf584630de9a9f6f86bf26170171dee60ba601f2a015b456991715f04bbd3bd",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0200",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 200,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ancestor\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0200-update-dolt_conflicts_interpreted_example-text-set-our_value",
+      "expectedKind": "rows",
+      "query": "UPDATE \"dolt_conflicts_interpreted_example(text)\" SET our_value = 'ancestor';",
+      "querySha256": "73dad0033cc55aac634368c791b3adf6b9e1fcc554e74b036c8459f728b77463",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0201",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 201,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ancestor\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0201-delete-from-dolt_conflicts_interpreted_example-text",
+      "expectedKind": "error",
+      "query": "DELETE FROM \"dolt_conflicts_interpreted_example(text)\";",
+      "querySha256": "dc45db6d7dda095154b10fc91585394d734c9d83bdf967e3f3dee7096bcf4db7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0202",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 202,
+      "scriptName": "Function deleted \"theirs\" updated \"ours\", chose \"ancestor\"",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0202-select-interpreted_example-12",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_example('12');",
+      "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0203",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 203,
+      "scriptName": "Function update multiple conflicts",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0203-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0204",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 204,
+      "scriptName": "Function update multiple conflicts",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0204-select-length-dolt_commit-m-initial",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'initial')::text) = 34;",
+      "querySha256": "05355d06ae2e762642620d5304c1ece579bc1553fba6c5a09d424dd252967f25",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0205",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 205,
+      "scriptName": "Function update multiple conflicts",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0205-select-dolt_checkout-b-other",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_checkout('-b', 'other')",
+      "querySha256": "eb1ba66170764046947aad49472a195661fcfa082f2e8cf8fd66ad1edbf87dda",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0206",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 206,
+      "scriptName": "Function update multiple conflicts",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0206-create-or-replace-function-interpreted_example",
+      "expectedKind": "rows",
+      "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS INT8 AS $$ BEGIN RETURN input || '3'; END; $$ LANGUAGE plpgsql;",
+      "querySha256": "9e1f223fb3998b2c4e8e323a940c2e2c07cb90394534f6da74cf310da90ea06d",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0207",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 207,
+      "scriptName": "Function update multiple conflicts",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0207-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0208",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 208,
+      "scriptName": "Function update multiple conflicts",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0208-select-length-dolt_commit-m-other",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'other')::text) = 34;",
+      "querySha256": "53d52365dbf173391f2c8e198e94f4930cc0d2cbfd13305fdfddc59a9d4b7fa7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0209",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 209,
+      "scriptName": "Function update multiple conflicts",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0209-select-dolt_checkout-main",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_checkout('main')",
+      "querySha256": "692db5c3d58a12710a4b2b6513b13d4a2d2b71c46bf68a6d288ec3caf5cc26bc",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0210",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 210,
+      "scriptName": "Function update multiple conflicts",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0210-create-or-replace-function-interpreted_example",
+      "expectedKind": "rows",
+      "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS FLOAT AS $$ BEGIN RETURN input || '2'; END; $$ LANGUAGE plpgsql;",
+      "querySha256": "3b488a9c5901fdab33995be4d53e74f1d35475065cbeccc8f332aa7ac6dc0b32",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0211",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 211,
+      "scriptName": "Function update multiple conflicts",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0211-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0212",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 212,
+      "scriptName": "Function update multiple conflicts",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0212-select-length-dolt_commit-m-next",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'next')::text) = 34;",
+      "querySha256": "840e7eea67afb6c6baf7febbef5dc424607d512b23dd069027b0e422d3242a17",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0213",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 213,
+      "scriptName": "Function update multiple conflicts",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0213-select-dolt_merge-other",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_merge('other');",
+      "querySha256": "e5f2c3db8c87868caacec9968f41b4c6c77b51d482aac4071f04bf13405ac771",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0214",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 214,
+      "scriptName": "Function update multiple conflicts",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0214-select-*-from-dolt_conflicts",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM dolt_conflicts;",
+      "querySha256": "54d0fd024cb4ff877fe959db169e680d51d47d59723ff377281d7a5170d4a98a",
+      "nonLiteral": [
+        "DoltSpecific",
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0215",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 215,
+      "scriptName": "Function update multiple conflicts",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0215-select-base_value-our_value-our_diff_type-their_value",
+      "expectedKind": "rows",
+      "query": "SELECT base_value, our_value, our_diff_type, their_value, their_diff_type, dolt_conflict_id FROM \"dolt_conflicts_interpreted_example(text)\";",
+      "querySha256": "dbf584630de9a9f6f86bf26170171dee60ba601f2a015b456991715f04bbd3bd",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0216",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 216,
+      "scriptName": "Function update multiple conflicts",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0216-update-dolt_conflicts_interpreted_example-text-set-our_value",
+      "expectedKind": "rows",
+      "query": "UPDATE \"dolt_conflicts_interpreted_example(text)\" SET our_value = their_value;",
+      "querySha256": "d3a710168b5aefd58d0ade072e700916f6c1a4d146014a00bcaca4a5c66ed407",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0217",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 217,
+      "scriptName": "Function update multiple conflicts",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0217-select-*-from-dolt_conflicts_interpreted_example-text",
+      "expectedKind": "error",
+      "query": "SELECT * FROM \"dolt_conflicts_interpreted_example(text)\";",
+      "querySha256": "f0f6bea3a7a2c0f2605f0822c36a06aabaaa388148da04e9f106b4e127ab1e12",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0218",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 218,
+      "scriptName": "Function update multiple conflicts",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0218-select-interpreted_example-12",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_example('12');",
+      "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0219",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 219,
+      "scriptName": "Function update multiple conflicts",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0219-select-interpreted_example-123456789012",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_example('123456789012');",
+      "querySha256": "f593311f8def7dbab237a8a7ef15455fd0538db26f6a4d7aefd1280073fae47e",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0220",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 220,
+      "scriptName": "Function delete multiple conflicts",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0220-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0221",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 221,
+      "scriptName": "Function delete multiple conflicts",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0221-select-length-dolt_commit-m-initial",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'initial')::text) = 34;",
+      "querySha256": "05355d06ae2e762642620d5304c1ece579bc1553fba6c5a09d424dd252967f25",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0222",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 222,
+      "scriptName": "Function delete multiple conflicts",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0222-select-dolt_checkout-b-other",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_checkout('-b', 'other')",
+      "querySha256": "eb1ba66170764046947aad49472a195661fcfa082f2e8cf8fd66ad1edbf87dda",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0223",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 223,
+      "scriptName": "Function delete multiple conflicts",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0223-create-or-replace-function-interpreted_example",
+      "expectedKind": "rows",
+      "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS INT8 AS $$ BEGIN RETURN input || '3'; END; $$ LANGUAGE plpgsql;",
+      "querySha256": "9e1f223fb3998b2c4e8e323a940c2e2c07cb90394534f6da74cf310da90ea06d",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0224",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 224,
+      "scriptName": "Function delete multiple conflicts",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0224-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0225",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 225,
+      "scriptName": "Function delete multiple conflicts",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0225-select-length-dolt_commit-m-other",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'other')::text) = 34;",
+      "querySha256": "53d52365dbf173391f2c8e198e94f4930cc0d2cbfd13305fdfddc59a9d4b7fa7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0226",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 226,
+      "scriptName": "Function delete multiple conflicts",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0226-select-dolt_checkout-main",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_checkout('main')",
+      "querySha256": "692db5c3d58a12710a4b2b6513b13d4a2d2b71c46bf68a6d288ec3caf5cc26bc",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0227",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 227,
+      "scriptName": "Function delete multiple conflicts",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0227-create-or-replace-function-interpreted_example",
+      "expectedKind": "rows",
+      "query": "CREATE OR REPLACE FUNCTION interpreted_example(input TEXT) RETURNS FLOAT AS $$ BEGIN RETURN input || '2'; END; $$ LANGUAGE plpgsql;",
+      "querySha256": "3b488a9c5901fdab33995be4d53e74f1d35475065cbeccc8f332aa7ac6dc0b32",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0228",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 228,
+      "scriptName": "Function delete multiple conflicts",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0228-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0229",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 229,
+      "scriptName": "Function delete multiple conflicts",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0229-select-length-dolt_commit-m-next",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'next')::text) = 34;",
+      "querySha256": "840e7eea67afb6c6baf7febbef5dc424607d512b23dd069027b0e422d3242a17",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0230",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 230,
+      "scriptName": "Function delete multiple conflicts",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0230-select-dolt_merge-other",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_merge('other');",
+      "querySha256": "e5f2c3db8c87868caacec9968f41b4c6c77b51d482aac4071f04bf13405ac771",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0231",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 231,
+      "scriptName": "Function delete multiple conflicts",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0231-select-*-from-dolt_conflicts",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM dolt_conflicts;",
+      "querySha256": "54d0fd024cb4ff877fe959db169e680d51d47d59723ff377281d7a5170d4a98a",
+      "nonLiteral": [
+        "DoltSpecific",
+        "Expected"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0232",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 232,
+      "scriptName": "Function delete multiple conflicts",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0232-select-base_value-our_value-our_diff_type-their_value",
+      "expectedKind": "rows",
+      "query": "SELECT base_value, our_value, our_diff_type, their_value, their_diff_type, dolt_conflict_id FROM \"dolt_conflicts_interpreted_example(text)\";",
+      "querySha256": "dbf584630de9a9f6f86bf26170171dee60ba601f2a015b456991715f04bbd3bd",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0233",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 233,
+      "scriptName": "Function delete multiple conflicts",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0233-delete-from-dolt_conflicts_interpreted_example-text",
+      "expectedKind": "rows",
+      "query": "DELETE FROM \"dolt_conflicts_interpreted_example(text)\";",
+      "querySha256": "dc45db6d7dda095154b10fc91585394d734c9d83bdf967e3f3dee7096bcf4db7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0234",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 234,
+      "scriptName": "Function delete multiple conflicts",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0234-select-*-from-dolt_conflicts_interpreted_example-text",
+      "expectedKind": "error",
+      "query": "SELECT * FROM \"dolt_conflicts_interpreted_example(text)\";",
+      "querySha256": "f0f6bea3a7a2c0f2605f0822c36a06aabaaa388148da04e9f106b4e127ab1e12",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject#0235",
+      "source": "testing/go/conflicts_root_object_test.go:TestConflictsRootObject",
+      "ordinal": 235,
+      "scriptName": "Function delete multiple conflicts",
+      "oracle": "internal",
+      "suggestedId": "conflicts-root-object-test-testconflictsrootobject-0235-select-interpreted_example-12",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_example('12');",
+      "querySha256": "78cf95472d8665f212d38e12ae29bfcd9662fb29fc3d8cea624b5ee50bcbcfe5",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    }
+  ]
+}

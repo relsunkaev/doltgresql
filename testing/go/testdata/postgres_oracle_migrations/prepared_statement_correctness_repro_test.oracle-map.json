@@ -1,0 +1,99 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map prepared_statement_correctness_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/prepared_statement_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/prepared_statement_correctness_repro_test.go:TestCreateTableAsExecutePreparedStatementRepro#0001",
+      "source": "testing/go/prepared_statement_correctness_repro_test.go:TestCreateTableAsExecutePreparedStatementRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLE AS EXECUTE materializes prepared result",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-correctness-repro-test-testcreatetableasexecutepreparedstatementrepro-0001-select-id::text-label-from-prepared_ctas_items",
+      "suggestedId": "prepared-statement-correctness-repro-test-testcreatetableasexecutepreparedstatementrepro-0001-select-id::text-label-from-prepared_ctas_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id::TEXT, label\n\t\t\t\t\t\tFROM prepared_ctas_items;",
+      "querySha256": "eb621a0132e47e3d0197fdeedafadfd59cd341f881abf4162e05a89c4c648f11",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          },
+          {
+            "value": "seven"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/prepared_statement_correctness_repro_test.go:TestPreparedStatementAcceptsUserDefinedParameterTypeRepro#0001",
+      "source": "testing/go/prepared_statement_correctness_repro_test.go:TestPreparedStatementAcceptsUserDefinedParameterTypeRepro",
+      "ordinal": 1,
+      "scriptName": "PREPARE accepts user-defined enum parameter type",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-correctness-repro-test-testpreparedstatementacceptsuserdefinedparametertyperepro-0001-execute-prepared_enum_plan-ok",
+      "suggestedId": "prepared-statement-correctness-repro-test-testpreparedstatementacceptsuserdefinedparametertyperepro-0001-execute-prepared_enum_plan-ok",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "EXECUTE prepared_enum_plan('ok');",
+      "querySha256": "9885d9644aabb5edfe4b52cbc46544a420d4e8049f6d4d3419c5aa1c5a5e7a1f",
+      "expectedRows": [
+        [
+          {
+            "value": "ok"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/prepared_statement_correctness_repro_test.go:TestPreparedStatementAcceptsUserDefinedParameterTypeRepro#0002",
+      "source": "testing/go/prepared_statement_correctness_repro_test.go:TestPreparedStatementAcceptsUserDefinedParameterTypeRepro",
+      "ordinal": 2,
+      "scriptName": "PREPARE accepts user-defined enum parameter type",
+      "oracle": "internal",
+      "suggestedId": "prepared-statement-correctness-repro-test-testpreparedstatementacceptsuserdefinedparametertyperepro-0002-select-parameter_types::text-from-pg_catalog.pg_prepared_statements-where",
+      "expectedKind": "rows",
+      "query": "SELECT parameter_types::TEXT\n\t\t\t\t\t\tFROM pg_catalog.pg_prepared_statements\n\t\t\t\t\t\tWHERE name = 'prepared_enum_plan';",
+      "querySha256": "d4f9841ab02d5f86881b2c5bbe7d800dd8403e2d330ca63688fa4873fe9d68ee",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/prepared_statement_correctness_repro_test.go:TestPreparedStatementsResultTypesColumnRepro#0001",
+      "source": "testing/go/prepared_statement_correctness_repro_test.go:TestPreparedStatementsResultTypesColumnRepro",
+      "ordinal": 1,
+      "scriptName": "pg_prepared_statements exposes result_types",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-correctness-repro-test-testpreparedstatementsresulttypescolumnrepro-0001-select-atttypid::regtype::text-from-pg_catalog.pg_attribute-where",
+      "suggestedId": "prepared-statement-correctness-repro-test-testpreparedstatementsresulttypescolumnrepro-0001-select-atttypid::regtype::text-from-pg_catalog.pg_attribute-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT atttypid::regtype::text\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute\n\t\t\t\t\t\tWHERE attrelid = 'pg_catalog.pg_prepared_statements'::regclass\n\t\t\t\t\t\t\tAND attname = 'result_types'\n\t\t\t\t\t\t\tAND NOT attisdropped;",
+      "querySha256": "6653e8e39c48401abe4190eac50674c69d52034dd86dc20500029fb42c95eb3c",
+      "expectedRows": [
+        [
+          {
+            "value": "regtype[]"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}
