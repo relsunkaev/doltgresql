@@ -849,6 +849,7 @@ func (stmt *plpgSQL_stmt_return) Convert(fallbackExpression string) Return {
 	}
 	return Return{
 		Expression: fallbackExpression,
+		LineNumber: stmt.LineNumber,
 	}
 }
 

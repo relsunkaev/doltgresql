@@ -47,11 +47,18 @@ func ValidateReturnStatements(ops []InterpreterOperation, returnType *pgtypes.Do
 			}
 			continue
 		}
+		if isImplicitBareReturn(op) {
+			continue
+		}
 		if !allowsBareReturn {
 			return pgerror.New(pgcode.Syntax, "RETURN statement in a function returning non-void requires an expression")
 		}
 	}
 	return nil
+}
+
+func isImplicitBareReturn(op InterpreterOperation) bool {
+	return strings.TrimSpace(op.Options[diagnosticOptionLineNumber]) == ""
 }
 
 func isReturnTypeNamed(returnType, resolvedType *pgtypes.DoltgresType, name string) bool {

@@ -33,9 +33,15 @@ func TestValidateReturnStatements(t *testing.T) {
 	}{
 		{
 			name:         "non-void bare return",
-			ops:          []InterpreterOperation{{OpCode: OpCode_Return}},
+			ops:          []InterpreterOperation{explicitReturnOp("")},
 			returnType:   pgtypes.Int32,
 			expectedCode: pgcode.Syntax,
+		},
+		{
+			name:         "non-void implicit end return",
+			ops:          []InterpreterOperation{{OpCode: OpCode_Return}},
+			returnType:   pgtypes.Int32,
+			expectedCode: pgcode.Uncategorized,
 		},
 		{
 			name:         "void return expression",
@@ -118,5 +124,15 @@ func TestValidateReturnStatements(t *testing.T) {
 				t.Fatalf("expected SQLSTATE %s, found %s: %v", tt.expectedCode, code, err)
 			}
 		})
+	}
+}
+
+func explicitReturnOp(expression string) InterpreterOperation {
+	return InterpreterOperation{
+		OpCode:      OpCode_Return,
+		PrimaryData: expression,
+		Options: map[string]string{
+			diagnosticOptionLineNumber: "1",
+		},
 	}
 }

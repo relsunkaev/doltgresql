@@ -619,6 +619,7 @@ func (stmt ReturnNext) AppendOperations(ops *[]InterpreterOperation, stack *Inte
 // Return represents a RETURN statement.
 type Return struct {
 	Expression string
+	LineNumber int32
 }
 
 var _ Statement = Return{}
@@ -641,6 +642,7 @@ func (stmt Return) AppendOperations(ops *[]InterpreterOperation, stack *Interpre
 		OpCode:        OpCode_Return,
 		PrimaryData:   expression,
 		SecondaryData: referencedVariables,
+		Options:       diagnosticStatementOptions(stmt.LineNumber, "RETURN", stmt.Expression),
 	})
 	return nil
 }
