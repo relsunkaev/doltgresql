@@ -1482,6 +1482,7 @@ func explicitPublicSchemaCleanup(setupQueries []string, query string) []string {
 	cleanup = append(cleanup, cleanupForCreatedFunctions(cleanupStatements, true)...)
 	cleanup = append(cleanup, cleanupForCreatedProcedures(cleanupStatements, true)...)
 	cleanup = append(cleanup, cleanupForCreatedTables(cleanupStatements)...)
+	cleanup = append(cleanup, cleanupForCreatedSequences(cleanupStatements)...)
 	cleanup = append(cleanup, cleanupForCreatedSchemas(cleanupStatements)...)
 	cleanup = append(cleanup, cleanupForCreatedLanguages(cleanupStatements)...)
 	cleanup = append(cleanup, cleanupForCreatedDatabases(cleanupStatements)...)
@@ -2784,11 +2785,13 @@ func entryFromScriptTestAssertion(source string, setup []oracleStatement, ordina
 		}
 		if len(generatedSetup) == 0 {
 			generatedCleanup = append(generatedCleanup, cleanupForCreatedTables([]string{query})...)
+			generatedCleanup = append(generatedCleanup, cleanupForCreatedSequences([]string{query})...)
 		} else {
 			generatedCleanup = append(generatedCleanup, cleanupForCreatedPublicTables(cleanupStatements)...)
 			generatedCleanup = append(generatedCleanup, cleanupForCreatedFunctions(cleanupStatements, false)...)
 			generatedCleanup = append(generatedCleanup, cleanupForCreatedProcedures(cleanupStatements, false)...)
 		}
+		generatedCleanup = append(generatedCleanup, cleanupForCreatedSequences(cleanupStatements)...)
 		generatedCleanup = append(generatedCleanup, cleanupForCreatedForeignDataWrappers(cleanupStatements)...)
 		generatedCleanup = append(generatedCleanup, cleanupForCreatedSubscriptions(cleanupStatements)...)
 		generatedCleanup = append(generatedCleanup, cleanupForCreatedPublications(cleanupStatements)...)
@@ -2867,6 +2870,7 @@ func setupNeedsPlpgsql(statements []string) bool {
 
 func queryNeedsGeneratedCleanup(query string) bool {
 	return len(cleanupForCreatedTables([]string{query})) > 0 ||
+		len(cleanupForCreatedSequences([]string{query})) > 0 ||
 		len(cleanupForCreatedForeignDataWrappers([]string{query})) > 0 ||
 		len(cleanupForCreatedTypes([]string{query})) > 0 ||
 		len(cleanupForCreatedDatabases([]string{query})) > 0 ||
@@ -2912,6 +2916,10 @@ func cleanupForCreatedExtensions(statements []string) []string {
 
 func cleanupForCreatedTables(statements []string) []string {
 	return cleanupForCreatedObjects(statements, "create table ", "DROP TABLE IF EXISTS ", " CASCADE")
+}
+
+func cleanupForCreatedSequences(statements []string) []string {
+	return cleanupForCreatedObjects(statements, "create sequence ", "DROP SEQUENCE IF EXISTS ", " CASCADE")
 }
 
 func cleanupForCreatedPublicTables(statements []string) []string {

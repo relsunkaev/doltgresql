@@ -335,22 +335,13 @@ func TestSequences(t *testing.T) {
 					Query: "SELECT nextval('test_sequence');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0087-select-nextval-test_sequence"},
 				},
 				{
-					Query: "SELECT nextval('public.test_sequence');",
-					Expected: []sql.Row{
-						{2},
-					},
+					Query: "SELECT nextval('public.test_sequence');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0088-select-nextval-public.test_sequence", Cleanup: []string{"DROP SEQUENCE IF EXISTS test_sequence CASCADE"}},
 				},
 				{
-					Query: `SELECT nextval('"test_sequence"');`,
-					Expected: []sql.Row{
-						{3},
-					},
+					Query: `SELECT nextval('"test_sequence"');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0089-select-nextval-test_sequence", Cleanup: []string{"DROP SEQUENCE IF EXISTS test_sequence CASCADE"}},
 				},
 				{
-					Query: `SELECT nextval('public."test_sequence"');`,
-					Expected: []sql.Row{
-						{4},
-					},
+					Query: `SELECT nextval('public."test_sequence"');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0090-select-nextval-public.-test_sequence", Cleanup: []string{"DROP SEQUENCE IF EXISTS test_sequence CASCADE"}},
 				},
 			},
 		},
@@ -459,12 +450,10 @@ func TestSequences(t *testing.T) {
 				},
 				{
 					// test with a double-quoted identifier
-					Query:    `SELECT setval('public."test5"', 100, true);`,
-					Expected: []sql.Row{{100}},
+					Query: `SELECT setval('public."test5"', 100, true);`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0120-select-setval-public.-test5-100", Cleanup: []string{"DROP SEQUENCE IF EXISTS test2 CASCADE", "DROP SEQUENCE IF EXISTS test3 CASCADE", "DROP SEQUENCE IF EXISTS test4 CASCADE", "DROP SEQUENCE IF EXISTS test5 CASCADE"}},
 				},
 				{
-					Query:    "SELECT nextval('test5');",
-					Expected: []sql.Row{{101}},
+					Query: "SELECT nextval('test5');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0121-select-nextval-test5", Cleanup: []string{"DROP SEQUENCE IF EXISTS test2 CASCADE", "DROP SEQUENCE IF EXISTS test3 CASCADE", "DROP SEQUENCE IF EXISTS test4 CASCADE", "DROP SEQUENCE IF EXISTS test5 CASCADE"}},
 				},
 			},
 		},
@@ -616,46 +605,25 @@ func TestSequences(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT last_value, is_called FROM public.dump_seq;",
-					Expected: []sql.Row{
-						{5, "f"},
-					},
+					Query: "SELECT last_value, is_called FROM public.dump_seq;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0156-select-last_value-is_called-from-public.dump_seq", Cleanup: []string{"DROP SEQUENCE IF EXISTS public.dump_seq CASCADE"}},
 				},
 				{
-					Query: "SELECT nextval('public.dump_seq');",
-					Expected: []sql.Row{
-						{5},
-					},
+					Query: "SELECT nextval('public.dump_seq');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0157-select-nextval-public.dump_seq", Cleanup: []string{"DROP SEQUENCE IF EXISTS public.dump_seq CASCADE"}},
 				},
 				{
-					Query: "SELECT last_value, is_called FROM public.dump_seq;",
-					Expected: []sql.Row{
-						{5, "t"},
-					},
+					Query: "SELECT last_value, is_called FROM public.dump_seq;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0158-select-last_value-is_called-from-public.dump_seq", Cleanup: []string{"DROP SEQUENCE IF EXISTS public.dump_seq CASCADE"}},
 				},
 				{
-					Query: "SELECT setval('public.dump_seq', 11, false);",
-					Expected: []sql.Row{
-						{11},
-					},
+					Query: "SELECT setval('public.dump_seq', 11, false);", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0159-select-setval-public.dump_seq-11-false", Cleanup: []string{"DROP SEQUENCE IF EXISTS public.dump_seq CASCADE"}},
 				},
 				{
-					Query: "SELECT last_value, is_called FROM public.dump_seq;",
-					Expected: []sql.Row{
-						{11, "f"},
-					},
+					Query: "SELECT last_value, is_called FROM public.dump_seq;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0160-select-last_value-is_called-from-public.dump_seq", Cleanup: []string{"DROP SEQUENCE IF EXISTS public.dump_seq CASCADE"}},
 				},
 				{
-					Query: "SELECT nextval('public.dump_seq');",
-					Expected: []sql.Row{
-						{11},
-					},
+					Query: "SELECT nextval('public.dump_seq');", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0161-select-nextval-public.dump_seq", Cleanup: []string{"DROP SEQUENCE IF EXISTS public.dump_seq CASCADE"}},
 				},
 				{
-					Query: "SELECT last_value, is_called FROM public.dump_seq;",
-					Expected: []sql.Row{
-						{11, "t"},
-					},
+					Query: "SELECT last_value, is_called FROM public.dump_seq;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0162-select-last_value-is_called-from-public.dump_seq", Cleanup: []string{"DROP SEQUENCE IF EXISTS public.dump_seq CASCADE"}},
 				},
 			},
 		},

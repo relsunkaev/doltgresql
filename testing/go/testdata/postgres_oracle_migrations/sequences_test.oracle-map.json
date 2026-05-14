@@ -1711,39 +1711,75 @@
       "source": "testing/go/sequences_test.go:TestSequences",
       "ordinal": 88,
       "scriptName": "nextval() with double-quoted identifiers",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0088-select-nextval-public.test_sequence",
       "suggestedId": "sequences-test-testsequences-0088-select-nextval-public.test_sequence",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT nextval('public.test_sequence');",
       "querySha256": "4f39298d18b7a209ed27aa099a204d35f3844c07bd7c18748e570a6d9ec2e554",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SEQUENCE IF EXISTS test_sequence CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/sequences_test.go:TestSequences#0089",
       "source": "testing/go/sequences_test.go:TestSequences",
       "ordinal": 89,
       "scriptName": "nextval() with double-quoted identifiers",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0089-select-nextval-test_sequence",
       "suggestedId": "sequences-test-testsequences-0089-select-nextval-test_sequence",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT nextval('\"test_sequence\"');",
       "querySha256": "67f7c17ef03f21878e4bcb3e99708a806063d8b6b32b2522855cdb41e3361182",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SEQUENCE IF EXISTS test_sequence CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/sequences_test.go:TestSequences#0090",
       "source": "testing/go/sequences_test.go:TestSequences",
       "ordinal": 90,
       "scriptName": "nextval() with double-quoted identifiers",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0090-select-nextval-public.-test_sequence",
       "suggestedId": "sequences-test-testsequences-0090-select-nextval-public.-test_sequence",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT nextval('public.\"test_sequence\"');",
       "querySha256": "38798f78547d3d705f279dfe774bf777788a465e46309b98e69958a8747b1085",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SEQUENCE IF EXISTS test_sequence CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/sequences_test.go:TestSequences#0091",
@@ -2377,26 +2413,56 @@
       "source": "testing/go/sequences_test.go:TestSequences",
       "ordinal": 120,
       "scriptName": "setval()",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0120-select-setval-public.-test5-100",
       "suggestedId": "sequences-test-testsequences-0120-select-setval-public.-test5-100",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT setval('public.\"test5\"', 100, true);",
       "querySha256": "28052a203f8eb4a5ec71de04800e7159bbb777da2ab7984816b6606c217c55e6",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "100"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SEQUENCE IF EXISTS test2 CASCADE",
+        "DROP SEQUENCE IF EXISTS test3 CASCADE",
+        "DROP SEQUENCE IF EXISTS test4 CASCADE",
+        "DROP SEQUENCE IF EXISTS test5 CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/sequences_test.go:TestSequences#0121",
       "source": "testing/go/sequences_test.go:TestSequences",
       "ordinal": 121,
       "scriptName": "setval()",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0121-select-nextval-test5",
       "suggestedId": "sequences-test-testsequences-0121-select-nextval-test5",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT nextval('test5');",
       "querySha256": "4a9ca7269827540979674ab57bd1f007164d84d5391e62b86b6733ad94291c05",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "101"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SEQUENCE IF EXISTS test2 CASCADE",
+        "DROP SEQUENCE IF EXISTS test3 CASCADE",
+        "DROP SEQUENCE IF EXISTS test4 CASCADE",
+        "DROP SEQUENCE IF EXISTS test5 CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/sequences_test.go:TestSequences#0122",
@@ -3615,91 +3681,187 @@
       "source": "testing/go/sequences_test.go:TestSequences",
       "ordinal": 156,
       "scriptName": "sequence relation scans",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0156-select-last_value-is_called-from-public.dump_seq",
       "suggestedId": "sequences-test-testsequences-0156-select-last_value-is_called-from-public.dump_seq",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT last_value, is_called FROM public.dump_seq;",
       "querySha256": "d26ac61949be1f41f0373217188435c6ec705b3f4d2a96ff84e534dbc844817e",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "5"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SEQUENCE IF EXISTS public.dump_seq CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/sequences_test.go:TestSequences#0157",
       "source": "testing/go/sequences_test.go:TestSequences",
       "ordinal": 157,
       "scriptName": "sequence relation scans",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0157-select-nextval-public.dump_seq",
       "suggestedId": "sequences-test-testsequences-0157-select-nextval-public.dump_seq",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT nextval('public.dump_seq');",
       "querySha256": "3018a7d871ff93e0f4e0160647f75909c6942e35a77a919775a03769a5718b36",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SEQUENCE IF EXISTS public.dump_seq CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/sequences_test.go:TestSequences#0158",
       "source": "testing/go/sequences_test.go:TestSequences",
       "ordinal": 158,
       "scriptName": "sequence relation scans",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0158-select-last_value-is_called-from-public.dump_seq",
       "suggestedId": "sequences-test-testsequences-0158-select-last_value-is_called-from-public.dump_seq",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT last_value, is_called FROM public.dump_seq;",
       "querySha256": "d26ac61949be1f41f0373217188435c6ec705b3f4d2a96ff84e534dbc844817e",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "5"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SEQUENCE IF EXISTS public.dump_seq CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/sequences_test.go:TestSequences#0159",
       "source": "testing/go/sequences_test.go:TestSequences",
       "ordinal": 159,
       "scriptName": "sequence relation scans",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0159-select-setval-public.dump_seq-11-false",
       "suggestedId": "sequences-test-testsequences-0159-select-setval-public.dump_seq-11-false",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT setval('public.dump_seq', 11, false);",
       "querySha256": "595f726947dbc84b4c20cc989878763b9be79a43d64bc8635849be6ee482c36b",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "11"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SEQUENCE IF EXISTS public.dump_seq CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/sequences_test.go:TestSequences#0160",
       "source": "testing/go/sequences_test.go:TestSequences",
       "ordinal": 160,
       "scriptName": "sequence relation scans",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0160-select-last_value-is_called-from-public.dump_seq",
       "suggestedId": "sequences-test-testsequences-0160-select-last_value-is_called-from-public.dump_seq",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT last_value, is_called FROM public.dump_seq;",
       "querySha256": "d26ac61949be1f41f0373217188435c6ec705b3f4d2a96ff84e534dbc844817e",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "11"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SEQUENCE IF EXISTS public.dump_seq CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/sequences_test.go:TestSequences#0161",
       "source": "testing/go/sequences_test.go:TestSequences",
       "ordinal": 161,
       "scriptName": "sequence relation scans",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0161-select-nextval-public.dump_seq",
       "suggestedId": "sequences-test-testsequences-0161-select-nextval-public.dump_seq",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT nextval('public.dump_seq');",
       "querySha256": "3018a7d871ff93e0f4e0160647f75909c6942e35a77a919775a03769a5718b36",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "11"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SEQUENCE IF EXISTS public.dump_seq CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/sequences_test.go:TestSequences#0162",
       "source": "testing/go/sequences_test.go:TestSequences",
       "ordinal": 162,
       "scriptName": "sequence relation scans",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "sequences-test-testsequences-0162-select-last_value-is_called-from-public.dump_seq",
       "suggestedId": "sequences-test-testsequences-0162-select-last_value-is_called-from-public.dump_seq",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT last_value, is_called FROM public.dump_seq;",
       "querySha256": "d26ac61949be1f41f0373217188435c6ec705b3f4d2a96ff84e534dbc844817e",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "11"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SEQUENCE IF EXISTS public.dump_seq CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/sequences_test.go:TestSequences#0163",
