@@ -4362,6 +4362,8 @@ func errMessageToSQLState(msg string) (string, bool) {
 		return pgcode.CheckViolation.String(), true
 	case strings.HasPrefix(msg, "column ") && strings.Contains(msg, "could not be found"):
 		return pgcode.UndefinedColumn.String(), true
+	case strings.HasPrefix(msg, "column ") && strings.Contains(msg, " not found in data type "):
+		return pgcode.UndefinedColumn.String(), true
 	case strings.HasPrefix(msg, `table "`) && strings.Contains(msg, `" does not have column "`):
 		return pgcode.UndefinedColumn.String(), true
 	case strings.HasPrefix(msg, `cannot alter table "`) && strings.Contains(msg, `" uses its row type`):

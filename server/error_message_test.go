@@ -97,6 +97,10 @@ func TestErrMessageToSQLStateFormatsMissingAlterTableColumn(t *testing.T) {
 	code, ok := errMessageToSQLState(`table "drop_missing_strict_items" does not have column "missing_col"`)
 	require.True(t, ok)
 	require.Equal(t, pgcode.UndefinedColumn.String(), code)
+
+	code, ok = errMessageToSQLState(`column "a" not found in data type t1a`)
+	require.True(t, ok)
+	require.Equal(t, pgcode.UndefinedColumn.String(), code)
 }
 
 func TestErrMessageToSQLStateFormatsAlterTableRowTypeDependency(t *testing.T) {
