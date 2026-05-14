@@ -2560,28 +2560,16 @@ var typesTests = []ScriptTest{
 				Query: "SELECT ('4294967295'::varchar)::xid, ('4294967296232'::varchar)::xid;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0430-select-4294967295-::varchar-::xid-4294967296232", Compare: "sqlstate"},
 			},
 			{
-				Query: "SELECT ('-4294967295'::varchar)::xid, ('-4294967296232'::varchar)::xid;",
-				Expected: []sql.Row{
-					{1, 4294967064},
-				},
+				Query: "SELECT ('-4294967295'::varchar)::xid, ('-4294967296232'::varchar)::xid;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0431-select-4294967295-::varchar-::xid-4294967296232", Compare: "sqlstate"},
 			},
 			{
-				Query: "SELECT ('4294967295'::char(11))::xid, ('4294967296'::char(11))::xid;",
-				Expected: []sql.Row{
-					{4294967295, 0},
-				},
+				Query: "SELECT ('4294967295'::char(11))::xid, ('4294967296'::char(11))::xid;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0432-select-4294967295-::char-11-::xid", Compare: "sqlstate"},
 			},
 			{
-				Query: "SELECT ('4294967295'::name)::xid, ('4294967296'::name)::xid;",
-				Expected: []sql.Row{
-					{4294967295, 0},
-				},
+				Query: "SELECT ('4294967295'::name)::xid, ('4294967296'::name)::xid;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0433-select-4294967295-::name-::xid-4294967296", Compare: "sqlstate"},
 			},
 			{
-				Query: "SELECT ('abc'::text)::xid, ('abc'::char(3))::xid, ('abc'::varchar)::xid, ('abc'::name)::xid;",
-				Expected: []sql.Row{
-					{0, 0, 0, 0},
-				},
+				Query: "SELECT ('abc'::text)::xid, ('abc'::char(3))::xid, ('abc'::varchar)::xid, ('abc'::name)::xid;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0434-select-abc-::text-::xid-abc", Compare: "sqlstate"},
 			},
 		},
 	},
