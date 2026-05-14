@@ -522,7 +522,7 @@ func (a *AlterIndexSetStatistics) RowIter(ctx *sql.Context, row sql.Row) (sql.Ro
 		return nil, sql.ErrIndexNotFound.New(a.index)
 	}
 	if isConstraintBackedIndex(located.index) {
-		return nil, errors.Errorf("ALTER INDEX statistics targets for constraint-backed indexes are not yet supported")
+		return nil, pgerror.New(pgcode.FeatureNotSupported, "ALTER INDEX statistics targets for constraint-backed indexes are not yet supported")
 	}
 	if err = checkLocatedIndexTableOwnership(ctx, located); err != nil {
 		return nil, err
@@ -530,18 +530,18 @@ func (a *AlterIndexSetStatistics) RowIter(ctx *sql.Context, row sql.Row) (sql.Ro
 
 	accessMethod := indexmetadata.AccessMethod(located.index.IndexType(), located.index.Comment())
 	if accessMethod != indexmetadata.AccessMethodBtree {
-		return nil, errors.Errorf("ALTER INDEX statistics targets for %s indexes are not yet supported", accessMethod)
+		return nil, pgerror.Newf(pgcode.FeatureNotSupported, "ALTER INDEX statistics targets for %s indexes are not yet supported", accessMethod)
 	}
 
 	logicalColumns := indexmetadata.LogicalColumns(located.index, located.table.Schema(ctx))
 	indexName := indexmetadata.DisplayNameForTable(located.index, located.table)
 	columnIdx := int(a.columnNumber) - 1
 	if columnIdx < 0 || columnIdx >= len(logicalColumns) {
-		return nil, errors.Errorf(`column number %d of relation "%s" does not exist`, a.columnNumber, indexName)
+		return nil, pgerror.Newf(pgcode.UndefinedColumn, `column number %d of relation "%s" does not exist`, a.columnNumber, indexName)
 	}
 	logicalColumn := logicalColumns[columnIdx]
 	if !logicalColumn.Expression {
-		return nil, errors.Errorf(`cannot alter statistics on non-expression column "%s" of index "%s"`, logicalColumn.Definition, indexName)
+		return nil, pgerror.Newf(pgcode.FeatureNotSupported, `cannot alter statistics on non-expression column "%s" of index "%s"`, logicalColumn.Definition, indexName)
 	}
 
 	metadata, hasMetadata := indexmetadata.DecodeComment(located.index.Comment())
