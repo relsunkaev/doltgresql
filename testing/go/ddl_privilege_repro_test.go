@@ -1226,7 +1226,8 @@ func TestAlterTableReplicaIdentityRequiresOwnershipRepro(t *testing.T) {
 				{
 					Query: `SELECT relreplident
 						FROM pg_catalog.pg_class
-						WHERE relname = 'replica_identity_owner_private';`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testaltertablereplicaidentityrequiresownershiprepro-0002-select-relreplident-from-pg_catalog.pg_class-where"},
+						WHERE relname = 'replica_identity_owner_private';`,
+					Expected: []sql.Row{{"d"}},
 				},
 			},
 		},

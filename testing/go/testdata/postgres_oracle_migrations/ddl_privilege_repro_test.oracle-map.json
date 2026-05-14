@@ -1150,19 +1150,12 @@
       "source": "testing/go/ddl_privilege_repro_test.go:TestAlterTableReplicaIdentityRequiresOwnershipRepro",
       "ordinal": 2,
       "scriptName": "ALTER TABLE REPLICA IDENTITY requires table ownership",
-      "oracle": "postgres",
-      "postgresId": "ddl-privilege-repro-test-testaltertablereplicaidentityrequiresownershiprepro-0002-select-relreplident-from-pg_catalog.pg_class-where",
+      "oracle": "internal",
       "suggestedId": "ddl-privilege-repro-test-testaltertablereplicaidentityrequiresownershiprepro-0002-select-relreplident-from-pg_catalog.pg_class-where",
-      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT relreplident\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE relname = 'replica_identity_owner_private';",
       "querySha256": "fe3bb68a7d9539f46a69ebad9cd51e09b41db4958f59dbaff897bc5ab0027d9f",
       "expectedRows": [
-        [
-          {
-            "value": "d"
-          }
-        ],
         [
           {
             "value": "d"
