@@ -276,6 +276,18 @@ func TestErrMessageToSQLStateFormatsTypmodOverflow(t *testing.T) {
 	require.True(t, ok)
 	require.Equal(t, pgcode.NumericValueOutOfRange.String(), code)
 
+	code, ok = errMessageToSQLState(`bit string length 3 does not match type bit(8)`)
+	require.True(t, ok)
+	require.Equal(t, pgcode.StringDataLengthMismatch.String(), code)
+
+	code, ok = errMessageToSQLState(`bit string too long for type bit varying(16)`)
+	require.True(t, ok)
+	require.Equal(t, pgcode.StringDataRightTruncation.String(), code)
+
+	code, ok = errMessageToSQLState(`could not parse string as bit array: "2" is not a valid binary digit`)
+	require.True(t, ok)
+	require.Equal(t, pgcode.InvalidTextRepresentation.String(), code)
+
 	code, ok = errMessageToSQLState(`value too long for type varying(3): out of range`)
 	require.True(t, ok)
 	require.Equal(t, pgcode.StringDataRightTruncation.String(), code)

@@ -224,7 +224,11 @@ func (l *lexer) populateErrorDetails() {
 	if lastTok.id == ERROR {
 		// This is a tokenizer (lexical) error: the scanner
 		// will have stored the error message in the string field.
-		err := pgerror.WithCandidateCode(errors.Newf("lexical error: %s", lastTok.str), pgcode.Syntax)
+		code := pgcode.Syntax
+		if strings.Contains(lastTok.str, "is not a valid binary digit") {
+			code = pgcode.InvalidTextRepresentation
+		}
+		err := pgerror.WithCandidateCode(errors.Newf("lexical error: %s", lastTok.str), code)
 		l.lastError = errors.WithSecondaryError(err, l.lastError)
 	} else {
 		// This is a contextual error. Print the provided error message

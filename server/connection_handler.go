@@ -4451,8 +4451,14 @@ func errMessageToSQLState(msg string) (string, bool) {
 		return pgcode.DatetimeFieldOverflow.String(), true
 	case strings.HasPrefix(msg, "numeric field overflow"):
 		return pgcode.NumericValueOutOfRange.String(), true
+	case strings.HasPrefix(msg, "bit string length ") && strings.Contains(msg, " does not match type bit("):
+		return pgcode.StringDataLengthMismatch.String(), true
+	case strings.HasPrefix(msg, "bit string too long for type bit varying("):
+		return pgcode.StringDataRightTruncation.String(), true
 	case strings.HasPrefix(msg, "value too long for type "):
 		return pgcode.StringDataRightTruncation.String(), true
+	case strings.HasPrefix(msg, "could not parse string as bit array: "):
+		return pgcode.InvalidTextRepresentation.String(), true
 	case strings.HasPrefix(msg, "invalid input syntax for type "):
 		return pgcode.InvalidTextRepresentation.String(), true
 	case strings.HasPrefix(msg, "function: '") && strings.Contains(msg, "' not found; function does not exist"):
