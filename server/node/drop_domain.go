@@ -28,6 +28,8 @@ import (
 	corefunctions "github.com/dolthub/doltgresql/core/functions"
 	"github.com/dolthub/doltgresql/core/id"
 	coreprocedures "github.com/dolthub/doltgresql/core/procedures"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
 	"github.com/dolthub/doltgresql/server/types"
 )
@@ -114,7 +116,7 @@ func (c *DropDomain) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 			// TODO: handle cascade
 			return nil, errors.Errorf(`cascading domain drops are not yet supported`)
 		}
-		return nil, errors.Errorf(`cannot drop type %s because other objects depend on it - %s`, c.domain, dependency)
+		return nil, pgerror.Newf(pgcode.DependentObjectsStillExist, `cannot drop type %s because other objects depend on it - %s`, c.domain, dependency)
 	}
 
 	if err = collection.DropType(ctx, typeID); err != nil {

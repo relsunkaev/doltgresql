@@ -263,6 +263,7 @@ func castSQLError(err error) error {
 	switch pgerror.GetPGCode(err) {
 	case pgcode.DeadlockDetected,
 		pgcode.CheckViolation,
+		pgcode.DependentObjectsStillExist,
 		pgcode.DuplicateObject,
 		pgcode.FeatureNotSupported,
 		pgcode.Grouping,
