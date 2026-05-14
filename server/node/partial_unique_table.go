@@ -30,11 +30,15 @@ import (
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
+	"github.com/dolthub/doltgresql/core"
+	corefunctions "github.com/dolthub/doltgresql/core/functions"
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/postgres/parser/lex"
 	"github.com/dolthub/doltgresql/postgres/parser/parser"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
+	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
 type partialUniqueIndex struct {
@@ -681,6 +685,7 @@ type partialIndexPredicate struct {
 	expr      tree.Expr
 	tableName string
 	schema    sql.Schema
+	params    []predicateValue
 }
 
 type predicateTruth uint8
@@ -1156,6 +1161,12 @@ func (p *partialIndexPredicate) evalValue(ctx *sql.Context, row sql.Row, expr tr
 		return p.evalNullIf(ctx, row, expr)
 	case *tree.FuncExpr:
 		return p.evalFunction(ctx, row, expr)
+	case *tree.Placeholder:
+		idx := int(expr.Idx)
+		if idx < 0 || idx >= len(p.params) {
+			return predicateValue{}, errors.Errorf("partial unique index predicate placeholder %s is not available", expr.String())
+		}
+		return p.params[idx], nil
 	case *tree.StrVal:
 		return predicateValue{value: expr.RawString()}, nil
 	case *tree.UnresolvedName:
@@ -1287,8 +1298,16 @@ func (p *partialIndexPredicate) evalNullIf(ctx *sql.Context, row sql.Row, expr *
 }
 
 func (p *partialIndexPredicate) evalFunction(ctx *sql.Context, row sql.Row, expr *tree.FuncExpr) (predicateValue, error) {
-	name, ok := partialPredicateFunctionName(expr.Func)
+	fnRef, ok := partialPredicateFunctionRef(expr.Func)
 	if !ok {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function %s is not yet supported", expr.Func.String())
+	}
+	name := fnRef.name
+	useBuiltin := fnRef.schema == "" || strings.EqualFold(fnRef.schema, "pg_catalog")
+	if !useBuiltin {
+		if value, found, err := p.evalSQLFunction(ctx, row, expr, fnRef); err != nil || found {
+			return value, err
+		}
 		return predicateValue{}, errors.Errorf("partial unique index predicate function %s is not yet supported", expr.Func.String())
 	}
 	if name == "strpos" {
@@ -1332,6 +1351,11 @@ func (p *partialIndexPredicate) evalFunction(ctx *sql.Context, row sql.Row, expr
 	}
 	if name == "substr" || name == "substring" {
 		return p.evalSubstring(ctx, row, expr, name)
+	}
+	if !partialPredicateBuiltinFunctionName(name) {
+		if value, found, err := p.evalSQLFunction(ctx, row, expr, fnRef); err != nil || found {
+			return value, err
+		}
 	}
 	if len(expr.Exprs) != 1 {
 		return predicateValue{}, errors.Errorf("partial unique index predicate function %s expects one argument", name)
@@ -1407,6 +1431,222 @@ func (p *partialIndexPredicate) evalFunction(ctx *sql.Context, row sql.Row, expr
 	default:
 		return predicateValue{}, errors.Errorf("partial unique index predicate function %s is not yet supported", name)
 	}
+}
+
+type partialPredicateFunctionReference struct {
+	database string
+	schema   string
+	name     string
+}
+
+func partialPredicateBuiltinFunctionName(name string) bool {
+	switch name {
+	case "abs", "ascii", "bit_length", "btrim", "ceil", "ceiling", "char_length", "character_length", "chr",
+		"concat", "floor", "gcd", "hashtext", "initcap", "lcm", "left", "length", "lower", "lpad", "ltrim",
+		"md5", "mod", "octet_length", "quote_ident", "quote_literal", "repeat", "replace", "reverse", "right",
+		"round", "rpad", "rtrim", "sign", "split_part", "starts_with", "strpos", "substr", "substring",
+		"to_hex", "translate", "trunc", "upper":
+		return true
+	default:
+		return false
+	}
+}
+
+func (p *partialIndexPredicate) evalSQLFunction(ctx *sql.Context, row sql.Row, expr *tree.FuncExpr, fnRef partialPredicateFunctionReference) (predicateValue, bool, error) {
+	args := make([]predicateValue, len(expr.Exprs))
+	for i, argExpr := range expr.Exprs {
+		arg, err := p.evalValue(ctx, row, argExpr)
+		if err != nil {
+			return predicateValue{}, false, err
+		}
+		args[i] = arg
+	}
+	fn, found, err := resolvePartialPredicateSQLFunction(ctx, fnRef, args)
+	if err != nil || !found {
+		return predicateValue{}, found, err
+	}
+	if fn.SetOf || fn.Aggregate || fn.SQLDefinition == "" {
+		return predicateValue{}, true, errors.Errorf("partial unique index predicate function %s is not yet supported", fnRef.name)
+	}
+	if fn.Strict {
+		for _, arg := range args {
+			if arg.value == nil {
+				return predicateValue{}, true, nil
+			}
+		}
+	}
+	returnType, err := partialPredicateTypeFromID(ctx, fn.ReturnType)
+	if err != nil {
+		return predicateValue{}, true, err
+	}
+	bodyExpr, err := partialPredicateSQLFunctionBodyExpr(fn.SQLDefinition)
+	if err != nil {
+		return predicateValue{}, true, err
+	}
+	paramSchema, paramRow, err := partialPredicateSQLFunctionArgs(ctx, fn, args)
+	if err != nil {
+		return predicateValue{}, true, err
+	}
+	bodyPredicate := &partialIndexPredicate{
+		expr:   bodyExpr,
+		schema: paramSchema,
+		params: args,
+	}
+	if returnType != nil && returnType.ID == pgtypes.Bool.ID {
+		truth, err := bodyPredicate.evalBool(ctx, paramRow, bodyExpr)
+		if err != nil {
+			return predicateValue{}, true, err
+		}
+		if truth == predicateUnknown {
+			return predicateValue{typ: returnType}, true, nil
+		}
+		return predicateValue{value: truth == predicateTrue, typ: returnType}, true, nil
+	}
+	value, err := bodyPredicate.evalValue(ctx, paramRow, bodyExpr)
+	if err != nil {
+		return predicateValue{}, true, err
+	}
+	value.typ = returnType
+	return value, true, nil
+}
+
+func resolvePartialPredicateSQLFunction(ctx *sql.Context, fnRef partialPredicateFunctionReference, args []predicateValue) (corefunctions.Function, bool, error) {
+	funcCollection, err := core.GetFunctionsCollectionFromContextForDatabase(ctx, fnRef.database)
+	if err != nil {
+		return corefunctions.Function{}, false, err
+	}
+	schemas := []string{fnRef.schema}
+	if fnRef.schema == "" {
+		currentSchema, err := core.GetCurrentSchema(ctx)
+		if err != nil {
+			return corefunctions.Function{}, false, err
+		}
+		schemas = []string{currentSchema}
+	}
+	for _, schema := range schemas {
+		if schema == "" {
+			continue
+		}
+		overloads, err := funcCollection.GetFunctionOverloads(ctx, id.NewFunction(schema, fnRef.name))
+		if err != nil {
+			return corefunctions.Function{}, false, err
+		}
+		for _, overload := range overloads {
+			if overload.SQLDefinition == "" || len(overload.ParameterTypes) != len(args) {
+				continue
+			}
+			matches, err := partialPredicateFunctionArgsMatch(ctx, overload.ParameterTypes, args)
+			if err != nil {
+				return corefunctions.Function{}, false, err
+			}
+			if matches {
+				return overload, true, nil
+			}
+		}
+	}
+	return corefunctions.Function{}, false, nil
+}
+
+func partialPredicateFunctionArgsMatch(ctx *sql.Context, paramTypes []id.Type, args []predicateValue) (bool, error) {
+	for i, paramType := range paramTypes {
+		argType, err := partialPredicateValueType(ctx, args[i])
+		if err != nil {
+			return false, err
+		}
+		if argType == nil || argType.ID != paramType {
+			return false, nil
+		}
+	}
+	return true, nil
+}
+
+func partialPredicateSQLFunctionArgs(ctx *sql.Context, fn corefunctions.Function, args []predicateValue) (sql.Schema, sql.Row, error) {
+	schema := make(sql.Schema, len(args))
+	row := make(sql.Row, len(args))
+	for i, arg := range args {
+		argType, err := partialPredicateValueType(ctx, arg)
+		if err != nil {
+			return nil, nil, err
+		}
+		if argType == nil {
+			argType = pgtypes.Unknown
+		}
+		name := fmt.Sprintf("$%d", i+1)
+		if i < len(fn.ParameterNames) && fn.ParameterNames[i] != "" && fn.ParameterNames[i] != "\"\"" {
+			name = partialPredicateIdentifier(fn.ParameterNames[i])
+		}
+		schema[i] = &sql.Column{
+			Name: name,
+			Type: argType,
+		}
+		row[i] = arg.value
+	}
+	return schema, row, nil
+}
+
+func partialPredicateSQLFunctionBodyExpr(sqlDefinition string) (tree.Expr, error) {
+	statements, err := parser.Parse(sqlDefinition)
+	if err != nil {
+		return nil, err
+	}
+	if len(statements) != 1 {
+		return nil, errors.Errorf("partial unique index predicate SQL function must contain a single statement")
+	}
+	switch stmt := statements[0].AST.(type) {
+	case *tree.Select:
+		selectClause, ok := stmt.Select.(*tree.SelectClause)
+		if !ok ||
+			selectClause.Distinct ||
+			len(selectClause.DistinctOn) > 0 ||
+			len(selectClause.Exprs) != 1 ||
+			len(selectClause.From.Tables) > 0 ||
+			selectClause.Where != nil ||
+			len(selectClause.GroupBy) > 0 ||
+			selectClause.Having != nil ||
+			len(selectClause.Window) > 0 ||
+			selectClause.TableSelect {
+			return nil, errors.Errorf("partial unique index predicate SQL function body is not yet supported")
+		}
+		return selectClause.Exprs[0].Expr, nil
+	case *tree.Return:
+		return stmt.Expr, nil
+	default:
+		return nil, errors.Errorf("partial unique index predicate SQL function statement %T is not yet supported", stmt)
+	}
+}
+
+func partialPredicateValueType(ctx *sql.Context, value predicateValue) (*pgtypes.DoltgresType, error) {
+	if value.typ != nil {
+		if typ, ok := value.typ.(*pgtypes.DoltgresType); ok {
+			return typ, nil
+		}
+		return pgtypes.FromGmsTypeToDoltgresType(value.typ)
+	}
+	switch value.value.(type) {
+	case bool:
+		return pgtypes.Bool, nil
+	case int, int8, int16, int32:
+		return pgtypes.Int32, nil
+	case int64:
+		return pgtypes.Int64, nil
+	case string:
+		return pgtypes.Text, nil
+	case nil:
+		return nil, nil
+	default:
+		return nil, errors.Errorf("partial unique index predicate value type %T is not yet supported", value.value)
+	}
+}
+
+func partialPredicateTypeFromID(ctx *sql.Context, typID id.Type) (*pgtypes.DoltgresType, error) {
+	if typ, ok := pgtypes.IDToBuiltInDoltgresType[typID]; ok {
+		return typ, nil
+	}
+	typeCollection, err := core.GetTypesCollectionFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return typeCollection.GetType(ctx, typID)
 }
 
 func predicateQuoteIdentifierText(text string) string {
@@ -2296,17 +2536,37 @@ func predicateSignedIntegerValue(value any) (int64, bool) {
 }
 
 func partialPredicateFunctionName(ref tree.ResolvableFunctionReference) (string, bool) {
+	fnRef, ok := partialPredicateFunctionRef(ref)
+	return fnRef.name, ok
+}
+
+func partialPredicateFunctionRef(ref tree.ResolvableFunctionReference) (partialPredicateFunctionReference, bool) {
 	switch fn := ref.FunctionReference.(type) {
 	case *tree.UnresolvedName:
 		if fn.Star || fn.NumParts == 0 {
-			return "", false
+			return partialPredicateFunctionReference{}, false
 		}
-		return strings.ToLower(strings.Trim(fn.Parts[0], `"`)), true
+		fnRef := partialPredicateFunctionReference{
+			name: partialPredicateIdentifier(fn.Parts[0]),
+		}
+		if fn.NumParts > 1 {
+			fnRef.schema = partialPredicateIdentifier(fn.Parts[1])
+		}
+		if fn.NumParts > 2 {
+			fnRef.database = partialPredicateIdentifier(fn.Parts[2])
+		}
+		return fnRef, true
 	case *tree.FunctionDefinition:
-		return strings.ToLower(strings.Trim(fn.Name, `"`)), true
+		return partialPredicateFunctionReference{
+			name: partialPredicateIdentifier(fn.Name),
+		}, true
 	default:
-		return "", false
+		return partialPredicateFunctionReference{}, false
 	}
+}
+
+func partialPredicateIdentifier(identifier string) string {
+	return strings.ToLower(strings.Trim(identifier, `"`))
 }
 
 func (p *partialIndexPredicate) columnName(name *tree.UnresolvedName) (string, error) {
