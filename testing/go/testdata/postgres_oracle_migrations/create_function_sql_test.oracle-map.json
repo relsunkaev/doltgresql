@@ -21,14 +21,16 @@
       "oracle": "postgres",
       "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0001-create-function-alt_func1-int-returns",
       "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0001-create-function-alt_func1-int-returns",
-      "compare": "sqlstate",
+      "compare": "structural",
       "expectedKind": "rows",
-      "sqlstate": "42723",
-      "errorSeverity": "ERROR",
       "query": "CREATE FUNCTION alt_func1(int) RETURNS int LANGUAGE sql AS 'SELECT $1 + 1';",
       "querySha256": "5242571d26672193a1d084534fd4b18a23454b8b50dc58f7044dd27b99485f82",
-      "needsCleanup": false,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP FUNCTION IF EXISTS alt_func1(int)"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0002",
@@ -60,14 +62,16 @@
       "oracle": "postgres",
       "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0003-create-function-alt_func1-x-int",
       "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0003-create-function-alt_func1-x-int",
-      "compare": "sqlstate",
+      "compare": "structural",
       "expectedKind": "rows",
-      "sqlstate": "42723",
-      "errorSeverity": "ERROR",
       "query": "CREATE FUNCTION alt_func1(x int) RETURNS int LANGUAGE sql AS 'SELECT x + 1';",
       "querySha256": "013d5355722fdce72f62ddbdf722e6af85cc780d02489b51b33e07e22f21bd78",
-      "needsCleanup": false,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP FUNCTION IF EXISTS alt_func1(int)"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0004",

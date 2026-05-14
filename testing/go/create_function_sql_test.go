@@ -27,7 +27,7 @@ func TestCreateFunctionsLanguageSQL(t *testing.T) {
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `CREATE FUNCTION alt_func1(int) RETURNS int LANGUAGE sql AS 'SELECT $1 + 1';`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0001-create-function-alt_func1-int-returns", Compare: "sqlstate"},
+					Query: `CREATE FUNCTION alt_func1(int) RETURNS int LANGUAGE sql AS 'SELECT $1 + 1';`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0001-create-function-alt_func1-int-returns", Cleanup: []string{"DROP FUNCTION IF EXISTS alt_func1(int)"}},
 				},
 				{
 					Query: `SELECT alt_func1(3);`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0002-select-alt_func1-3"},
@@ -39,7 +39,7 @@ func TestCreateFunctionsLanguageSQL(t *testing.T) {
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `CREATE FUNCTION alt_func1(x int) RETURNS int LANGUAGE sql AS 'SELECT x + 1';`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0003-create-function-alt_func1-x-int", Compare: "sqlstate"},
+					Query: `CREATE FUNCTION alt_func1(x int) RETURNS int LANGUAGE sql AS 'SELECT x + 1';`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0003-create-function-alt_func1-x-int", Cleanup: []string{"DROP FUNCTION IF EXISTS alt_func1(int)"}},
 				},
 				{
 					Query: `SELECT alt_func1(3);`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0004-select-alt_func1-3"},
