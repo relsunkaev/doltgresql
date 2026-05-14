@@ -3658,20 +3658,11 @@
       "source": "testing/go/functions_test.go:TestSystemInformationFunctions",
       "ordinal": 51,
       "scriptName": "version",
-      "oracle": "postgres",
-      "postgresId": "functions-test-testsysteminformationfunctions-0051-select-version",
+      "oracle": "internal",
       "suggestedId": "functions-test-testsysteminformationfunctions-0051-select-version",
-      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT version();",
       "querySha256": "b58ff8f6a1f4dfcf081049eb042e30be7ed157bc55f58aa9dc7cca4a4219c8be",
-      "expectedRows": [
-        [
-          {
-            "value": "PostgreSQL 16.13 on aarch64-unknown-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit"
-          }
-        ]
-      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
