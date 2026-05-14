@@ -15,6 +15,7 @@
 package functions
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/dolthub/go-mysql-server/sql"
@@ -101,8 +102,14 @@ var btoidvectorcmp = framework.Function2{
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Oidvector, pgtypes.Oidvector},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1, val2 any) (any, error) {
-		leftOidvector := val1.([]any)
-		rightOidvector := val2.([]any)
+		leftOidvector, ok := pgtypes.ArrayElements(val1)
+		if !ok {
+			return nil, fmt.Errorf("expected oidvector value but received %T", val1)
+		}
+		rightOidvector, ok := pgtypes.ArrayElements(val2)
+		if !ok {
+			return nil, fmt.Errorf("expected oidvector value but received %T", val2)
+		}
 		llen := len(leftOidvector)
 		rlen := len(rightOidvector)
 		minLen := min(llen, rlen)
