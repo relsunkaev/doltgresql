@@ -220,9 +220,20 @@
       "suggestedId": "catalog-correctness-repro-test-testquotedtablenamesarecasesensitiverepro-0005-select-relname-from-pg_catalog.pg_class-where",
       "compare": "structural",
       "expectedKind": "rows",
-      "query": "SELECT relname\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE relnamespace = 'public'::regnamespace\n\t\t\t\t\t\t\tAND relname IN ('CaseTable', 'casetable')\n\t\t\t\t\t\tORDER BY relname;",
-      "querySha256": "062fc7d03987079fbc6aa86bef63142834063624d92a7011b4ec1c78df32c1ba",
-      "expectedRows": [],
+      "query": "SELECT relname\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE relnamespace = current_schema()::regnamespace\n\t\t\t\t\t\t\tAND relname IN ('CaseTable', 'casetable')\n\t\t\t\t\t\tORDER BY relname;",
+      "querySha256": "10034db0153d78e0f12855b4f482dee50a27302e83b044a26b6e2193bf63c400",
+      "expectedRows": [
+        [
+          {
+            "value": "CaseTable"
+          }
+        ],
+        [
+          {
+            "value": "casetable"
+          }
+        ]
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },

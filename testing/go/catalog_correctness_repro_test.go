@@ -121,7 +121,7 @@ func TestQuotedTableNamesAreCaseSensitiveRepro(t *testing.T) {
 				{
 					Query: `SELECT relname
 						FROM pg_catalog.pg_class
-						WHERE relnamespace = 'public'::regnamespace
+						WHERE relnamespace = current_schema()::regnamespace
 							AND relname IN ('CaseTable', 'casetable')
 						ORDER BY relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testquotedtablenamesarecasesensitiverepro-0005-select-relname-from-pg_catalog.pg_class-where"},
 				},
