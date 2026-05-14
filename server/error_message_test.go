@@ -291,6 +291,14 @@ func TestErrMessageToSQLStateFormatsTypmodOverflow(t *testing.T) {
 	require.True(t, ok)
 	require.Equal(t, pgcode.NumericValueOutOfRange.String(), code)
 
+	code, ok = errMessageToSQLState(`smallint out of range: out of range`)
+	require.True(t, ok)
+	require.Equal(t, pgcode.NumericValueOutOfRange.String(), code)
+
+	code, ok = errMessageToSQLState(`integer out of range`)
+	require.True(t, ok)
+	require.Equal(t, pgcode.NumericValueOutOfRange.String(), code)
+
 	code, ok = errMessageToSQLState(`bit string length 3 does not match type bit(8)`)
 	require.True(t, ok)
 	require.Equal(t, pgcode.StringDataLengthMismatch.String(), code)

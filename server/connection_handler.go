@@ -4457,6 +4457,10 @@ func errMessageToSQLState(msg string) (string, bool) {
 		strings.HasPrefix(msg, "date/time field value out of range"),
 		strings.HasPrefix(msg, "timestamp out of range"):
 		return pgcode.DatetimeFieldOverflow.String(), true
+	case strings.HasPrefix(msg, "smallint out of range"),
+		strings.HasPrefix(msg, "integer out of range"),
+		strings.HasPrefix(msg, "bigint out of range"):
+		return pgcode.NumericValueOutOfRange.String(), true
 	case strings.HasPrefix(msg, "numeric field overflow"):
 		return pgcode.NumericValueOutOfRange.String(), true
 	case strings.HasPrefix(msg, "bit string length ") && strings.Contains(msg, " does not match type bit("):
