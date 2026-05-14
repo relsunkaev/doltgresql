@@ -102,21 +102,21 @@ func (c *CreateRole) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 		return nil, pgerror.Newf(pgcode.DuplicateObject, `role "%s" already exists`, c.Name)
 	}
 	if c.ConnectionLimit < -1 {
-		return nil, errors.New("invalid connection limit")
+		return nil, pgerror.New(pgcode.InvalidParameterValue, "invalid connection limit")
 	}
 
 	if !userRole.IsSuperUser && !userRole.CanCreateRoles {
 		// TODO: grab the actual error message
-		return nil, errors.Errorf(`role "%s" does not have permission to create the role`, userRole.Name)
+		return nil, pgerror.Newf(pgcode.InsufficientPrivilege, `role "%s" does not have permission to create the role`, userRole.Name)
 	}
 	if !userRole.IsSuperUser && c.IsSuperUser {
-		return nil, errors.Errorf(`role "%s" does not have permission to create the role`, userRole.Name)
+		return nil, pgerror.Newf(pgcode.InsufficientPrivilege, `role "%s" does not have permission to create the role`, userRole.Name)
 	}
 	if !userRole.IsSuperUser && (c.CanBypassRowLevelSecurity || c.IsReplicationRole) {
-		return nil, errors.New("permission denied")
+		return nil, pgerror.New(pgcode.InsufficientPrivilege, "permission denied")
 	}
 	if !userRole.IsSuperUser && c.CanCreateDB && !userRole.CanCreateDB {
-		return nil, errors.New("permission denied")
+		return nil, pgerror.New(pgcode.InsufficientPrivilege, "permission denied")
 	}
 	if !userRole.IsSuperUser {
 		var membershipErr error
@@ -124,7 +124,7 @@ func (c *CreateRole) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 			for _, group := range addToRoles {
 				groupID, _, withAdminOption := auth.IsRoleAMember(userRole.ID(), group.ID())
 				if !groupID.IsValid() || !withAdminOption {
-					membershipErr = errors.Errorf(`role "%s" does not have permission to grant role "%s"`, userRole.Name, group.Name)
+					membershipErr = pgerror.Newf(pgcode.InsufficientPrivilege, `role "%s" does not have permission to grant role "%s"`, userRole.Name, group.Name)
 					return
 				}
 			}

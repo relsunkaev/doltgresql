@@ -25,6 +25,8 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 	gmserrors "gopkg.in/src-d/go-errors.v1"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/auth"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -79,11 +81,11 @@ func (c *AlterRole) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 	if role.IsSuperUser && !userRole.IsSuperUser {
 		// Only superusers can modify other superusers
 		// TODO: grab the actual error message
-		return nil, errors.Errorf(`role "%s" does not have permission to alter role "%s"`, userRole.Name, role.Name)
+		return nil, pgerror.Newf(pgcode.InsufficientPrivilege, `role "%s" does not have permission to alter role "%s"`, userRole.Name, role.Name)
 	} else if !userRole.IsSuperUser && !userRole.CanCreateRoles && role.ID() != userRole.ID() {
 		// A role may only modify itself if it doesn't have the ability to create roles
 		// TODO: allow non-role-creating roles to only modify their own password, and grab actual error message
-		return nil, errors.Errorf(`role "%s" does not have permission to alter role "%s"`, userRole.Name, role.Name)
+		return nil, pgerror.Newf(pgcode.InsufficientPrivilege, `role "%s" does not have permission to alter role "%s"`, userRole.Name, role.Name)
 	}
 	if c.SetName != "" || c.ResetName != "" || c.ResetAll {
 		if c.DatabaseName != "" && !dsess.DSessFromSess(ctx.Session).Provider().HasDatabase(ctx, c.DatabaseName) {
@@ -106,20 +108,20 @@ func (c *AlterRole) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 		return sql.RowsToRowIter(), nil
 	}
 	if connectionLimit, ok := c.Options["CONNECTION_LIMIT"].(int32); ok && connectionLimit < -1 {
-		return nil, errors.New("invalid connection limit")
+		return nil, pgerror.New(pgcode.InvalidParameterValue, "invalid connection limit")
 	}
 	if !userRole.IsSuperUser {
 		for optionName := range c.Options {
 			switch optionName {
 			case "BYPASSRLS", "NOBYPASSRLS", "REPLICATION", "NOREPLICATION", "SUPERUSER", "NOSUPERUSER":
-				return nil, errors.Errorf(`role "%s" does not have permission to alter role "%s"`, userRole.Name, role.Name)
+				return nil, pgerror.Newf(pgcode.InsufficientPrivilege, `role "%s" does not have permission to alter role "%s"`, userRole.Name, role.Name)
 			}
 		}
 		if _, ok := c.Options["CREATEDB"]; ok && !userRole.CanCreateDB {
-			return nil, errors.New("permission denied")
+			return nil, pgerror.New(pgcode.InsufficientPrivilege, "permission denied")
 		}
 		if role.ID() == userRole.ID() && !alterRoleOptionsOnlyPassword(c.Options) {
-			return nil, errors.New("permission denied")
+			return nil, pgerror.New(pgcode.InsufficientPrivilege, "permission denied")
 		}
 	}
 	for optionName, optionValue := range c.Options {
@@ -127,7 +129,7 @@ func (c *AlterRole) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 		case "BYPASSRLS":
 			if !userRole.IsSuperUser {
 				// TODO: grab the actual error message
-				return nil, errors.Errorf(`role "%s" does not have permission to alter role "%s"`, userRole.Name, role.Name)
+				return nil, pgerror.Newf(pgcode.InsufficientPrivilege, `role "%s" does not have permission to alter role "%s"`, userRole.Name, role.Name)
 			}
 			role.CanBypassRowLevelSecurity = true
 		case "CONNECTION_LIMIT":
@@ -143,7 +145,7 @@ func (c *AlterRole) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 		case "NOBYPASSRLS":
 			if !userRole.IsSuperUser {
 				// TODO: grab the actual error message
-				return nil, errors.Errorf(`role "%s" does not have permission to alter role "%s"`, userRole.Name, role.Name)
+				return nil, pgerror.Newf(pgcode.InsufficientPrivilege, `role "%s" does not have permission to alter role "%s"`, userRole.Name, role.Name)
 			}
 			role.CanBypassRowLevelSecurity = false
 		case "NOCREATEDB":
@@ -157,13 +159,13 @@ func (c *AlterRole) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 		case "NOREPLICATION":
 			if !userRole.IsSuperUser {
 				// TODO: grab the actual error message
-				return nil, errors.Errorf(`role "%s" does not have permission to alter role "%s"`, userRole.Name, role.Name)
+				return nil, pgerror.Newf(pgcode.InsufficientPrivilege, `role "%s" does not have permission to alter role "%s"`, userRole.Name, role.Name)
 			}
 			role.IsReplicationRole = false
 		case "NOSUPERUSER":
 			if !userRole.IsSuperUser {
 				// TODO: grab the actual error message
-				return nil, errors.Errorf(`role "%s" does not have permission to alter role "%s"`, userRole.Name, role.Name)
+				return nil, pgerror.Newf(pgcode.InsufficientPrivilege, `role "%s" does not have permission to alter role "%s"`, userRole.Name, role.Name)
 			}
 			role.IsSuperUser = false
 		case "PASSWORD":
@@ -180,13 +182,13 @@ func (c *AlterRole) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 		case "REPLICATION":
 			if !userRole.IsSuperUser {
 				// TODO: grab the actual error message
-				return nil, errors.Errorf(`role "%s" does not have permission to alter role "%s"`, userRole.Name, role.Name)
+				return nil, pgerror.Newf(pgcode.InsufficientPrivilege, `role "%s" does not have permission to alter role "%s"`, userRole.Name, role.Name)
 			}
 			role.IsReplicationRole = true
 		case "SUPERUSER":
 			if !userRole.IsSuperUser {
 				// TODO: grab the actual error message
-				return nil, errors.Errorf(`role "%s" does not have permission to alter role "%s"`, userRole.Name, role.Name)
+				return nil, pgerror.Newf(pgcode.InsufficientPrivilege, `role "%s" does not have permission to alter role "%s"`, userRole.Name, role.Name)
 			}
 			role.IsSuperUser = true
 		case "VALID_UNTIL":
