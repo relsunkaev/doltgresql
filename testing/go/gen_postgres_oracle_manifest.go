@@ -1334,6 +1334,7 @@ func mergeMigrationFiles(existing migrationFile, generated migrationFile) (migra
 	replaced := make(map[string]struct{}, len(generated.Assertions))
 	for _, assertion := range existing.Assertions {
 		if replacement, ok := replacementByKey[assertion.Key]; ok {
+			preserveCachedExpectation(&replacement, assertion)
 			merged = append(merged, replacement)
 			replaced[assertion.Key] = struct{}{}
 			continue
@@ -1363,6 +1364,26 @@ func mergeMigrationFiles(existing migrationFile, generated migrationFile) (migra
 	}
 	existing.Assertions = merged
 	return existing, nil
+}
+
+func preserveCachedExpectation(replacement *migrationAssertion, existing migrationAssertion) {
+	if replacement.Oracle != "postgres" {
+		return
+	}
+	if replacement.ExpectedRows != nil || replacement.SQLState != "" || replacement.ExpectedTag != nil {
+		return
+	}
+	replacement.ExpectedKind = existing.ExpectedKind
+	replacement.ExpectedRows = existing.ExpectedRows
+	replacement.ExpectedTag = existing.ExpectedTag
+	replacement.SQLState = existing.SQLState
+	replacement.ErrorSeverity = existing.ErrorSeverity
+	if replacement.Compare == "" {
+		replacement.Compare = existing.Compare
+	}
+	if len(replacement.ColumnModes) == 0 {
+		replacement.ColumnModes = existing.ColumnModes
+	}
 }
 
 func hasUnsafeAutoIsolatedPublicReference(entry entry) bool {
