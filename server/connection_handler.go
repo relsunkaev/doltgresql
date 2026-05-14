@@ -4451,6 +4451,8 @@ func errMessageToSQLState(msg string) (string, bool) {
 		return pgcode.Syntax.String(), true
 	case strings.HasPrefix(msg, "unsupported pgcrypto digest algorithm: "):
 		return pgcode.InvalidParameterValue.String(), true
+	case strings.HasPrefix(msg, "Variable '") && strings.Contains(msg, "' can't be set to the value of '"):
+		return pgcode.InvalidParameterValue.String(), true
 	case msg == "Length not in range",
 		msg == "Corrupt ascii-armor",
 		msg == "data not a multiple of block size":

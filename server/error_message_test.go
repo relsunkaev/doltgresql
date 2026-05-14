@@ -80,6 +80,13 @@ func TestCastSQLErrorMapsGeneratedColumnValue(t *testing.T) {
 	require.Equal(t, err.Error(), castErr.Error())
 }
 
+func TestErrorResponseCodeMapsInvalidSystemVariableValue(t *testing.T) {
+	err := mysql.NewSQLError(1105, "HY000", "Variable '%s' can't be set to the value of '%s'", "effective_io_concurrency", "100")
+
+	require.Equal(t, pgcode.InvalidParameterValue.String(), errorResponseCode(err))
+	require.Equal(t, pgcode.InvalidParameterValue.String(), errorResponseCode(errors.New("Variable 'maintenance_io_concurrency' can't be set to the value of '1' (errno 1105) (sqlstate HY000)")))
+}
+
 func TestSanitizeErrorMessageFormatsMissingNonNullableColumn(t *testing.T) {
 	sanitized := sanitizeErrorMessage("Field 'id' doesn't have a default value (errno 1105) (sqlstate HY000)")
 
