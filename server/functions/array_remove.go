@@ -15,9 +15,10 @@
 package functions
 
 import (
-	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -39,12 +40,15 @@ var array_remove_anyarray_anyelement = framework.Function2{
 			return nil, nil
 		}
 
-		array := val1.([]any)
+		array, ok := pgtypes.ArrayElements(val1)
+		if !ok {
+			return nil, pgtypes.ErrUnhandledType.New(t[0].String(), val1)
+		}
 		baseType := t[0].ArrayBaseType()
 		result := make([]any, 0, len(array))
 		for _, element := range array {
-			if _, ok := element.([]any); ok {
-				return nil, errors.New("removing elements from multidimensional arrays is not supported")
+			if _, ok := pgtypes.ArrayElements(element); ok {
+				return nil, pgerror.New(pgcode.FeatureNotSupported, "removing elements from multidimensional arrays is not supported")
 			}
 			if element == nil || val2 == nil {
 				if element == nil && val2 == nil {
