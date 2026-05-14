@@ -279,6 +279,46 @@ func TestParseDynamicExecuteExpressionBindings(t *testing.T) {
 	}
 }
 
+func TestParseDynamicForExecuteExpressionBindings(t *testing.T) {
+	ops, err := Parse(`CREATE FUNCTION test_block() RETURNS void AS $$
+		DECLARE
+			query_text TEXT := 'SELECT $1::int AS id';
+			target_id INT := 7;
+			value_seen INT;
+		BEGIN
+			FOR value_seen IN EXECUTE query_text USING target_id LOOP
+				PERFORM value_seen;
+			END LOOP;
+		END;
+	$$ LANGUAGE plpgsql;`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var initOp *InterpreterOperation
+	for i := range ops {
+		if ops[i].OpCode == OpCode_ForQueryInit {
+			initOp = &ops[i]
+			break
+		}
+	}
+	if initOp == nil {
+		t.Fatalf("expected dynamic FOR query init operation, found %#v", ops)
+	}
+	if initOp.Options["dynamic"] != "true" {
+		t.Fatalf("dynamic option = %q, expected true; op: %#v", initOp.Options["dynamic"], initOp)
+	}
+	if initOp.Options["queryBindingCount"] != "1" {
+		t.Fatalf("queryBindingCount = %q, expected 1; op: %#v", initOp.Options["queryBindingCount"], initOp)
+	}
+	if initOp.PrimaryData != "$1 " {
+		t.Fatalf("primary data = %q", initOp.PrimaryData)
+	}
+	if len(initOp.SecondaryData) != 2 || initOp.SecondaryData[0] != "query_text" || initOp.SecondaryData[1] != "target_id" {
+		t.Fatalf("secondary data = %#v", initOp.SecondaryData)
+	}
+}
+
 func TestParseDynamicExecuteIntoStrict(t *testing.T) {
 	ops, err := Parse(`CREATE FUNCTION test_block() RETURNS void AS $$
 		DECLARE

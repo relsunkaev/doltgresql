@@ -226,6 +226,8 @@ func (conv jsonConversionContext) convertStatement(stmt statement) (Statement, e
 		return stmt.Case.Convert(conv)
 	case stmt.DynExec != nil:
 		return stmt.DynExec.Convert()
+	case stmt.DynForSLoop != nil:
+		return stmt.DynForSLoop.Convert(conv)
 	case stmt.ExecSQL != nil:
 		return stmt.ExecSQL.Convert()
 	case stmt.Exit != nil:

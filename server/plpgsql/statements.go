@@ -382,6 +382,9 @@ func (stmt ExceptionBlock) AppendOperations(ops *[]InterpreterOperation, stack *
 type ForQueryInit struct {
 	CursorName string
 	Query      string
+	Params     []string
+	Dynamic    bool
+	LineNumber int32
 }
 
 var _ Statement = ForQueryInit{}
@@ -397,11 +400,25 @@ func (stmt ForQueryInit) AppendOperations(ops *[]InterpreterOperation, stack *In
 	if err != nil {
 		return err
 	}
+	params := referencedVariables
+	var options map[string]string
+	if stmt.Dynamic {
+		params = make([]string, 0, len(referencedVariables)+len(stmt.Params))
+		params = append(params, referencedVariables...)
+		params = append(params, stmt.Params...)
+		options = diagnosticStatementOptions(stmt.LineNumber, "FOR IN EXECUTE", stmt.Query)
+		if options == nil {
+			options = make(map[string]string)
+		}
+		options["dynamic"] = "true"
+		options["queryBindingCount"] = strconv.Itoa(len(referencedVariables))
+	}
 	*ops = append(*ops, InterpreterOperation{
 		OpCode:        OpCode_ForQueryInit,
 		PrimaryData:   queryStr,
-		SecondaryData: referencedVariables,
+		SecondaryData: params,
 		Target:        stmt.CursorName,
+		Options:       options,
 	})
 	return nil
 }

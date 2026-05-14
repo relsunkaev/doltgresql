@@ -727,7 +727,23 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 			return val, true, nil
 
 		case OpCode_ForQueryInit:
-			schema, rows, err := iFunc.QueryMultiReturn(ctx, stack, operation.PrimaryData, operation.SecondaryData)
+			statement := operation.PrimaryData
+			bindings := operation.SecondaryData
+			var cleanupDynamicForQuery func()
+			if operation.Options["dynamic"] == "true" {
+				queryBindingCount, err := strconv.Atoi(operation.Options["queryBindingCount"])
+				if err != nil {
+					return nil, false, err
+				}
+				statement, bindings, cleanupDynamicForQuery, err = prepareDynamicStatement(ctx, iFunc, stack, statement, bindings, queryBindingCount)
+				if err != nil {
+					return nil, false, err
+				}
+			}
+			schema, rows, err := iFunc.QueryMultiReturn(ctx, stack, statement, bindings)
+			if cleanupDynamicForQuery != nil {
+				cleanupDynamicForQuery()
+			}
 			if err != nil {
 				state.lastExceptionContext = diagnosticPGExceptionContext(ctx, iFunc, operation)
 				return nil, false, err
@@ -744,7 +760,7 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 				// Jump forward past the loop body and back-goto, same mechanism as OpCode_If.
 				counter = operation.Index - 1
 			} else {
-				if err := stack.UpdateRecord(operation.Target, schema, row); err != nil {
+				if err := assignForQueryRow(ctx, stack, operation.Target, schema, row); err != nil {
 					return nil, false, err
 				}
 			}
@@ -1686,6 +1702,23 @@ func assignSQLRowValue(ctx *sql.Context, stack InterpreterStack, variableName st
 		return err
 	}
 	return stack.SetVariable(ctx, variableName, castValue)
+}
+
+func assignForQueryRow(ctx *sql.Context, stack InterpreterStack, variableName string, sch sql.Schema, row sql.Row) error {
+	if stack.IsRecordVariable(variableName) {
+		return stack.UpdateRecord(variableName, sch, row)
+	}
+	target := stack.GetVariable(variableName)
+	if target.Type == nil {
+		return fmt.Errorf("variable `%s` could not be found", variableName)
+	}
+	if target.Type.IsCompositeType() && !target.Type.IsRecordType() {
+		return assignSQLCompositeRowValue(ctx, stack, variableName, sch, row)
+	}
+	if len(row) != 1 || len(sch) != 1 {
+		return errors.New("loop variable of loop over rows must be a record variable or list of scalar variables")
+	}
+	return assignSQLRowValue(ctx, stack, variableName, sch[0].Type, row[0])
 }
 
 func assignSQLCompositeRowValue(ctx *sql.Context, stack InterpreterStack, variableName string, sch sql.Schema, row sql.Row) error {

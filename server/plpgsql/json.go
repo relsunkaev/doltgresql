@@ -156,6 +156,16 @@ type plpgSQL_stmt_dynexecute struct {
 	Params     []sqlstmt `json:"params"`
 }
 
+// plpgSQL_stmt_dynfors exists to match the expected JSON format.
+type plpgSQL_stmt_dynfors struct {
+	Label      string      `json:"label"`
+	Var        datum       `json:"var"`
+	Body       []statement `json:"body"`
+	Query      expr        `json:"query"`
+	Params     []sqlstmt   `json:"params"`
+	LineNumber int32       `json:"lineno"`
+}
+
 // plpgSQL_case_when exists to match the expected JSON format.
 type plpgSQL_case_when struct {
 	LineNumber int32       `json:"lineno"`
@@ -346,6 +356,7 @@ type statement struct {
 	Call        *plpgSQL_stmt_call         `json:"PLpgSQL_stmt_call"`
 	Case        *plpgSQL_stmt_case         `json:"PLpgSQL_stmt_case"`
 	DynExec     *plpgSQL_stmt_dynexecute   `json:"PLpgSQL_stmt_dynexecute"`
+	DynForSLoop *plpgSQL_stmt_dynfors      `json:"PLpgSQL_stmt_dynfors"`
 	ExecSQL     *plpgSQL_stmt_execsql      `json:"PLpgSQL_stmt_execsql"`
 	Exit        *plpgSQL_stmt_exit         `json:"PLpgSQL_stmt_exit"`
 	ForILoop    *plpgSQL_stmt_fori         `json:"PLpgSQL_stmt_fori"`
@@ -691,15 +702,8 @@ func (stmt *plpgSQL_stmt_fors) Convert(conv jsonConversionContext) (block Block,
 		return Block{}, errors.New("FOR..IN..SELECT loop must have a query")
 	}
 
-	var varName string
-	switch {
-	case stmt.Var.Record != nil:
-		varName = stmt.Var.Record.RefName
-	case stmt.Var.Variable != nil:
-		varName = stmt.Var.Variable.RefName
-	case stmt.Var.Row != nil:
-		varName = stmt.Var.Row.RefName
-	default:
+	varName, ok := forQueryLoopVariableName(conv, stmt.Var)
+	if !ok {
 		return Block{}, errors.New("FOR..IN..SELECT loop variable must be a record, row, or variable")
 	}
 
@@ -726,6 +730,56 @@ func (stmt *plpgSQL_stmt_fors) Convert(conv jsonConversionContext) (block Block,
 	block.Body = append(block.Body, convertedBody...)
 	block.Body = append(block.Body, Goto{Offset: -(1 + bodySize)})
 	return block, nil
+}
+
+// Convert converts the JSON statement into its output form.
+func (stmt *plpgSQL_stmt_dynfors) Convert(conv jsonConversionContext) (block Block, err error) {
+	block.Label = stmt.Label
+	block.IsLoop = true
+
+	varName, ok := forQueryLoopVariableName(conv, stmt.Var)
+	if !ok {
+		return Block{}, errors.New("FOR..IN..EXECUTE loop variable must be a record, row, or variable")
+	}
+
+	cursorName := fmt.Sprintf("__cursor_%s_%d__", varName, stmt.LineNumber)
+	params := make([]string, 0, len(stmt.Params))
+	for _, param := range stmt.Params {
+		params = append(params, param.Expr.Query)
+	}
+
+	convertedBody, err := conv.convertStatements(stmt.Body)
+	if err != nil {
+		return Block{}, err
+	}
+	bodySize := OperationSizeForStatements(convertedBody)
+
+	block.Body = []Statement{
+		ForQueryInit{CursorName: cursorName, Query: stmt.Query.Expression.Query, Params: params, Dynamic: true, LineNumber: stmt.LineNumber},
+		ForQueryNext{CursorName: cursorName, RecordVar: varName, GotoOffset: bodySize + 2},
+	}
+	block.Body = append(block.Body, convertedBody...)
+	block.Body = append(block.Body, Goto{Offset: -(1 + bodySize)})
+	return block, nil
+}
+
+func forQueryLoopVariableName(conv jsonConversionContext, loopVar datum) (string, bool) {
+	switch {
+	case loopVar.Record != nil:
+		return loopVar.Record.RefName, true
+	case loopVar.Variable != nil:
+		return loopVar.Variable.RefName, true
+	case loopVar.Row != nil:
+		if loopVar.Row.RefName != "" && !strings.EqualFold(loopVar.Row.RefName, "(unnamed row)") {
+			return loopVar.Row.RefName, true
+		}
+		if len(loopVar.Row.Fields) == 1 {
+			return conv.datumName(loopVar.Row.Fields[0].VariableNumber)
+		}
+		return loopVar.Row.RefName, true
+	default:
+		return "", false
+	}
 }
 
 // Convert converts the JSON statement into its output form.
