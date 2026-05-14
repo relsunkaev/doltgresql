@@ -25,6 +25,8 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/postgres/parser/types"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -102,7 +104,7 @@ var regprocedurein = framework.Function1{
 				}
 			}
 		}
-		return id.Null, errors.Errorf(`function "%s" does not exist`, input)
+		return id.Null, pgerror.Newf(pgcode.UndefinedFunction, `function "%s" does not exist`, input)
 	},
 }
 

@@ -21,6 +21,8 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 	"github.com/dolthub/doltgresql/utils"
@@ -64,7 +66,7 @@ var regprocin = framework.Function1{
 			if len(funcInterfaces) == 1 {
 				return funcInterfaces[0].InternalID(), nil
 			}
-			return id.Null, errors.Errorf(`"function "%s" does not exist"`, input)
+			return id.Null, pgerror.Newf(pgcode.UndefinedFunction, `function "%s" does not exist`, input)
 		default:
 			return id.Null, errors.Errorf("regproc failed validation")
 		}
