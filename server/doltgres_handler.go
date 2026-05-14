@@ -264,6 +264,9 @@ func castSQLError(err error) error {
 	if sql.ErrGeneratedColumnValue.Is(pgErr) {
 		return pgerror.New(pgcode.GeneratedAlways, pgErr.Error())
 	}
+	if sql.ErrSystemVariableReadOnly.Is(pgErr) {
+		return pgerror.New(pgcode.CantChangeRuntimeParam, pgErr.Error())
+	}
 	switch pgerror.GetPGCode(pgErr) {
 	case pgcode.AmbiguousFunction,
 		pgcode.ArraySubscript,

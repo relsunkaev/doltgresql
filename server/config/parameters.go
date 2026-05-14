@@ -27,6 +27,8 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/variables"
 	"gopkg.in/src-d/go-errors.v1"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/auth"
 )
 
@@ -89,8 +91,7 @@ func ResetAllSessionVariables(ctx *sql.Context) error {
 }
 
 var (
-	ErrInvalidValue          = errors.NewKind("ERROR:  invalid value for parameter \"%s\": \"%s\"")
-	ErrCannotChangeAtRuntime = errors.NewKind("ERROR:  parameter \"%s\" cannot be changed now")
+	ErrInvalidValue = errors.NewKind("ERROR:  invalid value for parameter \"%s\": \"%s\"")
 )
 
 var _ sql.SystemVariable = (*Parameter)(nil)
@@ -162,7 +163,7 @@ func (p *Parameter) InitValue(ctx *sql.Context, val any, global bool) (sql.Syste
 // SetValue implements sql.SystemVariable.
 func (p *Parameter) SetValue(ctx *sql.Context, val any, global bool) (sql.SystemVarValue, error) {
 	if p.IsReadOnly() {
-		return sql.SystemVarValue{}, ErrCannotChangeAtRuntime.New(p.Name)
+		return sql.SystemVarValue{}, pgerror.Newf(pgcode.CantChangeRuntimeParam, `parameter "%s" cannot be changed now`, p.Name)
 	}
 	if p.Context == ParameterContextSuperUser && !currentRoleIsSuperUser(ctx) {
 		return sql.SystemVarValue{}, cerrors.Errorf(`permission denied to set parameter "%s"`, p.Name)
