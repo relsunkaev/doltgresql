@@ -1590,6 +1590,8 @@ var triggerSpecialVariables = map[string]*pgtypes.DoltgresType{
 	"TG_WHEN":         pgtypes.Text,
 	"TG_LEVEL":        pgtypes.Text,
 	"TG_OP":           pgtypes.Text,
+	"TG_EVENT":        pgtypes.Text,
+	"TG_TAG":          pgtypes.Text,
 	"TG_RELID":        pgtypes.Oid,
 	"TG_RELNAME":      pgtypes.Name,
 	"TG_TABLE_NAME":   pgtypes.Name,

@@ -230,7 +230,7 @@ func init() {
 		toInternal("date"):             Date,
 		toInternal("datemultirange"):   DateMultiRange,
 		toInternal("daterange"):        DateRange,
-		toInternal("event_trigger"):    Unknown,
+		toInternal("event_trigger"):    EventTrigger,
 		toInternal("fdw_handler"):      Unknown,
 		toInternal("float4"):           Float32,
 		toInternal("float8"):           Float64,

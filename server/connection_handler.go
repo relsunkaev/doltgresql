@@ -2439,26 +2439,41 @@ func (h *ConnectionHandler) executeBoundWithReplication(clientQuery ConvertedQue
 	var captureCtx *sql.Context
 	callback := h.spoolRowsCallbackWithRowSuppression(clientQuery, rowsAffected, isExecute, suppressRows)
 	if capture != nil {
-		clientCallback := callback
+		capturingCallback := callback
 		callback = func(ctx *sql.Context, res *Result) error {
 			captureCtx = ctx
 			clientResult, err := capture.appendResultAndTrimClient(ctx, res)
 			if err != nil {
 				return err
 			}
-			return clientCallback(ctx, clientResult)
+			return capturingCallback(ctx, clientResult)
 		}
 	}
 	if err := h.doltgresHandler.ComExecuteBoundWithFields(context.Background(), h.mysqlConn, executionQuery.String, boundPlan, formatCodes, resultFields, callback); err != nil {
 		return err
 	}
 	if capture != nil {
-		return h.publishOrBufferReplicationCapture(captureCtx, capture)
-	}
-	if advanceLSN && *rowsAffected > 0 {
+		if err := h.publishOrBufferReplicationCapture(captureCtx, capture); err != nil {
+			return err
+		}
+	} else if advanceLSN && *rowsAffected > 0 {
 		h.advanceOrBufferReplicationLSN()
 	}
+	if err := h.fireDDLCommandEndEventTriggers(clientQuery); err != nil {
+		return err
+	}
 	return nil
+}
+
+func (h *ConnectionHandler) fireDDLCommandEndEventTriggers(query ConvertedQuery) error {
+	if !node.HasDDLCommandEndEventTriggers(query.StatementTag) {
+		return nil
+	}
+	ctx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, query.String)
+	if err != nil {
+		return err
+	}
+	return node.FireDDLCommandEndEventTriggers(ctx, h.doltgresHandler.e, query.StatementTag)
 }
 
 func (h *ConnectionHandler) publishOrBufferReplicationCapture(ctx *sql.Context, capture *replicationChangeCapture) error {
@@ -3898,15 +3913,21 @@ func (h *ConnectionHandler) query(query ConvertedQuery) error {
 	clientCallback := callback
 	callback = func(ctx *sql.Context, res *Result) error {
 		queryCtx = ctx
+		var err error
 		if capture != nil {
 			captureCtx = ctx
 			clientResult, err := capture.appendResultAndTrimClient(ctx, res)
 			if err != nil {
 				return err
 			}
-			return clientCallback(ctx, clientResult)
+			err = clientCallback(ctx, clientResult)
+		} else {
+			err = clientCallback(ctx, res)
 		}
-		return clientCallback(ctx, res)
+		if err != nil {
+			return err
+		}
+		return nil
 	}
 	err = h.doltgresHandler.ComQuery(context.Background(), h.mysqlConn, queryToExecute.String, queryToExecute.AST, callback)
 	if err != nil {
@@ -3936,7 +3957,9 @@ func (h *ConnectionHandler) query(query ConvertedQuery) error {
 	} else if isRollbackQuery(query) {
 		h.clearPendingReplication()
 	}
-
+	if err = h.fireDDLCommandEndEventTriggers(query); err != nil {
+		return err
+	}
 	h.invalidatePreparedPlanCacheIfNeeded(query)
 	h.sendBuffered(makeCommandComplete(query.StatementTag, rowsAffected))
 	return h.finishNotifications(query)
@@ -4566,6 +4589,9 @@ func (h *ConnectionHandler) convertQuery(query string) ([]ConvertedQuery, error)
 	if converted, ok := convertedCreatePolicy(query); ok {
 		return []ConvertedQuery{converted}, nil
 	}
+	if converted, ok := convertedCreateEventTrigger(query); ok {
+		return []ConvertedQuery{converted}, nil
+	}
 	if converted, ok := convertedCreateCollation(query); ok {
 		return []ConvertedQuery{converted}, nil
 	}
@@ -4965,6 +4991,38 @@ func convertedCreatePolicy(query string) (ConvertedQuery, bool) {
 		},
 		StatementTag: "CREATE POLICY",
 	}, true
+}
+
+var createEventTriggerRegex = regexp.MustCompile(`(?is)^\s*CREATE\s+EVENT\s+TRIGGER\s+([a-zA-Z_][a-zA-Z0-9_$]*)\s+ON\s+([a-z_]+)\s+WHEN\s+TAG\s+IN\s*\(([^)]*)\)\s+EXECUTE\s+(?:FUNCTION|PROCEDURE)\s+([a-zA-Z_][a-zA-Z0-9_$]*(?:\.[a-zA-Z_][a-zA-Z0-9_$]*)?)\s*\(\s*\)\s*;?\s*$`)
+var eventTriggerTagRegex = regexp.MustCompile(`'((?:''|[^'])*)'`)
+
+func convertedCreateEventTrigger(query string) (ConvertedQuery, bool) {
+	matches := createEventTriggerRegex.FindStringSubmatch(query)
+	if len(matches) == 0 {
+		return ConvertedQuery{}, false
+	}
+	tags := make([]string, 0)
+	for _, tagMatch := range eventTriggerTagRegex.FindAllStringSubmatch(matches[3], -1) {
+		tags = append(tags, strings.ReplaceAll(tagMatch[1], "''", "'"))
+	}
+	if len(tags) == 0 {
+		return ConvertedQuery{}, false
+	}
+	return ConvertedQuery{
+		String: query,
+		AST: sqlparser.InjectedStatement{
+			Statement: node.NewCreateEventTrigger(matches[1], matches[2], tags, eventTriggerFunctionID(matches[4])),
+		},
+		StatementTag: "CREATE EVENT TRIGGER",
+	}, true
+}
+
+func eventTriggerFunctionID(name string) id.Function {
+	parts := strings.Split(name, ".")
+	if len(parts) == 2 {
+		return id.NewFunction(parts[0], parts[1])
+	}
+	return id.NewFunction("", name)
 }
 
 func convertedCreateCollation(query string) (ConvertedQuery, bool) {
