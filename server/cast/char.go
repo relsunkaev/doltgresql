@@ -81,14 +81,14 @@ func charImplicit() {
 		FromType: pgtypes.BpChar,
 		ToType:   pgtypes.Text,
 		Function: func(ctx *sql.Context, val any, targetType *pgtypes.DoltgresType) (any, error) {
-			return val, nil
+			return strings.TrimRight(val.(string), " "), nil
 		},
 	})
 	framework.MustAddImplicitTypeCast(framework.TypeCast{
 		FromType: pgtypes.BpChar,
 		ToType:   pgtypes.VarChar,
 		Function: func(ctx *sql.Context, val any, targetType *pgtypes.DoltgresType) (any, error) {
-			return handleStringCast(val.(string), targetType)
+			return handleStringCast(strings.TrimRight(val.(string), " "), targetType)
 		},
 	})
 }
