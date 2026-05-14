@@ -174,6 +174,21 @@ func currentRoleIsSuperUser(ctx *sql.Context) bool {
 	return auth.GetRole(ctx.Client().User).IsSuperUser
 }
 
+// CanViewPostgresConfigParameter returns whether the current role may inspect
+// a PostgreSQL configuration parameter's value.
+func CanViewPostgresConfigParameter(ctx *sql.Context, name string) bool {
+	param, ok := postgresConfigParameters[strings.ToLower(name)].(*Parameter)
+	if !ok {
+		return true
+	}
+	switch param.Context {
+	case ParameterContextSuperUser, ParameterContextSuperUserBackend:
+		return currentRoleIsSuperUser(ctx)
+	default:
+		return true
+	}
+}
+
 // IsReadOnly implements sql.SystemVariable.
 func (p *Parameter) IsReadOnly() bool {
 	switch strings.ToLower(p.Name) {

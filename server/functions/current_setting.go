@@ -21,6 +21,7 @@ import (
 
 	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
 	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
+	"github.com/dolthub/doltgresql/server/config"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -56,6 +57,10 @@ var current_setting_text_bool = framework.Function2{
 // getCurSetting returns value set for given user variable. It returns nil instead of an error
 // if it doesn't exist and missingOk is set to true.
 func getCurSetting(ctx *sql.Context, s string, missingOk bool) (any, error) {
+	if !config.CanViewPostgresConfigParameter(ctx, s) {
+		return nil, pgerror.Newf(pgcode.InsufficientPrivilege, `permission denied to examine parameter "%s"`, s)
+	}
+
 	_, variable, err := ctx.GetUserVariable(ctx, s)
 	if err != nil {
 		if missingOk {
