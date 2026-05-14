@@ -636,6 +636,7 @@ func rewriteOracleSourceFile(file string, migrationOverrides map[string]oracleMe
 		return false, err
 	}
 	packageScriptTests := packageScriptTestSlices(parsed)
+	scriptTestHelpers := scriptTestHelperReturns(parsed)
 	packageStrings := packageStringSlices(parsed)
 	changed := false
 	matched := false
@@ -650,7 +651,7 @@ func rewriteOracleSourceFile(file string, migrationOverrides map[string]oracleMe
 		ast.Inspect(fn.Body, func(node ast.Node) bool {
 			lit, ok := node.(*ast.CompositeLit)
 			if ok && isScriptTestSliceType(lit.Type) {
-				sliceChanged, sliceMatched := rewriteOracleScriptTestSlice(lit, source, &ordinal, stringSlices, migrationOverrides, keyFilter, postgresIDFilter)
+				sliceChanged, sliceMatched := rewriteOracleScriptTestSlice(lit, source, &ordinal, stringSlices, migrationOverrides, scriptTestHelpers, keyFilter, postgresIDFilter)
 				if sliceChanged {
 					changed = true
 				}
@@ -662,7 +663,7 @@ func rewriteOracleSourceFile(file string, migrationOverrides map[string]oracleMe
 				return true
 			}
 			if lit, ok := packageScriptTestSliceForRunScripts(call, packageScriptTests); ok {
-				sliceChanged, sliceMatched := rewriteOracleScriptTestSlice(lit, source, &ordinal, stringSlices, migrationOverrides, keyFilter, postgresIDFilter)
+				sliceChanged, sliceMatched := rewriteOracleScriptTestSlice(lit, source, &ordinal, stringSlices, migrationOverrides, scriptTestHelpers, keyFilter, postgresIDFilter)
 				if sliceChanged {
 					changed = true
 				}
@@ -685,11 +686,11 @@ func rewriteOracleSourceFile(file string, migrationOverrides map[string]oracleMe
 	return matched, os.WriteFile(file, buf.Bytes(), 0644)
 }
 
-func rewriteOracleScriptTestSlice(lit *ast.CompositeLit, source string, ordinal *int, stringSlices map[string][]string, migrationOverrides map[string]oracleMeta, keyFilter map[string]struct{}, postgresIDFilter map[string]struct{}) (bool, bool) {
+func rewriteOracleScriptTestSlice(lit *ast.CompositeLit, source string, ordinal *int, stringSlices map[string][]string, migrationOverrides map[string]oracleMeta, scriptTestHelpers map[string]*ast.CompositeLit, keyFilter map[string]struct{}, postgresIDFilter map[string]struct{}) (bool, bool) {
 	changed := false
 	matched := false
 	for _, element := range lit.Elts {
-		scriptLit, ok := element.(*ast.CompositeLit)
+		scriptLit, generatedHelper, ok := scriptTestLiteralForElement(element, scriptTestHelpers)
 		if !ok {
 			continue
 		}
@@ -708,6 +709,9 @@ func rewriteOracleScriptTestSlice(lit *ast.CompositeLit, source string, ordinal 
 				continue
 			}
 			*ordinal = *ordinal + 1
+			if generatedHelper {
+				continue
+			}
 			key := fmt.Sprintf("%s#%04d", source, *ordinal)
 			if len(keyFilter) > 0 {
 				if _, ok := keyFilter[key]; !ok {
