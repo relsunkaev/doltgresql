@@ -472,6 +472,41 @@ func TestParseForeachArrayLoop(t *testing.T) {
 	}
 }
 
+func TestParseForeachSliceArrayLoop(t *testing.T) {
+	ops, err := Parse(`CREATE FUNCTION test_block(values_in INT[]) RETURNS void AS $$
+		DECLARE
+			row_slice INT[];
+		BEGIN
+			FOREACH row_slice SLICE 1 IN ARRAY values_in LOOP
+				PERFORM row_slice;
+			END LOOP;
+		END;
+	$$ LANGUAGE plpgsql;`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var initOp *InterpreterOperation
+	for i := range ops {
+		if ops[i].OpCode == OpCode_ForEachInit {
+			initOp = &ops[i]
+			break
+		}
+	}
+	if initOp == nil {
+		t.Fatalf("expected FOREACH SLICE to lower to foreach init; ops: %#v", ops)
+	}
+	if strings.TrimSpace(initOp.PrimaryData) != "$1" {
+		t.Fatalf("FOREACH SLICE expression = %q; op: %#v", initOp.PrimaryData, initOp)
+	}
+	if len(initOp.SecondaryData) != 1 || initOp.SecondaryData[0] != "values_in" {
+		t.Fatalf("FOREACH SLICE bindings = %#v; op: %#v", initOp.SecondaryData, initOp)
+	}
+	if initOp.Options["slice"] != "1" || initOp.Options["target"] != "row_slice" {
+		t.Fatalf("FOREACH SLICE options = %#v; op: %#v", initOp.Options, initOp)
+	}
+}
+
 func TestParseDynamicExecuteIntoRecord(t *testing.T) {
 	ops, err := Parse(`CREATE FUNCTION test_block() RETURNS text AS $$
 		DECLARE

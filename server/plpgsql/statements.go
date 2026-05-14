@@ -436,6 +436,44 @@ func (stmt ForQueryInit) AppendOperations(ops *[]InterpreterOperation, stack *In
 	return nil
 }
 
+// ForEachInit evaluates a FOREACH array expression and stores the iteration values in a named cursor.
+type ForEachInit struct {
+	CursorName   string
+	VariableName string
+	Expression   string
+	Slice        int32
+	LineNumber   int32
+}
+
+var _ Statement = ForEachInit{}
+
+// OperationSize implements the interface Statement.
+func (ForEachInit) OperationSize() int32 {
+	return 1
+}
+
+// AppendOperations implements the interface Statement.
+func (stmt ForEachInit) AppendOperations(ops *[]InterpreterOperation, stack *InterpreterStack) error {
+	expression, referencedVariables, err := substituteVariableReferences(stmt.Expression, stack)
+	if err != nil {
+		return err
+	}
+	options := diagnosticStatementOptions(stmt.LineNumber, "FOREACH", stmt.Expression)
+	if options == nil {
+		options = make(map[string]string)
+	}
+	options["slice"] = strconv.Itoa(int(stmt.Slice))
+	options["target"] = stmt.VariableName
+	*ops = append(*ops, InterpreterOperation{
+		OpCode:        OpCode_ForEachInit,
+		PrimaryData:   expression,
+		SecondaryData: referencedVariables,
+		Target:        stmt.CursorName,
+		Options:       options,
+	})
+	return nil
+}
+
 // ForQueryNext fetches the next row from a named cursor and assigns it to a record variable.
 // When the cursor is exhausted it jumps forward by GotoOffset (like an If), exiting the loop.
 type ForQueryNext struct {

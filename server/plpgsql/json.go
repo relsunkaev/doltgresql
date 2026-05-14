@@ -829,9 +829,6 @@ func (stmt *plpgSQL_stmt_foreach_a) Convert(conv jsonConversionContext) (block B
 	block.Label = stmt.Label
 	block.IsLoop = true
 
-	if stmt.Slice != 0 {
-		return Block{}, errors.New("FOREACH SLICE is not supported")
-	}
 	varName, ok := conv.datumName(stmt.VariableNumber)
 	if !ok {
 		return Block{}, errors.Errorf("FOREACH target datum %d could not be resolved", stmt.VariableNumber)
@@ -844,8 +841,21 @@ func (stmt *plpgSQL_stmt_foreach_a) Convert(conv jsonConversionContext) (block B
 	}
 	bodySize := OperationSizeForStatements(convertedBody)
 
+	var loopInit Statement
+	if stmt.Slice == 0 {
+		loopInit = ForQueryInit{CursorName: cursorName, Query: fmt.Sprintf("SELECT unnest(%s)", stmt.Expression.Expression.Query)}
+	} else {
+		loopInit = ForEachInit{
+			CursorName:   cursorName,
+			VariableName: varName,
+			Expression:   stmt.Expression.Expression.Query,
+			Slice:        stmt.Slice,
+			LineNumber:   stmt.LineNumber,
+		}
+	}
+
 	block.Body = []Statement{
-		ForQueryInit{CursorName: cursorName, Query: fmt.Sprintf("SELECT unnest(%s)", stmt.Expression.Expression.Query)},
+		loopInit,
 		ForQueryNext{CursorName: cursorName, RecordVar: varName, GotoOffset: bodySize + 2},
 	}
 	block.Body = append(block.Body, convertedBody...)

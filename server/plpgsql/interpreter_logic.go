@@ -758,6 +758,36 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 			}
 			state.lastRowCount = rowCountFromResultRows(rows)
 			stack.InitCursor(operation.Target, schema, rows)
+		case OpCode_ForEachInit:
+			targetName := operation.Options["target"]
+			target := stack.GetVariable(targetName)
+			if target.Type == nil {
+				return nil, false, fmt.Errorf("variable `%s` could not be found", targetName)
+			}
+			slice, err := strconv.Atoi(operation.Options["slice"])
+			if err != nil {
+				return nil, false, err
+			}
+			restoreCallSite := pushDiagnosticCallSite(ctx, operation)
+			schema, rows, err := iFunc.QueryMultiReturn(ctx, stack, "SELECT "+operation.PrimaryData+";", operation.SecondaryData)
+			restoreCallSite()
+			if err != nil {
+				state.lastExceptionContext = diagnosticPGExceptionContext(ctx, iFunc, operation)
+				return nil, false, err
+			}
+			if len(schema) != 1 || len(rows) != 1 || len(rows[0]) != 1 {
+				return nil, false, errors.New("FOREACH expression must return a single array value")
+			}
+			values, err := foreachArrayIterationValues(rows[0][0], int32(slice))
+			if err != nil {
+				return nil, false, err
+			}
+			cursorRows := make([]sql.Row, len(values))
+			for i, value := range values {
+				cursorRows[i] = sql.Row{value}
+			}
+			state.lastRowCount = int64(len(cursorRows))
+			stack.InitCursor(operation.Target, sql.Schema{{Name: targetName, Type: target.Type}}, cursorRows)
 		case OpCode_ForQueryNext:
 			schema, row, ok := stack.AdvanceCursor(operation.PrimaryData)
 			if !ok {
@@ -846,6 +876,64 @@ func rowCountFromResultRows(rows []sql.Row) int64 {
 		return int64(gmstypes.GetOkResult(rows[0]).RowsAffected)
 	}
 	return int64(len(rows))
+}
+
+func foreachArrayIterationValues(value any, slice int32) ([]any, error) {
+	if slice < 0 {
+		return nil, errors.New("FOREACH SLICE must be non-negative")
+	}
+	arr, ok := pgtypes.ArrayElements(value)
+	if !ok {
+		return nil, errors.Errorf("FOREACH expression must yield an array, got %T", value)
+	}
+	if len(arr) == 0 {
+		return nil, nil
+	}
+	if slice == 0 {
+		return flattenForeachArrayValues(arr), nil
+	}
+	depth := foreachArrayDepth(arr)
+	if int(slice) > depth {
+		return nil, errors.Errorf("FOREACH SLICE %d is out of bounds for array with %d dimensions", slice, depth)
+	}
+	return collectForeachArraySlices(arr, depth, int(slice)), nil
+}
+
+func flattenForeachArrayValues(value any) []any {
+	arr, ok := pgtypes.ArrayElements(value)
+	if !ok {
+		return []any{value}
+	}
+	values := make([]any, 0)
+	for _, item := range arr {
+		values = append(values, flattenForeachArrayValues(item)...)
+	}
+	return values
+}
+
+func foreachArrayDepth(arr []any) int {
+	for _, item := range arr {
+		nested, ok := pgtypes.ArrayElements(item)
+		if ok {
+			return 1 + foreachArrayDepth(nested)
+		}
+	}
+	return 1
+}
+
+func collectForeachArraySlices(value any, depth int, slice int) []any {
+	if depth <= slice {
+		return []any{value}
+	}
+	arr, ok := pgtypes.ArrayElements(value)
+	if !ok {
+		return []any{value}
+	}
+	values := make([]any, 0)
+	for _, item := range arr {
+		values = append(values, collectForeachArraySlices(item, depth-1, slice)...)
+	}
+	return values
 }
 
 func returnRecordToRow(returnType *pgtypes.DoltgresType, record []pgtypes.RecordValue) sql.Row {

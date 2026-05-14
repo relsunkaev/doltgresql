@@ -43,6 +43,7 @@ const (
 	OpCode_ForQueryInit OpCode = 19 // Initialize a cursor for FOR record IN query LOOP
 	OpCode_ForQueryNext OpCode = 20 // Advance cursor and assign next row to record, or jump to exit
 	OpCode_ReturnNext   OpCode = 21 // https://www.postgresql.org/docs/current/plpgsql-control-structures.html#PLPGSQL-STATEMENTS-RETURNING-RETURN-NEXT
+	OpCode_ForEachInit  OpCode = 22 // Initialize a cursor for FOREACH ... IN ARRAY LOOP
 	// New OpCode values MUST be added to the END of this list!
 	// Function OpCodes are persisted to disk, so these values MUST be stable across Doltgres versions.
 )
