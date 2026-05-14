@@ -43,6 +43,10 @@ func BeforeTableDropColumn(ctx *sql.Context, _ sql.StatementRunner, nodeInterfac
 	if doltTable == nil {
 		return n, nil
 	}
+	if dependentColumn, ok := generatedColumnDependingOnDroppedColumn(ctx, n.TargetSchema(), n.Column); ok {
+		tableName := doltTable.TableName()
+		return nil, pgerror.Newf(pgcode.DependentObjectsStillExist, `cannot drop column %s of table %s because generated column %s depends on it`, n.Column, tableName.Name, dependentColumn)
+	}
 	fkTable, ok := any(doltTable).(sql.ForeignKeyTable)
 	if !ok {
 		return n, nil
@@ -60,6 +64,18 @@ func BeforeTableDropColumn(ctx *sql.Context, _ sql.StatementRunner, nodeInterfac
 		}
 	}
 	return n, nil
+}
+
+func generatedColumnDependingOnDroppedColumn(ctx *sql.Context, schema sql.Schema, droppedColumn string) (string, bool) {
+	for _, col := range schema {
+		if col.Generated == nil || strings.EqualFold(col.Name, droppedColumn) {
+			continue
+		}
+		if plan.ColumnReferencedInDefaultValueExpression(ctx, col.Generated, droppedColumn) {
+			return col.Name, true
+		}
+	}
+	return "", false
 }
 
 // AfterTableDropColumn handles updating various table columns, alongside other validation that's unique to Doltgres.
