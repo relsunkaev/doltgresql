@@ -221,8 +221,7 @@ func TestExplicitPgTempFunctionLookupResolvesTemporaryFunctionRepro(t *testing.T
 					Query: `RESET search_path;`,
 				},
 				{
-					Query:    `SELECT pgtemp_lookup_probe();`,
-					Expected: []sql.Row{{"public"}},
+					Query: `SELECT pgtemp_lookup_probe();`, PostgresOracle: ScriptTestPostgresOracle{ID: "temp-table-correctness-repro-test-testexplicitpgtempfunctionlookupresolvestemporaryfunctionrepro-0001-select-pgtemp_lookup_probe"},
 				},
 				{
 					Query: `SET search_path = pg_temp, public;`,
@@ -232,8 +231,7 @@ func TestExplicitPgTempFunctionLookupResolvesTemporaryFunctionRepro(t *testing.T
 					Expected: []sql.Row{{"public"}},
 				},
 				{
-					Query:    `SELECT pg_temp.pgtemp_lookup_probe();`,
-					Expected: []sql.Row{{"temp"}},
+					Query: `SELECT pg_temp.pgtemp_lookup_probe();`, PostgresOracle: ScriptTestPostgresOracle{ID: "temp-table-correctness-repro-test-testexplicitpgtempfunctionlookupresolvestemporaryfunctionrepro-0003-select-pg_temp.pgtemp_lookup_probe"},
 				},
 			},
 		},
@@ -262,15 +260,13 @@ func TestTemporaryTableShadowsPersistentTableRepro(t *testing.T) {
 					Query: `SELECT id, label FROM temp_shadow_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "temp-table-correctness-repro-test-testtemporarytableshadowspersistenttablerepro-0001-select-id-label-from-temp_shadow_items"},
 				},
 				{
-					Query:    `SELECT id, label FROM public.temp_shadow_items;`,
-					Expected: []sql.Row{{1, "persistent"}},
+					Query: `SELECT id, label FROM public.temp_shadow_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "temp-table-correctness-repro-test-testtemporarytableshadowspersistenttablerepro-0002-select-id-label-from-public.temp_shadow_items"},
 				},
 				{
 					Query: `DROP TABLE temp_shadow_items;`,
 				},
 				{
-					Query:    `SELECT id, label FROM temp_shadow_items;`,
-					Expected: []sql.Row{{1, "persistent"}},
+					Query: `SELECT id, label FROM temp_shadow_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "temp-table-correctness-repro-test-testtemporarytableshadowspersistenttablerepro-0003-select-id-label-from-temp_shadow_items"},
 				},
 			},
 		},
@@ -301,11 +297,7 @@ func TestSchemaQualifiedInsertIgnoresTemporaryTableShadowRepro(t *testing.T) {
 				{
 					Query: `SELECT id, label
 						FROM temp_shadow_insert_items
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, "persistent"},
-						{3, "qualified persistent insert"},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "temp-table-correctness-repro-test-testschemaqualifiedinsertignorestemporarytableshadowrepro-0001-select-id-label-from-temp_shadow_insert_items"},
 				},
 			},
 		},
@@ -335,8 +327,7 @@ func TestSchemaQualifiedUpdateIgnoresTemporaryTableShadowRepro(t *testing.T) {
 					Query: `DROP TABLE temp_shadow_update_items;`,
 				},
 				{
-					Query:    `SELECT id, label FROM temp_shadow_update_items;`,
-					Expected: []sql.Row{{1, "qualified persistent update"}},
+					Query: `SELECT id, label FROM temp_shadow_update_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "temp-table-correctness-repro-test-testschemaqualifiedupdateignorestemporarytableshadowrepro-0001-select-id-label-from-temp_shadow_update_items"},
 				},
 			},
 		},
@@ -364,8 +355,7 @@ func TestSchemaQualifiedDeleteIgnoresTemporaryTableShadowRepro(t *testing.T) {
 					Query: `DROP TABLE temp_shadow_delete_items;`,
 				},
 				{
-					Query:    `SELECT count(*) FROM temp_shadow_delete_items;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM temp_shadow_delete_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "temp-table-correctness-repro-test-testschemaqualifieddeleteignorestemporarytableshadowrepro-0001-select-count-*-from-temp_shadow_delete_items"},
 				},
 			},
 		},
@@ -394,8 +384,7 @@ func TestSchemaQualifiedAlterIgnoresTemporaryTableShadowRepro(t *testing.T) {
 					Query: `DROP TABLE temp_shadow_alter_items;`,
 				},
 				{
-					Query:    `SELECT id, marker FROM temp_shadow_alter_items;`,
-					Expected: []sql.Row{{1, "qualified persistent alter"}},
+					Query: `SELECT id, marker FROM temp_shadow_alter_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "temp-table-correctness-repro-test-testschemaqualifiedalterignorestemporarytableshadowrepro-0001-select-id-marker-from-temp_shadow_alter_items"},
 				},
 			},
 		},
@@ -423,8 +412,7 @@ func TestSchemaQualifiedTruncateIgnoresTemporaryTableShadowRepro(t *testing.T) {
 					Query: `DROP TABLE temp_shadow_truncate_items;`,
 				},
 				{
-					Query:    `SELECT count(*) FROM temp_shadow_truncate_items;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM temp_shadow_truncate_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "temp-table-correctness-repro-test-testschemaqualifiedtruncateignorestemporarytableshadowrepro-0001-select-count-*-from-temp_shadow_truncate_items"},
 				},
 			},
 		},
@@ -449,15 +437,13 @@ func TestSchemaQualifiedDropIgnoresTemporaryTableShadowRepro(t *testing.T) {
 					Query: `DROP TABLE public.temp_shadow_drop_items;`,
 				},
 				{
-					Query:    `SELECT id, label FROM temp_shadow_drop_items;`,
-					Expected: []sql.Row{{2, "temporary"}},
+					Query: `SELECT id, label FROM temp_shadow_drop_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "temp-table-correctness-repro-test-testschemaqualifieddropignorestemporarytableshadowrepro-0001-select-id-label-from-temp_shadow_drop_items"},
 				},
 				{
 					Query: `DROP TABLE temp_shadow_drop_items;`,
 				},
 				{
-					Query:       `SELECT id, label FROM public.temp_shadow_drop_items;`,
-					ExpectedErr: `not found`,
+					Query: `SELECT id, label FROM public.temp_shadow_drop_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "temp-table-correctness-repro-test-testschemaqualifieddropignorestemporarytableshadowrepro-0002-select-id-label-from-public.temp_shadow_drop_items"},
 				},
 			},
 		},

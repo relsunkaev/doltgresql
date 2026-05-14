@@ -1603,78 +1603,150 @@
       "source": "testing/go/alter_table_test.go:TestAlterTable",
       "ordinal": 90,
       "scriptName": "alter table add primary key with timestamp column default values",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0090-select-created_at-is-not-null",
       "suggestedId": "alter-table-test-testaltertable-0090-select-created_at-is-not-null",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "select created_at is not null from t1 where id = 1;",
       "querySha256": "fd0a2006ce138386d294674f494dcc09f01d858dea2d9359d28417284e2a46a9",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS t1 CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/alter_table_test.go:TestAlterTable#0091",
       "source": "testing/go/alter_table_test.go:TestAlterTable",
       "ordinal": 91,
       "scriptName": "alter table add primary key with timestamp column default values",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0091-select-updated_at-is-not-null",
       "suggestedId": "alter-table-test-testaltertable-0091-select-updated_at-is-not-null",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "select updated_at is not null from t1 where id = 1;",
       "querySha256": "1346eb4e7ae4368c4b350758565821197015d5efbe484f496f54214139d14cea",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS t1 CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/alter_table_test.go:TestAlterTable#0092",
       "source": "testing/go/alter_table_test.go:TestAlterTable",
       "ordinal": 92,
       "scriptName": "alter table add primary key with timestamp column default values",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0092-select-created_at-=-updated_at-from",
       "suggestedId": "alter-table-test-testaltertable-0092-select-created_at-=-updated_at-from",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "select created_at = updated_at from t1 where id = 1;",
       "querySha256": "5066f505bfb47201789b79fb2c0279abb87ef78c719f0fd9cf82e153a71563aa",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS t1 CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/alter_table_test.go:TestAlterTable#0093",
       "source": "testing/go/alter_table_test.go:TestAlterTable",
       "ordinal": 93,
       "scriptName": "alter table add primary key with uuid column default values",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0093-select-uid-is-not-null",
       "suggestedId": "alter-table-test-testaltertable-0093-select-uid-is-not-null",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "select uid is not null from t1 where id = 1;",
       "querySha256": "3f2cb850c775eec36081332790dfc51e3490fb5f542d6ccdd87600e6a99d5222",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS t1 CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/alter_table_test.go:TestAlterTable#0094",
       "source": "testing/go/alter_table_test.go:TestAlterTable",
       "ordinal": 94,
       "scriptName": "alter table add primary key with uuid column default values",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0094-select-uid-is-not-null",
       "suggestedId": "alter-table-test-testaltertable-0094-select-uid-is-not-null",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "select uid is not null from t1 where id = 2;",
       "querySha256": "2f5ad175617c113624a26a831108d0beff851349dbdf9f4b5a89845051be6d7f",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS t1 CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/alter_table_test.go:TestAlterTable#0095",
       "source": "testing/go/alter_table_test.go:TestAlterTable",
       "ordinal": 95,
       "scriptName": "alter table add primary key with uuid column default values",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0095-select-select-uid-from-t1",
       "suggestedId": "alter-table-test-testaltertable-0095-select-select-uid-from-t1",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "select (select uid from t1 where id = 2) = (select uid from t1 where id = 1);",
       "querySha256": "baa4ff53167c343c7b008654486328b460ce22b4d4484face759cdf49ecc32ac",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS t1 CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/alter_table_test.go:TestAlterTable#0096",
@@ -1959,7 +2031,7 @@
       "postgresId": "alter-table-test-testaltertable-0108-select-t1a-.x-t1a-.@1",
       "suggestedId": "alter-table-test-testaltertable-0108-select-t1a-.x-t1a-.@1",
       "compare": "sqlstate",
-      "expectedKind": "rows",
+      "expectedKind": "error",
       "sqlstate": "42601",
       "errorSeverity": "ERROR",
       "query": "SELECT (t1a).x, (t1a).@1 FROM t2;",
@@ -2649,26 +2721,41 @@
       "source": "testing/go/alter_table_test.go:TestAlterTable",
       "ordinal": 141,
       "scriptName": "setting foreign key to SET NULL on NOT NULL defined column",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0141-alter-table-only-public.products-add",
       "suggestedId": "alter-table-test-testaltertable-0141-alter-table-only-public.products-add",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "ALTER TABLE ONLY public.products\n\t\t   ADD CONSTRAINT fk_category_id FOREIGN KEY (category_id) REFERENCES public.categories(category_id) ON UPDATE SET NULL ON DELETE SET NULL;",
       "querySha256": "fc6f716ba18259a8f4ac8dbb268908787ffc13bdf1d3335f4d806a0ccd7b3f7a",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP TABLE IF EXISTS public.products CASCADE",
+        "DROP TABLE IF EXISTS public.categories CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/alter_table_test.go:TestAlterTable#0142",
       "source": "testing/go/alter_table_test.go:TestAlterTable",
       "ordinal": 142,
       "scriptName": "setting foreign key to SET NULL on NOT NULL defined column",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0142-delete-from-categories-where-category_id",
       "suggestedId": "alter-table-test-testaltertable-0142-delete-from-categories-where-category_id",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "23502",
+      "errorSeverity": "ERROR",
       "query": "DELETE FROM categories WHERE category_id = 1;",
       "querySha256": "0c7b7b4d62e090eef69584f554e2545a0867f012740ed651891b5884ea81a01a",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "cleanup": [
+        "DROP TABLE IF EXISTS public.products CASCADE",
+        "DROP TABLE IF EXISTS public.categories CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/alter_table_test.go:TestAlterTable#0143",
@@ -2732,13 +2819,21 @@
       "source": "testing/go/alter_table_test.go:TestAlterTable",
       "ordinal": 146,
       "scriptName": "foreign key names can be the same but should be on different tables",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0146-alter-table-only-public.boards-add",
       "suggestedId": "alter-table-test-testaltertable-0146-alter-table-only-public.boards-add",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "ALTER TABLE ONLY public.boards\n    ADD CONSTRAINT fk_project_id FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;",
       "querySha256": "95d0fa9caf9bb383aedc1e0dfec266ed584251db44c0b7c62925a9f4260654b4",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP TABLE IF EXISTS public.boards CASCADE",
+        "DROP TABLE IF EXISTS public.project_assignments CASCADE",
+        "DROP TABLE IF EXISTS public.projects CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     }
   ]
 }

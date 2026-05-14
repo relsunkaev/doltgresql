@@ -585,16 +585,13 @@ func TestAlterTable(t *testing.T) {
 					Query: "ALTER TABLE ONLY public.t1 ADD CONSTRAINT t1_pkey PRIMARY KEY (id);",
 				},
 				{
-					Query:    "select created_at is not null from t1 where id = 1;",
-					Expected: []sql.Row{{"t"}},
+					Query: "select created_at is not null from t1 where id = 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0090-select-created_at-is-not-null"},
 				},
 				{
-					Query:    "select updated_at is not null from t1 where id = 1;",
-					Expected: []sql.Row{{"t"}},
+					Query: "select updated_at is not null from t1 where id = 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0091-select-updated_at-is-not-null"},
 				},
 				{
-					Query:    "select created_at = updated_at from t1 where id = 1;",
-					Expected: []sql.Row{{"t"}},
+					Query: "select created_at = updated_at from t1 where id = 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0092-select-created_at-=-updated_at-from"},
 				},
 			},
 		},
@@ -613,17 +610,15 @@ func TestAlterTable(t *testing.T) {
 					Query: "ALTER TABLE ONLY public.t1 ADD CONSTRAINT t1_pkey PRIMARY KEY (id);",
 				},
 				{
-					Query:    "select uid is not null from t1 where id = 1;",
-					Expected: []sql.Row{{"t"}},
+					Query: "select uid is not null from t1 where id = 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0093-select-uid-is-not-null"},
 				},
 				{
-					Query:    "select uid is not null from t1 where id = 2;",
-					Expected: []sql.Row{{"t"}},
+					Query: "select uid is not null from t1 where id = 2;", PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0094-select-uid-is-not-null"},
 				},
 				{
-					Query:    "select (select uid from t1 where id = 2) = (select uid from t1 where id = 1);",
-					Skip:     true, // panic in equality function
-					Expected: []sql.Row{{"f"}},
+					Query: "select (select uid from t1 where id = 2) = (select uid from t1 where id = 1);",
+					Skip:  true, PostgresOracle: // panic in equality function
+					ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0095-select-select-uid-from-t1"},
 				},
 			},
 		},
@@ -928,13 +923,11 @@ func TestAlterTable(t *testing.T) {
 				{
 					// Postgres allows this query to run successfully, but MySQL don't.
 					Query: `ALTER TABLE ONLY public.products
-		   ADD CONSTRAINT fk_category_id FOREIGN KEY (category_id) REFERENCES public.categories(category_id) ON UPDATE SET NULL ON DELETE SET NULL;`,
-					Expected: []sql.Row{},
+		   ADD CONSTRAINT fk_category_id FOREIGN KEY (category_id) REFERENCES public.categories(category_id) ON UPDATE SET NULL ON DELETE SET NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0141-alter-table-only-public.products-add"},
 				},
 				{
 					// null value in column "category_id" of relation "products" violates not-null constraint
-					Query:       `DELETE FROM categories WHERE category_id = 1;`,
-					ExpectedErr: `null value in column "category_id" violates not-null constraint`,
+					Query: `DELETE FROM categories WHERE category_id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0142-delete-from-categories-where-category_id"},
 				},
 			},
 		},
@@ -1010,8 +1003,7 @@ func TestAlterTable(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `ALTER TABLE ONLY public.boards
-    ADD CONSTRAINT fk_project_id FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;`,
-					Expected: []sql.Row{},
+    ADD CONSTRAINT fk_project_id FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0146-alter-table-only-public.boards-add"},
 				},
 			},
 		},
