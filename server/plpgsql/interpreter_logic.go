@@ -722,6 +722,9 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 		case OpCode_ForQueryNext:
 			schema, row, ok := stack.AdvanceCursor(operation.PrimaryData)
 			if !ok {
+				if err := setFoundVariable(ctx, stack, stack.CursorAdvanced(operation.PrimaryData)); err != nil {
+					return nil, false, err
+				}
 				stack.CloseCursor(operation.PrimaryData)
 				// Jump forward past the loop body and back-goto, same mechanism as OpCode_If.
 				counter = operation.Index - 1

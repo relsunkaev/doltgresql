@@ -311,6 +311,12 @@ func (is *InterpreterStack) AdvanceCursor(name string) (sql.Schema, sql.Row, boo
 	return cs.Schema, row, true
 }
 
+// CursorAdvanced returns whether at least one row has been consumed from the named cursor.
+func (is *InterpreterStack) CursorAdvanced(name string) bool {
+	cs, ok := is.cursors[name]
+	return ok && cs.Index > 0
+}
+
 // CloseCursor removes the named cursor from the stack.
 func (is *InterpreterStack) CloseCursor(name string) {
 	delete(is.cursors, name)
