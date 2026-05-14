@@ -25,6 +25,8 @@ import (
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/core/procedures"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/auth"
 )
 
@@ -133,6 +135,9 @@ func dropProcedure(ctx *sql.Context, procColl *procedures.Collection, fn *Routin
 	procExists := procColl.HasProcedure(ctx, procId)
 	if !procExists && ifExists {
 		return nil
+	}
+	if !procExists {
+		return pgerror.Newf(pgcode.UndefinedFunction, "procedure %s does not exist", fn.RoutineName)
 	}
 	proc, err := procColl.GetProcedure(ctx, procId)
 	if err != nil {
