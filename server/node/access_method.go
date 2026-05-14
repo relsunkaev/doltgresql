@@ -22,6 +22,8 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/accessmethod"
 	"github.com/dolthub/doltgresql/server/auth"
 )
@@ -174,7 +176,7 @@ func requireAccessMethodSuperuser(ctx *sql.Context) error {
 		userRole = auth.GetRole(ctx.Client().User)
 	})
 	if !userRole.IsValid() || !userRole.IsSuperUser {
-		return errors.New("must be superuser")
+		return pgerror.New(pgcode.InsufficientPrivilege, "must be superuser")
 	}
 	return nil
 }
