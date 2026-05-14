@@ -26,6 +26,7 @@ import (
 
 	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
 	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
+	pgexprs "github.com/dolthub/doltgresql/server/expression"
 	pgnode "github.com/dolthub/doltgresql/server/node"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -289,12 +290,40 @@ func validateColumnDefault(ctx *sql.Context, col *sql.Column, colDefault *sql.Co
 		return err
 	}
 
+	if !allowColumnReferences {
+		if err = validateDefaultRegclassCasts(ctx, colDefault.Expr); err != nil {
+			return err
+		}
+	}
+
 	// validate type of default expression
 	if err = colDefault.CheckType(ctx); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func validateDefaultRegclassCasts(ctx *sql.Context, expr sql.Expression) error {
+	var err error
+	sql.Inspect(ctx, expr, func(ctx *sql.Context, e sql.Expression) bool {
+		cast, ok := e.(*pgexprs.ExplicitCast)
+		if !ok {
+			return true
+		}
+		castType, ok := cast.Type(ctx).(*pgtypes.DoltgresType)
+		if !ok || castType.ID != pgtypes.Regclass.ID || !defaultRegclassCastHasLiteralInput(cast) {
+			return true
+		}
+		_, err = cast.Eval(ctx, nil)
+		return err == nil
+	})
+	return err
+}
+
+func defaultRegclassCastHasLiteralInput(cast *pgexprs.ExplicitCast) bool {
+	_, ok := cast.Child().(*expression.Literal)
+	return ok
 }
 
 func validateColumnDefaultExpressionText(expr string) error {
