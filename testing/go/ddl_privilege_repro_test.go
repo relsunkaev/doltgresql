@@ -748,9 +748,8 @@ func TestCreateTableAsRequiresSchemaCreatePrivilegeGuard(t *testing.T) {
 					Query: `CREATE TABLE ctas_private_schema.created_without_create AS
 						SELECT id, label FROM ctas_schema_source;`,
 
-					Username:    `ctas_schema_creator`,
-					Password:    `ctas`,
-					ExpectedErr: `permission denied for schema ctas_private_schema`,
+					Username: `ctas_schema_creator`,
+					Password: `ctas`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testcreatetableasrequiresschemacreateprivilegeguard-0001-create-table-as-select-id"},
 				},
 				{
 					Query: `SELECT to_regclass('ctas_private_schema.created_without_create')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "ddl-privilege-repro-test-testcreatetableasrequiresschemacreateprivilegeguard-0002-select-to_regclass-::text"},
