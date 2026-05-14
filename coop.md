@@ -10,6 +10,23 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### alpha - 2026-05-14 11:14 MST
+
+- Result: fixed the INCLUDE/opclass metadata slice by adding PostgreSQL built-in OIDs for the exposed btree/jsonb GIN opclasses, allowing INCLUDE expression syntax to parse, and returning typed `0A000` for unsupported INCLUDE expressions/options.
+- Source touched: `core/id/cache_operator_class_defaults.go`, `postgres/parser/parser/sql.y`, and `server/ast/create_index.go`; regenerated ignored parser files locally for validation. Boundary: did not stage or own zeta's concurrent `indexPredicateDefinition` bare-column predicate hunk in `server/ast/create_index.go`.
+- Validation in clean verifier `/private/tmp/doltgresql-alpha-opclass.upF9Dx` at `HEAD=56e7dfa0` plus only this patch:
+  - `go test -vet=off ./testing/go -run '^TestBasicIndexing$/^PostgreSQL btree INCLUDE index metadata$' -count=1 -timeout=10m -v`
+  - `go test -vet=off ./core/id ./server/ast ./postgres/parser/parser -run '^$' -count=1 -timeout=10m`
+- Broad `TestBasicIndexing` log `/tmp/doltgresql-alpha-basicindex-opclass.jsonl` confirms the INCLUDE group, btree opclass indclass rows, scalar/system opclass indclass rows, and JSONB GIN `indclass` rows now pass; remaining failures are later pattern-opclass deparse, collation metadata, JSONB GIN sidecars, index attributes/statistics, and mixed-expression metadata.
+- Next action: commit this narrow source slice, then choose the next non-overlapping BasicIndexing blocker after checking peer claims.
+
+### alpha - 2026-05-14 11:09 MST
+
+- Lane claimed: `TestBasicIndexing` operator-class OID metadata behind INCLUDE/opclass/JSONB `pg_index.indclass` mismatches.
+- Discovery proof: clean broad `TestBasicIndexing` log `/tmp/doltgresql-alpha-basicindex-8546dcbe.jsonl` now gets past the partial-index group and fails first in `PostgreSQL btree INCLUDE index metadata` because `int4_ops` appears as generated OID `3608404465` instead of PostgreSQL built-in OID `1978`; local PostgreSQL 16 oracle confirms built-in OIDs for the default btree and jsonb GIN opclasses Doltgres exposes.
+- Expected file: new `core/id` built-in opclass cache defaults plus this log only. Boundary: no parser/include-expression work in this slice, and no overlap with advisory manifest, VACUUM, harness, functions/oracle, materialized-view/relation-schema, grant/auth, or startup/schema lanes.
+- Next action: add the missing operator-class built-in cache entries, then validate the focused INCLUDE metadata group and current broad `TestBasicIndexing`.
+
 ### alpha - 2026-05-14 11:02 MST
 
 - Result: fixed the partial-index metadata slice by storing partial index predicates with PostgreSQL-style outer parentheses and translating GMS missing key-column errors to PostgreSQL `UndefinedColumn` (`42703`).

@@ -9381,7 +9381,7 @@ opt_include_index_cols:
   {
     $$.val = tree.IndexElemList(nil)
   }
-| INCLUDE '(' index_params_name_only ')'
+| INCLUDE '(' index_params ')'
   {
     $$.val = $3.idxElems()
   }
