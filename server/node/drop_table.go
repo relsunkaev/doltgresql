@@ -105,6 +105,9 @@ func (c *DropTable) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sql.
 		relations[i] = target.relation
 	}
 	if c.cascade {
+		if err = dropCascadeDependentForeignKeys(ctx, relations); err != nil {
+			return nil, err
+		}
 		dependentViews, dependentTables, err := dropCascadeDependentViews(ctx, relations)
 		if err != nil {
 			return nil, err
@@ -132,6 +135,67 @@ func (c *DropTable) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sql.
 		return nil, err
 	}
 	return dropTableIter, err
+}
+
+func dropCascadeDependentForeignKeys(ctx *sql.Context, relations []doltdb.TableName) error {
+	if len(relations) == 0 {
+		return nil
+	}
+	dropSet := make(map[string]struct{}, len(relations))
+	for _, relation := range relations {
+		dropSet[dropTableForeignKeyRelationKey(relation)] = struct{}{}
+	}
+
+	session, root, err := core.GetRootFromContext(ctx)
+	if err != nil {
+		return err
+	}
+	fkc, err := root.GetForeignKeyCollection(ctx)
+	if err != nil {
+		return err
+	}
+
+	var dependentForeignKeys []doltdb.ForeignKey
+	for _, fk := range fkc.AllKeys() {
+		if _, dropsParent := dropSet[dropTableForeignKeyRelationKey(fk.ReferencedTableName)]; !dropsParent {
+			continue
+		}
+		if _, dropsChild := dropSet[dropTableForeignKeyRelationKey(fk.TableName)]; dropsChild {
+			continue
+		}
+		dependentForeignKeys = append(dependentForeignKeys, fk)
+	}
+	if len(dependentForeignKeys) == 0 {
+		return nil
+	}
+
+	fkc.RemoveKeys(dependentForeignKeys...)
+	newRoot, err := root.PutForeignKeyCollection(ctx, fkc)
+	if err != nil {
+		return err
+	}
+	if err = dropCascadeDependentForeignKeyMetadata(ctx, dependentForeignKeys); err != nil {
+		return err
+	}
+	return session.SetWorkingRoot(ctx, ctx.GetCurrentDatabase(), newRoot)
+}
+
+func dropCascadeDependentForeignKeyMetadata(ctx *sql.Context, foreignKeys []doltdb.ForeignKey) error {
+	collection, err := core.GetForeignKeyMetadataCollectionFromContext(ctx, ctx.GetCurrentDatabase())
+	if err != nil {
+		return err
+	}
+	for _, fk := range foreignKeys {
+		fkID := id.NewForeignKey(fk.TableName.Schema, fk.TableName.Name, fk.Name)
+		if err = collection.DeleteMetadata(ctx, fkID); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func dropTableForeignKeyRelationKey(relation doltdb.TableName) string {
+	return strings.ToLower(relation.Schema) + "." + strings.ToLower(relation.Name)
 }
 
 func (c *DropTable) hideTemporaryShadowsForPersistentDrops(ctx *sql.Context, dropTables []sql.Node) func() {
