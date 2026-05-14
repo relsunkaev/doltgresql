@@ -88,21 +88,32 @@ func pgDependRows(ctx *sql.Context) ([]sql.Row, error) {
 
 	var rows []sql.Row
 	attrdefClassID := id.NewTable(PgCatalogName, PgAttrdefName).AsId()
+	rewriteClassID := id.NewTable(PgCatalogName, PgRewriteName).AsId()
 	if err := serverfunctions.IterateCurrentDatabase(ctx, serverfunctions.Callbacks{
 		View: func(ctx *sql.Context, schema serverfunctions.ItemSchema, view serverfunctions.ItemView) (cont bool, err error) {
 			refs, err := viewRelationDependencies(view.Item, schema.Item.SchemaName(), relationOids)
 			if err != nil {
 				return false, err
 			}
+			ruleOID := id.NewId(id.Section_View, schema.Item.SchemaName(), view.Item.Name, "_RETURN")
+			rows = append(rows, sql.Row{
+				rewriteClassID,  // classid
+				ruleOID,         // objid
+				int32(0),        // objsubid
+				classID,         // refclassid
+				view.OID.AsId(), // refobjid
+				int32(0),        // refobjsubid
+				"i",             // deptype
+			})
 			for _, ref := range refs {
 				rows = append(rows, sql.Row{
-					classID,         // classid
-					view.OID.AsId(), // objid
-					int32(0),        // objsubid
-					classID,         // refclassid
-					ref,             // refobjid
-					int32(0),        // refobjsubid
-					"n",             // deptype
+					rewriteClassID, // classid
+					ruleOID,        // objid
+					int32(0),       // objsubid
+					classID,        // refclassid
+					ref,            // refobjid
+					int32(0),       // refobjsubid
+					"n",            // deptype
 				})
 			}
 			return true, nil
