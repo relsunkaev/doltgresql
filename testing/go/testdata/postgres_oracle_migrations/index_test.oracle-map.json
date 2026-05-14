@@ -908,38 +908,11 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 2,
       "scriptName": "Covering Index",
-      "oracle": "postgres",
-      "postgresId": "index-test-testbasicindexing-0002-explain-select-*-from-test",
+      "oracle": "internal",
       "suggestedId": "index-test-testbasicindexing-0002-explain-select-*-from-test",
-      "compare": "structural",
-      "columnModes": [
-        "explain"
-      ],
       "expectedKind": "rows",
       "query": "explain SELECT * FROM test WHERE v1 = 2 ORDER BY pk;",
       "querySha256": "079642338c527bd62cf111ca45ee54da373f916f21c699c83bac02f39a3a2b1d",
-      "expectedRows": [
-        [
-          {
-            "value": "Sort  (cost=1.07..1.08 rows=1 width=16)"
-          }
-        ],
-        [
-          {
-            "value": "  Sort Key: pk"
-          }
-        ],
-        [
-          {
-            "value": "  ->  Seq Scan on test  (cost=0.00..1.06 rows=1 width=16)"
-          }
-        ],
-        [
-          {
-            "value": "        Filter: (v1 = 2)"
-          }
-        ]
-      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -989,38 +962,11 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 4,
       "scriptName": "Covering Index",
-      "oracle": "postgres",
-      "postgresId": "index-test-testbasicindexing-0004-explain-select-*-from-test",
+      "oracle": "internal",
       "suggestedId": "index-test-testbasicindexing-0004-explain-select-*-from-test",
-      "compare": "structural",
-      "columnModes": [
-        "explain"
-      ],
       "expectedKind": "rows",
       "query": "explain SELECT * FROM test WHERE v1 > 2 ORDER BY pk;",
       "querySha256": "a2ae9316be71665ca106d8869b76093fb76c1af157586c569575a8ba757105ab",
-      "expectedRows": [
-        [
-          {
-            "value": "Sort  (cost=1.07..1.08 rows=2 width=16)"
-          }
-        ],
-        [
-          {
-            "value": "  Sort Key: pk"
-          }
-        ],
-        [
-          {
-            "value": "  ->  Seq Scan on test  (cost=0.00..1.06 rows=2 width=16)"
-          }
-        ],
-        [
-          {
-            "value": "        Filter: (v1 > 2)"
-          }
-        ]
-      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -1062,38 +1008,11 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 6,
       "scriptName": "Covering Index",
-      "oracle": "postgres",
-      "postgresId": "index-test-testbasicindexing-0006-explain-select-*-from-test",
+      "oracle": "internal",
       "suggestedId": "index-test-testbasicindexing-0006-explain-select-*-from-test",
-      "compare": "structural",
-      "columnModes": [
-        "explain"
-      ],
       "expectedKind": "rows",
       "query": "explain SELECT * FROM test WHERE (v1 > 3 OR v1 < 2) AND v1 <> 5 ORDER BY pk;",
       "querySha256": "518fc8ef72891bc0018874f5a8f7f703ffc18020d0fb41806466f62f90576d78",
-      "expectedRows": [
-        [
-          {
-            "value": "Sort  (cost=1.10..1.10 rows=2 width=16)"
-          }
-        ],
-        [
-          {
-            "value": "  Sort Key: pk"
-          }
-        ],
-        [
-          {
-            "value": "  ->  Seq Scan on test  (cost=0.00..1.09 rows=2 width=16)"
-          }
-        ],
-        [
-          {
-            "value": "        Filter: ((v1 <> 5) AND ((v1 > 3) OR (v1 < 2)))"
-          }
-        ]
-      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -1135,38 +1054,11 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 8,
       "scriptName": "Covering Index",
-      "oracle": "postgres",
-      "postgresId": "index-test-testbasicindexing-0008-explain-select-*-from-test",
+      "oracle": "internal",
       "suggestedId": "index-test-testbasicindexing-0008-explain-select-*-from-test",
-      "compare": "structural",
-      "columnModes": [
-        "explain"
-      ],
       "expectedKind": "rows",
       "query": "explain SELECT * FROM test WHERE v1 = 2 OR v1 = 4 ORDER BY pk;",
       "querySha256": "95d0808051611607e3634fb27260bd379fb019a922b33761eeb602579d4dc010",
-      "expectedRows": [
-        [
-          {
-            "value": "Sort  (cost=1.08..1.09 rows=2 width=16)"
-          }
-        ],
-        [
-          {
-            "value": "  Sort Key: pk"
-          }
-        ],
-        [
-          {
-            "value": "  ->  Seq Scan on test  (cost=0.00..1.07 rows=2 width=16)"
-          }
-        ],
-        [
-          {
-            "value": "        Filter: ((v1 = 2) OR (v1 = 4))"
-          }
-        ]
-      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -1208,38 +1100,11 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 10,
       "scriptName": "Covering Index",
-      "oracle": "postgres",
-      "postgresId": "index-test-testbasicindexing-0010-explain-select-*-from-test",
+      "oracle": "internal",
       "suggestedId": "index-test-testbasicindexing-0010-explain-select-*-from-test",
-      "compare": "structural",
-      "columnModes": [
-        "explain"
-      ],
       "expectedKind": "rows",
       "query": "explain SELECT * FROM test WHERE v1 IN (2, 4) ORDER BY pk;",
       "querySha256": "161f1c617b8434e90a0502a252b1850ce41279ccc0230866488be6485e9a7f54",
-      "expectedRows": [
-        [
-          {
-            "value": "Sort  (cost=1.07..1.08 rows=2 width=16)"
-          }
-        ],
-        [
-          {
-            "value": "  Sort Key: pk"
-          }
-        ],
-        [
-          {
-            "value": "  ->  Seq Scan on test  (cost=0.00..1.06 rows=2 width=16)"
-          }
-        ],
-        [
-          {
-            "value": "        Filter: (v1 = ANY ('{2,4}'::bigint[]))"
-          }
-        ]
-      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -1281,38 +1146,11 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 12,
       "scriptName": "Covering Index",
-      "oracle": "postgres",
-      "postgresId": "index-test-testbasicindexing-0012-explain-select-*-from-test",
+      "oracle": "internal",
       "suggestedId": "index-test-testbasicindexing-0012-explain-select-*-from-test",
-      "compare": "structural",
-      "columnModes": [
-        "explain"
-      ],
       "expectedKind": "rows",
       "query": "explain SELECT * FROM test WHERE v1 IN (4, 2, 4, 2) ORDER BY pk;",
       "querySha256": "cd5efe7833350d7e43c6106e35564a5b6d43e8cb92f8725f991c1dc887f00a1a",
-      "expectedRows": [
-        [
-          {
-            "value": "Sort  (cost=1.11..1.12 rows=4 width=16)"
-          }
-        ],
-        [
-          {
-            "value": "  Sort Key: pk"
-          }
-        ],
-        [
-          {
-            "value": "  ->  Seq Scan on test  (cost=0.00..1.07 rows=4 width=16)"
-          }
-        ],
-        [
-          {
-            "value": "        Filter: (v1 = ANY ('{4,2,4,2}'::bigint[]))"
-          }
-        ]
-      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -1387,38 +1225,11 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 15,
       "scriptName": "Covering Index",
-      "oracle": "postgres",
-      "postgresId": "index-test-testbasicindexing-0015-explain-select-*-from-test",
+      "oracle": "internal",
       "suggestedId": "index-test-testbasicindexing-0015-explain-select-*-from-test",
-      "compare": "structural",
-      "columnModes": [
-        "explain"
-      ],
       "expectedKind": "rows",
       "query": "explain SELECT * FROM test WHERE v1 NOT IN (2, 4) ORDER BY pk;",
       "querySha256": "6c2af9e668544cb43d7e44b0aa9e840f1866ac7eb1c7c38049fbfbd7bc1bcb02",
-      "expectedRows": [
-        [
-          {
-            "value": "Sort  (cost=1.09..1.09 rows=3 width=16)"
-          }
-        ],
-        [
-          {
-            "value": "  Sort Key: pk"
-          }
-        ],
-        [
-          {
-            "value": "  ->  Seq Scan on test  (cost=0.00..1.06 rows=3 width=16)"
-          }
-        ],
-        [
-          {
-            "value": "        Filter: (v1 <> ALL ('{2,4}'::bigint[]))"
-          }
-        ]
-      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -1460,38 +1271,11 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 17,
       "scriptName": "Covering Index",
-      "oracle": "postgres",
-      "postgresId": "index-test-testbasicindexing-0017-explain-select-*-from-test",
+      "oracle": "internal",
       "suggestedId": "index-test-testbasicindexing-0017-explain-select-*-from-test",
-      "compare": "structural",
-      "columnModes": [
-        "explain"
-      ],
       "expectedKind": "rows",
       "query": "explain SELECT * FROM test WHERE v1 >= 4 ORDER BY pk;",
       "querySha256": "a90be42103ac766f04b82e62ba3a170adc795d6c6bfb7c3da5a1cceeaaa55449",
-      "expectedRows": [
-        [
-          {
-            "value": "Sort  (cost=1.07..1.08 rows=2 width=16)"
-          }
-        ],
-        [
-          {
-            "value": "  Sort Key: pk"
-          }
-        ],
-        [
-          {
-            "value": "  ->  Seq Scan on test  (cost=0.00..1.06 rows=2 width=16)"
-          }
-        ],
-        [
-          {
-            "value": "        Filter: (v1 >= 4)"
-          }
-        ]
-      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },

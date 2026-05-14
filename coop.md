@@ -10,6 +10,19 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### alpha - 2026-05-14 09:36 MST
+
+- Result: fixed `TestBasicIndexing/Covering_Index` by moving the eight Doltgres indexed-access `EXPLAIN` assertions from PostgreSQL oracles back to internal expected rows.
+- Root cause: the cached PostgreSQL plans use sequential scans for tiny tables, while Doltgres intentionally verifies its own `IndexedTableAccess(test)` plan shape for covering-index lookups; the actual SELECT result rows remain PostgreSQL-oracle rows.
+- Files touched: `testing/go/index_test.go`, `testing/go/testdata/postgres_oracle_migrations/index_test.oracle-map.json`, `testing/go/testdata/postgres_oracle_manifest.json`.
+- Validation in clean verifier `/tmp/doltgresql-alpha-basicindex-c93.BbxMfj` at `HEAD=c93e1365` plus only alpha basic-index patch:
+  - `go test -vet=off ./testing/go -run '^TestBasicIndexing$/^Covering_Index$' -count=1 -timeout=10m -v`
+  - `go test -vet=off ./testing/go -run '^TestPostgresOracleManifestGenerated$' -count=1 -timeout=10m -v`
+  - `jq empty testing/go/testdata/postgres_oracle_manifest.json testing/go/testdata/postgres_oracle_migrations/index_test.oracle-map.json`
+  - `git diff --check -- testing/go/index_test.go testing/go/testdata/postgres_oracle_migrations/index_test.oracle-map.json testing/go/testdata/postgres_oracle_manifest.json`
+- Follow-up: resume broader `TestBasicIndexing` or high-skip discovery after committing this narrow covering-index slice.
+
+
 ### alpha - 2026-05-14 09:34 MST
 
 - Result: fixed `TestJsonbGinPostingChunkLookupGate` by moving the Doltgres-specific JSONB GIN `EXPLAIN` plan assertion back to internal expected rows.

@@ -662,37 +662,79 @@ func TestBasicIndexing(t *testing.T) {
 					Query: "SELECT * FROM test WHERE v1 = 2 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0001-select-*-from-test-where"},
 				},
 				{
-					Query: "explain SELECT * FROM test WHERE v1 = 2 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0002-explain-select-*-from-test", ColumnModes: []string{"explain"}},
+					Query: "explain SELECT * FROM test WHERE v1 = 2 ORDER BY pk;",
+					Expected: []sql.Row{
+						{"Sort(test.pk ASC)"},
+						{" └─ IndexedTableAccess(test)"},
+						{"     ├─ index: [test.v1]"},
+						{"     ├─ filters: [{[2, 2]}]"},
+						{"     └─ columns: [pk v1]"},
+					},
 				},
 				{
 					Query: "SELECT * FROM test WHERE v1 > 2 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0003-select-*-from-test-where"},
 				},
 				{
-					Query: "explain SELECT * FROM test WHERE v1 > 2 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0004-explain-select-*-from-test", ColumnModes: []string{"explain"}},
+					Query: "explain SELECT * FROM test WHERE v1 > 2 ORDER BY pk;",
+					Expected: []sql.Row{
+						{"Sort(test.pk ASC)"},
+						{" └─ IndexedTableAccess(test)"},
+						{"     ├─ index: [test.v1]"},
+						{"     ├─ filters: [{(2, ∞)}]"},
+						{"     └─ columns: [pk v1]"},
+					},
 				},
 				{
 					Query: "SELECT * FROM test WHERE (v1 > 3 OR v1 < 2) AND v1 <> 5 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0005-select-*-from-test-where"},
 				},
 				{
-					Query: "explain SELECT * FROM test WHERE (v1 > 3 OR v1 < 2) AND v1 <> 5 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0006-explain-select-*-from-test", ColumnModes: []string{"explain"}},
+					Query: "explain SELECT * FROM test WHERE (v1 > 3 OR v1 < 2) AND v1 <> 5 ORDER BY pk;",
+					Expected: []sql.Row{
+						{"Sort(test.pk ASC)"},
+						{" └─ IndexedTableAccess(test)"},
+						{"     ├─ index: [test.v1]"},
+						{"     ├─ filters: [{(NULL, 2)}, {(3, 5)}, {(5, ∞)}]"},
+						{"     └─ columns: [pk v1]"},
+					},
 				},
 				{
 					Query: "SELECT * FROM test WHERE v1 = 2 OR v1 = 4 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0007-select-*-from-test-where"},
 				},
 				{
-					Query: "explain SELECT * FROM test WHERE v1 = 2 OR v1 = 4 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0008-explain-select-*-from-test", ColumnModes: []string{"explain"}},
+					Query: "explain SELECT * FROM test WHERE v1 = 2 OR v1 = 4 ORDER BY pk;",
+					Expected: []sql.Row{
+						{"Sort(test.pk ASC)"},
+						{" └─ IndexedTableAccess(test)"},
+						{"     ├─ index: [test.v1]"},
+						{"     ├─ filters: [{[2, 2]}, {[4, 4]}]"},
+						{"     └─ columns: [pk v1]"},
+					},
 				},
 				{
 					Query: "SELECT * FROM test WHERE v1 IN (2, 4) ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0009-select-*-from-test-where"},
 				},
 				{
-					Query: "explain SELECT * FROM test WHERE v1 IN (2, 4) ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0010-explain-select-*-from-test", ColumnModes: []string{"explain"}},
+					Query: "explain SELECT * FROM test WHERE v1 IN (2, 4) ORDER BY pk;",
+					Expected: []sql.Row{
+						{"Sort(test.pk ASC)"},
+						{" └─ IndexedTableAccess(test)"},
+						{"     ├─ index: [test.v1]"},
+						{"     ├─ filters: [{[2, 2]}, {[4, 4]}]"},
+						{"     └─ columns: [pk v1]"},
+					},
 				},
 				{
 					Query: "SELECT * FROM test WHERE v1 IN (4, 2, 4, 2) ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0011-select-*-from-test-where"},
 				},
 				{
-					Query: "explain SELECT * FROM test WHERE v1 IN (4, 2, 4, 2) ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0012-explain-select-*-from-test", ColumnModes: []string{"explain"}},
+					Query: "explain SELECT * FROM test WHERE v1 IN (4, 2, 4, 2) ORDER BY pk;",
+					Expected: []sql.Row{
+						{"Sort(test.pk ASC)"},
+						{" └─ IndexedTableAccess(test)"},
+						{"     ├─ index: [test.v1]"},
+						{"     ├─ filters: [{[2, 2]}, {[4, 4]}]"},
+						{"     └─ columns: [pk v1]"},
+					},
 				},
 				{
 					Query: "SELECT * FROM test WHERE v1 IN (NULL, 2, 2) ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0013-select-*-from-test-where"},
@@ -701,13 +743,27 @@ func TestBasicIndexing(t *testing.T) {
 					Query: "SELECT * FROM test WHERE v1 NOT IN (2, 4) ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0014-select-*-from-test-where"},
 				},
 				{
-					Query: "explain SELECT * FROM test WHERE v1 NOT IN (2, 4) ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0015-explain-select-*-from-test", ColumnModes: []string{"explain"}},
+					Query: "explain SELECT * FROM test WHERE v1 NOT IN (2, 4) ORDER BY pk;",
+					Expected: []sql.Row{
+						{"Sort(test.pk ASC)"},
+						{" └─ IndexedTableAccess(test)"},
+						{"     ├─ index: [test.v1]"},
+						{"     ├─ filters: [{(NULL, 2)}, {(2, 4)}, {(4, ∞)}]"},
+						{"     └─ columns: [pk v1]"},
+					},
 				},
 				{
 					Query: "SELECT * FROM test WHERE v1 >= 4 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0016-select-*-from-test-where"},
 				},
 				{
-					Query: "explain SELECT * FROM test WHERE v1 >= 4 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0017-explain-select-*-from-test", ColumnModes: []string{"explain"}},
+					Query: "explain SELECT * FROM test WHERE v1 >= 4 ORDER BY pk;",
+					Expected: []sql.Row{
+						{"Sort(test.pk ASC)"},
+						{" └─ IndexedTableAccess(test)"},
+						{"     ├─ index: [test.v1]"},
+						{"     ├─ filters: [{[4, ∞)}]"},
+						{"     └─ columns: [pk v1]"},
+					},
 				},
 				{
 					Query: "SELECT * FROM test WHERE v1 < 3 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0018-select-*-from-test-where"},
