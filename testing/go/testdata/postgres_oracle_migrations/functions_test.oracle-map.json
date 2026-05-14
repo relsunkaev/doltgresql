@@ -9028,17 +9028,14 @@
       "ordinal": 3,
       "scriptName": "pg_table_is_visible",
       "oracle": "postgres",
-      "postgresId": "functions-test-testschemavisibilityinquiryfunctions-0003-select-c.oid-c.relname-as-table_name",
-      "suggestedId": "functions-test-testschemavisibilityinquiryfunctions-0003-select-c.oid-c.relname-as-table_name",
+      "postgresId": "functions-test-testschemavisibilityinquiryfunctions-0003-select-c.relname-as-table_name",
+      "suggestedId": "functions-test-testschemavisibilityinquiryfunctions-0003-select-c.relname-as-table_name-n.nspname",
       "compare": "structural",
       "expectedKind": "rows",
-      "query": "SELECT c.oid, c.relname AS table_name, n.nspname AS table_schema FROM pg_catalog.pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE (n.nspname='myschema' OR n.nspname='testschema') AND left(relname, 5) <> 'dolt_' order by relname;",
-      "querySha256": "fde46b7ea93be9c47c75ac5dc4470d33fe4b8cb45ee9a8812afc717fa616b36a",
+      "query": "SELECT c.relname AS table_name, n.nspname AS table_schema FROM pg_catalog.pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE (n.nspname='myschema' OR n.nspname='testschema') AND left(relname, 5) <> 'dolt_' order by relname;",
+      "querySha256": "b321ba6ec9e95484891c03b753282547385a35d0bd692c228ffeade7adcbe802",
       "expectedRows": [
         [
-          {
-            "value": "27485"
-          },
           {
             "value": "mytable"
           },
@@ -9048,9 +9045,6 @@
         ],
         [
           {
-            "value": "27490"
-          },
-          {
             "value": "myview"
           },
           {
@@ -9058,9 +9052,6 @@
           }
         ],
         [
-          {
-            "value": "27502"
-          },
           {
             "value": "test_index"
           },
@@ -9070,9 +9061,6 @@
         ],
         [
           {
-            "value": "27503"
-          },
-          {
             "value": "test_seq"
           },
           {
@@ -9080,9 +9068,6 @@
           }
         ],
         [
-          {
-            "value": "27495"
-          },
           {
             "value": "test_table"
           },
@@ -9092,9 +9077,6 @@
         ],
         [
           {
-            "value": "27498"
-          },
-          {
             "value": "test_table_pkey"
           },
           {
@@ -9102,9 +9084,6 @@
           }
         ],
         [
-          {
-            "value": "27500"
-          },
           {
             "value": "test_table_v1_key"
           },
@@ -9144,16 +9123,16 @@
       "ordinal": 5,
       "scriptName": "pg_table_is_visible",
       "oracle": "postgres",
-      "postgresId": "functions-test-testschemavisibilityinquiryfunctions-0005-select-pg_table_is_visible-3057657334",
-      "suggestedId": "functions-test-testschemavisibilityinquiryfunctions-0005-select-pg_table_is_visible-3057657334",
+      "postgresId": "functions-test-testschemavisibilityinquiryfunctions-0005-select-pg_table_is_visible-test_index",
+      "suggestedId": "functions-test-testschemavisibilityinquiryfunctions-0005-select-pg_table_is_visible-select-c.oid-from",
       "compare": "structural",
       "expectedKind": "rows",
-      "query": "select pg_table_is_visible(3057657334);",
-      "querySha256": "e25533f68c26545746007392bd673ee4e9387ce46252d3e8d86cff824fb5abdc",
+      "query": "select pg_table_is_visible((SELECT c.oid FROM pg_catalog.pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname='testschema' AND c.relname='test_index'));",
+      "querySha256": "7e06126d2f34457db2bff09ecf5b1fad1d37c3aa96fb6da942b458a9d95d41cb",
       "expectedRows": [
         [
           {
-            "null": true
+            "value": "t"
           }
         ]
       ],
@@ -9166,16 +9145,16 @@
       "ordinal": 6,
       "scriptName": "pg_table_is_visible",
       "oracle": "postgres",
-      "postgresId": "functions-test-testschemavisibilityinquiryfunctions-0006-select-pg_table_is_visible-1952237395",
-      "suggestedId": "functions-test-testschemavisibilityinquiryfunctions-0006-select-pg_table_is_visible-1952237395",
+      "postgresId": "functions-test-testschemavisibilityinquiryfunctions-0006-select-pg_table_is_visible-test_table",
+      "suggestedId": "functions-test-testschemavisibilityinquiryfunctions-0006-select-pg_table_is_visible-select-c.oid-from",
       "compare": "structural",
       "expectedKind": "rows",
-      "query": "select pg_table_is_visible(1952237395);",
-      "querySha256": "4e0999b6826d94affa6c1d13b06783d3232b7b0bad2bd3c03c8eff0b9b5959ef",
+      "query": "select pg_table_is_visible((SELECT c.oid FROM pg_catalog.pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname='testschema' AND c.relname='test_table'));",
+      "querySha256": "741568d97948152ffe74a457742f424b21aae48d66b1b3eeb8680e112833fb20",
       "expectedRows": [
         [
           {
-            "null": true
+            "value": "t"
           }
         ]
       ],
@@ -9188,16 +9167,16 @@
       "ordinal": 7,
       "scriptName": "pg_table_is_visible",
       "oracle": "postgres",
-      "postgresId": "functions-test-testschemavisibilityinquiryfunctions-0007-select-pg_table_is_visible-1539973141",
-      "suggestedId": "functions-test-testschemavisibilityinquiryfunctions-0007-select-pg_table_is_visible-1539973141",
+      "postgresId": "functions-test-testschemavisibilityinquiryfunctions-0007-select-pg_table_is_visible-test_seq",
+      "suggestedId": "functions-test-testschemavisibilityinquiryfunctions-0007-select-pg_table_is_visible-select-c.oid-from",
       "compare": "structural",
       "expectedKind": "rows",
-      "query": "select pg_table_is_visible(1539973141);",
-      "querySha256": "422255940890640eba450c747533082d9b866fff26016140d907cbb5a8e371ca",
+      "query": "select pg_table_is_visible((SELECT c.oid FROM pg_catalog.pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname='testschema' AND c.relname='test_seq'));",
+      "querySha256": "d50d6b03db2f33dc361da5592770bad4d9404f9eebe00aaf28ae90e505e158df",
       "expectedRows": [
         [
           {
-            "null": true
+            "value": "t"
           }
         ]
       ],
@@ -9210,16 +9189,16 @@
       "ordinal": 8,
       "scriptName": "pg_table_is_visible",
       "oracle": "postgres",
-      "postgresId": "functions-test-testschemavisibilityinquiryfunctions-0008-select-pg_table_is_visible-3983475213",
-      "suggestedId": "functions-test-testschemavisibilityinquiryfunctions-0008-select-pg_table_is_visible-3983475213",
+      "postgresId": "functions-test-testschemavisibilityinquiryfunctions-0008-select-pg_table_is_visible-myview",
+      "suggestedId": "functions-test-testschemavisibilityinquiryfunctions-0008-select-pg_table_is_visible-select-c.oid-from",
       "compare": "structural",
       "expectedKind": "rows",
-      "query": "select pg_table_is_visible(3983475213);",
-      "querySha256": "481c9ce1ac7afdb167d4823f93d84d6b6cb3971a58d5782758cd5a9e76c3c4fa",
+      "query": "select pg_table_is_visible((SELECT c.oid FROM pg_catalog.pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname='myschema' AND c.relname='myview'));",
+      "querySha256": "31e697b8468ecf73e46846e4205749ae79f6fec7a92a31422a8cd5e88e6c8d13",
       "expectedRows": [
         [
           {
-            "null": true
+            "value": "f"
           }
         ]
       ],
@@ -9270,16 +9249,16 @@
       "ordinal": 11,
       "scriptName": "pg_table_is_visible",
       "oracle": "postgres",
-      "postgresId": "functions-test-testschemavisibilityinquiryfunctions-0011-select-pg_table_is_visible-3983475213",
-      "suggestedId": "functions-test-testschemavisibilityinquiryfunctions-0011-select-pg_table_is_visible-3983475213",
+      "postgresId": "functions-test-testschemavisibilityinquiryfunctions-0011-select-pg_table_is_visible-myview",
+      "suggestedId": "functions-test-testschemavisibilityinquiryfunctions-0011-select-pg_table_is_visible-select-c.oid-from",
       "compare": "structural",
       "expectedKind": "rows",
-      "query": "select pg_table_is_visible(3983475213);",
-      "querySha256": "481c9ce1ac7afdb167d4823f93d84d6b6cb3971a58d5782758cd5a9e76c3c4fa",
+      "query": "select pg_table_is_visible((SELECT c.oid FROM pg_catalog.pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname='myschema' AND c.relname='myview'));",
+      "querySha256": "31e697b8468ecf73e46846e4205749ae79f6fec7a92a31422a8cd5e88e6c8d13",
       "expectedRows": [
         [
           {
-            "null": true
+            "value": "t"
           }
         ]
       ],
@@ -9292,16 +9271,16 @@
       "ordinal": 12,
       "scriptName": "pg_table_is_visible",
       "oracle": "postgres",
-      "postgresId": "functions-test-testschemavisibilityinquiryfunctions-0012-select-pg_table_is_visible-3905781870",
-      "suggestedId": "functions-test-testschemavisibilityinquiryfunctions-0012-select-pg_table_is_visible-3905781870",
+      "postgresId": "functions-test-testschemavisibilityinquiryfunctions-0012-select-pg_table_is_visible-mytable",
+      "suggestedId": "functions-test-testschemavisibilityinquiryfunctions-0012-select-pg_table_is_visible-select-c.oid-from",
       "compare": "structural",
       "expectedKind": "rows",
-      "query": "select pg_table_is_visible(3905781870);",
-      "querySha256": "051d82edf9064a6e6a6c54c6daf3a8c5fd1eda8edefdfaad7550047556c0c61a",
+      "query": "select pg_table_is_visible((SELECT c.oid FROM pg_catalog.pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname='myschema' AND c.relname='mytable'));",
+      "querySha256": "8a58522be25f31353fb42d0f9dabbbd76e90569b668049ec41401bed9c523618",
       "expectedRows": [
         [
           {
-            "null": true
+            "value": "t"
           }
         ]
       ],

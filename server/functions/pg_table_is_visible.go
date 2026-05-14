@@ -96,10 +96,26 @@ func relationIsVisibleInSearchPath(ctx *sql.Context, oidVal id.Id, paths []strin
 		if !ok {
 			continue
 		}
-		if _, ok, err := schema.GetTableInsensitive(ctx, relationName); err != nil {
+		if ok, err := relationExistsInSchema(ctx, schema, relationName); err != nil {
 			return false, err
 		} else if ok {
 			return path == targetSchema, nil
+		}
+	}
+	return false, nil
+}
+
+func relationExistsInSchema(ctx *sql.Context, schema sql.DatabaseSchema, relationName string) (bool, error) {
+	if _, ok, err := schema.GetTableInsensitive(ctx, relationName); err != nil {
+		return false, err
+	} else if ok {
+		return true, nil
+	}
+	if viewDatabase, ok := schema.(sql.ViewDatabase); ok {
+		if _, ok, err := viewDatabase.GetViewDefinition(ctx, relationName); err != nil {
+			return false, err
+		} else if ok {
+			return true, nil
 		}
 	}
 	return false, nil

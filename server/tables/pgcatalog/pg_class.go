@@ -204,7 +204,7 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 			if err != nil {
 				return false, err
 			}
-			targetSchema, err := viewTargetSchema(ctx, view.Item)
+			targetSchema, err := viewTargetSchema(ctx, schema.Item.SchemaName(), view.Item)
 			if err != nil {
 				return false, err
 			}

@@ -291,7 +291,7 @@ func indexAttributes(ctx *sql.Context, table sql.Table, idx sql.Index, relationI
 }
 
 func viewAttributes(ctx *sql.Context, schemaName string, view functions.ItemView) ([]*pgAttribute, error) {
-	schema, err := viewTargetSchema(ctx, view.Item)
+	schema, err := viewTargetSchema(ctx, schemaName, view.Item)
 	if err != nil {
 		return nil, err
 	}
@@ -362,10 +362,19 @@ func resolvePgAttributeType(ctx *sql.Context, typ *pgtypes.DoltgresType) (*pgtyp
 	return resolvedType, nil
 }
 
-func viewTargetSchema(ctx *sql.Context, view sql.ViewDefinition) (sql.Schema, error) {
+func viewTargetSchema(ctx *sql.Context, schemaName string, view sql.ViewDefinition) (sql.Schema, error) {
 	createViewStatement := strings.TrimSpace(view.CreateViewStatement)
 	if createViewStatement == "" {
 		createViewStatement = "CREATE VIEW " + view.Name + " AS " + view.TextDefinition
+	}
+	if schemaName != "" {
+		textDefinition, err := functions.SchemaQualifiedViewDefinition(createViewStatement, schemaName)
+		if err != nil {
+			return nil, err
+		}
+		if strings.TrimSpace(textDefinition) != "" {
+			createViewStatement = "CREATE VIEW " + view.Name + " AS " + textDefinition
+		}
 	}
 	doltSession := dsess.DSessFromSess(ctx.Session)
 	catalog := sqle.NewDefault(doltSession.Provider()).Analyzer.Catalog

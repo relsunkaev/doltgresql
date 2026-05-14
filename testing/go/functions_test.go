@@ -1734,26 +1734,26 @@ func TestSchemaVisibilityInquiryFunctions(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT c.oid, c.relname AS table_name, n.nspname AS table_schema FROM pg_catalog.pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE (n.nspname='myschema' OR n.nspname='testschema') AND left(relname, 5) <> 'dolt_' order by relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testschemavisibilityinquiryfunctions-0003-select-c.oid-c.relname-as-table_name"},
+					Query: `SELECT c.relname AS table_name, n.nspname AS table_schema FROM pg_catalog.pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE (n.nspname='myschema' OR n.nspname='testschema') AND left(relname, 5) <> 'dolt_' order by relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testschemavisibilityinquiryfunctions-0003-select-c.relname-as-table_name"},
 				},
 				{
 					Query: `SHOW search_path;`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testschemavisibilityinquiryfunctions-0004-show-search_path"},
 				},
 				{
-					Query: `select pg_table_is_visible(3057657334);`, PostgresOracle: // index from testschema
-					ScriptTestPostgresOracle{ID: "functions-test-testschemavisibilityinquiryfunctions-0005-select-pg_table_is_visible-3057657334"},
+					Query: `select pg_table_is_visible((SELECT c.oid FROM pg_catalog.pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname='testschema' AND c.relname='test_index'));`, PostgresOracle: // index from testschema
+					ScriptTestPostgresOracle{ID: "functions-test-testschemavisibilityinquiryfunctions-0005-select-pg_table_is_visible-test_index"},
 				},
 				{
-					Query: `select pg_table_is_visible(1952237395);`, PostgresOracle: // table from testschema
-					ScriptTestPostgresOracle{ID: "functions-test-testschemavisibilityinquiryfunctions-0006-select-pg_table_is_visible-1952237395"},
+					Query: `select pg_table_is_visible((SELECT c.oid FROM pg_catalog.pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname='testschema' AND c.relname='test_table'));`, PostgresOracle: // table from testschema
+					ScriptTestPostgresOracle{ID: "functions-test-testschemavisibilityinquiryfunctions-0006-select-pg_table_is_visible-test_table"},
 				},
 				{
-					Query: `select pg_table_is_visible(1539973141);`, PostgresOracle: // sequence from testschema
-					ScriptTestPostgresOracle{ID: "functions-test-testschemavisibilityinquiryfunctions-0007-select-pg_table_is_visible-1539973141"},
+					Query: `select pg_table_is_visible((SELECT c.oid FROM pg_catalog.pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname='testschema' AND c.relname='test_seq'));`, PostgresOracle: // sequence from testschema
+					ScriptTestPostgresOracle{ID: "functions-test-testschemavisibilityinquiryfunctions-0007-select-pg_table_is_visible-test_seq"},
 				},
 				{
-					Query: `select pg_table_is_visible(3983475213);`, PostgresOracle: // view from myschema
-					ScriptTestPostgresOracle{ID: "functions-test-testschemavisibilityinquiryfunctions-0008-select-pg_table_is_visible-3983475213"},
+					Query: `select pg_table_is_visible((SELECT c.oid FROM pg_catalog.pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname='myschema' AND c.relname='myview'));`, PostgresOracle: // view from myschema
+					ScriptTestPostgresOracle{ID: "functions-test-testschemavisibilityinquiryfunctions-0008-select-pg_table_is_visible-myview"},
 				},
 				{
 					Query: `SET search_path = 'myschema';`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testschemavisibilityinquiryfunctions-0009-set-search_path-=-myschema"},
@@ -1762,12 +1762,12 @@ func TestSchemaVisibilityInquiryFunctions(t *testing.T) {
 					Query: `SHOW search_path;`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testschemavisibilityinquiryfunctions-0010-show-search_path"},
 				},
 				{
-					Query: `select pg_table_is_visible(3983475213);`, PostgresOracle: // view from myschema
-					ScriptTestPostgresOracle{ID: "functions-test-testschemavisibilityinquiryfunctions-0011-select-pg_table_is_visible-3983475213"},
+					Query: `select pg_table_is_visible((SELECT c.oid FROM pg_catalog.pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname='myschema' AND c.relname='myview'));`, PostgresOracle: // view from myschema
+					ScriptTestPostgresOracle{ID: "functions-test-testschemavisibilityinquiryfunctions-0011-select-pg_table_is_visible-myview"},
 				},
 				{
-					Query: `select pg_table_is_visible(3905781870);`, PostgresOracle: // table from myschema
-					ScriptTestPostgresOracle{ID: "functions-test-testschemavisibilityinquiryfunctions-0012-select-pg_table_is_visible-3905781870"},
+					Query: `select pg_table_is_visible((SELECT c.oid FROM pg_catalog.pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname='myschema' AND c.relname='mytable'));`, PostgresOracle: // table from myschema
+					ScriptTestPostgresOracle{ID: "functions-test-testschemavisibilityinquiryfunctions-0012-select-pg_table_is_visible-mytable"},
 				},
 			},
 		},
