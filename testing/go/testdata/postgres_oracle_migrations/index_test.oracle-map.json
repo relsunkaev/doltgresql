@@ -1892,7 +1892,7 @@
       "postgresId": "index-test-testbasicindexing-0029-select-/*+-lookup_join-jointable-test",
       "suggestedId": "index-test-testbasicindexing-0029-select-/*+-lookup_join-jointable-test",
       "compare": "sqlstate",
-      "expectedKind": "rows",
+      "expectedKind": "error",
       "sqlstate": "42601",
       "errorSeverity": "ERROR",
       "query": "select /*+ lookup_join(jointable, test) */ HINT * from test join jointable on test.v1 = jointable.v3 and test.v2 = 22 order by 1",
@@ -1905,12 +1905,59 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 30,
       "scriptName": "Covering Composite Index",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0030-explain-select-*-from-test",
       "suggestedId": "index-test-testbasicindexing-0030-explain-select-*-from-test",
+      "compare": "structural",
+      "columnModes": [
+        "explain"
+      ],
       "expectedKind": "rows",
       "query": "explain select * from test join jointable on test.v1 = jointable.v3 and test.v2 = 22 order by 1",
       "querySha256": "8bbc3f29b86e0c3d43dda8ba82716500ec05a3885b1c96b987996e3b2d5ff573",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "Sort  (cost=36.76..36.78 rows=9 width=40)"
+          }
+        ],
+        [
+          {
+            "value": "  Sort Key: test.pk"
+          }
+        ],
+        [
+          {
+            "value": "  ->  Hash Join  (cost=1.09..36.62 rows=9 width=40)"
+          }
+        ],
+        [
+          {
+            "value": "        Hash Cond: (jointable.v3 = test.v1)"
+          }
+        ],
+        [
+          {
+            "value": "        ->  Seq Scan on jointable  (cost=0.00..28.50 rows=1850 width=16)"
+          }
+        ],
+        [
+          {
+            "value": "        ->  Hash  (cost=1.07..1.07 rows=1 width=24)"
+          }
+        ],
+        [
+          {
+            "value": "              ->  Seq Scan on test  (cost=0.00..1.07 rows=1 width=24)"
+          }
+        ],
+        [
+          {
+            "value": "                    Filter: (v2 = 22)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1952,12 +1999,54 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 32,
       "scriptName": "Covering Composite Index",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0032-explain-select-*-from-test",
       "suggestedId": "index-test-testbasicindexing-0032-explain-select-*-from-test",
+      "compare": "structural",
+      "columnModes": [
+        "explain"
+      ],
       "expectedKind": "rows",
       "query": "explain select * from test join jointable on test.v1 = jointable.v3 and test.v2 = jointable.v4 order by 1",
       "querySha256": "f04ad6a6214719f68aa26bd18f4e1476729e1b86678e71eb4a778cf87dd8a95a",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "Sort  (cost=43.54..43.55 rows=1 width=40)"
+          }
+        ],
+        [
+          {
+            "value": "  Sort Key: test.pk"
+          }
+        ],
+        [
+          {
+            "value": "  ->  Hash Join  (cost=1.15..43.53 rows=1 width=40)"
+          }
+        ],
+        [
+          {
+            "value": "        Hash Cond: ((jointable.v3 = test.v1) AND (jointable.v4 = test.v2))"
+          }
+        ],
+        [
+          {
+            "value": "        ->  Seq Scan on jointable  (cost=0.00..28.50 rows=1850 width=16)"
+          }
+        ],
+        [
+          {
+            "value": "        ->  Hash  (cost=1.06..1.06 rows=6 width=24)"
+          }
+        ],
+        [
+          {
+            "value": "              ->  Seq Scan on test  (cost=0.00..1.06 rows=6 width=24)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9433,12 +9522,21 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 297,
       "scriptName": "multi column int index",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0297-select-pk-from-test-where",
       "suggestedId": "index-test-testbasicindexing-0297-select-pk-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT pk FROM test WHERE a = 2 and b = 2;",
       "querySha256": "112170c51926cbd0514409deb148758df84fe61eb199fc40ee58d5b53c67e1b2",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9446,12 +9544,26 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 298,
       "scriptName": "multi column int index",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0298-select-pk-from-test-where",
       "suggestedId": "index-test-testbasicindexing-0298-select-pk-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT pk FROM test WHERE a > 1",
       "querySha256": "3b1937a1fb9031dff422a566470619f7c4eae143b65b87b3261b980db7b52dda",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9459,12 +9571,21 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 299,
       "scriptName": "multi column int index",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0299-select-pk-from-test-where",
       "suggestedId": "index-test-testbasicindexing-0299-select-pk-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT pk FROM test WHERE a = 2 and b < 3",
       "querySha256": "b2173bf150bfdbb7da45d3fe391919ae7b22fc03bf52d09cdce53834b3495f8b",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9472,12 +9593,21 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 300,
       "scriptName": "multi column int index",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0300-select-pk-from-test-where",
       "suggestedId": "index-test-testbasicindexing-0300-select-pk-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT pk FROM test WHERE a > 2 and b < 3",
       "querySha256": "b6f29c40dd0d7e7a72c3fb5be4ee26b978112e20e229bf422a769c6f3af54f51",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9485,12 +9615,21 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 301,
       "scriptName": "multi column int index",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0301-select-pk-from-test-where",
       "suggestedId": "index-test-testbasicindexing-0301-select-pk-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT pk FROM test WHERE a > 2 and b < 2",
       "querySha256": "b3e442848f27aea548db584a5526cf286a52684cb02fb5cfc1c001f158f31924",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9498,12 +9637,15 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 302,
       "scriptName": "multi column int index",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0302-select-pk-from-test-where",
       "suggestedId": "index-test-testbasicindexing-0302-select-pk-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT pk FROM test WHERE a > 3 and b < 2",
       "querySha256": "b68e4dd9e36fcb928514c3b14b77ac4439c8c688d0d827cac883fdf0aaaa2263",
-      "needsCleanup": true,
+      "expectedRows": [],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9511,12 +9653,15 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 303,
       "scriptName": "multi column int index",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0303-select-pk-from-test-where",
       "suggestedId": "index-test-testbasicindexing-0303-select-pk-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT pk FROM test WHERE a > 3 and b < 2",
       "querySha256": "b68e4dd9e36fcb928514c3b14b77ac4439c8c688d0d827cac883fdf0aaaa2263",
-      "needsCleanup": true,
+      "expectedRows": [],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9524,12 +9669,21 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 304,
       "scriptName": "multi column int index",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0304-select-pk-from-test-where",
       "suggestedId": "index-test-testbasicindexing-0304-select-pk-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT pk FROM test WHERE a > 1 and b > 1",
       "querySha256": "0e3a1d14905f92fbfb2095810b3fc08f94d0db93ff0de232ae4d85f5a2880081",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9537,12 +9691,21 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 305,
       "scriptName": "multi column int index",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0305-select-pk-from-test-where",
       "suggestedId": "index-test-testbasicindexing-0305-select-pk-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT pk FROM test WHERE a > 1 and b = 1",
       "querySha256": "5fb17d8bf502a3918f56aadf7139d78d8aceeaec7de220ea96a716c37d4eb5ea",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9550,12 +9713,31 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 306,
       "scriptName": "multi column int index",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0306-select-pk-from-test-where",
       "suggestedId": "index-test-testbasicindexing-0306-select-pk-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT pk FROM test WHERE a < 3 and b > 0 order by 1",
       "querySha256": "4036b1788ef1b7313a797c7c4619ca92984941db19a3db7ea309f43fa74ac7d3",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9563,12 +9745,21 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 307,
       "scriptName": "multi column int index",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0307-select-pk-from-test-where",
       "suggestedId": "index-test-testbasicindexing-0307-select-pk-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT pk FROM test WHERE a > 1 and a < 3 order by 1",
       "querySha256": "639a6588bf4b76fc16aeb52e95b5c3055befae83dedceac998eefa493138f31e",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9576,12 +9767,21 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 308,
       "scriptName": "multi column int index",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0308-select-pk-from-test-where",
       "suggestedId": "index-test-testbasicindexing-0308-select-pk-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT pk FROM test WHERE a > 1 and a < 3 order by 1",
       "querySha256": "639a6588bf4b76fc16aeb52e95b5c3055befae83dedceac998eefa493138f31e",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9589,12 +9789,21 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 309,
       "scriptName": "multi column int index",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0309-select-pk-from-test-where",
       "suggestedId": "index-test-testbasicindexing-0309-select-pk-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT pk FROM test WHERE a > 1 and b > 1 order by 1",
       "querySha256": "777b6ac0cfc1f332a68902aedbdf421202b79546c7c3d0f8f7554da62b32bb77",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9667,12 +9876,21 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 315,
       "scriptName": "Unique index varchar",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0315-select-pk-from-test-where",
       "suggestedId": "index-test-testbasicindexing-0315-select-pk-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT pk FROM test WHERE (v1 = 'c' AND v2 = 'c');",
       "querySha256": "5eebb3fb10e61a0efca4af87a888b776703beea2b9b28dfa5ecf08869425107e",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9680,12 +9898,27 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 316,
       "scriptName": "unique index select",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0316-select-django_content_type-.-id-django_content_type",
       "suggestedId": "index-test-testbasicindexing-0316-select-django_content_type-.-id-django_content_type",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT \"django_content_type\".\"id\", \"django_content_type\".\"app_label\", \"django_content_type\".\"model\" FROM \"django_content_type\" WHERE (\"django_content_type\".\"app_label\" = 'auth' AND \"django_content_type\".\"model\" = 'permission') LIMIT 21;",
       "querySha256": "1161c17a43ad148e2b82ede1c25902d15e9a807a20da9a7a177dab9484e8f08f",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "auth"
+          },
+          {
+            "value": "permission"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9693,12 +9926,27 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 317,
       "scriptName": "unique index select",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0317-select-django_content_type-.-id-django_content_type",
       "suggestedId": "index-test-testbasicindexing-0317-select-django_content_type-.-id-django_content_type",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT \"django_content_type\".\"id\", \"django_content_type\".\"app_label\", \"django_content_type\".\"model\" FROM \"django_content_type\" WHERE (\"django_content_type\".\"app_label\" = 'auth' AND \"django_content_type\".\"model\" = 'group') LIMIT 21;",
       "querySha256": "3af5ea9e3be3c8fffbcc27932210c506c5c7f4324204b26cba52c75a5ae78a07",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "auth"
+          },
+          {
+            "value": "group"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9706,12 +9954,27 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 318,
       "scriptName": "unique index select",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0318-select-django_content_type-.-id-django_content_type",
       "suggestedId": "index-test-testbasicindexing-0318-select-django_content_type-.-id-django_content_type",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT \"django_content_type\".\"id\", \"django_content_type\".\"app_label\", \"django_content_type\".\"model\" FROM \"django_content_type\" WHERE (\"django_content_type\".\"app_label\" = 'auth' AND \"django_content_type\".\"model\" = 'user') LIMIT 21;",
       "querySha256": "2e3f9899f60726cc6e0c55acc4b307b17f16eee6f5d0b62c819196f9f2f676e9",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "auth"
+          },
+          {
+            "value": "user"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9719,12 +9982,27 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 319,
       "scriptName": "unique index select",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0319-select-django_content_type-.-id-django_content_type",
       "suggestedId": "index-test-testbasicindexing-0319-select-django_content_type-.-id-django_content_type",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT \"django_content_type\".\"id\", \"django_content_type\".\"app_label\", \"django_content_type\".\"model\" FROM \"django_content_type\" WHERE (\"django_content_type\".\"app_label\" = 'contenttypes' AND \"django_content_type\".\"model\" = 'contenttype') LIMIT 21;",
       "querySha256": "79c490953aa2e81fdded1be5a80f2f1a3a5182d6aa4a7bc2c4863c61969ea6f6",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "contenttypes"
+          },
+          {
+            "value": "contenttype"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9732,12 +10010,48 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 320,
       "scriptName": "Proper range AND + OR handling",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0320-select-*-from-test-where",
       "suggestedId": "index-test-testbasicindexing-0320-select-*-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test WHERE v1 BETWEEN 3 AND 5 OR v1 BETWEEN 7 AND 9;",
       "querySha256": "0f97751b24845c6b8d34db6937e174aa808a4be7a562fd93d8e7b734c3bbdc1e",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "5"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "7"
+          }
+        ],
+        [
+          {
+            "value": "5"
+          },
+          {
+            "value": "9"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9745,12 +10059,39 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 321,
       "scriptName": "Proper range AND + OR handling",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0321-explain-select-*-from-test",
       "suggestedId": "index-test-testbasicindexing-0321-explain-select-*-from-test",
+      "compare": "structural",
+      "columnModes": [
+        "explain"
+      ],
       "expectedKind": "rows",
       "query": "explain SELECT * FROM test WHERE v1 BETWEEN 3 AND 5 OR v1 BETWEEN 7 AND 9 order by 1;",
       "querySha256": "0829dfb0750f9f03789bfc0d9225ffd66c1353f91093ac9eaabb731a0d190327",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "Sort  (cost=1.11..1.11 rows=1 width=8)"
+          }
+        ],
+        [
+          {
+            "value": "  Sort Key: pk"
+          }
+        ],
+        [
+          {
+            "value": "  ->  Seq Scan on test  (cost=0.00..1.10 rows=1 width=8)"
+          }
+        ],
+        [
+          {
+            "value": "        Filter: (((v1 >= 3) AND (v1 <= 5)) OR ((v1 >= 7) AND (v1 <= 9)))"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9774,12 +10115,15 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 323,
       "scriptName": "Index attributes",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0323-create-unique-index-if-not",
       "suggestedId": "index-test-testbasicindexing-0323-create-unique-index-if-not",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "CREATE UNIQUE INDEX IF NOT EXISTS idx_items_title_lower ON items(lower(title));",
       "querySha256": "d3ed479acbef50b2b748f5d3f6c037f10e2cf015d36b07c051aed9e8ae1bbda2",
-      "needsCleanup": true,
+      "expectedRows": [],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9787,12 +10131,15 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 324,
       "scriptName": "Index attributes",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0324-create-index-idx_items_title_updated_include-on-items",
       "suggestedId": "index-test-testbasicindexing-0324-create-index-idx_items_title_updated_include-on-items",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "CREATE INDEX idx_items_title_updated_include ON items(title COLLATE \"C\", updated_at) INCLUDE (metadata);",
       "querySha256": "27d8372ecdd00eca326b355ce0747837b3e9852a8d0a26e9329c67236d1fee35",
-      "needsCleanup": true,
+      "expectedRows": [],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9800,12 +10147,39 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 325,
       "scriptName": "Index attributes",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0325-select-i.indkey-i.indexprs-pg_catalog.pg_get_expr-i.indexprs",
       "suggestedId": "index-test-testbasicindexing-0325-select-i.indkey-i.indexprs-pg_catalog.pg_get_expr-i.indexprs",
+      "compare": "structural",
+      "columnModes": [
+        "structural",
+        "structural",
+        "structural",
+        "schema"
+      ],
       "expectedKind": "rows",
       "query": "SELECT i.indkey,\n\ti.indexprs,\n\tpg_catalog.pg_get_expr(i.indexprs, i.indrelid),\n\tpg_catalog.pg_get_indexdef(i.indexrelid),\n\tpg_catalog.pg_get_indexdef(i.indexrelid, 1, true)\nFROM pg_catalog.pg_index i\nJOIN pg_catalog.pg_class c ON c.oid = i.indexrelid\nWHERE c.relname = 'idx_items_title_lower';",
       "querySha256": "a0bc68063ec5f3982006d44b515a19722eb4457ad78793e5535ee9ba5877fcbc",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          },
+          {
+            "value": "({FUNCEXPR :funcid 870 :funcresulttype 25 :funcretset false :funcvariadic false :funcformat 0 :funccollid 100 :inputcollid 100 :args ({RELABELTYPE :arg {VAR :varno 1 :varattno 2 :vartype 1043 :vartypmod 104 :varcollid 100 :varnullingrels (b) :varlevelsup 0 :varnosyn 1 :varattnosyn 2 :location 71} :resulttype 25 :resulttypmod -1 :resultcollid 100 :relabelformat 2 :location -1}) :location 65})"
+          },
+          {
+            "value": "lower((title)::text)"
+          },
+          {
+            "value": "CREATE UNIQUE INDEX idx_items_title_lower ON {{schema}}.items USING btree (lower((title)::text))"
+          },
+          {
+            "value": "lower(title::text)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9813,12 +10187,64 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 326,
       "scriptName": "Index attributes",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0326-select-a.attname-a.attnum-from-pg_catalog.pg_attribute",
       "suggestedId": "index-test-testbasicindexing-0326-select-a.attname-a.attnum-from-pg_catalog.pg_attribute",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT a.attname, a.attnum\nFROM pg_catalog.pg_attribute a\nJOIN pg_catalog.pg_class c ON c.oid = a.attrelid\nWHERE c.relname = 'items' AND a.attnum > 0\nORDER BY a.attnum;",
       "querySha256": "4ff0bed81e5782e38d3846a50f1077db671c281dadea288fd608471d365bc7b1",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "id"
+          },
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "id"
+          },
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "label"
+          },
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "title"
+          },
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "metadata"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "updated_at"
+          },
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9826,15 +10252,139 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 327,
       "scriptName": "Index attributes",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0327-select-c.relname-a.attname-a.attnum-a.atttypid",
       "suggestedId": "index-test-testbasicindexing-0327-select-c.relname-a.attname-a.attnum-a.atttypid",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT\n\tc.relname,\n\ta.attname,\n\ta.attnum,\n\ta.atttypid,\n\ta.attcollation,\n\ta.attstattarget\nFROM pg_catalog.pg_attribute a\nJOIN pg_catalog.pg_class c ON c.oid = a.attrelid\nWHERE c.relname IN ('items_pkey', 'idx_items_title_lower', 'idx_items_title_updated_include')\n  AND a.attnum > 0\nORDER BY c.relname, a.attnum;",
       "querySha256": "ead9778e2eb9cd2ef9875ef5ac918ed73b9e57fd0822d9f0fe8cb1190921dee8",
+      "expectedRows": [
+        [
+          {
+            "value": "idx_items_title_lower"
+          },
+          {
+            "value": "lower"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "25"
+          },
+          {
+            "value": "100"
+          },
+          {
+            "value": "-1"
+          }
+        ],
+        [
+          {
+            "value": "idx_items_title_updated_include"
+          },
+          {
+            "value": "title"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1043"
+          },
+          {
+            "value": "950"
+          },
+          {
+            "value": "-1"
+          }
+        ],
+        [
+          {
+            "value": "idx_items_title_updated_include"
+          },
+          {
+            "value": "updated_at"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "1114"
+          },
+          {
+            "value": "0"
+          },
+          {
+            "value": "-1"
+          }
+        ],
+        [
+          {
+            "value": "idx_items_title_updated_include"
+          },
+          {
+            "value": "metadata"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "114"
+          },
+          {
+            "value": "0"
+          },
+          {
+            "value": "-1"
+          }
+        ],
+        [
+          {
+            "value": "items_pkey"
+          },
+          {
+            "value": "id"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "23"
+          },
+          {
+            "value": "0"
+          },
+          {
+            "value": "-1"
+          }
+        ],
+        [
+          {
+            "value": "items_pkey"
+          },
+          {
+            "value": "id"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "23"
+          },
+          {
+            "value": "0"
+          },
+          {
+            "value": "-1"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9842,12 +10392,15 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 328,
       "scriptName": "Index attributes",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0328-insert-into-items-title-metadata",
       "suggestedId": "index-test-testbasicindexing-0328-insert-into-items-title-metadata",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "INSERT INTO items (title, metadata, updated_at) VALUES ('ABC', '{}', '2026-10-10 01:02:03');",
       "querySha256": "26b167ee4ec1b05dce37aa2ba10433c071de2d0fee97c43cfd591958811ab59c",
-      "needsCleanup": true,
+      "expectedRows": [],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9855,12 +10408,16 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 329,
       "scriptName": "Index attributes",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0329-insert-into-items-title-metadata",
       "suggestedId": "index-test-testbasicindexing-0329-insert-into-items-title-metadata",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
       "query": "INSERT INTO items (title, metadata, updated_at) VALUES ('abc', '{}', '2026-11-12 03:04:05');",
       "querySha256": "b48b58d8af3a8092d8f2c4b9a5c165b746fbaa7cf5b733819f61f975a26eab48",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9868,12 +10425,24 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 330,
       "scriptName": "PostgreSQL alter expression index statistics target",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0330-select-pg_catalog.pg_get_indexdef-c.oid-from-pg_catalog.pg_class",
       "suggestedId": "index-test-testbasicindexing-0330-select-pg_catalog.pg_get_indexdef-c.oid-from-pg_catalog.pg_class",
+      "compare": "structural",
+      "columnModes": [
+        "schema"
+      ],
       "expectedKind": "rows",
       "query": "SELECT pg_catalog.pg_get_indexdef(c.oid)\nFROM pg_catalog.pg_class c\nWHERE c.relname = 'alter_index_stats_mixed_idx';",
       "querySha256": "8ba16fcda43c89672a45b4789f96603c69c152f81499ca922bf251bab567dc9a",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "CREATE INDEX alter_index_stats_mixed_idx ON {{schema}}.alter_index_stats_meta USING btree (lower(title), code)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9881,15 +10450,61 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 331,
       "scriptName": "PostgreSQL alter expression index statistics target",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0331-select-c.relname-a.attname-a.attnum-a.attstattarget",
       "suggestedId": "index-test-testbasicindexing-0331-select-c.relname-a.attname-a.attnum-a.attstattarget",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT\n\tc.relname,\n\ta.attname,\n\ta.attnum,\n\ta.attstattarget\nFROM pg_catalog.pg_attribute a\nJOIN pg_catalog.pg_class c ON c.oid = a.attrelid\nWHERE c.relname IN ('alter_index_stats_lower_idx', 'alter_index_stats_mixed_idx')\n  AND a.attnum > 0\nORDER BY c.relname, a.attnum;",
       "querySha256": "d529aacbbd2b73ea85b0af9e6526b1356f1e22a4731bb3a2da60c174043bc818",
+      "expectedRows": [
+        [
+          {
+            "value": "alter_index_stats_lower_idx"
+          },
+          {
+            "value": "lower"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "100"
+          }
+        ],
+        [
+          {
+            "value": "alter_index_stats_mixed_idx"
+          },
+          {
+            "value": "lower"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "200"
+          }
+        ],
+        [
+          {
+            "value": "alter_index_stats_mixed_idx"
+          },
+          {
+            "value": "code"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "-1"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9897,15 +10512,41 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 332,
       "scriptName": "PostgreSQL alter expression index statistics target",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0332-select-c.relname-a.attname-a.attstattarget-from",
       "suggestedId": "index-test-testbasicindexing-0332-select-c.relname-a.attname-a.attstattarget-from",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT c.relname, a.attname, a.attstattarget\nFROM pg_catalog.pg_attribute a\nJOIN pg_catalog.pg_class c ON c.oid = a.attrelid\nWHERE c.relname IN ('alter_index_stats_lower_idx', 'alter_index_stats_mixed_idx')\n  AND a.attnum = 1\nORDER BY c.relname;",
       "querySha256": "5795ead8562958f8777f2ff4a9ec2018ca1bcb466d17c25d5477712342f2c3b8",
+      "expectedRows": [
+        [
+          {
+            "value": "alter_index_stats_lower_idx"
+          },
+          {
+            "value": "lower"
+          },
+          {
+            "value": "0"
+          }
+        ],
+        [
+          {
+            "value": "alter_index_stats_mixed_idx"
+          },
+          {
+            "value": "lower"
+          },
+          {
+            "value": "10000"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9913,12 +10554,16 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 333,
       "scriptName": "PostgreSQL alter expression index statistics target",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0333-alter-index-alter_index_stats_code_idx-alter-column",
       "suggestedId": "index-test-testbasicindexing-0333-alter-index-alter_index_stats_code_idx-alter-column",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "0A000",
+      "errorSeverity": "ERROR",
       "query": "ALTER INDEX alter_index_stats_code_idx ALTER COLUMN 1 SET STATISTICS 100;",
       "querySha256": "e35ee4eeec764de2cf3b3357ec70a69f94d9e391a526a5b99b65427b7106d785",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9926,12 +10571,16 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 334,
       "scriptName": "PostgreSQL alter expression index statistics target",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0334-alter-index-alter_index_stats_mixed_idx-alter-column",
       "suggestedId": "index-test-testbasicindexing-0334-alter-index-alter_index_stats_mixed_idx-alter-column",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "0A000",
+      "errorSeverity": "ERROR",
       "query": "ALTER INDEX alter_index_stats_mixed_idx ALTER COLUMN 2 SET STATISTICS 100;",
       "querySha256": "928caf40e59793672e61be67eb2434db750d1f4526fc16b7cb20db681f21ee54",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9939,12 +10588,16 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 335,
       "scriptName": "PostgreSQL alter expression index statistics target",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0335-alter-index-alter_index_stats_lower_idx-alter-column",
       "suggestedId": "index-test-testbasicindexing-0335-alter-index-alter_index_stats_lower_idx-alter-column",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "42703",
+      "errorSeverity": "ERROR",
       "query": "ALTER INDEX alter_index_stats_lower_idx ALTER COLUMN 2 SET STATISTICS 100;",
       "querySha256": "dbe57d77863634345e183f274ce9e829659041a7d5d1e57d585511a504a7d5b6",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9952,12 +10605,16 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 336,
       "scriptName": "PostgreSQL alter expression index statistics target",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0336-alter-index-alter_index_stats_meta_pkey-alter-column",
       "suggestedId": "index-test-testbasicindexing-0336-alter-index-alter_index_stats_meta_pkey-alter-column",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "0A000",
+      "errorSeverity": "ERROR",
       "query": "ALTER INDEX alter_index_stats_meta_pkey ALTER COLUMN 1 SET STATISTICS 100;",
       "querySha256": "688dd596e03096960244db2efcb9c8b59f9d16171aced6a2c87ac09afc53eba7",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9965,12 +10622,45 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 337,
       "scriptName": "PostgreSQL mixed expression index metadata",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0337-select-i.indkey-i.indexprs-pg_catalog.pg_get_expr-i.indexprs",
       "suggestedId": "index-test-testbasicindexing-0337-select-i.indkey-i.indexprs-pg_catalog.pg_get_expr-i.indexprs",
+      "compare": "structural",
+      "columnModes": [
+        "structural",
+        "structural",
+        "structural",
+        "schema"
+      ],
       "expectedKind": "rows",
       "query": "SELECT\n\ti.indkey,\n\ti.indexprs,\n\tpg_catalog.pg_get_expr(i.indexprs, i.indrelid),\n\tpg_catalog.pg_get_indexdef(i.indexrelid),\n\tpg_catalog.pg_get_indexdef(i.indexrelid, 1, true),\n\tpg_catalog.pg_get_indexdef(i.indexrelid, 2, true),\n\tpg_catalog.pg_get_indexdef(i.indexrelid, 3, true)\nFROM pg_catalog.pg_index i\nJOIN pg_catalog.pg_class c ON c.oid = i.indexrelid\nWHERE c.relname = 'mixed_expression_index_meta_idx';",
       "querySha256": "4fa07ccc72b6253beeb82e79e545ff75d65a71d2686983b46d2d47d0a04e0bf2",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "0 3 0"
+          },
+          {
+            "value": "({FUNCEXPR :funcid 870 :funcresulttype 25 :funcretset false :funcvariadic false :funcformat 0 :funccollid 100 :inputcollid 100 :args ({VAR :varno 1 :varattno 2 :vartype 25 :vartypmod -1 :varcollid 100 :varnullingrels (b) :varlevelsup 0 :varnosyn 1 :varattnosyn 2 :location 83}) :location 77} {FUNCEXPR :funcid 871 :funcresulttype 25 :funcretset false :funcvariadic false :funcformat 0 :funccollid 100 :inputcollid 100 :args ({VAR :varno 1 :varattno 3 :vartype 25 :vartypmod -1 :varcollid 100 :varnullingrels (b) :varlevelsup 0 :varnosyn 1 :varattnosyn 3 :location 104}) :location 98})"
+          },
+          {
+            "value": "lower(title), upper(code)"
+          },
+          {
+            "value": "CREATE INDEX mixed_expression_index_meta_idx ON {{schema}}.mixed_expression_index_meta USING btree (lower(title), code, upper(code))"
+          },
+          {
+            "value": "lower(title)"
+          },
+          {
+            "value": "code"
+          },
+          {
+            "value": "upper(code)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9978,12 +10668,21 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 338,
       "scriptName": "PostgreSQL mixed expression index metadata",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0338-select-id-from-mixed_expression_index_meta-where",
       "suggestedId": "index-test-testbasicindexing-0338-select-id-from-mixed_expression_index_meta-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT id\nFROM mixed_expression_index_meta\nWHERE lower(title) = 'alpha' AND code = 'a1'\nORDER BY id;",
       "querySha256": "6072c997272292af404951da69a1a70529b42c31699c3fe1720e82c3104437ee",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     }
   ]

@@ -779,35 +779,13 @@ func TestBasicIndexing(t *testing.T) {
 					Query: "select /*+ lookup_join(jointable, test) */ HINT * from test join jointable on test.v1 = jointable.v3 and test.v2 = 22 order by 1", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0029-select-/*+-lookup_join-jointable-test", Compare: "sqlstate"},
 				},
 				{
-					Query: "explain select * from test join jointable on test.v1 = jointable.v3 and test.v2 = 22 order by 1",
-					Expected: []sql.Row{
-						{"InnerJoin"},
-						{" ├─ (test.v1 = jointable.v3 AND test.v2 = 22)"},
-						{" ├─ IndexedTableAccess(test)"},
-						{" │   ├─ index: [test.pk]"},
-						{" │   ├─ filters: [{[NULL, ∞)}]"},
-						{" │   └─ columns: [pk v1 v2]"},
-						{" └─ Table"},
-						{"     ├─ name: jointable"},
-						{"     └─ columns: [v3 v4]"},
-					},
+					Query: "explain select * from test join jointable on test.v1 = jointable.v3 and test.v2 = 22 order by 1", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0030-explain-select-*-from-test", ColumnModes: []string{"explain"}},
 				},
 				{
 					Query: "select * from test join jointable on test.v1 = jointable.v3 and test.v2 = jointable.v4 order by 1", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0031-select-*-from-test-join"},
 				},
 				{
-					Query: "explain select * from test join jointable on test.v1 = jointable.v3 and test.v2 = jointable.v4 order by 1",
-					Expected: []sql.Row{
-						{"InnerJoin"},
-						{" ├─ (test.v1 = jointable.v3 AND test.v2 = jointable.v4)"},
-						{" ├─ IndexedTableAccess(test)"},
-						{" │   ├─ index: [test.pk]"},
-						{" │   ├─ filters: [{[NULL, ∞)}]"},
-						{" │   └─ columns: [pk v1 v2]"},
-						{" └─ Table"},
-						{"     ├─ name: jointable"},
-						{"     └─ columns: [v3 v4]"},
-					},
+					Query: "explain select * from test join jointable on test.v1 = jointable.v3 and test.v2 = jointable.v4 order by 1", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0032-explain-select-*-from-test", ColumnModes: []string{"explain"}},
 				},
 				{
 					Query: "SELECT * FROM test WHERE v1 > 2 AND v2 = 24 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0033-select-*-from-test-where"},
@@ -2771,81 +2749,43 @@ WHERE doc @> '{"a":1}';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-te
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT pk FROM test WHERE a = 2 and b = 2;`,
-					Expected: []sql.Row{
-						{3},
-					},
+					Query: `SELECT pk FROM test WHERE a = 2 and b = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0297-select-pk-from-test-where"},
 				},
 				{
-					Query: `SELECT pk FROM test WHERE a > 1`,
-					Expected: []sql.Row{
-						{3},
-						{4},
-					},
+					Query: `SELECT pk FROM test WHERE a > 1`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0298-select-pk-from-test-where"},
 				},
 				{
-					Query: `SELECT pk FROM test WHERE a = 2 and b < 3`,
-					Expected: []sql.Row{
-						{3},
-					},
+					Query: `SELECT pk FROM test WHERE a = 2 and b < 3`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0299-select-pk-from-test-where"},
 				},
 				{
-					Query: `SELECT pk FROM test WHERE a > 2 and b < 3`,
-					Expected: []sql.Row{
-						{4},
-					},
+					Query: `SELECT pk FROM test WHERE a > 2 and b < 3`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0300-select-pk-from-test-where"},
 				},
 				{
-					Query: `SELECT pk FROM test WHERE a > 2 and b < 2`,
-					Expected: []sql.Row{
-						{4},
-					},
+					Query: `SELECT pk FROM test WHERE a > 2 and b < 2`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0301-select-pk-from-test-where"},
 				},
 				{
-					Query:    `SELECT pk FROM test WHERE a > 3 and b < 2`,
-					Expected: []sql.Row{},
+					Query: `SELECT pk FROM test WHERE a > 3 and b < 2`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0302-select-pk-from-test-where"},
 				},
 				{
-					Query:    `SELECT pk FROM test WHERE a > 3 and b < 2`,
-					Expected: []sql.Row{},
+					Query: `SELECT pk FROM test WHERE a > 3 and b < 2`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0303-select-pk-from-test-where"},
 				},
 				{
-					Query: `SELECT pk FROM test WHERE a > 1 and b > 1`,
-					Expected: []sql.Row{
-						{3},
-					},
+					Query: `SELECT pk FROM test WHERE a > 1 and b > 1`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0304-select-pk-from-test-where"},
 				},
 				{
-					Query: `SELECT pk FROM test WHERE a > 1 and b = 1`,
-					Expected: []sql.Row{
-						{4},
-					},
+					Query: `SELECT pk FROM test WHERE a > 1 and b = 1`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0305-select-pk-from-test-where"},
 				},
 				{
-					Query: `SELECT pk FROM test WHERE a < 3 and b > 0 order by 1`,
-					Expected: []sql.Row{
-						{1},
-						{2},
-						{3},
-					},
+					Query: `SELECT pk FROM test WHERE a < 3 and b > 0 order by 1`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0306-select-pk-from-test-where"},
 				},
 				{
-					Query: `SELECT pk FROM test WHERE a > 1 and a < 3 order by 1`,
-					Expected: []sql.Row{
-						{3},
-					},
+					Query: `SELECT pk FROM test WHERE a > 1 and a < 3 order by 1`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0307-select-pk-from-test-where"},
 				},
 				{
-					Query: `SELECT pk FROM test WHERE a > 1 and a < 3 order by 1`,
-					Expected: []sql.Row{
-						{3},
-					},
+					Query: `SELECT pk FROM test WHERE a > 1 and a < 3 order by 1`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0308-select-pk-from-test-where"},
 				},
 				{
-					Query: `SELECT pk FROM test WHERE a > 1 and b > 1 order by 1`,
-					Expected: []sql.Row{
-						{3},
-					},
+					Query: `SELECT pk FROM test WHERE a > 1 and b > 1 order by 1`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0309-select-pk-from-test-where"},
 				},
 			},
 		},
@@ -2916,10 +2856,7 @@ WHERE doc @> '{"a":1}';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-te
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT pk FROM test WHERE (v1 = 'c' AND v2 = 'c');`,
-					Expected: []sql.Row{
-						{3},
-					},
+					Query: `SELECT pk FROM test WHERE (v1 = 'c' AND v2 = 'c');`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0315-select-pk-from-test-where"},
 				},
 			},
 		},
@@ -2935,28 +2872,16 @@ WHERE doc @> '{"a":1}';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-te
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT "django_content_type"."id", "django_content_type"."app_label", "django_content_type"."model" FROM "django_content_type" WHERE ("django_content_type"."app_label" = 'auth' AND "django_content_type"."model" = 'permission') LIMIT 21;`,
-					Expected: []sql.Row{
-						{1, "auth", "permission"},
-					},
+					Query: `SELECT "django_content_type"."id", "django_content_type"."app_label", "django_content_type"."model" FROM "django_content_type" WHERE ("django_content_type"."app_label" = 'auth' AND "django_content_type"."model" = 'permission') LIMIT 21;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0316-select-django_content_type-.-id-django_content_type"},
 				},
 				{
-					Query: `SELECT "django_content_type"."id", "django_content_type"."app_label", "django_content_type"."model" FROM "django_content_type" WHERE ("django_content_type"."app_label" = 'auth' AND "django_content_type"."model" = 'group') LIMIT 21;`,
-					Expected: []sql.Row{
-						{2, "auth", "group"},
-					},
+					Query: `SELECT "django_content_type"."id", "django_content_type"."app_label", "django_content_type"."model" FROM "django_content_type" WHERE ("django_content_type"."app_label" = 'auth' AND "django_content_type"."model" = 'group') LIMIT 21;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0317-select-django_content_type-.-id-django_content_type"},
 				},
 				{
-					Query: `SELECT "django_content_type"."id", "django_content_type"."app_label", "django_content_type"."model" FROM "django_content_type" WHERE ("django_content_type"."app_label" = 'auth' AND "django_content_type"."model" = 'user') LIMIT 21;`,
-					Expected: []sql.Row{
-						{3, "auth", "user"},
-					},
+					Query: `SELECT "django_content_type"."id", "django_content_type"."app_label", "django_content_type"."model" FROM "django_content_type" WHERE ("django_content_type"."app_label" = 'auth' AND "django_content_type"."model" = 'user') LIMIT 21;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0318-select-django_content_type-.-id-django_content_type"},
 				},
 				{
-					Query: `SELECT "django_content_type"."id", "django_content_type"."app_label", "django_content_type"."model" FROM "django_content_type" WHERE ("django_content_type"."app_label" = 'contenttypes' AND "django_content_type"."model" = 'contenttype') LIMIT 21;`,
-					Expected: []sql.Row{
-						{4, "contenttypes", "contenttype"},
-					},
+					Query: `SELECT "django_content_type"."id", "django_content_type"."app_label", "django_content_type"."model" FROM "django_content_type" WHERE ("django_content_type"."app_label" = 'contenttypes' AND "django_content_type"."model" = 'contenttype') LIMIT 21;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0319-select-django_content_type-.-id-django_content_type"},
 				},
 			},
 		},
@@ -2969,23 +2894,10 @@ WHERE doc @> '{"a":1}';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-te
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT * FROM test WHERE v1 BETWEEN 3 AND 5 OR v1 BETWEEN 7 AND 9;",
-					Expected: []sql.Row{
-						{2, 3},
-						{3, 5},
-						{4, 7},
-						{5, 9},
-					},
+					Query: "SELECT * FROM test WHERE v1 BETWEEN 3 AND 5 OR v1 BETWEEN 7 AND 9;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0320-select-*-from-test-where"},
 				},
 				{
-					Query: "explain SELECT * FROM test WHERE v1 BETWEEN 3 AND 5 OR v1 BETWEEN 7 AND 9 order by 1;",
-					Expected: []sql.Row{
-						{"Sort(test.pk ASC)"},
-						{" └─ IndexedTableAccess(test)"},
-						{"     ├─ index: [test.v1]"},
-						{"     ├─ filters: [{[3, 5]}, {[7, 9]}]"},
-						{"     └─ columns: [pk v1]"},
-					},
+					Query: "explain SELECT * FROM test WHERE v1 BETWEEN 3 AND 5 OR v1 BETWEEN 7 AND 9 order by 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0321-explain-select-*-from-test", ColumnModes: []string{"explain"}},
 				},
 			},
 		},
@@ -3050,12 +2962,10 @@ WHERE doc @> '{"a":1}';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-te
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "CREATE UNIQUE INDEX IF NOT EXISTS idx_items_title_lower ON items(lower(title));",
-					Expected: []sql.Row{},
+					Query: "CREATE UNIQUE INDEX IF NOT EXISTS idx_items_title_lower ON items(lower(title));", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0323-create-unique-index-if-not"},
 				},
 				{
-					Query:    `CREATE INDEX idx_items_title_updated_include ON items(title COLLATE "C", updated_at) INCLUDE (metadata);`,
-					Expected: []sql.Row{},
+					Query: `CREATE INDEX idx_items_title_updated_include ON items(title COLLATE "C", updated_at) INCLUDE (metadata);`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0324-create-index-idx_items_title_updated_include-on-items"},
 				},
 				{
 					Query: `SELECT i.indkey,
@@ -3065,23 +2975,14 @@ WHERE doc @> '{"a":1}';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-te
 	pg_catalog.pg_get_indexdef(i.indexrelid, 1, true)
 FROM pg_catalog.pg_index i
 JOIN pg_catalog.pg_class c ON c.oid = i.indexrelid
-WHERE c.relname = 'idx_items_title_lower';`,
-					Expected: []sql.Row{
-						{"0", "lower(title)", "lower(title)", "CREATE UNIQUE INDEX idx_items_title_lower ON public.items USING btree (lower(title))", "lower(title)"},
-					},
+WHERE c.relname = 'idx_items_title_lower';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0325-select-i.indkey-i.indexprs-pg_catalog.pg_get_expr-i.indexprs", ColumnModes: []string{"structural", "structural", "structural", "schema"}},
 				},
 				{
 					Query: `SELECT a.attname, a.attnum
 FROM pg_catalog.pg_attribute a
 JOIN pg_catalog.pg_class c ON c.oid = a.attrelid
 WHERE c.relname = 'items' AND a.attnum > 0
-ORDER BY a.attnum;`,
-					Expected: []sql.Row{
-						{"id", 1},
-						{"title", 2},
-						{"metadata", 3},
-						{"updated_at", 4},
-					},
+ORDER BY a.attnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0326-select-a.attname-a.attnum-from-pg_catalog.pg_attribute"},
 				},
 				{
 					Query: `SELECT
@@ -3095,22 +2996,13 @@ FROM pg_catalog.pg_attribute a
 JOIN pg_catalog.pg_class c ON c.oid = a.attrelid
 WHERE c.relname IN ('items_pkey', 'idx_items_title_lower', 'idx_items_title_updated_include')
   AND a.attnum > 0
-ORDER BY c.relname, a.attnum;`,
-					Expected: []sql.Row{
-						{"idx_items_title_lower", "lower", int16(1), typeOid("text"), collationOid("default"), int16(-1)},
-						{"idx_items_title_updated_include", "title", int16(1), typeOid("varchar"), collationOid("C"), int16(-1)},
-						{"idx_items_title_updated_include", "updated_at", int16(2), typeOid("timestamp"), uint32(0), int16(-1)},
-						{"idx_items_title_updated_include", "metadata", int16(3), typeOid("json"), uint32(0), int16(-1)},
-						{"items_pkey", "id", int16(1), typeOid("int4"), uint32(0), int16(-1)},
-					},
+ORDER BY c.relname, a.attnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0327-select-c.relname-a.attname-a.attnum-a.atttypid"},
 				},
 				{
-					Query:    "INSERT INTO items (title, metadata, updated_at) VALUES ('ABC', '{}', '2026-10-10 01:02:03');",
-					Expected: []sql.Row{},
+					Query: "INSERT INTO items (title, metadata, updated_at) VALUES ('ABC', '{}', '2026-10-10 01:02:03');", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0328-insert-into-items-title-metadata"},
 				},
 				{
-					Query:       "INSERT INTO items (title, metadata, updated_at) VALUES ('abc', '{}', '2026-11-12 03:04:05');",
-					ExpectedErr: "duplicate unique key given",
+					Query: "INSERT INTO items (title, metadata, updated_at) VALUES ('abc', '{}', '2026-11-12 03:04:05');", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0329-insert-into-items-title-metadata", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -3136,10 +3028,7 @@ ORDER BY c.relname, a.attnum;`,
 				{
 					Query: `SELECT pg_catalog.pg_get_indexdef(c.oid)
 FROM pg_catalog.pg_class c
-WHERE c.relname = 'alter_index_stats_mixed_idx';`,
-					Expected: []sql.Row{
-						{"CREATE INDEX alter_index_stats_mixed_idx ON public.alter_index_stats_meta USING btree (lower(title), code)"},
-					},
+WHERE c.relname = 'alter_index_stats_mixed_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0330-select-pg_catalog.pg_get_indexdef-c.oid-from-pg_catalog.pg_class", ColumnModes: []string{"schema"}},
 				},
 				{
 					Query: `SELECT
@@ -3151,12 +3040,7 @@ FROM pg_catalog.pg_attribute a
 JOIN pg_catalog.pg_class c ON c.oid = a.attrelid
 WHERE c.relname IN ('alter_index_stats_lower_idx', 'alter_index_stats_mixed_idx')
   AND a.attnum > 0
-ORDER BY c.relname, a.attnum;`,
-					Expected: []sql.Row{
-						{"alter_index_stats_lower_idx", "lower", int16(1), int16(100)},
-						{"alter_index_stats_mixed_idx", "lower", int16(1), int16(200)},
-						{"alter_index_stats_mixed_idx", "code", int16(2), int16(-1)},
-					},
+ORDER BY c.relname, a.attnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0331-select-c.relname-a.attname-a.attnum-a.attstattarget"},
 				},
 				{
 					Query: "ALTER INDEX alter_index_stats_lower_idx ALTER COLUMN 1 SET STATISTICS 0;",
@@ -3170,27 +3054,19 @@ FROM pg_catalog.pg_attribute a
 JOIN pg_catalog.pg_class c ON c.oid = a.attrelid
 WHERE c.relname IN ('alter_index_stats_lower_idx', 'alter_index_stats_mixed_idx')
   AND a.attnum = 1
-ORDER BY c.relname;`,
-					Expected: []sql.Row{
-						{"alter_index_stats_lower_idx", "lower", int16(0)},
-						{"alter_index_stats_mixed_idx", "lower", int16(10000)},
-					},
+ORDER BY c.relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0332-select-c.relname-a.attname-a.attstattarget-from"},
 				},
 				{
-					Query:       "ALTER INDEX alter_index_stats_code_idx ALTER COLUMN 1 SET STATISTICS 100;",
-					ExpectedErr: `cannot alter statistics on non-expression column "code" of index "alter_index_stats_code_idx"`,
+					Query: "ALTER INDEX alter_index_stats_code_idx ALTER COLUMN 1 SET STATISTICS 100;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0333-alter-index-alter_index_stats_code_idx-alter-column", Compare: "sqlstate"},
 				},
 				{
-					Query:       "ALTER INDEX alter_index_stats_mixed_idx ALTER COLUMN 2 SET STATISTICS 100;",
-					ExpectedErr: `cannot alter statistics on non-expression column "code" of index "alter_index_stats_mixed_idx"`,
+					Query: "ALTER INDEX alter_index_stats_mixed_idx ALTER COLUMN 2 SET STATISTICS 100;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0334-alter-index-alter_index_stats_mixed_idx-alter-column", Compare: "sqlstate"},
 				},
 				{
-					Query:       "ALTER INDEX alter_index_stats_lower_idx ALTER COLUMN 2 SET STATISTICS 100;",
-					ExpectedErr: `column number 2 of relation "alter_index_stats_lower_idx" does not exist`,
+					Query: "ALTER INDEX alter_index_stats_lower_idx ALTER COLUMN 2 SET STATISTICS 100;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0335-alter-index-alter_index_stats_lower_idx-alter-column", Compare: "sqlstate"},
 				},
 				{
-					Query:       "ALTER INDEX alter_index_stats_meta_pkey ALTER COLUMN 1 SET STATISTICS 100;",
-					ExpectedErr: "ALTER INDEX statistics targets for constraint-backed indexes are not yet supported",
+					Query: "ALTER INDEX alter_index_stats_meta_pkey ALTER COLUMN 1 SET STATISTICS 100;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0336-alter-index-alter_index_stats_meta_pkey-alter-column", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -3220,25 +3096,13 @@ ORDER BY c.relname;`,
 	pg_catalog.pg_get_indexdef(i.indexrelid, 3, true)
 FROM pg_catalog.pg_index i
 JOIN pg_catalog.pg_class c ON c.oid = i.indexrelid
-WHERE c.relname = 'mixed_expression_index_meta_idx';`,
-					Expected: []sql.Row{
-						{
-							"0 3 0",
-							"lower(title), upper(code)",
-							"lower(title), upper(code)",
-							"CREATE INDEX mixed_expression_index_meta_idx ON public.mixed_expression_index_meta USING btree (lower(title), code, upper(code))",
-							"lower(title)",
-							"code",
-							"upper(code)",
-						},
-					},
+WHERE c.relname = 'mixed_expression_index_meta_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0337-select-i.indkey-i.indexprs-pg_catalog.pg_get_expr-i.indexprs", ColumnModes: []string{"structural", "structural", "structural", "schema"}},
 				},
 				{
 					Query: `SELECT id
 FROM mixed_expression_index_meta
 WHERE lower(title) = 'alpha' AND code = 'a1'
-ORDER BY id;`,
-					Expected: []sql.Row{{1}},
+ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0338-select-id-from-mixed_expression_index_meta-where"},
 				},
 			},
 		},
