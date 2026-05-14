@@ -124,6 +124,7 @@ func TestErrMessageToSQLStateFormatsInsufficientPrivilege(t *testing.T) {
 		`permission denied to create database`,
 		`permission denied: must be owner of database protected_db`,
 		`must be owner of table protected_items`,
+		`must be superuser to create publication for all tables or tables in schema`,
 	} {
 		code, ok := errMessageToSQLState(msg)
 		require.True(t, ok)
@@ -140,6 +141,29 @@ func TestErrMessageToSQLStateFormatsCommonRuntimeErrors(t *testing.T) {
 		{msg: `role "missing_database_owner" does not exist`, code: pgcode.UndefinedObject},
 		{msg: `extension "plpgsql" must be installed in schema "pg_catalog"`, code: pgcode.DuplicateObject},
 		{msg: `division by zero`, code: pgcode.DivisionByZero},
+	} {
+		code, ok := errMessageToSQLState(tt.msg)
+		require.True(t, ok)
+		require.Equal(t, tt.code.String(), code)
+		require.Equal(t, tt.code.String(), errorResponseCode(errors.New(tt.msg)))
+	}
+}
+
+func TestErrMessageToSQLStateFormatsPLpgSQLDiagnosticsErrors(t *testing.T) {
+	for _, tt := range []struct {
+		msg  string
+		code pgcode.Code
+	}{
+		{msg: "query returned no rows", code: pgcode.NoDataFound},
+		{msg: "query returned more than one row", code: pgcode.TooManyRows},
+		{
+			msg:  "GET STACKED DIAGNOSTICS cannot be used outside an exception handler",
+			code: pgcode.StackedDiagnosticsAccessedWithoutActiveHandler,
+		},
+		{
+			msg:  "diagnostics item PG_ROUTINE_OID is not allowed in GET STACKED DIAGNOSTICS",
+			code: pgcode.Syntax,
+		},
 	} {
 		code, ok := errMessageToSQLState(tt.msg)
 		require.True(t, ok)

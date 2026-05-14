@@ -4371,8 +4371,17 @@ func errMessageToSQLState(msg string) (string, bool) {
 	case msg == "cannot create temporary relation in non-temporary schema":
 		return pgcode.InvalidTableDefinition.String(), true
 	case strings.HasPrefix(msg, "permission denied"),
-		strings.HasPrefix(msg, "must be owner"):
+		strings.HasPrefix(msg, "must be owner"),
+		strings.HasPrefix(msg, "must be superuser"):
 		return pgcode.InsufficientPrivilege.String(), true
+	case msg == "query returned no rows":
+		return pgcode.NoDataFound.String(), true
+	case msg == "query returned more than one row":
+		return pgcode.TooManyRows.String(), true
+	case msg == "GET STACKED DIAGNOSTICS cannot be used outside an exception handler":
+		return pgcode.StackedDiagnosticsAccessedWithoutActiveHandler.String(), true
+	case strings.HasPrefix(msg, "diagnostics item ") && strings.HasSuffix(msg, " is not allowed in GET STACKED DIAGNOSTICS"):
+		return pgcode.Syntax.String(), true
 	case strings.HasPrefix(msg, `role "`) && strings.HasSuffix(msg, `" does not exist`):
 		return pgcode.UndefinedObject.String(), true
 	case strings.HasPrefix(msg, `extension "`) && strings.Contains(msg, `" must be installed in schema "`):
