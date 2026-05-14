@@ -31,6 +31,7 @@ import (
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/comments"
 	"github.com/dolthub/doltgresql/server/functions"
+	"github.com/dolthub/doltgresql/server/replicaidentity"
 	"github.com/dolthub/doltgresql/server/rowsecurity"
 	"github.com/dolthub/doltgresql/server/tablemetadata"
 )
@@ -383,6 +384,9 @@ func cleanupDroppedTableTargets(ctx *sql.Context, targets []dropTableTarget) err
 			return err
 		}
 		comments.RemoveObject(target.tableID, "pg_class")
+		if err := replicaidentity.DropTable(target.dbName, target.relation.Schema, target.relation.Name); err != nil {
+			return err
+		}
 		rowsecurity.DropTable(uint32(ctx.Session.ID()), target.dbName, target.relation.Schema, target.relation.Name)
 	}
 	if len(targets) == 0 {

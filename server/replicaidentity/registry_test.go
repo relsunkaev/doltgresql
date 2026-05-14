@@ -47,3 +47,28 @@ func TestConfigureStoragePersistsReplicaIdentity(t *testing.T) {
 	require.False(t, exists)
 	require.False(t, isDir)
 }
+
+func TestDropTableRemovesPersistedReplicaIdentity(t *testing.T) {
+	defer ResetForTests()
+
+	fs := filesys.EmptyInMemFS("")
+	path := ".doltcfg/replica_identity.json"
+	require.NoError(t, ConfigureStorage(fs, path))
+	require.NoError(t, Set("postgres", "public", "items", IdentityFull, ""))
+	require.NoError(t, Set("postgres", "public", "other", IdentityNothing, ""))
+
+	require.NoError(t, DropTable("postgres", "public", "items"))
+
+	setting := Get("postgres", "public", "items")
+	require.Equal(t, IdentityDefault, setting.Identity)
+	require.Empty(t, setting.IndexName)
+
+	setting = Get("postgres", "public", "other")
+	require.Equal(t, IdentityNothing, setting.Identity)
+
+	require.NoError(t, ConfigureStorage(fs, path))
+	setting = Get("postgres", "public", "items")
+	require.Equal(t, IdentityDefault, setting.Identity)
+	setting = Get("postgres", "public", "other")
+	require.Equal(t, IdentityNothing, setting.Identity)
+}

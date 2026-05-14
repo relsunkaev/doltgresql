@@ -27,6 +27,7 @@ import (
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/comments"
+	"github.com/dolthub/doltgresql/server/replicaidentity"
 )
 
 // DropSchema wraps GMS DROP SCHEMA execution to clean Doltgres auth metadata.
@@ -118,7 +119,7 @@ func (d *DropSchema) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error) {
 		return nil, err
 	}
 
-	if err = removeDroppedSchemaMetadata(d.Name, relations); err != nil {
+	if err = removeDroppedSchemaMetadata(ctx, d.Name, relations); err != nil {
 		return nil, err
 	}
 	return sql.RowsToRowIter(rows...), nil
@@ -163,7 +164,12 @@ func dropSchemaContents(ctx *sql.Context, schema sql.DatabaseSchema) ([]doltdb.T
 	return relations, nil
 }
 
-func removeDroppedSchemaMetadata(schemaName string, relations []doltdb.TableName) error {
+func removeDroppedSchemaMetadata(ctx *sql.Context, schemaName string, relations []doltdb.TableName) error {
+	for _, relation := range relations {
+		if err := replicaidentity.DropTable(ctx.GetCurrentDatabase(), relation.Schema, relation.Name); err != nil {
+			return err
+		}
+	}
 	var err error
 	auth.LockWrite(func() {
 		err = removeDroppedSchemaAuthMetadata(schemaName, relations)

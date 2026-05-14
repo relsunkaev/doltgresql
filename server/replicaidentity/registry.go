@@ -169,6 +169,22 @@ func Set(database string, schema string, table string, identity Identity, indexN
 	return persistLocked()
 }
 
+// DropTable removes any explicit replica identity state for a dropped table.
+func DropTable(database string, schema string, table string) error {
+	defaultRegistry.Lock()
+	defer defaultRegistry.Unlock()
+	key := registryKey{
+		Database: database,
+		Schema:   schema,
+		Table:    table,
+	}
+	if _, ok := defaultRegistry.settings[key]; !ok {
+		return nil
+	}
+	delete(defaultRegistry.settings, key)
+	return persistLocked()
+}
+
 func loadLocked() error {
 	exists, isDir := defaultRegistry.storageFS.Exists(defaultRegistry.storagePath)
 	if !exists {
