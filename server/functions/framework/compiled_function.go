@@ -105,7 +105,7 @@ func newCompiledFunctionInternal(
 		return c
 	}
 	// Next we'll resolve the overload based on the parameters given.
-	overload, err := c.resolve(overloads, fnOverloads, originalTypes)
+	overload, err := c.resolve(ctx, overloads, fnOverloads, originalTypes)
 	if err != nil {
 		c.stashedErr = err
 		return c
@@ -692,12 +692,12 @@ func (c *CompiledFunction) GetQuickFunction() QuickFunction {
 
 // resolve returns an overloadMatch that either matches the given parameters exactly, or is a viable match after casting.
 // Returns an invalid overloadMatch if a viable match is not found.
-func (c *CompiledFunction) resolve(overloads *Overloads, fnOverloads []Overload, argTypes []*pgtypes.DoltgresType) (overloadMatch, error) {
+func (c *CompiledFunction) resolve(ctx *sql.Context, overloads *Overloads, fnOverloads []Overload, argTypes []*pgtypes.DoltgresType) (overloadMatch, error) {
 	lookupArgTypes := domainBaseLookupTypes(argTypes)
 
 	// First check for an exact match
 	exactMatch, found := overloads.ExactMatchForTypes(lookupArgTypes...)
-	if found {
+	if found && c.useExactMatch(ctx, exactMatch, lookupArgTypes) {
 		return overloadMatch{
 			params: Overload{
 				function:   exactMatch,
@@ -710,7 +710,7 @@ func (c *CompiledFunction) resolve(overloads *Overloads, fnOverloads []Overload,
 	// There are no exact matches, so now we'll look through all overloads to determine the best match. This is
 	// much more work, but there's a performance penalty for runtime overload resolution in Postgres as well.
 	if c.IsOperator {
-		return c.resolveOperator(lookupArgTypes, overloads, fnOverloads)
+		return c.resolveOperator(ctx, lookupArgTypes, overloads, fnOverloads)
 	} else {
 		return c.resolveFunction(lookupArgTypes, fnOverloads)
 	}
@@ -736,7 +736,7 @@ func domainBaseLookupTypes(argTypes []*pgtypes.DoltgresType) []*pgtypes.Doltgres
 
 // resolveOperator resolves an operator according to the rules defined by Postgres.
 // https://www.postgresql.org/docs/15/typeconv-oper.html
-func (c *CompiledFunction) resolveOperator(argTypes []*pgtypes.DoltgresType, overloads *Overloads, fnOverloads []Overload) (overloadMatch, error) {
+func (c *CompiledFunction) resolveOperator(ctx *sql.Context, argTypes []*pgtypes.DoltgresType, overloads *Overloads, fnOverloads []Overload) (overloadMatch, error) {
 	// Binary operators treat unknown literals as the other type, so we'll account for that here to see if we can find
 	// an "exact" match.
 	if len(argTypes) == 2 {
@@ -752,7 +752,7 @@ func (c *CompiledFunction) resolveOperator(argTypes []*pgtypes.DoltgresType, ove
 				casts[1] = UnknownLiteralCast
 				typ = argTypes[0]
 			}
-			if exactMatch, ok := overloads.ExactMatchForTypes(typ, typ); ok {
+			if exactMatch, ok := overloads.ExactMatchForTypes(typ, typ); ok && c.useExactMatch(ctx, exactMatch, []*pgtypes.DoltgresType{typ, typ}) {
 				return overloadMatch{
 					params: Overload{
 						function:   exactMatch,
@@ -795,6 +795,61 @@ func (c *CompiledFunction) resolveOperator(argTypes []*pgtypes.DoltgresType, ove
 	}
 	// From this point, the steps appear to be the same for functions and operators
 	return c.resolveFunction(argTypes, fnOverloads)
+}
+
+func (c *CompiledFunction) useExactMatch(ctx *sql.Context, exactMatch FunctionInterface, argTypes []*pgtypes.DoltgresType) bool {
+	if !c.IsOperator || !isCitextOperatorOverload(exactMatch) {
+		return true
+	}
+	relocatedSchema, ok := relocatedCitextSchema(argTypes)
+	if !ok {
+		return true
+	}
+	if ctx == nil {
+		return false
+	}
+	searchPath, err := core.SearchPath(ctx)
+	if err != nil {
+		return false
+	}
+	for _, schemaName := range searchPath {
+		if strings.EqualFold(schemaName, relocatedSchema) {
+			return true
+		}
+	}
+	return false
+}
+
+func isCitextOperatorOverload(function FunctionInterface) bool {
+	params := function.GetParameters()
+	if len(params) == 0 {
+		return false
+	}
+	for _, paramType := range params {
+		if paramType == nil || paramType.ID.TypeName() != "citext" {
+			return false
+		}
+	}
+	return true
+}
+
+func relocatedCitextSchema(argTypes []*pgtypes.DoltgresType) (string, bool) {
+	relocatedSchema := ""
+	for _, argType := range argTypes {
+		if argType == nil || argType.IsUnresolved || argType.ID.TypeName() != "citext" {
+			continue
+		}
+		schemaName := argType.ID.SchemaName()
+		if schemaName == "" || strings.EqualFold(schemaName, "public") {
+			continue
+		}
+		if relocatedSchema == "" {
+			relocatedSchema = schemaName
+		} else if !strings.EqualFold(relocatedSchema, schemaName) {
+			return "", false
+		}
+	}
+	return relocatedSchema, relocatedSchema != ""
 }
 
 // resolveFunction resolves a function according to the rules defined by Postgres.

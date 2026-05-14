@@ -105,6 +105,13 @@ func TestCreateExtensionCitextWithSchemaRegtypeRepro(t *testing.T) {
 						// the extension's target schema.
 						Compare: "sqlstate"},
 				},
+				{
+					Query: `SET search_path TO extensions, public, pg_catalog;`,
+				},
+				{
+					Query:    `SELECT ('Alice@Example.com'::citext = 'alice@example.com'::citext)::text;`,
+					Expected: []sql.Row{{"true"}},
+				},
 			},
 		},
 	})

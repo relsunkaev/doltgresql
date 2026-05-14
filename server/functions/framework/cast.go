@@ -235,6 +235,9 @@ func GetAssignmentCast(fromType *pgtypes.DoltgresType, toType *pgtypes.DoltgresT
 func GetImplicitCast(fromType *pgtypes.DoltgresType, toType *pgtypes.DoltgresType) pgtypes.TypeCastFunction {
 	lookupFromType := castLookupType(fromType)
 	lookupToType := castLookupType(toType)
+	if isCitextToTextCast(lookupFromType, lookupToType) {
+		return IdentityCast
+	}
 	if tcf := getCast(implicitTypeCastMutex, implicitTypeCastsMap, lookupFromType, lookupToType, GetImplicitCast); tcf != nil {
 		return tcf
 	}
@@ -264,6 +267,15 @@ func castLookupType(typ *pgtypes.DoltgresType) *pgtypes.DoltgresType {
 		return base
 	}
 	return typ
+}
+
+func isCitextToTextCast(fromType *pgtypes.DoltgresType, toType *pgtypes.DoltgresType) bool {
+	if fromType == nil || toType == nil {
+		return false
+	}
+	return fromType.ID.TypeName() == "citext" &&
+		fromType.InternalName == "citext" &&
+		toType.ID == pgtypes.Text.ID
 }
 
 // addTypeCast registers the given type cast.
