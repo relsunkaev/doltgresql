@@ -128,7 +128,7 @@ var timezone_text_timestamp = framework.Function2{
 			}
 			year, month, day := timeVal.Date()
 			hour, min, sec := timeVal.Clock()
-			return time.Date(year, month, day, hour, min, sec, timeVal.Nanosecond(), loc).In(serverLoc), nil
+			return timestampAtNamedZone(year, month, day, hour, min, sec, timeVal.Nanosecond(), loc).In(serverLoc), nil
 		}
 		t := timeVal.Add(time.Duration(int64(-newOffset) * NanosPerSec))
 		// for time offset
@@ -138,6 +138,18 @@ var timezone_text_timestamp = framework.Function2{
 		}
 		return t.In(serverLoc), nil
 	},
+}
+
+func timestampAtNamedZone(year int, month time.Month, day int, hour int, min int, sec int, nsec int, loc *time.Location) time.Time {
+	t := time.Date(year, month, day, hour, min, sec, nsec, loc)
+	tYear, tMonth, tDay := t.Date()
+	tHour, tMin, tSec := t.Clock()
+	if tYear == year && tMonth == month && tDay == day && tHour == hour && tMin == min && tSec == sec && t.Nanosecond() == nsec {
+		return t
+	}
+
+	_, offset := t.Zone()
+	return time.Date(year, month, day, hour, min, sec, nsec, time.UTC).Add(time.Duration(-int64(offset)) * time.Second)
 }
 
 // timezone_interval_timestamp represents the PostgreSQL date/time function, taking {interval, timestamp without time zone}
