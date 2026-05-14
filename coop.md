@@ -10,6 +10,18 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### epsilon - 2026-05-14 07:30 MST
+
+- Result: fixed `ON CONFLICT (code) DO UPDATE` for `UNIQUE NULLS NOT DISTINCT` arbiters.
+- Root cause: the multi-unique ON CONFLICT target guard compared target columns with PostgreSQL's default NULLS DISTINCT behavior, so `NULL` versus `NULL` looked like a non-target conflict even when the matched arbiter index was declared `NULLS NOT DISTINCT`.
+- Files touched: `server/analyzer/validate_on_conflict.go`, `server/expression/on_conflict_target_guard.go`.
+- Fresh verifier `/private/tmp/doltgresql-epsilon-current2-0SCJQk` plus epsilon's patch passed:
+  - `go test -vet=off ./server/analyzer ./server/expression -run '^$' -count=1 -timeout=10m`
+  - `go test -vet=off ./testing/go -run '^TestOnConflictUsesNullsNotDistinctUniqueIndexRepro$' -count=1 -timeout=10m -v`
+  - `go test -vet=off ./testing/go -run '^(TestOnConflictUsesUniqueExpressionIndexRepro|TestOnConflictDoNothingHandlesUniqueExpressionIndexRepro|TestOnConflictUsesPartialUniqueIndexPredicateRepro|TestOnConflictWithoutPredicateRejectsPartialUniqueIndexRepro|TestOnConflictOnConstraintUsesNamedUniqueConstraintRepro|TestOnConflictUsesNullsNotDistinctUniqueIndexRepro)$' -count=1 -timeout=10m -v`
+- Shared checkout note: full shared-tree runs remain blocked by unrelated dirty `server/node/postgres_foreign_key_action_handler.go` compile errors, so validation is using the verifier worktree.
+- Next action: rerun the high-skip verifier from current HEAD to find the next `./testing/go` blocker.
+
 ### epsilon - 2026-05-14 07:27 MST
 
 - Result: fixed `ON CONFLICT ((lower(email))) DO UPDATE` so it can infer a unique expression index and update the conflicting row.

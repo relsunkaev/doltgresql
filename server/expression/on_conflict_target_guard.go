@@ -39,9 +39,10 @@ import (
 // that raises "duplicate key value violates unique constraint X".
 type OnConflictTargetGuard struct {
 	expression.UnaryExpressionStub
-	targetIndexes  []int
-	schemaLen      int
-	constraintName string
+	targetIndexes    []int
+	schemaLen        int
+	constraintName   string
+	nullsNotDistinct bool
 }
 
 var _ sql.Expression = (*OnConflictTargetGuard)(nil)
@@ -50,7 +51,7 @@ var _ sql.Expression = (*OnConflictTargetGuard)(nil)
 // target indexes are positions in the destination schema; schemaLen
 // is the destination schema length so the guard can find the new-row
 // half of the concatenated row passed to ON DUP eval.
-func NewOnConflictTargetGuard(inner sql.Expression, targetIndexes []int, schemaLen int, constraintName string) *OnConflictTargetGuard {
+func NewOnConflictTargetGuard(inner sql.Expression, targetIndexes []int, schemaLen int, constraintName string, nullsNotDistinct bool) *OnConflictTargetGuard {
 	indexes := make([]int, len(targetIndexes))
 	copy(indexes, targetIndexes)
 	return &OnConflictTargetGuard{
@@ -58,6 +59,7 @@ func NewOnConflictTargetGuard(inner sql.Expression, targetIndexes []int, schemaL
 		targetIndexes:       indexes,
 		schemaLen:           schemaLen,
 		constraintName:      constraintName,
+		nullsNotDistinct:    nullsNotDistinct,
 	}
 }
 
@@ -67,7 +69,7 @@ func (g *OnConflictTargetGuard) Eval(ctx *sql.Context, row sql.Row) (interface{}
 		for _, idx := range g.targetIndexes {
 			oldVal := row[idx]
 			newVal := row[idx+g.schemaLen]
-			if !valuesEqual(oldVal, newVal) {
+			if !valuesEqual(oldVal, newVal, g.nullsNotDistinct) {
 				return nil, pgerror.Newf(pgcode.UniqueViolation,
 					"duplicate key value violates unique constraint %q",
 					g.constraintName)
@@ -102,18 +104,15 @@ func (g *OnConflictTargetGuard) WithChildren(ctx *sql.Context, children ...sql.E
 		targetIndexes:       g.targetIndexes,
 		schemaLen:           g.schemaLen,
 		constraintName:      g.constraintName,
+		nullsNotDistinct:    g.nullsNotDistinct,
 	}, nil
 }
 
 // valuesEqual returns true when the two values are semantically
-// equal under PG's default unique-index NULLs-distinct rule. NULLs
-// never compare equal to anything (including each other) because
-// the only case where this guard runs is on a confirmed non-NULL
-// unique-index hit; if either side is nil here it indicates the
-// conflict came from a different index entirely.
-func valuesEqual(a, b interface{}) bool {
+// equal for the targeted conflict arbiter.
+func valuesEqual(a, b interface{}, nullsNotDistinct bool) bool {
 	if a == nil || b == nil {
-		return false
+		return nullsNotDistinct && a == nil && b == nil
 	}
 	return reflect.DeepEqual(a, b)
 }

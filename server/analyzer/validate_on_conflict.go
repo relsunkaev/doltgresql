@@ -155,6 +155,7 @@ type conflictTarget struct {
 	targetColumnNames []string
 	schemaLen         int
 	constraintName    string
+	nullsNotDistinct  bool
 	multipleUniques   bool
 }
 
@@ -236,6 +237,7 @@ func resolveConflictTarget(ctx *sql.Context, destination sql.Node, targetColumns
 		targetColumnNames: targetNames,
 		schemaLen:         len(schema),
 		constraintName:    matchingIndex.ID(),
+		nullsNotDistinct:  indexmetadata.NullsNotDistinct(matchingIndex.Comment()),
 		multipleUniques:   uniqueIndexCount > 1,
 	}, nil
 }
@@ -490,7 +492,7 @@ func wrapOnDupForTargetGuard(ctx *sql.Context, insert *plan.InsertInto, target c
 			continue
 		}
 		guarded := pgexprs.NewOnConflictTargetGuard(
-			setField.RightChild, target.targetIndexes, target.schemaLen, target.constraintName)
+			setField.RightChild, target.targetIndexes, target.schemaLen, target.constraintName, target.nullsNotDistinct)
 		replaced, err := setField.WithChildren(ctx, setField.LeftChild, guarded)
 		if err != nil {
 			return nil, err
