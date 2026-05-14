@@ -231,8 +231,7 @@ var createViewStmts = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query:    `create view public.v1 as with table1 as (select * from t1) select id from table1;`,
-				Expected: []sql.Row{},
+				Query: `create view public.v1 as with table1 as (select * from t1) select id from table1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-view-test-testcreateviewstatements-0031-create-view-public.v1-as-with", Cleanup: []string{"DROP TABLE IF EXISTS public.t1 CASCADE"}},
 			},
 		},
 	},

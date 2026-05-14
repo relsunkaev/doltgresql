@@ -299,7 +299,8 @@
       "query": "select name from dolt_schemas;",
       "querySha256": "117f3c28a1f7dc54336a44c707816b103c8db37f22919c903fe84cd0d8872360",
       "nonLiteral": [
-        "DoltSpecific"
+        "DoltSpecific",
+        "PriorDoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -314,6 +315,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = testschema, myschema;",
       "querySha256": "5999f2aea84c38d9f69cc35d696c355c926d03bd2b5daaee6811aa69a9eb8097",
+      "nonLiteral": [
+        "PriorDoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -327,6 +331,9 @@
       "expectedKind": "rows",
       "query": "SHOW search_path;",
       "querySha256": "bb32debfb8e12979ffd6aa333ff3f37d713d6812918ab85fbb1c300d700081d2",
+      "nonLiteral": [
+        "PriorDoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -340,6 +347,9 @@
       "expectedKind": "rows",
       "query": "select v1 from myview order by pk;",
       "querySha256": "1c277af87b32d08679ea017372c108ed6443e3201c99d9a52037411b72990af1",
+      "nonLiteral": [
+        "PriorDoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -353,6 +363,9 @@
       "expectedKind": "rows",
       "query": "select v2 from testview order by pk;",
       "querySha256": "2c61007e2c9f854c291f1d362fe28329c202ba8d5fa430e00b827325b66341c1",
+      "nonLiteral": [
+        "PriorDoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -367,7 +380,8 @@
       "query": "select name from dolt_schemas;",
       "querySha256": "117f3c28a1f7dc54336a44c707816b103c8db37f22919c903fe84cd0d8872360",
       "nonLiteral": [
-        "DoltSpecific"
+        "DoltSpecific",
+        "PriorDoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -672,13 +686,19 @@
       "source": "testing/go/create_view_test.go:TestCreateViewStatements",
       "ordinal": 31,
       "scriptName": "create view with CTE",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "create-view-test-testcreateviewstatements-0031-create-view-public.v1-as-with",
       "suggestedId": "create-view-test-testcreateviewstatements-0031-create-view-public.v1-as-with",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "create view public.v1 as with table1 as (select * from t1) select id from table1;",
       "querySha256": "0556e16e28cfe11c1c62324b4441fa8863049875d4be1abd9bdfc3b4b6db6be0",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP TABLE IF EXISTS public.t1 CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/create_view_test.go:TestCreateViewStatements#0032",
