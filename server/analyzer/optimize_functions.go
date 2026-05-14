@@ -29,6 +29,7 @@ import (
 
 	pgexprs "github.com/dolthub/doltgresql/server/expression"
 	"github.com/dolthub/doltgresql/server/functions/framework"
+	pgnodes "github.com/dolthub/doltgresql/server/node"
 	pgtransform "github.com/dolthub/doltgresql/server/transform"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -99,7 +100,7 @@ func OptimizeFunctions(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, sc
 		hasSRF := false
 		// Check if there is set returning function in the source node (e.g. SELECT * FROM unnest())
 		n, sameNode, err := transform.NodeExprsWithNode(ctx, projectNode.Child, func(ctx *sql.Context, in sql.Node, expr sql.Expression) (sql.Expression, transform.TreeIdentity, error) {
-			expr, sameFunction, err := optimizeCompiledFunction(ctx, a, expr)
+			expr, sameFunction, err := optimizeCompiledFunction(ctx, a, in, expr)
 			if err != nil {
 				return nil, transform.SameTree, err
 			}
@@ -126,7 +127,7 @@ func OptimizeFunctions(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, sc
 
 		// Check if there is set returning function in the projection expressions (e.g. SELECT unnest() [FROM table/srf])
 		exprs, sameExprs, err := transform.Exprs(ctx, projectNode.Projections, func(ctx *sql.Context, expr sql.Expression) (sql.Expression, transform.TreeIdentity, error) {
-			return optimizeCompiledFunction(ctx, a, expr)
+			return optimizeCompiledFunction(ctx, a, projectNode, expr)
 		})
 		if err != nil {
 			return nil, transform.SameTree, err
@@ -156,11 +157,11 @@ func OptimizeFunctions(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, sc
 
 func optimizeNodeCompiledFunctions(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node) (sql.Node, transform.TreeIdentity, error) {
 	return transform.OneNodeExprsWithNode(ctx, node, func(ctx *sql.Context, in sql.Node, expr sql.Expression) (sql.Expression, transform.TreeIdentity, error) {
-		return optimizeCompiledFunction(ctx, a, expr)
+		return optimizeCompiledFunction(ctx, a, in, expr)
 	})
 }
 
-func optimizeCompiledFunction(ctx *sql.Context, a *analyzer.Analyzer, expr sql.Expression) (sql.Expression, transform.TreeIdentity, error) {
+func optimizeCompiledFunction(ctx *sql.Context, a *analyzer.Analyzer, in sql.Node, expr sql.Expression) (sql.Expression, transform.TreeIdentity, error) {
 	compiledFunction, ok := expr.(*framework.CompiledFunction)
 	if !ok {
 		return expr, transform.SameTree, nil
@@ -173,9 +174,11 @@ func optimizeCompiledFunction(ctx *sql.Context, a *analyzer.Analyzer, expr sql.E
 	// TODO: need better way to detect sequence usage
 	switch compiledFunction.FunctionName() {
 	case "nextval", "setval", "currval":
-		err := authCheckSequenceFromExpr(ctx, a.Catalog.AuthHandler, compiledFunction.Arguments[0])
-		if err != nil {
-			return nil, transform.SameTree, err
+		if !skipStoredDefaultSequenceAuth(in) {
+			err := authCheckSequenceFromExpr(ctx, a.Catalog.AuthHandler, compiledFunction.Arguments[0])
+			if err != nil {
+				return nil, transform.SameTree, err
+			}
 		}
 	}
 	if quickFunction := compiledFunction.GetQuickFunction(); quickFunction != nil {
@@ -189,6 +192,15 @@ func optimizeCompiledFunction(ctx *sql.Context, a *analyzer.Analyzer, expr sql.E
 		return nil, transform.SameTree, err
 	}
 	return compiledFunction, transform.NewTree, nil
+}
+
+func skipStoredDefaultSequenceAuth(node sql.Node) bool {
+	switch node.(type) {
+	case *plan.AlterDefaultSet, *plan.AddColumn, *plan.ModifyColumn, *plan.CreateTable, *pgnodes.CreateTable:
+		return true
+	default:
+		return false
+	}
 }
 
 func rewriteGroupByVectorAggregates(ctx *sql.Context, groupByNode *plan.GroupBy) (*plan.GroupBy, transform.TreeIdentity, error) {
