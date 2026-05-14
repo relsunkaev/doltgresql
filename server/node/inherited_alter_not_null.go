@@ -18,10 +18,12 @@ import (
 	"io"
 	"strings"
 
-	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	"github.com/dolthub/go-mysql-server/sql/types"
+
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 )
 
 // InheritedAlterNotNull runs ALTER COLUMN SET/DROP NOT NULL for a parent table
@@ -124,7 +126,7 @@ func (i *InheritedAlterNotNull) validateNoNullRows(ctx *sql.Context) error {
 			}
 			if row[columnIndex] == nil {
 				_ = iter.Close(ctx)
-				return errors.Errorf(`column "%s" of relation "%s" contains null values`, columnName, table.Name())
+				return pgerror.Newf(pgcode.NotNullViolation, `column "%s" of relation "%s" contains null values`, columnName, table.Name())
 			}
 		}
 		if err := iter.Close(ctx); err != nil {
