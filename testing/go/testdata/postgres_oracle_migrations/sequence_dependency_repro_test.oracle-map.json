@@ -207,13 +207,26 @@
       "source": "testing/go/sequence_dependency_repro_test.go:TestPgGetSerialSequenceHandlesQuotedTableNamesWithDots",
       "ordinal": 2,
       "scriptName": "pg_get_serial_sequence handles quoted table names containing dots",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "sequence-dependency-repro-test-testpggetserialsequencehandlesquotedtablenameswithdots-0002-select-pg_get_serial_sequence-public.-pgget.serial.table-id",
       "suggestedId": "sequence-dependency-repro-test-testpggetserialsequencehandlesquotedtablenameswithdots-0002-select-pg_get_serial_sequence-public.-pgget.serial.table-id",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT pg_get_serial_sequence('public.\"pgget.serial.table\"', 'id');",
       "querySha256": "91d5a56a80253923749c8a4c37d19f351364101e4464492be6d53b134c6bce9d",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "public.pgget_serial_table_seq"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS \"pgget.serial.table\" CASCADE",
+        "DROP SEQUENCE IF EXISTS pgget_serial_table_seq CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/sequence_dependency_repro_test.go:TestPgGetSerialSequenceQuotesSequenceNames#0001",
@@ -345,26 +358,52 @@
       "source": "testing/go/sequence_dependency_repro_test.go:TestCreateQualifiedSequenceOwnedByUnqualifiedTableRepro",
       "ordinal": 1,
       "scriptName": "CREATE SEQUENCE resolves unqualified OWNED BY table names",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "sequence-dependency-repro-test-testcreatequalifiedsequenceownedbyunqualifiedtablerepro-0001-select-pg_get_serial_sequence-create_qualified_sequence_owner_items-id",
       "suggestedId": "sequence-dependency-repro-test-testcreatequalifiedsequenceownedbyunqualifiedtablerepro-0001-select-pg_get_serial_sequence-create_qualified_sequence_owner_items-id",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT pg_get_serial_sequence(\n\t\t\t\t\t\t\t'create_qualified_sequence_owner_items',\n\t\t\t\t\t\t\t'id'\n\t\t\t\t\t\t);",
       "querySha256": "1b7280665614ae03108a3d8785d86ba6300d3838ad12a766db4e596475c2a0ef",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "public.create_qualified_sequence_owner_seq"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS create_qualified_sequence_owner_items CASCADE",
+        "DROP SEQUENCE IF EXISTS public.create_qualified_sequence_owner_seq CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/sequence_dependency_repro_test.go:TestAlterQualifiedSequenceOwnedByUnqualifiedTableRepro#0001",
       "source": "testing/go/sequence_dependency_repro_test.go:TestAlterQualifiedSequenceOwnedByUnqualifiedTableRepro",
       "ordinal": 1,
       "scriptName": "ALTER SEQUENCE resolves unqualified OWNED BY table names",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "sequence-dependency-repro-test-testalterqualifiedsequenceownedbyunqualifiedtablerepro-0001-select-pg_get_serial_sequence-alter_qualified_sequence_owner_items-id",
       "suggestedId": "sequence-dependency-repro-test-testalterqualifiedsequenceownedbyunqualifiedtablerepro-0001-select-pg_get_serial_sequence-alter_qualified_sequence_owner_items-id",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT pg_get_serial_sequence(\n\t\t\t\t\t\t\t'alter_qualified_sequence_owner_items',\n\t\t\t\t\t\t\t'id'\n\t\t\t\t\t\t);",
       "querySha256": "51af990de82ddf1ab994538c336e698250ae0cc17299df608937f3b6498025ed",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "public.alter_qualified_sequence_owner_seq"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS alter_qualified_sequence_owner_items CASCADE",
+        "DROP SEQUENCE IF EXISTS public.alter_qualified_sequence_owner_seq CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/sequence_dependency_repro_test.go:TestNextvalIsNotRolledBackRepro#0001",
@@ -774,13 +813,25 @@
       "source": "testing/go/sequence_dependency_repro_test.go:TestNextvalHandlesQuotedSequenceNamesWithDotsRepro",
       "ordinal": 2,
       "scriptName": "nextval handles quoted sequence names containing dots",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "sequence-dependency-repro-test-testnextvalhandlesquotedsequencenameswithdotsrepro-0002-select-nextval-public.-quoted.sequence.name",
       "suggestedId": "sequence-dependency-repro-test-testnextvalhandlesquotedsequencenameswithdotsrepro-0002-select-nextval-public.-quoted.sequence.name",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT nextval('public.\"quoted.sequence.name\"');",
       "querySha256": "c8261dcda92ba91de30523aaff7f5bc969f5df7fb91e8943bbaf98d3a308b113",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SEQUENCE IF EXISTS \"quoted.sequence.name\" CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/sequence_dependency_repro_test.go:TestSetvalHandlesQuotedSequenceNamesWithDotsRepro#0001",
@@ -809,13 +860,25 @@
       "source": "testing/go/sequence_dependency_repro_test.go:TestSetvalHandlesQuotedSequenceNamesWithDotsRepro",
       "ordinal": 2,
       "scriptName": "setval handles quoted sequence names containing dots",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "sequence-dependency-repro-test-testsetvalhandlesquotedsequencenameswithdotsrepro-0002-select-setval-public.-setval.quoted.sequence-50",
       "suggestedId": "sequence-dependency-repro-test-testsetvalhandlesquotedsequencenameswithdotsrepro-0002-select-setval-public.-setval.quoted.sequence-50",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT setval('public.\"setval.quoted.sequence\"', 50);",
       "querySha256": "c2234d4b664834f76da59f0ec5397dc6cc8768bb75db4d8e52c46d97656f2151",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "50"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SEQUENCE IF EXISTS \"setval.quoted.sequence\" CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/sequence_dependency_repro_test.go:TestNextvalUsesSecondSearchPathSchemaRepro#0001",

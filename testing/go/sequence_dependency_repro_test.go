@@ -260,8 +260,7 @@ func TestPgGetSerialSequenceHandlesQuotedTableNamesWithDots(t *testing.T) {
 					Query: `SELECT pg_get_serial_sequence('"pgget.serial.table"', 'id');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testpggetserialsequencehandlesquotedtablenameswithdots-0001-select-pg_get_serial_sequence-pgget.serial.table-id", ColumnModes: []string{"schema"}},
 				},
 				{
-					Query:    `SELECT pg_get_serial_sequence('public."pgget.serial.table"', 'id');`,
-					Expected: []sql.Row{{"public.pgget_serial_table_seq"}},
+					Query: `SELECT pg_get_serial_sequence('public."pgget.serial.table"', 'id');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testpggetserialsequencehandlesquotedtablenameswithdots-0002-select-pg_get_serial_sequence-public.-pgget.serial.table-id"},
 				},
 			},
 		},
@@ -377,8 +376,7 @@ func TestCreateQualifiedSequenceOwnedByUnqualifiedTableRepro(t *testing.T) {
 					Query: `SELECT pg_get_serial_sequence(
 							'create_qualified_sequence_owner_items',
 							'id'
-						);`,
-					Expected: []sql.Row{{"public.create_qualified_sequence_owner_seq"}},
+						);`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testcreatequalifiedsequenceownedbyunqualifiedtablerepro-0001-select-pg_get_serial_sequence-create_qualified_sequence_owner_items-id"},
 				},
 			},
 		},
@@ -407,8 +405,7 @@ func TestAlterQualifiedSequenceOwnedByUnqualifiedTableRepro(t *testing.T) {
 					Query: `SELECT pg_get_serial_sequence(
 							'alter_qualified_sequence_owner_items',
 							'id'
-						);`,
-					Expected: []sql.Row{{"public.alter_qualified_sequence_owner_seq"}},
+						);`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testalterqualifiedsequenceownedbyunqualifiedtablerepro-0001-select-pg_get_serial_sequence-alter_qualified_sequence_owner_items-id"},
 				},
 			},
 		},
@@ -636,8 +633,7 @@ func TestNextvalHandlesQuotedSequenceNamesWithDotsRepro(t *testing.T) {
 					Query: `SELECT nextval('"quoted.sequence.name"');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testnextvalhandlesquotedsequencenameswithdotsrepro-0001-select-nextval-quoted.sequence.name"},
 				},
 				{
-					Query:    `SELECT nextval('public."quoted.sequence.name"');`,
-					Expected: []sql.Row{{2}},
+					Query: `SELECT nextval('public."quoted.sequence.name"');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testnextvalhandlesquotedsequencenameswithdotsrepro-0002-select-nextval-public.-quoted.sequence.name"},
 				},
 			},
 		},
@@ -659,8 +655,7 @@ func TestSetvalHandlesQuotedSequenceNamesWithDotsRepro(t *testing.T) {
 					Query: `SELECT setval('"setval.quoted.sequence"', 42);`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testsetvalhandlesquotedsequencenameswithdotsrepro-0001-select-setval-setval.quoted.sequence-42"},
 				},
 				{
-					Query:    `SELECT setval('public."setval.quoted.sequence"', 50);`,
-					Expected: []sql.Row{{50}},
+					Query: `SELECT setval('public."setval.quoted.sequence"', 50);`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-dependency-repro-test-testsetvalhandlesquotedsequencenameswithdotsrepro-0002-select-setval-public.-setval.quoted.sequence-50"},
 				},
 			},
 		},
