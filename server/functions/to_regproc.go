@@ -15,7 +15,6 @@
 package functions
 
 import (
-	"strconv"
 	"strings"
 
 	"github.com/dolthub/go-mysql-server/sql"
@@ -37,9 +36,8 @@ var to_regproc_text = framework.Function1{
 	IsNonDeterministic: true,
 	Strict:             true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val1 any) (any, error) {
-		// If the string just represents a number, then we return nil.
-		if _, err := strconv.ParseUint(val1.(string), 10, 32); err == nil {
-			return nil, nil
+		if oidValue, ok := toRegOIDText(val1.(string)); ok {
+			return oidValue, nil
 		}
 		oid, err := pgtypes.Regproc.IoInput(ctx, val1.(string))
 		if err != nil {

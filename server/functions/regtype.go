@@ -24,6 +24,8 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/postgres/parser/types"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	"github.com/dolthub/doltgresql/server/settings"
@@ -169,6 +171,9 @@ var regtypesend = framework.Function1{
 
 // regtype_IoInputValidation handles the validation for the parsed sections in regtypein.
 func regtype_IoInputValidation(ctx *sql.Context, input string, sections []string) error {
+	if regtypeHasMisplacedQuote(input) {
+		return pgerror.New(pgcode.Syntax, "invalid name syntax")
+	}
 	switch len(sections) {
 	case 1:
 		return nil
@@ -191,4 +196,27 @@ func regtype_IoInputValidation(ctx *sql.Context, input string, sections []string
 	default:
 		return errors.Errorf("invalid name syntax")
 	}
+}
+
+func regtypeHasMisplacedQuote(input string) bool {
+	trimmed := []rune(strings.TrimSpace(input))
+	inQuotes := false
+	for i := 0; i < len(trimmed); i++ {
+		if trimmed[i] != '"' {
+			continue
+		}
+		if inQuotes {
+			if i < len(trimmed)-1 && trimmed[i+1] == '"' {
+				i++
+				continue
+			}
+			inQuotes = false
+			continue
+		}
+		if i != 0 && trimmed[i-1] != '.' {
+			return true
+		}
+		inQuotes = true
+	}
+	return false
 }

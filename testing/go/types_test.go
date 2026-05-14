@@ -1771,7 +1771,7 @@ var typesTests = []ScriptTest{
 			{
 				Query: `SELECT '"Testing2"'::regclass;`,
 				Expected: []sql.Row{
-					{"Testing2"},
+					{`"Testing2"`},
 				},
 			},
 			{ // This tests that an invalid OID returns itself in string form
