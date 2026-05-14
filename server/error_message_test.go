@@ -181,6 +181,7 @@ func TestErrMessageToSQLStateFormatsCommonRuntimeErrors(t *testing.T) {
 		{msg: `extension "plpgsql" must be installed in schema "pg_catalog"`, code: pgcode.DuplicateObject},
 		{msg: `division by zero`, code: pgcode.DivisionByZero},
 		{msg: `zero raised to a negative power is undefined`, code: pgcode.InvalidArgumentForPowerFunction},
+		{msg: `field name must not be null`, code: pgcode.NullValueNotAllowed},
 	} {
 		code, ok := errMessageToSQLState(tt.msg)
 		require.True(t, ok)
