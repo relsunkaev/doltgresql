@@ -219,6 +219,21 @@ func TestErrMessageToSQLStateFormatsDomainConstraintErrors(t *testing.T) {
 	}
 }
 
+func TestErrMessageToSQLStateFormatsCastErrors(t *testing.T) {
+	for _, tt := range []struct {
+		msg  string
+		code pgcode.Code
+	}{
+		{msg: `ASSIGNMENT_CAST: target is of type "char" but expression is of type integer: 7`, code: pgcode.DatatypeMismatch},
+		{msg: "EXPLICIT CAST: cast from `boolean` to `\"char\"` does not exist: true", code: pgcode.CannotCoerce},
+	} {
+		code, ok := errMessageToSQLState(tt.msg)
+		require.True(t, ok)
+		require.Equal(t, tt.code.String(), code)
+		require.Equal(t, tt.code.String(), errorResponseCode(errors.New(tt.msg)))
+	}
+}
+
 func TestErrMessageToSQLStateFormatsSubqueryTooManyColumns(t *testing.T) {
 	msg := "subquery has too many columns"
 	code, ok := errMessageToSQLState(msg)

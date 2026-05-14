@@ -4390,6 +4390,10 @@ func errMessageToSQLState(msg string) (string, bool) {
 		return pgcode.DivisionByZero.String(), true
 	case strings.HasPrefix(msg, "domain ") && strings.HasSuffix(msg, " does not allow null values"):
 		return pgcode.NotNullViolation.String(), true
+	case strings.HasPrefix(msg, "ASSIGNMENT_CAST: target is of type "):
+		return pgcode.DatatypeMismatch.String(), true
+	case strings.HasPrefix(msg, "EXPLICIT CAST: cast from ") && strings.Contains(msg, " does not exist"):
+		return pgcode.CannotCoerce.String(), true
 	case msg == "cannot use subquery in check constraint":
 		return pgcode.FeatureNotSupported.String(), true
 	case msg == "aggregate functions are not allowed in check constraints":
