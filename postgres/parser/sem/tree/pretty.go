@@ -984,6 +984,8 @@ func (node *Insert) doc(p *PrettyCfg) pretty.Doc {
 		cond := pretty.Nil
 		if len(node.OnConflict.Columns) > 0 {
 			cond = p.bracket("(", p.Doc(&node.OnConflict.Columns), ")")
+		} else if len(node.OnConflict.ArbiterExpressions) > 0 {
+			cond = p.bracket("(", p.Doc(&node.OnConflict.ArbiterExpressions), ")")
 		}
 		items = append(items, p.row("ON CONFLICT", cond))
 		if node.OnConflict.ArbiterPredicate != nil {

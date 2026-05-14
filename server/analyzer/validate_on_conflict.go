@@ -69,10 +69,10 @@ func ValidateOnConflictArbiter(ctx *sql.Context, _ *gmsanalyzer.Analyzer, node s
 			changed = transform.NewTree
 		}
 	}
-	if !ok || conflict == nil || (len(conflict.Columns) == 0 && conflict.Constraint == "") {
+	if !ok || conflict == nil || (len(conflict.Columns) == 0 && len(conflict.ArbiterExpressions) == 0 && conflict.Constraint == "") {
 		return insert, changed, nil
 	}
-	target, err := resolveConflictTarget(ctx, insert.Destination, conflict.Columns, string(conflict.Constraint), conflict.ArbiterPredicate)
+	target, err := resolveConflictTarget(ctx, insert.Destination, conflict.Columns, conflict.ArbiterExpressions, string(conflict.Constraint), conflict.ArbiterPredicate)
 	if err != nil {
 		return nil, transform.NewTree, err
 	}
@@ -169,7 +169,7 @@ func joinNameList(names []string) string {
 	return out
 }
 
-func resolveConflictTarget(ctx *sql.Context, destination sql.Node, targetColumns tree.NameList, constraintName string, arbiterPredicate tree.Expr) (conflictTarget, error) {
+func resolveConflictTarget(ctx *sql.Context, destination sql.Node, targetColumns tree.NameList, targetExpressions tree.Exprs, constraintName string, arbiterPredicate tree.Expr) (conflictTarget, error) {
 	table, err := plan.GetInsertable(destination)
 	if err != nil {
 		return conflictTarget{}, err
@@ -199,6 +199,12 @@ func resolveConflictTarget(ctx *sql.Context, destination sql.Node, targetColumns
 		}
 		if constraintName != "" {
 			if uniqueIndexMatchesConstraintName(index, constraintName) {
+				matchingIndex = index
+			}
+			continue
+		}
+		if len(targetExpressions) > 0 {
+			if uniqueIndexMatchesConflictExpressions(index, schema, targetExpressions, arbiterPredicateDef) {
 				matchingIndex = index
 			}
 			continue
@@ -284,6 +290,77 @@ func uniqueIndexMatchesConflictTarget(index sql.Index, schema sql.Schema, target
 		return false
 	}
 	return true
+}
+
+func uniqueIndexMatchesConflictExpressions(index sql.Index, schema sql.Schema, targetExpressions tree.Exprs, arbiterPredicate string) bool {
+	logicalColumns := indexmetadata.LogicalColumns(index, schema)
+	if len(logicalColumns) != len(targetExpressions) {
+		return false
+	}
+
+	indexExpressionCounts := make(map[string]int, len(logicalColumns))
+	for _, column := range logicalColumns {
+		indexExpressionCounts[normalizeConflictExpression(column.Definition)]++
+	}
+	for _, targetExpression := range targetExpressions {
+		definition := normalizeConflictExpression(tree.AsString(targetExpression))
+		if indexExpressionCounts[definition] == 0 {
+			return false
+		}
+		indexExpressionCounts[definition]--
+	}
+	indexPredicate := indexmetadata.Predicate(index.Comment())
+	if indexPredicate == "" {
+		return true
+	}
+	if arbiterPredicate == "" {
+		return false
+	}
+	if !indexpredicate.Implies(indexPredicate, arbiterPredicate) {
+		return false
+	}
+	return true
+}
+
+func normalizeConflictExpression(expr string) string {
+	expr = strings.TrimSpace(expr)
+	expr = strings.ReplaceAll(expr, "`", "")
+	expr = strings.ReplaceAll(expr, `"`, "")
+	for {
+		unwrapped := trimEnclosingParens(expr)
+		if unwrapped == expr {
+			break
+		}
+		expr = unwrapped
+	}
+	expr = strings.Join(strings.Fields(expr), "")
+	return strings.ToLower(expr)
+}
+
+func trimEnclosingParens(expr string) string {
+	expr = strings.TrimSpace(expr)
+	if len(expr) < 2 || expr[0] != '(' || expr[len(expr)-1] != ')' {
+		return expr
+	}
+	depth := 0
+	for i, ch := range expr {
+		switch ch {
+		case '(':
+			depth++
+		case ')':
+			depth--
+			if depth < 0 {
+				return expr
+			}
+			if depth == 0 && i < len(expr)-1 {
+				return expr
+			}
+		}
+	}
+	if depth != 0 {
+		return expr
+	}
+	return strings.TrimSpace(expr[1 : len(expr)-1])
 }
 
 // wrapOnDupForTargetGuard returns an updated InsertInto whose

@@ -10,6 +10,18 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### epsilon - 2026-05-14 07:27 MST
+
+- Result: fixed `ON CONFLICT ((lower(email))) DO UPDATE` so it can infer a unique expression index and update the conflicting row.
+- Root cause: the parser only accepted name-list conflict targets, then GMS handed Dolt's update writer a stored duplicate row without hidden virtual expression-index columns. The ON DUP update evaluator also expects the duplicate old row to have the full destination schema length.
+- Files touched: `postgres/parser/parser/sql.y`, `postgres/parser/sem/tree/insert.go`, `postgres/parser/sem/tree/pretty.go`, `server/analyzer/init.go`, `server/analyzer/validate_on_conflict.go`, `server/analyzer/validate_hidden_columns.go`, `server/analyzer/assign_virtual_column_upsert_updates.go`, `server/node/virtual_column_update_table.go`.
+- Fresh verifier `/private/tmp/doltgresql-epsilon-current2-0SCJQk` plus epsilon's patch passed:
+  - `go test -vet=off ./server/analyzer ./server/node ./postgres/parser/parser ./postgres/parser/sem/tree -run '^$' -count=1 -timeout=10m`
+  - `go test -vet=off ./testing/go -run '^TestOnConflictUsesUniqueExpressionIndexRepro$' -count=1 -timeout=10m -v`
+- Related verifier slice also passed partial unique, missing-predicate, ON CONSTRAINT, and expression DO NOTHING cases; it now exposes the next unrelated blocker at `TestOnConflictUsesNullsNotDistinctUniqueIndexRepro`, which still raises duplicate unique violation instead of firing DO UPDATE.
+- Shared checkout note: full shared-tree runs remain blocked by unrelated dirty `server/node/postgres_foreign_key_action_handler.go` compile errors, so validation is using the verifier worktree.
+- Next action: commit the expression-index conflict-target lane, then inspect the NULLS NOT DISTINCT ON CONFLICT blocker.
+
 ### epsilon - 2026-05-14 07:06 MST
 
 - Result: fixed the `DROP INDEX CONCURRENTLY` transaction-block oracle assertion to be schema-scoped.

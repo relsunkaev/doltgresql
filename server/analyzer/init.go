@@ -73,6 +73,7 @@ const (
 	ruleId_ValidateDropConstraintOwnership                                        // validateDropConstraintOwnership
 	ruleId_ValidateOnConflictArbiter                                              // validateOnConflictArbiter
 	ruleId_AssignNullsNotDistinctUniqueChecks                                     // assignNullsNotDistinctUniqueChecks
+	ruleId_AssignVirtualColumnUpsertUpdates                                       // assignVirtualColumnUpsertUpdates
 	ruleId_AssignRelationLocking                                                  // assignRelationLocking
 	ruleId_AssignRowLevelLocking                                                  // assignRowLevelLocking
 	ruleId_SuppressReplicaRoleForeignKeys                                         // suppressReplicaRoleForeignKeys
@@ -132,6 +133,7 @@ func Init() {
 		analyzer.Rule{Id: ruleId_AssignJsonbGinMaintainers, Apply: AssignJsonbGinMaintainers},
 		analyzer.Rule{Id: ruleId_AssignPartitionedTableWrites, Apply: AssignPartitionedTableWrites},
 		analyzer.Rule{Id: ruleId_AssignNullsNotDistinctUniqueChecks, Apply: AssignNullsNotDistinctUniqueChecks},
+		analyzer.Rule{Id: ruleId_AssignVirtualColumnUpsertUpdates, Apply: AssignVirtualColumnUpsertUpdates},
 		analyzer.Rule{Id: ruleId_AssignBtreePlannerBoundaries, Apply: AssignBtreePlannerBoundaries},
 		analyzer.Rule{Id: ruleId_AssignInheritedTableScans, Apply: AssignInheritedTableScans},
 		analyzer.Rule{Id: ruleId_AssignRowLevelLocking, Apply: AssignRowLevelLocking},
@@ -149,6 +151,7 @@ func Init() {
 	analyzer.OnceBeforeDefault = replaceAnalyzerRuleByName(analyzer.OnceBeforeDefault, "validateGroupBy",
 		analyzer.Rule{Id: ruleId_ValidateGroupBy, Apply: ValidateGroupBy})
 	analyzer.OnceBeforeDefault = wrapAnalyzerRuleByName(analyzer.OnceBeforeDefault, "simplifyFilters", skipRuleForNonDeterministicFilters)
+	analyzer.DefaultRules = wrapAnalyzerRuleByName(analyzer.DefaultRules, "validateNoHiddenSystemColumns", skipInsertDestinationHiddenSystemValidation)
 	analyzer.DefaultRules = replaceAnalyzerRuleByName(analyzer.DefaultRules, "validateCheckConstraints",
 		analyzer.Rule{Id: ruleId_ValidateCheckConstraints, Apply: ValidateCheckConstraints})
 

@@ -86,6 +86,10 @@ func (node *Insert) Format(ctx *FmtCtx) {
 			ctx.WriteString(" (")
 			ctx.FormatNode(&node.OnConflict.Columns)
 			ctx.WriteString(")")
+		} else if len(node.OnConflict.ArbiterExpressions) > 0 {
+			ctx.WriteString(" (")
+			ctx.FormatNode(&node.OnConflict.ArbiterExpressions)
+			ctx.WriteString(")")
 		}
 		if node.OnConflict.ArbiterPredicate != nil {
 			ctx.WriteString(" WHERE ")
@@ -120,11 +124,12 @@ func (node *Insert) DefaultValues() bool {
 // uses the primary key for as the conflict index and the values being inserted
 // for Exprs.
 type OnConflict struct {
-	Columns          NameList
-	ArbiterPredicate Expr
-	Exprs            UpdateExprs
-	Where            *Where
-	DoNothing        bool
+	Columns            NameList
+	ArbiterExpressions Exprs
+	ArbiterPredicate   Expr
+	Exprs              UpdateExprs
+	Where              *Where
+	DoNothing          bool
 	// Constraint is set when the user wrote ON CONFLICT ON CONSTRAINT
 	// name instead of a column list. The AST converter resolves this
 	// to a unique-index column list before routing through the rest
@@ -134,5 +139,5 @@ type OnConflict struct {
 
 // IsUpsertAlias returns true if the UPSERT syntactic sugar was used.
 func (oc *OnConflict) IsUpsertAlias() bool {
-	return oc != nil && oc.Columns == nil && oc.ArbiterPredicate == nil && oc.Exprs == nil && oc.Where == nil && !oc.DoNothing
+	return oc != nil && oc.Columns == nil && oc.ArbiterExpressions == nil && oc.ArbiterPredicate == nil && oc.Exprs == nil && oc.Where == nil && !oc.DoNothing
 }

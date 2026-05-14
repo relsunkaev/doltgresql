@@ -54,6 +54,41 @@ type publicationTargetList struct {
     last    publicationTargetKind
 }
 
+func onConflictTargetFromExprs(exprs tree.Exprs) *tree.OnConflict {
+    if columns, ok := onConflictTargetNameList(exprs); ok {
+        return &tree.OnConflict{Columns: columns}
+    }
+    return &tree.OnConflict{ArbiterExpressions: exprs}
+}
+
+func onConflictTargetNameList(exprs tree.Exprs) (tree.NameList, bool) {
+    columns := make(tree.NameList, len(exprs))
+    for i, expr := range exprs {
+        for {
+            paren, ok := expr.(*tree.ParenExpr)
+            if !ok {
+                break
+            }
+            expr = paren.Expr
+        }
+        switch expr := expr.(type) {
+        case *tree.UnresolvedName:
+            if expr.Star || expr.NumParts != 1 {
+                return nil, false
+            }
+            columns[i] = tree.Name(expr.Parts[0])
+        case *tree.ColumnItem:
+            if expr.TableName != nil {
+                return nil, false
+            }
+            columns[i] = expr.ColumnName
+        default:
+            return nil, false
+        }
+    }
+    return columns, true
+}
+
 func mergeCreateDatabaseOption(target, option *tree.CreateDatabase) *tree.CreateDatabase {
     if target == nil {
         target = &tree.CreateDatabase{}
@@ -1423,7 +1458,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 
 %type <tree.Statement> insert_rest
 %type <tree.NameList> opt_col_def_list
-%type <*tree.OnConflict> on_conflict
+%type <*tree.OnConflict> on_conflict on_conflict_target
 
 %type <tree.Statement> begin_transaction
 %type <tree.TransactionModes> transaction_mode_list transaction_mode
@@ -11696,22 +11731,20 @@ on_conflict:
       DoNothing: true,
     }
   }
-| ON CONFLICT '(' name_list ')' opt_where_clause DO NOTHING
+| ON CONFLICT '(' on_conflict_target ')' opt_where_clause DO NOTHING
   {
-    $$.val = &tree.OnConflict{
-      Columns: $4.nameList(),
-      ArbiterPredicate: $6.expr(),
-      DoNothing: true,
-    }
+    conflict := $4.onConflict()
+    conflict.ArbiterPredicate = $6.expr()
+    conflict.DoNothing = true
+    $$.val = conflict
   }
-| ON CONFLICT '(' name_list ')' opt_where_clause DO UPDATE SET set_clause_list opt_where_clause
+| ON CONFLICT '(' on_conflict_target ')' opt_where_clause DO UPDATE SET set_clause_list opt_where_clause
   {
-    $$.val = &tree.OnConflict{
-      Columns: $4.nameList(),
-      ArbiterPredicate: $6.expr(),
-      Exprs: $10.updateExprs(),
-      Where: tree.NewWhere(tree.AstWhere, $11.expr()),
-    }
+    conflict := $4.onConflict()
+    conflict.ArbiterPredicate = $6.expr()
+    conflict.Exprs = $10.updateExprs()
+    conflict.Where = tree.NewWhere(tree.AstWhere, $11.expr())
+    $$.val = conflict
   }
 | ON CONFLICT ON CONSTRAINT constraint_name DO NOTHING
   {
@@ -11727,6 +11760,12 @@ on_conflict:
       Exprs:      $9.updateExprs(),
       Where:      tree.NewWhere(tree.AstWhere, $10.expr()),
     }
+  }
+
+on_conflict_target:
+  expr_list
+  {
+    $$.val = onConflictTargetFromExprs($1.exprs())
   }
 
 returning_clause:
