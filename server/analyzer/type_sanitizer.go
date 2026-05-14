@@ -49,9 +49,8 @@ func TypeSanitizer(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, scope 
 		case *expression.GetField:
 			switch n := n.(type) {
 			case *plan.Project, *plan.Filter, *plan.GroupBy:
-				child := n.Children()[0]
 				// Some dolt_ tables do not have doltgres types for their columns, so we convert them here
-				if rt, ok := child.(*plan.ResolvedTable); ok && strings.HasPrefix(rt.Name(), "dolt_") {
+				if nodeReadsSingleDoltSystemTable(n.Children()[0]) {
 					// This is a projection on a table, so we can safely convert the type
 					if _, ok := expr.Type(ctx).(*pgtypes.DoltgresType); !ok {
 						return pgexprs.NewGMSCast(expr), transform.NewTree, nil
@@ -117,6 +116,17 @@ func TypeSanitizer(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, scope 
 		}
 		return expr, transform.SameTree, nil
 	})
+}
+
+func nodeReadsSingleDoltSystemTable(node sql.Node) bool {
+	if rt, ok := node.(*plan.ResolvedTable); ok {
+		return strings.HasPrefix(rt.Name(), "dolt_")
+	}
+	children := node.Children()
+	if len(children) != 1 {
+		return false
+	}
+	return nodeReadsSingleDoltSystemTable(children[0])
 }
 
 // typeSanitizerLiterals handles literal expressions for TypeSanitizer.
