@@ -187,6 +187,7 @@ type ExecuteSQL struct {
 	Statement  string
 	Target     string
 	Strict     bool
+	Options    map[string]string
 	LineNumber int32
 }
 
@@ -204,6 +205,12 @@ func (stmt ExecuteSQL) AppendOperations(ops *[]InterpreterOperation, stack *Inte
 		return err
 	}
 	options := diagnosticStatementOptions(stmt.LineNumber, "SQL statement", stmt.Statement)
+	for key, value := range stmt.Options {
+		if options == nil {
+			options = make(map[string]string)
+		}
+		options[key] = value
+	}
 	if stmt.Strict {
 		if options == nil {
 			options = make(map[string]string)

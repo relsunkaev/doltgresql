@@ -66,6 +66,7 @@ const (
 	dmlReturningIntoOption     = "dmlReturningInto"
 	integerForLoopFoundOption  = "integerForLoopFound"
 	raiseValidationErrorOption = "raiseValidationError"
+	transactionControlNoop     = "transactionControlNoop"
 )
 
 // The interpreter has no async statement timeout hook, so bound runaway loops
@@ -406,6 +407,9 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 			}
 			counter = handlerEnd - 1
 		case OpCode_Execute:
+			if operation.Options[transactionControlNoop] == "true" {
+				continue
+			}
 			statement := operation.PrimaryData
 			bindings := operation.SecondaryData
 			isDynamicExecute := operation.Options["dynamic"] == "true"

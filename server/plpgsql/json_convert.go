@@ -224,6 +224,8 @@ func (conv jsonConversionContext) convertStatement(stmt statement) (Statement, e
 		return stmt.Call.Convert()
 	case stmt.Case != nil:
 		return stmt.Case.Convert(conv)
+	case stmt.Commit != nil:
+		return stmt.Commit.Convert(), nil
 	case stmt.DynExec != nil:
 		return stmt.DynExec.Convert()
 	case stmt.DynForSLoop != nil:
@@ -252,6 +254,8 @@ func (conv jsonConversionContext) convertStatement(stmt statement) (Statement, e
 		return stmt.ReturnNext.Convert(conv.nextReturnNextExpression()), nil
 	case stmt.ReturnQuery != nil:
 		return stmt.ReturnQuery.Convert(), nil
+	case stmt.Rollback != nil:
+		return stmt.Rollback.Convert(), nil
 	case stmt.While != nil:
 		return stmt.While.Convert(conv)
 	default:

@@ -409,6 +409,37 @@ func TestParseDmlReturningIntoMarksMultiRowCheck(t *testing.T) {
 	}
 }
 
+func TestParseProcedureTransactionControl(t *testing.T) {
+	ops, err := Parse(`CREATE PROCEDURE test_proc()
+		LANGUAGE plpgsql
+		AS $$
+		BEGIN
+			COMMIT;
+			ROLLBACK;
+		END;
+		$$;`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var statements []string
+	var commitOp *InterpreterOperation
+	for i := range ops {
+		if ops[i].OpCode == OpCode_Execute {
+			if strings.TrimSpace(ops[i].PrimaryData) == "COMMIT" {
+				commitOp = &ops[i]
+			}
+			statements = append(statements, strings.TrimSpace(ops[i].PrimaryData))
+		}
+	}
+	if len(statements) != 2 || statements[0] != "COMMIT" || statements[1] != "ROLLBACK" {
+		t.Fatalf("transaction statements = %#v; ops: %#v", statements, ops)
+	}
+	if commitOp == nil || commitOp.Options[transactionControlNoop] != "true" {
+		t.Fatalf("expected COMMIT to be marked as a no-op; op: %#v", commitOp)
+	}
+}
+
 func TestParseDynamicExecuteIntoRecord(t *testing.T) {
 	ops, err := Parse(`CREATE FUNCTION test_block() RETURNS text AS $$
 		DECLARE

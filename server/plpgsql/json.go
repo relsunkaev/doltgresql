@@ -173,6 +173,18 @@ type plpgSQL_case_when struct {
 	Body       []statement `json:"stmts"`
 }
 
+// plpgSQL_stmt_commit exists to match the expected JSON format.
+type plpgSQL_stmt_commit struct {
+	LineNumber int32 `json:"lineno"`
+	Chain      bool  `json:"chain"`
+}
+
+// plpgSQL_stmt_rollback exists to match the expected JSON format.
+type plpgSQL_stmt_rollback struct {
+	LineNumber int32 `json:"lineno"`
+	Chain      bool  `json:"chain"`
+}
+
 // plpgSQL_exception_wrapper exists to match the expected JSON format.
 type plpgSQL_exception_wrapper struct {
 	ExceptionBlock plpgSQL_exception_block `json:"PLpgSQL_exception_block"`
@@ -355,6 +367,7 @@ type statement struct {
 	Block       *plpgSQL_stmt_block        `json:"PLpgSQL_stmt_block"`
 	Call        *plpgSQL_stmt_call         `json:"PLpgSQL_stmt_call"`
 	Case        *plpgSQL_stmt_case         `json:"PLpgSQL_stmt_case"`
+	Commit      *plpgSQL_stmt_commit       `json:"PLpgSQL_stmt_commit"`
 	DynExec     *plpgSQL_stmt_dynexecute   `json:"PLpgSQL_stmt_dynexecute"`
 	DynForSLoop *plpgSQL_stmt_dynfors      `json:"PLpgSQL_stmt_dynfors"`
 	ExecSQL     *plpgSQL_stmt_execsql      `json:"PLpgSQL_stmt_execsql"`
@@ -369,6 +382,7 @@ type statement struct {
 	Return      *plpgSQL_stmt_return       `json:"PLpgSQL_stmt_return"`
 	ReturnNext  *plpgSQL_stmt_return_next  `json:"PLpgSQL_stmt_return_next"`
 	ReturnQuery *plpgSQL_stmt_return_query `json:"PLpgSQL_stmt_return_query"`
+	Rollback    *plpgSQL_stmt_rollback     `json:"PLpgSQL_stmt_rollback"`
 	When        *plpgSQL_case_when         `json:"PLpgSQL_case_when"`
 	While       *plpgSQL_stmt_while        `json:"PLpgSQL_stmt_while"`
 }
@@ -523,6 +537,23 @@ func (stmt *plpgSQL_stmt_dynexecute) Convert() (DynamicExecute, error) {
 		Strict:     stmt.Strict,
 		LineNumber: stmt.LineNumber,
 	}, nil
+}
+
+// Convert converts the JSON statement into its output form.
+func (stmt *plpgSQL_stmt_commit) Convert() ExecuteSQL {
+	options := map[string]string{transactionControlNoop: "true"}
+	if stmt.Chain {
+		return ExecuteSQL{Statement: "COMMIT AND CHAIN", Options: options, LineNumber: stmt.LineNumber}
+	}
+	return ExecuteSQL{Statement: "COMMIT", Options: options, LineNumber: stmt.LineNumber}
+}
+
+// Convert converts the JSON statement into its output form.
+func (stmt *plpgSQL_stmt_rollback) Convert() ExecuteSQL {
+	if stmt.Chain {
+		return ExecuteSQL{Statement: "ROLLBACK AND CHAIN", LineNumber: stmt.LineNumber}
+	}
+	return ExecuteSQL{Statement: "ROLLBACK", LineNumber: stmt.LineNumber}
 }
 
 // Convert converts the JSON statement into its output form.
