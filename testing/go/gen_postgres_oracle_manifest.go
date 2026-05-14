@@ -38,6 +38,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dolthub/doltgresql/postgres/parser/duration"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -1645,6 +1646,11 @@ func normalizeGeneratedPostgresValue(entry entry, index int, value interface{}, 
 		return fmt.Sprint(v)
 	case pgtype.Numeric:
 		return normalizeGeneratedPostgresPgNumeric(v)
+	case pgtype.Interval:
+		if !v.Valid {
+			return "<null>"
+		}
+		return duration.MakeDuration(v.Microseconds*duration.NanosPerMicro, int64(v.Days), int64(v.Months)).String()
 	case []byte:
 		switch mode {
 		case "bytea":
@@ -1750,6 +1756,8 @@ func inferGeneratedPostgresMode(oid uint32) string {
 		return "timestamp"
 	case 1184, 1266:
 		return "timestamptz"
+	case 1186:
+		return "interval"
 	case 199, 1000, 1001, 1002, 1003, 1005, 1006, 1007, 1008, 1009, 1010, 1011, 1012, 1013, 1014, 1015, 1016, 1017, 1018, 1019, 1020, 1021, 1022, 1027, 1028, 1034, 1040, 1041, 1115, 1182, 1183, 1185, 1187, 1231, 1270, 2951, 3807:
 		return "array"
 	default:
