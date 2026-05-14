@@ -33,7 +33,6 @@ import (
 	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/functions"
-	"github.com/dolthub/doltgresql/server/replicaidentity"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
@@ -97,9 +96,6 @@ func (c *CreatePublication) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, e
 		return nil, err
 	}
 	if err = validatePublicationSchemaMembership(pub, publicationSchemaRestrictionColumnList); err != nil {
-		return nil, err
-	}
-	if err = validatePublicationReplicaIdentityColumns(ctx, pub); err != nil {
 		return nil, err
 	}
 	if err = collection.AddPublication(ctx, pub); err != nil {
@@ -322,9 +318,6 @@ func (a *AlterPublication) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, er
 		pub.Owner = id.NewId(id.Section_User, owner)
 	default:
 		return nil, errors.Errorf("unknown ALTER PUBLICATION action: %s", a.Action)
-	}
-	if err = validatePublicationReplicaIdentityColumns(ctx, pub); err != nil {
-		return nil, err
 	}
 	if err = collection.UpdatePublication(ctx, pub); err != nil {
 		return nil, err
@@ -967,84 +960,6 @@ func validatePublicationSchemaMembership(pub publications.Publication, errorKind
 			"cannot use column list in publication that publishes tables in schemas")
 	}
 	return nil
-}
-
-func validatePublicationReplicaIdentityColumns(ctx *sql.Context, pub publications.Publication) error {
-	if !pub.PublishUpdate && !pub.PublishDelete {
-		return nil
-	}
-	for _, relation := range pub.Tables {
-		if len(relation.Columns) == 0 {
-			continue
-		}
-		schemaName := relation.Table.SchemaName()
-		tableName := relation.Table.TableName()
-		table, err := core.GetSqlTableFromContext(ctx, "", doltdb.TableName{Name: tableName, Schema: schemaName})
-		if err != nil {
-			return err
-		}
-		if table == nil {
-			return errors.Errorf(`relation "%s.%s" does not exist`, schemaName, tableName)
-		}
-		keyColumns, err := publicationReplicaIdentityColumns(ctx, table, replicaidentity.Get(ctx.GetCurrentDatabase(), schemaName, table.Name()))
-		if err != nil {
-			return err
-		}
-		if len(keyColumns) == 0 {
-			return errors.Errorf(`cannot use publication column list for table "%s" because it has no replica identity`, tableName)
-		}
-		publishedColumns := make(map[string]struct{}, len(relation.Columns))
-		for _, column := range relation.Columns {
-			publishedColumns[strings.ToLower(column)] = struct{}{}
-		}
-		for column := range keyColumns {
-			if _, ok := publishedColumns[column]; !ok {
-				return errors.Errorf(`publication column list for table "%s" must include replica identity column "%s"`, tableName, column)
-			}
-		}
-	}
-	return nil
-}
-
-func publicationReplicaIdentityColumns(ctx *sql.Context, table sql.Table, setting replicaidentity.Setting) (map[string]struct{}, error) {
-	switch setting.Identity {
-	case replicaidentity.IdentityNothing:
-		return map[string]struct{}{}, nil
-	case replicaidentity.IdentityFull:
-		columns := make(map[string]struct{}, len(table.Schema(ctx)))
-		for _, column := range table.Schema(ctx) {
-			columns[strings.ToLower(column.Name)] = struct{}{}
-		}
-		return columns, nil
-	case replicaidentity.IdentityUsingIndex:
-		indexedTable, ok := table.(sql.IndexAddressable)
-		if !ok {
-			return map[string]struct{}{}, nil
-		}
-		indexes, err := indexedTable.GetIndexes(ctx)
-		if err != nil {
-			return nil, err
-		}
-		for _, index := range indexes {
-			if !strings.EqualFold(replicaIdentityIndexName(index), setting.IndexName) && !strings.EqualFold(index.ID(), setting.IndexName) {
-				continue
-			}
-			columns := make(map[string]struct{}, len(index.Expressions()))
-			for _, expr := range index.Expressions() {
-				columns[strings.ToLower(replicaIdentityIndexColumnName(expr))] = struct{}{}
-			}
-			return columns, nil
-		}
-		return map[string]struct{}{}, nil
-	default:
-		columns := make(map[string]struct{})
-		for _, column := range table.Schema(ctx) {
-			if column.PrimaryKey {
-				columns[strings.ToLower(column.Name)] = struct{}{}
-			}
-		}
-		return columns, nil
-	}
 }
 
 func publicationHasColumnListTable(tables []publications.PublicationRelation) bool {
