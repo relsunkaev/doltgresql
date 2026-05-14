@@ -90,7 +90,7 @@ var pg_advisory_lock_bigint = framework.Function1{
 	IsNonDeterministic: true,
 	Strict:             true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val1 any) (any, error) {
-		return nil, acquireAdvisoryLock(ctx, advisoryLockNameInt8(val1.(int64)), -1, false)
+		return "", acquireAdvisoryLock(ctx, advisoryLockNameInt8(val1.(int64)), -1, false)
 	},
 }
 
@@ -102,7 +102,7 @@ var pg_advisory_lock_int4_int4 = framework.Function2{
 	IsNonDeterministic: true,
 	Strict:             true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
-		return nil, acquireAdvisoryLock(ctx, advisoryLockNameInt4Pair(val1.(int32), val2.(int32)), -1, false)
+		return "", acquireAdvisoryLock(ctx, advisoryLockNameInt4Pair(val1.(int32), val2.(int32)), -1, false)
 	},
 }
 
@@ -165,7 +165,7 @@ var pg_advisory_xact_lock_bigint = framework.Function1{
 	IsNonDeterministic: true,
 	Strict:             true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val1 any) (any, error) {
-		return nil, acquireAdvisoryLock(ctx, advisoryLockNameInt8(val1.(int64)), -1, true)
+		return "", acquireAdvisoryLock(ctx, advisoryLockNameInt8(val1.(int64)), -1, true)
 	},
 }
 
@@ -177,7 +177,7 @@ var pg_advisory_xact_lock_int4_int4 = framework.Function2{
 	IsNonDeterministic: true,
 	Strict:             true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
-		return nil, acquireAdvisoryLock(ctx, advisoryLockNameInt4Pair(val1.(int32), val2.(int32)), -1, true)
+		return "", acquireAdvisoryLock(ctx, advisoryLockNameInt4Pair(val1.(int32), val2.(int32)), -1, true)
 	},
 }
 
@@ -245,7 +245,7 @@ var pg_advisory_unlock_all = framework.Function0{
 			}
 		}
 		ReleaseSessionSharedAdvisoryLocks(uint32(ctx.Session.ID()))
-		return nil, nil
+		return "", nil
 	},
 }
 

@@ -42,7 +42,7 @@ var pg_advisory_lock_shared_bigint = framework.Function1{
 	IsNonDeterministic: true,
 	Strict:             true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val1 any) (any, error) {
-		return nil, acquireSharedAdvisoryLock(ctx, advisoryLockNameInt8(val1.(int64)), -1)
+		return "", acquireSharedAdvisoryLock(ctx, advisoryLockNameInt8(val1.(int64)), -1)
 	},
 }
 
@@ -54,7 +54,7 @@ var pg_advisory_lock_shared_int4_int4 = framework.Function2{
 	IsNonDeterministic: true,
 	Strict:             true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
-		return nil, acquireSharedAdvisoryLock(ctx, advisoryLockNameInt4Pair(val1.(int32), val2.(int32)), -1)
+		return "", acquireSharedAdvisoryLock(ctx, advisoryLockNameInt4Pair(val1.(int32), val2.(int32)), -1)
 	},
 }
 
