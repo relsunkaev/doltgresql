@@ -30,6 +30,8 @@ import (
 
 const doltSchemaViewFragmentType = "view"
 
+type suppressViewRootObjectsContextKey struct{}
+
 type viewRootObject struct {
 	name                doltdb.TableName
 	fragment            string
@@ -81,6 +83,9 @@ func (root *RootValue) getViewRootObject(ctx context.Context, name doltdb.TableN
 }
 
 func (root *RootValue) iterViewRootObjects(ctx context.Context, cb func(name doltdb.TableName, table doltdb.RootObject) (stop bool, err error)) error {
+	if suppress, _ := ctx.Value(suppressViewRootObjectsContextKey{}).(bool); suppress {
+		return nil
+	}
 	schemas, err := schemaNames(ctx, root)
 	if err != nil {
 		return err
@@ -169,6 +174,13 @@ func sqlContext(ctx context.Context) *sql.Context {
 		return sqlCtx
 	}
 	return sql.NewContext(ctx)
+}
+
+// WithoutSyntheticViewRootObjects returns a SQL context that hides synthetic view root objects
+// during generic root-object iteration. Explicit view lookups and filtered view diffs should use
+// the normal context so view definitions remain diffable by name.
+func WithoutSyntheticViewRootObjects(ctx *sql.Context) *sql.Context {
+	return ctx.WithContext(context.WithValue(ctx.Context, suppressViewRootObjectsContextKey{}, true))
 }
 
 func doltSchemaColumnIndex(columns []schema.Column, name string) int {
