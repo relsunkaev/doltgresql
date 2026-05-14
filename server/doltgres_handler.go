@@ -260,7 +260,8 @@ func (h *DoltgresHandler) ComQuery(ctx context.Context, c *mysql.Conn, query str
 }
 
 func castSQLError(err error) error {
-	switch pgerror.GetPGCode(err) {
+	pgErr := unwrapGMSWrapperForPGCode(err)
+	switch pgerror.GetPGCode(pgErr) {
 	case pgcode.DeadlockDetected,
 		pgcode.CheckViolation,
 		pgcode.DatatypeMismatch,
@@ -289,9 +290,20 @@ func castSQLError(err error) error {
 		pgcode.UndefinedPreparedStatement,
 		pgcode.Windowing,
 		pgcode.WrongObjectType:
-		return err
+		return pgErr
 	default:
 		return sql.CastSQLError(err)
+	}
+}
+
+func unwrapGMSWrapperForPGCode(err error) error {
+	switch e := err.(type) {
+	case sql.WrappedInsertError:
+		return unwrapGMSWrapperForPGCode(e.Cause)
+	case sql.WrappedTypeConversionError:
+		return unwrapGMSWrapperForPGCode(e.Err)
+	default:
+		return err
 	}
 }
 

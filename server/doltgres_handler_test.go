@@ -15,6 +15,7 @@
 package server
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/dolthub/go-mysql-server/sql"
@@ -47,6 +48,14 @@ func TestCastSQLErrorPreservesDDLPGCodes(t *testing.T) {
 		err := pgerror.New(code, "ddl validation error")
 		require.Equal(t, code, pgerror.GetPGCode(castSQLError(err)))
 	}
+}
+
+func TestCastSQLErrorPreservesWrappedInsertPGCodes(t *testing.T) {
+	err := pgerror.WithCandidateCode(errors.New("reject before trigger insert"), pgcode.RaiseException)
+	wrapped := sql.NewWrappedInsertError(sql.NewRow(1, "bad"), err)
+
+	require.Equal(t, pgcode.RaiseException, pgerror.GetPGCode(castSQLError(wrapped)))
+	require.Equal(t, "reject before trigger insert", castSQLError(wrapped).Error())
 }
 
 func TestExecutionResultFieldsUsesSuppliedFields(t *testing.T) {
