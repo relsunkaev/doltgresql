@@ -25,6 +25,8 @@ import (
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/functions"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/comments"
 )
@@ -163,10 +165,7 @@ func resolveFunctionID(ctx *sql.Context, funcColl *functions.Collection, fn *Rou
 		if len(funcs) == 1 {
 			funcId = funcs[0].ID
 		} else if len(funcs) > 1 {
-			funcExists := funcColl.HasFunction(ctx, funcId)
-			if !funcExists {
-				return id.NullFunction, errors.Errorf(`function name "%s" is not unique`, fn.RoutineName)
-			}
+			return id.NullFunction, pgerror.Newf(pgcode.AmbiguousFunction, `function name "%s" is not unique`, fn.RoutineName)
 		}
 	} else {
 		var argTypes = make([]id.Type, len(fn.Args))

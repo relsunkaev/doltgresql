@@ -120,10 +120,7 @@ func dropProcedure(ctx *sql.Context, procColl *procedures.Collection, fn *Routin
 		if len(procs) == 1 {
 			procId = procs[0].ID
 		} else if len(procs) > 1 {
-			procExists := procColl.HasProcedure(ctx, procId)
-			if !procExists {
-				return errors.Errorf(`procedure name "%s" is not unique`, fn.RoutineName)
-			}
+			return pgerror.Newf(pgcode.AmbiguousFunction, `procedure name "%s" is not unique`, fn.RoutineName)
 		}
 	} else {
 		var argTypes = make([]id.Type, len(fn.Args))
