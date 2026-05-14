@@ -670,7 +670,28 @@ func indexPredicateDefinition(expr tree.Expr) string {
 	if predicate == "" {
 		return ""
 	}
+	if isBareColumnPredicate(expr) {
+		return predicate
+	}
 	return "(" + predicate + ")"
+}
+
+func isBareColumnPredicate(expr tree.Expr) bool {
+	switch e := expr.(type) {
+	case *tree.ParenExpr:
+		return isBareColumnPredicate(e.Expr)
+	case *tree.ColumnItem:
+		return e.TableName == nil
+	case *tree.UnresolvedName:
+		normalized, err := e.NormalizeVarName()
+		if err != nil {
+			return false
+		}
+		column, ok := normalized.(*tree.ColumnItem)
+		return ok && column.TableName == nil
+	default:
+		return false
+	}
 }
 
 func trimIndexExpressionParens(expr string) string {
