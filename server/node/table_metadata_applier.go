@@ -21,6 +21,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/types"
 
+	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
 	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 )
@@ -228,17 +229,18 @@ func applyTableColumnAliases(ctx *sql.Context, db sql.Database, tableName string
 	for i, col := range schema {
 		reservedNames[col.Name] = struct{}{}
 		if i < len(aliases) {
-			reservedNames[aliases[i]] = struct{}{}
+			reservedNames[core.EncodePhysicalColumnName(aliases[i])] = struct{}{}
 		}
 	}
 	for i, alias := range aliases {
 		from := schema[i].Name
-		if from == alias {
+		to := core.EncodePhysicalColumnName(alias)
+		if from == to {
 			continue
 		}
 		temp := uniqueMaterializedViewAliasTempName(reservedNames, i)
 		reservedNames[temp] = struct{}{}
-		steps = append(steps, renameStep{index: i, from: from, to: alias, temp: temp})
+		steps = append(steps, renameStep{index: i, from: from, to: to, temp: temp})
 	}
 
 	for _, step := range steps {
@@ -266,7 +268,7 @@ func ValidateColumnAliases(schema sql.Schema, aliases []string) error {
 	}
 	seen := make(map[string]struct{}, len(schema))
 	for i, col := range schema {
-		name := col.Name
+		name := core.DecodePhysicalColumnName(col.Name)
 		if i < len(aliases) {
 			name = aliases[i]
 		}
