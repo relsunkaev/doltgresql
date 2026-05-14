@@ -166,6 +166,16 @@ type plpgSQL_stmt_dynfors struct {
 	LineNumber int32       `json:"lineno"`
 }
 
+// plpgSQL_stmt_foreach_a exists to match the expected JSON format.
+type plpgSQL_stmt_foreach_a struct {
+	Label          string      `json:"label"`
+	VariableNumber int32       `json:"varno"`
+	Slice          int32       `json:"slice"`
+	Expression     expr        `json:"expr"`
+	Body           []statement `json:"body"`
+	LineNumber     int32       `json:"lineno"`
+}
+
 // plpgSQL_case_when exists to match the expected JSON format.
 type plpgSQL_case_when struct {
 	LineNumber int32       `json:"lineno"`
@@ -373,6 +383,7 @@ type statement struct {
 	ExecSQL     *plpgSQL_stmt_execsql      `json:"PLpgSQL_stmt_execsql"`
 	Exit        *plpgSQL_stmt_exit         `json:"PLpgSQL_stmt_exit"`
 	ForILoop    *plpgSQL_stmt_fori         `json:"PLpgSQL_stmt_fori"`
+	ForEachLoop *plpgSQL_stmt_foreach_a    `json:"PLpgSQL_stmt_foreach_a"`
 	ForSLoop    *plpgSQL_stmt_fors         `json:"PLpgSQL_stmt_fors"`
 	GetDiag     *plpgSQL_stmt_getdiag      `json:"PLpgSQL_stmt_getdiag"`
 	If          *plpgSQL_stmt_if           `json:"PLpgSQL_stmt_if"`
@@ -811,6 +822,35 @@ func forQueryLoopVariableName(conv jsonConversionContext, loopVar datum) (string
 	default:
 		return "", false
 	}
+}
+
+// Convert converts the JSON statement into its output form.
+func (stmt *plpgSQL_stmt_foreach_a) Convert(conv jsonConversionContext) (block Block, err error) {
+	block.Label = stmt.Label
+	block.IsLoop = true
+
+	if stmt.Slice != 0 {
+		return Block{}, errors.New("FOREACH SLICE is not supported")
+	}
+	varName, ok := conv.datumName(stmt.VariableNumber)
+	if !ok {
+		return Block{}, errors.Errorf("FOREACH target datum %d could not be resolved", stmt.VariableNumber)
+	}
+
+	cursorName := fmt.Sprintf("__cursor_%s_%d__", varName, stmt.LineNumber)
+	convertedBody, err := conv.convertStatements(stmt.Body)
+	if err != nil {
+		return Block{}, err
+	}
+	bodySize := OperationSizeForStatements(convertedBody)
+
+	block.Body = []Statement{
+		ForQueryInit{CursorName: cursorName, Query: fmt.Sprintf("SELECT unnest(%s)", stmt.Expression.Expression.Query)},
+		ForQueryNext{CursorName: cursorName, RecordVar: varName, GotoOffset: bodySize + 2},
+	}
+	block.Body = append(block.Body, convertedBody...)
+	block.Body = append(block.Body, Goto{Offset: -(1 + bodySize)})
+	return block, nil
 }
 
 // Convert converts the JSON statement into its output form.

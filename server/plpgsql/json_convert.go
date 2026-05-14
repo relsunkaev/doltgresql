@@ -236,6 +236,8 @@ func (conv jsonConversionContext) convertStatement(stmt statement) (Statement, e
 		return stmt.Exit.Convert(), nil
 	case stmt.ForILoop != nil:
 		return stmt.ForILoop.Convert(conv)
+	case stmt.ForEachLoop != nil:
+		return stmt.ForEachLoop.Convert(conv)
 	case stmt.ForSLoop != nil:
 		return stmt.ForSLoop.Convert(conv)
 	case stmt.GetDiag != nil:

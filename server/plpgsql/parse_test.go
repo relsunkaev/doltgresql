@@ -440,6 +440,38 @@ func TestParseProcedureTransactionControl(t *testing.T) {
 	}
 }
 
+func TestParseForeachArrayLoop(t *testing.T) {
+	ops, err := Parse(`CREATE FUNCTION test_block(values_in INT[]) RETURNS void AS $$
+		DECLARE
+			value_seen INT;
+		BEGIN
+			FOREACH value_seen IN ARRAY values_in LOOP
+				PERFORM value_seen;
+			END LOOP;
+		END;
+	$$ LANGUAGE plpgsql;`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var initOp *InterpreterOperation
+	for i := range ops {
+		if ops[i].OpCode == OpCode_ForQueryInit {
+			initOp = &ops[i]
+			break
+		}
+	}
+	if initOp == nil {
+		t.Fatalf("expected FOREACH to lower to query-loop init; ops: %#v", ops)
+	}
+	if initOp.PrimaryData != "SELECT unnest ( $1 ) " {
+		t.Fatalf("FOREACH query = %q; op: %#v", initOp.PrimaryData, initOp)
+	}
+	if len(initOp.SecondaryData) != 1 || initOp.SecondaryData[0] != "values_in" {
+		t.Fatalf("FOREACH bindings = %#v; op: %#v", initOp.SecondaryData, initOp)
+	}
+}
+
 func TestParseDynamicExecuteIntoRecord(t *testing.T) {
 	ops, err := Parse(`CREATE FUNCTION test_block() RETURNS text AS $$
 		DECLARE
