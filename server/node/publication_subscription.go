@@ -835,6 +835,10 @@ func validatePublicationColumns(tableSchema sql.Schema, columns []string) ([]str
 		found := false
 		for _, tableColumn := range tableSchema {
 			if tableColumn.Name == column || strings.EqualFold(tableColumn.Name, column) {
+				if tableColumn.Generated != nil && !tableColumn.AutoIncrement {
+					return nil, pgerror.Newf(pgcode.InvalidColumnReference,
+						`cannot use generated column "%s" in publication column list`, tableColumn.Name)
+				}
 				resolved[i] = tableColumn.Name
 				found = true
 				break
