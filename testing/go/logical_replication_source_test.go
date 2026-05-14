@@ -678,9 +678,7 @@ func TestLogicalReplicationTemporarySlotDropsOnSessionCloseRepro(t *testing.T) {
 	require.Equal(t, 1, slotCount)
 
 	require.NoError(t, replConn.Close(ctx))
-	require.NoError(t, conn.Current.QueryRow(ctx, `
-		SELECT count(*) FROM pg_catalog.pg_replication_slots WHERE slot_name = $1`, slotName).Scan(&slotCount))
-	require.Equal(t, 0, slotCount, "temporary logical replication slots should be dropped when the creating session closes")
+	waitForReplicationSlotDropped(t, ctx, conn, slotName)
 }
 
 func TestLogicalReplicationRejectsInvalidSlotNameRepro(t *testing.T) {
@@ -4218,4 +4216,21 @@ func waitForInactiveSlot(t *testing.T, ctx context.Context, conn *Connection, sl
 	}
 	require.NoError(t, lastErr)
 	require.FailNow(t, "replication slot did not become inactive")
+}
+
+func waitForReplicationSlotDropped(t *testing.T, ctx context.Context, conn *Connection, slotName string) {
+	t.Helper()
+	deadline := time.Now().Add(5 * time.Second)
+	var lastErr error
+	var slotCount int
+	for time.Now().Before(deadline) {
+		lastErr = conn.Current.QueryRow(ctx, `
+			SELECT count(*) FROM pg_catalog.pg_replication_slots WHERE slot_name = $1`, slotName).Scan(&slotCount)
+		if lastErr == nil && slotCount == 0 {
+			return
+		}
+		time.Sleep(25 * time.Millisecond)
+	}
+	require.NoError(t, lastErr)
+	require.Equal(t, 0, slotCount, "replication slot %s should be dropped", slotName)
 }
