@@ -448,6 +448,8 @@ func TestErrMessageToSQLStateFormatsAlterTableDDLErrors(t *testing.T) {
 		{msg: `Constraint "doesnotexist" does not exist`, code: pgcode.UndefinedObject},
 		{msg: "error: Multiple primary keys defined", code: pgcode.InvalidTableDefinition},
 		{msg: "Multiple primary keys defined", code: pgcode.InvalidTableDefinition},
+		{msg: "unable to change type of column `id` as it is used by foreign keys", code: pgcode.DatatypeMismatch},
+		{msg: "blob/text column 'parent_id' used in key specification without a key length", code: pgcode.DatatypeMismatch},
 	} {
 		code, ok := errMessageToSQLState(tt.msg)
 		require.True(t, ok)

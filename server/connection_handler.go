@@ -4416,6 +4416,10 @@ func errMessageToSQLState(msg string) (string, bool) {
 		return pgcode.DependentObjectsStillExist.String(), true
 	case strings.HasPrefix(msg, `cannot drop index "`) && strings.Contains(msg, `" because constraint "`) && strings.Contains(msg, `" requires it`):
 		return pgcode.DependentObjectsStillExist.String(), true
+	case strings.HasPrefix(msg, "unable to change type of column ") && strings.HasSuffix(msg, " as it is used by foreign keys"):
+		return pgcode.DatatypeMismatch.String(), true
+	case strings.HasPrefix(msg, "blob/text column '") && strings.HasSuffix(msg, "' used in key specification without a key length"):
+		return pgcode.DatatypeMismatch.String(), true
 	case msg == "cannot create temporary relation in non-temporary schema":
 		return pgcode.InvalidTableDefinition.String(), true
 	case strings.HasPrefix(msg, "permission denied"),
