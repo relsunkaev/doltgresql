@@ -30,8 +30,22 @@ import (
 // ReplaceNode is used to replace generic top-level nodes with Doltgres versions that wrap them, without performing any
 // additional analysis. This is used to handle relatively straightforward tasks, like delete cascading, etc.
 func ReplaceNode(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, scope *plan.Scope, selector analyzer.RuleSelector, qFlags *sql.QueryFlags) (sql.Node, transform.TreeIdentity, error) {
+	return replaceNode(ctx, a, node)
+}
+
+func replaceNode(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node) (sql.Node, transform.TreeIdentity, error) {
 	// TODO: need to add the majority of other DDL operations here
 	switch node := node.(type) {
+	case *pgnodes.RelationLockingNode:
+		child, identity, err := replaceNode(ctx, a, node.Child())
+		if err != nil || identity == transform.SameTree {
+			return node, identity, err
+		}
+		rewrapped, err := node.WithChildren(ctx, child)
+		if err != nil {
+			return nil, transform.SameTree, err
+		}
+		return rewrapped, transform.NewTree, nil
 	case *plan.CreateDB:
 		return pgnodes.NewCreateDatabase(node), transform.NewTree, nil
 	case *plan.CreateView:
