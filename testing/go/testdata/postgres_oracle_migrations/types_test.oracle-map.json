@@ -3646,15 +3646,34 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 129,
       "scriptName": "JSON type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0129-insert-into-t_json-values-$1",
       "suggestedId": "types-test-testtypes-0129-insert-into-t_json-values-$1",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "Insert into t_json values ($1, $2) returning *",
       "querySha256": "a81400a34218905342657bf97fa273eec6b8d72cd0efb59408a6f519c2273a7f",
-      "nonLiteral": [
-        "BindVars"
+      "bindVars": [
+        {
+          "kind": "string",
+          "value": "101"
+        },
+        {
+          "kind": "null",
+          "null": true
+        }
       ],
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "101"
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -3662,8 +3681,10 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 130,
       "scriptName": "JSON type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0130-select-5-::json",
       "suggestedId": "types-test-testtypes-0130-select-5-::json",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT '5'::json;",
       "querySha256": "0117e7a78eb9fb39259b2007019083b2afb5c670670b5f72b2c0e7479331cfbe",
@@ -3674,10 +3695,7 @@
           }
         ]
       ],
-      "nonLiteral": [
-        "PriorBindVars"
-      ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -3685,8 +3703,10 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 131,
       "scriptName": "JSON type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0131-select-false-::json",
       "suggestedId": "types-test-testtypes-0131-select-false-::json",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT 'false'::json;",
       "querySha256": "8accc003e44f33a520353b23ba0dbf55d5210a62230ed34dcf119d744e482fd1",
@@ -3697,10 +3717,7 @@
           }
         ]
       ],
-      "nonLiteral": [
-        "PriorBindVars"
-      ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -3708,8 +3725,10 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 132,
       "scriptName": "JSON type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0132-select-hi-::json",
       "suggestedId": "types-test-testtypes-0132-select-hi-::json",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT '\"hi\"'::json;",
       "querySha256": "7ca41ef0483139292fdb990889fe191b7f1541d8b05d35d33f3f6fe02376d3d9",
@@ -3720,10 +3739,7 @@
           }
         ]
       ],
-      "nonLiteral": [
-        "PriorBindVars"
-      ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -3731,8 +3747,10 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 133,
       "scriptName": "JSON type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0133-select-null::json",
       "suggestedId": "types-test-testtypes-0133-select-null::json",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT null::json;",
       "querySha256": "d71a40d0b0db62c913b012392bd172d65a504b90694ef874ac8dc55dad7bfa3a",
@@ -3743,10 +3761,7 @@
           }
         ]
       ],
-      "nonLiteral": [
-        "PriorBindVars"
-      ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -3754,8 +3769,10 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 134,
       "scriptName": "JSON type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0134-select-null-::json",
       "suggestedId": "types-test-testtypes-0134-select-null-::json",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT 'null'::json;",
       "querySha256": "060efd0e783f11e57b51025c6a4275c4eea46df31e36f31a414059bcb9556a8a",
@@ -3766,10 +3783,7 @@
           }
         ]
       ],
-      "nonLiteral": [
-        "PriorBindVars"
-      ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -3777,8 +3791,10 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 135,
       "scriptName": "JSON type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0135-select-{-reading-:-1.230e-5}",
       "suggestedId": "types-test-testtypes-0135-select-{-reading-:-1.230e-5}",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT '{\"reading\": 1.230e-5}'::json;",
       "querySha256": "e29362c4d1aa9ef37f91d11fd7cef7417861f29497a17f2440efba5866ff7172",
@@ -3789,10 +3805,7 @@
           }
         ]
       ],
-      "nonLiteral": [
-        "PriorBindVars"
-      ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -3800,8 +3813,10 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 136,
       "scriptName": "JSON type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0136-select-json-{-a-:",
       "suggestedId": "types-test-testtypes-0136-select-json-{-a-:",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "select json '{ \"a\":  \"\\ud83d\\ude04\\ud83d\\udc36\" }' -> 'a'",
       "querySha256": "f13cf25420b9e125a5476fdebcbfcdbf129108563e53f20661fd070eef185870",
@@ -3812,10 +3827,7 @@
           }
         ]
       ],
-      "nonLiteral": [
-        "PriorBindVars"
-      ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -3914,15 +3926,34 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 140,
       "scriptName": "JSONB type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0140-insert-into-t_jsonb-values-$1",
       "suggestedId": "types-test-testtypes-0140-insert-into-t_jsonb-values-$1",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "insert into t_jsonb values ($1, $2) returning *",
       "querySha256": "db738d0fb4835cee30f7b876881f2016a360ad66c027947ed8b82084851728ad",
-      "nonLiteral": [
-        "BindVars"
+      "bindVars": [
+        {
+          "kind": "string",
+          "value": "4"
+        },
+        {
+          "kind": "null",
+          "null": true
+        }
       ],
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "4"
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -3930,8 +3961,10 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 141,
       "scriptName": "JSONB type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0141-select-{-bar-:-baz",
       "suggestedId": "types-test-testtypes-0141-select-{-bar-:-baz",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT '{\"bar\": \"baz\", \"balance\": 7.77, \"active\":false}'::jsonb;",
       "querySha256": "a569940731003f212593ca6ba9237442c473c5056d4ecf8c3ac56e187b50af53",
@@ -3942,10 +3975,7 @@
           }
         ]
       ],
-      "nonLiteral": [
-        "PriorBindVars"
-      ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -3953,8 +3983,10 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 142,
       "scriptName": "JSONB type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0142-select-{-active-:-baz",
       "suggestedId": "types-test-testtypes-0142-select-{-active-:-baz",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT '{\"active\": \"baz\", \"active\":false, \"balance\": 7.77}'::jsonb;",
       "querySha256": "84717cd03971ad944e50afac560c89742cea685a49f0648bc90ba91912f4bd64",
@@ -3965,10 +3997,7 @@
           }
         ]
       ],
-      "nonLiteral": [
-        "PriorBindVars"
-      ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -3976,8 +4005,10 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 143,
       "scriptName": "JSONB type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0143-select-{-active-:false-balance",
       "suggestedId": "types-test-testtypes-0143-select-{-active-:false-balance",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT '{\"active\":false, \"balance\": 7.77, \"bar\": \"baz\"}'::jsonb;",
       "querySha256": "3f189fecd26df8f79a4c9f29f10084fd98028c5324b92d2b756b986142471b81",
@@ -3988,10 +4019,7 @@
           }
         ]
       ],
-      "nonLiteral": [
-        "PriorBindVars"
-      ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -3999,8 +4027,10 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 144,
       "scriptName": "JSONB type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0144-select-jsonb-{-a-:null",
       "suggestedId": "types-test-testtypes-0144-select-jsonb-{-a-:null",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT jsonb '{\"a\":null, \"b\":\"qq\"}' ? 'a';",
       "querySha256": "ee795b91d51c16e6241a226984baa06c7445b17e8b2bb262c827cb5baae6dd23",
@@ -4011,10 +4041,7 @@
           }
         ]
       ],
-      "nonLiteral": [
-        "PriorBindVars"
-      ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -4022,7 +4049,8 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 145,
       "scriptName": "JSONB type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0145-insert-into-t_jsonb_unique-values-2",
       "suggestedId": "types-test-testtypes-0145-insert-into-t_jsonb_unique-values-2",
       "compare": "sqlstate",
       "expectedKind": "error",
@@ -4030,10 +4058,7 @@
       "errorSeverity": "ERROR",
       "query": "INSERT INTO t_jsonb_unique VALUES (2, '{\"key\": \"value\"}');",
       "querySha256": "3cbc52afc3c1228a13c6eecdb6305b9591fac36d2f18f6ac668326df3f19740f",
-      "nonLiteral": [
-        "PriorBindVars"
-      ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -4041,7 +4066,8 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 146,
       "scriptName": "JSONB type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0146-alter-table-t_jsonb_unique_build-add-constraint",
       "suggestedId": "types-test-testtypes-0146-alter-table-t_jsonb_unique_build-add-constraint",
       "compare": "sqlstate",
       "expectedKind": "error",
@@ -4049,10 +4075,7 @@
       "errorSeverity": "ERROR",
       "query": "ALTER TABLE t_jsonb_unique_build ADD CONSTRAINT t_jsonb_unique_build_v1_key UNIQUE (v1);",
       "querySha256": "eea64aedcfbf713b0aeb17f787f209b6db610baa48087e3dd5bacf8c7521bec4",
-      "nonLiteral": [
-        "PriorBindVars"
-      ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {

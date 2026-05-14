@@ -831,53 +831,29 @@ var typesTests = []ScriptTest{
 			},
 			{
 				Query:    "Insert into t_json values ($1, $2) returning *",
-				BindVars: []any{"101", nil},
-				Expected: []sql.Row{
-					{101, nil},
-				},
+				BindVars: []any{"101", nil}, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0129-insert-into-t_json-values-$1"},
 			},
 			{
-				Query: "SELECT '5'::json;",
-				Expected: []sql.Row{
-					{`5`},
-				},
+				Query: "SELECT '5'::json;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0130-select-5-::json"},
 			},
 			{
-				Query: "SELECT 'false'::json;",
-				Expected: []sql.Row{
-					{`false`},
-				},
+				Query: "SELECT 'false'::json;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0131-select-false-::json"},
 			},
 			{
-				Query: `SELECT '"hi"'::json;`,
-				Expected: []sql.Row{
-					{`"hi"`},
-				},
+				Query: `SELECT '"hi"'::json;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0132-select-hi-::json"},
 			},
 			{
-				Query: `SELECT null::json;`,
-				Expected: []sql.Row{
-					{nil},
-				},
+				Query: `SELECT null::json;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0133-select-null::json"},
 			},
 			{
 				Skip:  true, // https://github.com/jackc/pgx/issues/2430
-				Query: `SELECT 'null'::json;`,
-				Expected: []sql.Row{
-					{`null`},
-				},
+				Query: `SELECT 'null'::json;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0134-select-null-::json"},
 			},
 			{
-				Query: `SELECT '{"reading": 1.230e-5}'::json;`,
-				Expected: []sql.Row{
-					{`{"reading": 1.230e-5}`},
-				},
+				Query: `SELECT '{"reading": 1.230e-5}'::json;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0135-select-{-reading-:-1.230e-5}"},
 			},
 			{
-				Query: `select json '{ "a":  "\ud83d\ude04\ud83d\udc36" }' -> 'a'`,
-				Expected: []sql.Row{
-					{`"\ud83d\ude04\ud83d\udc36"`},
-				},
+				Query: `select json '{ "a":  "\ud83d\ude04\ud83d\udc36" }' -> 'a'`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0136-select-json-{-a-:"},
 			},
 		},
 	},
@@ -913,42 +889,25 @@ var typesTests = []ScriptTest{
 			},
 			{
 				Query:    "insert into t_jsonb values ($1, $2) returning *",
-				BindVars: []any{"4", nil},
-				Expected: []sql.Row{
-					{4, nil},
-				},
+				BindVars: []any{"4", nil}, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0140-insert-into-t_jsonb-values-$1"},
 			},
 			{
-				Query: `SELECT '{"bar": "baz", "balance": 7.77, "active":false}'::jsonb;`,
-				Expected: []sql.Row{
-					{`{"bar": "baz", "active": false, "balance": 7.77}`},
-				},
+				Query: `SELECT '{"bar": "baz", "balance": 7.77, "active":false}'::jsonb;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0141-select-{-bar-:-baz"},
 			},
 			{
-				Query: `SELECT '{"active": "baz", "active":false, "balance": 7.77}'::jsonb;`,
-				Expected: []sql.Row{
-					{`{"active": false, "balance": 7.77}`},
-				},
+				Query: `SELECT '{"active": "baz", "active":false, "balance": 7.77}'::jsonb;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0142-select-{-active-:-baz"},
 			},
 			{
-				Query: `SELECT '{"active":false, "balance": 7.77, "bar": "baz"}'::jsonb;`,
-				Expected: []sql.Row{
-					{`{"bar": "baz", "active": false, "balance": 7.77}`},
-				},
+				Query: `SELECT '{"active":false, "balance": 7.77, "bar": "baz"}'::jsonb;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0143-select-{-active-:false-balance"},
 			},
 			{
-				Query: `SELECT jsonb '{"a":null, "b":"qq"}' ? 'a';`,
-				Expected: []sql.Row{
-					{"t"},
-				},
+				Query: `SELECT jsonb '{"a":null, "b":"qq"}' ? 'a';`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0144-select-jsonb-{-a-:null"},
 			},
 			{
-				Query:       `INSERT INTO t_jsonb_unique VALUES (2, '{"key": "value"}');`,
-				ExpectedErr: `"key": "value"`,
+				Query: `INSERT INTO t_jsonb_unique VALUES (2, '{"key": "value"}');`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0145-insert-into-t_jsonb_unique-values-2", Compare: "sqlstate"},
 			},
 			{
-				Query:       `ALTER TABLE t_jsonb_unique_build ADD CONSTRAINT t_jsonb_unique_build_v1_key UNIQUE (v1);`,
-				ExpectedErr: `"key": "value"`,
+				Query: `ALTER TABLE t_jsonb_unique_build ADD CONSTRAINT t_jsonb_unique_build_v1_key UNIQUE (v1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0146-alter-table-t_jsonb_unique_build-add-constraint", Compare: "sqlstate"},
 			},
 		},
 	},
