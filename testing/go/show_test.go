@@ -163,38 +163,25 @@ func TestShowTables(t *testing.T) {
 					Query: `SHOW TABLES`, PostgresOracle: ScriptTestPostgresOracle{ID: "show-test-testshowtables-0001-show-tables", Compare: "sqlstate"},
 				},
 				{
-					Query: `SHOW TABLES from public`,
-					Expected: []sql.Row{
-						{"t1"},
-						{"t2"},
-					},
+					Query: `SHOW TABLES from public`, PostgresOracle: ScriptTestPostgresOracle{ID: "show-test-testshowtables-0002-show-tables-from-public", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SHOW TABLES from schema2`,
-					Expected: []sql.Row{},
+					Query: `SHOW TABLES from schema2`, PostgresOracle: ScriptTestPostgresOracle{ID: "show-test-testshowtables-0003-show-tables-from-schema2", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SHOW TABLES from schema3`,
-					ExpectedErr: "not found",
+					Query: `SHOW TABLES from schema3`, PostgresOracle: ScriptTestPostgresOracle{ID: "show-test-testshowtables-0004-show-tables-from-schema3", Compare: "sqlstate"},
 				},
 				{
-					Query: `SHOW TABLES from postgres.public`,
-					Expected: []sql.Row{
-						{"t1"},
-						{"t2"},
-					},
+					Query: `SHOW TABLES from postgres.public`, PostgresOracle: ScriptTestPostgresOracle{ID: "show-test-testshowtables-0005-show-tables-from-postgres.public", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SHOW TABLES from postgres.schema2`,
-					Expected: []sql.Row{},
+					Query: `SHOW TABLES from postgres.schema2`, PostgresOracle: ScriptTestPostgresOracle{ID: "show-test-testshowtables-0006-show-tables-from-postgres.schema2", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SHOW TABLES from postgres.schema3`,
-					ExpectedErr: "not found",
+					Query: `SHOW TABLES from postgres.schema3`, PostgresOracle: ScriptTestPostgresOracle{ID: "show-test-testshowtables-0007-show-tables-from-postgres.schema3", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SHOW TABLES from db3`,
-					ExpectedErr: "not found",
+					Query: `SHOW TABLES from db3`, PostgresOracle: ScriptTestPostgresOracle{ID: "show-test-testshowtables-0008-show-tables-from-db3", Compare: "sqlstate"},
 				},
 			},
 		},
