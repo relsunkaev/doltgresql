@@ -21,12 +21,17 @@
       "oracle": "postgres",
       "postgresId": "non-json-builtin-repro-test-testintegerbaseformattingbuiltinsrepro-0001-select-to_bin-10",
       "suggestedId": "non-json-builtin-repro-test-testintegerbaseformattingbuiltinsrepro-0001-select-to_bin-10",
-      "compare": "sqlstate",
+      "compare": "structural",
       "expectedKind": "rows",
-      "sqlstate": "42883",
-      "errorSeverity": "ERROR",
       "query": "SELECT to_bin(10);",
       "querySha256": "065fb19af2767c316a567fd3d78536169f1d930c07ea79e4ca4a12fa8e573715",
+      "expectedRows": [
+        [
+          {
+            "value": "1010"
+          }
+        ]
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -38,12 +43,17 @@
       "oracle": "postgres",
       "postgresId": "non-json-builtin-repro-test-testintegerbaseformattingbuiltinsrepro-0002-select-to_oct-10",
       "suggestedId": "non-json-builtin-repro-test-testintegerbaseformattingbuiltinsrepro-0002-select-to_oct-10",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "42883",
-      "errorSeverity": "ERROR",
+      "compare": "structural",
+      "expectedKind": "rows",
       "query": "SELECT to_oct(10);",
       "querySha256": "afd11b82666ff4ea85aa29435d14413b78644b45000c7b9017374ca41e4dcd1a",
+      "expectedRows": [
+        [
+          {
+            "value": "12"
+          }
+        ]
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },

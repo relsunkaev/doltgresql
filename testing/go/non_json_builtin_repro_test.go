@@ -26,21 +26,19 @@ func TestIntegerBaseFormattingBuiltinsRepro(t *testing.T) {
 			Name: "to_bin and to_oct format integers",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT to_bin(10);`, PostgresOracle: ScriptTestPostgresOracle{ID: "non-json-builtin-repro-test-testintegerbaseformattingbuiltinsrepro-0001-select-to_bin-10", Compare: "sqlstate"},
+					Query: `SELECT to_bin(10);`, PostgresOracle: ScriptTestPostgresOracle{ID: "non-json-builtin-repro-test-testintegerbaseformattingbuiltinsrepro-0001-select-to_bin-10"},
 				},
 				{
-					Query: `SELECT to_oct(10);`, PostgresOracle: ScriptTestPostgresOracle{ID: "non-json-builtin-repro-test-testintegerbaseformattingbuiltinsrepro-0002-select-to_oct-10",
-
-						// TestUuidExtractionBuiltinsRepro reproduces a PostgreSQL compatibility gap:
-						// PostgreSQL exposes built-ins for extracting version and timestamp metadata
-						// from UUID values.
-						Compare: "sqlstate"},
+					Query: `SELECT to_oct(10);`, PostgresOracle: ScriptTestPostgresOracle{ID: "non-json-builtin-repro-test-testintegerbaseformattingbuiltinsrepro-0002-select-to_oct-10"},
 				},
 			},
 		},
 	})
 }
 
+// TestUuidExtractionBuiltinsRepro reproduces a PostgreSQL compatibility gap:
+// PostgreSQL exposes built-ins for extracting version and timestamp metadata
+// from UUID values.
 func TestUuidExtractionBuiltinsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
