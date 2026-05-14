@@ -1100,7 +1100,7 @@ func addPublicationSchemas(pub *publications.Publication, schemas []string) erro
 		if slices.ContainsFunc(pub.Schemas, func(existing string) bool {
 			return strings.EqualFold(existing, schema)
 		}) {
-			return errors.Errorf(`schema "%s" is already member of publication "%s"`, schema, pub.ID.PublicationName())
+			return pgerror.Newf(pgcode.DuplicateObject, `schema "%s" is already member of publication "%s"`, schema, pub.ID.PublicationName())
 		}
 		pub.Schemas = append(pub.Schemas, schema)
 	}
