@@ -332,15 +332,9 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 					stack.NewRecord(operation.Target, nil, nil)
 					continue
 				}
-				resolvedType, err = typeCollection.GetType(ctx, id.NewType(schemaName, typeName))
+				resolvedType, err = resolveDeclareType(ctx, typeCollection, operation.PrimaryData)
 				if err != nil {
 					return nil, false, err
-				}
-				if resolvedType == nil && schemaName == "pg_catalog" && !strings.Contains(strings.TrimSpace(operation.PrimaryData), ".") {
-					resolvedType, err = typeCollection.GetType(ctx, id.NewType("", typeName))
-					if err != nil {
-						return nil, false, err
-					}
 				}
 			}
 			if resolvedType == nil {
@@ -1963,6 +1957,28 @@ func formatSQLQualifiedIdentifier(parts []string) string {
 
 func quoteSQLIdentifier(ident string) string {
 	return `"` + strings.ReplaceAll(ident, `"`, `""`) + `"`
+}
+
+func resolveDeclareType(ctx *sql.Context, typeCollection *typecollection.TypeCollection, rawTypeName string) (*pgtypes.DoltgresType, error) {
+	schemaName, typeName := normalizeDeclareTypeName(rawTypeName)
+	resolvedType, err := typeCollection.GetType(ctx, id.NewType(schemaName, typeName))
+	if err != nil || resolvedType != nil {
+		return resolvedType, err
+	}
+	if schemaName != "pg_catalog" || strings.Contains(strings.TrimSpace(rawTypeName), ".") {
+		return nil, nil
+	}
+	currentSchema, err := typecollection.GetSchemaName(ctx, nil, "")
+	if err != nil {
+		return nil, err
+	}
+	if currentSchema != "" && currentSchema != schemaName {
+		resolvedType, err = typeCollection.GetType(ctx, id.NewType(currentSchema, typeName))
+		if err != nil || resolvedType != nil {
+			return resolvedType, err
+		}
+	}
+	return typeCollection.GetType(ctx, id.NewType("", typeName))
 }
 
 // normalizeDeclareTypeName maps pg_query_go's PL/pgSQL declaration type names
