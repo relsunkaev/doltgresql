@@ -22,6 +22,7 @@ import (
 
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/auth"
 	pgexprs "github.com/dolthub/doltgresql/server/expression"
@@ -82,7 +83,7 @@ func nodeAliasedTableExpr(ctx *Context, node *tree.AliasedTableExpr) (*vitess.Al
 						if len(node.As.Cols) > 0 {
 							columns := make([]vitess.ColIdent, len(node.As.Cols))
 							for i := range node.As.Cols {
-								columns[i] = vitess.NewColIdent(string(node.As.Cols[i]))
+								columns[i] = vitess.NewColIdent(core.EncodePhysicalColumnName(string(node.As.Cols[i])))
 							}
 							valuesStmt.Columns = columns
 						}

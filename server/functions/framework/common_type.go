@@ -15,8 +15,8 @@
 package framework
 
 import (
-	"github.com/cockroachdb/errors"
-
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
@@ -50,7 +50,7 @@ func FindCommonType(types []*pgtypes.DoltgresType) (_ *pgtypes.DoltgresType, req
 			candidateType = typ
 		}
 		if typ.ID != pgtypes.Unknown.ID && candidateType.TypCategory != typ.TypCategory {
-			return nil, false, errors.Errorf("types %s and %s cannot be matched", candidateType.String(), typ.String())
+			return nil, false, pgerror.Newf(pgcode.DatatypeMismatch, "types %s and %s cannot be matched", candidateType.String(), typ.String())
 		}
 	}
 	// Attempt to find the most general type (or the preferred type in the type category)
@@ -74,7 +74,7 @@ func FindCommonType(types []*pgtypes.DoltgresType) (_ *pgtypes.DoltgresType, req
 		if typ.ID == pgtypes.Unknown.ID || typ.ID == candidateType.ID {
 			continue
 		} else if GetImplicitCast(typ, candidateType) == nil {
-			return nil, false, errors.Errorf("cannot find implicit cast function from %s to %s", candidateType.String(), typ.String())
+			return nil, false, pgerror.Newf(pgcode.DatatypeMismatch, "cannot find implicit cast function from %s to %s", candidateType.String(), typ.String())
 		}
 	}
 	return candidateType, requiresCasts, nil
