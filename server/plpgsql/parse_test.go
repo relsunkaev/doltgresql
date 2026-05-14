@@ -162,6 +162,34 @@ func TestParseReturnQueryOperations(t *testing.T) {
 	}
 }
 
+func TestParseReturnQueryExecuteOperations(t *testing.T) {
+	ops, err := Parse(`CREATE FUNCTION func2() RETURNS SETOF INT
+		LANGUAGE plpgsql
+		AS $$
+		BEGIN
+			RETURN QUERY EXECUTE 'SELECT * FROM (VALUES ($1), ($2)) AS v(x)' USING 40, 50;
+		END;
+		$$;`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(ops) != 4 {
+		t.Fatalf("expected 4 operations, found %d: %#v", len(ops), ops)
+	}
+	if ops[1].OpCode != OpCode_ReturnQuery {
+		t.Fatalf("operation 1 opcode = %d, expected %d; all ops: %#v", ops[1].OpCode, OpCode_ReturnQuery, ops)
+	}
+	if ops[1].Options["dynamic"] != "true" {
+		t.Fatalf("dynamic option = %q, expected true; op: %#v", ops[1].Options["dynamic"], ops[1])
+	}
+	if ops[1].Options["queryBindingCount"] != "0" {
+		t.Fatalf("queryBindingCount = %q, expected 0; op: %#v", ops[1].Options["queryBindingCount"], ops[1])
+	}
+	if len(ops[1].SecondaryData) != 2 || ops[1].SecondaryData[0] != "40" || ops[1].SecondaryData[1] != "50" {
+		t.Fatalf("RETURN QUERY EXECUTE bindings = %#v, expected USING params", ops[1].SecondaryData)
+	}
+}
+
 func TestParseReturnNextOperations(t *testing.T) {
 	ops, err := Parse(`CREATE FUNCTION func2(n INT) RETURNS SETOF INT
 		LANGUAGE plpgsql

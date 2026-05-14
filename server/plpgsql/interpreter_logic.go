@@ -731,7 +731,23 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 				}
 			}
 		case OpCode_ReturnQuery:
-			schema, rows, err := iFunc.QueryMultiReturn(ctx, stack, operation.PrimaryData, operation.SecondaryData)
+			statement := operation.PrimaryData
+			bindings := operation.SecondaryData
+			var cleanupDynamicReturnQuery func()
+			if operation.Options["dynamic"] == "true" {
+				queryBindingCount, err := strconv.Atoi(operation.Options["queryBindingCount"])
+				if err != nil {
+					return nil, false, err
+				}
+				statement, bindings, cleanupDynamicReturnQuery, err = prepareDynamicStatement(ctx, iFunc, stack, statement, bindings, queryBindingCount)
+				if err != nil {
+					return nil, false, err
+				}
+			}
+			schema, rows, err := iFunc.QueryMultiReturn(ctx, stack, statement, bindings)
+			if cleanupDynamicReturnQuery != nil {
+				cleanupDynamicReturnQuery()
+			}
 			if err != nil {
 				state.lastExceptionContext = diagnosticPGExceptionContext(ctx, iFunc, operation)
 				return nil, false, err
@@ -1455,6 +1471,42 @@ func diagnosticPGRoutineOID(iFunc InterpretedFunction) id.Id {
 		return id.NewOID(0).AsId()
 	}
 	return iFunc.InternalID()
+}
+
+func prepareDynamicStatement(
+	ctx *sql.Context,
+	iFunc InterpretedFunction,
+	stack InterpreterStack,
+	statement string,
+	bindings []string,
+	queryBindingCount int,
+) (string, []string, func(), error) {
+	if queryBindingCount > len(bindings) {
+		return "", nil, nil, errors.New("dynamic execute query binding count exceeds available bindings")
+	}
+	queryBindings := bindings[:queryBindingCount]
+	bindings = bindings[queryBindingCount:]
+	queryVal, err := iFunc.QuerySingleReturn(ctx, stack, "SELECT "+statement, pgtypes.Text, queryBindings)
+	if err != nil {
+		return "", nil, nil, err
+	}
+	if queryVal == nil {
+		return "", nil, nil, errors.New("query string argument of EXECUTE is null")
+	}
+	statement = queryVal.(string)
+	if len(bindings) == 0 {
+		return statement, bindings, nil, nil
+	}
+	stack.PushScope()
+	cleanup := func() {
+		stack.PopScope()
+	}
+	bindings, err = evaluateDynamicExecuteUsingParams(ctx, iFunc, stack, bindings)
+	if err != nil {
+		cleanup()
+		return "", nil, nil, err
+	}
+	return statement, bindings, cleanup, nil
 }
 
 func evaluateDynamicExecuteUsingParams(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack, params []string) ([]string, error) {

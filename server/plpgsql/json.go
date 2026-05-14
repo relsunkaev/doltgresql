@@ -306,8 +306,10 @@ type plpgSQL_stmt_return_next struct {
 
 // plpgSQL_stmt_return_query exists to match the expected JSON format.
 type plpgSQL_stmt_return_query struct {
-	Query      expr  `json:"query"`
-	LineNumber int32 `json:"lineno"`
+	Query      expr      `json:"query"`
+	DynQuery   expr      `json:"dynquery"`
+	Params     []sqlstmt `json:"params"`
+	LineNumber int32     `json:"lineno"`
 }
 
 // plpgSQL_stmt_while exists to match the expected JSON format.
@@ -868,8 +870,21 @@ func (stmt *plpgSQL_stmt_return_next) Convert(fallbackExpression string) ReturnN
 
 // Convert converts the JSON statement into its output form.
 func (stmt *plpgSQL_stmt_return_query) Convert() ReturnQuery {
+	params := make([]string, 0, len(stmt.Params))
+	for _, param := range stmt.Params {
+		params = append(params, param.Expr.Query)
+	}
+	if stmt.DynQuery.Expression.Query != "" {
+		return ReturnQuery{
+			Query:      stmt.DynQuery.Expression.Query,
+			Params:     params,
+			Dynamic:    true,
+			LineNumber: stmt.LineNumber,
+		}
+	}
 	return ReturnQuery{
-		Query: stmt.Query.Expression.Query,
+		Query:      stmt.Query.Expression.Query,
+		LineNumber: stmt.LineNumber,
 	}
 }
 

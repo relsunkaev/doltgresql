@@ -570,7 +570,10 @@ type Record struct {
 
 // ReturnQuery represents a RETURN QUERY statement.
 type ReturnQuery struct {
-	Query string
+	Query      string
+	Params     []string
+	Dynamic    bool
+	LineNumber int32
 }
 
 var _ Statement = ReturnQuery{}
@@ -586,11 +589,24 @@ func (r ReturnQuery) AppendOperations(ops *[]InterpreterOperation, stack *Interp
 	if err != nil {
 		return err
 	}
+	params := referencedVariables
+	options := diagnosticStatementOptions(r.LineNumber, "RETURN QUERY", r.Query)
+	if r.Dynamic {
+		params = make([]string, 0, len(referencedVariables)+len(r.Params))
+		params = append(params, referencedVariables...)
+		params = append(params, r.Params...)
+		if options == nil {
+			options = make(map[string]string)
+		}
+		options["dynamic"] = "true"
+		options["queryBindingCount"] = strconv.Itoa(len(referencedVariables))
+	}
 
 	*ops = append(*ops, InterpreterOperation{
 		OpCode:        OpCode_ReturnQuery,
 		PrimaryData:   query,
-		SecondaryData: referencedVariables,
+		SecondaryData: params,
+		Options:       options,
 	})
 	return nil
 }
