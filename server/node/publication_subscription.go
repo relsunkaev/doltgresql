@@ -237,6 +237,9 @@ func (a *AlterPublication) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, er
 		if pub.AllTables && (len(a.Tables) > 0 || len(a.Schemas) > 0) {
 			return nil, publicationAllTablesMutationError(pub.ID.PublicationName())
 		}
+		if publicationTableSpecsHaveRowFilter(a.Tables) {
+			return nil, pgerror.New(pgcode.Syntax, "cannot use WHERE clause when dropping table from publication")
+		}
 		tables, err := resolvePublicationTables(ctx, a.Tables)
 		if err != nil {
 			return nil, err
@@ -786,6 +789,10 @@ func resolvePublicationTables(ctx *sql.Context, specs []PublicationTableSpec) ([
 		if table == nil {
 			return nil, errors.Errorf(`relation "%s" does not exist`, doltdb.TableName{Name: spec.Name, Schema: schema}.String())
 		}
+		if publicationIsSystemSchema(schema) {
+			return nil, pgerror.Newf(pgcode.InvalidParameterValue,
+				`cannot add relation "%s" to publication`, doltdb.TableName{Name: spec.Name, Schema: schema}.String())
+		}
 		relationID := id.NewTable(schema, spec.Name)
 		columns, err := validatePublicationColumns(table.Schema(ctx), spec.Columns)
 		if err != nil {
@@ -1038,6 +1045,17 @@ func publicationHasColumnListTable(tables []publications.PublicationRelation) bo
 	return false
 }
 
+func publicationTableSpecsHaveRowFilter(specs []PublicationTableSpec) bool {
+	return slices.ContainsFunc(specs, func(spec PublicationTableSpec) bool {
+		return strings.TrimSpace(spec.RowFilter) != ""
+	})
+}
+
+func publicationIsSystemSchema(schema string) bool {
+	return strings.EqualFold(schema, "pg_catalog") ||
+		strings.EqualFold(schema, "information_schema")
+}
+
 func publicationAddSchemaRestrictionError(publicationName string) error {
 	return pgerror.Newf(pgcode.InvalidParameterValue,
 		`cannot add schema to publication "%s" because it contains a table where a column list is specified`,
@@ -1045,7 +1063,8 @@ func publicationAddSchemaRestrictionError(publicationName string) error {
 }
 
 func publicationAllTablesMutationError(publicationName string) error {
-	return errors.Errorf(`publication "%s" is defined as FOR ALL TABLES`, publicationName)
+	return pgerror.Newf(pgcode.ObjectNotInPrerequisiteState,
+		`publication "%s" is defined as FOR ALL TABLES`, publicationName)
 }
 
 func addPublicationTables(pub *publications.Publication, tables []publications.PublicationRelation) error {
