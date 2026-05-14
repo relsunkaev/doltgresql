@@ -768,8 +768,7 @@ ORDER BY typname;`,
 					Query: `SELECT e.extname, n.nspname, e.extrelocatable, e.extversion
 						FROM pg_catalog.pg_extension e
 						JOIN pg_catalog.pg_namespace n ON n.oid = e.extnamespace
-						WHERE e.extname = 'btree_gist';`,
-					Expected: []sql.Row{{"btree_gist", "public", "t", "1.7"}},
+						WHERE e.extname = 'btree_gist';`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0118-select-e.extname-n.nspname-e.extrelocatable-e.extversion", Cleanup: []string{"DROP EXTENSION IF EXISTS btree_gist CASCADE"}},
 				},
 				{
 					Query: `SELECT opc.opcname, opf.opfname, typ.typname, n.nspname, opc.opcdefault
@@ -780,13 +779,7 @@ JOIN pg_catalog.pg_type typ ON typ.oid = opc.opcintype
 JOIN pg_catalog.pg_namespace n ON n.oid = opc.opcnamespace
 WHERE am.amname = 'gist'
 	AND opc.opcname IN ('gist_bool_ops', 'gist_int4_ops', 'gist_text_ops', 'gist_uuid_ops')
-ORDER BY opc.opcname;`,
-					Expected: []sql.Row{
-						{"gist_bool_ops", "gist_bool_ops", "bool", "public", "t"},
-						{"gist_int4_ops", "gist_int4_ops", "int4", "public", "t"},
-						{"gist_text_ops", "gist_text_ops", "text", "public", "t"},
-						{"gist_uuid_ops", "gist_uuid_ops", "uuid", "public", "t"},
-					},
+ORDER BY opc.opcname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0119-select-opc.opcname-opf.opfname-typ.typname-n.nspname", Cleanup: []string{"DROP EXTENSION IF EXISTS btree_gist CASCADE"}},
 				},
 				{
 					Query: `SELECT opf.opfname, n.nspname, COUNT(*)
@@ -797,13 +790,7 @@ JOIN pg_catalog.pg_namespace n ON n.oid = opf.opfnamespace
 WHERE am.amname = 'gist'
 	AND opf.opfname IN ('gist_bool_ops', 'gist_int4_ops', 'gist_text_ops', 'gist_uuid_ops')
 GROUP BY opf.opfname, n.nspname
-ORDER BY opf.opfname;`,
-					Expected: []sql.Row{
-						{"gist_bool_ops", "public", 6},
-						{"gist_int4_ops", "public", 7},
-						{"gist_text_ops", "public", 6},
-						{"gist_uuid_ops", "public", 6},
-					},
+ORDER BY opf.opfname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0120-select-opf.opfname-n.nspname-count-*", Cleanup: []string{"DROP EXTENSION IF EXISTS btree_gist CASCADE"}},
 				},
 				{
 					Query: `SELECT opf.opfname, amop.amopstrategy, amop.amoppurpose, btree_opf.opfname
@@ -871,12 +858,10 @@ ORDER BY amproc.amprocnum;`,
 					Query: `SELECT e.extname, n.nspname
 						FROM pg_catalog.pg_extension e
 						JOIN pg_catalog.pg_namespace n ON n.oid = e.extnamespace
-						WHERE e.extname = 'citext';`,
-					Expected: []sql.Row{{"citext", "public"}},
+						WHERE e.extname = 'citext';`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0126-select-e.extname-n.nspname-from-pg_catalog.pg_extension", Cleanup: []string{"DROP EXTENSION IF EXISTS citext CASCADE", "DROP TABLE IF EXISTS app_users CASCADE"}},
 				},
 				{
-					Query:    `SELECT email::text FROM app_users WHERE id = 1;`,
-					Expected: []sql.Row{{"Alice@Example.com"}},
+					Query: `SELECT email::text FROM app_users WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0127-select-email::text-from-app_users-where", Cleanup: []string{"DROP EXTENSION IF EXISTS citext CASCADE", "DROP TABLE IF EXISTS app_users CASCADE"}},
 				},
 				{
 					Query: `SELECT opc.opcname, am.amname, typ.typname, opc.opcdefault::text
@@ -913,12 +898,10 @@ ORDER BY amproc.amprocnum;`,
 					Expected: []sql.Row{{"citext_ops", int16(1), "citext_cmp"}},
 				},
 				{
-					Query:    `SELECT ('Alice@Example.com'::public.citext = 'alice@example.com'::public.citext)::text;`,
-					Expected: []sql.Row{{"true"}},
+					Query: `SELECT ('Alice@Example.com'::public.citext = 'alice@example.com'::public.citext)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0131-select-alice@example.com-::public.citext-=-alice@example.com", Cleanup: []string{"DROP EXTENSION IF EXISTS citext CASCADE", "DROP TABLE IF EXISTS app_users CASCADE"}},
 				},
 				{
-					Query:    `SELECT ('Alice@Example.com'::public.citext <> 'alice@example.com'::public.citext)::text, ('bob@example.com'::public.citext > 'ALICE@example.com'::public.citext)::text;`,
-					Expected: []sql.Row{{"false", "true"}},
+					Query: `SELECT ('Alice@Example.com'::public.citext <> 'alice@example.com'::public.citext)::text, ('bob@example.com'::public.citext > 'ALICE@example.com'::public.citext)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0132-select-alice@example.com-::public.citext-<>-alice@example.com", Cleanup: []string{"DROP EXTENSION IF EXISTS citext CASCADE", "DROP TABLE IF EXISTS app_users CASCADE"}},
 				},
 				{
 					Query: `EXPLAIN SELECT id FROM app_users WHERE email = 'alice@example.com'::public.citext;`,
@@ -933,20 +916,16 @@ ORDER BY amproc.amprocnum;`,
 					},
 				},
 				{
-					Query:    `SELECT id FROM app_users WHERE email = 'alice@example.com'::public.citext;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT id FROM app_users WHERE email = 'alice@example.com'::public.citext;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0134-select-id-from-app_users-where", Cleanup: []string{"DROP EXTENSION IF EXISTS citext CASCADE", "DROP TABLE IF EXISTS app_users CASCADE"}},
 				},
 				{
-					Query:    `SELECT id FROM app_users WHERE email > 'alice@example.com'::public.citext ORDER BY id;`,
-					Expected: []sql.Row{{2}},
+					Query: `SELECT id FROM app_users WHERE email > 'alice@example.com'::public.citext ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0135-select-id-from-app_users-where", Cleanup: []string{"DROP EXTENSION IF EXISTS citext CASCADE", "DROP TABLE IF EXISTS app_users CASCADE"}},
 				},
 				{
-					Query:       `UPDATE app_users SET email = 'BOB@example.com' WHERE id = 1;`,
-					ExpectedErr: "duplicate",
+					Query: `UPDATE app_users SET email = 'BOB@example.com' WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0136-update-app_users-set-email-=", Compare: "sqlstate", Cleanup: []string{"DROP EXTENSION IF EXISTS citext CASCADE", "DROP TABLE IF EXISTS app_users CASCADE"}},
 				},
 				{
-					Query:       `INSERT INTO app_users VALUES (3, 'alice@example.com');`,
-					ExpectedErr: "duplicate",
+					Query: `INSERT INTO app_users VALUES (3, 'alice@example.com');`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0137-insert-into-app_users-values-3", Compare: "sqlstate", Cleanup: []string{"DROP EXTENSION IF EXISTS citext CASCADE", "DROP TABLE IF EXISTS app_users CASCADE"}},
 				},
 			},
 		},
