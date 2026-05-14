@@ -931,7 +931,11 @@ func writePromotedOracleMap(sourceFile string, outputPath string, testNameFilter
 	}
 	for i := range candidates.Assertions {
 		assertion := &candidates.Assertions[i]
-		if assertion.Query == "" || hasAnyNonLiteral(assertion.NonLiteral, "Query", "Username", "BindVars", "CopyFromStdInFile", "SetUpScript", "DoltSpecific", "PriorQuery", "PriorUsername", "PriorBindVars", "PriorCopyFromStdInFile") {
+		if assertion.Query == "" {
+			continue
+		}
+		if hasPostgresOracleBlockingNonLiteral(assertion.NonLiteral) {
+			markOracleAssertionInternal(assertion)
 			continue
 		}
 		if !forcePostgresOracle && len(assertion.NonLiteral) > 0 {
@@ -1087,6 +1091,15 @@ func refreshPromotedOracleMap(sourceFile string, outputPath string, testNameFilt
 				continue
 			}
 		}
+		if hasPostgresOracleBlockingNonLiteral(assertion.NonLiteral) {
+			err := fmt.Errorf("generated oracle entry depends on non-literal ScriptTest setup that the PostgreSQL refresh harness cannot replay")
+			if skipRefreshErrors {
+				fmt.Fprintf(os.Stderr, "skipping %s: %v\n", entry.ID, err)
+				markOracleAssertionInternal(assertion)
+				continue
+			}
+			return fmt.Errorf("%s: %w", entry.ID, err)
+		}
 		if hasDoltSpecificStatement(entry) {
 			err := fmt.Errorf("generated oracle entry references Dolt-specific SQL that PostgreSQL cannot be source-of-truth for")
 			if skipRefreshErrors {
@@ -1122,12 +1135,14 @@ func refreshPromotedOracleMap(sourceFile string, outputPath string, testNameFilt
 		}
 		if sqlstate != "" {
 			assertion.Compare = "sqlstate"
+			assertion.ExpectedKind = "error"
 			assertion.SQLState = sqlstate
 			assertion.ErrorSeverity = severity
 			assertion.ExpectedRows = nil
 			continue
 		}
 		applyGeneratedExpectedValueModes(assertion, expectedRows)
+		assertion.ExpectedKind = "rows"
 		assertion.ExpectedRows = expectedRows
 		if assertion.Compare == "sqlstate" {
 			assertion.Compare = "structural"
@@ -1253,6 +1268,9 @@ func hasDoltSpecificSQL(statement string) bool {
 	if doltSpecificIdentifierPattern.MatchString(code) {
 		return true
 	}
+	if doltSpecificInternalIdentifierPattern.MatchString(code) {
+		return true
+	}
 	for _, literal := range stringLiterals {
 		if isDoltSpecificStringLiteral(literal) {
 			return true
@@ -1262,6 +1280,7 @@ func hasDoltSpecificSQL(statement string) bool {
 }
 
 var doltSpecificIdentifierPattern = regexp.MustCompile(`(^|[^a-z0-9_])dolt[._][a-z0-9_]+`)
+var doltSpecificInternalIdentifierPattern = regexp.MustCompile(`(^|[^a-z0-9_])dg_[a-z0-9_]*_posting_chunks($|[^a-z0-9_])`)
 
 func sqlCodeAndStringLiterals(statement string) (string, []string) {
 	var code strings.Builder
@@ -1301,7 +1320,9 @@ func isDoltSpecificStringLiteral(literal string) bool {
 	if literal == "dolt_" || literal == "dolt_%" {
 		return false
 	}
-	return strings.Contains(literal, "dolt.") || doltSpecificLiteralPattern.MatchString(literal)
+	return strings.Contains(literal, "dolt.") ||
+		doltSpecificLiteralPattern.MatchString(literal) ||
+		doltSpecificInternalIdentifierPattern.MatchString(literal)
 }
 
 var doltSpecificLiteralPattern = regexp.MustCompile(`(^|[^a-z0-9_])dolt_[a-z0-9][a-z0-9_]*`)
@@ -1329,6 +1350,21 @@ func hasAnyNonLiteral(nonLiteral []string, names ...string) bool {
 		}
 	}
 	return false
+}
+
+func hasPostgresOracleBlockingNonLiteral(nonLiteral []string) bool {
+	return hasAnyNonLiteral(nonLiteral,
+		"Query",
+		"Username",
+		"BindVars",
+		"CopyFromStdInFile",
+		"SetUpScript",
+		"DoltSpecific",
+		"PriorQuery",
+		"PriorUsername",
+		"PriorBindVars",
+		"PriorCopyFromStdInFile",
+	)
 }
 
 func postgresOracleDSN(flagValue string) (string, error) {

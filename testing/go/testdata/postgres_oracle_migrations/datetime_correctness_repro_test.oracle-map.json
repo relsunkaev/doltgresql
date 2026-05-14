@@ -955,15 +955,15 @@
       "source": "testing/go/datetime_correctness_repro_test.go:TestTimestampTypmodCopyFromRoundsStoredValueRepro",
       "ordinal": 1,
       "scriptName": "timestamp typmod COPY FROM rounds stored value",
-      "oracle": "postgres",
-      "postgresId": "datetime-correctness-repro-test-testtimestamptypmodcopyfromroundsstoredvaluerepro-0001-select-ts::text-from-timestamp_typmod_copy_items-order",
+      "oracle": "internal",
       "suggestedId": "datetime-correctness-repro-test-testtimestamptypmodcopyfromroundsstoredvaluerepro-0001-select-ts::text-from-timestamp_typmod_copy_items-order",
-      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT ts::text\n\t\t\t\t\t\tFROM timestamp_typmod_copy_items\n\t\t\t\t\t\tORDER BY id;",
       "querySha256": "997e0bd6370a00f7c0152263e6dc1a594c3dcb8a838dfa7d6c7cba5c766c27a5",
-      "expectedRows": [],
-      "needsCleanup": false,
+      "nonLiteral": [
+        "PriorCopyFromStdInFile"
+      ],
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -1081,15 +1081,15 @@
       "source": "testing/go/datetime_correctness_repro_test.go:TestTimestamptzTypmodCopyFromRoundsStoredValueRepro",
       "ordinal": 1,
       "scriptName": "timestamptz typmod COPY FROM rounds stored value",
-      "oracle": "postgres",
-      "postgresId": "datetime-correctness-repro-test-testtimestamptztypmodcopyfromroundsstoredvaluerepro-0001-select-tz::text-from-timestamptz_typmod_copy_items-order",
+      "oracle": "internal",
       "suggestedId": "datetime-correctness-repro-test-testtimestamptztypmodcopyfromroundsstoredvaluerepro-0001-select-tz::text-from-timestamptz_typmod_copy_items-order",
-      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT tz::text\n\t\t\t\t\t\tFROM timestamptz_typmod_copy_items\n\t\t\t\t\t\tORDER BY id;",
       "querySha256": "f3c7fd001cbdd44586fa6369250e515af05308e3a7bcac25c149615aeed63bed",
-      "expectedRows": [],
-      "needsCleanup": false,
+      "nonLiteral": [
+        "PriorCopyFromStdInFile"
+      ],
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -1535,15 +1535,15 @@
       "source": "testing/go/datetime_correctness_repro_test.go:TestTimeTypmodCopyFromRoundsStoredValueGuard",
       "ordinal": 1,
       "scriptName": "time typmod COPY FROM rounds stored value",
-      "oracle": "postgres",
-      "postgresId": "datetime-correctness-repro-test-testtimetypmodcopyfromroundsstoredvalueguard-0001-select-t::text-tz::text-from-time_typmod_copy_items",
+      "oracle": "internal",
       "suggestedId": "datetime-correctness-repro-test-testtimetypmodcopyfromroundsstoredvalueguard-0001-select-t::text-tz::text-from-time_typmod_copy_items",
-      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT t::text, tz::text\n\t\t\t\t\t\tFROM time_typmod_copy_items\n\t\t\t\t\t\tORDER BY id;",
       "querySha256": "103536da479c32b2fb3fccc9a40fbe8ccd1474dbe82e86a8fb2761e08dbb2c2a",
-      "expectedRows": [],
-      "needsCleanup": false,
+      "nonLiteral": [
+        "PriorCopyFromStdInFile"
+      ],
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -1991,15 +1991,15 @@
       "source": "testing/go/datetime_correctness_repro_test.go:TestIntervalTypmodCopyFromRestrictsStoredValueRepro",
       "ordinal": 1,
       "scriptName": "interval typmod COPY FROM restricts stored value",
-      "oracle": "postgres",
-      "postgresId": "datetime-correctness-repro-test-testintervaltypmodcopyfromrestrictsstoredvaluerepro-0001-select-ds::text-from-interval_typmod_copy_items-order",
+      "oracle": "internal",
       "suggestedId": "datetime-correctness-repro-test-testintervaltypmodcopyfromrestrictsstoredvaluerepro-0001-select-ds::text-from-interval_typmod_copy_items-order",
-      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT ds::text\n\t\t\t\t\t\tFROM interval_typmod_copy_items\n\t\t\t\t\t\tORDER BY id;",
       "querySha256": "391367d579dd92b2d04085411c8734ecec7140e50ce6bce409a79e92ab78eec0",
-      "expectedRows": [],
-      "needsCleanup": false,
+      "nonLiteral": [
+        "PriorCopyFromStdInFile"
+      ],
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {

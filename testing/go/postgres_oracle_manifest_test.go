@@ -262,6 +262,37 @@ func TestPostgresOraclePromotedMapSkipsDoltSpecificQueries(t *testing.T) {
 	}
 }
 
+func TestPostgresOraclePromotedMapSkipsDoltSidecarQueries(t *testing.T) {
+	outPath := filepath.Join(t.TempDir(), "index_test.oracle-map.json")
+	cmd := exec.Command("go", "run", "gen_postgres_oracle_manifest.go",
+		"--promote-oracle-map", "index_test.go",
+		"--oracle-test-name", "TestJsonbGinPostingChunkBuildGate",
+		"--promote-oracle-map-output", outPath)
+	output, err := cmd.CombinedOutput()
+	require.NoError(t, err, string(output))
+
+	data, err := os.ReadFile(outPath)
+	require.NoError(t, err)
+	var generated struct {
+		Assertions []struct {
+			Oracle     string   `json:"oracle"`
+			Query      string   `json:"query"`
+			NonLiteral []string `json:"nonLiteral"`
+		} `json:"assertions"`
+	}
+	require.NoError(t, json.Unmarshal(data, &generated))
+	foundSidecarQueries := 0
+	for _, assertion := range generated.Assertions {
+		if !strings.Contains(assertion.Query, "_posting_chunks") {
+			continue
+		}
+		foundSidecarQueries++
+		require.Equal(t, "internal", assertion.Oracle)
+		require.Contains(t, assertion.NonLiteral, "DoltSpecific")
+	}
+	require.Equal(t, 3, foundSidecarQueries)
+}
+
 func TestPostgresOraclePromotedMapKeepsDoltNameFilters(t *testing.T) {
 	outPath := filepath.Join(t.TempDir(), "functions_test.oracle-map.json")
 	cmd := exec.Command("go", "run", "gen_postgres_oracle_manifest.go",

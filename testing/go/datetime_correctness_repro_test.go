@@ -562,7 +562,8 @@ func TestTimestampTypmodCopyFromRoundsStoredValueRepro(t *testing.T) {
 				{
 					Query: `SELECT ts::text
 						FROM timestamp_typmod_copy_items
-						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimestamptypmodcopyfromroundsstoredvaluerepro-0001-select-ts::text-from-timestamp_typmod_copy_items-order"},
+						ORDER BY id;`,
+					Expected: []sql.Row{{"2021-09-15 21:43:57"}},
 				},
 			},
 		},
@@ -752,7 +753,8 @@ func TestTimestamptzTypmodCopyFromRoundsStoredValueRepro(t *testing.T) {
 				{
 					Query: `SELECT tz::text
 						FROM timestamptz_typmod_copy_items
-						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimestamptztypmodcopyfromroundsstoredvaluerepro-0001-select-tz::text-from-timestamptz_typmod_copy_items-order"},
+						ORDER BY id;`,
+					Expected: []sql.Row{{"2021-09-15 21:43:57+00"}},
 				},
 			},
 		},
@@ -1275,7 +1277,8 @@ func TestTimeTypmodCopyFromRoundsStoredValueGuard(t *testing.T) {
 				{
 					Query: `SELECT t::text, tz::text
 						FROM time_typmod_copy_items
-						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimetypmodcopyfromroundsstoredvalueguard-0001-select-t::text-tz::text-from-time_typmod_copy_items"},
+						ORDER BY id;`,
+					Expected: []sql.Row{{"21:43:57", "21:43:57+00"}},
 				},
 			},
 		},
@@ -1821,7 +1824,8 @@ func TestIntervalTypmodCopyFromRestrictsStoredValueRepro(t *testing.T) {
 				{
 					Query: `SELECT ds::text
 						FROM interval_typmod_copy_items
-						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testintervaltypmodcopyfromrestrictsstoredvaluerepro-0001-select-ds::text-from-interval_typmod_copy_items-order"},
+						ORDER BY id;`,
+					Expected: []sql.Row{{"3 days 04:05:07"}},
 				},
 			},
 		},

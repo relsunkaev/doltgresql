@@ -168,17 +168,12 @@
       "oracle": "postgres",
       "postgresId": "aggregate-correctness-repro-test-testalteraggregaterenamerepro-0002-select-rename_custom_sum_old-v-from-rename_custom_sum_items",
       "suggestedId": "aggregate-correctness-repro-test-testalteraggregaterenamerepro-0002-select-rename_custom_sum_old-v-from-rename_custom_sum_items",
-      "compare": "structural",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "42883",
+      "errorSeverity": "ERROR",
       "query": "SELECT rename_custom_sum_old(v) FROM rename_custom_sum_items;",
       "querySha256": "3eac0af1ddf0b781f156516b93c1568d4ef2aaf941a4711ef3705eea6ef5f115",
-      "expectedRows": [
-        [
-          {
-            "value": "3"
-          }
-        ]
-      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -258,9 +253,6 @@
             "value": "230"
           }
         ]
-      ],
-      "nonLiteral": [
-        "Expected"
       ],
       "needsCleanup": false,
       "cleanupProvided": false
