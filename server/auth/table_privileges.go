@@ -186,6 +186,25 @@ func HasTablePrivilegeGrantOption(key TablePrivilegeKey, privilege Privilege) Ro
 	return 0
 }
 
+// HasDependentTablePrivilege returns whether key.Role has granted the same table privilege to another role.
+func HasDependentTablePrivilege(key TablePrivilegeKey, privilege Privilege) bool {
+	for dependentKey, tablePrivilegeValue := range globalDatabase.tablePrivileges.Data {
+		if dependentKey.Table != key.Table || dependentKey.Column != key.Column {
+			continue
+		}
+		privilegeMap, ok := tablePrivilegeValue.Privileges[privilege]
+		if !ok {
+			continue
+		}
+		for grantedPrivilege := range privilegeMap {
+			if grantedPrivilege.GrantedBy == key.Role {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // RemoveTablePrivilege removes the privilege from the global database. If `grantOptionOnly` is true, then only the WITH
 // GRANT OPTION portion is revoked. If `grantOptionOnly` is false, then the full privilege is removed. If the GrantedBy
 // field contains a valid RoleID, then only the privilege associated with that granter is removed. Otherwise, the

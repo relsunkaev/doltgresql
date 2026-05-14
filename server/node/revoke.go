@@ -123,7 +123,7 @@ func (r *Revoke) Resolved() bool {
 
 // RowIter implements the interface sql.ExecSourceRel.
 func (r *Revoke) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error) {
-	if r.Cascade {
+	if r.Cascade && r.RevokeTable == nil {
 		return nil, errors.New("REVOKE does not yet support CASCADE")
 	}
 
@@ -231,7 +231,7 @@ func (r *Revoke) common(ctx *sql.Context) (roles []auth.Role, userRole auth.Role
 		if !grantedByRole.IsValid() {
 			return nil, auth.Role{}, 0, errors.Errorf(`role "%s" does not exist`, r.GrantedBy)
 		}
-		if groupID, _, _ := auth.IsRoleAMember(userRole.ID(), grantedByRole.ID()); !groupID.IsValid() {
+		if userRole.ID() != grantedByRole.ID() {
 			// TODO: grab the actual error message
 			return nil, auth.Role{}, 0, errors.Errorf(`role "%s" does not have permission to revoke this privilege`, userRole.Name)
 		}
@@ -267,10 +267,14 @@ func (r *Revoke) revokeTable(ctx *sql.Context) error {
 					// TODO: grab the actual error message
 					return errors.Errorf(`role "%s" does not have permission to revoke this privilege`, userRole.Name)
 				}
-				auth.RemoveTablePrivilege(auth.TablePrivilegeKey{
+				targetKey := auth.TablePrivilegeKey{
 					Role:  role.ID(),
 					Table: table,
-				}, auth.GrantedPrivilege{
+				}
+				if !r.Cascade && auth.HasDependentTablePrivilege(targetKey, privilege) {
+					continue
+				}
+				auth.RemoveTablePrivilege(targetKey, auth.GrantedPrivilege{
 					Privilege: privilege,
 					GrantedBy: grantedByID,
 				}, r.GrantOptionFor)

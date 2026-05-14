@@ -10,6 +10,24 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### epsilon - 2026-05-14 06:33 MST
+
+- Result: fixed the REVOKE `GRANTED BY` current-user check and the table REVOKE cascade/restrict behavior covered by the current oracle slice.
+- Root causes:
+  - `REVOKE ... GRANTED BY` allowed inherited role membership, while PostgreSQL requires the named grantor to be the session user.
+  - `REVOKE ... CASCADE` was rejected before table revokes could use the existing table privilege path.
+  - table `REVOKE ... RESTRICT` needed to preserve privilege chains when the target role has downstream table grants in the current oracle slice.
+- Files touched: `server/node/revoke.go`, `server/auth/table_privileges.go`, and one epsilon-owned classifier hunk in `server/connection_handler.go`.
+- Fresh verifier `/private/tmp/doltgresql-epsilon-current-xeo64K` plus epsilon's patch passed:
+  - `go test -vet=off ./testing/go -run '^TestRevokeGrantedByRequiresCurrentUserRepro$' -count=1 -timeout=5m`
+  - related REVOKE `GRANTED BY` coverage for table/schema/sequence/routine grantor preservation.
+  - table cascade/restrict repros for `REVOKE` and `REVOKE GRANT OPTION`.
+  - `go test -vet=off ./server -run '^TestErrMessageToSQLStateFormatsCommonRuntimeErrors$' -count=1 -timeout=5m`
+  - `go test -vet=off ./server/auth ./server/node -run '^$' -count=1 -timeout=5m`
+- Current high-skip verifier log `/tmp/doltgresql-epsilon-current-highskip-28.jsonl` advances past the REVOKE correctness lane, then stops at `TestGroupBy/Basic_order_by/group_by_cases/SELECT id as alias1, (SELECT alias1+1 group by alias1 having alias1 > 0) FROM members where id < 6;`: PostgreSQL expects an error, Doltgres returns rows.
+- Shared checkout note: full shared-tree runs remain blocked by unrelated dirty `server/node/postgres_foreign_key_action_handler.go` compile errors, so validation is using the verifier worktree.
+- Next action: inspect alias visibility for subquery `GROUP BY/HAVING`.
+
 ### epsilon - 2026-05-14 06:25 MST
 
 - Result: fixed `REVOKE ... ON ALL TABLES IN SCHEMA` over-revoking the current schema.
