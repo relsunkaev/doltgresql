@@ -26,6 +26,8 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/auth"
 )
 
@@ -201,7 +203,7 @@ func checkCreateDatabasePrivilege(ctx *sql.Context) error {
 
 func rejectDatabaseDDLInTransaction(ctx *sql.Context, statement string) error {
 	if ctx.GetIgnoreAutoCommit() {
-		return errors.Errorf("%s cannot run inside a transaction block", statement)
+		return pgerror.Newf(pgcode.ActiveSQLTransaction, "%s cannot run inside a transaction block", statement)
 	}
 	return nil
 }
