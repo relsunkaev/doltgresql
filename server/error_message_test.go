@@ -224,6 +224,7 @@ func TestErrMessageToSQLStateFormatsMissingCommentObjects(t *testing.T) {
 		code pgcode.Code
 	}{
 		{msg: `relation "missing_comment_table" does not exist`, code: pgcode.UndefinedTable},
+		{msg: `sequence "missing_grant_sequence" does not exist`, code: pgcode.UndefinedTable},
 		{msg: `operator "+" does not exist`, code: pgcode.UndefinedFunction},
 		{msg: `access method "missing_comment_am" does not exist`, code: pgcode.UndefinedObject},
 		{msg: `collation "missing_comment_collation" does not exist`, code: pgcode.UndefinedObject},
