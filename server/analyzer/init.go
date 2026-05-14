@@ -75,6 +75,7 @@ const (
 	ruleId_SuppressReplicaRoleForeignKeys                                         // suppressReplicaRoleForeignKeys
 	ruleId_SuppressDeferrableForeignKeys                                          // suppressDeferrableForeignKeys
 	ruleId_EnforceForeignKeyMatchFull                                             // enforceForeignKeyMatchFull
+	ruleId_PrioritizeUniqueFKInsert                                               // prioritizeUniqueForeignKeyInsertViolations
 	ruleId_UnwrapTableCopierCreateTable                                           // unwrapTableCopierCreateTable
 	ruleId_PreserveTableMetadata                                                  // preserveTableMetadata
 	ruleId_ValidateCreateIndexOwnership                                           // validateCreateIndexOwnership
@@ -196,6 +197,7 @@ func Init() {
 		analyzer.Rule{Id: ruleId_EnforceForeignKeyMatchFull, Apply: EnforceForeignKeyMatchFull},
 		analyzer.Rule{Id: ruleId_SuppressDeferrableForeignKeys, Apply: SuppressDeferrableForeignKeys},
 		analyzer.Rule{Id: ruleId_SuppressReplicaRoleForeignKeys, Apply: SuppressReplicaRoleForeignKeys},
+		analyzer.Rule{Id: ruleId_PrioritizeUniqueFKInsert, Apply: PrioritizeUniqueForeignKeyInsertViolations},
 		analyzer.Rule{Id: ruleId_ValidateCreateOrReplaceView, Apply: ValidateCreateOrReplaceView},
 		analyzer.Rule{Id: ruleId_ReplaceNode, Apply: ReplaceNode},
 		analyzer.Rule{Id: ruleId_InsertContextRootFinalizer, Apply: InsertContextRootFinalizer},
