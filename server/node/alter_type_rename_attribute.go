@@ -24,7 +24,6 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/core"
-	pgfunctions "github.com/dolthub/doltgresql/core/functions"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/types"
 )
@@ -150,9 +149,6 @@ func (c *AlterTypeRenameAttribute) RowIter(ctx *sql.Context, r sql.Row) (sql.Row
 		return nil, err
 	}
 	if err = c.renameDependentTableColumns(ctx, typ); err != nil {
-		return nil, err
-	}
-	if err = c.renameDependentFunctions(ctx, typ.ID); err != nil {
 		return nil, err
 	}
 	if err = c.renameDependentViews(ctx, typ.ID); err != nil {
@@ -287,39 +283,6 @@ func (c *AlterTypeRenameAttribute) renameDependentViews(ctx *sql.Context, typeID
 			if err = viewDatabase.CreateView(ctx, view.Name, textDefinition, createViewStatement); err != nil {
 				return err
 			}
-		}
-	}
-	return nil
-}
-
-func (c *AlterTypeRenameAttribute) renameDependentFunctions(ctx *sql.Context, typeID id.Type) error {
-	collection, err := core.GetFunctionsCollectionFromContextForDatabase(ctx, c.database)
-	if err != nil {
-		return err
-	}
-	var updates []functionRename
-	if err = collection.IterateFunctions(ctx, func(function pgfunctions.Function) (bool, error) {
-		if function.SQLDefinition == "" {
-			return false, nil
-		}
-		sqlDefinition, changed, err := rewriteSQLCompositeAttributeReferences(function.SQLDefinition, typeID, c.oldAttr, c.newAttr)
-		if err != nil || !changed {
-			return false, err
-		}
-		updated := function
-		updated.SQLDefinition = sqlDefinition
-		updated.Definition = function.ReplaceDefinition(sqlDefinition)
-		updates = append(updates, functionRename{oldID: function.ID, updated: updated})
-		return false, nil
-	}); err != nil {
-		return err
-	}
-	for _, update := range updates {
-		if err = collection.DropFunction(ctx, update.oldID); err != nil {
-			return err
-		}
-		if err = collection.AddFunction(ctx, update.updated); err != nil {
-			return err
 		}
 	}
 	return nil
