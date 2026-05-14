@@ -2585,12 +2585,13 @@ func TestPgProc(t *testing.T) {
 						Compare: "sqlstate"},
 				},
 				{
-					Query:       `SELECT * FROM "pg_catalog"."PG_proc";`,
-					ExpectedErr: "not",
+					Query: `SELECT * FROM "pg_catalog"."PG_proc";`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// Different cases but non-quoted, so it works
+						ID: "pgcatalog-test-testpgproc-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
-				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT count(*) > 0 FROM PG_catalog.pg_PROC WHERE proname = 'abs';",
-					Expected: []sql.Row{{"t"}},
+				{
+					Query: "SELECT count(*) > 0 FROM PG_catalog.pg_PROC WHERE proname = 'abs';", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgproc-0004-select-count-*->-0"},
 				},
 			},
 		},

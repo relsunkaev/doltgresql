@@ -1032,12 +1032,31 @@
       "source": "testing/go/plpgsql_correctness_repro_test.go:TestPlpgsqlFunctionReturnsRefcursorRepro",
       "ordinal": 2,
       "scriptName": "PL/pgSQL function returns fetchable refcursor",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlfunctionreturnsrefcursorrepro-0002-fetch-all-from-plpgsql_item_cursor",
       "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlfunctionreturnsrefcursorrepro-0002-fetch-all-from-plpgsql_item_cursor",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "FETCH ALL FROM plpgsql_item_cursor;",
       "querySha256": "8025a8175f65588d5ff8ba4984b3880953ffd4a98c8f1bc050f14c1bb224f087",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1045,12 +1064,24 @@
       "source": "testing/go/plpgsql_correctness_repro_test.go:TestPlpgsqlFunctionOutParametersReturnRowsRepro",
       "ordinal": 1,
       "scriptName": "PL/pgSQL function OUT parameters are callable by input args",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-correctness-repro-test-testplpgsqlfunctionoutparametersreturnrowsrepro-0001-select-*-from-plpgsql_out_parameter_values-4",
       "suggestedId": "plpgsql-correctness-repro-test-testplpgsqlfunctionoutparametersreturnrowsrepro-0001-select-*-from-plpgsql_out_parameter_values-4",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM plpgsql_out_parameter_values(4);",
       "querySha256": "cd96efb5bcf85f5ded255858eb1ac66f3aca534a483bfc5a7d73c0fbd545d6f3",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "8"
+          },
+          {
+            "value": "12"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     }
   ]

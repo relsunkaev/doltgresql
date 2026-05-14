@@ -864,15 +864,13 @@ var SchemaTests = []ScriptTest{
 				Query: "Show schemas", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0089-show-schemas", Compare: "sqlstate"},
 			},
 			{
-				Query:       "DROP SCHEMA dropme;",
-				ExpectedErr: "database schema not found",
+				Query: "DROP SCHEMA dropme;", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0090-drop-schema-dropme", Compare: "sqlstate"},
 			},
 			{
 				Query: "drop schema if exists dropme;",
 			},
 			{
-				Query:       `DROP SCHEMA "hasTables";`,
-				ExpectedErr: "cannot drop schema hasTables because other objects depend on it",
+				Query: `DROP SCHEMA "hasTables";`, PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0091-drop-schema-hastables", Compare: "sqlstate"},
 			},
 			{
 				Skip:  true, // not implemented yet
@@ -885,8 +883,7 @@ var SchemaTests = []ScriptTest{
 				Query: "create type hastype.mytype as enum('a', 'b', 'c');",
 			},
 			{
-				Query:       "DROP SCHEMA hastype;",
-				ExpectedErr: "cannot drop schema hastype because other objects depend on it",
+				Query: "DROP SCHEMA hastype;", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0092-drop-schema-hastype", Compare: "sqlstate"},
 			},
 			{
 				Query: "create schema hassequence;",
@@ -895,20 +892,21 @@ var SchemaTests = []ScriptTest{
 				Query: "create sequence hassequence.myseq start 1 increment 1;",
 			},
 			{
-				Query:       "DROP SCHEMA hassequence;",
-				ExpectedErr: "cannot drop schema hassequence because other objects depend on it",
+				Query: "DROP SCHEMA hassequence;", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0093-drop-schema-hassequence", Compare:
+
+				// More tests:
+				// * alter table statements, when they work better
+				// * AS OF (when supported)
+				// * revision qualifiers
+				// * more statement types
+				// * INSERT INTO schema1 SELECT FROM schema2
+				// * Subqueries accessing different schemas in the same SELECT
+				// * Joins across schemas
+				// * Table names matching schema names. For example, test1.test1, test1.test2, test2.test1, test2.test2
+				"sqlstate"},
 			},
 		},
 	},
-	// More tests:
-	// * alter table statements, when they work better
-	// * AS OF (when supported)
-	// * revision qualifiers
-	// * more statement types
-	// * INSERT INTO schema1 SELECT FROM schema2
-	// * Subqueries accessing different schemas in the same SELECT
-	// * Joins across schemas
-	// * Table names matching schema names. For example, test1.test1, test1.test2, test2.test1, test2.test2
 }
 
 func TestSchemas(t *testing.T) {

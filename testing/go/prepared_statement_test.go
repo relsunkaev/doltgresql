@@ -46,10 +46,7 @@ func TestSQLPreparedStatements(t *testing.T) {
 					Query: "EXECUTE sql_add(2, 5);", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testsqlpreparedstatements-0001-execute-sql_add-2-5"},
 				},
 				{
-					Query: "SELECT name, from_sql, generic_plans, custom_plans FROM pg_catalog.pg_prepared_statements WHERE name = 'sql_add';",
-					Expected: []sql.Row{
-						{"sql_add", "t", 0, 1},
-					},
+					Query: "SELECT name, from_sql, generic_plans, custom_plans FROM pg_catalog.pg_prepared_statements WHERE name = 'sql_add';", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testsqlpreparedstatements-0002-select-name-from_sql-generic_plans-custom_plans"},
 				},
 				{
 					Query: "PREPARE sql_concat(text, text) AS SELECT concat($1, $2);",
@@ -70,11 +67,7 @@ func TestSQLPreparedStatements(t *testing.T) {
 					Query: "EXECUTE sql_insert(2, 'two');",
 				},
 				{
-					Query: "SELECT * FROM sql_prepare_items ORDER BY pk;",
-					Expected: []sql.Row{
-						{1, "one"},
-						{2, "two"},
-					},
+					Query: "SELECT * FROM sql_prepare_items ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testsqlpreparedstatements-0004-select-*-from-sql_prepare_items-order"},
 				},
 				{
 					Query: "PREPARE sql_no_params AS SELECT count(*) FROM sql_prepare_items;",
@@ -86,10 +79,7 @@ func TestSQLPreparedStatements(t *testing.T) {
 					},
 				},
 				{
-					Query: "EXECUTE sql_no_params;",
-					Expected: []sql.Row{
-						{2},
-					},
+					Query: "EXECUTE sql_no_params;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testsqlpreparedstatements-0006-execute-sql_no_params"},
 				},
 				{
 					Query: "SELECT name, generic_plans, custom_plans FROM pg_catalog.pg_prepared_statements WHERE name = 'sql_no_params';",
@@ -101,8 +91,7 @@ func TestSQLPreparedStatements(t *testing.T) {
 					Query: "DEALLOCATE sql_add;",
 				},
 				{
-					Query:    "SELECT name FROM pg_catalog.pg_prepared_statements WHERE name = 'sql_add';",
-					Expected: []sql.Row{},
+					Query: "SELECT name FROM pg_catalog.pg_prepared_statements WHERE name = 'sql_add';", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testsqlpreparedstatements-0008-select-name-from-pg_catalog.pg_prepared_statements-where"},
 				},
 				{
 					Query: "DEALLOCATE ALL;",
@@ -123,8 +112,7 @@ func TestSQLPreparedStatements(t *testing.T) {
 					Query: "PREPARE sql_dup AS SELECT 2;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testsqlpreparedstatements-0010-prepare-sql_dup-as-select-2", Compare: "sqlstate"},
 				},
 				{
-					Query:       "EXECUTE sql_missing;",
-					ExpectedErr: "does not exist",
+					Query: "EXECUTE sql_missing;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testsqlpreparedstatements-0011-execute-sql_missing", Compare: "sqlstate"},
 				},
 				{
 					Query:       "EXECUTE sql_dup(1);",

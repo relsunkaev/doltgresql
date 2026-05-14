@@ -83,12 +83,21 @@
       "source": "testing/go/trigger_checklist_guard_test.go:TestStatementTriggerChecklistGuard",
       "ordinal": 3,
       "scriptName": "transition table shadows and restores existing temporary table",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-checklist-guard-test-teststatementtriggerchecklistguard-0003-select-marker-from-new_rows",
       "suggestedId": "trigger-checklist-guard-test-teststatementtriggerchecklistguard-0003-select-marker-from-new_rows",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT marker FROM new_rows;",
       "querySha256": "c95e1d94c7efd34974c00dbfa0914ebaa6ad41d21e05f466a11b3a34034aa9c3",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "42"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {

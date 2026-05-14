@@ -871,6 +871,7 @@ func runPostgresOracleEntry(t testing.TB, ctx context.Context, conn *pgx.Conn, p
 	resetOracleSession(t, ctx, conn)
 	runOracleStatements(t, ctx, conn, variables, entry.Cleanup)
 	defer func() {
+		resetOracleSession(t, ctx, conn)
 		runOracleStatements(t, ctx, conn, variables, entry.Cleanup)
 		resetOracleSession(t, ctx, conn)
 	}()
@@ -920,7 +921,12 @@ func runOracleStatements(t testing.TB, ctx context.Context, conn *pgx.Conn, vari
 
 func resetOracleSession(t testing.TB, ctx context.Context, conn *pgx.Conn) {
 	t.Helper()
+	_, _ = conn.Exec(ctx, "ROLLBACK")
+	_, _ = conn.Exec(ctx, "DEALLOCATE ALL")
+	_, _ = conn.Exec(ctx, "DISCARD TEMP")
 	_, err := conn.Exec(ctx, "RESET ROLE")
+	require.NoError(t, err)
+	_, err = conn.Exec(ctx, "RESET SESSION AUTHORIZATION")
 	require.NoError(t, err)
 	_, err = conn.Exec(ctx, "RESET ALL")
 	require.NoError(t, err)

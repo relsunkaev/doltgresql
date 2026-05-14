@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 func TestDropProcedure(t *testing.T) {
@@ -137,12 +135,10 @@ func TestDropProcedure(t *testing.T) {
 					Query: "DROP PROCEDURE public.proc1;", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-procedure-test-testdropprocedure-0027-drop-procedure-public.proc1", Compare: "sqlstate"},
 				},
 				{
-					Query:       "CALL proc1();",
-					ExpectedErr: "does not exist",
+					Query: "CALL proc1();", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-procedure-test-testdropprocedure-0028-call-proc1"},
 				},
 				{
-					Query:    "DROP PROCEDURE postgres.public.proc2(TEXT);",
-					Expected: []sql.Row{},
+					Query: "DROP PROCEDURE postgres.public.proc2(TEXT);", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-procedure-test-testdropprocedure-0029-drop-procedure-postgres.public.proc2-text", Compare: "sqlstate"},
 				},
 				{
 					Query:       "CALL proc2('bar');",

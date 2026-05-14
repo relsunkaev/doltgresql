@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestCreateTemporaryViewRoundTripRepro reproduces a view DDL correctness bug:
@@ -36,8 +34,7 @@ func TestCreateTemporaryViewRoundTripRepro(t *testing.T) {
 				{
 					Query: `SELECT table_schema LIKE 'pg_temp_%'
 						FROM information_schema.views
-						WHERE table_name = 'temp_view_roundtrip';`,
-					Expected: []sql.Row{{true}},
+						WHERE table_name = 'temp_view_roundtrip';`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testcreatetemporaryviewroundtriprepro-0002-select-table_schema-like-pg_temp_%-from"},
 				},
 			},
 		},
@@ -294,8 +291,7 @@ func TestCreateOrReplaceViewAllowsStableAnonymousColumnRepro(t *testing.T) {
 						SELECT 1;`,
 				},
 				{
-					Query:    `SELECT * FROM replace_view_anonymous_column;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT * FROM replace_view_anonymous_column;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-ddl-correctness-repro-test-testcreateorreplaceviewallowsstableanonymouscolumnrepro-0001-select-*-from-replace_view_anonymous_column"},
 				},
 			},
 		},

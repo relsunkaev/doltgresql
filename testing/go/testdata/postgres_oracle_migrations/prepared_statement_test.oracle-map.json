@@ -2006,12 +2006,30 @@
       "source": "testing/go/prepared_statement_test.go:TestSQLPreparedStatements",
       "ordinal": 2,
       "scriptName": "SQL PREPARE and EXECUTE",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testsqlpreparedstatements-0002-select-name-from_sql-generic_plans-custom_plans",
       "suggestedId": "prepared-statement-test-testsqlpreparedstatements-0002-select-name-from_sql-generic_plans-custom_plans",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT name, from_sql, generic_plans, custom_plans FROM pg_catalog.pg_prepared_statements WHERE name = 'sql_add';",
       "querySha256": "605d6cb5bd139e81600a804a7e1276d91f14ac0a75639ec1a0f35fca2a40d673",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "sql_add"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "0"
+          },
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -2032,12 +2050,32 @@
       "source": "testing/go/prepared_statement_test.go:TestSQLPreparedStatements",
       "ordinal": 4,
       "scriptName": "SQL PREPARE and EXECUTE",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testsqlpreparedstatements-0004-select-*-from-sql_prepare_items-order",
       "suggestedId": "prepared-statement-test-testsqlpreparedstatements-0004-select-*-from-sql_prepare_items-order",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM sql_prepare_items ORDER BY pk;",
       "querySha256": "1a0658884dae3694ec9d75e508eecaa5028bd74e14c1850c22dc50c031aa1b88",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "one"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "two"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -2058,12 +2096,21 @@
       "source": "testing/go/prepared_statement_test.go:TestSQLPreparedStatements",
       "ordinal": 6,
       "scriptName": "SQL PREPARE and EXECUTE",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testsqlpreparedstatements-0006-execute-sql_no_params",
       "suggestedId": "prepared-statement-test-testsqlpreparedstatements-0006-execute-sql_no_params",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "EXECUTE sql_no_params;",
       "querySha256": "f14917211c3717e57a1f1357fd1be7e28543f247c6bae259484c36d4b0cafa0f",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -2084,12 +2131,15 @@
       "source": "testing/go/prepared_statement_test.go:TestSQLPreparedStatements",
       "ordinal": 8,
       "scriptName": "SQL PREPARE and EXECUTE",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testsqlpreparedstatements-0008-select-name-from-pg_catalog.pg_prepared_statements-where",
       "suggestedId": "prepared-statement-test-testsqlpreparedstatements-0008-select-name-from-pg_catalog.pg_prepared_statements-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT name FROM pg_catalog.pg_prepared_statements WHERE name = 'sql_add';",
       "querySha256": "544c199a88cf980490778374f3653f13a6dd00a49d19ff391183a4798c362ae2",
-      "needsCleanup": true,
+      "expectedRows": [],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -2127,12 +2177,16 @@
       "source": "testing/go/prepared_statement_test.go:TestSQLPreparedStatements",
       "ordinal": 11,
       "scriptName": "SQL PREPARE errors",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testsqlpreparedstatements-0011-execute-sql_missing",
       "suggestedId": "prepared-statement-test-testsqlpreparedstatements-0011-execute-sql_missing",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "26000",
+      "errorSeverity": "ERROR",
       "query": "EXECUTE sql_missing;",
       "querySha256": "bee3668c687395d9d5fd721b2c062df38e18fedcdf1fbc60c3d37f8220e59c5a",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {

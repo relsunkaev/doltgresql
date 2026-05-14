@@ -34,8 +34,7 @@ func TestDiscard(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       "DISCARD SEQUENCES",
-					ExpectedErr: "unimplemented",
+					Query: "DISCARD SEQUENCES", PostgresOracle: ScriptTestPostgresOracle{ID: "session-test-testdiscard-0004-discard-sequences"},
 				},
 				{
 					Query: "select * from test",
@@ -56,9 +55,10 @@ func TestDiscard(t *testing.T) {
 					Query: "BEGIN",
 				},
 				{
-					Query:       "DISCARD ALL",
-					ExpectedErr: "DISCARD ALL cannot run inside a transaction block",
-					Skip:        true, // not yet implemented
+					Query: "DISCARD ALL",
+
+					Skip: true, PostgresOracle: // not yet implemented
+					ScriptTestPostgresOracle{ID: "session-test-testdiscard-0006-discard-all", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -87,9 +87,10 @@ func TestRollback(t *testing.T) {
 					Skip:        true, // temp table should be dropped after ROLLBACK
 				},
 				{
-					Query:    "create temp table test (b int)",
-					Expected: []sql.Row{},
-					Skip:     true, // temp table should be dropped after ROLLBACK
+					Query: "create temp table test (b int)",
+
+					Skip: true, PostgresOracle: // temp table should be dropped after ROLLBACK
+					ScriptTestPostgresOracle{ID: "session-test-testrollback-0004-create-temp-table-test-b"},
 				},
 			},
 		},
@@ -102,16 +103,13 @@ func TestSetTransaction(t *testing.T) {
 			Name: "Electric snapshot transaction setup",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "BEGIN",
-					Expected: []sql.Row{},
+					Query: "BEGIN", PostgresOracle: ScriptTestPostgresOracle{ID: "session-test-testsettransaction-0001-begin"},
 				},
 				{
-					Query:    "SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY",
-					Expected: []sql.Row{},
+					Query: "SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY", PostgresOracle: ScriptTestPostgresOracle{ID: "session-test-testsettransaction-0002-set-transaction-isolation-level-repeatable"},
 				},
 				{
-					Query:    "SET TRANSACTION SNAPSHOT 'doltgres-snapshot-dgzero_0'",
-					Expected: []sql.Row{},
+					Query: "SET TRANSACTION SNAPSHOT 'doltgres-snapshot-dgzero_0'", PostgresOracle: ScriptTestPostgresOracle{ID: "session-test-testsettransaction-0003-set-transaction-snapshot-doltgres-snapshot-dgzero_0", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT pg_current_snapshot(), pg_current_wal_lsn();`,

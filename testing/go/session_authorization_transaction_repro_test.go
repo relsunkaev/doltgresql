@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestSetSessionAuthorizationRejectedInTransactionRepro reproduces a
@@ -41,8 +39,7 @@ func TestSetSessionAuthorizationRejectedInTransactionRepro(t *testing.T) {
 					Query: `ROLLBACK;`,
 				},
 				{
-					Query:    `SELECT current_user, session_user;`,
-					Expected: []sql.Row{{"postgres", "postgres"}},
+					Query: `SELECT current_user, session_user;`, PostgresOracle: ScriptTestPostgresOracle{ID: "session-authorization-transaction-repro-test-testsetsessionauthorizationrejectedintransactionrepro-0002-select-current_user-session_user"},
 				},
 			},
 		},

@@ -17,7 +17,6 @@ package _go
 import (
 	"testing"
 
-	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/stretchr/testify/require"
 )
 
@@ -113,8 +112,7 @@ func TestPreparedStatementAcceptsUserDefinedParameterTypeRepro(t *testing.T) {
 				{
 					Query: `SELECT parameter_types::TEXT
 						FROM pg_catalog.pg_prepared_statements
-						WHERE name = 'prepared_enum_plan';`,
-					Expected: []sql.Row{{"{prepared_enum_mood}"}},
+						WHERE name = 'prepared_enum_plan';`, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-correctness-repro-test-testpreparedstatementacceptsuserdefinedparametertyperepro-0002-select-parameter_types::text-from-pg_catalog.pg_prepared_statements-where"},
 				},
 			},
 		},

@@ -40,12 +40,21 @@
       "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateTemporaryViewRoundTripRepro",
       "ordinal": 2,
       "scriptName": "CREATE TEMPORARY VIEW round trips from temp schema",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testcreatetemporaryviewroundtriprepro-0002-select-table_schema-like-pg_temp_%-from",
       "suggestedId": "view-ddl-correctness-repro-test-testcreatetemporaryviewroundtriprepro-0002-select-table_schema-like-pg_temp_%-from",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT table_schema LIKE 'pg_temp_%'\n\t\t\t\t\t\tFROM information_schema.views\n\t\t\t\t\t\tWHERE table_name = 'temp_view_roundtrip';",
       "querySha256": "816703d1ad361d7be1b170f5cea821ef83b3ec3c577d8b024af40d405f26e55e",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1683,6 +1692,28 @@
           },
           {
             "value": "two"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewAllowsStableAnonymousColumnRepro#0001",
+      "source": "testing/go/view_ddl_correctness_repro_test.go:TestCreateOrReplaceViewAllowsStableAnonymousColumnRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE OR REPLACE VIEW allows stable anonymous column",
+      "oracle": "postgres",
+      "postgresId": "view-ddl-correctness-repro-test-testcreateorreplaceviewallowsstableanonymouscolumnrepro-0001-select-*-from-replace_view_anonymous_column",
+      "suggestedId": "view-ddl-correctness-repro-test-testcreateorreplaceviewallowsstableanonymouscolumnrepro-0001-select-*-from-replace_view_anonymous_column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM replace_view_anonymous_column;",
+      "querySha256": "5b2ea0cc044f8d9e5a193c69e9a8c516eb1f25061b33b813e355946581236888",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
           }
         ]
       ],

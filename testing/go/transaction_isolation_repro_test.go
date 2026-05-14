@@ -62,8 +62,7 @@ func TestSetTransactionSnapshotValidationRepro(t *testing.T) {
 					Query: `BEGIN ISOLATION LEVEL REPEATABLE READ;`,
 				},
 				{
-					Query:       `SET TRANSACTION SNAPSHOT 'not-a-snapshot';`,
-					ExpectedErr: `invalid snapshot identifier`,
+					Query: `SET TRANSACTION SNAPSHOT 'not-a-snapshot';`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-isolation-repro-test-testsettransactionsnapshotvalidationrepro-0001-set-transaction-snapshot-not-a-snapshot", Compare: "sqlstate"},
 				},
 				{
 					Query: `ROLLBACK;`,
@@ -77,8 +76,13 @@ func TestSetTransactionSnapshotValidationRepro(t *testing.T) {
 					Query: `BEGIN;`,
 				},
 				{
-					Query:       `SET TRANSACTION SNAPSHOT 'not-a-snapshot';`,
-					ExpectedErr: `must have isolation level SERIALIZABLE or REPEATABLE READ`,
+					Query: `SET TRANSACTION SNAPSHOT 'not-a-snapshot';`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-isolation-repro-test-testsettransactionsnapshotvalidationrepro-0002-set-transaction-snapshot-not-a-snapshot",
+
+						// TestTxidCurrentReportsNonzeroTransactionId guards that txid_current returns
+						// a stable nonzero value within a transaction, matching PostgreSQL's contract.
+						// The value is derived from the session ID; a real per-transaction allocation
+						// is a follow-up.
+						Compare: "sqlstate"},
 				},
 				{
 					Query: `ROLLBACK;`,
@@ -88,10 +92,6 @@ func TestSetTransactionSnapshotValidationRepro(t *testing.T) {
 	})
 }
 
-// TestTxidCurrentReportsNonzeroTransactionId guards that txid_current returns
-// a stable nonzero value within a transaction, matching PostgreSQL's contract.
-// The value is derived from the session ID; a real per-transaction allocation
-// is a follow-up.
 func TestTxidCurrentReportsNonzeroTransactionId(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -103,8 +103,7 @@ func TestTxidCurrentReportsNonzeroTransactionId(t *testing.T) {
 				{
 					Query: `SELECT
 							txid_current() = txid_current(),
-							txid_current() > 0;`,
-					Expected: []sql.Row{{"t", "t"}},
+							txid_current() > 0;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-isolation-repro-test-testtxidcurrentreportsnonzerotransactionid-0001-select-txid_current-=-txid_current-txid_current"},
 				},
 				{
 					Query: `ROLLBACK;`,
@@ -115,8 +114,7 @@ func TestTxidCurrentReportsNonzeroTransactionId(t *testing.T) {
 			Name: "txid_current outside a transaction is nonzero",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT txid_current() > 0;`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT txid_current() > 0;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-isolation-repro-test-testtxidcurrentreportsnonzerotransactionid-0002-select-txid_current->-0"},
 				},
 			},
 		},
@@ -129,8 +127,7 @@ func TestTxidCurrentReportsNonzeroTransactionId(t *testing.T) {
 				{
 					Query: `SELECT a = b FROM (
 							SELECT txid_current() AS a, txid_current() AS b
-						) AS t;`,
-					Expected: []sql.Row{{"t"}},
+						) AS t;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-isolation-repro-test-testtxidcurrentreportsnonzerotransactionid-0003-select-a-=-b-from"},
 				},
 				{
 					Query: `ROLLBACK;`,

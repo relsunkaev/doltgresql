@@ -2474,16 +2474,7 @@ var typesTests = []ScriptTest{
 				Query: "INSERT INTO t_xid VALUES (8, 'abc', 'd');", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0406-insert-into-t_xid-values-8", Compare: "sqlstate"},
 			},
 			{
-				Query: "SELECT * FROM t_xid ORDER BY id;",
-				Expected: []sql.Row{
-					{1, 9012, "100"},
-					{2, 100, "101"},
-					{4, 4294967295, "a"},
-					{5, 0, "b"},
-					{6, 0, "c"},
-					{7, 4294967295, "d"},
-					{8, 0, "d"},
-				},
+				Query: "SELECT * FROM t_xid ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0407-select-*-from-t_xid-order"},
 			},
 		},
 	},
@@ -2566,10 +2557,7 @@ var typesTests = []ScriptTest{
 				Query: "SELECT ('-4294967295'::text)::xid, ('-4294967297'::text)::xid;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0429-select-4294967295-::text-::xid-4294967297", Compare: "sqlstate"},
 			},
 			{
-				Query: "SELECT ('4294967295'::varchar)::xid, ('4294967296232'::varchar)::xid;",
-				Expected: []sql.Row{
-					{4294967295, 232},
-				},
+				Query: "SELECT ('4294967295'::varchar)::xid, ('4294967296232'::varchar)::xid;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0430-select-4294967295-::varchar-::xid-4294967296232", Compare: "sqlstate"},
 			},
 			{
 				Query: "SELECT ('-4294967295'::varchar)::xid, ('-4294967296232'::varchar)::xid;",

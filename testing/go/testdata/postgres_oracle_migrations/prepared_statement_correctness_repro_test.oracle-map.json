@@ -65,12 +65,21 @@
       "source": "testing/go/prepared_statement_correctness_repro_test.go:TestPreparedStatementAcceptsUserDefinedParameterTypeRepro",
       "ordinal": 2,
       "scriptName": "PREPARE accepts user-defined enum parameter type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-correctness-repro-test-testpreparedstatementacceptsuserdefinedparametertyperepro-0002-select-parameter_types::text-from-pg_catalog.pg_prepared_statements-where",
       "suggestedId": "prepared-statement-correctness-repro-test-testpreparedstatementacceptsuserdefinedparametertyperepro-0002-select-parameter_types::text-from-pg_catalog.pg_prepared_statements-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT parameter_types::TEXT\n\t\t\t\t\t\tFROM pg_catalog.pg_prepared_statements\n\t\t\t\t\t\tWHERE name = 'prepared_enum_plan';",
       "querySha256": "d4f9841ab02d5f86881b2c5bbe7d800dd8403e2d330ca63688fa4873fe9d68ee",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "{prepared_enum_mood}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {

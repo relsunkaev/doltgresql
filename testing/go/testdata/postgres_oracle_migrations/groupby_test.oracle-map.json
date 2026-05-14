@@ -234,12 +234,40 @@
       "source": "testing/go/groupby_test.go:TestGroupBy",
       "ordinal": 7,
       "scriptName": "Basic order by/group by cases",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "groupby-test-testgroupby-0007-select-id-select-upper-team",
       "suggestedId": "groupby-test-testgroupby-0007-select-id-select-upper-team",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT id, (SELECT UPPER(team) having id > 3) as upper_team FROM members where id < 6;",
       "querySha256": "a5678418a5e2de0ab83006b4ee99b1eefcf93d4518205c2689321a6f439bc465",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          },
+          {
+            "null": true
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "RED"
+          }
+        ],
+        [
+          {
+            "value": "5"
+          },
+          {
+            "value": "ORANGE"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -247,12 +275,40 @@
       "source": "testing/go/groupby_test.go:TestGroupBy",
       "ordinal": 8,
       "scriptName": "Basic order by/group by cases",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "groupby-test-testgroupby-0008-select-id-select-1-as",
       "suggestedId": "groupby-test-testgroupby-0008-select-id-select-1-as",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT id, (SELECT -1 as id having id < 10) as upper_team FROM members where id < 6;",
       "querySha256": "3d2ad41d1adae3fd55fa988c4ad40b7ea75e69440e10777dcf351fa4e6088a48",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "-1"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "-1"
+          }
+        ],
+        [
+          {
+            "value": "5"
+          },
+          {
+            "value": "-1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {

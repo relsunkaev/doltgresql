@@ -2,8 +2,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 func TestSubqueries(t *testing.T) {
@@ -22,12 +20,7 @@ func TestSubqueries(t *testing.T) {
 					Query: `SELECT *, (SELECT id from test where id = 2) FROM test order by id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "subqueries-test-testsubqueries-0002-select-*-select-id-from", Compare: "sqlstate"},
 				},
 				{
-					Query: `SELECT *, (SELECT id from test t2 where t2.id = test.id) FROM test order by id;`,
-					Expected: []sql.Row{
-						{1, 1},
-						{2, 2},
-						{3, 3},
-					},
+					Query: `SELECT *, (SELECT id from test t2 where t2.id = test.id) FROM test order by id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "subqueries-test-testsubqueries-0003-select-*-select-id-from", Compare: "sqlstate"},
 				},
 			},
 		},

@@ -872,11 +872,7 @@ func TestSystemInformationFunctions(t *testing.T) {
 					Skip: true,
 					Query: `SELECT shobj_description(
                  (SELECT oid FROM pg_tablespace WHERE spcname = 'tblspc_2'),
-                 'pg_tablespace');`,
-					ExpectedColNames: []string{"shobj_description"},
-					Expected: []sql.Row{
-						{"Store a few of the things"},
-					},
+                 'pg_tablespace');`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testsysteminformationfunctions-0065-select-shobj_description-select-oid-from"},
 				},
 			},
 		},
@@ -1528,20 +1524,16 @@ func TestJsonFunctions(t *testing.T) {
 					Query: `SELECT s.pk, e.jsonb_array_elements FROM json_shapes s JOIN LATERAL jsonb_array_elements(s.doc->'items') AS e ON true ORDER BY s.pk, e.jsonb_array_elements;`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testjsonfunctions-0123-select-s.pk-e.jsonb_array_elements-from-json_shapes", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT s.pk, elem FROM json_shapes s JOIN LATERAL jsonb_array_elements(s.doc->'items') AS elem ON true ORDER BY s.pk, elem;`,
-					Expected: []sql.Row{{1, "1"}, {1, "2"}, {2, "2"}, {2, "3"}},
+					Query: `SELECT s.pk, elem FROM json_shapes s JOIN LATERAL jsonb_array_elements(s.doc->'items') AS elem ON true ORDER BY s.pk, elem;`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testjsonfunctions-0124-select-s.pk-elem-from-json_shapes"},
 				},
 				{
-					Query:    `SELECT DISTINCT elem FROM json_shapes s JOIN LATERAL jsonb_array_elements(s.doc->'items') AS elem ON true ORDER BY elem;`,
-					Expected: []sql.Row{{"1"}, {"2"}, {"3"}},
+					Query: `SELECT DISTINCT elem FROM json_shapes s JOIN LATERAL jsonb_array_elements(s.doc->'items') AS elem ON true ORDER BY elem;`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testjsonfunctions-0125-select-distinct-elem-from-json_shapes"},
 				},
 				{
-					Query:    `SELECT DISTINCT jsonb_array_elements(doc->'items') FROM json_shapes ORDER BY jsonb_array_elements;`,
-					Expected: []sql.Row{{"1"}, {"2"}, {"3"}},
+					Query: `SELECT DISTINCT jsonb_array_elements(doc->'items') FROM json_shapes ORDER BY jsonb_array_elements;`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testjsonfunctions-0126-select-distinct-jsonb_array_elements-doc->-items"},
 				},
 				{
-					Query:    `SELECT s.pk, e.json_array_elements FROM json_shapes s JOIN LATERAL (SELECT * FROM json_array_elements(s.raw->'items')) AS e ON true ORDER BY s.pk, e.json_array_elements;`,
-					Expected: []sql.Row{{1, "1"}, {1, "2"}, {2, "2"}, {2, "3"}},
+					Query: `SELECT s.pk, e.json_array_elements FROM json_shapes s JOIN LATERAL (SELECT * FROM json_array_elements(s.raw->'items')) AS e ON true ORDER BY s.pk, e.json_array_elements;`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testjsonfunctions-0127-select-s.pk-e.json_array_elements-from-json_shapes", Compare: "sqlstate"},
 				},
 				{
 					Query:    `SELECT s.pk, e.json_array_elements FROM json_shapes s JOIN LATERAL json_array_elements(s.raw->'items') AS e ON true ORDER BY s.pk, e.json_array_elements;`,

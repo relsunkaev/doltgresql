@@ -131,8 +131,7 @@ func TestSavepoints(t *testing.T) {
 				},
 				{Query: "ROLLBACK;"},
 				{
-					Query:    "SELECT COUNT(*) FROM sp_repeat;",
-					Expected: []gms.Row{{0}},
+					Query: "SELECT COUNT(*) FROM sp_repeat;", PostgresOracle: ScriptTestPostgresOracle{ID: "savepoints-test-testsavepoints-0005-select-count-*-from-sp_repeat"},
 				},
 			},
 		},
@@ -162,8 +161,18 @@ func TestSavepoints(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{Query: "BEGIN;"},
 				{
-					Query:       "ROLLBACK TO SAVEPOINT nothere;",
-					ExpectedErr: "SAVEPOINT nothere does not exist",
+					Query: "ROLLBACK TO SAVEPOINT nothere;", PostgresOracle: ScriptTestPostgresOracle{ID: "savepoints-test-testsavepoints-0007-rollback-to-savepoint-nothere",
+
+						// TestSavepointsORMShape exercises the savepoint workflow exactly the
+						// way pgx (and every Go ORM that wraps pgx) drives it: pgx.Tx.Begin
+						// nested calls map to SAVEPOINT/RELEASE/ROLLBACK TO. This is the
+						// `pgx.Tx.Begin()` -> nested `tx.Begin()` shape that real applications
+						// hit.
+						//
+						// We use the pgx driver directly with pgx.Tx.Begin() (which issues
+						// SAVEPOINT under the hood) so the test is workload-shape evidence,
+						// not just SQL-string evidence.
+						Compare: "sqlstate"},
 				},
 				{Query: "ROLLBACK;"},
 			},
@@ -171,15 +180,6 @@ func TestSavepoints(t *testing.T) {
 	})
 }
 
-// TestSavepointsORMShape exercises the savepoint workflow exactly the
-// way pgx (and every Go ORM that wraps pgx) drives it: pgx.Tx.Begin
-// nested calls map to SAVEPOINT/RELEASE/ROLLBACK TO. This is the
-// `pgx.Tx.Begin()` -> nested `tx.Begin()` shape that real applications
-// hit.
-//
-// We use the pgx driver directly with pgx.Tx.Begin() (which issues
-// SAVEPOINT under the hood) so the test is workload-shape evidence,
-// not just SQL-string evidence.
 func TestSavepointsORMShape(t *testing.T) {
 	port, err := gms.GetEmptyPort()
 	require.NoError(t, err)

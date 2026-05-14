@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 func TestGroupBy(t *testing.T) {
@@ -48,12 +46,10 @@ func TestGroupBy(t *testing.T) {
 					Query: "SELECT id as alias1, (SELECT alias1+1 group by alias1 having alias1 > 0) FROM members where id < 6;", PostgresOracle: ScriptTestPostgresOracle{ID: "groupby-test-testgroupby-0006-select-id-as-alias1-select", Compare: "sqlstate"},
 				},
 				{
-					Query:    "SELECT id, (SELECT UPPER(team) having id > 3) as upper_team FROM members where id < 6;",
-					Expected: []sql.Row{{3, nil}, {4, "RED"}, {5, "ORANGE"}},
+					Query: "SELECT id, (SELECT UPPER(team) having id > 3) as upper_team FROM members where id < 6;", PostgresOracle: ScriptTestPostgresOracle{ID: "groupby-test-testgroupby-0007-select-id-select-upper-team"},
 				},
 				{
-					Query:    "SELECT id, (SELECT -1 as id having id < 10) as upper_team FROM members where id < 6;",
-					Expected: []sql.Row{{3, -1}, {4, -1}, {5, -1}},
+					Query: "SELECT id, (SELECT -1 as id having id < 10) as upper_team FROM members where id < 6;", PostgresOracle: ScriptTestPostgresOracle{ID: "groupby-test-testgroupby-0008-select-id-select-1-as"},
 				},
 			},
 		},

@@ -329,8 +329,7 @@ func TestAlterCompositeTypeRenameAttributeUpdatesFunctionBodyMetadataRepro(t *te
 						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT (ROW(7)::rename_attr_function_item).new_name;`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT (ROW(7)::rename_attr_function_item).new_name;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-type-rename-repro-test-testaltercompositetyperenameattributeupdatesfunctionbodymetadatarepro-0002-select-row-7-::rename_attr_function_item-.new_name"},
 				},
 			},
 		},

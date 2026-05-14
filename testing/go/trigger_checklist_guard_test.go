@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 func TestStatementTriggerChecklistGuard(t *testing.T) {
@@ -78,8 +76,7 @@ func TestStatementTriggerChecklistGuard(t *testing.T) {
 					Query: `SELECT seen_count, seen_sum FROM audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-checklist-guard-test-teststatementtriggerchecklistguard-0002-select-seen_count-seen_sum-from-audit"},
 				},
 				{
-					Query:    `SELECT marker FROM new_rows;`,
-					Expected: []sql.Row{{42}},
+					Query: `SELECT marker FROM new_rows;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-checklist-guard-test-teststatementtriggerchecklistguard-0003-select-marker-from-new_rows"},
 				},
 			},
 		},

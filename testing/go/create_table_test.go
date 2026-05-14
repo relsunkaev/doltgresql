@@ -394,16 +394,14 @@ func TestCreateTable(t *testing.T) {
 					Query: "CREATE TEMP TABLE temp (id serial primary key)", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0053-create-temp-table-temp-id"},
 				},
 				{
-					Query:    "INSERT INTO temp DEFAULT VALUES",
-					Expected: []sql.Row{},
+					Query: "INSERT INTO temp DEFAULT VALUES", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0054-insert-into-temp-default-values"},
 				},
 				{
 					Query:    "INSERT INTO temp DEFAULT VALUES",
 					Expected: []sql.Row{},
 				},
 				{
-					Query:    "SELECT id FROM temp ORDER BY id",
-					Expected: []sql.Row{{1}, {2}},
+					Query: "SELECT id FROM temp ORDER BY id", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0056-select-id-from-temp-order"},
 				},
 			},
 		},

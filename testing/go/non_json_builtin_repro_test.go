@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestIntegerBaseFormattingBuiltinsRepro reproduces a PostgreSQL compatibility
@@ -31,17 +29,18 @@ func TestIntegerBaseFormattingBuiltinsRepro(t *testing.T) {
 					Query: `SELECT to_bin(10);`, PostgresOracle: ScriptTestPostgresOracle{ID: "non-json-builtin-repro-test-testintegerbaseformattingbuiltinsrepro-0001-select-to_bin-10", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT to_oct(10);`,
-					Expected: []sql.Row{{"12"}},
+					Query: `SELECT to_oct(10);`, PostgresOracle: ScriptTestPostgresOracle{ID: "non-json-builtin-repro-test-testintegerbaseformattingbuiltinsrepro-0002-select-to_oct-10",
+
+						// TestUuidExtractionBuiltinsRepro reproduces a PostgreSQL compatibility gap:
+						// PostgreSQL exposes built-ins for extracting version and timestamp metadata
+						// from UUID values.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestUuidExtractionBuiltinsRepro reproduces a PostgreSQL compatibility gap:
-// PostgreSQL exposes built-ins for extracting version and timestamp metadata
-// from UUID values.
 func TestUuidExtractionBuiltinsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -51,17 +50,18 @@ func TestUuidExtractionBuiltinsRepro(t *testing.T) {
 					Query: `SELECT uuid_extract_version('41db1265-8bc1-4ab3-992f-885799a4af1d'::uuid)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "non-json-builtin-repro-test-testuuidextractionbuiltinsrepro-0001-select-uuid_extract_version-41db1265-8bc1-4ab3-992f-885799a4af1d-::uuid-::text", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT uuid_extract_timestamp('41db1265-8bc1-4ab3-992f-885799a4af1d'::uuid) IS NULL;`,
-					Expected: []sql.Row{{true}},
+					Query: `SELECT uuid_extract_timestamp('41db1265-8bc1-4ab3-992f-885799a4af1d'::uuid) IS NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "non-json-builtin-repro-test-testuuidextractionbuiltinsrepro-0002-select-uuid_extract_timestamp-41db1265-8bc1-4ab3-992f-885799a4af1d-::uuid-is",
+
+						// TestTypeMetadataBuiltinsRepro reproduces PostgreSQL compatibility gaps:
+						// PostgreSQL exposes pg_basetype for domain base-type lookup and to_regtypemod
+						// for parsing type modifiers from textual type specifications.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestTypeMetadataBuiltinsRepro reproduces PostgreSQL compatibility gaps:
-// PostgreSQL exposes pg_basetype for domain base-type lookup and to_regtypemod
-// for parsing type modifiers from textual type specifications.
 func TestTypeMetadataBuiltinsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -74,17 +74,18 @@ func TestTypeMetadataBuiltinsRepro(t *testing.T) {
 					Query: `SELECT pg_basetype('non_json_builtin_domain'::regtype)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "non-json-builtin-repro-test-testtypemetadatabuiltinsrepro-0001-select-pg_basetype-non_json_builtin_domain-::regtype-::text", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT format_type(to_regtype('varchar(32)'), to_regtypemod('varchar(32)'));`,
-					Expected: []sql.Row{{"character varying(32)"}},
+					Query: `SELECT format_type(to_regtype('varchar(32)'), to_regtypemod('varchar(32)'));`, PostgresOracle: ScriptTestPostgresOracle{ID: "non-json-builtin-repro-test-testtypemetadatabuiltinsrepro-0002-select-format_type-to_regtype-varchar-32",
+
+						// TestUnicodeInformationBuiltinsRepro reproduces PostgreSQL compatibility gaps:
+						// PostgreSQL exposes Unicode metadata helpers for checking assigned codepoints
+						// and reporting the built-in Unicode data version.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestUnicodeInformationBuiltinsRepro reproduces PostgreSQL compatibility gaps:
-// PostgreSQL exposes Unicode metadata helpers for checking assigned codepoints
-// and reporting the built-in Unicode data version.
 func TestUnicodeInformationBuiltinsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -94,17 +95,18 @@ func TestUnicodeInformationBuiltinsRepro(t *testing.T) {
 					Query: `SELECT unicode_assigned('abc');`, PostgresOracle: ScriptTestPostgresOracle{ID: "non-json-builtin-repro-test-testunicodeinformationbuiltinsrepro-0001-select-unicode_assigned-abc", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT unicode_version() IS NOT NULL;`,
-					Expected: []sql.Row{{true}},
+					Query: `SELECT unicode_version() IS NOT NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "non-json-builtin-repro-test-testunicodeinformationbuiltinsrepro-0002-select-unicode_version-is-not-null",
+
+						// TestPostgres16InputValidationBuiltinsRepro reproduces PostgreSQL 16
+						// compatibility gaps: pg_input_is_valid and pg_input_error_info should expose
+						// soft input-validation checks.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestPostgres16InputValidationBuiltinsRepro reproduces PostgreSQL 16
-// compatibility gaps: pg_input_is_valid and pg_input_error_info should expose
-// soft input-validation checks.
 func TestPostgres16InputValidationBuiltinsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{

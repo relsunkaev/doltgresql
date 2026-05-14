@@ -57,12 +57,16 @@
       "source": "testing/go/transaction_isolation_repro_test.go:TestSetTransactionSnapshotValidationRepro",
       "ordinal": 1,
       "scriptName": "SET TRANSACTION SNAPSHOT rejects invalid identifier",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "transaction-isolation-repro-test-testsettransactionsnapshotvalidationrepro-0001-set-transaction-snapshot-not-a-snapshot",
       "suggestedId": "transaction-isolation-repro-test-testsettransactionsnapshotvalidationrepro-0001-set-transaction-snapshot-not-a-snapshot",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
       "query": "SET TRANSACTION SNAPSHOT 'not-a-snapshot';",
       "querySha256": "2c4e9550e230d701d0def10281cf4bbd3a11852728d6c7b699f2d94b95a825ca",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -70,12 +74,16 @@
       "source": "testing/go/transaction_isolation_repro_test.go:TestSetTransactionSnapshotValidationRepro",
       "ordinal": 2,
       "scriptName": "SET TRANSACTION SNAPSHOT requires repeatable read or serializable",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "transaction-isolation-repro-test-testsettransactionsnapshotvalidationrepro-0002-set-transaction-snapshot-not-a-snapshot",
       "suggestedId": "transaction-isolation-repro-test-testsettransactionsnapshotvalidationrepro-0002-set-transaction-snapshot-not-a-snapshot",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "0A000",
+      "errorSeverity": "ERROR",
       "query": "SET TRANSACTION SNAPSHOT 'not-a-snapshot';",
       "querySha256": "2c4e9550e230d701d0def10281cf4bbd3a11852728d6c7b699f2d94b95a825ca",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -83,12 +91,24 @@
       "source": "testing/go/transaction_isolation_repro_test.go:TestTxidCurrentReportsNonzeroTransactionId",
       "ordinal": 1,
       "scriptName": "txid_current reports a nonzero current transaction ID",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "transaction-isolation-repro-test-testtxidcurrentreportsnonzerotransactionid-0001-select-txid_current-=-txid_current-txid_current",
       "suggestedId": "transaction-isolation-repro-test-testtxidcurrentreportsnonzerotransactionid-0001-select-txid_current-=-txid_current-txid_current",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT\n\t\t\t\t\t\t\ttxid_current() = txid_current(),\n\t\t\t\t\t\t\ttxid_current() > 0;",
       "querySha256": "1e2311e5832af4b496e61ebf0107d4b31aa4e739b723915fb2c1732c7b666e96",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -96,12 +116,21 @@
       "source": "testing/go/transaction_isolation_repro_test.go:TestTxidCurrentReportsNonzeroTransactionId",
       "ordinal": 2,
       "scriptName": "txid_current outside a transaction is nonzero",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "transaction-isolation-repro-test-testtxidcurrentreportsnonzerotransactionid-0002-select-txid_current->-0",
       "suggestedId": "transaction-isolation-repro-test-testtxidcurrentreportsnonzerotransactionid-0002-select-txid_current->-0",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT txid_current() > 0;",
       "querySha256": "dfadcee8f3107847fdae2ce557d370bcd429ad03d92a19aa1aa5b3df515e8a02",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -109,12 +138,21 @@
       "source": "testing/go/transaction_isolation_repro_test.go:TestTxidCurrentReportsNonzeroTransactionId",
       "ordinal": 3,
       "scriptName": "txid_current returns the same value across siblings in a SELECT list",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "transaction-isolation-repro-test-testtxidcurrentreportsnonzerotransactionid-0003-select-a-=-b-from",
       "suggestedId": "transaction-isolation-repro-test-testtxidcurrentreportsnonzerotransactionid-0003-select-a-=-b-from",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT a = b FROM (\n\t\t\t\t\t\t\tSELECT txid_current() AS a, txid_current() AS b\n\t\t\t\t\t\t) AS t;",
       "querySha256": "b17afa8a723b94a68529ce26232333a1828ce31432358c0fb0fc9325f54e78a1",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {

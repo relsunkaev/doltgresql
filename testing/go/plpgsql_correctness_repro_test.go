@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestPlpgsqlCaseWithoutElseRaisesCaseNotFoundRepro reproduces a PL/pgSQL
@@ -1175,8 +1173,7 @@ func TestPlpgsqlFunctionReturnsRefcursorRepro(t *testing.T) {
 					Query: `SELECT plpgsql_open_refcursor('plpgsql_item_cursor');`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlfunctionreturnsrefcursorrepro-0001-select-plpgsql_open_refcursor-plpgsql_item_cursor"},
 				},
 				{
-					Query:    `FETCH ALL FROM plpgsql_item_cursor;`,
-					Expected: []sql.Row{{1}, {2}, {3}},
+					Query: `FETCH ALL FROM plpgsql_item_cursor;`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlfunctionreturnsrefcursorrepro-0002-fetch-all-from-plpgsql_item_cursor"},
 				},
 				{
 					Query:            `COMMIT;`,
@@ -1209,8 +1206,7 @@ func TestPlpgsqlFunctionOutParametersReturnRowsRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM plpgsql_out_parameter_values(4);`,
-					Expected: []sql.Row{{8, 12}},
+					Query: `SELECT * FROM plpgsql_out_parameter_values(4);`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-correctness-repro-test-testplpgsqlfunctionoutparametersreturnrowsrepro-0001-select-*-from-plpgsql_out_parameter_values-4"},
 				},
 			},
 		},

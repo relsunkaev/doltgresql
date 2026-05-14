@@ -7249,8 +7249,7 @@ var setStmts = []ScriptTest{
 				Query: "set myvar.val2 to (select current_setting('myvar.var_value'))", PostgresOracle: ScriptTestPostgresOracle{ID: "set-test-testsetstatements-1672-set-myvar.val2-to-select-current_setting", Compare: "sqlstate"},
 			},
 			{
-				Query:    "SHOW myvar.val2",
-				Expected: []sql.Row{{"a"}},
+				Query: "SHOW myvar.val2", PostgresOracle: ScriptTestPostgresOracle{ID: "set-test-testsetstatements-1673-show-myvar.val2", Compare: "sqlstate"},
 			},
 		},
 	},

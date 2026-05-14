@@ -35,12 +35,24 @@
       "source": "testing/go/session_correctness_repro_test.go:TestSetSessionAuthorizationChangesCurrentAndSessionUserRepro",
       "ordinal": 1,
       "scriptName": "SET SESSION AUTHORIZATION changes current and session user",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "session-correctness-repro-test-testsetsessionauthorizationchangescurrentandsessionuserrepro-0001-select-current_user-session_user",
       "suggestedId": "session-correctness-repro-test-testsetsessionauthorizationchangescurrentandsessionuserrepro-0001-select-current_user-session_user",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT current_user, session_user;",
       "querySha256": "f1f1669043de3a1bc91bdbbb7ccfde4530c01b4e8191eb2940a3447da2ccb43f",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "session_auth_target"
+          },
+          {
+            "value": "session_auth_target"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -61,12 +73,16 @@
       "source": "testing/go/session_correctness_repro_test.go:TestSetSessionAuthorizationValidatesTargetRoleRepro",
       "ordinal": 1,
       "scriptName": "SET SESSION AUTHORIZATION rejects missing roles",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "session-correctness-repro-test-testsetsessionauthorizationvalidatestargetrolerepro-0001-set-session-authorization-missing_session_auth_role",
       "suggestedId": "session-correctness-repro-test-testsetsessionauthorizationvalidatestargetrolerepro-0001-set-session-authorization-missing_session_auth_role",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
       "query": "SET SESSION AUTHORIZATION missing_session_auth_role;",
       "querySha256": "aef4e43628c9ecc4540d25ab7898dc385ac7801b9341d6c8082fc017b237967b",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -74,12 +90,15 @@
       "source": "testing/go/session_correctness_repro_test.go:TestSetSessionAuthorizationRequiresSuperuserForOtherRolesRepro",
       "ordinal": 1,
       "scriptName": "SET SESSION AUTHORIZATION cannot switch again as non-superuser",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "session-correctness-repro-test-testsetsessionauthorizationrequiressuperuserforotherrolesrepro-0001-set-session-authorization-session_auth_other",
       "suggestedId": "session-correctness-repro-test-testsetsessionauthorizationrequiressuperuserforotherrolesrepro-0001-set-session-authorization-session_auth_other",
-      "expectedKind": "error",
+      "compare": "structural",
+      "expectedKind": "rows",
       "query": "SET SESSION AUTHORIZATION session_auth_other;",
       "querySha256": "f5672a0452efecec1d809fe856e9cf71d89b338e2f31d8f6ffdd4851170b2d7b",
-      "needsCleanup": true,
+      "expectedRows": [],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -116,12 +135,16 @@
       "source": "testing/go/session_correctness_repro_test.go:TestSetLocalSearchPathAcceptsSchemaListRepro",
       "ordinal": 2,
       "scriptName": "SET LOCAL search_path accepts a schema list",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "session-correctness-repro-test-testsetlocalsearchpathacceptsschemalistrepro-0002-select-count-*-from-local_items",
       "suggestedId": "session-correctness-repro-test-testsetlocalsearchpathacceptsschemalistrepro-0002-select-count-*-from-local_items",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
       "query": "SELECT count(*) FROM local_items;",
       "querySha256": "527f53d01d5464db4cea4cd688ec8676971e98600169ab72fe5fa3744a915b77",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {

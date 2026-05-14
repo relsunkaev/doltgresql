@@ -10557,12 +10557,60 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 407,
       "scriptName": "Xid type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0407-select-*-from-t_xid-order",
       "suggestedId": "types-test-testtypes-0407-select-*-from-t_xid-order",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM t_xid ORDER BY id;",
       "querySha256": "e886f2eb1be43c5bf7e764ff1e6093c847c75589c020e17913b49f051aa475c3",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "9012"
+          },
+          {
+            "value": "100"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "4294967295"
+          },
+          {
+            "value": "a"
+          }
+        ],
+        [
+          {
+            "value": "6"
+          },
+          {
+            "value": "0"
+          },
+          {
+            "value": "c"
+          }
+        ],
+        [
+          {
+            "value": "7"
+          },
+          {
+            "value": "4294967295"
+          },
+          {
+            "value": "d"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -11016,12 +11064,16 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 430,
       "scriptName": "Xid type, explicit casts",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0430-select-4294967295-::varchar-::xid-4294967296232",
       "suggestedId": "types-test-testtypes-0430-select-4294967295-::varchar-::xid-4294967296232",
-      "expectedKind": "rows",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22003",
+      "errorSeverity": "ERROR",
       "query": "SELECT ('4294967295'::varchar)::xid, ('4294967296232'::varchar)::xid;",
       "querySha256": "a8a435fd07bcf8f0907a6472c859b4129732967a1e8a04888b62fd60e029b8d1",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {

@@ -29,8 +29,7 @@ func TestParameters(t *testing.T) {
 					Query: "SELECT default_with_oids;", PostgresOracle: ScriptTestPostgresOracle{ID: "parameters-test-testparameters-0001-select-default_with_oids", Compare: "sqlstate"},
 				},
 				{
-					Query:    "SET default_with_oids = false;",
-					Expected: []sql.Row{},
+					Query: "SET default_with_oids = false;", PostgresOracle: ScriptTestPostgresOracle{ID: "parameters-test-testparameters-0002-set-default_with_oids-=-false"},
 				},
 			},
 		},

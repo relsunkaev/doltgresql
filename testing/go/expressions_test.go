@@ -372,16 +372,13 @@ func TestSubscript(t *testing.T) {
 					Query: `SELECT ARRAY[1, 2, 3][1];`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testsubscript-0001-select-array[1-2-3][1]", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT (ARRAY[1, 2, 3])[3];`,
-					Expected: []sql.Row{{3}},
+					Query: `SELECT (ARRAY[1, 2, 3])[3];`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testsubscript-0002-select-array[1-2-3]-[3]"},
 				},
 				{
-					Query:    `SELECT (ARRAY[1, 2, 3])[1+1];`,
-					Expected: []sql.Row{{2}},
+					Query: `SELECT (ARRAY[1, 2, 3])[1+1];`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testsubscript-0003-select-array[1-2-3]-[1+1]"},
 				},
 				{
-					Query:    `SELECT ARRAY[1, 2, 3][0];`,
-					Expected: []sql.Row{{nil}},
+					Query: `SELECT ARRAY[1, 2, 3][0];`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testsubscript-0004-select-array[1-2-3][0]", Compare: "sqlstate"},
 				},
 				{
 					Query:    `SELECT ARRAY[1, 2, 3][4];`,

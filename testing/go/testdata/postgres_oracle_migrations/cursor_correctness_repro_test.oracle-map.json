@@ -40,12 +40,21 @@
       "source": "testing/go/cursor_correctness_repro_test.go:TestCursorWithHoldSurvivesCommitRepro",
       "ordinal": 2,
       "scriptName": "WITH HOLD cursor survives commit",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "cursor-correctness-repro-test-testcursorwithholdsurvivescommitrepro-0002-fetch-next-from-hold_cur",
       "suggestedId": "cursor-correctness-repro-test-testcursorwithholdsurvivescommitrepro-0002-fetch-next-from-hold_cur",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "FETCH NEXT FROM hold_cur;",
       "querySha256": "bafa8a579494f0b47f641b6b98f66ae3f4abbe4318e4eec6fdcc0109e552ad08",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     }
   ]

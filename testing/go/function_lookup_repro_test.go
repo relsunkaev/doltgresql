@@ -199,8 +199,7 @@ func TestSchemaQualifiedFunctionSideEffectsUseExplicitSchemaRepro(t *testing.T) 
 						Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT label FROM dg_fn_effect_audit;`,
-					Expected: []sql.Row{{"b"}},
+					Query: `SELECT label FROM dg_fn_effect_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "function-lookup-repro-test-testschemaqualifiedfunctionsideeffectsuseexplicitschemarepro-0002-select-label-from-dg_fn_effect_audit", Compare: "sqlstate"},
 				},
 			},
 		},

@@ -1057,12 +1057,15 @@
       "source": "testing/go/create_table_test.go:TestCreateTable",
       "ordinal": 54,
       "scriptName": "create temporary table with serial column",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0054-insert-into-temp-default-values",
       "suggestedId": "create-table-test-testcreatetable-0054-insert-into-temp-default-values",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "INSERT INTO temp DEFAULT VALUES",
       "querySha256": "b21444c46adca193e9a4bcb338fa542bfab9cff0eaebfc573b4006760788085d",
-      "needsCleanup": true,
+      "expectedRows": [],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1083,12 +1086,26 @@
       "source": "testing/go/create_table_test.go:TestCreateTable",
       "ordinal": 56,
       "scriptName": "create temporary table with serial column",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0056-select-id-from-temp-order",
       "suggestedId": "create-table-test-testcreatetable-0056-select-id-from-temp-order",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT id FROM temp ORDER BY id",
       "querySha256": "929853bf269b1f149f8e7e3d4ee057b93d593b4c552185702dc138be8ae6d3a2",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {

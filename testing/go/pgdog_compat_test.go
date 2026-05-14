@@ -123,10 +123,7 @@ func TestPgDogCompatibilityBoundary(t *testing.T) {
 					Query: "EXECUTE dg_pgdog_stmt(41);", PostgresOracle: ScriptTestPostgresOracle{ID: "pgdog-compat-test-testpgdogcompatibilityboundary-0012-execute-dg_pgdog_stmt-41"},
 				},
 				{
-					Query: "SELECT name, from_sql FROM pg_catalog.pg_prepared_statements WHERE name = 'dg_pgdog_stmt';",
-					Expected: []sql.Row{
-						{"dg_pgdog_stmt", "t"},
-					},
+					Query: "SELECT name, from_sql FROM pg_catalog.pg_prepared_statements WHERE name = 'dg_pgdog_stmt';", PostgresOracle: ScriptTestPostgresOracle{ID: "pgdog-compat-test-testpgdogcompatibilityboundary-0013-select-name-from_sql-from-pg_catalog.pg_prepared_statements"},
 				},
 				{
 					Query: "SELECT pg_current_wal_lsn();",

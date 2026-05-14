@@ -34,12 +34,24 @@
       "source": "testing/go/session_authorization_transaction_repro_test.go:TestSetSessionAuthorizationRejectedInTransactionRepro",
       "ordinal": 2,
       "scriptName": "SET SESSION AUTHORIZATION is rejected inside transaction",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "session-authorization-transaction-repro-test-testsetsessionauthorizationrejectedintransactionrepro-0002-select-current_user-session_user",
       "suggestedId": "session-authorization-transaction-repro-test-testsetsessionauthorizationrejectedintransactionrepro-0002-select-current_user-session_user",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT current_user, session_user;",
       "querySha256": "f1f1669043de3a1bc91bdbbb7ccfde4530c01b4e8191eb2940a3447da2ccb43f",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "postgres"
+          },
+          {
+            "value": "postgres"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     }
   ]

@@ -35,12 +35,15 @@
       "source": "testing/go/parameters_test.go:TestParameters",
       "ordinal": 2,
       "scriptName": "default_with_oids",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "parameters-test-testparameters-0002-set-default_with_oids-=-false",
       "suggestedId": "parameters-test-testparameters-0002-set-default_with_oids-=-false",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SET default_with_oids = false;",
       "querySha256": "4b587144f86ce2b0d277a35b17df700b76f4f4993dc83ea82c1a51cc9bea52d9",
-      "needsCleanup": true,
+      "expectedRows": [],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {

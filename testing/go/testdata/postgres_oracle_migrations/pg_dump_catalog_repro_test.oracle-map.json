@@ -1,0 +1,182 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map pg_dump_catalog_repro_test.go --oracle-postgres-id pg-dump-catalog-repro-test-testpgdumpcatalogcompatibilityprobe-0001-select-count-*->=-0,pg-dump-catalog-repro-test-testpgdumpcatalogcompatibilityprobe-0002-select-count-*->=-0,pg-dump-catalog-repro-test-testpgdumpcatalogcompatibilityprobe-0003-select-count-*->=-0,pg-dump-catalog-repro-test-testpgdumpcatalogcompatibilityprobe-0004-select-not-exists-select-1,pg-dump-catalog-repro-test-testpgdumpcatalogcompatibilityprobe-0005-select-not-exists-select-1,pg-dump-catalog-repro-test-testpgdumpcatalogcompatibilityprobe-0006-select-option_name-option_value-from-pg_catalog.pg_options_to_table,pg-dump-catalog-repro-test-testpgdumpcatalogcompatibilityprobe-0007-select-pg_catalog.array_agg-v-order-by --force-postgres-oracle",
+  "sourceFile": "testing/go/pg_dump_catalog_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/pg_dump_catalog_repro_test.go:TestPgDumpCatalogCompatibilityProbe#0001",
+      "source": "testing/go/pg_dump_catalog_repro_test.go:TestPgDumpCatalogCompatibilityProbe",
+      "ordinal": 1,
+      "scriptName": "pg_dump pg_proc transform function OID predicates",
+      "oracle": "postgres",
+      "postgresId": "pg-dump-catalog-repro-test-testpgdumpcatalogcompatibilityprobe-0001-select-count-*->=-0",
+      "suggestedId": "pg-dump-catalog-repro-test-testpgdumpcatalogcompatibilityprobe-0001-select-count-*->=-0",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) >= 0\n\t\t\t\t\t\tFROM pg_catalog.pg_proc p\n\t\t\t\t\t\tWHERE EXISTS (\n\t\t\t\t\t\t\tSELECT 1\n\t\t\t\t\t\t\tFROM pg_catalog.pg_transform\n\t\t\t\t\t\t\tWHERE pg_transform.oid > 16383\n\t\t\t\t\t\t\t\tAND (p.oid = pg_transform.trffromsql\n\t\t\t\t\t\t\t\t\tOR p.oid = pg_transform.trftosql)\n\t\t\t\t\t\t);",
+      "querySha256": "259d212e153be829fa897e242233ad50edc18e61a6e61bc5331b018df4114b8f",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_dump_catalog_repro_test.go:TestPgDumpCatalogCompatibilityProbe#0002",
+      "source": "testing/go/pg_dump_catalog_repro_test.go:TestPgDumpCatalogCompatibilityProbe",
+      "ordinal": 2,
+      "scriptName": "pg_dump pg_proc transform function OID predicates",
+      "oracle": "postgres",
+      "postgresId": "pg-dump-catalog-repro-test-testpgdumpcatalogcompatibilityprobe-0002-select-count-*->=-0",
+      "suggestedId": "pg-dump-catalog-repro-test-testpgdumpcatalogcompatibilityprobe-0002-select-count-*->=-0",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) >= 0\n\t\t\t\t\t\tFROM pg_catalog.pg_ts_parser\n\t\t\t\t\t\tWHERE prsstart::oid IS NOT NULL\n\t\t\t\t\t\t\tAND prstoken::oid IS NOT NULL\n\t\t\t\t\t\t\tAND prsend::oid IS NOT NULL\n\t\t\t\t\t\t\tAND prsheadline::oid IS NOT NULL\n\t\t\t\t\t\t\tAND prslextype::oid IS NOT NULL;",
+      "querySha256": "4364d0abe4d4b6a262fc4dfb720940b46939ce887936b27423b1a913ed4c6706",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_dump_catalog_repro_test.go:TestPgDumpCatalogCompatibilityProbe#0003",
+      "source": "testing/go/pg_dump_catalog_repro_test.go:TestPgDumpCatalogCompatibilityProbe",
+      "ordinal": 3,
+      "scriptName": "pg_dump pg_proc transform function OID predicates",
+      "oracle": "postgres",
+      "postgresId": "pg-dump-catalog-repro-test-testpgdumpcatalogcompatibilityprobe-0003-select-count-*->=-0",
+      "suggestedId": "pg-dump-catalog-repro-test-testpgdumpcatalogcompatibilityprobe-0003-select-count-*->=-0",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) >= 0\n\t\t\t\t\t\tFROM pg_catalog.pg_ts_template\n\t\t\t\t\t\tWHERE tmplinit::oid IS NOT NULL\n\t\t\t\t\t\t\tAND tmpllexize::oid IS NOT NULL;",
+      "querySha256": "8e56f3c2885c6c60136ee13ed2a91aa8db01c16a0685381d5be3b01ec6dcf9cc",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_dump_catalog_repro_test.go:TestPgDumpCatalogCompatibilityProbe#0004",
+      "source": "testing/go/pg_dump_catalog_repro_test.go:TestPgDumpCatalogCompatibilityProbe",
+      "ordinal": 4,
+      "scriptName": "pg_dump pg_proc transform function OID predicates",
+      "oracle": "postgres",
+      "postgresId": "pg-dump-catalog-repro-test-testpgdumpcatalogcompatibilityprobe-0004-select-not-exists-select-1",
+      "suggestedId": "pg-dump-catalog-repro-test-testpgdumpcatalogcompatibilityprobe-0004-select-not-exists-select-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT NOT EXISTS (\n\t\t\t\t\t\t\tSELECT 1\n\t\t\t\t\t\t\tFROM pg_catalog.pg_proc p\n\t\t\t\t\t\t\tLEFT JOIN pg_catalog.pg_roles r ON r.oid = p.proowner\n\t\t\t\t\t\t\tWHERE r.oid IS NULL\n\t\t\t\t\t\t);",
+      "querySha256": "80c094509536d74e68471c8e666ab3ad5ad2041595e122105a8f7a2cd9fdd84a",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_dump_catalog_repro_test.go:TestPgDumpCatalogCompatibilityProbe#0005",
+      "source": "testing/go/pg_dump_catalog_repro_test.go:TestPgDumpCatalogCompatibilityProbe",
+      "ordinal": 5,
+      "scriptName": "pg_dump pg_proc transform function OID predicates",
+      "oracle": "postgres",
+      "postgresId": "pg-dump-catalog-repro-test-testpgdumpcatalogcompatibilityprobe-0005-select-not-exists-select-1",
+      "suggestedId": "pg-dump-catalog-repro-test-testpgdumpcatalogcompatibilityprobe-0005-select-not-exists-select-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT NOT EXISTS (\n\t\t\t\t\t\t\tSELECT 1\n\t\t\t\t\t\t\tFROM pg_catalog.pg_cast\n\t\t\t\t\t\t\tWHERE oid > 16383\n\t\t\t\t\t\t\t\tAND castsource = 'integer'::regtype\n\t\t\t\t\t\t\t\tAND casttarget = 'bigint'::regtype\n\t\t\t\t\t\t\t\tAND castfunc = 481::oid\n\t\t\t\t\t\t);",
+      "querySha256": "2cc72743bc0c4f2748cac23cdda45cf856a43de063786fddde7d7aa95e68db27",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_dump_catalog_repro_test.go:TestPgDumpCatalogCompatibilityProbe#0006",
+      "source": "testing/go/pg_dump_catalog_repro_test.go:TestPgDumpCatalogCompatibilityProbe",
+      "ordinal": 6,
+      "scriptName": "pg_dump pg_proc transform function OID predicates",
+      "oracle": "postgres",
+      "postgresId": "pg-dump-catalog-repro-test-testpgdumpcatalogcompatibilityprobe-0006-select-option_name-option_value-from-pg_catalog.pg_options_to_table",
+      "suggestedId": "pg-dump-catalog-repro-test-testpgdumpcatalogcompatibilityprobe-0006-select-option_name-option_value-from-pg_catalog.pg_options_to_table",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT option_name, option_value\n\t\t\t\t\t\tFROM pg_catalog.pg_options_to_table(ARRAY['fillfactor=90', 'parallel_workers']::text[])\n\t\t\t\t\t\tORDER BY option_name;",
+      "querySha256": "f87f399c4f518af96a7f1f4f327508c93dfd110883b918df9ba8c74f9213bf28",
+      "expectedRows": [
+        [
+          {
+            "value": "fillfactor"
+          },
+          {
+            "value": "90"
+          }
+        ],
+        [
+          {
+            "value": "parallel_workers"
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_dump_catalog_repro_test.go:TestPgDumpCatalogCompatibilityProbe#0007",
+      "source": "testing/go/pg_dump_catalog_repro_test.go:TestPgDumpCatalogCompatibilityProbe",
+      "ordinal": 7,
+      "scriptName": "pg_dump pg_proc transform function OID predicates",
+      "oracle": "postgres",
+      "postgresId": "pg-dump-catalog-repro-test-testpgdumpcatalogcompatibilityprobe-0007-select-pg_catalog.array_agg-v-order-by",
+      "suggestedId": "pg-dump-catalog-repro-test-testpgdumpcatalogcompatibilityprobe-0007-select-pg_catalog.array_agg-v-order-by",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_catalog.array_agg(v ORDER BY v)\n\t\t\t\t\t\tFROM (VALUES (2), (1)) AS src(v);",
+      "querySha256": "68b543dafa8136af4ee4bceac41af7f7555c10423da409d7f4fc5d92ad04f3af",
+      "expectedRows": [
+        [
+          {
+            "value": "{1,2}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

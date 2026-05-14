@@ -415,12 +415,21 @@
       "source": "testing/go/alter_type_rename_repro_test.go:TestAlterCompositeTypeRenameAttributeUpdatesFunctionBodyMetadataRepro",
       "ordinal": 2,
       "scriptName": "RENAME ATTRIBUTE updates dependent function bodies",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "alter-type-rename-repro-test-testaltercompositetyperenameattributeupdatesfunctionbodymetadatarepro-0002-select-row-7-::rename_attr_function_item-.new_name",
       "suggestedId": "alter-type-rename-repro-test-testaltercompositetyperenameattributeupdatesfunctionbodymetadatarepro-0002-select-row-7-::rename_attr_function_item-.new_name",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT (ROW(7)::rename_attr_function_item).new_name;",
       "querySha256": "de1a5c08f6e64b949cea894aa0d21796546810e1cbf9810513385d9eaf4a1c98",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {

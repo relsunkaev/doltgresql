@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestCursorWithHoldSurvivesCommitRepro reproduces a cursor state persistence
@@ -49,8 +47,7 @@ func TestCursorWithHoldSurvivesCommitRepro(t *testing.T) {
 					SkipResultsCheck: true,
 				},
 				{
-					Query:    `FETCH NEXT FROM hold_cur;`,
-					Expected: []sql.Row{{2}},
+					Query: `FETCH NEXT FROM hold_cur;`, PostgresOracle: ScriptTestPostgresOracle{ID: "cursor-correctness-repro-test-testcursorwithholdsurvivescommitrepro-0002-fetch-next-from-hold_cur"},
 				},
 				{
 					Query:            `CLOSE hold_cur;`,

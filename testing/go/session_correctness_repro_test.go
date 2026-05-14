@@ -175,8 +175,7 @@ func TestSetSessionAuthorizationChangesCurrentAndSessionUserRepro(t *testing.T) 
 					Query: `SET SESSION AUTHORIZATION session_auth_target;`,
 				},
 				{
-					Query:    `SELECT current_user, session_user;`,
-					Expected: []sql.Row{{"session_auth_target", "session_auth_target"}},
+					Query: `SELECT current_user, session_user;`, PostgresOracle: ScriptTestPostgresOracle{ID: "session-correctness-repro-test-testsetsessionauthorizationchangescurrentandsessionuserrepro-0001-select-current_user-session_user"},
 				},
 				{
 					Query: `RESET SESSION AUTHORIZATION;`,
@@ -196,8 +195,7 @@ func TestSetSessionAuthorizationValidatesTargetRoleRepro(t *testing.T) {
 			Name: "SET SESSION AUTHORIZATION rejects missing roles",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SET SESSION AUTHORIZATION missing_session_auth_role;`,
-					ExpectedErr: `role "missing_session_auth_role" does not exist`,
+					Query: `SET SESSION AUTHORIZATION missing_session_auth_role;`, PostgresOracle: ScriptTestPostgresOracle{ID: "session-correctness-repro-test-testsetsessionauthorizationvalidatestargetrolerepro-0001-set-session-authorization-missing_session_auth_role", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -217,8 +215,7 @@ func TestSetSessionAuthorizationRequiresSuperuserForOtherRolesRepro(t *testing.T
 					Query: `SET SESSION AUTHORIZATION session_auth_limited;`,
 				},
 				{
-					Query:       `SET SESSION AUTHORIZATION session_auth_other;`,
-					ExpectedErr: `permission denied`,
+					Query: `SET SESSION AUTHORIZATION session_auth_other;`, PostgresOracle: ScriptTestPostgresOracle{ID: "session-correctness-repro-test-testsetsessionauthorizationrequiressuperuserforotherrolesrepro-0001-set-session-authorization-session_auth_other"},
 				},
 				{
 					Query:    `SELECT current_user, session_user;`,
@@ -262,18 +259,19 @@ func TestSetLocalSearchPathAcceptsSchemaListRepro(t *testing.T) {
 					Query: `COMMIT;`,
 				},
 				{
-					Query:       `SELECT count(*) FROM local_items;`,
-					ExpectedErr: `not found`,
+					Query: `SELECT count(*) FROM local_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "session-correctness-repro-test-testsetlocalsearchpathacceptsschemalistrepro-0002-select-count-*-from-local_items",
+
+						// TestSetLocalSearchPathDefaultUsesDefaultValueRepro reproduces a session
+						// correctness bug: SET LOCAL search_path TO DEFAULT should reset the
+						// transaction-local search_path to PostgreSQL's default value, not store the
+						// literal string DEFAULT.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestSetLocalSearchPathDefaultUsesDefaultValueRepro reproduces a session
-// correctness bug: SET LOCAL search_path TO DEFAULT should reset the
-// transaction-local search_path to PostgreSQL's default value, not store the
-// literal string DEFAULT.
 func TestSetLocalSearchPathDefaultUsesDefaultValueRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{

@@ -134,12 +134,21 @@
       "source": "testing/go/savepoints_test.go:TestSavepoints",
       "ordinal": 5,
       "scriptName": "rollback to is repeatable; release destroys the name",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "savepoints-test-testsavepoints-0005-select-count-*-from-sp_repeat",
       "suggestedId": "savepoints-test-testsavepoints-0005-select-count-*-from-sp_repeat",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT COUNT(*) FROM sp_repeat;",
       "querySha256": "d0fadc4c47db07f20ecd85e6abd11e1f84bd8acfaa7895596abfdd83c12b499f",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -174,12 +183,16 @@
       "source": "testing/go/savepoints_test.go:TestSavepoints",
       "ordinal": 7,
       "scriptName": "rollback to unknown savepoint errors",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "savepoints-test-testsavepoints-0007-rollback-to-savepoint-nothere",
       "suggestedId": "savepoints-test-testsavepoints-0007-rollback-to-savepoint-nothere",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "3B001",
+      "errorSeverity": "ERROR",
       "query": "ROLLBACK TO SAVEPOINT nothere;",
       "querySha256": "3ebbfc049c68a5d6abe1e7fe7a7bbf47b37fb82577781022636979830db25659",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     }
   ]

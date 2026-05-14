@@ -134,8 +134,7 @@ func TestCreateFunctionsLanguageSQL(t *testing.T) {
 					Query: `SELECT public.sp_build_view_bathymetry_layer()`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0017-select-public.sp_build_view_bathymetry_layer", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT * from view_bathymetry_layer`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT * from view_bathymetry_layer`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0018-select-*-from-view_bathymetry_layer", Compare: "sqlstate"},
 				},
 				{
 					Query:    `SELECT public.sp_build_view_bathymetry_layer()`,

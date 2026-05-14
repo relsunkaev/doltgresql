@@ -3985,12 +3985,21 @@
       "source": "testing/go/functions_test.go:TestSystemInformationFunctions",
       "ordinal": 65,
       "scriptName": "shobj_description",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "functions-test-testsysteminformationfunctions-0065-select-shobj_description-select-oid-from",
       "suggestedId": "functions-test-testsysteminformationfunctions-0065-select-shobj_description-select-oid-from",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT shobj_description(\n                 (SELECT oid FROM pg_tablespace WHERE spcname = 'tblspc_2'),\n                 'pg_tablespace');",
       "querySha256": "d253ecbc38d87c6721209493834782c1540889055c0d5038798d9ae4f3e3d08f",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -8071,12 +8080,48 @@
       "source": "testing/go/functions_test.go:TestJsonFunctions",
       "ordinal": 124,
       "scriptName": "json mixed representation coverage",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "functions-test-testjsonfunctions-0124-select-s.pk-elem-from-json_shapes",
       "suggestedId": "functions-test-testjsonfunctions-0124-select-s.pk-elem-from-json_shapes",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT s.pk, elem FROM json_shapes s JOIN LATERAL jsonb_array_elements(s.doc->'items') AS elem ON true ORDER BY s.pk, elem;",
       "querySha256": "45b81b67817251a3c7aa3a1fd441d13e3f558faafc257f4d341e6c8205689beb",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -8084,12 +8129,31 @@
       "source": "testing/go/functions_test.go:TestJsonFunctions",
       "ordinal": 125,
       "scriptName": "json mixed representation coverage",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "functions-test-testjsonfunctions-0125-select-distinct-elem-from-json_shapes",
       "suggestedId": "functions-test-testjsonfunctions-0125-select-distinct-elem-from-json_shapes",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT DISTINCT elem FROM json_shapes s JOIN LATERAL jsonb_array_elements(s.doc->'items') AS elem ON true ORDER BY elem;",
       "querySha256": "86e3044819b454952f891a7a15fa69eaf7279e54b35307c2dcfbd535c6209ad2",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -8097,12 +8161,31 @@
       "source": "testing/go/functions_test.go:TestJsonFunctions",
       "ordinal": 126,
       "scriptName": "json mixed representation coverage",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "functions-test-testjsonfunctions-0126-select-distinct-jsonb_array_elements-doc->-items",
       "suggestedId": "functions-test-testjsonfunctions-0126-select-distinct-jsonb_array_elements-doc->-items",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT DISTINCT jsonb_array_elements(doc->'items') FROM json_shapes ORDER BY jsonb_array_elements;",
       "querySha256": "1fa8b8a3c94beb414cd4672c0c7173e7b9f466afa2dbaacc494a4ba5624b5dba",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -8110,12 +8193,16 @@
       "source": "testing/go/functions_test.go:TestJsonFunctions",
       "ordinal": 127,
       "scriptName": "json mixed representation coverage",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "functions-test-testjsonfunctions-0127-select-s.pk-e.json_array_elements-from-json_shapes",
       "suggestedId": "functions-test-testjsonfunctions-0127-select-s.pk-e.json_array_elements-from-json_shapes",
-      "expectedKind": "rows",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42703",
+      "errorSeverity": "ERROR",
       "query": "SELECT s.pk, e.json_array_elements FROM json_shapes s JOIN LATERAL (SELECT * FROM json_array_elements(s.raw->'items')) AS e ON true ORDER BY s.pk, e.json_array_elements;",
       "querySha256": "5a022cc7e05490a364b4a395e4d01caaca1c56d41b3d431e2a0c05905b8f6267",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {

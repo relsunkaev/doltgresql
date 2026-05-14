@@ -1207,12 +1207,21 @@
       "source": "testing/go/expressions_test.go:TestSubscript",
       "ordinal": 2,
       "scriptName": "array literal",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testsubscript-0002-select-array[1-2-3]-[3]",
       "suggestedId": "expressions-test-testsubscript-0002-select-array[1-2-3]-[3]",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT (ARRAY[1, 2, 3])[3];",
       "querySha256": "35445837d23a520b29a0a4782fe0c8c2be4c8321322acdc3a7c01697d8175166",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1220,12 +1229,21 @@
       "source": "testing/go/expressions_test.go:TestSubscript",
       "ordinal": 3,
       "scriptName": "array literal",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testsubscript-0003-select-array[1-2-3]-[1+1]",
       "suggestedId": "expressions-test-testsubscript-0003-select-array[1-2-3]-[1+1]",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT (ARRAY[1, 2, 3])[1+1];",
       "querySha256": "43c48ba97e8cc68da1473c5298ec34c7248c973b0bd9c10ed44eb88c286883f5",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1233,12 +1251,16 @@
       "source": "testing/go/expressions_test.go:TestSubscript",
       "ordinal": 4,
       "scriptName": "array literal",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testsubscript-0004-select-array[1-2-3][0]",
       "suggestedId": "expressions-test-testsubscript-0004-select-array[1-2-3][0]",
-      "expectedKind": "rows",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
       "query": "SELECT ARRAY[1, 2, 3][0];",
       "querySha256": "39964d683d9bb8a4861fdc686e74a8bb0d65caef04666f0761585d86cdca18db",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
