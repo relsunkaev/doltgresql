@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestPgRelationIsPublishableClassifiesRelationsRepro reproduces a publication
@@ -83,10 +81,6 @@ func TestPublicationColumnListRejectsDuplicateColumnsRepro(t *testing.T) {
 				{
 					Query: `CREATE PUBLICATION publication_duplicate_columns_create_pub
 						FOR TABLE publication_duplicate_columns (id, id);`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testpublicationcolumnlistrejectsduplicatecolumnsrepro-0001-create-publication-publication_duplicate_columns_create_pub-for-table",
-
-						// TestPublicationAddTableColumnListRejectsDuplicateColumnsRepro reproduces a
-						// publication metadata correctness bug: PostgreSQL rejects duplicate column
-						// names when adding a table to a publication.
 						Compare: "sqlstate"},
 				},
 			},
@@ -331,10 +325,6 @@ func TestPublicationAlterRejectsDuplicatePublishViaRootOptionRepro(t *testing.T)
 					Query: `ALTER PUBLICATION publication_alter_duplicate_via_root_option_pub
 						SET (publish_via_partition_root = true,
 							publish_via_partition_root = false);`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testpublicationalterrejectsduplicatepublishviarootoptionrepro-0001-alter-publication-set-publish_via_partition_root-=",
-
-						// TestPublicationAllowsEmptyPublishOptionRepro reproduces a publication option
-						// correctness bug: PostgreSQL accepts an empty publish action list and stores a
-						// publication that publishes no actions.
 						Compare: "sqlstate"},
 				},
 			},
@@ -385,8 +375,8 @@ func TestPublicationCreateSchemaCurrentSchemaResolvesSearchPathRepro(t *testing.
 						FROM pg_catalog.pg_publication_namespace pn
 						JOIN pg_catalog.pg_publication p ON p.oid = pn.pnpubid
 						JOIN pg_catalog.pg_namespace n ON n.oid = pn.pnnspid
-						WHERE p.pubname = 'publication_current_schema_create_pub';`,
-					Expected: []sql.Row{{"publication_current_schema_create_pub", "publication_current_schema_create_actual"}},
+						WHERE p.pubname = 'publication_current_schema_create_pub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testpublicationcreateschemacurrentschemaresolvessearchpathrepro-0001-select-p.pubname-n.nspname-from-pg_catalog.pg_publication_namespace",
+						Cleanup: []string{"DROP PUBLICATION IF EXISTS publication_current_schema_create_pub", "DROP TABLE IF EXISTS publication_current_schema_create_actual.items CASCADE", "DROP SCHEMA IF EXISTS publication_current_schema_create_actual CASCADE"}},
 				},
 			},
 		},
@@ -418,8 +408,8 @@ func TestPublicationAddSchemaCurrentSchemaResolvesSearchPathRepro(t *testing.T) 
 						FROM pg_catalog.pg_publication_namespace pn
 						JOIN pg_catalog.pg_publication p ON p.oid = pn.pnpubid
 						JOIN pg_catalog.pg_namespace n ON n.oid = pn.pnnspid
-						WHERE p.pubname = 'publication_current_schema_add_pub';`,
-					Expected: []sql.Row{{"publication_current_schema_add_pub", "publication_current_schema_add_actual"}},
+						WHERE p.pubname = 'publication_current_schema_add_pub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testpublicationaddschemacurrentschemaresolvessearchpathrepro-0001-select-p.pubname-n.nspname-from-pg_catalog.pg_publication_namespace",
+						Cleanup: []string{"DROP PUBLICATION IF EXISTS publication_current_schema_add_pub", "DROP TABLE IF EXISTS publication_current_schema_add_actual.items CASCADE", "DROP SCHEMA IF EXISTS publication_current_schema_add_actual CASCADE"}},
 				},
 			},
 		},
@@ -452,8 +442,8 @@ func TestPublicationSetSchemaCurrentSchemaResolvesSearchPathRepro(t *testing.T) 
 						FROM pg_catalog.pg_publication_namespace pn
 						JOIN pg_catalog.pg_publication p ON p.oid = pn.pnpubid
 						JOIN pg_catalog.pg_namespace n ON n.oid = pn.pnnspid
-						WHERE p.pubname = 'publication_current_schema_set_pub';`,
-					Expected: []sql.Row{{"publication_current_schema_set_pub", "publication_current_schema_set_actual"}},
+						WHERE p.pubname = 'publication_current_schema_set_pub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testpublicationsetschemacurrentschemaresolvessearchpathrepro-0001-select-p.pubname-n.nspname-from-pg_catalog.pg_publication_namespace",
+						Cleanup: []string{"DROP PUBLICATION IF EXISTS publication_current_schema_set_pub", "DROP TABLE IF EXISTS publication_current_schema_set_actual.items CASCADE", "DROP SCHEMA IF EXISTS publication_current_schema_set_actual CASCADE"}},
 				},
 			},
 		},
@@ -485,8 +475,8 @@ func TestPublicationDropSchemaCurrentSchemaResolvesSearchPathRepro(t *testing.T)
 					Query: `SELECT count(*)
 						FROM pg_catalog.pg_publication_namespace pn
 						JOIN pg_catalog.pg_publication p ON p.oid = pn.pnpubid
-						WHERE p.pubname = 'publication_current_schema_drop_pub';`,
-					Expected: []sql.Row{{0}},
+						WHERE p.pubname = 'publication_current_schema_drop_pub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testpublicationdropschemacurrentschemaresolvessearchpathrepro-0001-select-count-*-from-pg_catalog.pg_publication_namespace",
+						Cleanup: []string{"DROP PUBLICATION IF EXISTS publication_current_schema_drop_pub", "DROP TABLE IF EXISTS publication_current_schema_drop_actual.items CASCADE", "DROP SCHEMA IF EXISTS publication_current_schema_drop_actual CASCADE"}},
 				},
 			},
 		},
@@ -516,8 +506,8 @@ func TestPublicationCreateDuplicateSchemasNormalizes(t *testing.T) {
 					Query: `SELECT count(*)
 						FROM pg_catalog.pg_publication_namespace pn
 						JOIN pg_catalog.pg_publication p ON p.oid = pn.pnpubid
-						WHERE p.pubname = 'publication_duplicate_schema_create_pub';`,
-					Expected: []sql.Row{{1}},
+						WHERE p.pubname = 'publication_duplicate_schema_create_pub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testpublicationcreateduplicateschemasnormalizes-0001-select-count-*-from-pg_catalog.pg_publication_namespace",
+						Cleanup: []string{"DROP PUBLICATION IF EXISTS publication_duplicate_schema_create_pub", "DROP TABLE IF EXISTS publication_duplicate_schema_create.items CASCADE", "DROP SCHEMA IF EXISTS publication_duplicate_schema_create CASCADE"}},
 				},
 			},
 		},
@@ -548,8 +538,8 @@ func TestPublicationSetDuplicateSchemasNormalizes(t *testing.T) {
 					Query: `SELECT count(*)
 						FROM pg_catalog.pg_publication_namespace pn
 						JOIN pg_catalog.pg_publication p ON p.oid = pn.pnpubid
-						WHERE p.pubname = 'publication_duplicate_schema_set_pub';`,
-					Expected: []sql.Row{{1}},
+						WHERE p.pubname = 'publication_duplicate_schema_set_pub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testpublicationsetduplicateschemasnormalizes-0001-select-count-*-from-pg_catalog.pg_publication_namespace",
+						Cleanup: []string{"DROP PUBLICATION IF EXISTS publication_duplicate_schema_set_pub", "DROP TABLE IF EXISTS publication_duplicate_schema_set.items CASCADE", "DROP SCHEMA IF EXISTS publication_duplicate_schema_set CASCADE"}},
 				},
 			},
 		},
@@ -574,15 +564,14 @@ func TestPublicationAddExistingSchemaRejectsDuplicate(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `ALTER PUBLICATION publication_duplicate_schema_add_pub
-						ADD TABLES IN SCHEMA publication_duplicate_schema_add;`,
-					ExpectedErr: `already member of publication`,
+						ADD TABLES IN SCHEMA publication_duplicate_schema_add;`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testpublicationaddexistingschemarejectsduplicate-0001-alter-publication-publication_duplicate_schema_add_pub-add-tables", Compare: "sqlstate", Cleanup: []string{"DROP PUBLICATION IF EXISTS publication_duplicate_schema_add_pub", "DROP TABLE IF EXISTS publication_duplicate_schema_add.items CASCADE",
+						"DROP SCHEMA IF EXISTS publication_duplicate_schema_add CASCADE"}},
 				},
 				{
 					Query: `SELECT count(*)
 						FROM pg_catalog.pg_publication_namespace pn
 						JOIN pg_catalog.pg_publication p ON p.oid = pn.pnpubid
-						WHERE p.pubname = 'publication_duplicate_schema_add_pub';`,
-					Expected: []sql.Row{{1}},
+						WHERE p.pubname = 'publication_duplicate_schema_add_pub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testpublicationaddexistingschemarejectsduplicate-0002-select-count-*-from-pg_catalog.pg_publication_namespace", Cleanup: []string{"DROP PUBLICATION IF EXISTS publication_duplicate_schema_add_pub", "DROP TABLE IF EXISTS publication_duplicate_schema_add.items CASCADE", "DROP SCHEMA IF EXISTS publication_duplicate_schema_add CASCADE"}},
 				},
 			},
 		},
@@ -607,14 +596,13 @@ func TestPublicationCreateRejectsColumnListWithSchemaRepro(t *testing.T) {
 				{
 					Query: `CREATE PUBLICATION publication_column_schema_create_pub
 						FOR TABLES IN SCHEMA publication_column_schema_create,
-							TABLE publication_column_schema_create.items (id);`,
-					ExpectedErr: `cannot use column list`,
+							TABLE publication_column_schema_create.items (id);`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testpublicationcreaterejectscolumnlistwithschemarepro-0001-create-publication-publication_column_schema_create_pub-for-tables", Compare: "sqlstate", Cleanup: []string{"DROP PUBLICATION IF EXISTS publication_column_schema_create_pub",
+						"DROP TABLE IF EXISTS publication_column_schema_create.items CASCADE", "DROP SCHEMA IF EXISTS publication_column_schema_create CASCADE"}},
 				},
 				{
 					Query: `SELECT count(*)
 						FROM pg_catalog.pg_publication
-						WHERE pubname = 'publication_column_schema_create_pub';`,
-					Expected: []sql.Row{{0}},
+						WHERE pubname = 'publication_column_schema_create_pub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testpublicationcreaterejectscolumnlistwithschemarepro-0002-select-count-*-from-pg_catalog.pg_publication", Cleanup: []string{"DROP TABLE IF EXISTS publication_column_schema_create.items CASCADE", "DROP SCHEMA IF EXISTS publication_column_schema_create CASCADE"}},
 				},
 			},
 		},
@@ -641,22 +629,20 @@ func TestPublicationAddTableRejectsColumnListWithSchemaPublicationRepro(t *testi
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `ALTER PUBLICATION publication_column_schema_add_table_pub
-						ADD TABLE publication_column_schema_add_table.items (id);`,
-					ExpectedErr: `cannot use column list`,
+						ADD TABLE publication_column_schema_add_table.items (id);`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testpublicationaddtablerejectscolumnlistwithschemapublicationrepro-0001-alter-publication-publication_column_schema_add_table_pub-add-table", Compare: "sqlstate", Cleanup: []string{"DROP PUBLICATION IF EXISTS publication_column_schema_add_table_pub", "DROP TABLE IF EXISTS publication_column_schema_add_table.items CASCADE", "DROP SCHEMA IF EXISTS publication_column_schema_add_table CASCADE"}},
 				},
 				{
 					Query: `SELECT count(*)
 						FROM pg_catalog.pg_publication_rel pr
 						JOIN pg_catalog.pg_publication p ON p.oid = pr.prpubid
-						WHERE p.pubname = 'publication_column_schema_add_table_pub';`,
-					Expected: []sql.Row{{0}},
+						WHERE p.pubname = 'publication_column_schema_add_table_pub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testpublicationaddtablerejectscolumnlistwithschemapublicationrepro-0002-select-count-*-from-pg_catalog.pg_publication_rel", Cleanup: []string{"DROP PUBLICATION IF EXISTS publication_column_schema_add_table_pub", "DROP TABLE IF EXISTS publication_column_schema_add_table.items CASCADE",
+						"DROP SCHEMA IF EXISTS publication_column_schema_add_table CASCADE"}},
 				},
 				{
 					Query: `SELECT count(*)
 						FROM pg_catalog.pg_publication_namespace pn
 						JOIN pg_catalog.pg_publication p ON p.oid = pn.pnpubid
-						WHERE p.pubname = 'publication_column_schema_add_table_pub';`,
-					Expected: []sql.Row{{1}},
+						WHERE p.pubname = 'publication_column_schema_add_table_pub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testpublicationaddtablerejectscolumnlistwithschemapublicationrepro-0003-select-count-*-from-pg_catalog.pg_publication_namespace", Cleanup: []string{"DROP PUBLICATION IF EXISTS publication_column_schema_add_table_pub", "DROP TABLE IF EXISTS publication_column_schema_add_table.items CASCADE", "DROP SCHEMA IF EXISTS publication_column_schema_add_table CASCADE"}},
 				},
 			},
 		},
@@ -682,22 +668,20 @@ func TestPublicationAddSchemaRejectsExistingColumnListRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `ALTER PUBLICATION publication_column_schema_add_schema_pub
-						ADD TABLES IN SCHEMA publication_column_schema_add_schema;`,
-					ExpectedErr: `cannot add schema`,
+						ADD TABLES IN SCHEMA publication_column_schema_add_schema;`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testpublicationaddschemarejectsexistingcolumnlistrepro-0001-alter-publication-publication_column_schema_add_schema_pub-add-tables", Compare: "sqlstate", Cleanup: []string{"DROP PUBLICATION IF EXISTS publication_column_schema_add_schema_pub", "DROP TABLE IF EXISTS publication_column_schema_add_schema.items CASCADE", "DROP SCHEMA IF EXISTS publication_column_schema_add_schema CASCADE"}},
 				},
 				{
 					Query: `SELECT count(*)
 						FROM pg_catalog.pg_publication_rel pr
 						JOIN pg_catalog.pg_publication p ON p.oid = pr.prpubid
-						WHERE p.pubname = 'publication_column_schema_add_schema_pub';`,
-					Expected: []sql.Row{{1}},
+						WHERE p.pubname = 'publication_column_schema_add_schema_pub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testpublicationaddschemarejectsexistingcolumnlistrepro-0002-select-count-*-from-pg_catalog.pg_publication_rel", Cleanup: []string{"DROP PUBLICATION IF EXISTS publication_column_schema_add_schema_pub", "DROP TABLE IF EXISTS publication_column_schema_add_schema.items CASCADE",
+						"DROP SCHEMA IF EXISTS publication_column_schema_add_schema CASCADE"}},
 				},
 				{
 					Query: `SELECT count(*)
 						FROM pg_catalog.pg_publication_namespace pn
 						JOIN pg_catalog.pg_publication p ON p.oid = pn.pnpubid
-						WHERE p.pubname = 'publication_column_schema_add_schema_pub';`,
-					Expected: []sql.Row{{0}},
+						WHERE p.pubname = 'publication_column_schema_add_schema_pub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testpublicationaddschemarejectsexistingcolumnlistrepro-0003-select-count-*-from-pg_catalog.pg_publication_namespace", Cleanup: []string{"DROP PUBLICATION IF EXISTS publication_column_schema_add_schema_pub", "DROP TABLE IF EXISTS publication_column_schema_add_schema.items CASCADE", "DROP SCHEMA IF EXISTS publication_column_schema_add_schema CASCADE"}},
 				},
 			},
 		},
@@ -723,22 +707,20 @@ func TestPublicationSetRejectsColumnListWithSchemaRepro(t *testing.T) {
 				{
 					Query: `ALTER PUBLICATION publication_column_schema_set_pub
 						SET TABLES IN SCHEMA publication_column_schema_set,
-							TABLE publication_column_schema_set.items (id);`,
-					ExpectedErr: `cannot use column list`,
+							TABLE publication_column_schema_set.items (id);`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testpublicationsetrejectscolumnlistwithschemarepro-0001-alter-publication-publication_column_schema_set_pub-set-tables", Compare: "sqlstate", Cleanup: []string{"DROP PUBLICATION IF EXISTS publication_column_schema_set_pub", "DROP TABLE IF EXISTS publication_column_schema_set.items CASCADE", "DROP SCHEMA IF EXISTS publication_column_schema_set CASCADE"}},
 				},
 				{
 					Query: `SELECT count(*)
 						FROM pg_catalog.pg_publication_rel pr
 						JOIN pg_catalog.pg_publication p ON p.oid = pr.prpubid
-						WHERE p.pubname = 'publication_column_schema_set_pub';`,
-					Expected: []sql.Row{{0}},
+						WHERE p.pubname = 'publication_column_schema_set_pub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testpublicationsetrejectscolumnlistwithschemarepro-0002-select-count-*-from-pg_catalog.pg_publication_rel", Cleanup: []string{"DROP PUBLICATION IF EXISTS publication_column_schema_set_pub", "DROP TABLE IF EXISTS publication_column_schema_set.items CASCADE",
+						"DROP SCHEMA IF EXISTS publication_column_schema_set CASCADE"}},
 				},
 				{
 					Query: `SELECT count(*)
 						FROM pg_catalog.pg_publication_namespace pn
 						JOIN pg_catalog.pg_publication p ON p.oid = pn.pnpubid
-						WHERE p.pubname = 'publication_column_schema_set_pub';`,
-					Expected: []sql.Row{{0}},
+						WHERE p.pubname = 'publication_column_schema_set_pub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testpublicationsetrejectscolumnlistwithschemarepro-0003-select-count-*-from-pg_catalog.pg_publication_namespace", Cleanup: []string{"DROP PUBLICATION IF EXISTS publication_column_schema_set_pub", "DROP TABLE IF EXISTS publication_column_schema_set.items CASCADE", "DROP SCHEMA IF EXISTS publication_column_schema_set CASCADE"}},
 				},
 			},
 		},
@@ -762,10 +744,6 @@ func TestPublicationColumnListRespectsQuotedColumnCaseRepro(t *testing.T) {
 				{
 					Query: `CREATE PUBLICATION publication_case_column_pub
 						FOR TABLE publication_case_column_items (casecolumn);`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testpublicationcolumnlistrespectsquotedcolumncaserepro-0001-create-publication-publication_case_column_pub-for-table",
-
-						// TestPublicationSetTableColumnListRespectsQuotedColumnCaseRepro reproduces a
-						// publication metadata correctness bug: PostgreSQL rejects unquoted lower-case
-						// column list entries that do not match quoted mixed-case column names.
 						Compare: "sqlstate"},
 				},
 			},
@@ -839,10 +817,6 @@ func TestPublicationRejectsSystemSchemaRepro(t *testing.T) {
 				{
 					Query: `CREATE PUBLICATION publication_pg_catalog_schema_pub
 						FOR TABLES IN SCHEMA pg_catalog;`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testpublicationrejectssystemschemarepro-0001-create-publication-publication_pg_catalog_schema_pub-for-tables",
-
-						// TestPublicationAddSchemaRejectsSystemSchemaRepro reproduces a publication
-						// metadata validation bug: PostgreSQL rejects adding system schemas to existing
-						// publications.
 						Compare: "sqlstate"},
 				},
 			},
@@ -909,10 +883,6 @@ func TestPublicationRejectsSystemTableRepro(t *testing.T) {
 				{
 					Query: `CREATE PUBLICATION publication_pg_catalog_table_pub
 						FOR TABLE pg_catalog.pg_class;`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testpublicationrejectssystemtablerepro-0001-create-publication-publication_pg_catalog_table_pub-for-table",
-
-						// TestPublicationAddTableRejectsSystemTableRepro reproduces a publication
-						// metadata validation bug: PostgreSQL rejects adding system tables to existing
-						// publications.
 						Compare: "sqlstate"},
 				},
 			},
@@ -1051,21 +1021,19 @@ func TestPublicationAllTablesRejectsAddSchemaRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `ALTER PUBLICATION publication_all_add_schema_pub
-						ADD TABLES IN SCHEMA publication_all_add_schema;`,
-					ExpectedErr: `FOR ALL TABLES`,
+						ADD TABLES IN SCHEMA publication_all_add_schema;`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testpublicationalltablesrejectsaddschemarepro-0001-alter-publication-publication_all_add_schema_pub-add-tables", Compare: "sqlstate", Cleanup: []string{"DROP PUBLICATION IF EXISTS publication_all_add_schema_pub", "DROP SCHEMA IF EXISTS publication_all_add_schema CASCADE"}},
 				},
 				{
 					Query: `SELECT puballtables
 						FROM pg_catalog.pg_publication
-						WHERE pubname = 'publication_all_add_schema_pub';`,
-					Expected: []sql.Row{{"t"}},
+						WHERE pubname = 'publication_all_add_schema_pub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testpublicationalltablesrejectsaddschemarepro-0002-select-puballtables-from-pg_catalog.pg_publication-where", Cleanup: []string{"DROP PUBLICATION IF EXISTS publication_all_add_schema_pub", "DROP SCHEMA IF EXISTS publication_all_add_schema CASCADE"}},
 				},
 				{
 					Query: `SELECT count(*)
 						FROM pg_catalog.pg_publication_namespace pn
 						JOIN pg_catalog.pg_publication p ON p.oid = pn.pnpubid
-						WHERE p.pubname = 'publication_all_add_schema_pub';`,
-					Expected: []sql.Row{{0}},
+						WHERE p.pubname = 'publication_all_add_schema_pub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testpublicationalltablesrejectsaddschemarepro-0003-select-count-*-from-pg_catalog.pg_publication_namespace",
+						Cleanup: []string{"DROP PUBLICATION IF EXISTS publication_all_add_schema_pub", "DROP SCHEMA IF EXISTS publication_all_add_schema CASCADE"}},
 				},
 			},
 		},
@@ -1086,21 +1054,19 @@ func TestPublicationAllTablesRejectsSetSchemaRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `ALTER PUBLICATION publication_all_set_schema_pub
-						SET TABLES IN SCHEMA publication_all_set_schema;`,
-					ExpectedErr: `FOR ALL TABLES`,
+						SET TABLES IN SCHEMA publication_all_set_schema;`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testpublicationalltablesrejectssetschemarepro-0001-alter-publication-publication_all_set_schema_pub-set-tables", Compare: "sqlstate", Cleanup: []string{"DROP PUBLICATION IF EXISTS publication_all_set_schema_pub", "DROP SCHEMA IF EXISTS publication_all_set_schema CASCADE"}},
 				},
 				{
 					Query: `SELECT puballtables
 						FROM pg_catalog.pg_publication
-						WHERE pubname = 'publication_all_set_schema_pub';`,
-					Expected: []sql.Row{{"t"}},
+						WHERE pubname = 'publication_all_set_schema_pub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testpublicationalltablesrejectssetschemarepro-0002-select-puballtables-from-pg_catalog.pg_publication-where", Cleanup: []string{"DROP PUBLICATION IF EXISTS publication_all_set_schema_pub", "DROP SCHEMA IF EXISTS publication_all_set_schema CASCADE"}},
 				},
 				{
 					Query: `SELECT count(*)
 						FROM pg_catalog.pg_publication_namespace pn
 						JOIN pg_catalog.pg_publication p ON p.oid = pn.pnpubid
-						WHERE p.pubname = 'publication_all_set_schema_pub';`,
-					Expected: []sql.Row{{0}},
+						WHERE p.pubname = 'publication_all_set_schema_pub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testpublicationalltablesrejectssetschemarepro-0003-select-count-*-from-pg_catalog.pg_publication_namespace",
+						Cleanup: []string{"DROP PUBLICATION IF EXISTS publication_all_set_schema_pub", "DROP SCHEMA IF EXISTS publication_all_set_schema CASCADE"}},
 				},
 			},
 		},
@@ -1163,19 +1129,17 @@ func TestPublicationColumnListRequiresReplicaIdentityForUpdatesRepro(t *testing.
 				{
 					Query: `CREATE PUBLICATION publication_update_columns
 						FOR TABLE publication_identity_columns (label)
-						WITH (publish = 'update');`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testpublicationcolumnlistrequiresreplicaidentityforupdatesrepro-0001-create-publication-publication_update_columns-for-table",
-
-						// TestPublicationColumnListRequiresReplicaIdentityIndexForUpdatesRepro
-						// reproduces a logical-replication consistency bug: when REPLICA IDENTITY
-						// USING INDEX is configured, publication column lists for UPDATE or DELETE must
-						// include that index's columns.
-						Compare: "sqlstate"},
+						WITH (publish = 'update');`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testpublicationcolumnlistrequiresreplicaidentityforupdatesrepro-0001-create-publication-publication_update_columns-for-table"},
 				},
 			},
 		},
 	})
 }
 
+// TestPublicationColumnListRequiresReplicaIdentityIndexForUpdatesRepro
+// reproduces a logical-replication consistency bug: when REPLICA IDENTITY
+// USING INDEX is configured, publication column lists for UPDATE or DELETE must
+// include that index's columns.
 func TestPublicationColumnListRequiresReplicaIdentityIndexForUpdatesRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1200,18 +1164,16 @@ func TestPublicationColumnListRequiresReplicaIdentityIndexForUpdatesRepro(t *tes
 				{
 					Query: `CREATE PUBLICATION publication_identity_index_update_columns
 						FOR TABLE publication_identity_index_columns (label)
-						WITH (publish = 'update');`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testpublicationcolumnlistrequiresreplicaidentityindexforupdatesrepro-0001-create-publication-for-table-publication_identity_index_columns",
-
-						// TestPublicationMembershipSurvivesTableRenameRepro reproduces a publication
-						// catalog consistency bug: explicit publication membership is tied to the
-						// relation, so renaming the table should update catalog-visible membership.
-						Compare: "sqlstate"},
+						WITH (publish = 'update');`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testpublicationcolumnlistrequiresreplicaidentityindexforupdatesrepro-0001-create-publication-for-table-publication_identity_index_columns"},
 				},
 			},
 		},
 	})
 }
 
+// TestPublicationMembershipSurvivesTableRenameRepro reproduces a publication
+// catalog consistency bug: explicit publication membership is tied to the
+// relation, so renaming the table should update catalog-visible membership.
 func TestPublicationMembershipSurvivesTableRenameRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1231,11 +1193,6 @@ func TestPublicationMembershipSurvivesTableRenameRepro(t *testing.T) {
 					Query: `SELECT pubname, schemaname, tablename, array_to_string(attnames, ',')
 						FROM pg_catalog.pg_publication_tables
 						WHERE pubname = 'publication_rename_pub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testpublicationmembershipsurvivestablerenamerepro-0001-select-pubname-schemaname-tablename-array_to_string",
-
-						// TestPublicationMembershipClearedWhenTableDroppedRepro reproduces a
-						// publication catalog consistency bug: dropping a published table should remove
-						// its explicit publication membership, so a later same-name table is not
-						// automatically published.
 						ColumnModes: []string{"structural", "schema"}},
 				},
 			},
@@ -1300,14 +1257,13 @@ func TestPublicationSchemaMembershipClearedWhenSchemaDroppedRepro(t *testing.T) 
 					Query: `SELECT count(*)
 						FROM pg_catalog.pg_publication_namespace pn
 						JOIN pg_catalog.pg_publication p ON p.oid = pn.pnpubid
-						WHERE p.pubname = 'publication_empty_schema_drop_pub';`,
-					Expected: []sql.Row{{0}},
+						WHERE p.pubname = 'publication_empty_schema_drop_pub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testpublicationschemamembershipclearedwhenschemadroppedrepro-0001-select-count-*-from-pg_catalog.pg_publication_namespace", Cleanup: []string{"DROP PUBLICATION IF EXISTS publication_empty_schema_drop_pub",
+						"DROP TABLE IF EXISTS publication_empty_schema_drop.items CASCADE", "DROP SCHEMA IF EXISTS publication_empty_schema_drop CASCADE"}},
 				},
 				{
 					Query: `SELECT count(*)
 						FROM pg_catalog.pg_publication_tables
-						WHERE pubname = 'publication_empty_schema_drop_pub';`,
-					Expected: []sql.Row{{0}},
+						WHERE pubname = 'publication_empty_schema_drop_pub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testpublicationschemamembershipclearedwhenschemadroppedrepro-0002-select-count-*-from-pg_catalog.pg_publication_tables", Cleanup: []string{"DROP PUBLICATION IF EXISTS publication_empty_schema_drop_pub", "DROP TABLE IF EXISTS publication_empty_schema_drop.items CASCADE", "DROP SCHEMA IF EXISTS publication_empty_schema_drop CASCADE"}},
 				},
 			},
 		},
@@ -1376,14 +1332,13 @@ func TestDropColumnUsedByPublicationColumnListRequiresCascadeRepro(t *testing.T)
 						FROM information_schema.columns
 						WHERE table_schema = 'public'
 						  AND table_name = 'publication_drop_column_items'
-						  AND column_name = 'label';`,
-					Expected: []sql.Row{{1}},
+						  AND column_name = 'label';`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testdropcolumnusedbypublicationcolumnlistrequirescascaderepro-0002-select-count-*-from-information_schema.columns", Cleanup: []string{"DROP PUBLICATION IF EXISTS publication_drop_column_pub", "DROP TABLE IF EXISTS publication_drop_column_items CASCADE"}},
 				},
 				{
 					Query: `SELECT pubname, schemaname, tablename, array_to_string(attnames, ',')
 						FROM pg_catalog.pg_publication_tables
-						WHERE pubname = 'publication_drop_column_pub';`,
-					Expected: []sql.Row{{"publication_drop_column_pub", "public", "publication_drop_column_items", "id,label"}},
+						WHERE pubname = 'publication_drop_column_pub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testdropcolumnusedbypublicationcolumnlistrequirescascaderepro-0003-select-pubname-schemaname-tablename-array_to_string",
+						Cleanup: []string{"DROP PUBLICATION IF EXISTS publication_drop_column_pub", "DROP TABLE IF EXISTS publication_drop_column_items CASCADE"}},
 				},
 			},
 		},
@@ -1417,8 +1372,8 @@ func TestDropColumnUsedByPublicationRowFilterRequiresCascadeRepro(t *testing.T) 
 						FROM information_schema.columns
 						WHERE table_schema = 'public'
 						  AND table_name = 'publication_filter_drop_items'
-						  AND column_name = 'visible';`,
-					Expected: []sql.Row{{1}},
+						  AND column_name = 'visible';`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testdropcolumnusedbypublicationrowfilterrequirescascaderepro-0002-select-count-*-from-information_schema.columns",
+						Cleanup: []string{"DROP PUBLICATION IF EXISTS publication_filter_drop_pub", "DROP TABLE IF EXISTS publication_filter_drop_items CASCADE"}},
 				},
 			},
 		},
@@ -1451,10 +1406,6 @@ func TestPublicationRowFilterSurvivesColumnRenameRepro(t *testing.T) {
 							replace(replace(rowfilter, '(', ''), ')', '')
 						FROM pg_catalog.pg_publication_tables
 						WHERE pubname = 'publication_filter_rename_pub';`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testpublicationrowfiltersurvivescolumnrenamerepro-0001-select-pubname-schemaname-tablename-replace",
-
-						// TestPublicationRowFilterRejectsUnknownColumnRepro reproduces a publication
-						// correctness bug: PostgreSQL validates row-filter expressions when the
-						// publication is created, including rejecting missing table columns.
 						ColumnModes: []string{"structural", "schema"}},
 				},
 			},
@@ -1943,10 +1894,6 @@ func TestPublicationDeleteRequiresReplicaIdentityRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `DELETE FROM publication_delete_identity WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-correctness-repro-test-testpublicationdeleterequiresreplicaidentityrepro-0001-delete-from-publication_delete_identity-where-id",
-
-						// TestPublicationUpdateRequiresReplicaIdentityRepro reproduces a
-						// logical-replication consistency bug: PostgreSQL rejects UPDATE on a table
-						// that publishes updates but has REPLICA IDENTITY NOTHING.
 						Compare: "sqlstate"},
 				},
 				{
