@@ -15,6 +15,7 @@
 package functions
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -62,7 +63,11 @@ var int4out = framework.Function1{
 	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Int32},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
-		return strconv.FormatInt(int64(val.(int32)), 10), nil
+		iVal, err := int4Value(val)
+		if err != nil {
+			return nil, err
+		}
+		return strconv.FormatInt(int64(iVal), 10), nil
 	},
 }
 
@@ -89,10 +94,37 @@ var int4send = framework.Function1{
 	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Int32},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		iVal, err := int4Value(val)
+		if err != nil {
+			return nil, err
+		}
 		writer := utils.NewWireWriter()
-		writer.WriteInt32(val.(int32))
+		writer.WriteInt32(iVal)
 		return writer.BufferData(), nil
 	},
+}
+
+func int4Value(val any) (int32, error) {
+	switch n := val.(type) {
+	case int32:
+		return n, nil
+	case int:
+		if n > 2147483647 || n < -2147483648 {
+			return 0, fmt.Errorf("integer out of range")
+		}
+		return int32(n), nil
+	case int64:
+		if n > 2147483647 || n < -2147483648 {
+			return 0, fmt.Errorf("integer out of range")
+		}
+		return int32(n), nil
+	case int16:
+		return int32(n), nil
+	case int8:
+		return int32(n), nil
+	default:
+		return 0, fmt.Errorf("expected int4 value, got %T", val)
+	}
 }
 
 // btint4cmp represents the PostgreSQL function of int4 type compare.
