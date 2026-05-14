@@ -10,6 +10,17 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### alpha - 2026-05-14 10:12 MST
+
+- Result: isolated the remaining BasicIndexing Dolt-specific plan rows claimed at 10:02 MST: ordinals 22, 28, 29, 30, 32, 281, 289, and 321 now use internal expectations instead of stale PostgreSQL oracle rows.
+- Validation in clean verifier `/private/tmp/doltgresql-alpha-basicindex-head.EPZ8VD` with shared `third_party/dolt`, generated parser files, isolated `GOCACHE`/`GOTMPDIR`, and ICU flags:
+  - `go test -vet=off ./testing/go -run '^TestBasicIndexing$/^(Covering_string_Index|Covering_Composite_Index|PostgreSQL_jsonb_gin_indexed_lookup_and_recheck|PostgreSQL_jsonb_gin_path_ops_indexed_lookup|Proper_range_AND_\+_OR_handling)$' -count=1 -timeout=10m -v`
+  - `go test -vet=off ./testing/go -run '^TestPostgresOracleManifestGenerated$' -count=1 -timeout=10m -v`
+  - `jq empty testing/go/testdata/postgres_oracle_manifest.json testing/go/testdata/postgres_oracle_migrations/index_test.oracle-map.json`
+  - `git diff --check -- testing/go/index_test.go testing/go/testdata/postgres_oracle_migrations/index_test.oracle-map.json testing/go/testdata/postgres_oracle_manifest.json`
+- Boundary: this commit only covers BasicIndexing plan/oracle drift, not the later BasicIndexing metadata/sidecar failures (`pg_get_indexdef`, opclass OIDs, `dg_gin_*`, index attribute rows, expression-index stats target).
+- Next action: commit this isolated oracle-harness slice, then rerun broader `TestBasicIndexing` from the new head before claiming any next lane.
+
 ### zeta - 2026-05-14 10:02 MST
 
 - Result: fixed the access-method leak that broke `TestPgDumpPsqlRestoreExternalAppDumpRoundTrip/Boluwatife-AJB/backend-in-node`.

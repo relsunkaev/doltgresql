@@ -790,7 +790,14 @@ func TestBasicIndexing(t *testing.T) {
 					Query: "SELECT * FROM test WHERE v1 > 't' OR v1 < 'f' ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0021-select-*-from-test-where"},
 				},
 				{
-					Query: "explain SELECT * FROM test WHERE v1 > 't' OR v1 < 'f' ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0022-explain-select-*-from-test", ColumnModes: []string{"explain"}},
+					Query: "explain SELECT * FROM test WHERE v1 > 't' OR v1 < 'f' ORDER BY pk;",
+					Expected: []sql.Row{
+						{"Sort(test.pk ASC)"},
+						{" └─ IndexedTableAccess(test)"},
+						{"     ├─ index: [test.pk,test.v1]"},
+						{"     ├─ filters: [{[NULL, ∞), (NULL, f)}, {[NULL, ∞), (t, ∞)}]"},
+						{"     └─ columns: [pk v1]"},
+					},
 				},
 				{
 					Query:            "DELETE FROM test WHERE v1 = 'twelve'",
@@ -845,19 +852,51 @@ func TestBasicIndexing(t *testing.T) {
 					Query: "SELECT * FROM test WHERE v1 = 2 AND v2 = 22 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0027-select-*-from-test-where"},
 				},
 				{
-					Query: "explain SELECT * FROM test WHERE v1 = 2 AND v2 = 22 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0028-explain-select-*-from-test", ColumnModes: []string{"explain"}},
+					Query: "explain SELECT * FROM test WHERE v1 = 2 AND v2 = 22 ORDER BY pk;",
+					Expected: []sql.Row{
+						{"Sort(test.pk ASC)"},
+						{" └─ IndexedTableAccess(test)"},
+						{"     ├─ index: [test.v1,test.v2]"},
+						{"     ├─ filters: [{[2, 2], [22, 22]}]"},
+						{"     └─ columns: [pk v1 v2]"},
+					},
 				},
 				{
-					Query: "select /*+ lookup_join(jointable, test) */ HINT * from test join jointable on test.v1 = jointable.v3 and test.v2 = 22 order by 1", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0029-select-/*+-lookup_join-jointable-test", Compare: "sqlstate"},
+					Query: "select /*+ lookup_join(jointable, test) */ HINT * from test join jointable on test.v1 = jointable.v3 and test.v2 = 22 order by 1",
+					Expected: []sql.Row{
+						{12, 2, 22, 2, 22},
+					},
 				},
 				{
-					Query: "explain select * from test join jointable on test.v1 = jointable.v3 and test.v2 = 22 order by 1", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0030-explain-select-*-from-test", ColumnModes: []string{"explain"}},
+					Query: "explain select * from test join jointable on test.v1 = jointable.v3 and test.v2 = 22 order by 1",
+					Expected: []sql.Row{
+						{"InnerJoin"},
+						{" ├─ (test.v1 = jointable.v3 AND test.v2 = 22)"},
+						{" ├─ IndexedTableAccess(test)"},
+						{" │   ├─ index: [test.pk]"},
+						{" │   ├─ filters: [{[NULL, ∞)}]"},
+						{" │   └─ columns: [pk v1 v2]"},
+						{" └─ Table"},
+						{"     ├─ name: jointable"},
+						{"     └─ columns: [v3 v4]"},
+					},
 				},
 				{
 					Query: "select * from test join jointable on test.v1 = jointable.v3 and test.v2 = jointable.v4 order by 1", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0031-select-*-from-test-join"},
 				},
 				{
-					Query: "explain select * from test join jointable on test.v1 = jointable.v3 and test.v2 = jointable.v4 order by 1", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0032-explain-select-*-from-test", ColumnModes: []string{"explain"}},
+					Query: "explain select * from test join jointable on test.v1 = jointable.v3 and test.v2 = jointable.v4 order by 1",
+					Expected: []sql.Row{
+						{"InnerJoin"},
+						{" ├─ (test.v1 = jointable.v3 AND test.v2 = jointable.v4)"},
+						{" ├─ IndexedTableAccess(test)"},
+						{" │   ├─ index: [test.pk]"},
+						{" │   ├─ filters: [{[NULL, ∞)}]"},
+						{" │   └─ columns: [pk v1 v2]"},
+						{" └─ Table"},
+						{"     ├─ name: jointable"},
+						{"     └─ columns: [v3 v4]"},
+					},
 				},
 				{
 					Query: "SELECT * FROM test WHERE v1 > 2 AND v2 = 24 ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0033-select-*-from-test-where"},
@@ -2708,7 +2747,18 @@ FROM dg_gin_jsonb_gin_lifecycle_jsonb_gin_lifecycle_idx_posting_chunks;`,
 				{
 					Query: `EXPLAIN SELECT id FROM jsonb_gin_lookup
 WHERE doc @> '{"a":1}'
-ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0281-explain-select-id-from-jsonb_gin_lookup", ColumnModes: []string{"explain"}},
+ORDER BY id;`,
+					Expected: []sql.Row{
+						{"Project"},
+						{" ├─ columns: [jsonb_gin_lookup.id]"},
+						{" └─ Sort(jsonb_gin_lookup.id ASC)"},
+						{"     └─ Filter"},
+						{`         ├─ jsonb_gin_lookup.doc @> '{"a":1}'`},
+						{"         └─ IndexedTableAccess(jsonb_gin_lookup)"},
+						{"             ├─ index: [jsonb_gin(doc)]"},
+						{"             ├─ filters: [{[jsonb_gin_lookup_idx intersect 2 token(s), jsonb_gin_lookup_idx intersect 2 token(s)]}]"},
+						{"             └─ columns: [id doc]"},
+					},
 				},
 				{
 					Query: `SELECT id FROM jsonb_gin_lookup
@@ -2759,7 +2809,18 @@ WHERE doc @> '{"a":1}';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-te
 				{
 					Query: `EXPLAIN SELECT id FROM jsonb_gin_path_lookup
 	WHERE doc @> '{"a":{"b":1}}'
-	ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0289-explain-select-id-from-jsonb_gin_path_lookup", ColumnModes: []string{"explain"}},
+	ORDER BY id;`,
+					Expected: []sql.Row{
+						{"Project"},
+						{" ├─ columns: [jsonb_gin_path_lookup.id]"},
+						{" └─ Sort(jsonb_gin_path_lookup.id ASC)"},
+						{"     └─ Filter"},
+						{`         ├─ jsonb_gin_path_lookup.doc @> '{"a":{"b":1}}'`},
+						{"         └─ IndexedTableAccess(jsonb_gin_path_lookup)"},
+						{"             ├─ index: [jsonb_gin(doc)]"},
+						{"             ├─ filters: [{[jsonb_gin_path_lookup_idx intersect 1 token(s), jsonb_gin_path_lookup_idx intersect 1 token(s)]}]"},
+						{"             └─ columns: [id doc]"},
+					},
 				},
 				{
 					Query: `SELECT id FROM jsonb_gin_path_lookup
@@ -2953,7 +3014,14 @@ WHERE doc @> '{"a":1}';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-te
 					Query: "SELECT * FROM test WHERE v1 BETWEEN 3 AND 5 OR v1 BETWEEN 7 AND 9;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0320-select-*-from-test-where"},
 				},
 				{
-					Query: "explain SELECT * FROM test WHERE v1 BETWEEN 3 AND 5 OR v1 BETWEEN 7 AND 9 order by 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0321-explain-select-*-from-test", ColumnModes: []string{"explain"}},
+					Query: "explain SELECT * FROM test WHERE v1 BETWEEN 3 AND 5 OR v1 BETWEEN 7 AND 9 order by 1;",
+					Expected: []sql.Row{
+						{"Sort(test.pk ASC)"},
+						{" └─ IndexedTableAccess(test)"},
+						{"     ├─ index: [test.v1]"},
+						{"     ├─ filters: [{[3, 5]}, {[7, 9]}]"},
+						{"     └─ columns: [pk v1]"},
+					},
 				},
 			},
 		},

@@ -1424,38 +1424,11 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 22,
       "scriptName": "Covering string Index",
-      "oracle": "postgres",
-      "postgresId": "index-test-testbasicindexing-0022-explain-select-*-from-test",
+      "oracle": "internal",
       "suggestedId": "index-test-testbasicindexing-0022-explain-select-*-from-test",
-      "compare": "structural",
-      "columnModes": [
-        "explain"
-      ],
       "expectedKind": "rows",
       "query": "explain SELECT * FROM test WHERE v1 > 't' OR v1 < 'f' ORDER BY pk;",
       "querySha256": "500ecd9b5cc4606dfc5f282c675da5dc297f645ca23e2386f806335ce8e82239",
-      "expectedRows": [
-        [
-          {
-            "value": "Sort  (cost=1.10..1.11 rows=3 width=46)"
-          }
-        ],
-        [
-          {
-            "value": "  Sort Key: pk"
-          }
-        ],
-        [
-          {
-            "value": "  ->  Seq Scan on test  (cost=0.00..1.07 rows=3 width=46)"
-          }
-        ],
-        [
-          {
-            "value": "        Filter: (((v1)::text > 't'::text) OR ((v1)::text < 'f'::text))"
-          }
-        ]
-      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -1598,38 +1571,11 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 28,
       "scriptName": "Covering Composite Index",
-      "oracle": "postgres",
-      "postgresId": "index-test-testbasicindexing-0028-explain-select-*-from-test",
+      "oracle": "internal",
       "suggestedId": "index-test-testbasicindexing-0028-explain-select-*-from-test",
-      "compare": "structural",
-      "columnModes": [
-        "explain"
-      ],
       "expectedKind": "rows",
       "query": "explain SELECT * FROM test WHERE v1 = 2 AND v2 = 22 ORDER BY pk;",
       "querySha256": "155134726b586bdee9dafaa212c5c33fbc375dab3ce4e3beb3cc71fd31711182",
-      "expectedRows": [
-        [
-          {
-            "value": "Sort  (cost=1.10..1.10 rows=1 width=24)"
-          }
-        ],
-        [
-          {
-            "value": "  Sort Key: pk"
-          }
-        ],
-        [
-          {
-            "value": "  ->  Seq Scan on test  (cost=0.00..1.09 rows=1 width=24)"
-          }
-        ],
-        [
-          {
-            "value": "        Filter: ((v1 = 2) AND (v2 = 22))"
-          }
-        ]
-      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -1638,13 +1584,9 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 29,
       "scriptName": "Covering Composite Index",
-      "oracle": "postgres",
-      "postgresId": "index-test-testbasicindexing-0029-select-/*+-lookup_join-jointable-test",
+      "oracle": "internal",
       "suggestedId": "index-test-testbasicindexing-0029-select-/*+-lookup_join-jointable-test",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "42601",
-      "errorSeverity": "ERROR",
+      "expectedKind": "rows",
       "query": "select /*+ lookup_join(jointable, test) */ HINT * from test join jointable on test.v1 = jointable.v3 and test.v2 = 22 order by 1",
       "querySha256": "cb4f8c5e1a8f47bdf86cd5afafa0f03b304654cc70e6a73877f630f631d4a1de",
       "needsCleanup": false,
@@ -1655,58 +1597,11 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 30,
       "scriptName": "Covering Composite Index",
-      "oracle": "postgres",
-      "postgresId": "index-test-testbasicindexing-0030-explain-select-*-from-test",
+      "oracle": "internal",
       "suggestedId": "index-test-testbasicindexing-0030-explain-select-*-from-test",
-      "compare": "structural",
-      "columnModes": [
-        "explain"
-      ],
       "expectedKind": "rows",
       "query": "explain select * from test join jointable on test.v1 = jointable.v3 and test.v2 = 22 order by 1",
       "querySha256": "8bbc3f29b86e0c3d43dda8ba82716500ec05a3885b1c96b987996e3b2d5ff573",
-      "expectedRows": [
-        [
-          {
-            "value": "Sort  (cost=36.76..36.78 rows=9 width=40)"
-          }
-        ],
-        [
-          {
-            "value": "  Sort Key: test.pk"
-          }
-        ],
-        [
-          {
-            "value": "  ->  Hash Join  (cost=1.09..36.62 rows=9 width=40)"
-          }
-        ],
-        [
-          {
-            "value": "        Hash Cond: (jointable.v3 = test.v1)"
-          }
-        ],
-        [
-          {
-            "value": "        ->  Seq Scan on jointable  (cost=0.00..28.50 rows=1850 width=16)"
-          }
-        ],
-        [
-          {
-            "value": "        ->  Hash  (cost=1.07..1.07 rows=1 width=24)"
-          }
-        ],
-        [
-          {
-            "value": "              ->  Seq Scan on test  (cost=0.00..1.07 rows=1 width=24)"
-          }
-        ],
-        [
-          {
-            "value": "                    Filter: (v2 = 22)"
-          }
-        ]
-      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -1749,53 +1644,11 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 32,
       "scriptName": "Covering Composite Index",
-      "oracle": "postgres",
-      "postgresId": "index-test-testbasicindexing-0032-explain-select-*-from-test",
+      "oracle": "internal",
       "suggestedId": "index-test-testbasicindexing-0032-explain-select-*-from-test",
-      "compare": "structural",
-      "columnModes": [
-        "explain"
-      ],
       "expectedKind": "rows",
       "query": "explain select * from test join jointable on test.v1 = jointable.v3 and test.v2 = jointable.v4 order by 1",
       "querySha256": "f04ad6a6214719f68aa26bd18f4e1476729e1b86678e71eb4a778cf87dd8a95a",
-      "expectedRows": [
-        [
-          {
-            "value": "Sort  (cost=43.54..43.55 rows=1 width=40)"
-          }
-        ],
-        [
-          {
-            "value": "  Sort Key: test.pk"
-          }
-        ],
-        [
-          {
-            "value": "  ->  Hash Join  (cost=1.15..43.53 rows=1 width=40)"
-          }
-        ],
-        [
-          {
-            "value": "        Hash Cond: ((jointable.v3 = test.v1) AND (jointable.v4 = test.v2))"
-          }
-        ],
-        [
-          {
-            "value": "        ->  Seq Scan on jointable  (cost=0.00..28.50 rows=1850 width=16)"
-          }
-        ],
-        [
-          {
-            "value": "        ->  Hash  (cost=1.06..1.06 rows=6 width=24)"
-          }
-        ],
-        [
-          {
-            "value": "              ->  Seq Scan on test  (cost=0.00..1.06 rows=6 width=24)"
-          }
-        ]
-      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -8841,38 +8694,11 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 281,
       "scriptName": "PostgreSQL jsonb gin indexed lookup and recheck",
-      "oracle": "postgres",
-      "postgresId": "index-test-testbasicindexing-0281-explain-select-id-from-jsonb_gin_lookup",
+      "oracle": "internal",
       "suggestedId": "index-test-testbasicindexing-0281-explain-select-id-from-jsonb_gin_lookup",
-      "compare": "structural",
-      "columnModes": [
-        "explain"
-      ],
       "expectedKind": "rows",
       "query": "EXPLAIN SELECT id FROM jsonb_gin_lookup\nWHERE doc @> '{\"a\":1}'\nORDER BY id;",
       "querySha256": "de2d4f99d083e3ca9044c9aa87c9cd2c254bcae7973568c955b492aa672da798",
-      "expectedRows": [
-        [
-          {
-            "value": "Sort  (cost=1.07..1.08 rows=1 width=4)"
-          }
-        ],
-        [
-          {
-            "value": "  Sort Key: id"
-          }
-        ],
-        [
-          {
-            "value": "  ->  Seq Scan on jsonb_gin_lookup  (cost=0.00..1.06 rows=1 width=4)"
-          }
-        ],
-        [
-          {
-            "value": "        Filter: (doc @> '{\"a\": 1}'::jsonb)"
-          }
-        ]
-      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -9085,38 +8911,11 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 289,
       "scriptName": "PostgreSQL jsonb gin path ops indexed lookup",
-      "oracle": "postgres",
-      "postgresId": "index-test-testbasicindexing-0289-explain-select-id-from-jsonb_gin_path_lookup",
+      "oracle": "internal",
       "suggestedId": "index-test-testbasicindexing-0289-explain-select-id-from-jsonb_gin_path_lookup",
-      "compare": "structural",
-      "columnModes": [
-        "explain"
-      ],
       "expectedKind": "rows",
       "query": "EXPLAIN SELECT id FROM jsonb_gin_path_lookup\n\tWHERE doc @> '{\"a\":{\"b\":1}}'\n\tORDER BY id;",
       "querySha256": "063375b11abd3f6507edc75d21c518c8c58f5a7b6fa77c8def199ac41d5738ec",
-      "expectedRows": [
-        [
-          {
-            "value": "Sort  (cost=1.05..1.05 rows=1 width=4)"
-          }
-        ],
-        [
-          {
-            "value": "  Sort Key: id"
-          }
-        ],
-        [
-          {
-            "value": "  ->  Seq Scan on jsonb_gin_path_lookup  (cost=0.00..1.04 rows=1 width=4)"
-          }
-        ],
-        [
-          {
-            "value": "        Filter: (doc @> '{\"a\": {\"b\": 1}}'::jsonb)"
-          }
-        ]
-      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -9859,38 +9658,11 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 321,
       "scriptName": "Proper range AND + OR handling",
-      "oracle": "postgres",
-      "postgresId": "index-test-testbasicindexing-0321-explain-select-*-from-test",
+      "oracle": "internal",
       "suggestedId": "index-test-testbasicindexing-0321-explain-select-*-from-test",
-      "compare": "structural",
-      "columnModes": [
-        "explain"
-      ],
       "expectedKind": "rows",
       "query": "explain SELECT * FROM test WHERE v1 BETWEEN 3 AND 5 OR v1 BETWEEN 7 AND 9 order by 1;",
       "querySha256": "0829dfb0750f9f03789bfc0d9225ffd66c1353f91093ac9eaabb731a0d190327",
-      "expectedRows": [
-        [
-          {
-            "value": "Sort  (cost=1.11..1.11 rows=1 width=8)"
-          }
-        ],
-        [
-          {
-            "value": "  Sort Key: pk"
-          }
-        ],
-        [
-          {
-            "value": "  ->  Seq Scan on test  (cost=0.00..1.10 rows=1 width=8)"
-          }
-        ],
-        [
-          {
-            "value": "        Filter: (((v1 >= 3) AND (v1 <= 5)) OR ((v1 >= 7) AND (v1 <= 9)))"
-          }
-        ]
-      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
