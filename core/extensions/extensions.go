@@ -131,6 +131,9 @@ func GetAvailableExtensions() map[string]*pg_extension.ExtensionFiles {
 	}
 	for name := range builtinExtensionShims {
 		if shim, ok := BuiltinExtensionShim(name); ok {
+			if localExt, ok := available[name]; ok {
+				shim.SQLFileNames = append([]string(nil), localExt.SQLFileNames...)
+			}
 			available[name] = shim
 		}
 	}

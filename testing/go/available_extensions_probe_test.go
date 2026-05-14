@@ -53,10 +53,21 @@ func TestAvailableExtensionsProbe(t *testing.T) {
 					Query: `SELECT name, version, installed, relocatable, schema
 						FROM pg_catalog.pg_available_extension_versions
 						WHERE name IN ('btree_gist', 'citext', 'hstore', 'pgcrypto', 'plpgsql', 'uuid-ossp', 'vector')
-						ORDER BY name;`,
+						ORDER BY name, version;`,
 					Expected: []sql.Row{
+						{"btree_gist", "1.2", "f", "t", nil},
+						{"btree_gist", "1.3", "f", "t", nil},
+						{"btree_gist", "1.4", "f", "t", nil},
+						{"btree_gist", "1.5", "f", "t", nil},
+						{"btree_gist", "1.6", "f", "t", nil},
 						{"btree_gist", "1.7", "f", "t", nil},
+						{"citext", "1.4", "f", "t", nil},
+						{"citext", "1.5", "f", "t", nil},
 						{"citext", "1.6", "t", "t", nil},
+						{"hstore", "1.4", "f", "t", nil},
+						{"hstore", "1.5", "f", "t", nil},
+						{"hstore", "1.6", "f", "t", nil},
+						{"hstore", "1.7", "f", "t", nil},
 						{"hstore", "1.8", "t", "t", nil},
 						{"pgcrypto", "1.3", "t", "t", nil},
 						{"plpgsql", "1.0", "f", "f", "pg_catalog"},

@@ -21,6 +21,7 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/extensions"
+	"github.com/dolthub/doltgresql/core/extensions/pg_extension"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -56,25 +57,49 @@ func (p PgAvailableExtensionVersionsHandler) RowIter(ctx *sql.Context, partition
 	rows := make([]sql.Row, 0, len(names))
 	for _, name := range names {
 		ext := availableExtensions[name]
+		var installedVersion pg_extension.Version
 		installed := false
 		if loaded, err := extCollection.GetLoadedExtension(ctx, id.NewExtension(name)); err != nil {
 			return nil, err
-		} else if loaded.ExtName.IsValid() && loaded.LibIdentifier.Version() == ext.Control.DefaultVersion {
+		} else if loaded.ExtName.IsValid() {
+			installedVersion = loaded.LibIdentifier.Version()
 			installed = true
 		}
-		rows = append(rows, sql.Row{
-			name,
-			ext.Control.DefaultVersion.String(),
-			installed,
-			ext.Control.Superuser,
-			ext.Control.Trusted,
-			ext.Control.Relocatable,
-			nullableString(ext.Control.Schema),
-			stringSliceToAny(ext.Control.Requires),
-			nullableString(ext.Control.Comment),
-		})
+		for _, version := range availableExtensionVersions(ext) {
+			rows = append(rows, sql.Row{
+				name,
+				version.String(),
+				installed && installedVersion == version,
+				ext.Control.Superuser,
+				ext.Control.Trusted,
+				ext.Control.Relocatable,
+				nullableString(ext.Control.Schema),
+				stringSliceToAny(ext.Control.Requires),
+				nullableString(ext.Control.Comment),
+			})
+		}
 	}
 	return sql.RowsToRowIter(rows...), nil
+}
+
+func availableExtensionVersions(ext *pg_extension.ExtensionFiles) []pg_extension.Version {
+	versions := make(map[pg_extension.Version]struct{})
+	versions[ext.Control.DefaultVersion] = struct{}{}
+	for _, sqlFileName := range ext.SQLFileNames {
+		fileVersions := pg_extension.DecodeFilenameVersions(ext.Name, sqlFileName)
+		if fileVersions.To != 0 {
+			versions[fileVersions.To] = struct{}{}
+		}
+	}
+	if len(versions) == 0 {
+		return nil
+	}
+	sortedVersions := make([]pg_extension.Version, 0, len(versions))
+	for version := range versions {
+		sortedVersions = append(sortedVersions, version)
+	}
+	slices.Sort(sortedVersions)
+	return sortedVersions
 }
 
 // Schema implements the interface tables.Handler.
