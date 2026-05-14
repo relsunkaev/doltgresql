@@ -101,12 +101,24 @@ func TestErrMessageToSQLStateFormatsMissingAlterTableColumn(t *testing.T) {
 	code, ok = errMessageToSQLState(`column "a" not found in data type t1a`)
 	require.True(t, ok)
 	require.Equal(t, pgcode.UndefinedColumn.String(), code)
+
+	code, ok = errMessageToSQLState(`column "not_a_field" of relation "rename_attr_missing" does not exist`)
+	require.True(t, ok)
+	require.Equal(t, pgcode.UndefinedColumn.String(), code)
+
+	code, ok = errMessageToSQLState(`column "b" of relation "rename_attr_collision" already exists`)
+	require.True(t, ok)
+	require.Equal(t, pgcode.DuplicateColumn.String(), code)
 }
 
 func TestErrMessageToSQLStateFormatsAlterTableRowTypeDependency(t *testing.T) {
 	code, ok := errMessageToSQLState(`cannot alter table "row_type_parent" because column "row_type_child.parent_row" uses its row type`)
 	require.True(t, ok)
 	require.Equal(t, pgcode.FeatureNotSupported.String(), code)
+
+	code, ok = errMessageToSQLState(`"rename_attr_enum" is not a composite type`)
+	require.True(t, ok)
+	require.Equal(t, pgcode.UndefinedTable.String(), code)
 }
 
 func TestErrMessageToSQLStateFormatsTruncateForeignKeyDependency(t *testing.T) {
