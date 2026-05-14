@@ -800,8 +800,7 @@ JOIN pg_catalog.pg_opfamily btree_opf ON btree_opf.oid = amop.amopsortfamily
 JOIN pg_catalog.pg_am am ON am.oid = amop.amopmethod
 WHERE am.amname = 'gist'
 	AND opf.opfname = 'gist_int4_ops'
-	AND amop.amopstrategy = 15;`,
-					Expected: []sql.Row{{"gist_int4_ops", int16(15), "o", "integer_ops"}},
+	AND amop.amopstrategy = 15;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0121-select-opf.opfname-amop.amopstrategy-amop.amoppurpose-btree_opf.opfname", Cleanup: []string{"DROP EXTENSION IF EXISTS btree_gist CASCADE"}},
 				},
 				{
 					Query: `SELECT opf.opfname, amproc.amprocnum, amproc.amproc
@@ -811,12 +810,7 @@ JOIN pg_catalog.pg_am am ON am.oid = opf.opfmethod
 WHERE am.amname = 'gist'
 	AND opf.opfname = 'gist_int4_ops'
 	AND amproc.amprocnum IN (1, 8, 9)
-ORDER BY amproc.amprocnum;`,
-					Expected: []sql.Row{
-						{"gist_int4_ops", int16(1), "gbt_int4_consistent"},
-						{"gist_int4_ops", int16(8), "gbt_int4_distance"},
-						{"gist_int4_ops", int16(9), "gbt_int4_fetch"},
-					},
+ORDER BY amproc.amprocnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0122-select-opf.opfname-amproc.amprocnum-amproc.amproc-from", Cleanup: []string{"DROP EXTENSION IF EXISTS btree_gist CASCADE"}},
 				},
 				{
 					Query:       `CREATE TABLE btree_gist_probe (id integer primary key, v integer); CREATE INDEX btree_gist_probe_v_idx ON btree_gist_probe USING gist (v);`,
@@ -879,14 +873,7 @@ ORDER BY amproc.amprocnum;`,
 						JOIN pg_catalog.pg_operator opr ON opr.oid = amop.amopopr
 						WHERE am.amname = 'btree'
 							AND opf.opfname = 'citext_ops'
-						ORDER BY amop.amopstrategy;`,
-					Expected: []sql.Row{
-						{"citext_ops", int16(1), "<"},
-						{"citext_ops", int16(2), "<="},
-						{"citext_ops", int16(3), "="},
-						{"citext_ops", int16(4), ">="},
-						{"citext_ops", int16(5), ">"},
-					},
+						ORDER BY amop.amopstrategy;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0129-select-opf.opfname-amop.amopstrategy-opr.oprname-from", Cleanup: []string{"DROP EXTENSION IF EXISTS citext CASCADE", "DROP TABLE IF EXISTS app_users CASCADE"}},
 				},
 				{
 					Query: `SELECT opf.opfname, amproc.amprocnum, amproc.amproc::regproc::text
@@ -894,8 +881,7 @@ ORDER BY amproc.amprocnum;`,
 						JOIN pg_catalog.pg_opfamily opf ON opf.oid = amproc.amprocfamily
 						JOIN pg_catalog.pg_am am ON am.oid = opf.opfmethod
 						WHERE am.amname = 'btree'
-							AND opf.opfname = 'citext_ops';`,
-					Expected: []sql.Row{{"citext_ops", int16(1), "citext_cmp"}},
+							AND opf.opfname = 'citext_ops';`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0130-select-opf.opfname-amproc.amprocnum-amproc.amproc::regproc::text-from", Cleanup: []string{"DROP EXTENSION IF EXISTS citext CASCADE", "DROP TABLE IF EXISTS app_users CASCADE"}},
 				},
 				{
 					Query: `SELECT ('Alice@Example.com'::public.citext = 'alice@example.com'::public.citext)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0131-select-alice@example.com-::public.citext-=-alice@example.com", Cleanup: []string{"DROP EXTENSION IF EXISTS citext CASCADE", "DROP TABLE IF EXISTS app_users CASCADE"}},
@@ -1295,12 +1281,10 @@ ORDER BY am.amname, opf.opfname, amproc.amprocnum;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT extname FROM pg_catalog.pg_extension WHERE extname = 'hstore';`,
-					Expected: []sql.Row{},
+					Query: `SELECT extname FROM pg_catalog.pg_extension WHERE extname = 'hstore';`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0227-select-extname-from-pg_catalog.pg_extension-where", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE"}},
 				},
 				{
-					Query:       `DROP EXTENSION hstore;`,
-					ExpectedErr: `extension "hstore" does not exist`,
+					Query: `DROP EXTENSION hstore;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0228-drop-extension-hstore", Compare: "sqlstate", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE"}},
 				},
 			},
 		},

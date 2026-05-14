@@ -2209,32 +2209,93 @@
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 121,
       "scriptName": "CREATE EXTENSION btree_gist dump compatibility shim",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0121-select-opf.opfname-amop.amopstrategy-amop.amoppurpose-btree_opf.opfname",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0121-select-opf.opfname-amop.amopstrategy-amop.amoppurpose-btree_opf.opfname",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT opf.opfname, amop.amopstrategy, amop.amoppurpose, btree_opf.opfname\nFROM pg_catalog.pg_amop amop\nJOIN pg_catalog.pg_opfamily opf ON opf.oid = amop.amopfamily\nJOIN pg_catalog.pg_opfamily btree_opf ON btree_opf.oid = amop.amopsortfamily\nJOIN pg_catalog.pg_am am ON am.oid = amop.amopmethod\nWHERE am.amname = 'gist'\n\tAND opf.opfname = 'gist_int4_ops'\n\tAND amop.amopstrategy = 15;",
       "querySha256": "8c22996446341b0c3faf4ff9803f39e8d4d306843a955cd4095c76279516da11",
+      "expectedRows": [
+        [
+          {
+            "value": "gist_int4_ops"
+          },
+          {
+            "value": "15"
+          },
+          {
+            "value": "o"
+          },
+          {
+            "value": "integer_ops"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS btree_gist CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0122",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 122,
       "scriptName": "CREATE EXTENSION btree_gist dump compatibility shim",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0122-select-opf.opfname-amproc.amprocnum-amproc.amproc-from",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0122-select-opf.opfname-amproc.amprocnum-amproc.amproc-from",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT opf.opfname, amproc.amprocnum, amproc.amproc\nFROM pg_catalog.pg_amproc amproc\nJOIN pg_catalog.pg_opfamily opf ON opf.oid = amproc.amprocfamily\nJOIN pg_catalog.pg_am am ON am.oid = opf.opfmethod\nWHERE am.amname = 'gist'\n\tAND opf.opfname = 'gist_int4_ops'\n\tAND amproc.amprocnum IN (1, 8, 9)\nORDER BY amproc.amprocnum;",
       "querySha256": "62fbc11ad160d838bee776d2d4ecf9979084a953f27735152cc9ebe136360d43",
+      "expectedRows": [
+        [
+          {
+            "value": "gist_int4_ops"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "gbt_int4_consistent"
+          }
+        ],
+        [
+          {
+            "value": "gist_int4_ops"
+          },
+          {
+            "value": "8"
+          },
+          {
+            "value": "gbt_int4_distance"
+          }
+        ],
+        [
+          {
+            "value": "gist_int4_ops"
+          },
+          {
+            "value": "9"
+          },
+          {
+            "value": "gbt_int4_fetch"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS btree_gist CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0123",
@@ -2372,32 +2433,114 @@
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 129,
       "scriptName": "CREATE EXTENSION citext installs case-insensitive text type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0129-select-opf.opfname-amop.amopstrategy-opr.oprname-from",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0129-select-opf.opfname-amop.amopstrategy-opr.oprname-from",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT opf.opfname, amop.amopstrategy, opr.oprname\n\t\t\t\t\t\tFROM pg_catalog.pg_amop amop\n\t\t\t\t\t\tJOIN pg_catalog.pg_opfamily opf ON opf.oid = amop.amopfamily\n\t\t\t\t\t\tJOIN pg_catalog.pg_am am ON am.oid = amop.amopmethod\n\t\t\t\t\t\tJOIN pg_catalog.pg_operator opr ON opr.oid = amop.amopopr\n\t\t\t\t\t\tWHERE am.amname = 'btree'\n\t\t\t\t\t\t\tAND opf.opfname = 'citext_ops'\n\t\t\t\t\t\tORDER BY amop.amopstrategy;",
       "querySha256": "1b799c59feed2a689c1f35fb8b90b51c697c7f4b18d5f570db3b50d534b6d19c",
+      "expectedRows": [
+        [
+          {
+            "value": "citext_ops"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "<"
+          }
+        ],
+        [
+          {
+            "value": "citext_ops"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "<="
+          }
+        ],
+        [
+          {
+            "value": "citext_ops"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "="
+          }
+        ],
+        [
+          {
+            "value": "citext_ops"
+          },
+          {
+            "value": "4"
+          },
+          {
+            "value": ">="
+          }
+        ],
+        [
+          {
+            "value": "citext_ops"
+          },
+          {
+            "value": "5"
+          },
+          {
+            "value": ">"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS citext CASCADE",
+        "DROP TABLE IF EXISTS app_users CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0130",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 130,
       "scriptName": "CREATE EXTENSION citext installs case-insensitive text type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0130-select-opf.opfname-amproc.amprocnum-amproc.amproc::regproc::text-from",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0130-select-opf.opfname-amproc.amprocnum-amproc.amproc::regproc::text-from",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT opf.opfname, amproc.amprocnum, amproc.amproc::regproc::text\n\t\t\t\t\t\tFROM pg_catalog.pg_amproc amproc\n\t\t\t\t\t\tJOIN pg_catalog.pg_opfamily opf ON opf.oid = amproc.amprocfamily\n\t\t\t\t\t\tJOIN pg_catalog.pg_am am ON am.oid = opf.opfmethod\n\t\t\t\t\t\tWHERE am.amname = 'btree'\n\t\t\t\t\t\t\tAND opf.opfname = 'citext_ops';",
       "querySha256": "e03861f1036bd2ae75b809758c4175881c73ef320c3c23d9fe7fdf76acc625f5",
+      "expectedRows": [
+        [
+          {
+            "value": "citext_ops"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "citext_cmp"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS citext CASCADE",
+        "DROP TABLE IF EXISTS app_users CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0131",
@@ -5313,26 +5456,39 @@
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 227,
       "scriptName": "DROP EXTENSION supports dump cleanup prelude",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0227-select-extname-from-pg_catalog.pg_extension-where",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0227-select-extname-from-pg_catalog.pg_extension-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT extname FROM pg_catalog.pg_extension WHERE extname = 'hstore';",
       "querySha256": "63990c9f4b4b3a3b9a24cc488523282e9beb9a6a3e90bf562bd68daf79574796",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0228",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 228,
       "scriptName": "DROP EXTENSION supports dump cleanup prelude",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0228-drop-extension-hstore",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0228-drop-extension-hstore",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "42704",
+      "errorSeverity": "ERROR",
       "query": "DROP EXTENSION hstore;",
       "querySha256": "3555357445baa97b16836c3f1fb3950765c9651c8fd34490a6529ac5e07e322b",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     }
   ]
 }
