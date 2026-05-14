@@ -87,11 +87,8 @@ func (c *CreateSequence) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, erro
 	}
 	// The sequence won't have the schema filled in, so we have to do that now
 	c.sequence.Id = id.NewSequence(schema, c.sequence.Id.SequenceName())
-	if c.sequence.Owner == "" {
-		c.sequence.Owner = ctx.Client().User
-		if c.sequence.Owner == "" {
-			c.sequence.Owner = "postgres"
-		}
+	if c.sequence.Owner == "" && (!c.fromAlter || !c.sequence.OwnerTable.IsValid()) {
+		c.sequence.Owner = defaultSequenceOwner(ctx)
 	}
 
 	// Check that the sequence name is free
@@ -130,6 +127,12 @@ func (c *CreateSequence) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, erro
 			owner, err := tableOwner(ctx, doltdb.TableName{Name: c.sequence.OwnerTable.TableName(), Schema: schema})
 			if err != nil {
 				return nil, err
+			}
+			if c.sequence.Owner == "" {
+				c.sequence.Owner = owner
+			}
+			if c.sequence.Owner == "" {
+				c.sequence.Owner = defaultSequenceOwner(ctx)
 			}
 			if owner != "" && owner != c.sequence.Owner {
 				return nil, pgerror.New(pgcode.ObjectNotInPrerequisiteState, "sequence must have same owner as table it is linked to")
@@ -194,6 +197,9 @@ func (c *CreateSequence) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, erro
 			}
 		}
 	}
+	if c.sequence.Owner == "" {
+		c.sequence.Owner = defaultSequenceOwner(ctx)
+	}
 	// Create the sequence since we know it's completely valid
 	collection, err := core.GetSequencesCollectionFromContext(ctx, c.database)
 	if err != nil {
@@ -241,6 +247,14 @@ func (c *CreateSequence) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, erro
 		}
 	}
 	return sql.RowsToRowIter(), nil
+}
+
+func defaultSequenceOwner(ctx *sql.Context) string {
+	owner := ctx.Client().User
+	if owner == "" {
+		owner = "postgres"
+	}
+	return owner
 }
 
 func temporarySequenceOwnerTable(ctx *sql.Context, database string, tableName string) (sql.Table, bool) {

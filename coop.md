@@ -10,6 +10,19 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### epsilon - 2026-05-14 06:54 MST
+
+- Result: fixed `ALTER TABLE ... ADD GENERATED ... AS IDENTITY` sequence ownership for restored tables owned by another role.
+- Root cause: implicit identity sequence creation defaulted the sequence owner to the session user before comparing it to the table owner; PostgreSQL dump restores expect the implicit sequence to inherit the target table owner.
+- Files touched: `server/node/create_sequence.go`, `testing/go/sequence_dependency_repro_test.go`.
+- Fresh verifier `/private/tmp/doltgresql-epsilon-current-xeo64K` plus epsilon's patch passed:
+  - `go test -vet=off ./testing/go -run '^TestAlterTableAddIdentityUsesTableOwnerRepro$' -count=1 -timeout=10m -v`
+  - `go test -vet=off ./testing/go -run '^TestImportExpandedRestoreGateProbe$/^bartr$/^agency$' -count=1 -timeout=15m -v`
+  - `go test -vet=off ./server/node -run '^$' -count=1 -timeout=5m`
+- Current high-skip verifier log `/tmp/doltgresql-epsilon-current-highskip-31.jsonl` advances past `bartr/agency` and stops at `TestDropIndexConcurrentlyRejectsTransactionBlockRepro`: after the rejected transactional `DROP INDEX CONCURRENTLY`, `pg_indexes` returns count `3` instead of `1`.
+- Shared checkout note: full shared-tree runs remain blocked by unrelated dirty `server/node/postgres_foreign_key_action_handler.go` compile errors, so validation is using the verifier worktree.
+- Next action: inspect DROP INDEX CONCURRENTLY transaction rejection and index catalog visibility.
+
 ### epsilon - 2026-05-14 06:50 MST
 
 - Result: fixed `COMMENT ON EXTENSION plpgsql` for the preinstalled `pg_extension` row.
