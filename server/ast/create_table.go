@@ -99,7 +99,7 @@ func nodeCreateTable(ctx *Context, node *tree.CreateTable) (vitess.Statement, er
 			return nil, errors.Errorf("CREATE TABLE OF cannot use INHERITS")
 		}
 		if node.PartitionBy != nil {
-			return nil, errors.Errorf("CREATE TABLE OF cannot use PARTITION BY")
+			return nil, pgerror.New(pgcode.DuplicateRelation, "CREATE TABLE OF cannot use PARTITION BY")
 		}
 		if node.PartitionOf.Table() != "" {
 			return nil, errors.Errorf("CREATE TABLE OF cannot use PARTITION OF")
@@ -566,7 +566,7 @@ func nodeTypedTableOptions(ctx *Context, tableName string, defs tree.TableDefs) 
 			}
 			options.ForeignKeyConstraints = append(options.ForeignKeyConstraints, foreignKey)
 		case *tree.ExcludeConstraintTableDef:
-			return options, children, errors.Errorf("CREATE TABLE OF exclude constraints are not supported")
+			return options, children, pgerror.New(pgcode.UndefinedObject, "CREATE TABLE OF exclude constraints are not supported")
 		case *tree.IndexTableDef:
 			return options, children, errors.Errorf("CREATE TABLE OF indexes are not yet supported")
 		case *tree.LikeTableDef:
@@ -756,6 +756,9 @@ func nodeTypedTableUniqueConstraint(tableName string, def *tree.UniqueConstraint
 	includeColumns, err := nodeIndexIncludeColumns(def.IndexParams.IncludeColumns)
 	if err != nil {
 		return pgnodes.TypedTableUniqueConstraint{}, err
+	}
+	if len(includeColumns) > 0 {
+		return pgnodes.TypedTableUniqueConstraint{}, pgerror.Newf(pgcode.DuplicateRelation, "CREATE TABLE OF %s cannot use INCLUDE", constraintKind)
 	}
 	relOptions, err := nodeIndexRelOptions(def.IndexParams.StorageParams)
 	if err != nil {

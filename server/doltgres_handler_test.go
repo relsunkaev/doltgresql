@@ -38,6 +38,7 @@ func TestCastSQLErrorPreservesDDLPGCodes(t *testing.T) {
 		pgcode.CaseNotFound,
 		pgcode.DatatypeMismatch,
 		pgcode.DependentObjectsStillExist,
+		pgcode.DuplicateColumn,
 		pgcode.DuplicatePreparedStatement,
 		pgcode.DuplicateRelation,
 		pgcode.InvalidColumnReference,

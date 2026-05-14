@@ -297,6 +297,7 @@ func castSQLError(err error) error {
 		pgcode.CheckViolation,
 		pgcode.DatatypeMismatch,
 		pgcode.DependentObjectsStillExist,
+		pgcode.DuplicateColumn,
 		pgcode.DuplicatePreparedStatement,
 		pgcode.DuplicateObject,
 		pgcode.DuplicateRelation,

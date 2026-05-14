@@ -192,7 +192,7 @@ func (c *CreateTypedTable) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, er
 
 	if c.Temporary {
 		if len(c.Options.ForeignKeyConstraints) > 0 {
-			return nil, sql.ErrTemporaryTablesForeignKeySupport.New()
+			return nil, pgerror.New(pgcode.InvalidTableDefinition, "temporary tables do not support foreign keys")
 		}
 		tableCreator, ok := unwrapPrivilegedDatabase(db).(sql.TemporaryTableCreator)
 		if !ok {
@@ -659,7 +659,7 @@ func applyTypedTableOptions(ctx *sql.Context, schema sql.Schema, typ *pgtypes.Do
 	for _, option := range options.ColumnOptions {
 		idx := typedTableColumnIndex(schema, option.Name)
 		if idx < 0 {
-			return errors.Errorf(`column "%s" does not exist in composite type "%s"`, option.Name, typ.ID.TypeName())
+			return typedTableUndefinedColumnError(option.Name, typ)
 		}
 		if option.NullableSet {
 			schema[idx].Nullable = option.Nullable
@@ -710,7 +710,7 @@ func applyTypedTableOptions(ctx *sql.Context, schema sql.Schema, typ *pgtypes.Do
 	for _, columnName := range primaryKeyColumns {
 		idx := typedTableColumnIndex(schema, columnName)
 		if idx < 0 {
-			return errors.Errorf(`column "%s" does not exist in composite type "%s"`, columnName, typ.ID.TypeName())
+			return typedTableUndefinedColumnError(columnName, typ)
 		}
 		key := strings.ToLower(columnName)
 		if _, ok := seenPrimary[key]; ok {
@@ -730,26 +730,30 @@ func applyTypedTableOptions(ctx *sql.Context, schema sql.Schema, typ *pgtypes.Do
 		seenUniqueColumns := make(map[string]struct{}, len(unique.Columns))
 		for _, columnName := range unique.Columns {
 			if typedTableColumnIndex(schema, columnName) < 0 {
-				return errors.Errorf(`column "%s" does not exist in composite type "%s"`, columnName, typ.ID.TypeName())
+				return typedTableUndefinedColumnError(columnName, typ)
 			}
 			columnKey := strings.ToLower(columnName)
 			if _, ok := seenUniqueColumns[columnKey]; ok {
-				return errors.Errorf(`column "%s" appears twice in unique constraint`, columnName)
+				return pgerror.Newf(pgcode.DuplicateColumn, `column "%s" appears twice in unique constraint`, columnName)
 			}
 			seenUniqueColumns[columnKey] = struct{}{}
 		}
 		for _, columnName := range unique.IncludeColumns {
 			if typedTableColumnIndex(schema, columnName) < 0 {
-				return errors.Errorf(`column "%s" does not exist in composite type "%s"`, columnName, typ.ID.TypeName())
+				return typedTableUndefinedColumnError(columnName, typ)
 			}
 		}
 	}
 	for _, columnName := range options.PrimaryKeyInclude {
 		if typedTableColumnIndex(schema, columnName) < 0 {
-			return errors.Errorf(`column "%s" does not exist in composite type "%s"`, columnName, typ.ID.TypeName())
+			return typedTableUndefinedColumnError(columnName, typ)
 		}
 	}
 	return nil
+}
+
+func typedTableUndefinedColumnError(columnName string, typ *pgtypes.DoltgresType) error {
+	return pgerror.Newf(pgcode.UndefinedColumn, `column "%s" does not exist in composite type "%s"`, columnName, typ.ID.TypeName())
 }
 
 func typedTableColumnIndex(schema sql.Schema, name string) int {
