@@ -38,7 +38,6 @@ func validateForeignKeyDefinition(ctx *sql.Context, fkDef sql.ForeignKeyConstrai
 	}
 	for i := range fkDef.Columns {
 		col := cols[strings.ToLower(fkDef.Columns[i])]
-		parentCol := parentCols[strings.ToLower(fkDef.ParentColumns[i])]
 		if col.Generated != nil {
 			if foreignKeyUpdateActionWritesReferencingColumn(fkDef.OnUpdate) {
 				return errors.Errorf("generated column %q cannot be used with ON UPDATE %s in a foreign key", col.Name, fkDef.OnUpdate)
@@ -47,12 +46,16 @@ func validateForeignKeyDefinition(ctx *sql.Context, fkDef sql.ForeignKeyConstrai
 				return errors.Errorf("generated column %q cannot be used with ON DELETE %s in a foreign key", col.Name, fkDef.OnDelete)
 			}
 		}
-		if !foreignKeyComparableTypes(ctx, col.Type, parentCol.Type) {
-			return errors.Errorf("Key columns %q and %q are of incompatible types: %s and %s", col.Name, parentCol.Name, col.Type.String(), parentCol.Type.String())
-		}
 	}
 	if err := validateForeignKeyReferenceHasUniqueIndex(ctx, fkDef); err != nil {
 		return err
+	}
+	for i := range fkDef.Columns {
+		col := cols[strings.ToLower(fkDef.Columns[i])]
+		parentCol := parentCols[strings.ToLower(fkDef.ParentColumns[i])]
+		if !foreignKeyComparableTypes(ctx, col.Type, parentCol.Type) {
+			return pgerror.Newf(pgcode.DatatypeMismatch, "Key columns %q and %q are of incompatible types: %s and %s", col.Name, parentCol.Name, col.Type.String(), parentCol.Type.String())
+		}
 	}
 	return nil
 }
