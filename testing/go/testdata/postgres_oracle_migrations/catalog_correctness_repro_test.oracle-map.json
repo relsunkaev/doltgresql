@@ -313,9 +313,20 @@
       "suggestedId": "catalog-correctness-repro-test-testquotedviewnamesarecasesensitiverepro-0004-select-relname-from-pg_catalog.pg_class-where",
       "compare": "structural",
       "expectedKind": "rows",
-      "query": "SELECT relname\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE relnamespace = 'public'::regnamespace\n\t\t\t\t\t\t\tAND relkind = 'v'\n\t\t\t\t\t\t\tAND relname IN ('CaseView', 'caseview')\n\t\t\t\t\t\tORDER BY relname;",
-      "querySha256": "c59552ebe5af0fdfac23ddb1ffa647b6da8a17807b717c05d3b74990b08090bf",
-      "expectedRows": [],
+      "query": "SELECT relname\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE relnamespace = current_schema()::regnamespace\n\t\t\t\t\t\t\tAND relkind = 'v'\n\t\t\t\t\t\t\tAND relname IN ('CaseView', 'caseview')\n\t\t\t\t\t\tORDER BY relname;",
+      "querySha256": "0e2715e29928029d25ff1b072c966547e168a8497b8bc0360b8505fe16cdc85e",
+      "expectedRows": [
+        [
+          {
+            "value": "CaseView"
+          }
+        ],
+        [
+          {
+            "value": "caseview"
+          }
+        ]
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -395,9 +406,20 @@
       "suggestedId": "catalog-correctness-repro-test-testquotedmaterializedviewnamesarecasesensitiverepro-0004-select-relname-from-pg_catalog.pg_class-where",
       "compare": "structural",
       "expectedKind": "rows",
-      "query": "SELECT relname\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE relnamespace = 'public'::regnamespace\n\t\t\t\t\t\t\tAND relkind = 'm'\n\t\t\t\t\t\t\tAND relname IN ('CaseMatView', 'casematview')\n\t\t\t\t\t\tORDER BY relname;",
-      "querySha256": "8addb765ac0117f5ae3189f44e341d7e082e789d54264bd565ebb2c57d54ca46",
-      "expectedRows": [],
+      "query": "SELECT relname\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE relnamespace = current_schema()::regnamespace\n\t\t\t\t\t\t\tAND relkind = 'm'\n\t\t\t\t\t\t\tAND relname IN ('CaseMatView', 'casematview')\n\t\t\t\t\t\tORDER BY relname;",
+      "querySha256": "db867f8946aef3abac5145ed80de81ec8a7c45bd18c8137d4a79a0235130422d",
+      "expectedRows": [
+        [
+          {
+            "value": "CaseMatView"
+          }
+        ],
+        [
+          {
+            "value": "casematview"
+          }
+        ]
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -427,9 +449,20 @@
       "suggestedId": "catalog-correctness-repro-test-testquotedsequencenamesarecasesensitive-0002-select-relname-from-pg_catalog.pg_class-where",
       "compare": "structural",
       "expectedKind": "rows",
-      "query": "SELECT relname\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE relnamespace = 'public'::regnamespace\n\t\t\t\t\t\t\tAND relkind = 'S'\n\t\t\t\t\t\t\tAND relname IN ('CaseSequence', 'casesequence')\n\t\t\t\t\t\tORDER BY relname;",
-      "querySha256": "1b2e508c4072e567bf433eb66e0130925683ab6c3f2231a74cd2c01ddec09b73",
-      "expectedRows": [],
+      "query": "SELECT relname\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE relnamespace = current_schema()::regnamespace\n\t\t\t\t\t\t\tAND relkind = 'S'\n\t\t\t\t\t\t\tAND relname IN ('CaseSequence', 'casesequence')\n\t\t\t\t\t\tORDER BY relname;",
+      "querySha256": "ed22c4a2d28e67e88f664f680ccb51bf8181fe9a4ab8971d14815eb04c273ebf",
+      "expectedRows": [
+        [
+          {
+            "value": "CaseSequence"
+          }
+        ],
+        [
+          {
+            "value": "casesequence"
+          }
+        ]
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -807,9 +840,20 @@
       "suggestedId": "catalog-correctness-repro-test-testquotedindexnamesarecasesensitiverepro-0002-select-relname-from-pg_catalog.pg_class-where",
       "compare": "structural",
       "expectedKind": "rows",
-      "query": "SELECT relname\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE relnamespace = 'public'::regnamespace\n\t\t\t\t\t\t\tAND relkind = 'i'\n\t\t\t\t\t\t\tAND relname IN ('CaseIndex', 'caseindex')\n\t\t\t\t\t\tORDER BY relname;",
-      "querySha256": "2ad47c67a2052975038fbc8d44be8a0101b2d0d30ad70eddac7f8f98afe4b4b4",
-      "expectedRows": [],
+      "query": "SELECT relname\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE relnamespace = current_schema()::regnamespace\n\t\t\t\t\t\t\tAND relkind = 'i'\n\t\t\t\t\t\t\tAND relname IN ('CaseIndex', 'caseindex')\n\t\t\t\t\t\tORDER BY relname;",
+      "querySha256": "d0c661ad2a7293955cb99b9349221fbf6d0750bd7a29ed01b357f309c8175db4",
+      "expectedRows": [
+        [
+          {
+            "value": "CaseIndex"
+          }
+        ],
+        [
+          {
+            "value": "caseindex"
+          }
+        ]
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -998,9 +1042,20 @@
       "suggestedId": "catalog-correctness-repro-test-testquoteddomainnamesarecasesensitive-0002-select-typname-from-pg_catalog.pg_type-where",
       "compare": "structural",
       "expectedKind": "rows",
-      "query": "SELECT typname\n\t\t\t\t\t\tFROM pg_catalog.pg_type\n\t\t\t\t\t\tWHERE typnamespace = 'public'::regnamespace\n\t\t\t\t\t\t\tAND typname IN ('CaseDomain', 'casedomain')\n\t\t\t\t\t\tORDER BY typname;",
-      "querySha256": "b8b87b152ab60c8aaa4a9e93fcb9ba5ec54089aa0f54a9a01f976cb45cc5af2b",
-      "expectedRows": [],
+      "query": "SELECT typname\n\t\t\t\t\t\tFROM pg_catalog.pg_type\n\t\t\t\t\t\tWHERE typnamespace = current_schema()::regnamespace\n\t\t\t\t\t\t\tAND typname IN ('CaseDomain', 'casedomain')\n\t\t\t\t\t\tORDER BY typname;",
+      "querySha256": "1a28640845fa0709b22a55f555cc491d9c78f1c889317a4a55353a43c8009eb0",
+      "expectedRows": [
+        [
+          {
+            "value": "CaseDomain"
+          }
+        ],
+        [
+          {
+            "value": "casedomain"
+          }
+        ]
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },

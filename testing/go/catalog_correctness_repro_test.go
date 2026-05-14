@@ -156,7 +156,7 @@ func TestQuotedViewNamesAreCaseSensitiveRepro(t *testing.T) {
 				{
 					Query: `SELECT relname
 						FROM pg_catalog.pg_class
-						WHERE relnamespace = 'public'::regnamespace
+						WHERE relnamespace = current_schema()::regnamespace
 							AND relkind = 'v'
 							AND relname IN ('CaseView', 'caseview')
 						ORDER BY relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testquotedviewnamesarecasesensitiverepro-0004-select-relname-from-pg_catalog.pg_class-where"},
@@ -193,7 +193,7 @@ func TestQuotedMaterializedViewNamesAreCaseSensitiveRepro(t *testing.T) {
 				{
 					Query: `SELECT relname
 						FROM pg_catalog.pg_class
-						WHERE relnamespace = 'public'::regnamespace
+						WHERE relnamespace = current_schema()::regnamespace
 							AND relkind = 'm'
 							AND relname IN ('CaseMatView', 'casematview')
 						ORDER BY relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testquotedmaterializedviewnamesarecasesensitiverepro-0004-select-relname-from-pg_catalog.pg_class-where"},
@@ -220,7 +220,7 @@ func TestQuotedSequenceNamesAreCaseSensitive(t *testing.T) {
 				{
 					Query: `SELECT relname
 						FROM pg_catalog.pg_class
-						WHERE relnamespace = 'public'::regnamespace
+						WHERE relnamespace = current_schema()::regnamespace
 							AND relkind = 'S'
 							AND relname IN ('CaseSequence', 'casesequence')
 						ORDER BY relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testquotedsequencenamesarecasesensitive-0002-select-relname-from-pg_catalog.pg_class-where"},
@@ -444,7 +444,7 @@ func TestQuotedIndexNamesAreCaseSensitiveRepro(t *testing.T) {
 				{
 					Query: `SELECT relname
 						FROM pg_catalog.pg_class
-						WHERE relnamespace = 'public'::regnamespace
+						WHERE relnamespace = current_schema()::regnamespace
 							AND relkind = 'i'
 							AND relname IN ('CaseIndex', 'caseindex')
 						ORDER BY relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testquotedindexnamesarecasesensitiverepro-0002-select-relname-from-pg_catalog.pg_class-where"},
@@ -570,7 +570,7 @@ func TestQuotedDomainNamesAreCaseSensitive(t *testing.T) {
 				{
 					Query: `SELECT typname
 						FROM pg_catalog.pg_type
-						WHERE typnamespace = 'public'::regnamespace
+						WHERE typnamespace = current_schema()::regnamespace
 							AND typname IN ('CaseDomain', 'casedomain')
 						ORDER BY typname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testquoteddomainnamesarecasesensitive-0002-select-typname-from-pg_catalog.pg_type-where"},
 				},
