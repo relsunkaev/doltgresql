@@ -17,6 +17,7 @@ package framework
 import (
 	"testing"
 
+	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/stretchr/testify/require"
 
 	"github.com/dolthub/doltgresql/core/id"
@@ -37,4 +38,17 @@ func TestCompiledFunctionStringSchemaQualifiesResolvedUserFunction(t *testing.T)
 	}
 
 	require.Equal(t, `"mixed""schema"."lookup_default"()`, compiled.String())
+}
+
+func TestCompiledFunctionUserDefinedFunctionsRequireStatementRunner(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+
+	for _, fn := range []FunctionInterface{
+		InterpretedFunction{ID: id.NewFunction("public", "volatile_plpgsql"), ReturnType: pgtypes.Int32},
+		SQLFunction{ID: id.NewFunction("public", "volatile_sql"), ReturnType: pgtypes.Int32},
+	} {
+		compiled := &CompiledFunction{Name: fn.GetName()}
+		_, err := compiled.callResolvedFunction(ctx, fn, nil)
+		require.ErrorContains(t, err, "statement runner is not available")
+	}
 }

@@ -516,6 +516,9 @@ func (c *CompiledFunction) callResolvedFunction(ctx *sql.Context, fn FunctionInt
 	case Function7:
 		return f.Callable(ctx, ([8]*pgtypes.DoltgresType)(c.callResolved), args[0], args[1], args[2], args[3], args[4], args[5], args[6])
 	case InterpretedFunction:
+		if c.runner == nil {
+			return nil, cerrors.Errorf("statement runner is not available for function %s", c.Name)
+		}
 		restoreSecurityDefiner := applyRoutineSecurityDefiner(ctx, f)
 		defer restoreSecurityDefiner()
 		return plpgsql.Call(ctx, f, c.runner, c.callResolved, args)
@@ -552,6 +555,9 @@ func (c *CompiledFunction) callResolvedFunction(ctx *sql.Context, fn FunctionInt
 			return nil, nil
 		}
 	case SQLFunction:
+		if c.runner == nil {
+			return nil, cerrors.Errorf("statement runner is not available for function %s", c.Name)
+		}
 		return CallSqlFunction(ctx, f, c.runner, args)
 	default:
 		return nil, cerrors.Errorf("unknown function type in CompiledFunction::Eval %T", f)
