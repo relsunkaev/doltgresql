@@ -199,12 +199,17 @@
       "oracle": "postgres",
       "postgresId": "function-lookup-repro-test-testschemaqualifiedfunctionsideeffectsuseexplicitschemarepro-0001-select-dg_fn_effect_b.lookup_mutator",
       "suggestedId": "function-lookup-repro-test-testschemaqualifiedfunctionsideeffectsuseexplicitschemarepro-0001-select-dg_fn_effect_b.lookup_mutator",
-      "compare": "sqlstate",
+      "compare": "structural",
       "expectedKind": "rows",
-      "sqlstate": "42P01",
-      "errorSeverity": "ERROR",
       "query": "SELECT dg_fn_effect_b.lookup_mutator();",
       "querySha256": "0f73ae9490ca96441db4d9880f18cf0eb80b805d5297862a0167d855f29c1ccb",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -216,12 +221,17 @@
       "oracle": "postgres",
       "postgresId": "function-lookup-repro-test-testschemaqualifiedfunctionsideeffectsuseexplicitschemarepro-0002-select-label-from-dg_fn_effect_audit",
       "suggestedId": "function-lookup-repro-test-testschemaqualifiedfunctionsideeffectsuseexplicitschemarepro-0002-select-label-from-dg_fn_effect_audit",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "42P01",
-      "errorSeverity": "ERROR",
+      "compare": "structural",
+      "expectedKind": "rows",
       "query": "SELECT label FROM dg_fn_effect_audit;",
       "querySha256": "ac1468efe3c2d3e11fdfe3d60e3368f65598e32795563365681910e8a0362119",
+      "expectedRows": [
+        [
+          {
+            "value": "b"
+          }
+        ]
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },

@@ -167,11 +167,11 @@ func TestSchemaQualifiedFunctionSideEffectsUseExplicitSchemaRepro(t *testing.T) 
 		{
 			Name: "schema-qualified function side effects use explicit schema",
 			SetUpScript: []string{
-				`CREATE TABLE dg_fn_effect_audit (
-					label TEXT PRIMARY KEY
-				);`,
 				`CREATE SCHEMA dg_fn_effect_a;`,
 				`CREATE SCHEMA dg_fn_effect_b;`,
+				`CREATE TABLE dg_fn_effect_a.dg_fn_effect_audit (
+					label TEXT PRIMARY KEY
+				);`,
 				`CREATE FUNCTION dg_fn_effect_a.lookup_mutator() RETURNS INT AS $$
 				BEGIN
 					INSERT INTO dg_fn_effect_audit VALUES ('a');
@@ -190,16 +190,10 @@ func TestSchemaQualifiedFunctionSideEffectsUseExplicitSchemaRepro(t *testing.T) 
 					Query: `SET search_path = dg_fn_effect_a, public;`,
 				},
 				{
-					Query: `SELECT dg_fn_effect_b.lookup_mutator();`, PostgresOracle: ScriptTestPostgresOracle{ID: "function-lookup-repro-test-testschemaqualifiedfunctionsideeffectsuseexplicitschemarepro-0001-select-dg_fn_effect_b.lookup_mutator",
-
-						// TestSchemaQualifiedDefaultFunctionUsesExplicitSchemaRepro reproduces a data
-						// corruption bug: stored defaults that explicitly call a schema-qualified
-						// function should persist the named function's result, not the result from a
-						// same-name function in the current search path.
-						Compare: "sqlstate"},
+					Query: `SELECT dg_fn_effect_b.lookup_mutator();`, PostgresOracle: ScriptTestPostgresOracle{ID: "function-lookup-repro-test-testschemaqualifiedfunctionsideeffectsuseexplicitschemarepro-0001-select-dg_fn_effect_b.lookup_mutator"},
 				},
 				{
-					Query: `SELECT label FROM dg_fn_effect_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "function-lookup-repro-test-testschemaqualifiedfunctionsideeffectsuseexplicitschemarepro-0002-select-label-from-dg_fn_effect_audit", Compare: "sqlstate"},
+					Query: `SELECT label FROM dg_fn_effect_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "function-lookup-repro-test-testschemaqualifiedfunctionsideeffectsuseexplicitschemarepro-0002-select-label-from-dg_fn_effect_audit"},
 				},
 			},
 		},
