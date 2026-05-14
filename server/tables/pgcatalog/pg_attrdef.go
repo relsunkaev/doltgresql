@@ -21,6 +21,9 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/core/id"
+	pgparser "github.com/dolthub/doltgresql/postgres/parser/parser"
+	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	pgexprs "github.com/dolthub/doltgresql/server/expression"
 	"github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -126,14 +129,37 @@ func (iter *pgAttrdefRowIter) Close(ctx *sql.Context) error {
 }
 
 func columnDefaultText(col *sql.Column) string {
+	if col.Generated != nil {
+		return generatedColumnText(col.Generated)
+	}
 	if col.Default != nil {
 		return columnDefaultValueText(col.Default)
 	}
-	if col.Generated != nil {
-		expr := unquoteSimpleExpressionIdentifiers(col.Generated.String())
-		return "(" + stripRedundantOuterParens(expr) + ")"
-	}
 	return ""
+}
+
+func generatedColumnText(def *sql.ColumnDefaultValue) string {
+	if def == nil {
+		return ""
+	}
+	if unresolved, ok := def.Expr.(*sql.UnresolvedColumnDefault); ok {
+		return parenthesizedCatalogExpression(postgresParsedExpressionString(unresolved.ExprString))
+	}
+	return parenthesizedCatalogExpression(pgexprs.CatalogExpressionString(def.Expr))
+}
+
+func parenthesizedCatalogExpression(expr string) string {
+	expr = unquoteSimpleExpressionIdentifiers(expr)
+	return "(" + stripRedundantOuterParens(expr) + ")"
+}
+
+func postgresParsedExpressionString(expr string) string {
+	expr = stripRedundantOuterParens(expr)
+	parsed, err := pgparser.ParseExpr(expr)
+	if err != nil {
+		return expr
+	}
+	return tree.AsString(parsed)
 }
 
 func columnDefaultValueText(def *sql.ColumnDefaultValue) string {
