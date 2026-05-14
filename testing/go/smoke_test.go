@@ -53,16 +53,13 @@ func TestSmokeTests(t *testing.T) {
 					Query: "SELECT NULL = NULL", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0008-select-null-=-null"},
 				},
 				{
-					Query:    ";",
-					Expected: []sql.Row{},
+					Query: ";", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0009", Compare: "tag"},
 				},
 				{
-					Query:    " ; ",
-					Expected: []sql.Row{},
+					Query: " ; ", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0010", Compare: "tag"},
 				},
 				{
-					Query:    "-- this is only a comment",
-					Expected: []sql.Row{},
+					Query: "-- this is only a comment", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0011-this-is-only-a-comment", Compare: "tag"},
 				},
 			},
 		},
@@ -469,8 +466,7 @@ func TestSmokeTests(t *testing.T) {
 			Name: "Empty statement",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    ";",
-					Expected: []sql.Row{},
+					Query: ";", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testsmoketests-0090", Compare: "tag"},
 				},
 			},
 		},
