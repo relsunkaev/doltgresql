@@ -22,6 +22,8 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -105,7 +107,7 @@ func nodeColumnTableDef(ctx *Context, node *tree.ColumnTableDef, tableName vites
 
 	if computedAsAnyIdentity {
 		if node.Nullable.Nullability == tree.Null {
-			return nil, errors.Errorf("conflicting NULL/NOT NULL declarations")
+			return nil, pgerror.Newf(pgcode.Syntax, "conflicting NULL/NOT NULL declarations")
 		}
 		isNull = false
 		isNotNull = true
