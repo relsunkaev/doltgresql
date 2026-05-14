@@ -267,10 +267,20 @@ func TestInfoSchemaTables(t *testing.T) {
 					Query: `SELECT * FROM information_schema.tables WHERE table_name='test_table';`, PostgresOracle: ScriptTestPostgresOracle{ID: "information-schema-test-testinfoschematables-0001-select-*-from-information_schema.tables-where", ColumnModes: []string{"structural", "schema"}},
 				},
 				{
-					Query: `SELECT DISTINCT table_schema FROM information_schema.tables order by table_schema;`, PostgresOracle: ScriptTestPostgresOracle{ID: "information-schema-test-testinfoschematables-0002-select-distinct-table_schema-from-information_schema.tables", ColumnModes: []string{"schema"}},
+					Query: `SELECT DISTINCT table_schema FROM information_schema.tables order by table_schema;`,
+					Expected: []sql.Row{
+						{"information_schema"},
+						{"pg_catalog"},
+						{"public"},
+					},
 				},
 				{
-					Query: `SELECT table_catalog, table_schema FROM information_schema.tables group by table_catalog, table_schema order by table_schema;`, PostgresOracle: ScriptTestPostgresOracle{ID: "information-schema-test-testinfoschematables-0003-select-table_catalog-table_schema-from-information_schema.tables", ColumnModes: []string{"structural", "schema"}},
+					Query: `SELECT table_catalog, table_schema FROM information_schema.tables group by table_catalog, table_schema order by table_schema;`,
+					Expected: []sql.Row{
+						{"postgres", "information_schema"},
+						{"postgres", "pg_catalog"},
+						{"postgres", "public"},
+					},
 				},
 				{
 					Query: `SELECT table_catalog, table_schema, table_name FROM information_schema.tables WHERE table_schema='public';`,
