@@ -232,14 +232,13 @@ func TestUpdateSelfReferentialSubqueryUsesStatementSnapshotGuard(t *testing.T) {
 	})
 }
 
-// TestOnConflictUpdateAssignmentsUseOriginalRowValuesRepro reproduces a
-// PostgreSQL correctness bug: ON CONFLICT DO UPDATE SET expressions should
-// read original target-row values unless they explicitly reference EXCLUDED,
-// but Doltgres applies earlier assignments from the same SET list.
+// TestOnConflictUpdateAssignmentsUseOriginalRowValuesRepro guards PostgreSQL's
+// ON CONFLICT DO UPDATE name resolution: unqualified target-table columns are
+// ambiguous because EXCLUDED exposes the same column names.
 func TestOnConflictUpdateAssignmentsUseOriginalRowValuesRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
-			Name: "ON CONFLICT UPDATE assignments read original target row values",
+			Name: "ON CONFLICT UPDATE rejects ambiguous unqualified columns",
 			SetUpScript: []string{
 				`CREATE TABLE on_conflict_assignment_items (
 					id INT PRIMARY KEY,
@@ -252,10 +251,11 @@ func TestOnConflictUpdateAssignmentsUseOriginalRowValuesRepro(t *testing.T) {
 				{
 					Query: `INSERT INTO on_conflict_assignment_items VALUES (1, 'excluded-c1', 'excluded-c2')
 						ON CONFLICT (id) DO UPDATE SET c1 = 'new-c1', c2 = c1;`,
+					ExpectedErr: `column reference "c1" is ambiguous`,
 				},
 				{
 					Query:    `SELECT c1, c2 FROM on_conflict_assignment_items WHERE id = 1;`,
-					Expected: []sql.Row{{"new-c1", "old-c1"}},
+					Expected: []sql.Row{{"old-c1", "old-c2"}},
 				},
 			},
 		},

@@ -24,6 +24,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	"github.com/dolthub/go-mysql-server/sql/transform"
 
+	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/postgres/parser/parser"
 	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
 	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
@@ -66,6 +67,9 @@ func ValidateOnConflictArbiter(ctx *sql.Context, _ *gmsanalyzer.Analyzer, node s
 		return nil, transform.NewTree, err
 	}
 	if hasOnDuplicateUpdates {
+		if err = validateOnConflictUpdateColumnReferences(ctx, insert.Destination, conflict); err != nil {
+			return nil, transform.NewTree, err
+		}
 		var wrapped bool
 		insert, wrapped, err = wrapOnConflictUpdateExpressions(ctx, insert, conflict, target)
 		if err != nil {
@@ -239,6 +243,72 @@ func resolveConflictTarget(ctx *sql.Context, destination sql.Node, targetColumns
 		nullsNotDistinct:  indexmetadata.NullsNotDistinct(matchingIndex.Comment()),
 		multipleUniques:   uniqueIndexCount > 1,
 	}, nil
+}
+
+func validateOnConflictUpdateColumnReferences(ctx *sql.Context, destination sql.Node, conflict *tree.OnConflict) error {
+	if conflict == nil {
+		return nil
+	}
+	table, err := plan.GetInsertable(destination)
+	if err != nil {
+		return err
+	}
+	columns := destinationColumnNameSet(table.Schema(ctx))
+	visitor := onConflictAmbiguousColumnVisitor{columns: columns}
+	for _, updateExpr := range conflict.Exprs {
+		if updateExpr == nil || updateExpr.Expr == nil {
+			continue
+		}
+		tree.WalkExprConst(&visitor, updateExpr.Expr)
+		if visitor.err != nil {
+			return visitor.err
+		}
+	}
+	if conflict.Where != nil && conflict.Where.Expr != nil {
+		tree.WalkExprConst(&visitor, conflict.Where.Expr)
+		if visitor.err != nil {
+			return visitor.err
+		}
+	}
+	return nil
+}
+
+func destinationColumnNameSet(schema sql.Schema) map[string]struct{} {
+	columns := make(map[string]struct{}, len(schema))
+	for _, column := range schema {
+		columns[core.DecodePhysicalColumnName(column.Name)] = struct{}{}
+	}
+	return columns
+}
+
+type onConflictAmbiguousColumnVisitor struct {
+	columns map[string]struct{}
+	err     error
+}
+
+func (v *onConflictAmbiguousColumnVisitor) VisitPre(expr tree.Expr) (bool, tree.Expr) {
+	if v.err != nil {
+		return false, expr
+	}
+	switch expr := expr.(type) {
+	case *tree.Subquery:
+		return false, expr
+	case *tree.UnresolvedName:
+		if expr.Star || expr.NumParts != 1 {
+			return false, expr
+		}
+		column := expr.Parts[0]
+		if _, ok := v.columns[column]; ok {
+			v.err = pgerror.Newf(pgcode.AmbiguousColumn, "column reference %q is ambiguous", column)
+		}
+		return false, expr
+	default:
+		return true, expr
+	}
+}
+
+func (v *onConflictAmbiguousColumnVisitor) VisitPost(expr tree.Expr) tree.Expr {
+	return expr
 }
 
 // uniqueIndexMatchesConstraintName returns whether the named index

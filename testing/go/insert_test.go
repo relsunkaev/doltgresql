@@ -92,12 +92,13 @@ func TestInsert(t *testing.T) {
 					Query: "SELECT * FROM mytable order by id", PostgresOracle: ScriptTestPostgresOracle{ID: "insert-test-testinsert-0003-select-*-from-mytable-order"},
 				},
 				{
-					Query: "INSERT INTO mytable (ID, naME) VALUES (1, 'hello') ON CONFLICT (id) DO UPDATE set name = concat('new', name)",
+					Query:       "INSERT INTO mytable (ID, naME) VALUES (1, 'hello') ON CONFLICT (id) DO UPDATE set name = concat('new', name)",
+					ExpectedErr: `column reference "name" is ambiguous`,
 				},
 				{
 					Query: "SELECT * FROM mytable order by id",
 					Expected: []sql.Row{
-						{1, "newworld"},
+						{1, "world"},
 						{2, "conflict"},
 					},
 				},
@@ -106,18 +107,18 @@ func TestInsert(t *testing.T) {
 					SkipResultsCheck: true,
 				},
 				{
-					Query:            "INSERT INTO t2 (id, c1, c2) VALUES (1, 'hello', 'world') ON CONFLICT (id) DO UPDATE SET c1 = 'conflict', c2 = c1",
-					SkipResultsCheck: true,
+					Query:       "INSERT INTO t2 (id, c1, c2) VALUES (1, 'hello', 'world') ON CONFLICT (id) DO UPDATE SET c1 = 'conflict', c2 = c1",
+					ExpectedErr: `column reference "c1" is ambiguous`,
 				},
 				{
-					Query:            "INSERT INTO t2 (id, c1, c2) VALUES (2, 'hello', 'world') ON CONFLICT (id) DO UPDATE SET c2 = c1",
-					SkipResultsCheck: true,
+					Query:       "INSERT INTO t2 (id, c1, c2) VALUES (2, 'hello', 'world') ON CONFLICT (id) DO UPDATE SET c2 = c1",
+					ExpectedErr: `column reference "c1" is ambiguous`,
 				},
 				{
 					Query: "SELECT * FROM t2 order by id",
 					Expected: []sql.Row{
-						{1, "conflict", "conflict"},
-						{2, "world", "world"},
+						{1, "hello", "world"},
+						{2, "world", "hello"},
 					},
 				},
 				{
@@ -172,8 +173,8 @@ ON CONFLICT (id) do update set c1 = $4`,
 					// rewriting `col = expr` to a CASE expression that
 					// preserves the existing value when the predicate
 					// is false. Predicate is true (mytable.id=1's name
-					// is 'newworld'), so the update applies.
-					Query: "INSERT INTO mytable (id, name) VALUES (1, 'conditional update') ON CONFLICT (id) DO UPDATE SET name = 'conditional update' WHERE mytable.name = 'newworld'",
+					// is 'predicate target'), so the update applies.
+					Query: "INSERT INTO mytable (id, name) VALUES (1, 'conditional update') ON CONFLICT (id) DO UPDATE SET name = 'conditional update' WHERE mytable.name = 'predicate target'",
 				},
 				{
 					// id=1's name has been updated by the targeted
