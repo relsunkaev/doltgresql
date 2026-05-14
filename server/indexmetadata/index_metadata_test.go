@@ -19,6 +19,7 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
@@ -346,6 +347,17 @@ func TestColumnOpClassDefinitionOmitsDefaults(t *testing.T) {
 			},
 			tableSchema: sql.Schema{{Name: "label", Type: pgtypes.Text}},
 			want:        OpClassTextPatternOps,
+		},
+		{
+			name:         "citext_ops_preserved",
+			accessMethod: AccessMethodBtree,
+			opClass:      OpClassCitextOps,
+			logicalColumn: LogicalColumn{
+				Definition:  "email",
+				StorageName: "email",
+			},
+			tableSchema: sql.Schema{{Name: "email", Type: pgtypes.NewCitextType(id.NewType("public", "_citext"), id.NewType("public", "citext"))}},
+			want:        OpClassCitextOps,
 		},
 		{
 			name:         "expression_preserves_opclass",

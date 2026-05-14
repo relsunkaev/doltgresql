@@ -275,6 +275,9 @@ func isDefaultOpClass(accessMethod string, opClass string, logicalColumn Logical
 	if logicalColumn.Expression {
 		return false
 	}
+	if opClass == OpClassCitextOps {
+		return false
+	}
 	column, ok := schemaColumn(tableSchema, logicalColumn.StorageName)
 	if !ok {
 		column, ok = schemaColumn(tableSchema, logicalColumn.Definition)
