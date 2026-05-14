@@ -57,26 +57,78 @@
       "source": "testing/go/schemas_test.go:TestSchemas",
       "ordinal": 2,
       "scriptName": "implicit schema with index gets created in public schema",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "schemas-test-testschemas-0002-select-*-from-public.employees",
       "suggestedId": "schemas-test-testschemas-0002-select-*-from-public.employees",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM public.employees;",
       "querySha256": "ff4e443f710e9a5d326b8b9e01c6d3b1d4515f2b01f9398d09312e5433837646",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "John"
+          },
+          {
+            "value": "Doe"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "Jane"
+          },
+          {
+            "value": "Doe"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS employees CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/schemas_test.go:TestSchemas#0003",
       "source": "testing/go/schemas_test.go:TestSchemas",
       "ordinal": 3,
       "scriptName": "table gets created in public schema by default",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "schemas-test-testschemas-0003-select-*-from-public.test",
       "suggestedId": "schemas-test-testschemas-0003-select-*-from-public.test",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM public.test;",
       "querySha256": "8f91c0904a5400da36c1f44e8a22e43f119b79edbd40d4fb3e84ba3b5a0ed338",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS test CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/schemas_test.go:TestSchemas#0004",
@@ -96,65 +148,115 @@
       "source": "testing/go/schemas_test.go:TestSchemas",
       "ordinal": 5,
       "scriptName": "drop table",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "schemas-test-testschemas-0005-insert-into-t1-values-1",
       "suggestedId": "schemas-test-testschemas-0005-insert-into-t1-values-1",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
       "query": "INSERT INTO t1 VALUES (1, 1), (2, 2);",
       "querySha256": "4e0a97622d227c06c68bcab7578bf5b63d701b4a6404ec906145ab1459f0f301",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "cleanup": [
+        "DROP TABLE IF EXISTS t1 CASCADE",
+        "DROP TABLE IF EXISTS t2 CASCADE",
+        "DROP TABLE IF EXISTS t3 CASCADE",
+        "DROP TABLE IF EXISTS t4 CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/schemas_test.go:TestSchemas#0006",
       "source": "testing/go/schemas_test.go:TestSchemas",
       "ordinal": 6,
       "scriptName": "drop table",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "schemas-test-testschemas-0006-insert-into-t2-values-3",
       "suggestedId": "schemas-test-testschemas-0006-insert-into-t2-values-3",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
       "query": "INSERT INTO t2 VALUES (3, 3), (4, 4);",
       "querySha256": "d50e3b21b2d0192b6b7e10b15b123971d88758bc7e3fc8b4ab01bb5d4b69de08",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "cleanup": [
+        "DROP TABLE IF EXISTS t1 CASCADE",
+        "DROP TABLE IF EXISTS t2 CASCADE",
+        "DROP TABLE IF EXISTS t3 CASCADE",
+        "DROP TABLE IF EXISTS t4 CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/schemas_test.go:TestSchemas#0007",
       "source": "testing/go/schemas_test.go:TestSchemas",
       "ordinal": 7,
       "scriptName": "drop table",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "schemas-test-testschemas-0007-insert-into-t3-values-1",
       "suggestedId": "schemas-test-testschemas-0007-insert-into-t3-values-1",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
       "query": "INSERT INTO t3 VALUES (1, 1), (2, 2);",
       "querySha256": "2162965c54a36ece09643c2ab2da19e60d89c5f2ab20c5a503a63b842b5d70b9",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "cleanup": [
+        "DROP TABLE IF EXISTS t1 CASCADE",
+        "DROP TABLE IF EXISTS t2 CASCADE",
+        "DROP TABLE IF EXISTS t3 CASCADE",
+        "DROP TABLE IF EXISTS t4 CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/schemas_test.go:TestSchemas#0008",
       "source": "testing/go/schemas_test.go:TestSchemas",
       "ordinal": 8,
       "scriptName": "drop table",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "schemas-test-testschemas-0008-insert-into-t4-values-3",
       "suggestedId": "schemas-test-testschemas-0008-insert-into-t4-values-3",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
       "query": "INSERT INTO t4 VALUES (3, 3), (4, 4);",
       "querySha256": "bdbbc4a351132152339ef9ba9e31b3b65a6f6990219996c2bbd3532956fbbf29",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "cleanup": [
+        "DROP TABLE IF EXISTS t1 CASCADE",
+        "DROP TABLE IF EXISTS t2 CASCADE",
+        "DROP TABLE IF EXISTS t3 CASCADE",
+        "DROP TABLE IF EXISTS t4 CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/schemas_test.go:TestSchemas#0009",
       "source": "testing/go/schemas_test.go:TestSchemas",
       "ordinal": 9,
       "scriptName": "drop table",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "schemas-test-testschemas-0009-drop-table-t1",
       "suggestedId": "schemas-test-testschemas-0009-drop-table-t1",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
       "query": "drop table t1",
       "querySha256": "3c07fd3757b43818e00b102a969b0dd4278675640402259940d3b2c7b24890fe",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "cleanup": [
+        "DROP TABLE IF EXISTS t1 CASCADE",
+        "DROP TABLE IF EXISTS t2 CASCADE",
+        "DROP TABLE IF EXISTS t3 CASCADE",
+        "DROP TABLE IF EXISTS t4 CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/schemas_test.go:TestSchemas#0010",
@@ -195,169 +297,352 @@
       "source": "testing/go/schemas_test.go:TestSchemas",
       "ordinal": 12,
       "scriptName": "search path returns user table before public table",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "schemas-test-testschemas-0012-select-*-from-test",
       "suggestedId": "schemas-test-testschemas-0012-select-*-from-test",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test;",
       "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS public.test CASCADE",
+        "DROP SCHEMA IF EXISTS postgres CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/schemas_test.go:TestSchemas#0013",
       "source": "testing/go/schemas_test.go:TestSchemas",
       "ordinal": 13,
       "scriptName": "search path returns user table before public table",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "schemas-test-testschemas-0013-insert-into-postgres.test-values-2",
       "suggestedId": "schemas-test-testschemas-0013-insert-into-postgres.test-values-2",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "INSERT INTO postgres.test VALUES (2, 2);",
       "querySha256": "386abcf501acfd28248f19091784272011ca24054084080489f36c67274fce7b",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP TABLE IF EXISTS public.test CASCADE",
+        "DROP TABLE IF EXISTS postgres.test CASCADE",
+        "DROP SCHEMA IF EXISTS postgres CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/schemas_test.go:TestSchemas#0014",
       "source": "testing/go/schemas_test.go:TestSchemas",
       "ordinal": 14,
       "scriptName": "search path returns user table before public table",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "schemas-test-testschemas-0014-select-*-from-test",
       "suggestedId": "schemas-test-testschemas-0014-select-*-from-test",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test;",
       "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS public.test CASCADE",
+        "DROP TABLE IF EXISTS postgres.test CASCADE",
+        "DROP SCHEMA IF EXISTS postgres CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/schemas_test.go:TestSchemas#0015",
       "source": "testing/go/schemas_test.go:TestSchemas",
       "ordinal": 15,
       "scriptName": "empty search path will not resolve tables",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "schemas-test-testschemas-0015-select-*-from-test",
       "suggestedId": "schemas-test-testschemas-0015-select-*-from-test",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
       "query": "SELECT * FROM test;",
       "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "cleanup": [
+        "DROP TABLE IF EXISTS public.test CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/schemas_test.go:TestSchemas#0016",
       "source": "testing/go/schemas_test.go:TestSchemas",
       "ordinal": 16,
       "scriptName": "empty search path will not resolve tables",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "schemas-test-testschemas-0016-select-*-from-public.test",
       "suggestedId": "schemas-test-testschemas-0016-select-*-from-public.test",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM public.test;",
       "querySha256": "8f91c0904a5400da36c1f44e8a22e43f119b79edbd40d4fb3e84ba3b5a0ed338",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS public.test CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/schemas_test.go:TestSchemas#0017",
       "source": "testing/go/schemas_test.go:TestSchemas",
       "ordinal": 17,
       "scriptName": "public schema qualifier",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "schemas-test-testschemas-0017-insert-into-public.test-values-1",
       "suggestedId": "schemas-test-testschemas-0017-insert-into-public.test-values-1",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "INSERT INTO public.test VALUES (1, 1), (2, 2);",
       "querySha256": "d052fe9cac962f4d97d9ff3c958064da20671700a17f071ab6c049fbfe4bca93",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP TABLE IF EXISTS public.test CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/schemas_test.go:TestSchemas#0018",
       "source": "testing/go/schemas_test.go:TestSchemas",
       "ordinal": 18,
       "scriptName": "public schema qualifier",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "schemas-test-testschemas-0018-select-*-from-public.test",
       "suggestedId": "schemas-test-testschemas-0018-select-*-from-public.test",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM public.test;",
       "querySha256": "8f91c0904a5400da36c1f44e8a22e43f119b79edbd40d4fb3e84ba3b5a0ed338",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS public.test CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/schemas_test.go:TestSchemas#0019",
       "source": "testing/go/schemas_test.go:TestSchemas",
       "ordinal": 19,
       "scriptName": "public schema qualifier, multiple tables",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "schemas-test-testschemas-0019-insert-into-public.test-values-1",
       "suggestedId": "schemas-test-testschemas-0019-insert-into-public.test-values-1",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "INSERT INTO public.test VALUES (1, 1), (2, 2);",
       "querySha256": "d052fe9cac962f4d97d9ff3c958064da20671700a17f071ab6c049fbfe4bca93",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP TABLE IF EXISTS public.test CASCADE",
+        "DROP TABLE IF EXISTS public.test2 CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/schemas_test.go:TestSchemas#0020",
       "source": "testing/go/schemas_test.go:TestSchemas",
       "ordinal": 20,
       "scriptName": "public schema qualifier, multiple tables",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "schemas-test-testschemas-0020-insert-into-public.test2-values-3",
       "suggestedId": "schemas-test-testschemas-0020-insert-into-public.test2-values-3",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "INSERT INTO public.test2 VALUES (3, 3), (4, 4);",
       "querySha256": "cb4cc21c931bc404b4f9436810f3a81da47fa49a92c0772bbc8e4044733a688b",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP TABLE IF EXISTS public.test CASCADE",
+        "DROP TABLE IF EXISTS public.test2 CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/schemas_test.go:TestSchemas#0021",
       "source": "testing/go/schemas_test.go:TestSchemas",
       "ordinal": 21,
       "scriptName": "public schema qualifier, multiple tables",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "schemas-test-testschemas-0021-select-*-from-public.test",
       "suggestedId": "schemas-test-testschemas-0021-select-*-from-public.test",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM public.test;",
       "querySha256": "8f91c0904a5400da36c1f44e8a22e43f119b79edbd40d4fb3e84ba3b5a0ed338",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS public.test CASCADE",
+        "DROP TABLE IF EXISTS public.test2 CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/schemas_test.go:TestSchemas#0022",
       "source": "testing/go/schemas_test.go:TestSchemas",
       "ordinal": 22,
       "scriptName": "public schema qualifier, multiple tables",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "schemas-test-testschemas-0022-select-*-from-public.test2",
       "suggestedId": "schemas-test-testschemas-0022-select-*-from-public.test2",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM public.test2;",
       "querySha256": "3365b7bc758df58e6786ffd7dad9651b5d1fb695ff2e7e1e70e27d4b8b3b1db8",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS public.test CASCADE",
+        "DROP TABLE IF EXISTS public.test2 CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/schemas_test.go:TestSchemas#0023",
       "source": "testing/go/schemas_test.go:TestSchemas",
       "ordinal": 23,
       "scriptName": "public db and schema qualifier",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "schemas-test-testschemas-0023-insert-into-postgres.public.test-values-1",
       "suggestedId": "schemas-test-testschemas-0023-insert-into-postgres.public.test-values-1",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "INSERT INTO postgres.public.test VALUES (1, 1), (2, 2);",
       "querySha256": "c14e47726d5c4cf2f7f14509d76bacdcab22cb2dbfb53f48fad8ebecb77c441e",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP TABLE IF EXISTS postgres.public.test CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/schemas_test.go:TestSchemas#0024",
       "source": "testing/go/schemas_test.go:TestSchemas",
       "ordinal": 24,
       "scriptName": "public db and schema qualifier",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "schemas-test-testschemas-0024-select-*-from-postgres.public.test",
       "suggestedId": "schemas-test-testschemas-0024-select-*-from-postgres.public.test",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM postgres.public.test;",
       "querySha256": "b4041fcb8a8a5316bd0abd05863d32b9b44fbc60380bed6344341e4fd0265ecd",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS postgres.public.test CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/schemas_test.go:TestSchemas#0025",

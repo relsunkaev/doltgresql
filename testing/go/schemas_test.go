@@ -34,11 +34,7 @@ var SchemaTests = []ScriptTest{
 				Query: "SELECT * FROM employees;", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0001-select-*-from-employees"},
 			},
 			{
-				Query: "SELECT * FROM public.employees;",
-				Expected: []sql.Row{
-					{1, "John", "Doe"},
-					{2, "Jane", "Doe"},
-				},
+				Query: "SELECT * FROM public.employees;", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0002-select-*-from-public.employees", Cleanup: []string{"DROP TABLE IF EXISTS employees CASCADE"}},
 			},
 		},
 	},
@@ -52,11 +48,7 @@ var SchemaTests = []ScriptTest{
 				Query: "INSERT INTO public.test VALUES (1, 1), (2, 2);",
 			},
 			{
-				Query: "SELECT * FROM public.test;",
-				Expected: []sql.Row{
-					{1, 1},
-					{2, 2},
-				},
+				Query: "SELECT * FROM public.test;", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0003-select-*-from-public.test", Cleanup: []string{"DROP TABLE IF EXISTS test CASCADE"}},
 			},
 		},
 	},
@@ -114,27 +106,22 @@ var SchemaTests = []ScriptTest{
 				Query: "drop table if exists public.t4",
 			},
 			{
-				Query:       "INSERT INTO t1 VALUES (1, 1), (2, 2);",
-				ExpectedErr: "not found",
+				Query: "INSERT INTO t1 VALUES (1, 1), (2, 2);", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0005-insert-into-t1-values-1", Compare: "sqlstate", Cleanup: []string{"DROP TABLE IF EXISTS t1 CASCADE", "DROP TABLE IF EXISTS t2 CASCADE", "DROP TABLE IF EXISTS t3 CASCADE", "DROP TABLE IF EXISTS t4 CASCADE"}},
 			},
 			{
-				Query:       "INSERT INTO t2 VALUES (3, 3), (4, 4);",
-				ExpectedErr: "not found",
+				Query: "INSERT INTO t2 VALUES (3, 3), (4, 4);", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0006-insert-into-t2-values-3", Compare: "sqlstate", Cleanup: []string{"DROP TABLE IF EXISTS t1 CASCADE", "DROP TABLE IF EXISTS t2 CASCADE", "DROP TABLE IF EXISTS t3 CASCADE", "DROP TABLE IF EXISTS t4 CASCADE"}},
 			},
 			{
-				Query:       "INSERT INTO t3 VALUES (1, 1), (2, 2);",
-				ExpectedErr: "not found",
+				Query: "INSERT INTO t3 VALUES (1, 1), (2, 2);", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0007-insert-into-t3-values-1", Compare: "sqlstate", Cleanup: []string{"DROP TABLE IF EXISTS t1 CASCADE", "DROP TABLE IF EXISTS t2 CASCADE", "DROP TABLE IF EXISTS t3 CASCADE", "DROP TABLE IF EXISTS t4 CASCADE"}},
 			},
 			{
-				Query:       "INSERT INTO t4 VALUES (3, 3), (4, 4);",
-				ExpectedErr: "not found",
+				Query: "INSERT INTO t4 VALUES (3, 3), (4, 4);", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0008-insert-into-t4-values-3", Compare: "sqlstate", Cleanup: []string{"DROP TABLE IF EXISTS t1 CASCADE", "DROP TABLE IF EXISTS t2 CASCADE", "DROP TABLE IF EXISTS t3 CASCADE", "DROP TABLE IF EXISTS t4 CASCADE"}},
 			},
 			{
 				Query: "drop table if exists t1",
 			},
 			{
-				Query:       "drop table t1",
-				ExpectedErr: "not found",
+				Query: "drop table t1", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0009-drop-table-t1", Compare: "sqlstate", Cleanup: []string{"DROP TABLE IF EXISTS t1 CASCADE", "DROP TABLE IF EXISTS t2 CASCADE", "DROP TABLE IF EXISTS t3 CASCADE", "DROP TABLE IF EXISTS t4 CASCADE"}},
 			},
 		},
 	},
@@ -195,23 +182,16 @@ var SchemaTests = []ScriptTest{
 				Query: "INSERT INTO public.test VALUES (1, 1);",
 			},
 			{
-				Query: "SELECT * FROM test;",
-				Expected: []sql.Row{
-					{1, 1},
-				},
+				Query: "SELECT * FROM test;", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0012-select-*-from-test", Cleanup: []string{"DROP TABLE IF EXISTS public.test CASCADE", "DROP SCHEMA IF EXISTS postgres CASCADE"}},
 			},
 			{
 				Query: "CREATE TABLE postgres.test (pk BIGINT PRIMARY KEY, v1 BIGINT);",
 			},
 			{
-				Query:    "INSERT INTO postgres.test VALUES (2, 2);",
-				Expected: []sql.Row{},
+				Query: "INSERT INTO postgres.test VALUES (2, 2);", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0013-insert-into-postgres.test-values-2", Cleanup: []string{"DROP TABLE IF EXISTS public.test CASCADE", "DROP TABLE IF EXISTS postgres.test CASCADE", "DROP SCHEMA IF EXISTS postgres CASCADE"}},
 			},
 			{
-				Query: "SELECT * FROM test;",
-				Expected: []sql.Row{
-					{2, 2},
-				},
+				Query: "SELECT * FROM test;", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0014-select-*-from-test", Cleanup: []string{"DROP TABLE IF EXISTS public.test CASCADE", "DROP TABLE IF EXISTS postgres.test CASCADE", "DROP SCHEMA IF EXISTS postgres CASCADE"}},
 			},
 		},
 	},
@@ -226,14 +206,10 @@ var SchemaTests = []ScriptTest{
 				Query: "INSERT INTO public.test VALUES (1, 1);",
 			},
 			{
-				Query:       "SELECT * FROM test;",
-				ExpectedErr: "table not found",
+				Query: "SELECT * FROM test;", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0015-select-*-from-test", Compare: "sqlstate", Cleanup: []string{"DROP TABLE IF EXISTS public.test CASCADE"}},
 			},
 			{
-				Query: "SELECT * FROM public.test;",
-				Expected: []sql.Row{
-					{1, 1},
-				},
+				Query: "SELECT * FROM public.test;", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0016-select-*-from-public.test", Cleanup: []string{"DROP TABLE IF EXISTS public.test CASCADE"}},
 			},
 		},
 	},
@@ -244,15 +220,10 @@ var SchemaTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query:    "INSERT INTO public.test VALUES (1, 1), (2, 2);",
-				Expected: []sql.Row{},
+				Query: "INSERT INTO public.test VALUES (1, 1), (2, 2);", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0017-insert-into-public.test-values-1", Cleanup: []string{"DROP TABLE IF EXISTS public.test CASCADE"}},
 			},
 			{
-				Query: "SELECT * FROM public.test;",
-				Expected: []sql.Row{
-					{1, 1},
-					{2, 2},
-				},
+				Query: "SELECT * FROM public.test;", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0018-select-*-from-public.test", Cleanup: []string{"DROP TABLE IF EXISTS public.test CASCADE"}},
 			},
 		},
 	},
@@ -264,26 +235,16 @@ var SchemaTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query:    "INSERT INTO public.test VALUES (1, 1), (2, 2);",
-				Expected: []sql.Row{},
+				Query: "INSERT INTO public.test VALUES (1, 1), (2, 2);", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0019-insert-into-public.test-values-1", Cleanup: []string{"DROP TABLE IF EXISTS public.test CASCADE", "DROP TABLE IF EXISTS public.test2 CASCADE"}},
 			},
 			{
-				Query:    "INSERT INTO public.test2 VALUES (3, 3), (4, 4);",
-				Expected: []sql.Row{},
+				Query: "INSERT INTO public.test2 VALUES (3, 3), (4, 4);", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0020-insert-into-public.test2-values-3", Cleanup: []string{"DROP TABLE IF EXISTS public.test CASCADE", "DROP TABLE IF EXISTS public.test2 CASCADE"}},
 			},
 			{
-				Query: "SELECT * FROM public.test;",
-				Expected: []sql.Row{
-					{1, 1},
-					{2, 2},
-				},
+				Query: "SELECT * FROM public.test;", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0021-select-*-from-public.test", Cleanup: []string{"DROP TABLE IF EXISTS public.test CASCADE", "DROP TABLE IF EXISTS public.test2 CASCADE"}},
 			},
 			{
-				Query: "SELECT * FROM public.test2;",
-				Expected: []sql.Row{
-					{3, 3},
-					{4, 4},
-				},
+				Query: "SELECT * FROM public.test2;", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0022-select-*-from-public.test2", Cleanup: []string{"DROP TABLE IF EXISTS public.test CASCADE", "DROP TABLE IF EXISTS public.test2 CASCADE"}},
 			},
 		},
 	},
@@ -294,15 +255,10 @@ var SchemaTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query:    "INSERT INTO postgres.public.test VALUES (1, 1), (2, 2);",
-				Expected: []sql.Row{},
+				Query: "INSERT INTO postgres.public.test VALUES (1, 1), (2, 2);", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0023-insert-into-postgres.public.test-values-1", Cleanup: []string{"DROP TABLE IF EXISTS postgres.public.test CASCADE"}},
 			},
 			{
-				Query: "SELECT * FROM postgres.public.test;",
-				Expected: []sql.Row{
-					{1, 1},
-					{2, 2},
-				},
+				Query: "SELECT * FROM postgres.public.test;", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0024-select-*-from-postgres.public.test", Cleanup: []string{"DROP TABLE IF EXISTS postgres.public.test CASCADE"}},
 			},
 		},
 	},
@@ -892,19 +848,18 @@ var SchemaTests = []ScriptTest{
 				Query: "create sequence hassequence.myseq start 1 increment 1;",
 			},
 			{
-				Query: "DROP SCHEMA hassequence;", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0093-drop-schema-hassequence", Compare:
-
-				// More tests:
-				// * alter table statements, when they work better
-				// * AS OF (when supported)
-				// * revision qualifiers
-				// * more statement types
-				// * INSERT INTO schema1 SELECT FROM schema2
-				// * Subqueries accessing different schemas in the same SELECT
-				// * Joins across schemas
-				// * Table names matching schema names. For example, test1.test1, test1.test2, test2.test1, test2.test2
-				"sqlstate"},
+				Query: "DROP SCHEMA hassequence;", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0093-drop-schema-hassequence", Compare: "sqlstate"},
 			},
+			// More tests:
+			// * alter table statements, when they work better
+			// * AS OF (when supported)
+			// * revision qualifiers
+			// * more statement types
+			// * INSERT INTO schema1 SELECT FROM schema2
+			// * Subqueries accessing different schemas in the same SELECT
+			// * Joins across schemas
+			// * Table names matching schema names. For example, test1.test1, test1.test2, test2.test1, test2.test2
+
 		},
 	},
 }
