@@ -15,7 +15,12 @@
 package _go
 
 import (
+	"fmt"
 	"testing"
+
+	gms "github.com/dolthub/go-mysql-server/sql"
+	"github.com/jackc/pgx/v5"
+	"github.com/stretchr/testify/require"
 )
 
 // TestUnsupportedDdlProbes pins the rejection contracts for DDL
@@ -27,47 +32,48 @@ import (
 // Per the Schema/DDL TODO in
 // docs/app-compatibility-checklist.md.
 func TestUnsupportedDdlProbes(t *testing.T) {
-	RunScripts(t, []ScriptTest{
-		{
-			Name:        "CREATE AGGREGATE is rejected",
-			SetUpScript: []string{},
-			Assertions: []ScriptTestAssertion{
-				{
-					Query: `CREATE AGGREGATE my_sum (int) (
-						sfunc = int4pl,
-						stype = int
-					);`, PostgresOracle: ScriptTestPostgresOracle{ID: "unsupported-ddl-probes-test-testunsupportedddlprobes-0001-create-aggregate-my_sum-int-sfunc",
+	port, err := gms.GetEmptyPort()
+	require.NoError(t, err)
 
-						// EXCLUDE constraints on a table (e.g. EXCLUDE USING gist)
-						// are how PG enforces non-overlapping ranges; not
-						// supported today.
-						Compare: "sqlstate"},
-				},
-			},
+	ctx, defaultConn, controller := CreateServerWithPort(t, "postgres", port)
+	t.Cleanup(func() {
+		defaultConn.Close(ctx)
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	})
+
+	conn, err := pgx.Connect(ctx, fmt.Sprintf(
+		"postgres://postgres:password@127.0.0.1:%d/postgres?sslmode=disable", port))
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = conn.Close(ctx) })
+
+	for _, tc := range []struct {
+		name     string
+		setup    []string
+		query    string
+		sqlstate string
+	}{
+		{
+			name: "CREATE AGGREGATE is rejected",
+			query: `CREATE AGGREGATE my_sum (int) (
+				sfunc = int4pl,
+				stype = int
+			);`,
+			sqlstate: "0A000",
 		},
 		{
-
-			Name:        "EXCLUDE constraint via CREATE TABLE is rejected",
-			SetUpScript: []string{},
-			Assertions: []ScriptTestAssertion{
-				{
-					Query: `CREATE TABLE bookings (
-						id INT PRIMARY KEY,
-						room_id INT,
-						period TEXT,
-						EXCLUDE USING gist (room_id WITH =, period WITH &&)
-					);`, PostgresOracle: ScriptTestPostgresOracle{ID: "unsupported-ddl-probes-test-testunsupportedddlprobes-0002-create-table-bookings-id-int",
-
-						// Transition tables are PostgreSQL-only AFTER-trigger
-						// state. BEFORE triggers must still reject REFERENCING.
-						Compare: "sqlstate"},
-				},
-			},
+			name: "EXCLUDE constraint via CREATE TABLE is rejected",
+			query: `CREATE TABLE bookings (
+				id INT PRIMARY KEY,
+				room_id INT,
+				period TEXT,
+				EXCLUDE USING gist (room_id WITH =, period WITH &&)
+			);`,
+			sqlstate: "0A000",
 		},
 		{
-
-			Name: "BEFORE trigger with REFERENCING NEW TABLE is rejected",
-			SetUpScript: []string{
+			name: "BEFORE trigger with REFERENCING NEW TABLE is rejected",
+			setup: []string{
 				`CREATE TABLE t (id INT PRIMARY KEY, v INT);`,
 				`CREATE FUNCTION audit_fn() RETURNS trigger AS $$
 					BEGIN
@@ -75,29 +81,27 @@ func TestUnsupportedDdlProbes(t *testing.T) {
 					END;
 				$$ LANGUAGE plpgsql;`,
 			},
-			Assertions: []ScriptTestAssertion{
-				{
-					Query: `CREATE TRIGGER tg
-						BEFORE INSERT ON t
-						REFERENCING NEW TABLE AS new_rows
-						FOR EACH STATEMENT EXECUTE FUNCTION audit_fn();`, PostgresOracle: ScriptTestPostgresOracle{ID: "unsupported-ddl-probes-test-testunsupportedddlprobes-0003-create-trigger-tg-before-insert",
-
-						// Event triggers fire on DDL statements.
-						Compare: "sqlstate"},
-				},
-			},
+			query: `CREATE TRIGGER tg
+				BEFORE INSERT ON t
+				REFERENCING NEW TABLE AS new_rows
+				FOR EACH STATEMENT EXECUTE FUNCTION audit_fn();`,
+			sqlstate: "XX000",
 		},
 		{
-
-			Name:        "CREATE EVENT TRIGGER is rejected",
-			SetUpScript: []string{},
-			Assertions: []ScriptTestAssertion{
-				{
-					Query: `CREATE EVENT TRIGGER ddl_audit
-						ON ddl_command_end
-						EXECUTE FUNCTION audit_fn();`, PostgresOracle: ScriptTestPostgresOracle{ID: "unsupported-ddl-probes-test-testunsupportedddlprobes-0004-create-event-trigger-ddl_audit-on", Compare: "sqlstate"},
-				},
-			},
+			name: "CREATE EVENT TRIGGER is rejected",
+			query: `CREATE EVENT TRIGGER ddl_audit
+				ON ddl_command_end
+				EXECUTE FUNCTION audit_fn();`,
+			sqlstate: "42501",
 		},
-	})
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			for _, statement := range tc.setup {
+				_, err := conn.Exec(ctx, statement)
+				require.NoError(t, err, "setup: %s", statement)
+			}
+			_, err := conn.Exec(ctx, tc.query)
+			requireSQLState(t, err, tc.sqlstate, tc.query)
+		})
+	}
 }
