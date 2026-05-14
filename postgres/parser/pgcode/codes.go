@@ -125,6 +125,7 @@ var (
 	NullValueNoIndicatorParameter         = MakeCode("22002")
 	NumericValueOutOfRange                = MakeCode("22003")
 	SequenceGeneratorLimitExceeded        = MakeCode("2200H")
+	SingletonSQLJSONItemRequired          = MakeCode("22038")
 	StringDataLengthMismatch              = MakeCode("22026")
 	StringDataRightTruncation             = MakeCode("22001")
 	Substring                             = MakeCode("22011")

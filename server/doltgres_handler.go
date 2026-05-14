@@ -296,6 +296,7 @@ func castSQLError(err error) error {
 		pgcode.ProgramLimitExceeded,
 		pgcode.QueryCanceled,
 		pgcode.RaiseException,
+		pgcode.SingletonSQLJSONItemRequired,
 		pgcode.Syntax,
 		pgcode.UniqueViolation,
 		pgcode.UndefinedColumn,

@@ -24,6 +24,8 @@ import (
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -534,7 +536,7 @@ func jsonPathIsDecimalNumber(text string) bool {
 
 func jsonPathSingleBooleanResult(values []pgtypes.JsonValue) (any, error) {
 	if len(values) != 1 {
-		return nil, errors.New("single boolean result is expected")
+		return nil, pgerror.New(pgcode.SingletonSQLJSONItemRequired, "single boolean result is expected")
 	}
 	switch value := values[0].(type) {
 	case pgtypes.JsonValueBoolean:
@@ -542,6 +544,6 @@ func jsonPathSingleBooleanResult(values []pgtypes.JsonValue) (any, error) {
 	case pgtypes.JsonValueNull:
 		return nil, nil
 	default:
-		return nil, errors.New("single boolean result is expected")
+		return nil, pgerror.New(pgcode.SingletonSQLJSONItemRequired, "single boolean result is expected")
 	}
 }
