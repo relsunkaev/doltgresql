@@ -769,10 +769,7 @@ func TestSystemInformationFunctions(t *testing.T) {
 			Name: "version",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT version();`,
-					Expected: []sql.Row{
-						{"PostgreSQL 15.5"},
-					},
+					Query: `SELECT version();`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testsysteminformationfunctions-0051-select-version"},
 				},
 			},
 		},
