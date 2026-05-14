@@ -482,12 +482,11 @@
       "oracle": "postgres",
       "postgresId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0028-call-interpreted_merging-12",
       "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0028-call-interpreted_merging-12",
-      "compare": "sqlstate",
+      "compare": "structural",
       "expectedKind": "rows",
-      "sqlstate": "55000",
-      "errorSeverity": "ERROR",
       "query": "CALL interpreted_merging('12');",
       "querySha256": "ab1829a41a633f2545936ff2f1214fdcf906012cf95cc301fe5ff765518fceb9",
+      "expectedRows": [],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -510,6 +509,14 @@
           },
           {
             "value": "77"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "112"
           }
         ]
       ],
