@@ -10,6 +10,24 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### epsilon - 2026-05-14 05:34 MST
+
+- Result: fixed the `TestStringFunction` and `TestUnknownFunctions` SQLSTATE blockers discovered after the date/time slice.
+- Root causes:
+  - `split_part(..., 0)` returned a generic error instead of PostgreSQL `invalid_parameter_value` (`22023`).
+  - `string_agg` arity errors returned generic errors instead of `undefined_function` (`42883`).
+  - `group_concat(... ORDER BY ...)` hit the generic unsupported function-order-by path before unknown-function resolution, returning `0A000` instead of `42883`.
+- Files touched: `server/functions/split_part.go`, `server/ast/func_expr.go`, and one string/aggregate classifier hunk in `server/connection_handler.go`.
+- Fresh current-HEAD verifier `/private/tmp/doltgresql-epsilon-current-xeo64K` plus epsilon's patch passed:
+  - `go test -json -vet=off ./testing/go -run '^TestStringFunction$/^split_part$' -count=1 -timeout=10m`
+  - `go test -json -vet=off ./testing/go -run '^TestStringFunction$/^string_agg$' -count=1 -timeout=10m`
+  - `go test -json -vet=off ./testing/go -run '^TestUnknownFunctions$' -count=1 -timeout=10m`
+  - `git diff --check` on epsilon-owned files.
+- Shared checkout note: `go test -vet=off ./server/ast ./server/functions -run '^$' -count=1` remains blocked in `./server/ast` by unrelated dirty `server/node/postgres_foreign_key_action_handler.go` compile errors; `./server/functions` passed.
+- Current high-skip verifier log `/tmp/doltgresql-epsilon-current-highskip-8.jsonl` advances past `TestStringFunction` and `TestUnknownFunctions`, then stops at `TestSetReturningFunctions/generate_series/SELECT generate_series(1::int4,6::int4,0::int4)`: expected SQLSTATE `22023`, actual `XX000`.
+- Committed as `c47c5b78`.
+- Next action: fix the `generate_series` zero-step SQLSTATE in the set-returning-functions lane.
+
 ### epsilon - 2026-05-14 05:27 MST
 
 - Result: fixed the remaining `TestDateAndTimeFunction` SQLSTATE/parser blockers through `date_bin`; the high-skip verifier now advances to `TestStringFunction/split_part`.
