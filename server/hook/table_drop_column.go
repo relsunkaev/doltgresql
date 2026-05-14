@@ -60,6 +60,14 @@ func AfterTableDropColumn(ctx *sql.Context, runner sql.StatementRunner, nodeInte
 	if err = dropSequencesOwnedByColumn(ctx, tableName, n.Column); err != nil {
 		return err
 	}
+	updatedTable, err := alteredTableFromNode(ctx, n.Database(), n.Table)
+	if err != nil {
+		return err
+	}
+	updatedType, err := tableRowTypeFromSQLTable(ctx, tableName, updatedTable)
+	if err != nil {
+		return err
+	}
 
 	for _, otherTableName := range allTableNames {
 		if doltdb.IsSystemTable(otherTableName) {
@@ -99,12 +107,12 @@ func AfterTableDropColumn(ctx *sql.Context, runner sql.StatementRunner, nodeInte
 			if trimIdx == -1 {
 				return errors.New("DROP COLUMN post-hook could not find the index of the column to remove")
 			}
+			if err = updateDependentColumnType(ctx, databaseNameForSQLDatabase(n.Database()), otherTableName, otherCol.Name, updatedType); err != nil {
+				return err
+			}
 			// The UPDATE changes the values in the table
 			updateStr := fmt.Sprintf(`UPDATE "%s"."%s" SET "%s" = dolt_recordtrim("%s", %d)::"%s"."%s";`,
 				otherTableName.Schema, otherTableName.Name, otherCol.Name, otherCol.Name, trimIdx, tableName.Schema, tableName.Name)
-			// The ALTER updates the type on the schema since it still has the old one
-			alterStr := fmt.Sprintf(`ALTER TABLE "%s"."%s" ALTER COLUMN "%s" TYPE "%s"."%s";`,
-				otherTableName.Schema, otherTableName.Name, otherCol.Name, tableName.Schema, tableName.Name)
 			// We run the statements as though they were interpreted since we're running new statements inside the original
 			_, err = sql.RunInterpreted(ctx, func(subCtx *sql.Context) ([]sql.Row, error) {
 				_, rowIter, _, err := runner.QueryWithBindings(subCtx, updateStr, nil, nil, nil)
@@ -115,11 +123,7 @@ func AfterTableDropColumn(ctx *sql.Context, runner sql.StatementRunner, nodeInte
 				if err != nil {
 					return nil, err
 				}
-				_, rowIter, _, err = runner.QueryWithBindings(subCtx, alterStr, nil, nil, nil)
-				if err != nil {
-					return nil, err
-				}
-				return sql.RowIterToRows(subCtx, rowIter)
+				return nil, nil
 			})
 			if err != nil {
 				return err

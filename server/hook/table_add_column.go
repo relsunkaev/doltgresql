@@ -377,6 +377,14 @@ func AfterTableAddColumn(ctx *sql.Context, runner sql.StatementRunner, nodeInter
 	if err = recordColumnMissingValueMetadata(ctx, n); err != nil {
 		return err
 	}
+	updatedTable, err := alteredTableFromNode(ctx, n.Database(), n.Table)
+	if err != nil {
+		return err
+	}
+	updatedType, err := tableRowTypeFromSQLTable(ctx, tableName, updatedTable)
+	if err != nil {
+		return err
+	}
 
 	for _, otherTableName := range allTableNames {
 		if doltdb.IsSystemTable(otherTableName) {
@@ -405,18 +413,23 @@ func AfterTableAddColumn(ctx *sql.Context, runner sql.StatementRunner, nodeInter
 				// This column isn't our table type, so we can ignore it
 				continue
 			}
-			// Build the UPDATE statement that we'll run for this table
-			rowValues := make([]string, len(sch)+1)
-			for i, col := range sch {
-				rowValues[i] = fmt.Sprintf(`("%s")."%s"`, otherCol.Name, col.Name)
+			if err = updateDependentColumnType(ctx, databaseNameForSQLDatabase(n.Database()), otherTableName, otherCol.Name, updatedType); err != nil {
+				return err
 			}
-			rowValues[len(rowValues)-1] = "NULL"
+			// Build the UPDATE statement that we'll run for this table.
+			// Existing attributes are copied by name, while the added
+			// attribute is appended as NULL for every stored composite.
+			rowValues := make([]string, len(updatedType.CompositeAttrs))
+			for i, attr := range updatedType.CompositeAttrs {
+				if schemaHasColumn(sch, attr.Name) {
+					rowValues[i] = fmt.Sprintf(`("%s")."%s"`, otherCol.Name, attr.Name)
+				} else {
+					rowValues[i] = "NULL"
+				}
+			}
 			// The UPDATE changes the values in the table
 			updateStr := fmt.Sprintf(`UPDATE "%s"."%s" SET "%s" = ROW(%s)::"%s"."%s" WHERE length("%s"::text) > 0;`,
 				otherTableName.Schema, otherTableName.Name, otherCol.Name, strings.Join(rowValues, ","), tableName.Schema, tableName.Name, otherCol.Name)
-			// The ALTER updates the type on the schema since it still has the old one
-			alterStr := fmt.Sprintf(`ALTER TABLE "%s"."%s" ALTER COLUMN "%s" TYPE "%s"."%s";`,
-				otherTableName.Schema, otherTableName.Name, otherCol.Name, tableName.Schema, tableName.Name)
 			// We run the statements as though they were interpreted since we're running new statements inside the original
 			_, err = sql.RunInterpreted(ctx, func(subCtx *sql.Context) ([]sql.Row, error) {
 				_, rowIter, _, err := runner.QueryWithBindings(subCtx, updateStr, nil, nil, nil)
@@ -427,11 +440,7 @@ func AfterTableAddColumn(ctx *sql.Context, runner sql.StatementRunner, nodeInter
 				if err != nil {
 					return nil, err
 				}
-				_, rowIter, _, err = runner.QueryWithBindings(subCtx, alterStr, nil, nil, nil)
-				if err != nil {
-					return nil, err
-				}
-				return sql.RowIterToRows(subCtx, rowIter)
+				return nil, nil
 			})
 			if err != nil {
 				return err
@@ -580,4 +589,65 @@ func alteredTableName(nodeToSearch sql.Node) string {
 		nodeStack = append(nodeStack, node.Children()...)
 	}
 	return ""
+}
+
+func tableRowTypeFromSQLTable(ctx *sql.Context, tableName doltdb.TableName, table sql.Table) (*pgtypes.DoltgresType, error) {
+	schemaName := tableName.Schema
+	if schemaName == "" {
+		var err error
+		schemaName, err = core.GetSchemaName(ctx, nil, "")
+		if err != nil {
+			return nil, err
+		}
+	}
+	if schemaTable, ok := table.(sql.DatabaseSchemaTable); ok {
+		schemaName = schemaTable.DatabaseSchema().SchemaName()
+	}
+	tableSchema := table.Schema(ctx)
+	typeID := id.NewType(schemaName, tableName.Name)
+	relID := id.NewTable(schemaName, tableName.Name).AsId()
+	arrayID := id.NewType(schemaName, "_"+tableName.Name)
+	attrs := make([]pgtypes.CompositeAttribute, len(tableSchema))
+	for i, col := range tableSchema {
+		colType, ok := col.Type.(*pgtypes.DoltgresType)
+		if !ok {
+			return nil, pgtypes.ErrTypeDoesNotExist.New(tableName.Name)
+		}
+		attrs[i] = pgtypes.NewCompositeAttribute(ctx, relID, col.Name, colType.ID, colType.GetAttTypMod(), int16(i+1), "")
+	}
+	return pgtypes.NewCompositeType(ctx, relID, arrayID, typeID, attrs), nil
+}
+
+func schemaHasColumn(schema sql.Schema, columnName string) bool {
+	return schema.IndexOfColName(columnName) >= 0
+}
+
+func updateDependentColumnType(ctx *sql.Context, databaseName string, tableName doltdb.TableName, columnName string, updatedType *pgtypes.DoltgresType) error {
+	sqlTable, err := core.GetSqlTableFromContext(ctx, databaseName, tableName)
+	if err != nil {
+		return err
+	}
+	if sqlTable == nil {
+		return sql.ErrTableNotFound.New(tableName.Name)
+	}
+	alterable, ok := sqlTable.(sql.AlterableTable)
+	if !ok {
+		alterable, ok = sql.GetUnderlyingTable(sqlTable).(sql.AlterableTable)
+	}
+	if !ok {
+		return sql.ErrAlterTableNotSupported.New(sqlTable.Name())
+	}
+	for _, col := range sqlTable.Schema(ctx) {
+		if !strings.EqualFold(col.Name, columnName) {
+			continue
+		}
+		updatedCol := *col
+		if currentType, ok := col.Type.(*pgtypes.DoltgresType); ok && currentType.GetAttTypMod() != -1 {
+			updatedCol.Type = updatedType.WithAttTypMod(currentType.GetAttTypMod())
+		} else {
+			updatedCol.Type = updatedType
+		}
+		return alterable.ModifyColumn(ctx, col.Name, &updatedCol, nil)
+	}
+	return sql.ErrTableColumnNotFound.New(tableName.Name, columnName)
 }
