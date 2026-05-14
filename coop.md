@@ -10,6 +10,16 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### epsilon - 2026-05-14 07:58 MST
+
+- Result: fixed `TestAuthDoltProcedures` flaking on stale file remotes during `select dolt_backup('sync-url', ...)`.
+- Root cause: auth procedure tests reused the fixed remote URL `file://$TMPDIR/bak1`; a stale or partial backup directory from an earlier run made the first superuser backup sync open a missing table file before the assertion could validate authorization behavior.
+- Files touched: `testing/go/auth_test.go`.
+- Fresh verifier `/private/tmp/doltgresql-epsilon-current2-0SCJQk` plus epsilon's patch passed:
+  - `go test -vet=off ./testing/go -run '^TestAuthDoltProcedures$' -count=1 -timeout=10m -v`
+- Shared checkout note: full shared-tree runs remain blocked by unrelated dirty `server/node/postgres_foreign_key_action_handler.go` compile errors, so validation used the verifier worktree.
+- Next action: commit only the auth temp-root slice, then rerun current-head failfast `./testing/go` discovery.
+
 ### epsilon - 2026-05-14 07:51 MST
 
 - Result: fixed ActiveRecord primary-key introspection after the high-skip verifier exposed `ActiveRecord::UnknownPrimaryKey` for tables with a single-column primary key.
