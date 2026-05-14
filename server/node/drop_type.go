@@ -127,7 +127,8 @@ func (c *DropType) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 		// TODO: get the base type name
 		//  add HINT:  You can drop type ___ instead. (base type)
 		arrTypeName := typ.String()
-		return nil, types.ErrCannotDropArrayType.New(arrTypeName, strings.TrimSuffix(arrTypeName, "[]"))
+		return nil, pgerror.Newf(pgcode.DependentObjectsStillExist,
+			`cannot drop type %s because type %s requires it`, arrTypeName, strings.TrimSuffix(arrTypeName, "[]"))
 	}
 
 	// iterate on all table columns to check if this type is currently used.

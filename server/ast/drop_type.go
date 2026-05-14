@@ -15,10 +15,10 @@
 package ast
 
 import (
-	"github.com/cockroachdb/errors"
-
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	pgnodes "github.com/dolthub/doltgresql/server/node"
 )
@@ -29,7 +29,7 @@ func nodeDropType(ctx *Context, node *tree.DropType) (vitess.Statement, error) {
 		return nil, nil
 	}
 	if len(node.Names) != 1 {
-		return nil, errors.Errorf("dropping multiple types in DROP TYPE is not yet supported")
+		return nil, pgerror.Newf(pgcode.UndefinedObject, "dropping multiple types in DROP TYPE is not yet supported")
 	}
 	tn := node.Names[0].ToTableName()
 	return vitess.InjectedStatement{
