@@ -4425,6 +4425,9 @@ func errMessageToSQLState(msg string) (string, bool) {
 		return pgcode.StackedDiagnosticsAccessedWithoutActiveHandler.String(), true
 	case strings.HasPrefix(msg, "diagnostics item ") && strings.HasSuffix(msg, " is not allowed in GET STACKED DIAGNOSTICS"):
 		return pgcode.Syntax.String(), true
+	case strings.HasPrefix(msg, "unrecognized configuration parameter "),
+		strings.HasPrefix(msg, "ERROR: unrecognized configuration parameter "):
+		return pgcode.UndefinedObject.String(), true
 	case strings.HasPrefix(msg, `role "`) && strings.HasSuffix(msg, `" does not exist`):
 		return pgcode.UndefinedObject.String(), true
 	case strings.HasPrefix(msg, `schema "`) && strings.HasSuffix(msg, `" does not exist`):
