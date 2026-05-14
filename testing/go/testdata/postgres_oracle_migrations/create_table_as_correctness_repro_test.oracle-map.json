@@ -696,26 +696,58 @@
       "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsExplicitColumnNamesRepro",
       "ordinal": 1,
       "scriptName": "CREATE TABLE AS explicit column names rename output",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "create-table-as-correctness-repro-test-testcreatetableasexplicitcolumnnamesrepro-0001-select-column_name-from-information_schema.columns-where",
       "suggestedId": "create-table-as-correctness-repro-test-testcreatetableasexplicitcolumnnamesrepro-0001-select-column_name-from-information_schema.columns-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT column_name\n\t\t\t\t\t\tFROM information_schema.columns\n\t\t\t\t\t\tWHERE table_schema = 'public'\n\t\t\t\t\t\t\tAND table_name = 'ctas_explicit_names'\n\t\t\t\t\t\tORDER BY ordinal_position;",
       "querySha256": "769f6942ba821179e2a8a043b9bb2d316c8eb3b888958d79ea11ae6c0c0764b6",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "new_id"
+          }
+        ],
+        [
+          {
+            "value": "new_label"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS ctas_explicit_names CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsExplicitColumnNamesRepro#0002",
       "source": "testing/go/create_table_as_correctness_repro_test.go:TestCreateTableAsExplicitColumnNamesRepro",
       "ordinal": 2,
       "scriptName": "CREATE TABLE AS explicit column names rename output",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "create-table-as-correctness-repro-test-testcreatetableasexplicitcolumnnamesrepro-0002-select-new_id-new_label-from-ctas_explicit_names",
       "suggestedId": "create-table-as-correctness-repro-test-testcreatetableasexplicitcolumnnamesrepro-0002-select-new_id-new_label-from-ctas_explicit_names",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT new_id, new_label FROM ctas_explicit_names;",
       "querySha256": "5841d0bc0759d27eab583741595fe5da445da28cba14aa4075e772485f0ba655",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "one"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS ctas_explicit_names CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     }
   ]
 }

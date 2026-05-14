@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestCreateTableAsWithNoDataDoesNotEvaluateQuery guards PostgreSQL's CTAS
@@ -514,12 +512,10 @@ func TestCreateTableAsExplicitColumnNamesRepro(t *testing.T) {
 						FROM information_schema.columns
 						WHERE table_schema = 'public'
 							AND table_name = 'ctas_explicit_names'
-						ORDER BY ordinal_position;`,
-					Expected: []sql.Row{{"new_id"}, {"new_label"}},
+						ORDER BY ordinal_position;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-as-correctness-repro-test-testcreatetableasexplicitcolumnnamesrepro-0001-select-column_name-from-information_schema.columns-where"},
 				},
 				{
-					Query:    `SELECT new_id, new_label FROM ctas_explicit_names;`,
-					Expected: []sql.Row{{1, "one"}},
+					Query: `SELECT new_id, new_label FROM ctas_explicit_names;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-as-correctness-repro-test-testcreatetableasexplicitcolumnnamesrepro-0002-select-new_id-new_label-from-ctas_explicit_names"},
 				},
 			},
 		},
