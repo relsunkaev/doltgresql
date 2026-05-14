@@ -758,17 +758,27 @@ func (capture *replicationChangeCapture) publicationColumnIndexes(columns []stri
 		}
 		return indexes, nil
 	}
-	indexByName := make(map[string]int, len(capture.fields))
-	for i, field := range capture.fields {
-		indexByName[strings.ToLower(string(field.Name))] = i
+	publishedColumns := make(map[string]struct{}, len(columns))
+	for _, column := range columns {
+		publishedColumns[strings.ToLower(column)] = struct{}{}
 	}
-	indexes := make([]int, len(columns))
-	for i, column := range columns {
-		idx, ok := indexByName[strings.ToLower(column)]
-		if !ok {
-			return nil, errors.Errorf(`publication column "%s" was not captured for table "%s"`, column, capture.table)
+	indexes := make([]int, 0, len(columns))
+	for i, field := range capture.fields {
+		if _, ok := publishedColumns[strings.ToLower(string(field.Name))]; ok {
+			indexes = append(indexes, i)
 		}
-		indexes[i] = idx
+	}
+	if len(indexes) != len(columns) {
+		capturedColumns := make(map[string]struct{}, len(capture.fields))
+		for _, field := range capture.fields {
+			capturedColumns[strings.ToLower(string(field.Name))] = struct{}{}
+		}
+		for _, column := range columns {
+			_, ok := capturedColumns[strings.ToLower(column)]
+			if !ok {
+				return nil, errors.Errorf(`publication column "%s" was not captured for table "%s"`, column, capture.table)
+			}
+		}
 	}
 	return indexes, nil
 }

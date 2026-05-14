@@ -2199,7 +2199,7 @@ func TestLogicalReplicationSourcePublishesCopyFromRowsRepro(t *testing.T) {
 	require.Equal(t, "copied-from-stdin", label)
 
 	relation, insert, _ := receiveInsertChange(t, replConn)
-	requireInsertChange(t, relation, insert, "dg_copy_from_items", "1", "copied-from-stdin")
+	requireInsertChangeWithKeyColumn(t, relation, insert, "public", "dg_copy_from_items", "id", "1", "copied-from-stdin")
 }
 
 func TestLogicalReplicationSourceHonorsPublicationRowFilterAndColumnList(t *testing.T) {
@@ -2226,7 +2226,8 @@ func TestLogicalReplicationSourceHonorsPublicationRowFilterAndColumnList(t *test
 	_, err = conn.Current.Exec(ctx, `
 		CREATE PUBLICATION dg_customer_pub
 		FOR TABLE dg_customer_items (customer_id, label)
-		WHERE (customer_id = 42);`)
+		WHERE (customer_id = 42)
+		WITH (publish = 'insert');`)
 	require.NoError(t, err)
 
 	replConn := connectReplicationConn(t, ctx, port)
@@ -2460,9 +2461,17 @@ func TestLogicalReplicationSourceHonorsPublicationUpdateDeleteFiltersAndColumnLi
 		CREATE TABLE dg_customer_update_delete_items (
 			item_id BIGINT PRIMARY KEY,
 			customer_id BIGINT NOT NULL,
-			label TEXT,
+			label TEXT NOT NULL,
 			internal_note TEXT
 		);`)
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, `
+		CREATE UNIQUE INDEX dg_customer_update_delete_identity_idx
+		ON dg_customer_update_delete_items (customer_id, label);`)
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, `
+		ALTER TABLE dg_customer_update_delete_items
+		REPLICA IDENTITY USING INDEX dg_customer_update_delete_identity_idx;`)
 	require.NoError(t, err)
 	_, err = conn.Current.Exec(ctx, `
 		INSERT INTO dg_customer_update_delete_items VALUES
@@ -4057,15 +4066,20 @@ func requireInsertChange(t *testing.T, relation *pglogrepl.RelationMessageV2, in
 
 func requireInsertChangeInSchema(t *testing.T, relation *pglogrepl.RelationMessageV2, insert *pglogrepl.InsertMessageV2, schema string, table string, tenantID string, label string) {
 	t.Helper()
+	requireInsertChangeWithKeyColumn(t, relation, insert, schema, table, "tenant_id", tenantID, label)
+}
+
+func requireInsertChangeWithKeyColumn(t *testing.T, relation *pglogrepl.RelationMessageV2, insert *pglogrepl.InsertMessageV2, schema string, table string, keyColumn string, keyValue string, label string) {
+	t.Helper()
 	require.Equal(t, schema, relation.Namespace)
 	require.Equal(t, table, relation.RelationName)
 	require.Equal(t, uint16(2), relation.ColumnNum)
-	require.Equal(t, "tenant_id", relation.Columns[0].Name)
+	require.Equal(t, keyColumn, relation.Columns[0].Name)
 	require.Equal(t, uint8(1), relation.Columns[0].Flags)
 	require.Equal(t, "label", relation.Columns[1].Name)
 	require.Equal(t, relation.RelationID, insert.RelationID)
 	require.Len(t, insert.Tuple.Columns, 2)
-	require.Equal(t, tenantID, string(insert.Tuple.Columns[0].Data))
+	require.Equal(t, keyValue, string(insert.Tuple.Columns[0].Data))
 	require.Equal(t, label, string(insert.Tuple.Columns[1].Data))
 }
 
