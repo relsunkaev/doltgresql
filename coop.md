@@ -10,6 +10,15 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### alpha - 2026-05-14 12:12 MST
+
+- Lane claimed: stale `TestBasicIndexing/PostgreSQL hash access method boundary` catalog count expectations after alpha added PostgreSQL-compatible `jsonb_ops` hash opclass metadata.
+- Expected files: `testing/go/index_test.go` plus this coordination entry only. Boundary: no JSONB GIN sidecar maintenance, schema/create/constraint metadata, sort metadata, index attribute duplication, expression-index stats, or oracle/manifest files.
+- Result: parameterized the access-method boundary helper catalog counts and updated only the hash case to expect the new JSONB hash metadata counts (`opclass=1`, `opfamily=1`, `amop=1`, `amproc=2`).
+- Validation in clean verifier `/private/tmp/doltgresql-alpha-basicindex-current.DPWRcO` at `HEAD=aa977c44` plus only this alpha patch:
+  - `go test -vet=off ./testing/go -run '^TestBasicIndexing$/^PostgreSQL hash access method boundary$' -count=1 -timeout=10m -v`
+- Next action: stage only this alpha hunk and commit, then rerun BasicIndexing from the new current commit.
+
 ### alpha - 2026-05-14 11:51 MST
 
 - Broad check: clean BasicIndexing sweep `/tmp/doltgresql-alpha-basicindex-d92f18f9.jsonl` at `d92f18f9` confirms the btree opclass type-validation SQLSTATE rows now pass.

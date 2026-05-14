@@ -26,7 +26,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 )
 
-func unsupportedAccessMethodBoundaryScript(displayName string, accessMethod string, handler string, createIndexSupported bool) ScriptTest {
+func unsupportedAccessMethodBoundaryScript(displayName string, accessMethod string, handler string, createIndexSupported bool, opclassCount int64, opfamilyCount int64, amopCount int64, amprocCount int64) ScriptTest {
 	tableName := "access_method_boundary_" + accessMethod
 	indexName := tableName + "_idx"
 	expectedIndexCount := int64(0)
@@ -52,21 +52,21 @@ WHERE amname = '` + accessMethod + `';`,
 FROM pg_catalog.pg_opclass opc
 JOIN pg_catalog.pg_am am ON am.oid = opc.opcmethod
 WHERE am.amname = '` + accessMethod + `';`,
-				Expected: []sql.Row{{0}},
+				Expected: []sql.Row{{opclassCount}},
 			},
 			{
 				Query: `SELECT COUNT(*)
 FROM pg_catalog.pg_opfamily opf
 JOIN pg_catalog.pg_am am ON am.oid = opf.opfmethod
 WHERE am.amname = '` + accessMethod + `';`,
-				Expected: []sql.Row{{0}},
+				Expected: []sql.Row{{opfamilyCount}},
 			},
 			{
 				Query: `SELECT COUNT(*)
 FROM pg_catalog.pg_amop amop
 JOIN pg_catalog.pg_am am ON am.oid = amop.amopmethod
 WHERE am.amname = '` + accessMethod + `';`,
-				Expected: []sql.Row{{0}},
+				Expected: []sql.Row{{amopCount}},
 			},
 			{
 				Query: `SELECT COUNT(*)
@@ -74,7 +74,7 @@ FROM pg_catalog.pg_amproc amproc
 JOIN pg_catalog.pg_opfamily opf ON opf.oid = amproc.amprocfamily
 JOIN pg_catalog.pg_am am ON am.oid = opf.opfmethod
 WHERE am.amname = '` + accessMethod + `';`,
-				Expected: []sql.Row{{0}},
+				Expected: []sql.Row{{amprocCount}},
 			},
 			{
 				Query:       "CREATE INDEX " + indexName + " ON " + tableName + " USING " + accessMethod + " (v);",
@@ -1446,10 +1446,10 @@ func TestBasicIndexing(t *testing.T) {
 				},
 			},
 		},
-		unsupportedAccessMethodBoundaryScript("hash", "hash", "hashhandler", false),
-		unsupportedAccessMethodBoundaryScript("GiST", "gist", "gisthandler", true),
-		unsupportedAccessMethodBoundaryScript("SP-GiST", "spgist", "spghandler", false),
-		unsupportedAccessMethodBoundaryScript("BRIN", "brin", "brinhandler", false),
+		unsupportedAccessMethodBoundaryScript("hash", "hash", "hashhandler", false, 1, 1, 1, 2),
+		unsupportedAccessMethodBoundaryScript("GiST", "gist", "gisthandler", true, 0, 0, 0, 0),
+		unsupportedAccessMethodBoundaryScript("SP-GiST", "spgist", "spghandler", false, 0, 0, 0, 0),
+		unsupportedAccessMethodBoundaryScript("BRIN", "brin", "brinhandler", false, 0, 0, 0, 0),
 		{
 			Name: "PostgreSQL btree reloptions metadata",
 			SetUpScript: []string{
