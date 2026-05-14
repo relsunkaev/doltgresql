@@ -27,6 +27,9 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/transform"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/core/triggers"
 	"github.com/dolthub/doltgresql/postgres/parser/parser"
 	"github.com/dolthub/doltgresql/server/ast"
 	"github.com/dolthub/doltgresql/server/deferrable"
@@ -95,7 +98,7 @@ func wrapForeignKeyActionHandler(ctx *sql.Context, a *analyzer.Analyzer, fkHandl
 	if !needsPostgresActions {
 		return fkHandler, transform.SameTree, nil
 	}
-	return pgnodes.NewPostgresForeignKeyActionHandler(fkHandler, validations), transform.NewTree, nil
+	return pgnodes.NewPostgresForeignKeyActionHandler(fkHandler, validations, a.Runner), transform.NewTree, nil
 }
 
 func collectForeignKeyActionValidations(ctx *sql.Context, a *analyzer.Analyzer, editor *plan.ForeignKeyEditor, validations pgnodes.ForeignKeyActionValidations, seen map[*plan.ForeignKeyEditor]struct{}) (bool, error) {
@@ -115,6 +118,13 @@ func collectForeignKeyActionValidations(ctx *sql.Context, a *analyzer.Analyzer, 
 		if !actionColumns.IsEmpty() {
 			needsPostgresActions = true
 		}
+		firesChildRowTriggers, err := foreignKeyActionFiresChildRowTriggers(ctx, refAction.ForeignKey)
+		if err != nil {
+			return false, err
+		}
+		if firesChildRowTriggers {
+			needsPostgresActions = true
+		}
 		if foreignKeyActionValidatesChildRow(refAction.ForeignKey) {
 			needsPostgresActions = true
 			validation, err := buildForeignKeyActionValidation(ctx, a, refAction.ForeignKey)
@@ -132,6 +142,82 @@ func collectForeignKeyActionValidations(ctx *sql.Context, a *analyzer.Analyzer, 
 		}
 	}
 	return needsPostgresActions, nil
+}
+
+func foreignKeyActionFiresChildRowTriggers(ctx *sql.Context, fk sql.ForeignKeyConstraint) (bool, error) {
+	updatesChildRows := foreignKeyActionUpdatesChildRows(fk)
+	deletesChildRows := foreignKeyActionDeletesChildRows(fk)
+	if !updatesChildRows && !deletesChildRows {
+		return false, nil
+	}
+	trigCollection, err := core.GetTriggersCollectionFromContext(ctx, foreignKeyActionDatabaseName(ctx, fk.Database))
+	if err != nil {
+		return false, err
+	}
+	tableID, err := foreignKeyActionChildTableID(ctx, fk)
+	if err != nil {
+		return false, err
+	}
+	allTriggers := trigCollection.GetTriggersForTable(ctx, tableID)
+	for _, trigger := range allTriggers {
+		if !trigger.FiresInOriginMode() || !trigger.ForEachRow {
+			continue
+		}
+		for _, event := range trigger.Events {
+			if updatesChildRows && event.Type == triggers.TriggerEventType_Update {
+				return true, nil
+			}
+			if deletesChildRows && event.Type == triggers.TriggerEventType_Delete {
+				return true, nil
+			}
+		}
+	}
+	return false, nil
+}
+
+func foreignKeyActionUpdatesChildRows(fk sql.ForeignKeyConstraint) bool {
+	return foreignKeyUpdateActionUpdatesChildRows(fk.OnUpdate) || foreignKeyDeleteActionUpdatesChildRows(fk.OnDelete)
+}
+
+func foreignKeyUpdateActionUpdatesChildRows(action sql.ForeignKeyReferentialAction) bool {
+	switch action {
+	case sql.ForeignKeyReferentialAction_Cascade, sql.ForeignKeyReferentialAction_SetNull, sql.ForeignKeyReferentialAction_SetDefault:
+		return true
+	default:
+		return false
+	}
+}
+
+func foreignKeyDeleteActionUpdatesChildRows(action sql.ForeignKeyReferentialAction) bool {
+	switch action {
+	case sql.ForeignKeyReferentialAction_SetNull, sql.ForeignKeyReferentialAction_SetDefault:
+		return true
+	default:
+		return false
+	}
+}
+
+func foreignKeyActionDeletesChildRows(fk sql.ForeignKeyConstraint) bool {
+	return fk.OnDelete == sql.ForeignKeyReferentialAction_Cascade
+}
+
+func foreignKeyActionDatabaseName(ctx *sql.Context, database string) string {
+	if database != "" {
+		return database
+	}
+	return ctx.GetCurrentDatabase()
+}
+
+func foreignKeyActionChildTableID(ctx *sql.Context, fk sql.ForeignKeyConstraint) (id.Table, error) {
+	schemaName := fk.SchemaName
+	if schemaName == "" {
+		var err error
+		schemaName, err = core.GetCurrentSchema(ctx)
+		if err != nil {
+			return id.NullTable, err
+		}
+	}
+	return id.NewTable(schemaName, fk.Table), nil
 }
 
 func foreignKeyActionValidatesChildRow(fk sql.ForeignKeyConstraint) bool {
