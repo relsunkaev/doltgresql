@@ -38,6 +38,7 @@ const (
 	ruleId_ApplyTablesForAnalyzeAllTables                                         // applyTablesForAnalyzeAllTables
 	ruleId_ApplyIdentityOverride                                                  // applyIdentityOverride
 	ruleId_AssignInsertCasts                                                      // assignInsertCasts
+	ruleId_RebindInsertGeneratedSourceRefs                                        // rebindInsertGeneratedSourceRefs
 	ruleId_AssignJsonbGinLookups                                                  // assignJsonbGinLookups
 	ruleId_AssignJsonbGinMaintainers                                              // assignJsonbGinMaintainers
 	ruleId_AssignPartitionedTableWrites                                           // assignPartitionedTableWrites
@@ -196,6 +197,7 @@ func Init() {
 		// AddDomainConstraintsToCasts needs to run after 'assignExecIndexes' rule in GMS.
 		analyzer.Rule{Id: ruleId_AddDomainConstraintsToCasts, Apply: AddDomainConstraintsToCasts},
 		analyzer.Rule{Id: ruleId_AssignIndexStats, Apply: AssignIndexStats},
+		analyzer.Rule{Id: ruleId_RebindInsertGeneratedSourceRefs, Apply: RebindInsertGeneratedSourceRefs},
 		analyzer.Rule{Id: ruleId_EnforceForeignKeyMatchFull, Apply: EnforceForeignKeyMatchFull},
 		analyzer.Rule{Id: ruleId_SuppressDeferrableForeignKeys, Apply: SuppressDeferrableForeignKeys},
 		analyzer.Rule{Id: ruleId_SuppressReplicaRoleForeignKeys, Apply: SuppressReplicaRoleForeignKeys},
