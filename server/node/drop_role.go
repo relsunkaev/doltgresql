@@ -23,6 +23,8 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/comments"
 )
@@ -73,7 +75,7 @@ func (c *DropRole) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 				break
 			}
 			if role.IsValid() && auth.RoleHasDependencies(role) {
-				err = errors.Errorf(`role "%s" cannot be dropped because some objects depend on it`, role.Name)
+				err = pgerror.Newf(pgcode.DependentObjectsStillExist, `role "%s" cannot be dropped because some objects depend on it`, role.Name)
 				break
 			}
 		}
