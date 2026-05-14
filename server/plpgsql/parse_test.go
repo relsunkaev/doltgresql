@@ -24,6 +24,7 @@ func TestParseDeclareAliasesArraysAndRecords(t *testing.T) {
 		DECLARE
 			labels TEXT[] := '{alpha,beta,gamma}';
 			target_id INT;
+			required_id INT NOT NULL := 1;
 			target_alias ALIAS FOR target_id;
 			item RECORD;
 		BEGIN
@@ -45,9 +46,10 @@ func TestParseDeclareAliasesArraysAndRecords(t *testing.T) {
 		}
 	}
 	for target, typ := range map[string]string{
-		"labels":    "text[] ",
-		"target_id": "int",
-		"item":      "record",
+		"labels":      "text[] ",
+		"target_id":   "int",
+		"required_id": "int ",
+		"item":        "record",
 	} {
 		if declares[target] != typ {
 			t.Fatalf("declare %s = %q, expected %q; all declares: %#v", target, declares[target], typ, declares)
@@ -63,6 +65,17 @@ func TestParseDeclareAliasesArraysAndRecords(t *testing.T) {
 		if schema != "pg_catalog" || typ != expectedType {
 			t.Fatalf("normalize %q = %s.%s, expected pg_catalog.%s", raw, schema, typ, expectedType)
 		}
+	}
+
+	var foundNotNull bool
+	for _, op := range ops {
+		if op.OpCode == OpCode_Declare && op.Target == "required_id" && op.Options[notNullVariableOption] == "true" {
+			foundNotNull = true
+			break
+		}
+	}
+	if !foundNotNull {
+		t.Fatalf("NOT NULL declaration option was not preserved; ops: %#v", ops)
 	}
 
 	var foundAlias bool

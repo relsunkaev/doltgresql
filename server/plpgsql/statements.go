@@ -146,6 +146,9 @@ func (stmt Block) AppendOperations(ops *[]InterpreterOperation, stack *Interpret
 			PrimaryData: variable.Type,
 			Target:      variable.Name,
 		}
+		if variable.NotNull {
+			op.Options = map[string]string{notNullVariableOption: "true"}
+		}
 		var val any
 		if variable.Default != "" {
 			op.SecondaryData = []string{variable.Default}
@@ -751,6 +754,7 @@ type Variable struct {
 	Name        string
 	Type        string
 	IsParameter bool
+	NotNull     bool
 	Default     string
 }
 

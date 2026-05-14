@@ -362,6 +362,7 @@ type plpgSQL_var struct {
 	RefName    string      `json:"refname"`
 	Type       datatype    `json:"datatype"`
 	LineNumber int32       `json:"lineno"`
+	NotNull    bool        `json:"notnull"`
 	Default    default_val `json:"default_val"`
 }
 

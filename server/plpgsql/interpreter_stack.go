@@ -20,6 +20,8 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 	"github.com/dolthub/doltgresql/utils"
 )
@@ -35,9 +37,10 @@ type cursorState struct {
 // interacted with. InterpreterVariableReference are, instead, the avenue of interaction as a variable may be an
 // aggregate type (such as a record).
 type interpreterVariable struct {
-	Record sql.Schema // TODO: all records carry their type information alongside the value, so this is redundant
-	Type   *pgtypes.DoltgresType
-	Value  any
+	Record  sql.Schema // TODO: all records carry their type information alongside the value, so this is redundant
+	Type    *pgtypes.DoltgresType
+	Value   any
+	NotNull bool
 }
 
 // InterpreterVariableReference is a reference to a variable that lives on the stack. If the type is not null, then it
@@ -45,8 +48,9 @@ type interpreterVariable struct {
 // the variables as this allows for interacting with sections of aggregate types (such as record) as well as normal
 // variable interaction.
 type InterpreterVariableReference struct {
-	Type  *pgtypes.DoltgresType
-	Value *any
+	Type    *pgtypes.DoltgresType
+	Value   *any
+	NotNull bool
 }
 
 // InterpreterScopeDetails contains all of the details that are relevant to a particular scope.
@@ -119,8 +123,9 @@ func (is *InterpreterStack) GetVariable(name string) InterpreterVariableReferenc
 		if iv, ok := is.stack.PeekDepth(i).variables[name]; ok {
 			if len(fieldName) == 0 {
 				return InterpreterVariableReference{
-					Type:  iv.Type,
-					Value: &iv.Value,
+					Type:    iv.Type,
+					Value:   &iv.Value,
+					NotNull: iv.NotNull,
 				}
 			} else if len(iv.Record) > 0 {
 				fieldIdx := iv.Record.IndexOf(fieldName, iv.Record[0].Source)
@@ -224,9 +229,15 @@ func (is *InterpreterStack) NewVariable(name string, typ *pgtypes.DoltgresType) 
 
 // NewVariableWithValue creates a new variable in the current scope, setting its initial value to the one given.
 func (is *InterpreterStack) NewVariableWithValue(name string, typ *pgtypes.DoltgresType, val any) {
+	is.NewVariableWithValueAndNotNull(name, typ, val, false)
+}
+
+// NewVariableWithValueAndNotNull creates a new variable and records whether NULL assignments are rejected.
+func (is *InterpreterStack) NewVariableWithValueAndNotNull(name string, typ *pgtypes.DoltgresType, val any, notNull bool) {
 	is.stack.Peek().variables[name] = &interpreterVariable{
-		Type:  typ,
-		Value: val,
+		Type:    typ,
+		Value:   val,
+		NotNull: notNull,
 	}
 }
 
@@ -261,6 +272,9 @@ func (is *InterpreterStack) SetVariable(ctx *sql.Context, name string, val any) 
 	iv := is.GetVariable(name)
 	if iv.Type == nil {
 		return fmt.Errorf("variable `%s` could not be found", name)
+	}
+	if iv.NotNull && val == nil {
+		return pgerror.Newf(pgcode.NullValueNotAllowed, `null value cannot be assigned to variable "%s" declared NOT NULL`, name)
 	}
 	*iv.Value = val
 	return nil

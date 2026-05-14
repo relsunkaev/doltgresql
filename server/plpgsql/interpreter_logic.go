@@ -66,6 +66,7 @@ const (
 	dmlReturningIntoOption     = "dmlReturningInto"
 	integerForLoopFoundOption  = "integerForLoopFound"
 	raiseValidationErrorOption = "raiseValidationError"
+	notNullVariableOption      = "notNullVariable"
 	transactionControlNoop     = "transactionControlNoop"
 )
 
@@ -342,6 +343,7 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 			}
 			if len(operation.SecondaryData) != 0 {
 				defVal := operation.SecondaryData[0]
+				notNull := operation.Options[notNullVariableOption] == "true"
 				// Default value can be a literal value or a reference to parameter
 				isParam := false
 				for _, param := range iFunc.GetParameterNames() {
@@ -353,19 +355,19 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 				if isParam {
 					ivr := stack.GetVariable(defVal)
 					if ivr.Value != nil {
-						stack.NewVariableWithValue(operation.Target, resolvedType, *ivr.Value)
+						stack.NewVariableWithValueAndNotNull(operation.Target, resolvedType, *ivr.Value, notNull)
 					} else {
-						stack.NewVariable(operation.Target, resolvedType)
+						stack.NewVariableWithValueAndNotNull(operation.Target, resolvedType, nil, notNull)
 					}
 				} else {
 					val, err := resolvedType.IoInput(ctx, strings.Trim(operation.SecondaryData[0], "'"))
 					if err != nil {
 						return nil, false, err
 					}
-					stack.NewVariableWithValue(operation.Target, resolvedType, val)
+					stack.NewVariableWithValueAndNotNull(operation.Target, resolvedType, val, notNull)
 				}
 			} else {
-				stack.NewVariable(operation.Target, resolvedType)
+				stack.NewVariableWithValueAndNotNull(operation.Target, resolvedType, nil, operation.Options[notNullVariableOption] == "true")
 			}
 		case OpCode_DeleteInto:
 			// TODO: implement

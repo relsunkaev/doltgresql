@@ -164,6 +164,7 @@ func jsonConvert(jsonBlock plpgSQL_block, source string) (Block, error) {
 				Name:        v.Variable.RefName,
 				Type:        strings.ToLower(v.Variable.Type.Type.Name),
 				IsParameter: v.Variable.LineNumber == 0,
+				NotNull:     v.Variable.NotNull,
 				Default:     v.Variable.Default.Var.Query,
 			})
 		default:
