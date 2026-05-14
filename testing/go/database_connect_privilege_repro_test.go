@@ -52,7 +52,8 @@ func TestRevokedDatabaseConnectPreventsNewSessionRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT 1;`,
+					Query:       `SELECT 1;`,
+					ExpectedErr: "permission denied for database postgres",
 
 					Username: `no_connect`,
 					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{ID: "database-connect-privilege-repro-test-testrevokeddatabaseconnectpreventsnewsessionrepro-0001-select-1"},
