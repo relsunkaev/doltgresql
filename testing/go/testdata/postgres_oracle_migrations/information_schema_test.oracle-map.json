@@ -245,52 +245,109 @@
       "source": "testing/go/information_schema_test.go:TestInfoSchemaColumns",
       "ordinal": 3,
       "scriptName": "information_schema.columns",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "information-schema-test-testinfoschemacolumns-0003-select-columns.column_name-pg_catalog.col_description-||-table_catalog",
       "suggestedId": "information-schema-test-testinfoschemacolumns-0003-select-columns.column_name-pg_catalog.col_description-||-table_catalog",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT \n\t\t\t\t\t\tcolumns.column_name, \n\t\t\t\t\t\tpg_catalog.col_description(('\"' || table_catalog || '\".\"' || table_schema || '\".\"' || table_name || '\"')::regclass::oid, ordinal_position) AS description, \n\t\t\t\t\t\t('\"' || \"udt_schema\" || '\".\"' || \"udt_name\" || '\"')::\"regtype\" AS \"regtype\", \n\t\t\t\t\t\tpg_catalog.format_type(\"col_attr\".\"atttypid\", \"col_attr\".\"atttypmod\") AS \"format_type\" \n\t\t\t\t\t\tFROM \"information_schema\".\"columns\" \n\t\t\t\t\t\tLEFT JOIN \"pg_catalog\".\"pg_attribute\" AS \"col_attr\" \n\t\t\t\t\t\tON \"col_attr\".\"attname\" = \"columns\".\"column_name\" AND \"col_attr\".\"attrelid\" = ( \n\t\t\t\t\t\t\tSELECT \"cls\".\"oid\" FROM \"pg_catalog\".\"pg_class\" AS \"cls\" \n\t\t\t\t\t\t\tLEFT JOIN \"pg_catalog\".\"pg_namespace\" AS \"ns\" ON \"ns\".\"oid\" = \"cls\".\"relnamespace\" \n\t\t\t\t\t\t\tWHERE \"cls\".\"relname\" = \"columns\".\"table_name\" AND \"ns\".\"nspname\" = \"columns\".\"table_schema\" \n\t\t\t\t\t\t) WHERE (\"table_schema\" = 'public' AND \"table_name\" = 'test_table');",
       "querySha256": "a4c1122adaaf9cbaa8c872da335f21f3067b8a70068f280c5494e408b36c8e8b",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "id"
+          },
+          {
+            "null": true
+          },
+          {
+            "value": "integer"
+          },
+          {
+            "value": "integer"
+          }
+        ],
+        [
+          {
+            "value": "col1"
+          },
+          {
+            "null": true
+          },
+          {
+            "value": "character varying"
+          },
+          {
+            "value": "character varying(255)"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS test_table CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/information_schema_test.go:TestInfoSchemaColumns#0004",
       "source": "testing/go/information_schema_test.go:TestInfoSchemaColumns",
       "ordinal": 4,
       "scriptName": "information_schema.columns",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "information-schema-test-testinfoschemacolumns-0004-create-schema-test_schema",
       "suggestedId": "information-schema-test-testinfoschemacolumns-0004-create-schema-test_schema",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "CREATE SCHEMA test_schema;",
       "querySha256": "a3419a48994fd13a668befcaab23c4d0d7e9e08e6e6a9093effb3c85b7e953d9",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP TABLE IF EXISTS test_table CASCADE",
+        "DROP SCHEMA IF EXISTS test_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/information_schema_test.go:TestInfoSchemaColumns#0005",
       "source": "testing/go/information_schema_test.go:TestInfoSchemaColumns",
       "ordinal": 5,
       "scriptName": "information_schema.columns",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "information-schema-test-testinfoschemacolumns-0005-set-search_path-to-test_schema",
       "suggestedId": "information-schema-test-testinfoschemacolumns-0005-set-search_path-to-test_schema",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SET SEARCH_PATH TO test_schema;",
       "querySha256": "8e00207516e4ca388353430820c0b7c1377440ddb38f7a3cd72daf4cec07b36b",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP TABLE IF EXISTS test_table CASCADE",
+        "DROP SCHEMA IF EXISTS test_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/information_schema_test.go:TestInfoSchemaColumns#0006",
       "source": "testing/go/information_schema_test.go:TestInfoSchemaColumns",
       "ordinal": 6,
       "scriptName": "information_schema.columns",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "information-schema-test-testinfoschemacolumns-0006-create-table-test_table2-id2-int",
       "suggestedId": "information-schema-test-testinfoschemacolumns-0006-create-table-test_table2-id2-int",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "CREATE TABLE test_table2 (id2 INT);",
       "querySha256": "d17de2d51a1857f59c070e064aec26ba1093c1064e57e2fb4e48a1c2e5ea6005",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP TABLE IF EXISTS test_table CASCADE",
+        "DROP TABLE IF EXISTS test_table2 CASCADE",
+        "DROP SCHEMA IF EXISTS test_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/information_schema_test.go:TestInfoSchemaColumns#0007",
@@ -310,13 +367,36 @@
       "source": "testing/go/information_schema_test.go:TestInfoSchemaColumns",
       "ordinal": 8,
       "scriptName": "information_schema.columns",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "information-schema-test-testinfoschemacolumns-0008-select-table_catalog-table_schema-table_name-column_name",
       "suggestedId": "information-schema-test-testinfoschemacolumns-0008-select-table_catalog-table_schema-table_name-column_name",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT table_catalog, table_schema, table_name, column_name FROM information_schema.columns WHERE table_schema='test_schema';",
       "querySha256": "d6220cc28e52704d05da46cfd5cab1254ff75504d6c49324b9e4b1be2166d0c6",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "postgres"
+          },
+          {
+            "value": "test_schema"
+          },
+          {
+            "value": "test_table2"
+          },
+          {
+            "value": "id2"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS test_table CASCADE",
+        "DROP TABLE IF EXISTS test_table2 CASCADE",
+        "DROP SCHEMA IF EXISTS test_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/information_schema_test.go:TestInfoSchemaColumns#0009",
@@ -336,104 +416,920 @@
       "source": "testing/go/information_schema_test.go:TestInfoSchemaColumns",
       "ordinal": 10,
       "scriptName": "information_schema.columns",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "information-schema-test-testinfoschemacolumns-0010-select-*-from-information_schema.columns-where",
       "suggestedId": "information-schema-test-testinfoschemacolumns-0010-select-*-from-information_schema.columns-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM information_schema.columns WHERE table_name='test_view';",
       "querySha256": "264df63b91fcbd7982a167607daa06db6b72a8e6a4f6695919af87a40e1ff8b6",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "postgres"
+          },
+          {
+            "value": "public"
+          },
+          {
+            "value": "test_view"
+          },
+          {
+            "value": "id"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "null": true
+          },
+          {
+            "value": "YES"
+          },
+          {
+            "value": "integer"
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "value": "32"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "0"
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "value": "postgres"
+          },
+          {
+            "value": "pg_catalog"
+          },
+          {
+            "value": "int4"
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "NO"
+          },
+          {
+            "value": "NO"
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "value": "NO"
+          },
+          {
+            "value": "NEVER"
+          },
+          {
+            "null": true
+          },
+          {
+            "value": "YES"
+          }
+        ],
+        [
+          {
+            "value": "postgres"
+          },
+          {
+            "value": "public"
+          },
+          {
+            "value": "test_view"
+          },
+          {
+            "value": "col1"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "null": true
+          },
+          {
+            "value": "YES"
+          },
+          {
+            "value": "character varying"
+          },
+          {
+            "value": "255"
+          },
+          {
+            "value": "1020"
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "value": "postgres"
+          },
+          {
+            "value": "pg_catalog"
+          },
+          {
+            "value": "varchar"
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "NO"
+          },
+          {
+            "value": "NO"
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "value": "NO"
+          },
+          {
+            "value": "NEVER"
+          },
+          {
+            "null": true
+          },
+          {
+            "value": "YES"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS test_table CASCADE",
+        "DROP TABLE IF EXISTS test_table2 CASCADE",
+        "DROP SCHEMA IF EXISTS test_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/information_schema_test.go:TestInfoSchemaColumns#0011",
       "source": "testing/go/information_schema_test.go:TestInfoSchemaColumns",
       "ordinal": 11,
       "scriptName": "information_schema.columns",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "information-schema-test-testinfoschemacolumns-0011-select-columns.table_name-columns.column_name-from-information_schema",
       "suggestedId": "information-schema-test-testinfoschemacolumns-0011-select-columns.table_name-columns.column_name-from-information_schema",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT columns.table_name, columns.column_name from \"information_schema\".\"columns\" WHERE table_name='test_table';",
       "querySha256": "d3ddfa1763013ae4bd9fb692f6598f610a49aa7d580f95e9882512eaf7bd26e1",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "test_table"
+          },
+          {
+            "value": "id"
+          }
+        ],
+        [
+          {
+            "value": "test_table"
+          },
+          {
+            "value": "col1"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS test_table CASCADE",
+        "DROP TABLE IF EXISTS test_table2 CASCADE",
+        "DROP SCHEMA IF EXISTS test_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/information_schema_test.go:TestInfoSchemaColumns#0012",
       "source": "testing/go/information_schema_test.go:TestInfoSchemaColumns",
       "ordinal": 12,
       "scriptName": "information_schema.columns",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "information-schema-test-testinfoschemacolumns-0012-create-table-testnumtypes-id-int",
       "suggestedId": "information-schema-test-testinfoschemacolumns-0012-create-table-testnumtypes-id-int",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "CREATE TABLE testnumtypes (id INT PRIMARY KEY, col1 SMALLINT, col2 BIGINT, col3 REAL, col4 DOUBLE PRECISION, col5 NUMERIC, col6 DECIMAL(10, 2), col7 OID, col8 XID);",
       "querySha256": "818202f244674b62d6110b135e6ec404d8ab27244c8a6596d4112cac0fe4c838",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP TABLE IF EXISTS test_table CASCADE",
+        "DROP TABLE IF EXISTS test_table2 CASCADE",
+        "DROP TABLE IF EXISTS testnumtypes CASCADE",
+        "DROP SCHEMA IF EXISTS test_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/information_schema_test.go:TestInfoSchemaColumns#0013",
       "source": "testing/go/information_schema_test.go:TestInfoSchemaColumns",
       "ordinal": 13,
       "scriptName": "information_schema.columns",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "information-schema-test-testinfoschemacolumns-0013-select-column_name-ordinal_position-data_type-udt_name",
       "suggestedId": "information-schema-test-testinfoschemacolumns-0013-select-column_name-ordinal_position-data_type-udt_name",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT column_name, ordinal_position, data_type, udt_name, numeric_precision, numeric_precision_radix, numeric_scale FROM information_schema.columns WHERE table_name='testnumtypes' ORDER BY ordinal_position ASC;",
       "querySha256": "c3bfaf6d43c0ab46a991fece8a2e079b98b6dcc243faf16e6ad13fa93ec25b65",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "id"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "integer"
+          },
+          {
+            "value": "int4"
+          },
+          {
+            "value": "32"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "0"
+          }
+        ],
+        [
+          {
+            "value": "col1"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "smallint"
+          },
+          {
+            "value": "int2"
+          },
+          {
+            "value": "16"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "0"
+          }
+        ],
+        [
+          {
+            "value": "col2"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "bigint"
+          },
+          {
+            "value": "int8"
+          },
+          {
+            "value": "64"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "0"
+          }
+        ],
+        [
+          {
+            "value": "col3"
+          },
+          {
+            "value": "4"
+          },
+          {
+            "value": "real"
+          },
+          {
+            "value": "float4"
+          },
+          {
+            "value": "24"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "null": true
+          }
+        ],
+        [
+          {
+            "value": "col4"
+          },
+          {
+            "value": "5"
+          },
+          {
+            "value": "double precision"
+          },
+          {
+            "value": "float8"
+          },
+          {
+            "value": "53"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "null": true
+          }
+        ],
+        [
+          {
+            "value": "col5"
+          },
+          {
+            "value": "6"
+          },
+          {
+            "value": "numeric"
+          },
+          {
+            "value": "numeric"
+          },
+          {
+            "null": true
+          },
+          {
+            "value": "10"
+          },
+          {
+            "null": true
+          }
+        ],
+        [
+          {
+            "value": "col6"
+          },
+          {
+            "value": "7"
+          },
+          {
+            "value": "numeric"
+          },
+          {
+            "value": "numeric"
+          },
+          {
+            "value": "10"
+          },
+          {
+            "value": "10"
+          },
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "col7"
+          },
+          {
+            "value": "8"
+          },
+          {
+            "value": "oid"
+          },
+          {
+            "value": "oid"
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          }
+        ],
+        [
+          {
+            "value": "col8"
+          },
+          {
+            "value": "9"
+          },
+          {
+            "value": "xid"
+          },
+          {
+            "value": "xid"
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS test_table CASCADE",
+        "DROP TABLE IF EXISTS test_table2 CASCADE",
+        "DROP TABLE IF EXISTS testnumtypes CASCADE",
+        "DROP SCHEMA IF EXISTS test_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/information_schema_test.go:TestInfoSchemaColumns#0014",
       "source": "testing/go/information_schema_test.go:TestInfoSchemaColumns",
       "ordinal": 14,
       "scriptName": "information_schema.columns",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "information-schema-test-testinfoschemacolumns-0014-create-table-teststringtypes-id-int",
       "suggestedId": "information-schema-test-testinfoschemacolumns-0014-create-table-teststringtypes-id-int",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "CREATE TABLE teststringtypes (id INT PRIMARY KEY, col1 CHAR(10), col2 VARCHAR(10), col3 TEXT, col4 \"char\", col5 CHARACTER, col6 VARCHAR, col7 UUID);",
       "querySha256": "64d02aca527cf46f74ddb77c7566bdb64fede605c22fbdfcf32e8db4eff9437a",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP TABLE IF EXISTS test_table CASCADE",
+        "DROP TABLE IF EXISTS test_table2 CASCADE",
+        "DROP TABLE IF EXISTS testnumtypes CASCADE",
+        "DROP TABLE IF EXISTS teststringtypes CASCADE",
+        "DROP SCHEMA IF EXISTS test_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/information_schema_test.go:TestInfoSchemaColumns#0015",
       "source": "testing/go/information_schema_test.go:TestInfoSchemaColumns",
       "ordinal": 15,
       "scriptName": "information_schema.columns",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "information-schema-test-testinfoschemacolumns-0015-select-column_name-ordinal_position-data_type-udt_name",
       "suggestedId": "information-schema-test-testinfoschemacolumns-0015-select-column_name-ordinal_position-data_type-udt_name",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT column_name, ordinal_position, data_type, udt_name, character_maximum_length, character_octet_length FROM information_schema.columns WHERE table_name='teststringtypes' ORDER BY ordinal_position ASC;",
       "querySha256": "8a0bd1aec28a8aa83553453ee15f0e8ad0c38b8ada13b8556e5079d6cfcfb481",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "id"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "integer"
+          },
+          {
+            "value": "int4"
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          }
+        ],
+        [
+          {
+            "value": "col1"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "character"
+          },
+          {
+            "value": "bpchar"
+          },
+          {
+            "value": "10"
+          },
+          {
+            "value": "40"
+          }
+        ],
+        [
+          {
+            "value": "col2"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "character varying"
+          },
+          {
+            "value": "varchar"
+          },
+          {
+            "value": "10"
+          },
+          {
+            "value": "40"
+          }
+        ],
+        [
+          {
+            "value": "col3"
+          },
+          {
+            "value": "4"
+          },
+          {
+            "value": "text"
+          },
+          {
+            "value": "text"
+          },
+          {
+            "null": true
+          },
+          {
+            "value": "1073741824"
+          }
+        ],
+        [
+          {
+            "value": "col4"
+          },
+          {
+            "value": "5"
+          },
+          {
+            "value": "\"char\""
+          },
+          {
+            "value": "char"
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          }
+        ],
+        [
+          {
+            "value": "col5"
+          },
+          {
+            "value": "6"
+          },
+          {
+            "value": "character"
+          },
+          {
+            "value": "bpchar"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "4"
+          }
+        ],
+        [
+          {
+            "value": "col6"
+          },
+          {
+            "value": "7"
+          },
+          {
+            "value": "character varying"
+          },
+          {
+            "value": "varchar"
+          },
+          {
+            "null": true
+          },
+          {
+            "value": "1073741824"
+          }
+        ],
+        [
+          {
+            "value": "col7"
+          },
+          {
+            "value": "8"
+          },
+          {
+            "value": "uuid"
+          },
+          {
+            "value": "uuid"
+          },
+          {
+            "null": true
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS test_table CASCADE",
+        "DROP TABLE IF EXISTS test_table2 CASCADE",
+        "DROP TABLE IF EXISTS testnumtypes CASCADE",
+        "DROP TABLE IF EXISTS teststringtypes CASCADE",
+        "DROP SCHEMA IF EXISTS test_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/information_schema_test.go:TestInfoSchemaColumns#0016",
       "source": "testing/go/information_schema_test.go:TestInfoSchemaColumns",
       "ordinal": 16,
       "scriptName": "information_schema.columns",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "information-schema-test-testinfoschemacolumns-0016-create-table-testtimetypes-id-int",
       "suggestedId": "information-schema-test-testinfoschemacolumns-0016-create-table-testtimetypes-id-int",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "CREATE TABLE testtimetypes (id INT PRIMARY KEY, col1 DATE, col2 TIME, col3 TIMESTAMP, col4 TIMESTAMPTZ,  col5 TIMETZ);",
       "querySha256": "ad9adaac3f5667aecc64ce273dafa8bb02eefef8616ea71a06d2833bff651c86",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP TABLE IF EXISTS test_table CASCADE",
+        "DROP TABLE IF EXISTS test_table2 CASCADE",
+        "DROP TABLE IF EXISTS testnumtypes CASCADE",
+        "DROP TABLE IF EXISTS teststringtypes CASCADE",
+        "DROP TABLE IF EXISTS testtimetypes CASCADE",
+        "DROP SCHEMA IF EXISTS test_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/information_schema_test.go:TestInfoSchemaColumns#0017",
       "source": "testing/go/information_schema_test.go:TestInfoSchemaColumns",
       "ordinal": 17,
       "scriptName": "information_schema.columns",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "information-schema-test-testinfoschemacolumns-0017-select-column_name-ordinal_position-data_type-datetime_precision",
       "suggestedId": "information-schema-test-testinfoschemacolumns-0017-select-column_name-ordinal_position-data_type-datetime_precision",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT column_name, ordinal_position, data_type, datetime_precision FROM information_schema.columns WHERE table_name='testtimetypes' ORDER BY ordinal_position ASC;",
       "querySha256": "31ef1a229634ebf0687cfd566d30c491c82cb7f53f0502943142e416dcdfe9a2",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "id"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "integer"
+          },
+          {
+            "null": true
+          }
+        ],
+        [
+          {
+            "value": "col1"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "date"
+          },
+          {
+            "value": "0"
+          }
+        ],
+        [
+          {
+            "value": "col2"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "time without time zone"
+          },
+          {
+            "value": "6"
+          }
+        ],
+        [
+          {
+            "value": "col3"
+          },
+          {
+            "value": "4"
+          },
+          {
+            "value": "timestamp without time zone"
+          },
+          {
+            "value": "6"
+          }
+        ],
+        [
+          {
+            "value": "col4"
+          },
+          {
+            "value": "5"
+          },
+          {
+            "value": "timestamp with time zone"
+          },
+          {
+            "value": "6"
+          }
+        ],
+        [
+          {
+            "value": "col5"
+          },
+          {
+            "value": "6"
+          },
+          {
+            "value": "time with time zone"
+          },
+          {
+            "value": "6"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS test_table CASCADE",
+        "DROP TABLE IF EXISTS test_table2 CASCADE",
+        "DROP TABLE IF EXISTS testnumtypes CASCADE",
+        "DROP TABLE IF EXISTS teststringtypes CASCADE",
+        "DROP TABLE IF EXISTS testtimetypes CASCADE",
+        "DROP SCHEMA IF EXISTS test_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/information_schema_test.go:TestInfoSchemaColumns#0018",
@@ -453,13 +1349,30 @@
       "source": "testing/go/information_schema_test.go:TestInfoSchemaColumns",
       "ordinal": 19,
       "scriptName": "information_schema.columns",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "information-schema-test-testinfoschemacolumns-0019-select-col_description-2957635223-ordinal_position-as",
       "suggestedId": "information-schema-test-testinfoschemacolumns-0019-select-col_description-2957635223-ordinal_position-as",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "select col_description(2957635223, ordinal_position) as comment from information_schema.columns limit 1;",
       "querySha256": "3229116ad23380f6b433e5e29d10b79ee5b9289bbd8386cefb6c9db73267738f",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS test_table CASCADE",
+        "DROP TABLE IF EXISTS test_table2 CASCADE",
+        "DROP TABLE IF EXISTS testnumtypes CASCADE",
+        "DROP TABLE IF EXISTS teststringtypes CASCADE",
+        "DROP TABLE IF EXISTS testtimetypes CASCADE",
+        "DROP SCHEMA IF EXISTS test_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/information_schema_test.go:TestInfoSchemaSchemata#0001",
@@ -965,39 +1878,61 @@
       "source": "testing/go/information_schema_test.go:TestInfoSchemaTables",
       "ordinal": 5,
       "scriptName": "information_schema.tables",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "information-schema-test-testinfoschematables-0005-create-schema-test_schema",
       "suggestedId": "information-schema-test-testinfoschematables-0005-create-schema-test_schema",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "CREATE SCHEMA test_schema;",
       "querySha256": "a3419a48994fd13a668befcaab23c4d0d7e9e08e6e6a9093effb3c85b7e953d9",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP TABLE IF EXISTS test_table CASCADE",
+        "DROP SCHEMA IF EXISTS test_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/information_schema_test.go:TestInfoSchemaTables#0006",
       "source": "testing/go/information_schema_test.go:TestInfoSchemaTables",
       "ordinal": 6,
       "scriptName": "information_schema.tables",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "information-schema-test-testinfoschematables-0006-set-search_path-to-test_schema",
       "suggestedId": "information-schema-test-testinfoschematables-0006-set-search_path-to-test_schema",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SET SEARCH_PATH TO test_schema;",
       "querySha256": "8e00207516e4ca388353430820c0b7c1377440ddb38f7a3cd72daf4cec07b36b",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP TABLE IF EXISTS test_table CASCADE",
+        "DROP SCHEMA IF EXISTS test_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/information_schema_test.go:TestInfoSchemaTables#0007",
       "source": "testing/go/information_schema_test.go:TestInfoSchemaTables",
       "ordinal": 7,
       "scriptName": "information_schema.tables",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "information-schema-test-testinfoschematables-0007-create-table-test_table2-id-int",
       "suggestedId": "information-schema-test-testinfoschematables-0007-create-table-test_table2-id-int",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "CREATE TABLE test_table2 (id INT);",
       "querySha256": "6cb9b40165eed2ffad817377ecf3e370eb255b25e0805e0e47b35fc4b51ccc71",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP TABLE IF EXISTS test_table CASCADE",
+        "DROP TABLE IF EXISTS test_table2 CASCADE",
+        "DROP SCHEMA IF EXISTS test_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/information_schema_test.go:TestInfoSchemaTables#0008",
@@ -1030,52 +1965,123 @@
       "source": "testing/go/information_schema_test.go:TestInfoSchemaTables",
       "ordinal": 10,
       "scriptName": "information_schema.tables",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "information-schema-test-testinfoschematables-0010-select-table_catalog-table_schema-table_name-from",
       "suggestedId": "information-schema-test-testinfoschematables-0010-select-table_catalog-table_schema-table_name-from",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT table_catalog, table_schema, table_name FROM information_schema.tables WHERE table_schema='test_schema';",
       "querySha256": "b5c73c41976d29c31a490b6e5c9d7e2b9be687c083c27aceb87185e9ef9f8c56",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "postgres"
+          },
+          {
+            "value": "test_schema"
+          },
+          {
+            "value": "test_table2"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS test_table CASCADE",
+        "DROP TABLE IF EXISTS test_table2 CASCADE",
+        "DROP SCHEMA IF EXISTS test_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/information_schema_test.go:TestInfoSchemaTables#0011",
       "source": "testing/go/information_schema_test.go:TestInfoSchemaTables",
       "ordinal": 11,
       "scriptName": "information_schema.tables",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "information-schema-test-testinfoschematables-0011-select-table_catalog-table_schema-table_name-table_type",
       "suggestedId": "information-schema-test-testinfoschematables-0011-select-table_catalog-table_schema-table_name-table_type",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT table_catalog, table_schema, table_name, table_type FROM information_schema.tables WHERE table_schema = 'test_schema' ORDER BY table_name;",
       "querySha256": "2171cc34b33e134243975103a5a2a57d894b43b3d2bc7913674c29430851967f",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "postgres"
+          },
+          {
+            "value": "test_schema"
+          },
+          {
+            "value": "test_table2"
+          },
+          {
+            "value": "BASE TABLE"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS test_table CASCADE",
+        "DROP TABLE IF EXISTS test_table2 CASCADE",
+        "DROP SCHEMA IF EXISTS test_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/information_schema_test.go:TestInfoSchemaTables#0012",
       "source": "testing/go/information_schema_test.go:TestInfoSchemaTables",
       "ordinal": 12,
       "scriptName": "information_schema.tables",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "information-schema-test-testinfoschematables-0012-select-table_schema-table_name-obj_description-||",
       "suggestedId": "information-schema-test-testinfoschematables-0012-select-table_schema-table_name-obj_description-||",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT \"table_schema\", \"table_name\", obj_description(('\"' || \"table_schema\" || '\".\"' || \"table_name\" || '\"')::regclass, 'pg_class') AS table_comment FROM \"information_schema\".\"tables\" WHERE (\"table_schema\" = 'test_schema' AND \"table_name\" = 'test_table2')",
       "querySha256": "4a594f01b33761ed40c2916f2a39cc52ad618647ea00222233b6312a14f7a6d8",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "test_schema"
+          },
+          {
+            "value": "test_table2"
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS test_table CASCADE",
+        "DROP TABLE IF EXISTS test_table2 CASCADE",
+        "DROP SCHEMA IF EXISTS test_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/information_schema_test.go:TestInfoSchemaTables#0013",
       "source": "testing/go/information_schema_test.go:TestInfoSchemaTables",
       "ordinal": 13,
       "scriptName": "information_schema.tables",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "information-schema-test-testinfoschematables-0013-create-view-test_view-as-select",
       "suggestedId": "information-schema-test-testinfoschematables-0013-create-view-test_view-as-select",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "CREATE VIEW test_view AS SELECT * FROM test_table2;",
       "querySha256": "70b29669a8cd8135954be90337ff95357f8e67cd6ac1cda8a68be55a1dd96be0",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP TABLE IF EXISTS test_table CASCADE",
+        "DROP TABLE IF EXISTS test_table2 CASCADE",
+        "DROP SCHEMA IF EXISTS test_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/information_schema_test.go:TestInfoSchemaTables#0014",
@@ -5740,65 +6746,113 @@
       "source": "testing/go/information_schema_test.go:TestInfoSchemaViews",
       "ordinal": 4,
       "scriptName": "information_schema.views",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "information-schema-test-testinfoschemaviews-0004-select-table_catalog-table_schema-table_name-from",
       "suggestedId": "information-schema-test-testinfoschemaviews-0004-select-table_catalog-table_schema-table_name-from",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT table_catalog, table_schema, table_name FROM information_schema.views WHERE table_schema='public';",
       "querySha256": "79be7c7bbf322dec48859d6ccc7e2a8a8ebeacda1bc903934f6d7ab5a4b13ed7",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "postgres"
+          },
+          {
+            "value": "public"
+          },
+          {
+            "value": "test_view"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS test_table CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/information_schema_test.go:TestInfoSchemaViews#0005",
       "source": "testing/go/information_schema_test.go:TestInfoSchemaViews",
       "ordinal": 5,
       "scriptName": "information_schema.views",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "information-schema-test-testinfoschemaviews-0005-create-schema-test_schema",
       "suggestedId": "information-schema-test-testinfoschemaviews-0005-create-schema-test_schema",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "CREATE SCHEMA test_schema;",
       "querySha256": "a3419a48994fd13a668befcaab23c4d0d7e9e08e6e6a9093effb3c85b7e953d9",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP TABLE IF EXISTS test_table CASCADE",
+        "DROP SCHEMA IF EXISTS test_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/information_schema_test.go:TestInfoSchemaViews#0006",
       "source": "testing/go/information_schema_test.go:TestInfoSchemaViews",
       "ordinal": 6,
       "scriptName": "information_schema.views",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "information-schema-test-testinfoschemaviews-0006-set-search_path-to-test_schema",
       "suggestedId": "information-schema-test-testinfoschemaviews-0006-set-search_path-to-test_schema",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SET SEARCH_PATH TO test_schema;",
       "querySha256": "8e00207516e4ca388353430820c0b7c1377440ddb38f7a3cd72daf4cec07b36b",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP TABLE IF EXISTS test_table CASCADE",
+        "DROP SCHEMA IF EXISTS test_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/information_schema_test.go:TestInfoSchemaViews#0007",
       "source": "testing/go/information_schema_test.go:TestInfoSchemaViews",
       "ordinal": 7,
       "scriptName": "information_schema.views",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "information-schema-test-testinfoschemaviews-0007-create-table-test_table2-id-int",
       "suggestedId": "information-schema-test-testinfoschemaviews-0007-create-table-test_table2-id-int",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "CREATE TABLE test_table2 (id int);",
       "querySha256": "82c416ee4d6441142b0521936b0dd4035eb9bb4ded1921b7b2353ce9b5016632",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP TABLE IF EXISTS test_table CASCADE",
+        "DROP TABLE IF EXISTS test_table2 CASCADE",
+        "DROP SCHEMA IF EXISTS test_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/information_schema_test.go:TestInfoSchemaViews#0008",
       "source": "testing/go/information_schema_test.go:TestInfoSchemaViews",
       "ordinal": 8,
       "scriptName": "information_schema.views",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "information-schema-test-testinfoschemaviews-0008-create-view-test_view2-as-select",
       "suggestedId": "information-schema-test-testinfoschemaviews-0008-create-view-test_view2-as-select",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "CREATE VIEW test_view2 as select * from test_table2;",
       "querySha256": "796bf05eb585f23ab03035d01afc5932524645810532f8da903ec6d736039ff6",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP TABLE IF EXISTS test_table CASCADE",
+        "DROP TABLE IF EXISTS test_table2 CASCADE",
+        "DROP SCHEMA IF EXISTS test_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/information_schema_test.go:TestInfoSchemaViews#0009",
@@ -5831,13 +6885,33 @@
       "source": "testing/go/information_schema_test.go:TestInfoSchemaViews",
       "ordinal": 11,
       "scriptName": "information_schema.views",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "information-schema-test-testinfoschemaviews-0011-select-table_catalog-table_schema-table_name-from",
       "suggestedId": "information-schema-test-testinfoschemaviews-0011-select-table_catalog-table_schema-table_name-from",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT table_catalog, table_schema, table_name FROM information_schema.views WHERE table_schema='test_schema';",
       "querySha256": "d3421fe4cd2713675c5996dda141400a9ab4e983422dcba37d98267205c10a3f",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "postgres"
+          },
+          {
+            "value": "test_schema"
+          },
+          {
+            "value": "test_view2"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS test_table CASCADE",
+        "DROP TABLE IF EXISTS test_table2 CASCADE",
+        "DROP SCHEMA IF EXISTS test_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/information_schema_test.go:TestInfoSchemaViews#0012",
