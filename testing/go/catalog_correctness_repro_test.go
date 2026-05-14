@@ -35,7 +35,8 @@ func TestPgClassNamespaceOidLookupDoesNotRequireWarmCacheRepro(t *testing.T) {
 					Query: `SELECT c.relname
 						FROM pg_catalog.pg_class c
 						WHERE c.relnamespace = 2638679668
-							AND c.relname = 'testtable';`, PostgresOracle: ScriptTestPostgresOracle{ID: "catalog-correctness-repro-test-testpgclassnamespaceoidlookupdoesnotrequirewarmcacherepro-0001-select-c.relname-from-pg_catalog.pg_class-c"},
+							AND c.relname = 'testtable';`,
+					Expected: []sql.Row{{"testtable"}},
 				},
 			},
 		},
