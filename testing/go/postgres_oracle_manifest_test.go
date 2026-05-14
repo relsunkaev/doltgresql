@@ -533,6 +533,12 @@ func TestPostgresOracleRewriteSourcesSupportsSourceFileFilter(t *testing.T) {
 	require.Contains(t, string(output), "--rewrite-oracle-postgres-id requires --rewrite-oracle-sources")
 
 	cmd = exec.Command("go", "run", "gen_postgres_oracle_manifest.go",
+		"--rewrite-oracle-key", "testing/go/session_test.go:TestDiscard#0001")
+	output, err = cmd.CombinedOutput()
+	require.Error(t, err)
+	require.Contains(t, string(output), "--rewrite-oracle-key requires --rewrite-oracle-sources")
+
+	cmd = exec.Command("go", "run", "gen_postgres_oracle_manifest.go",
 		"--rewrite-oracle-sources",
 		"--rewrite-oracle-source-file", "missing_oracle_source_test.go")
 	output, err = cmd.CombinedOutput()
@@ -545,6 +551,13 @@ func TestPostgresOracleRewriteSourcesSupportsSourceFileFilter(t *testing.T) {
 	output, err = cmd.CombinedOutput()
 	require.Error(t, err)
 	require.Contains(t, string(output), "no PostgreSQL oracle source entries matched --rewrite-oracle-postgres-id missing-oracle-id")
+
+	cmd = exec.Command("go", "run", "gen_postgres_oracle_manifest.go",
+		"--rewrite-oracle-sources",
+		"--rewrite-oracle-key", "testing/go/session_test.go:TestDiscard#9999")
+	output, err = cmd.CombinedOutput()
+	require.Error(t, err)
+	require.Contains(t, string(output), "no PostgreSQL oracle source entries matched --rewrite-oracle-key testing/go/session_test.go:TestDiscard#9999")
 }
 
 func TestPostgresOraclePromotedMapSupportsPackageScriptTestVariables(t *testing.T) {

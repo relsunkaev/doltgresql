@@ -137,6 +137,7 @@ func main() {
 	promoteOracleMapOutput := flag.String("promote-oracle-map-output", "", "output path for --promote-oracle-map; defaults to testdata/postgres_oracle_migrations/<source>.oracle-map.json")
 	rewriteOracleSourcesFlag := flag.Bool("rewrite-oracle-sources", false, "remove handwritten Expected* fields from source assertions covered by PostgreSQL oracle maps and add explicit PostgresOracle markers")
 	rewriteOracleSourceFile := flag.String("rewrite-oracle-source-file", "", "optional comma-separated source file filter for --rewrite-oracle-sources")
+	rewriteOracleKey := flag.String("rewrite-oracle-key", "", "optional comma-separated migration key filter for --rewrite-oracle-sources")
 	rewriteOraclePostgresID := flag.String("rewrite-oracle-postgres-id", "", "optional comma-separated PostgresOracle ID filter for --rewrite-oracle-sources")
 	oracleTestName := flag.String("oracle-test-name", "", "optional comma-separated Test function filter for --promote-oracle-map or --refresh-oracle-map")
 	oracleScriptName := flag.String("oracle-script-name", "", "optional comma-separated ScriptTest Name filter for --promote-oracle-map or --refresh-oracle-map")
@@ -153,8 +154,9 @@ func main() {
 			os.Exit(1)
 		}
 		sourceFiles := parseOracleSourceFileFilter(*rewriteOracleSourceFile)
+		keys := parseOracleKeyFilter(*rewriteOracleKey)
 		postgresIDs := parseOraclePostgresIDFilter(*rewriteOraclePostgresID)
-		if err := rewriteOracleSources(sourceFiles, postgresIDs); err != nil {
+		if err := rewriteOracleSources(sourceFiles, keys, postgresIDs); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
@@ -226,6 +228,10 @@ func main() {
 		fmt.Fprintln(os.Stderr, "--rewrite-oracle-source-file requires --rewrite-oracle-sources")
 		os.Exit(1)
 	}
+	if *rewriteOracleKey != "" {
+		fmt.Fprintln(os.Stderr, "--rewrite-oracle-key requires --rewrite-oracle-sources")
+		os.Exit(1)
+	}
 	if *rewriteOraclePostgresID != "" {
 		fmt.Fprintln(os.Stderr, "--rewrite-oracle-postgres-id requires --rewrite-oracle-sources")
 		os.Exit(1)
@@ -264,6 +270,10 @@ func parseOracleScriptNameFilter(value string) map[string]struct{} {
 }
 
 func parseOraclePostgresIDFilter(value string) map[string]struct{} {
+	return parseOracleNameFilter(value)
+}
+
+func parseOracleKeyFilter(value string) map[string]struct{} {
 	return parseOracleNameFilter(value)
 }
 
@@ -532,13 +542,18 @@ func addMigrationOverrides(overrides map[string]oracleMeta, mapped migrationFile
 	return nil
 }
 
-func rewriteOracleSources(sourceFileFilter map[string]struct{}, postgresIDFilter map[string]struct{}) error {
+func rewriteOracleSources(sourceFileFilter map[string]struct{}, keyFilter map[string]struct{}, postgresIDFilter map[string]struct{}) error {
 	migrationOverrides, err := loadMigrationOverrides()
 	if err != nil {
 		return err
 	}
 	files := map[string]struct{}{}
 	for key, meta := range migrationOverrides {
+		if len(keyFilter) > 0 {
+			if _, ok := keyFilter[key]; !ok {
+				continue
+			}
+		}
 		if len(postgresIDFilter) > 0 {
 			if _, ok := postgresIDFilter[meta.ID]; !ok {
 				continue
@@ -574,9 +589,12 @@ func rewriteOracleSources(sourceFileFilter map[string]struct{}, postgresIDFilter
 	if len(postgresIDFilter) > 0 && len(sortedFiles) == 0 {
 		return fmt.Errorf("no PostgreSQL oracle source entries matched --rewrite-oracle-postgres-id %s", strings.Join(sortedFilterKeys(postgresIDFilter), ","))
 	}
+	if len(keyFilter) > 0 && len(sortedFiles) == 0 {
+		return fmt.Errorf("no PostgreSQL oracle source entries matched --rewrite-oracle-key %s", strings.Join(sortedFilterKeys(keyFilter), ","))
+	}
 	matchedAny := false
 	for _, file := range sortedFiles {
-		matched, err := rewriteOracleSourceFile(file, migrationOverrides, postgresIDFilter)
+		matched, err := rewriteOracleSourceFile(file, migrationOverrides, keyFilter, postgresIDFilter)
 		if err != nil {
 			return err
 		}
@@ -585,10 +603,13 @@ func rewriteOracleSources(sourceFileFilter map[string]struct{}, postgresIDFilter
 	if len(postgresIDFilter) > 0 && !matchedAny {
 		return fmt.Errorf("no PostgreSQL oracle source assertions matched --rewrite-oracle-postgres-id %s", strings.Join(sortedFilterKeys(postgresIDFilter), ","))
 	}
+	if len(keyFilter) > 0 && !matchedAny {
+		return fmt.Errorf("no PostgreSQL oracle source assertions matched --rewrite-oracle-key %s", strings.Join(sortedFilterKeys(keyFilter), ","))
+	}
 	return nil
 }
 
-func rewriteOracleSourceFile(file string, migrationOverrides map[string]oracleMeta, postgresIDFilter map[string]struct{}) (bool, error) {
+func rewriteOracleSourceFile(file string, migrationOverrides map[string]oracleMeta, keyFilter map[string]struct{}, postgresIDFilter map[string]struct{}) (bool, error) {
 	fset := token.NewFileSet()
 	parsed, err := parser.ParseFile(fset, file, nil, parser.ParseComments)
 	if err != nil {
@@ -609,7 +630,7 @@ func rewriteOracleSourceFile(file string, migrationOverrides map[string]oracleMe
 		ast.Inspect(fn.Body, func(node ast.Node) bool {
 			lit, ok := node.(*ast.CompositeLit)
 			if ok && isScriptTestSliceType(lit.Type) {
-				sliceChanged, sliceMatched := rewriteOracleScriptTestSlice(lit, source, &ordinal, stringSlices, migrationOverrides, postgresIDFilter)
+				sliceChanged, sliceMatched := rewriteOracleScriptTestSlice(lit, source, &ordinal, stringSlices, migrationOverrides, keyFilter, postgresIDFilter)
 				if sliceChanged {
 					changed = true
 				}
@@ -621,7 +642,7 @@ func rewriteOracleSourceFile(file string, migrationOverrides map[string]oracleMe
 				return true
 			}
 			if lit, ok := packageScriptTestSliceForRunScripts(call, packageScriptTests); ok {
-				sliceChanged, sliceMatched := rewriteOracleScriptTestSlice(lit, source, &ordinal, stringSlices, migrationOverrides, postgresIDFilter)
+				sliceChanged, sliceMatched := rewriteOracleScriptTestSlice(lit, source, &ordinal, stringSlices, migrationOverrides, keyFilter, postgresIDFilter)
 				if sliceChanged {
 					changed = true
 				}
@@ -644,7 +665,7 @@ func rewriteOracleSourceFile(file string, migrationOverrides map[string]oracleMe
 	return matched, os.WriteFile(file, buf.Bytes(), 0644)
 }
 
-func rewriteOracleScriptTestSlice(lit *ast.CompositeLit, source string, ordinal *int, stringSlices map[string][]string, migrationOverrides map[string]oracleMeta, postgresIDFilter map[string]struct{}) (bool, bool) {
+func rewriteOracleScriptTestSlice(lit *ast.CompositeLit, source string, ordinal *int, stringSlices map[string][]string, migrationOverrides map[string]oracleMeta, keyFilter map[string]struct{}, postgresIDFilter map[string]struct{}) (bool, bool) {
 	changed := false
 	matched := false
 	for _, element := range lit.Elts {
@@ -668,6 +689,11 @@ func rewriteOracleScriptTestSlice(lit *ast.CompositeLit, source string, ordinal 
 			}
 			*ordinal = *ordinal + 1
 			key := fmt.Sprintf("%s#%04d", source, *ordinal)
+			if len(keyFilter) > 0 {
+				if _, ok := keyFilter[key]; !ok {
+					continue
+				}
+			}
 			meta, ok := migrationOverrides[key]
 			if !ok || meta.ID == "" {
 				continue
