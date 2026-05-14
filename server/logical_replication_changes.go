@@ -25,6 +25,7 @@ import (
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
+	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/dsess"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	"github.com/dolthub/go-mysql-server/sql/transform"
@@ -320,6 +321,9 @@ func (capture *replicationChangeCapture) fullRowColumnNames(ctx *sql.Context) ([
 }
 
 func (capture *replicationChangeCapture) resolveTable(ctx *sql.Context) (sql.Table, string, error) {
+	if table, ok := capture.temporaryTable(ctx); ok {
+		return table, "pg_temp", nil
+	}
 	schema, err := core.GetSchemaName(ctx, nil, capture.schema)
 	if err != nil {
 		return nil, "", err
@@ -333,7 +337,30 @@ func (capture *replicationChangeCapture) resolveTable(ctx *sql.Context) (sql.Tab
 	return table, schema, nil
 }
 
+func (capture *replicationChangeCapture) referencesTemporaryTable(ctx *sql.Context) bool {
+	_, ok := capture.temporaryTable(ctx)
+	return ok
+}
+
+func (capture *replicationChangeCapture) temporaryTable(ctx *sql.Context) (sql.Table, bool) {
+	if capture == nil || ctx == nil {
+		return nil, false
+	}
+	if capture.schema != "" && !isTemporarySchemaName(capture.schema) {
+		return nil, false
+	}
+	return dsess.DSessFromSess(ctx.Session).GetTemporaryTable(ctx, ctx.GetCurrentDatabase(), capture.table)
+}
+
+func isTemporarySchemaName(schema string) bool {
+	schema = strings.ToLower(schema)
+	return schema == "pg_temp" || strings.HasPrefix(schema, "pg_temp_")
+}
+
 func (capture *replicationChangeCapture) publish(ctx *sql.Context) error {
+	if capture.referencesTemporaryTable(ctx) {
+		return nil
+	}
 	return publishReplicationCaptures(ctx, []*replicationChangeCapture{capture})
 }
 
@@ -579,6 +606,9 @@ func (capture *replicationChangeCapture) publicationMayPublishCapture(pub public
 
 func (capture *replicationChangeCapture) validateReplicaIdentity(ctx *sql.Context) error {
 	if capture == nil || (capture.action != replicationChangeUpdate && capture.action != replicationChangeDelete) {
+		return nil
+	}
+	if capture.referencesTemporaryTable(ctx) {
 		return nil
 	}
 	table, schema, err := capture.resolveTable(ctx)
