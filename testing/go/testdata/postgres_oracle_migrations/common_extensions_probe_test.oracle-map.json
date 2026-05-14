@@ -759,23 +759,6 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0033",
-      "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
-      "ordinal": 33,
-      "scriptName": "pgcrypto digest hmac and random-byte runtime calls",
-      "oracle": "postgres",
-      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0033-select-encrypt-\\x68656c6c6f20706763727970746f-::bytea-\\x30313233343536373839616263646566",
-      "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0033-select-encrypt-\\x68656c6c6f20706763727970746f-::bytea-\\x30313233343536373839616263646566",
-      "compare": "sqlstate",
-      "expectedKind": "rows",
-      "sqlstate": "39000",
-      "errorSeverity": "ERROR",
-      "query": "SELECT encrypt('\\x68656c6c6f20706763727970746f'::bytea, '\\x30313233343536373839616263646566'::bytea, 'bf')::text;",
-      "querySha256": "4be43334a963e10db60458621b97c8540e3683d0d0e5487a8241f20e80ae1a5e",
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0034",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 34,

@@ -207,7 +207,8 @@ AAAA
 					Query: `SELECT encrypt('\x00'::bytea, '\x00'::bytea, 'aes');`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0032-select-encrypt-\\x00-::bytea-\\x00", ColumnModes: []string{"bytea"}},
 				},
 				{
-					Query: `SELECT encrypt('\x68656c6c6f20706763727970746f'::bytea, '\x30313233343536373839616263646566'::bytea, 'bf')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0033-select-encrypt-\\x68656c6c6f20706763727970746f-::bytea-\\x30313233343536373839616263646566", Compare: "sqlstate"},
+					Query:    `SELECT encrypt('\x68656c6c6f20706763727970746f'::bytea, '\x30313233343536373839616263646566'::bytea, 'bf')::text;`,
+					Expected: []sql.Row{{`\xa50945ee7031548efa0c256a14547425`}},
 				},
 				{
 					Query:    `SELECT decrypt('\xa50945ee7031548efa0c256a14547425'::bytea, '\x30313233343536373839616263646566'::bytea, 'bf')::text;`,
