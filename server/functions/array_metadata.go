@@ -38,7 +38,7 @@ var array_dims_anyarray = framework.Function1{
 	Return:     pgtypes.Text,
 	Parameters: [1]*pgtypes.DoltgresType{pgtypes.AnyArray},
 	Strict:     true,
-	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+	Callable: func(ctx *sql.Context, t [2]*pgtypes.DoltgresType, val any) (any, error) {
 		array, ok := pgtypes.ArrayElements(val)
 		if !ok {
 			return nil, fmt.Errorf("expected array value but received %T", val)
@@ -47,13 +47,9 @@ var array_dims_anyarray = framework.Function1{
 		if len(dimensions) == 0 {
 			return nil, nil
 		}
-		lowerBounds := pgtypes.ArrayLowerBounds(val)
 		sb := strings.Builder{}
 		for i, length := range dimensions {
-			lowerBound := int32(1)
-			if i < len(lowerBounds) {
-				lowerBound = lowerBounds[i]
-			}
+			lowerBound := arrayLowerBoundForType(t[0], val, int32(i+1))
 			sb.WriteString(fmt.Sprintf("[%d:%d]", lowerBound, lowerBound+length-1))
 		}
 		return sb.String(), nil
@@ -66,10 +62,10 @@ var array_lower_anyarray_int32 = framework.Function2{
 	Return:     pgtypes.Int32,
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.AnyArray, pgtypes.Int32},
 	Strict:     true,
-	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+	Callable: func(ctx *sql.Context, t [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
 		dimension := val2.(int32)
 		if _, ok := arrayDimensionLength(val1, dimension); ok {
-			return pgtypes.ArrayLowerBound(val1, dimension), nil
+			return arrayLowerBoundForType(t[0], val1, dimension), nil
 		}
 		return nil, nil
 	},
@@ -123,6 +119,20 @@ func arrayDimensions(array []any) []int32 {
 		return dimensions
 	}
 	return append(dimensions, nestedDimensions...)
+}
+
+func arrayLowerBoundForType(typ *pgtypes.DoltgresType, val any, dimension int32) int32 {
+	if lowerBounds := pgtypes.ArrayLowerBounds(val); int(dimension) <= len(lowerBounds) {
+		return pgtypes.ArrayLowerBound(val, dimension)
+	}
+	if dimension == 1 && isZeroBasedCatalogVectorType(typ) {
+		return 0
+	}
+	return pgtypes.ArrayLowerBound(val, dimension)
+}
+
+func isZeroBasedCatalogVectorType(typ *pgtypes.DoltgresType) bool {
+	return typ != nil && (typ.ID == pgtypes.Int16vector.ID || typ.ID == pgtypes.Oidvector.ID)
 }
 
 func arrayCardinality(array []any) int32 {

@@ -46,7 +46,7 @@ var generate_subscripts = framework.Function2{
 			return nil, sql.ErrUnsupportedFeature.New("generate_subscripts only supports 1-dimensional arrays")
 		}
 
-		start := int(pgtypes.ArrayLowerBound(val1, dimension))
+		start := int(arrayLowerBoundForType(t[0], val1, dimension))
 
 		var i = start
 		return pgtypes.NewSetReturningFunctionRowIter(func(ctx *sql.Context) (sql.Row, error) {

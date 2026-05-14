@@ -10,6 +10,19 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### epsilon - 2026-05-14 07:51 MST
+
+- Result: fixed ActiveRecord primary-key introspection after the high-skip verifier exposed `ActiveRecord::UnknownPrimaryKey` for tables with a single-column primary key.
+- Root cause: `generate_subscripts(pg_index.indkey, 1)` treated raw catalog `int2vector` values as one-based when no array lower-bound metadata was attached, so ActiveRecord's join read `indkey[1]` as nil and matched every `pg_attribute` row.
+- Files touched: `server/functions/array_metadata.go`, `server/functions/array_position.go`, `server/functions/array_upper.go`, `server/functions/generate_subscripts.go`, `testing/go/pg_index_indclass_any_test.go`.
+- Fresh verifier `/private/tmp/doltgresql-epsilon-current2-0SCJQk` plus epsilon's patch passed:
+  - `go test -vet=off ./testing/go -run '^TestPgIndexVectorSlices$' -count=1 -timeout=10m -v`
+  - `go test -vet=off ./testing/go -run '^TestActiveRecordClientSmoke$' -count=1 -timeout=10m -v`
+  - `go test -vet=off ./server/functions -run '^$' -count=1 -timeout=10m`
+  - `go test -vet=off ./testing/go -run '^TestSetReturningFunctions$/^generate_subscripts_on_0-indexed_array_types$' -count=1 -timeout=10m -v`
+- Shared checkout note: full shared-tree runs remain blocked by unrelated dirty `server/node/postgres_foreign_key_action_handler.go` compile errors, so validation used the verifier worktree.
+- Next action: stage only epsilon-owned hunks and commit, then continue current-head high-skip discovery.
+
 ### epsilon - 2026-05-14 07:30 MST
 
 - Result: fixed `ON CONFLICT (code) DO UPDATE` for `UNIQUE NULLS NOT DISTINCT` arbiters.

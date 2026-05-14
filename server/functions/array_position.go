@@ -50,7 +50,7 @@ var array_position_anyarray_anyelement = framework.Function2{
 		searchElement := val2
 		arrayType := t[0]
 		baseType := arrayType.ArrayBaseType()
-		lowerBound := pgtypes.ArrayLowerBound(val1, 1)
+		lowerBound := arrayLowerBoundForType(arrayType, val1, 1)
 
 		for i, element := range array {
 			cmp, err := baseType.Compare(ctx, element, searchElement)
@@ -83,7 +83,7 @@ var array_position_anyarray_anyelement_int32 = framework.Function3{
 		start := val3.(int32)
 		arrayType := t[0]
 		baseType := arrayType.ArrayBaseType()
-		lowerBound := pgtypes.ArrayLowerBound(val1, 1)
+		lowerBound := arrayLowerBoundForType(arrayType, val1, 1)
 
 		startIdx := int(start - lowerBound)
 		if startIdx < 0 {
@@ -142,7 +142,7 @@ var array_position_int2vector_int2 = framework.Function2{
 
 		searchElement := val2.(int16)
 		array, _ := pgtypes.ArrayElements(val1)
-		lowerBound := pgtypes.ArrayLowerBound(val1, 1)
+		lowerBound := arrayLowerBoundForType(pgtypes.Int16vector, val1, 1)
 		for i, element := range array {
 			cmp, err := pgtypes.Int16.Compare(ctx, element, searchElement)
 			if err != nil {
@@ -171,7 +171,7 @@ var array_position_int2array_oid = framework.Function2{
 			return nil, nil
 		}
 		array, _ := pgtypes.ArrayElements(val1)
-		lowerBound := pgtypes.ArrayLowerBound(val1, 1)
+		lowerBound := arrayLowerBoundForType(pgtypes.Int16Array, val1, 1)
 		for i, element := range array {
 			cmp, err := pgtypes.Int16.Compare(ctx, element, searchElement)
 			if err != nil {
@@ -225,7 +225,7 @@ var array_positions_anyarray_anyelement = framework.Function2{
 		searchElement := val2
 		arrayType := t[0]
 		baseType := arrayType.ArrayBaseType()
-		lowerBound := pgtypes.ArrayLowerBound(val1, 1)
+		lowerBound := arrayLowerBoundForType(arrayType, val1, 1)
 		var positions []any
 
 		for i, element := range array {

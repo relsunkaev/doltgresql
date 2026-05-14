@@ -32,10 +32,10 @@ var array_upper_anyarray_int32 = framework.Function2{
 	Return:     pgtypes.Int32,
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.AnyArray, pgtypes.Int32},
 	Strict:     true,
-	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+	Callable: func(ctx *sql.Context, t [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
 		dimension := val2.(int32)
 		if length, ok := arrayDimensionLength(val1, dimension); ok {
-			return pgtypes.ArrayLowerBound(val1, dimension) + length - 1, nil
+			return arrayLowerBoundForType(t[0], val1, dimension) + length - 1, nil
 		}
 		return nil, nil
 	},

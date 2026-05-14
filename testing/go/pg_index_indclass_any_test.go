@@ -16,6 +16,8 @@ package _go
 
 import (
 	"testing"
+
+	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestPgIndexIndclassAny exercises the planner path for
@@ -72,6 +74,7 @@ func TestPgIndexVectorSlices(t *testing.T) {
 				`CREATE TABLE idxslice_t (id INT, label TEXT, category TEXT);`,
 				`CREATE INDEX idxslice_label_category_idx ON idxslice_t (label, category);`,
 				`CREATE PUBLICATION idxslice_pub FOR TABLE idxslice_t;`,
+				`CREATE TABLE idxslice_pk_probe (id INT PRIMARY KEY, label TEXT);`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
@@ -112,7 +115,7 @@ FROM (
 ) AS idx
 JOIN pg_catalog.pg_attribute a
   ON a.attrelid = idx.indrelid
- AND a.attnum = idx.attnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-index-indclass-any-test-testpgindexvectorslices-0004-select-array_to_string-array_agg-a.attname-order"},
+	AND a.attnum = idx.attnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-index-indclass-any-test-testpgindexvectorslices-0004-select-array_to_string-array_agg-a.attname-order"},
 				},
 				{
 					Query: `WITH indexed_columns AS (
@@ -157,6 +160,19 @@ JOIN pg_catalog.pg_attribute a
 SELECT "schema", "tableName", "name", "col", "dir", "unique", "isPrimaryKey", "isReplicaIdentity", "isImmediate"
 FROM indexed_columns
 ORDER BY "schema", "tableName", "name", "col";`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-index-indclass-any-test-testpgindexvectorslices-0005-with-indexed_columns-as-select-pg_indexes.schemaname", ColumnModes: []string{"schema"}},
+				},
+				{
+					Query: `SELECT array_to_string(array_agg(a.attname ORDER BY i.idx), ',')
+FROM (
+  SELECT indrelid, indkey, generate_subscripts(indkey, 1) idx
+  FROM pg_catalog.pg_index
+  WHERE indrelid = 'idxslice_pk_probe'::regclass
+    AND indisprimary
+) i
+JOIN pg_catalog.pg_attribute a
+  ON a.attrelid = i.indrelid
+ AND a.attnum = i.indkey[i.idx];`,
+					Expected: []sql.Row{{"id"}},
 				},
 			},
 		},
