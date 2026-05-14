@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestAnalyzePopulatesPgStatsRepro reproduces a catalog persistence bug:
@@ -41,8 +39,7 @@ func TestAnalyzePopulatesPgStatsRepro(t *testing.T) {
 						FROM pg_catalog.pg_stats
 						WHERE schemaname = 'public'
 							AND tablename = 'analyze_catalog_target'
-							AND attname = 'category';`,
-					Expected: []sql.Row{{"category"}},
+							AND attname = 'category';`, PostgresOracle: ScriptTestPostgresOracle{ID: "statistics-catalog-repro-test-testanalyzepopulatespgstatsrepro-0001-select-attname-from-pg_catalog.pg_stats-where"},
 				},
 			},
 		},

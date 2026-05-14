@@ -18,13 +18,25 @@
       "source": "testing/go/statistics_catalog_repro_test.go:TestAnalyzePopulatesPgStatsRepro",
       "ordinal": 1,
       "scriptName": "ANALYZE populates pg_stats",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "statistics-catalog-repro-test-testanalyzepopulatespgstatsrepro-0001-select-attname-from-pg_catalog.pg_stats-where",
       "suggestedId": "statistics-catalog-repro-test-testanalyzepopulatespgstatsrepro-0001-select-attname-from-pg_catalog.pg_stats-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT attname\n\t\t\t\t\t\tFROM pg_catalog.pg_stats\n\t\t\t\t\t\tWHERE schemaname = 'public'\n\t\t\t\t\t\t\tAND tablename = 'analyze_catalog_target'\n\t\t\t\t\t\t\tAND attname = 'category';",
       "querySha256": "4f350cef330302da8a063f19fb06d791f5ac0b94a0f31afeeb3ae3c990294374",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "category"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS analyze_catalog_target CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/statistics_catalog_repro_test.go:TestCreateStatisticsPopulatesPgStatisticExtRepro#0001",
