@@ -36,7 +36,16 @@ const (
 var (
 	authTestCreateSuperUser = fmt.Sprintf("create user if not exists '%s' with superuser password '%s';", authTestSuperUser, authTestSuperPass)
 	authTestCreateBasicUser = fmt.Sprintf("create user if not exists '%s' with password '%s'", authTestBasicUser, authTestBasicPass)
+	authTestFileRoot        = mustAuthTestFileRoot()
 )
+
+func mustAuthTestFileRoot() string {
+	dir, err := os.MkdirTemp(os.TempDir(), "doltgresql-auth-*")
+	if err != nil {
+		panic(err)
+	}
+	return dir
+}
 
 func TestAuthTests(t *testing.T) {
 	RunScripts(t, []ScriptTest{
@@ -1585,6 +1594,6 @@ func authTestGrantBasic(object string, privileges ...string) ScriptTestAssertion
 
 // authTestFireUrl returns a file:// URL path for a temp file.
 func authTestFireUrl(path string) string {
-	path = filepath.Join(os.TempDir(), path)
+	path = filepath.Join(authTestFileRoot, path)
 	return "file://" + filepath.ToSlash(filepath.Clean(path))
 }
