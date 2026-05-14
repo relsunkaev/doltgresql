@@ -164,17 +164,16 @@
       "source": "testing/go/column_privilege_repro_test.go:TestCreateTableAsAllowsGrantedSourceColumnsRepro",
       "ordinal": 1,
       "scriptName": "CREATE TABLE AS allows granted source columns",
-      "oracle": "postgres",
-      "postgresId": "column-privilege-repro-test-testcreatetableasallowsgrantedsourcecolumnsrepro-0001-select-id-public_value-from-ctas_column_copy",
+      "oracle": "internal",
       "suggestedId": "column-privilege-repro-test-testcreatetableasallowsgrantedsourcecolumnsrepro-0001-select-id-public_value-from-ctas_column_copy",
-      "compare": "sqlstate",
       "expectedKind": "rows",
-      "sqlstate": "42501",
-      "errorSeverity": "ERROR",
       "username": "ctas_column_user",
       "query": "SELECT id, public_value FROM ctas_column_copy;",
       "querySha256": "5d81117b934230e760429751d35fd91424ff772ed2ba130bc63c11a88e29b3af",
-      "needsCleanup": false,
+      "nonLiteral": [
+        "PriorUsername"
+      ],
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {

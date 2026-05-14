@@ -196,12 +196,8 @@ func TestCreateTableAsAllowsGrantedSourceColumnsRepro(t *testing.T) {
 					Query: `SELECT id, public_value FROM ctas_column_copy;`,
 
 					Username: `ctas_column_user`,
-					Password: `column`, PostgresOracle: ScriptTestPostgresOracle{
-
-						// TestCreateTableAsRejectsUngrantedSourceColumnsGuard covers CTAS source-column
-						// authorization: creating a table from a query cannot read columns for which
-						// the role lacks SELECT privilege.
-						ID: "column-privilege-repro-test-testcreatetableasallowsgrantedsourcecolumnsrepro-0001-select-id-public_value-from-ctas_column_copy", Compare: "sqlstate"},
+					Password: `column`,
+					Expected: []sql.Row{{1, "public"}},
 				},
 			},
 		},
