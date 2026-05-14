@@ -3132,28 +3132,6 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/functions_test.go:TestSystemInformationFunctions#0020",
-      "source": "testing/go/functions_test.go:TestSystemInformationFunctions",
-      "ordinal": 20,
-      "scriptName": "current snapshot",
-      "oracle": "postgres",
-      "postgresId": "functions-test-testsysteminformationfunctions-0020-select-pg_current_snapshot",
-      "suggestedId": "functions-test-testsysteminformationfunctions-0020-select-pg_current_snapshot",
-      "compare": "structural",
-      "expectedKind": "rows",
-      "query": "SELECT pg_current_snapshot();",
-      "querySha256": "9ec06aa811cf09905832d45b360435a16e7c92aa84ee097c48e0ac16b9149be6",
-      "expectedRows": [
-        [
-          {
-            "value": "6316:6316:"
-          }
-        ]
-      ],
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
       "key": "testing/go/functions_test.go:TestSystemInformationFunctions#0021",
       "source": "testing/go/functions_test.go:TestSystemInformationFunctions",
       "ordinal": 21,
@@ -3199,28 +3177,6 @@
         [
           {
             "value": "3"
-          }
-        ]
-      ],
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/functions_test.go:TestSystemInformationFunctions#0023",
-      "source": "testing/go/functions_test.go:TestSystemInformationFunctions",
-      "ordinal": 23,
-      "scriptName": "current snapshot",
-      "oracle": "postgres",
-      "postgresId": "functions-test-testsysteminformationfunctions-0023-select-pg_snapshot_send-pg_current_snapshot-::text",
-      "suggestedId": "functions-test-testsysteminformationfunctions-0023-select-pg_snapshot_send-pg_current_snapshot-::text",
-      "compare": "structural",
-      "expectedKind": "rows",
-      "query": "SELECT pg_snapshot_send(pg_current_snapshot())::text;",
-      "querySha256": "d6078ff0c4967fa2c8eb6a38ce755d72e45ad44cff790f46b63c48f26734dadb",
-      "expectedRows": [
-        [
-          {
-            "value": "\\x0000000000000000000018b100000000000018b1"
           }
         ]
       ],

@@ -647,7 +647,8 @@ func TestSystemInformationFunctions(t *testing.T) {
 			Name: "current snapshot",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT pg_current_snapshot();`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testsysteminformationfunctions-0020-select-pg_current_snapshot"},
+					Query:    `SELECT pg_current_snapshot();`,
+					Expected: []sql.Row{{"1:1:"}},
 				},
 				{
 					Query: `SELECT pg_snapshot_xmin('1:4:2,3'::pg_snapshot)::text, pg_snapshot_xmax('1:4:2,3'::pg_snapshot)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testsysteminformationfunctions-0021-select-pg_snapshot_xmin-1:4:2-3-::pg_snapshot"},
@@ -656,7 +657,8 @@ func TestSystemInformationFunctions(t *testing.T) {
 					Query: `SELECT pg_snapshot_xip('1:4:2,3'::pg_snapshot)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testsysteminformationfunctions-0022-select-pg_snapshot_xip-1:4:2-3-::pg_snapshot"},
 				},
 				{
-					Query: `SELECT pg_snapshot_send(pg_current_snapshot())::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testsysteminformationfunctions-0023-select-pg_snapshot_send-pg_current_snapshot-::text"},
+					Query:    `SELECT pg_snapshot_send('1:4:2,3'::pg_snapshot)::text;`,
+					Expected: []sql.Row{{"\\x000000020000000000000001000000000000000400000000000000020000000000000003"}},
 				},
 				{
 					Query: `SELECT pg_visible_in_snapshot('1'::xid8, '1:4:2,3'::pg_snapshot), pg_visible_in_snapshot('2'::xid8, '1:4:2,3'::pg_snapshot), pg_visible_in_snapshot('4'::xid8, '1:4:2,3'::pg_snapshot);`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testsysteminformationfunctions-0024-select-pg_visible_in_snapshot-1-::xid8-1:4:2"},
