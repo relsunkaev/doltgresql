@@ -15,6 +15,7 @@
 package functions
 
 import (
+	"strconv"
 	"testing"
 
 	"github.com/shopspring/decimal"
@@ -23,16 +24,42 @@ import (
 )
 
 func TestPowerNumericFractionalExponentScale(t *testing.T) {
-	got, err := power_numeric_numeric.Callable(
-		nil,
-		[3]*pgtypes.DoltgresType{},
-		decimal.NewFromInt(4),
-		decimal.NewFromFloat(0.5),
-	)
-	if err != nil {
-		t.Fatal(err)
+	tests := []struct {
+		name string
+		base decimal.Decimal
+		want string
+	}{
+		{
+			name: "integer result keeps numeric scale",
+			base: decimal.NewFromInt(4),
+			want: "2.0000000000000000",
+		},
+		{
+			name: "float8 cast preserves PostgreSQL precision",
+			base: decimal.NewFromInt(2),
+			want: "1.4142135623730951",
+		},
 	}
-	if text := got.(decimal.Decimal).StringFixed(16); text != "2.0000000000000000" {
-		t.Fatalf("got %q, want %q", text, "2.0000000000000000")
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := power_numeric_numeric.Callable(
+				nil,
+				[3]*pgtypes.DoltgresType{},
+				test.base,
+				decimal.NewFromFloat(0.5),
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if text := got.(decimal.Decimal).StringFixed(16); text != test.want {
+				t.Fatalf("got %q, want %q", text, test.want)
+			}
+			if test.base.Equal(decimal.NewFromInt(2)) {
+				f, _ := got.(decimal.Decimal).Float64()
+				if text := strconv.FormatFloat(f, 'f', -1, 64); text != test.want {
+					t.Fatalf("float8 cast got %q, want %q", text, test.want)
+				}
+			}
+		})
 	}
 }

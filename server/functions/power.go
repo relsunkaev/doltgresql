@@ -29,6 +29,7 @@ import (
 func initPower() {
 	framework.RegisterFunction(power_float64_float64)
 	framework.RegisterFunction(power_numeric_numeric)
+	framework.RegisterFunction(numeric_power_numeric_numeric)
 }
 
 var (
@@ -54,31 +55,42 @@ var power_float64_float64 = framework.Function2{
 	},
 }
 
+func powerNumericNumeric(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+	if val1 == nil || val2 == nil {
+		return nil, nil
+	}
+	d1 := val1.(decimal.Decimal)
+	d2 := val2.(decimal.Decimal)
+	if d1.Equal(numericOne) {
+		return numericOne, nil
+	}
+	if d1.Equal(decimal.Zero) && d2.Cmp(decimal.Zero) == -1 {
+		return nil, errPowerZeroToNegative
+	}
+	// decimal.Pow() does not handle the zero exponent properly, so we special case it
+	if d2.Equal(decimal.Zero) {
+		return numericOne, nil
+	}
+	if d2.Exponent() < 0 {
+		return decimal.NewFromFloat(math.Pow(d1.InexactFloat64(), d2.InexactFloat64())), nil
+	}
+	return d1.Pow(d2), nil
+}
+
 // power_numeric_numeric represents the PostgreSQL function of the same name, taking the same parameters.
 var power_numeric_numeric = framework.Function2{
 	Name:       "power",
 	Return:     pgtypes.Numeric,
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Numeric, pgtypes.Numeric},
 	Strict:     true,
-	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
-		if val1 == nil || val2 == nil {
-			return nil, nil
-		}
-		d1 := val1.(decimal.Decimal)
-		d2 := val2.(decimal.Decimal)
-		if d1.Equal(numericOne) {
-			return numericOne, nil
-		}
-		if d1.Equal(decimal.Zero) && d2.Cmp(decimal.Zero) == -1 {
-			return nil, errPowerZeroToNegative
-		}
-		// decimal.Pow() does not handle the zero exponent properly, so we special case it
-		if d2.Equal(decimal.Zero) {
-			return numericOne, nil
-		}
-		if d2.Exponent() < 0 {
-			return decimal.New(int64(math.Round(math.Pow(d1.InexactFloat64(), d2.InexactFloat64())*1e16)), -16), nil
-		}
-		return d1.Pow(d2), nil
-	},
+	Callable:   powerNumericNumeric,
+}
+
+// numeric_power_numeric_numeric is PostgreSQL's internal implementation name for power(numeric, numeric).
+var numeric_power_numeric_numeric = framework.Function2{
+	Name:       "numeric_power",
+	Return:     pgtypes.Numeric,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Numeric, pgtypes.Numeric},
+	Strict:     true,
+	Callable:   powerNumericNumeric,
 }
