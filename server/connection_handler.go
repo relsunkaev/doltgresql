@@ -4417,6 +4417,10 @@ func errMessageToSQLState(msg string) (string, bool) {
 		return pgcode.DuplicateColumn.String(), true
 	case strings.HasPrefix(msg, "too many column names were specified"):
 		return pgcode.Syntax.String(), true
+	case strings.HasPrefix(msg, "Duplicate key name "):
+		return pgcode.DuplicateRelation.String(), true
+	case strings.HasPrefix(msg, `index "`) && strings.HasSuffix(msg, `" was not found`):
+		return pgcode.UndefinedObject.String(), true
 	case strings.HasPrefix(msg, `materialized view "`) && strings.HasSuffix(msg, `" has not been populated`):
 		return pgcode.ObjectNotInPrerequisiteState.String(), true
 	case strings.HasPrefix(msg, "REFRESH options CONCURRENTLY and WITH NO DATA cannot be used together"):

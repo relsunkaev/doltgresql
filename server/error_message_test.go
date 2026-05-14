@@ -304,3 +304,18 @@ func TestErrMessageToSQLStateFormatsUndefinedFunction(t *testing.T) {
 	require.True(t, ok)
 	require.Equal(t, pgcode.UndefinedFunction.String(), code)
 }
+
+func TestErrMessageToSQLStateFormatsIndexDDLErrors(t *testing.T) {
+	for _, tt := range []struct {
+		msg  string
+		code pgcode.Code
+	}{
+		{msg: "Duplicate key name 'if_not_exists_idx'", code: pgcode.DuplicateRelation},
+		{msg: `index "drop_t_idx" was not found`, code: pgcode.UndefinedObject},
+	} {
+		code, ok := errMessageToSQLState(tt.msg)
+		require.True(t, ok)
+		require.Equal(t, tt.code.String(), code)
+		require.Equal(t, tt.code.String(), errorResponseCode(errors.New(tt.msg)))
+	}
+}
