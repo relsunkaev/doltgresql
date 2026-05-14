@@ -318,7 +318,9 @@ func databaseNameForSQLDatabase(db sql.Database) string {
 }
 
 func sequenceDefaultName(ctx *sql.Context, databaseName string, schemaName string, sequenceName string) string {
-	if databaseName == "" || databaseName == ctx.GetCurrentDatabase() {
+	currentDatabase, _ := doltdb.SplitRevisionDbName(ctx.GetCurrentDatabase())
+	defaultDatabase, _ := doltdb.SplitRevisionDbName(databaseName)
+	if defaultDatabase == "" || strings.EqualFold(defaultDatabase, currentDatabase) {
 		return doltdb.TableName{Name: sequenceName, Schema: schemaName}.String()
 	}
 	return quoteIdentifier(databaseName) + "." + quoteIdentifier(schemaName) + "." + quoteIdentifier(sequenceName)

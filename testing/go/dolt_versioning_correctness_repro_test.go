@@ -1617,6 +1617,55 @@ func TestDoltCheckoutRestoresSequenceStateGuard(t *testing.T) {
 	})
 }
 
+// TestSerialDefaultUsesCheckedOutBranchAfterCheckoutRepro guards SERIAL
+// defaults after branch checkout. The default nextval() must resolve through
+// the checked-out branch rather than the branch that created the table.
+func TestSerialDefaultUsesCheckedOutBranchAfterCheckoutRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "SERIAL default uses checked-out branch after checkout",
+			SetUpScript: []string{
+				`CREATE TABLE serial_default_branch_items (
+					id SERIAL PRIMARY KEY,
+					label TEXT
+				);`,
+				`INSERT INTO serial_default_branch_items (label) VALUES ('base');`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'base serial default branch');`,
+				`SELECT DOLT_BRANCH('serial_default_other');`,
+				`INSERT INTO serial_default_branch_items (label) VALUES ('main');`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'main serial default branch');`,
+				`SELECT DOLT_CHECKOUT('serial_default_other');`,
+				`INSERT INTO serial_default_branch_items (label) VALUES ('other');`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'other serial default branch');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT id, label
+						FROM serial_default_branch_items
+						ORDER BY id;`,
+					Expected: []sql.Row{
+						{1, "base"},
+						{2, "other"},
+					},
+				},
+				{
+					Query:    `SELECT DOLT_CHECKOUT('main');`,
+					Expected: []sql.Row{{`{0,"Switched to branch 'main'"}`}},
+				},
+				{
+					Query: `SELECT id, label
+						FROM serial_default_branch_items
+						ORDER BY id;`,
+					Expected: []sql.Row{
+						{1, "base"},
+						{2, "main"},
+					},
+				},
+			},
+		},
+	})
+}
+
 // TestDoltCheckoutRestoresTriggerDefinitionsGuard keeps coverage for branch
 // checkout restoring trigger definitions.
 func TestDoltCheckoutRestoresTriggerDefinitionsGuard(t *testing.T) {
