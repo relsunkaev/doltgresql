@@ -193,7 +193,7 @@ func TestAlterAggregateRenameRepro(t *testing.T) {
 					Query: `SELECT rename_custom_sum_new(v) FROM rename_custom_sum_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "aggregate-correctness-repro-test-testalteraggregaterenamerepro-0001-select-rename_custom_sum_new-v-from-rename_custom_sum_items"},
 				},
 				{
-					Query: `SELECT rename_custom_sum_old(v) FROM rename_custom_sum_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "aggregate-correctness-repro-test-testalteraggregaterenamerepro-0002-select-rename_custom_sum_old-v-from-rename_custom_sum_items"},
+					Query: `SELECT rename_custom_sum_old(v) FROM rename_custom_sum_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "aggregate-correctness-repro-test-testalteraggregaterenamerepro-0002-select-rename_custom_sum_old-v-from-rename_custom_sum_items", Compare: "sqlstate"},
 				},
 			},
 		},

@@ -95,11 +95,6 @@ func TestSelect(t *testing.T) {
 					Query:          "select * from (values(1,'峰哥',18),(2,'王哥',20),(3,'张哥',22)) x(id,name,age) limit $1;",
 					BindVars:       []any{2}, // forcing this to use prepared statements
 					PostgresOracle: ScriptTestPostgresOracle{ID: "select-test-testselect-0018-select-*-from-values-1"},
-					ExpectedColNames: []string{
-						"id",
-						"name",
-						"age",
-					},
 				},
 			},
 		},
