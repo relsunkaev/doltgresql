@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestValuesQuotedCaseDistinctAggregateColumnsRepro reproduces a correctness
@@ -1454,8 +1452,7 @@ func TestUuidEqualityAfterPrimaryKeyRewriteRepro(t *testing.T) {
 				{
 					Query: `SELECT
 							(SELECT uid FROM uuid_equality_items WHERE id = 2) =
-							(SELECT uid FROM uuid_equality_items WHERE id = 1);`,
-					Expected: []sql.Row{{"f"}},
+							(SELECT uid FROM uuid_equality_items WHERE id = 1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testuuidequalityafterprimarykeyrewriterepro-0001-select-select-uid-from-uuid_equality_items"},
 				},
 			},
 		},

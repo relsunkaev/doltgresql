@@ -1290,6 +1290,9 @@ func refreshPromotedOracleMap(sourceFile string, outputPath string, testNameFilt
 				return fmt.Errorf("%s: %w", entry.ID, err)
 			}
 		}
+		assertion.Cleanup = entry.Cleanup
+		assertion.CleanupProvided = len(entry.Cleanup) > 0
+		assertion.NeedsCleanup = false
 		expectedRows, columnModes, sqlstate, severity, expectedTag, err := readPostgresOracleExpected(ctx, conn, entry)
 		if err != nil {
 			if skipRefreshErrors {
@@ -1495,6 +1498,7 @@ func explicitPublicSchemaCleanup(setupQueries []string, query string) []string {
 	cleanup = append(cleanup, cleanupForCreatedSequences(cleanupStatements)...)
 	cleanup = append(cleanup, cleanupForCreatedSchemas(cleanupStatements)...)
 	cleanup = append(cleanup, cleanupForCreatedLanguages(cleanupStatements)...)
+	cleanup = append(cleanup, cleanupForCreatedTransforms(cleanupStatements)...)
 	cleanup = append(cleanup, cleanupForCreatedDatabases(cleanupStatements)...)
 	cleanup = append(cleanup, cleanupForCreatedTypes(cleanupStatements)...)
 	cleanup = append(cleanup, cleanupForCreatedUsers(cleanupStatements)...)
@@ -2809,6 +2813,7 @@ func entryFromScriptTestAssertion(source string, setup []oracleStatement, ordina
 		generatedCleanup = append(generatedCleanup, cleanupForCreatedLargeObjects(cleanupStatements)...)
 		generatedCleanup = append(generatedCleanup, cleanupForCreatedSchemas(cleanupStatements)...)
 		generatedCleanup = append(generatedCleanup, cleanupForCreatedLanguages(cleanupStatements)...)
+		generatedCleanup = append(generatedCleanup, cleanupForCreatedTransforms(cleanupStatements)...)
 		generatedCleanup = append(generatedCleanup, cleanupForCreatedDatabases(cleanupStatements)...)
 		generatedCleanup = append(generatedCleanup, cleanupForCreatedTypes(cleanupStatements)...)
 		generatedCleanup = append(generatedCleanup, cleanupForCreatedUsers(cleanupStatements)...)
@@ -2888,6 +2893,7 @@ func queryNeedsGeneratedCleanup(query string) bool {
 		len(cleanupForCreatedLargeObjects([]string{query})) > 0 ||
 		len(cleanupForCreatedExtensions([]string{query})) > 0 ||
 		len(cleanupForCreatedLanguages([]string{query})) > 0 ||
+		len(cleanupForCreatedTransforms([]string{query})) > 0 ||
 		len(cleanupForCreatedPublications([]string{query})) > 0 ||
 		len(cleanupForCreatedSubscriptions([]string{query})) > 0 ||
 		len(cleanupForCreatedUsers([]string{query})) > 0 ||
@@ -3210,6 +3216,50 @@ func dropOwnedByIfRoleExists(name string) string {
 
 func cleanupForCreatedLanguages(statements []string) []string {
 	return cleanupForCreatedObjects(statements, "create language ", "DROP LANGUAGE IF EXISTS ", " CASCADE")
+}
+
+func cleanupForCreatedTransforms(statements []string) []string {
+	seen := map[string]struct{}{}
+	cleanup := make([]string, 0)
+	for _, statement := range statements {
+		typeName, languageName, ok := createdTransformTarget(statement)
+		if !ok {
+			continue
+		}
+		if strings.Contains(typeName, "{{") || strings.Contains(typeName, "}}") || strings.Contains(languageName, "{{") || strings.Contains(languageName, "}}") {
+			continue
+		}
+		key := strings.ToLower(typeName) + "\x00" + strings.ToLower(languageName)
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		seen[key] = struct{}{}
+		cleanup = append(cleanup, "DROP TRANSFORM IF EXISTS FOR "+typeName+" LANGUAGE "+languageName)
+	}
+	return cleanup
+}
+
+func createdTransformTarget(statement string) (string, string, bool) {
+	trimmed := strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(statement), ";"))
+	lower := strings.ToLower(trimmed)
+	const prefix = "create transform for "
+	if !strings.HasPrefix(lower, prefix) {
+		return "", "", false
+	}
+	rest := strings.TrimSpace(trimmed[len(prefix):])
+	lowerRest := strings.ToLower(rest)
+	const languageKeyword = " language "
+	index := strings.Index(lowerRest, languageKeyword)
+	if index < 0 {
+		return "", "", false
+	}
+	typeName := strings.TrimSpace(rest[:index])
+	languageRest := strings.TrimSpace(rest[index+len(languageKeyword):])
+	languageName, ok := firstSQLName(languageRest)
+	if typeName == "" || !ok {
+		return "", "", false
+	}
+	return typeName, languageName, true
 }
 
 func cleanupForCreatedTypes(statements []string) []string {

@@ -18,13 +18,31 @@
       "source": "testing/go/object_identity_repro_test.go:TestPgGetObjectAddressTableRepro",
       "ordinal": 1,
       "scriptName": "pg_get_object_address resolves a table name",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "object-identity-repro-test-testpggetobjectaddresstablerepro-0001-select-classid::regclass::text-objid::regclass::text-objsubid::text-from",
       "suggestedId": "object-identity-repro-test-testpggetobjectaddresstablerepro-0001-select-classid::regclass::text-objid::regclass::text-objsubid::text-from",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "\nSELECT classid::regclass::TEXT, objid::regclass::TEXT, objsubid::TEXT\nFROM pg_catalog.pg_get_object_address(\n\t'table',\n\tARRAY['public', 'object_address_items'],\n\tARRAY[]::TEXT[]\n);",
       "querySha256": "a72a619aa55626cea850a8ebd92256a4af0ca94bd2f9b566ccc97dfc295880f3",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "pg_class"
+          },
+          {
+            "value": "object_address_items"
+          },
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS object_address_items CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/object_identity_repro_test.go:TestPgDescribeObjectTableRepro#0001",

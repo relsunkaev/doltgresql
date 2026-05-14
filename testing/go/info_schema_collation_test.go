@@ -15,7 +15,6 @@
 package _go
 
 import (
-	"github.com/dolthub/go-mysql-server/sql"
 	"testing"
 )
 
@@ -51,15 +50,7 @@ func TestInformationSchemaColumnsCollationName(t *testing.T) {
 					Query: `SELECT column_name, collation_name
 FROM information_schema.columns
 WHERE table_name = 'coll_default' AND table_schema = 'public'
-ORDER BY ordinal_position;`,
-					Expected: []sql.Row{
-						{"id", nil},
-						{"s_text", nil},
-						{"s_varchar", nil},
-						{"n", nil},
-						{"ts", nil},
-						{"b", nil},
-					},
+ORDER BY ordinal_position;`, PostgresOracle: ScriptTestPostgresOracle{ID: "info-schema-collation-test-testinformationschemacolumnscollationname-0001-select-column_name-collation_name-from-information_schema.columns"},
 				},
 			},
 		},

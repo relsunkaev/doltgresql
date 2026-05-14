@@ -18,13 +18,26 @@
       "source": "testing/go/transform_definition_repro_test.go:TestCreateTransformPersistsPgTransformRepro",
       "ordinal": 1,
       "scriptName": "CREATE TRANSFORM populates pg_transform",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "transform-definition-repro-test-testcreatetransformpersistspgtransformrepro-0001-select-count-*-from-pg_catalog.pg_transform",
       "suggestedId": "transform-definition-repro-test-testcreatetransformpersistspgtransformrepro-0001-select-count-*-from-pg_catalog.pg_transform",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_transform t\n\t\t\t\t\t\tJOIN pg_catalog.pg_language l ON l.oid = t.trflang\n\t\t\t\t\t\tWHERE t.trftype = 'integer'::regtype\n\t\t\t\t\t\t\tAND l.lanname = 'sql';",
       "querySha256": "716b52fbacc2500cbd6f10af6f6d43fe324116f65d00a71706fb057b97906c73",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TRANSFORM IF EXISTS FOR int LANGUAGE SQL",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/transform_definition_repro_test.go:TestCreateTransformRequiresTypeOwnershipRepro#0001",

@@ -18,13 +18,68 @@
       "source": "testing/go/info_schema_collation_test.go:TestInformationSchemaColumnsCollationName",
       "ordinal": 1,
       "scriptName": "collation_name is NULL for default-collated strings and non-strings",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "info-schema-collation-test-testinformationschemacolumnscollationname-0001-select-column_name-collation_name-from-information_schema.columns",
       "suggestedId": "info-schema-collation-test-testinformationschemacolumnscollationname-0001-select-column_name-collation_name-from-information_schema.columns",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT column_name, collation_name\nFROM information_schema.columns\nWHERE table_name = 'coll_default' AND table_schema = 'public'\nORDER BY ordinal_position;",
       "querySha256": "70a97c7f9a2b2b7732e83fd0328a06977b32e297ffda67b42a3bb6fb5fde3817",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "id"
+          },
+          {
+            "null": true
+          }
+        ],
+        [
+          {
+            "value": "s_text"
+          },
+          {
+            "null": true
+          }
+        ],
+        [
+          {
+            "value": "s_varchar"
+          },
+          {
+            "null": true
+          }
+        ],
+        [
+          {
+            "value": "n"
+          },
+          {
+            "null": true
+          }
+        ],
+        [
+          {
+            "value": "ts"
+          },
+          {
+            "null": true
+          }
+        ],
+        [
+          {
+            "value": "b"
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS coll_default CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/info_schema_collation_test.go:TestInformationSchemaColumnsCollationName#0002",

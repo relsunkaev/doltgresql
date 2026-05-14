@@ -2,8 +2,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestPgGetObjectAddressTableRepro documents the PostgreSQL object-address
@@ -23,8 +21,7 @@ FROM pg_catalog.pg_get_object_address(
 	'table',
 	ARRAY['public', 'object_address_items'],
 	ARRAY[]::TEXT[]
-);`,
-					Expected: []sql.Row{{"pg_class", "object_address_items", "0"}},
+);`, PostgresOracle: ScriptTestPostgresOracle{ID: "object-identity-repro-test-testpggetobjectaddresstablerepro-0001-select-classid::regclass::text-objid::regclass::text-objsubid::text-from"},
 				},
 			},
 		},

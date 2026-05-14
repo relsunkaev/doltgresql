@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestCreateTransformPersistsPgTransformRepro reproduces a catalog persistence
@@ -38,8 +36,7 @@ func TestCreateTransformPersistsPgTransformRepro(t *testing.T) {
 						FROM pg_catalog.pg_transform t
 						JOIN pg_catalog.pg_language l ON l.oid = t.trflang
 						WHERE t.trftype = 'integer'::regtype
-							AND l.lanname = 'sql';`,
-					Expected: []sql.Row{{1}},
+							AND l.lanname = 'sql';`, PostgresOracle: ScriptTestPostgresOracle{ID: "transform-definition-repro-test-testcreatetransformpersistspgtransformrepro-0001-select-count-*-from-pg_catalog.pg_transform"},
 				},
 			},
 		},

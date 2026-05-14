@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestXmlTypeColumnCreationRepro reproduces an XML type compatibility gap:
@@ -63,8 +61,7 @@ func TestXmlTextFunctionRepro(t *testing.T) {
 			Name: "xmltext escapes XML text-node content",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT xmltext('< foo & bar >')::text;`,
-					Expected: []sql.Row{{"&lt; foo &amp; bar &gt;"}},
+					Query: `SELECT xmltext('< foo & bar >')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "xml-correctness-repro-test-testxmltextfunctionrepro-0001-select-xmltext-<-foo-&"},
 				},
 			},
 		},

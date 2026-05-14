@@ -2566,13 +2566,25 @@
       "source": "testing/go/query_correctness_repro_test.go:TestUuidEqualityAfterPrimaryKeyRewriteRepro",
       "ordinal": 1,
       "scriptName": "UUID equality works after adding primary key",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testuuidequalityafterprimarykeyrewriterepro-0001-select-select-uid-from-uuid_equality_items",
       "suggestedId": "query-correctness-repro-test-testuuidequalityafterprimarykeyrewriterepro-0001-select-select-uid-from-uuid_equality_items",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT\n\t\t\t\t\t\t\t(SELECT uid FROM uuid_equality_items WHERE id = 2) =\n\t\t\t\t\t\t\t(SELECT uid FROM uuid_equality_items WHERE id = 1);",
       "querySha256": "ec8d6c7601dc359bf922660c2d748fed2af092a9debba2eca9f6f04b9301bc10",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS uuid_equality_items CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/query_correctness_repro_test.go:TestSubstringForCountSyntaxRepro#0001",
