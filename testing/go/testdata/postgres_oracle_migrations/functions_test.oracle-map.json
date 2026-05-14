@@ -9267,13 +9267,10 @@
       "suggestedId": "functions-test-testschemavisibilityinquiryfunctions-0013-select-t.oid-t.typname-n.nspname-from",
       "compare": "structural",
       "expectedKind": "rows",
-      "query": "SELECT t.oid, t.typname, n.nspname FROM pg_catalog.pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace WHERE n.nspname='myschema' OR n.nspname='testschema' ORDER BY t.typname;",
-      "querySha256": "b0f3b6bc887bb23edb77674756eae21bf30560a8737b5d505d97eb144866cfc5",
+      "query": "SELECT t.typname, n.nspname FROM pg_catalog.pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace WHERE n.nspname='myschema' OR n.nspname='testschema' ORDER BY t.typname;",
+      "querySha256": "74b8939f901d37ca5966e8874bc760a26583f8ba62d77bc4c35a3f73f928efeb",
       "expectedRows": [
         [
-          {
-            "value": "27695"
-          },
           {
             "value": "_mydomain"
           },
@@ -9283,9 +9280,6 @@
         ],
         [
           {
-            "value": "27697"
-          },
-          {
             "value": "_myenum"
           },
           {
@@ -9293,9 +9287,6 @@
           }
         ],
         [
-          {
-            "value": "27706"
-          },
           {
             "value": "_test_domain"
           },
@@ -9305,9 +9296,6 @@
         ],
         [
           {
-            "value": "27708"
-          },
-          {
             "value": "_test_enum"
           },
           {
@@ -9315,9 +9303,6 @@
           }
         ],
         [
-          {
-            "value": "27696"
-          },
           {
             "value": "mydomain"
           },
@@ -9327,9 +9312,6 @@
         ],
         [
           {
-            "value": "27698"
-          },
-          {
             "value": "myenum"
           },
           {
@@ -9338,9 +9320,6 @@
         ],
         [
           {
-            "value": "27707"
-          },
-          {
             "value": "test_domain"
           },
           {
@@ -9348,9 +9327,6 @@
           }
         ],
         [
-          {
-            "value": "27709"
-          },
           {
             "value": "test_enum"
           },
@@ -9394,12 +9370,12 @@
       "suggestedId": "functions-test-testschemavisibilityinquiryfunctions-0015-select-pg_type_is_visible-2272253470",
       "compare": "structural",
       "expectedKind": "rows",
-      "query": "SELECT pg_type_is_visible(2272253470);",
-      "querySha256": "13da53033e0c9cd63aa8001fb82385ef500d00b75a49a90314f5ff82d5810b47",
+      "query": "SELECT pg_type_is_visible((SELECT t.oid FROM pg_catalog.pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace WHERE n.nspname='testschema' AND t.typname='test_domain'));",
+      "querySha256": "135f468de78bcc11039da52382f69bc358b12f4aead82ab754c2d5c1511d99ae",
       "expectedRows": [
         [
           {
-            "null": true
+            "value": "t"
           }
         ]
       ],
@@ -9416,12 +9392,12 @@
       "suggestedId": "functions-test-testschemavisibilityinquiryfunctions-0016-select-pg_type_is_visible-1117094145",
       "compare": "structural",
       "expectedKind": "rows",
-      "query": "SELECT pg_type_is_visible(1117094145);",
-      "querySha256": "243d6b1c2b7ae872f196a720de816a42ee1c36de768786c1ab81a90db4dc5e06",
+      "query": "SELECT pg_type_is_visible((SELECT t.oid FROM pg_catalog.pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace WHERE n.nspname='testschema' AND t.typname='test_enum'));",
+      "querySha256": "f1cd44877059df522c29ad400d6098e0d5b500dd51c5fc4d215d30e80af666f6",
       "expectedRows": [
         [
           {
-            "null": true
+            "value": "t"
           }
         ]
       ],
@@ -9438,12 +9414,12 @@
       "suggestedId": "functions-test-testschemavisibilityinquiryfunctions-0017-select-pg_type_is_visible-340132571",
       "compare": "structural",
       "expectedKind": "rows",
-      "query": "SELECT pg_type_is_visible(340132571);",
-      "querySha256": "34e661b1cb8465ea325198b9dd2b312047323a845ad63b84faf2c6843b7d3f69",
+      "query": "SELECT pg_type_is_visible((SELECT t.oid FROM pg_catalog.pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace WHERE n.nspname='myschema' AND t.typname='mydomain'));",
+      "querySha256": "2059b52add6944a8f95156bf4ad7e86550b97e4a016eeee4d2feb3d056dfd00b",
       "expectedRows": [
         [
           {
-            "null": true
+            "value": "f"
           }
         ]
       ],
@@ -9460,12 +9436,12 @@
       "suggestedId": "functions-test-testschemavisibilityinquiryfunctions-0018-select-pg_type_is_visible-1684884017",
       "compare": "structural",
       "expectedKind": "rows",
-      "query": "SELECT pg_type_is_visible(1684884017);",
-      "querySha256": "8d9f5d43409be82987aac68e5fb3f0a11a58ac46f3ef3bc195732f33a1d3f1ff",
+      "query": "SELECT pg_type_is_visible((SELECT t.oid FROM pg_catalog.pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace WHERE n.nspname='myschema' AND t.typname='myenum'));",
+      "querySha256": "223f2344a25a7ecb29cec064bfdb1746154b92870ada89b68c6519049be19124",
       "expectedRows": [
         [
           {
-            "null": true
+            "value": "f"
           }
         ]
       ],
@@ -9520,12 +9496,12 @@
       "suggestedId": "functions-test-testschemavisibilityinquiryfunctions-0021-select-pg_type_is_visible-340132571",
       "compare": "structural",
       "expectedKind": "rows",
-      "query": "SELECT pg_type_is_visible(340132571);",
-      "querySha256": "34e661b1cb8465ea325198b9dd2b312047323a845ad63b84faf2c6843b7d3f69",
+      "query": "SELECT pg_type_is_visible((SELECT t.oid FROM pg_catalog.pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace WHERE n.nspname='myschema' AND t.typname='mydomain'));",
+      "querySha256": "2059b52add6944a8f95156bf4ad7e86550b97e4a016eeee4d2feb3d056dfd00b",
       "expectedRows": [
         [
           {
-            "null": true
+            "value": "t"
           }
         ]
       ],
@@ -9542,12 +9518,12 @@
       "suggestedId": "functions-test-testschemavisibilityinquiryfunctions-0022-select-pg_type_is_visible-1684884017",
       "compare": "structural",
       "expectedKind": "rows",
-      "query": "SELECT pg_type_is_visible(1684884017);",
-      "querySha256": "8d9f5d43409be82987aac68e5fb3f0a11a58ac46f3ef3bc195732f33a1d3f1ff",
+      "query": "SELECT pg_type_is_visible((SELECT t.oid FROM pg_catalog.pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace WHERE n.nspname='myschema' AND t.typname='myenum'));",
+      "querySha256": "223f2344a25a7ecb29cec064bfdb1746154b92870ada89b68c6519049be19124",
       "expectedRows": [
         [
           {
-            "null": true
+            "value": "t"
           }
         ]
       ],
@@ -9564,12 +9540,12 @@
       "suggestedId": "functions-test-testschemavisibilityinquiryfunctions-0023-select-pg_type_is_visible-2272253470",
       "compare": "structural",
       "expectedKind": "rows",
-      "query": "SELECT pg_type_is_visible(2272253470);",
-      "querySha256": "13da53033e0c9cd63aa8001fb82385ef500d00b75a49a90314f5ff82d5810b47",
+      "query": "SELECT pg_type_is_visible((SELECT t.oid FROM pg_catalog.pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace WHERE n.nspname='testschema' AND t.typname='test_domain'));",
+      "querySha256": "135f468de78bcc11039da52382f69bc358b12f4aead82ab754c2d5c1511d99ae",
       "expectedRows": [
         [
           {
-            "null": true
+            "value": "f"
           }
         ]
       ],
@@ -9586,12 +9562,12 @@
       "suggestedId": "functions-test-testschemavisibilityinquiryfunctions-0024-select-pg_type_is_visible-1117094145",
       "compare": "structural",
       "expectedKind": "rows",
-      "query": "SELECT pg_type_is_visible(1117094145);",
-      "querySha256": "243d6b1c2b7ae872f196a720de816a42ee1c36de768786c1ab81a90db4dc5e06",
+      "query": "SELECT pg_type_is_visible((SELECT t.oid FROM pg_catalog.pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace WHERE n.nspname='testschema' AND t.typname='test_enum'));",
+      "querySha256": "f1cd44877059df522c29ad400d6098e0d5b500dd51c5fc4d215d30e80af666f6",
       "expectedRows": [
         [
           {
-            "null": true
+            "value": "f"
           }
         ]
       ],

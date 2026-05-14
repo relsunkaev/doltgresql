@@ -1791,25 +1791,25 @@ func TestSchemaVisibilityInquiryFunctions(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT t.oid, t.typname, n.nspname FROM pg_catalog.pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace WHERE n.nspname='myschema' OR n.nspname='testschema' ORDER BY t.typname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testschemavisibilityinquiryfunctions-0013-select-t.oid-t.typname-n.nspname-from"},
+					Query: `SELECT t.typname, n.nspname FROM pg_catalog.pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace WHERE n.nspname='myschema' OR n.nspname='testschema' ORDER BY t.typname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testschemavisibilityinquiryfunctions-0013-select-t.oid-t.typname-n.nspname-from"},
 				},
 				{
 					Query: `SHOW search_path;`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testschemavisibilityinquiryfunctions-0014-show-search_path"},
 				},
 				{
-					Query: `SELECT pg_type_is_visible(2272253470);`, PostgresOracle: // test_domain from testschema
+					Query: `SELECT pg_type_is_visible((SELECT t.oid FROM pg_catalog.pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace WHERE n.nspname='testschema' AND t.typname='test_domain'));`, PostgresOracle: // test_domain from testschema
 					ScriptTestPostgresOracle{ID: "functions-test-testschemavisibilityinquiryfunctions-0015-select-pg_type_is_visible-2272253470"},
 				},
 				{
-					Query: `SELECT pg_type_is_visible(1117094145);`, PostgresOracle: // test_enum from testschema
+					Query: `SELECT pg_type_is_visible((SELECT t.oid FROM pg_catalog.pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace WHERE n.nspname='testschema' AND t.typname='test_enum'));`, PostgresOracle: // test_enum from testschema
 					ScriptTestPostgresOracle{ID: "functions-test-testschemavisibilityinquiryfunctions-0016-select-pg_type_is_visible-1117094145"},
 				},
 				{
-					Query: `SELECT pg_type_is_visible(340132571);`, PostgresOracle: // mydomain from myschema
+					Query: `SELECT pg_type_is_visible((SELECT t.oid FROM pg_catalog.pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace WHERE n.nspname='myschema' AND t.typname='mydomain'));`, PostgresOracle: // mydomain from myschema
 					ScriptTestPostgresOracle{ID: "functions-test-testschemavisibilityinquiryfunctions-0017-select-pg_type_is_visible-340132571"},
 				},
 				{
-					Query: `SELECT pg_type_is_visible(1684884017);`, PostgresOracle: // myenum from myschema
+					Query: `SELECT pg_type_is_visible((SELECT t.oid FROM pg_catalog.pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace WHERE n.nspname='myschema' AND t.typname='myenum'));`, PostgresOracle: // myenum from myschema
 					ScriptTestPostgresOracle{ID: "functions-test-testschemavisibilityinquiryfunctions-0018-select-pg_type_is_visible-1684884017"},
 				},
 				{
@@ -1819,19 +1819,19 @@ func TestSchemaVisibilityInquiryFunctions(t *testing.T) {
 					Query: `SHOW search_path;`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testschemavisibilityinquiryfunctions-0020-show-search_path"},
 				},
 				{
-					Query: `SELECT pg_type_is_visible(340132571);`, PostgresOracle: // mydomain from myschema
+					Query: `SELECT pg_type_is_visible((SELECT t.oid FROM pg_catalog.pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace WHERE n.nspname='myschema' AND t.typname='mydomain'));`, PostgresOracle: // mydomain from myschema
 					ScriptTestPostgresOracle{ID: "functions-test-testschemavisibilityinquiryfunctions-0021-select-pg_type_is_visible-340132571"},
 				},
 				{
-					Query: `SELECT pg_type_is_visible(1684884017);`, PostgresOracle: // myenum from myschema
+					Query: `SELECT pg_type_is_visible((SELECT t.oid FROM pg_catalog.pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace WHERE n.nspname='myschema' AND t.typname='myenum'));`, PostgresOracle: // myenum from myschema
 					ScriptTestPostgresOracle{ID: "functions-test-testschemavisibilityinquiryfunctions-0022-select-pg_type_is_visible-1684884017"},
 				},
 				{
-					Query: `SELECT pg_type_is_visible(2272253470);`, PostgresOracle: // test_domain from testschema
+					Query: `SELECT pg_type_is_visible((SELECT t.oid FROM pg_catalog.pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace WHERE n.nspname='testschema' AND t.typname='test_domain'));`, PostgresOracle: // test_domain from testschema
 					ScriptTestPostgresOracle{ID: "functions-test-testschemavisibilityinquiryfunctions-0023-select-pg_type_is_visible-2272253470"},
 				},
 				{
-					Query: `SELECT pg_type_is_visible(1117094145);`, PostgresOracle: // test_enum from testschema
+					Query: `SELECT pg_type_is_visible((SELECT t.oid FROM pg_catalog.pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace WHERE n.nspname='testschema' AND t.typname='test_enum'));`, PostgresOracle: // test_enum from testschema
 					ScriptTestPostgresOracle{ID: "functions-test-testschemavisibilityinquiryfunctions-0024-select-pg_type_is_visible-1117094145"},
 				},
 				{

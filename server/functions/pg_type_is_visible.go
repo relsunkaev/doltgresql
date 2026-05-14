@@ -40,24 +40,29 @@ var pg_type_is_visible = framework.Function1{
 		oidVal := val.(id.Id)
 
 		if oidVal.Section() != id.Section_Type {
-			return false, nil
+			return nil, nil
 		}
 
-		// Get the schema name where the type is defined
-		// For type IDs, the first segment contains the schema name
-		schemaName := oidVal.Segment(0)
+		typeColl, err := core.GetTypesCollectionFromContext(ctx)
+		if err != nil {
+			return false, err
+		}
+		targetType, err := typeColl.GetType(ctx, id.Type(oidVal))
+		if err != nil {
+			return false, err
+		}
+		if targetType == nil {
+			return nil, nil
+		}
 
-		// Get the current search path
+		schemaName := targetType.ID.SchemaName()
+		typeName := targetType.ID.TypeName()
+
 		searchPath, err := core.SearchPath(ctx)
 		if err != nil {
 			return false, err
 		}
 
-		typeName := oidVal.Segment(1)
-		typeColl, err := core.GetTypesCollectionFromContext(ctx)
-		if err != nil {
-			return false, err
-		}
 		for _, path := range searchPath {
 			typ, err := typeColl.GetType(ctx, id.NewType(path, typeName))
 			if err != nil {
