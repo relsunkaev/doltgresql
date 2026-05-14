@@ -19,8 +19,6 @@ import (
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
-	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/dsess"
-	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/resolve"
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/core"
@@ -71,34 +69,19 @@ var pg_get_serial_sequence_text_text = framework.Function2{
 			tableName = pathElems[0]
 		}
 
-		// Resolve the table's schema if it wasn't specified
-		if schemaName == "" {
-			doltSession := dsess.DSessFromSess(ctx.Session)
-			roots, ok := doltSession.GetRoots(ctx, ctx.GetCurrentDatabase())
-			if !ok {
-				return nil, errors.Errorf("unable to get roots")
-			}
-			foundTableName, _, ok, err := resolve.TableWithSearchPath(ctx, roots.Working, tableName)
-			if err != nil {
-				return nil, err
-			}
-			if !ok {
-				return nil, pgerror.Newf(pgcode.UndefinedTable, `relation "%s" does not exist`, tableName)
-			}
-			schemaName = foundTableName.Schema
-		}
-
-		// Validate the full schema + table name and grab the columns
-		table, err := core.GetSqlTableFromContext(ctx, "", doltdb.TableName{
-			Schema: schemaName,
-			Name:   tableName,
-		})
+		// Resolve the relation. PostgreSQL accepts any existing relation here;
+		// views simply cannot own serial sequences, so they return NULL.
+		table, resolvedSchemaName, isView, err := resolvePgGetSerialSequenceRelation(ctx, schemaName, tableName)
 		if err != nil {
 			return nil, err
+		}
+		if isView {
+			return nil, nil
 		}
 		if table == nil {
 			return nil, pgerror.Newf(pgcode.UndefinedTable, `relation "%s" does not exist`, tableName)
 		}
+		schemaName = resolvedSchemaName
 		tableSchema := table.Schema(ctx)
 
 		// Find the column in the table's schema
@@ -139,6 +122,42 @@ var pg_get_serial_sequence_text_text = framework.Function2{
 
 		return nil, nil
 	},
+}
+
+func resolvePgGetSerialSequenceRelation(ctx *sql.Context, schemaName string, tableName string) (sql.Table, string, bool, error) {
+	if schemaName != "" {
+		table, err := core.GetSqlTableFromContext(ctx, "", doltdb.TableName{
+			Schema: schemaName,
+			Name:   tableName,
+		})
+		if err != nil || table != nil {
+			return table, schemaName, false, err
+		}
+		viewExists, err := doltgresViewExists(ctx, schemaName, tableName)
+		return nil, schemaName, viewExists, err
+	}
+
+	searchPath, err := core.SearchPath(ctx)
+	if err != nil {
+		return nil, "", false, err
+	}
+	for _, searchSchemaName := range searchPath {
+		table, err := core.GetSqlTableFromContext(ctx, "", doltdb.TableName{
+			Schema: searchSchemaName,
+			Name:   tableName,
+		})
+		if err != nil {
+			return nil, "", false, err
+		}
+		if table != nil {
+			return table, searchSchemaName, false, nil
+		}
+		viewExists, err := doltgresViewExists(ctx, searchSchemaName, tableName)
+		if err != nil || viewExists {
+			return nil, searchSchemaName, viewExists, err
+		}
+	}
+	return nil, "", false, nil
 }
 
 func schemaExists(ctx *sql.Context, schemaName string) (bool, error) {
