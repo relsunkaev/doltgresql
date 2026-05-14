@@ -247,6 +247,8 @@ func Convert(postgresStmt parser.Statement) (vitess.Statement, error) {
 		return nodePrepareTransaction(ctx, stmt)
 	case *tree.RefreshMaterializedView:
 		return nodeRefreshMaterializedView(ctx, stmt)
+	case *tree.ReassignOwned:
+		return nodeReassignOwned(ctx, stmt)
 	case *tree.ReleaseSavepoint:
 		return nodeReleaseSavepoint(ctx, stmt)
 	case *tree.Reindex:

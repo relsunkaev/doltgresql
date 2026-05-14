@@ -481,6 +481,27 @@ func (node *DropRole) Format(ctx *FmtCtx) {
 	ctx.FormatNode(&node.Names)
 }
 
+var _ Statement = &ReassignOwned{}
+
+// ReassignOwned represents a REASSIGN OWNED statement.
+type ReassignOwned struct {
+	OldRoles []string
+	NewRole  string
+}
+
+// Format implements the NodeFormatter interface.
+func (node *ReassignOwned) Format(ctx *FmtCtx) {
+	ctx.WriteString("REASSIGN OWNED BY ")
+	for i, oldRole := range node.OldRoles {
+		if i > 0 {
+			ctx.WriteString(", ")
+		}
+		ctx.WriteString(oldRole)
+	}
+	ctx.WriteString(" TO ")
+	ctx.WriteString(node.NewRole)
+}
+
 // DropType represents a DROP TYPE command.
 type DropType struct {
 	Names        []*UnresolvedObjectName

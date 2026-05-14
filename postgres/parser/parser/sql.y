@@ -951,7 +951,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 
 %token <str> QUERIES QUERY
 
-%token <str> RANGE RANGES READ READ_ONLY READ_WRITE REAL RECEIVE RECURSIVE RECURRING REF REFERENCES REFERENCING REFRESH
+%token <str> RANGE RANGES READ READ_ONLY READ_WRITE REAL RECEIVE REASSIGN RECURSIVE RECURRING REF REFERENCES REFERENCING REFRESH
 %token <str> REGCLASS REGPROC REGPROCEDURE REGNAMESPACE REGTYPE REINDEX REJECT_LIMIT RELEASE REMAINDER
 %token <str> REMOVE_PATH RENAME REPEATABLE REPLACE REPLICA REPLICATION RESET RESTART RESTORE RESTRICT RESTRICTED RESUME
 %token <str> RETRY RETURN RETURNING RETURNS REVISION_HISTORY REVOKE RIGHT
@@ -1177,6 +1177,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %type <tree.Statement> restore_stmt
 %type <tree.StringOrPlaceholderOptList> string_or_placeholder_opt_list
 %type <[]tree.StringOrPlaceholderOptList> list_of_string_or_placeholder_opt_list
+%type <tree.Statement> reassign_owned_stmt
 %type <tree.Statement> revoke_stmt
 %type <tree.Statement> refresh_stmt
 %type <*tree.Select> select_stmt
@@ -1700,6 +1701,7 @@ non_transaction_stmt:
 | listen_stmt
 | notify_stmt
 | prepare_stmt      // EXTEND WITH HELP: PREPARE
+| reassign_owned_stmt // EXTEND WITH HELP: REASSIGN OWNED
 | revoke_stmt       // EXTEND WITH HELP: REVOKE
 | savepoint_stmt    // EXTEND WITH HELP: SAVEPOINT
 | release_stmt      // EXTEND WITH HELP: RELEASE
@@ -6829,6 +6831,19 @@ opt_granted_by:
   {
     $$ = $3
   }
+
+// %Help: REASSIGN OWNED - change ownership of database objects owned by a role
+// %Category: Priv
+// %Text:
+// REASSIGN OWNED BY <old_role> [, ...] TO <new_role>
+//
+// %SeeAlso: DROP OWNED
+reassign_owned_stmt:
+  REASSIGN OWNED BY role_spec_list TO role_spec
+  {
+    $$.val = &tree.ReassignOwned{OldRoles: $4.strs(), NewRole: $6}
+  }
+| REASSIGN OWNED error // SHOW HELP: REASSIGN OWNED
 
 // %Help: REVOKE - remove access privileges and role memberships
 // %Category: Priv
@@ -16875,6 +16890,7 @@ unreserved_keyword:
 | READ_ONLY
 | READ_WRITE
 | RECEIVE
+| REASSIGN
 | RECURRING
 | RECURSIVE
 | REF

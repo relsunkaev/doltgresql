@@ -14,7 +14,11 @@
 
 package parser
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+)
 
 func TestParseRoutineArgNameBeforeOutMode(t *testing.T) {
 	statements, err := Parse(`CREATE FUNCTION pgp_armor_headers(text, key OUT text, value OUT text)
@@ -71,5 +75,25 @@ func TestParsePointTypeCastExpression(t *testing.T) {
 		if len(statements) != 1 {
 			t.Fatalf("%s: expected 1 statement, got %d", query, len(statements))
 		}
+	}
+}
+
+func TestParseReassignOwned(t *testing.T) {
+	statements, err := Parse(`REASSIGN OWNED BY old_role, CURRENT_USER TO new_role;`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(statements) != 1 {
+		t.Fatalf("expected 1 statement, got %d", len(statements))
+	}
+	stmt, ok := statements[0].AST.(*tree.ReassignOwned)
+	if !ok {
+		t.Fatalf("expected *tree.ReassignOwned, got %T", statements[0].AST)
+	}
+	if stmt.NewRole != "new_role" {
+		t.Fatalf("expected new role new_role, got %s", stmt.NewRole)
+	}
+	if got := stmt.OldRoles; len(got) != 2 || got[0] != "old_role" || got[1] != "current_user" {
+		t.Fatalf("unexpected old roles: %#v", got)
 	}
 }
