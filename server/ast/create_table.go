@@ -757,9 +757,6 @@ func nodeTypedTableUniqueConstraint(tableName string, def *tree.UniqueConstraint
 	if err != nil {
 		return pgnodes.TypedTableUniqueConstraint{}, err
 	}
-	if len(includeColumns) > 0 {
-		return pgnodes.TypedTableUniqueConstraint{}, pgerror.Newf(pgcode.DuplicateRelation, "CREATE TABLE OF %s cannot use INCLUDE", constraintKind)
-	}
 	relOptions, err := nodeIndexRelOptions(def.IndexParams.StorageParams)
 	if err != nil {
 		return pgnodes.TypedTableUniqueConstraint{}, err

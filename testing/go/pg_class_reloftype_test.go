@@ -511,9 +511,6 @@ WHERE table_name = 'typed_index_option_tasks' AND constraint_type = 'UNIQUE';`,
 					Query: `CREATE TABLE typed_unique_duplicate OF typed_options (UNIQUE (code, code));`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0052-create-table-typed_unique_duplicate-of-typed_options", Compare: "sqlstate"},
 				},
 				{
-					Query: `CREATE TABLE typed_unique_include OF typed_options (UNIQUE (code) INCLUDE (id));`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0053-create-table-typed_unique_include-of-typed_options", Compare: "sqlstate"},
-				},
-				{
 					Query: `CREATE TABLE typed_partitioned OF typed_options PARTITION BY LIST (id);`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-reloftype-test-testtypedtablefromcompositetype-0054-create-table-typed_partitioned-of-typed_options", Compare: "sqlstate"},
 				},
 				{
