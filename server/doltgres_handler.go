@@ -265,7 +265,8 @@ func castSQLError(err error) error {
 		return pgerror.New(pgcode.GeneratedAlways, pgErr.Error())
 	}
 	switch pgerror.GetPGCode(pgErr) {
-	case pgcode.DeadlockDetected,
+	case pgcode.AmbiguousFunction,
+		pgcode.DeadlockDetected,
 		pgcode.CannotCoerce,
 		pgcode.CheckViolation,
 		pgcode.DatatypeMismatch,

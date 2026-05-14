@@ -29,6 +29,8 @@ import (
 	"github.com/dolthub/doltgresql/core/extensions"
 	"github.com/dolthub/doltgresql/core/extensions/pg_extension"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/functionstats"
 	"github.com/dolthub/doltgresql/server/plpgsql"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -838,7 +840,10 @@ func (c *CompiledFunction) resolveFunction(argTypes []*pgtypes.DoltgresType, ove
 	}
 
 	// More than one candidate survived all resolution steps, so the call is ambiguous.
-	return overloadMatch{}, ErrFunctionNotUnique.New(c.OverloadString(argTypes))
+	return overloadMatch{}, pgerror.WithCandidateCode(
+		ErrFunctionNotUnique.New(c.OverloadString(argTypes)),
+		pgcode.AmbiguousFunction,
+	)
 }
 
 // typeCompatibleOverloads returns all overloads that have a matching number of params whose types can be
