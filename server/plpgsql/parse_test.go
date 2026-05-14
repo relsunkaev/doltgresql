@@ -99,6 +99,34 @@ func TestParseRaiseDuplicateOptionValidation(t *testing.T) {
 	t.Fatalf("expected raise operation; ops: %#v", ops)
 }
 
+func TestParseCaseWithoutElseRaisesCaseNotFound(t *testing.T) {
+	ops, err := Parse(`CREATE FUNCTION plpgsql_case_without_else(v INT)
+		RETURNS void AS $$
+		BEGIN
+			CASE v
+				WHEN 1 THEN
+					RETURN;
+			END CASE;
+		END;
+		$$ LANGUAGE plpgsql;`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, op := range ops {
+		if op.OpCode == OpCode_Raise {
+			if op.Options["0"] != "'case_not_found'" {
+				t.Fatalf("raise errcode = %q, expected case_not_found; op: %#v", op.Options["0"], op)
+			}
+			if op.Options["3"] != "'CASE statement is missing ELSE part.'" {
+				t.Fatalf("raise hint = %q, expected missing ELSE hint; op: %#v", op.Options["3"], op)
+			}
+			return
+		}
+	}
+	t.Fatalf("expected implicit case-not-found raise operation; ops: %#v", ops)
+}
+
 func TestParseReturnQueryOperations(t *testing.T) {
 	ops, err := Parse(`CREATE OR REPLACE FUNCTION func2(n INT) RETURNS TABLE (c_id INT, c_name TEXT, c_total_spent INT)
 		LANGUAGE plpgsql

@@ -469,9 +469,12 @@ func (stmt *plpgSQL_stmt_case) Convert(conv jsonConversionContext) (block Block,
 		block.Body = append(block.Body, convertElseBodyStatements...)
 	} else {
 		block.Body = append(block.Body, Raise{
-			Level:      "EXCEPTION",
-			Message:    "case not found",
-			Options:    map[string]string{strconv.Itoa(int(NoticeOptionTypeHint)): "'CASE statement is missing ELSE part.'"},
+			Level:   "EXCEPTION",
+			Message: "case not found",
+			Options: map[string]string{
+				strconv.Itoa(int(NoticeOptionTypeErrCode)): "'case_not_found'",
+				strconv.Itoa(int(NoticeOptionTypeHint)):    "'CASE statement is missing ELSE part.'",
+			},
 			LineNumber: stmt.LineNumber,
 		})
 	}
