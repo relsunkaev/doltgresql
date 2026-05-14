@@ -35,6 +35,7 @@ import (
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/core/publications"
+	pgnodes "github.com/dolthub/doltgresql/server/node"
 	"github.com/dolthub/doltgresql/server/replicaidentity"
 	"github.com/dolthub/doltgresql/server/replsource"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -70,6 +71,7 @@ type replicationChangeCapture struct {
 	fields            []pgproto3.FieldDescription
 	rows              []Row
 	oldRows           []Row
+	rowActions        []replicationChangeAction
 	rowsAffected      uint64
 }
 
@@ -539,7 +541,7 @@ func (capture *replicationChangeCapture) publicationTargets(ctx *sql.Context, sc
 	var targets []publicationChangeTarget
 	tableID := id.NewTable(schema, capture.table)
 	err = collection.IteratePublications(ctx, func(pub publications.Publication) (stop bool, err error) {
-		if !publicationPublishesCaptureAction(pub, capture.action) {
+		if !capture.publicationMayPublishCapture(pub) {
 			return false, nil
 		}
 		if pub.AllTables {
@@ -561,6 +563,18 @@ func (capture *replicationChangeCapture) publicationTargets(ctx *sql.Context, sc
 		return false, nil
 	})
 	return targets, err
+}
+
+func (capture *replicationChangeCapture) publicationMayPublishCapture(pub publications.Publication) bool {
+	if len(capture.rowActions) == 0 {
+		return publicationPublishesCaptureAction(pub, capture.action)
+	}
+	for _, action := range capture.rowActions {
+		if publicationPublishesCaptureAction(pub, action) {
+			return true
+		}
+	}
+	return false
 }
 
 func (capture *replicationChangeCapture) validateReplicaIdentity(ctx *sql.Context) error {
@@ -667,6 +681,10 @@ func (capture *replicationChangeCapture) projectRowsForPublication(ctx *sql.Cont
 	}
 	rows := make([]replicationProjectedRow, 0, len(capture.rows))
 	for rowIdx, row := range capture.rows {
+		rowAction := capture.action
+		if rowIdx < len(capture.rowActions) && capture.rowActions[rowIdx] != 0 {
+			rowAction = capture.rowActions[rowIdx]
+		}
 		newMatches, err := capture.rowMatchesPublicationFilter(ctx, row, filterExpr)
 		if err != nil {
 			return nil, nil, err
@@ -677,7 +695,7 @@ func (capture *replicationChangeCapture) projectRowsForPublication(ctx *sql.Cont
 		}
 		projectedRow := replicationProjectedRow{
 			newRow: projected,
-			action: capture.action,
+			action: rowAction,
 		}
 		oldMatches := false
 		if rowIdx < len(capture.oldRows) {
@@ -693,7 +711,7 @@ func (capture *replicationChangeCapture) projectRowsForPublication(ctx *sql.Cont
 			}
 			projectedRow.oldRow = projectedOld
 		}
-		if capture.action == replicationChangeUpdate && rowIdx < len(capture.oldRows) {
+		if rowAction == replicationChangeUpdate && rowIdx < len(capture.oldRows) {
 			switch {
 			case oldMatches && newMatches:
 				projectedRow.action = replicationChangeUpdate
@@ -1627,27 +1645,63 @@ func appendCString(data []byte, value string) []byte {
 }
 
 func wrapReplicationCapturePlan(ctx *sql.Context, boundPlan sql.Node, capture *replicationChangeCapture) (sql.Node, error) {
-	if capture == nil || capture.action != replicationChangeUpdate {
+	if capture == nil {
 		return boundPlan, nil
 	}
 	wrappedPlan, _, err := transform.NodeWithOpaque(ctx, boundPlan, func(ctx *sql.Context, node sql.Node) (sql.Node, transform.TreeIdentity, error) {
-		updateNode, ok := node.(*plan.Update)
-		if !ok {
+		switch typed := node.(type) {
+		case *plan.Update:
+			if capture.action != replicationChangeUpdate {
+				return node, transform.SameTree, nil
+			}
+			if _, ok := typed.Child.(*replicationUpdateCaptureNode); ok {
+				return node, transform.SameTree, nil
+			}
+			newNode, err := typed.WithChildren(ctx, &replicationUpdateCaptureNode{
+				Source:  typed.Child,
+				Capture: capture,
+			})
+			if err != nil {
+				return nil, transform.NewTree, err
+			}
+			return newNode, transform.NewTree, nil
+		case *pgnodes.OnConflictReturningInsert:
+			table, _, err := capture.resolveTable(ctx)
+			if err != nil {
+				return nil, transform.SameTree, err
+			}
+			return typed.WithObserver(&replicationOnConflictReturningObserver{
+				capture: capture,
+				schema:  table.Schema(ctx),
+			}), transform.NewTree, nil
+		default:
 			return node, transform.SameTree, nil
 		}
-		if _, ok = updateNode.Child.(*replicationUpdateCaptureNode); ok {
-			return node, transform.SameTree, nil
-		}
-		newNode, err := updateNode.WithChildren(ctx, &replicationUpdateCaptureNode{
-			Source:  updateNode.Child,
-			Capture: capture,
-		})
-		if err != nil {
-			return nil, transform.NewTree, err
-		}
-		return newNode, transform.NewTree, nil
 	})
 	return wrappedPlan, err
+}
+
+type replicationOnConflictReturningObserver struct {
+	capture *replicationChangeCapture
+	schema  sql.Schema
+}
+
+func (r *replicationOnConflictReturningObserver) ObserveOnConflictReturningRow(ctx *sql.Context, oldRow sql.Row, newRow sql.Row) error {
+	if r == nil || r.capture == nil {
+		return nil
+	}
+	if len(oldRow) > 0 {
+		outputRow, err := rowToBytes(ctx, r.schema, oldRow, nil, nil)
+		if err != nil {
+			return err
+		}
+		r.capture.oldRows = append(r.capture.oldRows, Row{val: outputRow})
+		r.capture.rowActions = append(r.capture.rowActions, replicationChangeUpdate)
+		return nil
+	}
+	r.capture.oldRows = append(r.capture.oldRows, Row{})
+	r.capture.rowActions = append(r.capture.rowActions, replicationChangeInsert)
+	return nil
 }
 
 type replicationUpdateCaptureNode struct {

@@ -26,16 +26,29 @@ import (
 // ... ON CONFLICT paths where the GMS executor otherwise treats the statement
 // like MySQL INSERT IGNORE / ON DUPLICATE KEY UPDATE.
 type OnConflictReturningInsert struct {
-	insert *plan.InsertInto
+	insert   *plan.InsertInto
+	observer OnConflictReturningObserver
 }
 
 var _ sql.DebugStringer = (*OnConflictReturningInsert)(nil)
 var _ sql.ExecBuilderNode = (*OnConflictReturningInsert)(nil)
 var _ plan.DisjointedChildrenNode = (*OnConflictReturningInsert)(nil)
 
+// OnConflictReturningObserver observes the executor's pre-RETURNING row shape.
+type OnConflictReturningObserver interface {
+	ObserveOnConflictReturningRow(ctx *sql.Context, oldRow sql.Row, newRow sql.Row) error
+}
+
 // NewOnConflictReturningInsert returns a new *OnConflictReturningInsert.
 func NewOnConflictReturningInsert(insert *plan.InsertInto) *OnConflictReturningInsert {
 	return &OnConflictReturningInsert{insert: insert}
+}
+
+// WithObserver returns a new *OnConflictReturningInsert with the given observer.
+func (i *OnConflictReturningInsert) WithObserver(observer OnConflictReturningObserver) *OnConflictReturningInsert {
+	ret := *i
+	ret.observer = observer
+	return &ret
 }
 
 // Children implements the sql.Node interface.
@@ -84,6 +97,7 @@ func (i *OnConflictReturningInsert) BuildRowIter(ctx *sql.Context, b sql.NodeExe
 		destinationLen: len(i.insert.Destination.Schema(ctx)),
 		onDupUpdates:   i.insert.OnDupExprs != nil && i.insert.OnDupExprs.HasUpdates(),
 		updateWhere:    updateWhereState,
+		observer:       i.observer,
 	}, nil
 }
 
@@ -103,7 +117,9 @@ func (i *OnConflictReturningInsert) WithChildren(ctx *sql.Context, children ...s
 	if err != nil {
 		return nil, err
 	}
-	return NewOnConflictReturningInsert(insert.(*plan.InsertInto)), nil
+	ret := *i
+	ret.insert = insert.(*plan.InsertInto)
+	return &ret, nil
 }
 
 // WithDisjointedChildren implements the plan.DisjointedChildrenNode interface.
@@ -112,7 +128,9 @@ func (i *OnConflictReturningInsert) WithDisjointedChildren(children [][]sql.Node
 	if err != nil {
 		return nil, err
 	}
-	return NewOnConflictReturningInsert(insert.(*plan.InsertInto)), nil
+	ret := *i
+	ret.insert = insert.(*plan.InsertInto)
+	return &ret, nil
 }
 
 type onConflictReturningInsertIter struct {
@@ -122,6 +140,7 @@ type onConflictReturningInsertIter struct {
 	destinationLen int
 	onDupUpdates   bool
 	updateWhere    *pgexprs.OnConflictUpdateWhereState
+	observer       OnConflictReturningObserver
 }
 
 var _ sql.RowIter = (*onConflictReturningInsertIter)(nil)
@@ -144,7 +163,18 @@ func (i *onConflictReturningInsertIter) Next(ctx *sql.Context) (sql.Row, error) 
 			continue
 		}
 		if i.onDupUpdates && len(row) == i.destinationLen*2 {
-			row = row[i.destinationLen:]
+			oldRow := row[:i.destinationLen]
+			newRow := row[i.destinationLen:]
+			if i.observer != nil {
+				if err = i.observer.ObserveOnConflictReturningRow(execCtx, oldRow, newRow); err != nil {
+					return nil, err
+				}
+			}
+			row = newRow
+		} else if i.observer != nil {
+			if err = i.observer.ObserveOnConflictReturningRow(execCtx, nil, row); err != nil {
+				return nil, err
+			}
 		}
 		return evalReturning(execCtx, row, i.returning)
 	}
