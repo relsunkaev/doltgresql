@@ -30,6 +30,8 @@ import (
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/core/sequences"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/auth"
 	pgexprs "github.com/dolthub/doltgresql/server/expression"
 	"github.com/dolthub/doltgresql/server/functions/framework"
@@ -125,6 +127,13 @@ func (c *CreateSequence) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, erro
 			return nil, errors.Errorf(`sequence cannot be owned by relation "%s"`, c.sequence.OwnerTable.TableName())
 		}
 		if !temporaryOwnerExists {
+			owner, err := tableOwner(ctx, doltdb.TableName{Name: c.sequence.OwnerTable.TableName(), Schema: schema})
+			if err != nil {
+				return nil, err
+			}
+			if owner != "" && owner != c.sequence.Owner {
+				return nil, pgerror.New(pgcode.ObjectNotInPrerequisiteState, "sequence must have same owner as table it is linked to")
+			}
 			if err = checkTableOwnership(ctx, doltdb.TableName{Name: c.sequence.OwnerTable.TableName(), Schema: schema}); err != nil {
 				return nil, errors.Wrap(err, "permission denied")
 			}
