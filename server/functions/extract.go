@@ -23,9 +23,10 @@ import (
 	cerrors "github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/shopspring/decimal"
-	"gopkg.in/src-d/go-errors.v1"
 
 	"github.com/dolthub/doltgresql/postgres/parser/duration"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/postgres/parser/timeofday"
 	"github.com/dolthub/doltgresql/postgres/parser/timetz"
 	"github.com/dolthub/doltgresql/server/functions/framework"
@@ -42,7 +43,9 @@ func initExtract() {
 	framework.RegisterFunction(extract_text_interval)
 }
 
-var ErrUnitNotSupported = errors.NewKind("unit \"%s\" not supported for type %s")
+func newUnitNotSupportedError(field string, typ string) error {
+	return pgerror.Newf(pgcode.FeatureNotSupported, `unit "%s" not supported for type %s`, field, typ)
+}
 
 // extract_text_date represents the PostgreSQL date/time function, taking {text, date}
 var extract_text_date = framework.Function2{
@@ -57,7 +60,7 @@ var extract_text_date = framework.Function2{
 		switch strings.ToLower(field) {
 		case "hour", "hours", "microsecond", "microseconds", "millisecond", "milliseconds",
 			"minute", "minutes", "second", "seconds", "timezone", "timezone_hour", "timezone_minute":
-			return nil, ErrUnitNotSupported.New(field, "date")
+			return nil, newUnitNotSupportedError(field, "date")
 		case "epoch":
 			return decimal.NewFromFloat(float64(dateVal.UnixMicro()) / 1000000), nil
 		default:
@@ -80,7 +83,7 @@ var extract_text_time = framework.Function2{
 		case "century", "centuries", "day", "days", "decade", "decades", "dow", "doy",
 			"isodow", "isoyear", "julian", "millennium", "millenniums", "month", "months",
 			"quarter", "timezone", "timezone_hour", "timezone_minute", "week", "year", "years":
-			return nil, ErrUnitNotSupported.New(field, "time without time zone")
+			return nil, newUnitNotSupportedError(field, "time without time zone")
 		default:
 			return getFieldFromTimeVal(field, timeVal)
 		}
@@ -102,7 +105,7 @@ var extract_text_timetz = framework.Function2{
 		case "century", "centuries", "day", "days", "decade", "decades", "dow", "doy",
 			"isodow", "isoyear", "julian", "millennium", "millenniums", "month", "months",
 			"quarter", "week", "year", "years":
-			return nil, ErrUnitNotSupported.New(field, "time with time zone")
+			return nil, newUnitNotSupportedError(field, "time with time zone")
 		case "timezone":
 			return decimal.NewFromInt(-int64(-currentOffset)), nil
 		case "timezone_hour":
@@ -127,7 +130,7 @@ var extract_text_timestamp = framework.Function2{
 		tsVal := val2.(time.Time)
 		switch strings.ToLower(field) {
 		case "timezone", "timezone_hour", "timezone_minute":
-			return nil, ErrUnitNotSupported.New(field, "timestamp without time zone")
+			return nil, newUnitNotSupportedError(field, "timestamp without time zone")
 		default:
 			return getFieldFromTimeVal(field, tsVal)
 		}
@@ -245,7 +248,7 @@ var extract_text_interval = framework.Function2{
 		case "year", "years":
 			return decimal.NewFromInt(intervalFieldFromMonths(dur.Months, duration.MonthsPerYear)), nil
 		case "dow", "doy", "isodow", "isoyear", "julian", "timezone", "timezone_hour", "timezone_minute", "week":
-			return nil, ErrUnitNotSupported.New(field, "interval")
+			return nil, newUnitNotSupportedError(field, "interval")
 		default:
 			return nil, cerrors.Errorf("unknown field given: %s", field)
 		}

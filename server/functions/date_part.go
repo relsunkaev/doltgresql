@@ -49,7 +49,7 @@ var date_part_text_date = framework.Function2{
 		switch strings.ToLower(field) {
 		case "hour", "hours", "microsecond", "microseconds", "millisecond", "milliseconds",
 			"minute", "minutes", "second", "seconds", "timezone", "timezone_hour", "timezone_minute":
-			return nil, ErrUnitNotSupported.New(field, "date")
+			return nil, newUnitNotSupportedError(field, "date")
 		case "epoch":
 			return float64(dateVal.UnixMicro()) / 1000000, nil
 		default:
@@ -76,7 +76,7 @@ var date_part_text_time = framework.Function2{
 		case "century", "centuries", "day", "days", "decade", "decades", "dow", "doy",
 			"isodow", "isoyear", "julian", "millennium", "millenniums", "month", "months",
 			"quarter", "timezone", "timezone_hour", "timezone_minute", "week", "year", "years":
-			return nil, ErrUnitNotSupported.New(field, "time without time zone")
+			return nil, newUnitNotSupportedError(field, "time without time zone")
 		default:
 			result, err := getFieldFromTimeVal(field, timeVal)
 			if err != nil {
@@ -102,7 +102,7 @@ var date_part_text_timetz = framework.Function2{
 		case "century", "centuries", "day", "days", "decade", "decades", "dow", "doy",
 			"isodow", "isoyear", "julian", "millennium", "millenniums", "month", "months",
 			"quarter", "week", "year", "years":
-			return nil, ErrUnitNotSupported.New(field, "time with time zone")
+			return nil, newUnitNotSupportedError(field, "time with time zone")
 		case "timezone":
 			return float64(-currentOffset), nil
 		case "timezone_hour":
@@ -131,7 +131,7 @@ var date_part_text_timestamp = framework.Function2{
 		tsVal := val2.(time.Time)
 		switch strings.ToLower(field) {
 		case "timezone", "timezone_hour", "timezone_minute":
-			return nil, ErrUnitNotSupported.New(field, "timestamp without time zone")
+			return nil, newUnitNotSupportedError(field, "timestamp without time zone")
 		default:
 			result, err := getFieldFromTimeVal(field, tsVal)
 			if err != nil {
@@ -222,9 +222,9 @@ var date_part_text_interval = framework.Function2{
 		case "year", "years":
 			return float64(intervalFieldFromMonths(dur.Months, duration.MonthsPerYear)), nil
 		case "dow", "doy", "isodow", "isoyear", "julian", "timezone", "timezone_hour", "timezone_minute", "week":
-			return nil, ErrUnitNotSupported.New(field, "interval")
+			return nil, newUnitNotSupportedError(field, "interval")
 		default:
-			return nil, ErrUnitNotSupported.New(field, "interval")
+			return nil, newUnitNotSupportedError(field, "interval")
 		}
 	},
 }
