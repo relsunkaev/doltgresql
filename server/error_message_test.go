@@ -180,6 +180,7 @@ func TestErrMessageToSQLStateFormatsCommonRuntimeErrors(t *testing.T) {
 		{msg: `extension "pgcrypto" already exists`, code: pgcode.DuplicateObject},
 		{msg: `extension "plpgsql" must be installed in schema "pg_catalog"`, code: pgcode.DuplicateObject},
 		{msg: `division by zero`, code: pgcode.DivisionByZero},
+		{msg: `zero raised to a negative power is undefined`, code: pgcode.InvalidArgumentForPowerFunction},
 	} {
 		code, ok := errMessageToSQLState(tt.msg)
 		require.True(t, ok)

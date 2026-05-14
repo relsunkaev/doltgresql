@@ -4431,6 +4431,8 @@ func errMessageToSQLState(msg string) (string, bool) {
 		return pgcode.DuplicateObject.String(), true
 	case strings.HasPrefix(msg, "division by zero"):
 		return pgcode.DivisionByZero.String(), true
+	case msg == "zero raised to a negative power is undefined":
+		return pgcode.InvalidArgumentForPowerFunction.String(), true
 	case strings.HasPrefix(msg, "domain ") && strings.HasSuffix(msg, " does not allow null values"):
 		return pgcode.NotNullViolation.String(), true
 	case strings.HasPrefix(msg, "Field '") && strings.Contains(msg, "' doesn't have a default value"):
