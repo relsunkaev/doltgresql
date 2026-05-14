@@ -282,13 +282,77 @@ func (p *PgsqlScope) GetValue(ctx *sql.Context, name string, _ sql.CollationID) 
 		if err != nil {
 			return nil, err
 		}
-		return val, nil
+		return displayPostgresConfigParameter(name, val), nil
 	case PsqlScopeLocal:
 		// TODO: support LOCAL scope
 		return nil, cerrors.Errorf("unsupported scope `%v` on configuration parameter `%s`", p.Type, name)
 	default:
 		return nil, cerrors.Errorf("unknown scope `%v` on configuration parameter `%s`", p.Type, name)
 	}
+}
+
+func displayPostgresConfigParameter(name string, value any) any {
+	stringValue, ok := value.(string)
+	if !ok {
+		return value
+	}
+	switch strings.ToLower(name) {
+	case "local_preload_libraries", "session_preload_libraries":
+		return formatPostgresListQuotedString(stringValue)
+	default:
+		return value
+	}
+}
+
+func formatPostgresListQuotedString(value string) string {
+	if value == "" {
+		return ""
+	}
+	parts := strings.Split(value, ",")
+	for i, part := range parts {
+		parts[i] = formatPostgresListQuotedElement(strings.TrimSpace(part))
+	}
+	return strings.Join(parts, ", ")
+}
+
+func formatPostgresListQuotedElement(value string) string {
+	if value != "" && isPostgresListBareWord(value) {
+		return value
+	}
+	var builder strings.Builder
+	builder.Grow(len(value) + 2)
+	builder.WriteByte('"')
+	for _, r := range value {
+		if r == '"' || r == '\\' {
+			builder.WriteByte('\\')
+		}
+		builder.WriteRune(r)
+	}
+	builder.WriteByte('"')
+	return builder.String()
+}
+
+func isPostgresListBareWord(value string) bool {
+	for i, r := range value {
+		if i == 0 {
+			if !isPostgresIdentStart(r) {
+				return false
+			}
+			continue
+		}
+		if !isPostgresIdentPart(r) {
+			return false
+		}
+	}
+	return true
+}
+
+func isPostgresIdentStart(r rune) bool {
+	return r == '_' || ('A' <= r && r <= 'Z') || ('a' <= r && r <= 'z')
+}
+
+func isPostgresIdentPart(r rune) bool {
+	return isPostgresIdentStart(r) || r == '$' || ('0' <= r && r <= '9')
 }
 
 // IsGlobalOnly implements sql.SystemVariableScope.
