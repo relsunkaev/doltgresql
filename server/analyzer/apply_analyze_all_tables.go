@@ -15,12 +15,15 @@
 package analyzer
 
 import (
-	"github.com/cockroachdb/errors"
+	"strings"
+
 	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
+	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/dsess"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/analyzer"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	"github.com/dolthub/go-mysql-server/sql/transform"
+	"github.com/jackc/pgx/v5/pgproto3"
 
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/tablemetadata"
@@ -37,10 +40,11 @@ func applyTablesForAnalyzeAllTables(ctx *sql.Context, a *analyzer.Analyzer, node
 	// If a set of tables is already populated, we don't need to do anything. We only fill in all tables when
 	// the caller didn't explicitly specify any tables to be analyzed.
 	if len(analyzeTable.Tables) > 0 {
-		if err := checkAnalyzeTablePrivileges(ctx, analyzeTable.Tables); err != nil {
-			return node, transform.SameTree, err
+		filteredTables := filterAnalyzeTablesByPrivilege(ctx, analyzeTable.Tables)
+		if len(filteredTables) == len(analyzeTable.Tables) {
+			return node, transform.SameTree, nil
 		}
-		return node, transform.SameTree, nil
+		return analyzeTable.WithTables(filteredTables), transform.NewTree, nil
 	}
 
 	db, err := a.Catalog.Database(ctx, ctx.GetCurrentDatabase())
@@ -64,22 +68,27 @@ func applyTablesForAnalyzeAllTables(ctx *sql.Context, a *analyzer.Analyzer, node
 	}
 
 	analyzeTable = analyzeTable.WithTables(tables)
-	if err = checkAnalyzeTablePrivileges(ctx, analyzeTable.Tables); err != nil {
-		return node, transform.SameTree, err
-	}
+	analyzeTable = analyzeTable.WithTables(filterAnalyzeTablesByPrivilege(ctx, analyzeTable.Tables))
 	return analyzeTable, transform.NewTree, nil
 }
 
-func checkAnalyzeTablePrivileges(ctx *sql.Context, tables []sql.Table) error {
+func filterAnalyzeTablesByPrivilege(ctx *sql.Context, tables []sql.Table) []sql.Table {
+	filteredTables := make([]sql.Table, 0, len(tables))
 	for _, table := range tables {
-		if err := checkAnalyzeTablePrivilege(ctx, table); err != nil {
-			return err
+		if hasAnalyzeTablePrivilege(ctx, table) {
+			filteredTables = append(filteredTables, table)
+			continue
 		}
+		sess := dsess.DSessFromSess(ctx.Session)
+		sess.Notice(&pgproto3.NoticeResponse{
+			Severity: "WARNING",
+			Message:  "permission denied to analyze " + quoteAnalyzeTableIdentifier(table.Name()) + ", skipping it",
+		})
 	}
-	return nil
+	return filteredTables
 }
 
-func checkAnalyzeTablePrivilege(ctx *sql.Context, table sql.Table) error {
+func hasAnalyzeTablePrivilege(ctx *sql.Context, table sql.Table) bool {
 	owner := ""
 	if commented, ok := table.(sql.CommentedTable); ok {
 		owner = tablemetadata.Owner(commented.Comment())
@@ -88,7 +97,7 @@ func checkAnalyzeTablePrivilege(ctx *sql.Context, table sql.Table) error {
 		owner = "postgres"
 	}
 	if owner == ctx.Client().User {
-		return nil
+		return true
 	}
 
 	tableName := doltdb.TableName{Name: table.Name(), Schema: tableSchemaName(table)}
@@ -101,10 +110,7 @@ func checkAnalyzeTablePrivilege(ctx *sql.Context, table sql.Table) error {
 			roleHasAnalyzePrivilege(publicRole.ID(), tableName) ||
 			auth.HasInheritedRole(role.ID(), "pg_maintain")
 	})
-	if !allowed {
-		return errors.Errorf("permission denied for table %s", table.Name())
-	}
-	return nil
+	return allowed
 }
 
 func roleHasAnalyzePrivilege(role auth.RoleID, tableName doltdb.TableName) bool {
@@ -115,4 +121,8 @@ func roleHasAnalyzePrivilege(role auth.RoleID, tableName doltdb.TableName) bool 
 		Role:  role,
 		Table: tableName,
 	}, auth.Privilege_MAINTAIN)
+}
+
+func quoteAnalyzeTableIdentifier(identifier string) string {
+	return `"` + strings.ReplaceAll(identifier, `"`, `""`) + `"`
 }
