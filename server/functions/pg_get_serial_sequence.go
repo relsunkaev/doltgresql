@@ -24,6 +24,8 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -48,15 +50,25 @@ var pg_get_serial_sequence_text_text = framework.Function2{
 		// Parse out the schema if one was supplied
 		var err error
 		schemaName := ""
-		if strings.Contains(tableName, ".") {
-			// TODO: ParseRelationName() will return the first schema from the search_path if one is not included
-			//       in the relation name, but that doesn't mean it's the correct schema. It should be updated to
-			//       not return any schema name if one wasn't explicitly specified, then we should search for the
-			//       table on the search_path and find the first schema that contains a table with that name.
+		pathElems, err := splitQualifiedIdentifier(tableName)
+		if err != nil {
+			return nil, err
+		}
+		hasExplicitSchema := len(pathElems) > 1
+		if hasExplicitSchema {
 			schemaName, tableName, err = ParseRelationName(ctx, tableName)
 			if err != nil {
 				return nil, err
 			}
+			schemaExists, err := schemaExists(ctx, schemaName)
+			if err != nil {
+				return nil, err
+			}
+			if !schemaExists {
+				return nil, pgerror.Newf(pgcode.InvalidSchemaName, `schema "%s" does not exist`, schemaName)
+			}
+		} else {
+			tableName = pathElems[0]
 		}
 
 		// Resolve the table's schema if it wasn't specified
@@ -71,7 +83,7 @@ var pg_get_serial_sequence_text_text = framework.Function2{
 				return nil, err
 			}
 			if !ok {
-				return nil, errors.Errorf(`relation "%s" does not exist`, tableName)
+				return nil, pgerror.Newf(pgcode.UndefinedTable, `relation "%s" does not exist`, tableName)
 			}
 			schemaName = foundTableName.Schema
 		}
@@ -85,14 +97,14 @@ var pg_get_serial_sequence_text_text = framework.Function2{
 			return nil, err
 		}
 		if table == nil {
-			return nil, errors.Errorf(`relation "%s" does not exist`, tableName)
+			return nil, pgerror.Newf(pgcode.UndefinedTable, `relation "%s" does not exist`, tableName)
 		}
 		tableSchema := table.Schema(ctx)
 
 		// Find the column in the table's schema
 		columnIndex := tableSchema.IndexOfColName(columnName)
 		if columnIndex < 0 {
-			return nil, errors.Errorf(`column "%s" of relation "%s" does not exist`, columnName, tableName)
+			return nil, pgerror.Newf(pgcode.UndefinedColumn, `column "%s" of relation "%s" does not exist`, columnName, tableName)
 		}
 		column := tableSchema[columnIndex]
 
@@ -127,6 +139,19 @@ var pg_get_serial_sequence_text_text = framework.Function2{
 
 		return nil, nil
 	},
+}
+
+func schemaExists(ctx *sql.Context, schemaName string) (bool, error) {
+	db, err := core.GetSqlDatabaseFromContext(ctx, "")
+	if err != nil || db == nil {
+		return false, err
+	}
+	schemaDb, ok := db.(sql.SchemaDatabase)
+	if !ok || !schemaDb.SupportsDatabaseSchemas() {
+		return true, nil
+	}
+	_, ok, err = schemaDb.GetSchema(ctx, schemaName)
+	return ok, err
 }
 
 // quoteIdentifierIfNeeded returns the SQL representation of an identifier,
