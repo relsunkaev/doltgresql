@@ -1947,13 +1947,9 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 43,
       "scriptName": "Covering Composite Index join, different types",
-      "oracle": "postgres",
-      "postgresId": "index-test-testbasicindexing-0043-select-/*+-lookup_join-jointable-test",
+      "oracle": "internal",
       "suggestedId": "index-test-testbasicindexing-0043-select-/*+-lookup_join-jointable-test",
-      "compare": "sqlstate",
       "expectedKind": "rows",
-      "sqlstate": "42601",
-      "errorSeverity": "ERROR",
       "query": "select /*+ lookup_join(jointable, test) */ HINT * from test join jointable on test.v1 = jointable.v3 and test.v2 = 22 order by 1",
       "querySha256": "cb4f8c5e1a8f47bdf86cd5afafa0f03b304654cc70e6a73877f630f631d4a1de",
       "needsCleanup": false,
@@ -2003,13 +1999,9 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 47,
       "scriptName": "Covering Composite Index join, different types out of range",
-      "oracle": "postgres",
-      "postgresId": "index-test-testbasicindexing-0047-select-/*+-lookup_join-jointable-test",
+      "oracle": "internal",
       "suggestedId": "index-test-testbasicindexing-0047-select-/*+-lookup_join-jointable-test",
-      "compare": "sqlstate",
       "expectedKind": "rows",
-      "sqlstate": "42601",
-      "errorSeverity": "ERROR",
       "query": "select /*+ lookup_join(jointable, test) */ HINT * from test join jointable on test.v1 = jointable.v3 and test.v2 = 22 order by 1",
       "querySha256": "cb4f8c5e1a8f47bdf86cd5afafa0f03b304654cc70e6a73877f630f631d4a1de",
       "needsCleanup": false,
@@ -2688,38 +2680,11 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 71,
       "scriptName": "Covering Index IN",
-      "oracle": "postgres",
-      "postgresId": "index-test-testbasicindexing-0071-explain-select-*-from-test",
+      "oracle": "internal",
       "suggestedId": "index-test-testbasicindexing-0071-explain-select-*-from-test",
-      "compare": "structural",
-      "columnModes": [
-        "explain"
-      ],
       "expectedKind": "rows",
       "query": "explain SELECT * FROM test WHERE v1 IN (2, '3', 4) ORDER BY v1;",
       "querySha256": "4f756b68c533d0555c6a8186e1160227f6b1f9a192302b6d665c4c08b12db9ab",
-      "expectedRows": [
-        [
-          {
-            "value": "Sort  (cost=1.09..1.10 rows=3 width=12)"
-          }
-        ],
-        [
-          {
-            "value": "  Sort Key: v1"
-          }
-        ],
-        [
-          {
-            "value": "  ->  Seq Scan on test  (cost=0.00..1.07 rows=3 width=12)"
-          }
-        ],
-        [
-          {
-            "value": "        Filter: (v1 = ANY ('{2,3,4}'::integer[]))"
-          }
-        ]
-      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },

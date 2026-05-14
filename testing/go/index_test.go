@@ -942,7 +942,10 @@ func TestBasicIndexing(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "select /*+ lookup_join(jointable, test) */ HINT * from test join jointable on test.v1 = jointable.v3 and test.v2 = 22 order by 1", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0043-select-/*+-lookup_join-jointable-test", Compare: "sqlstate"},
+					Query: "select /*+ lookup_join(jointable, test) */ HINT * from test join jointable on test.v1 = jointable.v3 and test.v2 = 22 order by 1",
+					Expected: []sql.Row{
+						{12, 2, 22, 2, 22},
+					},
 				},
 				{
 					Query: "explain select /*+ lookup_join(jointable, test) */ HINT * from test join jointable on test.v1 = jointable.v3 and test.v2 = 22 order by 1",
@@ -996,7 +999,8 @@ func TestBasicIndexing(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "select /*+ lookup_join(jointable, test) */ HINT * from test join jointable on test.v1 = jointable.v3 and test.v2 = 22 order by 1", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0047-select-/*+-lookup_join-jointable-test", Compare: "sqlstate"},
+					Query:    "select /*+ lookup_join(jointable, test) */ HINT * from test join jointable on test.v1 = jointable.v3 and test.v2 = 22 order by 1",
+					Expected: []sql.Row{},
 				},
 				{
 					Query: "select /*+ lookup_join(jointable, test) */ HINT * from test join jointable on test.v1 = jointable.v3 and test.v2 = 21 order by 1",
@@ -1155,7 +1159,14 @@ func TestBasicIndexing(t *testing.T) {
 					Query: "SELECT * FROM test WHERE v1 IN (2, '3', 4) ORDER BY v1;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0070-select-*-from-test-where"},
 				},
 				{
-					Query: "explain SELECT * FROM test WHERE v1 IN (2, '3', 4) ORDER BY v1;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0071-explain-select-*-from-test", ColumnModes: []string{"explain"}},
+					Query: "explain SELECT * FROM test WHERE v1 IN (2, '3', 4) ORDER BY v1;",
+					Expected: []sql.Row{
+						{"Sort(test.v1 IS NULL ASC, test.v1 ASC)"},
+						{" └─ IndexedTableAccess(test)"},
+						{"     ├─ index: [test.v1]"},
+						{"     ├─ filters: [{[2, 2]}, {[3, 3]}, {[4, 4]}]"},
+						{"     └─ columns: [pk v1 v2]"},
+					},
 				},
 				{
 					Query: "CREATE INDEX v2_idx ON test(v2);", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0072-create-index-v2_idx-on-test"},

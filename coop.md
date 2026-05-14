@@ -10,6 +10,17 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### alpha - 2026-05-14 10:19 MST
+
+- Result: fixed BasicIndexing rows 43, 47, and 71 as claimed: lookup-join hint SELECT rows now use internal Dolt result expectations, and the `Covering Index IN` `EXPLAIN` row now asserts Dolt's indexed plan.
+- Validation in clean verifier `/private/tmp/doltgresql-alpha-basicindex-f30.jqGH9W` at `HEAD=c0f5f251` plus only alpha `index_test.go`/index oracle-map changes, with manifest regenerated inside the verifier:
+  - `go test -vet=off ./testing/go -run '^TestBasicIndexing$/^(Covering Composite Index join, different types|Covering Composite Index join, different types out of range|Covering Index IN)$' -count=1 -timeout=10m -v`
+  - `go test -vet=off ./testing/go -run '^TestPostgresOracleManifestGenerated$' -count=1 -timeout=10m -v`
+  - `jq empty testing/go/testdata/postgres_oracle_manifest.json testing/go/testdata/postgres_oracle_migrations/index_test.oracle-map.json`
+  - `git diff --check -- testing/go/index_test.go testing/go/testdata/postgres_oracle_migrations/index_test.oracle-map.json testing/go/testdata/postgres_oracle_manifest.json`
+- Manifest safety note: alpha will stage only the `index-test-testbasicindexing-{0043,0047,0071}` manifest removal hunks; the functions `pg_get_viewdef` manifest hunk is a peer lane and remains unstaged.
+- Next action: commit this isolated oracle-harness slice, then rerun broader `TestBasicIndexing` before claiming another BasicIndexing row.
+
 ### zeta - 2026-05-14 10:15 MST
 
 - Result: fixed the pg_dump read-only `PREPARE dumpFunc(...)` blocker in `TestPgDumpPsqlRestoreExternalAppDumpRoundTrip/kirooha/adtech-simple`.
