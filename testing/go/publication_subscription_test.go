@@ -61,20 +61,21 @@ func TestPublicationDDLAndCatalogs(t *testing.T) {
 					Query: "ALTER PUBLICATION dg_pub ADD TABLE pub_more;",
 				},
 				{
-					Query: "ALTER PUBLICATION dg_pub ADD TABLES IN SCHEMA aux;",
+					Query: "CREATE PUBLICATION dg_schema_pub;",
 				},
 				{
-					Query: "SELECT schemaname, tablename FROM pg_catalog.pg_publication_tables WHERE pubname = 'dg_pub' ORDER BY schemaname, tablename;",
+					Query: "ALTER PUBLICATION dg_schema_pub ADD TABLES IN SCHEMA aux;",
+				},
+				{
+					Query: "SELECT schemaname, tablename FROM pg_catalog.pg_publication_tables WHERE pubname = 'dg_schema_pub' ORDER BY schemaname, tablename;",
 					Expected: []sql.Row{
 						{"aux", "schema_items"},
-						{"public", "pub_items"},
-						{"public", "pub_more"},
 					},
 				},
 				{
-					Query: "SELECT p.pubname, n.nspname FROM pg_catalog.pg_publication_namespace pn JOIN pg_catalog.pg_publication p ON p.oid = pn.pnpubid JOIN pg_catalog.pg_namespace n ON n.oid = pn.pnnspid WHERE p.pubname = 'dg_pub';",
+					Query: "SELECT p.pubname, n.nspname FROM pg_catalog.pg_publication_namespace pn JOIN pg_catalog.pg_publication p ON p.oid = pn.pnpubid JOIN pg_catalog.pg_namespace n ON n.oid = pn.pnnspid WHERE p.pubname = 'dg_schema_pub';",
 					Expected: []sql.Row{
-						{"dg_pub", "aux"},
+						{"dg_schema_pub", "aux"},
 					},
 				},
 				{
@@ -90,13 +91,16 @@ func TestPublicationDDLAndCatalogs(t *testing.T) {
 					Query: "ALTER PUBLICATION dg_pub DROP TABLE pub_more;",
 				},
 				{
-					Query: "ALTER PUBLICATION dg_pub DROP TABLES IN SCHEMA aux;",
+					Query: "ALTER PUBLICATION dg_schema_pub DROP TABLES IN SCHEMA aux;",
 				},
 				{
 					Query: "SELECT schemaname, tablename FROM pg_catalog.pg_publication_tables WHERE pubname = 'dg_pub';",
 					Expected: []sql.Row{
 						{"public", "pub_items"},
 					},
+				},
+				{
+					Query: "DROP PUBLICATION dg_schema_pub;",
 				},
 				{
 					Query: "ALTER PUBLICATION dg_pub RENAME TO dg_pub_renamed;",
