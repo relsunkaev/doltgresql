@@ -10,6 +10,17 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### omega - 2026-05-13 21:25 MST
+
+- Lane complete locally: generated trigger oracle migration batch for `testing/go/trigger_correctness_repro_test.go`.
+- Files expected: `testing/go/trigger_correctness_repro_test.go`, `testing/go/testdata/postgres_oracle_migrations/trigger_correctness_repro_test.oracle-map.json`, `testing/go/testdata/postgres_oracle_manifest.json`, and this `coop.md` entry only.
+- Automation: refreshed 35 residual IDs through `gen_postgres_oracle_manifest.go --refresh-oracle-map`, rewrote source markers with `--rewrite-oracle-sources --rewrite-oracle-source-file trigger_correctness_repro_test.go`, and regenerated the manifest. Cache moved to `93 postgres / 0 internal`; overall local maps are `9,937 / 12,799` postgres-backed (`77.64%`).
+- Validation: manifest/cache gates passed. Focused new-promotion run covered 23 top-level tests: 20 passed; 3 are red on adjacent pre-existing oracle/source mismatches while the newly promoted `SELECT count(*)` rows in those tests passed.
+- Confirmed mismatches: `TestUpdateTriggerWhenWholeRowDistinctRepro` returns `variable OLD.* could not be found` (`HY000`/wire `XX000`) for whole-row trigger `WHEN (OLD.* IS DISTINCT FROM NEW.*)` updates that PostgreSQL accepts; `TestBeforeInsertTriggerErrorRollsBackSideEffectsRepro` and `TestStatementInsertTriggerErrorRollsBackSideEffectsRepro` cache PostgreSQL SQLSTATE `P0001` for trigger `RAISE EXCEPTION`, but Doltgres returns `HY000`.
+- Repro command shape: with ICU flags and `GOFLAGS=-p=1`, run `go test -vet=off ./testing/go -run '^(TestAfterDeleteTriggerErrorRollsBackStatementRepro|TestAfterInsertTriggerErrorRollsBackStatementRepro|TestAfterStatementDeleteTriggerErrorRollsBackStatementRepro|TestAfterStatementInsertTriggerErrorRollsBackStatementRepro|TestAfterStatementUpdateTriggerErrorRollsBackStatementRepro|TestAfterTruncateTriggerErrorRollsBackStatementRepro|TestAfterUpdateTriggerErrorRollsBackStatementRepro|TestBeforeDeleteRowTriggerSideEffectsRollBackOnForeignKeyErrorRepro|TestBeforeDeleteTriggerErrorRollsBackSideEffectsRepro|TestBeforeInsertTriggerErrorRollsBackSideEffectsRepro|TestBeforeInsertTriggerSideEffectsRollBackOnConstraintErrorRepro|TestBeforeTruncateTriggerErrorRollsBackSideEffectsRepro|TestBeforeUpdateRowTriggerSideEffectsRollBackOnForeignKeyErrorRepro|TestBeforeUpdateTriggerErrorRollsBackSideEffectsRepro|TestBeforeUpdateTriggerSideEffectsRollBackOnConstraintErrorRepro|TestStatementDeleteTriggerErrorRollsBackSideEffectsRepro|TestStatementDeleteTriggerSideEffectsRollBackOnForeignKeyErrorRepro|TestStatementInsertTriggerErrorRollsBackSideEffectsRepro|TestStatementTriggerSideEffectsRollBackOnConstraintErrorRepro|TestStatementUpdateTriggerErrorRollsBackSideEffectsRepro|TestStatementUpdateTriggerSideEffectsRollBackOnConstraintErrorRepro|TestUpdateTriggerWhenOldNewDistinctRepro|TestUpdateTriggerWhenWholeRowDistinctRepro)$' -count=1 -json`.
+- Boundary: avoided delta UUID oracle-data files, active read-only classifications, zeta/alpha clean failfast lanes, dirty peer source files, and `third_party/dolt`.
+- Next action: pick the next largest non-overlapping automatable residual bucket after committing this trigger migration.
+
 ### omega - 2026-05-13 21:19 MST
 
 - Lane complete locally: finish/validate generated command-tag oracle migration follow-up for `testing/go/smoke_test.go:TestEmptyQuery`.

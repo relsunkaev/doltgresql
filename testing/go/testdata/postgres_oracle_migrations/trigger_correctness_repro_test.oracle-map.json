@@ -614,15 +614,24 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestUpdateTriggerWhenOldNewDistinctRepro",
       "ordinal": 1,
       "scriptName": "UPDATE trigger WHEN compares OLD and NEW",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testupdatetriggerwhenoldnewdistinctrepro-0001-select-count-*-from-trigger_when_update_audit",
       "suggestedId": "trigger-correctness-repro-test-testupdatetriggerwhenoldnewdistinctrepro-0001-select-count-*-from-trigger_when_update_audit",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM trigger_when_update_audit;",
       "querySha256": "58b40b47eb8d09702d4b874323a9899acfc65f64bc67ec0a17462e52c29b2137",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -658,15 +667,24 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestUpdateTriggerWhenWholeRowDistinctRepro",
       "ordinal": 1,
       "scriptName": "UPDATE trigger WHEN compares whole OLD and NEW rows",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testupdatetriggerwhenwholerowdistinctrepro-0001-select-count-*-from-trigger_when_whole_row_audit",
       "suggestedId": "trigger-correctness-repro-test-testupdatetriggerwhenwholerowdistinctrepro-0001-select-count-*-from-trigger_when_whole_row_audit",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM trigger_when_whole_row_audit;",
       "querySha256": "734bbd9b60921b42b86c05ba4d64cbd96336e905729c417fc2152382e67217f0",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -719,15 +737,24 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestAfterInsertTriggerErrorRollsBackStatementRepro",
       "ordinal": 2,
       "scriptName": "AFTER INSERT trigger error rolls back statement",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testafterinserttriggererrorrollsbackstatementrepro-0002-select-count-*-from-trigger_error_target",
       "suggestedId": "trigger-correctness-repro-test-testafterinserttriggererrorrollsbackstatementrepro-0002-select-count-*-from-trigger_error_target",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM trigger_error_target;",
       "querySha256": "9f8effd381fa01970b5cbacef7af62d36fffb56534f23a73b05d7ba77602f3a4",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -735,15 +762,24 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestAfterInsertTriggerErrorRollsBackStatementRepro",
       "ordinal": 3,
       "scriptName": "AFTER INSERT trigger error rolls back statement",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testafterinserttriggererrorrollsbackstatementrepro-0003-select-count-*-from-trigger_error_audit",
       "suggestedId": "trigger-correctness-repro-test-testafterinserttriggererrorrollsbackstatementrepro-0003-select-count-*-from-trigger_error_audit",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM trigger_error_audit;",
       "querySha256": "c10c22dbfd09713a1fa0aa3ce32c831c483f702cf33639500ad0cda993234a20",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -790,15 +826,24 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestAfterUpdateTriggerErrorRollsBackStatementRepro",
       "ordinal": 3,
       "scriptName": "AFTER UPDATE trigger error rolls back statement",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testafterupdatetriggererrorrollsbackstatementrepro-0003-select-count-*-from-after_update_trigger_error_audit",
       "suggestedId": "trigger-correctness-repro-test-testafterupdatetriggererrorrollsbackstatementrepro-0003-select-count-*-from-after_update_trigger_error_audit",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM after_update_trigger_error_audit;",
       "querySha256": "1f623cb30a2f61287791750bd5c93fc3f3567ae5210199dda836113acb12059a",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -848,15 +893,24 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestAfterDeleteTriggerErrorRollsBackStatementRepro",
       "ordinal": 3,
       "scriptName": "AFTER DELETE trigger error rolls back statement",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testafterdeletetriggererrorrollsbackstatementrepro-0003-select-count-*-from-after_delete_trigger_error_audit",
       "suggestedId": "trigger-correctness-repro-test-testafterdeletetriggererrorrollsbackstatementrepro-0003-select-count-*-from-after_delete_trigger_error_audit",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM after_delete_trigger_error_audit;",
       "querySha256": "835b17584bf5f4f884f8db395c4631359c5df74c6fb8f09058c2a14a5bab89f0",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -881,15 +935,24 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestBeforeInsertTriggerErrorRollsBackSideEffectsRepro",
       "ordinal": 2,
       "scriptName": "BEFORE INSERT trigger error rolls back side effects",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testbeforeinserttriggererrorrollsbacksideeffectsrepro-0002-select-count-*-from-before_trigger_error_target",
       "suggestedId": "trigger-correctness-repro-test-testbeforeinserttriggererrorrollsbacksideeffectsrepro-0002-select-count-*-from-before_trigger_error_target",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM before_trigger_error_target;",
       "querySha256": "50a4cd7496723dc21b49cc83877f635a7bb276c013c7f2a1bc6b1f20ff79c6cb",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -897,15 +960,24 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestBeforeInsertTriggerErrorRollsBackSideEffectsRepro",
       "ordinal": 3,
       "scriptName": "BEFORE INSERT trigger error rolls back side effects",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testbeforeinserttriggererrorrollsbacksideeffectsrepro-0003-select-count-*-from-before_trigger_error_audit",
       "suggestedId": "trigger-correctness-repro-test-testbeforeinserttriggererrorrollsbacksideeffectsrepro-0003-select-count-*-from-before_trigger_error_audit",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM before_trigger_error_audit;",
       "querySha256": "dbcdfd9c31b733244a07dc56af227782a0f930f4764eb8d705a2a403f4649ab8",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -952,15 +1024,24 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestBeforeUpdateTriggerErrorRollsBackSideEffectsRepro",
       "ordinal": 3,
       "scriptName": "BEFORE UPDATE trigger error rolls back side effects",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testbeforeupdatetriggererrorrollsbacksideeffectsrepro-0003-select-count-*-from-before_update_trigger_error_audit",
       "suggestedId": "trigger-correctness-repro-test-testbeforeupdatetriggererrorrollsbacksideeffectsrepro-0003-select-count-*-from-before_update_trigger_error_audit",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM before_update_trigger_error_audit;",
       "querySha256": "39c443904b49cfa53078a645eff3cf9528a2322172dc6d8322e3b3b364cd7832",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1010,15 +1091,24 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestBeforeDeleteTriggerErrorRollsBackSideEffectsRepro",
       "ordinal": 3,
       "scriptName": "BEFORE DELETE trigger error rolls back side effects",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testbeforedeletetriggererrorrollsbacksideeffectsrepro-0003-select-count-*-from-before_delete_trigger_error_audit",
       "suggestedId": "trigger-correctness-repro-test-testbeforedeletetriggererrorrollsbacksideeffectsrepro-0003-select-count-*-from-before_delete_trigger_error_audit",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM before_delete_trigger_error_audit;",
       "querySha256": "c91a2dbb3ee827fc1209174a8b6651427729336e79177628508f5375ebba48d4",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1043,15 +1133,24 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestBeforeInsertTriggerSideEffectsRollBackOnConstraintErrorRepro",
       "ordinal": 2,
       "scriptName": "BEFORE INSERT trigger side effects roll back on constraint error",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testbeforeinserttriggersideeffectsrollbackonconstrainterrorrepro-0002-select-count-*-from-before_trigger_check_target",
       "suggestedId": "trigger-correctness-repro-test-testbeforeinserttriggersideeffectsrollbackonconstrainterrorrepro-0002-select-count-*-from-before_trigger_check_target",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM before_trigger_check_target;",
       "querySha256": "faa74973bda8ff3b5a75e7989979b493b0bc54b107e69fd378bfa817f47703c0",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1059,15 +1158,24 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestBeforeInsertTriggerSideEffectsRollBackOnConstraintErrorRepro",
       "ordinal": 3,
       "scriptName": "BEFORE INSERT trigger side effects roll back on constraint error",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testbeforeinserttriggersideeffectsrollbackonconstrainterrorrepro-0003-select-count-*-from-before_trigger_check_audit",
       "suggestedId": "trigger-correctness-repro-test-testbeforeinserttriggersideeffectsrollbackonconstrainterrorrepro-0003-select-count-*-from-before_trigger_check_audit",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM before_trigger_check_audit;",
       "querySha256": "6eaa4c9e0b93692b57551ccd3861fe0e623124000a38da9a7b5011e01722c231",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1114,15 +1222,24 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestBeforeUpdateTriggerSideEffectsRollBackOnConstraintErrorRepro",
       "ordinal": 3,
       "scriptName": "BEFORE UPDATE trigger side effects roll back on constraint error",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testbeforeupdatetriggersideeffectsrollbackonconstrainterrorrepro-0003-select-count-*-from-before_update_trigger_check_audit",
       "suggestedId": "trigger-correctness-repro-test-testbeforeupdatetriggersideeffectsrollbackonconstrainterrorrepro-0003-select-count-*-from-before_update_trigger_check_audit",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM before_update_trigger_check_audit;",
       "querySha256": "ceb0396cc68396773daa23ea8535e58b066a1fea6769e0d2228e529ef50bef2e",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1147,15 +1264,24 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestStatementTriggerSideEffectsRollBackOnConstraintErrorRepro",
       "ordinal": 2,
       "scriptName": "statement trigger side effects roll back on constraint error",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-teststatementtriggersideeffectsrollbackonconstrainterrorrepro-0002-select-count-*-from-statement_trigger_check_target",
       "suggestedId": "trigger-correctness-repro-test-teststatementtriggersideeffectsrollbackonconstrainterrorrepro-0002-select-count-*-from-statement_trigger_check_target",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM statement_trigger_check_target;",
       "querySha256": "b2e236396d91dd550c9c83d5f23c79525a842c475e45b8c400c62c552966c0fb",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1163,15 +1289,24 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestStatementTriggerSideEffectsRollBackOnConstraintErrorRepro",
       "ordinal": 3,
       "scriptName": "statement trigger side effects roll back on constraint error",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-teststatementtriggersideeffectsrollbackonconstrainterrorrepro-0003-select-count-*-from-statement_trigger_check_audit",
       "suggestedId": "trigger-correctness-repro-test-teststatementtriggersideeffectsrollbackonconstrainterrorrepro-0003-select-count-*-from-statement_trigger_check_audit",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM statement_trigger_check_audit;",
       "querySha256": "f4b1779ba64740e9d2441a13ebcd1c1a6093bba639b205bb3a75c9dc5784206f",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1218,15 +1353,24 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestStatementUpdateTriggerSideEffectsRollBackOnConstraintErrorRepro",
       "ordinal": 3,
       "scriptName": "statement UPDATE trigger side effects roll back on constraint error",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-teststatementupdatetriggersideeffectsrollbackonconstrainterrorrepro-0003-select-count-*-from-statement_update_trigger_check_audit",
       "suggestedId": "trigger-correctness-repro-test-teststatementupdatetriggersideeffectsrollbackonconstrainterrorrepro-0003-select-count-*-from-statement_update_trigger_check_audit",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM statement_update_trigger_check_audit;",
       "querySha256": "6a6564e748566fcce02405d736428218127da0e61e15f926e555a5cd9217cd41",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1251,15 +1395,24 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestStatementDeleteTriggerSideEffectsRollBackOnForeignKeyErrorRepro",
       "ordinal": 2,
       "scriptName": "statement DELETE trigger side effects roll back on foreign-key error",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-teststatementdeletetriggersideeffectsrollbackonforeignkeyerrorrepro-0002-select-count-*-from-statement_delete_trigger_parent",
       "suggestedId": "trigger-correctness-repro-test-teststatementdeletetriggersideeffectsrollbackonforeignkeyerrorrepro-0002-select-count-*-from-statement_delete_trigger_parent",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM statement_delete_trigger_parent;",
       "querySha256": "df8c1f8c2e75f6de67177564b27900c93cb81fa41812947d8814f0c99f800f82",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1267,15 +1420,24 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestStatementDeleteTriggerSideEffectsRollBackOnForeignKeyErrorRepro",
       "ordinal": 3,
       "scriptName": "statement DELETE trigger side effects roll back on foreign-key error",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-teststatementdeletetriggersideeffectsrollbackonforeignkeyerrorrepro-0003-select-count-*-from-statement_delete_trigger_audit",
       "suggestedId": "trigger-correctness-repro-test-teststatementdeletetriggersideeffectsrollbackonforeignkeyerrorrepro-0003-select-count-*-from-statement_delete_trigger_audit",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM statement_delete_trigger_audit;",
       "querySha256": "f8d0c3a35f07e31d0d1bc88b600601e9aa964b5e58e751e4d3b15a63c63e5ed7",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1300,15 +1462,24 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestStatementInsertTriggerErrorRollsBackSideEffectsRepro",
       "ordinal": 2,
       "scriptName": "statement INSERT trigger exception rolls back trigger side effects",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-teststatementinserttriggererrorrollsbacksideeffectsrepro-0002-select-count-*-from-stmt_insert_exception_target",
       "suggestedId": "trigger-correctness-repro-test-teststatementinserttriggererrorrollsbacksideeffectsrepro-0002-select-count-*-from-stmt_insert_exception_target",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM stmt_insert_exception_target;",
       "querySha256": "4a62654cb1f428cbb7007b6f94d55072930b2b28cb8d146592495344f565248f",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1316,15 +1487,24 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestStatementInsertTriggerErrorRollsBackSideEffectsRepro",
       "ordinal": 3,
       "scriptName": "statement INSERT trigger exception rolls back trigger side effects",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-teststatementinserttriggererrorrollsbacksideeffectsrepro-0003-select-count-*-from-stmt_insert_exception_audit",
       "suggestedId": "trigger-correctness-repro-test-teststatementinserttriggererrorrollsbacksideeffectsrepro-0003-select-count-*-from-stmt_insert_exception_audit",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM stmt_insert_exception_audit;",
       "querySha256": "ea7e947315101396065e80595ed361eff888febe8cbcd2ad8bdc66c38fbd99ab",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1371,15 +1551,24 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestStatementUpdateTriggerErrorRollsBackSideEffectsRepro",
       "ordinal": 3,
       "scriptName": "statement UPDATE trigger exception rolls back trigger side effects",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-teststatementupdatetriggererrorrollsbacksideeffectsrepro-0003-select-count-*-from-stmt_update_exception_audit",
       "suggestedId": "trigger-correctness-repro-test-teststatementupdatetriggererrorrollsbacksideeffectsrepro-0003-select-count-*-from-stmt_update_exception_audit",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM stmt_update_exception_audit;",
       "querySha256": "2ddbdc17af02886ddfe6ab46b32f164b909e18fb874ea7241f67b7c767a694e5",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1404,15 +1593,24 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestStatementDeleteTriggerErrorRollsBackSideEffectsRepro",
       "ordinal": 2,
       "scriptName": "statement DELETE trigger exception rolls back trigger side effects",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-teststatementdeletetriggererrorrollsbacksideeffectsrepro-0002-select-count-*-from-stmt_delete_exception_target",
       "suggestedId": "trigger-correctness-repro-test-teststatementdeletetriggererrorrollsbacksideeffectsrepro-0002-select-count-*-from-stmt_delete_exception_target",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM stmt_delete_exception_target;",
       "querySha256": "408693b3008c4823955fe80091c09d88bcb4db7392c54b551bb7dd4ce37b903f",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1420,15 +1618,24 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestStatementDeleteTriggerErrorRollsBackSideEffectsRepro",
       "ordinal": 3,
       "scriptName": "statement DELETE trigger exception rolls back trigger side effects",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-teststatementdeletetriggererrorrollsbacksideeffectsrepro-0003-select-count-*-from-stmt_delete_exception_audit",
       "suggestedId": "trigger-correctness-repro-test-teststatementdeletetriggererrorrollsbacksideeffectsrepro-0003-select-count-*-from-stmt_delete_exception_audit",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM stmt_delete_exception_audit;",
       "querySha256": "c545bfcec9f46cd008e3a760cff128230790d6f10f95986982bcc320c327558d",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1453,15 +1660,24 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestAfterStatementInsertTriggerErrorRollsBackStatementRepro",
       "ordinal": 2,
       "scriptName": "AFTER INSERT statement trigger exception rolls back statement",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testafterstatementinserttriggererrorrollsbackstatementrepro-0002-select-count-*-from-after_stmt_insert_exception_target",
       "suggestedId": "trigger-correctness-repro-test-testafterstatementinserttriggererrorrollsbackstatementrepro-0002-select-count-*-from-after_stmt_insert_exception_target",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM after_stmt_insert_exception_target;",
       "querySha256": "43d71b70ed893bb4cdcaeb04617bc84d0e5b147e7c7ea229d612f0e458090459",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1469,15 +1685,24 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestAfterStatementInsertTriggerErrorRollsBackStatementRepro",
       "ordinal": 3,
       "scriptName": "AFTER INSERT statement trigger exception rolls back statement",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testafterstatementinserttriggererrorrollsbackstatementrepro-0003-select-count-*-from-after_stmt_insert_exception_audit",
       "suggestedId": "trigger-correctness-repro-test-testafterstatementinserttriggererrorrollsbackstatementrepro-0003-select-count-*-from-after_stmt_insert_exception_audit",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM after_stmt_insert_exception_audit;",
       "querySha256": "5ea89fdc69137a3fbea045bf2cac1b9ccda44275e1f038b9c82cc444c34f28c3",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1524,15 +1749,24 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestAfterStatementUpdateTriggerErrorRollsBackStatementRepro",
       "ordinal": 3,
       "scriptName": "AFTER UPDATE statement trigger exception rolls back statement",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testafterstatementupdatetriggererrorrollsbackstatementrepro-0003-select-count-*-from-after_stmt_update_exception_audit",
       "suggestedId": "trigger-correctness-repro-test-testafterstatementupdatetriggererrorrollsbackstatementrepro-0003-select-count-*-from-after_stmt_update_exception_audit",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM after_stmt_update_exception_audit;",
       "querySha256": "c138263c6e03f697b4fde09567c61d35861af0b45b409fb9dd39b14aea8a02ec",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1557,15 +1791,24 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestAfterStatementDeleteTriggerErrorRollsBackStatementRepro",
       "ordinal": 2,
       "scriptName": "AFTER DELETE statement trigger exception rolls back statement",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testafterstatementdeletetriggererrorrollsbackstatementrepro-0002-select-count-*-from-after_stmt_delete_exception_target",
       "suggestedId": "trigger-correctness-repro-test-testafterstatementdeletetriggererrorrollsbackstatementrepro-0002-select-count-*-from-after_stmt_delete_exception_target",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM after_stmt_delete_exception_target;",
       "querySha256": "37db91f9f12046ee55b0885d11a7cc974447a1d3da3f255fa8bde47077e09a9d",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1573,15 +1816,24 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestAfterStatementDeleteTriggerErrorRollsBackStatementRepro",
       "ordinal": 3,
       "scriptName": "AFTER DELETE statement trigger exception rolls back statement",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testafterstatementdeletetriggererrorrollsbackstatementrepro-0003-select-count-*-from-after_stmt_delete_exception_audit",
       "suggestedId": "trigger-correctness-repro-test-testafterstatementdeletetriggererrorrollsbackstatementrepro-0003-select-count-*-from-after_stmt_delete_exception_audit",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM after_stmt_delete_exception_audit;",
       "querySha256": "376cb60c93353e8f2839b3d525dcf73d81911efa287995218b197caa87a838e4",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1606,15 +1858,24 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestBeforeTruncateTriggerErrorRollsBackSideEffectsRepro",
       "ordinal": 2,
       "scriptName": "BEFORE TRUNCATE trigger exception rolls back trigger side effects",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testbeforetruncatetriggererrorrollsbacksideeffectsrepro-0002-select-count-*-from-before_truncate_exception_target",
       "suggestedId": "trigger-correctness-repro-test-testbeforetruncatetriggererrorrollsbacksideeffectsrepro-0002-select-count-*-from-before_truncate_exception_target",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM before_truncate_exception_target;",
       "querySha256": "5fe2b483a3d135262691d138db62806dc4777823ee6656ee3dd9395285ade5d8",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1622,15 +1883,24 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestBeforeTruncateTriggerErrorRollsBackSideEffectsRepro",
       "ordinal": 3,
       "scriptName": "BEFORE TRUNCATE trigger exception rolls back trigger side effects",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testbeforetruncatetriggererrorrollsbacksideeffectsrepro-0003-select-count-*-from-before_truncate_exception_audit",
       "suggestedId": "trigger-correctness-repro-test-testbeforetruncatetriggererrorrollsbacksideeffectsrepro-0003-select-count-*-from-before_truncate_exception_audit",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM before_truncate_exception_audit;",
       "querySha256": "d65b58a58226b9d6579ceb35883737458858e6d0cbcf8fa325dbda6f09226370",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1655,15 +1925,24 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestAfterTruncateTriggerErrorRollsBackStatementRepro",
       "ordinal": 2,
       "scriptName": "AFTER TRUNCATE trigger exception rolls back statement",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testaftertruncatetriggererrorrollsbackstatementrepro-0002-select-count-*-from-after_truncate_exception_target",
       "suggestedId": "trigger-correctness-repro-test-testaftertruncatetriggererrorrollsbackstatementrepro-0002-select-count-*-from-after_truncate_exception_target",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM after_truncate_exception_target;",
       "querySha256": "dfb8bac0170c972a4030b741e1a82e54e56b562a496e2b331d7e187d4c1f0fa7",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1671,15 +1950,24 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestAfterTruncateTriggerErrorRollsBackStatementRepro",
       "ordinal": 3,
       "scriptName": "AFTER TRUNCATE trigger exception rolls back statement",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testaftertruncatetriggererrorrollsbackstatementrepro-0003-select-count-*-from-after_truncate_exception_audit",
       "suggestedId": "trigger-correctness-repro-test-testaftertruncatetriggererrorrollsbackstatementrepro-0003-select-count-*-from-after_truncate_exception_audit",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM after_truncate_exception_audit;",
       "querySha256": "4f7b0d9c77de34f086c0b7ba8beec79522116a99774d802933717f7647cfec17",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1704,15 +1992,24 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestBeforeDeleteRowTriggerSideEffectsRollBackOnForeignKeyErrorRepro",
       "ordinal": 2,
       "scriptName": "BEFORE DELETE row trigger side effects roll back on foreign-key error",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testbeforedeleterowtriggersideeffectsrollbackonforeignkeyerrorrepro-0002-select-count-*-from-before_delete_row_trigger_parent",
       "suggestedId": "trigger-correctness-repro-test-testbeforedeleterowtriggersideeffectsrollbackonforeignkeyerrorrepro-0002-select-count-*-from-before_delete_row_trigger_parent",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM before_delete_row_trigger_parent;",
       "querySha256": "5dc1658e739c2088a10a9537cf9129dd26a0cccfc2486d187d8186b393dd8bed",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1720,15 +2017,24 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestBeforeDeleteRowTriggerSideEffectsRollBackOnForeignKeyErrorRepro",
       "ordinal": 3,
       "scriptName": "BEFORE DELETE row trigger side effects roll back on foreign-key error",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testbeforedeleterowtriggersideeffectsrollbackonforeignkeyerrorrepro-0003-select-count-*-from-before_delete_row_trigger_audit",
       "suggestedId": "trigger-correctness-repro-test-testbeforedeleterowtriggersideeffectsrollbackonforeignkeyerrorrepro-0003-select-count-*-from-before_delete_row_trigger_audit",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM before_delete_row_trigger_audit;",
       "querySha256": "1948077142a9abe47cc2de41cb1ff95edab9d41b103818215594c0e80acbe4e6",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1775,15 +2081,24 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestBeforeUpdateRowTriggerSideEffectsRollBackOnForeignKeyErrorRepro",
       "ordinal": 3,
       "scriptName": "BEFORE UPDATE row trigger side effects roll back on foreign-key error",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testbeforeupdaterowtriggersideeffectsrollbackonforeignkeyerrorrepro-0003-select-count-*-from-before_update_row_trigger_audit",
       "suggestedId": "trigger-correctness-repro-test-testbeforeupdaterowtriggersideeffectsrollbackonforeignkeyerrorrepro-0003-select-count-*-from-before_update_row_trigger_audit",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM before_update_row_trigger_audit;",
       "querySha256": "9bd70432b6bd03c419bbb193ed222b7d864d4be3c7e2d1b6bc8a131f74c35b6d",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {

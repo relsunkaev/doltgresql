@@ -122,11 +122,11 @@ func TestBeforeInsertTriggerMutatedRowChecksConstraintsRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `INSERT INTO trigger_check_target VALUES (1, 5);`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testbeforeinserttriggermutatedrowchecksconstraintsrepro-0001-insert-into-trigger_check_target-values-1",
+					Query: `INSERT INTO trigger_check_target VALUES (1, 5);`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testbeforeinserttriggermutatedrowchecksconstraintsrepro-0001-insert-into-trigger_check_target-values-1", Compare: "sqlstate"},
 
-						// TestBeforeInsertTriggerReturningSeesMutatedRowRepro guards that INSERT
-						// RETURNING reports the row after BEFORE INSERT triggers mutate NEW.
-						Compare: "sqlstate"},
+					// TestBeforeInsertTriggerReturningSeesMutatedRowRepro guards that INSERT
+					// RETURNING reports the row after BEFORE INSERT triggers mutate NEW.
+
 				},
 				{
 					Query: `SELECT count(*) FROM trigger_check_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testbeforeinserttriggermutatedrowchecksconstraintsrepro-0002-select-count-*-from-trigger_check_target"},
@@ -191,13 +191,13 @@ func TestBeforeUpdateTriggerMutatedRowChecksConstraintsRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `UPDATE trigger_update_check_target SET qty = 6 WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testbeforeupdatetriggermutatedrowchecksconstraintsrepro-0001-update-trigger_update_check_target-set-qty-=", Compare:
+					Query: `UPDATE trigger_update_check_target SET qty = 6 WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testbeforeupdatetriggermutatedrowchecksconstraintsrepro-0001-update-trigger_update_check_target-set-qty-=", Compare: "sqlstate"},
 
 					// TestOnConflictUpdateWhereFalseDoesNotFireUpdateTriggersRepro reproduces an
 					// UPSERT/trigger correctness bug: PostgreSQL does not fire row-level UPDATE
 					// triggers when the ON CONFLICT DO UPDATE WHERE predicate rejects the
 					// conflicting row.
-					"sqlstate"},
+
 				},
 				{
 					Query: `SELECT qty FROM trigger_update_check_target WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testbeforeupdatetriggermutatedrowchecksconstraintsrepro-0002-select-qty-from-trigger_update_check_target-where"},
@@ -316,11 +316,11 @@ func TestBeforeInsertTriggerVisibleRowsRollBackOnLaterErrorRepro(t *testing.T) {
 				{
 					Query: `INSERT INTO trigger_visibility_atomic_items VALUES
 						(1, 'hi', 1),
-						(2, 'bad', -1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testbeforeinserttriggervisiblerowsrollbackonlatererrorrepro-0001-insert-into-trigger_visibility_atomic_items-values-1",
+						(2, 'bad', -1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testbeforeinserttriggervisiblerowsrollbackonlatererrorrepro-0001-insert-into-trigger_visibility_atomic_items-values-1", Compare: "sqlstate"},
 
-						// TestUpdateFromFiresRowTriggersRepro reproduces a trigger correctness bug:
-						// UPDATE ... FROM should fire row-level UPDATE triggers for changed target rows.
-						Compare: "sqlstate"},
+					// TestUpdateFromFiresRowTriggersRepro reproduces a trigger correctness bug:
+					// UPDATE ... FROM should fire row-level UPDATE triggers for changed target rows.
+
 				},
 				{
 					Query:    `SELECT count(*) FROM trigger_visibility_atomic_items;`,
@@ -587,12 +587,12 @@ func TestTriggerFunctionCannotBeCalledDirectlyRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT trigger_direct_call_func();`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testtriggerfunctioncannotbecalleddirectlyrepro-0001-select-trigger_direct_call_func",
+					Query: `SELECT trigger_direct_call_func();`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testtriggerfunctioncannotbecalleddirectlyrepro-0001-select-trigger_direct_call_func", Compare: "sqlstate"},
 
-						// TestDeferrableConstraintTriggerFiresAtCommitRepro reproduces a trigger
-						// correctness bug: PostgreSQL supports deferrable constraint triggers that run
-						// at transaction end rather than immediately after the statement.
-						Compare: "sqlstate"},
+					// TestDeferrableConstraintTriggerFiresAtCommitRepro reproduces a trigger
+					// correctness bug: PostgreSQL supports deferrable constraint triggers that run
+					// at transaction end rather than immediately after the statement.
+
 				},
 			},
 		},
@@ -679,8 +679,7 @@ func TestUpdateTriggerWhenOldNewDistinctRepro(t *testing.T) {
 					Query: `UPDATE trigger_when_update_target SET note = 'same-value-change' WHERE id = 1;`,
 				},
 				{
-					Query:    `SELECT count(*) FROM trigger_when_update_audit;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM trigger_when_update_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testupdatetriggerwhenoldnewdistinctrepro-0001-select-count-*-from-trigger_when_update_audit"},
 				},
 				{
 					Query: `UPDATE trigger_when_update_target SET v = 11 WHERE id = 1;`,
@@ -728,8 +727,7 @@ func TestUpdateTriggerWhenWholeRowDistinctRepro(t *testing.T) {
 					Query: `UPDATE trigger_when_whole_row_target SET note = note WHERE id = 1;`,
 				},
 				{
-					Query:    `SELECT count(*) FROM trigger_when_whole_row_audit;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM trigger_when_whole_row_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testupdatetriggerwhenwholerowdistinctrepro-0001-select-count-*-from-trigger_when_whole_row_audit"},
 				},
 				{
 					Query: `UPDATE trigger_when_whole_row_target SET note = 'changed' WHERE id = 1;`,
@@ -773,12 +771,10 @@ func TestAfterInsertTriggerErrorRollsBackStatementRepro(t *testing.T) {
 					Query: `INSERT INTO trigger_error_target VALUES (1, 'bad');`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testafterinserttriggererrorrollsbackstatementrepro-0001-insert-into-trigger_error_target-values-1", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM trigger_error_target;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM trigger_error_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testafterinserttriggererrorrollsbackstatementrepro-0002-select-count-*-from-trigger_error_target"},
 				},
 				{
-					Query:    `SELECT count(*) FROM trigger_error_audit;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM trigger_error_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testafterinserttriggererrorrollsbackstatementrepro-0003-select-count-*-from-trigger_error_audit"},
 				},
 			},
 		},
@@ -821,8 +817,7 @@ func TestAfterUpdateTriggerErrorRollsBackStatementRepro(t *testing.T) {
 					Query: `SELECT label FROM after_update_trigger_error_target WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testafterupdatetriggererrorrollsbackstatementrepro-0002-select-label-from-after_update_trigger_error_target-where"},
 				},
 				{
-					Query:    `SELECT count(*) FROM after_update_trigger_error_audit;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM after_update_trigger_error_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testafterupdatetriggererrorrollsbackstatementrepro-0003-select-count-*-from-after_update_trigger_error_audit"},
 				},
 			},
 		},
@@ -865,8 +860,7 @@ func TestAfterDeleteTriggerErrorRollsBackStatementRepro(t *testing.T) {
 					Query: `SELECT id, label FROM after_delete_trigger_error_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testafterdeletetriggererrorrollsbackstatementrepro-0002-select-id-label-from-after_delete_trigger_error_target"},
 				},
 				{
-					Query:    `SELECT count(*) FROM after_delete_trigger_error_audit;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM after_delete_trigger_error_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testafterdeletetriggererrorrollsbackstatementrepro-0003-select-count-*-from-after_delete_trigger_error_audit"},
 				},
 			},
 		},
@@ -904,12 +898,10 @@ func TestBeforeInsertTriggerErrorRollsBackSideEffectsRepro(t *testing.T) {
 					Query: `INSERT INTO before_trigger_error_target VALUES (1, 'bad');`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testbeforeinserttriggererrorrollsbacksideeffectsrepro-0001-insert-into-before_trigger_error_target-values-1", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM before_trigger_error_target;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM before_trigger_error_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testbeforeinserttriggererrorrollsbacksideeffectsrepro-0002-select-count-*-from-before_trigger_error_target"},
 				},
 				{
-					Query:    `SELECT count(*) FROM before_trigger_error_audit;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM before_trigger_error_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testbeforeinserttriggererrorrollsbacksideeffectsrepro-0003-select-count-*-from-before_trigger_error_audit"},
 				},
 			},
 		},
@@ -952,8 +944,7 @@ func TestBeforeUpdateTriggerErrorRollsBackSideEffectsRepro(t *testing.T) {
 					Query: `SELECT label FROM before_update_trigger_error_target WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testbeforeupdatetriggererrorrollsbacksideeffectsrepro-0002-select-label-from-before_update_trigger_error_target-where"},
 				},
 				{
-					Query:    `SELECT count(*) FROM before_update_trigger_error_audit;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM before_update_trigger_error_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testbeforeupdatetriggererrorrollsbacksideeffectsrepro-0003-select-count-*-from-before_update_trigger_error_audit"},
 				},
 			},
 		},
@@ -996,8 +987,7 @@ func TestBeforeDeleteTriggerErrorRollsBackSideEffectsRepro(t *testing.T) {
 					Query: `SELECT id, label FROM before_delete_trigger_error_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testbeforedeletetriggererrorrollsbacksideeffectsrepro-0002-select-id-label-from-before_delete_trigger_error_target"},
 				},
 				{
-					Query:    `SELECT count(*) FROM before_delete_trigger_error_audit;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM before_delete_trigger_error_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testbeforedeletetriggererrorrollsbacksideeffectsrepro-0003-select-count-*-from-before_delete_trigger_error_audit"},
 				},
 			},
 		},
@@ -1035,12 +1025,10 @@ func TestBeforeInsertTriggerSideEffectsRollBackOnConstraintErrorRepro(t *testing
 					Query: `INSERT INTO before_trigger_check_target VALUES (1, -1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testbeforeinserttriggersideeffectsrollbackonconstrainterrorrepro-0001-insert-into-before_trigger_check_target-values-1", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM before_trigger_check_target;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM before_trigger_check_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testbeforeinserttriggersideeffectsrollbackonconstrainterrorrepro-0002-select-count-*-from-before_trigger_check_target"},
 				},
 				{
-					Query:    `SELECT count(*) FROM before_trigger_check_audit;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM before_trigger_check_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testbeforeinserttriggersideeffectsrollbackonconstrainterrorrepro-0003-select-count-*-from-before_trigger_check_audit"},
 				},
 			},
 		},
@@ -1082,8 +1070,7 @@ func TestBeforeUpdateTriggerSideEffectsRollBackOnConstraintErrorRepro(t *testing
 					Query: `SELECT qty FROM before_update_trigger_check_target WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testbeforeupdatetriggersideeffectsrollbackonconstrainterrorrepro-0002-select-qty-from-before_update_trigger_check_target-where"},
 				},
 				{
-					Query:    `SELECT count(*) FROM before_update_trigger_check_audit;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM before_update_trigger_check_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testbeforeupdatetriggersideeffectsrollbackonconstrainterrorrepro-0003-select-count-*-from-before_update_trigger_check_audit"},
 				},
 			},
 		},
@@ -1120,12 +1107,10 @@ func TestStatementTriggerSideEffectsRollBackOnConstraintErrorRepro(t *testing.T)
 					Query: `INSERT INTO statement_trigger_check_target VALUES (1, -1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-teststatementtriggersideeffectsrollbackonconstrainterrorrepro-0001-insert-into-statement_trigger_check_target-values-1", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM statement_trigger_check_target;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM statement_trigger_check_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-teststatementtriggersideeffectsrollbackonconstrainterrorrepro-0002-select-count-*-from-statement_trigger_check_target"},
 				},
 				{
-					Query:    `SELECT count(*) FROM statement_trigger_check_audit;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM statement_trigger_check_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-teststatementtriggersideeffectsrollbackonconstrainterrorrepro-0003-select-count-*-from-statement_trigger_check_audit"},
 				},
 			},
 		},
@@ -1167,8 +1152,7 @@ func TestStatementUpdateTriggerSideEffectsRollBackOnConstraintErrorRepro(t *test
 					Query: `SELECT qty FROM statement_update_trigger_check_target WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-teststatementupdatetriggersideeffectsrollbackonconstrainterrorrepro-0002-select-qty-from-statement_update_trigger_check_target-where"},
 				},
 				{
-					Query:    `SELECT count(*) FROM statement_update_trigger_check_audit;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM statement_update_trigger_check_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-teststatementupdatetriggersideeffectsrollbackonconstrainterrorrepro-0003-select-count-*-from-statement_update_trigger_check_audit"},
 				},
 			},
 		},
@@ -1211,12 +1195,10 @@ func TestStatementDeleteTriggerSideEffectsRollBackOnForeignKeyErrorRepro(t *test
 					Query: `DELETE FROM statement_delete_trigger_parent WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-teststatementdeletetriggersideeffectsrollbackonforeignkeyerrorrepro-0001-delete-from-statement_delete_trigger_parent-where-id", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM statement_delete_trigger_parent;`,
-					Expected: []sql.Row{{int64(1)}},
+					Query: `SELECT count(*) FROM statement_delete_trigger_parent;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-teststatementdeletetriggersideeffectsrollbackonforeignkeyerrorrepro-0002-select-count-*-from-statement_delete_trigger_parent"},
 				},
 				{
-					Query:    `SELECT count(*) FROM statement_delete_trigger_audit;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM statement_delete_trigger_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-teststatementdeletetriggersideeffectsrollbackonforeignkeyerrorrepro-0003-select-count-*-from-statement_delete_trigger_audit"},
 				},
 			},
 		},
@@ -1253,12 +1235,10 @@ func TestStatementInsertTriggerErrorRollsBackSideEffectsRepro(t *testing.T) {
 					Query: `INSERT INTO stmt_insert_exception_target VALUES (1, 'new');`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-teststatementinserttriggererrorrollsbacksideeffectsrepro-0001-insert-into-stmt_insert_exception_target-values-1", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM stmt_insert_exception_target;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM stmt_insert_exception_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-teststatementinserttriggererrorrollsbacksideeffectsrepro-0002-select-count-*-from-stmt_insert_exception_target"},
 				},
 				{
-					Query:    `SELECT count(*) FROM stmt_insert_exception_audit;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM stmt_insert_exception_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-teststatementinserttriggererrorrollsbacksideeffectsrepro-0003-select-count-*-from-stmt_insert_exception_audit"},
 				},
 			},
 		},
@@ -1299,8 +1279,7 @@ func TestStatementUpdateTriggerErrorRollsBackSideEffectsRepro(t *testing.T) {
 					Query: `SELECT label FROM stmt_update_exception_target WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-teststatementupdatetriggererrorrollsbacksideeffectsrepro-0002-select-label-from-stmt_update_exception_target-where"},
 				},
 				{
-					Query:    `SELECT count(*) FROM stmt_update_exception_audit;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM stmt_update_exception_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-teststatementupdatetriggererrorrollsbacksideeffectsrepro-0003-select-count-*-from-stmt_update_exception_audit"},
 				},
 			},
 		},
@@ -1338,12 +1317,10 @@ func TestStatementDeleteTriggerErrorRollsBackSideEffectsRepro(t *testing.T) {
 					Query: `DELETE FROM stmt_delete_exception_target WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-teststatementdeletetriggererrorrollsbacksideeffectsrepro-0001-delete-from-stmt_delete_exception_target-where-id", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM stmt_delete_exception_target;`,
-					Expected: []sql.Row{{int64(1)}},
+					Query: `SELECT count(*) FROM stmt_delete_exception_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-teststatementdeletetriggererrorrollsbacksideeffectsrepro-0002-select-count-*-from-stmt_delete_exception_target"},
 				},
 				{
-					Query:    `SELECT count(*) FROM stmt_delete_exception_audit;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM stmt_delete_exception_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-teststatementdeletetriggererrorrollsbacksideeffectsrepro-0003-select-count-*-from-stmt_delete_exception_audit"},
 				},
 			},
 		},
@@ -1380,12 +1357,10 @@ func TestAfterStatementInsertTriggerErrorRollsBackStatementRepro(t *testing.T) {
 					Query: `INSERT INTO after_stmt_insert_exception_target VALUES (1, 'new');`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testafterstatementinserttriggererrorrollsbackstatementrepro-0001-insert-into-after_stmt_insert_exception_target-values-1", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM after_stmt_insert_exception_target;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM after_stmt_insert_exception_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testafterstatementinserttriggererrorrollsbackstatementrepro-0002-select-count-*-from-after_stmt_insert_exception_target"},
 				},
 				{
-					Query:    `SELECT count(*) FROM after_stmt_insert_exception_audit;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM after_stmt_insert_exception_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testafterstatementinserttriggererrorrollsbackstatementrepro-0003-select-count-*-from-after_stmt_insert_exception_audit"},
 				},
 			},
 		},
@@ -1426,8 +1401,7 @@ func TestAfterStatementUpdateTriggerErrorRollsBackStatementRepro(t *testing.T) {
 					Query: `SELECT label FROM after_stmt_update_exception_target WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testafterstatementupdatetriggererrorrollsbackstatementrepro-0002-select-label-from-after_stmt_update_exception_target-where"},
 				},
 				{
-					Query:    `SELECT count(*) FROM after_stmt_update_exception_audit;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM after_stmt_update_exception_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testafterstatementupdatetriggererrorrollsbackstatementrepro-0003-select-count-*-from-after_stmt_update_exception_audit"},
 				},
 			},
 		},
@@ -1465,12 +1439,10 @@ func TestAfterStatementDeleteTriggerErrorRollsBackStatementRepro(t *testing.T) {
 					Query: `DELETE FROM after_stmt_delete_exception_target WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testafterstatementdeletetriggererrorrollsbackstatementrepro-0001-delete-from-after_stmt_delete_exception_target-where-id", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM after_stmt_delete_exception_target;`,
-					Expected: []sql.Row{{int64(1)}},
+					Query: `SELECT count(*) FROM after_stmt_delete_exception_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testafterstatementdeletetriggererrorrollsbackstatementrepro-0002-select-count-*-from-after_stmt_delete_exception_target"},
 				},
 				{
-					Query:    `SELECT count(*) FROM after_stmt_delete_exception_audit;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM after_stmt_delete_exception_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testafterstatementdeletetriggererrorrollsbackstatementrepro-0003-select-count-*-from-after_stmt_delete_exception_audit"},
 				},
 			},
 		},
@@ -1508,12 +1480,10 @@ func TestBeforeTruncateTriggerErrorRollsBackSideEffectsRepro(t *testing.T) {
 					Query: `TRUNCATE before_truncate_exception_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testbeforetruncatetriggererrorrollsbacksideeffectsrepro-0001-truncate-before_truncate_exception_target", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM before_truncate_exception_target;`,
-					Expected: []sql.Row{{int64(1)}},
+					Query: `SELECT count(*) FROM before_truncate_exception_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testbeforetruncatetriggererrorrollsbacksideeffectsrepro-0002-select-count-*-from-before_truncate_exception_target"},
 				},
 				{
-					Query:    `SELECT count(*) FROM before_truncate_exception_audit;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM before_truncate_exception_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testbeforetruncatetriggererrorrollsbacksideeffectsrepro-0003-select-count-*-from-before_truncate_exception_audit"},
 				},
 			},
 		},
@@ -1551,12 +1521,10 @@ func TestAfterTruncateTriggerErrorRollsBackStatementRepro(t *testing.T) {
 					Query: `TRUNCATE after_truncate_exception_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testaftertruncatetriggererrorrollsbackstatementrepro-0001-truncate-after_truncate_exception_target", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM after_truncate_exception_target;`,
-					Expected: []sql.Row{{int64(1)}},
+					Query: `SELECT count(*) FROM after_truncate_exception_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testaftertruncatetriggererrorrollsbackstatementrepro-0002-select-count-*-from-after_truncate_exception_target"},
 				},
 				{
-					Query:    `SELECT count(*) FROM after_truncate_exception_audit;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM after_truncate_exception_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testaftertruncatetriggererrorrollsbackstatementrepro-0003-select-count-*-from-after_truncate_exception_audit"},
 				},
 			},
 		},
@@ -1598,12 +1566,10 @@ func TestBeforeDeleteRowTriggerSideEffectsRollBackOnForeignKeyErrorRepro(t *test
 					Query: `DELETE FROM before_delete_row_trigger_parent WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testbeforedeleterowtriggersideeffectsrollbackonforeignkeyerrorrepro-0001-delete-from-before_delete_row_trigger_parent-where-id", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM before_delete_row_trigger_parent;`,
-					Expected: []sql.Row{{int64(1)}},
+					Query: `SELECT count(*) FROM before_delete_row_trigger_parent;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testbeforedeleterowtriggersideeffectsrollbackonforeignkeyerrorrepro-0002-select-count-*-from-before_delete_row_trigger_parent"},
 				},
 				{
-					Query:    `SELECT count(*) FROM before_delete_row_trigger_audit;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM before_delete_row_trigger_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testbeforedeleterowtriggersideeffectsrollbackonforeignkeyerrorrepro-0003-select-count-*-from-before_delete_row_trigger_audit"},
 				},
 			},
 		},
@@ -1649,8 +1615,7 @@ func TestBeforeUpdateRowTriggerSideEffectsRollBackOnForeignKeyErrorRepro(t *test
 					Query: `SELECT id FROM before_update_row_trigger_parent;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testbeforeupdaterowtriggersideeffectsrollbackonforeignkeyerrorrepro-0002-select-id-from-before_update_row_trigger_parent"},
 				},
 				{
-					Query:    `SELECT count(*) FROM before_update_row_trigger_audit;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM before_update_row_trigger_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-correctness-repro-test-testbeforeupdaterowtriggersideeffectsrollbackonforeignkeyerrorrepro-0003-select-count-*-from-before_update_row_trigger_audit"},
 				},
 			},
 		},
