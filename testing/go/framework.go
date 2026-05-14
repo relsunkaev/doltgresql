@@ -573,7 +573,7 @@ func createServerLocalWithFileSystemAndPort(t testing.TB, database string, port 
 // newTestDatabaseConnection returns a Connection to the test |database| at |host|:|port|. If the |database| provided
 // does not exist, it will be automatically created.
 func newTestDatabaseConnection(t testing.TB, ctx context.Context, database, host string, port int) *Connection {
-	const connectionUrlFmt = "postgres://postgres:password@%s:%d/%s?DateStyle=ISO%%2C%%20MDY"
+	const connectionUrlFmt = "postgres://postgres:password@%s:%d/%s?sslmode=disable&DateStyle=ISO%%2C%%20MDY"
 	func() {
 		var conn *pgx.Conn
 		var err error
@@ -1234,7 +1234,7 @@ func (conn *Connection) Connect(ctx context.Context, username string, password s
 	} else {
 		var err error
 		config := conn.Default.Config()
-		conn.Current, err = pgx.Connect(ctx, fmt.Sprintf("postgres://%s:%s@127.0.0.1:%d/%s", username, password, config.Port, config.Database))
+		conn.Current, err = pgx.Connect(ctx, fmt.Sprintf("postgres://%s:%s@127.0.0.1:%d/%s?sslmode=disable", username, password, config.Port, config.Database))
 		return err
 	}
 }
