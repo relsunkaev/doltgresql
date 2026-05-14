@@ -1104,7 +1104,7 @@ ORDER BY amproc.amprocnum;`,
 				},
 				{
 					Query:    `SELECT each('"B"=>"5", "A"=>"2"'::public.hstore);`,
-					Expected: []sql.Row{{[]any{`A`, `2`}}, {[]any{`B`, `5`}}},
+					Expected: []sql.Row{{`(A,2)`}, {`(B,5)`}},
 				},
 				{
 					Query:    `SELECT hstore(ARRAY['n', 'float', 'bool', 'str', 'empty', 'bad'], ARRAY['12', '3.5', 'true', '012', NULL, '12x'])::text, array_to_string(hstore_to_array('"n"=>"12", "float"=>"3.5", "bool"=>"true", "str"=>"012", "empty"=>NULL, "bad"=>"12x"'::public.hstore), '|', '<NULL>');`,
