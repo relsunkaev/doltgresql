@@ -131,11 +131,11 @@ func GetPotentialImplicitCasts(fromType id.Type) []*pgtypes.DoltgresType {
 func GetExplicitCast(fromType *pgtypes.DoltgresType, toType *pgtypes.DoltgresType) pgtypes.TypeCastFunction {
 	lookupFromType := castLookupType(fromType)
 	lookupToType := castLookupType(toType)
-	if tcf := getCast(explicitTypeCastMutex, explicitTypeCastsMap, lookupFromType, lookupToType, GetExplicitCast); tcf != nil {
+	if tcf := getCast(explicitTypeCastMutex, explicitTypeCastsMap, lookupFromType, lookupToType, GetExplicitCast, true); tcf != nil {
 		return tcf
-	} else if tcf = getCast(assignmentTypeCastMutex, assignmentTypeCastsMap, lookupFromType, lookupToType, GetExplicitCast); tcf != nil {
+	} else if tcf = getCast(assignmentTypeCastMutex, assignmentTypeCastsMap, lookupFromType, lookupToType, GetExplicitCast, true); tcf != nil {
 		return tcf
-	} else if tcf = getCast(implicitTypeCastMutex, implicitTypeCastsMap, lookupFromType, lookupToType, GetExplicitCast); tcf != nil {
+	} else if tcf = getCast(implicitTypeCastMutex, implicitTypeCastsMap, lookupFromType, lookupToType, GetExplicitCast, true); tcf != nil {
 		return tcf
 	}
 	// We check for the identity and sizing casts after checking the maps, as the identity may be overridden by a user.
@@ -197,9 +197,9 @@ func GetAssignmentCast(fromType *pgtypes.DoltgresType, toType *pgtypes.DoltgresT
 			return assignmentString(str, targetType)
 		}
 	}
-	if tcf := getCast(assignmentTypeCastMutex, assignmentTypeCastsMap, lookupFromType, lookupToType, GetAssignmentCast); tcf != nil {
+	if tcf := getCast(assignmentTypeCastMutex, assignmentTypeCastsMap, lookupFromType, lookupToType, GetAssignmentCast, false); tcf != nil {
 		return tcf
-	} else if tcf = getCast(implicitTypeCastMutex, implicitTypeCastsMap, lookupFromType, lookupToType, GetAssignmentCast); tcf != nil {
+	} else if tcf = getCast(implicitTypeCastMutex, implicitTypeCastsMap, lookupFromType, lookupToType, GetAssignmentCast, false); tcf != nil {
 		return tcf
 	}
 	// We check for the identity and sizing casts after checking the maps, as the identity may be overridden by a user.
@@ -238,7 +238,7 @@ func GetImplicitCast(fromType *pgtypes.DoltgresType, toType *pgtypes.DoltgresTyp
 	if isCitextToTextCast(lookupFromType, lookupToType) {
 		return IdentityCast
 	}
-	if tcf := getCast(implicitTypeCastMutex, implicitTypeCastsMap, lookupFromType, lookupToType, GetImplicitCast); tcf != nil {
+	if tcf := getCast(implicitTypeCastMutex, implicitTypeCastsMap, lookupFromType, lookupToType, GetImplicitCast, false); tcf != nil {
 		return tcf
 	}
 	// We check for the identity and sizing casts after checking the maps, as the identity may be overridden by a user.
@@ -312,7 +312,7 @@ func getPotentialCasts(mutex *sync.RWMutex, castArray map[id.Type][]*pgtypes.Dol
 // not valid.
 func getCast(mutex *sync.RWMutex,
 	castMap map[id.Type]map[id.Type]pgtypes.TypeCastFunction,
-	fromType *pgtypes.DoltgresType, toType *pgtypes.DoltgresType, outerFunc getCastFunction) pgtypes.TypeCastFunction {
+	fromType *pgtypes.DoltgresType, toType *pgtypes.DoltgresType, outerFunc getCastFunction, ignoreStringSizingErrors bool) pgtypes.TypeCastFunction {
 	mutex.RLock()
 	defer mutex.RUnlock()
 
@@ -327,7 +327,7 @@ func getCast(mutex *sync.RWMutex,
 		fromBaseType, fromBaseErr := fromType.ResolveArrayBaseType(nil)
 		toBaseType, toBaseErr := toType.ResolveArrayBaseType(nil)
 		if fromBaseErr != nil || toBaseErr != nil {
-			return runtimeArrayCast(fromType, toType, outerFunc)
+			return runtimeArrayCast(fromType, toType, outerFunc, ignoreStringSizingErrors)
 		}
 		if baseCast := outerFunc(fromBaseType, toBaseType); baseCast != nil {
 			// We use a closure that can unwrap the slice, since conversion functions expect a singular non-nil value
@@ -341,10 +341,11 @@ func getCast(mutex *sync.RWMutex,
 					return nil, errors.Errorf("expected array value but received %T", vals)
 				}
 				castVals, err := castArrayValues(ctx, arrayVals, targetBaseType, baseCast)
-				if err != nil {
-					return nil, err
+				result := pgtypes.NewArrayValue(castVals, pgtypes.ArrayLowerBounds(vals))
+				if ignoreStringSizingErrors && err != nil && targetBaseType.TypCategory == pgtypes.TypeCategory_StringTypes && result != nil {
+					return result, nil
 				}
-				return pgtypes.NewArrayValue(castVals, pgtypes.ArrayLowerBounds(vals)), nil
+				return result, err
 			}
 		}
 
@@ -352,7 +353,7 @@ func getCast(mutex *sync.RWMutex,
 	return nil
 }
 
-func runtimeArrayCast(fromType *pgtypes.DoltgresType, toType *pgtypes.DoltgresType, outerFunc getCastFunction) pgtypes.TypeCastFunction {
+func runtimeArrayCast(fromType *pgtypes.DoltgresType, toType *pgtypes.DoltgresType, outerFunc getCastFunction, ignoreStringSizingErrors bool) pgtypes.TypeCastFunction {
 	return func(ctx *sql.Context, vals any, targetType *pgtypes.DoltgresType) (any, error) {
 		if targetType == nil {
 			targetType = toType
@@ -374,10 +375,11 @@ func runtimeArrayCast(fromType *pgtypes.DoltgresType, toType *pgtypes.DoltgresTy
 			return nil, errors.Errorf("expected array value but received %T", vals)
 		}
 		castVals, err := castArrayValues(ctx, arrayVals, targetBaseType, baseCast)
-		if err != nil {
-			return nil, err
+		result := pgtypes.NewArrayValue(castVals, pgtypes.ArrayLowerBounds(vals))
+		if ignoreStringSizingErrors && err != nil && targetBaseType.TypCategory == pgtypes.TypeCategory_StringTypes && result != nil {
+			return result, nil
 		}
-		return pgtypes.NewArrayValue(castVals, pgtypes.ArrayLowerBounds(vals)), nil
+		return result, err
 	}
 }
 

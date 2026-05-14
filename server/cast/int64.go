@@ -21,6 +21,8 @@ import (
 	"github.com/shopspring/decimal"
 
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -83,7 +85,7 @@ func int64Implicit() {
 		ToType:   pgtypes.Oid,
 		Function: func(ctx *sql.Context, val any, targetType *pgtypes.DoltgresType) (any, error) {
 			if val.(int64) > pgtypes.MaxUint32 || val.(int64) < 0 {
-				return nil, errOutOfRange.New(targetType.String())
+				return nil, pgerror.New(pgcode.NumericValueOutOfRange, "OID out of range")
 			}
 			if internalID := id.Cache().ToInternal(uint32(val.(int64))); internalID.IsValid() {
 				return internalID, nil

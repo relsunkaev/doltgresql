@@ -23,6 +23,8 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 	"github.com/dolthub/doltgresql/utils"
@@ -51,7 +53,7 @@ var oidin = framework.Function1{
 		}
 		// Note: This minimum is different (-4294967295) for Postgres 15.4 compiled by Visual C++
 		if iVal > pgtypes.MaxUint32 || iVal < pgtypes.MinInt32 {
-			return id.Null, pgtypes.ErrValueIsOutOfRangeForType.New(input, "oid")
+			return id.Null, pgerror.Newf(pgcode.NumericValueOutOfRange, "value %q is out of range for type oid", input)
 		}
 		uVal := uint32(iVal)
 		if internalID := id.Cache().ToInternal(uVal); internalID.IsValid() {
