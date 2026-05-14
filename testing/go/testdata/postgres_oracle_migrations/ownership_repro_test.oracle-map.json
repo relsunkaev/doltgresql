@@ -28,7 +28,7 @@
       "expectedRows": [
         [
           {
-            "value": "postgres"
+            "value": "table_catalog_creator"
           }
         ]
       ],
@@ -43,10 +43,18 @@
       "oracle": "postgres",
       "postgresId": "ownership-repro-test-testtableownercanusecreatedtablerepro-0001-select-id-label-from-owner_created_table",
       "suggestedId": "ownership-repro-test-testtableownercanusecreatedtablerepro-0001-select-id-label-from-owner_created_table",
-      "compare": "sqlstate",
+      "compare": "structural",
       "expectedKind": "rows",
-      "sqlstate": "42501",
-      "errorSeverity": "ERROR",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "owned"
+          }
+        ]
+      ],
       "username": "table_owner_user",
       "query": "SELECT id, label FROM owner_created_table;",
       "querySha256": "5792ad64519cee41f7fd08b6bd0ee7429d30eaa2515a63adf93c42a741dd6b54",
@@ -68,7 +76,7 @@
       "expectedRows": [
         [
           {
-            "value": "postgres"
+            "value": "sequence_catalog_creator"
           }
         ]
       ],
@@ -90,7 +98,7 @@
       "expectedRows": [
         [
           {
-            "value": "postgres"
+            "value": "view_catalog_creator"
           }
         ]
       ],
@@ -105,10 +113,18 @@
       "oracle": "postgres",
       "postgresId": "ownership-repro-test-testviewownercanusecreatedviewrepro-0001-select-id-label-from-owner_created_view",
       "suggestedId": "ownership-repro-test-testviewownercanusecreatedviewrepro-0001-select-id-label-from-owner_created_view",
-      "compare": "sqlstate",
+      "compare": "structural",
       "expectedKind": "rows",
-      "sqlstate": "42501",
-      "errorSeverity": "ERROR",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "visible"
+          }
+        ]
+      ],
       "username": "view_owner_user",
       "query": "SELECT id, label FROM owner_created_view;",
       "querySha256": "cb5f1be9b3647e5cd7d215a80fb2d80c21c3a186aa08b854a07313a976fe6769",
@@ -130,7 +146,7 @@
       "expectedRows": [
         [
           {
-            "value": "postgres"
+            "value": "materialized_view_catalog_creator"
           }
         ]
       ],
@@ -145,10 +161,18 @@
       "oracle": "postgres",
       "postgresId": "ownership-repro-test-testmaterializedviewownercanusecreatedmaterializedviewrepro-0001-select-id-label-from-owner_created_materialized_view",
       "suggestedId": "ownership-repro-test-testmaterializedviewownercanusecreatedmaterializedviewrepro-0001-select-id-label-from-owner_created_materialized_view",
-      "compare": "sqlstate",
+      "compare": "structural",
       "expectedKind": "rows",
-      "sqlstate": "42501",
-      "errorSeverity": "ERROR",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "initial"
+          }
+        ]
+      ],
       "username": "materialized_view_owner_user",
       "query": "SELECT id, label FROM owner_created_materialized_view;",
       "querySha256": "2b1655c140f507cb09f8586395c83ef26db2a5f8c5870f80ee91d6f823a2ad4c",
@@ -170,7 +194,7 @@
       "expectedRows": [
         [
           {
-            "value": "postgres"
+            "value": "schema_catalog_creator"
           }
         ]
       ],
@@ -185,10 +209,15 @@
       "oracle": "postgres",
       "postgresId": "ownership-repro-test-testschemaownercanusecreatedschemarepro-0001-select-id-from-owner_created_schema.owned_schema_table",
       "suggestedId": "ownership-repro-test-testschemaownercanusecreatedschemarepro-0001-select-id-from-owner_created_schema.owned_schema_table",
-      "compare": "sqlstate",
+      "compare": "structural",
       "expectedKind": "rows",
-      "sqlstate": "42501",
-      "errorSeverity": "ERROR",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
       "username": "schema_owner_user",
       "query": "SELECT id FROM owner_created_schema.owned_schema_table;",
       "querySha256": "065e0fa7386bb4d4279e4aed65e7add606a94cb53853e3b5511a60f084c36690",
@@ -210,7 +239,7 @@
       "expectedRows": [
         [
           {
-            "value": "postgres"
+            "value": "type_catalog_creator"
           }
         ]
       ],
@@ -255,7 +284,7 @@
       "expectedRows": [
         [
           {
-            "value": "postgres"
+            "value": "domain_catalog_creator"
           }
         ]
       ],
@@ -783,7 +812,7 @@
       "expectedRows": [
         [
           {
-            "value": "postgres"
+            "value": "replace_function_owner"
           }
         ]
       ],
@@ -844,7 +873,7 @@
       "expectedRows": [
         [
           {
-            "value": "postgres"
+            "value": "replace_procedure_owner"
           }
         ]
       ],
@@ -866,7 +895,7 @@
       "expectedRows": [
         [
           {
-            "value": "postgres"
+            "value": "replace_aggregate_owner"
           }
         ]
       ],
