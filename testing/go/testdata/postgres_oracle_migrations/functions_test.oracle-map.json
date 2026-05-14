@@ -952,7 +952,7 @@
       "expectedRows": [
         [
           {
-            "value": "{<nil>,30,50}"
+            "value": "{NULL,30,50}"
           }
         ]
       ],
@@ -974,7 +974,7 @@
       "expectedRows": [
         [
           {
-            "value": "{<nil>,b,c}"
+            "value": "{NULL,b,c}"
           }
         ]
       ],
@@ -8675,7 +8675,7 @@
       "expectedRows": [
         [
           {
-            "value": "{<nil>}"
+            "value": "{NULL}"
           }
         ]
       ],
@@ -8697,7 +8697,7 @@
       "expectedRows": [
         [
           {
-            "value": "{<nil>,6}"
+            "value": "{NULL,6}"
           }
         ]
       ],

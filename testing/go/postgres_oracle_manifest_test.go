@@ -345,6 +345,17 @@ func TestPostgresOraclePromotedMapCountsGeneratedHelperScripts(t *testing.T) {
 	require.Equal(t, "index-test-testbasicindexing-0239-insert-into-unique_constraint_column_default_name-values-2", uniqueConstraintInsert.SuggestedID)
 }
 
+func TestPostgresOracleArrayNormalization(t *testing.T) {
+	require.Equal(t, "array", inferPostgresOracleMode(2951))
+	normalized, ok := normalizePostgresOracleSlice([]any{
+		int64(1),
+		nil,
+		[16]byte{0xa0, 0xee, 0xbc, 0x99, 0x9c, 0x0b, 0x4e, 0xf8, 0xbb, 0x6d, 0x6b, 0xb9, 0xbd, 0x38, 0x0a, 0x11},
+	})
+	require.True(t, ok)
+	require.Equal(t, "{1,NULL,a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11}", normalized)
+}
+
 func TestPostgresOraclePromotedMapKeepsDoltNameFilters(t *testing.T) {
 	outPath := filepath.Join(t.TempDir(), "functions_test.oracle-map.json")
 	cmd := exec.Command("go", "run", "gen_postgres_oracle_manifest.go",
@@ -471,6 +482,41 @@ func TestPostgresOraclePromotedMapSupportsScriptNameFilter(t *testing.T) {
 		require.Equal(t, "publication table lists accept repeated and omitted table keywords", assertion.ScriptName)
 		require.Equal(t, "postgres", assertion.Oracle)
 	}
+}
+
+func TestPostgresOraclePromotedMapSupportsPostgresIDFilter(t *testing.T) {
+	const postgresID = "publication-subscription-test-testpublicationddlandcatalogs-0012-select-schemaname-tablename-from-pg_catalog.pg_publication_tables"
+
+	outPath := filepath.Join(t.TempDir(), "publication_subscription_test.oracle-map.json")
+	cmd := exec.Command("go", "run", "gen_postgres_oracle_manifest.go",
+		"--promote-oracle-map", "publication_subscription_test.go",
+		"--oracle-postgres-id", postgresID,
+		"--promote-oracle-map-output", outPath)
+	output, err := cmd.CombinedOutput()
+	require.NoError(t, err, string(output))
+
+	data, err := os.ReadFile(outPath)
+	require.NoError(t, err)
+	var generated struct {
+		GeneratedBy string `json:"generatedBy"`
+		SourceFile  string `json:"sourceFile"`
+		Assertions  []struct {
+			Source     string `json:"source"`
+			ScriptName string `json:"scriptName"`
+			Ordinal    int    `json:"ordinal"`
+			Oracle     string `json:"oracle"`
+			PostgresID string `json:"postgresId"`
+		} `json:"assertions"`
+	}
+	require.NoError(t, json.Unmarshal(data, &generated))
+	require.Equal(t, "go run gen_postgres_oracle_manifest.go --promote-oracle-map publication_subscription_test.go --oracle-postgres-id "+postgresID, generated.GeneratedBy)
+	require.Equal(t, "testing/go/publication_subscription_test.go", generated.SourceFile)
+	require.Len(t, generated.Assertions, 1)
+	require.Equal(t, "testing/go/publication_subscription_test.go:TestPublicationDDLAndCatalogs", generated.Assertions[0].Source)
+	require.Equal(t, "publication table lists accept repeated and omitted table keywords", generated.Assertions[0].ScriptName)
+	require.Equal(t, 12, generated.Assertions[0].Ordinal)
+	require.Equal(t, "postgres", generated.Assertions[0].Oracle)
+	require.Equal(t, postgresID, generated.Assertions[0].PostgresID)
 }
 
 func TestPostgresOraclePromotedMapSupportsPackageScriptTestVariables(t *testing.T) {
@@ -991,7 +1037,7 @@ func inferPostgresOracleMode(oid uint32) string {
 		return "timestamp"
 	case 1184, 1266:
 		return "timestamptz"
-	case 1000, 1005, 1007, 1016, 1021, 1022, 1009, 1015, 1231:
+	case 199, 1000, 1001, 1002, 1003, 1005, 1006, 1007, 1008, 1009, 1010, 1011, 1012, 1013, 1014, 1015, 1016, 1017, 1018, 1019, 1020, 1021, 1022, 1027, 1028, 1034, 1040, 1041, 1115, 1182, 1183, 1185, 1187, 1231, 1270, 2951, 3807:
 		return "array"
 	default:
 		return "structural"
@@ -1086,14 +1132,54 @@ func normalizePostgresOracleSlice(value any) (string, bool) {
 	}
 	parts := make([]string, rv.Len())
 	for i := range parts {
-		element := rv.Index(i)
-		if element.Kind() == reflect.Pointer && element.IsNil() {
-			parts[i] = "NULL"
-			continue
-		}
-		parts[i] = fmt.Sprint(element.Interface())
+		parts[i] = normalizePostgresOracleArrayElement(rv.Index(i))
 	}
 	return "{" + strings.Join(parts, ",") + "}", true
+}
+
+func normalizePostgresOracleArrayElement(element reflect.Value) string {
+	if !element.IsValid() {
+		return "NULL"
+	}
+	for element.Kind() == reflect.Interface || element.Kind() == reflect.Pointer {
+		if element.IsNil() {
+			return "NULL"
+		}
+		element = element.Elem()
+	}
+	if uuid, ok := postgresOracleUUIDArrayElement(element); ok {
+		return uuid
+	}
+	switch value := element.Interface().(type) {
+	case pgtype.Numeric:
+		if !value.Valid {
+			return "NULL"
+		}
+		return normalizePostgresOraclePgNumeric(value)
+	case pgtype.UUID:
+		if !value.Valid {
+			return "NULL"
+		}
+		return formatPostgresOracleUUID(value.Bytes)
+	default:
+		return fmt.Sprint(value)
+	}
+}
+
+func postgresOracleUUIDArrayElement(element reflect.Value) (string, bool) {
+	if element.Kind() != reflect.Array || element.Len() != 16 || element.Type().Elem().Kind() != reflect.Uint8 {
+		return "", false
+	}
+	var bytes [16]byte
+	for i := range bytes {
+		bytes[i] = byte(element.Index(i).Uint())
+	}
+	return formatPostgresOracleUUID(bytes), true
+}
+
+func formatPostgresOracleUUID(bytes [16]byte) string {
+	encoded := hex.EncodeToString(bytes[:])
+	return encoded[0:8] + "-" + encoded[8:12] + "-" + encoded[12:16] + "-" + encoded[16:20] + "-" + encoded[20:32]
 }
 
 func comparePostgresOracleRows(t testing.TB, entry postgresOracleEntry, actual [][]string) {

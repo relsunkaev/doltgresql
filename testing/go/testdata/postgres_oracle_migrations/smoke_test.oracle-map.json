@@ -825,7 +825,7 @@
       "expectedRows": [
         [
           {
-            "value": "{1,<nil>}"
+            "value": "{1,NULL}"
           }
         ]
       ],
@@ -1239,7 +1239,7 @@
             "value": "{text,without,quotes}"
           },
           {
-            "value": "{<nil>,<nil>,NULL,quoted}"
+            "value": "{NULL,NULL,NULL,quoted}"
           }
         ]
       ],

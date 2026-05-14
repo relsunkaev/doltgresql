@@ -111,7 +111,7 @@
             "value": "1"
           },
           {
-            "value": "{123456789012345,<nil>}"
+            "value": "{123456789012345,NULL}"
           }
         ],
         [
@@ -2230,7 +2230,7 @@
             "value": "1"
           },
           {
-            "value": "{abcdefghij,<nil>}"
+            "value": "{abcdefghij,NULL}"
           }
         ],
         [
@@ -2263,7 +2263,7 @@
             "value": "1"
           },
           {
-            "value": "{abcdefghij,<nil>,1234,abc}"
+            "value": "{abcdefghij,NULL,1234,abc}"
           }
         ],
         [
@@ -2918,7 +2918,7 @@
             "value": "1"
           },
           {
-            "value": "{123.456,<nil>}"
+            "value": "{123.456,NULL}"
           }
         ],
         [
@@ -3017,7 +3017,7 @@
             "value": "1"
           },
           {
-            "value": "{123,<nil>}"
+            "value": "{123,NULL}"
           }
         ],
         [
@@ -5735,7 +5735,7 @@
             "value": "1"
           },
           {
-            "value": "{<nil>,{12345 -2 false finite true}}"
+            "value": "{NULL,123.45}"
           }
         ],
         [
@@ -5743,7 +5743,7 @@
             "value": "2"
           },
           {
-            "value": "{{6789 -2 false finite true},{5729031468 -4 false finite true}}"
+            "value": "{67.89,572903.1468}"
           }
         ]
       ],
@@ -7410,7 +7410,7 @@
             "value": "1"
           },
           {
-            "value": "{<nil>,123.875}"
+            "value": "{NULL,123.875}"
           }
         ],
         [
@@ -8578,7 +8578,7 @@
             "value": "1"
           },
           {
-            "value": "{42,<nil>}"
+            "value": "{42,NULL}"
           }
         ],
         [
@@ -10116,7 +10116,7 @@
             "value": "1"
           },
           {
-            "value": "[[160 238 188 153 156 11 78 248 187 109 107 185 189 56 10 17] <nil>]"
+            "value": "{a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11,NULL}"
           }
         ],
         [
@@ -10124,7 +10124,7 @@
             "value": "2"
           },
           {
-            "value": "[<nil> [244 122 193 11 88 204 67 114 165 103 14 2 178 195 212 121]]"
+            "value": "{NULL,f47ac10b-58cc-4372-a567-0e02b2c3d479}"
           }
         ]
       ],
@@ -11025,7 +11025,7 @@
       "expectedRows": [
         [
           {
-            "value": "{abc,def,<nil>}"
+            "value": "{abc,def,NULL}"
           }
         ]
       ],
@@ -11047,7 +11047,7 @@
       "expectedRows": [
         [
           {
-            "value": "{<nil>}"
+            "value": "{NULL}"
           }
         ]
       ],
