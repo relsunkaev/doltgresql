@@ -598,15 +598,24 @@
       "source": "testing/go/set_test.go:TestSetStatements",
       "ordinal": 31,
       "scriptName": "special case SEED",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "set-test-testsetstatements-0031-show-geqo_seed",
       "suggestedId": "set-test-testsetstatements-0031-show-geqo_seed",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SHOW geqo_seed",
       "querySha256": "ada3baafdee6bac31a534df55e9a78ba41a1b3986a7c893ed6d032f304695f92",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -8309,15 +8318,24 @@
       "source": "testing/go/set_test.go:TestSetStatements",
       "ordinal": 401,
       "scriptName": "set 'effective_io_concurrency' configuration variable",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "set-test-testsetstatements-0401-show-effective_io_concurrency",
       "suggestedId": "set-test-testsetstatements-0401-show-effective_io_concurrency",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SHOW effective_io_concurrency",
       "querySha256": "1fb9bd12858cf526d3fd7a08de92f07a246450cd8baf8ecce0067061b934f392",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -8341,15 +8359,24 @@
       "source": "testing/go/set_test.go:TestSetStatements",
       "ordinal": 403,
       "scriptName": "set 'effective_io_concurrency' configuration variable",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "set-test-testsetstatements-0403-show-effective_io_concurrency",
       "suggestedId": "set-test-testsetstatements-0403-show-effective_io_concurrency",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SHOW effective_io_concurrency",
       "querySha256": "1fb9bd12858cf526d3fd7a08de92f07a246450cd8baf8ecce0067061b934f392",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -20305,15 +20332,24 @@
       "source": "testing/go/set_test.go:TestSetStatements",
       "ordinal": 967,
       "scriptName": "set 'maintenance_io_concurrency' configuration variable",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "set-test-testsetstatements-0967-show-maintenance_io_concurrency",
       "suggestedId": "set-test-testsetstatements-0967-show-maintenance_io_concurrency",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SHOW maintenance_io_concurrency",
       "querySha256": "2dff0908323f2089fcee8225be91c62d8ab3fc6518b75eb6f97603976e621b8d",
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -20337,15 +20373,24 @@
       "source": "testing/go/set_test.go:TestSetStatements",
       "ordinal": 969,
       "scriptName": "set 'maintenance_io_concurrency' configuration variable",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "set-test-testsetstatements-0969-show-maintenance_io_concurrency",
       "suggestedId": "set-test-testsetstatements-0969-show-maintenance_io_concurrency",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SHOW maintenance_io_concurrency",
       "querySha256": "2dff0908323f2089fcee8225be91c62d8ab3fc6518b75eb6f97603976e621b8d",
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -30552,15 +30597,24 @@
       "source": "testing/go/set_test.go:TestSetStatements",
       "ordinal": 1456,
       "scriptName": "set 'transaction_deferrable' configuration variable",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "set-test-testsetstatements-1456-show-transaction_deferrable",
       "suggestedId": "set-test-testsetstatements-1456-show-transaction_deferrable",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SHOW transaction_deferrable",
       "querySha256": "ae63c78e46895606e0ac50bd7f82dcd87f29a506d6904472d80056db6f0bda0c",
+      "expectedRows": [
+        [
+          {
+            "value": "off"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -30794,15 +30848,24 @@
       "source": "testing/go/set_test.go:TestSetStatements",
       "ordinal": 1468,
       "scriptName": "set 'transaction_read_only' configuration variable",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "set-test-testsetstatements-1468-show-transaction_read_only",
       "suggestedId": "set-test-testsetstatements-1468-show-transaction_read_only",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SHOW transaction_read_only",
       "querySha256": "da69ed32429a7730953ed4d9476d39925e381027a839a8eda4a77edb8389243d",
+      "expectedRows": [
+        [
+          {
+            "value": "off"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {

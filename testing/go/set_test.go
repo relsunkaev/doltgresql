@@ -146,8 +146,7 @@ var setStmts = []ScriptTest{
 				Query: "SET SEED 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "set-test-testsetstatements-0030-set-seed-1", Compare: "sqlstate"},
 			},
 			{
-				Query:    "SHOW geqo_seed",
-				Expected: []sql.Row{{float64(1)}},
+				Query: "SHOW geqo_seed", PostgresOracle: ScriptTestPostgresOracle{ID: "set-test-testsetstatements-0031-show-geqo_seed"},
 			},
 			{
 				Query: "SELECT current_setting('geqo_seed')", PostgresOracle: ScriptTestPostgresOracle{ID: "set-test-testsetstatements-0032-select-current_setting-geqo_seed"},
@@ -1758,15 +1757,13 @@ var setStmts = []ScriptTest{
 				Query: "SET effective_io_concurrency TO '100'", PostgresOracle: ScriptTestPostgresOracle{ID: "set-test-testsetstatements-0400-set-effective_io_concurrency-to-100", Compare: "sqlstate"},
 			},
 			{
-				Query:    "SHOW effective_io_concurrency",
-				Expected: []sql.Row{{int64(100)}},
+				Query: "SHOW effective_io_concurrency", PostgresOracle: ScriptTestPostgresOracle{ID: "set-test-testsetstatements-0401-show-effective_io_concurrency"},
 			},
 			{
 				Query: "SET effective_io_concurrency TO DEFAULT", PostgresOracle: ScriptTestPostgresOracle{ID: "set-test-testsetstatements-0402-set-effective_io_concurrency-to-default"},
 			},
 			{
-				Query:    "SHOW effective_io_concurrency",
-				Expected: []sql.Row{{int64(0)}},
+				Query: "SHOW effective_io_concurrency", PostgresOracle: ScriptTestPostgresOracle{ID: "set-test-testsetstatements-0403-show-effective_io_concurrency"},
 			},
 			{
 				Query: "SELECT current_setting('effective_io_concurrency')", PostgresOracle: ScriptTestPostgresOracle{ID: "set-test-testsetstatements-0404-select-current_setting-effective_io_concurrency"},
@@ -4136,15 +4133,13 @@ var setStmts = []ScriptTest{
 				Query: "SET maintenance_io_concurrency TO '1'", PostgresOracle: ScriptTestPostgresOracle{ID: "set-test-testsetstatements-0966-set-maintenance_io_concurrency-to-1", Compare: "sqlstate"},
 			},
 			{
-				Query:    "SHOW maintenance_io_concurrency",
-				Expected: []sql.Row{{int64(1)}},
+				Query: "SHOW maintenance_io_concurrency", PostgresOracle: ScriptTestPostgresOracle{ID: "set-test-testsetstatements-0967-show-maintenance_io_concurrency"},
 			},
 			{
 				Query: "SET maintenance_io_concurrency TO DEFAULT", PostgresOracle: ScriptTestPostgresOracle{ID: "set-test-testsetstatements-0968-set-maintenance_io_concurrency-to-default"},
 			},
 			{
-				Query:    "SHOW maintenance_io_concurrency",
-				Expected: []sql.Row{{int64(0)}},
+				Query: "SHOW maintenance_io_concurrency", PostgresOracle: ScriptTestPostgresOracle{ID: "set-test-testsetstatements-0969-show-maintenance_io_concurrency"},
 			},
 			{
 				Query: "SELECT current_setting('maintenance_io_concurrency')", PostgresOracle: ScriptTestPostgresOracle{ID: "set-test-testsetstatements-0970-select-current_setting-maintenance_io_concurrency"},
@@ -6333,8 +6328,7 @@ var setStmts = []ScriptTest{
 				Query: "SET transaction_deferrable TO DEFAULT", PostgresOracle: ScriptTestPostgresOracle{ID: "set-test-testsetstatements-1455-set-transaction_deferrable-to-default", Compare: "sqlstate"},
 			},
 			{
-				Query:    "SHOW transaction_deferrable",
-				Expected: []sql.Row{{int8(0)}},
+				Query: "SHOW transaction_deferrable", PostgresOracle: ScriptTestPostgresOracle{ID: "set-test-testsetstatements-1456-show-transaction_deferrable"},
 			},
 			{
 				Query: "SELECT current_setting('transaction_deferrable')", PostgresOracle: ScriptTestPostgresOracle{ID: "set-test-testsetstatements-1457-select-current_setting-transaction_deferrable"},
@@ -6382,8 +6376,7 @@ var setStmts = []ScriptTest{
 				Query: "SET transaction_read_only TO DEFAULT", PostgresOracle: ScriptTestPostgresOracle{ID: "set-test-testsetstatements-1467-set-transaction_read_only-to-default", Compare: "sqlstate"},
 			},
 			{
-				Query:    "SHOW transaction_read_only",
-				Expected: []sql.Row{{int8(0)}},
+				Query: "SHOW transaction_read_only", PostgresOracle: ScriptTestPostgresOracle{ID: "set-test-testsetstatements-1468-show-transaction_read_only"},
 			},
 			{
 				Query: "SELECT current_setting('transaction_read_only')", PostgresOracle: ScriptTestPostgresOracle{ID: "set-test-testsetstatements-1469-select-current_setting-transaction_read_only"},

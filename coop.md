@@ -10,6 +10,14 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### omega - 2026-05-13 21:34 MST
+
+- Lane claimed: promote seven pre-classified stable `SHOW` rows in `testing/go/set_test.go:TestSetStatements` (`#0031`, `#0401`, `#0403`, `#0967`, `#0969`, `#1456`, `#1468`).
+- Files expected: `testing/go/set_test.go`, `testing/go/testdata/postgres_oracle_migrations/set_test.oracle-map.json`, `testing/go/testdata/postgres_oracle_manifest.json`, and this `coop.md` entry only.
+- Plan: targeted `--refresh-oracle-map`, source rewrite by postgres ID, manifest regeneration, then focused `TestSetStatements`/manifest validation.
+- Validation update: map/source/manifest generation completed and manifest/cache gates passed. Focused `TestSetStatements` validation is red; newly promoted `SHOW geqo_seed`, initial `SHOW effective_io_concurrency`, and initial `SHOW maintenance_io_concurrency` pass, while the default/reset rows for `effective_io_concurrency`, `maintenance_io_concurrency`, `transaction_deferrable`, and `transaction_read_only` expose existing config/default-value mismatches.
+- Boundary: avoid dirty peer source files, active read-only classifications/source lanes, `third_party/dolt`, and unrelated issue/trigger oracle bug-capture commits.
+
 ### omega - 2026-05-13 21:32 MST
 
 - Lane complete locally: promoted `testing/go/issues_test.go` direct candidates `TestIssues#0031-0039` from epsilon's temp-only classification.
