@@ -20,7 +20,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/expression"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
@@ -341,10 +340,10 @@ func jsonAggObjectKey(ctx *sql.Context, typ *pgtypes.DoltgresType, val any) (str
 		return "", err
 	}
 	if res == nil {
-		return "", errors.New("field name must not be null")
+		return "", pgerror.New(pgcode.NullValueNotAllowed, "field name must not be null")
 	}
 	if jsonAggObjectKeyIsNonScalar(typ, res) {
-		return "", errors.New(jsonAggObjectNonScalarKeyErr)
+		return "", pgerror.New(pgcode.InvalidParameterValue, jsonAggObjectNonScalarKeyErr)
 	}
 	if str, ok := res.(string); ok {
 		return str, nil
