@@ -4434,6 +4434,10 @@ func errMessageToSQLState(msg string) (string, bool) {
 		return pgcode.DuplicateRelation.String(), true
 	case strings.HasPrefix(msg, `index "`) && strings.HasSuffix(msg, `" was not found`):
 		return pgcode.UndefinedObject.String(), true
+	case strings.HasPrefix(msg, `Constraint "`) && strings.HasSuffix(msg, `" does not exist`):
+		return pgcode.UndefinedObject.String(), true
+	case msg == "error: Multiple primary keys defined" || msg == "Multiple primary keys defined":
+		return pgcode.InvalidTableDefinition.String(), true
 	case strings.HasPrefix(msg, `materialized view "`) && strings.HasSuffix(msg, `" has not been populated`):
 		return pgcode.ObjectNotInPrerequisiteState.String(), true
 	case strings.HasPrefix(msg, "REFRESH options CONCURRENTLY and WITH NO DATA cannot be used together"):

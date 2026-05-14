@@ -370,3 +370,19 @@ func TestErrMessageToSQLStateFormatsIndexDDLErrors(t *testing.T) {
 		require.Equal(t, tt.code.String(), errorResponseCode(errors.New(tt.msg)))
 	}
 }
+
+func TestErrMessageToSQLStateFormatsAlterTableDDLErrors(t *testing.T) {
+	for _, tt := range []struct {
+		msg  string
+		code pgcode.Code
+	}{
+		{msg: `Constraint "doesnotexist" does not exist`, code: pgcode.UndefinedObject},
+		{msg: "error: Multiple primary keys defined", code: pgcode.InvalidTableDefinition},
+		{msg: "Multiple primary keys defined", code: pgcode.InvalidTableDefinition},
+	} {
+		code, ok := errMessageToSQLState(tt.msg)
+		require.True(t, ok)
+		require.Equal(t, tt.code.String(), code)
+		require.Equal(t, tt.code.String(), errorResponseCode(errors.New(tt.msg)))
+	}
+}
