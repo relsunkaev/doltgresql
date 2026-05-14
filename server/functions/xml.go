@@ -33,7 +33,6 @@ func initXml() {
 	framework.RegisterFunction(xml_recv)
 	framework.RegisterFunction(xml_send)
 	framework.RegisterFunction(xml_text)
-	framework.RegisterFunction(xmltext_text)
 	framework.RegisterFunction(xmlcomment_text)
 	framework.RegisterFunction(xmlelement_any)
 	framework.RegisterFunction(xmlforest_any)
@@ -117,16 +116,6 @@ var xml_text = framework.Function1{
 			return nil, err
 		}
 		return input, nil
-	},
-}
-
-var xmltext_text = framework.Function1{
-	Name:       "xmltext",
-	Return:     pgtypes.Xml,
-	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Text},
-	Strict:     true,
-	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
-		return escapeXMLText(val.(string)), nil
 	},
 }
 
