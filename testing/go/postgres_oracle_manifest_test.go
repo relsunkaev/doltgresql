@@ -519,6 +519,21 @@ func TestPostgresOraclePromotedMapSupportsPostgresIDFilter(t *testing.T) {
 	require.Equal(t, postgresID, generated.Assertions[0].PostgresID)
 }
 
+func TestPostgresOracleRewriteSourcesSupportsSourceFileFilter(t *testing.T) {
+	cmd := exec.Command("go", "run", "gen_postgres_oracle_manifest.go",
+		"--rewrite-oracle-source-file", "session_test.go")
+	output, err := cmd.CombinedOutput()
+	require.Error(t, err)
+	require.Contains(t, string(output), "--rewrite-oracle-source-file requires --rewrite-oracle-sources")
+
+	cmd = exec.Command("go", "run", "gen_postgres_oracle_manifest.go",
+		"--rewrite-oracle-sources",
+		"--rewrite-oracle-source-file", "missing_oracle_source_test.go")
+	output, err = cmd.CombinedOutput()
+	require.Error(t, err)
+	require.Contains(t, string(output), "no PostgreSQL oracle source entries matched --rewrite-oracle-source-file missing_oracle_source_test.go")
+}
+
 func TestPostgresOraclePromotedMapSupportsPackageScriptTestVariables(t *testing.T) {
 	outPath := filepath.Join(t.TempDir(), "set_test.oracle-map.json")
 	cmd := exec.Command("go", "run", "gen_postgres_oracle_manifest.go",

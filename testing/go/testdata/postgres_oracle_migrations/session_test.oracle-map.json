@@ -40,12 +40,15 @@
       "source": "testing/go/session_test.go:TestDiscard",
       "ordinal": 2,
       "scriptName": "Test discard",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "session-test-testdiscard-0002-discard-all",
       "suggestedId": "session-test-testdiscard-0002-discard-all",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "DISCARD ALL",
       "querySha256": "98f36323c6bcf3d04d4b423d63caa325d692376ef457a4c1b41c27023a19ebf4",
-      "needsCleanup": true,
+      "expectedRows": [],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -53,12 +56,16 @@
       "source": "testing/go/session_test.go:TestDiscard",
       "ordinal": 3,
       "scriptName": "Test discard",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "session-test-testdiscard-0003-select-*-from-test",
       "suggestedId": "session-test-testdiscard-0003-select-*-from-test",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
       "query": "select * from test",
       "querySha256": "a683579dfdba586b444f0994f4b0b31351b8ec438cae0b4091fc3a0d658613f0",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -105,25 +112,41 @@
       "source": "testing/go/session_test.go:TestRollback",
       "ordinal": 1,
       "scriptName": "Test rollback transaction",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "session-test-testrollback-0001-select-*-from-test",
       "suggestedId": "session-test-testrollback-0001-select-*-from-test",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "select * from test",
       "querySha256": "a683579dfdba586b444f0994f4b0b31351b8ec438cae0b4091fc3a0d658613f0",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "cleanup": [
+        "ROLLBACK",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/session_test.go:TestRollback#0002",
       "source": "testing/go/session_test.go:TestRollback",
       "ordinal": 2,
       "scriptName": "Test rollback transaction",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "session-test-testrollback-0002-rollback",
       "suggestedId": "session-test-testrollback-0002-rollback",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "ROLLBACK",
       "querySha256": "587fa628a9fe4642ac0e22825a97e81d388af674f7251a9fb699f96901dcb710",
-      "needsCleanup": true,
+      "expectedRows": [],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -222,25 +245,34 @@
       "source": "testing/go/session_test.go:TestSetTransaction",
       "ordinal": 6,
       "scriptName": "Begin transaction serializable isolation mode",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "session-test-testsettransaction-0006-begin-isolation-level-serializable",
       "suggestedId": "session-test-testsettransaction-0006-begin-isolation-level-serializable",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "BEGIN ISOLATION LEVEL SERIALIZABLE",
       "querySha256": "547004d6c33e887b6fe478e1d23004ef14c3fa1c8c4756ec52aea4a3933e7fb0",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "ROLLBACK"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/session_test.go:TestSetTransaction#0007",
       "source": "testing/go/session_test.go:TestSetTransaction",
       "ordinal": 7,
       "scriptName": "Begin transaction serializable isolation mode",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "session-test-testsettransaction-0007-commit",
       "suggestedId": "session-test-testsettransaction-0007-commit",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "COMMIT",
       "querySha256": "79663c1d3b43ceaf9ee728e501c64b57ae2e4d6cb36ff5c65eddcda1de27342f",
-      "needsCleanup": true,
+      "expectedRows": [],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -248,25 +280,35 @@
       "source": "testing/go/session_test.go:TestSetTransaction",
       "ordinal": 8,
       "scriptName": "Begin transaction serializable isolation mode",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "session-test-testsettransaction-0008-start-transaction-isolation-level-serializable",
       "suggestedId": "session-test-testsettransaction-0008-start-transaction-isolation-level-serializable",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "START TRANSACTION ISOLATION LEVEL SERIALIZABLE READ WRITE",
       "querySha256": "06bb5759491cd68ce004fa92a23bf49f2fb4684e7a490ed71dd02a8c840d8030",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "ROLLBACK",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/session_test.go:TestSetTransaction#0009",
       "source": "testing/go/session_test.go:TestSetTransaction",
       "ordinal": 9,
       "scriptName": "Begin transaction serializable isolation mode",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "session-test-testsettransaction-0009-commit",
       "suggestedId": "session-test-testsettransaction-0009-commit",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "COMMIT",
       "querySha256": "79663c1d3b43ceaf9ee728e501c64b57ae2e4d6cb36ff5c65eddcda1de27342f",
-      "needsCleanup": true,
+      "expectedRows": [],
+      "needsCleanup": false,
       "cleanupProvided": false
     }
   ]

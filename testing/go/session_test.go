@@ -19,12 +19,10 @@ func TestDiscard(t *testing.T) {
 					Query: "select * from test", PostgresOracle: ScriptTestPostgresOracle{ID: "session-test-testdiscard-0001-select-*-from-test"},
 				},
 				{
-					Query:    "DISCARD ALL",
-					Expected: []sql.Row{},
+					Query: "DISCARD ALL", PostgresOracle: ScriptTestPostgresOracle{ID: "session-test-testdiscard-0002-discard-all"},
 				},
 				{
-					Query:       "select * from test",
-					ExpectedErr: "table not found",
+					Query: "select * from test", PostgresOracle: ScriptTestPostgresOracle{ID: "session-test-testdiscard-0003-select-*-from-test", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -78,12 +76,10 @@ func TestRollback(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "select * from test",
-					Expected: []sql.Row{{1}},
+					Query: "select * from test", PostgresOracle: ScriptTestPostgresOracle{ID: "session-test-testrollback-0001-select-*-from-test"},
 				},
 				{
-					Query:    "ROLLBACK",
-					Expected: []sql.Row{},
+					Query: "ROLLBACK", PostgresOracle: ScriptTestPostgresOracle{ID: "session-test-testrollback-0002-rollback"},
 				},
 				{
 					Query:       "select * from test",
@@ -133,20 +129,16 @@ func TestSetTransaction(t *testing.T) {
 			Name: "Begin transaction serializable isolation mode",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "BEGIN ISOLATION LEVEL SERIALIZABLE",
-					Expected: []sql.Row{},
+					Query: "BEGIN ISOLATION LEVEL SERIALIZABLE", PostgresOracle: ScriptTestPostgresOracle{ID: "session-test-testsettransaction-0006-begin-isolation-level-serializable"},
 				},
 				{
-					Query:    "COMMIT",
-					Expected: []sql.Row{},
+					Query: "COMMIT", PostgresOracle: ScriptTestPostgresOracle{ID: "session-test-testsettransaction-0007-commit"},
 				},
 				{
-					Query:    "START TRANSACTION ISOLATION LEVEL SERIALIZABLE READ WRITE",
-					Expected: []sql.Row{},
+					Query: "START TRANSACTION ISOLATION LEVEL SERIALIZABLE READ WRITE", PostgresOracle: ScriptTestPostgresOracle{ID: "session-test-testsettransaction-0008-start-transaction-isolation-level-serializable"},
 				},
 				{
-					Query:    "COMMIT",
-					Expected: []sql.Row{},
+					Query: "COMMIT", PostgresOracle: ScriptTestPostgresOracle{ID: "session-test-testsettransaction-0009-commit"},
 				},
 			},
 		},

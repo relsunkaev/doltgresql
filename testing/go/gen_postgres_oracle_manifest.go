@@ -136,6 +136,7 @@ func main() {
 	refreshOracleMap := flag.String("refresh-oracle-map", "", "promote one ScriptTest source file and refresh its cached expected rows from PostgreSQL")
 	promoteOracleMapOutput := flag.String("promote-oracle-map-output", "", "output path for --promote-oracle-map; defaults to testdata/postgres_oracle_migrations/<source>.oracle-map.json")
 	rewriteOracleSourcesFlag := flag.Bool("rewrite-oracle-sources", false, "remove handwritten Expected* fields from source assertions covered by PostgreSQL oracle maps and add explicit PostgresOracle markers")
+	rewriteOracleSourceFile := flag.String("rewrite-oracle-source-file", "", "optional comma-separated source file filter for --rewrite-oracle-sources")
 	oracleTestName := flag.String("oracle-test-name", "", "optional comma-separated Test function filter for --promote-oracle-map or --refresh-oracle-map")
 	oracleScriptName := flag.String("oracle-script-name", "", "optional comma-separated ScriptTest Name filter for --promote-oracle-map or --refresh-oracle-map")
 	oracleSkipScriptName := flag.String("oracle-skip-script-name", "", "optional comma-separated ScriptTest Name filter to exclude for --promote-oracle-map or --refresh-oracle-map")
@@ -150,7 +151,8 @@ func main() {
 			fmt.Fprintln(os.Stderr, "--rewrite-oracle-sources cannot be combined with other generator modes or options")
 			os.Exit(1)
 		}
-		if err := rewriteOracleSources(); err != nil {
+		sourceFiles := parseOracleSourceFileFilter(*rewriteOracleSourceFile)
+		if err := rewriteOracleSources(sourceFiles); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
@@ -218,6 +220,11 @@ func main() {
 		return
 	}
 
+	if *rewriteOracleSourceFile != "" {
+		fmt.Fprintln(os.Stderr, "--rewrite-oracle-source-file requires --rewrite-oracle-sources")
+		os.Exit(1)
+	}
+
 	if *forcePostgresOracle {
 		fmt.Fprintln(os.Stderr, "--force-postgres-oracle requires --refresh-oracle-map")
 		os.Exit(1)
@@ -252,6 +259,19 @@ func parseOracleScriptNameFilter(value string) map[string]struct{} {
 
 func parseOraclePostgresIDFilter(value string) map[string]struct{} {
 	return parseOracleNameFilter(value)
+}
+
+func parseOracleSourceFileFilter(value string) map[string]struct{} {
+	rawFilter := parseOracleNameFilter(value)
+	if len(rawFilter) == 0 {
+		return nil
+	}
+	filter := map[string]struct{}{}
+	for file := range rawFilter {
+		file = strings.TrimPrefix(file, "testing/go/")
+		filter[file] = struct{}{}
+	}
+	return filter
 }
 
 func parseOracleNameFilter(value string) map[string]struct{} {
@@ -506,7 +526,7 @@ func addMigrationOverrides(overrides map[string]oracleMeta, mapped migrationFile
 	return nil
 }
 
-func rewriteOracleSources() error {
+func rewriteOracleSources(sourceFileFilter map[string]struct{}) error {
 	migrationOverrides, err := loadMigrationOverrides()
 	if err != nil {
 		return err
@@ -525,6 +545,11 @@ func rewriteOracleSources() error {
 		if sourceFile == "" {
 			continue
 		}
+		if len(sourceFileFilter) > 0 {
+			if _, ok := sourceFileFilter[sourceFile]; !ok {
+				continue
+			}
+		}
 		files[sourceFile] = struct{}{}
 	}
 	sortedFiles := make([]string, 0, len(files))
@@ -532,6 +557,9 @@ func rewriteOracleSources() error {
 		sortedFiles = append(sortedFiles, file)
 	}
 	sort.Strings(sortedFiles)
+	if len(sourceFileFilter) > 0 && len(sortedFiles) == 0 {
+		return fmt.Errorf("no PostgreSQL oracle source entries matched --rewrite-oracle-source-file %s", strings.Join(sortedFilterKeys(sourceFileFilter), ","))
+	}
 	for _, file := range sortedFiles {
 		if err := rewriteOracleSourceFile(file, migrationOverrides); err != nil {
 			return err
