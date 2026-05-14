@@ -149,9 +149,10 @@ func TestAuthTests(t *testing.T) {
 					Query: `CREATE USER user4 PASSWORD 'pass4' NOLOGIN;`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0020-create-user-user4-password-pass4"},
 				},
 				{
-					Query:    `SELECT 1;`,
-					Username: `user1`,
-					Password: `pass1`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0021-select-1"},
+					Query:       `SELECT 1;`,
+					Username:    `user1`,
+					Password:    `pass1`,
+					ExpectedErr: `authentication failed`,
 				},
 				{
 					Query:    `SELECT 2;`,
@@ -164,9 +165,10 @@ func TestAuthTests(t *testing.T) {
 					Password: `pass3`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0023-select-3"},
 				},
 				{
-					Query:    `SELECT 4;`,
-					Username: `user4`,
-					Password: `pass4`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0024-select-4"},
+					Query:       `SELECT 4;`,
+					Username:    `user4`,
+					Password:    `pass4`,
+					ExpectedErr: `authentication failed`,
 				},
 				{ // We'll flip LOGIN/NOLOGIN statuses
 					Query: `ALTER USER user1 WITH LOGIN;`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0025-alter-user-user1-with-login"},
@@ -180,9 +182,10 @@ func TestAuthTests(t *testing.T) {
 					Password: `pass1`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0027-select-5"},
 				},
 				{
-					Query:    `SELECT 6;`,
-					Username: `user2`,
-					Password: `pass2`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0028-select-6"},
+					Query:       `SELECT 6;`,
+					Username:    `user2`,
+					Password:    `pass2`,
+					ExpectedErr: `authentication failed`,
 				},
 			},
 		},

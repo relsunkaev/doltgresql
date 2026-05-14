@@ -354,22 +354,13 @@
       "source": "testing/go/auth_test.go:TestAuthTests",
       "ordinal": 21,
       "scriptName": "ALTER LOGIN",
-      "oracle": "postgres",
-      "postgresId": "auth-test-testauthtests-0021-select-1",
+      "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0021-select-1",
-      "compare": "structural",
       "expectedKind": "error",
       "username": "user1",
       "query": "SELECT 1;",
       "querySha256": "17db4fd369edb9244b9f91d9aeed145c3d04ad8ba6e95d06247f07a63527d11a",
-      "expectedRows": [
-        [
-          {
-            "value": "1"
-          }
-        ]
-      ],
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -423,22 +414,13 @@
       "source": "testing/go/auth_test.go:TestAuthTests",
       "ordinal": 24,
       "scriptName": "ALTER LOGIN",
-      "oracle": "postgres",
-      "postgresId": "auth-test-testauthtests-0024-select-4",
+      "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0024-select-4",
-      "compare": "structural",
       "expectedKind": "error",
       "username": "user4",
       "query": "SELECT 4;",
       "querySha256": "3f55c55f7360881c3fd6ecd9e05c47b4d461a8a0579bddcba6fccbb6105ff66e",
-      "expectedRows": [
-        [
-          {
-            "value": "4"
-          }
-        ]
-      ],
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -501,22 +483,13 @@
       "source": "testing/go/auth_test.go:TestAuthTests",
       "ordinal": 28,
       "scriptName": "ALTER LOGIN",
-      "oracle": "postgres",
-      "postgresId": "auth-test-testauthtests-0028-select-6",
+      "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0028-select-6",
-      "compare": "structural",
       "expectedKind": "error",
       "username": "user2",
       "query": "SELECT 6;",
       "querySha256": "664d691f1561d639bbcb21db95e4098505cfb5a5f945d32f72571da388fe1034",
-      "expectedRows": [
-        [
-          {
-            "value": "6"
-          }
-        ]
-      ],
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
