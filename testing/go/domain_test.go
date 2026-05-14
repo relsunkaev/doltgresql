@@ -48,7 +48,7 @@ func TestDomain(t *testing.T) {
 					Query: `CREATE TABLE test_table (id int primary key, v non_existing_domain);`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0007-create-table-test_table-id-int", Compare: "sqlstate"},
 				},
 				{
-					Query: `SELECT conname, contype, conrelid, contypid from pg_constraint WHERE conname IN ('year_check', 'year_check_min', 'year_check_max') ORDER BY conname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0008-select-conname-contype-conrelid-contypid"},
+					Query: `SELECT conname, contype, conrelid, contypid::regtype::text AS contypid from pg_constraint WHERE conname IN ('year_check', 'year_check_min', 'year_check_max') ORDER BY conname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0008-select-conname-contype-conrelid-contypid"},
 				},
 			},
 		},
@@ -60,7 +60,7 @@ func TestDomain(t *testing.T) {
 					Query: `CREATE DOMAIN d1 AS integer CONSTRAINT check1 CHECK (VALUE > 100) CONSTRAINT check2 CHECK (VALUE < 200);`,
 				},
 				{
-					Query: `SELECT conname, contype, conrelid, contypid from pg_constraint WHERE conname IN ('check1', 'check2') ORDER BY conname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0009-select-conname-contype-conrelid-contypid"},
+					Query: `SELECT conname, contype, conrelid, contypid::regtype::text AS contypid from pg_constraint WHERE conname IN ('check1', 'check2') ORDER BY conname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0009-select-conname-contype-conrelid-contypid"},
 				},
 				{
 					Query: "create table t1 (pk int primary key, v d1);",
@@ -78,14 +78,14 @@ func TestDomain(t *testing.T) {
 					Query: "CREATE DOMAIN d2 AS integer CHECK (VALUE > 300) CHECK (VALUE < 400);",
 				},
 				{
-					Query: `SELECT conname, contype, conrelid, contypid from pg_constraint WHERE conname IN ('d2_check', 'd2_check1') ORDER BY conname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0012-select-conname-contype-conrelid-contypid"},
+					Query: `SELECT conname, contype, conrelid, contypid::regtype::text AS contypid from pg_constraint WHERE conname IN ('d2_check', 'd2_check1') ORDER BY conname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0012-select-conname-contype-conrelid-contypid"},
 				},
 				{
 					Query: "CREATE DOMAIN d3 AS integer CONSTRAINT d3_check1 CHECK (VALUE > 300) CHECK (VALUE < 400);",
 				},
 				{
 					// TODO: this is slightly different behavior from Postgres, but the important thing is two different names are generated
-					Query: `SELECT conname, contype, conrelid, contypid from pg_constraint WHERE conname IN ('d3_check1', 'd3_check') ORDER BY conname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0013-select-conname-contype-conrelid-contypid"},
+					Query: `SELECT conname, contype, conrelid, contypid::regtype::text AS contypid from pg_constraint WHERE conname IN ('d3_check1', 'd3_check') ORDER BY conname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-test-testdomain-0013-select-conname-contype-conrelid-contypid"},
 				},
 			},
 		},

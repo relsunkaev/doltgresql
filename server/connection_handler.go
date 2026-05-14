@@ -4431,6 +4431,10 @@ func errMessageToSQLState(msg string) (string, bool) {
 		return pgcode.DivisionByZero.String(), true
 	case strings.HasPrefix(msg, "domain ") && strings.HasSuffix(msg, " does not allow null values"):
 		return pgcode.NotNullViolation.String(), true
+	case strings.HasPrefix(msg, "Field '") && strings.Contains(msg, "' doesn't have a default value"):
+		return pgcode.NotNullViolation.String(), true
+	case strings.HasPrefix(msg, `null value in column "`) && strings.Contains(msg, `" violates not-null constraint`):
+		return pgcode.NotNullViolation.String(), true
 	case strings.HasPrefix(msg, "ASSIGNMENT_CAST: target is of type "):
 		return pgcode.DatatypeMismatch.String(), true
 	case strings.HasPrefix(msg, "EXPLICIT CAST: cast from ") && strings.Contains(msg, " does not exist"):

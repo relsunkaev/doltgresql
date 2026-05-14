@@ -136,11 +136,11 @@
       "scriptName": "create domain",
       "oracle": "postgres",
       "postgresId": "domain-test-testdomain-0008-select-conname-contype-conrelid-contypid",
-      "suggestedId": "domain-test-testdomain-0008-select-conname-contype-conrelid-contypid",
+      "suggestedId": "domain-test-testdomain-0008-select-conname-contype-conrelid-contypid::regtype::text",
       "compare": "structural",
       "expectedKind": "rows",
-      "query": "SELECT conname, contype, conrelid, contypid from pg_constraint WHERE conname IN ('year_check', 'year_check_min', 'year_check_max') ORDER BY conname;",
-      "querySha256": "d380f07fce937675854d8d39f6b1309c87e856e4243e16faa1c2958829512c01",
+      "query": "SELECT conname, contype, conrelid, contypid::regtype::text AS contypid from pg_constraint WHERE conname IN ('year_check', 'year_check_min', 'year_check_max') ORDER BY conname;",
+      "querySha256": "b7abae79e9e8a63bb78221826c0f21be508803d283fab374ea9ad62fa0156e42",
       "expectedRows": [
         [
           {
@@ -153,7 +153,7 @@
             "value": "0"
           },
           {
-            "value": "280981"
+            "value": "year"
           }
         ],
         [
@@ -167,21 +167,7 @@
             "value": "0"
           },
           {
-            "value": "281018"
-          }
-        ],
-        [
-          {
-            "value": "year_check"
-          },
-          {
-            "value": "c"
-          },
-          {
-            "value": "0"
-          },
-          {
-            "value": "281021"
+            "value": "year_with_check"
           }
         ],
         [
@@ -195,7 +181,7 @@
             "value": "0"
           },
           {
-            "value": "281024"
+            "value": "year_with_two_checks"
           }
         ],
         [
@@ -209,7 +195,7 @@
             "value": "0"
           },
           {
-            "value": "281024"
+            "value": "year_with_two_checks"
           }
         ]
       ],
@@ -223,11 +209,11 @@
       "scriptName": "multiple checks",
       "oracle": "postgres",
       "postgresId": "domain-test-testdomain-0009-select-conname-contype-conrelid-contypid",
-      "suggestedId": "domain-test-testdomain-0009-select-conname-contype-conrelid-contypid",
+      "suggestedId": "domain-test-testdomain-0009-select-conname-contype-conrelid-contypid::regtype::text",
       "compare": "structural",
       "expectedKind": "rows",
-      "query": "SELECT conname, contype, conrelid, contypid from pg_constraint WHERE conname IN ('check1', 'check2') ORDER BY conname;",
-      "querySha256": "2c6ca48c1911d709b26bdf65aac503603410c41ed8f9e48ed684eb3c572b8353",
+      "query": "SELECT conname, contype, conrelid, contypid::regtype::text AS contypid from pg_constraint WHERE conname IN ('check1', 'check2') ORDER BY conname;",
+      "querySha256": "b048caced95ea29bb32ea9584d691e6db18e0674dbac5f220b679c464fbeca4b",
       "expectedRows": [
         [
           {
@@ -240,7 +226,7 @@
             "value": "0"
           },
           {
-            "value": "281029"
+            "value": "d1"
           }
         ],
         [
@@ -254,7 +240,7 @@
             "value": "0"
           },
           {
-            "value": "281029"
+            "value": "d1"
           }
         ]
       ],
@@ -302,11 +288,11 @@
       "scriptName": "multiple checks",
       "oracle": "postgres",
       "postgresId": "domain-test-testdomain-0012-select-conname-contype-conrelid-contypid",
-      "suggestedId": "domain-test-testdomain-0012-select-conname-contype-conrelid-contypid",
+      "suggestedId": "domain-test-testdomain-0012-select-conname-contype-conrelid-contypid::regtype::text",
       "compare": "structural",
       "expectedKind": "rows",
-      "query": "SELECT conname, contype, conrelid, contypid from pg_constraint WHERE conname IN ('d2_check', 'd2_check1') ORDER BY conname;",
-      "querySha256": "650bdc49a3667b2cd6454f78fddb8db45dbc7bd02aa00b6302c3c4cdaaa81f2c",
+      "query": "SELECT conname, contype, conrelid, contypid::regtype::text AS contypid from pg_constraint WHERE conname IN ('d2_check', 'd2_check1') ORDER BY conname;",
+      "querySha256": "a5c9ec993a2896d1fd68bc4b14e00baa81f8e236409295d9ec7f2042e2bfff50",
       "expectedRows": [
         [
           {
@@ -319,7 +305,7 @@
             "value": "0"
           },
           {
-            "value": "281063"
+            "value": "d2"
           }
         ],
         [
@@ -333,7 +319,7 @@
             "value": "0"
           },
           {
-            "value": "281063"
+            "value": "d2"
           }
         ]
       ],
@@ -347,11 +333,11 @@
       "scriptName": "multiple checks",
       "oracle": "postgres",
       "postgresId": "domain-test-testdomain-0013-select-conname-contype-conrelid-contypid",
-      "suggestedId": "domain-test-testdomain-0013-select-conname-contype-conrelid-contypid",
+      "suggestedId": "domain-test-testdomain-0013-select-conname-contype-conrelid-contypid::regtype::text",
       "compare": "structural",
       "expectedKind": "rows",
-      "query": "SELECT conname, contype, conrelid, contypid from pg_constraint WHERE conname IN ('d3_check1', 'd3_check') ORDER BY conname;",
-      "querySha256": "a5c756459a4a56f17645f58b10d2b084897f093aaa0331a836d267ef0815ef60",
+      "query": "SELECT conname, contype, conrelid, contypid::regtype::text AS contypid from pg_constraint WHERE conname IN ('d3_check1', 'd3_check') ORDER BY conname;",
+      "querySha256": "8b0868badc9c2c03781d060d73ee86916d89a7bbe93976687cc2185b891850ca",
       "expectedRows": [
         [
           {
@@ -364,7 +350,7 @@
             "value": "0"
           },
           {
-            "value": "281081"
+            "value": "d3"
           }
         ],
         [
@@ -378,7 +364,7 @@
             "value": "0"
           },
           {
-            "value": "281081"
+            "value": "d3"
           }
         ]
       ],
