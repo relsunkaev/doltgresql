@@ -36,6 +36,8 @@ import (
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/core/publications"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	pgnodes "github.com/dolthub/doltgresql/server/node"
 	"github.com/dolthub/doltgresql/server/replicaidentity"
 	"github.com/dolthub/doltgresql/server/replsource"
@@ -625,7 +627,7 @@ func (capture *replicationChangeCapture) validateReplicaIdentity(ctx *sql.Contex
 		return err
 	}
 	if setting.Identity == replicaidentity.IdentityNothing || (setting.Identity != replicaidentity.IdentityFull && len(keyColumns) == 0) {
-		return errors.Errorf(`cannot %s table "%s" because it does not have a replica identity and publishes %s`,
+		return pgerror.Newf(pgcode.ObjectNotInPrerequisiteState, `cannot %s table "%s" because it does not have a replica identity and publishes %s`,
 			replicationChangeActionSQL(capture.action), capture.table, replicationChangeActionSQL(capture.action))
 	}
 	return nil
