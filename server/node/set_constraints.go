@@ -23,6 +23,8 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/deferrable"
 	pgexprs "github.com/dolthub/doltgresql/server/expression"
 )
@@ -167,10 +169,10 @@ func (s *SetConstraints) validateNamedConstraints(ctx *sql.Context) error {
 			return err
 		}
 		if !found {
-			return errors.Errorf(`constraint "%s" does not exist`, name)
+			return pgerror.Newf(pgcode.UndefinedObject, `constraint "%s" does not exist`, name)
 		}
 		if !isDeferrable {
-			return errors.Errorf(`constraint "%s" is not deferrable`, name)
+			return pgerror.Newf(pgcode.WrongObjectType, `constraint "%s" is not deferrable`, name)
 		}
 	}
 	return nil
