@@ -850,18 +850,13 @@ func rewriteOracleAssertion(lit *ast.CompositeLit, meta oracleMeta) bool {
 		}
 		if key.Name == "PostgresOracle" {
 			hasPostgresOracle = true
-			replacement := postgresOracleMarker(meta)
-			if !reflect.DeepEqual(kv.Value, replacement) {
-				kv.Value = replacement
-				changed = true
-			}
 		}
 		rewritten = append(rewritten, element)
 	}
 	if !hasPostgresOracle {
 		rewritten = append(rewritten, &ast.KeyValueExpr{
 			Key:   ast.NewIdent("PostgresOracle"),
-			Value: postgresOracleMarker(meta),
+			Value: postgresOracleSourceMarker(meta.ID),
 		})
 		changed = true
 	}
@@ -869,6 +864,21 @@ func rewriteOracleAssertion(lit *ast.CompositeLit, meta oracleMeta) bool {
 		lit.Elts = rewritten
 	}
 	return changed
+}
+
+func postgresOracleSourceMarker(id string) *ast.CompositeLit {
+	return &ast.CompositeLit{
+		Type: ast.NewIdent("ScriptTestPostgresOracle"),
+		Elts: []ast.Expr{
+			&ast.KeyValueExpr{
+				Key: &ast.Ident{Name: "ID"},
+				Value: &ast.BasicLit{
+					Kind:  token.STRING,
+					Value: strconv.Quote(id),
+				},
+			},
+		},
+	}
 }
 
 func postgresOracleMarker(meta oracleMeta) *ast.CompositeLit {
