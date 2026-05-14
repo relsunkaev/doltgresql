@@ -962,6 +962,7 @@ func TestCommentOnFunctionRequiresOwnershipRepro(t *testing.T) {
 			SetUpScript: []string{
 				`CREATE USER function_comment_intruder PASSWORD 'intruder';`,
 				`CREATE FUNCTION comment_private_function() RETURNS INT LANGUAGE SQL AS $$ SELECT 7 $$;`,
+				`GRANT USAGE ON SCHEMA public TO function_comment_intruder;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
@@ -986,6 +987,7 @@ func TestCommentOnTypeRequiresOwnershipRepro(t *testing.T) {
 			SetUpScript: []string{
 				`CREATE USER type_comment_intruder PASSWORD 'intruder';`,
 				`CREATE TYPE comment_private_type AS ENUM ('one', 'two');`,
+				`GRANT USAGE ON SCHEMA public TO type_comment_intruder;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
