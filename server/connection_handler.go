@@ -4395,6 +4395,8 @@ func errMessageToSQLState(msg string) (string, bool) {
 		return pgcode.InvalidColumnReference.String(), true
 	case msg == "WITH TIES cannot be specified without ORDER BY":
 		return pgcode.Syntax.String(), true
+	case strings.HasPrefix(msg, "FOR UPDATE is not allowed with "):
+		return pgcode.FeatureNotSupported.String(), true
 	case strings.HasPrefix(msg, `relation "`) && strings.HasSuffix(msg, `" does not exist`):
 		return pgcode.UndefinedTable.String(), true
 	case strings.HasPrefix(msg, `operator "`) && strings.HasSuffix(msg, `" does not exist`):

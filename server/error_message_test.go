@@ -213,6 +213,14 @@ func TestErrMessageToSQLStateFormatsQueryShapeErrors(t *testing.T) {
 			code: pgcode.InvalidColumnReference,
 		},
 		{msg: "WITH TIES cannot be specified without ORDER BY", code: pgcode.Syntax},
+		{
+			msg:  "FOR UPDATE is not allowed with DISTINCT, GROUP BY, aggregate, or HAVING query results",
+			code: pgcode.FeatureNotSupported,
+		},
+		{
+			msg:  "FOR UPDATE is not allowed with set operation query results",
+			code: pgcode.FeatureNotSupported,
+		},
 	} {
 		code, ok := errMessageToSQLState(tt.msg)
 		require.True(t, ok)
