@@ -261,6 +261,9 @@ func (h *DoltgresHandler) ComQuery(ctx context.Context, c *mysql.Conn, query str
 
 func castSQLError(err error) error {
 	pgErr := unwrapGMSWrapperForPGCode(err)
+	if sql.ErrGeneratedColumnValue.Is(pgErr) {
+		return pgerror.New(pgcode.GeneratedAlways, pgErr.Error())
+	}
 	switch pgerror.GetPGCode(pgErr) {
 	case pgcode.DeadlockDetected,
 		pgcode.CannotCoerce,
@@ -270,6 +273,7 @@ func castSQLError(err error) error {
 		pgcode.DuplicatePreparedStatement,
 		pgcode.DuplicateObject,
 		pgcode.FeatureNotSupported,
+		pgcode.GeneratedAlways,
 		pgcode.Grouping,
 		pgcode.InvalidForeignKey,
 		pgcode.InvalidColumnReference,

@@ -248,6 +248,7 @@ var (
 	AmbiguousAlias                     = MakeCode("42P09")
 	InvalidColumnReference             = MakeCode("42P10")
 	InvalidColumnDefinition            = MakeCode("42611")
+	GeneratedAlways                    = MakeCode("428C9")
 	InvalidCursorDefinition            = MakeCode("42P11")
 	InvalidDatabaseDefinition          = MakeCode("42P12")
 	InvalidFunctionDefinition          = MakeCode("42P13")

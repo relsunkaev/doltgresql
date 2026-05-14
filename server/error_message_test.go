@@ -19,6 +19,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/vitess/go/mysql"
 	"github.com/stretchr/testify/require"
 
@@ -65,10 +66,18 @@ func TestErrorResponseCodeFormatsExclusionConstraintViolation(t *testing.T) {
 }
 
 func TestCastSQLErrorPreservesExplicitPGCodes(t *testing.T) {
-	for _, code := range []pgcode.Code{pgcode.Syntax, pgcode.RaiseException, pgcode.CheckViolation, pgcode.InsufficientPrivilege} {
+	for _, code := range []pgcode.Code{pgcode.Syntax, pgcode.RaiseException, pgcode.CheckViolation, pgcode.GeneratedAlways, pgcode.InsufficientPrivilege} {
 		err := pgerror.New(code, "plpgsql error")
 		require.Equal(t, code, pgerror.GetPGCode(castSQLError(err)))
 	}
+}
+
+func TestCastSQLErrorMapsGeneratedColumnValue(t *testing.T) {
+	err := sql.ErrGeneratedColumnValue.New("a", "t1")
+	castErr := castSQLError(err)
+
+	require.Equal(t, pgcode.GeneratedAlways, pgerror.GetPGCode(castErr))
+	require.Equal(t, err.Error(), castErr.Error())
 }
 
 func TestSanitizeErrorMessageFormatsMissingNonNullableColumn(t *testing.T) {
