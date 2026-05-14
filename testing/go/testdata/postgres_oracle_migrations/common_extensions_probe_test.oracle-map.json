@@ -4544,13 +4544,23 @@
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 193,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0193-create-index-vending_inventory_gist_idx-on-vending_machines",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0193-create-index-vending_inventory_gist_idx-on-vending_machines",
-      "expectedKind": "error",
+      "compare": "structural",
+      "expectedKind": "rows",
       "query": "CREATE INDEX vending_inventory_gist_idx ON vending_machines USING gist (inventory gist_hstore_ops);",
       "querySha256": "ea7880fde03dd13eb44690ff0db0b969ee388a179ac8ffef810af3fa4bcd5b71",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0194",

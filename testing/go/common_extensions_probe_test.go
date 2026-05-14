@@ -1159,8 +1159,7 @@ ORDER BY am.amname, opf.opfname, amproc.amprocnum;`,
 					ExpectedErr: `operator class btree_hstore_ops is not yet supported for btree indexes`,
 				},
 				{
-					Query:       `CREATE INDEX vending_inventory_gist_idx ON vending_machines USING gist (inventory gist_hstore_ops);`,
-					ExpectedErr: `index method gist is not yet supported`,
+					Query: `CREATE INDEX vending_inventory_gist_idx ON vending_machines USING gist (inventory gist_hstore_ops);`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0193-create-index-vending_inventory_gist_idx-on-vending_machines", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
 					Query:       `CREATE INDEX vending_inventory_hash_idx ON vending_machines USING hash (inventory hash_hstore_ops);`,
