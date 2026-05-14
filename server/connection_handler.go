@@ -1168,7 +1168,7 @@ func (h *ConnectionHandler) beginTransaction(query ConvertedQuery, transactionCh
 func (h *ConnectionHandler) setTransaction(stmt node.SetTransaction, query ConvertedQuery) error {
 	if stmt.Snapshot != "" {
 		if !h.inTransaction || !h.transactionSnapshotAllowed {
-			return pgerror.New(pgcode.InvalidParameterValue, "must have isolation level SERIALIZABLE or REPEATABLE READ")
+			return pgerror.New(pgcode.FeatureNotSupported, "must have isolation level SERIALIZABLE or REPEATABLE READ")
 		}
 		return pgerror.New(pgcode.InvalidParameterValue, "invalid snapshot identifier")
 	}
