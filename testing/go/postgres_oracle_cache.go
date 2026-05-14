@@ -412,6 +412,9 @@ func normalizeCachedPostgresOracleJSON(value string) string {
 	trimmed := strings.TrimSpace(value)
 	var decoded any
 	if err := json.Unmarshal([]byte(trimmed), &decoded); err == nil {
+		if text, ok := decoded.(string); ok {
+			return text
+		}
 		canonical, err := json.Marshal(decoded)
 		if err == nil {
 			return string(canonical)

@@ -178,7 +178,7 @@ func jsonbSetValue(target pgtypes.JsonValue, path []string, newValue pgtypes.Jso
 
 func jsonbSetValueAt(target pgtypes.JsonValue, path []string, newValue pgtypes.JsonValue, createMissing bool, position int) (pgtypes.JsonValue, error) {
 	if len(path) == 0 {
-		return pgtypes.JsonValueCopy(newValue), nil
+		return pgtypes.JsonValueCopy(target), nil
 	}
 	switch value := target.(type) {
 	case pgtypes.JsonValueObject:
@@ -205,7 +205,7 @@ func jsonbSetValueAt(target pgtypes.JsonValue, path []string, newValue pgtypes.J
 		newArray := pgtypes.JsonValueCopy(value).(pgtypes.JsonValueArray)
 		idx, ok := jsonArrayPathIndex(path[0], len(newArray))
 		if !ok {
-			return nil, errors.Errorf("path element at position %d is not an integer: %q", position, path[0])
+			return nil, pgerror.Newf(pgcode.InvalidTextRepresentation, "path element at position %d is not an integer: %q", position, path[0])
 		}
 		if len(path) == 1 {
 			if idx >= 0 && idx < len(newArray) {
@@ -228,7 +228,7 @@ func jsonbSetValueAt(target pgtypes.JsonValue, path []string, newValue pgtypes.J
 		newArray[idx] = nested
 		return newArray, nil
 	default:
-		return nil, errors.New("cannot set path in scalar")
+		return nil, pgerror.New(pgcode.InvalidParameterValue, "cannot set path in scalar")
 	}
 }
 
@@ -243,14 +243,18 @@ func jsonArrayPathIndex(path string, length int) (int, bool) {
 	return idx, true
 }
 
-func textArrayToStringSlice(val any) ([]string, error) {
+func textArrayToStringSlice(ctx *sql.Context, val any) ([]string, error) {
 	values := val.([]any)
 	path := make([]string, len(values))
 	for i, value := range values {
-		if value == nil {
-			return nil, errors.Errorf("path element at position %d is null", i+1)
+		unwrapped, err := sql.UnwrapAny(ctx, value)
+		if err != nil {
+			return nil, err
 		}
-		path[i] = value.(string)
+		if unwrapped == nil {
+			return nil, pgerror.Newf(pgcode.NullValueNotAllowed, "path element at position %d is null", i+1)
+		}
+		path[i] = unwrapped.(string)
 	}
 	return path, nil
 }

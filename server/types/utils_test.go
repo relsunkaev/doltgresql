@@ -48,6 +48,16 @@ func TestQuoteStringEscapesArraySpecialCharacters(t *testing.T) {
 			want: `"a\\b\"c"`,
 		},
 		{
+			name: "newline",
+			in:   "a\nb",
+			want: "\"a\nb\"",
+		},
+		{
+			name: "tab",
+			in:   "a\tb",
+			want: "\"a\tb\"",
+		},
+		{
 			name: "null spelling",
 			in:   "NULL",
 			want: `"NULL"`,

@@ -23,6 +23,8 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 	fastjson "github.com/goccy/go-json"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -102,7 +104,7 @@ func jsonPredicateBytes(ctx *sql.Context, typ *pgtypes.DoltgresType, val any) ([
 	case pgtypes.TypeCategory_StringTypes, pgtypes.TypeCategory_UnknownTypes:
 		return []byte(unwrapped.(string)), nil
 	default:
-		return nil, errors.Errorf("cannot use type %s in IS JSON predicate", typ.String())
+		return nil, pgerror.Newf(pgcode.DatatypeMismatch, "cannot use type %s in IS JSON predicate", typ.String())
 	}
 }
 

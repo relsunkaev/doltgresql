@@ -19,10 +19,11 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/goccy/go-json"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 	"github.com/dolthub/doltgresql/utils"
@@ -494,7 +495,7 @@ func jsonbSetCallable(ctx *sql.Context, target any, path any, newValue any, crea
 	if err != nil {
 		return nil, err
 	}
-	jsonPath, err := textArrayToStringSlice(path)
+	jsonPath, err := textArrayToStringSlice(ctx, path)
 	if err != nil {
 		return nil, err
 	}
@@ -569,7 +570,7 @@ func jsonbSetLaxCallable(ctx *sql.Context, target any, path any, newValue any, c
 
 	switch nullValueTreatment {
 	case "raise_exception":
-		return nil, errors.New("JSON value must not be null")
+		return nil, pgerror.New(pgcode.NullValueNotAllowed, "JSON value must not be null")
 	case "use_json_null":
 		return jsonbSetCallable(ctx, target, path, pgtypes.JsonDocument{Value: pgtypes.JsonValueNull(0)}, createMissing)
 	case "delete_key":
@@ -613,7 +614,7 @@ func nonNullTextArg(ctx *sql.Context, val any) (string, error) {
 }
 
 func invalidJsonbSetLaxTreatment() error {
-	return errors.New(`null_value_treatment must be "delete_key", "return_target", "use_json_null", or "raise_exception"`)
+	return pgerror.New(pgcode.InvalidParameterValue, `null_value_treatment must be "delete_key", "return_target", "use_json_null", or "raise_exception"`)
 }
 
 // jsonb_insert represents the PostgreSQL function jsonb_insert with insert_after defaulting to false.
@@ -647,7 +648,7 @@ func jsonbInsertCallable(ctx *sql.Context, target any, path any, newValue any, i
 	if err != nil {
 		return nil, err
 	}
-	jsonPath, err := textArrayToStringSlice(path)
+	jsonPath, err := textArrayToStringSlice(ctx, path)
 	if err != nil {
 		return nil, err
 	}
@@ -685,7 +686,7 @@ func jsonbDeletePathCallable(ctx *sql.Context, target any, path any) (any, error
 	if err != nil {
 		return nil, err
 	}
-	jsonPath, err := textArrayToStringSlice(path)
+	jsonPath, err := textArrayToStringSlice(ctx, path)
 	if err != nil {
 		return nil, err
 	}

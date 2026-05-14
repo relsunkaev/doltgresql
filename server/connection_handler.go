@@ -4457,6 +4457,15 @@ func errMessageToSQLState(msg string) (string, bool) {
 		return pgcode.InvalidArgumentForPowerFunction.String(), true
 	case msg == "field name must not be null":
 		return pgcode.NullValueNotAllowed.String(), true
+	case msg == "JSON value must not be null",
+		msg == "null value not allowed for object key",
+		strings.HasPrefix(msg, "path element at position ") && strings.HasSuffix(msg, " is null"):
+		return pgcode.NullValueNotAllowed.String(), true
+	case msg == "array must have even number of elements",
+		msg == "array must have two columns",
+		msg == "wrong number of array subscripts",
+		msg == "mismatched array dimensions":
+		return pgcode.ArraySubscript.String(), true
 	case strings.HasPrefix(msg, "domain ") && strings.HasSuffix(msg, " does not allow null values"):
 		return pgcode.NotNullViolation.String(), true
 	case strings.HasPrefix(msg, "Field '") && strings.Contains(msg, "' doesn't have a default value"):

@@ -30,6 +30,8 @@ import (
 	"github.com/goccy/go-json"
 	"github.com/shopspring/decimal"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/utils"
 )
 
@@ -342,7 +344,7 @@ func JsonValueDeletePath(value JsonValue, path []string) (JsonValue, error) {
 		newValue, _, err := jsonValueDeletePath(value, path, 1)
 		return newValue, err
 	default:
-		return nil, errors.Errorf("cannot delete path in scalar")
+		return nil, pgerror.New(pgcode.InvalidParameterValue, "cannot delete path in scalar")
 	}
 }
 
@@ -426,7 +428,7 @@ func JsonValueSetPath(target JsonValue, path []string, newValue JsonValue, creat
 func jsonValueSetPath(target JsonValue, path []string, newValue JsonValue, createMissing bool, position int) (JsonValue, error) {
 	target = JsonValueUnwrapRaw(target)
 	if len(path) == 0 {
-		return JsonValueCopy(newValue), nil
+		return JsonValueCopy(target), nil
 	}
 	switch value := target.(type) {
 	case JsonValueObject:
@@ -453,7 +455,7 @@ func jsonValueSetPath(target JsonValue, path []string, newValue JsonValue, creat
 		newArray := JsonValueCopy(value).(JsonValueArray)
 		idx, ok := jsonValueArrayPathIndex(path[0], len(newArray))
 		if !ok {
-			return nil, errors.Errorf("path element at position %d is not an integer: %q", position, path[0])
+			return nil, pgerror.Newf(pgcode.InvalidTextRepresentation, "path element at position %d is not an integer: %q", position, path[0])
 		}
 		if len(path) == 1 {
 			if idx >= 0 && idx < len(newArray) {
@@ -476,7 +478,7 @@ func jsonValueSetPath(target JsonValue, path []string, newValue JsonValue, creat
 		newArray[idx] = nested
 		return newArray, nil
 	default:
-		return nil, errors.New("cannot set path in scalar")
+		return nil, pgerror.New(pgcode.InvalidParameterValue, "cannot set path in scalar")
 	}
 }
 
@@ -549,10 +551,7 @@ func jsonValueInsertPath(value JsonValue, path []string, newValue JsonValue, ins
 		key := path[0]
 		if len(path) == 1 {
 			if _, ok := value.Index[key]; ok {
-				if position == 1 {
-					return nil, false, errors.New("cannot replace existing key")
-				}
-				return JsonValueCopy(value), false, nil
+				return nil, false, pgerror.New(pgcode.InvalidParameterValue, "cannot replace existing key")
 			}
 			items := make([]JsonValueObjectItem, 0, len(value.Items)+1)
 			for _, item := range value.Items {
@@ -584,7 +583,7 @@ func jsonValueInsertPath(value JsonValue, path []string, newValue JsonValue, ins
 	case JsonValueArray:
 		idx, err := strconv.Atoi(path[0])
 		if err != nil {
-			return nil, false, errors.Errorf("path element at position %d is not an integer: %s", position, path[0])
+			return nil, false, pgerror.Newf(pgcode.InvalidTextRepresentation, "path element at position %d is not an integer: %s", position, path[0])
 		}
 		if len(path) == 1 {
 			return jsonValueArrayInsertIndex(value, idx, newValue, insertAfter), true, nil
@@ -606,7 +605,7 @@ func jsonValueInsertPath(value JsonValue, path []string, newValue JsonValue, ins
 		newArray[idx] = newChild
 		return newArray, true, nil
 	default:
-		return nil, false, errors.New("cannot set path in scalar")
+		return nil, false, pgerror.New(pgcode.InvalidParameterValue, "cannot set path in scalar")
 	}
 }
 
@@ -657,7 +656,7 @@ func jsonValueDeletePath(value JsonValue, path []string, position int) (JsonValu
 	case JsonValueArray:
 		idx, err := strconv.Atoi(path[0])
 		if err != nil {
-			return nil, false, errors.Errorf("path element at position %d is not an integer: %s", position, path[0])
+			return nil, false, pgerror.Newf(pgcode.InvalidTextRepresentation, "path element at position %d is not an integer: %s", position, path[0])
 		}
 		if len(path) == 1 {
 			return jsonValueArrayDeleteIndex(value, idx), true, nil

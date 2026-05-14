@@ -214,7 +214,7 @@ var to_json_anyelement = framework.Function1{
 	Name:       "to_json",
 	Return:     pgtypes.Json,
 	Parameters: [1]*pgtypes.DoltgresType{pgtypes.AnyElement},
-	Strict:     false,
+	Strict:     true,
 	Callable: func(ctx *sql.Context, t [2]*pgtypes.DoltgresType, val any) (any, error) {
 		value, err := jsonValueFromAnyElement(ctx, t[0], val, false)
 		if err != nil {
@@ -473,7 +473,7 @@ func buildJsonObjectFromTextArray(ctx *sql.Context, val any, sortKeys bool) (pgt
 		items := make([]pgtypes.JsonValueObjectItem, 0, len(rows))
 		for _, row := range rows {
 			if len(row) != 2 {
-				return pgtypes.JsonValueObject{}, errors.New("array must have two columns")
+				return pgtypes.JsonValueObject{}, pgerror.New(pgcode.ArraySubscript, "array must have two columns")
 			}
 			item, err := jsonObjectItemFromTextValues(ctx, row[0], row[1])
 			if err != nil {
@@ -484,7 +484,7 @@ func buildJsonObjectFromTextArray(ctx *sql.Context, val any, sortKeys bool) (pgt
 		return jsonObjectFromItems(items, sortKeys), nil
 	}
 	if len(values)%2 != 0 {
-		return pgtypes.JsonValueObject{}, errors.New("array must have even number of elements")
+		return pgtypes.JsonValueObject{}, pgerror.New(pgcode.ArraySubscript, "array must have even number of elements")
 	}
 	items := make([]pgtypes.JsonValueObjectItem, 0, len(values)/2)
 	for i := 0; i < len(values); i += 2 {
@@ -515,10 +515,10 @@ func buildJsonObjectFromTextArrays(ctx *sql.Context, keys any, values any, sortK
 		return pgtypes.JsonValueObject{}, err
 	}
 	if keysAreMultidimensional || valuesAreMultidimensional {
-		return pgtypes.JsonValueObject{}, errors.New("wrong number of array subscripts")
+		return pgtypes.JsonValueObject{}, pgerror.New(pgcode.ArraySubscript, "wrong number of array subscripts")
 	}
 	if len(keyValues) != len(valueValues) {
-		return pgtypes.JsonValueObject{}, errors.New("mismatched array dimensions")
+		return pgtypes.JsonValueObject{}, pgerror.New(pgcode.ArraySubscript, "mismatched array dimensions")
 	}
 	items := make([]pgtypes.JsonValueObjectItem, 0, len(keyValues))
 	for i := range keyValues {
@@ -561,12 +561,12 @@ func textArrayRows(ctx *sql.Context, values []any) ([][]any, bool, error) {
 		if !ok {
 			foundScalar = true
 			if foundNested {
-				return nil, false, errors.New("array must have two columns")
+				return nil, false, pgerror.New(pgcode.ArraySubscript, "array must have two columns")
 			}
 			continue
 		}
 		if foundScalar {
-			return nil, false, errors.New("array must have two columns")
+			return nil, false, pgerror.New(pgcode.ArraySubscript, "array must have two columns")
 		}
 		foundNested = true
 		rows = append(rows, row)
@@ -627,7 +627,7 @@ func jsonObjectTextKey(ctx *sql.Context, val any) (string, error) {
 		return "", err
 	}
 	if res == nil {
-		return "", errors.New("null value not allowed for object key")
+		return "", pgerror.New(pgcode.NullValueNotAllowed, "null value not allowed for object key")
 	}
 	str, ok := res.(string)
 	if !ok {

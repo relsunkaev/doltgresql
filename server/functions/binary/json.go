@@ -18,9 +18,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	pgfunctions "github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -52,7 +53,7 @@ func initJSON() {
 	framework.RegisterBinaryFunction(framework.Operator_BinaryJSONPathExists, jsonb_path_exists_opr)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryJSONPathMatch, jsonb_path_match_opr)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryMinus, jsonb_delete_text)
-	framework.RegisterBinaryFunction(framework.Operator_BinaryMinus, jsonb_delete_text_array)
+	framework.RegisterBinaryOperatorFunction(framework.Operator_BinaryMinus, jsonb_delete_text_array)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryMinus, jsonb_delete_int32)
 }
 
@@ -228,42 +229,54 @@ var jsonb_extract_path = framework.Function2{
 	Variadic:   true,
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
-		value, err := jsonbValue(ctx, val1)
-		if err != nil {
+		value, ok, err := jsonbExtractPathValue(ctx, val1, val2)
+		if err != nil || !ok {
 			return nil, err
 		}
-		paths := val2.([]interface{})
-		for _, path := range paths {
-			textPath, ok := path.(string)
-			if !ok {
-				return nil, nil
-			}
-			switch currentValue := value.(type) {
-			case pgtypes.JsonValueObject:
-				idx, ok := currentValue.Index[textPath]
-				if !ok {
-					return nil, nil
-				}
-				value = currentValue.Items[idx].Value
-			case pgtypes.JsonValueArray:
-				idx, err := strconv.Atoi(textPath)
-				if err != nil {
-					// We don't return the error here, a bad parse is treated as an object key which isn't valid
-					return nil, nil
-				}
-				if idx < 0 {
-					idx += len(currentValue)
-				}
-				if idx < 0 || idx >= len(currentValue) {
-					return nil, nil
-				}
-				value = currentValue[idx]
-			default:
-				return nil, nil
-			}
-		}
-		return pgtypes.JsonDocument{Value: value}, nil
+		return jsonbJsonOutput(value)
 	},
+}
+
+func jsonbExtractPathValue(ctx *sql.Context, val1 any, val2 any) (pgtypes.JsonValue, bool, error) {
+	value, err := jsonbValue(ctx, val1)
+	if err != nil {
+		return nil, false, err
+	}
+	paths := val2.([]interface{})
+	for _, path := range paths {
+		textPath, ok := path.(string)
+		if !ok {
+			return nil, false, nil
+		}
+		switch currentValue := value.(type) {
+		case pgtypes.JsonValueObject:
+			idx, ok := currentValue.Index[textPath]
+			if !ok {
+				return nil, false, nil
+			}
+			value = currentValue.Items[idx].Value
+		case pgtypes.JsonValueArray:
+			idx, err := strconv.Atoi(textPath)
+			if err != nil {
+				// We don't return the error here, a bad parse is treated as an object key which isn't valid
+				return nil, false, nil
+			}
+			if idx < 0 {
+				idx += len(currentValue)
+			}
+			if idx < 0 || idx >= len(currentValue) {
+				return nil, false, nil
+			}
+			value = currentValue[idx]
+		default:
+			return nil, false, nil
+		}
+	}
+	return value, true, nil
+}
+
+func jsonbJsonOutput(value pgtypes.JsonValue) (any, error) {
+	return pgtypes.JsonDocument{Value: value}, nil
 }
 
 // json_extract_path_text represents the PostgreSQL function of the same name, taking the same parameters.
@@ -290,11 +303,11 @@ var jsonb_extract_path_text = framework.Function2{
 	Variadic:   true,
 	Strict:     true,
 	Callable: func(ctx *sql.Context, dt [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
-		doc, err := jsonb_extract_path.Callable(ctx, dt, val1, val2)
-		if err != nil || doc == nil {
+		value, ok, err := jsonbExtractPathValue(ctx, val1, val2)
+		if err != nil || !ok {
 			return nil, err
 		}
-		return jsonbExtractTextOutput(ctx, doc)
+		return jsonbValueTextOutput(ctx, value)
 	},
 }
 
@@ -681,7 +694,7 @@ func textArrayValueToStrings(val any) ([]string, error) {
 	path := make([]string, len(values))
 	for i, value := range values {
 		if value == nil {
-			return nil, errors.Errorf("path element at position %d is null", i+1)
+			return nil, pgerror.Newf(pgcode.NullValueNotAllowed, "path element at position %d is null", i+1)
 		}
 		path[i] = value.(string)
 	}
@@ -709,7 +722,11 @@ func jsonbExtractTextOutput(ctx *sql.Context, val any) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	switch value := doc.Value.(type) {
+	return jsonbValueTextOutput(ctx, doc.Value)
+}
+
+func jsonbValueTextOutput(ctx *sql.Context, value pgtypes.JsonValue) (any, error) {
+	switch value := pgtypes.JsonValueUnwrapRaw(value).(type) {
 	case pgtypes.JsonValueString:
 		return pgtypes.JsonStringUnescape(value)
 	case pgtypes.JsonValueNull:
