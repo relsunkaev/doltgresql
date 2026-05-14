@@ -705,15 +705,24 @@
       "source": "testing/go/index_correctness_repro_test.go:TestCreateUniqueIndexNullsNotDistinctRejectsExistingDuplicateNullsRepro",
       "ordinal": 2,
       "scriptName": "CREATE UNIQUE INDEX NULLS NOT DISTINCT rejects existing duplicate NULLs",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testcreateuniqueindexnullsnotdistinctrejectsexistingduplicatenullsrepro-0002-select-count-*-from-pg_indexes",
       "suggestedId": "index-correctness-repro-test-testcreateuniqueindexnullsnotdistinctrejectsexistingduplicatenullsrepro-0002-select-count-*-from-pg_indexes",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_indexes\n\t\t\t\t\t\tWHERE tablename = 'create_nulls_not_distinct_existing_items'\n\t\t\t\t\t\t\tAND indexname = 'create_nulls_not_distinct_existing_code_idx';",
       "querySha256": "dc73424bb0dd19133cec0216a7b18d641528effab68cf22e6eca8a9562c30bf3",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -738,15 +747,24 @@
       "source": "testing/go/index_correctness_repro_test.go:TestCreateUniqueIndexRejectsExistingDuplicatesRepro",
       "ordinal": 2,
       "scriptName": "CREATE UNIQUE INDEX rejects existing duplicates",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testcreateuniqueindexrejectsexistingduplicatesrepro-0002-select-count-*-from-pg_indexes",
       "suggestedId": "index-correctness-repro-test-testcreateuniqueindexrejectsexistingduplicatesrepro-0002-select-count-*-from-pg_indexes",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_indexes\n\t\t\t\t\t\tWHERE tablename = 'create_unique_existing_duplicate_items'\n\t\t\t\t\t\t\tAND indexname = 'create_unique_existing_duplicate_code_idx';",
       "querySha256": "c936f387aea2f8c9f28780a969f33e79e8255d99636e22205a5cdc73323a3a34",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {

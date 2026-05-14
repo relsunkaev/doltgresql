@@ -10,6 +10,17 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### omega - 2026-05-13 22:13 MST
+
+- Lane claimed: low-count fully-convertible oracle promotion batch found by automated temp-refresh scan.
+- Expected source/map files: `transaction_error_repro_test.go`, `on_conflict_returning_test.go`, `parameter_privilege_repro_test.go`, `update_test.go`, `index_correctness_repro_test.go`, `tablespace_privilege_repro_test.go`, `drop_procedure_test.go`, `transaction_isolation_repro_test.go`, their matching `testing/go/testdata/postgres_oracle_migrations/*.oracle-map.json`, and generated manifest hunks for those rows.
+- Plan: regenerate from a clean detached worktree at current `HEAD`, promote only the exact IDs from the positive scan, validate focused tests plus manifest/cache generation gates, then stage only verified hunks in the shared checkout.
+- Update 22:15: initial clean verifier `/tmp/doltgresql-omega-lowbatch-clean` promoted 23 rows, but focused normal validation failed. Parking `drop_procedure_test.go` because unrelated existing rows still fail (`DROP PROCEDURE doesnotexist` SQLSTATE `42883` vs Doltgres `XX000`, qualified-name drops mutate state, ambiguous drop rows). Parking `transaction_error_repro_test.go` because the generated PostgreSQL oracle exposes transaction-abort/savepoint behavior mismatch (`INSERT ... before_rollback_to_savepoint` should be rejected after duplicate key until rollback to savepoint, but Doltgres accepted it). Regenerating only the safe subset: on-conflict-returning, parameter privileges, update, index correctness, tablespace privilege, and txid isolation rows.
+- Update 22:18: clean verifier `/tmp/doltgresql-omega-lowbatch-safe` still failed after excluding drop/transaction rows because `tablespace_privilege_repro_test.go` exposes unsupported Doltgres behavior: PostgreSQL succeeds for `GRANT/REVOKE CREATE ON TABLESPACE pg_default`, while Doltgres returns `0A000 this form of GRANT/REVOKE is not yet supported`. Parking tablespace rows and regenerating only on-conflict-returning, parameter privileges, update, index correctness, and txid isolation.
+- Update 22:20: final clean verifier `/tmp/doltgresql-omega-lowbatch-pass` at `HEAD b9225c3f` promoted 15 rows and passed focused normal tests plus `TestPostgresOracleManifestSchema`, `TestPostgresOracleCacheCoversManifestScriptEntries`, `TestPostgresOracleManifestGenerated`, `TestPostgresOracleMigrationCandidatesGenerated`, and `TestPostgresOraclePromotedMapGenerated`. Coverage after this slice: `9,977 / 12,799` assertions on PostgreSQL oracle (`77.95%`) and `1,987 / 2,325` source test functions fully migrated (`85.46%`).
+- Boundary: avoiding active alpha catalog/OID source lane, dirty catalog oracle lane, dirty harness files, and `third_party/dolt`; skipping `drop_function_test.go` because focused normal validation already proved same-script state mutation makes that row unsafe.
+
+
 ### omega - 2026-05-13 21:43 MST
 
 - Lane claimed/read-only first: temp-refresh classification for literal non-Dolt residual rows in `testing/go/index_test.go` / `index_test.oracle-map.json`.

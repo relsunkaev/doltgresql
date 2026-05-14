@@ -160,15 +160,24 @@
       "source": "testing/go/transaction_isolation_repro_test.go:TestTxidCurrentAdvancesAcrossTransactionsRepro",
       "ordinal": 1,
       "scriptName": "txid_current advances across committed transactions",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "transaction-isolation-repro-test-testtxidcurrentadvancesacrosstransactionsrepro-0001-select-count-distinct-txid-from",
       "suggestedId": "transaction-isolation-repro-test-testtxidcurrentadvancesacrosstransactionsrepro-0001-select-count-distinct-txid-from",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(DISTINCT txid) FROM txid_values;",
       "querySha256": "b52b8193a0983aa1c0802f596cfa9d19349e52c742f5c1acf8508fb45a8b77f8",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     }
   ]

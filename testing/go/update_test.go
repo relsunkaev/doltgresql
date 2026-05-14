@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 func TestUpdate(t *testing.T) {
@@ -50,31 +48,19 @@ func TestUpdate(t *testing.T) {
 					Query: "update t set i = default where i = 100;",
 				},
 				{
-					Query: "select * from t order by i",
-					Expected: []sql.Row{
-						{10, "a"},
-						{200, "b"},
-					},
+					Query: "select * from t order by i", PostgresOracle: ScriptTestPostgresOracle{ID: "update-test-testupdate-0002-select-*-from-t-order"},
 				},
 				{
 					Query: "update t set j = default where i = 200;",
 				},
 				{
-					Query: "select * from t order by i",
-					Expected: []sql.Row{
-						{10, "a"},
-						{200, "abcdef"},
-					},
+					Query: "select * from t order by i", PostgresOracle: ScriptTestPostgresOracle{ID: "update-test-testupdate-0003-select-*-from-t-order"},
 				},
 				{
 					Query: "update t set i = default, j = default;",
 				},
 				{
-					Query: "select * from t order by i",
-					Expected: []sql.Row{
-						{10, "abcdef"},
-						{10, "abcdef"},
-					},
+					Query: "select * from t order by i", PostgresOracle: ScriptTestPostgresOracle{ID: "update-test-testupdate-0004-select-*-from-t-order"},
 				},
 				{
 					Query: "update t2 set i = default",
@@ -82,12 +68,8 @@ func TestUpdate(t *testing.T) {
 				},
 				{
 					Query: "select * from t2",
-					Skip:  true, // skipped because of above
-					Expected: []sql.Row{
-						{nil},
-						{nil},
-						{nil},
-					},
+					Skip:  true, PostgresOracle: // skipped because of above
+					ScriptTestPostgresOracle{ID: "update-test-testupdate-0005-select-*-from-t2"},
 				},
 			},
 		},

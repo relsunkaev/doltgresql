@@ -30,8 +30,7 @@ func TestGrantOnConfigurationParameterRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `GRANT SET ON PARAMETER work_mem TO parameter_set_grantee;`,
-					ExpectedTag: `GRANT`,
+					Query: `GRANT SET ON PARAMETER work_mem TO parameter_set_grantee;`, PostgresOracle: ScriptTestPostgresOracle{ID: "parameter-privilege-repro-test-testgrantonconfigurationparameterrepro-0001-grant-set-on-parameter-work_mem", Compare: "tag"},
 				},
 			},
 		},
@@ -42,17 +41,18 @@ func TestGrantOnConfigurationParameterRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `GRANT ALTER SYSTEM ON PARAMETER work_mem TO parameter_alter_system_grantee;`,
-					ExpectedTag: `GRANT`,
+					Query: `GRANT ALTER SYSTEM ON PARAMETER work_mem TO parameter_alter_system_grantee;`, PostgresOracle: ScriptTestPostgresOracle{ID: "parameter-privilege-repro-test-testgrantonconfigurationparameterrepro-0002-grant-alter-system-on-parameter",
+
+						// TestRevokeOnConfigurationParameterRepro reproduces an admin ACL correctness
+						// bug: PostgreSQL supports revoking SET and ALTER SYSTEM privileges from
+						// configuration parameters.
+						Compare: "tag"},
 				},
 			},
 		},
 	})
 }
 
-// TestRevokeOnConfigurationParameterRepro reproduces an admin ACL correctness
-// bug: PostgreSQL supports revoking SET and ALTER SYSTEM privileges from
-// configuration parameters.
 func TestRevokeOnConfigurationParameterRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -62,8 +62,7 @@ func TestRevokeOnConfigurationParameterRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `REVOKE SET ON PARAMETER work_mem FROM parameter_set_revokee;`,
-					ExpectedTag: `REVOKE`,
+					Query: `REVOKE SET ON PARAMETER work_mem FROM parameter_set_revokee;`, PostgresOracle: ScriptTestPostgresOracle{ID: "parameter-privilege-repro-test-testrevokeonconfigurationparameterrepro-0001-revoke-set-on-parameter-work_mem", Compare: "tag"},
 				},
 			},
 		},
@@ -74,17 +73,18 @@ func TestRevokeOnConfigurationParameterRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `REVOKE ALTER SYSTEM ON PARAMETER work_mem FROM parameter_alter_system_revokee;`,
-					ExpectedTag: `REVOKE`,
+					Query: `REVOKE ALTER SYSTEM ON PARAMETER work_mem FROM parameter_alter_system_revokee;`, PostgresOracle: ScriptTestPostgresOracle{ID: "parameter-privilege-repro-test-testrevokeonconfigurationparameterrepro-0002-revoke-alter-system-on-parameter",
+
+						// TestHasParameterPrivilegeHelperRepro reproduces an admin ACL helper gap:
+						// PostgreSQL exposes has_parameter_privilege for parameter-level SET and ALTER
+						// SYSTEM privileges.
+						Compare: "tag"},
 				},
 			},
 		},
 	})
 }
 
-// TestHasParameterPrivilegeHelperRepro reproduces an admin ACL helper gap:
-// PostgreSQL exposes has_parameter_privilege for parameter-level SET and ALTER
-// SYSTEM privileges.
 func TestHasParameterPrivilegeHelperRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{

@@ -58,13 +58,16 @@ func TestActiveRecordClientSmoke(t *testing.T) {
 
 	work := t.TempDir()
 	gemHome := filepath.Join(work, "gems")
+	gemSpecCache := filepath.Join(work, "gem-spec-cache")
 	binDir := filepath.Join(work, "bin")
 	cmdCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	gemEnv := append(os.Environ(),
+		"HOME="+work,
 		"GEM_HOME="+gemHome,
 		"GEM_PATH="+gemHome,
+		"GEM_SPEC_CACHE="+gemSpecCache,
 		"NO_COLOR=1",
 	)
 	installGem := func(name string, version string, preArgs []string, postArgs ...string) {
@@ -246,8 +249,10 @@ end
 	)
 	cmd := exec.CommandContext(cmdCtx, ruby, scriptPath, url)
 	cmd.Env = append(os.Environ(),
+		"HOME="+work,
 		"GEM_HOME="+gemHome,
 		"GEM_PATH="+gemHome,
+		"GEM_SPEC_CACHE="+gemSpecCache,
 		"NO_COLOR=1",
 	)
 	out, err := cmd.CombinedOutput()

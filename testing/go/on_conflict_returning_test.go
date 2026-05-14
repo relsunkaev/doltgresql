@@ -119,26 +119,22 @@ func TestInsertOnConflictReturning(t *testing.T) {
 				{
 					Query: `INSERT INTO kv VALUES (1, 99)
 						ON CONFLICT (k) DO NOTHING
-						RETURNING k, v;`,
-					ExpectedTag: `INSERT 0 0`,
+						RETURNING k, v;`, PostgresOracle: ScriptTestPostgresOracle{ID: "on-conflict-returning-test-testinsertonconflictreturning-0011-insert-into-kv-values-1", Compare: "tag"},
 				},
 				{
 					Query: `INSERT INTO kv VALUES (2, 20)
 						ON CONFLICT (k) DO NOTHING
-						RETURNING k, v;`,
-					ExpectedTag: `INSERT 0 1`,
+						RETURNING k, v;`, PostgresOracle: ScriptTestPostgresOracle{ID: "on-conflict-returning-test-testinsertonconflictreturning-0012-insert-into-kv-values-2", Compare: "tag"},
 				},
 				{
 					Query: `INSERT INTO kv VALUES (1, 11)
 						ON CONFLICT (k) DO UPDATE SET v = EXCLUDED.v
-						RETURNING k, v;`,
-					ExpectedTag: `INSERT 0 1`,
+						RETURNING k, v;`, PostgresOracle: ScriptTestPostgresOracle{ID: "on-conflict-returning-test-testinsertonconflictreturning-0013-insert-into-kv-values-1", Compare: "tag"},
 				},
 				{
 					Query: `INSERT INTO kv VALUES (1, 12), (3, 30)
 						ON CONFLICT (k) DO UPDATE SET v = EXCLUDED.v
-						RETURNING k, v;`,
-					ExpectedTag: `INSERT 0 2`,
+						RETURNING k, v;`, PostgresOracle: ScriptTestPostgresOracle{ID: "on-conflict-returning-test-testinsertonconflictreturning-0014-insert-into-kv-values-1", Compare: "tag"},
 				},
 				{
 					Query: "SELECT k, v FROM kv ORDER BY k;", PostgresOracle: ScriptTestPostgresOracle{ID: "on-conflict-returning-test-testinsertonconflictreturning-0015-select-k-v-from-kv"},

@@ -167,8 +167,7 @@ func TestTxidCurrentAdvancesAcrossTransactionsRepro(t *testing.T) {
 					Query: `COMMIT;`,
 				},
 				{
-					Query:    `SELECT count(DISTINCT txid) FROM txid_values;`,
-					Expected: []sql.Row{{int64(2)}},
+					Query: `SELECT count(DISTINCT txid) FROM txid_values;`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-isolation-repro-test-testtxidcurrentadvancesacrosstransactionsrepro-0001-select-count-distinct-txid-from"},
 				},
 			},
 		},

@@ -60,6 +60,7 @@ func TestRubyPGClientSmoke(t *testing.T) {
 
 	work := t.TempDir()
 	gemHome := filepath.Join(work, "gems")
+	gemSpecCache := filepath.Join(work, "gem-spec-cache")
 	binDir := filepath.Join(work, "bin")
 	cmdCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -73,8 +74,10 @@ func TestRubyPGClientSmoke(t *testing.T) {
 		"--with-pg-config="+pgConfig,
 	)
 	install.Env = append(os.Environ(),
+		"HOME="+work,
 		"GEM_HOME="+gemHome,
 		"GEM_PATH="+gemHome,
+		"GEM_SPEC_CACHE="+gemSpecCache,
 		"NO_COLOR=1",
 	)
 	if out, err := install.CombinedOutput(); err != nil {
@@ -187,8 +190,10 @@ end
 	)
 	cmd := exec.CommandContext(cmdCtx, ruby, scriptPath, url)
 	cmd.Env = append(os.Environ(),
+		"HOME="+work,
 		"GEM_HOME="+gemHome,
 		"GEM_PATH="+gemHome,
+		"GEM_SPEC_CACHE="+gemSpecCache,
 		"NO_COLOR=1",
 	)
 	out, err := cmd.CombinedOutput()

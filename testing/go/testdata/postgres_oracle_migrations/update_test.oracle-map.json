@@ -43,12 +43,32 @@
       "source": "testing/go/update_test.go:TestUpdate",
       "ordinal": 2,
       "scriptName": "update to default",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "update-test-testupdate-0002-select-*-from-t-order",
       "suggestedId": "update-test-testupdate-0002-select-*-from-t-order",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "select * from t order by i",
       "querySha256": "1981155a1dbb2c87f9c709a43ebbdef812d4b33fca4513b4e855712fb83a60c8",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          },
+          {
+            "value": "a"
+          }
+        ],
+        [
+          {
+            "value": "200"
+          },
+          {
+            "value": "b"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -56,12 +76,32 @@
       "source": "testing/go/update_test.go:TestUpdate",
       "ordinal": 3,
       "scriptName": "update to default",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "update-test-testupdate-0003-select-*-from-t-order",
       "suggestedId": "update-test-testupdate-0003-select-*-from-t-order",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "select * from t order by i",
       "querySha256": "1981155a1dbb2c87f9c709a43ebbdef812d4b33fca4513b4e855712fb83a60c8",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          },
+          {
+            "value": "a"
+          }
+        ],
+        [
+          {
+            "value": "200"
+          },
+          {
+            "value": "abcdef"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -69,12 +109,32 @@
       "source": "testing/go/update_test.go:TestUpdate",
       "ordinal": 4,
       "scriptName": "update to default",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "update-test-testupdate-0004-select-*-from-t-order",
       "suggestedId": "update-test-testupdate-0004-select-*-from-t-order",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "select * from t order by i",
       "querySha256": "1981155a1dbb2c87f9c709a43ebbdef812d4b33fca4513b4e855712fb83a60c8",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          },
+          {
+            "value": "abcdef"
+          }
+        ],
+        [
+          {
+            "value": "10"
+          },
+          {
+            "value": "abcdef"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -82,12 +142,31 @@
       "source": "testing/go/update_test.go:TestUpdate",
       "ordinal": 5,
       "scriptName": "update to default",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "update-test-testupdate-0005-select-*-from-t2",
       "suggestedId": "update-test-testupdate-0005-select-*-from-t2",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "select * from t2",
       "querySha256": "ce88bc9b16796cee5d027494c41905a465c626f640262c6e96678c6c2f8263b4",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ],
+        [
+          {
+            "null": true
+          }
+        ],
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {

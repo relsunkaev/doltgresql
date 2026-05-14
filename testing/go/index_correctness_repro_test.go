@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestCreateIndexConcurrentlyRejectsTransactionBlockRepro reproduces a DDL
@@ -567,8 +565,7 @@ func TestCreateUniqueIndexNullsNotDistinctRejectsExistingDuplicateNullsRepro(t *
 					Query: `SELECT count(*)
 						FROM pg_indexes
 						WHERE tablename = 'create_nulls_not_distinct_existing_items'
-							AND indexname = 'create_nulls_not_distinct_existing_code_idx';`,
-					Expected: []sql.Row{{int64(0)}},
+							AND indexname = 'create_nulls_not_distinct_existing_code_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testcreateuniqueindexnullsnotdistinctrejectsexistingduplicatenullsrepro-0002-select-count-*-from-pg_indexes"},
 				},
 			},
 		},
@@ -600,8 +597,7 @@ func TestCreateUniqueIndexRejectsExistingDuplicatesRepro(t *testing.T) {
 					Query: `SELECT count(*)
 						FROM pg_indexes
 						WHERE tablename = 'create_unique_existing_duplicate_items'
-							AND indexname = 'create_unique_existing_duplicate_code_idx';`,
-					Expected: []sql.Row{{int64(0)}},
+							AND indexname = 'create_unique_existing_duplicate_code_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testcreateuniqueindexrejectsexistingduplicatesrepro-0002-select-count-*-from-pg_indexes"},
 				},
 			},
 		},
