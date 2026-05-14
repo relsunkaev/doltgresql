@@ -481,6 +481,7 @@ func (stmt Goto) AppendOperations(ops *[]InterpreterOperation, stack *Interprete
 type If struct {
 	Condition  string
 	GotoOffset int32
+	Options    map[string]string
 }
 
 var _ Statement = If{}
@@ -502,6 +503,7 @@ func (stmt If) AppendOperations(ops *[]InterpreterOperation, stack *InterpreterS
 		PrimaryData:   "SELECT " + condition + ";",
 		SecondaryData: referencedVariables,
 		Index:         len(*ops) + int(stmt.GotoOffset),
+		Options:       stmt.Options,
 	})
 	return nil
 }

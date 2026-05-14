@@ -661,6 +661,9 @@ func (stmt *plpgSQL_stmt_fori) Convert(conv jsonConversionContext) (block Block,
 		If{
 			Condition:  condition,
 			GotoOffset: 2,
+			Options: map[string]string{
+				integerForLoopFoundOption: "true",
+			},
 		},
 		Goto{
 			Offset: 3 + bodySize,

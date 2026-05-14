@@ -63,6 +63,7 @@ const (
 	diagnosticOptionAction     = "pgContextAction"
 	diagnosticOptionLineNumber = "lineNumber"
 	diagnosticOptionStatement  = "pgContextStatement"
+	integerForLoopFoundOption  = "integerForLoopFound"
 	raiseValidationErrorOption = "raiseValidationError"
 )
 
@@ -77,6 +78,7 @@ type interpreterExecutionState struct {
 	operationCount       int
 	lastRowCount         int64
 	lastExceptionContext string
+	integerForLoops      map[int]bool
 	stackedDiagnostics   *plpgsqlExceptionDiagnostics
 }
 
@@ -591,6 +593,19 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 				return nil, false, err
 			}
 			condition, _ := retVal.(bool)
+			if operation.Options[integerForLoopFoundOption] == "true" {
+				if condition {
+					if state.integerForLoops == nil {
+						state.integerForLoops = make(map[int]bool)
+					}
+					state.integerForLoops[counter] = true
+				} else {
+					if err := setFoundVariable(ctx, stack, state.integerForLoops[counter]); err != nil {
+						return nil, false, err
+					}
+					delete(state.integerForLoops, counter)
+				}
+			}
 			if condition {
 				// We're never changing the scope, so we can just assign it directly.
 				// Also, we must assign to index-1, so that the increment hits our target.
