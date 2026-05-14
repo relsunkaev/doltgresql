@@ -335,7 +335,7 @@ func runScript(t *testing.T, ctx context.Context, script ScriptTest, conn *Conne
 				}
 
 				if cachedExpectedRows != nil {
-					actualRows := assertion.postgresOracleCached.stringRows(readRows)
+					actualRows := assertion.postgresOracleCached.stringRowsForFields(readRows, rows.FieldDescriptions())
 					if orderBy {
 						assert.Equal(t, expectedRows, actualRows, "wrong result for query %s", assertion.Query)
 					} else {
@@ -829,6 +829,15 @@ func NormalizeValToString(dt *types.DoltgresType, v any) any {
 
 	switch dt.ID {
 	case types.Json.ID:
+		switch val := v.(type) {
+		case bool:
+			if val {
+				return "t"
+			}
+			return "f"
+		case string:
+			return val
+		}
 		str, err := json.Marshal(v)
 		if err != nil {
 			panic(err)

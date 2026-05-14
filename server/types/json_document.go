@@ -197,11 +197,6 @@ func JsonObjectFromItems(items []JsonValueObjectItem, sortKeys bool) JsonValueOb
 			copied = append(copied, JsonValueObjectItem{Key: key, Value: value})
 		}
 		sort.Slice(copied, func(i, j int) bool {
-			if len(copied[i].Key) < len(copied[j].Key) {
-				return true
-			} else if len(copied[i].Key) > len(copied[j].Key) {
-				return false
-			}
 			return copied[i].Key < copied[j].Key
 		})
 	}
@@ -1419,14 +1414,7 @@ func ConvertToJsonDocument(val interface{}) (JsonValue, error) {
 	case map[string]interface{}:
 		keys := utils.GetMapKeys(val)
 		sort.Slice(keys, func(i, j int) bool {
-			// Key length is sorted before key contents
-			if len(keys[i]) < len(keys[j]) {
-				return true
-			} else if len(keys[i]) > len(keys[j]) {
-				return false
-			} else {
-				return keys[i] < keys[j]
-			}
+			return keys[i] < keys[j]
 		})
 		items := make([]JsonValueObjectItem, len(val))
 		index := make(map[string]int)

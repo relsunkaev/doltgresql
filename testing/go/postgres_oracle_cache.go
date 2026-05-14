@@ -221,7 +221,15 @@ func (entry *postgresOracleCachedEntry) stringRows(rows []sql.Row) []sql.Row {
 	return postgresOracleStringRowsWithModes(rows, entry.ColumnModes)
 }
 
+func (entry *postgresOracleCachedEntry) stringRowsForFields(rows []sql.Row, fields []pgconn.FieldDescription) []sql.Row {
+	return postgresOracleStringRowsWithModesAndFields(rows, entry.ColumnModes, fields)
+}
+
 func postgresOracleStringRowsWithModes(rows []sql.Row, modes []string) []sql.Row {
+	return postgresOracleStringRowsWithModesAndFields(rows, modes, nil)
+}
+
+func postgresOracleStringRowsWithModesAndFields(rows []sql.Row, modes []string, fields []pgconn.FieldDescription) []sql.Row {
 	stringRows := make([]sql.Row, len(rows))
 	for rowIndex, row := range rows {
 		stringRow := make(sql.Row, len(row))
@@ -229,7 +237,11 @@ func postgresOracleStringRowsWithModes(rows []sql.Row, modes []string) []sql.Row
 			if value == nil {
 				stringRow[columnIndex] = nil
 			} else {
-				stringRow[columnIndex] = postgresOracleStringValueWithMode(value, cachedPostgresOracleColumnMode(modes, columnIndex))
+				mode := cachedPostgresOracleColumnMode(modes, columnIndex)
+				if mode == "structural" && columnIndex < len(fields) {
+					mode = inferCachedPostgresOracleColumnMode(fields[columnIndex].DataTypeOID)
+				}
+				stringRow[columnIndex] = postgresOracleStringValueWithMode(value, mode)
 			}
 		}
 		stringRows[rowIndex] = stringRow
@@ -287,6 +299,15 @@ func cachedPostgresOracleColumnMode(modes []string, index int) string {
 		return modes[index]
 	}
 	return "structural"
+}
+
+func inferCachedPostgresOracleColumnMode(oid uint32) string {
+	switch oid {
+	case 114, 3802:
+		return "json"
+	default:
+		return "structural"
+	}
 }
 
 var cachedPostgresOracleSchemaNamePattern = regexp.MustCompile(`dg_oracle_[0-9]+`)
