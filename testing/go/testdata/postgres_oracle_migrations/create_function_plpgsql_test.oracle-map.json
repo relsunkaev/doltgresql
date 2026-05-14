@@ -1563,7 +1563,8 @@
       "query": "SELECT length(dolt_commit('-m', 'initial')::text) = 34;",
       "querySha256": "05355d06ae2e762642620d5304c1ece579bc1553fba6c5a09d424dd252967f25",
       "nonLiteral": [
-        "DoltSpecific"
+        "DoltSpecific",
+        "PriorDoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1579,7 +1580,8 @@
       "query": "SELECT dolt_checkout('-b', 'other')",
       "querySha256": "eb1ba66170764046947aad49472a195661fcfa082f2e8cf8fd66ad1edbf87dda",
       "nonLiteral": [
-        "DoltSpecific"
+        "DoltSpecific",
+        "PriorDoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1594,6 +1596,9 @@
       "expectedKind": "rows",
       "query": "CREATE OR REPLACE FUNCTION interpreted_as_of(input TEXT) RETURNS TEXT AS $$\nBEGIN\n\tRETURN input;\nEND;\n$$ LANGUAGE plpgsql;",
       "querySha256": "f92ae48970ac6b4a37688f72bbf272a92236a952d6be7c8b017c72c9771c4d28",
+      "nonLiteral": [
+        "PriorDoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1608,7 +1613,8 @@
       "query": "SELECT dolt_add('.');",
       "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
       "nonLiteral": [
-        "DoltSpecific"
+        "DoltSpecific",
+        "PriorDoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1624,7 +1630,8 @@
       "query": "SELECT length(dolt_commit('-m', 'updated func')::text) = 34;",
       "querySha256": "30ae714244989d2f0ac7bb00a967ca58374236309aafc110095c4b5e43994b0c",
       "nonLiteral": [
-        "DoltSpecific"
+        "DoltSpecific",
+        "PriorDoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1639,6 +1646,9 @@
       "expectedKind": "rows",
       "query": "SELECT interpreted_as_of('abc');",
       "querySha256": "dc4b542c267b293f7a99716ed33a15c1cab34071c18d7290dd25baaee57b9cb2",
+      "nonLiteral": [
+        "PriorDoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1653,7 +1663,8 @@
       "query": "SELECT dolt_checkout('main')",
       "querySha256": "692db5c3d58a12710a4b2b6513b13d4a2d2b71c46bf68a6d288ec3caf5cc26bc",
       "nonLiteral": [
-        "DoltSpecific"
+        "DoltSpecific",
+        "PriorDoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1668,6 +1679,9 @@
       "expectedKind": "rows",
       "query": "SELECT interpreted_as_of('abcd');",
       "querySha256": "a93bc5168bb68f0061733abddf1bf16839a8be238aa04a796eef1bdffb1ea752",
+      "nonLiteral": [
+        "PriorDoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1753,7 +1767,8 @@
       "query": "SELECT length(dolt_commit('-m', 'initial')::text) = 34;",
       "querySha256": "05355d06ae2e762642620d5304c1ece579bc1553fba6c5a09d424dd252967f25",
       "nonLiteral": [
-        "DoltSpecific"
+        "DoltSpecific",
+        "PriorDoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1769,7 +1784,8 @@
       "query": "SELECT dolt_checkout('-b', 'other')",
       "querySha256": "eb1ba66170764046947aad49472a195661fcfa082f2e8cf8fd66ad1edbf87dda",
       "nonLiteral": [
-        "DoltSpecific"
+        "DoltSpecific",
+        "PriorDoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1784,6 +1800,9 @@
       "expectedKind": "rows",
       "query": "CREATE FUNCTION interpreted_merging(input INT4) RETURNS INT4 AS $$\nBEGIN\n\tRETURN input + 11;\nEND;\n$$ LANGUAGE plpgsql;",
       "querySha256": "f3efbf89f809d8909a5fd3bc799cc9d6e11091706b4318f0598c516dafe2883b",
+      "nonLiteral": [
+        "PriorDoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1798,7 +1817,8 @@
       "query": "SELECT dolt_add('.');",
       "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
       "nonLiteral": [
-        "DoltSpecific"
+        "DoltSpecific",
+        "PriorDoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1814,7 +1834,8 @@
       "query": "SELECT length(dolt_commit('-m', 'another func')::text) = 34;",
       "querySha256": "ec9533b88524e145d376b5a5b60d522e4d0f23cad4aedfc6d2dbaebb192a4c4a",
       "nonLiteral": [
-        "DoltSpecific"
+        "DoltSpecific",
+        "PriorDoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1829,6 +1850,9 @@
       "expectedKind": "rows",
       "query": "SELECT interpreted_merging(55);",
       "querySha256": "e056e470498e4a862ad0e5893417bfcecfc61d080f094f56d6f1fcd2e079ade5",
+      "nonLiteral": [
+        "PriorDoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1843,7 +1867,8 @@
       "query": "SELECT dolt_checkout('main')",
       "querySha256": "692db5c3d58a12710a4b2b6513b13d4a2d2b71c46bf68a6d288ec3caf5cc26bc",
       "nonLiteral": [
-        "DoltSpecific"
+        "DoltSpecific",
+        "PriorDoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1858,6 +1883,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO test VALUES (80);",
       "querySha256": "fd7dd6f5937c23be0541806df527272d5568c70e8285cd595275e884591ac776",
+      "nonLiteral": [
+        "PriorDoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1872,7 +1900,8 @@
       "query": "SELECT dolt_add('.');",
       "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
       "nonLiteral": [
-        "DoltSpecific"
+        "DoltSpecific",
+        "PriorDoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1888,7 +1917,8 @@
       "query": "SELECT length(dolt_commit('-m', 'updated table')::text) = 34;",
       "querySha256": "57e7d3ac3191afc9db1394c1ffef2180960bf2ad53f1f1cec3f3494acb603885",
       "nonLiteral": [
-        "DoltSpecific"
+        "DoltSpecific",
+        "PriorDoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1903,6 +1933,9 @@
       "expectedKind": "rows",
       "query": "SELECT interpreted_merging('abcde');",
       "querySha256": "fb83f8841456b445a02aec81977712d31114088bca6f39041b05a88ba0b7ed1d",
+      "nonLiteral": [
+        "PriorDoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1916,6 +1949,9 @@
       "expectedKind": "error",
       "query": "SELECT interpreted_merging(67);",
       "querySha256": "3f752de78f4a39961edc05862848e4382471e0cc4c2035dee1c302b443e0d173",
+      "nonLiteral": [
+        "PriorDoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1929,6 +1965,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM test;",
       "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "nonLiteral": [
+        "PriorDoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1943,7 +1982,8 @@
       "query": "SELECT length(dolt_merge('other')::text) = 57;",
       "querySha256": "a41a3448f115a67ee26b748a1e764cda6fe66de9ef02cf191c65025251ee5283",
       "nonLiteral": [
-        "DoltSpecific"
+        "DoltSpecific",
+        "PriorDoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1958,6 +1998,9 @@
       "expectedKind": "rows",
       "query": "SELECT interpreted_merging('abcdef');",
       "querySha256": "738368efd6d6c60f89952b90da8828a13e476a69393f18353b44255d1674023d",
+      "nonLiteral": [
+        "PriorDoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1971,6 +2014,9 @@
       "expectedKind": "rows",
       "query": "SELECT interpreted_merging(58);",
       "querySha256": "876d8c9a38e363352e00020aca3cd4dd865564baa190b973b6c2111ef96d4bb0",
+      "nonLiteral": [
+        "PriorDoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1984,6 +2030,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM test;",
       "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "nonLiteral": [
+        "PriorDoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2040,6 +2089,9 @@
       "expectedKind": "rows",
       "query": "SELECT f1('abcd');",
       "querySha256": "49c4a448a418f47e3d252ec19a93af99ec2f11f86d1d868dedfca271c03a6fbd",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2053,6 +2105,9 @@
       "expectedKind": "rows",
       "query": "SELECT \"postgres/b1\".public.f1(55);",
       "querySha256": "5c9f7050ca872a6f35dbd8cdec5210073ac2c1bdf490a389a45c14b15390c302",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2066,6 +2121,10 @@
       "expectedKind": "rows",
       "query": "SELECT f1(55);",
       "querySha256": "55299784a3125d8a8384fa804c16851eefbb5552d679d8eef3c352c620ea164e",
+      "nonLiteral": [
+        "DoltSpecific",
+        "PriorDoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2074,13 +2133,20 @@
       "source": "testing/go/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
       "ordinal": 105,
       "scriptName": "Nested IF statements with exceptions",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0105-create-function-public.fn_name-returns-trigger",
       "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0105-create-function-public.fn_name-returns-trigger",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "CREATE FUNCTION public.fn_name() RETURNS trigger\n    LANGUAGE plpgsql\n    AS $$\nBEGIN\n    IF NEW.start_date IS NOT NULL\n       AND NEW.end_date IS NULL\n    THEN\n        NEW.end_date := NEW.start_date + INTERVAL '31 day';\n    END IF;\n    IF NEW.start_date IS NOT NULL\n       AND NEW.end_date IS NOT NULL\n    THEN\n        IF NEW.end_date < NEW.start_date THEN\n            RAISE EXCEPTION 'end_date (%) start_date (%)',\n                NEW.end_date, NEW.start_date;\n        END IF;\n        IF NEW.end_date > (NEW.start_date + INTERVAL '31 day') THEN\n            RAISE EXCEPTION 'Too far (start_date=%, end_date=%)',\n                NEW.start_date, NEW.end_date;\n        END IF;\n    END IF;\n    RETURN NEW;\nEND;\n$$;",
       "querySha256": "189a4f87faa79ac9b87147a2e2f811296de86a252433180cf2e26abfd5cb996f",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DO $$ DECLARE r record; BEGIN FOR r IN SELECT p.oid::pg_catalog.regprocedure AS signature FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'fn_name' AND p.prokind = 'f' LOOP EXECUTE 'DROP FUNCTION IF EXISTS ' || r.signature || ' CASCADE'; END LOOP; END $$",
+        "DROP TABLE IF EXISTS public.table_name CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0106",
@@ -2103,12 +2169,15 @@
       "source": "testing/go/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
       "ordinal": 107,
       "scriptName": "Nested IF statements with exceptions",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0107-insert-into-public.table_name-values-2025-01-02",
       "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0107-insert-into-public.table_name-values-2025-01-02",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "INSERT INTO public.table_name VALUES ('2025-01-02', '2025-02-02');",
       "querySha256": "8d79b8029309109ee89844bc77cf003a59d1d1c0da959406ef4ebce76b663e21",
-      "needsCleanup": true,
+      "expectedRows": [],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -2116,12 +2185,15 @@
       "source": "testing/go/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
       "ordinal": 108,
       "scriptName": "Nested IF statements with exceptions",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0108-insert-into-public.table_name-values-2025-04-05",
       "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0108-insert-into-public.table_name-values-2025-04-05",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "INSERT INTO public.table_name VALUES ('2025-04-05', NULL);",
       "querySha256": "52fe525d422a835f42914d7d6910cdc2d8dca40505072df5e83a69e4a9cf2ad7",
-      "needsCleanup": true,
+      "expectedRows": [],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -2129,12 +2201,16 @@
       "source": "testing/go/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
       "ordinal": 109,
       "scriptName": "Nested IF statements with exceptions",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0109-insert-into-public.table_name-values-2025-09-10",
       "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0109-insert-into-public.table_name-values-2025-09-10",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "P0001",
+      "errorSeverity": "ERROR",
       "query": "INSERT INTO public.table_name VALUES ('2025-09-10', '2025-07-08');",
       "querySha256": "064d732038c359963226dc504f4a23d2b8c2ec50b795bd4c1e0d17088a1814ec",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -2142,12 +2218,16 @@
       "source": "testing/go/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
       "ordinal": 110,
       "scriptName": "Nested IF statements with exceptions",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0110-insert-into-public.table_name-values-2025-11-11",
       "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0110-insert-into-public.table_name-values-2025-11-11",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "P0001",
+      "errorSeverity": "ERROR",
       "query": "INSERT INTO public.table_name VALUES ('2025-11-11', '2025-12-31');",
       "querySha256": "7e8b545c2954f65570b7e6026d6fd93a10625c5d69e32ba2d74e521000d5c51e",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -2344,13 +2424,20 @@
       "source": "testing/go/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
       "ordinal": 120,
       "scriptName": "resolve type with empty search path",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0120-create-function-public.ambienttempdetail_insertupdate-p_panel_project_id-integer",
       "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0120-create-function-public.ambienttempdetail_insertupdate-p_panel_project_id-integer",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "CREATE FUNCTION public.ambienttempdetail_insertupdate(p_panel_project_id integer, p_threshold_value numeric, p_reading_interval_in_min integer) RETURNS integer\n    LANGUAGE plpgsql\n    AS $$\nDECLARE\n    v_rtn_value INTEGER;\nBEGIN\n    IF NOT EXISTS (SELECT * FROM AmbientTempDetail WHERE PanelProjectId = p_panel_project_id) THEN\n        INSERT INTO AmbientTempDetail (PanelProjectId, Threshold_Value, ReadingIntervalInMin)\n        VALUES (p_panel_project_id, p_threshold_value, p_reading_interval_in_min)\n        RETURNING TempDetailId INTO v_rtn_value;\n    ELSE\n        UPDATE AmbientTempDetail\n        SET PanelProjectId = p_panel_project_id,\n            Threshold_Value = p_threshold_value,\n            ReadingIntervalInMin = p_reading_interval_in_min\n        WHERE PanelProjectId = p_panel_project_id;\n        v_rtn_value := p_panel_project_id;\n    END IF;\n    \n    RETURN v_rtn_value;\nEND;\n$$;",
       "querySha256": "e5303f23d77a7c445914b1df32f0e06e0d7ca3f881995ad93ab437163bc3ba3a",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DO $$ DECLARE r record; BEGIN FOR r IN SELECT p.oid::pg_catalog.regprocedure AS signature FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'ambienttempdetail_insertupdate' AND p.prokind = 'f' LOOP EXECUTE 'DROP FUNCTION IF EXISTS ' || r.signature || ' CASCADE'; END LOOP; END $$",
+        "DROP TABLE IF EXISTS public.ambienttempdetail CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0121",
@@ -2401,13 +2488,20 @@
       "source": "testing/go/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
       "ordinal": 123,
       "scriptName": "create function on non-existent table that does not exist yet with 'check_function_bodies'",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0123-create-function-public.film_in_stock-p_film_id-integer",
       "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0123-create-function-public.film_in_stock-p_film_id-integer",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
       "query": "CREATE FUNCTION public.film_in_stock(p_film_id integer, p_store_id integer, OUT p_film_count integer) RETURNS SETOF integer\n    LANGUAGE sql\n    AS $_$\n     SELECT inventory_id\n     FROM inventory\n     WHERE film_id = $1\n     AND store_id = $2\n     AND inventory_in_stock(inventory_id);\n$_$;",
       "querySha256": "08804154c859a988a661bdaadd94a33513a0922a15c8ee22471528ba5f3058e2",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "cleanup": [
+        "DO $$ DECLARE r record; BEGIN FOR r IN SELECT p.oid::pg_catalog.regprocedure AS signature FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'film_in_stock' AND p.prokind = 'f' LOOP EXECUTE 'DROP FUNCTION IF EXISTS ' || r.signature || ' CASCADE'; END LOOP; END $$"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0124",
@@ -2443,13 +2537,21 @@
       "source": "testing/go/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
       "ordinal": 126,
       "scriptName": "create function on non-existent table that does not exist yet with 'check_function_bodies'",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0126-create-table-public.inventory-inventory_id-integer",
       "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0126-create-table-public.inventory-inventory_id-integer",
-      "expectedKind": "rows",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
       "query": "CREATE TABLE public.inventory (\n    inventory_id integer DEFAULT nextval('public.inventory_inventory_id_seq'::regclass) NOT NULL,\n    film_id smallint NOT NULL,\n    store_id smallint NOT NULL,\n    last_update timestamp without time zone DEFAULT now() NOT NULL\n);\n",
       "querySha256": "cd8a9b7f627c05da6353ed241388c92df0abe90d9e55c29c77e7e2123e41746d",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "cleanup": [
+        "DO $$ DECLARE r record; BEGIN FOR r IN SELECT p.oid::pg_catalog.regprocedure AS signature FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'film_in_stock' AND p.prokind = 'f' LOOP EXECUTE 'DROP FUNCTION IF EXISTS ' || r.signature || ' CASCADE'; END LOOP; END $$",
+        "DROP TABLE IF EXISTS public.inventory CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0127",

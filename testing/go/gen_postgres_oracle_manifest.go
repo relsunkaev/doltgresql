@@ -1479,6 +1479,8 @@ func explicitPublicSchemaCleanup(setupQueries []string, query string) []string {
 	cleanup = append(cleanup, cleanupForCreatedPublications(cleanupStatements)...)
 	cleanup = append(cleanup, cleanupForCreatedExtensions(cleanupStatements)...)
 	cleanup = append(cleanup, cleanupForCreatedLargeObjects(cleanupStatements)...)
+	cleanup = append(cleanup, cleanupForCreatedFunctions(cleanupStatements, true)...)
+	cleanup = append(cleanup, cleanupForCreatedProcedures(cleanupStatements, true)...)
 	cleanup = append(cleanup, cleanupForCreatedTables(cleanupStatements)...)
 	cleanup = append(cleanup, cleanupForCreatedSchemas(cleanupStatements)...)
 	cleanup = append(cleanup, cleanupForCreatedLanguages(cleanupStatements)...)
@@ -2782,6 +2784,10 @@ func entryFromScriptTestAssertion(source string, setup []oracleStatement, ordina
 		}
 		if len(generatedSetup) == 0 {
 			generatedCleanup = append(generatedCleanup, cleanupForCreatedTables([]string{query})...)
+		} else {
+			generatedCleanup = append(generatedCleanup, cleanupForCreatedPublicTables(cleanupStatements)...)
+			generatedCleanup = append(generatedCleanup, cleanupForCreatedFunctions(cleanupStatements, false)...)
+			generatedCleanup = append(generatedCleanup, cleanupForCreatedProcedures(cleanupStatements, false)...)
 		}
 		generatedCleanup = append(generatedCleanup, cleanupForCreatedForeignDataWrappers(cleanupStatements)...)
 		generatedCleanup = append(generatedCleanup, cleanupForCreatedSubscriptions(cleanupStatements)...)
@@ -2908,6 +2914,30 @@ func cleanupForCreatedTables(statements []string) []string {
 	return cleanupForCreatedObjects(statements, "create table ", "DROP TABLE IF EXISTS ", " CASCADE")
 }
 
+func cleanupForCreatedPublicTables(statements []string) []string {
+	seen := map[string]struct{}{}
+	cleanup := make([]string, 0)
+	for _, statement := range statements {
+		name, ok := createdObjectName(statement, "create table ")
+		if !ok {
+			continue
+		}
+		if strings.Contains(name, "{{") || strings.Contains(name, "}}") {
+			continue
+		}
+		parts, ok := splitSQLQualifiedName(name)
+		if !ok || len(parts) < 2 || parts[len(parts)-2] != "public" {
+			continue
+		}
+		if _, ok := seen[name]; ok {
+			continue
+		}
+		seen[name] = struct{}{}
+		cleanup = append(cleanup, "DROP TABLE IF EXISTS "+name+" CASCADE")
+	}
+	return cleanup
+}
+
 func cleanupForCreatedForeignDataWrappers(statements []string) []string {
 	return cleanupForCreatedObjects(statements, "create foreign data wrapper ", "DROP FOREIGN DATA WRAPPER IF EXISTS ", " CASCADE")
 }
@@ -2950,6 +2980,150 @@ func createdLargeObjectOID(statement string) (string, bool) {
 		}
 	}
 	return oid, true
+}
+
+func cleanupForCreatedFunctions(statements []string, includeUnqualified bool) []string {
+	return cleanupForCreatedRoutines(statements, []string{"create function ", "create or replace function "}, "f", "FUNCTION", includeUnqualified)
+}
+
+func cleanupForCreatedProcedures(statements []string, includeUnqualified bool) []string {
+	return cleanupForCreatedRoutines(statements, []string{"create procedure ", "create or replace procedure "}, "p", "PROCEDURE", includeUnqualified)
+}
+
+func cleanupForCreatedRoutines(statements []string, prefixes []string, prokind string, dropType string, includeUnqualified bool) []string {
+	seen := map[string]struct{}{}
+	cleanup := make([]string, 0)
+	for _, statement := range statements {
+		name, ok := createdRoutineName(statement, prefixes)
+		if !ok {
+			continue
+		}
+		if strings.Contains(name, "{{") || strings.Contains(name, "}}") {
+			continue
+		}
+		schema, routine, ok := routineSchemaAndName(name, includeUnqualified)
+		if !ok {
+			continue
+		}
+		key := prokind + "\x00" + schema + "\x00" + routine
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		seen[key] = struct{}{}
+		cleanup = append(cleanup, dropRoutineByCatalog(schema, routine, prokind, dropType))
+	}
+	return cleanup
+}
+
+func createdRoutineName(statement string, prefixes []string) (string, bool) {
+	trimmed := strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(statement), ";"))
+	lower := strings.ToLower(trimmed)
+	for _, prefix := range prefixes {
+		if !strings.HasPrefix(lower, prefix) {
+			continue
+		}
+		rest := strings.TrimSpace(trimmed[len(prefix):])
+		return routineNameBeforeArgs(rest)
+	}
+	return "", false
+}
+
+func routineNameBeforeArgs(rest string) (string, bool) {
+	if rest == "" {
+		return "", false
+	}
+	inQuote := false
+	for i := 0; i < len(rest); i++ {
+		switch rest[i] {
+		case '"':
+			if inQuote && i+1 < len(rest) && rest[i+1] == '"' {
+				i++
+				continue
+			}
+			inQuote = !inQuote
+		case '(':
+			if !inQuote {
+				name := strings.TrimSpace(rest[:i])
+				return name, name != ""
+			}
+		}
+	}
+	return "", false
+}
+
+func routineSchemaAndName(name string, includeUnqualified bool) (string, string, bool) {
+	parts, ok := splitSQLQualifiedName(name)
+	if !ok || len(parts) == 0 {
+		return "", "", false
+	}
+	routine := parts[len(parts)-1]
+	schema := "public"
+	if len(parts) >= 2 {
+		schema = parts[len(parts)-2]
+	} else if !includeUnqualified {
+		return "", "", false
+	}
+	if schema == "" || routine == "" {
+		return "", "", false
+	}
+	return schema, routine, true
+}
+
+func splitSQLQualifiedName(name string) ([]string, bool) {
+	parts := make([]string, 0)
+	for {
+		name = strings.TrimSpace(name)
+		if name == "" {
+			return nil, false
+		}
+		part, rest, ok := nextSQLQualifiedNamePart(name)
+		if !ok {
+			return nil, false
+		}
+		parts = append(parts, part)
+		if rest == "" {
+			return parts, true
+		}
+		if rest[0] != '.' {
+			return nil, false
+		}
+		name = rest[1:]
+	}
+}
+
+func nextSQLQualifiedNamePart(name string) (string, string, bool) {
+	if name[0] == '"' {
+		var builder strings.Builder
+		for i := 1; i < len(name); i++ {
+			if name[i] != '"' {
+				builder.WriteByte(name[i])
+				continue
+			}
+			if i+1 < len(name) && name[i+1] == '"' {
+				builder.WriteByte('"')
+				i++
+				continue
+			}
+			return builder.String(), strings.TrimSpace(name[i+1:]), true
+		}
+		return "", "", false
+	}
+	end := len(name)
+	for i, r := range name {
+		if r == '.' || r == '\t' || r == '\n' || r == '\r' || r == ' ' {
+			end = i
+			break
+		}
+	}
+	part := strings.TrimSpace(name[:end])
+	if part == "" {
+		return "", "", false
+	}
+	return strings.ToLower(part), strings.TrimSpace(name[end:]), true
+}
+
+func dropRoutineByCatalog(schema string, name string, prokind string, dropType string) string {
+	return "DO $$ DECLARE r record; BEGIN FOR r IN SELECT p.oid::pg_catalog.regprocedure AS signature FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = " + quoteSQLString(schema) + " AND p.proname = " + quoteSQLString(name) + " AND p.prokind = " + quoteSQLString(prokind) + " LOOP EXECUTE 'DROP " + dropType + " IF EXISTS ' || r.signature || ' CASCADE'; END LOOP; END $$"
 }
 
 func cleanupForCreatedDatabases(statements []string) []string {

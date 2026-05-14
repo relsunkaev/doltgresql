@@ -1089,27 +1089,22 @@ BEGIN
     END IF;
     RETURN NEW;
 END;
-$$;`,
-					Expected: []sql.Row{},
+$$;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0105-create-function-public.fn_name-returns-trigger", Cleanup: []string{"DO $$ DECLARE r record; BEGIN FOR r IN SELECT p.oid::pg_catalog.regprocedure AS signature FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'fn_name' AND p.prokind = 'f' LOOP EXECUTE 'DROP FUNCTION IF EXISTS ' || r.signature || ' CASCADE'; END LOOP; END $$", "DROP TABLE IF EXISTS public.table_name CASCADE"}},
 				},
 				{
 					Query: `CREATE TRIGGER trig_name BEFORE INSERT OR UPDATE ON public.table_name FOR EACH ROW EXECUTE FUNCTION public.fn_name();`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0106-create-trigger-trig_name-before-insert"},
 				},
 				{
-					Query:    "INSERT INTO public.table_name VALUES ('2025-01-02', '2025-02-02');",
-					Expected: []sql.Row{},
+					Query: "INSERT INTO public.table_name VALUES ('2025-01-02', '2025-02-02');", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0107-insert-into-public.table_name-values-2025-01-02"},
 				},
 				{
-					Query:    "INSERT INTO public.table_name VALUES ('2025-04-05', NULL);",
-					Expected: []sql.Row{},
+					Query: "INSERT INTO public.table_name VALUES ('2025-04-05', NULL);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0108-insert-into-public.table_name-values-2025-04-05"},
 				},
 				{
-					Query:       "INSERT INTO public.table_name VALUES ('2025-09-10', '2025-07-08');",
-					ExpectedErr: "end_date (2025-07-08) start_date (2025-09-10)",
+					Query: "INSERT INTO public.table_name VALUES ('2025-09-10', '2025-07-08');", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0109-insert-into-public.table_name-values-2025-09-10", Compare: "sqlstate"},
 				},
 				{
-					Query:       "INSERT INTO public.table_name VALUES ('2025-11-11', '2025-12-31');",
-					ExpectedErr: "Too far (start_date=2025-11-11, end_date=2025-12-31)",
+					Query: "INSERT INTO public.table_name VALUES ('2025-11-11', '2025-12-31');", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0110-insert-into-public.table_name-values-2025-11-11", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1135,8 +1130,8 @@ $$;`,
 				},
 				{
 					Query: `SELECT singleReturn();`,
-					Skip:  true, PostgresOracle: // TODO: better PL/pgSQL internal support for non-trigger composite types
-					ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0114-select-singlereturn"},
+					Skip:  true, PostgresOracle: ScriptTestPostgresOracle{ // TODO: better PL/pgSQL internal support for non-trigger composite types
+						ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0114-select-singlereturn"},
 				},
 			},
 		},
@@ -1301,8 +1296,7 @@ BEGIN
     
     RETURN v_rtn_value;
 END;
-$$;`,
-					Expected: []sql.Row{},
+$$;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0120-create-function-public.ambienttempdetail_insertupdate-p_panel_project_id-integer", Cleanup: []string{"DO $$ DECLARE r record; BEGIN FOR r IN SELECT p.oid::pg_catalog.regprocedure AS signature FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'ambienttempdetail_insertupdate' AND p.prokind = 'f' LOOP EXECUTE 'DROP FUNCTION IF EXISTS ' || r.signature || ' CASCADE'; END LOOP; END $$", "DROP TABLE IF EXISTS public.ambienttempdetail CASCADE"}},
 				},
 				{
 					Query: "set search_path to 'public'",
@@ -1327,8 +1321,7 @@ $$;`,
      WHERE film_id = $1
      AND store_id = $2
      AND inventory_in_stock(inventory_id);
-$_$;`,
-					ExpectedErr: `table not found`,
+$_$;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0123-create-function-public.film_in_stock-p_film_id-integer", Compare: "sqlstate", Cleanup: []string{"DO $$ DECLARE r record; BEGIN FOR r IN SELECT p.oid::pg_catalog.regprocedure AS signature FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'film_in_stock' AND p.prokind = 'f' LOOP EXECUTE 'DROP FUNCTION IF EXISTS ' || r.signature || ' CASCADE'; END LOOP; END $$"}},
 				},
 				{
 					Query: "SET check_function_bodies = false;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0124-set-check_function_bodies-=-false"},
@@ -1352,8 +1345,7 @@ $_$;`,
     store_id smallint NOT NULL,
     last_update timestamp without time zone DEFAULT now() NOT NULL
 );
-`,
-					Expected: []sql.Row{},
+`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0126-create-table-public.inventory-inventory_id-integer", Compare: "sqlstate", Cleanup: []string{"DO $$ DECLARE r record; BEGIN FOR r IN SELECT p.oid::pg_catalog.regprocedure AS signature FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'film_in_stock' AND p.prokind = 'f' LOOP EXECUTE 'DROP FUNCTION IF EXISTS ' || r.signature || ' CASCADE'; END LOOP; END $$", "DROP TABLE IF EXISTS public.inventory CASCADE"}},
 				},
 			},
 		},
