@@ -618,6 +618,12 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 			if validationErr := operation.Options[raiseValidationErrorOption]; validationErr != "" {
 				return nil, false, pgerror.New(pgcode.Syntax, validationErr)
 			}
+			if isBareRaiseOperation(operation) {
+				if state.stackedDiagnostics == nil {
+					return nil, false, pgerror.New(pgcode.StackedDiagnosticsAccessedWithoutActiveHandler, "RAISE without parameters cannot be used outside an exception handler")
+				}
+				return nil, false, plpgsqlExceptionErrorFromDiagnostics(*state.stackedDiagnostics)
+			}
 
 			message, err := evaluteNoticeMessage(ctx, iFunc, operation, stack)
 			if err != nil {
@@ -627,8 +633,7 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 			if operation.PrimaryData == "EXCEPTION" {
 				// TODO: Notices at the EXCEPTION level should also abort the current tx.
 				diagnostics := plpgsqlExceptionDiagnosticsFromRaise(ctx, iFunc, operation, message)
-				err := plpgsqlExceptionError{diagnostics: diagnostics}
-				return nil, false, pgerror.WithCandidateCode(err, pgcode.MakeCode(diagnostics.ReturnedSQLState))
+				return nil, false, plpgsqlExceptionErrorFromDiagnostics(diagnostics)
 			} else {
 				noticeResponse := &pgproto3.NoticeResponse{
 					Severity: operation.PrimaryData,
@@ -835,6 +840,23 @@ func returnNextRecords(ctx *sql.Context, iFunc InterpretedFunction, stack Interp
 			Type:  iFunc.GetReturn(),
 		},
 	}}, nil
+}
+
+func isBareRaiseOperation(operation InterpreterOperation) bool {
+	if operation.PrimaryData != "EXCEPTION" || len(operation.SecondaryData) != 1 || operation.SecondaryData[0] != "" {
+		return false
+	}
+	for key := range operation.Options {
+		if _, err := strconv.Atoi(key); err == nil {
+			return false
+		}
+	}
+	return true
+}
+
+func plpgsqlExceptionErrorFromDiagnostics(diagnostics plpgsqlExceptionDiagnostics) error {
+	err := plpgsqlExceptionError{diagnostics: diagnostics}
+	return pgerror.WithCandidateCode(err, pgcode.MakeCode(diagnostics.ReturnedSQLState))
 }
 
 func plpgsqlExceptionDiagnosticsFromRaise(ctx *sql.Context, iFunc InterpretedFunction, operation InterpreterOperation, message string) plpgsqlExceptionDiagnostics {
