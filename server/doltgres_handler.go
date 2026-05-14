@@ -610,6 +610,7 @@ func (h *DoltgresHandler) maybeReleaseAllLocks(c *mysql.Conn) {
 		// doesn't see stale rollback state.
 		_ = functions.ReleaseSessionXactLocksWithSubsystem(ctx, h.e.LS)
 		node.ReleaseSessionRowLocks(c.ConnectionID)
+		node.ReleaseSessionRelationLocks(c.ConnectionID)
 		_ = functions.ReleaseSessionXactVars(ctx)
 		functions.ReleaseSessionSharedAdvisoryLocks(c.ConnectionID)
 		_, err = h.e.LS.ReleaseAll(ctx)

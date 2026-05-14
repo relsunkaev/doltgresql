@@ -18,11 +18,20 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	pgnodes "github.com/dolthub/doltgresql/server/node"
 )
 
-// nodeLockTable accepts PostgreSQL relation locks. Doltgres does not yet model
-// PostgreSQL relation lock conflicts, but pg_dump depends on ACCESS SHARE
-// locks succeeding before catalog introspection.
-func nodeLockTable(_ *Context, _ *tree.LockTable) (vitess.Statement, error) {
-	return NewNoOp("LOCK TABLE is accepted, but PostgreSQL relation lock conflicts are not yet enforced"), nil
+func nodeLockTable(_ *Context, stmt *tree.LockTable) (vitess.Statement, error) {
+	targets := make([]pgnodes.RelationLockTarget, 0, len(stmt.Tables))
+	for _, table := range stmt.Tables {
+		target := pgnodes.RelationLockTarget{
+			Database: string(table.CatalogName),
+			Schema:   string(table.SchemaName),
+			Name:     string(table.ObjectName),
+		}
+		targets = append(targets, target)
+	}
+	return vitess.InjectedStatement{
+		Statement: pgnodes.NewLockTable(targets, stmt.Mode, stmt.Nowait),
+	}, nil
 }

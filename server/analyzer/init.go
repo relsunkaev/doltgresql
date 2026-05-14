@@ -71,6 +71,7 @@ const (
 	ruleId_ValidateDropConstraintOwnership                                        // validateDropConstraintOwnership
 	ruleId_ValidateOnConflictArbiter                                              // validateOnConflictArbiter
 	ruleId_AssignNullsNotDistinctUniqueChecks                                     // assignNullsNotDistinctUniqueChecks
+	ruleId_AssignRelationLocking                                                  // assignRelationLocking
 	ruleId_AssignRowLevelLocking                                                  // assignRowLevelLocking
 	ruleId_SuppressReplicaRoleForeignKeys                                         // suppressReplicaRoleForeignKeys
 	ruleId_SuppressDeferrableForeignKeys                                          // suppressDeferrableForeignKeys
@@ -162,6 +163,7 @@ func Init() {
 		analyzer.Rule{Id: ruleId_AssignInheritedAlterTable, Apply: AssignInheritedAlterTable},
 		analyzer.Rule{Id: ruleId_AssignInheritedAlterDefaults, Apply: AssignInheritedAlterDefaults},
 		analyzer.Rule{Id: ruleId_AssignInheritedNotNull, Apply: AssignInheritedNotNull},
+		analyzer.Rule{Id: ruleId_AssignRelationLocking, Apply: AssignRelationLocking},
 		analyzer.Rule{Id: ruleId_AssignBatchedIndexLookups, Apply: AssignBatchedIndexLookups},
 		analyzer.Rule{Id: ruleId_AssignJsonbGinLookups, Apply: AssignJsonbGinLookups},
 		analyzer.Rule{Id: ruleId_InferInnerJoinPredicates, Apply: InferInnerJoinPredicates},
