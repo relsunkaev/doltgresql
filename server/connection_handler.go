@@ -4389,6 +4389,8 @@ func errMessageToSQLState(msg string) (string, bool) {
 		return pgcode.Windowing.String(), true
 	case msg == "set-returning functions are not allowed in check constraints":
 		return pgcode.FeatureNotSupported.String(), true
+	case msg == "subquery has too many columns":
+		return pgcode.Syntax.String(), true
 	case strings.HasPrefix(msg, `relation "`) && strings.HasSuffix(msg, `" does not exist`):
 		return pgcode.UndefinedTable.String(), true
 	case strings.HasPrefix(msg, `operator "`) && strings.HasSuffix(msg, `" does not exist`):

@@ -195,6 +195,14 @@ func TestErrMessageToSQLStateFormatsDomainConstraintErrors(t *testing.T) {
 	}
 }
 
+func TestErrMessageToSQLStateFormatsSubqueryTooManyColumns(t *testing.T) {
+	msg := "subquery has too many columns"
+	code, ok := errMessageToSQLState(msg)
+	require.True(t, ok)
+	require.Equal(t, pgcode.Syntax.String(), code)
+	require.Equal(t, pgcode.Syntax.String(), errorResponseCode(errors.New(msg)))
+}
+
 func TestErrMessageToSQLStateFormatsTypmodOverflow(t *testing.T) {
 	code, ok := errMessageToSQLState(`numeric field overflow - A field with precision 5, scale 2 must round to an absolute value less than 10^3`)
 	require.True(t, ok)
