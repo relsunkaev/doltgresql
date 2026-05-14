@@ -49,6 +49,7 @@ func TestCastSQLErrorPreservesDDLPGCodes(t *testing.T) {
 		pgcode.NumericValueOutOfRange,
 		pgcode.ProgramLimitExceeded,
 		pgcode.QueryCanceled,
+		pgcode.ReadOnlySQLTransaction,
 		pgcode.UndefinedColumn,
 		pgcode.UndefinedPreparedStatement,
 		pgcode.UniqueViolation,
@@ -74,6 +75,12 @@ func TestCastSQLErrorMapsExpectedSingleRow(t *testing.T) {
 
 	wrapped := sql.NewWrappedInsertError(sql.NewRow(1, "bad"), err)
 	require.Equal(t, pgcode.CardinalityViolation, pgerror.GetPGCode(castSQLError(wrapped)))
+}
+
+func TestCastSQLErrorMapsReadOnlyTransaction(t *testing.T) {
+	err := sql.ErrReadOnlyTransaction.New()
+
+	require.Equal(t, pgcode.ReadOnlySQLTransaction, pgerror.GetPGCode(castSQLError(err)))
 }
 
 func TestExecutionResultFieldsUsesSuppliedFields(t *testing.T) {

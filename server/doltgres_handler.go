@@ -283,6 +283,9 @@ func castSQLError(err error) error {
 	if sql.ErrExpectedSingleRow.Is(pgErr) {
 		return pgerror.New(pgcode.CardinalityViolation, pgErr.Error())
 	}
+	if sql.ErrReadOnlyTransaction.Is(pgErr) {
+		return pgerror.New(pgcode.ReadOnlySQLTransaction, pgErr.Error())
+	}
 	switch pgerror.GetPGCode(pgErr) {
 	case pgcode.ActiveSQLTransaction,
 		pgcode.AmbiguousFunction,
@@ -318,6 +321,7 @@ func castSQLError(err error) error {
 		pgcode.ProgramLimitExceeded,
 		pgcode.QueryCanceled,
 		pgcode.RaiseException,
+		pgcode.ReadOnlySQLTransaction,
 		pgcode.SingletonSQLJSONItemRequired,
 		pgcode.Syntax,
 		pgcode.UniqueViolation,
