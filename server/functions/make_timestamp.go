@@ -20,6 +20,8 @@ import (
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -73,7 +75,7 @@ var make_timestamptz_int32_int32_int32_int32_int32_float64_text = framework.Func
 		tz := val7.(string)
 		loc, _, _, err := convertTzToOffsetSecs(time.Now().UTC(), tz)
 		if err != nil {
-			return nil, errors.Errorf(`time zone "%s" not recognized`, tz)
+			return nil, pgerror.Newf(pgcode.InvalidParameterValue, `time zone "%s" not recognized`, tz)
 		}
 		return getTimestampInServerLocation(val1.(int32), val2.(int32), val3.(int32), val4.(int32), val5.(int32), val6.(float64), loc)
 	},

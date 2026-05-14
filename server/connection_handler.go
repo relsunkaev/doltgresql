@@ -4514,6 +4514,23 @@ func errMessageToSQLState(msg string) (string, bool) {
 		return pgcode.UniqueViolation.String(), true
 	case strings.Contains(msg, "Unique Key Constraint Violation"):
 		return pgcode.UniqueViolation.String(), true
+	case strings.HasPrefix(msg, `hour "`) && strings.HasSuffix(msg, `" is invalid for the 12-hour clock`),
+		strings.HasPrefix(msg, `invalid input string for "`),
+		strings.HasPrefix(msg, "invalid combination of date conventions"),
+		strings.HasPrefix(msg, "trailing characters remain in input string after datetime format"),
+		strings.HasPrefix(msg, `source string too short for "`),
+		strings.HasPrefix(msg, `invalid value "`) && strings.Contains(msg, `" for "`),
+		strings.HasPrefix(msg, `conflicting values for "`) && strings.Contains(msg, `" field in formatting string`),
+		strings.HasPrefix(msg, "cannot calculate day of year without year information"):
+		return pgcode.InvalidDatetimeFormat.String(), true
+	case strings.HasPrefix(msg, `value for "`) && strings.Contains(msg, `" in source string is out of range`):
+		return pgcode.DatetimeFieldOverflow.String(), true
+	case strings.HasPrefix(msg, `time zone "`) && strings.HasSuffix(msg, `" not recognized`):
+		return pgcode.InvalidParameterValue.String(), true
+	case msg == "timestamps cannot be binned into intervals containing months or years":
+		return pgcode.FeatureNotSupported.String(), true
+	case msg == "stride must be greater than zero":
+		return pgcode.DatetimeFieldOverflow.String(), true
 	case strings.HasPrefix(msg, "date field value out of range"),
 		strings.HasPrefix(msg, "time field value out of range"),
 		strings.HasPrefix(msg, "date/time field value out of range"),

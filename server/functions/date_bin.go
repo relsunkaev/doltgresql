@@ -17,10 +17,11 @@ package functions
 import (
 	"time"
 
-	cerrors "github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/postgres/parser/duration"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -62,7 +63,7 @@ var date_bin_interval_timestamptz_timestamptz = framework.Function3{
 // binTimestamp implements the core logic for date_bin function.
 func binTimestamp(interval duration.Duration, timestamp time.Time, origin time.Time) (time.Time, error) {
 	if interval.Months != 0 {
-		return time.Time{}, cerrors.Errorf("timestamps cannot be binned into intervals containing months or years")
+		return time.Time{}, pgerror.New(pgcode.FeatureNotSupported, "timestamps cannot be binned into intervals containing months or years")
 	}
 
 	// Calculate total nanoseconds in the interval
@@ -70,7 +71,7 @@ func binTimestamp(interval duration.Duration, timestamp time.Time, origin time.T
 
 	// Check for zero or negative interval
 	if intervalNanos <= 0 {
-		return time.Time{}, cerrors.Errorf("stride must be greater than zero")
+		return time.Time{}, pgerror.New(pgcode.DatetimeFieldOverflow, "stride must be greater than zero")
 	}
 
 	diffNanos := timestamp.Sub(origin).Nanoseconds()

@@ -23,6 +23,8 @@ import (
 	"unicode"
 
 	"github.com/dolthub/doltgresql/postgres/parser/duration"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
@@ -49,6 +51,14 @@ const (
 	usecsPerSecs  = 1000000
 	maxTzdispHour = 15 // Maximum allowed hour part for timezone display
 )
+
+func invalidDatetimeFormatError(format string, args ...any) error {
+	return pgerror.Newf(pgcode.InvalidDatetimeFormat, format, args...)
+}
+
+func datetimeFieldOverflowError(format string, args ...any) error {
+	return pgerror.Newf(pgcode.DatetimeFieldOverflow, format, args...)
+}
 
 // formatNode represents a single element in a parsed format string
 type formatNode struct {
@@ -582,7 +592,7 @@ func getDateTimeFromFormat(ctx *sql.Context, input, format string) (time.Time, e
 			if tfc.mode == fromCharDateNONE {
 				tfc.mode = n.key.fcdMode
 			} else if tfc.mode != n.key.fcdMode {
-				return time.Time{}, errors.Errorf(`invalid combination of date conventions`)
+				return time.Time{}, invalidDatetimeFormatError(`invalid combination of date conventions`)
 			}
 		}
 
@@ -711,9 +721,9 @@ func getDateTimeFromFormat(ctx *sql.Context, input, format string) (time.Time, e
 			inputPos += skipTh(n.suffix)
 		case DCH_tz, DCH_TZ:
 			// TODO: implement this
-			return time.Time{}, errors.Errorf(`formatting TZ is not supported yet`)
+			return time.Time{}, pgerror.New(pgcode.FeatureNotSupported, `formatting TZ is not supported yet`)
 		case DCH_OF:
-			return time.Time{}, errors.Errorf(`formatting field "OF" is only supported in to_char; "OF" is not yet supported in to_date or to_timestamp`)
+			return time.Time{}, pgerror.New(pgcode.FeatureNotSupported, `formatting field "OF" is only supported in to_char; "OF" is not yet supported in to_date or to_timestamp`)
 		case DCH_TZH:
 			if input[inputPos] == '-' {
 				tfc.tzsign = -1
@@ -842,7 +852,7 @@ func getDateTimeFromFormat(ctx *sql.Context, input, format string) (time.Time, e
 				return time.Time{}, err
 			}
 			if v < 1 || v > 7 {
-				return time.Time{}, errors.Errorf(`date/time field value out of range`)
+				return time.Time{}, datetimeFieldOverflowError(`date/time field value out of range`)
 			}
 			// ISO ID is Monday=1..Sunday=7; internally weekdays are Sunday=1.
 			if v == 7 {
@@ -881,7 +891,7 @@ func getDateTimeFromFormat(ctx *sql.Context, input, format string) (time.Time, e
 
 			parts := strings.Split(input[inputPos:], ",")
 			if len(parts) < 2 {
-				return time.Time{}, errors.Errorf(`invalid input string for "Y,YYY"`)
+				return time.Time{}, invalidDatetimeFormatError(`invalid input string for "Y,YYY"`)
 			}
 
 			millenniaStr := strings.TrimSpace(parts[0])
@@ -903,7 +913,7 @@ func getDateTimeFromFormat(ctx *sql.Context, input, format string) (time.Time, e
 			}
 
 			if used != 3 {
-				return time.Time{}, errors.Errorf(`invalid input string for "Y,YYY"`)
+				return time.Time{}, invalidDatetimeFormatError(`invalid input string for "Y,YYY"`)
 			}
 
 			if y, err := strconv.Atoi(yearsStr[:used]); err == nil {
@@ -912,18 +922,18 @@ func getDateTimeFromFormat(ctx *sql.Context, input, format string) (time.Time, e
 			}
 
 			if matched < 2 {
-				return time.Time{}, errors.Errorf(`invalid input string for "Y,YYY"`)
+				return time.Time{}, invalidDatetimeFormatError(`invalid input string for "Y,YYY"`)
 			}
 
 			// Check for overflow on multiplication
 			if millennia > math.MaxInt32/1000 || millennia < math.MinInt32/1000 {
-				return time.Time{}, errors.Errorf(`value for "Y,YYY" in source string is out of range`)
+				return time.Time{}, datetimeFieldOverflowError(`value for "Y,YYY" in source string is out of range`)
 			}
 			millennia *= 1000
 
 			// Check for overflow on addition
 			if (years > 0 && millennia > math.MaxInt32-years) || (years < 0 && millennia < math.MinInt32-years) {
-				return time.Time{}, errors.Errorf(`value for "Y,YYY" in source string is out of range`)
+				return time.Time{}, datetimeFieldOverflowError(`value for "Y,YYY" in source string is out of range`)
 			}
 			years += millennia
 
@@ -1021,7 +1031,7 @@ func getDateTimeFromFormat(ctx *sql.Context, input, format string) (time.Time, e
 	}
 
 	if inputPos < len(input) {
-		return time.Time{}, errors.Errorf(`trailing characters remain in input string after datetime format`)
+		return time.Time{}, invalidDatetimeFormatError(`trailing characters remain in input string after datetime format`)
 	}
 
 	return getTime(ctx, tfc)
@@ -1063,7 +1073,7 @@ func getTime(ctx *sql.Context, t tmFromChar) (time.Time, error) {
 
 	if t.is12clock {
 		if hour < 1 || hour > hoursPerDay/2 {
-			return time.Time{}, errors.Errorf(`hour "%d" is invalid for the 12-hour clock`, hour)
+			return time.Time{}, invalidDatetimeFormatError(`hour "%d" is invalid for the 12-hour clock`, hour)
 		}
 		if t.pm != 0 && hour < hoursPerDay/2 {
 			hour += hoursPerDay / 2
@@ -1205,7 +1215,7 @@ func getTime(ctx *sql.Context, t tmFromChar) (time.Time, error) {
 
 	if t.ddd != 0 && (month <= 1 || day <= 1) {
 		if year == 0 && t.bc == 0 {
-			return time.Time{}, errors.Errorf(`cannot calculate day of year without year information`)
+			return time.Time{}, invalidDatetimeFormatError(`cannot calculate day of year without year information`)
 		}
 		if t.mode == fromCharDateISOWEEK {
 			// zeroth day of the ISO year, in Julian
@@ -1257,13 +1267,13 @@ func getTime(ctx *sql.Context, t tmFromChar) (time.Time, error) {
 		minute < 0 || minute >= 60 ||
 		second < 0 || second >= duration.SecsPerMinute ||
 		fsec < 0 || fsec > usecsPerSecs {
-		return time.Time{}, errors.Errorf(`date/time field value out of range`)
+		return time.Time{}, datetimeFieldOverflowError(`date/time field value out of range`)
 	}
 
 	if t.tzsign != 0 {
 		// TZH and/or TZM fields
 		if t.tzh < 0 || t.tzh > maxTzdispHour || t.tzm < 0 || t.tzm >= minsPerHour {
-			return time.Time{}, errors.Errorf(`date/time field value out of range`)
+			return time.Time{}, datetimeFieldOverflowError(`date/time field value out of range`)
 		}
 		has_tz = true
 		gmtOffset = (t.tzh*minsPerHour + t.tzm) * duration.SecsPerMinute
@@ -1297,7 +1307,7 @@ func getTime(ctx *sql.Context, t tmFromChar) (time.Time, error) {
 
 	// Validate the created time (handles invalid dates like Feb 30)
 	if result.Year() != year || int(result.Month()) != month || result.Day() != day {
-		return time.Time{}, errors.Errorf(`date/time field value out of range`)
+		return time.Time{}, datetimeFieldOverflowError(`date/time field value out of range`)
 	}
 
 	// Convert the result to specified timezone
@@ -1328,7 +1338,7 @@ func fromCharSeqSearch(keyName string, input string, arr []string, curVal int, c
 		if len(s) > 0 {
 			l = len(s[0])
 		}
-		return 0, 0, errors.Errorf(`invalid value "%s" for "%s"`, input[:l], keyName)
+		return 0, 0, invalidDatetimeFormatError(`invalid value "%s" for "%s"`, input[:l], keyName)
 	}
 
 	val, err := verifyVal(keyName, curVal, calculateVal(v))
@@ -1341,7 +1351,7 @@ func fromCharSeqSearch(keyName string, input string, arr []string, curVal int, c
 // verifyVal checks if the current value conflicts with a new value for the same field
 func verifyVal(keyName string, curVal, newVal int) (int, error) {
 	if curVal != 0 && curVal != newVal {
-		return 0, errors.Errorf(`conflicting values for "%s" field in formatting string`, keyName)
+		return 0, invalidDatetimeFormatError(`conflicting values for "%s" field in formatting string`, keyName)
 	}
 	return newVal, nil
 }
@@ -1349,7 +1359,7 @@ func verifyVal(keyName string, curVal, newVal int) (int, error) {
 // checkForOverflow validates that a value fits within int32 range
 func checkForOverflow(v int) (int, error) {
 	if v < math.MinInt32 || v > math.MaxInt32 {
-		return 0, errors.Errorf(`date/time field value out of range`)
+		return 0, datetimeFieldOverflowError(`date/time field value out of range`)
 	}
 	return v, nil
 }
@@ -1494,7 +1504,7 @@ func fromCharParseIntLen(input string, length int, nodes []*formatNode, curVal i
 	isFMorIsNextSeperator := n.suffix&DCH_S_FM != 0 || isNextSeperator(nodes)
 
 	if !isFMorIsNextSeperator && len(input) < length {
-		return 0, 0, errors.Errorf(`source string too short for "%s" formatting field`, n.key.name)
+		return 0, 0, invalidDatetimeFormatError(`source string too short for "%s" formatting field`, n.key.name)
 	}
 
 	used := 0
@@ -1520,11 +1530,11 @@ func fromCharParseIntLen(input string, length int, nodes []*formatNode, curVal i
 		if used < length && len(input) >= length {
 			used = length
 		}
-		return 0, 0, errors.Errorf(`invalid value "%s" for "%s"`, input[:used], n.key.name)
+		return 0, 0, invalidDatetimeFormatError(`invalid value "%s" for "%s"`, input[:used], n.key.name)
 	}
 
 	if res < math.MinInt32 || res > math.MaxInt32 {
-		return 0, 0, errors.Errorf(`value for "%s" in source string is out of range`, n.key.name)
+		return 0, 0, datetimeFieldOverflowError(`value for "%s" in source string is out of range`, n.key.name)
 	}
 
 	v, err := verifyVal(n.key.name, curVal, int(res))
