@@ -1918,10 +1918,10 @@ func TestSystemCatalogInformationFunctions(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT c.oid, c.relname AS table_name, n.nspname AS table_schema FROM pg_catalog.pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE (n.nspname='myschema' OR n.nspname='public') and left(relname, 5) <> 'dolt_';`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testsystemcataloginformationfunctions-0007-select-c.oid-c.relname-as-table_name"},
+					Query: `SELECT c.relname AS table_name, n.nspname AS table_schema FROM pg_catalog.pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' and c.relname IN ('test', 'test_view') ORDER BY c.relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testsystemcataloginformationfunctions-0007-select-c.relname-as-table_name-n.nspname"},
 				},
 				{
-					Query: `select pg_get_viewdef(2707638987);`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testsystemcataloginformationfunctions-0008-select-pg_get_viewdef-2707638987"},
+					Query: `select pg_get_viewdef('test_view'::regclass);`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testsystemcataloginformationfunctions-0008-select-pg_get_viewdef-test_view-::regclass"},
 				},
 			},
 		},

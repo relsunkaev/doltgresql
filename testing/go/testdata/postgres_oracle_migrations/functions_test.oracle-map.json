@@ -9794,13 +9794,30 @@
       "ordinal": 7,
       "scriptName": "pg_get_viewdef",
       "oracle": "postgres",
-      "postgresId": "functions-test-testsystemcataloginformationfunctions-0007-select-c.oid-c.relname-as-table_name",
-      "suggestedId": "functions-test-testsystemcataloginformationfunctions-0007-select-c.oid-c.relname-as-table_name",
+      "postgresId": "functions-test-testsystemcataloginformationfunctions-0007-select-c.relname-as-table_name-n.nspname",
+      "suggestedId": "functions-test-testsystemcataloginformationfunctions-0007-select-c.relname-as-table_name-n.nspname",
       "compare": "structural",
       "expectedKind": "rows",
-      "query": "SELECT c.oid, c.relname AS table_name, n.nspname AS table_schema FROM pg_catalog.pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE (n.nspname='myschema' OR n.nspname='public') and left(relname, 5) <> 'dolt_';",
-      "querySha256": "f258cd7eead094bb1658af873b31fae331fa3253d71b2941c7e799292d88501f",
-      "expectedRows": [],
+      "query": "SELECT c.relname AS table_name, n.nspname AS table_schema FROM pg_catalog.pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' and c.relname IN ('test', 'test_view') ORDER BY c.relname;",
+      "querySha256": "190677409bc41749f1fff2254e32d76f0e71e38ff6ca230a659f2cc65a2c5f4d",
+      "expectedRows": [
+        [
+          {
+            "value": "test"
+          },
+          {
+            "value": "public"
+          }
+        ],
+        [
+          {
+            "value": "test_view"
+          },
+          {
+            "value": "public"
+          }
+        ]
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -9810,16 +9827,16 @@
       "ordinal": 8,
       "scriptName": "pg_get_viewdef",
       "oracle": "postgres",
-      "postgresId": "functions-test-testsystemcataloginformationfunctions-0008-select-pg_get_viewdef-2707638987",
-      "suggestedId": "functions-test-testsystemcataloginformationfunctions-0008-select-pg_get_viewdef-2707638987",
+      "postgresId": "functions-test-testsystemcataloginformationfunctions-0008-select-pg_get_viewdef-test_view-::regclass",
+      "suggestedId": "functions-test-testsystemcataloginformationfunctions-0008-select-pg_get_viewdef-test_view-::regclass",
       "compare": "structural",
       "expectedKind": "rows",
-      "query": "select pg_get_viewdef(2707638987);",
-      "querySha256": "a8311407ad27bd768599f7aaf74ab78e0334318f1cc7ec804b58af07f909a709",
+      "query": "select pg_get_viewdef('test_view'::regclass);",
+      "querySha256": "bc8f93691c9c8aabd43fad88b2957e9299ea6729220fce2b1c40e5e7e67e4e4a",
       "expectedRows": [
         [
           {
-            "null": true
+            "value": " SELECT name\n   FROM test;"
           }
         ]
       ],
