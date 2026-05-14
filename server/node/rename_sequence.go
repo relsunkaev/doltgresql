@@ -23,6 +23,8 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/auth"
 )
 
@@ -105,7 +107,7 @@ func (r *RenameSequence) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, erro
 		return nil, err
 	}
 	if relationType != core.RelationType_DoesNotExist {
-		return nil, errors.Errorf(`relation "%s" already exists`, r.newSequence)
+		return nil, pgerror.Newf(pgcode.DuplicateRelation, `relation "%s" already exists`, r.newSequence)
 	}
 	newID := id.NewSequence(newSchema, r.newSequence)
 	if err = collection.RenameRootObject(ctx, oldID.AsId(), newID.AsId()); err != nil {

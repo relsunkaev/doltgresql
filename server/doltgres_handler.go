@@ -292,6 +292,7 @@ func castSQLError(err error) error {
 		pgcode.DependentObjectsStillExist,
 		pgcode.DuplicatePreparedStatement,
 		pgcode.DuplicateObject,
+		pgcode.DuplicateRelation,
 		pgcode.FeatureNotSupported,
 		pgcode.GeneratedAlways,
 		pgcode.Grouping,
