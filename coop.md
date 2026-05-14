@@ -10,6 +10,17 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### alpha - 2026-05-14 11:33 MST
+
+- Lane claimed: `ALTER INDEX ... RENAME` SQLSTATE for primary-key-backed indexes in `TestBasicIndexing/PostgreSQL primary key index rename unsupported boundary` and the custom primary-key constraint names group.
+- Discovery proof: current BasicIndexing sweep after `fix: type missing reindex index errors` reports the first remaining alpha-owned failures as expected `42P01` but actual `0A000` for `ALTER INDEX rename_primary_key_index_pkey ...`, `ALTER INDEX primary_key_constraint_table_custom ...`, and `ALTER INDEX primary_key_constraint_default_pkey ...`.
+- Expected file: `server/node/index_ddl.go` plus this coordination entry only. Boundary: do not touch the later `pg_constraint` SELECT row mismatches, btree sort metadata, opclass/collation validation, JSONB GIN sidecars, mixed-expression metadata, or oracle/manifest files.
+- Result: primary-key-backed index rename attempts now return typed `42P01`/undefined-relation instead of generic unsupported-feature `0A000`.
+- Validation in clean verifier `/private/tmp/doltgresql-alpha-pkrename-current.iLlq0l` at `HEAD=1936bb8e` plus only this alpha patch:
+  - `go test -vet=off ./testing/go -run '^TestBasicIndexing$/(^PostgreSQL primary key index rename unsupported boundary$|^PostgreSQL custom primary key constraint names$)/(ALTER_INDEX_rename_primary_key_index_pkey_RENAME_TO_rename_primary_key_index_id_key;|ALTER_INDEX_primary_key_constraint_table_custom_RENAME_TO_primary_key_constraint_table_other;|ALTER_INDEX_primary_key_constraint_default_pkey_RENAME_TO_primary_key_constraint_default_other;)$' -count=1 -timeout=10m -v`
+  - `go test -vet=off ./server/node -run '^$' -count=1 -timeout=10m`
+- Next action: stage only this alpha hunk and commit, then re-run `TestBasicIndexing` from the new HEAD to identify the next unclaimed index blocker.
+
 ### alpha - 2026-05-14 11:26 MST
 
 - Lane claimed: `REINDEX INDEX` missing-target SQLSTATE for `TestBasicIndexing/PostgreSQL_drop_index_restrict_lifecycle`.
