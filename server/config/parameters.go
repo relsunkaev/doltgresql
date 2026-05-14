@@ -25,7 +25,6 @@ import (
 	"github.com/dolthub/dolt/go/libraries/doltcore/sqle"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/variables"
-	"gopkg.in/src-d/go-errors.v1"
 
 	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
 	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
@@ -90,10 +89,6 @@ func ResetAllSessionVariables(ctx *sql.Context) error {
 	return nil
 }
 
-var (
-	ErrInvalidValue = errors.NewKind("ERROR:  invalid value for parameter \"%s\": \"%s\"")
-)
-
 var _ sql.SystemVariable = (*Parameter)(nil)
 
 type Parameter struct {
@@ -149,7 +144,7 @@ func (p *Parameter) InitValue(ctx *sql.Context, val any, global bool) (sql.Syste
 	if p.ValidateFunc != nil {
 		v, ok := p.ValidateFunc(currVal, convertedVal)
 		if !ok {
-			return sql.SystemVarValue{}, ErrInvalidValue.New(p.Name, convertedVal)
+			return sql.SystemVarValue{}, pgerror.Newf(pgcode.InvalidParameterValue, `invalid value for parameter "%s": "%v"`, p.Name, convertedVal)
 		}
 		convertedVal = v
 	}

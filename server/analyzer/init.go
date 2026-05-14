@@ -78,6 +78,7 @@ const (
 	ruleId_AssignRowLevelLocking                                                  // assignRowLevelLocking
 	ruleId_SuppressReplicaRoleForeignKeys                                         // suppressReplicaRoleForeignKeys
 	ruleId_SuppressDeferrableForeignKeys                                          // suppressDeferrableForeignKeys
+	ruleId_ValidateParameters                                                     // validateParameters
 	ruleId_EnforceForeignKeyMatchFull                                             // enforceForeignKeyMatchFull
 	ruleId_PrioritizeUniqueFKInsert                                               // prioritizeUniqueForeignKeyInsertViolations
 	ruleId_ApplyForeignKeyActionColumns                                           // applyForeignKeyActionColumns
@@ -140,6 +141,7 @@ func Init() {
 		analyzer.Rule{Id: ruleId_AssignTriggers, Apply: AssignTriggers},
 		analyzer.Rule{Id: ruleId_ValidateCreateFunction, Apply: ValidateCreateFunction},
 		analyzer.Rule{Id: ruleId_ValidateCreateSchema, Apply: ValidateCreateSchema},
+		analyzer.Rule{Id: ruleId_ValidateParameters, Apply: ValidateParameters},
 		analyzer.Rule{Id: ruleId_ResolveProcedureDefaults, Apply: ResolveProcedureDefaults},
 	)
 
