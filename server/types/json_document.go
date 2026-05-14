@@ -302,7 +302,7 @@ func JsonValueDeleteKey(value JsonValue, key string) (JsonValue, error) {
 	case JsonValueArray:
 		return jsonValueArrayDeleteStrings(value, map[string]struct{}{key: {}})
 	default:
-		return nil, errors.Errorf("cannot delete from scalar")
+		return nil, pgerror.New(pgcode.InvalidParameterValue, "cannot delete from scalar")
 	}
 }
 
@@ -319,7 +319,7 @@ func JsonValueDeleteKeys(value JsonValue, keys []string) (JsonValue, error) {
 	case JsonValueArray:
 		return jsonValueArrayDeleteStrings(value, keySet)
 	default:
-		return nil, errors.Errorf("cannot delete from scalar")
+		return nil, pgerror.New(pgcode.InvalidParameterValue, "cannot delete from scalar")
 	}
 }
 
@@ -330,9 +330,9 @@ func JsonValueDeleteIndex(value JsonValue, idx int) (JsonValue, error) {
 	case JsonValueArray:
 		return jsonValueArrayDeleteIndex(value, idx), nil
 	case JsonValueObject:
-		return nil, errors.Errorf("cannot delete from object using integer index")
+		return nil, pgerror.New(pgcode.InvalidParameterValue, "cannot delete from object using integer index")
 	default:
-		return nil, errors.Errorf("cannot delete from scalar")
+		return nil, pgerror.New(pgcode.InvalidParameterValue, "cannot delete from scalar")
 	}
 }
 
