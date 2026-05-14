@@ -132,15 +132,10 @@ func IterateDatabase(ctx *sql.Context, database string, callbacks Callbacks) err
 
 	// Then we'll iterate over everything that is contained within a schema
 	if currentSchemaDatabase, ok := currentDatabase.(sql.SchemaDatabase); ok && callbacks.iteratesOverSchemas() {
-		// Load and sort all schemas by name ascending
-		schemas, err := currentSchemaDatabase.AllSchemas(ctx)
+		schemas, err := schemasForIteration(ctx, currentSchemaDatabase, callbacks.SearchSchemas)
 		if err != nil {
 			return err
 		}
-
-		sort.Slice(schemas, func(i, j int) bool {
-			return schemas[i].SchemaName() < schemas[j].SchemaName()
-		})
 		// We'll load the sequences early (if the callback exists) since they're stored on the root.
 		// Within the schema iteration, we can simply
 		var sequenceMap map[string][]*sequences.Sequence
@@ -170,6 +165,37 @@ func IterateDatabase(ctx *sql.Context, database string, callbacks Callbacks) err
 		}
 	}
 	return nil
+}
+
+func schemasForIteration(ctx *sql.Context, db sql.SchemaDatabase, searchSchemas []string) ([]sql.DatabaseSchema, error) {
+	if len(searchSchemas) == 0 {
+		// Load and sort all schemas by name ascending.
+		schemas, err := db.AllSchemas(ctx)
+		if err != nil {
+			return nil, err
+		}
+		sort.Slice(schemas, func(i, j int) bool {
+			return schemas[i].SchemaName() < schemas[j].SchemaName()
+		})
+		return schemas, nil
+	}
+
+	schemas := make([]sql.DatabaseSchema, 0, len(searchSchemas))
+	seenSchemas := make(map[string]struct{}, len(searchSchemas))
+	for _, schemaName := range searchSchemas {
+		if _, ok := seenSchemas[schemaName]; ok {
+			continue
+		}
+		schema, ok, err := db.GetSchema(ctx, schemaName)
+		if err != nil {
+			return nil, err
+		}
+		if ok {
+			seenSchemas[schemaName] = struct{}{}
+			schemas = append(schemas, schema)
+		}
+	}
+	return schemas, nil
 }
 
 // typesBySchema returns a map of schema name to types within that schema.

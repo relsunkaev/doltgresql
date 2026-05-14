@@ -16,12 +16,15 @@ package functions
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
 	"github.com/dolthub/doltgresql/server/settings"
@@ -77,6 +80,9 @@ var regclassin = framework.Function1{
 			relationName = sections[2]
 		case 5:
 			database = sections[0]
+			if !strings.EqualFold(database, ctx.GetCurrentDatabase()) {
+				return id.Null, pgerror.Newf(pgcode.FeatureNotSupported, "cross-database references are not implemented: %s", input)
+			}
 			searchSchemas = []string{sections[2]}
 			relationName = sections[4]
 		default:

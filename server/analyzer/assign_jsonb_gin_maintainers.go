@@ -15,6 +15,8 @@
 package analyzer
 
 import (
+	"strings"
+
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/analyzer"
 	"github.com/dolthub/go-mysql-server/sql/plan"
@@ -22,6 +24,8 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	pgnodes "github.com/dolthub/doltgresql/server/node"
 	pgtransform "github.com/dolthub/doltgresql/server/transform"
 )
@@ -145,10 +149,18 @@ func schemaNameForTable(ctx *sql.Context, table sql.Table) (string, error) {
 	// that touch pg_catalog tables).
 	name, err := core.GetSchemaName(ctx, nil, "")
 	if err != nil {
-		if sql.ErrDatabaseNoDatabaseSchemaSelectedCreate.Is(err) {
+		if isNoSchemaSelectedForCreate(err) {
 			return "", nil
 		}
 		return "", err
 	}
 	return name, nil
+}
+
+func isNoSchemaSelectedForCreate(err error) bool {
+	if sql.ErrDatabaseNoDatabaseSchemaSelectedCreate.Is(err) {
+		return true
+	}
+	return pgerror.GetPGCode(err) == pgcode.InvalidSchemaName &&
+		strings.Contains(err.Error(), sql.ErrDatabaseNoDatabaseSchemaSelectedCreate.New().Error())
 }
