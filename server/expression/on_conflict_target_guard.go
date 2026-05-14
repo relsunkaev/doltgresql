@@ -17,9 +17,11 @@ package expression
 import (
 	"reflect"
 
-	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/expression"
+
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 )
 
 // OnConflictTargetGuard wraps an ON DUPLICATE KEY UPDATE assignment
@@ -66,7 +68,7 @@ func (g *OnConflictTargetGuard) Eval(ctx *sql.Context, row sql.Row) (interface{}
 			oldVal := row[idx]
 			newVal := row[idx+g.schemaLen]
 			if !valuesEqual(oldVal, newVal) {
-				return nil, errors.Errorf(
+				return nil, pgerror.Newf(pgcode.UniqueViolation,
 					"duplicate key value violates unique constraint %q",
 					g.constraintName)
 			}

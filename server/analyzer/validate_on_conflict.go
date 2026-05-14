@@ -25,6 +25,8 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/transform"
 
 	"github.com/dolthub/doltgresql/postgres/parser/parser"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	pgexprs "github.com/dolthub/doltgresql/server/expression"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
@@ -207,10 +209,10 @@ func resolveConflictTarget(ctx *sql.Context, destination sql.Node, targetColumns
 	}
 	if matchingIndex == nil {
 		if constraintName != "" {
-			return conflictTarget{}, errors.Errorf(
+			return conflictTarget{}, pgerror.Newf(pgcode.UndefinedObject,
 				"constraint %q for table does not exist", constraintName)
 		}
-		return conflictTarget{}, errors.Errorf("there is no unique or exclusion constraint matching the ON CONFLICT specification")
+		return conflictTarget{}, pgerror.New(pgcode.InvalidColumnReference, "there is no unique or exclusion constraint matching the ON CONFLICT specification")
 	}
 	indexes2 := indexmetadata.LogicalColumns(matchingIndex, schema)
 	targetIndexes := make([]int, 0, len(indexes2))

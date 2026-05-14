@@ -21,6 +21,8 @@ import (
 	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/sqlutil"
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
 )
 
@@ -276,7 +278,7 @@ func (e *onConflictDoNothingArbiterInserter) Insert(ctx *sql.Context, row sql.Ro
 			return err
 		}
 		if hit {
-			return errors.Errorf(
+			return pgerror.Newf(pgcode.UniqueViolation,
 				"duplicate key value violates unique constraint %q", check.name)
 		}
 	}

@@ -269,6 +269,7 @@ func castSQLError(err error) error {
 		pgcode.FeatureNotSupported,
 		pgcode.Grouping,
 		pgcode.InvalidForeignKey,
+		pgcode.InvalidColumnReference,
 		pgcode.InvalidObjectDefinition,
 		pgcode.InvalidTableDefinition,
 		pgcode.InvalidParameterValue,
@@ -279,10 +280,12 @@ func castSQLError(err error) error {
 		pgcode.ProgramLimitExceeded,
 		pgcode.RaiseException,
 		pgcode.Syntax,
+		pgcode.UniqueViolation,
 		pgcode.UndefinedColumn,
 		pgcode.UndefinedFunction,
 		pgcode.UndefinedObject,
-		pgcode.Windowing:
+		pgcode.Windowing,
+		pgcode.WrongObjectType:
 		return err
 	default:
 		return sql.CastSQLError(err)
