@@ -381,28 +381,22 @@ func TestSubscript(t *testing.T) {
 					Query: `SELECT ARRAY[1, 2, 3][0];`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testsubscript-0004-select-array[1-2-3][0]", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT ARRAY[1, 2, 3][4];`,
-					Expected: []sql.Row{{nil}},
+					Query: `SELECT ARRAY[1, 2, 3][4];`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testsubscript-0005-select-array[1-2-3][4]", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT ARRAY[1, 2, 3][null];`,
-					Expected: []sql.Row{{nil}},
+					Query: `SELECT ARRAY[1, 2, 3][null];`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testsubscript-0006-select-array[1-2-3][null]", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT ARRAY['a', 'b', 'c'][2];`,
-					Expected: []sql.Row{{"b"}},
+					Query: `SELECT ARRAY['a', 'b', 'c'][2];`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testsubscript-0007-select-array[-a-b-c", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT array_to_string((ARRAY[1, 2, 3, 4])[2:3], ','), array_to_string((ARRAY[1, 2, 3, 4])[:2], ','), array_to_string((ARRAY[1, 2, 3, 4])[3:], ',');`,
-					Expected: []sql.Row{{"2,3", "1,2", "3,4"}},
+					Query: `SELECT array_to_string((ARRAY[1, 2, 3, 4])[2:3], ','), array_to_string((ARRAY[1, 2, 3, 4])[:2], ','), array_to_string((ARRAY[1, 2, 3, 4])[3:], ',');`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testsubscript-0008-select-array_to_string-array[1-2-3"},
 				},
 				{
-					Query:    `SELECT array_to_string((ARRAY[1, 2, 3])[3:2], ','), array_to_string((ARRAY[1, 2, 3])[4:5], ',');`,
-					Expected: []sql.Row{{"", ""}},
+					Query: `SELECT array_to_string((ARRAY[1, 2, 3])[3:2], ','), array_to_string((ARRAY[1, 2, 3])[4:5], ',');`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testsubscript-0009-select-array_to_string-array[1-2-3]"},
 				},
 				{
-					Query:       `SELECT ARRAY[1, 2, 3]['abc'];`,
-					ExpectedErr: "integer: unhandled type: string",
+					Query: `SELECT ARRAY[1, 2, 3]['abc'];`, PostgresOracle: ScriptTestPostgresOracle{ID: "expressions-test-testsubscript-0010-select-array[1-2-3][-abc", Compare: "sqlstate"},
 				},
 			},
 		},

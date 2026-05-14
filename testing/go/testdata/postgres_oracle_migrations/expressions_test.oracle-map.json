@@ -37,9 +37,6 @@
           }
         ]
       ],
-      "nonLiteral": [
-        "Expected"
-      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -72,9 +69,6 @@
           }
         ]
       ],
-      "nonLiteral": [
-        "Expected"
-      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -102,9 +96,6 @@
             "value": "baz"
           }
         ]
-      ],
-      "nonLiteral": [
-        "Expected"
       ],
       "needsCleanup": false,
       "cleanupProvided": false
@@ -144,9 +135,6 @@
             "value": "baz"
           }
         ]
-      ],
-      "nonLiteral": [
-        "Expected"
       ],
       "needsCleanup": false,
       "cleanupProvided": false
@@ -412,9 +400,6 @@
           }
         ]
       ],
-      "nonLiteral": [
-        "Expected"
-      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -454,9 +439,6 @@
           }
         ]
       ],
-      "nonLiteral": [
-        "Expected"
-      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -484,9 +466,6 @@
             "value": "bar"
           }
         ]
-      ],
-      "nonLiteral": [
-        "Expected"
       ],
       "needsCleanup": false,
       "cleanupProvided": false
@@ -1194,7 +1173,7 @@
       "postgresId": "expressions-test-testsubscript-0001-select-array[1-2-3][1]",
       "suggestedId": "expressions-test-testsubscript-0001-select-array[1-2-3][1]",
       "compare": "sqlstate",
-      "expectedKind": "rows",
+      "expectedKind": "error",
       "sqlstate": "42601",
       "errorSeverity": "ERROR",
       "query": "SELECT ARRAY[1, 2, 3][1];",
@@ -1268,12 +1247,16 @@
       "source": "testing/go/expressions_test.go:TestSubscript",
       "ordinal": 5,
       "scriptName": "array literal",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testsubscript-0005-select-array[1-2-3][4]",
       "suggestedId": "expressions-test-testsubscript-0005-select-array[1-2-3][4]",
-      "expectedKind": "rows",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
       "query": "SELECT ARRAY[1, 2, 3][4];",
       "querySha256": "25bf7905d0a2e65803ac565c5c0f78839ef5b4fd26cee66881ba6aa26299cd6c",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1281,12 +1264,16 @@
       "source": "testing/go/expressions_test.go:TestSubscript",
       "ordinal": 6,
       "scriptName": "array literal",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testsubscript-0006-select-array[1-2-3][null]",
       "suggestedId": "expressions-test-testsubscript-0006-select-array[1-2-3][null]",
-      "expectedKind": "rows",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
       "query": "SELECT ARRAY[1, 2, 3][null];",
       "querySha256": "82c3134bec7019e5a8e18ec12931e026a45c37d6e3418a932bf9f6fb329f389a",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1294,12 +1281,16 @@
       "source": "testing/go/expressions_test.go:TestSubscript",
       "ordinal": 7,
       "scriptName": "array literal",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testsubscript-0007-select-array[-a-b-c",
       "suggestedId": "expressions-test-testsubscript-0007-select-array[-a-b-c",
-      "expectedKind": "rows",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
       "query": "SELECT ARRAY['a', 'b', 'c'][2];",
       "querySha256": "a4053f535ae3df4fed50cc672c139039ab9000d12e1c3f755e99a52cb57ca856",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1307,12 +1298,27 @@
       "source": "testing/go/expressions_test.go:TestSubscript",
       "ordinal": 8,
       "scriptName": "array literal",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testsubscript-0008-select-array_to_string-array[1-2-3",
       "suggestedId": "expressions-test-testsubscript-0008-select-array_to_string-array[1-2-3",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT array_to_string((ARRAY[1, 2, 3, 4])[2:3], ','), array_to_string((ARRAY[1, 2, 3, 4])[:2], ','), array_to_string((ARRAY[1, 2, 3, 4])[3:], ',');",
       "querySha256": "d100be9ba3c50c4e086e2f5f038ae2b08fd48e8bb3b9a34ad933c03dc2d4f8ea",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "2,3"
+          },
+          {
+            "value": "1,2"
+          },
+          {
+            "value": "3,4"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1320,12 +1326,24 @@
       "source": "testing/go/expressions_test.go:TestSubscript",
       "ordinal": 9,
       "scriptName": "array literal",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testsubscript-0009-select-array_to_string-array[1-2-3]",
       "suggestedId": "expressions-test-testsubscript-0009-select-array_to_string-array[1-2-3]",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT array_to_string((ARRAY[1, 2, 3])[3:2], ','), array_to_string((ARRAY[1, 2, 3])[4:5], ',');",
       "querySha256": "de5ae4948f77d396216520b30c8dd8f6fade0194edc161d5254b0ba8ca4f6c55",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": ""
+          },
+          {
+            "value": ""
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1333,12 +1351,16 @@
       "source": "testing/go/expressions_test.go:TestSubscript",
       "ordinal": 10,
       "scriptName": "array literal",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "expressions-test-testsubscript-0010-select-array[1-2-3][-abc",
       "suggestedId": "expressions-test-testsubscript-0010-select-array[1-2-3][-abc",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
       "query": "SELECT ARRAY[1, 2, 3]['abc'];",
       "querySha256": "782f088d6952a023f4fe8c28f2d129e028e2f39e9047d17acefe80c922bfaef6",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
