@@ -141,7 +141,16 @@ func (h *ConnectionHandler) dropReplicationSlot(statement string) error {
 	if len(fields) < 2 {
 		return errors.Errorf("invalid DROP_REPLICATION_SLOT command")
 	}
-	if err := replsource.DropSlot(normalizeReplicationIdentifier(fields[1])); err != nil {
+	options := replsource.DropSlotOptions{}
+	for _, option := range fields[2:] {
+		switch strings.ToUpper(option) {
+		case "WAIT":
+			options.Wait = true
+		default:
+			return errors.Errorf("unrecognized DROP_REPLICATION_SLOT option %q", option)
+		}
+	}
+	if err := replsource.DropSlotWithOptions(normalizeReplicationIdentifier(fields[1]), options); err != nil {
 		return err
 	}
 	return h.send(&pgproto3.CommandComplete{CommandTag: []byte("DROP_REPLICATION_SLOT")})

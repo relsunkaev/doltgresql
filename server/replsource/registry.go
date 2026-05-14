@@ -81,6 +81,7 @@ type SenderInfo struct {
 
 type registry struct {
 	mu          sync.Mutex
+	cond        *sync.Cond
 	nextID      uint64
 	slots       map[string]*Slot
 	senders     map[uint64]*Sender
@@ -90,6 +91,19 @@ type registry struct {
 	journal     []journalEntry
 	storageFS   filesys.Filesys
 	storagePath string
+}
+
+func (r *registry) waitCondLocked() *sync.Cond {
+	if r.cond == nil {
+		r.cond = sync.NewCond(&r.mu)
+	}
+	return r.cond
+}
+
+func (r *registry) broadcastSlotStateChangedLocked() {
+	if r.cond != nil {
+		r.cond.Broadcast()
+	}
 }
 
 // WALMessage is one CopyData XLogData payload destined for a logical replication sender.
@@ -274,16 +288,34 @@ func validSlotName(name string) bool {
 	return true
 }
 
+// DropSlotOptions controls logical replication slot drop behavior.
+type DropSlotOptions struct {
+	Wait bool
+}
+
 // DropSlot drops an inactive logical replication slot.
 func DropSlot(name string) error {
+	return DropSlotWithOptions(name, DropSlotOptions{})
+}
+
+// DropSlotWithOptions drops a logical replication slot.
+func DropSlotWithOptions(name string, options DropSlotOptions) error {
 	defaultRegistry.mu.Lock()
 	defer defaultRegistry.mu.Unlock()
-	slot, ok := defaultRegistry.slots[name]
-	if !ok {
-		return errors.Errorf(`replication slot "%s" does not exist`, name)
-	}
-	if slot.Active {
-		return errors.Errorf(`replication slot "%s" is active`, name)
+	var slot *Slot
+	for {
+		var ok bool
+		slot, ok = defaultRegistry.slots[name]
+		if !ok {
+			return errors.Errorf(`replication slot "%s" does not exist`, name)
+		}
+		if !slot.Active {
+			break
+		}
+		if !options.Wait {
+			return errors.Errorf(`replication slot "%s" is active`, name)
+		}
+		defaultRegistry.waitCondLocked().Wait()
 	}
 	delete(defaultRegistry.slots, name)
 	defaultRegistry.pruneJournalLocked()
@@ -291,6 +323,7 @@ func DropSlot(name string) error {
 		defaultRegistry.slots[name] = slot
 		return err
 	}
+	defaultRegistry.broadcastSlotStateChangedLocked()
 	return nil
 }
 
@@ -298,10 +331,15 @@ func DropSlot(name string) error {
 func DropTemporarySlotsForPID(pid int32) {
 	defaultRegistry.mu.Lock()
 	defer defaultRegistry.mu.Unlock()
+	dropped := false
 	for name, slot := range defaultRegistry.slots {
 		if slot.Temporary && slot.OwnerPID == pid {
 			delete(defaultRegistry.slots, name)
+			dropped = true
 		}
+	}
+	if dropped {
+		defaultRegistry.broadcastSlotStateChangedLocked()
 	}
 }
 
@@ -434,6 +472,7 @@ func UnregisterSender(senderID uint64) {
 			slot.ActivePID = 0
 		}
 	}
+	defaultRegistry.broadcastSlotStateChangedLocked()
 	defaultRegistry.persistBestEffortLocked()
 }
 
@@ -462,6 +501,7 @@ func TerminateSenderByPID(pid int32) bool {
 		terminated = true
 	}
 	if terminated {
+		defaultRegistry.broadcastSlotStateChangedLocked()
 		defaultRegistry.persistBestEffortLocked()
 	}
 	return terminated
