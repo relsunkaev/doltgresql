@@ -53,16 +53,13 @@ func TestPgDumpAlterColumnSetStorageProbe(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `ALTER TABLE ONLY public.storage_probe ALTER COLUMN payload SET STORAGE EXTENDED;`,
-					Expected: []gms.Row{},
+					Query: `ALTER TABLE ONLY public.storage_probe ALTER COLUMN payload SET STORAGE EXTENDED;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-dump-round-trip-test-testpgdumpaltercolumnsetstorageprobe-0001-alter-table-only-public.storage_probe-alter"},
 				},
 				{
-					Query:    `INSERT INTO storage_probe VALUES (1, 'ok');`,
-					Expected: []gms.Row{},
+					Query: `INSERT INTO storage_probe VALUES (1, 'ok');`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-dump-round-trip-test-testpgdumpaltercolumnsetstorageprobe-0002-insert-into-storage_probe-values-1"},
 				},
 				{
-					Query:    `SELECT payload FROM storage_probe WHERE id = 1;`,
-					Expected: []gms.Row{{"ok"}},
+					Query: `SELECT payload FROM storage_probe WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-dump-round-trip-test-testpgdumpaltercolumnsetstorageprobe-0003-select-payload-from-storage_probe-where"},
 				},
 			},
 		},
