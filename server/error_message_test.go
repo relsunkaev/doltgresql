@@ -148,6 +148,35 @@ func TestErrMessageToSQLStateFormatsCommonRuntimeErrors(t *testing.T) {
 	}
 }
 
+func TestErrMessageToSQLStateFormatsMissingCommentObjects(t *testing.T) {
+	for _, tt := range []struct {
+		msg  string
+		code pgcode.Code
+	}{
+		{msg: `relation "missing_comment_table" does not exist`, code: pgcode.UndefinedTable},
+		{msg: `operator "+" does not exist`, code: pgcode.UndefinedFunction},
+		{msg: `access method "missing_comment_am" does not exist`, code: pgcode.UndefinedObject},
+		{msg: `collation "missing_comment_collation" does not exist`, code: pgcode.UndefinedObject},
+		{msg: `extension "missing_comment_extension" does not exist`, code: pgcode.UndefinedObject},
+		{msg: `language "missing_comment_language" does not exist`, code: pgcode.UndefinedObject},
+		{msg: `large object 987654321 does not exist`, code: pgcode.UndefinedObject},
+		{msg: `policy "missing_comment_policy" for relation "comment_policy_target" does not exist`, code: pgcode.UndefinedObject},
+		{msg: `publication "missing_comment_publication" does not exist`, code: pgcode.UndefinedObject},
+		{msg: `subscription "missing_comment_subscription" does not exist`, code: pgcode.UndefinedObject},
+		{msg: `tablespace "missing_comment_tablespace" does not exist`, code: pgcode.UndefinedObject},
+		{msg: `text search configuration "missing_comment_ts_config" does not exist`, code: pgcode.UndefinedObject},
+		{msg: `text search dictionary "missing_comment_ts_dict" does not exist`, code: pgcode.UndefinedObject},
+		{msg: `text search parser "missing_comment_ts_parser" does not exist`, code: pgcode.UndefinedObject},
+		{msg: `text search template "missing_comment_ts_template" does not exist`, code: pgcode.UndefinedObject},
+		{msg: `type "missing_comment_domain" does not exist`, code: pgcode.UndefinedObject},
+	} {
+		code, ok := errMessageToSQLState(tt.msg)
+		require.True(t, ok)
+		require.Equal(t, tt.code.String(), code)
+		require.Equal(t, tt.code.String(), errorResponseCode(errors.New(tt.msg)))
+	}
+}
+
 func TestErrMessageToSQLStateFormatsTypmodOverflow(t *testing.T) {
 	code, ok := errMessageToSQLState(`numeric field overflow - A field with precision 5, scale 2 must round to an absolute value less than 10^3`)
 	require.True(t, ok)

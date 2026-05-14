@@ -4379,6 +4379,12 @@ func errMessageToSQLState(msg string) (string, bool) {
 		return pgcode.DuplicateObject.String(), true
 	case strings.HasPrefix(msg, "division by zero"):
 		return pgcode.DivisionByZero.String(), true
+	case strings.HasPrefix(msg, `relation "`) && strings.HasSuffix(msg, `" does not exist`):
+		return pgcode.UndefinedTable.String(), true
+	case strings.HasPrefix(msg, `operator "`) && strings.HasSuffix(msg, `" does not exist`):
+		return pgcode.UndefinedFunction.String(), true
+	case strings.HasSuffix(msg, " does not exist") && isUndefinedObjectMessage(msg):
+		return pgcode.UndefinedObject.String(), true
 	case strings.HasPrefix(msg, "column '") && strings.HasSuffix(msg, "' specified twice"):
 		return pgcode.DuplicateColumn.String(), true
 	case strings.HasPrefix(msg, `column "`) && strings.HasSuffix(msg, `" specified more than once`):
@@ -4420,6 +4426,28 @@ func errMessageToSQLState(msg string) (string, bool) {
 		return pgcode.UndefinedFunction.String(), true
 	}
 	return "", false
+}
+
+func isUndefinedObjectMessage(msg string) bool {
+	switch {
+	case strings.HasPrefix(msg, `access method "`),
+		strings.HasPrefix(msg, `collation "`),
+		strings.HasPrefix(msg, `extension "`),
+		strings.HasPrefix(msg, `language "`),
+		strings.HasPrefix(msg, "large object "),
+		strings.HasPrefix(msg, `policy "`),
+		strings.HasPrefix(msg, `publication "`),
+		strings.HasPrefix(msg, `subscription "`),
+		strings.HasPrefix(msg, `tablespace "`),
+		strings.HasPrefix(msg, `text search configuration "`),
+		strings.HasPrefix(msg, `text search dictionary "`),
+		strings.HasPrefix(msg, `text search parser "`),
+		strings.HasPrefix(msg, `text search template "`),
+		strings.HasPrefix(msg, `type "`):
+		return true
+	default:
+		return false
+	}
 }
 
 // mysqlErrnoToSQLState maps the MySQL error numbers the GMS error
