@@ -16,6 +16,7 @@ package hook
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
@@ -24,10 +25,42 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/comments"
 	"github.com/dolthub/doltgresql/server/tablemetadata"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
+
+// BeforeTableDropColumn rejects schema changes that would leave foreign-key
+// metadata referring to a removed parent column.
+func BeforeTableDropColumn(ctx *sql.Context, _ sql.StatementRunner, nodeInterface sql.Node) (sql.Node, error) {
+	n, ok := nodeInterface.(*plan.DropColumn)
+	if !ok {
+		return nil, errors.Errorf("DROP COLUMN pre-hook expected `*plan.DropColumn` but received `%T`", nodeInterface)
+	}
+	doltTable := core.SQLNodeToDoltTable(n.Table)
+	if doltTable == nil {
+		return n, nil
+	}
+	fkTable, ok := any(doltTable).(sql.ForeignKeyTable)
+	if !ok {
+		return n, nil
+	}
+	parentFks, err := fkTable.GetReferencedForeignKeys(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for _, fk := range parentFks {
+		for _, parentColumn := range fk.ParentColumns {
+			if strings.EqualFold(parentColumn, n.Column) {
+				tableName := doltTable.TableName()
+				return nil, pgerror.Newf(pgcode.DependentObjectsStillExist, "cannot drop column %s of table %s because other objects depend on it", n.Column, tableName.Name)
+			}
+		}
+	}
+	return n, nil
+}
 
 // AfterTableDropColumn handles updating various table columns, alongside other validation that's unique to Doltgres.
 func AfterTableDropColumn(ctx *sql.Context, runner sql.StatementRunner, nodeInterface sql.Node) error {
