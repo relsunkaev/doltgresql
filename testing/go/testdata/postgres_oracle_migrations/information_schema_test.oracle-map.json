@@ -354,13 +354,42 @@
       "source": "testing/go/information_schema_test.go:TestInfoSchemaColumns",
       "ordinal": 7,
       "scriptName": "information_schema.columns",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "information-schema-test-testinfoschemacolumns-0007-select-distinct-table_schema-from-information_schema.columns",
       "suggestedId": "information-schema-test-testinfoschemacolumns-0007-select-distinct-table_schema-from-information_schema.columns",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT DISTINCT table_schema FROM information_schema.columns order by table_schema;",
       "querySha256": "6223dfaa1790ff5f365fd6ee85d90d0d5c82c1457563d5a739297d7904c6e357",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "information_schema"
+          }
+        ],
+        [
+          {
+            "value": "pg_catalog"
+          }
+        ],
+        [
+          {
+            "value": "public"
+          }
+        ],
+        [
+          {
+            "value": "test_schema"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS test_table CASCADE",
+        "DROP TABLE IF EXISTS test_table2 CASCADE",
+        "DROP SCHEMA IF EXISTS test_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/information_schema_test.go:TestInfoSchemaColumns#0008",
@@ -1865,13 +1894,31 @@
       "source": "testing/go/information_schema_test.go:TestInfoSchemaTables",
       "ordinal": 4,
       "scriptName": "information_schema.tables",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "information-schema-test-testinfoschematables-0004-select-table_catalog-table_schema-table_name-from",
       "suggestedId": "information-schema-test-testinfoschematables-0004-select-table_catalog-table_schema-table_name-from",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT table_catalog, table_schema, table_name FROM information_schema.tables WHERE table_schema='public';",
       "querySha256": "35b10eef4133f7c9460253b5a33d67200a1bb97a5927f304c78f7aced5be0bc6",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "postgres"
+          },
+          {
+            "value": "public"
+          },
+          {
+            "value": "test_table"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS test_table CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/information_schema_test.go:TestInfoSchemaTables#0005",
@@ -1939,26 +1986,96 @@
       "source": "testing/go/information_schema_test.go:TestInfoSchemaTables",
       "ordinal": 8,
       "scriptName": "information_schema.tables",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "information-schema-test-testinfoschematables-0008-select-distinct-table_schema-from-information_schema.tables",
       "suggestedId": "information-schema-test-testinfoschematables-0008-select-distinct-table_schema-from-information_schema.tables",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT DISTINCT table_schema FROM information_schema.tables order by table_schema;",
       "querySha256": "8681a6a76dc007887bf69f22c989787c3a749d9808c499b79373808a9fc9b3ea",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "information_schema"
+          }
+        ],
+        [
+          {
+            "value": "pg_catalog"
+          }
+        ],
+        [
+          {
+            "value": "public"
+          }
+        ],
+        [
+          {
+            "value": "test_schema"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS test_table CASCADE",
+        "DROP TABLE IF EXISTS test_table2 CASCADE",
+        "DROP SCHEMA IF EXISTS test_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/information_schema_test.go:TestInfoSchemaTables#0009",
       "source": "testing/go/information_schema_test.go:TestInfoSchemaTables",
       "ordinal": 9,
       "scriptName": "information_schema.tables",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "information-schema-test-testinfoschematables-0009-select-table_catalog-table_schema-from-information_schema.tables",
       "suggestedId": "information-schema-test-testinfoschematables-0009-select-table_catalog-table_schema-from-information_schema.tables",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT table_catalog, table_schema FROM information_schema.tables group by table_catalog, table_schema order by table_schema;",
       "querySha256": "d997fc887550d78fffe5cfb22a7c458a45ea061a84ce2fbbbdde1b4621189d5e",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "postgres"
+          },
+          {
+            "value": "information_schema"
+          }
+        ],
+        [
+          {
+            "value": "postgres"
+          },
+          {
+            "value": "pg_catalog"
+          }
+        ],
+        [
+          {
+            "value": "postgres"
+          },
+          {
+            "value": "public"
+          }
+        ],
+        [
+          {
+            "value": "postgres"
+          },
+          {
+            "value": "test_schema"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS test_table CASCADE",
+        "DROP TABLE IF EXISTS test_table2 CASCADE",
+        "DROP SCHEMA IF EXISTS test_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/information_schema_test.go:TestInfoSchemaTables#0010",
@@ -2088,13 +2205,64 @@
       "source": "testing/go/information_schema_test.go:TestInfoSchemaTables",
       "ordinal": 14,
       "scriptName": "information_schema.tables",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "information-schema-test-testinfoschematables-0014-select-table_catalog-table_schema-table_name-table_type",
       "suggestedId": "information-schema-test-testinfoschematables-0014-select-table_catalog-table_schema-table_name-table_type",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT table_catalog, table_schema, table_name, table_type  FROM information_schema.tables WHERE table_schema='test_schema' OR table_schema='public';",
       "querySha256": "c28d380b95f40a12ac556ddd3bad98d8e748616a5c608454f0c448a96698fa6c",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "postgres"
+          },
+          {
+            "value": "public"
+          },
+          {
+            "value": "test_table"
+          },
+          {
+            "value": "BASE TABLE"
+          }
+        ],
+        [
+          {
+            "value": "postgres"
+          },
+          {
+            "value": "test_schema"
+          },
+          {
+            "value": "test_table2"
+          },
+          {
+            "value": "BASE TABLE"
+          }
+        ],
+        [
+          {
+            "value": "postgres"
+          },
+          {
+            "value": "test_schema"
+          },
+          {
+            "value": "test_view"
+          },
+          {
+            "value": "VIEW"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS test_table CASCADE",
+        "DROP TABLE IF EXISTS test_table2 CASCADE",
+        "DROP SCHEMA IF EXISTS test_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/information_schema_test.go:TestInfoSchemaViews#0001",
