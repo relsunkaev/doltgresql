@@ -40,6 +40,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/jackc/pgx/v5"
 
+	"github.com/dolthub/doltgresql/server/accessmethod"
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/initialization"
 	"github.com/dolthub/doltgresql/server/largeobject"
@@ -151,6 +152,9 @@ func runServer(ctx context.Context, cfg *servercfg.DoltgresConfig, dEnv *env.Dol
 		return nil, err
 	}
 	if err = largeobject.ConfigureStorage(dataDirFs, filepath.Join(cfgDir, "large_objects.json")); err != nil {
+		return nil, err
+	}
+	if err = accessmethod.ConfigureStorage(dataDirFs, filepath.Join(cfgDir, "access_methods.json")); err != nil {
 		return nil, err
 	}
 	if err = sessionstate.ConfigurePreparedTransactionStorage(dataDirFs, filepath.Join(cfgDir, "prepared_transactions.json")); err != nil {

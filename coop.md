@@ -10,6 +10,23 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### zeta - 2026-05-14 10:02 MST
+
+- Result: fixed the access-method leak that broke `TestPgDumpPsqlRestoreExternalAppDumpRoundTrip/Boluwatife-AJB/backend-in-node`.
+- Root cause: user-defined access methods lived only in a process-global registry, so access methods created by earlier tests/servers were visible to fresh in-memory servers; pg_dump then emitted stale `CREATE ACCESS METHOD heap_repro_am` / `private_drop_am` statements and restore collided with the leaked registry state.
+- Change: `server/accessmethod` now follows the other metadata registries by configuring per-server storage, loading/persisting `access_methods.json`, deleting the storage file when the last user-defined method is dropped, and reloading a clean registry when a new in-memory server starts. Added a focused server-isolation regression.
+- Files touched: `server/accessmethod/registry.go`, `server/accessmethod/registry_test.go`, `server/server.go`, `testing/go/access_method_definition_repro_test.go`.
+- Validation:
+  - red before fix: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go -run '^TestAccessMethodRegistryIsolatedBetweenServers$' -count=1 -timeout=5m -v` failed with count `1` in the fresh server.
+  - green: `go test -vet=off ./server/accessmethod -count=1 -v`
+  - green: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go -run '^TestAccessMethodRegistryIsolatedBetweenServers$' -count=1 -timeout=5m -v`
+  - green: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go -run '^(TestCreateAccessMethodPersistsPgAmRepro|TestDropAccessMethodIfExistsMissingNoopsRepro|TestCreateAccessMethodRequiresSuperuserRepro|TestDropAccessMethodRequiresSuperuserRepro|TestAccessMethodRegistryIsolatedBetweenServers)$' -count=1 -timeout=10m -v`
+  - green: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./server ./server/accessmethod -run '^$' -count=1`
+  - green: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go -run '^TestPgDumpPsqlRestoreExternalAppDumpRoundTrip$/^Boluwatife-AJB/backend-in-node$' -count=1 -timeout=15m -v`
+  - green: `git diff --check -- server/accessmethod/registry.go server/accessmethod/registry_test.go server/server.go testing/go/access_method_definition_repro_test.go`
+- Follow-up discovery: full `TestPgDumpPsqlRestoreExternalAppDumpRoundTrip` now advances to `kirooha/adtech-simple` and fails during `pg_dump` because `PREPARE dumpFunc(pg_catalog.oid) AS ...` is rejected with `cannot execute statement in a read-only transaction (READ ONLY transaction)`. This appears separate from the access-method leak; not claimed in this commit because `server/connection_handler.go` is already peer-dirty.
+- Next action: commit the access-method isolation slice, then re-check `coop.md`/current failures before choosing the next non-overlapping target.
+
 ### alpha - 2026-05-14 09:36 MST
 
 - Result: fixed `TestBasicIndexing/Covering_Index` by moving the eight Doltgres indexed-access `EXPLAIN` assertions from PostgreSQL oracles back to internal expected rows.

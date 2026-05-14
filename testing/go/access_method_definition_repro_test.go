@@ -16,6 +16,9 @@ package _go
 
 import (
 	"testing"
+
+	gms "github.com/dolthub/go-mysql-server/sql"
+	"github.com/stretchr/testify/require"
 )
 
 // TestCreateAccessMethodPersistsPgAmRepro reproduces a DDL/catalog correctness
@@ -53,4 +56,36 @@ func TestDropAccessMethodIfExistsMissingNoopsRepro(t *testing.T) {
 			},
 		},
 	})
+}
+
+func TestAccessMethodRegistryIsolatedBetweenServers(t *testing.T) {
+	sourcePort, err := gms.GetEmptyPort()
+	require.NoError(t, err)
+	sourceCtx, sourceConn, sourceController := CreateServerWithPort(t, "postgres", sourcePort)
+	_, err = sourceConn.Exec(sourceCtx, `CREATE ACCESS METHOD isolated_repro_am TYPE TABLE HANDLER heap_tableam_handler;`)
+	require.NoError(t, err)
+	sourceConn.Close(sourceCtx)
+	sourceController.Stop()
+	require.NoError(t, sourceController.WaitForStop())
+
+	restorePort, err := gms.GetEmptyPort()
+	require.NoError(t, err)
+	restoreCtx, restoreConn, restoreController := CreateServerWithPort(t, "postgres", restorePort)
+	t.Cleanup(func() {
+		restoreConn.Close(restoreCtx)
+		restoreController.Stop()
+		require.NoError(t, restoreController.WaitForStop())
+	})
+
+	var count int
+	err = restoreConn.Current.QueryRow(restoreCtx, `
+		SELECT count(*)
+		FROM pg_catalog.pg_am
+		WHERE amname = 'isolated_repro_am';
+	`).Scan(&count)
+	require.NoError(t, err)
+	require.Equal(t, 0, count)
+
+	_, err = restoreConn.Exec(restoreCtx, `CREATE ACCESS METHOD isolated_repro_am TYPE TABLE HANDLER heap_tableam_handler;`)
+	require.NoError(t, err)
 }
