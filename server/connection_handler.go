@@ -4527,6 +4527,8 @@ func errMessageToSQLState(msg string) (string, bool) {
 		return pgcode.DatetimeFieldOverflow.String(), true
 	case strings.HasPrefix(msg, `time zone "`) && strings.HasSuffix(msg, `" not recognized`):
 		return pgcode.InvalidParameterValue.String(), true
+	case msg == "field position must not be zero":
+		return pgcode.InvalidParameterValue.String(), true
 	case msg == "timestamps cannot be binned into intervals containing months or years":
 		return pgcode.FeatureNotSupported.String(), true
 	case msg == "stride must be greater than zero":
@@ -4552,6 +4554,8 @@ func errMessageToSQLState(msg string) (string, bool) {
 		return pgcode.InvalidTextRepresentation.String(), true
 	case strings.HasPrefix(msg, "invalid input syntax for type "):
 		return pgcode.InvalidTextRepresentation.String(), true
+	case msg == "string_agg requires two arguments":
+		return pgcode.UndefinedFunction.String(), true
 	case strings.HasPrefix(msg, "function: '") && strings.Contains(msg, "' not found; function does not exist"):
 		return pgcode.UndefinedFunction.String(), true
 	case strings.HasPrefix(msg, "function ") && strings.HasSuffix(msg, " does not exist"):

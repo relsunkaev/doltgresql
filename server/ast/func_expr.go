@@ -21,6 +21,8 @@ import (
 	"github.com/cockroachdb/errors"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/auth"
 	pgexprs "github.com/dolthub/doltgresql/server/expression"
@@ -232,7 +234,7 @@ func nodeFuncExpr(ctx *Context, node *tree.FuncExpr) (vitess.Expr, error) {
 	// special case for string_agg, which maps to the mysql aggregate function group_concat
 	case "string_agg":
 		if len(node.Exprs) != 2 {
-			return nil, errors.Errorf("string_agg requires two arguments")
+			return nil, pgerror.New(pgcode.UndefinedFunction, "string_agg requires two arguments")
 		}
 
 		sepString := ""
@@ -324,6 +326,9 @@ func nodeFuncExpr(ctx *Context, node *tree.FuncExpr) (vitess.Expr, error) {
 	}
 
 	if len(node.OrderBy) > 0 {
+		if normalizedName == "group_concat" {
+			return nil, pgerror.New(pgcode.UndefinedFunction, "function group_concat does not exist")
+		}
 		return nil, errors.Errorf("function ORDER BY is not yet supported")
 	}
 

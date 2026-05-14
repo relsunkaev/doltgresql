@@ -17,9 +17,10 @@ package functions
 import (
 	"strings"
 
-	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 	"github.com/dolthub/doltgresql/utils"
@@ -38,7 +39,7 @@ var split_part_text_text_int32 = framework.Function3{
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, str any, delimiter any, n any) (any, error) {
 		if n.(int32) == 0 {
-			return nil, errors.Errorf("field position must not be zero")
+			return nil, pgerror.New(pgcode.InvalidParameterValue, "field position must not be zero")
 		}
 		var parts []string
 		if len(delimiter.(string)) > 0 {
