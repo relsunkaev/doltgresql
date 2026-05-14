@@ -253,6 +253,8 @@ type relationLockingNodeIter struct {
 	releases []func()
 }
 
+var _ sql.MutableRowIter = (*relationLockingNodeIter)(nil)
+
 func (r *relationLockingNodeIter) Next(ctx *sql.Context) (sql.Row, error) {
 	return r.inner.Next(ctx)
 }
@@ -262,6 +264,16 @@ func (r *relationLockingNodeIter) Close(ctx *sql.Context) error {
 	releaseRelationLockFuncs(r.releases)
 	r.releases = nil
 	return err
+}
+
+func (r *relationLockingNodeIter) GetChildIter() sql.RowIter {
+	return r.inner
+}
+
+func (r *relationLockingNodeIter) WithChildIter(childIter sql.RowIter) sql.RowIter {
+	nr := *r
+	nr.inner = childIter
+	return &nr
 }
 
 func releaseRelationLockFuncs(releases []func()) {
