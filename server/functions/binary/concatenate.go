@@ -29,6 +29,7 @@ func initBinaryConcatenate() {
 	framework.RegisterBinaryFunction(framework.Operator_BinaryConcatenate, anytextcat)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryConcatenate, array_append)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryConcatenate, array_cat)
+	framework.RegisterFunction(array_cat_unknown_unknown)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryConcatenate, array_cat_array_unknown)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryConcatenate, array_cat_text_array)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryConcatenate, array_cat_unknown_array)
@@ -90,6 +91,24 @@ var array_cat = framework.Function2{
 	Callable:   array_cat_callable,
 }
 
+var array_cat_unknown_unknown = framework.Function2{
+	Name:       "array_cat",
+	Return:     pgtypes.TextArray,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Unknown, pgtypes.Unknown},
+	Strict:     false,
+	Callable: func(ctx *sql.Context, paramsAndReturn [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		array1, err := arrayCatUnknownTextArray(ctx, val1)
+		if err != nil {
+			return nil, err
+		}
+		array2, err := arrayCatUnknownTextArray(ctx, val2)
+		if err != nil {
+			return nil, err
+		}
+		return array_cat_callable(ctx, paramsAndReturn, array1, array2)
+	},
+}
+
 var array_cat_text_array = framework.Function2{
 	Name:       "array_cat",
 	Return:     pgtypes.AnyArray,
@@ -131,6 +150,17 @@ func array_cat_callable(ctx *sql.Context, paramsAndReturn [3]*pgtypes.DoltgresTy
 	copy(result[len(array1):], array2)
 
 	return result, nil
+}
+
+func arrayCatUnknownTextArray(ctx *sql.Context, val any) (any, error) {
+	if val == nil {
+		return nil, nil
+	}
+	str, err := pgtypes.Unknown.IoOutput(ctx, val)
+	if err != nil {
+		return nil, err
+	}
+	return pgtypes.TextArray.IoInput(ctx, str)
 }
 
 func bitcat_callable(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
