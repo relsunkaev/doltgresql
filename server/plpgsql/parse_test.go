@@ -281,6 +281,36 @@ func TestParseDynamicExecuteIntoStrict(t *testing.T) {
 	}
 }
 
+func TestParseSelectIntoStrict(t *testing.T) {
+	ops, err := Parse(`CREATE FUNCTION test_block() RETURNS void AS $$
+		DECLARE
+			got_id INT;
+		BEGIN
+			SELECT id INTO STRICT got_id FROM items WHERE id = 1;
+		END;
+	$$ LANGUAGE plpgsql;`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var executeOp *InterpreterOperation
+	for i := range ops {
+		if ops[i].OpCode == OpCode_Execute {
+			executeOp = &ops[i]
+			break
+		}
+	}
+	if executeOp == nil {
+		t.Fatalf("expected execute operation, found %#v", ops)
+	}
+	if executeOp.Target != "got_id" {
+		t.Fatalf("target = %q", executeOp.Target)
+	}
+	if executeOp.Options["strict"] != "true" {
+		t.Fatalf("strict option = %q, expected true; op: %#v", executeOp.Options["strict"], executeOp)
+	}
+}
+
 func TestParseDynamicExecuteIntoRecord(t *testing.T) {
 	ops, err := Parse(`CREATE FUNCTION test_block() RETURNS text AS $$
 		DECLARE

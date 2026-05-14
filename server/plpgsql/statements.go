@@ -186,6 +186,7 @@ func (stmt Block) AppendOperations(ops *[]InterpreterOperation, stack *Interpret
 type ExecuteSQL struct {
 	Statement  string
 	Target     string
+	Strict     bool
 	LineNumber int32
 }
 
@@ -202,12 +203,19 @@ func (stmt ExecuteSQL) AppendOperations(ops *[]InterpreterOperation, stack *Inte
 	if err != nil {
 		return err
 	}
+	options := diagnosticStatementOptions(stmt.LineNumber, "SQL statement", stmt.Statement)
+	if stmt.Strict {
+		if options == nil {
+			options = make(map[string]string)
+		}
+		options["strict"] = "true"
+	}
 	*ops = append(*ops, InterpreterOperation{
 		OpCode:        OpCode_Execute,
 		PrimaryData:   statementStr,
 		SecondaryData: referencedVariables,
 		Target:        stmt.Target,
-		Options:       diagnosticStatementOptions(stmt.LineNumber, "SQL statement", stmt.Statement),
+		Options:       options,
 	})
 	return nil
 }

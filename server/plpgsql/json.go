@@ -199,6 +199,7 @@ type plpgSQL_stmt_execsql struct {
 	SQLStmt    sqlstmt `json:"sqlstmt"`
 	LineNumber int32   `json:"lineno"`
 	Into       bool    `json:"into"`
+	Strict     bool    `json:"strict"`
 	Target     datum   `json:"target"`
 }
 
@@ -524,6 +525,7 @@ func (stmt *plpgSQL_stmt_execsql) Convert() (ExecuteSQL, error) {
 	return ExecuteSQL{
 		Statement:  stmt.SQLStmt.Expr.Query,
 		Target:     target,
+		Strict:     stmt.Strict,
 		LineNumber: stmt.LineNumber,
 	}, nil
 }
