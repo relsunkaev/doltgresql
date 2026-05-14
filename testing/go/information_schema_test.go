@@ -168,10 +168,7 @@ func TestInfoSchemaColumns(t *testing.T) {
 					Query: `CREATE TABLE test_table2 (id2 INT);`, PostgresOracle: ScriptTestPostgresOracle{ID: "information-schema-test-testinfoschemacolumns-0006-create-table-test_table2-id2-int", Cleanup: []string{"DROP TABLE IF EXISTS test_table CASCADE", "DROP TABLE IF EXISTS test_table2 CASCADE", "DROP SCHEMA IF EXISTS test_schema CASCADE"}},
 				},
 				{
-					Query: `SELECT DISTINCT table_schema FROM information_schema.columns order by table_schema;`,
-					Expected: []sql.Row{
-						{"information_schema"}, {"pg_catalog"}, {"public"}, {"test_schema"},
-					},
+					Query: `SELECT DISTINCT table_schema FROM information_schema.columns order by table_schema;`, PostgresOracle: ScriptTestPostgresOracle{ID: "information-schema-test-testinfoschemacolumns-0007-select-distinct-table_schema-from-information_schema.columns", Cleanup: []string{"DROP TABLE IF EXISTS test_table CASCADE", "DROP TABLE IF EXISTS test_table2 CASCADE", "DROP SCHEMA IF EXISTS test_schema CASCADE"}},
 				},
 				{
 					Query: `SELECT table_catalog, table_schema, table_name, column_name FROM information_schema.columns WHERE table_schema='test_schema';`, PostgresOracle: ScriptTestPostgresOracle{ID: "information-schema-test-testinfoschemacolumns-0008-select-table_catalog-table_schema-table_name-column_name", Cleanup: []string{"DROP TABLE IF EXISTS test_table CASCADE", "DROP TABLE IF EXISTS test_table2 CASCADE", "DROP SCHEMA IF EXISTS test_schema CASCADE"}},
@@ -283,10 +280,7 @@ func TestInfoSchemaTables(t *testing.T) {
 					},
 				},
 				{
-					Query: `SELECT table_catalog, table_schema, table_name FROM information_schema.tables WHERE table_schema='public';`,
-					Expected: []sql.Row{
-						{"postgres", "public", "test_table"},
-					},
+					Query: `SELECT table_catalog, table_schema, table_name FROM information_schema.tables WHERE table_schema='public';`, PostgresOracle: ScriptTestPostgresOracle{ID: "information-schema-test-testinfoschematables-0004-select-table_catalog-table_schema-table_name-from", Cleanup: []string{"DROP TABLE IF EXISTS test_table CASCADE"}},
 				},
 				{
 					Query: `CREATE SCHEMA test_schema;`, PostgresOracle: ScriptTestPostgresOracle{ID: "information-schema-test-testinfoschematables-0005-create-schema-test_schema", Cleanup: []string{"DROP TABLE IF EXISTS test_table CASCADE", "DROP SCHEMA IF EXISTS test_schema CASCADE"}},
@@ -298,19 +292,10 @@ func TestInfoSchemaTables(t *testing.T) {
 					Query: `CREATE TABLE test_table2 (id INT);`, PostgresOracle: ScriptTestPostgresOracle{ID: "information-schema-test-testinfoschematables-0007-create-table-test_table2-id-int", Cleanup: []string{"DROP TABLE IF EXISTS test_table CASCADE", "DROP TABLE IF EXISTS test_table2 CASCADE", "DROP SCHEMA IF EXISTS test_schema CASCADE"}},
 				},
 				{
-					Query: `SELECT DISTINCT table_schema FROM information_schema.tables order by table_schema;`,
-					Expected: []sql.Row{
-						{"information_schema"}, {"pg_catalog"}, {"public"}, {"test_schema"},
-					},
+					Query: `SELECT DISTINCT table_schema FROM information_schema.tables order by table_schema;`, PostgresOracle: ScriptTestPostgresOracle{ID: "information-schema-test-testinfoschematables-0008-select-distinct-table_schema-from-information_schema.tables", Cleanup: []string{"DROP TABLE IF EXISTS test_table CASCADE", "DROP TABLE IF EXISTS test_table2 CASCADE", "DROP SCHEMA IF EXISTS test_schema CASCADE"}},
 				},
 				{
-					Query: `SELECT table_catalog, table_schema FROM information_schema.tables group by table_catalog, table_schema order by table_schema;`,
-					Expected: []sql.Row{
-						{"postgres", "information_schema"},
-						{"postgres", "pg_catalog"},
-						{"postgres", "public"},
-						{"postgres", "test_schema"},
-					},
+					Query: `SELECT table_catalog, table_schema FROM information_schema.tables group by table_catalog, table_schema order by table_schema;`, PostgresOracle: ScriptTestPostgresOracle{ID: "information-schema-test-testinfoschematables-0009-select-table_catalog-table_schema-from-information_schema.tables", Cleanup: []string{"DROP TABLE IF EXISTS test_table CASCADE", "DROP TABLE IF EXISTS test_table2 CASCADE", "DROP SCHEMA IF EXISTS test_schema CASCADE"}},
 				},
 				{
 					Query: `SELECT table_catalog, table_schema, table_name FROM information_schema.tables WHERE table_schema='test_schema';`, PostgresOracle: ScriptTestPostgresOracle{ID: "information-schema-test-testinfoschematables-0010-select-table_catalog-table_schema-table_name-from", Cleanup: []string{"DROP TABLE IF EXISTS test_table CASCADE", "DROP TABLE IF EXISTS test_table2 CASCADE", "DROP SCHEMA IF EXISTS test_schema CASCADE"}},
@@ -325,12 +310,7 @@ func TestInfoSchemaTables(t *testing.T) {
 					Query: `CREATE VIEW test_view AS SELECT * FROM test_table2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "information-schema-test-testinfoschematables-0013-create-view-test_view-as-select", Cleanup: []string{"DROP TABLE IF EXISTS test_table CASCADE", "DROP TABLE IF EXISTS test_table2 CASCADE", "DROP SCHEMA IF EXISTS test_schema CASCADE"}},
 				},
 				{
-					Query: `SELECT table_catalog, table_schema, table_name, table_type  FROM information_schema.tables WHERE table_schema='test_schema' OR table_schema='public';`,
-					Expected: []sql.Row{
-						{"postgres", "public", "test_table", "BASE TABLE"},
-						{"postgres", "test_schema", "test_view", "VIEW"},
-						{"postgres", "test_schema", "test_table2", "BASE TABLE"},
-					},
+					Query: `SELECT table_catalog, table_schema, table_name, table_type  FROM information_schema.tables WHERE table_schema='test_schema' OR table_schema='public';`, PostgresOracle: ScriptTestPostgresOracle{ID: "information-schema-test-testinfoschematables-0014-select-table_catalog-table_schema-table_name-table_type", Cleanup: []string{"DROP TABLE IF EXISTS test_table CASCADE", "DROP TABLE IF EXISTS test_table2 CASCADE", "DROP SCHEMA IF EXISTS test_schema CASCADE"}},
 				},
 			},
 		},
