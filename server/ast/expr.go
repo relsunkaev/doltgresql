@@ -177,7 +177,7 @@ func nodeExpr(ctx *Context, node tree.Expr) (vitess.Expr, error) {
 		if len(node.Schema) > 0 && node.Schema != "pg_catalog" &&
 			!isPublicVectorBinaryOperator(node.Schema, node.Operator) &&
 			!isSchemaQualifiedHstoreBinaryOperator(node.Operator) {
-			return nil, errors.Errorf("schema %q not allowed in OPERATOR syntax", node.Schema)
+			return nil, pgerror.Newf(pgcode.InvalidSchemaName, "schema %q not allowed in OPERATOR syntax", node.Schema)
 		}
 
 		left, err := nodeExpr(ctx, node.Left)
@@ -392,7 +392,7 @@ func nodeExpr(ctx *Context, node tree.Expr) (vitess.Expr, error) {
 		if len(node.Schema) > 0 && node.Schema != "pg_catalog" &&
 			!isPublicHstoreComparisonOperator(node.Schema, node.Operator) &&
 			!isSchemaQualifiedHstoreComparisonOperator(node.Operator) {
-			return nil, errors.Errorf("schema %q not allowed in OPERATOR syntax", node.Schema)
+			return nil, pgerror.Newf(pgcode.InvalidSchemaName, "schema %q not allowed in OPERATOR syntax", node.Schema)
 		}
 
 		left, err := nodeExpr(ctx, node.Left)
