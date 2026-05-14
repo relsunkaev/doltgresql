@@ -1262,8 +1262,7 @@ func TestEnumDomainEnforcesConstraintsRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `INSERT INTO enum_domain_items VALUES (1, 'ok');`,
-					ExpectedTag: "INSERT 0 1",
+					Query: `INSERT INTO enum_domain_items VALUES (1, 'ok');`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testenumdomainenforcesconstraintsrepro-0001-insert-into-enum_domain_items-values-1", Compare: "tag"},
 				},
 				{
 					Query: `INSERT INTO enum_domain_items VALUES (2, 'sad');`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testenumdomainenforcesconstraintsrepro-0002-insert-into-enum_domain_items-values-2", Compare: "sqlstate"},
@@ -1293,8 +1292,7 @@ func TestCompositeTypeDomainFieldEnforcesConstraintsRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `INSERT INTO composite_field_items VALUES (ROW(1));`,
-					ExpectedTag: "INSERT 0 1",
+					Query: `INSERT INTO composite_field_items VALUES (ROW(1));`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testcompositetypedomainfieldenforcesconstraintsrepro-0001-insert-into-composite_field_items-values-row", Compare: "tag"},
 				},
 				{
 					Query: `INSERT INTO composite_field_items VALUES (ROW(-1));`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testcompositetypedomainfieldenforcesconstraintsrepro-0002-insert-into-composite_field_items-values-row", Compare: "sqlstate"},
@@ -1329,8 +1327,7 @@ func TestCompositeDomainAcceptsValidValuesRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `INSERT INTO composite_domain_items VALUES
-						(1, ROW(1, 2)::composite_domain_ordered_pair);`,
-					ExpectedTag: "INSERT 0 1",
+						(1, ROW(1, 2)::composite_domain_ordered_pair);`, PostgresOracle: ScriptTestPostgresOracle{ID: "domain-correctness-repro-test-testcompositedomainacceptsvalidvaluesrepro-0001-insert-into-composite_domain_items-values-1", Compare: "tag"},
 				},
 				{
 					Query: `INSERT INTO composite_domain_items VALUES
