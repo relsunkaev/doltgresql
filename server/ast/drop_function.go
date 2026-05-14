@@ -29,10 +29,6 @@ func nodeDropFunction(ctx *Context, node *tree.DropFunction) (vitess.Statement, 
 		return nil, nil
 	}
 
-	if node.DropBehavior == tree.DropCascade {
-		return nil, fmt.Errorf("DROP FUNCTION with CASCADE is not supported yet")
-	}
-
 	if len(node.Functions) == 0 {
 		return nil, fmt.Errorf("no function name specified for DROP FUNCTION")
 	}

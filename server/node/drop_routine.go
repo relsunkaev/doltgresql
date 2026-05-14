@@ -104,7 +104,7 @@ func (d *DropRoutine) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error) 
 			return nil, errors.Errorf(`routine name "%s" is not unique`, routineWithArgs.RoutineName)
 		}
 		if funcExists {
-			if err = dropFunction(ctx, funcColl, routineWithArgs, d.IfExists); err != nil {
+			if err = dropFunction(ctx, funcColl, routineWithArgs, d.IfExists, d.Cascade); err != nil {
 				return nil, err
 			}
 			continue
