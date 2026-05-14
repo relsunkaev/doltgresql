@@ -39,7 +39,7 @@ func TestPgGetIndexdefQuotesIdentifiersRepro(t *testing.T) {
 							pg_catalog.pg_get_indexdef(c.oid),
 							pg_catalog.pg_get_indexdef(c.oid, 1, false)
 						FROM pg_catalog.pg_class c
-						WHERE c.relname = 'IndexQuoteIdx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-metadata-repro-test-testpggetindexdefquotesidentifiersrepro-0001-select-pg_catalog.pg_get_indexdef-c.oid-pg_catalog.pg_get_indexdef-c.oid"},
+						WHERE c.relname = 'IndexQuoteIdx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-metadata-repro-test-testpggetindexdefquotesidentifiersrepro-0001-select-pg_catalog.pg_get_indexdef-c.oid-pg_catalog.pg_get_indexdef-c.oid", ColumnModes: []string{"schema", "structural"}},
 				},
 			},
 		},
@@ -64,7 +64,7 @@ func TestRenameTableUpdatesIndexDefinitionsRepro(t *testing.T) {
 				{
 					Query: `SELECT tablename, indexdef
 						FROM pg_catalog.pg_indexes
-						WHERE indexname = 'index_rename_table_label_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-metadata-repro-test-testrenametableupdatesindexdefinitionsrepro-0001-select-tablename-indexdef-from-pg_catalog.pg_indexes"},
+						WHERE indexname = 'index_rename_table_label_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-metadata-repro-test-testrenametableupdatesindexdefinitionsrepro-0001-select-tablename-indexdef-from-pg_catalog.pg_indexes", ColumnModes: []string{"structural", "schema"}},
 				},
 			},
 		},
@@ -90,7 +90,7 @@ func TestRenameColumnUpdatesIndexDefinitionsRepro(t *testing.T) {
 							pg_catalog.pg_get_indexdef(c.oid),
 							pg_catalog.pg_get_indexdef(c.oid, 1, false)
 						FROM pg_catalog.pg_class c
-						WHERE c.relname = 'index_rename_column_label_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-metadata-repro-test-testrenamecolumnupdatesindexdefinitionsrepro-0001-select-pg_catalog.pg_get_indexdef-c.oid-pg_catalog.pg_get_indexdef-c.oid"},
+						WHERE c.relname = 'index_rename_column_label_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-metadata-repro-test-testrenamecolumnupdatesindexdefinitionsrepro-0001-select-pg_catalog.pg_get_indexdef-c.oid-pg_catalog.pg_get_indexdef-c.oid", ColumnModes: []string{"schema", "structural"}},
 				},
 			},
 		},

@@ -10,6 +10,18 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### alpha - 2026-05-14 08:28 MST
+
+- Result: fixed stale schema normalization metadata for `TestPgGetIndexdefQuotesIdentifiersRepro`, `TestRenameTableUpdatesIndexDefinitionsRepro`, and `TestRenameColumnUpdatesIndexDefinitionsRepro`.
+- Root cause: the PostgreSQL oracle cache preserved isolated schema names in `pg_get_indexdef` / `pg_indexes.indexdef` rows while normal Doltgres script execution returns `public`; these rows needed `schema` column modes and `{{schema}}` placeholders, not a `pg_get_indexdef` source change.
+- Files touched: `testing/go/index_metadata_repro_test.go`, `testing/go/testdata/postgres_oracle_migrations/index_metadata_repro_test.oracle-map.json`, and generated `testing/go/testdata/postgres_oracle_manifest.json`.
+- Validation in clean verifier `/tmp/doltgresql-alpha-indexmeta-0a6a330b` at current `0a6a330b` plus only alpha patch:
+  - `go test -vet=off ./testing/go -run '^(TestPgGetIndexdefQuotesIdentifiersRepro|TestRenameTableUpdatesIndexDefinitionsRepro|TestRenameColumnUpdatesIndexDefinitionsRepro)$' -count=1 -timeout=10m -v`
+  - `go test -vet=off ./testing/go -run '^TestPostgresOracleManifestGenerated$' -count=1 -timeout=10m -v`
+  - `git diff --check -- testing/go/index_metadata_repro_test.go testing/go/testdata/postgres_oracle_migrations/index_metadata_repro_test.oracle-map.json testing/go/testdata/postgres_oracle_manifest.json`
+- Follow-up discovery: filtered chunk `1151-1200` now passes those rows and stops at `TestJsonbGinPostingChunkBuildGate/PostgreSQL jsonb gin posting chunk build gate`: PostgreSQL oracle expects `USING gin (doc)` for the default opclass, while Doltgres emits `USING gin (doc jsonb_ops)`. Alpha has not claimed that source lane yet.
+
+
 ### alpha - 2026-05-14 08:13 MST
 
 - Result: fixed `TestIndexDefinitionsRejectInvalidExpressionsRepro` SQLSTATE classification for PostgreSQL-invalid index expressions and partial-index predicates.

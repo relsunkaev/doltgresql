@@ -22,13 +22,17 @@
       "postgresId": "index-metadata-repro-test-testpggetindexdefquotesidentifiersrepro-0001-select-pg_catalog.pg_get_indexdef-c.oid-pg_catalog.pg_get_indexdef-c.oid",
       "suggestedId": "index-metadata-repro-test-testpggetindexdefquotesidentifiersrepro-0001-select-pg_catalog.pg_get_indexdef-c.oid-pg_catalog.pg_get_indexdef-c.oid",
       "compare": "structural",
+      "columnModes": [
+        "schema",
+        "structural"
+      ],
       "expectedKind": "rows",
       "query": "SELECT\n\t\t\t\t\t\t\tpg_catalog.pg_get_indexdef(c.oid),\n\t\t\t\t\t\t\tpg_catalog.pg_get_indexdef(c.oid, 1, false)\n\t\t\t\t\t\tFROM pg_catalog.pg_class c\n\t\t\t\t\t\tWHERE c.relname = 'IndexQuoteIdx';",
       "querySha256": "541771dc1d608f777993508af6570fc50b17637f3f5044c767622b279e1fe635",
       "expectedRows": [
         [
           {
-            "value": "CREATE INDEX \"IndexQuoteIdx\" ON dg_oracle_1778707243254409000.\"IndexQuoteItems\" USING btree (\"CaseColumn\")"
+            "value": "CREATE INDEX \"IndexQuoteIdx\" ON {{schema}}.\"IndexQuoteItems\" USING btree (\"CaseColumn\")"
           },
           {
             "value": "\"CaseColumn\""
@@ -47,6 +51,10 @@
       "postgresId": "index-metadata-repro-test-testrenametableupdatesindexdefinitionsrepro-0001-select-tablename-indexdef-from-pg_catalog.pg_indexes",
       "suggestedId": "index-metadata-repro-test-testrenametableupdatesindexdefinitionsrepro-0001-select-tablename-indexdef-from-pg_catalog.pg_indexes",
       "compare": "structural",
+      "columnModes": [
+        "structural",
+        "schema"
+      ],
       "expectedKind": "rows",
       "query": "SELECT tablename, indexdef\n\t\t\t\t\t\tFROM pg_catalog.pg_indexes\n\t\t\t\t\t\tWHERE indexname = 'index_rename_table_label_idx';",
       "querySha256": "cff2c5ba6ec8df379fb0f63e92cd57b725cfe29b33aa2c12324335314526f923",
@@ -56,7 +64,7 @@
             "value": "index_rename_table_new"
           },
           {
-            "value": "CREATE INDEX index_rename_table_label_idx ON dg_oracle_1778707243290816000.index_rename_table_new USING btree (label)"
+            "value": "CREATE INDEX index_rename_table_label_idx ON {{schema}}.index_rename_table_new USING btree (label)"
           }
         ]
       ],
@@ -72,13 +80,17 @@
       "postgresId": "index-metadata-repro-test-testrenamecolumnupdatesindexdefinitionsrepro-0001-select-pg_catalog.pg_get_indexdef-c.oid-pg_catalog.pg_get_indexdef-c.oid",
       "suggestedId": "index-metadata-repro-test-testrenamecolumnupdatesindexdefinitionsrepro-0001-select-pg_catalog.pg_get_indexdef-c.oid-pg_catalog.pg_get_indexdef-c.oid",
       "compare": "structural",
+      "columnModes": [
+        "schema",
+        "structural"
+      ],
       "expectedKind": "rows",
       "query": "SELECT\n\t\t\t\t\t\t\tpg_catalog.pg_get_indexdef(c.oid),\n\t\t\t\t\t\t\tpg_catalog.pg_get_indexdef(c.oid, 1, false)\n\t\t\t\t\t\tFROM pg_catalog.pg_class c\n\t\t\t\t\t\tWHERE c.relname = 'index_rename_column_label_idx';",
       "querySha256": "7e6ce04f4afd75771f51515cfc31f9c63cb9ec1a8446e8bab796027c515cfab3",
       "expectedRows": [
         [
           {
-            "value": "CREATE INDEX index_rename_column_label_idx ON dg_oracle_1778707243319899000.index_rename_column_items USING btree (new_label)"
+            "value": "CREATE INDEX index_rename_column_label_idx ON {{schema}}.index_rename_column_items USING btree (new_label)"
           },
           {
             "value": "new_label"
