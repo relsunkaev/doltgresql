@@ -133,36 +133,36 @@ func createTriggerTransitionNames(node *tree.CreateTrigger) (oldTransitionName s
 		return "", "", nil
 	}
 	if node.Time != tree.TriggerTimeAfter {
-		return "", "", errors.New("transition tables are only supported for AFTER triggers")
+		return "", "", pgerror.New(pgcode.InvalidObjectDefinition, "transition tables are only supported for AFTER triggers")
 	}
 	if len(node.Events) != 1 {
-		return "", "", errors.New("transition tables cannot be specified for triggers with more than one event")
+		return "", "", pgerror.New(pgcode.FeatureNotSupported, "transition tables cannot be specified for triggers with more than one event")
 	}
 	event := node.Events[0]
 	if event.Type == tree.TriggerEventUpdate && len(event.Cols) > 0 {
-		return "", "", errors.New("transition tables cannot be specified for triggers with column lists")
+		return "", "", pgerror.New(pgcode.FeatureNotSupported, "transition tables cannot be specified for triggers with column lists")
 	}
 	for _, rel := range node.Relations {
 		if rel.IsOld {
 			if len(oldTransitionName) > 0 {
-				return "", "", errors.New("OLD TABLE may only be specified once")
+				return "", "", pgerror.New(pgcode.InvalidObjectDefinition, "OLD TABLE may only be specified once")
 			}
 			if event.Type != tree.TriggerEventUpdate && event.Type != tree.TriggerEventDelete {
-				return "", "", errors.New("OLD TABLE can only be specified for UPDATE or DELETE triggers")
+				return "", "", pgerror.New(pgcode.InvalidObjectDefinition, "OLD TABLE can only be specified for UPDATE or DELETE triggers")
 			}
 			oldTransitionName = rel.Name
 		} else {
 			if len(newTransitionName) > 0 {
-				return "", "", errors.New("NEW TABLE may only be specified once")
+				return "", "", pgerror.New(pgcode.InvalidObjectDefinition, "NEW TABLE may only be specified once")
 			}
 			if event.Type != tree.TriggerEventInsert && event.Type != tree.TriggerEventUpdate {
-				return "", "", errors.New("NEW TABLE can only be specified for INSERT or UPDATE triggers")
+				return "", "", pgerror.New(pgcode.InvalidObjectDefinition, "NEW TABLE can only be specified for INSERT or UPDATE triggers")
 			}
 			newTransitionName = rel.Name
 		}
 	}
 	if len(oldTransitionName) > 0 && strings.EqualFold(oldTransitionName, newTransitionName) {
-		return "", "", errors.New("OLD TABLE and NEW TABLE transition names must be distinct")
+		return "", "", pgerror.New(pgcode.InvalidObjectDefinition, "OLD TABLE and NEW TABLE transition names must be distinct")
 	}
 	return oldTransitionName, newTransitionName, nil
 }
