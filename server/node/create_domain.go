@@ -26,6 +26,8 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/types"
 )
 
@@ -82,7 +84,7 @@ func (c *CreateDomain) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error)
 	arrayID := id.NewType(schema, "_"+c.Name)
 
 	if collection.HasType(ctx, internalID) {
-		return nil, types.ErrTypeAlreadyExists.New(c.Name)
+		return nil, createDomainDuplicateTypeError(c.Name)
 	}
 
 	asType := c.AsType
@@ -126,6 +128,9 @@ func (c *CreateDomain) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error)
 	newType.Owner = ctx.Client().User
 	err = collection.CreateType(ctx, newType)
 	if err != nil {
+		if types.ErrTypeAlreadyExists.Is(err) {
+			return nil, createDomainDuplicateTypeError(newType.Name())
+		}
 		return nil, err
 	}
 
@@ -133,6 +138,9 @@ func (c *CreateDomain) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error)
 	arrayType := types.CreateArrayTypeFromBaseType(newType)
 	err = collection.CreateType(ctx, arrayType)
 	if err != nil {
+		if types.ErrTypeAlreadyExists.Is(err) {
+			return nil, createDomainDuplicateTypeError(arrayType.Name())
+		}
 		return nil, err
 	}
 	if err = core.MarkTypesCollectionDirty(ctx, c.DatabaseName); err != nil {
@@ -140,6 +148,10 @@ func (c *CreateDomain) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error)
 	}
 
 	return sql.RowsToRowIter(), nil
+}
+
+func createDomainDuplicateTypeError(name string) error {
+	return pgerror.Newf(pgcode.DuplicateObject, `type "%s" already exists`, name)
 }
 
 func resolveCreateDomainBaseType(ctx *sql.Context, collection interface {
