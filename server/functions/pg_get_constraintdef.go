@@ -68,14 +68,15 @@ var pg_get_constraintdef_oid_bool = framework.Function2{
 }
 
 // getConstraintDef returns the definition of the constraint for the given OID.
-func getConstraintDef(ctx *sql.Context, oidVal id.Id) (string, error) {
-	var result string
+func getConstraintDef(ctx *sql.Context, oidVal id.Id) (any, error) {
+	var result *string
 	err := RunCallback(ctx, oidVal, Callbacks{
 		Check: func(ctx *sql.Context, schema ItemSchema, table ItemTable, check ItemCheck) (cont bool, err error) {
-			result = fmt.Sprintf("CHECK %s", formatCheckConstraintExpression(check.Item.CheckExpression))
+			def := fmt.Sprintf("CHECK %s", formatCheckConstraintExpression(check.Item.CheckExpression))
 			if !check.Item.Enforced {
-				result += " NOT ENFORCED"
+				def += " NOT ENFORCED"
 			}
+			result = &def
 			return false, nil
 		},
 		ForeignKey: func(ctx *sql.Context, schema ItemSchema, table ItemTable, fk ItemForeignKey) (cont bool, err error) {
@@ -85,7 +86,7 @@ func getConstraintDef(ctx *sql.Context, oidVal id.Id) (string, error) {
 			}
 			// Note the postgres doesn't include the name of a foreign key when printing it via pg_get_constraintdef
 			// The spacing here is also significant, as certain tools (SQLAlchemy) use regex to parse
-			result = fmt.Sprintf(
+			def := fmt.Sprintf(
 				"FOREIGN KEY (%s) REFERENCES %s(%s)",
 				getColumnNamesString(fk.Item.Columns),
 				parentTableName,
@@ -96,40 +97,46 @@ func getConstraintDef(ctx *sql.Context, oidVal id.Id) (string, error) {
 				return false, err
 			}
 			if matchFull {
-				result += " MATCH FULL"
+				def += " MATCH FULL"
 			}
 			if action := formatForeignKeyAction("ON UPDATE", fk.Item.OnUpdate); action != "" {
-				result += " " + action
+				def += " " + action
 			}
 			if action := formatForeignKeyAction("ON DELETE", fk.Item.OnDelete); action != "" {
-				result += " " + action
+				def += " " + action
 			}
 			timing, err := deferrable.ForeignKeyTimingForID(ctx, fk.OID, fk.Item)
 			if err != nil {
 				return false, err
 			}
 			if timing.Deferrable {
-				result += " DEFERRABLE"
+				def += " DEFERRABLE"
 			}
 			if timing.InitiallyDeferred {
-				result += " INITIALLY DEFERRED"
+				def += " INITIALLY DEFERRED"
 			}
+			result = &def
 			return false, nil
 		},
 		Index: func(ctx *sql.Context, schema ItemSchema, table ItemTable, index ItemIndex) (cont bool, err error) {
 			colsStr := getColumnNamesString(index.Item.Expressions())
+			var def string
 			if strings.ToLower(index.Item.ID()) == "primary" {
-				result = fmt.Sprintf("PRIMARY KEY (%s)", colsStr)
+				def = fmt.Sprintf("PRIMARY KEY (%s)", colsStr)
 			} else {
-				result = fmt.Sprintf("UNIQUE (%s)", colsStr)
+				def = fmt.Sprintf("UNIQUE (%s)", colsStr)
 			}
+			result = &def
 			return false, nil
 		},
 	})
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return result, nil
+	if result == nil {
+		return nil, nil
+	}
+	return *result, nil
 }
 
 // getColumnNamesString returns a comma-separated string of column names with
