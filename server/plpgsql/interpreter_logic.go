@@ -180,7 +180,7 @@ func Call(ctx *sql.Context, iFunc InterpretedFunction, runner sql.StatementRunne
 	if iFunc.GetReturn().ID == pgtypes.Void.ID {
 		return "", nil
 	}
-	return nil, nil
+	return nil, functionExecutedNoReturnStatementError()
 }
 
 func procedureOutputRow(iFunc InterpretedFunction, stack InterpreterStack) sql.Row {
@@ -668,6 +668,9 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 				if iFunc.GetReturn().ID == pgtypes.Void.ID {
 					return "", true, nil
 				}
+				if isImplicitBareReturn(operation) {
+					return nil, false, functionExecutedNoReturnStatementError()
+				}
 				return nil, true, nil
 			}
 
@@ -852,6 +855,10 @@ func isBareRaiseOperation(operation InterpreterOperation) bool {
 		}
 	}
 	return true
+}
+
+func functionExecutedNoReturnStatementError() error {
+	return pgerror.New(pgcode.RoutineExceptionFunctionExecutedNoReturnStatement, "control reached end of function without RETURN")
 }
 
 func plpgsqlExceptionErrorFromDiagnostics(diagnostics plpgsqlExceptionDiagnostics) error {

@@ -99,6 +99,24 @@ func TestCallVoidFunctionWithoutReturnReturnsVoidValue(t *testing.T) {
 	require.Equal(t, "", result)
 }
 
+func TestCallNonVoidFunctionWithoutReturnRequiresReturnValue(t *testing.T) {
+	_, err := Call(sql.NewEmptyContext(), testInterpretedFunction{returnType: pgtypes.Int32}, nil, nil, nil)
+	require.Error(t, err)
+	require.Equal(t, pgcode.RoutineExceptionFunctionExecutedNoReturnStatement, pgerror.GetPGCode(err))
+}
+
+func TestImplicitBareReturnInNonVoidFunctionRequiresReturnValue(t *testing.T) {
+	_, err := Call(sql.NewEmptyContext(), testInterpretedFunction{
+		returnType: pgtypes.Int32,
+		statements: []InterpreterOperation{{
+			OpCode: OpCode_Return,
+		}},
+	}, nil, nil, nil)
+
+	require.Error(t, err)
+	require.Equal(t, pgcode.RoutineExceptionFunctionExecutedNoReturnStatement, pgerror.GetPGCode(err))
+}
+
 func TestRaiseExceptionCarriesSQLState(t *testing.T) {
 	_, err := Call(sql.NewEmptyContext(), testInterpretedFunction{
 		returnType: pgtypes.Void,

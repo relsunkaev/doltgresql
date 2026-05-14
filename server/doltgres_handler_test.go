@@ -51,6 +51,8 @@ func TestCastSQLErrorPreservesDDLPGCodes(t *testing.T) {
 		pgcode.ProgramLimitExceeded,
 		pgcode.QueryCanceled,
 		pgcode.ReadOnlySQLTransaction,
+		pgcode.RoutineExceptionFunctionExecutedNoReturnStatement,
+		pgcode.StackedDiagnosticsAccessedWithoutActiveHandler,
 		pgcode.UndefinedColumn,
 		pgcode.UndefinedPreparedStatement,
 		pgcode.UniqueViolation,
