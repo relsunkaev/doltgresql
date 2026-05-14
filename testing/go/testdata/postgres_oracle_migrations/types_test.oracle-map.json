@@ -7600,182 +7600,375 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 276,
       "scriptName": "Regclass type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0276-select-public.testing-::regclass",
       "suggestedId": "types-test-testtypes-0276-select-public.testing-::regclass",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT 'public.testing'::regclass;",
       "querySha256": "f74baf2bca9b9edc768ab6e5b8d907bc1b3599800b04c9efeb2401c9e05dc146",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "testing"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS testing CASCADE",
+        "DROP TABLE IF EXISTS \"Testing2\" CASCADE",
+        "DROP SEQUENCE IF EXISTS seq1 CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/types_test.go:TestTypes#0277",
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 277,
       "scriptName": "Regclass type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0277-select-postgres.public.testing-::regclass",
       "suggestedId": "types-test-testtypes-0277-select-postgres.public.testing-::regclass",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT 'postgres.public.testing'::regclass;",
       "querySha256": "d68c308e38a7c0b524299939f947fa64ea7f3dda13f795406e38bd2955010971",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "testing"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS testing CASCADE",
+        "DROP TABLE IF EXISTS \"Testing2\" CASCADE",
+        "DROP SEQUENCE IF EXISTS seq1 CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/types_test.go:TestTypes#0278",
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 278,
       "scriptName": "Regclass type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0278-select-doesnotexist.public.testing-::regclass",
       "suggestedId": "types-test-testtypes-0278-select-doesnotexist.public.testing-::regclass",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "0A000",
+      "errorSeverity": "ERROR",
       "query": "SELECT 'doesnotexist.public.testing'::regclass;",
       "querySha256": "760e6f5d595d5b2c6d4f25095cf85b2438d829352936c4aea103ad8da9929d87",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "cleanup": [
+        "DROP TABLE IF EXISTS testing CASCADE",
+        "DROP TABLE IF EXISTS \"Testing2\" CASCADE",
+        "DROP SEQUENCE IF EXISTS seq1 CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/types_test.go:TestTypes#0279",
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 279,
       "scriptName": "Regclass type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0279-select-testview-::regclass",
       "suggestedId": "types-test-testtypes-0279-select-testview-::regclass",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT 'testview'::regclass;",
       "querySha256": "cf84fe33d3dae222c0aaac5fef674cad4921ebc44e1a7665fdd29da8dd0bd6ba",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "testview"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS testing CASCADE",
+        "DROP TABLE IF EXISTS \"Testing2\" CASCADE",
+        "DROP SEQUENCE IF EXISTS seq1 CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/types_test.go:TestTypes#0280",
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 280,
       "scriptName": "Regclass type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0280-select-testing-::regclass",
       "suggestedId": "types-test-testtypes-0280-select-testing-::regclass",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT ' testing'::regclass;",
       "querySha256": "25a48a5a68a37be5b0413d48b7a20a2e6bd32150c924b809d2cb2f91b5c50af8",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "testing"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS testing CASCADE",
+        "DROP TABLE IF EXISTS \"Testing2\" CASCADE",
+        "DROP SEQUENCE IF EXISTS seq1 CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/types_test.go:TestTypes#0281",
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 281,
       "scriptName": "Regclass type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0281-select-seq1-::regclass",
       "suggestedId": "types-test-testtypes-0281-select-seq1-::regclass",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT 'seq1'::regclass;",
       "querySha256": "baf15d5ea58131bdc84cf6f1551fcfa39f4a0394af6a7f735fab43c83d569372",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "seq1"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS testing CASCADE",
+        "DROP TABLE IF EXISTS \"Testing2\" CASCADE",
+        "DROP SEQUENCE IF EXISTS seq1 CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/types_test.go:TestTypes#0282",
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 282,
       "scriptName": "Regclass type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0282-select-testing2-::regclass",
       "suggestedId": "types-test-testtypes-0282-select-testing2-::regclass",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
       "query": "SELECT 'Testing2'::regclass;",
       "querySha256": "a8ec63d5748b764f2e74a37c63993d3b86b95b0752215841c83e3ae20cd6ca68",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "cleanup": [
+        "DROP TABLE IF EXISTS testing CASCADE",
+        "DROP TABLE IF EXISTS \"Testing2\" CASCADE",
+        "DROP SEQUENCE IF EXISTS seq1 CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/types_test.go:TestTypes#0283",
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 283,
       "scriptName": "Regclass type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0283-select-testing2-::regclass",
       "suggestedId": "types-test-testtypes-0283-select-testing2-::regclass",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT '\"Testing2\"'::regclass;",
       "querySha256": "4af81a733b1cbbfe0b4e4e1cc8f32a2c58903ca64489a5cd047dc64fc4a2d65b",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "\"Testing2\""
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS testing CASCADE",
+        "DROP TABLE IF EXISTS \"Testing2\" CASCADE",
+        "DROP SEQUENCE IF EXISTS seq1 CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/types_test.go:TestTypes#0284",
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 284,
       "scriptName": "Regclass type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0284-select-4294967295::regclass",
       "suggestedId": "types-test-testtypes-0284-select-4294967295::regclass",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT 4294967295::regclass;",
       "querySha256": "1a84682e9aa21f47f954e96b74606bb3e42f606bce668e548e7090e4099e6059",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "4294967295"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS testing CASCADE",
+        "DROP TABLE IF EXISTS \"Testing2\" CASCADE",
+        "DROP SEQUENCE IF EXISTS seq1 CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/types_test.go:TestTypes#0285",
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 285,
       "scriptName": "Regclass type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0285-select-relname-from-pg_catalog.pg_class-where",
       "suggestedId": "types-test-testtypes-0285-select-relname-from-pg_catalog.pg_class-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT relname FROM pg_catalog.pg_class WHERE oid = 'testing'::regclass;",
       "querySha256": "bb31f70cbbe897f48e370a88b5df7a532c4f29a4b223fdad0a504ca23310e666",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "testing"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS testing CASCADE",
+        "DROP TABLE IF EXISTS \"Testing2\" CASCADE",
+        "DROP SEQUENCE IF EXISTS seq1 CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/types_test.go:TestTypes#0286",
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 286,
       "scriptName": "Regclass type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0286-select-public.testing-::regclass-public.seq1-::regclass",
       "suggestedId": "types-test-testtypes-0286-select-public.testing-::regclass-public.seq1-::regclass",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT 'public.testing'::regclass, 'public.seq1'::regclass, 'public.testview'::regclass, 'public.testing_pkey'::regclass;",
       "querySha256": "257c47a855beca24b665bc702890111e41551ef68f48ba7d6a2cba92ddc49fcb",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "testing"
+          },
+          {
+            "value": "seq1"
+          },
+          {
+            "value": "testview"
+          },
+          {
+            "value": "testing_pkey"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS testing CASCADE",
+        "DROP TABLE IF EXISTS \"Testing2\" CASCADE",
+        "DROP SEQUENCE IF EXISTS seq1 CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/types_test.go:TestTypes#0287",
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 287,
       "scriptName": "Regclass type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0287-set-search_path-=",
       "suggestedId": "types-test-testtypes-0287-set-search_path-=",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SET search_path = '';",
       "querySha256": "c6d55eb8d1c044cda81abd778b14d8200b180ace30bfd2b444aaf855c34ee61d",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP TABLE IF EXISTS testing CASCADE",
+        "DROP TABLE IF EXISTS \"Testing2\" CASCADE",
+        "DROP SEQUENCE IF EXISTS seq1 CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/types_test.go:TestTypes#0288",
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 288,
       "scriptName": "Regclass type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0288-select-testing-::regclass",
       "suggestedId": "types-test-testtypes-0288-select-testing-::regclass",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
       "query": "SELECT 'testing'::regclass;",
       "querySha256": "bdab2608790d7e2ce31867b99df82ba58c393f96094ef6c8e2826c4446922e02",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "cleanup": [
+        "DROP TABLE IF EXISTS testing CASCADE",
+        "DROP TABLE IF EXISTS \"Testing2\" CASCADE",
+        "DROP SEQUENCE IF EXISTS seq1 CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/types_test.go:TestTypes#0289",
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 289,
       "scriptName": "Regclass type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0289-select-public.testing-::regclass-public.seq1-::regclass",
       "suggestedId": "types-test-testtypes-0289-select-public.testing-::regclass-public.seq1-::regclass",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT 'public.testing'::regclass, 'public.seq1'::regclass, 'public.testview'::regclass, 'public.testing_pkey'::regclass;",
       "querySha256": "257c47a855beca24b665bc702890111e41551ef68f48ba7d6a2cba92ddc49fcb",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "public.testing"
+          },
+          {
+            "value": "public.seq1"
+          },
+          {
+            "value": "public.testview"
+          },
+          {
+            "value": "public.testing_pkey"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS testing CASCADE",
+        "DROP TABLE IF EXISTS \"Testing2\" CASCADE",
+        "DROP SEQUENCE IF EXISTS seq1 CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/types_test.go:TestTypes#0290",

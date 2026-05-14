@@ -1731,84 +1731,51 @@ var typesTests = []ScriptTest{
 				Query: `SELECT 'testing'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0275-select-testing-::regclass"},
 			},
 			{
-				Query: `SELECT 'public.testing'::regclass;`,
-				Expected: []sql.Row{
-					{"testing"},
-				},
+				Query: `SELECT 'public.testing'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0276-select-public.testing-::regclass"},
 			},
 			{
-				Query: `SELECT 'postgres.public.testing'::regclass;`,
-				Expected: []sql.Row{
-					{"testing"},
-				},
+				Query: `SELECT 'postgres.public.testing'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0277-select-postgres.public.testing-::regclass"},
 			},
 			{
-				Query:       `SELECT 'doesnotexist.public.testing'::regclass;`,
-				ExpectedErr: "database not found",
+				Query: `SELECT 'doesnotexist.public.testing'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0278-select-doesnotexist.public.testing-::regclass"},
 			},
 			{
-				Query: `SELECT 'testview'::regclass;`,
-				Expected: []sql.Row{
-					{"testview"},
-				},
+				Query: `SELECT 'testview'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0279-select-testview-::regclass"},
 			},
 			{
-				Query: `SELECT ' testing'::regclass;`,
-				Expected: []sql.Row{
-					{"testing"},
-				},
+				Query: `SELECT ' testing'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0280-select-testing-::regclass"},
 			},
 			{
-				Query: `SELECT 'seq1'::regclass;`,
-				Expected: []sql.Row{
-					{"seq1"},
-				},
+				Query: `SELECT 'seq1'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0281-select-seq1-::regclass"},
 			},
 			{
-				Query:       `SELECT 'Testing2'::regclass;`,
-				ExpectedErr: "does not exist",
+				Query: `SELECT 'Testing2'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0282-select-testing2-::regclass"},
 			},
 			{
-				Query: `SELECT '"Testing2"'::regclass;`,
-				Expected: []sql.Row{
-					{`"Testing2"`},
-				},
+				Query: `SELECT '"Testing2"'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0283-select-testing2-::regclass"},
 			},
 			{ // This tests that an invalid OID returns itself in string form
-				Query: `SELECT 4294967295::regclass;`,
-				Expected: []sql.Row{
-					{"4294967295"},
-				},
+				Query: `SELECT 4294967295::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0284-select-4294967295::regclass"},
 			},
 			{
-				Query: "SELECT relname FROM pg_catalog.pg_class WHERE oid = 'testing'::regclass;",
-				Skip:  true, // panic converting string to regclass
-				Expected: []sql.Row{
-					{"testing"},
-				},
+				Query:          "SELECT relname FROM pg_catalog.pg_class WHERE oid = 'testing'::regclass;",
+				Skip:           true, // panic converting string to regclass
+				PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0285-select-relname-from-pg_catalog.pg_class-where"},
 			},
 			{
 				// schema-qualified relation names are not returned if the schema is on the search path
-				Query: `SELECT 'public.testing'::regclass, 'public.seq1'::regclass, 'public.testview'::regclass, 'public.testing_pkey'::regclass;`,
-				Expected: []sql.Row{
-					{"testing", "seq1", "testview", "testing_pkey"},
-				},
+				Query: `SELECT 'public.testing'::regclass, 'public.seq1'::regclass, 'public.testview'::regclass, 'public.testing_pkey'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0286-select-public.testing-::regclass-public.seq1-::regclass"},
 			},
 			{
 				// Clear out the current search_path setting to test schema-qualified relation names
-				Query:    `SET search_path = '';`,
-				Expected: []sql.Row{},
+				Query: `SET search_path = '';`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0287-set-search_path-="},
 			},
 			{
 				// Without 'public' on search_path, we get a does not exist error
-				Query:       `SELECT 'testing'::regclass;`,
-				ExpectedErr: "does not exist",
+				Query: `SELECT 'testing'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0288-select-testing-::regclass"},
 			},
 			{
-				Query: `SELECT 'public.testing'::regclass, 'public.seq1'::regclass, 'public.testview'::regclass, 'public.testing_pkey'::regclass;`,
-				Expected: []sql.Row{
-					{"public.testing", "public.seq1", "public.testview", "public.testing_pkey"},
-				},
+				Query: `SELECT 'public.testing'::regclass, 'public.seq1'::regclass, 'public.testview'::regclass, 'public.testing_pkey'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0289-select-public.testing-::regclass-public.seq1-::regclass"},
 			},
 		},
 	},
