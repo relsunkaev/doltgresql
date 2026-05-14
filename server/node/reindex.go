@@ -17,13 +17,14 @@ package node
 import (
 	"context"
 
-	"github.com/cockroachdb/errors"
 	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
 )
 
@@ -69,7 +70,7 @@ func (r *ReindexIndex) RowIter(ctx *sql.Context, row sql.Row) (sql.RowIter, erro
 		return nil, err
 	}
 	if !ok {
-		return nil, errors.Errorf(`index "%s" does not exist`, r.index)
+		return nil, pgerror.New(pgcode.UndefinedTable, `relation "`+r.index+`" does not exist`)
 	}
 	if err = checkIndexTableOwnership(ctx, doltdb.TableName{Schema: located.schema, Name: located.tableName}); err != nil {
 		return nil, err

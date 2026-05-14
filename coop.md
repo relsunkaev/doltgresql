@@ -10,6 +10,19 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### alpha - 2026-05-14 11:26 MST
+
+- Lane claimed: `REINDEX INDEX` missing-target SQLSTATE for `TestBasicIndexing/PostgreSQL_drop_index_restrict_lifecycle`.
+- Discovery proof: clean broad sweep `/tmp/doltgresql-alpha-basicindex-2b01764d.jsonl` at `HEAD=2b01764d` fails first on `REINDEX INDEX drop_index_restrict_missing_idx;` with expected `42P01` and actual `XX000`.
+- Expected file: `server/node/reindex.go` plus this log only. Boundary: no primary-key constraint rename metadata, no opclass/collation validation, no JSONB GIN sidecar, no mixed-expression metadata, and no oracle/manifest changes.
+- Result: `REINDEX INDEX` now returns typed `42P01`/undefined-relation for missing index targets instead of leaking a generic internal error.
+- Validation in clean verifier `/private/tmp/doltgresql-alpha-basicindex.qPJY7L` at `HEAD=2b01764d` plus only this alpha patch:
+  - `go test -vet=off ./testing/go -run '^TestBasicIndexing$/^PostgreSQL drop index restrict lifecycle$' -count=1 -timeout=10m -v`
+  - `go test -vet=off ./server/node -run '^$' -count=1 -timeout=10m`
+- Note: the first `./server/node` package build attempt failed during link with `no space left on device`; clearing `/private/tmp/doltgresql-alpha-gocache` freed space and the retry passed.
+- Commit landed: `fix: type missing reindex index errors`.
+- Next action: re-run `TestBasicIndexing` from the new HEAD to identify the next unclaimed index blocker.
+
 ### alpha - 2026-05-14 11:22 MST
 
 - Result: fixed the `pg_get_indexdef` column-deparse slice for decorated index keys. Column-specific `pg_get_indexdef(index_oid, attno, false)` now returns only the indexed attribute/expression, while full index definitions still preserve opclass/collation decorations; `pg_get_indexdef(index_oid, 0, true)` now omits schema qualification like PostgreSQL.
