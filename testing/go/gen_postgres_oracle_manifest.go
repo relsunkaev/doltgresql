@@ -813,6 +813,7 @@ func annotatedScriptTestEntriesForFiles(files []string, migrationOverrides map[s
 			return nil, err
 		}
 		packageScriptTests := packageScriptTestSlices(parsed)
+		scriptTestHelpers := scriptTestHelperReturns(parsed)
 		packageStrings := packageStringSlices(parsed)
 		for _, decl := range parsed.Decls {
 			fn, ok := decl.(*ast.FuncDecl)
@@ -829,7 +830,7 @@ func annotatedScriptTestEntriesForFiles(files []string, migrationOverrides map[s
 				}
 				lit, ok := node.(*ast.CompositeLit)
 				if ok && isScriptTestSliceType(lit.Type) {
-					generated, err := entriesFromScriptTestSlice(source, &ordinal, lit, stringSlices, migrationOverrides)
+					generated, err := entriesFromScriptTestSlice(source, &ordinal, lit, stringSlices, migrationOverrides, scriptTestHelpers)
 					if err != nil {
 						inspectErr = fmt.Errorf("%s: %w", source, err)
 						return false
@@ -842,7 +843,7 @@ func annotatedScriptTestEntriesForFiles(files []string, migrationOverrides map[s
 					return true
 				}
 				if lit, ok := packageScriptTestSliceForRunScripts(call, packageScriptTests); ok {
-					generated, err := entriesFromScriptTestSlice(source, &ordinal, lit, stringSlices, migrationOverrides)
+					generated, err := entriesFromScriptTestSlice(source, &ordinal, lit, stringSlices, migrationOverrides, scriptTestHelpers)
 					if err != nil {
 						inspectErr = fmt.Errorf("%s: %w", source, err)
 						return false
@@ -1360,6 +1361,7 @@ func hasPostgresOracleBlockingNonLiteral(nonLiteral []string) bool {
 		"CopyFromStdInFile",
 		"SetUpScript",
 		"DoltSpecific",
+		"GeneratedHelper",
 		"PriorQuery",
 		"PriorUsername",
 		"PriorBindVars",
@@ -1817,6 +1819,7 @@ func migrationCandidatesForFile(file string, migrationOverrides map[string]oracl
 	}
 	fieldSet := assertionFieldSet()
 	packageScriptTests := packageScriptTestSlices(parsed)
+	scriptTestHelpers := scriptTestHelperReturns(parsed)
 	packageStrings := packageStringSlices(parsed)
 	for _, decl := range parsed.Decls {
 		fn, ok := decl.(*ast.FuncDecl)
@@ -1838,7 +1841,7 @@ func migrationCandidatesForFile(file string, migrationOverrides map[string]oracl
 			}
 			lit, ok := node.(*ast.CompositeLit)
 			if ok && isScriptTestSliceType(lit.Type) {
-				generated, err := migrationCandidatesFromScriptTestSlice(source, &ordinal, lit, stringSlices, fieldSet, scriptNameFilter, skipScriptNameFilter, migrationOverrides)
+				generated, err := migrationCandidatesFromScriptTestSlice(source, &ordinal, lit, stringSlices, fieldSet, scriptNameFilter, skipScriptNameFilter, migrationOverrides, scriptTestHelpers)
 				if err != nil {
 					inspectErr = err
 					return false
@@ -1851,7 +1854,7 @@ func migrationCandidatesForFile(file string, migrationOverrides map[string]oracl
 				return true
 			}
 			if lit, ok := packageScriptTestSliceForRunScripts(call, packageScriptTests); ok {
-				generated, err := migrationCandidatesFromScriptTestSlice(source, &ordinal, lit, stringSlices, fieldSet, scriptNameFilter, skipScriptNameFilter, migrationOverrides)
+				generated, err := migrationCandidatesFromScriptTestSlice(source, &ordinal, lit, stringSlices, fieldSet, scriptNameFilter, skipScriptNameFilter, migrationOverrides, scriptTestHelpers)
 				if err != nil {
 					inspectErr = err
 					return false
@@ -1868,16 +1871,20 @@ func migrationCandidatesForFile(file string, migrationOverrides map[string]oracl
 	return candidates, nil
 }
 
-func migrationCandidatesFromScriptTestSlice(source string, ordinal *int, lit *ast.CompositeLit, stringSlices map[string][]string, fieldSet map[string]struct{}, scriptNameFilter map[string]struct{}, skipScriptNameFilter map[string]struct{}, migrationOverrides map[string]oracleMeta) ([]migrationAssertion, error) {
+func migrationCandidatesFromScriptTestSlice(source string, ordinal *int, lit *ast.CompositeLit, stringSlices map[string][]string, fieldSet map[string]struct{}, scriptNameFilter map[string]struct{}, skipScriptNameFilter map[string]struct{}, migrationOverrides map[string]oracleMeta, scriptTestHelpers map[string]*ast.CompositeLit) ([]migrationAssertion, error) {
 	candidates := make([]migrationAssertion, 0)
 	for _, element := range lit.Elts {
-		scriptLit, ok := element.(*ast.CompositeLit)
+		scriptLit, generatedHelper, ok := scriptTestLiteralForElement(element, scriptTestHelpers)
 		if !ok {
 			continue
 		}
+		helperNonLiteral := []string(nil)
+		if generatedHelper {
+			helperNonLiteral = append(helperNonLiteral, "GeneratedHelper")
+		}
 		scriptFields := compositeFields(scriptLit)
 		scriptName, _ := optionalStringLiteral(scriptFields["Name"])
-		scriptNonLiteral := candidateStringSlice(scriptFields["SetUpScript"], "SetUpScript", stringSlices, nil)
+		scriptNonLiteral := candidateStringSlice(scriptFields["SetUpScript"], "SetUpScript", stringSlices, helperNonLiteral)
 		includeScript := len(scriptNameFilter) == 0
 		if !includeScript {
 			_, includeScript = scriptNameFilter[scriptName]
@@ -2115,10 +2122,10 @@ func oracleIDWords(query string) string {
 	return strings.Join(kept, "-")
 }
 
-func entriesFromScriptTestSlice(source string, ordinal *int, lit *ast.CompositeLit, stringSlices map[string][]string, migrationOverrides map[string]oracleMeta) ([]entry, error) {
+func entriesFromScriptTestSlice(source string, ordinal *int, lit *ast.CompositeLit, stringSlices map[string][]string, migrationOverrides map[string]oracleMeta, scriptTestHelpers map[string]*ast.CompositeLit) ([]entry, error) {
 	entries := make([]entry, 0)
 	for _, element := range lit.Elts {
-		scriptLit, ok := element.(*ast.CompositeLit)
+		scriptLit, _, ok := scriptTestLiteralForElement(element, scriptTestHelpers)
 		if !ok {
 			continue
 		}
@@ -2660,8 +2667,16 @@ func isScriptTestSliceType(expr ast.Expr) bool {
 	if !ok {
 		return false
 	}
-	ident, ok := array.Elt.(*ast.Ident)
+	return isScriptTestType(array.Elt)
+}
+
+func isScriptTestType(expr ast.Expr) bool {
+	ident, ok := expr.(*ast.Ident)
 	return ok && ident.Name == "ScriptTest"
+}
+
+func isScriptTestLiteral(lit *ast.CompositeLit) bool {
+	return lit != nil && isScriptTestType(lit.Type)
 }
 
 func packageScriptTestSlices(parsed *ast.File) map[string]*ast.CompositeLit {
@@ -2689,6 +2704,62 @@ func packageScriptTestSlices(parsed *ast.File) map[string]*ast.CompositeLit {
 		}
 	}
 	return slices
+}
+
+func scriptTestHelperReturns(parsed *ast.File) map[string]*ast.CompositeLit {
+	helpers := map[string]*ast.CompositeLit{}
+	for _, decl := range parsed.Decls {
+		fn, ok := decl.(*ast.FuncDecl)
+		if !ok || fn.Body == nil || !returnsSingleScriptTest(fn.Type) {
+			continue
+		}
+		var returned *ast.CompositeLit
+		ast.Inspect(fn.Body, func(node ast.Node) bool {
+			if returned != nil {
+				return false
+			}
+			ret, ok := node.(*ast.ReturnStmt)
+			if !ok || len(ret.Results) != 1 {
+				return true
+			}
+			lit, ok := ret.Results[0].(*ast.CompositeLit)
+			if !ok || !isScriptTestLiteral(lit) {
+				return true
+			}
+			returned = lit
+			return false
+		})
+		if returned != nil {
+			helpers[fn.Name.Name] = returned
+		}
+	}
+	return helpers
+}
+
+func returnsSingleScriptTest(fnType *ast.FuncType) bool {
+	if fnType == nil || fnType.Results == nil || len(fnType.Results.List) != 1 {
+		return false
+	}
+	return isScriptTestType(fnType.Results.List[0].Type)
+}
+
+func scriptTestLiteralForElement(expr ast.Expr, scriptTestHelpers map[string]*ast.CompositeLit) (*ast.CompositeLit, bool, bool) {
+	if lit, ok := expr.(*ast.CompositeLit); ok {
+		return lit, false, true
+	}
+	call, ok := expr.(*ast.CallExpr)
+	if !ok {
+		return nil, false, false
+	}
+	ident, ok := call.Fun.(*ast.Ident)
+	if !ok {
+		return nil, false, false
+	}
+	lit, ok := scriptTestHelpers[ident.Name]
+	if !ok {
+		return nil, false, false
+	}
+	return lit, true, true
 }
 
 func packageStringSlices(parsed *ast.File) map[string][]string {

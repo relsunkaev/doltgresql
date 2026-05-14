@@ -28,6 +28,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -291,6 +292,57 @@ func TestPostgresOraclePromotedMapSkipsDoltSidecarQueries(t *testing.T) {
 		require.Contains(t, assertion.NonLiteral, "DoltSpecific")
 	}
 	require.Equal(t, 3, foundSidecarQueries)
+}
+
+func TestPostgresOraclePromotedMapCountsGeneratedHelperScripts(t *testing.T) {
+	outPath := filepath.Join(t.TempDir(), "index_test.oracle-map.json")
+	cmd := exec.Command("go", "run", "gen_postgres_oracle_manifest.go",
+		"--promote-oracle-map", "index_test.go",
+		"--oracle-test-name", "TestBasicIndexing",
+		"--promote-oracle-map-output", outPath)
+	output, err := cmd.CombinedOutput()
+	require.NoError(t, err, string(output))
+
+	data, err := os.ReadFile(outPath)
+	require.NoError(t, err)
+	var generated struct {
+		Assertions []struct {
+			Key         string   `json:"key"`
+			Ordinal     int      `json:"ordinal"`
+			Oracle      string   `json:"oracle"`
+			PostgresID  string   `json:"postgresId"`
+			SuggestedID string   `json:"suggestedId"`
+			NonLiteral  []string `json:"nonLiteral"`
+		} `json:"assertions"`
+	}
+	require.NoError(t, json.Unmarshal(data, &generated))
+
+	helperAssertions := 0
+	var uniqueConstraintInsert *struct {
+		Key         string   `json:"key"`
+		Ordinal     int      `json:"ordinal"`
+		Oracle      string   `json:"oracle"`
+		PostgresID  string   `json:"postgresId"`
+		SuggestedID string   `json:"suggestedId"`
+		NonLiteral  []string `json:"nonLiteral"`
+	}
+	for i := range generated.Assertions {
+		assertion := &generated.Assertions[i]
+		if slices.Contains(assertion.NonLiteral, "GeneratedHelper") {
+			helperAssertions++
+			require.Equal(t, "internal", assertion.Oracle)
+			require.Empty(t, assertion.PostgresID)
+		}
+		if assertion.PostgresID == "index-test-testbasicindexing-0211-insert-into-unique_constraint_column_default_name-values-2" {
+			uniqueConstraintInsert = assertion
+		}
+	}
+	require.Equal(t, 28, helperAssertions)
+	require.NotNil(t, uniqueConstraintInsert)
+	require.Equal(t, "testing/go/index_test.go:TestBasicIndexing#0239", uniqueConstraintInsert.Key)
+	require.Equal(t, 239, uniqueConstraintInsert.Ordinal)
+	require.Equal(t, "postgres", uniqueConstraintInsert.Oracle)
+	require.Equal(t, "index-test-testbasicindexing-0239-insert-into-unique_constraint_column_default_name-values-2", uniqueConstraintInsert.SuggestedID)
 }
 
 func TestPostgresOraclePromotedMapKeepsDoltNameFilters(t *testing.T) {
