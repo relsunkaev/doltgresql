@@ -268,18 +268,22 @@ func (r *rootFinalizerIter) releaseStatementSavepoint(ctx *sql.Context) error {
 }
 
 func clearsContextOnSuccess(child sql.Node) bool {
-	switch child.(type) {
+	switch child := child.(type) {
 	case *plan.Rollback, *plan.RollbackSavepoint:
 		return true
+	case *RelationLockingNode:
+		return clearsContextOnSuccess(child.Child())
 	default:
 		return strings.HasPrefix(strings.ToUpper(child.String()), "ROLLBACK")
 	}
 }
 
 func usesStatementSavepoint(child sql.Node) bool {
-	switch child.(type) {
+	switch child := child.(type) {
 	case *plan.Commit, *plan.Rollback, *plan.StartTransaction, *plan.CreateSavepoint, *plan.RollbackSavepoint, *plan.ReleaseSavepoint, *RenameDatabase:
 		return false
+	case *RelationLockingNode:
+		return usesStatementSavepoint(child.Child())
 	default:
 		return true
 	}
