@@ -110,15 +110,27 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 4,
       "scriptName": "Expressions with tables",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0004-select-exists-select-1-from",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0004-select-exists-select-1-from",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = $1);",
       "querySha256": "3001b3ae833508e18b773b38c22819f73ebc962bead5b85004156ceeea68c986",
-      "nonLiteral": [
-        "BindVars"
+      "bindVars": [
+        {
+          "kind": "string",
+          "value": "public"
+        }
       ],
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -126,15 +138,27 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 5,
       "scriptName": "Expressions with tables",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0005-select-nspname-from-pg_namespace-limit",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0005-select-nspname-from-pg_namespace-limit",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT nspname FROM pg_namespace LIMIT $1;",
       "querySha256": "4020a67fd4858da2434f18be579b9a5c1086b8e068779ceef720e2fe8fab02ee",
-      "nonLiteral": [
-        "BindVars"
+      "bindVars": [
+        {
+          "kind": "int",
+          "value": "1"
+        }
       ],
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "pg_toast"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -142,15 +166,305 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 6,
       "scriptName": "Expressions with tables",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0006-select-nspname-from-pg_namespace-offset",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0006-select-nspname-from-pg_namespace-offset",
+      "compare": "structural",
+      "columnModes": [
+        "schema"
+      ],
       "expectedKind": "rows",
       "query": "SELECT nspname FROM pg_namespace OFFSET $1;",
       "querySha256": "1308288ea618d232104357893e9f6db5114ebcf089485006a01c8aab9e017ce2",
-      "nonLiteral": [
-        "BindVars"
+      "bindVars": [
+        {
+          "kind": "int",
+          "value": "1"
+        }
       ],
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "pg_catalog"
+          }
+        ],
+        [
+          {
+            "value": "public"
+          }
+        ],
+        [
+          {
+            "value": "information_schema"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "rename_namespace_new"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "pg_temp_4"
+          }
+        ],
+        [
+          {
+            "value": "pg_toast_temp_4"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "pg_temp_3"
+          }
+        ],
+        [
+          {
+            "value": "pg_toast_temp_3"
+          }
+        ],
+        [
+          {
+            "value": "pg_temp_5"
+          }
+        ],
+        [
+          {
+            "value": "pg_toast_temp_5"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1076,12 +1390,32 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 35,
       "scriptName": "Float insert with binary bindvars",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0035-select-*-from-test-order",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0035-select-*-from-test-order",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test ORDER BY 1;",
       "querySha256": "dc899eebf4e7498534ce1cd1e06152676626110fd34b27b376b8b9d290c58d3c",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1.1"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "3.3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1089,15 +1423,30 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 36,
       "scriptName": "Float insert with binary bindvars",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0036-select-*-from-test-where",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0036-select-*-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test WHERE f1 = $1;",
       "querySha256": "68124194aeee4d79749be6a0bff8e60395ec479b5dc5dcfeedfe39541498c22c",
-      "nonLiteral": [
-        "BindVars"
+      "bindVars": [
+        {
+          "kind": "float",
+          "value": "1.1"
+        }
       ],
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1.1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1105,15 +1454,34 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 37,
       "scriptName": "Float insert with binary bindvars",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0037-select-*-from-test-where",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0037-select-*-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test WHERE f1 + $1 = $2;",
       "querySha256": "e16cc935fcfc408f9eaff956008e8cf457b6d3da058d2301fbe5ebf14b64ef97",
-      "nonLiteral": [
-        "BindVars"
+      "bindVars": [
+        {
+          "kind": "float",
+          "value": "1.0"
+        },
+        {
+          "kind": "float",
+          "value": "2.1"
+        }
       ],
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1.1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1121,15 +1489,34 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 38,
       "scriptName": "Float insert with binary bindvars",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0038-select-*-from-test-where",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0038-select-*-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test WHERE f1 = $1::decimal + $2::decimal;",
       "querySha256": "5cda1f5c7e825091056d8e7c2adf38f4cd5191be430fb633bcc0876e10802ead",
-      "nonLiteral": [
-        "BindVars"
+      "bindVars": [
+        {
+          "kind": "float",
+          "value": "1.0"
+        },
+        {
+          "kind": "float",
+          "value": "0.1"
+        }
       ],
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1.1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1193,12 +1580,32 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 41,
       "scriptName": "Date insert, update, delete with string bindvars",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0041-select-*-from-test-order",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0041-select-*-from-test-order",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test order by pk;",
       "querySha256": "74769386613e670e01494bcdfdca96c4cbae8ba7a8047e559b849cc9c7209003",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2022-02-02T00:00:00"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "2024-04-01T00:00:00"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1206,15 +1613,30 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 42,
       "scriptName": "Date insert, update, delete with string bindvars",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0042-select-*-from-test-where",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0042-select-*-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test WHERE v1 = $1;",
       "querySha256": "a38a86be8a3a787d4c47f59d3199a35c0b705b82a5bd5b3f6aa26cc32cf66c5c",
-      "nonLiteral": [
-        "BindVars"
+      "bindVars": [
+        {
+          "kind": "string",
+          "value": "2022-02-02"
+        }
       ],
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2022-02-02T00:00:00"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1222,15 +1644,21 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 43,
       "scriptName": "Date insert, update, delete with string bindvars",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0043-select-*-from-test-where",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0043-select-*-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test WHERE v1 = $1;",
       "querySha256": "a38a86be8a3a787d4c47f59d3199a35c0b705b82a5bd5b3f6aa26cc32cf66c5c",
-      "nonLiteral": [
-        "BindVars"
+      "bindVars": [
+        {
+          "kind": "string",
+          "value": "2022-02-03"
+        }
       ],
-      "needsCleanup": true,
+      "expectedRows": [],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1238,15 +1666,30 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 44,
       "scriptName": "Date insert, update, delete with string bindvars",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0044-select-*-from-test-where",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0044-select-*-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test WHERE v1 = $1;",
       "querySha256": "a38a86be8a3a787d4c47f59d3199a35c0b705b82a5bd5b3f6aa26cc32cf66c5c",
-      "nonLiteral": [
-        "BindVars"
+      "bindVars": [
+        {
+          "kind": "string",
+          "value": "2022-02-03"
+        }
       ],
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2022-02-03T00:00:00"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1254,12 +1697,24 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 45,
       "scriptName": "Date insert, update, delete with string bindvars",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0045-select-*-from-test-order",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0045-select-*-from-test-order",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test order by 1;",
       "querySha256": "8906614c93d6ba64d04c50898faaac1e150767a1572f5d099535c51ae01c10b0",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "2024-04-01T00:00:00"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1267,15 +1722,34 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 46,
       "scriptName": "Date insert, update, delete with string bindvars",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0046-insert-into-test-values-$1",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0046-insert-into-test-values-$1",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "INSERT INTO test VALUES ($1, $2) returning *;",
       "querySha256": "d7a872392f03725a2cec5c00d3681069ecfe4966a491257c2fd6a34d63aeca15",
-      "nonLiteral": [
-        "BindVars"
+      "bindVars": [
+        {
+          "kind": "string",
+          "value": "5"
+        },
+        {
+          "kind": "null",
+          "null": true
+        }
       ],
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "5"
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1283,12 +1757,32 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 47,
       "scriptName": "Date insert, update, delete with binary bindvars",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0047-select-*-from-test-order",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0047-select-*-from-test-order",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test order by pk;",
       "querySha256": "74769386613e670e01494bcdfdca96c4cbae8ba7a8047e559b849cc9c7209003",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2022-02-02T00:00:00"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "2024-04-01T00:00:00"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1296,15 +1790,30 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 48,
       "scriptName": "Date insert, update, delete with binary bindvars",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0048-select-*-from-test-where",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0048-select-*-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test WHERE v1 = $1;",
       "querySha256": "a38a86be8a3a787d4c47f59d3199a35c0b705b82a5bd5b3f6aa26cc32cf66c5c",
-      "nonLiteral": [
-        "BindVars"
+      "bindVars": [
+        {
+          "kind": "date",
+          "value": "2022-02-02"
+        }
       ],
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2022-02-02T00:00:00"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1312,15 +1821,21 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 49,
       "scriptName": "Date insert, update, delete with binary bindvars",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0049-select-*-from-test-where",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0049-select-*-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test WHERE v1 = $1;",
       "querySha256": "a38a86be8a3a787d4c47f59d3199a35c0b705b82a5bd5b3f6aa26cc32cf66c5c",
-      "nonLiteral": [
-        "BindVars"
+      "bindVars": [
+        {
+          "kind": "date",
+          "value": "2022-02-03"
+        }
       ],
-      "needsCleanup": true,
+      "expectedRows": [],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1328,15 +1843,30 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 50,
       "scriptName": "Date insert, update, delete with binary bindvars",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0050-select-*-from-test-where",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0050-select-*-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test WHERE v1 = $1;",
       "querySha256": "a38a86be8a3a787d4c47f59d3199a35c0b705b82a5bd5b3f6aa26cc32cf66c5c",
-      "nonLiteral": [
-        "BindVars"
+      "bindVars": [
+        {
+          "kind": "date",
+          "value": "2022-02-03"
+        }
       ],
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2022-02-03T00:00:00"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1344,12 +1874,24 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 51,
       "scriptName": "Date insert, update, delete with binary bindvars",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0051-select-*-from-test-order",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0051-select-*-from-test-order",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test order by 1;",
       "querySha256": "8906614c93d6ba64d04c50898faaac1e150767a1572f5d099535c51ae01c10b0",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "2024-04-01T00:00:00"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1357,12 +1899,32 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 52,
       "scriptName": "Timestamp insert with string bindvars",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0052-select-*-from-test-order",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0052-select-*-from-test-order",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test ORDER BY pk;",
       "querySha256": "d0f6c344ab64b143c8f2dd9f13d33077378ca78179f36f00dec40fe78e1ed1f4",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2023-01-15T14:30:00"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "2024-12-25T09:15:30"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1370,15 +1932,30 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 53,
       "scriptName": "Timestamp insert with string bindvars",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0053-select-*-from-test-where",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0053-select-*-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test WHERE t1 = $1;",
       "querySha256": "e694dd314934046d513aa0d662721999b06d2db2ef85afafffe77028af0c9046",
-      "nonLiteral": [
-        "BindVars"
+      "bindVars": [
+        {
+          "kind": "string",
+          "value": "2023-01-15 14:30"
+        }
       ],
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2023-01-15T14:30:00"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1386,15 +1963,30 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 54,
       "scriptName": "Timestamp insert with string bindvars",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0054-select-*-from-test-where",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0054-select-*-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test WHERE t1 = $1;",
       "querySha256": "e694dd314934046d513aa0d662721999b06d2db2ef85afafffe77028af0c9046",
-      "nonLiteral": [
-        "BindVars"
+      "bindVars": [
+        {
+          "kind": "string",
+          "value": "2023-01-15 16:45"
+        }
       ],
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2023-01-15T16:45:00"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1402,12 +1994,24 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 55,
       "scriptName": "Timestamp insert with string bindvars",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0055-select-*-from-test-order",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0055-select-*-from-test-order",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test ORDER BY pk;",
       "querySha256": "d0f6c344ab64b143c8f2dd9f13d33077378ca78179f36f00dec40fe78e1ed1f4",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "2024-12-25T09:15:30"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1415,15 +2019,34 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 56,
       "scriptName": "Timestamp insert with string bindvars",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0056-insert-into-test-values-$1",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0056-insert-into-test-values-$1",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "INSERT INTO test VALUES ($1, $2) returning *;",
       "querySha256": "d7a872392f03725a2cec5c00d3681069ecfe4966a491257c2fd6a34d63aeca15",
-      "nonLiteral": [
-        "BindVars"
+      "bindVars": [
+        {
+          "kind": "string",
+          "value": "3"
+        },
+        {
+          "kind": "null",
+          "null": true
+        }
       ],
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1431,12 +2054,32 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 57,
       "scriptName": "Timestamp insert with binary bindvars",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0057-select-*-from-test-order",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0057-select-*-from-test-order",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test ORDER BY pk;",
       "querySha256": "d0f6c344ab64b143c8f2dd9f13d33077378ca78179f36f00dec40fe78e1ed1f4",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2023-01-15T14:30:00"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "2024-12-25T09:15:30"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1444,15 +2087,30 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 58,
       "scriptName": "Timestamp insert with binary bindvars",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0058-select-*-from-test-where",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0058-select-*-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test WHERE t1 = $1;",
       "querySha256": "e694dd314934046d513aa0d662721999b06d2db2ef85afafffe77028af0c9046",
-      "nonLiteral": [
-        "BindVars"
+      "bindVars": [
+        {
+          "kind": "timestamp",
+          "value": "2023-01-15 14:30:00"
+        }
       ],
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2023-01-15T14:30:00"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1460,15 +2118,30 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 59,
       "scriptName": "Timestamp insert with binary bindvars",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0059-select-*-from-test-where",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0059-select-*-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test WHERE t1 = $1;",
       "querySha256": "e694dd314934046d513aa0d662721999b06d2db2ef85afafffe77028af0c9046",
-      "nonLiteral": [
-        "BindVars"
+      "bindVars": [
+        {
+          "kind": "timestamp",
+          "value": "2023-01-15 16:45:00"
+        }
       ],
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2023-01-15T16:45:00"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1476,12 +2149,24 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 60,
       "scriptName": "Timestamp insert with binary bindvars",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0060-select-*-from-test-order",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0060-select-*-from-test-order",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test ORDER BY pk;",
       "querySha256": "d0f6c344ab64b143c8f2dd9f13d33077378ca78179f36f00dec40fe78e1ed1f4",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "2024-12-25T09:15:30"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1549,6 +2234,9 @@
       "expectedKind": "rows",
       "query": "SELECT pk FROM test ORDER BY pk;",
       "querySha256": "a44b673cdfe9771ee0ba6e667093a4f82ee2c854c2451ef7897097b7bf84a1c8",
+      "nonLiteral": [
+        "PriorBindVars"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1563,7 +2251,8 @@
       "query": "SELECT pk FROM test WHERE t1 = $1;",
       "querySha256": "9a5a912375ae8c87dcd5edb0b2f3bfe27b73f48374565d9e1704555b4c435725",
       "nonLiteral": [
-        "BindVars"
+        "BindVars",
+        "PriorBindVars"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1573,12 +2262,32 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 65,
       "scriptName": "Time insert with string bindvars",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0065-select-*-from-test-order",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0065-select-*-from-test-order",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test ORDER BY pk;",
       "querySha256": "d0f6c344ab64b143c8f2dd9f13d33077378ca78179f36f00dec40fe78e1ed1f4",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "{52200000000 true}"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "{33330000000 true}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1586,15 +2295,30 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 66,
       "scriptName": "Time insert with string bindvars",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0066-select-*-from-test-where",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0066-select-*-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test WHERE t1 = $1;",
       "querySha256": "e694dd314934046d513aa0d662721999b06d2db2ef85afafffe77028af0c9046",
-      "nonLiteral": [
-        "BindVars"
+      "bindVars": [
+        {
+          "kind": "string",
+          "value": "14:30:00"
+        }
       ],
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "{52200000000 true}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1602,15 +2326,30 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 67,
       "scriptName": "Time insert with string bindvars",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0067-select-*-from-test-where",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0067-select-*-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test WHERE t1 = $1;",
       "querySha256": "e694dd314934046d513aa0d662721999b06d2db2ef85afafffe77028af0c9046",
-      "nonLiteral": [
-        "BindVars"
+      "bindVars": [
+        {
+          "kind": "string",
+          "value": "16:45:00"
+        }
       ],
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "{60300000000 true}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1618,12 +2357,24 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 68,
       "scriptName": "Time insert with string bindvars",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0068-select-*-from-test-order",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0068-select-*-from-test-order",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test ORDER BY pk;",
       "querySha256": "d0f6c344ab64b143c8f2dd9f13d33077378ca78179f36f00dec40fe78e1ed1f4",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "{33330000000 true}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1636,6 +2387,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM test ORDER BY pk;",
       "querySha256": "d0f6c344ab64b143c8f2dd9f13d33077378ca78179f36f00dec40fe78e1ed1f4",
+      "nonLiteral": [
+        "PriorBindVars"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1650,7 +2404,8 @@
       "query": "SELECT * FROM test WHERE t1 = $1;",
       "querySha256": "e694dd314934046d513aa0d662721999b06d2db2ef85afafffe77028af0c9046",
       "nonLiteral": [
-        "BindVars"
+        "BindVars",
+        "PriorBindVars"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1666,7 +2421,10 @@
       "query": "SELECT * FROM test WHERE t1 = $1;",
       "querySha256": "e694dd314934046d513aa0d662721999b06d2db2ef85afafffe77028af0c9046",
       "nonLiteral": [
-        "BindVars"
+        "BindVars",
+        "PriorBindVars",
+        "PriorBindVars",
+        "PriorBindVars"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1681,6 +2439,13 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM test ORDER BY pk;",
       "querySha256": "d0f6c344ab64b143c8f2dd9f13d33077378ca78179f36f00dec40fe78e1ed1f4",
+      "nonLiteral": [
+        "PriorBindVars",
+        "PriorBindVars",
+        "PriorBindVars",
+        "PriorBindVars",
+        "PriorBindVars"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1689,12 +2454,32 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 73,
       "scriptName": "UUID insert with string bindvars",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0073-select-*-from-test-order",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0073-select-*-from-test-order",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test ORDER BY pk;",
       "querySha256": "d0f6c344ab64b143c8f2dd9f13d33077378ca78179f36f00dec40fe78e1ed1f4",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "[85 14 132 0 226 155 65 212 167 22 68 102 85 68 0 0]"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "[107 167 184 16 157 173 17 209 128 180 0 192 79 212 48 200]"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1702,15 +2487,30 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 74,
       "scriptName": "UUID insert with string bindvars",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0074-select-*-from-test-where",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0074-select-*-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test WHERE u1 = $1;",
       "querySha256": "1ddcc1ff31879d5ab6d16dcfb8fbd9d5b5fd6fd5c86be326bab1a9e0e3c57677",
-      "nonLiteral": [
-        "BindVars"
+      "bindVars": [
+        {
+          "kind": "string",
+          "value": "550e8400-e29b-41d4-a716-446655440000"
+        }
       ],
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "[85 14 132 0 226 155 65 212 167 22 68 102 85 68 0 0]"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1718,15 +2518,30 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 75,
       "scriptName": "UUID insert with string bindvars",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0075-select-*-from-test-where",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0075-select-*-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test WHERE u1 = $1;",
       "querySha256": "1ddcc1ff31879d5ab6d16dcfb8fbd9d5b5fd6fd5c86be326bab1a9e0e3c57677",
-      "nonLiteral": [
-        "BindVars"
+      "bindVars": [
+        {
+          "kind": "string",
+          "value": "123e4567-e89b-12d3-a456-426614174000"
+        }
       ],
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "[18 62 69 103 232 155 18 211 164 86 66 102 20 23 64 0]"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1734,12 +2549,24 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 76,
       "scriptName": "UUID insert with string bindvars",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0076-select-*-from-test-order",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0076-select-*-from-test-order",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test ORDER BY pk;",
       "querySha256": "d0f6c344ab64b143c8f2dd9f13d33077378ca78179f36f00dec40fe78e1ed1f4",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "[107 167 184 16 157 173 17 209 128 180 0 192 79 212 48 200]"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1747,15 +2574,34 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 77,
       "scriptName": "UUID insert with string bindvars",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0077-insert-into-test-values-$1",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0077-insert-into-test-values-$1",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "INSERT INTO test VALUES ($1, $2) returning *;",
       "querySha256": "d7a872392f03725a2cec5c00d3681069ecfe4966a491257c2fd6a34d63aeca15",
-      "nonLiteral": [
-        "BindVars"
+      "bindVars": [
+        {
+          "kind": "string",
+          "value": "3"
+        },
+        {
+          "kind": "null",
+          "null": true
+        }
       ],
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1763,12 +2609,32 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 78,
       "scriptName": "UUID insert with binary bindvars",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0078-select-*-from-test-order",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0078-select-*-from-test-order",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test ORDER BY pk;",
       "querySha256": "d0f6c344ab64b143c8f2dd9f13d33077378ca78179f36f00dec40fe78e1ed1f4",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "[85 14 132 0 226 155 65 212 167 22 68 102 85 68 0 0]"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "[107 167 184 16 157 173 17 209 128 180 0 192 79 212 48 200]"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1776,15 +2642,30 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 79,
       "scriptName": "UUID insert with binary bindvars",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0079-select-*-from-test-where",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0079-select-*-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test WHERE u1 = $1;",
       "querySha256": "1ddcc1ff31879d5ab6d16dcfb8fbd9d5b5fd6fd5c86be326bab1a9e0e3c57677",
-      "nonLiteral": [
-        "BindVars"
+      "bindVars": [
+        {
+          "kind": "uuid",
+          "value": "550e8400-e29b-41d4-a716-446655440000"
+        }
       ],
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "[85 14 132 0 226 155 65 212 167 22 68 102 85 68 0 0]"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1792,15 +2673,30 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 80,
       "scriptName": "UUID insert with binary bindvars",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0080-select-*-from-test-where",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0080-select-*-from-test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test WHERE u1 = $1;",
       "querySha256": "1ddcc1ff31879d5ab6d16dcfb8fbd9d5b5fd6fd5c86be326bab1a9e0e3c57677",
-      "nonLiteral": [
-        "BindVars"
+      "bindVars": [
+        {
+          "kind": "uuid",
+          "value": "123e4567-e89b-12d3-a456-426614174000"
+        }
       ],
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "[18 62 69 103 232 155 18 211 164 86 66 102 20 23 64 0]"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1808,12 +2704,24 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 81,
       "scriptName": "UUID insert with binary bindvars",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0081-select-*-from-test-order",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0081-select-*-from-test-order",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test ORDER BY pk;",
       "querySha256": "d0f6c344ab64b143c8f2dd9f13d33077378ca78179f36f00dec40fe78e1ed1f4",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "[107 167 184 16 157 173 17 209 128 180 0 192 79 212 48 200]"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1852,9 +2760,6 @@
           }
         ]
       ],
-      "nonLiteral": [
-        "Expected"
-      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -1888,9 +2793,6 @@
             "value": "67.89"
           }
         ]
-      ],
-      "nonLiteral": [
-        "Expected"
       ],
       "needsCleanup": false,
       "cleanupProvided": false
@@ -1926,9 +2828,6 @@
           }
         ]
       ],
-      "nonLiteral": [
-        "Expected"
-      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -1956,9 +2855,6 @@
             "value": "12.345"
           }
         ]
-      ],
-      "nonLiteral": [
-        "Expected"
       ],
       "needsCleanup": false,
       "cleanupProvided": false
@@ -2041,9 +2937,6 @@
           }
         ]
       ],
-      "nonLiteral": [
-        "Expected"
-      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -2077,9 +2970,6 @@
             "value": "67.89"
           }
         ]
-      ],
-      "nonLiteral": [
-        "Expected"
       ],
       "needsCleanup": false,
       "cleanupProvided": false
@@ -2115,9 +3005,6 @@
           }
         ]
       ],
-      "nonLiteral": [
-        "Expected"
-      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -2145,9 +3032,6 @@
             "value": "12.345"
           }
         ]
-      ],
-      "nonLiteral": [
-        "Expected"
       ],
       "needsCleanup": false,
       "cleanupProvided": false
@@ -2542,15 +3426,27 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 102,
       "scriptName": "pg_get_viewdef function",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0102-select-pg_get_viewdef-$1::regclass",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0102-select-pg_get_viewdef-$1::regclass",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "select pg_get_viewdef($1::regclass);",
       "querySha256": "d45d46528c22661d6243e3abc9ec07f5ab6c438fe345e38130e44a5cb8b7e213",
-      "nonLiteral": [
-        "BindVars"
+      "bindVars": [
+        {
+          "kind": "string",
+          "value": "test_view"
+        }
       ],
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": " SELECT name\n   FROM test;"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -2705,9 +3601,6 @@
           }
         ]
       ],
-      "nonLiteral": [
-        "Expected"
-      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -2750,9 +3643,6 @@
             "value": "\\xc0ffee"
           }
         ]
-      ],
-      "nonLiteral": [
-        "Expected"
       ],
       "needsCleanup": false,
       "cleanupProvided": false
@@ -2842,15 +3732,41 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 110,
       "scriptName": "Bind parameter to compatible different types",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0110-select-*-from-text_test-where",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0110-select-*-from-text_test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM text_test where id = any($1) and code = any($1)",
       "querySha256": "6b97abf4d3b341e04c97e67c98856886a44d2f8d1b09eb1b639618cc651f8e8b",
-      "nonLiteral": [
-        "BindVars"
+      "bindVars": [
+        {
+          "kind": "stringArray",
+          "values": [
+            "foo",
+            "bar"
+          ]
+        }
       ],
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "foo"
+          },
+          {
+            "value": "bar"
+          }
+        ],
+        [
+          {
+            "value": "bar"
+          },
+          {
+            "value": "foo"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -2858,16 +3774,36 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 111,
       "scriptName": "Bind parameter to compatible different types",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0111-select-*-from-num_test-where",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0111-select-*-from-num_test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * from num_test where small = $1 and large = $1 and other = $1",
       "querySha256": "95141bf35618b0d8f6169b8adc684260a5251472cd55a17f24b1cb8517ecf772",
+      "bindVars": [
+        {
+          "kind": "int",
+          "value": "0"
+        }
+      ],
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          },
+          {
+            "value": "0"
+          },
+          {
+            "value": "0"
+          }
+        ]
+      ],
       "nonLiteral": [
-        "BindVars",
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -2875,16 +3811,36 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 112,
       "scriptName": "Bind parameter to compatible different types",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0112-select-*-from-num_test-where",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0112-select-*-from-num_test-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * from num_test where small = $1::INTEGER and large = $1::INTEGER and other = $1::INTEGER",
       "querySha256": "2d0c27f994a3be7b813f70989ed67d6953bf06f0463c3f25e1af8d98959a5592",
+      "bindVars": [
+        {
+          "kind": "int",
+          "value": "0"
+        }
+      ],
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          },
+          {
+            "value": "0"
+          },
+          {
+            "value": "0"
+          }
+        ]
+      ],
       "nonLiteral": [
-        "BindVars",
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -2892,15 +3848,22 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 113,
       "scriptName": "Bind parameter to compatible different types",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0113-select-*-from-num_test-where",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0113-select-*-from-num_test-where",
-      "expectedKind": "rows",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22P02",
+      "errorSeverity": "ERROR",
       "query": "SELECT * FROM num_test where small = $1 or other = $1",
       "querySha256": "31c4e7166352a7f884e635f50670410b6e7f9ede61d50d561ac3a0fd54aec799",
-      "nonLiteral": [
-        "BindVars"
+      "bindVars": [
+        {
+          "kind": "float",
+          "value": "1.5"
+        }
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -2908,15 +3871,22 @@
       "source": "testing/go/prepared_statement_test.go:TestPreparedStatements",
       "ordinal": 114,
       "scriptName": "Cannot bind parameter to column with incompatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testpreparedstatements-0114-select-*-from-text_test-where",
       "suggestedId": "prepared-statement-test-testpreparedstatements-0114-select-*-from-text_test-where",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "42883",
+      "errorSeverity": "ERROR",
       "query": "SELECT * FROM text_test where fullname = $1 and id = $1",
       "querySha256": "c8c7941b8c4f6fe58b3a7b4c28c414779beb9a5006ab9a4600916f2f7cb092bb",
-      "nonLiteral": [
-        "BindVars"
+      "bindVars": [
+        {
+          "kind": "int",
+          "value": "1"
+        }
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {

@@ -146,22 +146,15 @@ var preparedStatementTests = []ScriptTest{
 		Assertions: []ScriptTestAssertion{
 			{
 				Query:    "SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = $1);",
-				BindVars: []any{"public"},
-				Expected: []sql.Row{{"t"}},
+				BindVars: []any{"public"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0004-select-exists-select-1-from"},
 			},
 			{
 				Query:    "SELECT nspname FROM pg_namespace LIMIT $1;",
-				BindVars: []any{1},
-				Expected: []sql.Row{{"dolt"}},
+				BindVars: []any{1}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0005-select-nspname-from-pg_namespace-limit"},
 			},
 			{
 				Query:    "SELECT nspname FROM pg_namespace OFFSET $1;",
-				BindVars: []any{1},
-				Expected: []sql.Row{
-					{"information_schema"},
-					{"pg_catalog"},
-					{"public"},
-				},
+				BindVars: []any{1}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0006-select-nspname-from-pg_namespace-offset", ColumnModes: []string{"schema"}},
 			},
 		},
 	},
@@ -412,32 +405,19 @@ var preparedStatementTests = []ScriptTest{
 				BindVars: []any{1, 1.1, 3, 3.3},
 			},
 			{
-				Query: "SELECT * FROM test ORDER BY 1;",
-				Expected: []sql.Row{
-					{1, 1.1},
-					{3, 3.3},
-				},
+				Query: "SELECT * FROM test ORDER BY 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0035-select-*-from-test-order"},
 			},
 			{
 				Query:    "SELECT * FROM test WHERE f1 = $1;",
-				BindVars: []any{1.1},
-				Expected: []sql.Row{
-					{1, 1.1},
-				},
+				BindVars: []any{1.1}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0036-select-*-from-test-where"},
 			},
 			{
 				Query:    "SELECT * FROM test WHERE f1 + $1 = $2;",
-				BindVars: []any{1.0, 2.1},
-				Expected: []sql.Row{
-					{1, 1.1},
-				},
+				BindVars: []any{1.0, 2.1}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0037-select-*-from-test-where"},
 			},
 			{
 				Query:    "SELECT * FROM test WHERE f1 = $1::decimal + $2::decimal;",
-				BindVars: []any{1.0, 0.1},
-				Expected: []sql.Row{
-					{1, 1.1},
-				},
+				BindVars: []any{1.0, 0.1}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0038-select-*-from-test-where"},
 			},
 		},
 	},
@@ -494,23 +474,15 @@ var preparedStatementTests = []ScriptTest{
 				BindVars: []any{"1", "2022-02-02", "3", "2024-04-01 -07"},
 			},
 			{
-				Query: "SELECT * FROM test order by pk;",
-				Expected: []sql.Row{
-					{1, "2022-02-02"},
-					{3, "2024-04-01"},
-				},
+				Query: "SELECT * FROM test order by pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0041-select-*-from-test-order"},
 			},
 			{
 				Query:    "SELECT * FROM test WHERE v1 = $1;",
-				BindVars: []any{"2022-02-02"},
-				Expected: []sql.Row{
-					{1, "2022-02-02"},
-				},
+				BindVars: []any{"2022-02-02"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0042-select-*-from-test-where"},
 			},
 			{
 				Query:    "SELECT * FROM test WHERE v1 = $1;",
-				BindVars: []any{"2022-02-03"},
-				Expected: []sql.Row{},
+				BindVars: []any{"2022-02-03"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0043-select-*-from-test-where"},
 			},
 			{
 				Query:    "UPDATE test set v1 = $1 WHERE pk = $2;",
@@ -518,27 +490,18 @@ var preparedStatementTests = []ScriptTest{
 			},
 			{
 				Query:    "SELECT * FROM test WHERE v1 = $1;",
-				BindVars: []any{"2022-02-03"},
-				Expected: []sql.Row{
-					{1, "2022-02-03"},
-				},
+				BindVars: []any{"2022-02-03"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0044-select-*-from-test-where"},
 			},
 			{
 				Query:    "DELETE FROM test WHERE pk = $1;",
 				BindVars: []any{"1"},
 			},
 			{
-				Query: "SELECT * FROM test order by 1;",
-				Expected: []sql.Row{
-					{3, "2024-04-01"},
-				},
+				Query: "SELECT * FROM test order by 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0045-select-*-from-test-order"},
 			},
 			{
 				Query:    "INSERT INTO test VALUES ($1, $2) returning *;",
-				BindVars: []any{"5", nil},
-				Expected: []sql.Row{
-					{5, nil},
-				},
+				BindVars: []any{"5", nil}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0046-insert-into-test-values-$1"},
 			},
 		},
 	},
@@ -554,23 +517,15 @@ var preparedStatementTests = []ScriptTest{
 				BindVars: []any{1, Date("2022-02-02"), 3, Date("2024-04-01")},
 			},
 			{
-				Query: "SELECT * FROM test order by pk;",
-				Expected: []sql.Row{
-					{1, "2022-02-02"},
-					{3, "2024-04-01"},
-				},
+				Query: "SELECT * FROM test order by pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0047-select-*-from-test-order"},
 			},
 			{
 				Query:    "SELECT * FROM test WHERE v1 = $1;",
-				BindVars: []any{Date("2022-02-02")},
-				Expected: []sql.Row{
-					{1, "2022-02-02"},
-				},
+				BindVars: []any{Date("2022-02-02")}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0048-select-*-from-test-where"},
 			},
 			{
 				Query:    "SELECT * FROM test WHERE v1 = $1;",
-				BindVars: []any{Date("2022-02-03")},
-				Expected: []sql.Row{},
+				BindVars: []any{Date("2022-02-03")}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0049-select-*-from-test-where"},
 			},
 			{
 				Query:    "UPDATE test set v1 = $1 WHERE pk = $2;",
@@ -578,20 +533,14 @@ var preparedStatementTests = []ScriptTest{
 			},
 			{
 				Query:    "SELECT * FROM test WHERE v1 = $1;",
-				BindVars: []any{Date("2022-02-03")},
-				Expected: []sql.Row{
-					{1, "2022-02-03"},
-				},
+				BindVars: []any{Date("2022-02-03")}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0050-select-*-from-test-where"},
 			},
 			{
 				Query:    "DELETE FROM test WHERE pk = $1;",
 				BindVars: []any{1},
 			},
 			{
-				Query: "SELECT * FROM test order by 1;",
-				Expected: []sql.Row{
-					{3, "2024-04-01"},
-				},
+				Query: "SELECT * FROM test order by 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0051-select-*-from-test-order"},
 			},
 		},
 	},
@@ -610,18 +559,11 @@ var preparedStatementTests = []ScriptTest{
 				},
 			},
 			{
-				Query: "SELECT * FROM test ORDER BY pk;",
-				Expected: []sql.Row{
-					{1, "2023-01-15 14:30:00"},
-					{2, "2024-12-25 09:15:30"},
-				},
+				Query: "SELECT * FROM test ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0052-select-*-from-test-order"},
 			},
 			{
 				Query:    "SELECT * FROM test WHERE t1 = $1;",
-				BindVars: []any{"2023-01-15 14:30"},
-				Expected: []sql.Row{
-					{1, "2023-01-15 14:30:00"},
-				},
+				BindVars: []any{"2023-01-15 14:30"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0053-select-*-from-test-where"},
 			},
 			{
 				Query:    "UPDATE test SET t1 = $1 WHERE pk = $2;",
@@ -629,27 +571,18 @@ var preparedStatementTests = []ScriptTest{
 			},
 			{
 				Query:    "SELECT * FROM test WHERE t1 = $1;",
-				BindVars: []any{"2023-01-15 16:45"},
-				Expected: []sql.Row{
-					{1, "2023-01-15 16:45:00"},
-				},
+				BindVars: []any{"2023-01-15 16:45"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0054-select-*-from-test-where"},
 			},
 			{
 				Query:    "DELETE FROM test WHERE t1 = $1;",
 				BindVars: []any{"2023-01-15 16:45"},
 			},
 			{
-				Query: "SELECT * FROM test ORDER BY pk;",
-				Expected: []sql.Row{
-					{2, "2024-12-25 09:15:30"},
-				},
+				Query: "SELECT * FROM test ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0055-select-*-from-test-order"},
 			},
 			{
 				Query:    "INSERT INTO test VALUES ($1, $2) returning *;",
-				BindVars: []any{"3", nil},
-				Expected: []sql.Row{
-					{3, nil},
-				},
+				BindVars: []any{"3", nil}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0056-insert-into-test-values-$1"},
 			},
 		},
 	},
@@ -668,18 +601,11 @@ var preparedStatementTests = []ScriptTest{
 				},
 			},
 			{
-				Query: "SELECT * FROM test ORDER BY pk;",
-				Expected: []sql.Row{
-					{1, "2023-01-15 14:30:00"},
-					{2, "2024-12-25 09:15:30"},
-				},
+				Query: "SELECT * FROM test ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0057-select-*-from-test-order"},
 			},
 			{
 				Query:    "SELECT * FROM test WHERE t1 = $1;",
-				BindVars: []any{Timestamp("2023-01-15 14:30:00")},
-				Expected: []sql.Row{
-					{1, "2023-01-15 14:30:00"},
-				},
+				BindVars: []any{Timestamp("2023-01-15 14:30:00")}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0058-select-*-from-test-where"},
 			},
 			{
 				Query:    "UPDATE test SET t1 = $1 WHERE pk = $2;",
@@ -687,10 +613,7 @@ var preparedStatementTests = []ScriptTest{
 			},
 			{
 				Query:    "SELECT * FROM test WHERE t1 = $1;",
-				BindVars: []any{Timestamp("2023-01-15 16:45:00")},
-				Expected: []sql.Row{
-					{1, "2023-01-15 16:45:00"},
-				},
+				BindVars: []any{Timestamp("2023-01-15 16:45:00")}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0059-select-*-from-test-where"},
 			},
 			{
 				Query: "DELETE FROM test WHERE t1 = $1;",
@@ -698,10 +621,7 @@ var preparedStatementTests = []ScriptTest{
 					Timestamp("2023-01-15 16:45:00")},
 			},
 			{
-				Query: "SELECT * FROM test ORDER BY pk;",
-				Expected: []sql.Row{
-					{2, "2024-12-25 09:15:30"},
-				},
+				Query: "SELECT * FROM test ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0060-select-*-from-test-order"},
 			},
 		},
 	},
@@ -767,18 +687,11 @@ var preparedStatementTests = []ScriptTest{
 				BindVars: []any{"1", "14:30:00", "2", "09:15:30"},
 			},
 			{
-				Query: "SELECT * FROM test ORDER BY pk;",
-				Expected: []sql.Row{
-					{1, "14:30:00"},
-					{2, "09:15:30"},
-				},
+				Query: "SELECT * FROM test ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0065-select-*-from-test-order"},
 			},
 			{
 				Query:    "SELECT * FROM test WHERE t1 = $1;",
-				BindVars: []any{"14:30:00"},
-				Expected: []sql.Row{
-					{1, "14:30:00"},
-				},
+				BindVars: []any{"14:30:00"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0066-select-*-from-test-where"},
 			},
 			{
 				Query:    "UPDATE test SET t1 = $1 WHERE pk = $2;",
@@ -786,20 +699,14 @@ var preparedStatementTests = []ScriptTest{
 			},
 			{
 				Query:    "SELECT * FROM test WHERE t1 = $1;",
-				BindVars: []any{"16:45:00"},
-				Expected: []sql.Row{
-					{1, "16:45:00"},
-				},
+				BindVars: []any{"16:45:00"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0067-select-*-from-test-where"},
 			},
 			{
 				Query:    "DELETE FROM test WHERE t1 = $1;",
 				BindVars: []any{"16:45:00"},
 			},
 			{
-				Query: "SELECT * FROM test ORDER BY pk;",
-				Expected: []sql.Row{
-					{2, "09:15:30"},
-				},
+				Query: "SELECT * FROM test ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0068-select-*-from-test-order"},
 			},
 		},
 	},
@@ -863,18 +770,11 @@ var preparedStatementTests = []ScriptTest{
 				BindVars: []any{"1", "550e8400-e29b-41d4-a716-446655440000", "2", "6ba7b810-9dad-11d1-80b4-00c04fd430c8"},
 			},
 			{
-				Query: "SELECT * FROM test ORDER BY pk;",
-				Expected: []sql.Row{
-					{1, "550e8400-e29b-41d4-a716-446655440000"},
-					{2, "6ba7b810-9dad-11d1-80b4-00c04fd430c8"},
-				},
+				Query: "SELECT * FROM test ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0073-select-*-from-test-order"},
 			},
 			{
 				Query:    "SELECT * FROM test WHERE u1 = $1;",
-				BindVars: []any{"550e8400-e29b-41d4-a716-446655440000"},
-				Expected: []sql.Row{
-					{1, "550e8400-e29b-41d4-a716-446655440000"},
-				},
+				BindVars: []any{"550e8400-e29b-41d4-a716-446655440000"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0074-select-*-from-test-where"},
 			},
 			{
 				Query:    "UPDATE test SET u1 = $1 WHERE pk = $2;",
@@ -882,27 +782,18 @@ var preparedStatementTests = []ScriptTest{
 			},
 			{
 				Query:    "SELECT * FROM test WHERE u1 = $1;",
-				BindVars: []any{"123e4567-e89b-12d3-a456-426614174000"},
-				Expected: []sql.Row{
-					{1, "123e4567-e89b-12d3-a456-426614174000"},
-				},
+				BindVars: []any{"123e4567-e89b-12d3-a456-426614174000"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0075-select-*-from-test-where"},
 			},
 			{
 				Query:    "DELETE FROM test WHERE u1 = $1;",
 				BindVars: []any{"123e4567-e89b-12d3-a456-426614174000"},
 			},
 			{
-				Query: "SELECT * FROM test ORDER BY pk;",
-				Expected: []sql.Row{
-					{2, "6ba7b810-9dad-11d1-80b4-00c04fd430c8"},
-				},
+				Query: "SELECT * FROM test ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0076-select-*-from-test-order"},
 			},
 			{
 				Query:    "INSERT INTO test VALUES ($1, $2) returning *;",
-				BindVars: []any{"3", nil},
-				Expected: []sql.Row{
-					{3, nil},
-				},
+				BindVars: []any{"3", nil}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0077-insert-into-test-values-$1"},
 			},
 		},
 	},
@@ -920,18 +811,11 @@ var preparedStatementTests = []ScriptTest{
 					2, UUID("6ba7b810-9dad-11d1-80b4-00c04fd430c8")},
 			},
 			{
-				Query: "SELECT * FROM test ORDER BY pk;",
-				Expected: []sql.Row{
-					{1, "550e8400-e29b-41d4-a716-446655440000"},
-					{2, "6ba7b810-9dad-11d1-80b4-00c04fd430c8"},
-				},
+				Query: "SELECT * FROM test ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0078-select-*-from-test-order"},
 			},
 			{
 				Query:    "SELECT * FROM test WHERE u1 = $1;",
-				BindVars: []any{UUID("550e8400-e29b-41d4-a716-446655440000")},
-				Expected: []sql.Row{
-					{1, "550e8400-e29b-41d4-a716-446655440000"},
-				},
+				BindVars: []any{UUID("550e8400-e29b-41d4-a716-446655440000")}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0079-select-*-from-test-where"},
 			},
 			{
 				Query:    "UPDATE test SET u1 = $1 WHERE pk = $2;",
@@ -939,20 +823,14 @@ var preparedStatementTests = []ScriptTest{
 			},
 			{
 				Query:    "SELECT * FROM test WHERE u1 = $1;",
-				BindVars: []any{UUID("123e4567-e89b-12d3-a456-426614174000")},
-				Expected: []sql.Row{
-					{1, "123e4567-e89b-12d3-a456-426614174000"},
-				},
+				BindVars: []any{UUID("123e4567-e89b-12d3-a456-426614174000")}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0080-select-*-from-test-where"},
 			},
 			{
 				Query:    "DELETE FROM test WHERE u1 = $1;",
 				BindVars: []any{UUID("123e4567-e89b-12d3-a456-426614174000")},
 			},
 			{
-				Query: "SELECT * FROM test ORDER BY pk;",
-				Expected: []sql.Row{
-					{2, "6ba7b810-9dad-11d1-80b4-00c04fd430c8"},
-				},
+				Query: "SELECT * FROM test ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0081-select-*-from-test-order"},
 			},
 		},
 	},
@@ -1124,8 +1002,7 @@ var preparedStatementTests = []ScriptTest{
 		Assertions: []ScriptTestAssertion{
 			{
 				Query:    `select pg_get_viewdef($1::regclass);`,
-				BindVars: []any{"test_view"},
-				Expected: []sql.Row{{"SELECT name FROM test"}},
+				BindVars: []any{"test_view"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0102-select-pg_get_viewdef-$1::regclass"},
 			},
 		},
 	},
@@ -1196,32 +1073,19 @@ var preparedStatementTests = []ScriptTest{
 		Assertions: []ScriptTestAssertion{
 			{
 				Query:    "SELECT * FROM text_test where id = any($1) and code = any($1)",
-				BindVars: []any{[]string{"foo", "bar"}},
-				Expected: []sql.Row{
-					{"foo", "bar"},
-					{"bar", "foo"},
-				},
+				BindVars: []any{[]string{"foo", "bar"}}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0110-select-*-from-text_test-where"},
 			},
 			{
 				Query:    "SELECT * from num_test where small = $1 and large = $1 and other = $1",
-				BindVars: []any{0},
-				Expected: []sql.Row{
-					{0, 0, float64(0)},
-				},
+				BindVars: []any{0}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0111-select-*-from-num_test-where"},
 			},
 			{
 				Query:    "SELECT * from num_test where small = $1::INTEGER and large = $1::INTEGER and other = $1::INTEGER",
-				BindVars: []any{0},
-				Expected: []sql.Row{
-					{0, 0, float64(0)},
-				},
+				BindVars: []any{0}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0112-select-*-from-num_test-where"},
 			},
 			{
 				Query:    "SELECT * FROM num_test where small = $1 or other = $1",
-				BindVars: []any{1.5},
-				Expected: []sql.Row{
-					{1, 2, 1.5},
-				},
+				BindVars: []any{1.5}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0113-select-*-from-num_test-where", Compare: "sqlstate"},
 			},
 		},
 	},
@@ -1232,9 +1096,8 @@ var preparedStatementTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query:       "SELECT * FROM text_test where fullname = $1 and id = $1",
-				BindVars:    []any{1},
-				ExpectedErr: "parameter v1 is used for incompatible types: text and integer",
+				Query:    "SELECT * FROM text_test where fullname = $1 and id = $1",
+				BindVars: []any{1}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0114-select-*-from-text_test-where", Compare: "sqlstate"},
 			},
 		},
 	},
