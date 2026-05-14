@@ -74,6 +74,16 @@ func AfterTableRenameColumn(ctx *sql.Context, runner sql.StatementRunner, nodeIn
 	if persistErr != nil {
 		return persistErr
 	}
+	publicationCollection, err := core.GetPublicationsCollectionFromContext(ctx)
+	if err != nil {
+		return err
+	}
+	rowFilterRewriter := func(rowFilter string) (string, bool, error) {
+		return rewritePublicationRowFilterColumnReference(rowFilter, n.ColumnName, n.NewColumnName)
+	}
+	if err = publicationCollection.RenameTableColumn(ctx, tableName, n.ColumnName, n.NewColumnName, rowFilterRewriter); err != nil {
+		return err
+	}
 	rowsecurity.RenameColumn(uint32(ctx.Session.ID()), ctx.GetCurrentDatabase(), tableName.Schema, tableName.Name, n.ColumnName, n.NewColumnName)
 	tableAsType := id.NewType(tableName.Schema, tableName.Name)
 	allTableNames, err := root.GetAllTableNames(ctx, false)
@@ -125,6 +135,26 @@ func AfterTableRenameColumn(ctx *sql.Context, runner sql.StatementRunner, nodeIn
 		}
 	}
 	return nil
+}
+
+func rewritePublicationRowFilterColumnReference(rowFilter string, oldColumnName string, newColumnName string) (string, bool, error) {
+	statements, err := parser.Parse("SELECT " + rowFilter)
+	if err != nil || len(statements) != 1 {
+		return rowFilter, false, err
+	}
+	selectStmt, ok := statements[0].AST.(*tree.Select)
+	if !ok {
+		return rowFilter, false, nil
+	}
+	selectClause, ok := selectStmt.Select.(*tree.SelectClause)
+	if !ok || len(selectClause.Exprs) != 1 {
+		return rowFilter, false, nil
+	}
+	rewrittenExpr, changed, err := rewriteColumnReferenceExpr(selectClause.Exprs[0].Expr, oldColumnName, newColumnName)
+	if err != nil || !changed {
+		return rowFilter, changed, err
+	}
+	return rewrittenExpr.String(), true, nil
 }
 
 func rewriteRenamedColumnCheckConstraints(ctx *sql.Context, table sql.Table, oldColumnName, newColumnName string) error {

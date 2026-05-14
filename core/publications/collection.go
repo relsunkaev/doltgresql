@@ -207,6 +207,88 @@ func (pgp *Collection) RenameTable(ctx context.Context, oldName doltdb.TableName
 	return nil
 }
 
+// RenameTableColumn updates stored publication metadata for a renamed table column.
+func (pgp *Collection) RenameTableColumn(ctx context.Context, tableName doltdb.TableName, oldColumn string, newColumn string, rewriteRowFilter func(string) (string, bool, error)) error {
+	if strings.EqualFold(oldColumn, newColumn) {
+		return nil
+	}
+	tableID := id.NewTable(tableName.Schema, tableName.Name)
+	var updates []Publication
+	err := pgp.IteratePublications(ctx, func(pub Publication) (stop bool, err error) {
+		updated := pub
+		changed := false
+		for i := range updated.Tables {
+			if updated.Tables[i].Table != tableID {
+				continue
+			}
+			if len(updated.Tables[i].Columns) > 0 {
+				columns := slices.Clone(updated.Tables[i].Columns)
+				for j, column := range columns {
+					if strings.EqualFold(column, oldColumn) {
+						columns[j] = newColumn
+						changed = true
+					}
+				}
+				updated.Tables[i].Columns = columns
+			}
+			if rewriteRowFilter != nil && strings.TrimSpace(updated.Tables[i].RowFilter) != "" {
+				rowFilter, rowFilterChanged, err := rewriteRowFilter(updated.Tables[i].RowFilter)
+				if err != nil {
+					return false, err
+				}
+				if rowFilterChanged {
+					updated.Tables[i].RowFilter = rowFilter
+					changed = true
+				}
+			}
+		}
+		if changed {
+			updates = append(updates, updated)
+		}
+		return false, nil
+	})
+	if err != nil {
+		return err
+	}
+	for _, pub := range updates {
+		if err = pgp.UpdatePublication(ctx, pub); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// TableColumnReferenced returns whether a stored publication relation references the given table column.
+func (pgp *Collection) TableColumnReferenced(ctx context.Context, tableName doltdb.TableName, column string, rowFilterReferencesColumn func(string) (bool, error)) (bool, error) {
+	tableID := id.NewTable(tableName.Schema, tableName.Name)
+	referenced := false
+	err := pgp.IteratePublications(ctx, func(pub Publication) (stop bool, err error) {
+		for _, relation := range pub.Tables {
+			if relation.Table != tableID {
+				continue
+			}
+			for _, publishedColumn := range relation.Columns {
+				if strings.EqualFold(publishedColumn, column) {
+					referenced = true
+					return true, nil
+				}
+			}
+			if rowFilterReferencesColumn != nil && strings.TrimSpace(relation.RowFilter) != "" {
+				found, err := rowFilterReferencesColumn(relation.RowFilter)
+				if err != nil {
+					return false, err
+				}
+				if found {
+					referenced = true
+					return true, nil
+				}
+			}
+		}
+		return false, nil
+	})
+	return referenced, err
+}
+
 // IteratePublications iterates over all publications.
 func (pgp *Collection) IteratePublications(_ context.Context, callback func(f Publication) (stop bool, err error)) error {
 	for _, pubID := range pgp.idCache {

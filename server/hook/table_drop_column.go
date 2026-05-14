@@ -43,8 +43,23 @@ func BeforeTableDropColumn(ctx *sql.Context, _ sql.StatementRunner, nodeInterfac
 	if doltTable == nil {
 		return n, nil
 	}
+	tableName := doltTable.TableName()
+	publicationCollection, err := core.GetPublicationsCollectionFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	rowFilterReferenceChecker := func(rowFilter string) (bool, error) {
+		_, changed, err := rewritePublicationRowFilterColumnReference(rowFilter, n.Column, n.Column)
+		return changed, err
+	}
+	publicationColumnReferenced, err := publicationCollection.TableColumnReferenced(ctx, tableName, n.Column, rowFilterReferenceChecker)
+	if err != nil {
+		return nil, err
+	}
+	if publicationColumnReferenced {
+		return nil, pgerror.Newf(pgcode.DependentObjectsStillExist, "cannot drop column %s of table %s because other objects depend on it", n.Column, tableName.Name)
+	}
 	if dependentColumn, ok := generatedColumnDependingOnDroppedColumn(ctx, n.TargetSchema(), n.Column); ok {
-		tableName := doltTable.TableName()
 		return nil, pgerror.Newf(pgcode.DependentObjectsStillExist, `cannot drop column %s of table %s because generated column %s depends on it`, n.Column, tableName.Name, dependentColumn)
 	}
 	fkTable, ok := any(doltTable).(sql.ForeignKeyTable)
