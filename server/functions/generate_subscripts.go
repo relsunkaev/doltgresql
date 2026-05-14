@@ -15,6 +15,7 @@
 package functions
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/dolthub/go-mysql-server/sql"
@@ -36,18 +37,16 @@ var generate_subscripts = framework.Function2{
 	Strict:     true,
 	SRF:        true,
 	Callable: func(ctx *sql.Context, t [3]*pgtypes.DoltgresType, val1, val2 any) (any, error) {
-		arr := val1.([]any)
+		arr, ok := pgtypes.ArrayElements(val1)
+		if !ok {
+			return nil, fmt.Errorf("expected array value but received %T", val1)
+		}
 		dimension := val2.(int32)
 		if dimension != 1 {
 			return nil, sql.ErrUnsupportedFeature.New("generate_subscripts only supports 1-dimensional arrays")
 		}
 
-		// Int2vector (int16vector in doltgresql) and Oidvector are old postgres types that are primarily found in pg_catalog tables.
-		// Unlike other array types, they are zero-indexed.
-		start := 1
-		if t[0] == pgtypes.Int16vector || t[0] == pgtypes.Oidvector {
-			start = 0
-		}
+		start := int(pgtypes.ArrayLowerBound(val1, dimension))
 
 		var i = start
 		return pgtypes.NewSetReturningFunctionRowIter(func(ctx *sql.Context) (sql.Row, error) {

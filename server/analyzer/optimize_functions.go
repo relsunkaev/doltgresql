@@ -27,6 +27,8 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/planbuilder"
 	"github.com/dolthub/go-mysql-server/sql/transform"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	pgexprs "github.com/dolthub/doltgresql/server/expression"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgnodes "github.com/dolthub/doltgresql/server/node"
@@ -122,7 +124,7 @@ func OptimizeFunctions(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, sc
 
 		// insert node cannot have more than 1 row value if it has set returning function
 		if isInsertNode && hasMultipleExpressionTuples && hasSRF {
-			return nil, false, errors.Errorf("set-returning functions are not allowed in VALUES")
+			return nil, false, pgerror.New(pgcode.FeatureNotSupported, "set-returning functions are not allowed in VALUES")
 		}
 
 		// Check if there is set returning function in the projection expressions (e.g. SELECT unnest() [FROM table/srf])
