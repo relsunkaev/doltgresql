@@ -40,8 +40,8 @@
       "suggestedId": "index-correctness-repro-test-testcreateindexconcurrentlyrejectstransactionblockrepro-0002-select-count-*-::text-from",
       "compare": "structural",
       "expectedKind": "rows",
-      "query": "SELECT count(*)::TEXT\n\t\t\t\t\t\tFROM pg_catalog.pg_indexes\n\t\t\t\t\t\tWHERE tablename = 'concurrent_index_tx_items'\n\t\t\t\t\t\t\tAND indexname = 'concurrent_index_tx_items_label_idx';",
-      "querySha256": "3cf88957853514e560658ff5f314c9c37c471627abe95f72024b6344466393a4",
+      "query": "SELECT count(*)::TEXT\n\t\t\t\t\t\tFROM pg_catalog.pg_indexes\n\t\t\t\t\t\tWHERE schemaname = current_schema()\n\t\t\t\t\t\t\tAND tablename = 'concurrent_index_tx_items'\n\t\t\t\t\t\t\tAND indexname = 'concurrent_index_tx_items_label_idx';",
+      "querySha256": "31362e71893aba0368f36be359fae02e05d169314eea3404ade933f61c983a58",
       "expectedRows": [
         [
           {
@@ -79,12 +79,12 @@
       "suggestedId": "index-correctness-repro-test-testdropindexconcurrentlyrejectstransactionblockrepro-0002-select-count-*-::text-from",
       "compare": "structural",
       "expectedKind": "rows",
-      "query": "SELECT count(*)::TEXT\n\t\t\t\t\t\tFROM pg_catalog.pg_indexes\n\t\t\t\t\t\tWHERE tablename = 'drop_concurrent_index_tx_items'\n\t\t\t\t\t\t\tAND indexname = 'drop_concurrent_index_tx_items_label_idx';",
-      "querySha256": "e58b92bb782331c8b6bef782f13dfcede1d94e33d613072b9ebd4266385244bf",
+      "query": "SELECT count(*)::TEXT\n\t\t\t\t\t\tFROM pg_catalog.pg_indexes\n\t\t\t\t\t\tWHERE schemaname = current_schema()\n\t\t\t\t\t\t\tAND tablename = 'drop_concurrent_index_tx_items'\n\t\t\t\t\t\t\tAND indexname = 'drop_concurrent_index_tx_items_label_idx';",
+      "querySha256": "f57d6c0e999828cca78528795b1501dc2e6fa40c1362514b2c2934f8707f89f2",
       "expectedRows": [
         [
           {
-            "value": "3"
+            "value": "1"
           }
         ]
       ],

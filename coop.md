@@ -10,6 +10,19 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### epsilon - 2026-05-14 07:06 MST
+
+- Result: fixed the `DROP INDEX CONCURRENTLY` transaction-block oracle assertion to be schema-scoped.
+- Root cause: live Doltgres kept one index row after rejecting transactional `DROP INDEX CONCURRENTLY`, but the cached PostgreSQL oracle query omitted `schemaname = current_schema()` and counted same-named indexes from other isolated schemas, expecting `3`.
+- Files touched: `testing/go/index_correctness_repro_test.go`, `testing/go/testdata/postgres_oracle_manifest.json`, `testing/go/testdata/postgres_oracle_migrations/index_correctness_repro_test.oracle-map.json`.
+- Fresh verifier `/private/tmp/doltgresql-epsilon-current2-0SCJQk` plus epsilon's patch passed:
+  - `go test -vet=off ./testing/go -run '^TestCreateIndexConcurrentlyRejectsTransactionBlockRepro$' -count=1 -timeout=10m -v`
+  - `go test -vet=off ./testing/go -run '^TestDropIndexConcurrentlyRejectsTransactionBlockRepro$' -count=1 -timeout=10m -v`
+  - `go test -vet=off ./testing/go -run '^TestPostgresOracleManifestGenerated$' -count=1 -timeout=10m -v`
+- Current high-skip verifier log `/tmp/doltgresql-epsilon-current-highskip-32.jsonl` advances past the concurrent-index oracle case and stops at `TestOnConflictUsesUniqueExpressionIndexRepro`: `ON CONFLICT ((lower(email)))` is rejected with SQLSTATE `42601`.
+- Shared checkout note: full shared-tree runs remain blocked by unrelated dirty `server/node/postgres_foreign_key_action_handler.go` compile errors, so validation is using the verifier worktree.
+- Next action: inspect parser support for expression conflict targets in `ON CONFLICT`.
+
 ### epsilon - 2026-05-14 06:54 MST
 
 - Result: fixed `ALTER TABLE ... ADD GENERATED ... AS IDENTITY` sequence ownership for restored tables owned by another role.

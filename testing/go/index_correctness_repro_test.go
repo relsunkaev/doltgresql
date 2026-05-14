@@ -47,7 +47,8 @@ func TestCreateIndexConcurrentlyRejectsTransactionBlockRepro(t *testing.T) {
 				{
 					Query: `SELECT count(*)::TEXT
 						FROM pg_catalog.pg_indexes
-						WHERE tablename = 'concurrent_index_tx_items'
+						WHERE schemaname = current_schema()
+							AND tablename = 'concurrent_index_tx_items'
 							AND indexname = 'concurrent_index_tx_items_label_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testcreateindexconcurrentlyrejectstransactionblockrepro-0002-select-count-*-::text-from"},
 				},
 			},
@@ -85,7 +86,8 @@ func TestDropIndexConcurrentlyRejectsTransactionBlockRepro(t *testing.T) {
 				{
 					Query: `SELECT count(*)::TEXT
 						FROM pg_catalog.pg_indexes
-						WHERE tablename = 'drop_concurrent_index_tx_items'
+						WHERE schemaname = current_schema()
+							AND tablename = 'drop_concurrent_index_tx_items'
 							AND indexname = 'drop_concurrent_index_tx_items_label_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testdropindexconcurrentlyrejectstransactionblockrepro-0002-select-count-*-::text-from"},
 				},
 			},
