@@ -40,13 +40,14 @@ func nodeCreateFunction(ctx *Context, node *tree.CreateFunction) (vitess.Stateme
 	if err != nil {
 		return nil, err
 	}
-	if err = validateCreateFunctionRoutineOptions(node.ReturnsSetOf, options); err != nil {
+	returnsSet := node.ReturnsSetOf || node.ReturnsTable
+	if err = validateCreateFunctionRoutineOptions(returnsSet, options); err != nil {
 		return nil, err
 	}
 	if err = validateRoutineArgs(node.Args); err != nil {
 		return nil, err
 	}
-	metadata := routineOptionMetadata(options, node.ReturnsSetOf)
+	metadata := routineOptionMetadata(options, returnsSet)
 	setConfig, err := routineSetOptions(options)
 	if err != nil {
 		return nil, err
@@ -61,7 +62,14 @@ func nodeCreateFunction(ctx *Context, node *tree.CreateFunction) (vitess.Stateme
 			return nil, err
 		}
 	} else if node.ReturnsTable {
-		retType = createAnonymousCompositeType(node.RetType)
+		if len(node.RetType) == 1 {
+			_, retType, err = nodeResolvableTypeReference(ctx, node.RetType[0].Type, false)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			retType = createAnonymousCompositeType(node.RetType)
+		}
 	}
 
 	params := make([]pgnodes.RoutineParam, len(node.Args))
@@ -205,7 +213,7 @@ func nodeCreateFunction(ctx *Context, node *tree.CreateFunction) (vitess.Stateme
 			language,
 			sqlDef,
 			sqlDefParsedStmts,
-			node.ReturnsSetOf,
+			returnsSet,
 			options[tree.OptionLeakProof].IsLeakProof,
 			setConfig,
 			metadata,
