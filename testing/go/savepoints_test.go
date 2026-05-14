@@ -153,10 +153,7 @@ func TestSavepoints(t *testing.T) {
 				{Query: "RELEASE SAVEPOINT MYSP;"},
 				{Query: "COMMIT;"},
 				{
-					Query: "SELECT id FROM sp_case ORDER BY id;",
-					Expected: []gms.Row{
-						{1}, {3},
-					},
+					Query: "SELECT id FROM sp_case ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "savepoints-test-testsavepoints-0006-select-id-from-sp_case-order"},
 				},
 			},
 		},

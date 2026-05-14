@@ -147,12 +147,26 @@
       "source": "testing/go/savepoints_test.go:TestSavepoints",
       "ordinal": 6,
       "scriptName": "case-insensitive savepoint names",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "savepoints-test-testsavepoints-0006-select-id-from-sp_case-order",
       "suggestedId": "savepoints-test-testsavepoints-0006-select-id-from-sp_case-order",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT id FROM sp_case ORDER BY id;",
       "querySha256": "8e69476782db850634e1182f474286a9783deebfb9cd193b00903bb2b6aadf01",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
