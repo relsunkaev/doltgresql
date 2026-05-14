@@ -166,7 +166,6 @@ func Init() {
 		analyzer.Rule{Id: ruleId_AssignInheritedAlterTable, Apply: AssignInheritedAlterTable},
 		analyzer.Rule{Id: ruleId_AssignInheritedAlterDefaults, Apply: AssignInheritedAlterDefaults},
 		analyzer.Rule{Id: ruleId_AssignInheritedNotNull, Apply: AssignInheritedNotNull},
-		analyzer.Rule{Id: ruleId_AssignRelationLocking, Apply: AssignRelationLocking},
 		analyzer.Rule{Id: ruleId_AssignBatchedIndexLookups, Apply: AssignBatchedIndexLookups},
 		analyzer.Rule{Id: ruleId_AssignJsonbGinLookups, Apply: AssignJsonbGinLookups},
 		analyzer.Rule{Id: ruleId_InferInnerJoinPredicates, Apply: InferInnerJoinPredicates},
@@ -206,6 +205,7 @@ func Init() {
 		analyzer.Rule{Id: ruleId_PrioritizeUniqueFKInsert, Apply: PrioritizeUniqueForeignKeyInsertViolations},
 		analyzer.Rule{Id: ruleId_ValidateCreateOrReplaceView, Apply: ValidateCreateOrReplaceView},
 		analyzer.Rule{Id: ruleId_ReplaceNode, Apply: ReplaceNode},
+		analyzer.Rule{Id: ruleId_AssignRelationLocking, Apply: AssignRelationLocking},
 		analyzer.Rule{Id: ruleId_InsertContextRootFinalizer, Apply: InsertContextRootFinalizer},
 	)
 
