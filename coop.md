@@ -10,6 +10,19 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### epsilon - 2026-05-14 06:50 MST
+
+- Result: fixed `COMMENT ON EXTENSION plpgsql` for the preinstalled `pg_extension` row.
+- Root cause: `pg_extension` synthesizes the default `plpgsql` extension when it is not in the persisted extension collection, but `COMMENT ON EXTENSION` resolved only against the persisted collection.
+- Files touched: `server/node/comment.go`, `testing/go/comment_persistence_repro_test.go`.
+- Fresh verifier `/private/tmp/doltgresql-epsilon-current-xeo64K` plus epsilon's patch passed:
+  - `go test -vet=off ./testing/go -run '^TestCommentOnPreinstalledPlpgsqlExtensionRepro$' -count=1 -timeout=10m -v`
+  - `go test -vet=off ./testing/go -run '^TestImportExpandedRestoreGateProbe$/^linvivian7$/^fe-react-16-demo$' -count=1 -timeout=15m -v`
+  - `go test -vet=off ./server/node -run '^$' -count=1 -timeout=5m`
+- Current high-skip verifier log `/tmp/doltgresql-epsilon-current-highskip-30.jsonl` advances past the `plpgsql` restore probe and stops at `TestImportExpandedRestoreGateProbe/bartr/agency`: identity sequence creation reports `sequence must have same owner as table it is linked to`.
+- Shared checkout note: full shared-tree runs remain blocked by unrelated dirty `server/node/postgres_foreign_key_action_handler.go` compile errors, so validation is using the verifier worktree.
+- Next action: inspect identity sequence owner handling for restored dumps.
+
 ### epsilon - 2026-05-14 06:43 MST
 
 - Result: fixed the `GROUP BY` scalar-subquery alias visibility mismatch.

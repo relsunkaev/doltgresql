@@ -690,7 +690,7 @@ func resolveCommentExtension(ctx *sql.Context, name string) (id.Id, error) {
 		return id.Null, err
 	}
 	extID := id.NewExtension(name)
-	if !extCollection.HasLoadedExtension(ctx, extID) {
+	if !isPreinstalledExtension(name) && !extCollection.HasLoadedExtension(ctx, extID) {
 		return id.Null, fmt.Errorf(`extension "%s" does not exist`, name)
 	}
 	return extID.AsId(), nil

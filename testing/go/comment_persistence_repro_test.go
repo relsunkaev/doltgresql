@@ -364,6 +364,27 @@ func TestCommentOnRoleAndExtensionPersistsDescriptionRepro(t *testing.T) {
 	})
 }
 
+func TestCommentOnPreinstalledPlpgsqlExtensionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "COMMENT ON preinstalled plpgsql extension persists description metadata",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `COMMENT ON EXTENSION plpgsql IS 'visible plpgsql extension comment';`,
+				},
+				{
+					Query: `SELECT obj_description(
+						(SELECT oid FROM pg_extension WHERE extname = 'plpgsql'),
+						'pg_extension');`,
+					Expected: []sql.Row{{
+						"visible plpgsql extension comment",
+					}},
+				},
+			},
+		},
+	})
+}
+
 // TestCommentOnProcedureRoutineDomainLanguagePersistsDescriptionRepro
 // reproduces the same persistence bug for procedures, routines, domains, and
 // procedural languages.
