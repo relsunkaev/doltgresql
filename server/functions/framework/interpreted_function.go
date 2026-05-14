@@ -244,7 +244,7 @@ func (InterpretedFunction) ApplyBindings(ctx *sql.Context, stack plpgsql.Interpr
 			}
 			if enforceType {
 				switch variable.Type.TypCategory {
-				case pgtypes.TypeCategory_ArrayTypes, pgtypes.TypeCategory_DateTimeTypes, pgtypes.TypeCategory_StringTypes, pgtypes.TypeCategory_UserDefinedTypes:
+				case pgtypes.TypeCategory_ArrayTypes, pgtypes.TypeCategory_DateTimeTypes, pgtypes.TypeCategory_StringTypes, pgtypes.TypeCategory_UnknownTypes, pgtypes.TypeCategory_UserDefinedTypes:
 					formattedVar = pq.QuoteLiteral(formattedVar)
 				}
 			}

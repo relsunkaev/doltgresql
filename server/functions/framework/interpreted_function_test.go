@@ -15,6 +15,7 @@
 package framework_test
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/dolthub/go-mysql-server/sql"
@@ -27,14 +28,22 @@ import (
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
+var interpretedFunctionTestInit sync.Once
+
+func initInterpretedFunctionTestCatalog() {
+	interpretedFunctionTestInit.Do(func() {
+		functions.Init()
+		framework.Initialize()
+	})
+}
+
 // TestApplyBindings_RendersRegclassVariableThroughSessionContext asserts
 // that ApplyBindings renders a regclass-typed variable using the
 // session context it is given.
 //
 // See https://github.com/dolthub/doltgresql/issues/1142.
 func TestApplyBindings_RendersRegclassVariableThroughSessionContext(t *testing.T) {
-	functions.Init()
-	framework.Initialize()
+	initInterpretedFunctionTestCatalog()
 	ctx := sql.NewEmptyContext()
 	stack := plpgsql.NewInterpreterStack(nil)
 	stack.NewVariableWithValue("rel", pgtypes.Regclass, id.NewOID(1259).AsId())
@@ -45,6 +54,7 @@ func TestApplyBindings_RendersRegclassVariableThroughSessionContext(t *testing.T
 }
 
 func TestApplyBindings_IgnoresDollarPlaceholdersInsideStringLiterals(t *testing.T) {
+	initInterpretedFunctionTestCatalog()
 	ctx := sql.NewEmptyContext()
 	stack := plpgsql.NewInterpreterStack(nil)
 	stack.NewVariableWithValue("target_table", pgtypes.Text, "do_dynamic_target")
@@ -54,4 +64,16 @@ func TestApplyBindings_IgnoresDollarPlaceholdersInsideStringLiterals(t *testing.
 	require.NoError(t, err)
 	require.True(t, found)
 	require.Equal(t, "SELECT format('UPDATE %I SET label = $2 WHERE id = $1', (('do_dynamic_target')::text))", actual)
+}
+
+func TestApplyBindings_QuotesUnknownStringVariables(t *testing.T) {
+	initInterpretedFunctionTestCatalog()
+	ctx := sql.NewEmptyContext()
+	stack := plpgsql.NewInterpreterStack(nil)
+	stack.NewVariableWithValue("label", pgtypes.Unknown, "dynamic")
+
+	actual, found, err := framework.InterpretedFunction{}.ApplyBindings(ctx, stack, "SELECT $1", []string{"label"}, true)
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Equal(t, "SELECT (('dynamic')::unknown)", actual)
 }

@@ -164,6 +164,16 @@ func (is *InterpreterStack) GetRecord(name string) (sql.Schema, sql.Row, bool) {
 	return nil, nil, false
 }
 
+// IsRecordVariable returns whether name refers to a RECORD variable, even when it does not yet have a known shape.
+func (is *InterpreterStack) IsRecordVariable(name string) bool {
+	for i := 0; i < is.stack.Len(); i++ {
+		if iv, ok := is.stack.PeekDepth(i).variables[name]; ok {
+			return iv.Type == pgtypes.Trigger
+		}
+	}
+	return false
+}
+
 // ListVariables returns a map with the names of all variables. The attached slice represents field names for records.
 // All names are lowercased.
 func (is *InterpreterStack) ListVariables() map[string][]string {

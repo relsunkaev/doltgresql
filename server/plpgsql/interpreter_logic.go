@@ -474,10 +474,22 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 				} else {
 					// single column
 					if !found {
+						if stack.IsRecordVariable(operation.Target) {
+							if err = stack.UpdateRecord(operation.Target, nil, nil); err != nil {
+								return nil, false, err
+							}
+							continue
+						}
 						if err = stack.SetVariable(ctx, operation.Target, nil); err != nil {
 							return nil, false, err
 						}
 					} else {
+						if stack.IsRecordVariable(operation.Target) {
+							if err = stack.UpdateRecord(operation.Target, sch, rows[0]); err != nil {
+								return nil, false, err
+							}
+							continue
+						}
 						target := stack.GetVariable(operation.Target)
 						if target.Type != nil && target.Type.IsCompositeType() && !target.Type.IsRecordType() &&
 							len(rows[0]) == len(target.Type.CompositeAttrs) && len(sch) == len(target.Type.CompositeAttrs) {
