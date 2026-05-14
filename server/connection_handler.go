@@ -4343,7 +4343,8 @@ func errorResponseCode(err error) string {
 		sql.ErrForeignKeyParentViolation.Is(err):
 		return pgcode.ForeignKeyViolation.String()
 	case sql.ErrInsertIntoNonNullableProvidedNull.Is(err),
-		sql.ErrInsertIntoNonNullableDefaultNullColumn.Is(err):
+		sql.ErrInsertIntoNonNullableDefaultNullColumn.Is(err),
+		sql.ErrColumnDefaultReturnedNull.Is(err):
 		return pgcode.NotNullViolation.String()
 	case sql.ErrCheckConstraintViolated.Is(err):
 		return pgcode.CheckViolation.String()
@@ -4451,6 +4452,8 @@ func errMessageToSQLState(msg string) (string, bool) {
 	case strings.HasPrefix(msg, "Field '") && strings.Contains(msg, "' doesn't have a default value"):
 		return pgcode.NotNullViolation.String(), true
 	case strings.HasPrefix(msg, `null value in column "`) && strings.Contains(msg, `" violates not-null constraint`):
+		return pgcode.NotNullViolation.String(), true
+	case msg == "default value attempted to return null but column is non-nullable":
 		return pgcode.NotNullViolation.String(), true
 	case strings.HasPrefix(msg, "ASSIGNMENT_CAST: target is of type "):
 		return pgcode.DatatypeMismatch.String(), true

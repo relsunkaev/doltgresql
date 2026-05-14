@@ -254,6 +254,7 @@ func TestErrMessageToSQLStateFormatsDomainConstraintErrors(t *testing.T) {
 		{msg: `domain not_null_cast_domain does not allow null values`, code: pgcode.NotNullViolation},
 		{msg: `Field 'y' doesn't have a default value`, code: pgcode.NotNullViolation},
 		{msg: `null value in column "y" violates not-null constraint`, code: pgcode.NotNullViolation},
+		{msg: `default value attempted to return null but column is non-nullable`, code: pgcode.NotNullViolation},
 		{msg: `cannot use subquery in check constraint`, code: pgcode.FeatureNotSupported},
 		{msg: `aggregate functions are not allowed in check constraints`, code: pgcode.Grouping},
 		{msg: `window functions are not allowed in check constraints`, code: pgcode.Windowing},
