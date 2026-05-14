@@ -137,7 +137,7 @@ func runDockerPerlDBIProbe(ctx context.Context, scriptPath string, port int) ([]
 		"-v", filepath.Clean(scriptPath) + ":/tmp/dbi_probe.pl:ro",
 		perlDBIClientImage,
 		"sh", "-lc",
-		"apt-get update >/dev/null && apt-get install -y --no-install-recommends libdbd-pg-perl >/dev/null && perl /tmp/dbi_probe.pl",
+		"apt-get update >/dev/null && apt-get install -y --no-install-recommends libdbd-pg-perl >/dev/null && /usr/bin/perl /tmp/dbi_probe.pl",
 	}
 	return exec.CommandContext(ctx, "docker", args...).CombinedOutput()
 }
