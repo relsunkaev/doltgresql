@@ -311,7 +311,7 @@ func nodeIndexMetadata(node *tree.CreateIndex, accessMethod string) (*indexmetad
 		opClasses := make([]string, len(node.Columns))
 		for i, column := range node.Columns {
 			if column.Collation != "" {
-				return nil, errors.Errorf("index collation %s is not yet supported for gin indexes", column.Collation)
+				return nil, pgerror.Newf(pgcode.UndefinedObject, "collation %s does not exist", column.Collation)
 			}
 			opClass := indexmetadata.OpClassJsonbOps
 			if column.OpClass != nil {
@@ -321,7 +321,7 @@ func nodeIndexMetadata(node *tree.CreateIndex, accessMethod string) (*indexmetad
 				opClass = indexmetadata.NormalizeOpClass(column.OpClass.Name)
 			}
 			if !indexmetadata.IsSupportedGinJsonbOpClass(opClass) {
-				return nil, errors.Errorf("operator class %s is not yet supported for gin indexes", opClass)
+				return nil, pgerror.Newf(pgcode.UndefinedObject, "operator class %s does not exist for access method gin", opClass)
 			}
 			opClasses[i] = opClass
 		}
@@ -378,7 +378,7 @@ func nodeBtreeIndexMetadata(node *tree.CreateIndex) (*indexmetadata.Metadata, er
 		if column.Collation != "" {
 			collation := indexmetadata.NormalizeCollation(column.Collation)
 			if !indexmetadata.IsSupportedCollation(collation) {
-				return nil, errors.Errorf("index collation %s is not yet supported", column.Collation)
+				return nil, pgerror.Newf(pgcode.UndefinedObject, "collation %s does not exist", column.Collation)
 			}
 			collations[i] = collation
 			hasMetadata = true
@@ -390,7 +390,7 @@ func nodeBtreeIndexMetadata(node *tree.CreateIndex) (*indexmetadata.Metadata, er
 			}
 			opClass := indexmetadata.NormalizeOpClass(column.OpClass.Name)
 			if !indexmetadata.IsSupportedBtreeOpClass(opClass) {
-				return nil, errors.Errorf("operator class %s is not yet supported for btree indexes", opClass)
+				return nil, pgerror.Newf(pgcode.UndefinedObject, "operator class %s does not exist for access method btree", opClass)
 			}
 			opClasses[i] = opClass
 			hasMetadata = true

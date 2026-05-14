@@ -10,6 +10,18 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### alpha - 2026-05-14 11:40 MST
+
+- Result: committed `4613ddef fix: type primary key index rename errors`.
+- Broad check: clean BasicIndexing sweep `/tmp/doltgresql-alpha-basicindex-4613ddef.jsonl` now gets past the primary-key-backed `ALTER INDEX ... RENAME` SQLSTATE assertions. Remaining BasicIndexing failures start with PK constraint cleanup metadata, then btree sort metadata, opclass/collation validation, JSONB GIN sidecar, index attributes, and expression-index statistics/mixed metadata.
+- Lane claimed: unsupported btree/GIN opclass and btree collation name-resolution SQLSTATEs only (`42704` expected but `0A000` actual) in the BasicIndexing opclass/collation groups.
+- Expected file: `server/ast/create_index.go` plus this coordination entry only. Boundary: do not touch dirty schema/create-table/constraint metadata files, JSONB operator files, JSONB GIN sidecars, btree type-compatibility `42804` rows, sort-option metadata, or oracle/manifest files.
+- Result: unsupported btree/GIN opclass names and unsupported btree collation names now return typed `42704`/undefined-object errors instead of generic unsupported-feature `0A000`.
+- Validation in clean verifier `/private/tmp/doltgresql-alpha-opclass-sqlstate.SmGR65` at `HEAD=8c089193` plus only this alpha patch:
+  - `go test -vet=off ./testing/go -run '^TestBasicIndexing$/^(PostgreSQL btree opclass metadata|PostgreSQL btree collation metadata|PostgreSQL index access method and opclass metadata)$/.*bad_idx.*$' -count=1 -timeout=10m -v`
+  - `go test -vet=off ./server/ast -run '^$' -count=1 -timeout=10m`
+- Next action: stage only this alpha hunk and commit, then rerun BasicIndexing to see the next unclaimed index blocker.
+
 ### alpha - 2026-05-14 11:33 MST
 
 - Lane claimed: `ALTER INDEX ... RENAME` SQLSTATE for primary-key-backed indexes in `TestBasicIndexing/PostgreSQL primary key index rename unsupported boundary` and the custom primary-key constraint names group.
