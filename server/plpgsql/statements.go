@@ -210,6 +210,12 @@ func (stmt ExecuteSQL) AppendOperations(ops *[]InterpreterOperation, stack *Inte
 		}
 		options["strict"] = "true"
 	}
+	if len(stmt.Target) > 0 && isDMLReturningStatement(stmt.Statement) {
+		if options == nil {
+			options = make(map[string]string)
+		}
+		options[dmlReturningIntoOption] = "true"
+	}
 	*ops = append(*ops, InterpreterOperation{
 		OpCode:        OpCode_Execute,
 		PrimaryData:   statementStr,
@@ -741,6 +747,36 @@ func mergeDiagnosticStatementOptions(options map[string]string, lineNumber int32
 		options[key] = value
 	}
 	return options
+}
+
+func isDMLReturningStatement(statement string) bool {
+	scanResult, err := pg_query.Scan(statement)
+	if err != nil {
+		return false
+	}
+	var firstToken string
+	hasReturning := false
+	for _, token := range scanResult.Tokens {
+		tokenText := strings.ToLower(strings.TrimSpace(statement[token.Start:token.End]))
+		if tokenText == "" {
+			continue
+		}
+		if firstToken == "" {
+			firstToken = tokenText
+		}
+		if tokenText == "returning" {
+			hasReturning = true
+		}
+	}
+	if !hasReturning {
+		return false
+	}
+	switch firstToken {
+	case "insert", "update", "delete", "merge":
+		return true
+	default:
+		return false
+	}
 }
 
 // substituteVariableReferences parses the specified |expression| and replaces

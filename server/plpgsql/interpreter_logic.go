@@ -63,6 +63,7 @@ const (
 	diagnosticOptionAction     = "pgContextAction"
 	diagnosticOptionLineNumber = "lineNumber"
 	diagnosticOptionStatement  = "pgContextStatement"
+	dmlReturningIntoOption     = "dmlReturningInto"
 	integerForLoopFoundOption  = "integerForLoopFound"
 	raiseValidationErrorOption = "raiseValidationError"
 )
@@ -467,6 +468,9 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 					return nil, false, errors.New("query returned no rows")
 				}
 				if strict && len(rows) > 1 {
+					return nil, false, errors.New("query returned more than one row")
+				}
+				if operation.Options[dmlReturningIntoOption] == "true" && len(rows) > 1 {
 					return nil, false, errors.New("query returned more than one row")
 				}
 				if vars := strings.Split(operation.Target, ","); len(vars) > 1 {

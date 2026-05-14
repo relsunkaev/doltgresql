@@ -379,6 +379,36 @@ func TestParseSelectIntoStrict(t *testing.T) {
 	}
 }
 
+func TestParseDmlReturningIntoMarksMultiRowCheck(t *testing.T) {
+	ops, err := Parse(`CREATE FUNCTION test_block() RETURNS void AS $$
+		DECLARE
+			got_id INT;
+		BEGIN
+			INSERT INTO items VALUES (1), (2) RETURNING id INTO got_id;
+		END;
+	$$ LANGUAGE plpgsql;`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var executeOp *InterpreterOperation
+	for i := range ops {
+		if ops[i].OpCode == OpCode_Execute {
+			executeOp = &ops[i]
+			break
+		}
+	}
+	if executeOp == nil {
+		t.Fatalf("expected execute operation, found %#v", ops)
+	}
+	if executeOp.Target != "got_id" {
+		t.Fatalf("target = %q", executeOp.Target)
+	}
+	if executeOp.Options[dmlReturningIntoOption] != "true" {
+		t.Fatalf("dmlReturningInto option = %q, expected true; op: %#v", executeOp.Options[dmlReturningIntoOption], executeOp)
+	}
+}
+
 func TestParseDynamicExecuteIntoRecord(t *testing.T) {
 	ops, err := Parse(`CREATE FUNCTION test_block() RETURNS text AS $$
 		DECLARE
