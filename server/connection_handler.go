@@ -4447,6 +4447,8 @@ func errMessageToSQLState(msg string) (string, bool) {
 		msg == "Corrupt ascii-armor",
 		msg == "data not a multiple of block size":
 		return pgcode.ExternalRoutineInvocationException.String(), true
+	case strings.HasPrefix(msg, "pgcrypto PGP ") && strings.HasSuffix(msg, " is not yet supported"):
+		return pgcode.ExternalRoutineInvocationException.String(), true
 	case msg == "mismatched array dimensions":
 		return pgcode.ArraySubscript.String(), true
 	case strings.HasPrefix(msg, "FOR UPDATE is not allowed with "):

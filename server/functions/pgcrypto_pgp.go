@@ -15,15 +15,16 @@
 package functions
 
 import (
-	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
 func pgcryptoPGPUnsupported(operation string) error {
-	return errors.Errorf("pgcrypto PGP %s is not yet supported", operation)
+	return pgerror.New(pgcode.ExternalRoutineInvocationException, "pgcrypto PGP "+operation+" is not yet supported")
 }
 
 var pgcrypto_pgp_key_id = framework.Function1{

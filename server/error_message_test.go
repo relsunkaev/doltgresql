@@ -295,6 +295,7 @@ func TestErrMessageToSQLStateFormatsPgcryptoErrors(t *testing.T) {
 		{msg: "mismatched array dimensions", code: pgcode.ArraySubscript},
 		{msg: "Corrupt ascii-armor", code: pgcode.ExternalRoutineInvocationException},
 		{msg: "data not a multiple of block size", code: pgcode.ExternalRoutineInvocationException},
+		{msg: "pgcrypto PGP key inspection is not yet supported", code: pgcode.ExternalRoutineInvocationException},
 	} {
 		code, ok := errMessageToSQLState(tt.msg)
 		require.True(t, ok)

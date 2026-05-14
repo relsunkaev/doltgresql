@@ -569,14 +569,19 @@ func sequenceOwnedByRole(ctx *sql.Context, schemaName, seqName, roleName string)
 
 // checkPrivilegeOnRoutine checks privileges for given function or procedure provided with schema name.
 func checkPrivilegeOnRoutine(ctx *sql.Context, state AuthorizationQueryState, schemaName, routineName string, argTypes string, argTypesKnown bool, privileges []Privilege) error {
-	if !argTypesKnown {
-		return nil
-	}
 	// TODO: handle database
 	schName, err := core.GetSchemaName(ctx, nil, schemaName)
 	if err != nil {
 		// If this fails, then there's an issue with the search path.
 		// This will error later in the process, so we'll pass auth for now.
+		return nil
+	}
+	if schemaName != "" && !strings.EqualFold(schName, "pg_catalog") {
+		if err = checkPrivilegeOnSchema(state, schName, []Privilege{Privilege_USAGE}); err != nil {
+			return err
+		}
+	}
+	if !argTypesKnown {
 		return nil
 	}
 	roleRoutineKey := RoutinePrivilegeKey{

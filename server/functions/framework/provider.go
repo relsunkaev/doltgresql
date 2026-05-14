@@ -285,6 +285,30 @@ var compiledExtensionFunctionNames = map[string]map[string]struct{}{
 		"svals":                 {},
 		"tconvert":              {},
 	},
+	"pgcrypto": {
+		"armor":                 {},
+		"crypt":                 {},
+		"dearmor":               {},
+		"decrypt":               {},
+		"decrypt_iv":            {},
+		"digest":                {},
+		"encrypt":               {},
+		"encrypt_iv":            {},
+		"gen_random_bytes":      {},
+		"gen_random_uuid":       {},
+		"gen_salt":              {},
+		"hmac":                  {},
+		"pgp_armor_headers":     {},
+		"pgp_key_id":            {},
+		"pgp_pub_decrypt":       {},
+		"pgp_pub_decrypt_bytea": {},
+		"pgp_pub_encrypt":       {},
+		"pgp_pub_encrypt_bytea": {},
+		"pgp_sym_decrypt":       {},
+		"pgp_sym_decrypt_bytea": {},
+		"pgp_sym_encrypt":       {},
+		"pgp_sym_encrypt_bytea": {},
+	},
 	"uuid-ossp": {
 		"uuid_generate_v1":   {},
 		"uuid_generate_v1mc": {},
@@ -299,7 +323,18 @@ var compiledExtensionFunctionNames = map[string]map[string]struct{}{
 	},
 }
 
+func CompiledExtensionFunctionOverloads(ctx *sql.Context, schemaName string, functionName string) ([]FunctionInterface, bool) {
+	return compiledExtensionFunctionOverloads(ctx, schemaName, functionName)
+}
+
 func compiledExtensionFunction(ctx *sql.Context, schemaName string, functionName string) (sql.Function, bool) {
+	if _, ok := compiledExtensionFunctionOverloads(ctx, schemaName, functionName); !ok {
+		return nil, false
+	}
+	return compiledPgCatalogFunction("pg_catalog", functionName)
+}
+
+func compiledExtensionFunctionOverloads(ctx *sql.Context, schemaName string, functionName string) ([]FunctionInterface, bool) {
 	functionName = strings.ToLower(functionName)
 	for extName, functionNames := range compiledExtensionFunctionNames {
 		if _, ok := functionNames[functionName]; !ok {
@@ -316,7 +351,8 @@ func compiledExtensionFunction(ctx *sql.Context, schemaName string, functionName
 		if !strings.EqualFold(loadedExtension.Namespace.SchemaName(), schemaName) {
 			continue
 		}
-		return compiledPgCatalogFunction("pg_catalog", functionName)
+		overloads, ok := Catalog[functionName]
+		return overloads, ok && len(overloads) > 0
 	}
 	return nil, false
 }

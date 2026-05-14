@@ -27,6 +27,7 @@ import (
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/auth"
+	"github.com/dolthub/doltgresql/server/functions/framework"
 	"github.com/dolthub/doltgresql/server/largeobject"
 )
 
@@ -684,6 +685,9 @@ func aclRoutineExists(ctx *sql.Context, schema string, name string, argTypes str
 			return true, nil
 		}
 	}
+	if aclCompiledExtensionFunctionExists(ctx, schema, name, argTypes) {
+		return true, nil
+	}
 
 	procColl, err := core.GetProceduresCollectionFromContext(ctx)
 	if err != nil {
@@ -707,6 +711,31 @@ func aclRoutineArgTypesKey(argTypes []id.Type) string {
 		parts[i] = argType.TypeName()
 	}
 	return strings.Join(parts, ",")
+}
+
+func aclCompiledExtensionFunctionExists(ctx *sql.Context, schema string, name string, argTypes string) bool {
+	overloads, ok := framework.CompiledExtensionFunctionOverloads(ctx, schema, name)
+	if !ok {
+		return false
+	}
+	if argTypes == "" {
+		return true
+	}
+	for _, overload := range overloads {
+		if auth.RoutineArgTypesKey(compiledFunctionParameterIDs(overload)) == argTypes {
+			return true
+		}
+	}
+	return false
+}
+
+func compiledFunctionParameterIDs(function framework.FunctionInterface) []id.Type {
+	params := function.GetParameters()
+	paramIDs := make([]id.Type, len(params))
+	for i, param := range params {
+		paramIDs[i] = param.ID
+	}
+	return paramIDs
 }
 
 // grantType handles *GrantType from within RowIter.
