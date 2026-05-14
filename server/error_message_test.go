@@ -229,6 +229,24 @@ func TestErrMessageToSQLStateFormatsQueryShapeErrors(t *testing.T) {
 	}
 }
 
+func TestErrMessageToSQLStateFormatsPgcryptoErrors(t *testing.T) {
+	for _, tt := range []struct {
+		msg  string
+		code pgcode.Code
+	}{
+		{msg: "unsupported pgcrypto digest algorithm: unknown", code: pgcode.InvalidParameterValue},
+		{msg: "Length not in range", code: pgcode.ExternalRoutineInvocationException},
+		{msg: "mismatched array dimensions", code: pgcode.ArraySubscript},
+		{msg: "Corrupt ascii-armor", code: pgcode.ExternalRoutineInvocationException},
+		{msg: "data not a multiple of block size", code: pgcode.ExternalRoutineInvocationException},
+	} {
+		code, ok := errMessageToSQLState(tt.msg)
+		require.True(t, ok)
+		require.Equal(t, tt.code.String(), code)
+		require.Equal(t, tt.code.String(), errorResponseCode(errors.New(tt.msg)))
+	}
+}
+
 func TestErrMessageToSQLStateFormatsTypmodOverflow(t *testing.T) {
 	code, ok := errMessageToSQLState(`numeric field overflow - A field with precision 5, scale 2 must round to an absolute value less than 10^3`)
 	require.True(t, ok)

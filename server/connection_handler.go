@@ -4395,6 +4395,14 @@ func errMessageToSQLState(msg string) (string, bool) {
 		return pgcode.InvalidColumnReference.String(), true
 	case msg == "WITH TIES cannot be specified without ORDER BY":
 		return pgcode.Syntax.String(), true
+	case strings.HasPrefix(msg, "unsupported pgcrypto digest algorithm: "):
+		return pgcode.InvalidParameterValue.String(), true
+	case msg == "Length not in range",
+		msg == "Corrupt ascii-armor",
+		msg == "data not a multiple of block size":
+		return pgcode.ExternalRoutineInvocationException.String(), true
+	case msg == "mismatched array dimensions":
+		return pgcode.ArraySubscript.String(), true
 	case strings.HasPrefix(msg, "FOR UPDATE is not allowed with "):
 		return pgcode.FeatureNotSupported.String(), true
 	case strings.HasPrefix(msg, `relation "`) && strings.HasSuffix(msg, `" does not exist`):

@@ -464,6 +464,7 @@ func pgcryptoRawCipher(data []byte, key []byte, iv []byte, cipherType string, en
 	var block cipher.Block
 	switch config.algorithm {
 	case "aes":
+		key = pgcryptoNormalizeAESKey(key)
 		block, err = aes.NewCipher(key)
 		if err != nil {
 			return nil, errors.Errorf("invalid pgcrypto aes key length: %d", len(key))
@@ -524,6 +525,19 @@ func pgcryptoRawCipher(data []byte, key []byte, iv []byte, cipherType string, en
 		}
 	}
 	return output, nil
+}
+
+func pgcryptoNormalizeAESKey(key []byte) []byte {
+	keyLen := 32
+	switch {
+	case len(key) <= 16:
+		keyLen = 16
+	case len(key) <= 24:
+		keyLen = 24
+	}
+	normalizedKey := make([]byte, keyLen)
+	copy(normalizedKey, key)
+	return normalizedKey
 }
 
 func pgcryptoParseRawCipherType(cipherType string) (pgcryptoRawCipherConfig, error) {
