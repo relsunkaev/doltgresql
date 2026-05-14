@@ -72,7 +72,7 @@ func powerNumericNumeric(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any,
 		return numericOne, nil
 	}
 	if d2.Exponent() < 0 {
-		return decimal.NewFromFloat(math.Pow(d1.InexactFloat64(), d2.InexactFloat64())), nil
+		return decimal.NewFromFloat(math.Pow(d1.InexactFloat64(), d2.InexactFloat64())).Round(16), nil
 	}
 	return d1.Pow(d2), nil
 }

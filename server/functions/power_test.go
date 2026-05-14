@@ -25,19 +25,19 @@ import (
 
 func TestPowerNumericFractionalExponentScale(t *testing.T) {
 	tests := []struct {
-		name string
-		base decimal.Decimal
-		want string
+		name     string
+		base     decimal.Decimal
+		wantText string
 	}{
 		{
-			name: "integer result keeps numeric scale",
-			base: decimal.NewFromInt(4),
-			want: "2.0000000000000000",
+			name:     "integer result keeps numeric scale",
+			base:     decimal.NewFromInt(4),
+			wantText: "2.0000000000000000",
 		},
 		{
-			name: "float8 cast preserves PostgreSQL precision",
-			base: decimal.NewFromInt(2),
-			want: "1.4142135623730951",
+			name:     "float8 cast preserves PostgreSQL precision",
+			base:     decimal.NewFromInt(2),
+			wantText: "1.4142135623730951",
 		},
 	}
 	for _, test := range tests {
@@ -51,13 +51,18 @@ func TestPowerNumericFractionalExponentScale(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if text := got.(decimal.Decimal).StringFixed(16); text != test.want {
-				t.Fatalf("got %q, want %q", text, test.want)
+			if text, err := pgtypes.FormatNumericValue(got, -1); err != nil {
+				t.Fatal(err)
+			} else if text != test.wantText {
+				t.Fatalf("got formatted text %q, want %q", text, test.wantText)
+			}
+			if text := got.(decimal.Decimal).StringFixed(16); text != test.wantText {
+				t.Fatalf("got fixed text %q, want %q", text, test.wantText)
 			}
 			if test.base.Equal(decimal.NewFromInt(2)) {
 				f, _ := got.(decimal.Decimal).Float64()
-				if text := strconv.FormatFloat(f, 'f', -1, 64); text != test.want {
-					t.Fatalf("float8 cast got %q, want %q", text, test.want)
+				if text := strconv.FormatFloat(f, 'f', -1, 64); text != test.wantText {
+					t.Fatalf("float8 cast got %q, want %q", text, test.wantText)
 				}
 			}
 		})
