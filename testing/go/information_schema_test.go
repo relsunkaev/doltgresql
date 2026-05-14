@@ -347,13 +347,22 @@ func TestInfoSchemaViews(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM information_schema.views order by table_schema;`, PostgresOracle: ScriptTestPostgresOracle{ID: "information-schema-test-testinfoschemaviews-0001-select-*-from-information_schema.views-order", ColumnModes: []string{"structural", "schema"}},
+					Query: `SELECT * FROM information_schema.views order by table_schema;`,
+					Expected: []sql.Row{
+						{"postgres", "public", "test_view", "SELECT * FROM test_table", "NONE", "YES", "YES", "NO", "NO", "NO"},
+					},
 				},
 				{
-					Query: `SELECT DISTINCT table_schema FROM information_schema.views order by table_schema;`, PostgresOracle: ScriptTestPostgresOracle{ID: "information-schema-test-testinfoschemaviews-0002-select-distinct-table_schema-from-information_schema.views", ColumnModes: []string{"schema"}},
+					Query: `SELECT DISTINCT table_schema FROM information_schema.views order by table_schema;`,
+					Expected: []sql.Row{
+						{"public"},
+					},
 				},
 				{
-					Query: `SELECT table_catalog, table_schema FROM information_schema.views group by table_catalog, table_schema order by table_schema;`, PostgresOracle: ScriptTestPostgresOracle{ID: "information-schema-test-testinfoschemaviews-0003-select-table_catalog-table_schema-from-information_schema.views", ColumnModes: []string{"structural", "schema"}},
+					Query: `SELECT table_catalog, table_schema FROM information_schema.views group by table_catalog, table_schema order by table_schema;`,
+					Expected: []sql.Row{
+						{"postgres", "public"},
+					},
 				},
 				{
 					Query: `SELECT table_catalog, table_schema, table_name FROM information_schema.views WHERE table_schema='public';`, PostgresOracle: ScriptTestPostgresOracle{ID: "information-schema-test-testinfoschemaviews-0004-select-table_catalog-table_schema-table_name-from", Cleanup: []string{"DROP TABLE IF EXISTS test_table CASCADE"}},
