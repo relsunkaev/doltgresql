@@ -4379,6 +4379,16 @@ func errMessageToSQLState(msg string) (string, bool) {
 		return pgcode.DuplicateObject.String(), true
 	case strings.HasPrefix(msg, "division by zero"):
 		return pgcode.DivisionByZero.String(), true
+	case strings.HasPrefix(msg, "domain ") && strings.HasSuffix(msg, " does not allow null values"):
+		return pgcode.NotNullViolation.String(), true
+	case msg == "cannot use subquery in check constraint":
+		return pgcode.FeatureNotSupported.String(), true
+	case msg == "aggregate functions are not allowed in check constraints":
+		return pgcode.Grouping.String(), true
+	case msg == "window functions are not allowed in check constraints":
+		return pgcode.Windowing.String(), true
+	case msg == "set-returning functions are not allowed in check constraints":
+		return pgcode.FeatureNotSupported.String(), true
 	case strings.HasPrefix(msg, `relation "`) && strings.HasSuffix(msg, `" does not exist`):
 		return pgcode.UndefinedTable.String(), true
 	case strings.HasPrefix(msg, `operator "`) && strings.HasSuffix(msg, `" does not exist`):

@@ -177,6 +177,24 @@ func TestErrMessageToSQLStateFormatsMissingCommentObjects(t *testing.T) {
 	}
 }
 
+func TestErrMessageToSQLStateFormatsDomainConstraintErrors(t *testing.T) {
+	for _, tt := range []struct {
+		msg  string
+		code pgcode.Code
+	}{
+		{msg: `domain not_null_cast_domain does not allow null values`, code: pgcode.NotNullViolation},
+		{msg: `cannot use subquery in check constraint`, code: pgcode.FeatureNotSupported},
+		{msg: `aggregate functions are not allowed in check constraints`, code: pgcode.Grouping},
+		{msg: `window functions are not allowed in check constraints`, code: pgcode.Windowing},
+		{msg: `set-returning functions are not allowed in check constraints`, code: pgcode.FeatureNotSupported},
+	} {
+		code, ok := errMessageToSQLState(tt.msg)
+		require.True(t, ok)
+		require.Equal(t, tt.code.String(), code)
+		require.Equal(t, tt.code.String(), errorResponseCode(errors.New(tt.msg)))
+	}
+}
+
 func TestErrMessageToSQLStateFormatsTypmodOverflow(t *testing.T) {
 	code, ok := errMessageToSQLState(`numeric field overflow - A field with precision 5, scale 2 must round to an absolute value less than 10^3`)
 	require.True(t, ok)
