@@ -29,6 +29,8 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/deferrable"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
 	"github.com/dolthub/doltgresql/server/tablemetadata"
@@ -180,7 +182,7 @@ func (c *CreateTypedTable) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, er
 		return nil, pgtypes.ErrTypeDoesNotExist.New(c.typeDisplayName())
 	}
 	if !compositeType.IsCompositeType() || compositeType.IsRecordType() {
-		return nil, errors.Errorf(`type "%s" is not a composite type`, c.typeDisplayName())
+		return nil, pgerror.Newf(pgcode.WrongObjectType, `type "%s" is not a composite type`, c.typeDisplayName())
 	}
 
 	tableSchema, err := typedTableSchema(ctx, typeCollection, c.TableName, db.Name(), compositeType, c.Options, c.overrides)
