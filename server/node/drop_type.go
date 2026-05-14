@@ -32,6 +32,7 @@ import (
 	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/comments"
+	"github.com/dolthub/doltgresql/server/indexmetadata"
 	"github.com/dolthub/doltgresql/server/tablemetadata"
 	"github.com/dolthub/doltgresql/server/types"
 )
@@ -152,6 +153,9 @@ func (c *DropType) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 				return nil, pgerror.Newf(pgcode.DependentObjectsStillExist, `cannot drop type %s because other objects depend on it - table %s depends on type %s'`, c.typName, t.Name(), c.typName)
 			}
 			for _, col := range t.Schema(ctx) {
+				if col.HiddenSystem {
+					continue
+				}
 				if dt, isDoltgresType := col.Type.(*types.DoltgresType); isDoltgresType {
 					if dt.ID == typ.ID {
 						if c.cascade {
@@ -163,8 +167,68 @@ func (c *DropType) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 						return nil, pgerror.Newf(pgcode.DependentObjectsStillExist, `cannot drop type %s because other objects depend on it - column %s of table %s depends on type %s'`, c.typName, col.Name, t.Name(), c.typName)
 					}
 				}
+				if depends, err := columnDefaultReferencesType(ctx, col.Default, typ); err != nil || depends {
+					if err != nil {
+						return nil, err
+					}
+					if c.cascade {
+						// TODO: handle cascade
+						return nil, errors.Errorf(`cascading type drops are not yet supported`)
+					}
+					return nil, pgerror.Newf(pgcode.DependentObjectsStillExist, `cannot drop type %s because other objects depend on it - default for column %s of table %s depends on type %s`, c.typName, col.Name, t.Name(), c.typName)
+				}
+				if depends, err := columnDefaultReferencesType(ctx, col.Generated, typ); err != nil || depends {
+					if err != nil {
+						return nil, err
+					}
+					if c.cascade {
+						// TODO: handle cascade
+						return nil, errors.Errorf(`cascading type drops are not yet supported`)
+					}
+					return nil, pgerror.Newf(pgcode.DependentObjectsStillExist, `cannot drop type %s because other objects depend on it - generated column %s of table %s depends on type %s`, c.typName, col.Name, t.Name(), c.typName)
+				}
+				if depends, err := columnDefaultReferencesType(ctx, col.OnUpdate, typ); err != nil || depends {
+					if err != nil {
+						return nil, err
+					}
+					if c.cascade {
+						// TODO: handle cascade
+						return nil, errors.Errorf(`cascading type drops are not yet supported`)
+					}
+					return nil, pgerror.Newf(pgcode.DependentObjectsStillExist, `cannot drop type %s because other objects depend on it - on update expression for column %s of table %s depends on type %s`, c.typName, col.Name, t.Name(), c.typName)
+				}
+			}
+			if dependency, err := checkConstraintTypeDependency(ctx, t, typ); err != nil || dependency != "" {
+				if err != nil {
+					return nil, err
+				}
+				if c.cascade {
+					// TODO: handle cascade
+					return nil, errors.Errorf(`cascading type drops are not yet supported`)
+				}
+				return nil, pgerror.Newf(pgcode.DependentObjectsStillExist, `cannot drop type %s because other objects depend on it - %s`, c.typName, dependency)
+			}
+			if dependency, err := indexTypeDependency(ctx, t, typ); err != nil || dependency != "" {
+				if err != nil {
+					return nil, err
+				}
+				if c.cascade {
+					// TODO: handle cascade
+					return nil, errors.Errorf(`cascading type drops are not yet supported`)
+				}
+				return nil, pgerror.Newf(pgcode.DependentObjectsStillExist, `cannot drop type %s because other objects depend on it - %s`, c.typName, dependency)
 			}
 		}
+	}
+
+	if dependency, err := viewTypeDependency(ctx, db, typ); err != nil {
+		return nil, err
+	} else if dependency != "" {
+		if c.cascade {
+			// TODO: handle cascade
+			return nil, errors.Errorf(`cascading type drops are not yet supported`)
+		}
+		return nil, pgerror.Newf(pgcode.DependentObjectsStillExist, `cannot drop type %s because other objects depend on it - %s`, c.typName, dependency)
 	}
 
 	if dependency, err := routineTypeDependency(ctx, typ.ID); err != nil {
@@ -253,6 +317,187 @@ func routineTypeDependency(ctx *sql.Context, typeID id.Type) (string, error) {
 		return false, nil
 	})
 	return dependency, err
+}
+
+func columnDefaultReferencesType(ctx *sql.Context, defaultValue *sql.ColumnDefaultValue, typ *types.DoltgresType) (bool, error) {
+	if defaultValue == nil || defaultValue.Expr == nil {
+		return false, nil
+	}
+	if defaultValue.Expr.Resolved() && expressionTreeReferencesType(ctx, defaultValue.Expr, typ) {
+		return true, nil
+	}
+	return expressionReferencesType(defaultValue.Expr.String(), typ)
+}
+
+func expressionTreeReferencesType(ctx *sql.Context, expr sql.Expression, typ *types.DoltgresType) bool {
+	if expr == nil {
+		return false
+	}
+	found := false
+	sql.Inspect(ctx, expr, func(ctx *sql.Context, expr sql.Expression) bool {
+		if expr == nil {
+			return !found
+		}
+		if !expr.Resolved() {
+			return true
+		}
+		if sqlTypeReferencesType(expr.Type(ctx), typ) {
+			found = true
+			return false
+		}
+		if defaultExpr, ok := expr.(*sql.ColumnDefaultValue); ok && sqlTypeReferencesType(defaultExpr.OutType, typ) {
+			found = true
+			return false
+		}
+		return true
+	})
+	return found
+}
+
+func sqlTypeReferencesType(sqlType sql.Type, typ *types.DoltgresType) bool {
+	doltgresType, ok := sqlType.(*types.DoltgresType)
+	if !ok {
+		return false
+	}
+	return typeIDReferencesType(doltgresType.ID, typ) ||
+		typeIDReferencesType(doltgresType.Array, typ) ||
+		typeIDReferencesType(doltgresType.Elem, typ) ||
+		typeIDReferencesType(doltgresType.BaseTypeID, typ)
+}
+
+func checkConstraintTypeDependency(ctx *sql.Context, table sql.Table, typ *types.DoltgresType) (string, error) {
+	checkTable, ok := table.(sql.CheckTable)
+	if !ok {
+		checkTable, ok = sql.GetUnderlyingTable(table).(sql.CheckTable)
+	}
+	if !ok {
+		return "", nil
+	}
+	checks, err := checkTable.GetChecks(ctx)
+	if err != nil {
+		return "", err
+	}
+	for _, check := range checks {
+		depends, err := expressionReferencesType(check.CheckExpression, typ)
+		if err != nil || depends {
+			if err != nil {
+				return "", err
+			}
+			return fmt.Sprintf("check constraint %s on table %s depends on type %s", check.Name, table.Name(), typ.Name()), nil
+		}
+	}
+	return "", nil
+}
+
+func indexTypeDependency(ctx *sql.Context, table sql.Table, typ *types.DoltgresType) (string, error) {
+	indexed, ok := table.(sql.IndexAddressable)
+	if !ok {
+		indexed, ok = sql.GetUnderlyingTable(table).(sql.IndexAddressable)
+	}
+	if !ok {
+		return "", nil
+	}
+	indexes, err := indexed.GetIndexes(ctx)
+	if err != nil {
+		return "", err
+	}
+	for _, index := range indexes {
+		logicalColumns := indexmetadata.LogicalColumns(index, table.Schema(ctx))
+		for _, column := range logicalColumns {
+			if !column.Expression {
+				continue
+			}
+			depends, err := expressionReferencesType(column.Definition, typ)
+			if err != nil || depends {
+				if err != nil {
+					return "", err
+				}
+				return fmt.Sprintf("index %s on table %s depends on type %s", index.ID(), table.Name(), typ.Name()), nil
+			}
+		}
+		if predicate := indexmetadata.Predicate(index.Comment()); predicate != "" {
+			depends, err := expressionReferencesType(predicate, typ)
+			if err != nil || depends {
+				if err != nil {
+					return "", err
+				}
+				return fmt.Sprintf("index %s on table %s depends on type %s", index.ID(), table.Name(), typ.Name()), nil
+			}
+		}
+	}
+	return "", nil
+}
+
+func viewTypeDependency(ctx *sql.Context, db sql.Database, typ *types.DoltgresType) (string, error) {
+	viewDatabase, ok := db.(sql.ViewDatabase)
+	if !ok {
+		return "", nil
+	}
+	views, err := viewDatabase.AllViews(ctx)
+	if err != nil {
+		return "", err
+	}
+	for _, view := range views {
+		depends, err := sqlStatementReferencesType(view.CreateViewStatement, typ)
+		if err != nil || depends {
+			if err != nil {
+				return "", err
+			}
+			return fmt.Sprintf("view %s depends on type %s", view.Name, typ.Name()), nil
+		}
+	}
+	return "", nil
+}
+
+func expressionReferencesType(expr string, typ *types.DoltgresType) (bool, error) {
+	if strings.TrimSpace(expr) == "" {
+		return false, nil
+	}
+	_, changed, err := rewriteExpressionTypeReferences(
+		expr,
+		typ.ID,
+		typ.Array,
+		dropTypeProbeType(typ.ID),
+		dropTypeProbeType(typ.Array),
+	)
+	return changed, err
+}
+
+func sqlStatementReferencesType(statement string, typ *types.DoltgresType) (bool, error) {
+	_, changed, err := rewriteSQLTypeReferences(
+		statement,
+		typ.ID,
+		typ.Array,
+		dropTypeProbeType(typ.ID),
+		dropTypeProbeType(typ.Array),
+	)
+	return changed, err
+}
+
+func dropTypeProbeType(typeID id.Type) id.Type {
+	if !typeID.IsValid() {
+		return id.NullType
+	}
+	return id.NewType(typeID.SchemaName(), "__doltgresql_drop_type_probe_"+typeID.TypeName())
+}
+
+func typeIDReferencesType(typeID id.Type, typ *types.DoltgresType) bool {
+	if !typeID.IsValid() {
+		return false
+	}
+	if typeID == typ.ID {
+		return true
+	}
+	if typ.Array.IsValid() && typeID == typ.Array {
+		return true
+	}
+	if strings.EqualFold(typeID.TypeName(), typ.ID.TypeName()) {
+		return typeID.SchemaName() == "" || strings.EqualFold(typeID.SchemaName(), typ.ID.SchemaName())
+	}
+	if typ.Array.IsValid() && strings.EqualFold(typeID.TypeName(), typ.Array.TypeName()) {
+		return typeID.SchemaName() == "" || strings.EqualFold(typeID.SchemaName(), typ.Array.SchemaName())
+	}
+	return false
 }
 
 // Schema implements the interface sql.ExecSourceRel.
