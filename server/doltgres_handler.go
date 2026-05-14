@@ -266,6 +266,7 @@ func castSQLError(err error) error {
 	}
 	switch pgerror.GetPGCode(pgErr) {
 	case pgcode.AmbiguousFunction,
+		pgcode.ArraySubscript,
 		pgcode.DeadlockDetected,
 		pgcode.CannotCoerce,
 		pgcode.CheckViolation,
@@ -286,6 +287,7 @@ func castSQLError(err error) error {
 		pgcode.LockNotAvailable,
 		pgcode.NumericValueOutOfRange,
 		pgcode.NotNullViolation,
+		pgcode.NullValueNotAllowed,
 		pgcode.ObjectNotInPrerequisiteState,
 		pgcode.ProgramLimitExceeded,
 		pgcode.QueryCanceled,
