@@ -270,6 +270,12 @@ func runScript(t *testing.T, ctx context.Context, script ScriptTest, conn *Conne
 				requirePostgresOracleCachedSQLState(t, err, assertion.postgresOracleCached)
 				return
 			}
+			if assertion.postgresOracleCached != nil && assertion.postgresOracleCached.ExpectedTag != nil {
+				commandTag, err := conn.Exec(ctx, assertion.Query, scriptQueryArgs(assertion.BindVars)...)
+				require.NoError(t, err)
+				assert.Equal(t, *assertion.postgresOracleCached.ExpectedTag, commandTag.String())
+				return
+			}
 
 			cachedExpectedRows, err := assertion.postgresOracleCachedRows()
 			require.NoError(t, err)
@@ -1086,6 +1092,14 @@ func NormalizeVal(dt *types.DoltgresType, v any) any {
 			panic(err)
 		}
 		return u
+	case []byte:
+		if dt.ID == types.Uuid.ID && len(val) == uuid.Size {
+			u, err := uuid.FromBytes(val)
+			if err != nil {
+				panic(err)
+			}
+			return u
+		}
 	case []any:
 		baseType := dt
 		if baseType.IsArrayType() {

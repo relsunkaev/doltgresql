@@ -82,6 +82,7 @@ type entry struct {
 	ExpectedRows          *[][]cell         `json:"expectedRows,omitempty"`
 	ExpectedSQLState      string            `json:"expectedSqlstate,omitempty"`
 	ExpectedErrorSeverity string            `json:"expectedErrorSeverity,omitempty"`
+	ExpectedTag           *string           `json:"expectedTag,omitempty"`
 	ColumnModes           []string          `json:"columnModes,omitempty"`
 	Cleanup               []string          `json:"cleanup,omitempty"`
 	Variables             map[string]string `json:"variables,omitempty"`
@@ -120,6 +121,7 @@ type migrationAssertion struct {
 	Query           string    `json:"query,omitempty"`
 	QuerySHA256     string    `json:"querySha256,omitempty"`
 	ExpectedRows    *[][]cell `json:"expectedRows,omitempty"`
+	ExpectedTag     *string   `json:"expectedTag,omitempty"`
 	NonLiteral      []string  `json:"nonLiteral,omitempty"`
 	Cleanup         []string  `json:"cleanup,omitempty"`
 	NeedsCleanup    bool      `json:"needsCleanup"`
@@ -482,6 +484,7 @@ type oracleMeta struct {
 	ExpectedRows          *[][]cell
 	ExpectedSQLState      string
 	ExpectedErrorSeverity string
+	ExpectedTag           *string
 	Cleanup               []string
 }
 
@@ -536,6 +539,7 @@ func addMigrationOverrides(overrides map[string]oracleMeta, mapped migrationFile
 			ExpectedRows:          assertion.ExpectedRows,
 			ExpectedSQLState:      assertion.SQLState,
 			ExpectedErrorSeverity: assertion.ErrorSeverity,
+			ExpectedTag:           assertion.ExpectedTag,
 			Cleanup:               assertion.Cleanup,
 		}
 	}
@@ -1058,6 +1062,13 @@ func writePromotedOracleMap(sourceFile string, outputPath string, testNameFilter
 			}
 			assertion.Compare = "sqlstate"
 			assertion.NeedsCleanup = false
+		case "tag":
+			assertion.Oracle = "postgres"
+			if assertion.PostgresID == "" {
+				assertion.PostgresID = assertion.SuggestedID
+			}
+			assertion.Compare = "tag"
+			assertion.NeedsCleanup = false
 		}
 	}
 
@@ -1215,7 +1226,7 @@ func refreshPromotedOracleMap(sourceFile string, outputPath string, testNameFilt
 			}
 			return fmt.Errorf("%s: %w", entry.ID, err)
 		}
-		expectedRows, columnModes, sqlstate, severity, err := readPostgresOracleExpected(ctx, conn, entry)
+		expectedRows, columnModes, sqlstate, severity, expectedTag, err := readPostgresOracleExpected(ctx, conn, entry)
 		if err != nil {
 			if skipRefreshErrors {
 				fmt.Fprintf(os.Stderr, "skipping %s: %v\n", entry.ID, err)
@@ -1236,11 +1247,22 @@ func refreshPromotedOracleMap(sourceFile string, outputPath string, testNameFilt
 			assertion.SQLState = sqlstate
 			assertion.ErrorSeverity = severity
 			assertion.ExpectedRows = nil
+			assertion.ExpectedTag = nil
+			continue
+		}
+		if expectedTag != nil {
+			assertion.Compare = "tag"
+			assertion.ExpectedKind = "tag"
+			assertion.ExpectedTag = expectedTag
+			assertion.ExpectedRows = nil
+			assertion.SQLState = ""
+			assertion.ErrorSeverity = ""
 			continue
 		}
 		applyGeneratedExpectedValueModes(assertion, expectedRows)
 		assertion.ExpectedKind = "rows"
 		assertion.ExpectedRows = expectedRows
+		assertion.ExpectedTag = nil
 		if assertion.Compare == "sqlstate" {
 			assertion.Compare = "structural"
 		}
@@ -1263,6 +1285,7 @@ func markOracleAssertionInternal(assertion *migrationAssertion) {
 	assertion.SQLState = ""
 	assertion.ErrorSeverity = ""
 	assertion.ExpectedRows = nil
+	assertion.ExpectedTag = nil
 	assertion.Cleanup = nil
 	assertion.NeedsCleanup = true
 	assertion.CleanupProvided = false
@@ -1499,23 +1522,23 @@ func isExplainQuery(query string) bool {
 	return strings.HasPrefix(strings.ToLower(strings.TrimSpace(query)), "explain")
 }
 
-func readPostgresOracleExpected(ctx context.Context, conn *pgx.Conn, entry entry) (*[][]cell, []string, string, string, error) {
+func readPostgresOracleExpected(ctx context.Context, conn *pgx.Conn, entry entry) (*[][]cell, []string, string, string, *string, error) {
 	variables := oracleVariables(entry)
 	if err := resetOracleSession(ctx, conn); err != nil {
-		return nil, nil, "", "", err
+		return nil, nil, "", "", nil, err
 	}
 	if err := runOracleStatements(ctx, conn, variables, entry.Cleanup); err != nil {
-		return nil, nil, "", "", err
+		return nil, nil, "", "", nil, err
 	}
 	defer func() {
 		_ = runOracleStatements(ctx, conn, variables, entry.Cleanup)
 		_ = resetOracleSession(ctx, conn)
 	}()
 	if err := resetOracleSession(ctx, conn); err != nil {
-		return nil, nil, "", "", err
+		return nil, nil, "", "", nil, err
 	}
 	if err := runOracleStatements(ctx, conn, variables, entry.Setup); err != nil {
-		return nil, nil, "", "", err
+		return nil, nil, "", "", nil, err
 	}
 
 	query := expandOracleVariables(entry.Query, variables)
@@ -1523,24 +1546,36 @@ func readPostgresOracleExpected(ctx context.Context, conn *pgx.Conn, entry entry
 		_, err := conn.Exec(ctx, query)
 		if err == nil {
 			if entry.ExpectedSQLState != "" {
-				return nil, nil, "", "", fmt.Errorf("expected SQLSTATE %s but query succeeded", entry.ExpectedSQLState)
+				return nil, nil, "", "", nil, fmt.Errorf("expected SQLSTATE %s but query succeeded", entry.ExpectedSQLState)
 			}
 		} else {
 			var pgErr *pgconn.PgError
 			if !errors.As(err, &pgErr) {
-				return nil, nil, "", "", err
+				return nil, nil, "", "", nil, err
 			}
-			return nil, nil, pgErr.Code, pgErr.Severity, nil
+			return nil, nil, pgErr.Code, pgErr.Severity, nil, nil
 		}
+	}
+	if entry.Compare == "tag" || entry.ExpectedTag != nil {
+		commandTag, err := conn.Exec(ctx, query)
+		if err != nil {
+			var pgErr *pgconn.PgError
+			if !errors.As(err, &pgErr) {
+				return nil, nil, "", "", nil, err
+			}
+			return nil, nil, pgErr.Code, pgErr.Severity, nil, nil
+		}
+		tag := commandTag.String()
+		return nil, nil, "", "", &tag, nil
 	}
 
 	rows, err := conn.Query(ctx, query)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if !errors.As(err, &pgErr) {
-			return nil, nil, "", "", err
+			return nil, nil, "", "", nil, err
 		}
-		return nil, nil, pgErr.Code, pgErr.Severity, nil
+		return nil, nil, pgErr.Code, pgErr.Severity, nil, nil
 	}
 	defer rows.Close()
 
@@ -1548,12 +1583,12 @@ func readPostgresOracleExpected(ctx context.Context, conn *pgx.Conn, entry entry
 	columnModes := append([]string(nil), entry.ColumnModes...)
 	fields, err := oracleFieldDescriptions(rows)
 	if err != nil {
-		return nil, nil, "", "", err
+		return nil, nil, "", "", nil, err
 	}
 	for rows.Next() {
 		values, err := rows.Values()
 		if err != nil {
-			return nil, nil, "", "", err
+			return nil, nil, "", "", nil, err
 		}
 		row := make([]cell, 0, len(values))
 		for i, rowValue := range values {
@@ -1571,11 +1606,11 @@ func readPostgresOracleExpected(ctx context.Context, conn *pgx.Conn, entry entry
 	if err := rows.Err(); err != nil {
 		var pgErr *pgconn.PgError
 		if !errors.As(err, &pgErr) {
-			return nil, nil, "", "", err
+			return nil, nil, "", "", nil, err
 		}
-		return nil, nil, pgErr.Code, pgErr.Severity, nil
+		return nil, nil, pgErr.Code, pgErr.Severity, nil, nil
 	}
-	return &expected, columnModes, "", "", nil
+	return &expected, columnModes, "", "", nil, nil
 }
 
 func oracleFieldDescriptions(rows pgx.Rows) (fields []pgconn.FieldDescription, err error) {
@@ -2148,6 +2183,7 @@ func migrationCandidate(source string, ordinal int, scriptName string, fields ma
 			candidate.ColumnModes = meta.ColumnModes
 			candidate.SQLState = meta.ExpectedSQLState
 			candidate.ErrorSeverity = meta.ExpectedErrorSeverity
+			candidate.ExpectedTag = meta.ExpectedTag
 			candidate.Cleanup = meta.Cleanup
 			candidate.CleanupProvided = len(meta.Cleanup) > 0
 		}
@@ -2159,11 +2195,14 @@ func migrationCandidate(source string, ordinal int, scriptName string, fields ma
 		candidate.ColumnModes = meta.ColumnModes
 		candidate.SQLState = meta.ExpectedSQLState
 		candidate.ErrorSeverity = meta.ExpectedErrorSeverity
+		candidate.ExpectedTag = meta.ExpectedTag
 		candidate.Cleanup = meta.Cleanup
 		candidate.CleanupProvided = len(meta.Cleanup) > 0
 	}
 	if candidate.Oracle == "postgres" && candidate.ExpectedKind == "unknown" {
-		if candidate.Compare == "sqlstate" || candidate.SQLState != "" {
+		if candidate.Compare == "tag" || candidate.ExpectedTag != nil {
+			candidate.ExpectedKind = "tag"
+		} else if candidate.Compare == "sqlstate" || candidate.SQLState != "" {
 			candidate.ExpectedKind = "error"
 		} else {
 			candidate.ExpectedKind = "rows"
@@ -2454,6 +2493,7 @@ func entryFromScriptTestAssertion(source string, setup []string, ordinal int, as
 		Query:                 query,
 		ExpectedSQLState:      meta.ExpectedSQLState,
 		ExpectedErrorSeverity: meta.ExpectedErrorSeverity,
+		ExpectedTag:           meta.ExpectedTag,
 		ColumnModes:           meta.ColumnModes,
 		Cleanup:               generatedCleanup,
 	}
@@ -2461,6 +2501,9 @@ func entryFromScriptTestAssertion(source string, setup []string, ordinal int, as
 		generated.Compare = "structural"
 	}
 	if generated.Compare == "sqlstate" || generated.ExpectedSQLState != "" {
+		return generated, true, nil
+	}
+	if generated.Compare == "tag" || generated.ExpectedTag != nil {
 		return generated, true, nil
 	}
 

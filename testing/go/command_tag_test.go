@@ -23,8 +23,7 @@ var CommandTagTests = []ScriptTest{
 		Name: "set",
 		Assertions: []ScriptTestAssertion{
 			{
-				Query:       "SET extra_float_digits = 3",
-				ExpectedTag: "SET",
+				Query: "SET extra_float_digits = 3", PostgresOracle: ScriptTestPostgresOracle{ID: "command-tag-test-testcommandtag-0001-set-extra_float_digits-=-3", Compare: "tag"},
 			},
 		},
 	},
@@ -32,8 +31,7 @@ var CommandTagTests = []ScriptTest{
 		Name: "show",
 		Assertions: []ScriptTestAssertion{
 			{
-				Query:       "SHOW extra_float_digits",
-				ExpectedTag: "SHOW",
+				Query: "SHOW extra_float_digits", PostgresOracle: ScriptTestPostgresOracle{ID: "command-tag-test-testcommandtag-0002-show-extra_float_digits", Compare: "tag"},
 			},
 		},
 	},
@@ -41,8 +39,7 @@ var CommandTagTests = []ScriptTest{
 		Name: "create database",
 		Assertions: []ScriptTestAssertion{
 			{
-				Query:       "CREATE DATABASE mydb",
-				ExpectedTag: "CREATE DATABASE",
+				Query: "CREATE DATABASE mydb", PostgresOracle: ScriptTestPostgresOracle{ID: "command-tag-test-testcommandtag-0003-create-database-mydb", Compare: "tag"},
 			},
 		},
 	},
@@ -53,15 +50,13 @@ var CommandTagTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query:       "INSERT INTO table0 VALUES (1,'Dolt'), (2,'Doltgres'), (3,'DoltHub')",
-				ExpectedTag: "INSERT 0 3",
+				Query: "INSERT INTO table0 VALUES (1,'Dolt'), (2,'Doltgres'), (3,'DoltHub')", PostgresOracle: ScriptTestPostgresOracle{ID: "command-tag-test-testcommandtag-0004-insert-into-table0-values-1", Compare: "tag"},
 			},
 			{
 				Query: "SELECT * FROM table0 order by id", PostgresOracle: ScriptTestPostgresOracle{ID: "command-tag-test-testcommandtag-0005-select-*-from-table0-order"},
 			},
 			{
-				Query:       "SELECT * FROM table0",
-				ExpectedTag: "SELECT 3",
+				Query: "SELECT * FROM table0", PostgresOracle: ScriptTestPostgresOracle{ID: "command-tag-test-testcommandtag-0006-select-*-from-table0", Compare: "tag"},
 			},
 		},
 	},
@@ -73,15 +68,13 @@ var CommandTagTests = []ScriptTest{
 		},
 		Assertions: []ScriptTestAssertion{
 			{
-				Query:       "UPDATE table0 SET id = 4 WHERE name = 'Doltgres'",
-				ExpectedTag: "UPDATE 1",
+				Query: "UPDATE table0 SET id = 4 WHERE name = 'Doltgres'", PostgresOracle: ScriptTestPostgresOracle{ID: "command-tag-test-testcommandtag-0007-update-table0-set-id-=", Compare: "tag"},
 			},
 			{
 				Query: "SELECT * FROM table0 order by id", PostgresOracle: ScriptTestPostgresOracle{ID: "command-tag-test-testcommandtag-0008-select-*-from-table0-order"},
 			},
 			{
-				Query:       "SELECT * FROM table0 WHERE name <> 'Dolt'",
-				ExpectedTag: "SELECT 2",
+				Query: "SELECT * FROM table0 WHERE name <> 'Dolt'", PostgresOracle: ScriptTestPostgresOracle{ID: "command-tag-test-testcommandtag-0009-select-*-from-table0-where", Compare: "tag"},
 			},
 		},
 	},
@@ -94,15 +87,13 @@ var CommandTagTests = []ScriptTest{
 		Assertions: []ScriptTestAssertion{
 
 			{
-				Query:       "DELETE FROM table0",
-				ExpectedTag: "DELETE 3",
+				Query: "DELETE FROM table0", PostgresOracle: ScriptTestPostgresOracle{ID: "command-tag-test-testcommandtag-0010-delete-from-table0", Compare: "tag"},
 			},
 			{
 				Query: "SELECT * FROM table0 order by id", PostgresOracle: ScriptTestPostgresOracle{ID: "command-tag-test-testcommandtag-0011-select-*-from-table0-order"},
 			},
 			{
-				Query:       "SELECT * FROM table0",
-				ExpectedTag: "SELECT 0",
+				Query: "SELECT * FROM table0", PostgresOracle: ScriptTestPostgresOracle{ID: "command-tag-test-testcommandtag-0012-select-*-from-table0", Compare: "tag"},
 			},
 		},
 	},

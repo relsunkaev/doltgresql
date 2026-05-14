@@ -73,6 +73,7 @@ type postgresOracleEntry struct {
 	ExpectedRows          [][]postgresCell  `json:"expectedRows"`
 	ExpectedSQLState      string            `json:"expectedSqlstate"`
 	ExpectedErrorSeverity string            `json:"expectedErrorSeverity"`
+	ExpectedTag           *string           `json:"expectedTag"`
 	ColumnModes           []string          `json:"columnModes"`
 	Cleanup               []string          `json:"cleanup"`
 	Variables             map[string]string `json:"variables"`
@@ -721,7 +722,7 @@ func validatePostgresOracleManifest(t testing.TB, manifest postgresOracleManifes
 		}
 		seen[entry.ID] = struct{}{}
 		require.Contains(t, []string{"postgres", "internal"}, entry.Oracle, "oracle classification for %s", entry.ID)
-		require.Contains(t, []string{"exact", "structural", "regex", "sqlstate"}, entry.Compare, "comparison mode for %s", entry.ID)
+		require.Contains(t, []string{"exact", "structural", "regex", "sqlstate", "tag"}, entry.Compare, "comparison mode for %s", entry.ID)
 		for _, mode := range entry.ColumnModes {
 			require.Contains(t, []string{"exact", "structural", "numeric", "timestamp", "timestamptz", "array", "json", "bytea", "schema", "explain"}, mode,
 				"column mode for %s", entry.ID)
@@ -731,9 +732,14 @@ func validatePostgresOracleManifest(t testing.TB, manifest postgresOracleManifes
 			require.NotEmpty(t, entry.Query, "query for %s", entry.ID)
 			if entry.ExpectedSQLState != "" {
 				require.Empty(t, entry.ExpectedRows, "sqlstate oracle entries cannot also expect rows: %s", entry.ID)
+				require.Nil(t, entry.ExpectedTag, "sqlstate oracle entries cannot also expect tags: %s", entry.ID)
+			} else if entry.ExpectedTag != nil {
+				require.Empty(t, entry.ExpectedRows, "tag oracle entries cannot also expect rows: %s", entry.ID)
+				require.Equal(t, "tag", entry.Compare, "tag oracle entries must use tag comparison for %s", entry.ID)
 			} else {
 				require.NotNil(t, entry.ExpectedRows, "expected rows for %s", entry.ID)
 				require.NotEqual(t, "sqlstate", entry.Compare, "sqlstate comparison requires expectedSqlstate for %s", entry.ID)
+				require.NotEqual(t, "tag", entry.Compare, "tag comparison requires expectedTag for %s", entry.ID)
 			}
 		}
 	}
@@ -866,7 +872,7 @@ func requirePostgresMajor(t testing.TB, ctx context.Context, conn *pgx.Conn, exp
 
 func runPostgresOracleEntry(t testing.TB, ctx context.Context, conn *pgx.Conn, profile string, entry postgresOracleEntry) {
 	t.Helper()
-	require.Contains(t, []string{"exact", "structural", "regex", "sqlstate"}, entry.Compare, "comparison mode for %s", entry.ID)
+	require.Contains(t, []string{"exact", "structural", "regex", "sqlstate", "tag"}, entry.Compare, "comparison mode for %s", entry.ID)
 	variables := oracleVariables(entry)
 	resetOracleSession(t, ctx, conn)
 	runOracleStatements(t, ctx, conn, variables, entry.Cleanup)
@@ -890,7 +896,14 @@ func runPostgresOracleEntry(t testing.TB, ctx context.Context, conn *pgx.Conn, p
 		}
 		return
 	}
+	if entry.ExpectedTag != nil {
+		commandTag, err := conn.Exec(ctx, query)
+		require.NoError(t, err)
+		require.Equal(t, *entry.ExpectedTag, commandTag.String())
+		return
+	}
 	require.NotEqual(t, "sqlstate", entry.Compare, "sqlstate comparison requires expectedSqlstate for %s", entry.ID)
+	require.NotEqual(t, "tag", entry.Compare, "tag comparison requires expectedTag for %s", entry.ID)
 	rows, err := conn.Query(ctx, query)
 	require.NoError(t, err)
 	defer rows.Close()

@@ -44,6 +44,7 @@ type postgresOracleCachedEntry struct {
 	ExpectedRows          *[][]postgresOracleCachedCell `json:"expectedRows"`
 	ExpectedSQLState      string                        `json:"expectedSqlstate"`
 	ExpectedErrorSeverity string                        `json:"expectedErrorSeverity"`
+	ExpectedTag           *string                       `json:"expectedTag"`
 	ColumnModes           []string                      `json:"columnModes"`
 }
 
