@@ -12878,7 +12878,7 @@
       "expectedRows": [
         [
           {
-            "value": "{0 27 525 true}"
+            "value": "43 years 9 mons 27 days"
           }
         ]
       ],
@@ -12900,7 +12900,7 @@
       "expectedRows": [
         [
           {
-            "value": "{0 -27 -525 true}"
+            "value": "-43 years -9 mons -27 days"
           }
         ]
       ],
@@ -12922,7 +12922,7 @@
       "expectedRows": [
         [
           {
-            "value": "{0 3 2 true}"
+            "value": "2 mons 3 days"
           }
         ]
       ],
@@ -12944,7 +12944,7 @@
       "expectedRows": [
         [
           {
-            "value": "{0 -3 -2 true}"
+            "value": "-2 mons -3 days"
           }
         ]
       ],
@@ -12966,7 +12966,7 @@
       "expectedRows": [
         [
           {
-            "value": "{82798600000 26 525 true}"
+            "value": "43 years 9 mons 26 days 22:59:58.6"
           }
         ]
       ],
@@ -12988,7 +12988,7 @@
       "expectedRows": [
         [
           {
-            "value": "{-82798600000 -26 -525 true}"
+            "value": "-43 years -9 mons -26 days -22:59:58.6"
           }
         ]
       ],
@@ -13010,7 +13010,7 @@
       "expectedRows": [
         [
           {
-            "value": "{0 0 0 true}"
+            "value": "00:00:00"
           }
         ]
       ],
@@ -13032,7 +13032,7 @@
       "expectedRows": [
         [
           {
-            "value": "{0 0 0 true}"
+            "value": "00:00:00"
           }
         ]
       ],
@@ -13647,7 +13647,7 @@
       "expectedRows": [
         [
           {
-            "value": "{36000000000 2 0 true}"
+            "value": "2 days 10:00:00"
           }
         ]
       ],

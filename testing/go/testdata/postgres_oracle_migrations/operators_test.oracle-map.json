@@ -820,7 +820,7 @@
       "expectedRows": [
         [
           {
-            "value": "{43200000000 3 0 true}"
+            "value": "3 days 12:00:00"
           }
         ]
       ],
@@ -1744,7 +1744,7 @@
       "expectedRows": [
         [
           {
-            "value": "{-43200000000 1 0 true}"
+            "value": "1 day -12:00:00"
           }
         ]
       ],
@@ -2558,7 +2558,7 @@
       "expectedRows": [
         [
           {
-            "value": "{0 46 0 true}"
+            "value": "46 days"
           }
         ]
       ],
@@ -3372,7 +3372,7 @@
       "expectedRows": [
         [
           {
-            "value": "{60104347826 8 0 true}"
+            "value": "8 days 16:41:44.347826"
           }
         ]
       ],
@@ -17114,7 +17114,7 @@
       "expectedRows": [
         [
           {
-            "value": "{39600000000 -20 0 true}"
+            "value": "-20 days +11:00:00"
           }
         ]
       ],

@@ -22,15 +22,19 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
+
+	"github.com/dolthub/doltgresql/postgres/parser/duration"
 )
 
 type postgresOracleCachedManifest struct {
@@ -258,8 +262,21 @@ func postgresOracleStringValueWithMode(value any, mode string) string {
 		return fmt.Sprint(value)
 	}
 	switch v := value.(type) {
+	case time.Time:
+		switch mode {
+		case "timestamp":
+			return v.Format("2006-01-02T15:04:05.999999999")
+		case "timestamptz":
+			return v.UTC().Format(time.RFC3339Nano)
+		}
+		return fmt.Sprint(v)
 	case pgtype.Numeric:
 		return postgresOracleNumericString(v)
+	case pgtype.Interval:
+		if !v.Valid {
+			return "<null>"
+		}
+		return duration.MakeDuration(v.Microseconds*duration.NanosPerMicro, int64(v.Days), int64(v.Months)).String()
 	case []byte:
 		if mode == "bytea" {
 			return "\\x" + hex.EncodeToString(v)
@@ -277,6 +294,12 @@ func postgresOracleStringValueWithMode(value any, mode string) string {
 		return text
 	default:
 		text := fmt.Sprint(v)
+		if mode == "timestamp" {
+			return normalizeCachedPostgresOracleTimestamp(text)
+		}
+		if mode == "timestamptz" {
+			return normalizeCachedPostgresOracleTimestampTZ(text)
+		}
 		if mode == "schema" {
 			return normalizeCachedPostgresOracleSchema(text)
 		}
@@ -305,9 +328,64 @@ func inferCachedPostgresOracleColumnMode(oid uint32) string {
 	switch oid {
 	case 114, 3802:
 		return "json"
+	case 1082, 1114:
+		return "timestamp"
+	case 1184:
+		return "timestamptz"
 	default:
 		return "structural"
 	}
+}
+
+var (
+	cachedPostgresOracleDatePattern        = regexp.MustCompile(`^([0-9]{4})-([0-9]{2})-([0-9]{2})( BC)?$`)
+	cachedPostgresOracleTimestampPattern   = regexp.MustCompile(`^([0-9]{4})-([0-9]{2})-([0-9]{2}) ([0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]+)?)( BC)?$`)
+	cachedPostgresOracleTimestampTZPattern = regexp.MustCompile(`^([0-9]{4})-([0-9]{2})-([0-9]{2}) ([0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]+)?)([+-][0-9]{2}(?::[0-9]{2})?)( BC)?$`)
+)
+
+func normalizeCachedPostgresOracleTimestamp(value string) string {
+	if strings.Contains(value, "T") {
+		return value
+	}
+	if matches := cachedPostgresOracleDatePattern.FindStringSubmatch(value); matches != nil {
+		return normalizeCachedPostgresOracleDate(matches[1], matches[2], matches[3], matches[4]) + "T00:00:00"
+	}
+	if matches := cachedPostgresOracleTimestampPattern.FindStringSubmatch(value); matches != nil {
+		return normalizeCachedPostgresOracleDate(matches[1], matches[2], matches[3], matches[5]) + "T" + matches[4]
+	}
+	return value
+}
+
+func normalizeCachedPostgresOracleDate(year string, month string, day string, era string) string {
+	if era == "" {
+		return year + "-" + month + "-" + day
+	}
+	yearInt, err := strconv.Atoi(year)
+	if err != nil {
+		return year + "-" + month + "-" + day
+	}
+	return formatCachedPostgresOracleYear(1-yearInt) + "-" + month + "-" + day
+}
+
+func formatCachedPostgresOracleYear(year int) string {
+	if year < 0 {
+		return fmt.Sprintf("-%04d", -year)
+	}
+	return fmt.Sprintf("%04d", year)
+}
+
+func normalizeCachedPostgresOracleTimestampTZ(value string) string {
+	if strings.Contains(value, "T") {
+		return value
+	}
+	if matches := cachedPostgresOracleTimestampTZPattern.FindStringSubmatch(value); matches != nil {
+		date := normalizeCachedPostgresOracleDate(matches[1], matches[2], matches[3], matches[6])
+		if matches[5] == "+00" || matches[5] == "+00:00" {
+			return date + "T" + matches[4] + "Z"
+		}
+		return date + "T" + matches[4] + matches[5]
+	}
+	return value
 }
 
 var cachedPostgresOracleSchemaNamePattern = regexp.MustCompile(`dg_oracle_[0-9]+`)
