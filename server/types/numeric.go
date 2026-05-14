@@ -209,6 +209,26 @@ func numericSentinelEqual(left decimal.Decimal, right decimal.Decimal) bool {
 // NumericValueAsDecimal returns the finite decimal representation of a numeric value.
 func NumericValueAsDecimal(val any) (decimal.Decimal, bool, error) {
 	switch v := val.(type) {
+	case int:
+		return decimal.NewFromInt(int64(v)), true, nil
+	case int8:
+		return decimal.NewFromInt(int64(v)), true, nil
+	case int16:
+		return decimal.NewFromInt(int64(v)), true, nil
+	case int32:
+		return decimal.NewFromInt(int64(v)), true, nil
+	case int64:
+		return decimal.NewFromInt(v), true, nil
+	case uint:
+		return decimal.NewFromUint64(uint64(v)), true, nil
+	case uint8:
+		return decimal.NewFromUint64(uint64(v)), true, nil
+	case uint16:
+		return decimal.NewFromUint64(uint64(v)), true, nil
+	case uint32:
+		return decimal.NewFromUint64(uint64(v)), true, nil
+	case uint64:
+		return decimal.NewFromUint64(v), true, nil
 	case decimal.Decimal:
 		if _, ok := NumericSpecialValueCode(v); ok {
 			return decimal.Decimal{}, false, nil
@@ -348,7 +368,11 @@ func numericSortRank(val any) (int, decimal.Decimal, error) {
 			return 0, decimal.Decimal{}, errors.Errorf("unexpected numeric infinity modifier %v", v.InfinityModifier)
 		}
 	default:
-		return 0, decimal.Decimal{}, errors.Errorf("unexpected numeric value %T", val)
+		dec, ok, err := NumericValueAsDecimal(val)
+		if err != nil || !ok {
+			return 0, decimal.Decimal{}, err
+		}
+		return 1, dec, nil
 	}
 }
 

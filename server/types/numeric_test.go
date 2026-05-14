@@ -81,6 +81,8 @@ func TestNumericSpecialValuesCompareAndSerialize(t *testing.T) {
 		{"finite sorts before infinity", onePointFive, posInf, -1},
 		{"infinity sorts before nan", posInf, nan, -1},
 		{"nan equals nan", nan, nan, 0},
+		{"unsigned integer compares as finite", uint64(2), onePointFive, 1},
+		{"finite compares with unsigned integer", onePointFive, uint64(2), -1},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			got, err := CompareNumericValues(tc.left, tc.right)
@@ -107,5 +109,30 @@ func TestNumericSpecialValuesCompareAndSerialize(t *testing.T) {
 	}
 	if formatted != "Infinity" {
 		t.Fatalf("expected Infinity, found %s", formatted)
+	}
+}
+
+func TestNumericValueAsDecimalAcceptsIntegralValues(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		val  any
+		want string
+	}{
+		{"signed int64", int64(-7), "-7"},
+		{"unsigned int64", uint64(18446744073709551615), "18446744073709551615"},
+		{"unsigned int", uint(42), "42"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			dec, ok, err := NumericValueAsDecimal(tc.val)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !ok {
+				t.Fatal("expected finite decimal value")
+			}
+			if got := dec.String(); got != tc.want {
+				t.Fatalf("expected %s, found %s", tc.want, got)
+			}
+		})
 	}
 }
