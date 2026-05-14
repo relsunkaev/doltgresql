@@ -2658,58 +2658,40 @@ FROM dg_gin_jsonb_gin_lifecycle_jsonb_gin_lifecycle_idx_posting_chunks;`,
 				{
 					Query: `EXPLAIN SELECT id FROM jsonb_gin_lookup
 WHERE doc @> '{"a":1}'
-ORDER BY id;`,
-					Expected: []sql.Row{
-						{"Project"},
-						{" ├─ columns: [jsonb_gin_lookup.id]"},
-						{" └─ Sort(jsonb_gin_lookup.id ASC)"},
-						{"     └─ Filter"},
-						{`         ├─ jsonb_gin_lookup.doc @> '{"a":1}'`},
-						{"         └─ IndexedTableAccess(jsonb_gin_lookup)"},
-						{"             ├─ index: [jsonb_gin(doc)]"},
-						{"             ├─ filters: [{[jsonb_gin_lookup_idx intersect 2 token(s), jsonb_gin_lookup_idx intersect 2 token(s)]}]"},
-						{"             └─ columns: [id doc]"},
-					},
+ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0281-explain-select-id-from-jsonb_gin_lookup", ColumnModes: []string{"explain"}},
 				},
 				{
 					Query: `SELECT id FROM jsonb_gin_lookup
 WHERE doc @> '{"a":1}'
-ORDER BY id;`,
-					Expected: []sql.Row{{1}, {2}},
+ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0282-select-id-from-jsonb_gin_lookup-where"},
 				},
 				{
 					Query: `SELECT count(*) FROM jsonb_gin_lookup
-WHERE doc @> '{"a":1}';`,
-					Expected: []sql.Row{{2}},
+WHERE doc @> '{"a":1}';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0283-select-count-*-from-jsonb_gin_lookup"},
 				},
 				{
 					Query: `SELECT count(id) FROM jsonb_gin_lookup
-WHERE doc @> '{"a":1}';`,
-					Expected: []sql.Row{{2}},
+WHERE doc @> '{"a":1}';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0284-select-count-id-from-jsonb_gin_lookup"},
 				},
 				{
 					Query: `SELECT id FROM jsonb_gin_lookup
 	WHERE doc @> '{"a":null}'
-	ORDER BY id;`,
-					Expected: []sql.Row{{5}},
+	ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0285-select-id-from-jsonb_gin_lookup-where"},
 				},
 				{
 					Query: `SELECT id FROM jsonb_gin_lookup
 	WHERE doc ? 'a'
-	ORDER BY id;`,
-					Expected: []sql.Row{{1}, {2}, {3}, {5}},
+	ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0286-select-id-from-jsonb_gin_lookup-where"},
 				},
 				{
 					Query: `SELECT id FROM jsonb_gin_lookup
 	WHERE doc ?| ARRAY['missing','a']
-	ORDER BY id;`,
-					Expected: []sql.Row{{1}, {2}, {3}, {5}},
+	ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0287-select-id-from-jsonb_gin_lookup-where"},
 				},
 				{
 					Query: `SELECT id FROM jsonb_gin_lookup
 	WHERE doc ?& ARRAY['a','tags']
-	ORDER BY id;`,
-					Expected: []sql.Row{{1}, {2}, {3}, {5}},
+	ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0288-select-id-from-jsonb_gin_lookup-where"},
 				},
 			},
 		},
@@ -2727,24 +2709,12 @@ WHERE doc @> '{"a":1}';`,
 				{
 					Query: `EXPLAIN SELECT id FROM jsonb_gin_path_lookup
 	WHERE doc @> '{"a":{"b":1}}'
-	ORDER BY id;`,
-					Expected: []sql.Row{
-						{"Project"},
-						{" ├─ columns: [jsonb_gin_path_lookup.id]"},
-						{" └─ Sort(jsonb_gin_path_lookup.id ASC)"},
-						{"     └─ Filter"},
-						{`         ├─ jsonb_gin_path_lookup.doc @> '{"a":{"b":1}}'`},
-						{"         └─ IndexedTableAccess(jsonb_gin_path_lookup)"},
-						{"             ├─ index: [jsonb_gin(doc)]"},
-						{"             ├─ filters: [{[jsonb_gin_path_lookup_idx intersect 1 token(s), jsonb_gin_path_lookup_idx intersect 1 token(s)]}]"},
-						{"             └─ columns: [id doc]"},
-					},
+	ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0289-explain-select-id-from-jsonb_gin_path_lookup", ColumnModes: []string{"explain"}},
 				},
 				{
 					Query: `SELECT id FROM jsonb_gin_path_lookup
 	WHERE doc @> '{"a":{"b":1}}'
-	ORDER BY id;`,
-					Expected: []sql.Row{{1}},
+	ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0290-select-id-from-jsonb_gin_path_lookup-where"},
 				},
 			},
 		},
@@ -2767,31 +2737,25 @@ WHERE doc @> '{"a":1}';`,
 					Query: "CREATE INDEX jsonb_expr_idx_key ON jsonb_expr_idx ((doc->>'key'));",
 				},
 				{
-					Query:    "SELECT id FROM jsonb_expr_idx WHERE doc->>'key' = 'alpha';",
-					Expected: []sql.Row{{1}},
+					Query: "SELECT id FROM jsonb_expr_idx WHERE doc->>'key' = 'alpha';", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0291-select-id-from-jsonb_expr_idx-where"},
 				},
 				{
-					Query:    `INSERT INTO jsonb_expr_idx VALUES (4, '{"key":"gamma","n":4}');`,
-					Expected: []sql.Row{},
+					Query: `INSERT INTO jsonb_expr_idx VALUES (4, '{"key":"gamma","n":4}');`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0292-insert-into-jsonb_expr_idx-values-4"},
 				},
 				{
-					Query:    "SELECT id FROM jsonb_expr_idx WHERE doc->>'key' IN ('alpha', 'gamma') ORDER BY id;",
-					Expected: []sql.Row{{1}, {4}},
+					Query: "SELECT id FROM jsonb_expr_idx WHERE doc->>'key' IN ('alpha', 'gamma') ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0293-select-id-from-jsonb_expr_idx-where"},
 				},
 				{
 					Query: "CREATE UNIQUE INDEX jsonb_expr_idx_key_unique ON jsonb_expr_idx_unique ((doc->>'key'));",
 				},
 				{
-					Query:       `INSERT INTO jsonb_expr_idx_unique VALUES (4, '{"key":"alpha","n":4}');`,
-					ExpectedErr: "duplicate",
+					Query: `INSERT INTO jsonb_expr_idx_unique VALUES (4, '{"key":"alpha","n":4}');`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0294-insert-into-jsonb_expr_idx_unique-values-4", Compare: "sqlstate"},
 				},
 				{
-					Query:    `INSERT INTO jsonb_expr_idx_unique VALUES (5, '{"key":"gamma","n":5}');`,
-					Expected: []sql.Row{},
+					Query: `INSERT INTO jsonb_expr_idx_unique VALUES (5, '{"key":"gamma","n":5}');`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0295-insert-into-jsonb_expr_idx_unique-values-5"},
 				},
 				{
-					Query:    "SELECT id FROM jsonb_expr_idx_unique WHERE doc->>'key' IN ('alpha', 'gamma') ORDER BY id;",
-					Expected: []sql.Row{{1}, {5}},
+					Query: "SELECT id FROM jsonb_expr_idx_unique WHERE doc->>'key' IN ('alpha', 'gamma') ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0296-select-id-from-jsonb_expr_idx_unique-where"},
 				},
 			},
 		},

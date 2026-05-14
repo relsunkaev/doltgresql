@@ -9002,12 +9002,39 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 281,
       "scriptName": "PostgreSQL jsonb gin indexed lookup and recheck",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0281-explain-select-id-from-jsonb_gin_lookup",
       "suggestedId": "index-test-testbasicindexing-0281-explain-select-id-from-jsonb_gin_lookup",
+      "compare": "structural",
+      "columnModes": [
+        "explain"
+      ],
       "expectedKind": "rows",
       "query": "EXPLAIN SELECT id FROM jsonb_gin_lookup\nWHERE doc @> '{\"a\":1}'\nORDER BY id;",
       "querySha256": "de2d4f99d083e3ca9044c9aa87c9cd2c254bcae7973568c955b492aa672da798",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "Sort  (cost=1.07..1.08 rows=1 width=4)"
+          }
+        ],
+        [
+          {
+            "value": "  Sort Key: id"
+          }
+        ],
+        [
+          {
+            "value": "  ->  Seq Scan on jsonb_gin_lookup  (cost=0.00..1.06 rows=1 width=4)"
+          }
+        ],
+        [
+          {
+            "value": "        Filter: (doc @> '{\"a\": 1}'::jsonb)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9015,12 +9042,26 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 282,
       "scriptName": "PostgreSQL jsonb gin indexed lookup and recheck",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0282-select-id-from-jsonb_gin_lookup-where",
       "suggestedId": "index-test-testbasicindexing-0282-select-id-from-jsonb_gin_lookup-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT id FROM jsonb_gin_lookup\nWHERE doc @> '{\"a\":1}'\nORDER BY id;",
       "querySha256": "6e36e9ca9eac272ee1d670c9e177afab4fe95045853b96ded19785f12a96b2f4",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9028,12 +9069,21 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 283,
       "scriptName": "PostgreSQL jsonb gin indexed lookup and recheck",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0283-select-count-*-from-jsonb_gin_lookup",
       "suggestedId": "index-test-testbasicindexing-0283-select-count-*-from-jsonb_gin_lookup",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM jsonb_gin_lookup\nWHERE doc @> '{\"a\":1}';",
       "querySha256": "074719cab1ec46a7cc8226ea316c1ca1950c8d5f354f46262ab256d3118ff722",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9041,12 +9091,21 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 284,
       "scriptName": "PostgreSQL jsonb gin indexed lookup and recheck",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0284-select-count-id-from-jsonb_gin_lookup",
       "suggestedId": "index-test-testbasicindexing-0284-select-count-id-from-jsonb_gin_lookup",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT count(id) FROM jsonb_gin_lookup\nWHERE doc @> '{\"a\":1}';",
       "querySha256": "e6a1a950b383e73c46bf681f856b3cea30332f1cfaf13e63ea31ec01570f6483",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9054,12 +9113,21 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 285,
       "scriptName": "PostgreSQL jsonb gin indexed lookup and recheck",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0285-select-id-from-jsonb_gin_lookup-where",
       "suggestedId": "index-test-testbasicindexing-0285-select-id-from-jsonb_gin_lookup-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT id FROM jsonb_gin_lookup\n\tWHERE doc @> '{\"a\":null}'\n\tORDER BY id;",
       "querySha256": "b9b85662e95de8042a091b36ce585a7640b9978ab823f6143fd282d884d922ea",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9067,12 +9135,36 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 286,
       "scriptName": "PostgreSQL jsonb gin indexed lookup and recheck",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0286-select-id-from-jsonb_gin_lookup-where",
       "suggestedId": "index-test-testbasicindexing-0286-select-id-from-jsonb_gin_lookup-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT id FROM jsonb_gin_lookup\n\tWHERE doc ? 'a'\n\tORDER BY id;",
       "querySha256": "b705514fc1ebf022720f9903ef905d220de981d496eaeca4a2016c4f3663d9cf",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9080,12 +9172,36 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 287,
       "scriptName": "PostgreSQL jsonb gin indexed lookup and recheck",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0287-select-id-from-jsonb_gin_lookup-where",
       "suggestedId": "index-test-testbasicindexing-0287-select-id-from-jsonb_gin_lookup-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT id FROM jsonb_gin_lookup\n\tWHERE doc ?| ARRAY['missing','a']\n\tORDER BY id;",
       "querySha256": "86a9f9fccf809d17b6f31dac5370322c19e7005c038e34effc62d56c2490fb7d",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9093,12 +9209,36 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 288,
       "scriptName": "PostgreSQL jsonb gin indexed lookup and recheck",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0288-select-id-from-jsonb_gin_lookup-where",
       "suggestedId": "index-test-testbasicindexing-0288-select-id-from-jsonb_gin_lookup-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT id FROM jsonb_gin_lookup\n\tWHERE doc ?& ARRAY['a','tags']\n\tORDER BY id;",
       "querySha256": "99dcc0ba5629ecd37ff459c1f4d6a8a427e8c894874355d038bfde7bb40ebb79",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9106,12 +9246,39 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 289,
       "scriptName": "PostgreSQL jsonb gin path ops indexed lookup",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0289-explain-select-id-from-jsonb_gin_path_lookup",
       "suggestedId": "index-test-testbasicindexing-0289-explain-select-id-from-jsonb_gin_path_lookup",
+      "compare": "structural",
+      "columnModes": [
+        "explain"
+      ],
       "expectedKind": "rows",
       "query": "EXPLAIN SELECT id FROM jsonb_gin_path_lookup\n\tWHERE doc @> '{\"a\":{\"b\":1}}'\n\tORDER BY id;",
       "querySha256": "063375b11abd3f6507edc75d21c518c8c58f5a7b6fa77c8def199ac41d5738ec",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "Sort  (cost=1.05..1.05 rows=1 width=4)"
+          }
+        ],
+        [
+          {
+            "value": "  Sort Key: id"
+          }
+        ],
+        [
+          {
+            "value": "  ->  Seq Scan on jsonb_gin_path_lookup  (cost=0.00..1.04 rows=1 width=4)"
+          }
+        ],
+        [
+          {
+            "value": "        Filter: (doc @> '{\"a\": {\"b\": 1}}'::jsonb)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9119,12 +9286,21 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 290,
       "scriptName": "PostgreSQL jsonb gin path ops indexed lookup",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0290-select-id-from-jsonb_gin_path_lookup-where",
       "suggestedId": "index-test-testbasicindexing-0290-select-id-from-jsonb_gin_path_lookup-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT id FROM jsonb_gin_path_lookup\n\tWHERE doc @> '{\"a\":{\"b\":1}}'\n\tORDER BY id;",
       "querySha256": "e3015b2fb837191a64fe73845a0e6bb40fbc5805525997d15b49f7fe6e3d4a6c",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9132,12 +9308,21 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 291,
       "scriptName": "JSONB expression indexes",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0291-select-id-from-jsonb_expr_idx-where",
       "suggestedId": "index-test-testbasicindexing-0291-select-id-from-jsonb_expr_idx-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT id FROM jsonb_expr_idx WHERE doc->>'key' = 'alpha';",
       "querySha256": "67eec73817c12dc5d77da526f732f8e4dd27de0dc758bab2eb29ae0cab0f367f",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9145,12 +9330,15 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 292,
       "scriptName": "JSONB expression indexes",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0292-insert-into-jsonb_expr_idx-values-4",
       "suggestedId": "index-test-testbasicindexing-0292-insert-into-jsonb_expr_idx-values-4",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "INSERT INTO jsonb_expr_idx VALUES (4, '{\"key\":\"gamma\",\"n\":4}');",
       "querySha256": "a7f1e3a0a7d1dca8f50ca403a9371bad11f82b0250372783c8d5b4a4b4aabba0",
-      "needsCleanup": true,
+      "expectedRows": [],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9158,12 +9346,26 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 293,
       "scriptName": "JSONB expression indexes",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0293-select-id-from-jsonb_expr_idx-where",
       "suggestedId": "index-test-testbasicindexing-0293-select-id-from-jsonb_expr_idx-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT id FROM jsonb_expr_idx WHERE doc->>'key' IN ('alpha', 'gamma') ORDER BY id;",
       "querySha256": "069e447e86ea8aef4972c38469f500ff76ad356b833d672068cd63efe99e08b2",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9171,12 +9373,16 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 294,
       "scriptName": "JSONB expression indexes",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0294-insert-into-jsonb_expr_idx_unique-values-4",
       "suggestedId": "index-test-testbasicindexing-0294-insert-into-jsonb_expr_idx_unique-values-4",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
       "query": "INSERT INTO jsonb_expr_idx_unique VALUES (4, '{\"key\":\"alpha\",\"n\":4}');",
       "querySha256": "3223b16f3b84d3ab2e2db4a0ac0e3eec8ca813decb567986dcbe92205ba62b26",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9184,12 +9390,15 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 295,
       "scriptName": "JSONB expression indexes",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0295-insert-into-jsonb_expr_idx_unique-values-5",
       "suggestedId": "index-test-testbasicindexing-0295-insert-into-jsonb_expr_idx_unique-values-5",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "INSERT INTO jsonb_expr_idx_unique VALUES (5, '{\"key\":\"gamma\",\"n\":5}');",
       "querySha256": "f997fb779bfc8c66053cf1e33b2cb37d161184cbf9a872992c0eab9141eaf515",
-      "needsCleanup": true,
+      "expectedRows": [],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -9197,12 +9406,26 @@
       "source": "testing/go/index_test.go:TestBasicIndexing",
       "ordinal": 296,
       "scriptName": "JSONB expression indexes",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "index-test-testbasicindexing-0296-select-id-from-jsonb_expr_idx_unique-where",
       "suggestedId": "index-test-testbasicindexing-0296-select-id-from-jsonb_expr_idx_unique-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT id FROM jsonb_expr_idx_unique WHERE doc->>'key' IN ('alpha', 'gamma') ORDER BY id;",
       "querySha256": "0613fdf6238977ca443e0c769cf5edb2841a3f93434d67ffdf115850a312df01",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
