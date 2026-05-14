@@ -15,7 +15,6 @@
 package analyzer
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/dolthub/go-mysql-server/sql"
@@ -102,6 +101,12 @@ func ValidateColumnDefaults(ctx *sql.Context, _ *analyzer.Analyzer, n sql.Node, 
 				colDefault = sanitizedDefault
 
 				if isGeneratedDefault {
+					if colDefault.Expr != nil {
+						err = validateGeneratedColumnExpressionText(colDefault.Expr.String())
+						if err != nil {
+							return nil, transform.SameTree, err
+						}
+					}
 					err = validateColumnDefault(ctx, col, colDefault, true)
 					if err != nil {
 						return nil, transform.SameTree, err
@@ -245,7 +250,7 @@ func validateColumnDefault(ctx *sql.Context, col *sql.Column, colDefault *sql.Co
 			// TODO: functions must be deterministic to be used in column defaults
 			return true
 		case *plan.Subquery:
-			err = sql.ErrColumnDefaultSubquery.New(col.Name)
+			err = pgerror.Newf(pgcode.FeatureNotSupported, "default value on column `%s` may not contain subqueries", col.Name)
 			return false
 		}
 		if !allowColumnReferences {
@@ -384,7 +389,7 @@ func validateGeneratedColumnDefault(ctx *sql.Context, col *sql.Column, colDefaul
 			continue
 		}
 		if plan.ColumnReferencedInDefaultValueExpression(ctx, colDefault, schemaCol.Name) {
-			return fmt.Errorf("cannot use generated column %q in column generation expression", schemaCol.Name)
+			return generatedExpressionGeneratedColumnReferenceError(schemaCol.Name)
 		}
 	}
 
@@ -397,28 +402,32 @@ func validateGeneratedColumnDefault(ctx *sql.Context, col *sql.Column, colDefaul
 			}
 		}
 		if _, ok := e.(sql.Aggregation); ok {
-			err = fmt.Errorf("aggregate functions are not allowed in column generation expressions")
+			err = generatedExpressionAggregateError()
 			return false
 		}
 		if _, ok := e.(sql.WindowAggregation); ok {
-			err = fmt.Errorf("window functions are not allowed in column generation expressions")
+			err = generatedExpressionWindowError()
 			return false
 		}
 		if expr, ok := e.(sql.WindowAdaptableExpression); ok {
 			if expr.Window() != nil {
-				err = fmt.Errorf("window functions are not allowed in column generation expressions")
+				err = generatedExpressionWindowError()
 				return false
 			}
 		}
 		if expr, ok := e.(sql.RowIterExpression); ok {
 			if expr.ReturnsRowIter() {
-				err = fmt.Errorf("set-returning functions are not allowed in column generation expressions")
+				err = generatedExpressionSetReturningError()
 				return false
 			}
 		}
+		if _, ok := e.(*pgexprs.TableToComposite); ok {
+			err = generatedExpressionWholeRowReferenceError()
+			return false
+		}
 		if expr, ok := e.(sql.NonDeterministicExpression); ok {
 			if expr.IsNonDeterministic() {
-				err = fmt.Errorf("generation expression is not immutable")
+				err = generatedExpressionImmutableError()
 				return false
 			}
 		}
@@ -430,7 +439,7 @@ func validateGeneratedColumnDefault(ctx *sql.Context, col *sql.Column, colDefaul
 		}
 		if expr, ok := e.(*expression.GetField); ok {
 			if strings.EqualFold(expr.Name(), col.Name) {
-				err = fmt.Errorf("cannot use generated column %q in column generation expression", col.Name)
+				err = generatedExpressionGeneratedColumnReferenceError(col.Name)
 				return false
 			}
 		}
@@ -442,26 +451,31 @@ func validateGeneratedColumnDefault(ctx *sql.Context, col *sql.Column, colDefaul
 func validateGeneratedColumnExpressionText(expr string) error {
 	lower := strings.ToLower(expr)
 	if strings.Contains(lower, " over (") {
-		return fmt.Errorf("window functions are not allowed in column generation expressions")
+		return generatedExpressionWindowError()
+	}
+	for _, name := range generatedColumnUnsupportedSystemColumns {
+		if containsIdentifier(lower, name) {
+			return generatedExpressionSystemColumnError(name)
+		}
 	}
 	for _, name := range generatedColumnVolatileFunctions {
 		if containsFunctionCall(lower, name) {
-			return fmt.Errorf("generation expression is not immutable")
+			return generatedExpressionImmutableError()
 		}
 	}
 	for _, name := range generatedColumnAggregateFunctions {
 		if containsFunctionCall(lower, name) {
-			return fmt.Errorf("aggregate functions are not allowed in column generation expressions")
+			return generatedExpressionAggregateError()
 		}
 	}
 	for _, name := range generatedColumnWindowFunctions {
 		if containsFunctionCall(lower, name) {
-			return fmt.Errorf("window functions are not allowed in column generation expressions")
+			return generatedExpressionWindowError()
 		}
 	}
 	for _, name := range generatedColumnSetReturningFunctions {
 		if containsFunctionCall(lower, name) {
-			return fmt.Errorf("set-returning functions are not allowed in column generation expressions")
+			return generatedExpressionSetReturningError()
 		}
 	}
 	return nil
@@ -470,18 +484,46 @@ func validateGeneratedColumnExpressionText(expr string) error {
 func validateGeneratedColumnFunctionName(name string) error {
 	lower := strings.ToLower(name)
 	if stringInList(lower, generatedColumnVolatileFunctions) {
-		return fmt.Errorf("generation expression is not immutable")
+		return generatedExpressionImmutableError()
 	}
 	if stringInList(lower, generatedColumnAggregateFunctions) {
-		return fmt.Errorf("aggregate functions are not allowed in column generation expressions")
+		return generatedExpressionAggregateError()
 	}
 	if stringInList(lower, generatedColumnWindowFunctions) {
-		return fmt.Errorf("window functions are not allowed in column generation expressions")
+		return generatedExpressionWindowError()
 	}
 	if stringInList(lower, generatedColumnSetReturningFunctions) {
-		return fmt.Errorf("set-returning functions are not allowed in column generation expressions")
+		return generatedExpressionSetReturningError()
 	}
 	return nil
+}
+
+func generatedExpressionGeneratedColumnReferenceError(name string) error {
+	return pgerror.Newf(pgcode.InvalidObjectDefinition, "cannot use generated column %q in column generation expression", name)
+}
+
+func generatedExpressionWholeRowReferenceError() error {
+	return pgerror.New(pgcode.InvalidObjectDefinition, "cannot use whole-row variable in column generation expression")
+}
+
+func generatedExpressionSystemColumnError(name string) error {
+	return pgerror.Newf(pgcode.InvalidColumnReference, "cannot use system column %q in column generation expression", name)
+}
+
+func generatedExpressionImmutableError() error {
+	return pgerror.New(pgcode.InvalidObjectDefinition, "generation expression is not immutable")
+}
+
+func generatedExpressionAggregateError() error {
+	return pgerror.New(pgcode.Grouping, "aggregate functions are not allowed in column generation expressions")
+}
+
+func generatedExpressionWindowError() error {
+	return pgerror.New(pgcode.Windowing, "window functions are not allowed in column generation expressions")
+}
+
+func generatedExpressionSetReturningError() error {
+	return pgerror.New(pgcode.FeatureNotSupported, "set-returning functions are not allowed in column generation expressions")
 }
 
 func stringInList(value string, list []string) bool {
@@ -509,8 +551,35 @@ func containsFunctionCall(expr string, name string) bool {
 	}
 }
 
+func containsIdentifier(expr string, name string) bool {
+	start := 0
+	for {
+		idx := strings.Index(expr[start:], name)
+		if idx == -1 {
+			return false
+		}
+		idx += start
+		beforeBoundary := idx == 0 || isFunctionNameBoundary(expr[idx-1])
+		afterIdx := idx + len(name)
+		afterBoundary := afterIdx == len(expr) || isFunctionNameBoundary(expr[afterIdx])
+		if beforeBoundary && afterBoundary {
+			return true
+		}
+		start = idx + len(name)
+	}
+}
+
 func isFunctionNameBoundary(ch byte) bool {
 	return !((ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch == '_')
+}
+
+var generatedColumnUnsupportedSystemColumns = []string{
+	"cmax",
+	"cmin",
+	"ctid",
+	"oid",
+	"xmax",
+	"xmin",
 }
 
 var generatedColumnVolatileFunctions = []string{

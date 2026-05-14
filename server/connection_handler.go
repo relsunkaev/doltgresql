@@ -4391,6 +4391,8 @@ func errMessageToSQLState(msg string) (string, bool) {
 	switch {
 	case strings.HasPrefix(msg, "Check constraint "):
 		return pgcode.CheckViolation.String(), true
+	case isMissingUnsupportedSystemColumnMessage(msg):
+		return pgcode.InvalidColumnReference.String(), true
 	case strings.HasPrefix(msg, "column ") && strings.Contains(msg, "could not be found"):
 		return pgcode.UndefinedColumn.String(), true
 	case strings.HasPrefix(msg, `column "`) && strings.Contains(msg, `" of relation "`) && strings.HasSuffix(msg, `" does not exist`):
@@ -4424,6 +4426,8 @@ func errMessageToSQLState(msg string) (string, bool) {
 	case msg == "GET STACKED DIAGNOSTICS cannot be used outside an exception handler":
 		return pgcode.StackedDiagnosticsAccessedWithoutActiveHandler.String(), true
 	case strings.HasPrefix(msg, "diagnostics item ") && strings.HasSuffix(msg, " is not allowed in GET STACKED DIAGNOSTICS"):
+		return pgcode.Syntax.String(), true
+	case msg == "Incorrect usage of DEFAULT and generated column":
 		return pgcode.Syntax.String(), true
 	case strings.HasPrefix(msg, "unrecognized configuration parameter "),
 		strings.HasPrefix(msg, "ERROR: unrecognized configuration parameter "):
@@ -4587,6 +4591,19 @@ func isUndefinedObjectMessage(msg string) bool {
 		strings.HasPrefix(msg, `text search parser "`),
 		strings.HasPrefix(msg, `text search template "`),
 		strings.HasPrefix(msg, `type "`):
+		return true
+	default:
+		return false
+	}
+}
+
+func isMissingUnsupportedSystemColumnMessage(msg string) bool {
+	if !strings.HasPrefix(msg, `column "`) || !strings.HasSuffix(msg, `" could not be found in any table in scope`) {
+		return false
+	}
+	column := strings.TrimSuffix(strings.TrimPrefix(msg, `column "`), `" could not be found in any table in scope`)
+	switch column {
+	case "cmax", "cmin", "ctid", "oid", "xmax", "xmin":
 		return true
 	default:
 		return false

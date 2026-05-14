@@ -174,6 +174,7 @@ func Init() {
 	initMod()
 	initNextVal()
 	initNow()
+	initNumNulls()
 	initObjDescription()
 	initOctetLength()
 	initOverlaps()
