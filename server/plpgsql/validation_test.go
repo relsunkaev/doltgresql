@@ -88,6 +88,18 @@ func TestValidateReturnStatements(t *testing.T) {
 			returnType:   pgtypes.EventTrigger,
 			expectedCode: pgcode.Uncategorized,
 		},
+		{
+			name:         "trigger bare return",
+			ops:          []InterpreterOperation{{OpCode: OpCode_Return}},
+			returnType:   pgtypes.Trigger,
+			expectedCode: pgcode.Uncategorized,
+		},
+		{
+			name:         "unresolved trigger bare return",
+			ops:          []InterpreterOperation{{OpCode: OpCode_Return}},
+			returnType:   pgtypes.NewUnresolvedDoltgresType("", "trigger"),
+			expectedCode: pgcode.Uncategorized,
+		},
 	}
 
 	for _, tt := range tests {

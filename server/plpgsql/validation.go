@@ -30,8 +30,9 @@ func ValidateReturnStatements(ops []InterpreterOperation, returnType *pgtypes.Do
 	}
 
 	isVoid := isReturnTypeNamed(returnType, pgtypes.Void, "void")
+	isTrigger := isReturnTypeNamed(returnType, pgtypes.Trigger, "trigger")
 	isEventTrigger := isReturnTypeNamed(returnType, pgtypes.EventTrigger, "event_trigger")
-	allowsBareReturn := returnsSet || hasOutputParams || isVoid || isEventTrigger
+	allowsBareReturn := returnsSet || hasOutputParams || isVoid || isTrigger || isEventTrigger
 	for _, op := range ops {
 		if op.OpCode != OpCode_Return {
 			continue
