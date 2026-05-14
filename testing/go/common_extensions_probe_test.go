@@ -762,13 +762,14 @@ ORDER BY typname;`,
 			Name: "CREATE EXTENSION btree_gist dump compatibility shim",
 			SetUpScript: []string{
 				`CREATE EXTENSION IF NOT EXISTS btree_gist WITH SCHEMA public;`,
+				`CREATE TABLE btree_gist_probe (id integer primary key, v integer);`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT e.extname, n.nspname, e.extrelocatable, e.extversion
 						FROM pg_catalog.pg_extension e
 						JOIN pg_catalog.pg_namespace n ON n.oid = e.extnamespace
-						WHERE e.extname = 'btree_gist';`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0118-select-e.extname-n.nspname-e.extrelocatable-e.extversion", Cleanup: []string{"DROP EXTENSION IF EXISTS btree_gist CASCADE"}},
+						WHERE e.extname = 'btree_gist';`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0118-select-e.extname-n.nspname-e.extrelocatable-e.extversion", Cleanup: []string{"DROP TABLE IF EXISTS btree_gist_probe CASCADE", "DROP EXTENSION IF EXISTS btree_gist CASCADE"}},
 				},
 				{
 					Query: `SELECT opc.opcname, opf.opfname, typ.typname, n.nspname, opc.opcdefault
@@ -779,7 +780,7 @@ JOIN pg_catalog.pg_type typ ON typ.oid = opc.opcintype
 JOIN pg_catalog.pg_namespace n ON n.oid = opc.opcnamespace
 WHERE am.amname = 'gist'
 	AND opc.opcname IN ('gist_bool_ops', 'gist_int4_ops', 'gist_text_ops', 'gist_uuid_ops')
-ORDER BY opc.opcname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0119-select-opc.opcname-opf.opfname-typ.typname-n.nspname", Cleanup: []string{"DROP EXTENSION IF EXISTS btree_gist CASCADE"}},
+ORDER BY opc.opcname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0119-select-opc.opcname-opf.opfname-typ.typname-n.nspname", Cleanup: []string{"DROP TABLE IF EXISTS btree_gist_probe CASCADE", "DROP EXTENSION IF EXISTS btree_gist CASCADE"}},
 				},
 				{
 					Query: `SELECT opf.opfname, n.nspname, COUNT(*)
@@ -790,7 +791,7 @@ JOIN pg_catalog.pg_namespace n ON n.oid = opf.opfnamespace
 WHERE am.amname = 'gist'
 	AND opf.opfname IN ('gist_bool_ops', 'gist_int4_ops', 'gist_text_ops', 'gist_uuid_ops')
 GROUP BY opf.opfname, n.nspname
-ORDER BY opf.opfname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0120-select-opf.opfname-n.nspname-count-*", Cleanup: []string{"DROP EXTENSION IF EXISTS btree_gist CASCADE"}},
+ORDER BY opf.opfname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0120-select-opf.opfname-n.nspname-count-*", Cleanup: []string{"DROP TABLE IF EXISTS btree_gist_probe CASCADE", "DROP EXTENSION IF EXISTS btree_gist CASCADE"}},
 				},
 				{
 					Query: `SELECT opf.opfname, amop.amopstrategy, amop.amoppurpose, btree_opf.opfname
@@ -800,7 +801,7 @@ JOIN pg_catalog.pg_opfamily btree_opf ON btree_opf.oid = amop.amopsortfamily
 JOIN pg_catalog.pg_am am ON am.oid = amop.amopmethod
 WHERE am.amname = 'gist'
 	AND opf.opfname = 'gist_int4_ops'
-	AND amop.amopstrategy = 15;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0121-select-opf.opfname-amop.amopstrategy-amop.amoppurpose-btree_opf.opfname", Cleanup: []string{"DROP EXTENSION IF EXISTS btree_gist CASCADE"}},
+	AND amop.amopstrategy = 15;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0121-select-opf.opfname-amop.amopstrategy-amop.amoppurpose-btree_opf.opfname", Cleanup: []string{"DROP TABLE IF EXISTS btree_gist_probe CASCADE", "DROP EXTENSION IF EXISTS btree_gist CASCADE"}},
 				},
 				{
 					Query: `SELECT opf.opfname, amproc.amprocnum, amproc.amproc
@@ -810,11 +811,10 @@ JOIN pg_catalog.pg_am am ON am.oid = opf.opfmethod
 WHERE am.amname = 'gist'
 	AND opf.opfname = 'gist_int4_ops'
 	AND amproc.amprocnum IN (1, 8, 9)
-ORDER BY amproc.amprocnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0122-select-opf.opfname-amproc.amprocnum-amproc.amproc-from", Cleanup: []string{"DROP EXTENSION IF EXISTS btree_gist CASCADE"}},
+ORDER BY amproc.amprocnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0122-select-opf.opfname-amproc.amprocnum-amproc.amproc-from", Cleanup: []string{"DROP TABLE IF EXISTS btree_gist_probe CASCADE", "DROP EXTENSION IF EXISTS btree_gist CASCADE"}},
 				},
 				{
-					Query:       `CREATE TABLE btree_gist_probe (id integer primary key, v integer); CREATE INDEX btree_gist_probe_v_idx ON btree_gist_probe USING gist (v);`,
-					ExpectedErr: `index method gist is not yet supported`,
+					Query: `CREATE INDEX btree_gist_probe_v_idx ON btree_gist_probe USING gist (v);`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0123-create-index-btree_gist_probe_v_idx-on-btree_gist_probe", Cleanup: []string{"DROP TABLE IF EXISTS btree_gist_probe CASCADE"}},
 				},
 			},
 		},

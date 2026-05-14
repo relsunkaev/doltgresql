@@ -2047,6 +2047,7 @@
         ]
       ],
       "cleanup": [
+        "DROP TABLE IF EXISTS btree_gist_probe CASCADE",
         "DROP EXTENSION IF EXISTS btree_gist CASCADE"
       ],
       "needsCleanup": false,
@@ -2135,6 +2136,7 @@
         ]
       ],
       "cleanup": [
+        "DROP TABLE IF EXISTS btree_gist_probe CASCADE",
         "DROP EXTENSION IF EXISTS btree_gist CASCADE"
       ],
       "needsCleanup": false,
@@ -2199,6 +2201,7 @@
         ]
       ],
       "cleanup": [
+        "DROP TABLE IF EXISTS btree_gist_probe CASCADE",
         "DROP EXTENSION IF EXISTS btree_gist CASCADE"
       ],
       "needsCleanup": false,
@@ -2232,10 +2235,8 @@
           }
         ]
       ],
-      "nonLiteral": [
-        "Expected"
-      ],
       "cleanup": [
+        "DROP TABLE IF EXISTS btree_gist_probe CASCADE",
         "DROP EXTENSION IF EXISTS btree_gist CASCADE"
       ],
       "needsCleanup": false,
@@ -2288,10 +2289,8 @@
           }
         ]
       ],
-      "nonLiteral": [
-        "Expected"
-      ],
       "cleanup": [
+        "DROP TABLE IF EXISTS btree_gist_probe CASCADE",
         "DROP EXTENSION IF EXISTS btree_gist CASCADE"
       ],
       "needsCleanup": false,
@@ -2302,13 +2301,19 @@
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 123,
       "scriptName": "CREATE EXTENSION btree_gist dump compatibility shim",
-      "oracle": "internal",
-      "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0123-create-table-btree_gist_probe-id-integer",
-      "expectedKind": "error",
-      "query": "CREATE TABLE btree_gist_probe (id integer primary key, v integer); CREATE INDEX btree_gist_probe_v_idx ON btree_gist_probe USING gist (v);",
-      "querySha256": "ffb994c190d3ac8b41a7d08349d8e8ec833ffe1d21b175ee038f6ff692b469e6",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0123-create-index-btree_gist_probe_v_idx-on-btree_gist_probe",
+      "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0123-create-index-btree_gist_probe_v_idx-on-btree_gist_probe",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE INDEX btree_gist_probe_v_idx ON btree_gist_probe USING gist (v);",
+      "querySha256": "59f20800187a3c7822bbc53a7773db9c2fd8caf14ee9703a6aac732903058e0f",
+      "expectedRows": [],
+      "cleanup": [
+        "DROP TABLE IF EXISTS btree_gist_probe CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0124",
