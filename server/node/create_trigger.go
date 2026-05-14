@@ -143,6 +143,8 @@ func (c *CreateTrigger) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error
 			return nil, err
 		}
 		comments.RemoveObject(triggerID.AsId(), "pg_trigger")
+	} else if trigCollection.HasTrigger(ctx, triggerID) {
+		return nil, pgerror.Newf(pgcode.DuplicateObject, `trigger "%s" for relation "%s" already exists`, triggerID.TriggerName(), triggerID.TableName())
 	}
 	err = trigCollection.AddTrigger(ctx, triggers.Trigger{
 		ID:                  triggerID,

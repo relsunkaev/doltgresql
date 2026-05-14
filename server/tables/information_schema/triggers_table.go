@@ -77,6 +77,9 @@ func triggersRowIter(ctx *sql.Context, cat sql.Catalog) (sql.RowIter, error) {
 			actionOrder := int32(1)
 			for _, trigger := range tableTriggers {
 				for _, event := range trigger.Events {
+					if event.Type == triggers.TriggerEventType_Truncate {
+						continue
+					}
 					rows = append(rows, informationSchemaTriggerRow(schema, table, trigger, event, actionOrder))
 					actionOrder++
 				}

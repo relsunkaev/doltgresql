@@ -24,6 +24,8 @@ import (
 
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/core/triggers"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	pgnodes "github.com/dolthub/doltgresql/server/node"
 	"github.com/dolthub/doltgresql/server/plpgsql"
@@ -72,7 +74,7 @@ func nodeCreateTrigger(ctx *Context, node *tree.CreateTrigger) (_ vitess.Stateme
 			})
 		case tree.TriggerEventTruncate:
 			if node.ForEachRow {
-				return nil, errors.New("TRUNCATE triggers must be FOR EACH STATEMENT")
+				return nil, pgerror.New(pgcode.FeatureNotSupported, "TRUNCATE triggers must be FOR EACH STATEMENT")
 			}
 			events = append(events, triggers.TriggerEvent{
 				Type: triggers.TriggerEventType_Truncate,
