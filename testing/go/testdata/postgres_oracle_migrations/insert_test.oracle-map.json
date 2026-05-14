@@ -551,87 +551,192 @@
       "source": "testing/go/insert_test.go:TestInsert",
       "ordinal": 22,
       "scriptName": "insert returning",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "insert-test-testinsert-0022-insert-into-public.t-j-values",
       "suggestedId": "insert-test-testinsert-0022-insert-into-public.t-j-values",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "INSERT INTO public.t (j) VALUES (8) RETURNING t.j",
       "querySha256": "d39213058761587b97686bd5170e169422424817ac34f349d1dd43f62943ac55",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "8"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS t CASCADE",
+        "DROP TABLE IF EXISTS u CASCADE",
+        "DROP TABLE IF EXISTS s CASCADE",
+        "DROP TABLE IF EXISTS ts.t CASCADE",
+        "DROP SCHEMA IF EXISTS ts CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/insert_test.go:TestInsert#0023",
       "source": "testing/go/insert_test.go:TestInsert",
       "ordinal": 23,
       "scriptName": "insert returning",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "insert-test-testinsert-0023-insert-into-public.t-j-values",
       "suggestedId": "insert-test-testinsert-0023-insert-into-public.t-j-values",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "INSERT INTO public.t (j) VALUES (9) RETURNING public.t.j",
       "querySha256": "77214c179738f0333abf4582d386494d3388a7acaef28e4a6c1a77949fd66fa4",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "9"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS t CASCADE",
+        "DROP TABLE IF EXISTS u CASCADE",
+        "DROP TABLE IF EXISTS s CASCADE",
+        "DROP TABLE IF EXISTS ts.t CASCADE",
+        "DROP SCHEMA IF EXISTS ts CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/insert_test.go:TestInsert#0024",
       "source": "testing/go/insert_test.go:TestInsert",
       "ordinal": 24,
       "scriptName": "insert returning",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "insert-test-testinsert-0024-insert-into-ts.t-j-values",
       "suggestedId": "insert-test-testinsert-0024-insert-into-ts.t-j-values",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "INSERT INTO ts.t (j) VALUES (10) RETURNING ts.t.j",
       "querySha256": "b201ca0b45b2fe7f8ca8edd464a3ba82ea9b0ef7cbb22992a22f78de681db3d8",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS t CASCADE",
+        "DROP TABLE IF EXISTS u CASCADE",
+        "DROP TABLE IF EXISTS s CASCADE",
+        "DROP TABLE IF EXISTS ts.t CASCADE",
+        "DROP SCHEMA IF EXISTS ts CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/insert_test.go:TestInsert#0025",
       "source": "testing/go/insert_test.go:TestInsert",
       "ordinal": 25,
       "scriptName": "insert returning",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "insert-test-testinsert-0025-insert-into-public.t-j-values",
       "suggestedId": "insert-test-testinsert-0025-insert-into-public.t-j-values",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "INSERT INTO public.t (j) VALUES ($1) RETURNING j;",
       "querySha256": "c44595ed039827684a27c98b4b4b2b95575da672ff45f9857621838499e136d0",
-      "nonLiteral": [
-        "BindVars"
+      "bindVars": [
+        {
+          "kind": "int",
+          "value": "11"
+        }
       ],
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "11"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS t CASCADE",
+        "DROP TABLE IF EXISTS u CASCADE",
+        "DROP TABLE IF EXISTS s CASCADE",
+        "DROP TABLE IF EXISTS ts.t CASCADE",
+        "DROP SCHEMA IF EXISTS ts CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/insert_test.go:TestInsert#0026",
       "source": "testing/go/insert_test.go:TestInsert",
       "ordinal": 26,
       "scriptName": "insert returning",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "insert-test-testinsert-0026-insert-into-public.t-j-values",
       "suggestedId": "insert-test-testinsert-0026-insert-into-public.t-j-values",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "INSERT INTO public.t (j) VALUES ($1) RETURNING t.j;",
       "querySha256": "fc089840530947f7f95c2783d13e1cb9a3c550ec990beb4d7d4a93eba58dcd1b",
-      "nonLiteral": [
-        "BindVars"
+      "bindVars": [
+        {
+          "kind": "int",
+          "value": "12"
+        }
       ],
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "12"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS t CASCADE",
+        "DROP TABLE IF EXISTS u CASCADE",
+        "DROP TABLE IF EXISTS s CASCADE",
+        "DROP TABLE IF EXISTS ts.t CASCADE",
+        "DROP SCHEMA IF EXISTS ts CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/insert_test.go:TestInsert#0027",
       "source": "testing/go/insert_test.go:TestInsert",
       "ordinal": 27,
       "scriptName": "insert returning",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "insert-test-testinsert-0027-insert-into-public.t-j-values",
       "suggestedId": "insert-test-testinsert-0027-insert-into-public.t-j-values",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "INSERT INTO public.t (j) VALUES ($1) RETURNING public.t.j;",
       "querySha256": "b5d6f89cd88fef2905aebe2b5cd01ef29b989888f3934c618513eb74532b12ba",
-      "nonLiteral": [
-        "BindVars"
+      "bindVars": [
+        {
+          "kind": "int",
+          "value": "13"
+        }
       ],
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "13"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS t CASCADE",
+        "DROP TABLE IF EXISTS u CASCADE",
+        "DROP TABLE IF EXISTS s CASCADE",
+        "DROP TABLE IF EXISTS ts.t CASCADE",
+        "DROP SCHEMA IF EXISTS ts CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/insert_test.go:TestInsert#0028",

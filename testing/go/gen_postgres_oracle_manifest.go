@@ -162,12 +162,13 @@ func main() {
 	oracleSkipScriptName := flag.String("oracle-skip-script-name", "", "optional comma-separated ScriptTest Name filter to exclude for --promote-oracle-map or --refresh-oracle-map")
 	oraclePostgresID := flag.String("oracle-postgres-id", "", "optional comma-separated PostgresOracle ID filter for --promote-oracle-map or --refresh-oracle-map")
 	forcePostgresOracle := flag.Bool("force-postgres-oracle", false, "for --refresh-oracle-map, promote literal-query assertions to PostgreSQL even when expected fields are non-literal")
+	allowExplicitPublicSchema := flag.Bool("allow-explicit-public-schema", false, "for --refresh-oracle-map, replay explicit public-schema references without auto-isolated schema setup and store generated cleanup")
 	skipRefreshErrors := flag.Bool("skip-refresh-errors", false, "for --refresh-oracle-map, leave entries internal when PostgreSQL refresh fails and continue refreshing the rest")
 	postgresDSN := flag.String("postgres-dsn", "", "PostgreSQL DSN for --refresh-oracle-map; defaults to DOLTGRES_POSTGRES_TEST_DSN, POSTGRES_TEST_DSN, or DOLTGRES_ORACLE default")
 	flag.Parse()
 
 	if *rewriteOracleSourcesFlag {
-		if *stdout || *migrationCandidatesDir != "" || *promoteOracleMap != "" || *refreshOracleMap != "" || *promoteOracleMapOutput != "" || *oracleTestName != "" || *oracleScriptName != "" || *oracleSkipScriptName != "" || *oraclePostgresID != "" || *forcePostgresOracle || *skipRefreshErrors || *postgresDSN != "" {
+		if *stdout || *migrationCandidatesDir != "" || *promoteOracleMap != "" || *refreshOracleMap != "" || *promoteOracleMapOutput != "" || *oracleTestName != "" || *oracleScriptName != "" || *oracleSkipScriptName != "" || *oraclePostgresID != "" || *forcePostgresOracle || *allowExplicitPublicSchema || *skipRefreshErrors || *postgresDSN != "" {
 			fmt.Fprintln(os.Stderr, "--rewrite-oracle-sources cannot be combined with other generator modes or options")
 			os.Exit(1)
 		}
@@ -195,7 +196,7 @@ func main() {
 		scriptNames := parseOracleScriptNameFilter(*oracleScriptName)
 		skipScriptNames := parseOracleScriptNameFilter(*oracleSkipScriptName)
 		postgresIDs := parseOraclePostgresIDFilter(*oraclePostgresID)
-		if err := refreshPromotedOracleMap(*refreshOracleMap, *promoteOracleMapOutput, testNames, scriptNames, skipScriptNames, postgresIDs, dsn, *forcePostgresOracle, *skipRefreshErrors); err != nil {
+		if err := refreshPromotedOracleMap(*refreshOracleMap, *promoteOracleMapOutput, testNames, scriptNames, skipScriptNames, postgresIDs, dsn, *forcePostgresOracle, *allowExplicitPublicSchema, *skipRefreshErrors); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
@@ -209,6 +210,10 @@ func main() {
 		}
 		if *forcePostgresOracle {
 			fmt.Fprintln(os.Stderr, "--force-postgres-oracle requires --refresh-oracle-map")
+			os.Exit(1)
+		}
+		if *allowExplicitPublicSchema {
+			fmt.Fprintln(os.Stderr, "--allow-explicit-public-schema requires --refresh-oracle-map")
 			os.Exit(1)
 		}
 		if *stdout || *migrationCandidatesDir != "" {
@@ -229,6 +234,10 @@ func main() {
 	if *migrationCandidatesDir != "" {
 		if *forcePostgresOracle {
 			fmt.Fprintln(os.Stderr, "--force-postgres-oracle requires --refresh-oracle-map")
+			os.Exit(1)
+		}
+		if *allowExplicitPublicSchema {
+			fmt.Fprintln(os.Stderr, "--allow-explicit-public-schema requires --refresh-oracle-map")
 			os.Exit(1)
 		}
 		if *stdout {
@@ -257,6 +266,10 @@ func main() {
 
 	if *forcePostgresOracle {
 		fmt.Fprintln(os.Stderr, "--force-postgres-oracle requires --refresh-oracle-map")
+		os.Exit(1)
+	}
+	if *allowExplicitPublicSchema {
+		fmt.Fprintln(os.Stderr, "--allow-explicit-public-schema requires --refresh-oracle-map")
 		os.Exit(1)
 	}
 	if *skipRefreshErrors {
@@ -1105,7 +1118,7 @@ func writePromotedOracleMap(sourceFile string, outputPath string, testNameFilter
 	return os.WriteFile(outputPath, data, 0644)
 }
 
-func refreshPromotedOracleMap(sourceFile string, outputPath string, testNameFilter map[string]struct{}, scriptNameFilter map[string]struct{}, skipScriptNameFilter map[string]struct{}, postgresIDFilter map[string]struct{}, dsn string, forcePostgresOracle bool, skipRefreshErrors bool) error {
+func refreshPromotedOracleMap(sourceFile string, outputPath string, testNameFilter map[string]struct{}, scriptNameFilter map[string]struct{}, skipScriptNameFilter map[string]struct{}, postgresIDFilter map[string]struct{}, dsn string, forcePostgresOracle bool, allowExplicitPublicSchema bool, skipRefreshErrors bool) error {
 	sourceFile = strings.TrimPrefix(sourceFile, "testing/go/")
 	if outputPath == "" {
 		outputPath = filepath.Join("testdata", "postgres_oracle_migrations", strings.TrimSuffix(sourceFile, ".go")+".oracle-map.json")
@@ -1240,13 +1253,32 @@ func refreshPromotedOracleMap(sourceFile string, outputPath string, testNameFilt
 			return fmt.Errorf("%s: %w", entry.ID, err)
 		}
 		if hasUnsafeAutoIsolatedPublicReference(entry) {
-			err := fmt.Errorf("generated oracle entry uses an isolated schema but setup or query explicitly references public; add an explicit PostgresOracle override or skip this migration")
-			if skipRefreshErrors {
-				fmt.Fprintf(os.Stderr, "skipping %s: %v\n", entry.ID, err)
-				markOracleAssertionInternal(assertion)
-				continue
+			if allowExplicitPublicSchema {
+				var explicitCleanup []string
+				var ok bool
+				entry, explicitCleanup, ok = entryWithExplicitPublicSchemaCleanup(entry)
+				if ok {
+					assertion.Cleanup = explicitCleanup
+					assertion.CleanupProvided = len(explicitCleanup) > 0
+					assertion.NeedsCleanup = false
+				} else {
+					err := fmt.Errorf("generated oracle entry uses an isolated schema but setup could not be converted to explicit public-schema cleanup")
+					if skipRefreshErrors {
+						fmt.Fprintf(os.Stderr, "skipping %s: %v\n", entry.ID, err)
+						markOracleAssertionInternal(assertion)
+						continue
+					}
+					return fmt.Errorf("%s: %w", entry.ID, err)
+				}
+			} else {
+				err := fmt.Errorf("generated oracle entry uses an isolated schema but setup or query explicitly references public; add an explicit PostgresOracle override or skip this migration")
+				if skipRefreshErrors {
+					fmt.Fprintf(os.Stderr, "skipping %s: %v\n", entry.ID, err)
+					markOracleAssertionInternal(assertion)
+					continue
+				}
+				return fmt.Errorf("%s: %w", entry.ID, err)
 			}
-			return fmt.Errorf("%s: %w", entry.ID, err)
 		}
 		expectedRows, columnModes, sqlstate, severity, expectedTag, err := readPostgresOracleExpected(ctx, conn, entry)
 		if err != nil {
@@ -1415,6 +1447,46 @@ func hasUnsafeAutoIsolatedPublicReference(entry entry) bool {
 		}
 	}
 	return false
+}
+
+func entryWithExplicitPublicSchemaCleanup(entry entry) (entry, []string, bool) {
+	setupStatements := entrySetupStatements(entry)
+	if len(setupStatements) < 2 || setupStatements[0].Query != "CREATE SCHEMA {{quotedSchema}}" || !strings.Contains(setupStatements[1].Query, "{{quotedSchema}}") {
+		return entry, nil, false
+	}
+	setupStatements = append([]oracleStatement(nil), setupStatements[2:]...)
+	setupQueries := statementQueries(setupStatements)
+	cleanup := explicitPublicSchemaCleanup(setupQueries, entry.Query)
+	entry.Cleanup = cleanup
+	if statementsHaveBindVars(setupStatements) {
+		entry.SetupStatements = setupStatements
+		entry.Setup = nil
+	} else {
+		entry.Setup = setupQueries
+		entry.SetupStatements = nil
+	}
+	return entry, cleanup, true
+}
+
+func explicitPublicSchemaCleanup(setupQueries []string, query string) []string {
+	cleanupStatements := append(append([]string{}, setupQueries...), query)
+	cleanup := make([]string, 0)
+	if setupSetsRole(setupQueries) {
+		cleanup = append(cleanup, "RESET ROLE")
+	}
+	cleanup = append(cleanup, cleanupForCreatedForeignDataWrappers(cleanupStatements)...)
+	cleanup = append(cleanup, cleanupForCreatedSubscriptions(cleanupStatements)...)
+	cleanup = append(cleanup, cleanupForCreatedPublications(cleanupStatements)...)
+	cleanup = append(cleanup, cleanupForCreatedExtensions(cleanupStatements)...)
+	cleanup = append(cleanup, cleanupForCreatedLargeObjects(cleanupStatements)...)
+	cleanup = append(cleanup, cleanupForCreatedTables(cleanupStatements)...)
+	cleanup = append(cleanup, cleanupForCreatedSchemas(cleanupStatements)...)
+	cleanup = append(cleanup, cleanupForCreatedLanguages(cleanupStatements)...)
+	cleanup = append(cleanup, cleanupForCreatedDatabases(cleanupStatements)...)
+	cleanup = append(cleanup, cleanupForCreatedTypes(cleanupStatements)...)
+	cleanup = append(cleanup, cleanupForCreatedUsers(cleanupStatements)...)
+	cleanup = append(cleanup, cleanupForCreatedRoles(cleanupStatements)...)
+	return cleanup
 }
 
 func hasExplicitPublicSchemaReference(statement string) bool {
