@@ -141,14 +141,16 @@
       "oracle": "postgres",
       "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0007-create-function-get_grade_description-score-int",
       "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0007-create-function-get_grade_description-score-int",
-      "compare": "sqlstate",
+      "compare": "structural",
       "expectedKind": "rows",
-      "sqlstate": "42723",
-      "errorSeverity": "ERROR",
       "query": "CREATE FUNCTION get_grade_description(score INT)\n\t\t\t\t\t\t\tRETURNS TEXT\n\t\t\t\t\t\t\tLANGUAGE SQL\n\t\t\t\t\t\t\tAS $$\n\t\t\t\t\t\t\t\tSELECT\n\t\t\t\t\t\t\t\t\tCASE\n\t\t\t\t\t\t\t\t\t\tWHEN score >= 90 THEN 'Excellent'\n\t\t\t\t\t\t\t\t\t\tWHEN score >= 75 THEN 'Good'\n\t\t\t\t\t\t\t\t\t\tWHEN score >= 50 THEN 'Average'\n\t\t\t\t\t\t\t\t\tELSE 'Fail'\n\t\t\t\t\t\t\t\t\tEND;\n\t\t\t\t\t\t\t$$;",
       "querySha256": "14bdbcc20390763952d5622b07fbd3d54d4a9630a368d4d91bbdc88d84009146",
-      "needsCleanup": false,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP FUNCTION IF EXISTS get_grade_description(int)"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0008",

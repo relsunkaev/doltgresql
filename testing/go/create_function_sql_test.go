@@ -68,7 +68,7 @@ func TestCreateFunctionsLanguageSQL(t *testing.T) {
 										WHEN score >= 50 THEN 'Average'
 									ELSE 'Fail'
 									END;
-							$$;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0007-create-function-get_grade_description-score-int", Compare: "sqlstate"},
+							$$;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0007-create-function-get_grade_description-score-int", Cleanup: []string{"DROP FUNCTION IF EXISTS get_grade_description(int)"}},
 				},
 				{
 					Query: `SELECT get_grade_description(92);`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0008-select-get_grade_description-92"},
