@@ -24,6 +24,8 @@ import (
 	"github.com/cockroachdb/errors"
 
 	"github.com/dolthub/doltgresql/core/extensions/pg_extension"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 )
 
 var (
@@ -90,7 +92,7 @@ func GetExtension(name string) (_ *pg_extension.ExtensionFiles, err error) {
 // implements directly.
 func GetExtensionFiles(name string) (*pg_extension.ExtensionFiles, error) {
 	if reason, ok := unsupportedExtensionReasons[strings.ToLower(name)]; ok {
-		return nil, errors.Errorf(`extension "%s" is not supported by Doltgres: %s`, name, reason)
+		return nil, pgerror.Newf(pgcode.FeatureNotSupported, `extension "%s" is not supported by Doltgres: %s`, name, reason)
 	}
 	if shim, ok := BuiltinExtensionShim(name); ok {
 		return shim, nil
