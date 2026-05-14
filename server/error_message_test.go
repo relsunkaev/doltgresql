@@ -410,6 +410,10 @@ func TestErrMessageToSQLStateFormatsUndefinedFunction(t *testing.T) {
 	require.True(t, ok)
 	require.Equal(t, pgcode.UndefinedFunction.String(), code)
 
+	code, ok = errMessageToSQLState(`routine "missing_grant_function" does not exist`)
+	require.True(t, ok)
+	require.Equal(t, pgcode.UndefinedFunction.String(), code)
+
 	code, ok = errMessageToSQLState(`procedure "missing_proc" does not exist`)
 	require.True(t, ok)
 	require.Equal(t, pgcode.UndefinedFunction.String(), code)
