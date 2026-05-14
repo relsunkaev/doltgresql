@@ -20,6 +20,8 @@ import (
 	"github.com/cockroachdb/errors"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	pgnodes "github.com/dolthub/doltgresql/server/node"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -81,12 +83,12 @@ func nodeCreateDomain(ctx *Context, node *tree.CreateDomain) (vitess.Statement, 
 		} else if constraint.NotNull {
 			definedNotNull = true
 			if definedNull {
-				return nil, errors.Errorf("conflicting NULL/NOT NULL constraints")
+				return nil, pgerror.New(pgcode.Syntax, "conflicting NULL/NOT NULL constraints")
 			}
 		} else {
 			definedNull = true
 			if definedNotNull {
-				return nil, errors.Errorf("conflicting NULL/NOT NULL constraints")
+				return nil, pgerror.New(pgcode.Syntax, "conflicting NULL/NOT NULL constraints")
 			}
 		}
 	}
