@@ -1308,7 +1308,7 @@ $$;`,
 					Query: "set search_path to 'public'",
 				},
 				{
-					Query: "SELECT public.ambienttempdetail_insertupdate(101, 25.5, 15);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0121-select-public.ambienttempdetail_insertupdate-101-25.5-15", Compare: "sqlstate"},
+					Query: "SELECT public.ambienttempdetail_insertupdate(101, 25.5, 15);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0121-select-public.ambienttempdetail_insertupdate-101-25.5-15"},
 				},
 			},
 		},
@@ -1438,7 +1438,7 @@ $$ LANGUAGE plpgsql;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-func
 					Query: "SELECT * from decks;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0133-select-*-from-decks"},
 				},
 				{
-					Query: "SELECT delete_deck_tree(1);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0134-select-delete_deck_tree-1", Compare: "sqlstate"},
+					Query: "SELECT delete_deck_tree(1);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0134-select-delete_deck_tree-1"},
 				},
 				{
 					Query: "SELECT * from decks;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0135-select-*-from-decks"},

@@ -441,13 +441,13 @@ var postgresConfigParameters = map[string]sql.SystemVariable{
 	},
 	"check_function_bodies": &Parameter{
 		Name:      "check_function_bodies",
-		Default:   int8(1),
+		Default:   "on",
 		Category:  "Client Connection Defaults / Statement Behavior",
 		ShortDesc: "Check routine bodies during CREATE FUNCTION and CREATE PROCEDURE.",
 		Context:   ParameterContextUser,
-		Type:      types.NewSystemBoolType("check_function_bodies"),
+		Type:      newPostgresSystemBoolType("check_function_bodies"),
 		Source:    ParameterSourceDefault,
-		ResetVal:  int8(1),
+		ResetVal:  "on",
 		Scope:     GetPgsqlScope(PsqlScopeSession),
 	},
 	"checkpoint_completion_target": &Parameter{

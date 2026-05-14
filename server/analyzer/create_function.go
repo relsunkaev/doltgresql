@@ -15,6 +15,8 @@
 package analyzer
 
 import (
+	"strings"
+
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/analyzer"
 	"github.com/dolthub/go-mysql-server/sql/plan"
@@ -40,7 +42,7 @@ func ValidateCreateFunction(ctx *sql.Context, a *analyzer.Analyzer, n sql.Node, 
 	if err != nil {
 		return n, transform.SameTree, err
 	}
-	if checkFunctionBodiesVar.(int8) == 0 {
+	if !checkFunctionBodiesEnabled(checkFunctionBodiesVar) {
 		return n, transform.SameTree, nil
 	}
 
@@ -53,4 +55,19 @@ func ValidateCreateFunction(ctx *sql.Context, a *analyzer.Analyzer, n sql.Node, 
 	}
 
 	return n, transform.SameTree, nil
+}
+
+func checkFunctionBodiesEnabled(value any) bool {
+	switch v := value.(type) {
+	case bool:
+		return v
+	case int8:
+		return v != 0
+	case int:
+		return v != 0
+	case string:
+		return strings.EqualFold(v, "on") || strings.EqualFold(v, "true") || v == "1"
+	default:
+		return true
+	}
 }

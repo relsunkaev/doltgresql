@@ -2360,12 +2360,17 @@
       "oracle": "postgres",
       "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0121-select-public.ambienttempdetail_insertupdate-101-25.5-15",
       "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0121-select-public.ambienttempdetail_insertupdate-101-25.5-15",
-      "compare": "sqlstate",
+      "compare": "structural",
       "expectedKind": "rows",
-      "sqlstate": "55000",
-      "errorSeverity": "ERROR",
       "query": "SELECT public.ambienttempdetail_insertupdate(101, 25.5, 15);",
       "querySha256": "4d9e99099af783c2df348f7c94218e7e1a202115e0301f26b76329fe23a2bb71",
+      "expectedRows": [
+        [
+          {
+            "value": "101"
+          }
+        ]
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -2629,12 +2634,17 @@
       "oracle": "postgres",
       "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0134-select-delete_deck_tree-1",
       "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0134-select-delete_deck_tree-1",
-      "compare": "sqlstate",
+      "compare": "structural",
       "expectedKind": "rows",
-      "sqlstate": "55000",
-      "errorSeverity": "ERROR",
       "query": "SELECT delete_deck_tree(1);",
       "querySha256": "a53fb2f2738ea3a283454bde0245eea0ee72a1e102da6f766c02f1e4bc6154bd",
+      "expectedRows": [
+        [
+          {
+            "value": ""
+          }
+        ]
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -2653,17 +2663,6 @@
       "expectedRows": [
         [
           {
-            "value": "1"
-          },
-          {
-            "value": "name1"
-          },
-          {
-            "value": "2"
-          }
-        ],
-        [
-          {
             "value": "2"
           },
           {
@@ -2671,17 +2670,6 @@
           },
           {
             "value": "4"
-          }
-        ],
-        [
-          {
-            "value": "5"
-          },
-          {
-            "value": "name3"
-          },
-          {
-            "value": "1"
           }
         ],
         [
