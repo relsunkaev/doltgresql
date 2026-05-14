@@ -15,9 +15,10 @@
 package functions
 
 import (
-	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -37,7 +38,7 @@ var trim_array_anyarray_int32 = framework.Function2{
 		array := val1.([]any)
 		trimCount := val2.(int32)
 		if trimCount < 0 || int(trimCount) > len(array) {
-			return nil, errors.New("number of elements to trim must be between 0 and array length")
+			return nil, pgerror.New(pgcode.ArraySubscript, "number of elements to trim must be between 0 and array length")
 		}
 		resultLen := len(array) - int(trimCount)
 		result := make([]any, resultLen)
