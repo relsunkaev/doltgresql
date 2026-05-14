@@ -10,6 +10,15 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### omega - 2026-05-13 21:19 MST
+
+- Lane complete locally: finish/validate generated command-tag oracle migration follow-up for `testing/go/smoke_test.go:TestEmptyQuery`.
+- Files expected: `testing/go/smoke_test.go`, `testing/go/testdata/postgres_oracle_manifest.json`, `testing/go/testdata/postgres_oracle_migrations/smoke_test.oracle-map.json`, and this `coop.md` entry only.
+- Current cache change: two empty-query `ExpectedTag: EmptyCommandTag` assertions are rewritten to `PostgresOracle` entries with `compare: tag` and cached empty command tags.
+- Boundary: avoiding delta `testing/go/framework.go` UUID normalization, gamma XID cast source work, dirty peer source files, active read-only classifications, and `third_party/dolt`.
+- Validation: first focused run failed before tests because ICU headers were not on the default CGO include path; reran with `/opt/homebrew/opt/icu4c@78` flags. `go test -vet=off ./testing/go -run '^(TestEmptyQuery|TestPostgresOracleManifestSchema|TestPostgresOracleCacheCoversManifestScriptEntries|TestPostgresOracleManifestGenerated|TestPostgresOracleMigrationCandidatesGenerated|TestPostgresOraclePromotedMapGenerated)$' -count=1 -v` passed with `GOFLAGS=-p=1`, `TMPDIR`/`GOTMPDIR` under `/Users/ramazan/.cache/doltgresql-omega-emptyquery-gotmp`, and ICU flags. `git diff --check -- testing/go/smoke_test.go testing/go/testdata/postgres_oracle_manifest.json testing/go/testdata/postgres_oracle_migrations/smoke_test.oracle-map.json coop.md` passed.
+- Next action: pick the next non-overlapping automatable residual promotion after the smoke batch commit.
+
 ### delta - 2026-05-13 11:48 America/Phoenix
 
 - Lane probe: current-head clean verifier for unowned remaining failures only. Candidates are outside active FK NOT VALID, PL/pgSQL SRF, deferrable unique/PK, and dirty grant/oracle lanes.

@@ -2290,12 +2290,15 @@
       "source": "testing/go/smoke_test.go:TestEmptyQuery",
       "ordinal": 1,
       "scriptName": "Empty query test",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testemptyquery-0001",
       "suggestedId": "smoke-test-testemptyquery-0001",
+      "compare": "tag",
       "expectedKind": "tag",
       "query": ";",
       "querySha256": "41b805ea7ac014e23556e98bb374702a08344268f92489a02f0880849394a1e4",
-      "needsCleanup": true,
+      "expectedTag": "",
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -2303,12 +2306,15 @@
       "source": "testing/go/smoke_test.go:TestEmptyQuery",
       "ordinal": 2,
       "scriptName": "Empty query test",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testemptyquery-0002",
       "suggestedId": "smoke-test-testemptyquery-0002",
+      "compare": "tag",
       "expectedKind": "tag",
       "query": " ",
       "querySha256": "36a9e7f1c95b82ffb99743e0c5c4ce95d83c9a430aac59f84ef3cbfab6145068",
-      "needsCleanup": true,
+      "expectedTag": "",
+      "needsCleanup": false,
       "cleanupProvided": false
     }
   ]

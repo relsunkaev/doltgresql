@@ -617,12 +617,10 @@ func TestEmptyQuery(t *testing.T) {
 			Name: "Empty query test",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       ";",
-					ExpectedTag: EmptyCommandTag,
+					Query: ";", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testemptyquery-0001", Compare: "tag"},
 				},
 				{
-					Query:       " ",
-					ExpectedTag: EmptyCommandTag,
+					Query: " ", PostgresOracle: ScriptTestPostgresOracle{ID: "smoke-test-testemptyquery-0002", Compare: "tag"},
 				},
 			},
 		},
