@@ -596,21 +596,12 @@
       "source": "testing/go/ddl_privilege_repro_test.go:TestGrantWithoutGrantOptionDoesNotErrorRepro",
       "ordinal": 1,
       "scriptName": "GRANT without grant option does not delegate",
-      "oracle": "postgres",
-      "postgresId": "ddl-privilege-repro-test-testgrantwithoutgrantoptiondoesnoterrorrepro-0001-select-secret-from-grant_option_private",
+      "oracle": "internal",
       "suggestedId": "ddl-privilege-repro-test-testgrantwithoutgrantoptiondoesnoterrorrepro-0001-select-secret-from-grant_option_private",
-      "compare": "structural",
       "expectedKind": "error",
       "username": "grant_option_recipient",
       "query": "SELECT secret FROM grant_option_private;",
       "querySha256": "c54709ad1b6becb55215fb214c2c0cb75c95362c690edbdecc0bb0bf1674945c",
-      "expectedRows": [
-        [
-          {
-            "value": "owner-only"
-          }
-        ]
-      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },

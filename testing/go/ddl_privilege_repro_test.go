@@ -721,15 +721,10 @@ func TestGrantWithoutGrantOptionDoesNotErrorRepro(t *testing.T) {
 					Password: `plain`,
 				},
 				{
-					Query: `SELECT secret FROM grant_option_private;`,
-
-					Username: `grant_option_recipient`,
-					Password: `recipient`, PostgresOracle: ScriptTestPostgresOracle{
-
-						// TestCreateTableAsRequiresSchemaCreatePrivilegeGuard covers target-schema
-						// authorization: CREATE TABLE AS must require CREATE on the schema where the
-						// durable result table is created.
-						ID: "ddl-privilege-repro-test-testgrantwithoutgrantoptiondoesnoterrorrepro-0001-select-secret-from-grant_option_private"},
+					Query:       `SELECT secret FROM grant_option_private;`,
+					Username:    `grant_option_recipient`,
+					Password:    `recipient`,
+					ExpectedErr: `permission denied for table grant_option_private`,
 				},
 			},
 		},
