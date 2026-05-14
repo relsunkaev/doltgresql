@@ -93,6 +93,21 @@ func TestNewVariableInitializesToSQLNull(t *testing.T) {
 	require.Nil(t, *variable.Value)
 }
 
+func TestParseColumnPercentType(t *testing.T) {
+	tableParts, columnName, ok := parseColumnPercentType("public.items.label%TYPE")
+	require.True(t, ok)
+	require.Equal(t, []string{"public", "items"}, tableParts)
+	require.Equal(t, "label", columnName)
+
+	tableParts, columnName, ok = parseColumnPercentType("items.label%type")
+	require.True(t, ok)
+	require.Equal(t, []string{"items"}, tableParts)
+	require.Equal(t, "label", columnName)
+
+	_, _, ok = parseColumnPercentType("label%type")
+	require.False(t, ok)
+}
+
 func TestCallVoidFunctionWithoutReturnReturnsVoidValue(t *testing.T) {
 	result, err := Call(sql.NewEmptyContext(), testInterpretedFunction{returnType: pgtypes.Void}, nil, nil, nil)
 	require.NoError(t, err)

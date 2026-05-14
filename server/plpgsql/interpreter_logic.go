@@ -313,19 +313,25 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 				return nil, false, err
 			}
 
-			schemaName, typeName := normalizeDeclareTypeName(operation.PrimaryData)
-			if (schemaName == "" || schemaName == "pg_catalog") && strings.EqualFold(typeName, "record") {
-				stack.NewRecord(operation.Target, nil, nil)
-				continue
-			}
-			resolvedType, err := typeCollection.GetType(ctx, id.NewType(schemaName, typeName))
+			resolvedType, resolvedColumnType, err := resolveColumnPercentType(ctx, iFunc, stack, operation.PrimaryData)
 			if err != nil {
 				return nil, false, err
 			}
-			if resolvedType == nil && schemaName == "pg_catalog" && !strings.Contains(strings.TrimSpace(operation.PrimaryData), ".") {
-				resolvedType, err = typeCollection.GetType(ctx, id.NewType("", typeName))
+			if !resolvedColumnType {
+				schemaName, typeName := normalizeDeclareTypeName(operation.PrimaryData)
+				if (schemaName == "" || schemaName == "pg_catalog") && strings.EqualFold(typeName, "record") {
+					stack.NewRecord(operation.Target, nil, nil)
+					continue
+				}
+				resolvedType, err = typeCollection.GetType(ctx, id.NewType(schemaName, typeName))
 				if err != nil {
 					return nil, false, err
+				}
+				if resolvedType == nil && schemaName == "pg_catalog" && !strings.Contains(strings.TrimSpace(operation.PrimaryData), ".") {
+					resolvedType, err = typeCollection.GetType(ctx, id.NewType("", typeName))
+					if err != nil {
+						return nil, false, err
+					}
 				}
 			}
 			if resolvedType == nil {
@@ -1871,6 +1877,54 @@ func doltgresTypeFromSQLType(sqlType sql.Type) (*pgtypes.DoltgresType, error) {
 		return doltgresType, nil
 	}
 	return pgtypes.FromGmsTypeToDoltgresType(sqlType)
+}
+
+func resolveColumnPercentType(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack, rawTypeName string) (*pgtypes.DoltgresType, bool, error) {
+	tableParts, columnName, ok := parseColumnPercentType(rawTypeName)
+	if !ok {
+		return nil, false, nil
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s LIMIT 0", quoteSQLIdentifier(columnName), formatSQLQualifiedIdentifier(tableParts))
+	schema, _, err := iFunc.QueryMultiReturn(ctx, stack, query, nil)
+	if err != nil {
+		return nil, true, err
+	}
+	if len(schema) != 1 {
+		return nil, true, errors.Errorf("%%TYPE reference %s must resolve to exactly one column", rawTypeName)
+	}
+	resolvedType, err := doltgresTypeFromSQLType(schema[0].Type)
+	return resolvedType, true, err
+}
+
+func parseColumnPercentType(rawTypeName string) (tableParts []string, columnName string, ok bool) {
+	typeName := strings.TrimSpace(strings.ReplaceAll(rawTypeName, `"`, ""))
+	if !strings.HasSuffix(strings.ToLower(typeName), "%type") {
+		return nil, "", false
+	}
+	reference := strings.TrimSpace(typeName[:len(typeName)-len("%type")])
+	parts := strings.Split(reference, ".")
+	if len(parts) < 2 {
+		return nil, "", false
+	}
+	for i := range parts {
+		parts[i] = strings.TrimSpace(parts[i])
+		if parts[i] == "" {
+			return nil, "", false
+		}
+	}
+	return parts[:len(parts)-1], parts[len(parts)-1], true
+}
+
+func formatSQLQualifiedIdentifier(parts []string) string {
+	quoted := make([]string, len(parts))
+	for i, part := range parts {
+		quoted[i] = quoteSQLIdentifier(part)
+	}
+	return strings.Join(quoted, ".")
+}
+
+func quoteSQLIdentifier(ident string) string {
+	return `"` + strings.ReplaceAll(ident, `"`, `""`) + `"`
 }
 
 // normalizeDeclareTypeName maps pg_query_go's PL/pgSQL declaration type names
