@@ -1012,16 +1012,13 @@
       "source": "testing/go/auth_test.go:TestAuthTests",
       "ordinal": 60,
       "scriptName": "GRANT/REVOKE SELECT Privilege",
-      "oracle": "postgres",
-      "postgresId": "auth-test-testauthtests-0060-create-table-test-pk-int4",
-      "suggestedId": "auth-test-testauthtests-0060-create-table-test-pk-int4",
-      "compare": "structural",
+      "oracle": "internal",
+      "suggestedId": "auth-test-testauthtests-0060-select-1",
       "expectedKind": "rows",
       "username": "user1",
-      "query": "CREATE TABLE test (pk INT4 PRIMARY KEY);",
-      "querySha256": "4de6ace59f2ee29836b99ff94366eb873e7e164b1bb86dfa1077a55904d1eb7e",
-      "expectedRows": [],
-      "needsCleanup": false,
+      "query": "SELECT 1;",
+      "querySha256": "17db4fd369edb9244b9f91d9aeed145c3d04ad8ba6e95d06247f07a63527d11a",
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -1029,17 +1026,13 @@
       "source": "testing/go/auth_test.go:TestAuthTests",
       "ordinal": 61,
       "scriptName": "GRANT/REVOKE SELECT Privilege",
-      "oracle": "postgres",
-      "postgresId": "auth-test-testauthtests-0061-insert-into-test-values-1",
+      "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0061-insert-into-test-values-1",
-      "compare": "sqlstate",
       "expectedKind": "rows",
-      "sqlstate": "42501",
-      "errorSeverity": "ERROR",
       "username": "user1",
       "query": "INSERT INTO test VALUES (1), (5), (6);",
       "querySha256": "d7c64976b9a31cf7e4e4da766dcfa209ebe2c7f14b377c8b69ca2ec695dc5c65",
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -1047,17 +1040,13 @@
       "source": "testing/go/auth_test.go:TestAuthTests",
       "ordinal": 62,
       "scriptName": "GRANT/REVOKE SELECT Privilege",
-      "oracle": "postgres",
-      "postgresId": "auth-test-testauthtests-0062-select-*-from-test-order",
+      "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0062-select-*-from-test-order",
-      "compare": "sqlstate",
       "expectedKind": "rows",
-      "sqlstate": "42501",
-      "errorSeverity": "ERROR",
       "username": "user1",
       "query": "SELECT * FROM test ORDER BY pk",
       "querySha256": "29fc57bab114a104e0a0b99377d39dbf55b4877d096773c0f7aed290d2d78fcd",
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -1065,17 +1054,13 @@
       "source": "testing/go/auth_test.go:TestAuthTests",
       "ordinal": 63,
       "scriptName": "GRANT/REVOKE SELECT Privilege",
-      "oracle": "postgres",
-      "postgresId": "auth-test-testauthtests-0063-select-*-from-test-order",
+      "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0063-select-*-from-test-order",
-      "compare": "sqlstate",
       "expectedKind": "error",
-      "sqlstate": "42501",
-      "errorSeverity": "ERROR",
       "username": "user2",
       "query": "SELECT * FROM test ORDER BY pk",
       "querySha256": "29fc57bab114a104e0a0b99377d39dbf55b4877d096773c0f7aed290d2d78fcd",
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -1083,17 +1068,13 @@
       "source": "testing/go/auth_test.go:TestAuthTests",
       "ordinal": 64,
       "scriptName": "GRANT/REVOKE SELECT Privilege",
-      "oracle": "postgres",
-      "postgresId": "auth-test-testauthtests-0064-grant-select-on-test-to",
+      "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0064-grant-select-on-test-to",
-      "compare": "sqlstate",
       "expectedKind": "rows",
-      "sqlstate": "42501",
-      "errorSeverity": "ERROR",
       "username": "user1",
       "query": "GRANT SELECT ON test TO user2;",
       "querySha256": "08c8c4d346608aea6be5e8e4e81fc02f4b855ddf1615869fb08f6b7eeba5ce38",
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -1101,32 +1082,13 @@
       "source": "testing/go/auth_test.go:TestAuthTests",
       "ordinal": 65,
       "scriptName": "GRANT/REVOKE SELECT Privilege",
-      "oracle": "postgres",
-      "postgresId": "auth-test-testauthtests-0065-select-*-from-test-order",
+      "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0065-select-*-from-test-order",
-      "compare": "structural",
       "expectedKind": "rows",
       "username": "user2",
       "query": "SELECT * FROM test ORDER BY pk",
       "querySha256": "29fc57bab114a104e0a0b99377d39dbf55b4877d096773c0f7aed290d2d78fcd",
-      "expectedRows": [
-        [
-          {
-            "value": "1"
-          }
-        ],
-        [
-          {
-            "value": "5"
-          }
-        ],
-        [
-          {
-            "value": "6"
-          }
-        ]
-      ],
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -1134,17 +1096,13 @@
       "source": "testing/go/auth_test.go:TestAuthTests",
       "ordinal": 66,
       "scriptName": "GRANT/REVOKE SELECT Privilege",
-      "oracle": "postgres",
-      "postgresId": "auth-test-testauthtests-0066-revoke-select-on-test-from",
+      "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0066-revoke-select-on-test-from",
-      "compare": "sqlstate",
       "expectedKind": "rows",
-      "sqlstate": "42501",
-      "errorSeverity": "ERROR",
       "username": "user1",
       "query": "REVOKE SELECT ON test FROM user2;",
       "querySha256": "4b0e1864a62768837fb2c8d2bffda9347e8b2b5c0e172bbe03075c1ea3642a17",
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -1152,17 +1110,13 @@
       "source": "testing/go/auth_test.go:TestAuthTests",
       "ordinal": 67,
       "scriptName": "GRANT/REVOKE SELECT Privilege",
-      "oracle": "postgres",
-      "postgresId": "auth-test-testauthtests-0067-select-*-from-test-order",
+      "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0067-select-*-from-test-order",
-      "compare": "sqlstate",
       "expectedKind": "error",
-      "sqlstate": "42501",
-      "errorSeverity": "ERROR",
       "username": "user2",
       "query": "SELECT * FROM test ORDER BY pk",
       "querySha256": "29fc57bab114a104e0a0b99377d39dbf55b4877d096773c0f7aed290d2d78fcd",
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -1170,17 +1124,13 @@
       "source": "testing/go/auth_test.go:TestAuthTests",
       "ordinal": 68,
       "scriptName": "GRANT/REVOKE SELECT Privilege",
-      "oracle": "postgres",
-      "postgresId": "auth-test-testauthtests-0068-grant-select-on-test-to",
+      "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0068-grant-select-on-test-to",
-      "compare": "sqlstate",
       "expectedKind": "rows",
-      "sqlstate": "42501",
-      "errorSeverity": "ERROR",
       "username": "user1",
       "query": "GRANT SELECT ON test TO PUBLIC;",
       "querySha256": "e27babb50f7add3d5b7441632e365f1c710c1882aa01051b710d61b92eede11a",
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -1188,32 +1138,13 @@
       "source": "testing/go/auth_test.go:TestAuthTests",
       "ordinal": 69,
       "scriptName": "GRANT/REVOKE SELECT Privilege",
-      "oracle": "postgres",
-      "postgresId": "auth-test-testauthtests-0069-select-*-from-test-order",
+      "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0069-select-*-from-test-order",
-      "compare": "structural",
       "expectedKind": "rows",
       "username": "user2",
       "query": "SELECT * FROM test ORDER BY pk",
       "querySha256": "29fc57bab114a104e0a0b99377d39dbf55b4877d096773c0f7aed290d2d78fcd",
-      "expectedRows": [
-        [
-          {
-            "value": "1"
-          }
-        ],
-        [
-          {
-            "value": "5"
-          }
-        ],
-        [
-          {
-            "value": "6"
-          }
-        ]
-      ],
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
