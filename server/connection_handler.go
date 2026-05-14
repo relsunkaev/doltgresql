@@ -4391,6 +4391,10 @@ func errMessageToSQLState(msg string) (string, bool) {
 		return pgcode.FeatureNotSupported.String(), true
 	case msg == "subquery has too many columns":
 		return pgcode.Syntax.String(), true
+	case msg == "SELECT DISTINCT ON expressions must match initial ORDER BY expressions":
+		return pgcode.InvalidColumnReference.String(), true
+	case msg == "WITH TIES cannot be specified without ORDER BY":
+		return pgcode.Syntax.String(), true
 	case strings.HasPrefix(msg, `relation "`) && strings.HasSuffix(msg, `" does not exist`):
 		return pgcode.UndefinedTable.String(), true
 	case strings.HasPrefix(msg, `operator "`) && strings.HasSuffix(msg, `" does not exist`):

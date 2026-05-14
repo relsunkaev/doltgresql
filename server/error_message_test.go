@@ -203,6 +203,24 @@ func TestErrMessageToSQLStateFormatsSubqueryTooManyColumns(t *testing.T) {
 	require.Equal(t, pgcode.Syntax.String(), errorResponseCode(errors.New(msg)))
 }
 
+func TestErrMessageToSQLStateFormatsQueryShapeErrors(t *testing.T) {
+	for _, tt := range []struct {
+		msg  string
+		code pgcode.Code
+	}{
+		{
+			msg:  "SELECT DISTINCT ON expressions must match initial ORDER BY expressions",
+			code: pgcode.InvalidColumnReference,
+		},
+		{msg: "WITH TIES cannot be specified without ORDER BY", code: pgcode.Syntax},
+	} {
+		code, ok := errMessageToSQLState(tt.msg)
+		require.True(t, ok)
+		require.Equal(t, tt.code.String(), code)
+		require.Equal(t, tt.code.String(), errorResponseCode(errors.New(tt.msg)))
+	}
+}
+
 func TestErrMessageToSQLStateFormatsTypmodOverflow(t *testing.T) {
 	code, ok := errMessageToSQLState(`numeric field overflow - A field with precision 5, scale 2 must round to an absolute value less than 10^3`)
 	require.True(t, ok)
