@@ -10,6 +10,23 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### alpha - 2026-05-14 10:52 MST
+
+- Result: fixed the `TestBasicIndexing` reloptions/fillfactor slice by returning PostgreSQL `22023` for invalid btree index reloptions and allowing `ALTER INDEX ... SET/RESET (...)` to update btree constraint-backed index metadata without dropping the constraint ownership marker.
+- Source touched: `server/ast/create_index.go` and `server/node/index_ddl.go`.
+- Validation in clean verifier `/private/tmp/doltgresql-alpha-reloptions-head.90u8xn` at `HEAD=35151c2c` plus only this patch:
+  - `go test -vet=off ./testing/go -run '^TestBasicIndexing$/^PostgreSQL (btree reloptions metadata|alter index fillfactor metadata)$' -count=1 -timeout=10m -v`
+  - `go test -vet=off ./server/ast ./server/node -run '^$' -count=1 -timeout=10m`
+- Boundary: no oracle-map/manifest changes; peer dirty functions/pg-constraint/startup/grant files remain untouched.
+- Next action: commit this narrow source slice, then rerun broad `TestBasicIndexing` from a clean current HEAD to identify the next index blocker.
+
+### alpha - 2026-05-14 10:48 MST
+
+- Lane claimed: `TestBasicIndexing` btree reloptions / `ALTER INDEX` reloption SQLSTATE and constraint-backed index storage-parameter behavior.
+- Discovery proof: clean verifier `/private/tmp/doltgresql-alpha-basicindex-head.bQBGwd` at `HEAD=6749164d`, log `/tmp/doltgresql-alpha-basicindex-6749164d.jsonl`, now gets past the GiST boundary and fails first in `PostgreSQL_btree_reloptions_metadata` because invalid reloption names return `0A000` instead of PostgreSQL `22023`, invalid fillfactor returns generic `XX000`, and constraint-backed `ALTER INDEX ... SET (fillfactor=...)` still errors where PostgreSQL accepts the metadata update.
+- Expected files: index metadata/ALTER INDEX source plus `testing/go/index_test.go` only if a focused regression assertion is needed. Boundary: avoid active functions/oracle-map/manifest, pg-constraint, JSONPath, startup/schema/create-table/create-view/relation-schema, grant/auth, and `third_party/dolt` lanes.
+- Next action: inspect the reloption validation path, make SQLSTATEs PostgreSQL-compatible, implement constraint-backed reloption metadata where narrow, then validate the focused BasicIndexing subgroups.
+
 ### alpha - 2026-05-14 10:41 MST
 
 - Result: fixed `TestBasicIndexing/PostgreSQL_GiST_access_method_boundary` after metadata-backed GiST support by making only GiST expect successful `CREATE INDEX` with command tag `CREATE INDEX` and a catalog count of `1`; hash/SP-GiST/BRIN still assert unsupported errors and zero catalog rows.

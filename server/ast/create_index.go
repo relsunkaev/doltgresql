@@ -25,6 +25,8 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
 	pgnodes "github.com/dolthub/doltgresql/server/node"
@@ -502,21 +504,21 @@ func nodeIndexRelOptions(params tree.StorageParams) ([]string, error) {
 	for _, param := range params {
 		key := strings.ToLower(strings.TrimSpace(string(param.Key)))
 		if _, ok := seen[key]; ok {
-			return nil, errors.Errorf("index storage parameter %s is specified more than once", key)
+			return nil, pgerror.Newf(pgcode.InvalidParameterValue, "index storage parameter %s is specified more than once", key)
 		}
 		seen[key] = struct{}{}
 		switch key {
 		case "fillfactor":
 			fillfactor, err := nodeIndexStorageParamInt(param.Value)
 			if err != nil {
-				return nil, errors.Errorf("fillfactor must be an integer")
+				return nil, pgerror.New(pgcode.InvalidParameterValue, "fillfactor must be an integer")
 			}
 			if fillfactor < 10 || fillfactor > 100 {
-				return nil, errors.Errorf("fillfactor must be between 10 and 100")
+				return nil, pgerror.New(pgcode.InvalidParameterValue, "fillfactor must be between 10 and 100")
 			}
 			relOptions = append(relOptions, fmt.Sprintf("fillfactor=%d", fillfactor))
 		default:
-			return nil, errors.Errorf("index storage parameter %s is not yet supported", key)
+			return nil, pgerror.Newf(pgcode.InvalidParameterValue, "index storage parameter %s is not yet supported", key)
 		}
 	}
 	return relOptions, nil

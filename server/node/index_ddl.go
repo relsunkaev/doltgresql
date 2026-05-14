@@ -31,6 +31,7 @@ import (
 	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/comments"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
+	"github.com/dolthub/doltgresql/server/tablemetadata"
 )
 
 type locatedIndex struct {
@@ -412,19 +413,17 @@ func (a *AlterIndexSetStorage) RowIter(ctx *sql.Context, row sql.Row) (sql.RowIt
 		}
 		return nil, sql.ErrIndexNotFound.New(a.index)
 	}
-	if isConstraintBackedIndex(located.index) {
-		return nil, errors.Errorf("ALTER INDEX storage parameters for constraint-backed indexes are not yet supported")
-	}
 	if err = checkLocatedIndexTableOwnership(ctx, located); err != nil {
 		return nil, err
 	}
 
-	accessMethod := indexmetadata.AccessMethod(located.index.IndexType(), located.index.Comment())
+	indexComment := indexmetadata.CommentForTable(located.index, located.table)
+	accessMethod := indexmetadata.AccessMethod(located.index.IndexType(), indexComment)
 	if accessMethod != indexmetadata.AccessMethodBtree {
 		return nil, errors.Errorf("ALTER INDEX storage parameters for %s indexes are not yet supported", accessMethod)
 	}
 
-	metadata, hasMetadata := indexmetadata.DecodeComment(located.index.Comment())
+	metadata, hasMetadata := indexmetadata.DecodeComment(indexComment)
 	if !hasMetadata {
 		metadata = indexmetadata.Metadata{AccessMethod: indexmetadata.AccessMethodBtree}
 	}
@@ -434,6 +433,12 @@ func (a *AlterIndexSetStorage) RowIter(ctx *sql.Context, row sql.Row) (sql.RowIt
 		metadata.RelOptions = mergeRelOptions(metadata.RelOptions, a.relOptions)
 	}
 
+	if isPrimaryKeyIndex(located.index) {
+		if err = updatePrimaryKeyIndexMetadata(ctx, located, metadata); err != nil {
+			return nil, err
+		}
+		return sql.RowsToRowIter(), nil
+	}
 	if err = rebuildIndexWithMetadata(ctx, located, metadata); err != nil {
 		return nil, err
 	}
@@ -813,7 +818,9 @@ func rebuildIndexWithMetadata(ctx *sql.Context, located *locatedIndex, metadata 
 	constraint := sql.IndexConstraint_None
 	if located.index.IsUnique() {
 		constraint = sql.IndexConstraint_Unique
-		metadata.Constraint = indexmetadata.ConstraintNone
+		if indexmetadata.IsStandaloneIndex(located.index.Comment()) {
+			metadata.Constraint = indexmetadata.ConstraintNone
+		}
 	}
 
 	comment := alteredIndexComment(metadata)
@@ -831,6 +838,18 @@ func rebuildIndexWithMetadata(ctx *sql.Context, located *locatedIndex, metadata 
 		return err
 	}
 	return nil
+}
+
+func updatePrimaryKeyIndexMetadata(ctx *sql.Context, located *locatedIndex, metadata indexmetadata.Metadata) error {
+	alterable, ok := located.table.(sql.CommentAlterableTable)
+	if !ok {
+		return sql.ErrAlterTableCommentNotSupported.New(located.table.Name())
+	}
+	comment := ""
+	if commented, ok := located.table.(sql.CommentedTable); ok {
+		comment = commented.Comment()
+	}
+	return alterable.ModifyComment(ctx, tablemetadata.SetPrimaryKeyIndexComment(comment, indexmetadata.EncodeComment(metadata)))
 }
 
 func mergeRelOptions(existing []string, updates []string) []string {
