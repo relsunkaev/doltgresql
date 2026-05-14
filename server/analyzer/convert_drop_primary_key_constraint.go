@@ -30,9 +30,10 @@ import (
 	"github.com/dolthub/doltgresql/server/tablemetadata"
 )
 
-// convertDropPrimaryKeyConstraint converts a DropConstraint node dropping a primary key constraint into
-// an AlterPK node that GMS can process to remove the primary key.
-func convertDropPrimaryKeyConstraint(ctx *sql.Context, _ *analyzer.Analyzer, n sql.Node, _ *plan.Scope, _ analyzer.RuleSelector, _ *sql.QueryFlags) (sql.Node, transform.TreeIdentity, error) {
+// convertDropPrimaryKeyConstraint resolves DROP CONSTRAINT nodes, extending the
+// GMS resolver with PostgreSQL dependency handling for primary-key and unique
+// constraints.
+func convertDropPrimaryKeyConstraint(ctx *sql.Context, a *analyzer.Analyzer, n sql.Node, _ *plan.Scope, _ analyzer.RuleSelector, _ *sql.QueryFlags) (sql.Node, transform.TreeIdentity, error) {
 	return transform.Node(ctx, n, func(ctx *sql.Context, n sql.Node) (sql.Node, transform.TreeIdentity, error) {
 		dropConstraint, ok := n.(*plan.DropConstraint)
 		if !ok {
@@ -50,7 +51,24 @@ func convertDropPrimaryKeyConstraint(ctx *sql.Context, _ *analyzer.Analyzer, n s
 		if cascade {
 			dropConstraint = dropConstraintWithName(dropConstraint, dropConstraintName)
 		}
-		if it, ok := table.(sql.IndexAddressableTable); ok {
+
+		if foreignKeyTable, ok := table.(sql.ForeignKeyTable); ok {
+			declaredForeignKeys, err := foreignKeyTable.GetDeclaredForeignKeys(ctx)
+			if err != nil {
+				return nil, transform.SameTree, err
+			}
+			referencedForeignKeys, err := foreignKeyTable.GetReferencedForeignKeys(ctx)
+			if err != nil {
+				return nil, transform.SameTree, err
+			}
+			for _, foreignKey := range append(declaredForeignKeys, referencedForeignKeys...) {
+				if strings.EqualFold(foreignKey.Name, dropConstraintName) {
+					return pgnodes.NewDropDependentForeignKeys([]sql.ForeignKeyConstraint{foreignKey}), transform.NewTree, nil
+				}
+			}
+		}
+
+		if it, ok := table.(sql.IndexAddressable); ok {
 			indexes, err := it.GetIndexes(ctx)
 			if err != nil {
 				return nil, transform.SameTree, err
@@ -82,13 +100,46 @@ func convertDropPrimaryKeyConstraint(ctx *sql.Context, _ *analyzer.Analyzer, n s
 					}
 					return newNode, transform.NewTree, nil
 				}
+				if indexmetadata.IsUnique(index) &&
+					!indexmetadata.IsStandaloneIndex(index.Comment()) &&
+					indexNameMatchesDropConstraint(index, rt.Table, dropConstraintName) {
+					dependentForeignKeys, err := dependentForeignKeysForParentColumns(ctx, table, index.Expressions())
+					if err != nil {
+						return nil, transform.SameTree, err
+					}
+					dropIndex := plan.NewDropIndex(dropConstraintName, rt)
+					dropIndex.Catalog = a.Catalog
+					dropIndex.CurrentDatabase = rt.Database().Name()
+					if cascade && len(dependentForeignKeys) > 0 {
+						return plan.NewBlock([]sql.Node{
+							pgnodes.NewDropDependentForeignKeys(dependentForeignKeys),
+							dropIndex,
+						}), transform.NewTree, nil
+					}
+					return dropIndex, transform.NewTree, nil
+				}
 			}
 		}
 
-		if cascade {
-			return dropConstraint, transform.NewTree, nil
+		if checkTable, ok := table.(sql.CheckTable); ok {
+			checks, err := checkTable.GetChecks(ctx)
+			if err != nil {
+				return nil, transform.SameTree, err
+			}
+			for _, check := range checks {
+				if strings.EqualFold(check.Name, dropConstraintName) {
+					return plan.NewAlterDropCheck(rt, check.Name), transform.NewTree, nil
+				}
+			}
 		}
-		return n, transform.SameTree, nil
+
+		if dropConstraint.IfExists {
+			newAlterDropCheck := plan.NewAlterDropCheck(rt, dropConstraintName)
+			newAlterDropCheck.IfExists = true
+			return newAlterDropCheck, transform.NewTree, nil
+		}
+
+		return nil, transform.SameTree, sql.ErrUnknownConstraint.New(dropConstraintName)
 	})
 }
 
@@ -154,7 +205,10 @@ func dependentForeignKeysForPrimaryKey(ctx *sql.Context, table sql.Table) ([]sql
 	if len(primaryKeyColumns) == 0 {
 		return nil, nil
 	}
+	return dependentForeignKeysForParentColumns(ctx, table, primaryKeyColumns)
+}
 
+func dependentForeignKeysForParentColumns(ctx *sql.Context, table sql.Table, parentColumns []string) ([]sql.ForeignKeyConstraint, error) {
 	foreignKeyTable, ok := table.(sql.ForeignKeyTable)
 	if !ok {
 		return nil, nil
@@ -166,7 +220,7 @@ func dependentForeignKeysForPrimaryKey(ctx *sql.Context, table sql.Table) ([]sql
 
 	dependentForeignKeys := make([]sql.ForeignKeyConstraint, 0, len(referencedForeignKeys))
 	for _, foreignKey := range referencedForeignKeys {
-		if columnListsEqualFold(foreignKey.ParentColumns, primaryKeyColumns) {
+		if columnListsEqualFold(foreignKey.ParentColumns, parentColumns) {
 			dependentForeignKeys = append(dependentForeignKeys, foreignKey)
 		}
 	}
@@ -189,9 +243,17 @@ func columnListsEqualFold(left []string, right []string) bool {
 		return false
 	}
 	for i := range left {
-		if !strings.EqualFold(left[i], right[i]) {
+		if !strings.EqualFold(normalizeColumnReference(left[i]), normalizeColumnReference(right[i])) {
 			return false
 		}
 	}
 	return true
+}
+
+func normalizeColumnReference(column string) string {
+	column = strings.TrimSpace(column)
+	if lastDot := strings.LastIndex(column, "."); lastDot >= 0 {
+		column = column[lastDot+1:]
+	}
+	return strings.Trim(column, "`\"")
 }

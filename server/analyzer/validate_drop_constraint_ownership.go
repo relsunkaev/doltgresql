@@ -22,6 +22,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	"github.com/dolthub/go-mysql-server/sql/transform"
 
+	"github.com/dolthub/doltgresql/server/ast"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
 )
 
@@ -33,6 +34,7 @@ func validateDropConstraintOwnership(ctx *sql.Context, _ *analyzer.Analyzer, n s
 		if !ok || dropConstraint.IfExists {
 			return n, transform.SameTree, nil
 		}
+		dropConstraintName, _ := ast.DecodeDropConstraintCascade(dropConstraint.Name)
 
 		rt, ok := dropConstraint.Child.(*plan.ResolvedTable)
 		if !ok {
@@ -44,7 +46,7 @@ func validateDropConstraintOwnership(ctx *sql.Context, _ *analyzer.Analyzer, n s
 			return n, transform.SameTree, nil
 		}
 
-		matchesConstraint, err := matchesForeignKeyOrCheckConstraint(ctx, rt.Table, dropConstraint.Name)
+		matchesConstraint, err := matchesForeignKeyOrCheckConstraint(ctx, rt.Table, dropConstraintName)
 		if err != nil {
 			return nil, transform.SameTree, err
 		} else if matchesConstraint {
@@ -58,9 +60,9 @@ func validateDropConstraintOwnership(ctx *sql.Context, _ *analyzer.Analyzer, n s
 
 		for _, index := range indexes {
 			if index.IsUnique() &&
-				strings.EqualFold(index.ID(), dropConstraint.Name) &&
+				strings.EqualFold(index.ID(), dropConstraintName) &&
 				indexmetadata.IsStandaloneIndex(index.Comment()) {
-				return nil, transform.SameTree, sql.ErrUnknownConstraint.New(dropConstraint.Name)
+				return nil, transform.SameTree, sql.ErrUnknownConstraint.New(dropConstraintName)
 			}
 		}
 

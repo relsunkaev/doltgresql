@@ -108,9 +108,12 @@ func Init() {
 		{Id: ruleId_ResolveDropColumnIfExists, Apply: resolveDropColumnIfExists},
 		{Id: ruleId_ResolveType, Apply: ResolveType}, // ResolveType rule must run before simplifyFilters rule in GMS
 		{Id: ruleId_ApplyTablesForAnalyzeAllTables, Apply: applyTablesForAnalyzeAllTables},
-		{Id: ruleId_ValidateDropConstraintOwnership, Apply: validateDropConstraintOwnership},
-		{Id: ruleId_ConvertDropPrimaryKeyConstraint, Apply: convertDropPrimaryKeyConstraint}},
+	},
 		analyzer.OnceBeforeDefault...)
+	analyzer.OnceBeforeDefault = insertAnalyzerRulesByName(analyzer.OnceBeforeDefault, "resolveDropConstraint", true,
+		analyzer.Rule{Id: ruleId_ValidateDropConstraintOwnership, Apply: validateDropConstraintOwnership})
+	analyzer.OnceBeforeDefault = replaceAnalyzerRuleByName(analyzer.OnceBeforeDefault, "resolveDropConstraint",
+		analyzer.Rule{Id: ruleId_ConvertDropPrimaryKeyConstraint, Apply: convertDropPrimaryKeyConstraint})
 
 	analyzer.AlwaysBeforeDefault = append(analyzer.AlwaysBeforeDefault,
 		// ResolveType rule must run in this batch in addition to OnceBeforeDefault batch
