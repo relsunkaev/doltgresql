@@ -23,7 +23,10 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/expression"
 
 	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/auth"
+	"github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	"github.com/dolthub/doltgresql/server/types"
 )
@@ -47,6 +50,9 @@ func validateForeignKeyDefinition(ctx *sql.Context, fkDef sql.ForeignKeyConstrai
 		if !foreignKeyComparableTypes(ctx, col.Type, parentCol.Type) {
 			return errors.Errorf("Key columns %q and %q are of incompatible types: %s and %s", col.Name, parentCol.Name, col.Type.String(), parentCol.Type.String())
 		}
+	}
+	if err := validateForeignKeyReferenceHasUniqueIndex(ctx, fkDef); err != nil {
+		return err
 	}
 	return nil
 }
@@ -112,6 +118,78 @@ func roleHasReferencesOnColumns(role auth.RoleID, schemaName, tableName string, 
 		}
 	}
 	return true
+}
+
+func validateForeignKeyReferenceHasUniqueIndex(ctx *sql.Context, fkDef sql.ForeignKeyConstraint) error {
+	parentSchema, err := core.GetSchemaName(ctx, nil, fkDef.ParentSchema)
+	if err != nil {
+		return err
+	}
+
+	var foundTable bool
+	var foundUniqueIndex bool
+	err = functions.IterateCurrentDatabase(ctx, functions.Callbacks{
+		Table: func(ctx *sql.Context, schema functions.ItemSchema, table functions.ItemTable) (bool, error) {
+			if foreignKeyReferenceTargetsTable(schema, table, parentSchema, fkDef.ParentTable) {
+				foundTable = true
+			}
+			return true, nil
+		},
+		Index: func(ctx *sql.Context, schema functions.ItemSchema, table functions.ItemTable, index functions.ItemIndex) (bool, error) {
+			if !foreignKeyReferenceTargetsTable(schema, table, parentSchema, fkDef.ParentTable) {
+				return true, nil
+			}
+			foundTable = true
+			if foreignKeyReferenceIndexMatches(index.Item, fkDef.ParentColumns) {
+				foundUniqueIndex = true
+				return false, nil
+			}
+			return true, nil
+		},
+	})
+	if err != nil {
+		return err
+	}
+	if foundTable && !foundUniqueIndex {
+		return pgerror.Newf(pgcode.InvalidForeignKey, `there is no unique constraint matching given keys for referenced table "%s"`, fkDef.ParentTable)
+	}
+	return nil
+}
+
+func foreignKeyReferenceTargetsTable(schema functions.ItemSchema, table functions.ItemTable, schemaName, tableName string) bool {
+	return strings.EqualFold(schema.Item.SchemaName(), schemaName) && strings.EqualFold(table.Item.Name(), tableName)
+}
+
+func foreignKeyReferenceIndexMatches(index sql.Index, parentColumns []string) bool {
+	if !index.IsUnique() || index.IsSpatial() || index.IsFullText() || len(index.PrefixLengths()) > 0 {
+		return false
+	}
+	expressions := index.Expressions()
+	if len(expressions) != len(parentColumns) {
+		return false
+	}
+	expectedColumns := make(map[string]int, len(parentColumns))
+	for _, column := range parentColumns {
+		expectedColumns[strings.ToLower(column)]++
+	}
+	for _, expression := range expressions {
+		column := foreignKeyReferenceIndexExpressionColumn(index.Table(), expression)
+		if expectedColumns[column] == 0 {
+			return false
+		}
+		expectedColumns[column]--
+	}
+	return true
+}
+
+func foreignKeyReferenceIndexExpressionColumn(tableName string, expression string) string {
+	expression = strings.ToLower(strings.TrimSpace(expression))
+	tablePrefix := strings.ToLower(tableName) + "."
+	if strings.HasPrefix(expression, tablePrefix) {
+		expression = strings.TrimPrefix(expression, tablePrefix)
+	}
+	parts := strings.Split(expression, ".")
+	return strings.Trim(parts[len(parts)-1], "`\"")
 }
 
 // foreignKeyComparableTypes returns whether the two given types are able to be used as parent/child columns in a
