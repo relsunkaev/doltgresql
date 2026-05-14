@@ -271,7 +271,8 @@ func castSQLError(err error) error {
 		return pgerror.New(pgcode.UndefinedColumn, pgErr.Error())
 	}
 	switch pgerror.GetPGCode(pgErr) {
-	case pgcode.AmbiguousFunction,
+	case pgcode.ActiveSQLTransaction,
+		pgcode.AmbiguousFunction,
 		pgcode.ArraySubscript,
 		pgcode.DeadlockDetected,
 		pgcode.CannotCoerce,

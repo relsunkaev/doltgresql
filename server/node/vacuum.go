@@ -24,6 +24,8 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/auth"
 )
 
@@ -58,7 +60,7 @@ func (v *Vacuum) Resolved() bool {
 // RowIter implements the interface sql.ExecSourceRel.
 func (v *Vacuum) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error) {
 	if ctx.GetIgnoreAutoCommit() {
-		return nil, errors.New("VACUUM cannot run inside a transaction block")
+		return nil, pgerror.New(pgcode.ActiveSQLTransaction, "VACUUM cannot run inside a transaction block")
 	}
 	for _, table := range v.Tables {
 		schemaName, err := core.GetSchemaName(ctx, nil, table.Schema)
