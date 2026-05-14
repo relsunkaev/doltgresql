@@ -821,6 +821,7 @@ func pgConstraintToRow(constraint *pgConstraint) sql.Row {
 	if constraint.conType == "n" {
 		conNoInherit = constraint.conNoInherit
 	}
+	zeroOid := id.NewOID(0).AsId()
 
 	return sql.Row{
 		constraint.oid,           // oid
@@ -830,25 +831,32 @@ func pgConstraintToRow(constraint *pgConstraint) sql.Row {
 		constraint.conDeferrable, // condeferrable
 		constraint.conDeferred,   // condeferred
 		true,                     // convalidated
-		constraint.tableOid,      // conrelid
-		constraint.typeOid,       // contypid
-		constraint.idxOid,        // conindid
-		id.Id(id.NewOID(0)),      // conparentid
-		constraint.tableRefOid,   // confrelid
-		constraint.fkUpdateType,  // confupdtype
-		constraint.fkDeleteType,  // confdeltype
-		constraint.fkMatchType,   // confmatchtype
-		true,                     // conislocal
-		int16(0),                 // coninhcount
-		conNoInherit,             // connoinherit
-		conKey,                   // conkey
-		conFkey,                  // confkey
-		nil,                      // conpfeqop
-		nil,                      // conppeqop
-		nil,                      // conffeqop
-		nil,                      // confdelsetcols
-		nil,                      // conexclop
-		nil,                      // conbin
+		pgConstraintOidOrZero(constraint.tableOid, zeroOid), // conrelid
+		pgConstraintOidOrZero(constraint.typeOid, zeroOid),  // contypid
+		pgConstraintOidOrZero(constraint.idxOid, zeroOid),   // conindid
+		zeroOid, // conparentid
+		pgConstraintOidOrZero(constraint.tableRefOid, zeroOid), // confrelid
+		constraint.fkUpdateType,                                // confupdtype
+		constraint.fkDeleteType,                                // confdeltype
+		constraint.fkMatchType,                                 // confmatchtype
+		true,                                                   // conislocal
+		int16(0),                                               // coninhcount
+		conNoInherit,                                           // connoinherit
+		conKey,                                                 // conkey
+		conFkey,                                                // confkey
+		nil,                                                    // conpfeqop
+		nil,                                                    // conppeqop
+		nil,                                                    // conffeqop
+		nil,                                                    // confdelsetcols
+		nil,                                                    // conexclop
+		nil,                                                    // conbin
 		id.NewTable(PgCatalogName, PgConstraintName).AsId(), // tableoid
 	}
+}
+
+func pgConstraintOidOrZero(value id.Id, zeroOid id.Id) id.Id {
+	if value.IsValid() {
+		return value
+	}
+	return zeroOid
 }

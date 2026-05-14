@@ -748,9 +748,11 @@ func (c *CompiledFunction) resolveOperator(ctx *sql.Context, argTypes []*pgtypes
 			if leftUnknownType {
 				casts[0] = UnknownLiteralCast
 				typ = argTypes[1]
+				typ = c.catalogInternalCharTypeForUnknownOperatorLiteral(typ, 0, 1)
 			} else {
 				casts[1] = UnknownLiteralCast
 				typ = argTypes[0]
+				typ = c.catalogInternalCharTypeForUnknownOperatorLiteral(typ, 1, 0)
 			}
 			if exactMatch, ok := overloads.ExactMatchForTypes(typ, typ); ok && c.useExactMatch(ctx, exactMatch, []*pgtypes.DoltgresType{typ, typ}) {
 				return overloadMatch{
@@ -795,6 +797,36 @@ func (c *CompiledFunction) resolveOperator(ctx *sql.Context, argTypes []*pgtypes
 	}
 	// From this point, the steps appear to be the same for functions and operators
 	return c.resolveFunction(argTypes, fnOverloads)
+}
+
+func (c *CompiledFunction) catalogInternalCharTypeForUnknownOperatorLiteral(typ *pgtypes.DoltgresType, unknownIdx int, peerIdx int) *pgtypes.DoltgresType {
+	if typ.ID != pgtypes.Oid.ID || len(c.Arguments) <= unknownIdx || len(c.Arguments) <= peerIdx {
+		return typ
+	}
+	if !catalogInternalCharField(c.Arguments[peerIdx].String()) {
+		return typ
+	}
+	return pgtypes.InternalChar
+}
+
+func catalogInternalCharField(expr string) bool {
+	switch strings.ToLower(expr) {
+	case "pg_attribute.attalign",
+		"pg_attribute.attstorage",
+		"pg_attribute.attcompression",
+		"pg_attribute.attidentity",
+		"pg_attribute.attgenerated",
+		"pg_class.relkind",
+		"pg_class.relpersistence",
+		"pg_class.relreplident",
+		"pg_constraint.contype",
+		"pg_constraint.confupdtype",
+		"pg_constraint.confdeltype",
+		"pg_constraint.confmatchtype":
+		return true
+	default:
+		return false
+	}
 }
 
 func (c *CompiledFunction) useExactMatch(ctx *sql.Context, exactMatch FunctionInterface, argTypes []*pgtypes.DoltgresType) bool {

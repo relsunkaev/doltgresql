@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/dolthub/go-mysql-server/sql"
+	sqlexpression "github.com/dolthub/go-mysql-server/sql/expression"
 	"github.com/stretchr/testify/require"
 
 	"github.com/dolthub/doltgresql/core/id"
@@ -51,4 +52,16 @@ func TestCompiledFunctionUserDefinedFunctionsRequireStatementRunner(t *testing.T
 		_, err := compiled.callResolvedFunction(ctx, fn, nil)
 		require.ErrorContains(t, err, "statement runner is not available")
 	}
+}
+
+func TestCatalogInternalCharTypeForUnknownOperatorLiteral(t *testing.T) {
+	compiled := &CompiledFunction{Arguments: []sql.Expression{
+		sqlexpression.NewGetFieldWithTable(0, 0, pgtypes.Oid, "", "pg_attribute", "attgenerated", false),
+		sqlexpression.NewLiteral("", pgtypes.Unknown),
+	}}
+
+	require.Same(t, pgtypes.InternalChar, compiled.catalogInternalCharTypeForUnknownOperatorLiteral(pgtypes.Oid, 1, 0))
+
+	compiled.Arguments[0] = sqlexpression.NewGetFieldWithTable(0, 0, pgtypes.Oid, "", "pg_attribute", "attrelid", false)
+	require.Same(t, pgtypes.Oid, compiled.catalogInternalCharTypeForUnknownOperatorLiteral(pgtypes.Oid, 1, 0))
 }
