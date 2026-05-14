@@ -4529,6 +4529,8 @@ func errMessageToSQLState(msg string) (string, bool) {
 		return pgcode.InvalidParameterValue.String(), true
 	case msg == "field position must not be zero":
 		return pgcode.InvalidParameterValue.String(), true
+	case msg == "step size cannot equal zero":
+		return pgcode.InvalidParameterValue.String(), true
 	case msg == "timestamps cannot be binned into intervals containing months or years":
 		return pgcode.FeatureNotSupported.String(), true
 	case msg == "stride must be greater than zero":

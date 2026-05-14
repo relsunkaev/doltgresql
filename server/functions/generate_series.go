@@ -26,6 +26,8 @@ import (
 	"github.com/shopspring/decimal"
 
 	"github.com/dolthub/doltgresql/postgres/parser/duration"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,7 +45,7 @@ func initGenerateSeries() {
 }
 
 // errStepSizeZero is an error for a step size of zero in the generate_series functions.
-var errStepSizeZero = errors.New("step size cannot equal zero")
+var errStepSizeZero = pgerror.New(pgcode.InvalidParameterValue, "step size cannot equal zero")
 
 var _ sql.TableFunction = (*generateSeriesWithOrdinalityTableFunction)(nil)
 var _ sql.ExecSourceRel = (*generateSeriesWithOrdinalityTableFunction)(nil)
