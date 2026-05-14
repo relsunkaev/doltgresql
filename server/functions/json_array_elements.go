@@ -22,6 +22,8 @@ import (
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
@@ -54,9 +56,9 @@ func jsonValueAsArrayForElements(value pgtypes.JsonValue) (pgtypes.JsonValueArra
 	case pgtypes.JsonValueArray:
 		return value, nil
 	case pgtypes.JsonValueObject:
-		return nil, errors.New("cannot extract elements from an object")
+		return nil, pgerror.New(pgcode.InvalidParameterValue, "cannot extract elements from an object")
 	default:
-		return nil, errors.New("cannot extract elements from a scalar")
+		return nil, pgerror.New(pgcode.InvalidParameterValue, "cannot extract elements from a scalar")
 	}
 }
 
@@ -64,7 +66,7 @@ func jsonValueAsArrayForLength(value pgtypes.JsonValue) (pgtypes.JsonValueArray,
 	value = pgtypes.JsonValueUnwrapRaw(value)
 	array, ok := value.(pgtypes.JsonValueArray)
 	if !ok {
-		return nil, errors.New("cannot get array length of a non-array")
+		return nil, pgerror.New(pgcode.InvalidParameterValue, "cannot get array length of a non-array")
 	}
 	return array, nil
 }

@@ -412,6 +412,15 @@ func fixedColumnTableFunctionColumns(funcName string) ([]string, bool) {
 	}
 }
 
+func jsonArrayElementsTableFunction(funcName string) bool {
+	switch funcName {
+	case "json_array_elements", "json_array_elements_text", "jsonb_array_elements", "jsonb_array_elements_text":
+		return true
+	default:
+		return false
+	}
+}
+
 func singleColumnTableFunctionName(funcExpr *tree.FuncExpr) string {
 	funcName := strings.ToLower(funcExpr.Func.String())
 	if idx := strings.LastIndex(funcName, "."); idx >= 0 {

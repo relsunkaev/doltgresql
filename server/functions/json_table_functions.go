@@ -29,11 +29,17 @@ import (
 
 var _ sql.TableFunction = (*jsonEachTableFunction)(nil)
 var _ sql.ExecSourceRel = (*jsonEachTableFunction)(nil)
+var _ sql.TableFunction = (*jsonArrayElementsTableFunction)(nil)
+var _ sql.ExecSourceRel = (*jsonArrayElementsTableFunction)(nil)
 var _ sql.TableFunction = (*jsonTableFunction)(nil)
 var _ sql.ExecSourceRel = (*jsonTableFunction)(nil)
 
 func initJsonTableFunctions() {
 	dtablefunctions.DoltTableFunctions = append(dtablefunctions.DoltTableFunctions,
+		newJsonArrayElementsTableFunction("json_array_elements", pgtypes.Json, pgtypes.Json, jsonValueToOutput),
+		newJsonArrayElementsTableFunction("json_array_elements_text", pgtypes.Json, pgtypes.Text, jsonValueAsText),
+		newJsonArrayElementsTableFunction("jsonb_array_elements", pgtypes.JsonB, pgtypes.JsonB, jsonbValueToOutput),
+		newJsonArrayElementsTableFunction("jsonb_array_elements_text", pgtypes.JsonB, pgtypes.Text, jsonValueAsText),
 		newJsonEachTableFunction("json_each", pgtypes.Json, pgtypes.Json, false),
 		newJsonEachTableFunction("json_each_text", pgtypes.Json, pgtypes.Text, true),
 		newJsonEachTableFunction("jsonb_each", pgtypes.JsonB, pgtypes.JsonB, false),
@@ -45,6 +51,134 @@ func initJsonTableFunctions() {
 		newJsonToRecordTableFunction("doltgres_jsonb_to_recordset", pgtypes.JsonB, true),
 		&jsonTableFunction{},
 	)
+}
+
+func newJsonArrayElementsTableFunction(name string, inputType *pgtypes.DoltgresType, valueType *pgtypes.DoltgresType, rowMapper func(*sql.Context, pgtypes.JsonValue) (any, error)) *jsonArrayElementsTableFunction {
+	return &jsonArrayElementsTableFunction{
+		name:      name,
+		inputType: inputType,
+		valueType: valueType,
+		rowMapper: rowMapper,
+	}
+}
+
+type jsonArrayElementsTableFunction struct {
+	db        sql.Database
+	name      string
+	inputType *pgtypes.DoltgresType
+	valueType *pgtypes.DoltgresType
+	rowMapper func(*sql.Context, pgtypes.JsonValue) (any, error)
+	exprs     []sql.Expression
+}
+
+func (j *jsonArrayElementsTableFunction) NewInstance(ctx *sql.Context, db sql.Database, args []sql.Expression) (sql.Node, error) {
+	if len(args) != 1 {
+		return nil, sql.ErrInvalidArgumentNumber.New(j.Name(), 1, len(args))
+	}
+	nt := *j
+	nt.db = db
+	nt.exprs = args
+	return &nt, nil
+}
+
+func (j *jsonArrayElementsTableFunction) Name() string {
+	return j.name
+}
+
+func (j *jsonArrayElementsTableFunction) String() string {
+	args := make([]string, len(j.exprs))
+	for i, expr := range j.exprs {
+		args[i] = expr.String()
+	}
+	return fmt.Sprintf("%s(%s)", j.Name(), strings.Join(args, ", "))
+}
+
+func (j *jsonArrayElementsTableFunction) Resolved() bool {
+	for _, expr := range j.exprs {
+		if !expr.Resolved() {
+			return false
+		}
+	}
+	return true
+}
+
+func (j *jsonArrayElementsTableFunction) Expressions() []sql.Expression {
+	return j.exprs
+}
+
+func (j *jsonArrayElementsTableFunction) WithExpressions(ctx *sql.Context, exprs ...sql.Expression) (sql.Node, error) {
+	if len(exprs) != 1 {
+		return nil, sql.ErrInvalidChildrenNumber.New(j, len(exprs), 1)
+	}
+	nt := *j
+	nt.exprs = exprs
+	return &nt, nil
+}
+
+func (j *jsonArrayElementsTableFunction) Database() sql.Database {
+	return j.db
+}
+
+func (j *jsonArrayElementsTableFunction) WithDatabase(db sql.Database) (sql.Node, error) {
+	nt := *j
+	nt.db = db
+	return &nt, nil
+}
+
+func (j *jsonArrayElementsTableFunction) IsReadOnly() bool {
+	return true
+}
+
+func (j *jsonArrayElementsTableFunction) Schema(ctx *sql.Context) sql.Schema {
+	var dbName string
+	if j.db != nil {
+		dbName = j.db.Name()
+	}
+	return sql.Schema{&sql.Column{
+		DatabaseSource: dbName,
+		Source:         j.Name(),
+		Name:           "value",
+		Type:           j.valueType,
+		Nullable:       true,
+	}}
+}
+
+func (j *jsonArrayElementsTableFunction) Children() []sql.Node {
+	return nil
+}
+
+func (j *jsonArrayElementsTableFunction) WithChildren(ctx *sql.Context, children ...sql.Node) (sql.Node, error) {
+	if len(children) != 0 {
+		return nil, sql.ErrInvalidChildrenNumber.New(j, len(children), 0)
+	}
+	return j, nil
+}
+
+func (j *jsonArrayElementsTableFunction) RowIter(ctx *sql.Context, row sql.Row) (sql.RowIter, error) {
+	value, err := j.exprs[0].Eval(ctx, row)
+	if err != nil {
+		return nil, err
+	}
+	if value == nil {
+		return sql.RowsToRowIter(), nil
+	}
+	doc, err := jsonDocumentFromFunctionValue(ctx, j.inputType, value)
+	if err != nil {
+		return nil, err
+	}
+	array, err := jsonValueAsArrayForElements(doc.Value)
+	if err != nil {
+		return nil, err
+	}
+	return jsonArrayElementsRowIter(array, j.rowMapper), nil
+}
+
+func (j *jsonArrayElementsTableFunction) CollationCoercibility(ctx *sql.Context) (collation sql.CollationID, coercibility byte) {
+	return sql.Collation_binary, 5
+}
+
+func (j *jsonArrayElementsTableFunction) Collation() sql.CollationID {
+	return sql.Collation_binary
 }
 
 func newJsonEachTableFunction(name string, inputType *pgtypes.DoltgresType, valueType *pgtypes.DoltgresType, textOutput bool) *jsonEachTableFunction {

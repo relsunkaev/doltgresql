@@ -998,6 +998,9 @@ func nodeExpr(ctx *Context, node tree.Expr) (vitess.Expr, error) {
 		if ctx.ResolveExcludedRefs() && isExcludedRef(node) {
 			return excludedToValuesFunc(node)
 		}
+		if expr, ok := jsonArrayElementAliasExpr(ctx, node); ok {
+			return expr, nil
+		}
 		if node.NumParts == 1 {
 			if expr, ok, err := tableOIDExprForContext(ctx, node.Parts[0]); ok || err != nil {
 				return expr, err
@@ -1067,6 +1070,27 @@ func wholeRowDuplicateAliasExprForName(ctx *Context, name string) (vitess.Expr, 
 		Expression:         pgexprs.NewTableToCompositeExpr(alias.tableName),
 		SelectExprChildren: children,
 	}, true
+}
+
+func jsonArrayElementAliasExpr(ctx *Context, node *tree.UnresolvedName) (vitess.Expr, bool) {
+	if node.Star || node.NumParts != 2 || len(ctx.jsonArrayElementAliases) == 0 {
+		return nil, false
+	}
+	aliasName := node.Parts[1]
+	funcName, ok := ctx.jsonArrayElementAliases[strings.ToLower(aliasName)]
+	if !ok || !strings.EqualFold(node.Parts[0], funcName) {
+		return nil, false
+	}
+	value := &vitess.ColName{
+		Name: vitess.NewColIdent("value"),
+		Qualifier: vitess.TableName{
+			Name: vitess.NewTableIdent(aliasName),
+		},
+	}
+	if funcName != "jsonb_array_elements" {
+		return value, true
+	}
+	return astFunctionExpr(funcName, value), true
 }
 
 func astFunctionExpr(name string, args ...vitess.Expr) *vitess.FuncExpr {

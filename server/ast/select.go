@@ -95,6 +95,11 @@ func nodeSelect(ctx *Context, node *tree.Select) (vitess.SelectStatement, error)
 			Rows: []tree.Exprs{},
 		}
 	}
+	prevJsonArrayElementAliases := ctx.jsonArrayElementAliases
+	if selectClause, ok := node.Select.(*tree.SelectClause); ok {
+		ctx.jsonArrayElementAliases = jsonArrayElementAliasesFromFrom(selectClause.From)
+	}
+	defer func() { ctx.jsonArrayElementAliases = prevJsonArrayElementAliases }()
 	selectStmt, err := nodeSelectStatement(ctx, node.Select)
 	if err != nil {
 		return nil, err
@@ -411,6 +416,12 @@ func nodeSelectExpr(ctx *Context, node tree.SelectExpr) (vitess.SelectExpr, erro
 			if err != nil {
 				return nil, err
 			}
+			return &vitess.AliasedExpr{
+				Expr: vitessExpr,
+				As:   outputColumnIdent(string(node.As)),
+			}, nil
+		}
+		if vitessExpr, ok := jsonArrayElementAliasExpr(ctx, expr); ok {
 			return &vitess.AliasedExpr{
 				Expr: vitessExpr,
 				As:   outputColumnIdent(string(node.As)),

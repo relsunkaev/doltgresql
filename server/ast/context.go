@@ -47,6 +47,8 @@ type Context struct {
 	ignoreSelectAuthDepth int
 
 	wholeRowDuplicateAliases map[string]wholeRowDuplicateAlias
+
+	jsonArrayElementAliases map[string]string
 }
 
 type wholeRowDuplicateAlias struct {

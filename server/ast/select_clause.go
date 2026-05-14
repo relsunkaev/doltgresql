@@ -33,11 +33,15 @@ func nodeSelectClause(ctx *Context, node *tree.SelectClause) (*vitess.Select, er
 		return nil, nil
 	}
 	var wholeRowDuplicateAliases map[string]wholeRowDuplicateAlias
+	jsonArrayElementAliases := jsonArrayElementAliasesFromFrom(node.From)
 	node, wholeRowDuplicateAliases = rewriteWholeRowDuplicateSubqueryAliases(node)
 	node = rewriteValuesCaseDistinctAliases(node)
 	prevWholeRowDuplicateAliases := ctx.wholeRowDuplicateAliases
 	ctx.wholeRowDuplicateAliases = wholeRowDuplicateAliases
 	defer func() { ctx.wholeRowDuplicateAliases = prevWholeRowDuplicateAliases }()
+	prevJsonArrayElementAliases := ctx.jsonArrayElementAliases
+	ctx.jsonArrayElementAliases = jsonArrayElementAliases
+	defer func() { ctx.jsonArrayElementAliases = prevJsonArrayElementAliases }()
 	tableOIDName, tableOIDOk, err := selectTableOIDRelation(ctx, node.From)
 	if err != nil {
 		return nil, err
@@ -207,6 +211,47 @@ func selectTableOIDRelation(ctx *Context, from tree.From) (vitess.TableName, boo
 		return vitess.TableName{}, false, err
 	}
 	return resolved, true, nil
+}
+
+func jsonArrayElementAliasesFromFrom(from tree.From) map[string]string {
+	if len(from.Tables) == 0 {
+		return nil
+	}
+	aliases := make(map[string]string)
+	for _, table := range from.Tables {
+		collectJsonArrayElementAliases(table, aliases)
+	}
+	if len(aliases) == 0 {
+		return nil
+	}
+	return aliases
+}
+
+func collectJsonArrayElementAliases(table tree.TableExpr, aliases map[string]string) {
+	switch table := table.(type) {
+	case *tree.AliasedTableExpr:
+		if len(table.As.Cols) != 0 || table.As.Alias == "" {
+			return
+		}
+		rowsFrom, ok := table.Expr.(*tree.RowsFromExpr)
+		if !ok || len(rowsFrom.Items) != 1 {
+			return
+		}
+		funcExpr, ok := rowsFrom.Items[0].(*tree.FuncExpr)
+		if !ok {
+			return
+		}
+		funcName := singleColumnTableFunctionName(funcExpr)
+		if !jsonArrayElementsTableFunction(funcName) {
+			return
+		}
+		aliases[strings.ToLower(string(table.As.Alias))] = funcName
+	case *tree.JoinTableExpr:
+		collectJsonArrayElementAliases(table.Left, aliases)
+		collectJsonArrayElementAliases(table.Right, aliases)
+	case *tree.ParenTableExpr:
+		collectJsonArrayElementAliases(table.Expr, aliases)
+	}
 }
 
 type duplicateSubqueryAliasCandidate struct {

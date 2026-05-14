@@ -319,6 +319,9 @@ func (t *DoltgresType) Compare(ctx context.Context, v1 interface{}, v2 interface
 	case uint64:
 		return compareUnsignedIntegral(ab, v2)
 	case string:
+		if t.ID == Json.ID {
+			return 0, pgerror.New(pgcode.UndefinedFunction, "could not identify an ordering operator for type json")
+		}
 		bb := v2.(string)
 		if t.ID.TypeName() == "citext" {
 			ab = strings.ToLower(ab)
