@@ -276,6 +276,40 @@ func TestPostgresOraclePromotedMapSkipsDoltSpecificQueries(t *testing.T) {
 	}
 }
 
+func TestPostgresOraclePromotedMapSkipsPriorDoltSpecificSetup(t *testing.T) {
+	outPath := filepath.Join(t.TempDir(), "conflicts_root_object_test.oracle-map.json")
+	cmd := exec.Command("go", "run", "gen_postgres_oracle_manifest.go",
+		"--promote-oracle-map", "conflicts_root_object_test.go",
+		"--oracle-test-name", "TestConflictsRootObject",
+		"--oracle-script-name", `Function delete "definition" conflict without modification`,
+		"--promote-oracle-map-output", outPath)
+	output, err := cmd.CombinedOutput()
+	require.NoError(t, err, string(output))
+
+	data, err := os.ReadFile(outPath)
+	require.NoError(t, err)
+	var generated struct {
+		Assertions []struct {
+			Ordinal    int      `json:"ordinal"`
+			Oracle     string   `json:"oracle"`
+			Query      string   `json:"query"`
+			NonLiteral []string `json:"nonLiteral"`
+		} `json:"assertions"`
+	}
+	require.NoError(t, json.Unmarshal(data, &generated))
+
+	foundPostDoltFunctionCall := false
+	for _, assertion := range generated.Assertions {
+		if assertion.Ordinal != 6 || !strings.Contains(assertion.Query, "interpreted_example('12')") {
+			continue
+		}
+		foundPostDoltFunctionCall = true
+		require.Equal(t, "internal", assertion.Oracle)
+		require.Contains(t, assertion.NonLiteral, "PriorDoltSpecific")
+	}
+	require.True(t, foundPostDoltFunctionCall)
+}
+
 func TestPostgresOraclePromotedMapSkipsDoltSidecarQueries(t *testing.T) {
 	outPath := filepath.Join(t.TempDir(), "index_test.oracle-map.json")
 	cmd := exec.Command("go", "run", "gen_postgres_oracle_manifest.go",

@@ -1537,6 +1537,7 @@ func hasPostgresOracleBlockingNonLiteral(nonLiteral []string) bool {
 		"PriorUsername",
 		"PriorBindVars",
 		"PriorCopyFromStdInFile",
+		"PriorDoltSpecific",
 	)
 }
 
@@ -2255,6 +2256,14 @@ func migrationCandidatesFromScriptTestSlice(source string, ordinal *int, lit *as
 		scriptFields := compositeFields(scriptLit)
 		scriptName, _ := optionalStringLiteral(scriptFields["Name"])
 		scriptNonLiteral := candidateStringSlice(scriptFields["SetUpScript"], "SetUpScript", stringSlices, helperNonLiteral)
+		if setup, err := stringSlice(scriptFields["SetUpScript"], stringSlices); err == nil {
+			for _, statement := range setup {
+				if hasDoltSpecificSQL(statement) {
+					scriptNonLiteral = appendNonLiteral(scriptNonLiteral, "DoltSpecific")
+					break
+				}
+			}
+		}
 		includeScript := len(scriptNameFilter) == 0
 		if !includeScript {
 			_, includeScript = scriptNameFilter[scriptName]
@@ -2482,8 +2491,10 @@ func appendPriorSetupNonLiteral(nonLiteral []string, fields map[string]ast.Expr)
 	if expectationKind(fields) == "error" {
 		return nonLiteral
 	}
-	if _, err := optionalStringLiteral(fields["Query"]); err != nil {
+	if query, err := optionalStringLiteral(fields["Query"]); err != nil {
 		nonLiteral = append(nonLiteral, "PriorQuery")
+	} else if hasDoltSpecificSQL(query) {
+		nonLiteral = appendNonLiteral(nonLiteral, "PriorDoltSpecific")
 	}
 	if fields["Username"] != nil {
 		nonLiteral = append(nonLiteral, "PriorUsername")
@@ -2497,6 +2508,15 @@ func appendPriorSetupNonLiteral(nonLiteral []string, fields map[string]ast.Expr)
 		nonLiteral = append(nonLiteral, "PriorCopyFromStdInFile")
 	}
 	return nonLiteral
+}
+
+func appendNonLiteral(nonLiteral []string, value string) []string {
+	for _, existing := range nonLiteral {
+		if existing == value {
+			return nonLiteral
+		}
+	}
+	return append(nonLiteral, value)
 }
 
 func suggestedOracleID(source string, ordinal int, query string) string {
