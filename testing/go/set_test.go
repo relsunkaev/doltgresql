@@ -150,8 +150,7 @@ var setStmts = []ScriptTest{
 				Expected: []sql.Row{{float64(1)}},
 			},
 			{
-				Query:    "SELECT current_setting('geqo_seed')",
-				Expected: []sql.Row{{"1"}},
+				Query: "SELECT current_setting('geqo_seed')", PostgresOracle: ScriptTestPostgresOracle{ID: "set-test-testsetstatements-0032-select-current_setting-geqo_seed"},
 			},
 		},
 	},
@@ -1763,16 +1762,14 @@ var setStmts = []ScriptTest{
 				Expected: []sql.Row{{int64(100)}},
 			},
 			{
-				Query:    "SET effective_io_concurrency TO DEFAULT",
-				Expected: []sql.Row{},
+				Query: "SET effective_io_concurrency TO DEFAULT", PostgresOracle: ScriptTestPostgresOracle{ID: "set-test-testsetstatements-0402-set-effective_io_concurrency-to-default"},
 			},
 			{
 				Query:    "SHOW effective_io_concurrency",
 				Expected: []sql.Row{{int64(0)}},
 			},
 			{
-				Query:    "SELECT current_setting('effective_io_concurrency')",
-				Expected: []sql.Row{{"0"}},
+				Query: "SELECT current_setting('effective_io_concurrency')", PostgresOracle: ScriptTestPostgresOracle{ID: "set-test-testsetstatements-0404-select-current_setting-effective_io_concurrency"},
 			},
 		},
 	},
@@ -4143,16 +4140,14 @@ var setStmts = []ScriptTest{
 				Expected: []sql.Row{{int64(1)}},
 			},
 			{
-				Query:    "SET maintenance_io_concurrency TO DEFAULT",
-				Expected: []sql.Row{},
+				Query: "SET maintenance_io_concurrency TO DEFAULT", PostgresOracle: ScriptTestPostgresOracle{ID: "set-test-testsetstatements-0968-set-maintenance_io_concurrency-to-default"},
 			},
 			{
 				Query:    "SHOW maintenance_io_concurrency",
 				Expected: []sql.Row{{int64(0)}},
 			},
 			{
-				Query:    "SELECT current_setting('maintenance_io_concurrency')",
-				Expected: []sql.Row{{"0"}},
+				Query: "SELECT current_setting('maintenance_io_concurrency')", PostgresOracle: ScriptTestPostgresOracle{ID: "set-test-testsetstatements-0970-select-current_setting-maintenance_io_concurrency"},
 			},
 		},
 	},
@@ -6095,20 +6090,16 @@ var setStmts = []ScriptTest{
 				Query: "SET timezone_abbreviations TO ''", PostgresOracle: ScriptTestPostgresOracle{ID: "set-test-testsetstatements-1396-set-timezone_abbreviations-to", Compare: "sqlstate"},
 			},
 			{
-				Query:    "SHOW timezone_abbreviations",
-				Expected: []sql.Row{{""}},
+				Query: "SHOW timezone_abbreviations", PostgresOracle: ScriptTestPostgresOracle{ID: "set-test-testsetstatements-1397-show-timezone_abbreviations"},
 			},
 			{
-				Query:    "SET timezone_abbreviations TO 'Default'",
-				Expected: []sql.Row{},
+				Query: "SET timezone_abbreviations TO 'Default'", PostgresOracle: ScriptTestPostgresOracle{ID: "set-test-testsetstatements-1398-set-timezone_abbreviations-to-default"},
 			},
 			{
-				Query:    "SHOW timezone_abbreviations",
-				Expected: []sql.Row{{"Default"}},
+				Query: "SHOW timezone_abbreviations", PostgresOracle: ScriptTestPostgresOracle{ID: "set-test-testsetstatements-1399-show-timezone_abbreviations"},
 			},
 			{
-				Query:    "SELECT current_setting('timezone_abbreviations')",
-				Expected: []sql.Row{{"Default"}},
+				Query: "SELECT current_setting('timezone_abbreviations')", PostgresOracle: ScriptTestPostgresOracle{ID: "set-test-testsetstatements-1400-select-current_setting-timezone_abbreviations"},
 			},
 		},
 	},
@@ -6346,8 +6337,7 @@ var setStmts = []ScriptTest{
 				Expected: []sql.Row{{int8(0)}},
 			},
 			{
-				Query:    "SELECT current_setting('transaction_deferrable')",
-				Expected: []sql.Row{{"0"}},
+				Query: "SELECT current_setting('transaction_deferrable')", PostgresOracle: ScriptTestPostgresOracle{ID: "set-test-testsetstatements-1457-select-current_setting-transaction_deferrable"},
 			},
 		},
 	},
@@ -6368,12 +6358,10 @@ var setStmts = []ScriptTest{
 				Query: "SET transaction_isolation TO DEFAULT", PostgresOracle: ScriptTestPostgresOracle{ID: "set-test-testsetstatements-1461-set-transaction_isolation-to-default", Compare: "sqlstate"},
 			},
 			{
-				Query:    "SHOW transaction_isolation",
-				Expected: []sql.Row{{"read committed"}},
+				Query: "SHOW transaction_isolation", PostgresOracle: ScriptTestPostgresOracle{ID: "set-test-testsetstatements-1462-show-transaction_isolation"},
 			},
 			{
-				Query:    "SELECT current_setting('transaction_isolation')",
-				Expected: []sql.Row{{"read committed"}},
+				Query: "SELECT current_setting('transaction_isolation')", PostgresOracle: ScriptTestPostgresOracle{ID: "set-test-testsetstatements-1463-select-current_setting-transaction_isolation"},
 			},
 		},
 	},
@@ -6398,8 +6386,7 @@ var setStmts = []ScriptTest{
 				Expected: []sql.Row{{int8(0)}},
 			},
 			{
-				Query:    "SELECT current_setting('transaction_read_only')",
-				Expected: []sql.Row{{"0"}},
+				Query: "SELECT current_setting('transaction_read_only')", PostgresOracle: ScriptTestPostgresOracle{ID: "set-test-testsetstatements-1469-select-current_setting-transaction_read_only"},
 			},
 		},
 	},
@@ -7256,12 +7243,10 @@ var setStmts = []ScriptTest{
 				Query: "set myvar.var_value to (select 'a')", PostgresOracle: ScriptTestPostgresOracle{ID: "set-test-testsetstatements-1670-set-myvar.var_value-to-select-a", Compare: "sqlstate"},
 			},
 			{
-				Query:    "SHOW myvar.var_value",
-				Expected: []sql.Row{{"a"}},
+				Query: "SHOW myvar.var_value", PostgresOracle: ScriptTestPostgresOracle{ID: "set-test-testsetstatements-1671-show-myvar.var_value"},
 			},
 			{
-				Query:    "set myvar.val2 to (select current_setting('myvar.var_value'))",
-				Expected: []sql.Row{},
+				Query: "set myvar.val2 to (select current_setting('myvar.var_value'))", PostgresOracle: ScriptTestPostgresOracle{ID: "set-test-testsetstatements-1672-set-myvar.val2-to-select-current_setting", Compare: "sqlstate"},
 			},
 			{
 				Query:    "SHOW myvar.val2",

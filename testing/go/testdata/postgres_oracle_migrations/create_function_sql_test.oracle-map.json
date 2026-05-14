@@ -333,12 +333,16 @@
       "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
       "ordinal": 17,
       "scriptName": "function with create or replace view",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0017-select-public.sp_build_view_bathymetry_layer",
       "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0017-select-public.sp_build_view_bathymetry_layer",
-      "expectedKind": "rows",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42883",
+      "errorSeverity": "ERROR",
       "query": "SELECT public.sp_build_view_bathymetry_layer()",
       "querySha256": "ef2d01af2011ca27c30885fb3585c1dba26fe58776346a0006ebc3b5257d5c63",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -490,12 +494,32 @@
       "source": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL",
       "ordinal": 27,
       "scriptName": "function with delete",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0027-select-*-from-test",
       "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0027-select-*-from-test",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test;",
       "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "sched"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "busy"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {

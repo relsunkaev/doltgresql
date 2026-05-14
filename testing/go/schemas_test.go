@@ -858,18 +858,10 @@ var SchemaTests = []ScriptTest{
 				Query: "Show schemas", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0087-show-schemas", Compare: "sqlstate"},
 			},
 			{
-				Query:    "DROP SCHEMA dropme;",
-				Expected: []sql.Row{},
+				Query: "DROP SCHEMA dropme;", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0088-drop-schema-dropme"},
 			},
 			{
-				Query: "Show schemas",
-				Expected: []sql.Row{
-					{"dolt"},
-					{"hasTables"},
-					{"pg_catalog"},
-					{"public"},
-					{"information_schema"},
-				},
+				Query: "Show schemas", PostgresOracle: ScriptTestPostgresOracle{ID: "schemas-test-testschemas-0089-show-schemas", Compare: "sqlstate"},
 			},
 			{
 				Query:       "DROP SCHEMA dropme;",

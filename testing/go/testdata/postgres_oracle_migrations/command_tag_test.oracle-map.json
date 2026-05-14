@@ -137,12 +137,40 @@
       "source": "testing/go/command_tag_test.go:TestCommandTag",
       "ordinal": 8,
       "scriptName": "update",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "command-tag-test-testcommandtag-0008-select-*-from-table0-order",
       "suggestedId": "command-tag-test-testcommandtag-0008-select-*-from-table0-order",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM table0 order by id",
       "querySha256": "2e7290c3437ed0d606dd9ee13c12325a5558fe4f8b31f68ae218eb486d759fbf",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "Dolt"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "DoltHub"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "Doltgres"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -176,12 +204,15 @@
       "source": "testing/go/command_tag_test.go:TestCommandTag",
       "ordinal": 11,
       "scriptName": "delete",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "command-tag-test-testcommandtag-0011-select-*-from-table0-order",
       "suggestedId": "command-tag-test-testcommandtag-0011-select-*-from-table0-order",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM table0 order by id",
       "querySha256": "2e7290c3437ed0d606dd9ee13c12325a5558fe4f8b31f68ae218eb486d759fbf",
-      "needsCleanup": true,
+      "expectedRows": [],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {

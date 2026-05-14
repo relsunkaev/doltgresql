@@ -1972,12 +1972,15 @@
       "source": "testing/go/alter_table_test.go:TestAlterTable",
       "ordinal": 109,
       "scriptName": "ALTER TABLE RENAME COLUMN with table types",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0109-alter-table-t1b-rename-column",
       "suggestedId": "alter-table-test-testaltertable-0109-alter-table-t1b-rename-column",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "ALTER TABLE t1b RENAME COLUMN b TO bb;",
       "querySha256": "829aa0b027c60904459513cf5e0a3f96f4da169e522bcb5212353eb5b6130100",
-      "needsCleanup": true,
+      "expectedRows": [],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1985,12 +1988,15 @@
       "source": "testing/go/alter_table_test.go:TestAlterTable",
       "ordinal": 110,
       "scriptName": "ALTER TABLE RENAME COLUMN with table types",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0110-alter-table-t1b-rename-column",
       "suggestedId": "alter-table-test-testaltertable-0110-alter-table-t1b-rename-column",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "ALTER TABLE t1b RENAME COLUMN a TO aa;",
       "querySha256": "7a720be6dd8978ec5bc8a56a3d22f1b68c0a1cf916cc3f2288f88d69addec3df",
-      "needsCleanup": true,
+      "expectedRows": [],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1998,12 +2004,27 @@
       "source": "testing/go/alter_table_test.go:TestAlterTable",
       "ordinal": 111,
       "scriptName": "ALTER TABLE RENAME COLUMN with table types",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0111-select-*-from-t2",
       "suggestedId": "alter-table-test-testaltertable-0111-select-*-from-t2",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM t2;",
       "querySha256": "4cca2c8c0018c1898b41584c73e1a45f20b923e803a8639f5977973176d7ba92",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "(2,abc)"
+          },
+          {
+            "value": "(def,3)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -2011,12 +2032,15 @@
       "source": "testing/go/alter_table_test.go:TestAlterTable",
       "ordinal": 112,
       "scriptName": "ALTER TABLE RENAME COLUMN with table types",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0112-insert-into-t2-values-4",
       "suggestedId": "alter-table-test-testaltertable-0112-insert-into-t2-values-4",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "INSERT INTO t2 VALUES (4, ROW(5, 'ghi'), ROW('jkl', 6));",
       "querySha256": "259ff50fa573ca157f7af1d3e2d8666fdeb61fec6d62b4700869678e4414888a",
-      "needsCleanup": true,
+      "expectedRows": [],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -2024,12 +2048,16 @@
       "source": "testing/go/alter_table_test.go:TestAlterTable",
       "ordinal": 113,
       "scriptName": "ALTER TABLE RENAME COLUMN with table types",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0113-select-t1b-.aa-t1b-.@1",
       "suggestedId": "alter-table-test-testaltertable-0113-select-t1b-.aa-t1b-.@1",
-      "expectedKind": "rows",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
       "query": "SELECT (t1b).aa, (t1b).@1, (t1b).bb, (t1b).@2 FROM t2;",
       "querySha256": "cce0270740bf1db6bedb3ab8f0543badac3567f1259cbcd2d4194c30e80e8eda",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {

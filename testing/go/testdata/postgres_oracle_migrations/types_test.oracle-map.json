@@ -8367,12 +8367,21 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 319,
       "scriptName": "Regtype type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0319-select-integer-::regtype-::oid-::regtype",
       "suggestedId": "types-test-testtypes-0319-select-integer-::regtype-::oid-::regtype",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT (('integer'::regtype)::oid)::regtype;",
       "querySha256": "f0a779a0e6dd2dbeca94b89e7d7a85e27aa1f5f814f008d4eedc556fc6a9a242",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "integer"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -8380,12 +8389,21 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 320,
       "scriptName": "Regtype type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0320-select-integer-::regtype-::oid-::text",
       "suggestedId": "types-test-testtypes-0320-select-integer-::regtype-::oid-::text",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT ((('integer'::regtype)::oid)::text)::regtype;",
       "querySha256": "d719621f05e94cedfefc03def61ac45405ad84e0902ab505e696db7214b57adf",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "integer"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -8393,12 +8411,21 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 321,
       "scriptName": "Regtype type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0321-select-4294967295::regtype",
       "suggestedId": "types-test-testtypes-0321-select-4294967295::regtype",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT 4294967295::regtype;",
       "querySha256": "63c2f6879b20946cbea457d7103e13a50f5bc20d2d285f363adcf5acce1a6d9b",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "4294967295"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -8406,12 +8433,16 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 322,
       "scriptName": "Regtype type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0322-select-integer-::regtype",
       "suggestedId": "types-test-testtypes-0322-select-integer-::regtype",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "42704",
+      "errorSeverity": "ERROR",
       "query": "SELECT '\"Integer\"'::regtype;",
       "querySha256": "7a8d31743997c969dab1e95ff8b67a903be8cfddc44b891482603de36e5d6173",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -8419,12 +8450,16 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 323,
       "scriptName": "Regtype type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0323-select-integer-::regtype",
       "suggestedId": "types-test-testtypes-0323-select-integer-::regtype",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
       "query": "SELECT '\"integer'::regtype;",
       "querySha256": "dcda7589944d3d6ba16f692f85f84fb6905e91f82aa2744b51e18ef838980aca",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -8432,12 +8467,16 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 324,
       "scriptName": "Regtype type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0324-select-integer-::regtype",
       "suggestedId": "types-test-testtypes-0324-select-integer-::regtype",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
       "query": "SELECT 'integer\"'::regtype;",
       "querySha256": "d021ce09388903a1e9d7eb9ef16175f61f7ee5b6ebbc64014ae69951b5e0cbc3",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -8445,12 +8484,16 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 325,
       "scriptName": "Regtype type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0325-select-integer-::regtype",
       "suggestedId": "types-test-testtypes-0325-select-integer-::regtype",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
       "query": "SELECT '\"\"integer'::regtype;",
       "querySha256": "f68657c8fa4a729997c4a8110a34cbbb241a72d01b4f23ac949f07538fbd722b",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -10465,12 +10508,15 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 404,
       "scriptName": "Xid type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0404-insert-into-t_xid-values-6",
       "suggestedId": "types-test-testtypes-0404-insert-into-t_xid-values-6",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "INSERT INTO t_xid VALUES (6, '0', 'c');",
       "querySha256": "ad54259ea7dbdc7bc3e74cb78789552957ed98b493ed1b72ce74dfb8e12d5fcc",
-      "needsCleanup": true,
+      "expectedRows": [],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -10478,12 +10524,15 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 405,
       "scriptName": "Xid type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0405-insert-into-t_xid-values-7",
       "suggestedId": "types-test-testtypes-0405-insert-into-t_xid-values-7",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "INSERT INTO t_xid VALUES (7, '-1', 'd');",
       "querySha256": "5703ca87cb154c27d1411e561800e54d281d1b6a635f1553616a934a443b002a",
-      "needsCleanup": true,
+      "expectedRows": [],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -10491,12 +10540,16 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 406,
       "scriptName": "Xid type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0406-insert-into-t_xid-values-8",
       "suggestedId": "types-test-testtypes-0406-insert-into-t_xid-values-8",
-      "expectedKind": "rows",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22P02",
+      "errorSeverity": "ERROR",
       "query": "INSERT INTO t_xid VALUES (8, 'abc', 'd');",
       "querySha256": "94ded1b0ad3a2a02d3cb1195cabd1a674847f03be70f8dadd586c474fc4280e1",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -10946,12 +10999,16 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 429,
       "scriptName": "Xid type, explicit casts",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0429-select-4294967295-::text-::xid-4294967297",
       "suggestedId": "types-test-testtypes-0429-select-4294967295-::text-::xid-4294967297",
-      "expectedKind": "rows",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22003",
+      "errorSeverity": "ERROR",
       "query": "SELECT ('-4294967295'::text)::xid, ('-4294967297'::text)::xid;",
       "querySha256": "7e771007065b152d7835dc6c16170ad31d37fb98fa12777a81baa175ba1ddc04",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {

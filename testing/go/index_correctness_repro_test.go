@@ -50,8 +50,7 @@ func TestCreateIndexConcurrentlyRejectsTransactionBlockRepro(t *testing.T) {
 					Query: `SELECT count(*)::TEXT
 						FROM pg_catalog.pg_indexes
 						WHERE tablename = 'concurrent_index_tx_items'
-							AND indexname = 'concurrent_index_tx_items_label_idx';`,
-					Expected: []sql.Row{{"0"}},
+							AND indexname = 'concurrent_index_tx_items_label_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testcreateindexconcurrentlyrejectstransactionblockrepro-0002-select-count-*-::text-from"},
 				},
 			},
 		},
@@ -79,8 +78,7 @@ func TestDropIndexConcurrentlyRejectsTransactionBlockRepro(t *testing.T) {
 					SkipResultsCheck: true,
 				},
 				{
-					Query:       `DROP INDEX CONCURRENTLY drop_concurrent_index_tx_items_label_idx;`,
-					ExpectedErr: `cannot run inside a transaction block`,
+					Query: `DROP INDEX CONCURRENTLY drop_concurrent_index_tx_items_label_idx;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testdropindexconcurrentlyrejectstransactionblockrepro-0001-drop-index-concurrently-drop_concurrent_index_tx_items_label_idx", Compare: "sqlstate"},
 				},
 				{
 					Query:            `ROLLBACK;`,
@@ -90,8 +88,7 @@ func TestDropIndexConcurrentlyRejectsTransactionBlockRepro(t *testing.T) {
 					Query: `SELECT count(*)::TEXT
 						FROM pg_catalog.pg_indexes
 						WHERE tablename = 'drop_concurrent_index_tx_items'
-							AND indexname = 'drop_concurrent_index_tx_items_label_idx';`,
-					Expected: []sql.Row{{"1"}},
+							AND indexname = 'drop_concurrent_index_tx_items_label_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testdropindexconcurrentlyrejectstransactionblockrepro-0002-select-count-*-::text-from"},
 				},
 			},
 		},
@@ -128,8 +125,7 @@ func TestClusterMarksIndexClusteredRepro(t *testing.T) {
 						JOIN pg_catalog.pg_class t ON t.oid = i.indrelid
 						WHERE t.relname = 'cluster_metadata_items'
 							AND i.indisclustered
-						ORDER BY c.relname;`,
-					Expected: []sql.Row{{"cluster_metadata_items_label_idx"}},
+						ORDER BY c.relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testclustermarksindexclusteredrepro-0001-select-c.relname-from-pg_catalog.pg_index-i"},
 				},
 			},
 		},
@@ -160,18 +156,12 @@ func TestPartialUniqueIndexEnforcesPredicateRepro(t *testing.T) {
 						(3, 10, false);`,
 				},
 				{
-					Query:       `INSERT INTO partial_unique_items VALUES (4, 10, true);`,
-					ExpectedErr: `duplicate`,
+					Query: `INSERT INTO partial_unique_items VALUES (4, 10, true);`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testpartialuniqueindexenforcespredicaterepro-0001-insert-into-partial_unique_items-values-4", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, code, active
 						FROM partial_unique_items
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, 10, "t"},
-						{2, 10, "f"},
-						{3, 10, "f"},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testpartialuniqueindexenforcespredicaterepro-0002-select-id-code-active-from"},
 				},
 			},
 		},
@@ -200,8 +190,7 @@ func TestPartialUniqueIndexUpdatesPredicateMembershipGuard(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `UPDATE partial_unique_update_items SET active = true WHERE id = 2;`,
-					ExpectedErr: `duplicate`,
+					Query: `UPDATE partial_unique_update_items SET active = true WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testpartialuniqueindexupdatespredicatemembershipguard-0001-update-partial_unique_update_items-set-active-=", Compare: "sqlstate"},
 				},
 				{
 					Query: `UPDATE partial_unique_update_items SET active = false WHERE id = 1;`,
@@ -215,13 +204,7 @@ func TestPartialUniqueIndexUpdatesPredicateMembershipGuard(t *testing.T) {
 				{
 					Query: `SELECT id, code, active
 						FROM partial_unique_update_items
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, 10, "f"},
-						{2, 10, "t"},
-						{3, 20, "f"},
-						{4, 10, "f"},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testpartialuniqueindexupdatespredicatemembershipguard-0002-select-id-code-active-from"},
 				},
 			},
 		},
@@ -258,11 +241,7 @@ func TestOnConflictUsesPartialUniqueIndexPredicateRepro(t *testing.T) {
 				{
 					Query: `SELECT id, code, active, note
 						FROM partial_upsert_items
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, 10, "t", "new-active"},
-						{2, 10, "f", "inactive"},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testonconflictusespartialuniqueindexpredicaterepro-0001-select-id-code-active-note"},
 				},
 			},
 		},
@@ -290,12 +269,10 @@ func TestOnConflictWithoutPredicateRejectsPartialUniqueIndexRepro(t *testing.T) 
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `INSERT INTO partial_upsert_missing_predicate_items VALUES (1, 10, false)
-						ON CONFLICT (code) DO NOTHING;`,
-					ExpectedErr: `there is no unique or exclusion constraint matching the ON CONFLICT specification`,
+						ON CONFLICT (code) DO NOTHING;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testonconflictwithoutpredicaterejectspartialuniqueindexrepro-0001-insert-into-partial_upsert_missing_predicate_items-values-1", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT COUNT(*) FROM partial_upsert_missing_predicate_items;`,
-					Expected: []sql.Row{{0}},
+					Query: `SELECT COUNT(*) FROM partial_upsert_missing_predicate_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testonconflictwithoutpredicaterejectspartialuniqueindexrepro-0002-select-count-*-from-partial_upsert_missing_predicate_items"},
 				},
 			},
 		},
@@ -321,14 +298,12 @@ func TestUniqueExpressionIndexEnforcesComputedValuesRepro(t *testing.T) {
 					Query: `INSERT INTO unique_expression_items VALUES (1, 'User@Example.com');`,
 				},
 				{
-					Query:       `INSERT INTO unique_expression_items VALUES (2, 'user@example.com');`,
-					ExpectedErr: `duplicate`,
+					Query: `INSERT INTO unique_expression_items VALUES (2, 'user@example.com');`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testuniqueexpressionindexenforcescomputedvaluesrepro-0001-insert-into-unique_expression_items-values-2", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, email
 						FROM unique_expression_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, "User@Example.com"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testuniqueexpressionindexenforcescomputedvaluesrepro-0002-select-id-email-from-unique_expression_items"},
 				},
 			},
 		},
@@ -355,17 +330,12 @@ func TestUniqueExpressionIndexEnforcesUpdatedComputedValuesGuard(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `UPDATE unique_expression_update_items SET email = 'user@example.com' WHERE id = 2;`,
-					ExpectedErr: `duplicate`,
+					Query: `UPDATE unique_expression_update_items SET email = 'user@example.com' WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testuniqueexpressionindexenforcesupdatedcomputedvaluesguard-0001-update-unique_expression_update_items-set-email-=", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, email
 						FROM unique_expression_update_items
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, "User@Example.com"},
-						{2, "Other@Example.com"},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testuniqueexpressionindexenforcesupdatedcomputedvaluesguard-0002-select-id-email-from-unique_expression_update_items"},
 				},
 			},
 		},
@@ -398,8 +368,7 @@ func TestOnConflictUsesUniqueExpressionIndexRepro(t *testing.T) {
 				{
 					Query: `SELECT id, email, note
 						FROM expression_upsert_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, "User@Example.com", "new"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testonconflictusesuniqueexpressionindexrepro-0001-select-id-email-note-from"},
 				},
 			},
 		},
@@ -430,8 +399,7 @@ func TestOnConflictOnConstraintUsesNamedUniqueConstraintRepro(t *testing.T) {
 				{
 					Query: `SELECT id, code, note
 						FROM named_constraint_upsert_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, 10, "new"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testonconflictonconstraintusesnameduniqueconstraintrepro-0001-select-id-code-note-from"},
 				},
 			},
 		},
@@ -460,14 +428,12 @@ func TestUniqueIndexIncludeColumnsDoNotAffectUniquenessRepro(t *testing.T) {
 					Query: `INSERT INTO unique_include_items VALUES (1, 10, 'first');`,
 				},
 				{
-					Query:       `INSERT INTO unique_include_items VALUES (2, 10, 'second');`,
-					ExpectedErr: `duplicate`,
+					Query: `INSERT INTO unique_include_items VALUES (2, 10, 'second');`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testuniqueindexincludecolumnsdonotaffectuniquenessrepro-0001-insert-into-unique_include_items-values-2", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, code, label
 						FROM unique_include_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, 10, "first"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testuniqueindexincludecolumnsdonotaffectuniquenessrepro-0002-select-id-code-label-from"},
 				},
 			},
 		},
@@ -495,14 +461,12 @@ func TestUniqueIndexNullsNotDistinctRejectsDuplicateNullsRepro(t *testing.T) {
 					Query: `INSERT INTO unique_nulls_not_distinct_items VALUES (1, NULL);`,
 				},
 				{
-					Query:       `INSERT INTO unique_nulls_not_distinct_items VALUES (2, NULL);`,
-					ExpectedErr: `duplicate`,
+					Query: `INSERT INTO unique_nulls_not_distinct_items VALUES (2, NULL);`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testuniqueindexnullsnotdistinctrejectsduplicatenullsrepro-0001-insert-into-unique_nulls_not_distinct_items-values-2", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, code
 						FROM unique_nulls_not_distinct_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, nil}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testuniqueindexnullsnotdistinctrejectsduplicatenullsrepro-0002-select-id-code-from-unique_nulls_not_distinct_items"},
 				},
 			},
 		},
@@ -530,14 +494,12 @@ func TestUniqueIndexNullsNotDistinctRejectsUpdatedDuplicateNullsGuard(t *testing
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `UPDATE unique_nulls_not_distinct_update_items SET code = NULL WHERE id = 2;`,
-					ExpectedErr: `duplicate`,
+					Query: `UPDATE unique_nulls_not_distinct_update_items SET code = NULL WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testuniqueindexnullsnotdistinctrejectsupdatedduplicatenullsguard-0001-update-unique_nulls_not_distinct_update_items-set-code-=", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, code
 						FROM unique_nulls_not_distinct_update_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, nil}, {2, 10}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testuniqueindexnullsnotdistinctrejectsupdatedduplicatenullsguard-0002-select-id-code-from-unique_nulls_not_distinct_update_items"},
 				},
 			},
 		},
@@ -567,14 +529,12 @@ func TestOnConflictUsesNullsNotDistinctUniqueIndexRepro(t *testing.T) {
 					Query: `INSERT INTO nulls_not_distinct_upsert_items VALUES (2, NULL, 'new')
 						ON CONFLICT (code) DO UPDATE
 						SET label = EXCLUDED.label
-						RETURNING id, code, label;`,
-					Expected: []sql.Row{{1, nil, "new"}},
+						RETURNING id, code, label;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testonconflictusesnullsnotdistinctuniqueindexrepro-0001-insert-into-nulls_not_distinct_upsert_items-values-2"},
 				},
 				{
 					Query: `SELECT id, code, label
 						FROM nulls_not_distinct_upsert_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, nil, "new"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testonconflictusesnullsnotdistinctuniqueindexrepro-0002-select-id-code-label-from"},
 				},
 			},
 		},
@@ -601,8 +561,7 @@ func TestCreateUniqueIndexNullsNotDistinctRejectsExistingDuplicateNullsRepro(t *
 				{
 					Query: `CREATE UNIQUE INDEX create_nulls_not_distinct_existing_code_idx
 						ON create_nulls_not_distinct_existing_items (code)
-						NULLS NOT DISTINCT;`,
-					ExpectedErr: `duplicate`,
+						NULLS NOT DISTINCT;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testcreateuniqueindexnullsnotdistinctrejectsexistingduplicatenullsrepro-0001-create-unique-index-on-create_nulls_not_distinct_existing_items", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT count(*)
@@ -635,8 +594,7 @@ func TestCreateUniqueIndexRejectsExistingDuplicatesRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `CREATE UNIQUE INDEX create_unique_existing_duplicate_code_idx
-						ON create_unique_existing_duplicate_items (code);`,
-					ExpectedErr: `duplicate`,
+						ON create_unique_existing_duplicate_items (code);`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testcreateuniqueindexrejectsexistingduplicatesrepro-0001-create-unique-index-on-create_unique_existing_duplicate_items", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT count(*)
@@ -666,8 +624,7 @@ func TestIndexDefinitionsRejectInvalidExpressionsRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `CREATE INDEX index_srf_expression_items_idx
-						ON index_srf_expression_items ((generate_series(1, 2)));`,
-					ExpectedErr: `set-returning functions are not allowed in index expressions`,
+						ON index_srf_expression_items ((generate_series(1, 2)));`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testindexdefinitionsrejectinvalidexpressionsrepro-0001-create-index-index_srf_expression_items_idx-on-index_srf_expression_items", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -682,8 +639,7 @@ func TestIndexDefinitionsRejectInvalidExpressionsRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `CREATE INDEX index_volatile_expression_items_idx
-						ON index_volatile_expression_items ((random()));`,
-					ExpectedErr: `functions in index expression must be marked IMMUTABLE`,
+						ON index_volatile_expression_items ((random()));`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testindexdefinitionsrejectinvalidexpressionsrepro-0002-create-index-index_volatile_expression_items_idx-on-index_volatile_expression_items", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -698,8 +654,7 @@ func TestIndexDefinitionsRejectInvalidExpressionsRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `CREATE INDEX index_stable_expression_items_idx
-						ON index_stable_expression_items ((now()));`,
-					ExpectedErr: `functions in index expression must be marked IMMUTABLE`,
+						ON index_stable_expression_items ((now()));`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testindexdefinitionsrejectinvalidexpressionsrepro-0003-create-index-index_stable_expression_items_idx-on-index_stable_expression_items", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -719,8 +674,7 @@ func TestIndexDefinitionsRejectInvalidExpressionsRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `CREATE INDEX index_udf_volatile_expression_items_idx
-						ON index_udf_volatile_expression_items ((index_udf_volatile_value(v)));`,
-					ExpectedErr: `functions in index expression must be marked IMMUTABLE`,
+						ON index_udf_volatile_expression_items ((index_udf_volatile_value(v)));`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testindexdefinitionsrejectinvalidexpressionsrepro-0004-create-index-index_udf_volatile_expression_items_idx-on-index_udf_volatile_expression_items", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -740,8 +694,7 @@ func TestIndexDefinitionsRejectInvalidExpressionsRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `CREATE INDEX index_udf_stable_expression_items_idx
-						ON index_udf_stable_expression_items ((index_udf_stable_value(v)));`,
-					ExpectedErr: `functions in index expression must be marked IMMUTABLE`,
+						ON index_udf_stable_expression_items ((index_udf_stable_value(v)));`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testindexdefinitionsrejectinvalidexpressionsrepro-0005-create-index-index_udf_stable_expression_items_idx-on-index_udf_stable_expression_items", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -756,8 +709,7 @@ func TestIndexDefinitionsRejectInvalidExpressionsRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `CREATE INDEX index_aggregate_expression_items_idx
-						ON index_aggregate_expression_items ((avg(v)));`,
-					ExpectedErr: `ERROR`,
+						ON index_aggregate_expression_items ((avg(v)));`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testindexdefinitionsrejectinvalidexpressionsrepro-0006-create-index-index_aggregate_expression_items_idx-on-index_aggregate_expression_items", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -773,8 +725,7 @@ func TestIndexDefinitionsRejectInvalidExpressionsRepro(t *testing.T) {
 				{
 					Query: `CREATE INDEX partial_index_srf_predicate_items_idx
 						ON partial_index_srf_predicate_items (id)
-						WHERE generate_series(1, 2) > 0;`,
-					ExpectedErr: `set-returning functions are not allowed in index predicates`,
+						WHERE generate_series(1, 2) > 0;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testindexdefinitionsrejectinvalidexpressionsrepro-0007-create-index-partial_index_srf_predicate_items_idx-on-partial_index_srf_predicate_items", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -790,8 +741,7 @@ func TestIndexDefinitionsRejectInvalidExpressionsRepro(t *testing.T) {
 				{
 					Query: `CREATE INDEX partial_index_volatile_predicate_items_idx
 						ON partial_index_volatile_predicate_items (id)
-						WHERE random() > 0;`,
-					ExpectedErr: `functions in index predicate must be marked IMMUTABLE`,
+						WHERE random() > 0;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testindexdefinitionsrejectinvalidexpressionsrepro-0008-create-index-on-partial_index_volatile_predicate_items-id", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -807,8 +757,7 @@ func TestIndexDefinitionsRejectInvalidExpressionsRepro(t *testing.T) {
 				{
 					Query: `CREATE INDEX partial_index_stable_predicate_items_idx
 						ON partial_index_stable_predicate_items (id)
-						WHERE now() IS NOT NULL;`,
-					ExpectedErr: `functions in index predicate must be marked IMMUTABLE`,
+						WHERE now() IS NOT NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testindexdefinitionsrejectinvalidexpressionsrepro-0009-create-index-partial_index_stable_predicate_items_idx-on-partial_index_stable_predicate_items", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -829,8 +778,7 @@ func TestIndexDefinitionsRejectInvalidExpressionsRepro(t *testing.T) {
 				{
 					Query: `CREATE INDEX partial_index_udf_volatile_predicate_items_idx
 						ON partial_index_udf_volatile_predicate_items (id)
-						WHERE partial_index_udf_volatile_keep(v);`,
-					ExpectedErr: `functions in index predicate must be marked IMMUTABLE`,
+						WHERE partial_index_udf_volatile_keep(v);`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testindexdefinitionsrejectinvalidexpressionsrepro-0010-create-index-on-id-where", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -851,8 +799,7 @@ func TestIndexDefinitionsRejectInvalidExpressionsRepro(t *testing.T) {
 				{
 					Query: `CREATE INDEX partial_index_udf_stable_predicate_items_idx
 						ON partial_index_udf_stable_predicate_items (id)
-						WHERE partial_index_udf_stable_keep(v);`,
-					ExpectedErr: `functions in index predicate must be marked IMMUTABLE`,
+						WHERE partial_index_udf_stable_keep(v);`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testindexdefinitionsrejectinvalidexpressionsrepro-0011-create-index-on-partial_index_udf_stable_predicate_items-id", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -868,16 +815,17 @@ func TestIndexDefinitionsRejectInvalidExpressionsRepro(t *testing.T) {
 				{
 					Query: `CREATE INDEX partial_index_subquery_predicate_items_idx
 						ON partial_index_subquery_predicate_items (id)
-						WHERE id > (SELECT 0);`,
-					ExpectedErr: `cannot use subquery in index predicate`,
+						WHERE id > (SELECT 0);`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testindexdefinitionsrejectinvalidexpressionsrepro-0012-create-index-on-partial_index_subquery_predicate_items-id",
+
+						// TestOnConflictDoNothingHandlesUniqueExpressionIndexRepro guards targetless
+						// ON CONFLICT DO NOTHING against conflicts raised by unique expression indexes.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestOnConflictDoNothingHandlesUniqueExpressionIndexRepro guards targetless
-// ON CONFLICT DO NOTHING against conflicts raised by unique expression indexes.
 func TestOnConflictDoNothingHandlesUniqueExpressionIndexRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -899,8 +847,7 @@ func TestOnConflictDoNothingHandlesUniqueExpressionIndexRepro(t *testing.T) {
 				{
 					Query: `SELECT id, email
 						FROM expression_do_nothing_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, "User@Example.com"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-correctness-repro-test-testonconflictdonothinghandlesuniqueexpressionindexrepro-0001-select-id-email-from-expression_do_nothing_items"},
 				},
 			},
 		},

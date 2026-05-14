@@ -131,8 +131,7 @@ func TestCreateFunctionsLanguageSQL(t *testing.T) {
 							$$;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0016-create-function-public.sp_build_view_bathymetry_layer-returns-void", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT public.sp_build_view_bathymetry_layer()`,
-					Expected: []sql.Row{{nil}},
+					Query: `SELECT public.sp_build_view_bathymetry_layer()`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0017-select-public.sp_build_view_bathymetry_layer", Compare: "sqlstate"},
 				},
 				{
 					Query:    `SELECT * from view_bathymetry_layer`,
@@ -234,8 +233,7 @@ func TestCreateFunctionsLanguageSQL(t *testing.T) {
 					Query: `SELECT d('sched');`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0026-select-d-sched", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT * FROM test;`,
-					Expected: []sql.Row{{2, "busy"}},
+					Query: `SELECT * FROM test;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0027-select-*-from-test"},
 				},
 			},
 		},

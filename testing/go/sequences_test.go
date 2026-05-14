@@ -306,8 +306,7 @@ func TestSequences(t *testing.T) {
 			Name: "nextval() over multiple rows/columns",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "CREATE TABLE test (v1 INTEGER, v2 INTEGER);",
-					Expected: []sql.Row{},
+					Query: "CREATE TABLE test (v1 INTEGER, v2 INTEGER);", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0081-create-table-test-v1-integer"},
 				},
 				{
 					Query: "CREATE SEQUENCE seq1;", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0082-create-sequence-seq1"},
@@ -473,8 +472,7 @@ func TestSequences(t *testing.T) {
 			Name: "SERIAL",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "CREATE TABLE test (pk SERIAL PRIMARY KEY, v1 INTEGER);",
-					Expected: []sql.Row{},
+					Query: "CREATE TABLE test (pk SERIAL PRIMARY KEY, v1 INTEGER);", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0122-create-table-test-pk-serial"},
 				},
 				{
 					Query: "CREATE TABLE test_small (pk SMALLSERIAL PRIMARY KEY, v1 INTEGER);", PostgresOracle: ScriptTestPostgresOracle{ID: "sequences-test-testsequences-0123-create-table-test_small-pk-smallserial"},

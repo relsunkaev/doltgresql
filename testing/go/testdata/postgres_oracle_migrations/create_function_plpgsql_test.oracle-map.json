@@ -1127,12 +1127,16 @@
       "source": "testing/go/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
       "ordinal": 50,
       "scriptName": "RETURNS TABLE with join query",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0050-select-func2-11",
       "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0050-select-func2-11",
-      "expectedKind": "rows",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42804",
+      "errorSeverity": "ERROR",
       "query": "SELECT func2(11);",
       "querySha256": "bdf2415a23be91b42934ef0810c256aac4d4177fb6ef5163796f4d342c82e30b",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -2636,12 +2640,60 @@
       "source": "testing/go/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
       "ordinal": 135,
       "scriptName": "FOR S LOOP statement",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0135-select-*-from-decks",
       "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0135-select-*-from-decks",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * from decks;",
       "querySha256": "0103aeeef005074717fdcc3ea6b15c7b2f3eb106d6f933aa9291333107b8d706",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "name1"
+          },
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "name2"
+          },
+          {
+            "value": "4"
+          }
+        ],
+        [
+          {
+            "value": "5"
+          },
+          {
+            "value": "name3"
+          },
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "7"
+          },
+          {
+            "value": "name4"
+          },
+          {
+            "value": "9"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {

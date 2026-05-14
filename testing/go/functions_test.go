@@ -527,22 +527,13 @@ func TestFunctionsOID(t *testing.T) {
 					Query: `SELECT to_regtype('integer"');`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testfunctionsoid-0027-select-to_regtype-integer", Compare: "sqlstate"},
 				},
 				{
-					Query: `SELECT to_regtype(('integer'::regtype)::text);`,
-					Expected: []sql.Row{
-						{"integer"},
-					},
+					Query: `SELECT to_regtype(('integer'::regtype)::text);`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testfunctionsoid-0028-select-to_regtype-integer-::regtype-::text"},
 				},
 				{
-					Query: `SELECT to_regtype(('int'::regtype)::text);`,
-					Expected: []sql.Row{
-						{"integer"},
-					},
+					Query: `SELECT to_regtype(('int'::regtype)::text);`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testfunctionsoid-0029-select-to_regtype-int-::regtype-::text"},
 				},
 				{
-					Query: `SELECT to_regtype((('integer'::regtype)::oid)::text);`,
-					Expected: []sql.Row{
-						{nil},
-					},
+					Query: `SELECT to_regtype((('integer'::regtype)::oid)::text);`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testfunctionsoid-0030-select-to_regtype-integer-::regtype-::oid"},
 				},
 			},
 		},
@@ -871,12 +862,14 @@ func TestSystemInformationFunctions(t *testing.T) {
 						Compare: "sqlstate"},
 				},
 				{
-					Skip:     true,
-					Query:    `COMMENT ON TABLESPACE tblspc_2 IS 'Store a few of the things';`,
-					Expected: []sql.Row{},
+					Skip:  true,
+					Query: `COMMENT ON TABLESPACE tblspc_2 IS 'Store a few of the things';`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testsysteminformationfunctions-0064-comment-on-tablespace-tblspc_2-is",
+
+						// TODO: Implement shared database object comments
+						Compare: "sqlstate"},
 				},
 				{
-					Skip: true, // TODO: Implement shared database object comments
+					Skip: true,
 					Query: `SELECT shobj_description(
                  (SELECT oid FROM pg_tablespace WHERE spcname = 'tblspc_2'),
                  'pg_tablespace');`,
@@ -1463,60 +1456,46 @@ func TestJsonFunctions(t *testing.T) {
 					Query: `SELECT jsonb_delete('{"a":1, "b":2, "c":3}'::jsonb, ARRAY['a','c']::text[]);`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testjsonfunctions-0102-select-jsonb_delete-{-a-:1", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT jsonb_delete_path('{"n":null, "a":1, "b":[1,2], "d":{"1":[2,3]}}', '{n}');`,
-					Expected: []sql.Row{{`{"a": 1, "b": [1, 2], "d": {"1": [2, 3]}}`}},
+					Query: `SELECT jsonb_delete_path('{"n":null, "a":1, "b":[1,2], "d":{"1":[2,3]}}', '{n}');`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testjsonfunctions-0103-select-jsonb_delete_path-{-n-:null"},
 				},
 				{
-					Query:    `SELECT jsonb_delete_path('{"n":null, "a":1, "b":[1,2], "d":{"1":[2,3]}}', '{b,-1}');`,
-					Expected: []sql.Row{{`{"a": 1, "b": [1], "d": {"1": [2, 3]}, "n": null}`}},
+					Query: `SELECT jsonb_delete_path('{"n":null, "a":1, "b":[1,2], "d":{"1":[2,3]}}', '{b,-1}');`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testjsonfunctions-0104-select-jsonb_delete_path-{-n-:null"},
 				},
 				{
-					Query:    `SELECT jsonb_delete_path('{"a":1}'::jsonb, '{}'::text[]);`,
-					Expected: []sql.Row{{`{"a": 1}`}},
+					Query: `SELECT jsonb_delete_path('{"a":1}'::jsonb, '{}'::text[]);`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testjsonfunctions-0105-select-jsonb_delete_path-{-a-:1}"},
 				},
 				{
-					Query:       `SELECT jsonb_delete_path('{"a":1}'::jsonb, ARRAY[NULL]::text[]);`,
-					ExpectedErr: "path element at position 1 is null",
+					Query: `SELECT jsonb_delete_path('{"a":1}'::jsonb, ARRAY[NULL]::text[]);`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testjsonfunctions-0106-select-jsonb_delete_path-{-a-:1}", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SELECT jsonb_delete_path('"a"'::jsonb, '{a}'::text[]);`,
-					ExpectedErr: "cannot delete path in scalar",
+					Query: `SELECT jsonb_delete_path('"a"'::jsonb, '{a}'::text[]);`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testjsonfunctions-0107-select-jsonb_delete_path-a-::jsonb-{a}", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT jsonb_insert('{"a":[0,1,2]}', '{a,1}', '"new_value"');`,
-					Expected: []sql.Row{{`{"a": [0, "new_value", 1, 2]}`}},
+					Query: `SELECT jsonb_insert('{"a":[0,1,2]}', '{a,1}', '"new_value"');`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testjsonfunctions-0108-select-jsonb_insert-{-a-:[0"},
 				},
 				{
-					Query:    `SELECT jsonb_insert('{"a":[0,1,2]}', '{a,1}', '"new_value"', true);`,
-					Expected: []sql.Row{{`{"a": [0, 1, "new_value", 2]}`}},
+					Query: `SELECT jsonb_insert('{"a":[0,1,2]}', '{a,1}', '"new_value"', true);`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testjsonfunctions-0109-select-jsonb_insert-{-a-:[0"},
 				},
 				{
-					Query:    `SELECT jsonb_insert('{"a":{"b":{"c":[0,1,"test1","test2"]}}}', '{a,b,c,2}', '"new_value"');`,
-					Expected: []sql.Row{{`{"a": {"b": {"c": [0, 1, "new_value", "test1", "test2"]}}}`}},
+					Query: `SELECT jsonb_insert('{"a":{"b":{"c":[0,1,"test1","test2"]}}}', '{a,b,c,2}', '"new_value"');`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testjsonfunctions-0110-select-jsonb_insert-{-a-:{"},
 				},
 				{
-					Query:    `SELECT jsonb_insert('{"a":[0,1,2]}', '{a,10}', '"new_value"'), jsonb_insert('{"a":[0,1,2]}', '{a,-10}', '"new_value"');`,
-					Expected: []sql.Row{{`{"a": [0, 1, 2, "new_value"]}`, `{"a": ["new_value", 0, 1, 2]}`}},
+					Query: `SELECT jsonb_insert('{"a":[0,1,2]}', '{a,10}', '"new_value"'), jsonb_insert('{"a":[0,1,2]}', '{a,-10}', '"new_value"');`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testjsonfunctions-0111-select-jsonb_insert-{-a-:[0"},
 				},
 				{
-					Query:    `SELECT jsonb_insert('{"a":{"b":"value"}}', '{a,c}', '"new_value"'), jsonb_insert('{"a":{"b":"value"}}', '{a,b}', '"new_value"');`,
-					Expected: []sql.Row{{`{"a": {"b": "value", "c": "new_value"}}`, `{"a": {"b": "value"}}`}},
+					Query: `SELECT jsonb_insert('{"a":{"b":"value"}}', '{a,c}', '"new_value"'), jsonb_insert('{"a":{"b":"value"}}', '{a,b}', '"new_value"');`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testjsonfunctions-0112-select-jsonb_insert-{-a-:{", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT jsonb_insert('{"a":[0,1,2]}', '{missing,0}', '"new_value"');`,
-					Expected: []sql.Row{{`{"a": [0, 1, 2]}`}},
+					Query: `SELECT jsonb_insert('{"a":[0,1,2]}', '{missing,0}', '"new_value"');`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testjsonfunctions-0113-select-jsonb_insert-{-a-:[0"},
 				},
 				{
-					Query:       `SELECT jsonb_insert('{"a":[0,1,2]}', '{a,not_an_int}', '"new_value"');`,
-					ExpectedErr: "path element at position 2 is not an integer",
+					Query: `SELECT jsonb_insert('{"a":[0,1,2]}', '{a,not_an_int}', '"new_value"');`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testjsonfunctions-0114-select-jsonb_insert-{-a-:[0", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SELECT jsonb_insert('{"a":[0,1,2]}', ARRAY['a',NULL]::text[], '"new_value"');`,
-					ExpectedErr: "path element at position 2 is null",
+					Query: `SELECT jsonb_insert('{"a":[0,1,2]}', ARRAY['a',NULL]::text[], '"new_value"');`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testjsonfunctions-0115-select-jsonb_insert-{-a-:[0", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT jsonb_pretty('{"a":1,"b":[2]}'::jsonb);`,
-					Expected: []sql.Row{{"{\n    \"a\": 1,\n    \"b\": [\n        2\n    ]\n}"}},
+					Query: `SELECT jsonb_pretty('{"a":1,"b":[2]}'::jsonb);`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testjsonfunctions-0116-select-jsonb_pretty-{-a-:1"},
 				},
 			},
 		},
@@ -1546,8 +1525,7 @@ func TestJsonFunctions(t *testing.T) {
 					Query: `SELECT s.pk, e.jsonb_array_elements FROM json_shapes s JOIN LATERAL (SELECT * FROM jsonb_array_elements(s.doc->'items')) AS e ON true ORDER BY s.pk, e.jsonb_array_elements;`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testjsonfunctions-0122-select-s.pk-e.jsonb_array_elements-from-json_shapes", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT s.pk, e.jsonb_array_elements FROM json_shapes s JOIN LATERAL jsonb_array_elements(s.doc->'items') AS e ON true ORDER BY s.pk, e.jsonb_array_elements;`,
-					Expected: []sql.Row{{1, "1"}, {1, "2"}, {2, "2"}, {2, "3"}},
+					Query: `SELECT s.pk, e.jsonb_array_elements FROM json_shapes s JOIN LATERAL jsonb_array_elements(s.doc->'items') AS e ON true ORDER BY s.pk, e.jsonb_array_elements;`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testjsonfunctions-0123-select-s.pk-e.jsonb_array_elements-from-json_shapes", Compare: "sqlstate"},
 				},
 				{
 					Query:    `SELECT s.pk, elem FROM json_shapes s JOIN LATERAL jsonb_array_elements(s.doc->'items') AS elem ON true ORDER BY s.pk, elem;`,
@@ -2859,18 +2837,17 @@ func TestDateAndTimeFunction(t *testing.T) {
 						Compare: "sqlstate"},
 				},
 				{
-					Skip:     true,
-					Query:    `SELECT now()::timetz(4)::text = current_time(5)::text;`,
-					Expected: []sql.Row{{false}},
+					Skip:  true,
+					Query: `SELECT now()::timetz(4)::text = current_time(5)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testdateandtimefunction-0268-select-now-::timetz-4-::text"},
 				},
 				{
 					Query:    `SELECT length(to_char(current_date + 'now'::timetz, 'HH24:MI:SS.USTZH:TZM'));`,
 					Expected: []sql.Row{{int32(21)}},
 				},
 				{
-					Query: `SELECT length('now'::timetz::text) > length('now'::time::text);`,
+					Query: `SELECT length('now'::timetz::text) > length('now'::time::text);`, PostgresOracle:
 					// Direct ::text casts trim trailing zeros from microseconds, making the length variable.
-					Expected: []sql.Row{{"t"}},
+					ScriptTestPostgresOracle{ID: "functions-test-testdateandtimefunction-0270-select-length-now-::timetz::text->"},
 				},
 				{
 					Query:    `SELECT length(to_char('now'::time, 'HH24:MI:SS.US'));`,

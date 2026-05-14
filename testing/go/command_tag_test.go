@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 var CommandTagTests = []ScriptTest{
@@ -79,8 +77,7 @@ var CommandTagTests = []ScriptTest{
 				ExpectedTag: "UPDATE 1",
 			},
 			{
-				Query:    "SELECT * FROM table0 order by id",
-				Expected: []sql.Row{{1, "Dolt"}, {3, "DoltHub"}, {4, "Doltgres"}},
+				Query: "SELECT * FROM table0 order by id", PostgresOracle: ScriptTestPostgresOracle{ID: "command-tag-test-testcommandtag-0008-select-*-from-table0-order"},
 			},
 			{
 				Query:       "SELECT * FROM table0 WHERE name <> 'Dolt'",
@@ -101,8 +98,7 @@ var CommandTagTests = []ScriptTest{
 				ExpectedTag: "DELETE 3",
 			},
 			{
-				Query:    "SELECT * FROM table0 order by id",
-				Expected: []sql.Row{},
+				Query: "SELECT * FROM table0 order by id", PostgresOracle: ScriptTestPostgresOracle{ID: "command-tag-test-testcommandtag-0011-select-*-from-table0-order"},
 			},
 			{
 				Query:       "SELECT * FROM table0",

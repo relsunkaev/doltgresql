@@ -249,12 +249,15 @@
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
       "ordinal": 13,
       "scriptName": "Branching",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0013-select-*-from-test",
       "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0013-select-*-from-test",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test;",
       "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
-      "needsCleanup": true,
+      "expectedRows": [],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -262,12 +265,15 @@
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
       "ordinal": 14,
       "scriptName": "Branching",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0014-delete-from-test-where-v1",
       "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0014-delete-from-test-where-v1",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "DELETE FROM test WHERE v1 = 1;",
       "querySha256": "662483d966be41daed57a5813e3826dd51ea768d08f6a8b31d779606ff2cd9e5",
-      "needsCleanup": true,
+      "expectedRows": [],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -482,12 +488,24 @@
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
       "ordinal": 29,
       "scriptName": "Merging No Conflict",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0029-select-*-from-test",
       "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0029-select-*-from-test",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM test;",
       "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "77"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -495,12 +513,16 @@
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
       "ordinal": 30,
       "scriptName": "Merging No Conflict",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0030-call-interpreted_merging-55",
       "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0030-call-interpreted_merging-55",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "42883",
+      "errorSeverity": "ERROR",
       "query": "CALL interpreted_merging(55);",
       "querySha256": "a4b8a04aa3a345b9b891ea497cfa1da680cc5e27475923e52f5a91fc560ba7f4",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {

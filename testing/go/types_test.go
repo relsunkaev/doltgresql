@@ -1963,38 +1963,25 @@ var typesTests = []ScriptTest{
 					Compare: "sqlstate"},
 			},
 			{
-				Query: `SELECT (('integer'::regtype)::oid)::regtype;`,
-				Expected: []sql.Row{
-					{"integer"},
-				},
+				Query: `SELECT (('integer'::regtype)::oid)::regtype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0319-select-integer-::regtype-::oid-::regtype"},
 			},
 			{ // This tests that a string representing a raw OID converts the same as a raw OID
-				Query: `SELECT ((('integer'::regtype)::oid)::text)::regtype;`,
-				Expected: []sql.Row{
-					{"integer"},
-				},
+				Query: `SELECT ((('integer'::regtype)::oid)::text)::regtype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0320-select-integer-::regtype-::oid-::text"},
 			},
 			{ // This tests that an invalid OID returns itself in string form
-				Query: `SELECT 4294967295::regtype;`,
-				Expected: []sql.Row{
-					{"4294967295"},
-				},
+				Query: `SELECT 4294967295::regtype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0321-select-4294967295::regtype"},
 			},
 			{
-				Query:       `SELECT '"Integer"'::regtype;`,
-				ExpectedErr: "does not exist",
+				Query: `SELECT '"Integer"'::regtype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0322-select-integer-::regtype", Compare: "sqlstate"},
 			},
 			{
-				Query:       `SELECT '"integer'::regtype;`,
-				ExpectedErr: "invalid name syntax",
+				Query: `SELECT '"integer'::regtype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0323-select-integer-::regtype", Compare: "sqlstate"},
 			},
 			{
-				Query:       `SELECT 'integer"'::regtype;`,
-				ExpectedErr: "does not exist",
+				Query: `SELECT 'integer"'::regtype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0324-select-integer-::regtype", Compare: "sqlstate"},
 			},
 			{
-				Query:       `SELECT '""integer'::regtype;`,
-				ExpectedErr: "invalid name syntax",
+				Query: `SELECT '""integer'::regtype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0325-select-integer-::regtype", Compare: "sqlstate"},
 			},
 		},
 	},
@@ -2478,16 +2465,13 @@ var typesTests = []ScriptTest{
 				Query: "INSERT INTO t_xid VALUES (5, '4294967296', 'b');", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0403-insert-into-t_xid-values-5", Compare: "sqlstate"},
 			},
 			{
-				Query:    "INSERT INTO t_xid VALUES (6, '0', 'c');",
-				Expected: []sql.Row{},
+				Query: "INSERT INTO t_xid VALUES (6, '0', 'c');", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0404-insert-into-t_xid-values-6"},
 			},
 			{
-				Query:    "INSERT INTO t_xid VALUES (7, '-1', 'd');",
-				Expected: []sql.Row{},
+				Query: "INSERT INTO t_xid VALUES (7, '-1', 'd');", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0405-insert-into-t_xid-values-7"},
 			},
 			{
-				Query:    "INSERT INTO t_xid VALUES (8, 'abc', 'd');",
-				Expected: []sql.Row{},
+				Query: "INSERT INTO t_xid VALUES (8, 'abc', 'd');", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0406-insert-into-t_xid-values-8", Compare: "sqlstate"},
 			},
 			{
 				Query: "SELECT * FROM t_xid ORDER BY id;",
@@ -2579,10 +2563,7 @@ var typesTests = []ScriptTest{
 				Query: "SELECT ('4294967295'::text)::xid, ('4294967297'::text)::xid;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0428-select-4294967295-::text-::xid-4294967297", Compare: "sqlstate"},
 			},
 			{
-				Query: "SELECT ('-4294967295'::text)::xid, ('-4294967297'::text)::xid;",
-				Expected: []sql.Row{
-					{1, 4294967295},
-				},
+				Query: "SELECT ('-4294967295'::text)::xid, ('-4294967297'::text)::xid;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0429-select-4294967295-::text-::xid-4294967297", Compare: "sqlstate"},
 			},
 			{
 				Query: "SELECT ('4294967295'::varchar)::xid, ('4294967296232'::varchar)::xid;",

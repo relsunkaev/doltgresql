@@ -589,12 +589,24 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestDeferrableConstraintTriggerFiresAtCommitRepro",
       "ordinal": 2,
       "scriptName": "deferrable constraint trigger fires at commit",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testdeferrableconstrainttriggerfiresatcommitrepro-0002-select-id-v-from-constraint_trigger_audit",
       "suggestedId": "trigger-correctness-repro-test-testdeferrableconstrainttriggerfiresatcommitrepro-0002-select-id-v-from-constraint_trigger_audit",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT id, v FROM constraint_trigger_audit;",
       "querySha256": "18733796a99fa8b5805b99d16abb90c9709bac620889f35ce415354ffba09b78",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -618,12 +630,27 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestUpdateTriggerWhenOldNewDistinctRepro",
       "ordinal": 2,
       "scriptName": "UPDATE trigger WHEN compares OLD and NEW",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testupdatetriggerwhenoldnewdistinctrepro-0002-select-id-old_v-new_v-from",
       "suggestedId": "trigger-correctness-repro-test-testupdatetriggerwhenoldnewdistinctrepro-0002-select-id-old_v-new_v-from",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT id, old_v, new_v FROM trigger_when_update_audit;",
       "querySha256": "57df030f10e9bc5775e0d24e226ebb35b86fdbd9a5e28f5f900de8f81050efeb",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "10"
+          },
+          {
+            "value": "11"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -647,12 +674,27 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestUpdateTriggerWhenWholeRowDistinctRepro",
       "ordinal": 2,
       "scriptName": "UPDATE trigger WHEN compares whole OLD and NEW rows",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testupdatetriggerwhenwholerowdistinctrepro-0002-select-id-old_note-new_note-from",
       "suggestedId": "trigger-correctness-repro-test-testupdatetriggerwhenwholerowdistinctrepro-0002-select-id-old_note-new_note-from",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT id, old_note, new_note FROM trigger_when_whole_row_audit;",
       "querySha256": "8d376669a2a996e5892d99f939f4dde7ddd4768ccfdce5868c15158b12e52301",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "original"
+          },
+          {
+            "value": "changed"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -660,12 +702,16 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestAfterInsertTriggerErrorRollsBackStatementRepro",
       "ordinal": 1,
       "scriptName": "AFTER INSERT trigger error rolls back statement",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testafterinserttriggererrorrollsbackstatementrepro-0001-insert-into-trigger_error_target-values-1",
       "suggestedId": "trigger-correctness-repro-test-testafterinserttriggererrorrollsbackstatementrepro-0001-insert-into-trigger_error_target-values-1",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "P0001",
+      "errorSeverity": "ERROR",
       "query": "INSERT INTO trigger_error_target VALUES (1, 'bad');",
       "querySha256": "577fcc436d164eab5a498f3b8ee2d75ad381e257b2c02c46e0854cc5ecce5f89",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -705,12 +751,16 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestAfterUpdateTriggerErrorRollsBackStatementRepro",
       "ordinal": 1,
       "scriptName": "AFTER UPDATE trigger error rolls back statement",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testafterupdatetriggererrorrollsbackstatementrepro-0001-update-after_update_trigger_error_target-set-label-=",
       "suggestedId": "trigger-correctness-repro-test-testafterupdatetriggererrorrollsbackstatementrepro-0001-update-after_update_trigger_error_target-set-label-=",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "P0001",
+      "errorSeverity": "ERROR",
       "query": "UPDATE after_update_trigger_error_target SET label = 'new' WHERE id = 1;",
       "querySha256": "aece968e252566321d6571627629e8081397c687361ee6fcadd49c26225a37c9",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -718,12 +768,21 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestAfterUpdateTriggerErrorRollsBackStatementRepro",
       "ordinal": 2,
       "scriptName": "AFTER UPDATE trigger error rolls back statement",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testafterupdatetriggererrorrollsbackstatementrepro-0002-select-label-from-after_update_trigger_error_target-where",
       "suggestedId": "trigger-correctness-repro-test-testafterupdatetriggererrorrollsbackstatementrepro-0002-select-label-from-after_update_trigger_error_target-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT label FROM after_update_trigger_error_target WHERE id = 1;",
       "querySha256": "7210de2ec92fa7a42a45a944cde27282780d635b4ee0c5207f69fddb0bac790e",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "old"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -747,12 +806,16 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestAfterDeleteTriggerErrorRollsBackStatementRepro",
       "ordinal": 1,
       "scriptName": "AFTER DELETE trigger error rolls back statement",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testafterdeletetriggererrorrollsbackstatementrepro-0001-delete-from-after_delete_trigger_error_target-where-id",
       "suggestedId": "trigger-correctness-repro-test-testafterdeletetriggererrorrollsbackstatementrepro-0001-delete-from-after_delete_trigger_error_target-where-id",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "P0001",
+      "errorSeverity": "ERROR",
       "query": "DELETE FROM after_delete_trigger_error_target WHERE id = 1;",
       "querySha256": "76a02c5e7a7c566cfbe347725d6915b2b8770dd5776c93d714f61b988c5fd72e",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -760,12 +823,24 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestAfterDeleteTriggerErrorRollsBackStatementRepro",
       "ordinal": 2,
       "scriptName": "AFTER DELETE trigger error rolls back statement",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testafterdeletetriggererrorrollsbackstatementrepro-0002-select-id-label-from-after_delete_trigger_error_target",
       "suggestedId": "trigger-correctness-repro-test-testafterdeletetriggererrorrollsbackstatementrepro-0002-select-id-label-from-after_delete_trigger_error_target",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT id, label FROM after_delete_trigger_error_target;",
       "querySha256": "2c12393e10a13cfa44483b29a75eab808869b3bc1e2526102b3c73a9b83208ed",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "old"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -789,12 +864,16 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestBeforeInsertTriggerErrorRollsBackSideEffectsRepro",
       "ordinal": 1,
       "scriptName": "BEFORE INSERT trigger error rolls back side effects",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testbeforeinserttriggererrorrollsbacksideeffectsrepro-0001-insert-into-before_trigger_error_target-values-1",
       "suggestedId": "trigger-correctness-repro-test-testbeforeinserttriggererrorrollsbacksideeffectsrepro-0001-insert-into-before_trigger_error_target-values-1",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "P0001",
+      "errorSeverity": "ERROR",
       "query": "INSERT INTO before_trigger_error_target VALUES (1, 'bad');",
       "querySha256": "11c753aacb7e755a242d1bc99a3016624dbe8249c89899d09bcdce5fbcc09749",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -834,12 +913,16 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestBeforeUpdateTriggerErrorRollsBackSideEffectsRepro",
       "ordinal": 1,
       "scriptName": "BEFORE UPDATE trigger error rolls back side effects",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testbeforeupdatetriggererrorrollsbacksideeffectsrepro-0001-update-before_update_trigger_error_target-set-label-=",
       "suggestedId": "trigger-correctness-repro-test-testbeforeupdatetriggererrorrollsbacksideeffectsrepro-0001-update-before_update_trigger_error_target-set-label-=",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "P0001",
+      "errorSeverity": "ERROR",
       "query": "UPDATE before_update_trigger_error_target SET label = 'new' WHERE id = 1;",
       "querySha256": "490636e47206b600194d9b0444bf259664a15d7715a108c3b08acaff517c7c63",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -847,12 +930,21 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestBeforeUpdateTriggerErrorRollsBackSideEffectsRepro",
       "ordinal": 2,
       "scriptName": "BEFORE UPDATE trigger error rolls back side effects",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testbeforeupdatetriggererrorrollsbacksideeffectsrepro-0002-select-label-from-before_update_trigger_error_target-where",
       "suggestedId": "trigger-correctness-repro-test-testbeforeupdatetriggererrorrollsbacksideeffectsrepro-0002-select-label-from-before_update_trigger_error_target-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT label FROM before_update_trigger_error_target WHERE id = 1;",
       "querySha256": "812f923cbbec82f2894daaea498ccb6820466157803339556d760997527efbe0",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "old"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -876,12 +968,16 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestBeforeDeleteTriggerErrorRollsBackSideEffectsRepro",
       "ordinal": 1,
       "scriptName": "BEFORE DELETE trigger error rolls back side effects",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testbeforedeletetriggererrorrollsbacksideeffectsrepro-0001-delete-from-before_delete_trigger_error_target-where-id",
       "suggestedId": "trigger-correctness-repro-test-testbeforedeletetriggererrorrollsbacksideeffectsrepro-0001-delete-from-before_delete_trigger_error_target-where-id",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "P0001",
+      "errorSeverity": "ERROR",
       "query": "DELETE FROM before_delete_trigger_error_target WHERE id = 1;",
       "querySha256": "2d2b5a6d828327a56127d6aeb3fe183d9a3285353c52627b68a8010205ddad84",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -889,12 +985,24 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestBeforeDeleteTriggerErrorRollsBackSideEffectsRepro",
       "ordinal": 2,
       "scriptName": "BEFORE DELETE trigger error rolls back side effects",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testbeforedeletetriggererrorrollsbacksideeffectsrepro-0002-select-id-label-from-before_delete_trigger_error_target",
       "suggestedId": "trigger-correctness-repro-test-testbeforedeletetriggererrorrollsbacksideeffectsrepro-0002-select-id-label-from-before_delete_trigger_error_target",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT id, label FROM before_delete_trigger_error_target;",
       "querySha256": "b4c25eac8f06df31bf85a35d662f28c5bee9b64446d833f28f9a7345be8f4db9",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "old"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -918,12 +1026,16 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestBeforeInsertTriggerSideEffectsRollBackOnConstraintErrorRepro",
       "ordinal": 1,
       "scriptName": "BEFORE INSERT trigger side effects roll back on constraint error",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testbeforeinserttriggersideeffectsrollbackonconstrainterrorrepro-0001-insert-into-before_trigger_check_target-values-1",
       "suggestedId": "trigger-correctness-repro-test-testbeforeinserttriggersideeffectsrollbackonconstrainterrorrepro-0001-insert-into-before_trigger_check_target-values-1",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
       "query": "INSERT INTO before_trigger_check_target VALUES (1, -1);",
       "querySha256": "a37fadc8cc5290270b04cbe9505fd28d47c433bb47fdf4316f47a64706d2b37c",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -963,12 +1075,16 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestBeforeUpdateTriggerSideEffectsRollBackOnConstraintErrorRepro",
       "ordinal": 1,
       "scriptName": "BEFORE UPDATE trigger side effects roll back on constraint error",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testbeforeupdatetriggersideeffectsrollbackonconstrainterrorrepro-0001-update-before_update_trigger_check_target-set-qty-=",
       "suggestedId": "trigger-correctness-repro-test-testbeforeupdatetriggersideeffectsrollbackonconstrainterrorrepro-0001-update-before_update_trigger_check_target-set-qty-=",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
       "query": "UPDATE before_update_trigger_check_target SET qty = -1 WHERE id = 1;",
       "querySha256": "214af7962ea8e15790822fe77444e730c4bf60495b47013d25da8008aa7665f7",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -976,12 +1092,21 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestBeforeUpdateTriggerSideEffectsRollBackOnConstraintErrorRepro",
       "ordinal": 2,
       "scriptName": "BEFORE UPDATE trigger side effects roll back on constraint error",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testbeforeupdatetriggersideeffectsrollbackonconstrainterrorrepro-0002-select-qty-from-before_update_trigger_check_target-where",
       "suggestedId": "trigger-correctness-repro-test-testbeforeupdatetriggersideeffectsrollbackonconstrainterrorrepro-0002-select-qty-from-before_update_trigger_check_target-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT qty FROM before_update_trigger_check_target WHERE id = 1;",
       "querySha256": "9177e9d55ba6109c5e97c27c3136aa811539e5e6319ca36ececdf3082a7a802b",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1005,12 +1130,16 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestStatementTriggerSideEffectsRollBackOnConstraintErrorRepro",
       "ordinal": 1,
       "scriptName": "statement trigger side effects roll back on constraint error",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-teststatementtriggersideeffectsrollbackonconstrainterrorrepro-0001-insert-into-statement_trigger_check_target-values-1",
       "suggestedId": "trigger-correctness-repro-test-teststatementtriggersideeffectsrollbackonconstrainterrorrepro-0001-insert-into-statement_trigger_check_target-values-1",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
       "query": "INSERT INTO statement_trigger_check_target VALUES (1, -1);",
       "querySha256": "a64e5d19263cdec0189d555fd1d81ba0ce054e37c92a8452af6002ef3ac2bfdf",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1050,12 +1179,16 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestStatementUpdateTriggerSideEffectsRollBackOnConstraintErrorRepro",
       "ordinal": 1,
       "scriptName": "statement UPDATE trigger side effects roll back on constraint error",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-teststatementupdatetriggersideeffectsrollbackonconstrainterrorrepro-0001-update-statement_update_trigger_check_target-set-qty-=",
       "suggestedId": "trigger-correctness-repro-test-teststatementupdatetriggersideeffectsrollbackonconstrainterrorrepro-0001-update-statement_update_trigger_check_target-set-qty-=",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
       "query": "UPDATE statement_update_trigger_check_target SET qty = -1 WHERE id = 1;",
       "querySha256": "55262de177a057fa436e091425bedfa4d1ee0248834cf594384cce22f0576b4a",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1063,12 +1196,21 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestStatementUpdateTriggerSideEffectsRollBackOnConstraintErrorRepro",
       "ordinal": 2,
       "scriptName": "statement UPDATE trigger side effects roll back on constraint error",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-teststatementupdatetriggersideeffectsrollbackonconstrainterrorrepro-0002-select-qty-from-statement_update_trigger_check_target-where",
       "suggestedId": "trigger-correctness-repro-test-teststatementupdatetriggersideeffectsrollbackonconstrainterrorrepro-0002-select-qty-from-statement_update_trigger_check_target-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT qty FROM statement_update_trigger_check_target WHERE id = 1;",
       "querySha256": "db3fca864bf50f197a91fd495c9f8dd3683f6647a5e9e1972fcdbdc1c7c2ba24",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1092,12 +1234,16 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestStatementDeleteTriggerSideEffectsRollBackOnForeignKeyErrorRepro",
       "ordinal": 1,
       "scriptName": "statement DELETE trigger side effects roll back on foreign-key error",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-teststatementdeletetriggersideeffectsrollbackonforeignkeyerrorrepro-0001-delete-from-statement_delete_trigger_parent-where-id",
       "suggestedId": "trigger-correctness-repro-test-teststatementdeletetriggersideeffectsrollbackonforeignkeyerrorrepro-0001-delete-from-statement_delete_trigger_parent-where-id",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "23503",
+      "errorSeverity": "ERROR",
       "query": "DELETE FROM statement_delete_trigger_parent WHERE id = 1;",
       "querySha256": "b8b326297e4ac29f265eabac70050c21611805a73a1a3e13d2b4500a16ca9203",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1137,12 +1283,16 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestStatementInsertTriggerErrorRollsBackSideEffectsRepro",
       "ordinal": 1,
       "scriptName": "statement INSERT trigger exception rolls back trigger side effects",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-teststatementinserttriggererrorrollsbacksideeffectsrepro-0001-insert-into-stmt_insert_exception_target-values-1",
       "suggestedId": "trigger-correctness-repro-test-teststatementinserttriggererrorrollsbacksideeffectsrepro-0001-insert-into-stmt_insert_exception_target-values-1",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "P0001",
+      "errorSeverity": "ERROR",
       "query": "INSERT INTO stmt_insert_exception_target VALUES (1, 'new');",
       "querySha256": "775c670ef5d408dcb2e574b90cc7e14ee9074acf48b8d63fa290e37c16cbdb8e",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1182,12 +1332,16 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestStatementUpdateTriggerErrorRollsBackSideEffectsRepro",
       "ordinal": 1,
       "scriptName": "statement UPDATE trigger exception rolls back trigger side effects",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-teststatementupdatetriggererrorrollsbacksideeffectsrepro-0001-update-stmt_update_exception_target-set-label-=",
       "suggestedId": "trigger-correctness-repro-test-teststatementupdatetriggererrorrollsbacksideeffectsrepro-0001-update-stmt_update_exception_target-set-label-=",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "P0001",
+      "errorSeverity": "ERROR",
       "query": "UPDATE stmt_update_exception_target SET label = 'new' WHERE id = 1;",
       "querySha256": "357c5028cb49ad982a933b4c6aae05758e28860f6e969788ee9fcde3b0d7d0f3",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1195,12 +1349,21 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestStatementUpdateTriggerErrorRollsBackSideEffectsRepro",
       "ordinal": 2,
       "scriptName": "statement UPDATE trigger exception rolls back trigger side effects",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-teststatementupdatetriggererrorrollsbacksideeffectsrepro-0002-select-label-from-stmt_update_exception_target-where",
       "suggestedId": "trigger-correctness-repro-test-teststatementupdatetriggererrorrollsbacksideeffectsrepro-0002-select-label-from-stmt_update_exception_target-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT label FROM stmt_update_exception_target WHERE id = 1;",
       "querySha256": "ba209242217817dccb4bdaa9e8c5832577293bf317e57c62e1997400180ef8dc",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "old"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1224,12 +1387,16 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestStatementDeleteTriggerErrorRollsBackSideEffectsRepro",
       "ordinal": 1,
       "scriptName": "statement DELETE trigger exception rolls back trigger side effects",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-teststatementdeletetriggererrorrollsbacksideeffectsrepro-0001-delete-from-stmt_delete_exception_target-where-id",
       "suggestedId": "trigger-correctness-repro-test-teststatementdeletetriggererrorrollsbacksideeffectsrepro-0001-delete-from-stmt_delete_exception_target-where-id",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "P0001",
+      "errorSeverity": "ERROR",
       "query": "DELETE FROM stmt_delete_exception_target WHERE id = 1;",
       "querySha256": "3ca49803b2870f12f2a29520d5e2309c000a037dd56b3580772687f33c3c1c75",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1269,12 +1436,16 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestAfterStatementInsertTriggerErrorRollsBackStatementRepro",
       "ordinal": 1,
       "scriptName": "AFTER INSERT statement trigger exception rolls back statement",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testafterstatementinserttriggererrorrollsbackstatementrepro-0001-insert-into-after_stmt_insert_exception_target-values-1",
       "suggestedId": "trigger-correctness-repro-test-testafterstatementinserttriggererrorrollsbackstatementrepro-0001-insert-into-after_stmt_insert_exception_target-values-1",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "P0001",
+      "errorSeverity": "ERROR",
       "query": "INSERT INTO after_stmt_insert_exception_target VALUES (1, 'new');",
       "querySha256": "072b34ec680094c8bf571d7dc10dc2a8ad3d4375480c5c727608cf96715a0b13",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1314,12 +1485,16 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestAfterStatementUpdateTriggerErrorRollsBackStatementRepro",
       "ordinal": 1,
       "scriptName": "AFTER UPDATE statement trigger exception rolls back statement",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testafterstatementupdatetriggererrorrollsbackstatementrepro-0001-update-after_stmt_update_exception_target-set-label-=",
       "suggestedId": "trigger-correctness-repro-test-testafterstatementupdatetriggererrorrollsbackstatementrepro-0001-update-after_stmt_update_exception_target-set-label-=",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "P0001",
+      "errorSeverity": "ERROR",
       "query": "UPDATE after_stmt_update_exception_target SET label = 'new' WHERE id = 1;",
       "querySha256": "31a292d3a6aa19bc09e705a750060c92ddfeb4cb19611402af6b7d2025b8155d",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1327,12 +1502,21 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestAfterStatementUpdateTriggerErrorRollsBackStatementRepro",
       "ordinal": 2,
       "scriptName": "AFTER UPDATE statement trigger exception rolls back statement",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testafterstatementupdatetriggererrorrollsbackstatementrepro-0002-select-label-from-after_stmt_update_exception_target-where",
       "suggestedId": "trigger-correctness-repro-test-testafterstatementupdatetriggererrorrollsbackstatementrepro-0002-select-label-from-after_stmt_update_exception_target-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT label FROM after_stmt_update_exception_target WHERE id = 1;",
       "querySha256": "4b987251d83be178c1ee2f38dab439c51f92235604de1e2f2cdfad0499e0b3da",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "old"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1356,12 +1540,16 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestAfterStatementDeleteTriggerErrorRollsBackStatementRepro",
       "ordinal": 1,
       "scriptName": "AFTER DELETE statement trigger exception rolls back statement",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testafterstatementdeletetriggererrorrollsbackstatementrepro-0001-delete-from-after_stmt_delete_exception_target-where-id",
       "suggestedId": "trigger-correctness-repro-test-testafterstatementdeletetriggererrorrollsbackstatementrepro-0001-delete-from-after_stmt_delete_exception_target-where-id",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "P0001",
+      "errorSeverity": "ERROR",
       "query": "DELETE FROM after_stmt_delete_exception_target WHERE id = 1;",
       "querySha256": "a2280dba98d2e1f4a6760b63e234f94ff8681e6a525b1094b42b0d3ec8ff797f",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1401,12 +1589,16 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestBeforeTruncateTriggerErrorRollsBackSideEffectsRepro",
       "ordinal": 1,
       "scriptName": "BEFORE TRUNCATE trigger exception rolls back trigger side effects",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testbeforetruncatetriggererrorrollsbacksideeffectsrepro-0001-truncate-before_truncate_exception_target",
       "suggestedId": "trigger-correctness-repro-test-testbeforetruncatetriggererrorrollsbacksideeffectsrepro-0001-truncate-before_truncate_exception_target",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "P0001",
+      "errorSeverity": "ERROR",
       "query": "TRUNCATE before_truncate_exception_target;",
       "querySha256": "e65dc64f76ce0a9ba912c2918e2f9f487227aef581c1dd168ea2d769c41c5a7d",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1446,12 +1638,16 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestAfterTruncateTriggerErrorRollsBackStatementRepro",
       "ordinal": 1,
       "scriptName": "AFTER TRUNCATE trigger exception rolls back statement",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testaftertruncatetriggererrorrollsbackstatementrepro-0001-truncate-after_truncate_exception_target",
       "suggestedId": "trigger-correctness-repro-test-testaftertruncatetriggererrorrollsbackstatementrepro-0001-truncate-after_truncate_exception_target",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "P0001",
+      "errorSeverity": "ERROR",
       "query": "TRUNCATE after_truncate_exception_target;",
       "querySha256": "5d43e17bcab59555ea145b6162d4c15320659ee9b0238ea6c4f5f77d70f78226",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1491,12 +1687,16 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestBeforeDeleteRowTriggerSideEffectsRollBackOnForeignKeyErrorRepro",
       "ordinal": 1,
       "scriptName": "BEFORE DELETE row trigger side effects roll back on foreign-key error",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testbeforedeleterowtriggersideeffectsrollbackonforeignkeyerrorrepro-0001-delete-from-before_delete_row_trigger_parent-where-id",
       "suggestedId": "trigger-correctness-repro-test-testbeforedeleterowtriggersideeffectsrollbackonforeignkeyerrorrepro-0001-delete-from-before_delete_row_trigger_parent-where-id",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "23503",
+      "errorSeverity": "ERROR",
       "query": "DELETE FROM before_delete_row_trigger_parent WHERE id = 1;",
       "querySha256": "93bbb1e5401e83b4146937d5476ff7043db4a2dd9b91b118c4081f061e765ea7",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1536,12 +1736,16 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestBeforeUpdateRowTriggerSideEffectsRollBackOnForeignKeyErrorRepro",
       "ordinal": 1,
       "scriptName": "BEFORE UPDATE row trigger side effects roll back on foreign-key error",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testbeforeupdaterowtriggersideeffectsrollbackonforeignkeyerrorrepro-0001-update-before_update_row_trigger_parent-set-id-=",
       "suggestedId": "trigger-correctness-repro-test-testbeforeupdaterowtriggersideeffectsrollbackonforeignkeyerrorrepro-0001-update-before_update_row_trigger_parent-set-id-=",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "23503",
+      "errorSeverity": "ERROR",
       "query": "UPDATE before_update_row_trigger_parent SET id = 2 WHERE id = 1;",
       "querySha256": "c86539b1bfad2e4f668bef28a2861cd5706c4985acd6868672d8c94195a682de",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1549,12 +1753,21 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestBeforeUpdateRowTriggerSideEffectsRollBackOnForeignKeyErrorRepro",
       "ordinal": 2,
       "scriptName": "BEFORE UPDATE row trigger side effects roll back on foreign-key error",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testbeforeupdaterowtriggersideeffectsrollbackonforeignkeyerrorrepro-0002-select-id-from-before_update_row_trigger_parent",
       "suggestedId": "trigger-correctness-repro-test-testbeforeupdaterowtriggersideeffectsrollbackonforeignkeyerrorrepro-0002-select-id-from-before_update_row_trigger_parent",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT id FROM before_update_row_trigger_parent;",
       "querySha256": "7206c2648b3256d335619cb072f2cfad4198aa251c3bd1fbbb675caaf863b513",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -1578,12 +1791,38 @@
       "source": "testing/go/trigger_correctness_repro_test.go:TestEventTriggerAuditsDdlCommandRepro",
       "ordinal": 1,
       "scriptName": "event trigger audits CREATE TABLE",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testeventtriggerauditsddlcommandrepro-0001-select-tag-from-event_trigger_audit",
       "suggestedId": "trigger-correctness-repro-test-testeventtriggerauditsddlcommandrepro-0001-select-tag-from-event_trigger_audit",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT tag FROM event_trigger_audit;",
       "querySha256": "faa93c128aeb8da83ee3ab02e6ac17e324b57663cd84596c1bad715665a84ab0",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "CREATE TABLE"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/trigger_correctness_repro_test.go:TestBeforeInsertTriggerVisibleRowsRollBackOnLaterErrorRepro#0001",
+      "source": "testing/go/trigger_correctness_repro_test.go:TestBeforeInsertTriggerVisibleRowsRollBackOnLaterErrorRepro",
+      "ordinal": 1,
+      "scriptName": "BEFORE INSERT trigger-visible prior rows roll back on later error",
+      "oracle": "postgres",
+      "postgresId": "trigger-correctness-repro-test-testbeforeinserttriggervisiblerowsrollbackonlatererrorrepro-0001-insert-into-trigger_visibility_atomic_items-values-1",
+      "suggestedId": "trigger-correctness-repro-test-testbeforeinserttriggervisiblerowsrollbackonlatererrorrepro-0001-insert-into-trigger_visibility_atomic_items-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO trigger_visibility_atomic_items VALUES\n\t\t\t\t\t\t(1, 'hi', 1),\n\t\t\t\t\t\t(2, 'bad', -1);",
+      "querySha256": "2dc6dcc2469fc14b91df406fa22303a4973f9e83dca4372594ff6ead507df343",
+      "needsCleanup": false,
       "cleanupProvided": false
     }
   ]

@@ -265,12 +265,10 @@ limit 1`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0
 					Query: `SELECT ((t1a).@1), ((t1b).@2) FROM t2 ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0028-select-t1a-.@1-t1b-.@2", Compare: "sqlstate"},
 				},
 				{
-					Query:    `UPDATE t2 SET t1a=ROW((t1a).a+100, (t1a).c)::t1a WHERE length(t1a::text) > 0;`,
-					Expected: []sql.Row{},
+					Query: `UPDATE t2 SET t1a=ROW((t1a).a+100, (t1a).c)::t1a WHERE length(t1a::text) > 0;`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0029-update-t2-set-t1a=row-t1a"},
 				},
 				{
-					Query:    `UPDATE t2 SET t1b=ROW((t1b).@1+100, (t1b).@2)::t1b WHERE length(t1b::text) > 0;`,
-					Expected: []sql.Row{},
+					Query: `UPDATE t2 SET t1b=ROW((t1b).@1+100, (t1b).@2)::t1b WHERE length(t1b::text) > 0;`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0030-update-t2-set-t1b=row-t1b", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT * FROM t2 ORDER BY id;`,

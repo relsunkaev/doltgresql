@@ -137,12 +137,10 @@ $$ LANGUAGE plpgsql;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-proc
 					Query: "CALL interpreted_branch(4);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0012-call-interpreted_branch-4", Compare: "sqlstate"},
 				},
 				{
-					Query:    "SELECT * FROM test;",
-					Expected: []sql.Row{{1, 104}},
+					Query: "SELECT * FROM test;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0013-select-*-from-test"},
 				},
 				{
-					Query:    "DELETE FROM test WHERE v1 = 1;",
-					Expected: []sql.Row{},
+					Query: "DELETE FROM test WHERE v1 = 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0014-delete-from-test-where-v1"},
 				},
 				{
 					Query:    `SELECT dolt_add('.');`,
@@ -218,12 +216,10 @@ $$ LANGUAGE plpgsql;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-proc
 					Query: "CALL interpreted_merging('12');", PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0028-call-interpreted_merging-12", Compare: "sqlstate"},
 				},
 				{
-					Query:    "SELECT * FROM test;",
-					Expected: []sql.Row{{1, 77}, {2, 112}},
+					Query: "SELECT * FROM test;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0029-select-*-from-test"},
 				},
 				{
-					Query:       "CALL interpreted_merging(55);",
-					ExpectedErr: "does not exist",
+					Query: "CALL interpreted_merging(55);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0030-call-interpreted_merging-55", Compare: "sqlstate"},
 				},
 				{
 					Query:    `SELECT dolt_add('.');`,

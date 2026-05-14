@@ -620,10 +620,7 @@ $$ LANGUAGE plpgsql;`},
 					Query: "SELECT func2(1);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0049-select-func2-1", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT func2(11);",
-					Expected: []sql.Row{
-						{"(1,John,100)"},
-					},
+					Query: "SELECT func2(11);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0050-select-func2-11", Compare: "sqlstate"},
 				},
 				{
 					Query:    "SELECT func2(111);",
@@ -1445,11 +1442,7 @@ $$ LANGUAGE plpgsql;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-func
 					Query: "SELECT delete_deck_tree(1);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0134-select-delete_deck_tree-1", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT * from decks;",
-					Expected: []sql.Row{
-						{2, "name2", 4},
-						{7, "name4", 9},
-					},
+					Query: "SELECT * from decks;", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0135-select-*-from-decks"},
 				},
 			},
 		},

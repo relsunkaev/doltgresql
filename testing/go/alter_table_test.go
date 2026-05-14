@@ -697,29 +697,19 @@ func TestAlterTable(t *testing.T) {
 					Query: `SELECT (t1a).x, (t1a).@1 FROM t2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0108-select-t1a-.x-t1a-.@1", Compare: "sqlstate"},
 				},
 				{
-					Query:    `ALTER TABLE t1b RENAME COLUMN b TO bb;`,
-					Expected: []sql.Row{},
+					Query: `ALTER TABLE t1b RENAME COLUMN b TO bb;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0109-alter-table-t1b-rename-column"},
 				},
 				{
-					Query:    `ALTER TABLE t1b RENAME COLUMN a TO aa;`,
-					Expected: []sql.Row{},
+					Query: `ALTER TABLE t1b RENAME COLUMN a TO aa;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0110-alter-table-t1b-rename-column"},
 				},
 				{
-					Query: `SELECT * FROM t2;`,
-					Expected: []sql.Row{
-						{1, "(2,abc)", "(def,3)"},
-					},
+					Query: `SELECT * FROM t2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0111-select-*-from-t2"},
 				},
 				{
-					Query:    `INSERT INTO t2 VALUES (4, ROW(5, 'ghi'), ROW('jkl', 6));`,
-					Expected: []sql.Row{},
+					Query: `INSERT INTO t2 VALUES (4, ROW(5, 'ghi'), ROW('jkl', 6));`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0112-insert-into-t2-values-4"},
 				},
 				{
-					Query: `SELECT (t1b).aa, (t1b).@1, (t1b).bb, (t1b).@2 FROM t2;`,
-					Expected: []sql.Row{
-						{"def", "def", 3, 3},
-						{"jkl", "jkl", 6, 6},
-					},
+					Query: `SELECT (t1b).aa, (t1b).@1, (t1b).bb, (t1b).@2 FROM t2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-test-testaltertable-0113-select-t1b-.aa-t1b-.@1", Compare: "sqlstate"},
 				},
 			},
 		},
