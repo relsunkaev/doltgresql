@@ -36,10 +36,11 @@ func TestVacuumTableRequiresOwnershipRepro(t *testing.T) {
 					Username: `vacuum_intruder`,
 					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
 
-					// TestPgMaintainRoleAllowsVacuumRepro reproduces a predefined-role privilege
-					// bug: membership in pg_maintain should allow VACUUM on another role's table
-					// without table ownership.
-					ID: "maintenance-privilege-repro-test-testvacuumtablerequiresownershiprepro-0001-vacuum-vacuum_private"},
+						// TestPgMaintainRoleAllowsVacuumRepro reproduces a predefined-role privilege
+						// bug: membership in pg_maintain should allow VACUUM on another role's table
+						// without table ownership.
+						ID:      "maintenance-privilege-repro-test-testvacuumtablerequiresownershiprepro-0001-vacuum-vacuum_private",
+						Compare: "sqlstate"},
 				},
 			},
 		},
@@ -110,10 +111,10 @@ func TestVacuumCannotRunInsideTransactionBlockRepro(t *testing.T) {
 				{
 					Query: `VACUUM vacuum_transaction_target;`, PostgresOracle: ScriptTestPostgresOracle{ID: "maintenance-privilege-repro-test-testvacuumcannotruninsidetransactionblockrepro-0001-vacuum-vacuum_transaction_target",
 
-					// TestPostgres16VacuumAnalyzeBufferUsageLimitRepro reproduces a PostgreSQL 16
-					// compatibility gap: VACUUM and ANALYZE accept BUFFER_USAGE_LIMIT in their
-					// parenthesized option lists.
-					Compare: "sqlstate"},
+						// TestPostgres16VacuumAnalyzeBufferUsageLimitRepro reproduces a PostgreSQL 16
+						// compatibility gap: VACUUM and ANALYZE accept BUFFER_USAGE_LIMIT in their
+						// parenthesized option lists.
+						Compare: "sqlstate"},
 				},
 				{
 					Query: `ROLLBACK;`,
