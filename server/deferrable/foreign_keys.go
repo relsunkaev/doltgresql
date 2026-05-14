@@ -33,6 +33,8 @@ type Timing struct {
 	InitiallyDeferred bool
 }
 
+type ActionColumns = fkmetadata.ActionColumns
+
 type ParsedForeignKey struct {
 	Name          string
 	Table         string
@@ -41,6 +43,7 @@ type ParsedForeignKey struct {
 	ParentColumns []string
 	Timing        Timing
 	MatchFull     bool
+	ActionColumns ActionColumns
 }
 
 type Check struct {
@@ -58,26 +61,29 @@ type txnState struct {
 }
 
 type pendingForeignKeyTiming struct {
-	key       string
-	fk        sql.ForeignKeyConstraint
-	timing    Timing
-	matchFull bool
+	key           string
+	fk            sql.ForeignKeyConstraint
+	timing        Timing
+	matchFull     bool
+	actionColumns ActionColumns
 }
 
 const foreignKeyKeySeparator = "\x00"
 
 var registry = struct {
 	sync.Mutex
-	parsed    []ParsedForeignKey
-	timing    map[string]Timing
-	matchFull map[string]bool
-	pending   map[uint32]map[string]pendingForeignKeyTiming
-	txns      map[uint32]*txnState
+	parsed        []ParsedForeignKey
+	timing        map[string]Timing
+	matchFull     map[string]bool
+	actionColumns map[string]ActionColumns
+	pending       map[uint32]map[string]pendingForeignKeyTiming
+	txns          map[uint32]*txnState
 }{
-	timing:    make(map[string]Timing),
-	matchFull: make(map[string]bool),
-	pending:   make(map[uint32]map[string]pendingForeignKeyTiming),
-	txns:      make(map[uint32]*txnState),
+	timing:        make(map[string]Timing),
+	matchFull:     make(map[string]bool),
+	actionColumns: make(map[string]ActionColumns),
+	pending:       make(map[uint32]map[string]pendingForeignKeyTiming),
+	txns:          make(map[uint32]*txnState),
 }
 
 func RegisterParsedForeignKey(parsed ParsedForeignKey) {
@@ -86,6 +92,8 @@ func RegisterParsedForeignKey(parsed ParsedForeignKey) {
 	parsed.ParentTable = normalize(parsed.ParentTable)
 	parsed.Columns = normalizeSlice(parsed.Columns)
 	parsed.ParentColumns = normalizeSlice(parsed.ParentColumns)
+	parsed.ActionColumns.OnUpdate = normalizeSlice(parsed.ActionColumns.OnUpdate)
+	parsed.ActionColumns.OnDelete = normalizeSlice(parsed.ActionColumns.OnDelete)
 
 	registry.Lock()
 	defer registry.Unlock()
@@ -105,10 +113,11 @@ func BindForeignKey(ctx *sql.Context, fk sql.ForeignKeyConstraint) error {
 				registry.pending[connectionID] = make(map[string]pendingForeignKeyTiming)
 			}
 			registry.pending[connectionID][key] = pendingForeignKeyTiming{
-				key:       key,
-				fk:        fk,
-				timing:    parsed.Timing,
-				matchFull: parsed.MatchFull,
+				key:           key,
+				fk:            fk,
+				timing:        parsed.Timing,
+				matchFull:     parsed.MatchFull,
+				actionColumns: parsed.ActionColumns,
 			}
 			return nil
 		}
@@ -164,6 +173,30 @@ func ForeignKeyMatchFullForID(ctx *sql.Context, fkID id.ForeignKey, fk sql.Forei
 	return false, nil
 }
 
+// ForeignKeyActionColumns returns PostgreSQL SET NULL / SET DEFAULT column-list
+// metadata for fk.
+func ForeignKeyActionColumns(ctx *sql.Context, fk sql.ForeignKeyConstraint) (ActionColumns, error) {
+	return ForeignKeyActionColumnsForID(ctx, id.NullForeignKey, fk)
+}
+
+// ForeignKeyActionColumnsForID returns PostgreSQL SET NULL / SET DEFAULT
+// column-list metadata for fk from Doltgres-parsed DDL or persisted metadata.
+func ForeignKeyActionColumnsForID(ctx *sql.Context, fkID id.ForeignKey, fk sql.ForeignKeyConstraint) (ActionColumns, error) {
+	registry.Lock()
+	actionColumns, ok := lookupActionColumnsLocked(fk)
+	if ok {
+		registry.Unlock()
+		return actionColumns, nil
+	}
+	registry.Unlock()
+
+	actionColumns, ok, err := persistentForeignKeyActionColumns(ctx, fkID, fk)
+	if err != nil || ok {
+		return actionColumns, err
+	}
+	return ActionColumns{}, nil
+}
+
 func Begin(connectionID uint32) {
 	registry.Lock()
 	defer registry.Unlock()
@@ -193,6 +226,7 @@ func ResetForTests() {
 	registry.parsed = nil
 	registry.timing = make(map[string]Timing)
 	registry.matchFull = make(map[string]bool)
+	registry.actionColumns = make(map[string]ActionColumns)
 	registry.pending = make(map[uint32]map[string]pendingForeignKeyTiming)
 	registry.txns = make(map[uint32]*txnState)
 }
@@ -224,7 +258,7 @@ func FlushPendingForeignKeys(ctx *sql.Context) error {
 				return err
 			}
 		}
-		if err := persistForeignKeyMetadata(ctx, timing.fk, timing.timing, timing.matchFull); err != nil {
+		if err := persistForeignKeyMetadata(ctx, timing.fk, timing.timing, timing.matchFull, timing.actionColumns); err != nil {
 			return err
 		}
 	}
@@ -241,6 +275,11 @@ func FlushPendingForeignKeys(ctx *sql.Context) error {
 			registry.matchFull[timing.key] = true
 		} else {
 			delete(registry.matchFull, timing.key)
+		}
+		if timing.actionColumns.IsEmpty() {
+			delete(registry.actionColumns, timing.key)
+		} else {
+			registry.actionColumns[timing.key] = timing.actionColumns
 		}
 	}
 	return nil
@@ -330,6 +369,13 @@ func lookupMatchFullLocked(fk sql.ForeignKeyConstraint) (bool, bool) {
 	return false, false
 }
 
+func lookupActionColumnsLocked(fk sql.ForeignKeyConstraint) (ActionColumns, bool) {
+	if actionColumns, ok := registry.actionColumns[foreignKeyKey(fk)]; ok {
+		return actionColumns, true
+	}
+	return ActionColumns{}, false
+}
+
 func MarkDirty(connectionID uint32, fk sql.ForeignKeyConstraint) {
 	registry.Lock()
 	defer registry.Unlock()
@@ -404,10 +450,10 @@ func persistForeignKeyTiming(ctx *sql.Context, fk sql.ForeignKeyConstraint, timi
 	return collection.SetTiming(ctx, fkmetadata.MetadataFromForeignKey(schemaName, fk, fkmetadata.Timing{
 		Deferrable:        timing.Deferrable,
 		InitiallyDeferred: timing.InitiallyDeferred,
-	}, false))
+	}, false, fkmetadata.ActionColumns{}))
 }
 
-func persistForeignKeyMetadata(ctx *sql.Context, fk sql.ForeignKeyConstraint, timing Timing, matchFull bool) error {
+func persistForeignKeyMetadata(ctx *sql.Context, fk sql.ForeignKeyConstraint, timing Timing, matchFull bool, actionColumns ActionColumns) error {
 	if !core.IsContextValid(ctx) {
 		return nil
 	}
@@ -429,7 +475,7 @@ func persistForeignKeyMetadata(ctx *sql.Context, fk sql.ForeignKeyConstraint, ti
 	return collection.SetMetadata(ctx, fkmetadata.MetadataFromForeignKey(schemaName, fk, fkmetadata.Timing{
 		Deferrable:        timing.Deferrable,
 		InitiallyDeferred: timing.InitiallyDeferred,
-	}, matchFull))
+	}, matchFull, actionColumns))
 }
 
 func persistentForeignKeyTiming(ctx *sql.Context, fkID id.ForeignKey, fk sql.ForeignKeyConstraint) (Timing, bool, error) {
@@ -487,6 +533,31 @@ func persistentForeignKeyMatchFull(ctx *sql.Context, fkID id.ForeignKey, fk sql.
 		return false, false, err
 	}
 	return collection.MatchFullForForeignKey(ctx, fkID, fk)
+}
+
+func persistentForeignKeyActionColumns(ctx *sql.Context, fkID id.ForeignKey, fk sql.ForeignKeyConstraint) (ActionColumns, bool, error) {
+	if !core.IsContextValid(ctx) {
+		return ActionColumns{}, false, nil
+	}
+	if !fkID.IsValid() {
+		if fk.Table == "" || fk.Name == "" {
+			return ActionColumns{}, false, nil
+		}
+		schemaName := fk.SchemaName
+		if schemaName == "" {
+			var err error
+			schemaName, err = core.GetSchemaName(ctx, nil, "")
+			if err != nil {
+				return ActionColumns{}, false, err
+			}
+		}
+		fkID = id.NewForeignKey(schemaName, fk.Table, fk.Name)
+	}
+	collection, err := core.GetForeignKeyMetadataCollectionFromContext(ctx, ctx.GetCurrentDatabase())
+	if err != nil {
+		return ActionColumns{}, false, err
+	}
+	return collection.ActionColumnsForForeignKey(ctx, fkID, fk)
 }
 
 func validateMatchFullExistingRows(ctx *sql.Context, fk sql.ForeignKeyConstraint) error {

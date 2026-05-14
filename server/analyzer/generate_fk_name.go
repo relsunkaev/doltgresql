@@ -23,6 +23,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	"github.com/dolthub/go-mysql-server/sql/transform"
 
+	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/server/deferrable"
 	"github.com/dolthub/doltgresql/server/functions"
 )
@@ -37,13 +38,21 @@ func generateForeignKeyName(ctx *sql.Context, _ *analyzer.Analyzer, n sql.Node, 
 			// planbuilder additionally builds an FK from the column's ForeignKeyDef. Drop those structural duplicates
 			// before name generation so we don't try to register the same constraint twice.
 			deduped := dedupCreateTableForeignKeys(n.ForeignKeys())
+			changedForeignKey := len(deduped) != len(n.ForeignKeys())
 			copiedForeignKeys := make([]*sql.ForeignKeyConstraint, len(deduped))
 			for i, fk := range deduped {
 				copied := *fk
+				if copied.SchemaName == "" {
+					schemaName, err := core.GetSchemaName(ctx, n.Db, "")
+					if err != nil {
+						return nil, transform.SameTree, err
+					}
+					copied.SchemaName = schemaName
+					changedForeignKey = true
+				}
 				copiedForeignKeys[i] = &copied
 			}
 
-			changedForeignKey := len(copiedForeignKeys) != len(n.ForeignKeys())
 			generatedNames := make(map[string]struct{}, len(copiedForeignKeys))
 			for _, fk := range copiedForeignKeys {
 				if fk.Name == "" {
@@ -80,6 +89,13 @@ func generateForeignKeyName(ctx *sql.Context, _ *analyzer.Analyzer, n sql.Node, 
 		case *plan.CreateForeignKey:
 			if n.FkDef.Name == "" {
 				copiedFk := *n.FkDef
+				if copiedFk.SchemaName == "" {
+					schemaName, err := core.GetSchemaName(ctx, nil, "")
+					if err != nil {
+						return nil, transform.SameTree, err
+					}
+					copiedFk.SchemaName = schemaName
+				}
 				generatedName, err := generateFkName(ctx, copiedFk.Table, &copiedFk, nil)
 				if err != nil {
 					return nil, transform.SameTree, err
@@ -93,8 +109,22 @@ func generateForeignKeyName(ctx *sql.Context, _ *analyzer.Analyzer, n sql.Node, 
 					FkDef:      &copiedFk,
 				}, transform.NewTree, nil
 			} else {
-				if err := deferrable.BindForeignKey(ctx, *n.FkDef); err != nil {
+				copiedFk := *n.FkDef
+				if copiedFk.SchemaName == "" {
+					schemaName, err := core.GetSchemaName(ctx, nil, "")
+					if err != nil {
+						return nil, transform.SameTree, err
+					}
+					copiedFk.SchemaName = schemaName
+				}
+				if err := deferrable.BindForeignKey(ctx, copiedFk); err != nil {
 					return nil, transform.SameTree, err
+				}
+				if copiedFk.SchemaName != n.FkDef.SchemaName {
+					return &plan.CreateForeignKey{
+						DbProvider: n.DbProvider,
+						FkDef:      &copiedFk,
+					}, transform.NewTree, nil
 				}
 				return n, transform.SameTree, nil
 			}

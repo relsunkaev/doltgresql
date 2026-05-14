@@ -49,6 +49,34 @@ func nodeForeignKeyConstraintTableDef(ctx *Context, childTable string, node *tre
 	for i := range node.ToCols {
 		toCols[i] = vitess.NewColIdent(string(node.ToCols[i]))
 	}
+	var refActions [2]vitess.ReferenceAction
+	actionColumns := deferrable.ActionColumns{}
+	for i, refAction := range []tree.RefAction{node.Actions.Delete, node.Actions.Update} {
+		switch refAction.Action {
+		case tree.NoAction:
+			refActions[i] = vitess.NoAction
+		case tree.Restrict:
+			refActions[i] = vitess.Restrict
+		case tree.SetNull:
+			refActions[i] = vitess.SetNull
+			if i == 0 {
+				actionColumns.OnDelete = nameListToStrings(refAction.Columns)
+			} else {
+				actionColumns.OnUpdate = nameListToStrings(refAction.Columns)
+			}
+		case tree.SetDefault:
+			refActions[i] = vitess.SetDefault
+			if i == 0 {
+				actionColumns.OnDelete = nameListToStrings(refAction.Columns)
+			} else {
+				actionColumns.OnUpdate = nameListToStrings(refAction.Columns)
+			}
+		case tree.Cascade:
+			refActions[i] = vitess.Cascade
+		default:
+			return nil, errors.Errorf("unknown foreign key reference action encountered")
+		}
+	}
 	if childTable != "" {
 		deferrable.RegisterParsedForeignKey(deferrable.ParsedForeignKey{
 			Name:          string(node.Name),
@@ -60,31 +88,9 @@ func nodeForeignKeyConstraintTableDef(ctx *Context, childTable string, node *tre
 				Deferrable:        node.Deferrable == tree.Deferrable,
 				InitiallyDeferred: node.Initially == tree.InitiallyDeferred,
 			},
-			MatchFull: node.Match == tree.MatchFull,
+			MatchFull:     node.Match == tree.MatchFull,
+			ActionColumns: actionColumns,
 		})
-	}
-	var refActions [2]vitess.ReferenceAction
-	for i, refAction := range []tree.RefAction{node.Actions.Delete, node.Actions.Update} {
-		switch refAction.Action {
-		case tree.NoAction:
-			refActions[i] = vitess.NoAction
-		case tree.Restrict:
-			refActions[i] = vitess.Restrict
-		case tree.SetNull:
-			refActions[i] = vitess.SetNull
-			if refAction.Columns != nil {
-				return nil, errors.Errorf("SET NULL <columns> is not yet supported")
-			}
-		case tree.SetDefault:
-			refActions[i] = vitess.SetDefault
-			if refAction.Columns != nil {
-				return nil, errors.Errorf("SET DEFAULT <columns> is not yet supported")
-			}
-		case tree.Cascade:
-			refActions[i] = vitess.Cascade
-		default:
-			return nil, errors.Errorf("unknown foreign key reference action encountered")
-		}
 	}
 	return &vitess.ForeignKeyDefinition{
 		Source:            fromCols,

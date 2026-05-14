@@ -84,6 +84,11 @@ func (c *CreateForeignKey) BuildRowIter(ctx *sql.Context, _ sql.NodeExecBuilder,
 	if !ok {
 		return nil, sql.ErrTableNotFound.New(fkDef.Table)
 	}
+	if fkDef.SchemaName == "" {
+		if dst, ok := table.(sql.DatabaseSchemaTable); ok {
+			fkDef.SchemaName = dst.DatabaseSchema().SchemaName()
+		}
+	}
 
 	refDb, err := c.gmsCreateForeignKey.DbProvider.Database(ctx, fkDef.ParentDatabase)
 	if err != nil {

@@ -44,6 +44,18 @@ type Timing struct {
 	InitiallyDeferred bool
 }
 
+// ActionColumns stores PostgreSQL SET NULL / SET DEFAULT column lists for
+// referential actions. Dolt's FK collection only models the action kind, not
+// the optional subset of child columns affected by that action.
+type ActionColumns struct {
+	OnUpdate []string
+	OnDelete []string
+}
+
+func (columns ActionColumns) IsEmpty() bool {
+	return len(columns.OnUpdate) == 0 && len(columns.OnDelete) == 0
+}
+
 // Metadata stores Doltgres-only foreign-key metadata that Dolt's FK
 // collection does not yet model directly.
 type Metadata struct {
@@ -54,6 +66,7 @@ type Metadata struct {
 	ParentColumns []string
 	Timing        Timing
 	MatchFull     bool
+	ActionColumns ActionColumns
 }
 
 // Collection contains foreign-key metadata in the current database root.
@@ -84,7 +97,7 @@ func NewCollection(ctx context.Context, underlyingMap prolly.AddressMap, ns tree
 }
 
 // MetadataFromForeignKey returns persisted metadata for fk using the given resolved schema name.
-func MetadataFromForeignKey(schemaName string, fk sql.ForeignKeyConstraint, timing Timing, matchFull bool) Metadata {
+func MetadataFromForeignKey(schemaName string, fk sql.ForeignKeyConstraint, timing Timing, matchFull bool, actionColumns ActionColumns) Metadata {
 	if schemaName == "" {
 		schemaName = fk.SchemaName
 	}
@@ -96,6 +109,7 @@ func MetadataFromForeignKey(schemaName string, fk sql.ForeignKeyConstraint, timi
 		ParentColumns: slices.Clone(fk.ParentColumns),
 		Timing:        timing,
 		MatchFull:     matchFull,
+		ActionColumns: actionColumns.clone(),
 	}
 }
 
@@ -107,6 +121,7 @@ func (pgf *Collection) SetTiming(ctx context.Context, metadata Metadata) error {
 	}
 	if existing, ok := pgf.accessCache[metadata.ID]; ok {
 		metadata.MatchFull = existing.MatchFull
+		metadata.ActionColumns = existing.ActionColumns.clone()
 	}
 	return pgf.setMetadata(ctx, metadata)
 }
@@ -119,6 +134,7 @@ func (pgf *Collection) SetMatchFull(ctx context.Context, metadata Metadata) erro
 	}
 	if existing, ok := pgf.accessCache[metadata.ID]; ok {
 		metadata.Timing = existing.Timing
+		metadata.ActionColumns = existing.ActionColumns.clone()
 	}
 	return pgf.setMetadata(ctx, metadata)
 }
@@ -133,7 +149,7 @@ func (pgf *Collection) SetMetadata(ctx context.Context, metadata Metadata) error
 }
 
 func (pgf *Collection) setMetadata(ctx context.Context, metadata Metadata) error {
-	if !metadata.Timing.Deferrable && !metadata.MatchFull {
+	if !metadata.Timing.Deferrable && !metadata.MatchFull && metadata.ActionColumns.IsEmpty() {
 		return pgf.DeleteMetadata(ctx, metadata.ID)
 	}
 	return pgf.putMetadata(ctx, metadata)
@@ -197,6 +213,27 @@ func (pgf *Collection) MatchFullForForeignKey(ctx context.Context, fkID id.Forei
 		}
 	}
 	return false, false, nil
+}
+
+// ActionColumnsForForeignKey returns the persisted SET NULL / SET DEFAULT
+// column-list metadata for fk.
+func (pgf *Collection) ActionColumnsForForeignKey(ctx context.Context, fkID id.ForeignKey, fk sql.ForeignKeyConstraint) (ActionColumns, bool, error) {
+	if fkID.IsValid() {
+		if metadata, ok := pgf.accessCache[fkID]; ok && metadata.matchesForeignKey(fkID.SchemaName(), fk) {
+			return metadata.ActionColumns.clone(), true, nil
+		}
+	}
+	schemaName := fk.SchemaName
+	if fkID.IsValid() {
+		schemaName = fkID.SchemaName()
+	}
+	for _, cachedID := range pgf.idCache {
+		metadata := pgf.accessCache[cachedID]
+		if metadata.matchesForeignKey(schemaName, fk) {
+			return metadata.ActionColumns.clone(), true, nil
+		}
+	}
+	return ActionColumns{}, false, nil
 }
 
 func (pgf *Collection) putMetadata(ctx context.Context, metadata Metadata) error {
@@ -282,6 +319,8 @@ func (metadata Metadata) Serialize(ctx context.Context) ([]byte, error) {
 	writer.Bool(metadata.Timing.Deferrable)
 	writer.Bool(metadata.Timing.InitiallyDeferred)
 	writer.Bool(metadata.MatchFull)
+	writer.StringSlice(metadata.ActionColumns.OnUpdate)
+	writer.StringSlice(metadata.ActionColumns.OnDelete)
 	return writer.Data(), nil
 }
 
@@ -307,6 +346,12 @@ func DeserializeMetadata(ctx context.Context, data []byte) (Metadata, error) {
 		metadata.MatchFull = reader.Bool()
 	}
 	if !reader.IsEmpty() {
+		metadata.ActionColumns.OnUpdate = reader.StringSlice()
+	}
+	if !reader.IsEmpty() {
+		metadata.ActionColumns.OnDelete = reader.StringSlice()
+	}
+	if !reader.IsEmpty() {
 		return Metadata{}, errors.New("extra data found while deserializing foreign-key metadata")
 	}
 	metadata.normalize()
@@ -316,6 +361,15 @@ func DeserializeMetadata(ctx context.Context, data []byte) (Metadata, error) {
 func (metadata *Metadata) normalize() {
 	metadata.Columns = compactStringsPreservingOrder(metadata.Columns)
 	metadata.ParentColumns = compactStringsPreservingOrder(metadata.ParentColumns)
+	metadata.ActionColumns.OnUpdate = compactStringsPreservingOrder(metadata.ActionColumns.OnUpdate)
+	metadata.ActionColumns.OnDelete = compactStringsPreservingOrder(metadata.ActionColumns.OnDelete)
+}
+
+func (columns ActionColumns) clone() ActionColumns {
+	return ActionColumns{
+		OnUpdate: slices.Clone(columns.OnUpdate),
+		OnDelete: slices.Clone(columns.OnDelete),
+	}
 }
 
 func compactStringsPreservingOrder(values []string) []string {
@@ -365,9 +419,10 @@ func equalStringSlices(left []string, right []string) bool {
 
 func (metadata Metadata) summary() string {
 	metadata.normalize()
-	return fmt.Sprintf("%s columns=%v parent=%s.%s(%v) deferrable=%t initiallyDeferred=%t matchFull=%t",
+	return fmt.Sprintf("%s columns=%v parent=%s.%s(%v) deferrable=%t initiallyDeferred=%t matchFull=%t onUpdateColumns=%v onDeleteColumns=%v",
 		metadata.ID.AsId().String(), metadata.Columns, metadata.ParentSchema, metadata.ParentTable, metadata.ParentColumns,
-		metadata.Timing.Deferrable, metadata.Timing.InitiallyDeferred, metadata.MatchFull)
+		metadata.Timing.Deferrable, metadata.Timing.InitiallyDeferred, metadata.MatchFull,
+		metadata.ActionColumns.OnUpdate, metadata.ActionColumns.OnDelete)
 }
 
 // DeserializeRootObject implements the interface objinterface.Collection.
