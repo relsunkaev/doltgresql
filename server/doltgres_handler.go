@@ -298,6 +298,7 @@ func castSQLError(err error) error {
 		pgcode.InvalidForeignKey,
 		pgcode.InvalidColumnReference,
 		pgcode.InvalidColumnDefinition,
+		pgcode.InvalidName,
 		pgcode.InvalidObjectDefinition,
 		pgcode.InvalidTableDefinition,
 		pgcode.InvalidParameterValue,

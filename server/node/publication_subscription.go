@@ -578,7 +578,7 @@ func (a *AlterSubscription) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, e
 		sub.Enabled = false
 	case SubscriptionAlterSetOptions:
 		if _, ok := a.Options["two_phase"]; ok {
-			return nil, errors.New(`ALTER SUBSCRIPTION cannot set option "two_phase"`)
+			return nil, pgerror.New(pgcode.Syntax, `ALTER SUBSCRIPTION cannot set option "two_phase"`)
 		}
 		if err = applySubscriptionOptions(&sub, a.Options); err != nil {
 			return nil, err
@@ -1146,7 +1146,7 @@ func applySubscriptionOptions(sub *subscriptions.Subscription, options map[strin
 			sub.DisableOnError = parsed
 		case "slot_name":
 			if value == "" {
-				return errors.New(`replication slot name "" is too short`)
+				return pgerror.New(pgcode.InvalidName, `replication slot name "" is too short`)
 			}
 			if strings.EqualFold(value, "none") {
 				if sub.Enabled {
@@ -1264,7 +1264,7 @@ func parseReplicationBoolOption(key string, value string) (bool, error) {
 	case "false", "off", "no", "0":
 		return false, nil
 	default:
-		return false, errors.Errorf(`invalid boolean value for option "%s": "%s"`, key, value)
+		return false, pgerror.Newf(pgcode.Syntax, `invalid boolean value for option "%s": "%s"`, key, value)
 	}
 }
 
@@ -1275,7 +1275,7 @@ func parseStreamingOption(value string) (bool, error) {
 	case "false", "off", "no", "0":
 		return false, nil
 	default:
-		return false, errors.Errorf(`invalid value for option "streaming": "%s"`, value)
+		return false, pgerror.Newf(pgcode.Syntax, `invalid value for option "streaming": "%s"`, value)
 	}
 }
 
@@ -1284,7 +1284,7 @@ func validateSynchronousCommitOption(value string) error {
 	case "local", "remote_write", "remote_apply", "on", "off":
 		return nil
 	default:
-		return errors.Errorf(`invalid value for option "synchronous_commit": "%s"`, value)
+		return pgerror.Newf(pgcode.InvalidParameterValue, `invalid value for option "synchronous_commit": "%s"`, value)
 	}
 }
 
@@ -1293,7 +1293,7 @@ func validateSubscriptionOriginOption(value string) error {
 	case "none", "any":
 		return nil
 	default:
-		return errors.Errorf(`invalid value for option "origin": "%s"`, value)
+		return pgerror.Newf(pgcode.InvalidParameterValue, `invalid value for option "origin": "%s"`, value)
 	}
 }
 
