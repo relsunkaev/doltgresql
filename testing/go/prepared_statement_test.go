@@ -150,11 +150,17 @@ var preparedStatementTests = []ScriptTest{
 			},
 			{
 				Query:    "SELECT nspname FROM pg_namespace LIMIT $1;",
-				BindVars: []any{1}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0005-select-nspname-from-pg_namespace-limit"},
+				BindVars: []any{1},
+				Expected: []sql.Row{{"dolt"}},
 			},
 			{
 				Query:    "SELECT nspname FROM pg_namespace OFFSET $1;",
-				BindVars: []any{1}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0006-select-nspname-from-pg_namespace-offset", ColumnModes: []string{"schema"}},
+				BindVars: []any{1},
+				Expected: []sql.Row{
+					{"information_schema"},
+					{"pg_catalog"},
+					{"public"},
+				},
 			},
 		},
 	},
