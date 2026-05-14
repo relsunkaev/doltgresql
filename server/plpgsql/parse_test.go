@@ -449,6 +449,39 @@ func TestParseExceptionBlockStackedDiagnostics(t *testing.T) {
 	}
 }
 
+func TestParseExceptionBlockSpecialVariables(t *testing.T) {
+	ops, err := Parse(`CREATE FUNCTION test_block() RETURNS text AS $$
+		BEGIN
+			RAISE EXCEPTION 'custom exception' USING ERRCODE = '22012';
+		EXCEPTION WHEN OTHERS THEN
+			RETURN SQLSTATE || ':' || SQLERRM;
+		END;
+	$$ LANGUAGE plpgsql;`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var returnOp *InterpreterOperation
+	for i := range ops {
+		if ops[i].OpCode == OpCode_Return {
+			returnOp = &ops[i]
+			break
+		}
+	}
+	if returnOp == nil {
+		t.Fatalf("expected return operation, found %#v", ops)
+	}
+	expectedVars := []string{"SQLSTATE", "SQLERRM"}
+	if len(returnOp.SecondaryData) != len(expectedVars) {
+		t.Fatalf("referenced variables = %#v, expected %#v; op: %#v", returnOp.SecondaryData, expectedVars, returnOp)
+	}
+	for i, expectedVar := range expectedVars {
+		if returnOp.SecondaryData[i] != expectedVar {
+			t.Fatalf("referenced variable %d = %q, expected %q; op: %#v", i, returnOp.SecondaryData[i], expectedVar, returnOp)
+		}
+	}
+}
+
 func TestParseExceptionBlockMultipleHandlers(t *testing.T) {
 	ops, err := Parse(`CREATE FUNCTION test_block() RETURNS void AS $$
 		DECLARE

@@ -248,6 +248,21 @@ func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (
 	return nil, false, nil
 }
 
+func runExceptionHandlerOperations(
+	ctx *sql.Context,
+	iFunc InterpretedFunction,
+	stack InterpreterStack,
+	state *interpreterExecutionState,
+	diagnostics plpgsqlExceptionDiagnostics,
+	handler exceptionHandlerOperation,
+) (any, bool, error) {
+	stack.PushScope()
+	stack.NewVariableWithValue("SQLSTATE", pgtypes.Text, diagnostics.ReturnedSQLState)
+	stack.NewVariableWithValue("SQLERRM", pgtypes.Text, diagnostics.MessageText)
+	defer stack.PopScope()
+	return runOperations(ctx, iFunc, stack, state, handler.start, handler.end)
+}
+
 func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack, state *interpreterExecutionState, start, end int) (any, bool, error) {
 	// We increment before accessing, so start at -1
 	counter := start - 1
@@ -368,7 +383,7 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 				state.lastExceptionContext = ""
 				priorDiagnostics := state.stackedDiagnostics
 				state.stackedDiagnostics = &diagnostics
-				ret, returned, err = runOperations(ctx, iFunc, stack, state, handler.start, handler.end)
+				ret, returned, err = runExceptionHandlerOperations(ctx, iFunc, stack, state, diagnostics, handler)
 				state.stackedDiagnostics = priorDiagnostics
 				if err != nil {
 					return nil, false, err

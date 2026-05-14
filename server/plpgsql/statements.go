@@ -347,11 +347,16 @@ func (stmt ExceptionBlock) AppendOperations(ops *[]InterpreterOperation, stack *
 			(*ops)[markerIndex].Options["handlerConditions"] = (*ops)[markerIndex].Options[conditionKey]
 			(*ops)[markerIndex].Options["handlerStart"] = (*ops)[markerIndex].Options[startKey]
 		}
+		stack.PushScope()
+		stack.NewVariable("SQLSTATE", nil)
+		stack.NewVariable("SQLERRM", nil)
 		for _, innerStmt := range handler.Body {
 			if err := innerStmt.AppendOperations(ops, stack); err != nil {
+				stack.PopScope()
 				return err
 			}
 		}
+		stack.PopScope()
 		handlerEnd := len(*ops)
 		(*ops)[markerIndex].Options[endKey] = strconv.Itoa(handlerEnd)
 		if i == 0 {
