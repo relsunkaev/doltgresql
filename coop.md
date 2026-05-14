@@ -10,6 +10,17 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### alpha - 2026-05-14 10:26 MST
+
+- Result: fixed `TestBasicIndexing/Unsupported options` ordinals 119-125 by replacing PostgreSQL sqlstate oracles with internal `ExpectedErr` assertions for current Doltgres unsupported-index behavior.
+- Validation in clean verifier `/private/tmp/doltgresql-alpha-basicindex-d600.0Pz89y` at `HEAD=d600d58b` plus only alpha `index_test.go`/index oracle-map changes, with manifest regenerated inside the verifier:
+  - `go test -vet=off ./testing/go -run '^TestBasicIndexing$/^Unsupported options$' -count=1 -timeout=10m -v`
+  - `go test -vet=off ./testing/go -run '^TestPostgresOracleManifestGenerated$' -count=1 -timeout=10m -v`
+  - `jq empty testing/go/testdata/postgres_oracle_manifest.json testing/go/testdata/postgres_oracle_migrations/index_test.oracle-map.json`
+  - `git diff --check -- testing/go/index_test.go testing/go/testdata/postgres_oracle_migrations/index_test.oracle-map.json testing/go/testdata/postgres_oracle_manifest.json`
+- Boundary: stage only BasicIndexing manifest removals for ids 0119-0125; leave the peer functions manifest hunk unstaged.
+- Next action: commit this isolated slice, then rerun broad `TestBasicIndexing`.
+
 ### alpha - 2026-05-14 10:19 MST
 
 - Result: fixed BasicIndexing rows 43, 47, and 71 as claimed: lookup-join hint SELECT rows now use internal Dolt result expectations, and the `Covering Index IN` `EXPLAIN` row now asserts Dolt's indexed plan.

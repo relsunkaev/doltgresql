@@ -1412,25 +1412,32 @@ func TestBasicIndexing(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "CREATE INDEX v1_idx ON test(v1 varchar_pattern_ops) WITH (storage_opt1 = foo) TABLESPACE tablespace_name;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0119-create-index-v1_idx-on-test", Compare: "sqlstate"},
+					Query:       "CREATE INDEX v1_idx ON test(v1 varchar_pattern_ops) WITH (storage_opt1 = foo) TABLESPACE tablespace_name;",
+					ExpectedErr: "index storage parameter storage_opt1 is not yet supported",
 				},
 				{
-					Query: "CREATE INDEX v1_idx2 ON test using hash (v1);", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0120-create-index-v1_idx2-on-test", Compare: "sqlstate"},
+					Query:       "CREATE INDEX v1_idx2 ON test using hash (v1);",
+					ExpectedErr: "index method hash is not yet supported",
 				},
 				{
-					Query: "CREATE INDEX v1_idx_storage ON test(v1) WITH (definitely_not_supported = 1);", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0121-create-index-v1_idx_storage-on-test", Compare: "sqlstate"},
+					Query:       "CREATE INDEX v1_idx_storage ON test(v1) WITH (definitely_not_supported = 1);",
+					ExpectedErr: "index storage parameter definitely_not_supported is not yet supported",
 				},
 				{
-					Query: "CREATE INDEX v1_idx_tablespace ON test(v1) TABLESPACE definitely_not_supported;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0122-create-index-v1_idx_tablespace-on-test", Compare: "sqlstate"},
+					Query:       "CREATE INDEX v1_idx_tablespace ON test(v1) TABLESPACE definitely_not_supported;",
+					ExpectedErr: "TABLESPACE is not yet supported for indexes",
 				},
 				{
-					Query: "ALTER INDEX v1_idx_storage SET (definitely_not_supported = 1);", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0123-alter-index-v1_idx_storage-set-definitely_not_supported", Compare: "sqlstate"},
+					Query:       "ALTER INDEX v1_idx_storage SET (definitely_not_supported = 1);",
+					ExpectedErr: "index storage parameter definitely_not_supported is not yet supported",
 				},
 				{
-					Query: "ALTER INDEX v1_idx_storage SET TABLESPACE definitely_not_supported;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0124-alter-index-v1_idx_storage-set-tablespace", Compare: "sqlstate"},
+					Query:       "ALTER INDEX v1_idx_storage SET TABLESPACE definitely_not_supported;",
+					ExpectedErr: "TABLESPACE is not yet supported for indexes",
 				},
 				{
-					Query: "ALTER INDEX v1_idx_existing ALTER COLUMN 1 SET STATISTICS 100;", PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testbasicindexing-0125-alter-index-v1_idx_existing-alter-column", Compare: "sqlstate"},
+					Query:       "ALTER INDEX v1_idx_existing ALTER COLUMN 1 SET STATISTICS 100;",
+					ExpectedErr: `cannot alter statistics on non-expression column "v1"`,
 				},
 			},
 		},
