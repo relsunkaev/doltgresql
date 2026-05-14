@@ -18,12 +18,15 @@
       "source": "testing/go/language_privilege_repro_test.go:TestLanguageUsagePrivilegeCanBeRevokedAndGrantedRepro",
       "ordinal": 1,
       "scriptName": "language USAGE can be revoked from PUBLIC and granted to a role",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "language-privilege-repro-test-testlanguageusageprivilegecanberevokedandgrantedrepro-0001-revoke-usage-on-language-plpgsql",
       "suggestedId": "language-privilege-repro-test-testlanguageusageprivilegecanberevokedandgrantedrepro-0001-revoke-usage-on-language-plpgsql",
+      "compare": "tag",
       "expectedKind": "tag",
       "query": "REVOKE USAGE ON LANGUAGE plpgsql FROM PUBLIC;",
       "querySha256": "aab6d6e5b9ac666b8ee66140d94359674d55d26cc5e82279969256e67b841cc3",
-      "needsCleanup": true,
+      "expectedTag": "REVOKE",
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -54,6 +57,9 @@
       "expectedKind": "tag",
       "query": "GRANT USAGE ON LANGUAGE plpgsql TO language_usage_acl_user;",
       "querySha256": "5308d609cfcee0f170a2a7670b8090bfba29c62c9ca0a02942f2742b09d379e6",
+      "nonLiteral": [
+        "PriorExpectedError"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -67,6 +73,10 @@
       "expectedKind": "tag",
       "query": "REVOKE USAGE ON LANGUAGE plpgsql FROM language_usage_acl_user;",
       "querySha256": "2987952ba51882bc9d3caf86c559b4c3c2220fe3d34a3657aff0b31eba5a5c67",
+      "nonLiteral": [
+        "PriorExpectedError",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },

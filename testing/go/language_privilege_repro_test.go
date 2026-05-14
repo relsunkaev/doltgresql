@@ -31,8 +31,7 @@ func TestLanguageUsagePrivilegeCanBeRevokedAndGrantedRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `REVOKE USAGE ON LANGUAGE plpgsql FROM PUBLIC;`,
-					ExpectedTag: `REVOKE`,
+					Query: `REVOKE USAGE ON LANGUAGE plpgsql FROM PUBLIC;`, PostgresOracle: ScriptTestPostgresOracle{ID: "language-privilege-repro-test-testlanguageusageprivilegecanberevokedandgrantedrepro-0001-revoke-usage-on-language-plpgsql"},
 				},
 				{
 					Query: `CREATE FUNCTION language_acl_denied() RETURNS INT

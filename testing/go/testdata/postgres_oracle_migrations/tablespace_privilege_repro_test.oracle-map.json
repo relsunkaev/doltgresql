@@ -18,12 +18,15 @@
       "source": "testing/go/tablespace_privilege_repro_test.go:TestTablespaceCreatePrivilegeCanBeGrantedAndRevokedRepro",
       "ordinal": 1,
       "scriptName": "tablespace CREATE can be granted and revoked",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "tablespace-privilege-repro-test-testtablespacecreateprivilegecanbegrantedandrevokedrepro-0001-grant-create-on-tablespace-pg_default",
       "suggestedId": "tablespace-privilege-repro-test-testtablespacecreateprivilegecanbegrantedandrevokedrepro-0001-grant-create-on-tablespace-pg_default",
+      "compare": "tag",
       "expectedKind": "tag",
       "query": "GRANT CREATE ON TABLESPACE pg_default TO tablespace_create_acl_user;",
       "querySha256": "851e2fb113fd474dedcdb42d46780ce21e0e0a9240d5c973fed0ce3fe92c5739",
-      "needsCleanup": true,
+      "expectedTag": "GRANT",
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -31,12 +34,15 @@
       "source": "testing/go/tablespace_privilege_repro_test.go:TestTablespaceCreatePrivilegeCanBeGrantedAndRevokedRepro",
       "ordinal": 2,
       "scriptName": "tablespace CREATE can be granted and revoked",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "tablespace-privilege-repro-test-testtablespacecreateprivilegecanbegrantedandrevokedrepro-0002-revoke-create-on-tablespace-pg_default",
       "suggestedId": "tablespace-privilege-repro-test-testtablespacecreateprivilegecanbegrantedandrevokedrepro-0002-revoke-create-on-tablespace-pg_default",
+      "compare": "tag",
       "expectedKind": "tag",
       "query": "REVOKE CREATE ON TABLESPACE pg_default FROM tablespace_create_acl_user;",
       "querySha256": "619b4da4329980c8afca8f02892cc06e165a2060eeb3831e734ead6036fbaccd",
-      "needsCleanup": true,
+      "expectedTag": "REVOKE",
+      "needsCleanup": false,
       "cleanupProvided": false
     }
   ]

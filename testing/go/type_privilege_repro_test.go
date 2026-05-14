@@ -31,8 +31,7 @@ func TestTypeUsagePrivilegeCanBeRevokedAndGrantedRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `REVOKE USAGE ON TYPE type_usage_acl_mood FROM PUBLIC;`,
-					ExpectedTag: `REVOKE`,
+					Query: `REVOKE USAGE ON TYPE type_usage_acl_mood FROM PUBLIC;`, PostgresOracle: ScriptTestPostgresOracle{ID: "type-privilege-repro-test-testtypeusageprivilegecanberevokedandgrantedrepro-0001-revoke-usage-on-type-type_usage_acl_mood"},
 				},
 				{
 					Query: `SELECT 'ok'::type_usage_acl_mood::text;`,

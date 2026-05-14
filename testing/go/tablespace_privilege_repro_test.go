@@ -27,12 +27,10 @@ func TestTablespaceCreatePrivilegeCanBeGrantedAndRevokedRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `GRANT CREATE ON TABLESPACE pg_default TO tablespace_create_acl_user;`,
-					ExpectedTag: `GRANT`,
+					Query: `GRANT CREATE ON TABLESPACE pg_default TO tablespace_create_acl_user;`, PostgresOracle: ScriptTestPostgresOracle{ID: "tablespace-privilege-repro-test-testtablespacecreateprivilegecanbegrantedandrevokedrepro-0001-grant-create-on-tablespace-pg_default"},
 				},
 				{
-					Query:       `REVOKE CREATE ON TABLESPACE pg_default FROM tablespace_create_acl_user;`,
-					ExpectedTag: `REVOKE`,
+					Query: `REVOKE CREATE ON TABLESPACE pg_default FROM tablespace_create_acl_user;`, PostgresOracle: ScriptTestPostgresOracle{ID: "tablespace-privilege-repro-test-testtablespacecreateprivilegecanbegrantedandrevokedrepro-0002-revoke-create-on-tablespace-pg_default"},
 				},
 			},
 		},

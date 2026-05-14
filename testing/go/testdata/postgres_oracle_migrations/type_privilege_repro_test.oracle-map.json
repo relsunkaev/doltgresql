@@ -18,12 +18,15 @@
       "source": "testing/go/type_privilege_repro_test.go:TestTypeUsagePrivilegeCanBeRevokedAndGrantedRepro",
       "ordinal": 1,
       "scriptName": "type USAGE can be revoked from PUBLIC and granted to a role",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "type-privilege-repro-test-testtypeusageprivilegecanberevokedandgrantedrepro-0001-revoke-usage-on-type-type_usage_acl_mood",
       "suggestedId": "type-privilege-repro-test-testtypeusageprivilegecanberevokedandgrantedrepro-0001-revoke-usage-on-type-type_usage_acl_mood",
+      "compare": "tag",
       "expectedKind": "tag",
       "query": "REVOKE USAGE ON TYPE type_usage_acl_mood FROM PUBLIC;",
       "querySha256": "4e0b8edc7fc55ef5518887f40bf009361b3a81ef4b2fa164fb2da27d660eb13b",
-      "needsCleanup": true,
+      "expectedTag": "REVOKE",
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -54,6 +57,9 @@
       "expectedKind": "tag",
       "query": "GRANT USAGE ON TYPE type_usage_acl_mood TO type_usage_acl_user;",
       "querySha256": "6a0fb1866cf8304301b6cbbdc480307d102617439f493b7a9df704dcf96d9354",
+      "nonLiteral": [
+        "PriorExpectedError"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -85,6 +91,9 @@
       "expectedKind": "tag",
       "query": "REVOKE USAGE ON TYPE type_usage_acl_mood FROM type_usage_acl_user;",
       "querySha256": "ee90144fae7dc6d53473c05f2016be5e181e1a93a501c45d8b64a72a500368e4",
+      "nonLiteral": [
+        "PriorExpectedError"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
