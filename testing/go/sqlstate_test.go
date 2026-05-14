@@ -90,7 +90,7 @@ func TestSQLStateCodes(t *testing.T) {
 		},
 		{
 			name: "FK child violation -> 23503",
-			sql:  "INSERT INTO child (id, parent_id) VALUES (1, 999);",
+			sql:  "INSERT INTO child (id, parent_id) VALUES (2, 999);",
 			code: "23503",
 		},
 		{
