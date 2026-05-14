@@ -32,6 +32,7 @@ import (
 
 func TestCastSQLErrorPreservesDDLPGCodes(t *testing.T) {
 	for _, code := range []pgcode.Code{
+		pgcode.CannotCoerce,
 		pgcode.DatatypeMismatch,
 		pgcode.DependentObjectsStillExist,
 		pgcode.DuplicatePreparedStatement,

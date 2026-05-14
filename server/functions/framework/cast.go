@@ -25,6 +25,8 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
@@ -444,7 +446,7 @@ func getRecordCast(fromType *pgtypes.DoltgresType, toType *pgtypes.DoltgresType,
 					// TODO: these should go in DETAIL depending on the size
 					//   Input has too few columns.
 					//   Input has too many columns.
-					return nil, errors.Newf("cannot cast type %s to %s", fromType.Name(), targetType.Name())
+					return nil, pgerror.Newf(pgcode.CannotCoerce, "cannot cast type %s to %s", fromType.Name(), targetType.Name())
 				}
 				typeCollection, err := core.GetTypesCollectionFromContext(ctx)
 				if err != nil {
@@ -454,7 +456,7 @@ func getRecordCast(fromType *pgtypes.DoltgresType, toType *pgtypes.DoltgresType,
 				for i := range vals {
 					valType, ok := vals[i].Type.(*pgtypes.DoltgresType)
 					if !ok {
-						return nil, errors.New("cannot cast record containing GMS type")
+						return nil, pgerror.New(pgcode.CannotCoerce, "cannot cast record containing GMS type")
 					}
 					outputType, err := targetType.CompositeAttrs[i].ResolveType(ctx, typeCollection)
 					if err != nil {
@@ -468,7 +470,7 @@ func getRecordCast(fromType *pgtypes.DoltgresType, toType *pgtypes.DoltgresType,
 						positionCast := passthrough(valType, outputType)
 						if positionCast == nil {
 							// TODO: this should be the DETAIL, with the actual error being "cannot cast type <FROM_TYPE> to <TO_TYPE>"
-							return nil, errors.Newf("Cannot cast type %s to %s in column %d", valType.Name(), outputType.Name(), i+1)
+							return nil, pgerror.Newf(pgcode.CannotCoerce, "Cannot cast type %s to %s in column %d", valType.Name(), outputType.Name(), i+1)
 						}
 						outputVals[i].Value, err = positionCast(ctx, vals[i].Value, outputType)
 						if err != nil {

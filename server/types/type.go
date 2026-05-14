@@ -36,6 +36,8 @@ import (
 
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/postgres/parser/duration"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/postgres/parser/timeofday"
 	"github.com/dolthub/doltgresql/postgres/parser/timetz"
 	"github.com/dolthub/doltgresql/postgres/parser/uuid"
@@ -668,7 +670,7 @@ func (t *DoltgresType) convertCompositeValue(ctx context.Context, v interface{})
 		return nil, false, nil
 	}
 	if len(vals) != len(t.CompositeAttrs) {
-		return nil, true, errors.Errorf("cannot cast record with %d columns to %s", len(vals), t.Name())
+		return nil, true, pgerror.Newf(pgcode.CannotCoerce, "cannot cast record with %d columns to %s", len(vals), t.Name())
 	}
 	sqlCtx, ok := ctx.(*sql.Context)
 	if !ok {
@@ -693,11 +695,11 @@ func (t *DoltgresType) convertCompositeValue(ctx context.Context, v interface{})
 		}
 		fromType, ok := val.Type.(*DoltgresType)
 		if !ok {
-			return nil, true, errors.Errorf("cannot cast record containing %T to %s", val.Type, targetType.Name())
+			return nil, true, pgerror.Newf(pgcode.CannotCoerce, "cannot cast record containing %T to %s", val.Type, targetType.Name())
 		}
 		cast := GetAssignmentCast(fromType, targetType)
 		if cast == nil {
-			return nil, true, errors.Errorf("cannot cast type %s to %s in column %d", fromType.Name(), targetType.Name(), i+1)
+			return nil, true, pgerror.Newf(pgcode.CannotCoerce, "cannot cast type %s to %s in column %d", fromType.Name(), targetType.Name(), i+1)
 		}
 		converted[i].Value, err = cast(sqlCtx, val.Value, targetType)
 		if err != nil {

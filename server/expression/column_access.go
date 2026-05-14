@@ -24,6 +24,8 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
@@ -74,10 +76,10 @@ func (expr *ColumnAccess) Eval(ctx *sql.Context, row sql.Row) (any, error) {
 	recordVals, ok := field.([]pgtypes.RecordValue)
 	if !ok {
 		if len(expr.colName) > 0 {
-			return nil, errors.Errorf("column notation .%s applied to type %s, which is not a composite type",
+			return nil, pgerror.Newf(pgcode.WrongObjectType, "column notation .%s applied to type %s, which is not a composite type",
 				expr.colName, expr.child.Type(ctx).String())
 		} else {
-			return nil, errors.Errorf("column notation .@%d applied to type %s, which is not a composite type",
+			return nil, pgerror.Newf(pgcode.WrongObjectType, "column notation .@%d applied to type %s, which is not a composite type",
 				expr.colNameIdx+1, expr.child.Type(ctx).String())
 		}
 	}
@@ -155,10 +157,10 @@ func (expr *ColumnAccess) WithChildren(ctx *sql.Context, children ...sql.Express
 	}
 	if !doltgresType.IsCompositeType() {
 		if len(expr.colName) > 0 {
-			return nil, errors.Errorf("column notation .%s applied to type %s, which is not a composite type",
+			return nil, pgerror.Newf(pgcode.WrongObjectType, "column notation .%s applied to type %s, which is not a composite type",
 				expr.colName, children[0].Type(ctx).String())
 		} else {
-			return nil, errors.Errorf("column notation .@%d applied to type %s, which is not a composite type",
+			return nil, pgerror.Newf(pgcode.WrongObjectType, "column notation .@%d applied to type %s, which is not a composite type",
 				expr.colNameIdx+1, children[0].Type(ctx).String())
 		}
 	}

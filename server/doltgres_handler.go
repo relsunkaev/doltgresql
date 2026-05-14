@@ -263,6 +263,7 @@ func castSQLError(err error) error {
 	pgErr := unwrapGMSWrapperForPGCode(err)
 	switch pgerror.GetPGCode(pgErr) {
 	case pgcode.DeadlockDetected,
+		pgcode.CannotCoerce,
 		pgcode.CheckViolation,
 		pgcode.DatatypeMismatch,
 		pgcode.DependentObjectsStillExist,
