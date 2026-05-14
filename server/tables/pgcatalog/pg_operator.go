@@ -212,6 +212,8 @@ var defaultPostgresOperators = func() []pgOperator {
 		newJsonbOperator("?", "jsonb", "text", "jsonb_exists", zeroOID()),
 		newJsonbOperator("?|", "jsonb", "_text", "jsonb_exists_any", zeroOID()),
 		newJsonbOperator("?&", "jsonb", "_text", "jsonb_exists_all", zeroOID()),
+		newJsonbOperator("@?", "jsonb", "jsonpath", "jsonb_path_exists_opr", zeroOID()),
+		newJsonbOperator("@@", "jsonb", "jsonpath", "jsonb_path_match_opr", zeroOID()),
 	)
 	return operators
 }()

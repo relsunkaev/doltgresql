@@ -180,7 +180,12 @@ var defaultPostgresAmops = func() []amop {
 		newJsonbGinAmop(indexmetadata.OpClassJsonbOps, "?", "text", int16(9)),
 		newJsonbGinAmop(indexmetadata.OpClassJsonbOps, "?|", "_text", int16(10)),
 		newJsonbGinAmop(indexmetadata.OpClassJsonbOps, "?&", "_text", int16(11)),
+		newJsonbGinAmop(indexmetadata.OpClassJsonbOps, "@?", "jsonpath", int16(15)),
+		newJsonbGinAmop(indexmetadata.OpClassJsonbOps, "@@", "jsonpath", int16(16)),
 		newJsonbGinAmop(indexmetadata.OpClassJsonbPathOps, "@>", "jsonb", int16(7)),
+		newJsonbGinAmop(indexmetadata.OpClassJsonbPathOps, "@?", "jsonpath", int16(15)),
+		newJsonbGinAmop(indexmetadata.OpClassJsonbPathOps, "@@", "jsonpath", int16(16)),
+		newJsonbHashAmop(indexmetadata.OpClassJsonbOps, "=", int16(1)),
 	)
 	return amops
 }()
@@ -230,5 +235,17 @@ func newJsonbGinAmop(opclass string, operator string, rightType string, strategy
 		strategy:  strategy,
 		operator:  jsonbOperatorID(operator, "jsonb", rightType),
 		method:    id.NewAccessMethod(indexmetadata.AccessMethodGin).AsId(),
+	}
+}
+
+func newJsonbHashAmop(opclass string, operator string, strategy int16) amop {
+	return amop{
+		oid:       jsonbHashAmopID(opclass, strategy),
+		family:    jsonbHashOpfamilyID(opclass),
+		leftType:  pgCatalogTypeID("jsonb"),
+		rightType: pgCatalogTypeID("jsonb"),
+		strategy:  strategy,
+		operator:  jsonbOperatorID(operator, "jsonb", "jsonb"),
+		method:    id.NewAccessMethod(accessMethodHash).AsId(),
 	}
 }

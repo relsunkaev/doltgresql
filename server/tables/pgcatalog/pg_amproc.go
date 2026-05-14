@@ -163,6 +163,8 @@ var defaultPostgresAmprocs = func() []amproc {
 		newJsonbGinAmproc(indexmetadata.OpClassJsonbPathOps, int16(3), "gin_extract_jsonb_query_path"),
 		newJsonbGinAmproc(indexmetadata.OpClassJsonbPathOps, int16(4), "gin_consistent_jsonb_path"),
 		newJsonbGinAmproc(indexmetadata.OpClassJsonbPathOps, int16(6), "gin_triconsistent_jsonb_path"),
+		newJsonbHashAmproc(indexmetadata.OpClassJsonbOps, int16(1), "jsonb_hash"),
+		newJsonbHashAmproc(indexmetadata.OpClassJsonbOps, int16(2), "jsonb_hash_extended"),
 	)
 	return amprocs
 }()
@@ -208,6 +210,17 @@ func newJsonbGinAmproc(opclass string, procNum int16, proc string) amproc {
 	return amproc{
 		oid:       jsonbGinAmprocID(opclass, procNum),
 		family:    jsonbGinOpfamilyID(opclass),
+		leftType:  pgCatalogTypeID("jsonb"),
+		rightType: pgCatalogTypeID("jsonb"),
+		procNum:   procNum,
+		proc:      proc,
+	}
+}
+
+func newJsonbHashAmproc(opclass string, procNum int16, proc string) amproc {
+	return amproc{
+		oid:       jsonbHashAmprocID(opclass, procNum),
+		family:    jsonbHashOpfamilyID(opclass),
 		leftType:  pgCatalogTypeID("jsonb"),
 		rightType: pgCatalogTypeID("jsonb"),
 		procNum:   procNum,

@@ -10,6 +10,18 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### alpha - 2026-05-14 11:51 MST
+
+- Broad check: clean BasicIndexing sweep `/tmp/doltgresql-alpha-basicindex-d92f18f9.jsonl` at `d92f18f9` confirms the btree opclass type-validation SQLSTATE rows now pass.
+- Lane claimed: missing built-in `jsonb_ops` hash access-method catalog metadata. BasicIndexing fails the `pg_opclass` query because PostgreSQL expects `jsonb_ops` rows for btree, gin, and hash; cached `pgcatalog` oracle also expects matching `pg_opfamily`, `pg_amop`, and `pg_amproc` hash metadata.
+- Expected files: `core/id/cache_operator_class_defaults.go`, `server/tables/pgcatalog/{jsonb_gin_catalog.go,pg_opclass.go,pg_opfamily.go,pg_amop.go,pg_amproc.go,pg_operator.go}`, plus this coordination entry only. Boundary: do not touch JSONB GIN sidecar maintenance, dirty schema/create-table/constraint metadata files, BasicIndexing sort metadata, index attribute duplication, expression-index statistics, or oracle/manifest files.
+- Result: added the PostgreSQL-compatible hash `jsonb_ops` opclass/opfamily/amop/amproc rows with opclass OID `10089`, and filled the missing JSONB GIN jsonpath `@?`/`@@` operator catalog rows needed by `pg_amop`.
+- Validation in clean verifier `/private/tmp/doltgresql-alpha-basicindex-current.DPWRcO` at `HEAD=d92f18f9` plus only this alpha patch:
+  - `go test -vet=off ./testing/go -run '^TestBasicIndexing$/^PostgreSQL jsonb btree opclass metadata$' -count=1 -timeout=10m -v`
+  - `go test -vet=off ./testing/go -run '^TestPg(Amop|Amproc|Opclass)$/^pg_(amop|amproc|opclass)$/.*jsonb.*$' -count=1 -timeout=10m -v`
+  - `go test -vet=off ./server/tables/pgcatalog ./core/id -run '^$' -count=1 -timeout=10m`
+- Next action: stage only this alpha hunk and commit, then rerun BasicIndexing to see the next unclaimed index blocker.
+
 ### alpha - 2026-05-14 11:46 MST
 
 - Broad check: clean current-HEAD BasicIndexing sweep `/tmp/doltgresql-alpha-basicindex-a7038496.jsonl` confirms the unsupported opclass/collation name SQLSTATE rows now pass after `a7038496`.

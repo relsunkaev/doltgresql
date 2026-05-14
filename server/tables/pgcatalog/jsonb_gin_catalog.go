@@ -58,6 +58,10 @@ func jsonbGinOpfamilyID(opclass string) id.Id {
 	return id.NewId(id.Section_OperatorFamily, indexmetadata.AccessMethodGin, opclass)
 }
 
+func jsonbHashOpfamilyID(opclass string) id.Id {
+	return id.NewId(id.Section_OperatorFamily, accessMethodHash, opclass)
+}
+
 func jsonbOperatorID(name string, leftType string, rightType string) id.Id {
 	return pgCatalogOperatorID(name, leftType, rightType)
 }
@@ -75,6 +79,24 @@ func jsonbGinAmprocID(opclass string, procNum int16) id.Id {
 	return id.NewId(
 		id.Section_OperatorFamily,
 		"gin_amproc",
+		opclass,
+		strconv.FormatInt(int64(procNum), 10),
+	)
+}
+
+func jsonbHashAmopID(opclass string, strategy int16) id.Id {
+	return id.NewId(
+		id.Section_Operator,
+		"hash_amop",
+		opclass,
+		strconv.FormatInt(int64(strategy), 10),
+	)
+}
+
+func jsonbHashAmprocID(opclass string, procNum int16) id.Id {
+	return id.NewId(
+		id.Section_OperatorFamily,
+		"hash_amproc",
 		opclass,
 		strconv.FormatInt(int64(procNum), 10),
 	)
