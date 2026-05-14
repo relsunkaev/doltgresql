@@ -50,7 +50,7 @@ func AddDomainConstraints(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node,
 		if updatable, err := plan.GetUpdatable(n.Child); err == nil && updatable != nil {
 			schema = updatable.Schema(ctx)
 		}
-		return loadDomainConstraints(ctx, a, n, schema, false)
+		return loadDomainConstraints(ctx, a, n, schema, true)
 	default:
 		return node, transform.SameTree, nil
 	}
