@@ -590,6 +590,9 @@
           }
         ]
       ],
+      "columnModes": [
+        "json"
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },

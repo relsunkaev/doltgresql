@@ -189,7 +189,7 @@ func TestCreateTable(t *testing.T) {
 					Query: `INSERT INTO json_checks VALUES ('{"amount": -1}'::jsonb);`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0031-insert-into-json_checks-values-{", Compare: "sqlstate"},
 				},
 				{
-					Query: `SELECT payload FROM json_checks;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0032-select-payload-from-json_checks"},
+					Query: `SELECT payload FROM json_checks;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0032-select-payload-from-json_checks", ColumnModes: []string{"json"}},
 				},
 			},
 		},

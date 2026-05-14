@@ -15,6 +15,7 @@
 package _go
 
 import (
+	"bytes"
 	"encoding/hex"
 	"encoding/json"
 	goerrors "errors"
@@ -258,6 +259,9 @@ func postgresOracleStringValueWithMode(value any, mode string) string {
 		if mode == "explain" {
 			return normalizeCachedPostgresOracleExplain(text)
 		}
+		if mode == "json" {
+			return normalizeCachedPostgresOracleJSON(text)
+		}
 		return text
 	default:
 		text := fmt.Sprint(v)
@@ -266,6 +270,9 @@ func postgresOracleStringValueWithMode(value any, mode string) string {
 		}
 		if mode == "explain" {
 			return normalizeCachedPostgresOracleExplain(text)
+		}
+		if mode == "json" {
+			return normalizeCachedPostgresOracleJSON(text)
 		}
 		return text
 	}
@@ -300,6 +307,22 @@ func normalizeCachedPostgresOracleExplain(value string) string {
 	value = cachedPostgresOracleExplainPlanningPattern.ReplaceAllString(value, "Planning Time: <time> ms")
 	value = cachedPostgresOracleExplainExecutionPattern.ReplaceAllString(value, "Execution Time: <time> ms")
 	return value
+}
+
+func normalizeCachedPostgresOracleJSON(value string) string {
+	trimmed := strings.TrimSpace(value)
+	var decoded any
+	if err := json.Unmarshal([]byte(trimmed), &decoded); err == nil {
+		canonical, err := json.Marshal(decoded)
+		if err == nil {
+			return string(canonical)
+		}
+	}
+	var compacted bytes.Buffer
+	if err := json.Compact(&compacted, []byte(trimmed)); err == nil {
+		return compacted.String()
+	}
+	return trimmed
 }
 
 func postgresOracleNumericString(value pgtype.Numeric) string {
