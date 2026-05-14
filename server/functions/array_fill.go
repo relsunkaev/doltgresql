@@ -18,6 +18,8 @@ import (
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -56,7 +58,7 @@ func arrayFillDimensions(values []any) ([]int32, error) {
 			return nil, errors.Errorf("unexpected array_fill dimension type %T", value)
 		}
 		if dimension < 0 {
-			return nil, errors.New("dimension values cannot be negative")
+			return nil, pgerror.New(pgcode.ProgramLimitExceeded, "dimension values cannot be negative")
 		}
 		dimensions[i] = dimension
 	}

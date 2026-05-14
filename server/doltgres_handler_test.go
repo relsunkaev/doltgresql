@@ -29,7 +29,7 @@ import (
 )
 
 func TestCastSQLErrorPreservesDDLPGCodes(t *testing.T) {
-	for _, code := range []pgcode.Code{pgcode.InvalidObjectDefinition, pgcode.UndefinedColumn} {
+	for _, code := range []pgcode.Code{pgcode.InvalidObjectDefinition, pgcode.ProgramLimitExceeded, pgcode.UndefinedColumn} {
 		err := pgerror.New(code, "ddl validation error")
 		require.Equal(t, code, pgerror.GetPGCode(castSQLError(err)))
 	}

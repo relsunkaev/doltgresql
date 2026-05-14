@@ -272,6 +272,7 @@ func castSQLError(err error) error {
 		pgcode.InsufficientPrivilege,
 		pgcode.LockNotAvailable,
 		pgcode.ObjectNotInPrerequisiteState,
+		pgcode.ProgramLimitExceeded,
 		pgcode.RaiseException,
 		pgcode.Syntax,
 		pgcode.UndefinedColumn,
