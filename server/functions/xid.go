@@ -20,6 +20,8 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 	"github.com/dolthub/doltgresql/utils"
@@ -40,19 +42,37 @@ var xidin = framework.Function1{
 	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Cstring},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
-		input := strings.TrimSpace(val.(string))
-		if input == "" || strings.HasPrefix(input, "+") || strings.HasPrefix(input, "-") {
-			return nil, pgtypes.ErrInvalidSyntaxForType.New("xid", val.(string))
-		}
-		uVal, err := strconv.ParseUint(input, 10, 32)
+		return parseXidInput(val.(string))
+	},
+}
+
+func parseXidInput(raw string) (uint32, error) {
+	input := strings.TrimSpace(raw)
+	if input == "" || strings.HasPrefix(input, "+") {
+		return 0, pgtypes.ErrInvalidSyntaxForType.New("xid", raw)
+	}
+	if strings.HasPrefix(input, "-") {
+		sVal, err := strconv.ParseInt(input, 10, 32)
 		if err != nil {
 			if numErr, ok := err.(*strconv.NumError); ok && numErr.Err == strconv.ErrRange {
-				return nil, pgtypes.ErrValueIsOutOfRangeForType.New(val.(string), "xid")
+				return 0, xidOutOfRangeError(raw)
 			}
-			return nil, pgtypes.ErrInvalidSyntaxForType.New("xid", val.(string))
+			return 0, pgtypes.ErrInvalidSyntaxForType.New("xid", raw)
 		}
-		return uint32(uVal), nil
-	},
+		return uint32(int32(sVal)), nil
+	}
+	uVal, err := strconv.ParseUint(input, 10, 32)
+	if err != nil {
+		if numErr, ok := err.(*strconv.NumError); ok && numErr.Err == strconv.ErrRange {
+			return 0, xidOutOfRangeError(raw)
+		}
+		return 0, pgtypes.ErrInvalidSyntaxForType.New("xid", raw)
+	}
+	return uint32(uVal), nil
+}
+
+func xidOutOfRangeError(input string) error {
+	return pgerror.Newf(pgcode.NumericValueOutOfRange, "value %q is out of range for type xid", input)
 }
 
 // xidout represents the PostgreSQL function of xid type IO output.
