@@ -10,6 +10,27 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### epsilon - 2026-05-14 05:27 MST
+
+- Result: fixed the remaining `TestDateAndTimeFunction` SQLSTATE/parser blockers through `date_bin`; the high-skip verifier now advances to `TestStringFunction/split_part`.
+- Root causes:
+  - `to_timestamp` / `to_date` formatting parse failures returned generic errors for PostgreSQL invalid-format (`22007`) and datetime-overflow (`22008`) cases.
+  - `make_timestamptz(..., text)` unknown time zones returned generic errors instead of `invalid_parameter_value` (`22023`).
+  - The parser accepted `current_time()` even though PostgreSQL treats the empty-call form as syntax error; bare `current_time` and precision calls remain valid.
+  - `date_bin` month/year intervals and zero stride returned generic errors instead of `0A000` and `22008`.
+- Files touched: `server/functions/formatting.go`, `server/functions/make_timestamp.go`, `server/functions/date_bin.go`, `postgres/parser/parser/sql.y`, and one date/time classifier hunk in `server/connection_handler.go`.
+- Fresh current-HEAD verifier `/private/tmp/doltgresql-epsilon-current-xeo64K` plus epsilon's patch passed:
+  - `go test -json -vet=off ./testing/go -run '^TestDateAndTimeFunction$/^to_timestamp$' -count=1 -timeout=10m`
+  - `go test -json -vet=off ./testing/go -run '^TestDateAndTimeFunction$/^current_time and now functions$' -count=1 -timeout=10m`
+  - `go test -json -vet=off ./testing/go -run '^TestDateAndTimeFunction$/^make_timestamptz$' -count=1 -timeout=10m`
+  - `go test -json -vet=off ./testing/go -run '^TestDateAndTimeFunction$/^date_bin$' -count=1 -timeout=10m`
+  - `go test -vet=off ./server/functions -run '^$' -count=1`
+  - `git diff --check` on epsilon-owned files.
+- Current high-skip verifier log `/tmp/doltgresql-epsilon-current-highskip-5.jsonl` advances past `TestDateAndTimeFunction`, then stops at `TestStringFunction/split_part/SELECT split_part('a/b/c', '/', 0);`: expected SQLSTATE `22023`, actual `XX000`.
+- Shared checkout note: full shared-tree runs remain blocked by unrelated dirty `server/node/postgres_foreign_key_action_handler.go` compile errors, so validation used the fresh current-HEAD verifier.
+- Committed as `6d9af9c7`.
+- Next action: fix the `split_part` zero-position SQLSTATE in the string function lane.
+
 ### epsilon - 2026-05-14 05:09 MST
 
 - Result: fixed the current `TestDateAndTimeFunction` blockers through `to_date` and the PL/pgSQL missing-regclass default blocker.
