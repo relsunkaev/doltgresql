@@ -15,12 +15,13 @@
 package analyzer
 
 import (
-	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 	gmsanalyzer "github.com/dolthub/go-mysql-server/sql/analyzer"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	"github.com/dolthub/go-mysql-server/sql/transform"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	pgtransform "github.com/dolthub/doltgresql/server/transform"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -47,7 +48,7 @@ func validateOrderBySortFields(ctx *sql.Context, fields sql.SortFields) error {
 			continue
 		}
 		if typ.ID == pgtypes.Xid.ID || typ.ID == pgtypes.Xid8.ID {
-			return errors.Errorf("could not identify an ordering operator for type %s", typ.Name())
+			return pgerror.Newf(pgcode.UndefinedFunction, "could not identify an ordering operator for type %s", typ.Name())
 		}
 	}
 	return nil
