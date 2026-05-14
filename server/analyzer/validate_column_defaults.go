@@ -46,11 +46,7 @@ func ValidateColumnDefaults(ctx *sql.Context, _ *analyzer.Analyzer, n sql.Node, 
 				return nil, transform.SameTree, sql.ErrColumnNotFound.New(node.ColumnName)
 			}
 			col := sch[index]
-			allowColumnReferences, err := allowColumnReferencesForSetDefaultForeignKey(ctx, table, node.ColumnName)
-			if err != nil {
-				return node, transform.SameTree, err
-			}
-			err = validateColumnDefault(ctx, col, node.Default, allowColumnReferences)
+			err := validateColumnDefault(ctx, col, node.Default, false)
 			if err != nil {
 				return node, transform.SameTree, err
 			}
@@ -155,32 +151,6 @@ func sanitizeColumnDefaultExpressionAliases(ctx *sql.Context, colDefault *sql.Co
 		return nil, transform.SameTree, err
 	}
 	return cleanDefault, transform.NewTree, nil
-}
-
-func allowColumnReferencesForSetDefaultForeignKey(ctx *sql.Context, table *plan.ResolvedTable, columnName string) (bool, error) {
-	if table == nil {
-		return false, nil
-	}
-	fkTable, ok := table.UnderlyingTable().(sql.ForeignKeyTable)
-	if !ok {
-		return false, nil
-	}
-	foreignKeys, err := fkTable.GetDeclaredForeignKeys(ctx)
-	if err != nil {
-		return false, err
-	}
-	for _, foreignKey := range foreignKeys {
-		if foreignKey.OnUpdate != sql.ForeignKeyReferentialAction_SetDefault &&
-			foreignKey.OnDelete != sql.ForeignKeyReferentialAction_SetDefault {
-			continue
-		}
-		for _, fkColumn := range foreignKey.Columns {
-			if strings.EqualFold(fkColumn, columnName) {
-				return true, nil
-			}
-		}
-	}
-	return false, nil
 }
 
 func replaceGeneratedColumnDefault(node sql.SchemaTarget, col *sql.Column, colDefault *sql.ColumnDefaultValue) {

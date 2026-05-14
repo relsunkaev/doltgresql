@@ -899,15 +899,15 @@ func TestForeignKeys(t *testing.T) {
 						Expected: []sql.Row{{"test1", nil}},
 					},
 					{
-						Query:    "ALTER TABLE hn_stories ALTER COLUMN website_url SET DEFAULT (title);",
-						Expected: []sql.Row{},
+						Query:       "ALTER TABLE hn_stories ALTER COLUMN website_url SET DEFAULT (title);",
+						ExpectedErr: "cannot use column reference in DEFAULT expression",
 					},
 					{
 						Query: "DELETE FROM public.websites WHERE title = 'foo2';",
 					},
 					{
 						Query:    "SELECT * FROM public.hn_stories where title = 'test2';",
-						Expected: []sql.Row{{"test2", "test2"}},
+						Expected: []sql.Row{{"test2", nil}},
 					},
 				},
 			},
@@ -933,15 +933,15 @@ func TestForeignKeys(t *testing.T) {
 						Expected: []sql.Row{{"test1", nil}},
 					},
 					{
-						Query:    "ALTER TABLE hn_stories ALTER COLUMN website_url SET DEFAULT (title);",
-						Expected: []sql.Row{},
+						Query:       "ALTER TABLE hn_stories ALTER COLUMN website_url SET DEFAULT (title);",
+						ExpectedErr: "cannot use column reference in DEFAULT expression",
 					},
 					{
 						Query: "UPDATE public.websites SET url = 'http://doltdb.com' WHERE title = 'foo2';",
 					},
 					{
 						Query:    "SELECT * FROM public.hn_stories where title = 'test2';",
-						Expected: []sql.Row{{"test2", "test2"}},
+						Expected: []sql.Row{{"test2", nil}},
 					},
 				},
 			},
