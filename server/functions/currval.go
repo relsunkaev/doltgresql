@@ -20,6 +20,8 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -69,7 +71,7 @@ var lastval = framework.Function0{
 	Callable: func(ctx *sql.Context) (any, error) {
 		value, ok := sessionSequenceLastValue(ctx)
 		if !ok {
-			return nil, errors.Errorf("lastval is not yet defined in this session")
+			return nil, pgerror.New(pgcode.ObjectNotInPrerequisiteState, "lastval is not yet defined in this session")
 		}
 		return value.value, nil
 	},
@@ -90,5 +92,5 @@ func currvalForSequence(ctx *sql.Context, database string, sequenceID id.Sequenc
 	if value, ok := sessionSequenceCurrentValue(ctx, sequenceID); ok {
 		return value, nil
 	}
-	return 0, errors.Errorf(`currval of sequence "%s" is not yet defined in this session`, sequenceID.SequenceName())
+	return 0, pgerror.Newf(pgcode.ObjectNotInPrerequisiteState, `currval of sequence "%s" is not yet defined in this session`, sequenceID.SequenceName())
 }
