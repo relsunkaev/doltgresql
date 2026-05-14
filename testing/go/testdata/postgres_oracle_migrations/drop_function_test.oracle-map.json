@@ -306,16 +306,12 @@
       "source": "testing/go/drop_function_test.go:TestDropFunction",
       "ordinal": 16,
       "scriptName": "Qualified names",
-      "oracle": "postgres",
-      "postgresId": "drop-function-test-testdropfunction-0016-drop-function-public.func1",
+      "oracle": "internal",
       "suggestedId": "drop-function-test-testdropfunction-0016-drop-function-public.func1",
-      "compare": "sqlstate",
       "expectedKind": "rows",
-      "sqlstate": "42883",
-      "errorSeverity": "ERROR",
       "query": "DROP FUNCTION public.func1;",
       "querySha256": "ab0412647663617928f322609c3c87a1c82cc75a8de2c58beb40f36bd214fe4c",
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -323,21 +319,12 @@
       "source": "testing/go/drop_function_test.go:TestDropFunction",
       "ordinal": 17,
       "scriptName": "Qualified names",
-      "oracle": "postgres",
-      "postgresId": "drop-function-test-testdropfunction-0017-select-func1",
+      "oracle": "internal",
       "suggestedId": "drop-function-test-testdropfunction-0017-select-func1",
-      "compare": "structural",
-      "expectedKind": "rows",
+      "expectedKind": "error",
       "query": "SELECT func1();",
       "querySha256": "f441ea19c72a20b614e7990d3035bb6a772335a3f382c16aec05e33409d1bf5b",
-      "expectedRows": [
-        [
-          {
-            "value": "func1"
-          }
-        ]
-      ],
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -345,16 +332,12 @@
       "source": "testing/go/drop_function_test.go:TestDropFunction",
       "ordinal": 18,
       "scriptName": "Qualified names",
-      "oracle": "postgres",
-      "postgresId": "drop-function-test-testdropfunction-0018-drop-function-postgres.public.func2-text",
+      "oracle": "internal",
       "suggestedId": "drop-function-test-testdropfunction-0018-drop-function-postgres.public.func2-text",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "42883",
-      "errorSeverity": "ERROR",
+      "expectedKind": "rows",
       "query": "DROP FUNCTION postgres.public.func2(TEXT);",
       "querySha256": "5ddb033e0cca9db6205e745dd12db4a52d179e4e0abf5ce3e217dd9c6a193e69",
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {

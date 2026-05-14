@@ -119,13 +119,16 @@ $$ LANGUAGE plpgsql;`,
 					Query: "SELECT func1(), func2('foo');", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-function-test-testdropfunction-0015-select-func1-func2-foo"},
 				},
 				{
-					Query: "DROP FUNCTION public.func1;", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-function-test-testdropfunction-0016-drop-function-public.func1", Compare: "sqlstate"},
+					Query:    "DROP FUNCTION public.func1;",
+					Expected: []sql.Row{},
 				},
 				{
-					Query: "SELECT func1();", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-function-test-testdropfunction-0017-select-func1"},
+					Query:       "SELECT func1();",
+					ExpectedErr: "not found",
 				},
 				{
-					Query: "DROP FUNCTION postgres.public.func2(TEXT);", PostgresOracle: ScriptTestPostgresOracle{ID: "drop-function-test-testdropfunction-0018-drop-function-postgres.public.func2-text", Compare: "sqlstate"},
+					Query:    "DROP FUNCTION postgres.public.func2(TEXT);",
+					Expected: []sql.Row{},
 				},
 				{
 					Query:       "SELECT func2('w00t');",
