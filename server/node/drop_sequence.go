@@ -29,6 +29,8 @@ import (
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/core/sequences"
 	"github.com/dolthub/doltgresql/postgres/parser/parser"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/comments"
 	serverfunctions "github.com/dolthub/doltgresql/server/functions"
@@ -107,7 +109,8 @@ func (c *DropSequence) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error)
 	}
 	if len(dependentDefaults) > 0 {
 		if !c.cascade {
-			return nil, errors.Errorf(`cannot drop sequence %s because another object depends on it`, c.sequence)
+			return nil, pgerror.Newf(pgcode.DependentObjectsStillExist,
+				`cannot drop sequence %s because another object depends on it`, c.sequence)
 		}
 		if err = clearSequenceDefaultDependencies(ctx, dependentDefaults); err != nil {
 			return nil, err
