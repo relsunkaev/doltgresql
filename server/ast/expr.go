@@ -27,6 +27,8 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/postgres/parser/timeofday"
 	"github.com/dolthub/doltgresql/postgres/parser/types"
@@ -347,6 +349,9 @@ func nodeExpr(ctx *Context, node tree.Expr) (vitess.Expr, error) {
 			Children:   vitess.Exprs{expr},
 		}, nil
 	case *tree.ColumnAccessExpr:
+		if node.ByIndex {
+			return nil, pgerror.New(pgcode.Syntax, "column ordinal notation is not supported")
+		}
 		colAccess, err := pgexprs.NewColumnAccess(node.ColName, node.ColIndex)
 		if err != nil {
 			return nil, err
