@@ -23,8 +23,6 @@ import (
 
 func TestIn(t *testing.T) {
 	RunScriptsWithoutNormalization(t, []ScriptTest{
-		anyTests("ANY"),
-		anyTests("SOME"),
 		{
 			Name: "IN",
 			SetUpScript: []string{
@@ -118,6 +116,8 @@ func TestIn(t *testing.T) {
 				},
 			},
 		},
+		anyTests("ANY"),
+		anyTests("SOME"),
 	})
 }
 
