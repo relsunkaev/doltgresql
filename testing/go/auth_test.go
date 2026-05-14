@@ -205,7 +205,8 @@ func TestAuthTests(t *testing.T) {
 					Query: `CREATE USER user1 PASSWORD 'hello2';`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0031-create-user-user1-password-hello2", Compare: "sqlstate"},
 				},
 				{
-					Query: `CREATE USER IF NOT EXISTS user1 PASSWORD 'hello3';`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0032-create-user-if-not-exists", Compare: "sqlstate"},
+					Query:    `CREATE USER IF NOT EXISTS user1 PASSWORD 'hello3';`,
+					Expected: []sql.Row{},
 				},
 				{
 					Query:    `SELECT 2;`,

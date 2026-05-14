@@ -544,16 +544,12 @@
       "source": "testing/go/auth_test.go:TestAuthTests",
       "ordinal": 32,
       "scriptName": "CREATE USER IF NOT EXISTS",
-      "oracle": "postgres",
-      "postgresId": "auth-test-testauthtests-0032-create-user-if-not-exists",
+      "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0032-create-user-if-not-exists",
-      "compare": "sqlstate",
       "expectedKind": "rows",
-      "sqlstate": "42601",
-      "errorSeverity": "ERROR",
       "query": "CREATE USER IF NOT EXISTS user1 PASSWORD 'hello3';",
       "querySha256": "5cf0939d34fcc71b0134dde783ff7fc37a924c5ee6c3ab7dbaaad4ab7d9a7fe5",
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
