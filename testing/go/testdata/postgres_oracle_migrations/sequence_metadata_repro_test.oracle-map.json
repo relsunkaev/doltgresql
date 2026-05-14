@@ -46,13 +46,28 @@
       "source": "testing/go/sequence_metadata_repro_test.go:TestCreateSequencePopulatesPgStatioSequenceViewsRepro",
       "ordinal": 1,
       "scriptName": "CREATE SEQUENCE populates pg_statio sequence views",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "sequence-metadata-repro-test-testcreatesequencepopulatespgstatiosequenceviewsrepro-0001-select-exists-select-1-from",
       "suggestedId": "sequence-metadata-repro-test-testcreatesequencepopulatespgstatiosequenceviewsrepro-0001-select-exists-select-1-from",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT\n\t\t\t\t\t\t\tEXISTS (\n\t\t\t\t\t\t\t\tSELECT 1\n\t\t\t\t\t\t\t\tFROM pg_catalog.pg_statio_user_sequences\n\t\t\t\t\t\t\t\tWHERE schemaname = 'public'\n\t\t\t\t\t\t\t\t\tAND relname = 'statio_sequence_catalog_target'\n\t\t\t\t\t\t\t\t\tAND blks_read >= 0\n\t\t\t\t\t\t\t),\n\t\t\t\t\t\t\tEXISTS (\n\t\t\t\t\t\t\t\tSELECT 1\n\t\t\t\t\t\t\t\tFROM pg_catalog.pg_statio_all_sequences\n\t\t\t\t\t\t\t\tWHERE schemaname = 'public'\n\t\t\t\t\t\t\t\t\tAND relname = 'statio_sequence_catalog_target'\n\t\t\t\t\t\t\t\t\tAND blks_read >= 0\n\t\t\t\t\t\t\t);",
       "querySha256": "b5c24d85cd93efe1b403190ec16815411a06ef7843f0047c13124cf33c910478",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SEQUENCE IF EXISTS statio_sequence_catalog_target CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/sequence_metadata_repro_test.go:TestCreateTemporarySequenceRepro#0001",

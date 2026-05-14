@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestCreateSequencePopulatesPgSequencesRepro reproduces a catalog persistence
@@ -69,8 +67,7 @@ func TestCreateSequencePopulatesPgStatioSequenceViewsRepro(t *testing.T) {
 								WHERE schemaname = 'public'
 									AND relname = 'statio_sequence_catalog_target'
 									AND blks_read >= 0
-							);`,
-					Expected: []sql.Row{{"t", "t"}},
+							);`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-metadata-repro-test-testcreatesequencepopulatespgstatiosequenceviewsrepro-0001-select-exists-select-1-from"},
 				},
 			},
 		},
