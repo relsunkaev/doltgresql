@@ -19,6 +19,8 @@ import (
 
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	pgexprs "github.com/dolthub/doltgresql/server/expression"
 )
@@ -100,7 +102,7 @@ func nodeUpdateExprs(ctx *Context, node tree.UpdateExprs) (vitess.AssignmentExpr
 		for _, name := range node[i].Names {
 			name := string(name)
 			if _, ok := seenTargets[name]; ok {
-				return nil, fmt.Errorf("multiple assignments to same column %q", name)
+				return nil, pgerror.Newf(pgcode.Syntax, "multiple assignments to same column %q", name)
 			}
 			seenTargets[name] = struct{}{}
 		}
