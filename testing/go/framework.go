@@ -789,6 +789,8 @@ func NormalizeExpectedRow(fds []pgconn.FieldDescription, rows []sql.Row) []sql.R
 					}
 				} else if dt.ID == types.Bool.ID {
 					newRow[i] = NormalizeValToString(dt, row[i])
+				} else if dt.ID == types.InternalChar.ID {
+					newRow[i] = NormalizeValToString(dt, row[i])
 				} else {
 					newRow[i] = NormalizeIntsAndFloats(row[i])
 				}

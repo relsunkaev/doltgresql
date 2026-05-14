@@ -15,6 +15,8 @@
 package functions
 
 import (
+	"strings"
+
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/core"
@@ -96,7 +98,7 @@ func relationIsVisibleInSearchPath(ctx *sql.Context, oidVal id.Id, paths []strin
 		if !ok {
 			continue
 		}
-		if ok, err := relationExistsInSchema(ctx, schema, relationName); err != nil {
+		if ok, err := relationExistsInSchema(ctx, schema, relationName, targetSchema); err != nil {
 			return false, err
 		} else if ok {
 			return path == targetSchema, nil
@@ -105,11 +107,14 @@ func relationIsVisibleInSearchPath(ctx *sql.Context, oidVal id.Id, paths []strin
 	return false, nil
 }
 
-func relationExistsInSchema(ctx *sql.Context, schema sql.DatabaseSchema, relationName string) (bool, error) {
-	if _, ok, err := schema.GetTableInsensitive(ctx, relationName); err != nil {
+func relationExistsInSchema(ctx *sql.Context, schema sql.DatabaseSchema, relationName string, targetSchema string) (bool, error) {
+	if table, ok, err := schema.GetTableInsensitive(ctx, relationName); err != nil {
 		return false, err
 	} else if ok {
-		return true, nil
+		if tableID, ok, err := id.GetFromTable(ctx, table); err == nil && ok {
+			return tableID.SchemaName() == schema.SchemaName(), nil
+		}
+		return schema.SchemaName() == targetSchema && strings.EqualFold(table.Name(), relationName), nil
 	}
 	if viewDatabase, ok := schema.(sql.ViewDatabase); ok {
 		if _, ok, err := viewDatabase.GetViewDefinition(ctx, relationName); err != nil {
