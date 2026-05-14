@@ -208,19 +208,22 @@ func getDomainCheckConstraintsForTable(ctx *sql.Context, a *analyzer.Analyzer, c
 	for i, check := range checkDefs {
 		if useTableColumnReferences && col.Source != "" {
 			q := fmt.Sprintf("select %s from %s", check.CheckExpression, col.Source)
-			checkExpr, err := parseAndReplaceDomainCheckConstraint(ctx, a, check.CheckExpression, q, &tree.ColumnItem{
+			checkExpr, err := tryParseAndReplaceDomainCheckConstraint(ctx, a, check.CheckExpression, q, &tree.ColumnItem{
 				ColumnName: tree.Name(col.Name),
 				TableName:  &tree.UnresolvedObjectName{NumParts: 1, Parts: [3]string{col.Source}},
 			})
 			if err != nil {
-				return nil, err
+				if !isMissingDomainCheckTable(err) {
+					return nil, err
+				}
+			} else {
+				checks[i] = &sql.CheckConstraint{
+					Name:     check.Name,
+					Expr:     checkExpr,
+					Enforced: true,
+				}
+				continue
 			}
-			checks[i] = &sql.CheckConstraint{
-				Name:     check.Name,
-				Expr:     checkExpr,
-				Enforced: true,
-			}
-			continue
 		}
 		q := fmt.Sprintf("select %s", check.CheckExpression)
 		checkExpr, err := parseAndReplaceDomainCheckConstraint(ctx, a, check.CheckExpression, q, domainColumnForType(domainCheckValueType(domainType, baseType)))
@@ -249,6 +252,23 @@ func getDomainCheckConstraintsForTable(ctx *sql.Context, a *analyzer.Analyzer, c
 	}
 
 	return checks, nil
+}
+
+func tryParseAndReplaceDomainCheckConstraint(ctx *sql.Context, a *analyzer.Analyzer, checkExpr, query string, replacesValue tree.Expr) (expr sql.Expression, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = errors.Errorf("%v", r)
+		}
+	}()
+	return parseAndReplaceDomainCheckConstraint(ctx, a, checkExpr, query, replacesValue)
+}
+
+func isMissingDomainCheckTable(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := err.Error()
+	return strings.Contains(msg, "table not found:") || strings.Contains(msg, "relation does not exist")
 }
 
 // AddDomainConstraintsToCasts adds domain type's constraints to cast expressions.
