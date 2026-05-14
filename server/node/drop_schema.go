@@ -16,6 +16,7 @@ package node
 
 import (
 	"context"
+	"strings"
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
@@ -24,7 +25,9 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/types"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/core/publications"
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/comments"
 	"github.com/dolthub/doltgresql/server/replicaidentity"
@@ -79,13 +82,7 @@ func (d *DropSchema) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sql
 	if err != nil {
 		return nil, err
 	}
-	auth.LockWrite(func() {
-		err = removeDroppedSchemaAuthMetadata(d.gmsDropSchema.DbName, nil)
-	})
-	if err != nil {
-		return nil, err
-	}
-	comments.RemoveObject(id.NewNamespace(d.gmsDropSchema.DbName).AsId(), "pg_namespace")
+	err = removeDroppedSchemaMetadata(ctx, d.gmsDropSchema.DbName, nil)
 	return iter, nil
 }
 
@@ -170,6 +167,9 @@ func removeDroppedSchemaMetadata(ctx *sql.Context, schemaName string, relations 
 			return err
 		}
 	}
+	if err := removeDroppedSchemaPublicationMetadata(ctx, schemaName); err != nil {
+		return err
+	}
 	var err error
 	auth.LockWrite(func() {
 		err = removeDroppedSchemaAuthMetadata(schemaName, relations)
@@ -178,6 +178,91 @@ func removeDroppedSchemaMetadata(ctx *sql.Context, schemaName string, relations 
 		return err
 	}
 	comments.RemoveObject(id.NewNamespace(schemaName).AsId(), "pg_namespace")
+	return nil
+}
+
+func removeDroppedSchemaPublicationMetadata(ctx *sql.Context, schemaName string) error {
+	collection, err := core.GetPublicationsCollectionFromContext(ctx)
+	if err != nil {
+		return err
+	}
+	var updates []publications.Publication
+	err = collection.IteratePublications(ctx, func(pub publications.Publication) (stop bool, err error) {
+		updated := pub
+		changed := false
+		if len(pub.Schemas) > 0 {
+			schemas := make([]string, 0, len(pub.Schemas))
+			for _, schema := range pub.Schemas {
+				if strings.EqualFold(schema, schemaName) {
+					changed = true
+					continue
+				}
+				schemas = append(schemas, schema)
+			}
+			updated.Schemas = schemas
+		}
+		if len(pub.Tables) > 0 {
+			tables := make([]publications.PublicationRelation, 0, len(pub.Tables))
+			for _, table := range pub.Tables {
+				if strings.EqualFold(table.Table.SchemaName(), schemaName) {
+					changed = true
+					continue
+				}
+				tables = append(tables, table)
+			}
+			updated.Tables = tables
+		}
+		if changed {
+			updates = append(updates, updated)
+		}
+		return false, nil
+	})
+	if err != nil {
+		return err
+	}
+	for _, pub := range updates {
+		if err = collection.UpdatePublication(ctx, pub); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func removeDroppedTablePublicationMetadata(ctx *sql.Context, relation doltdb.TableName) error {
+	collection, err := core.GetPublicationsCollectionFromContext(ctx)
+	if err != nil {
+		return err
+	}
+	var updates []publications.Publication
+	err = collection.IteratePublications(ctx, func(pub publications.Publication) (stop bool, err error) {
+		if len(pub.Tables) == 0 {
+			return false, nil
+		}
+		tables := make([]publications.PublicationRelation, 0, len(pub.Tables))
+		changed := false
+		for _, table := range pub.Tables {
+			if strings.EqualFold(table.Table.SchemaName(), relation.Schema) &&
+				strings.EqualFold(table.Table.TableName(), relation.Name) {
+				changed = true
+				continue
+			}
+			tables = append(tables, table)
+		}
+		if changed {
+			updated := pub
+			updated.Tables = tables
+			updates = append(updates, updated)
+		}
+		return false, nil
+	})
+	if err != nil {
+		return err
+	}
+	for _, pub := range updates {
+		if err = collection.UpdatePublication(ctx, pub); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

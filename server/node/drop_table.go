@@ -387,6 +387,9 @@ func cleanupDroppedTableTargets(ctx *sql.Context, targets []dropTableTarget) err
 		if err := replicaidentity.DropTable(target.dbName, target.relation.Schema, target.relation.Name); err != nil {
 			return err
 		}
+		if err := removeDroppedTablePublicationMetadata(ctx, target.relation); err != nil {
+			return err
+		}
 		rowsecurity.DropTable(uint32(ctx.Session.ID()), target.dbName, target.relation.Schema, target.relation.Name)
 	}
 	if len(targets) == 0 {
