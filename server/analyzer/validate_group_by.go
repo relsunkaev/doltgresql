@@ -54,6 +54,11 @@ func ValidateGroupBy(ctx *sql.Context, a *gmsanalyzer.Analyzer, n sql.Node, scop
 		}()
 		switch n := n.(type) {
 		case *plan.GroupBy:
+			if aliasName, ok := invalidCorrelatedGroupByAlias(ctx, scope, n.GroupByExprs); ok {
+				err = pgerror.Newf(pgcode.UndefinedColumn, `column "%s" does not exist`, aliasName)
+				return false
+			}
+
 			var noGroupBy bool
 			if len(n.GroupByExprs) == 0 {
 				noGroupBy = true
@@ -137,6 +142,55 @@ func ValidateGroupBy(ctx *sql.Context, a *gmsanalyzer.Analyzer, n sql.Node, scop
 	})
 
 	return n, transform.SameTree, err
+}
+
+func invalidCorrelatedGroupByAlias(ctx *sql.Context, scope *plan.Scope, exprs []sql.Expression) (string, bool) {
+	correlated := scope.Correlated()
+	if correlated.Empty() {
+		return "", false
+	}
+
+	// GMS may resolve an outer select-list alias inside a scalar subquery's
+	// GROUP BY. PostgreSQL exposes the underlying outer column names, but not
+	// renamed output aliases, to that subquery scope.
+	for _, expr := range exprs {
+		var aliasName string
+		sql.Inspect(ctx, expr, func(ctx *sql.Context, expr sql.Expression) bool {
+			if aliasName != "" {
+				return false
+			}
+
+			alias, ok := expr.(*expression.Alias)
+			if !ok {
+				return true
+			}
+			if !correlated.Contains(alias.Id()) || aliasReferencesSameNamedColumn(alias) {
+				return true
+			}
+
+			aliasName = alias.Name()
+			return false
+		})
+		if aliasName != "" {
+			return aliasName, true
+		}
+	}
+
+	return "", false
+}
+
+func aliasReferencesSameNamedColumn(alias *expression.Alias) bool {
+	child := alias.Child
+	for {
+		nestedAlias, ok := child.(*expression.Alias)
+		if !ok {
+			break
+		}
+		child = nestedAlias.Child
+	}
+
+	getField, ok := child.(*expression.GetField)
+	return ok && strings.EqualFold(alias.Name(), getField.Name())
 }
 
 func groupByValidationError(err error) error {

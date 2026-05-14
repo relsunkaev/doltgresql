@@ -10,6 +10,18 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### epsilon - 2026-05-14 06:43 MST
+
+- Result: fixed the `GROUP BY` scalar-subquery alias visibility mismatch.
+- Root cause: GMS leaves a correlated outer projection alias visible inside the scalar subquery, so `GROUP BY alias1 HAVING alias1 > 0` resolved to the outer `id AS alias1`; PostgreSQL treats that output alias as out of scope for the subquery.
+- Files touched: `server/analyzer/validate_group_by.go`.
+- Fresh verifier `/private/tmp/doltgresql-epsilon-current-xeo64K` plus epsilon's patch passed:
+  - `go test -vet=off ./testing/go -run '^TestGroupBy$' -count=1 -timeout=10m`
+  - `go test -vet=off ./server/analyzer -run '^$' -count=1 -timeout=5m`
+- Current high-skip verifier log `/tmp/doltgresql-epsilon-current-highskip-29.jsonl` advances past `TestGroupBy` and stops at `TestImportExpandedRestoreGateProbe/linvivian7/fe-react-16-demo`: `COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';` reports `extension "plpgsql" does not exist`.
+- Shared checkout note: full shared-tree runs remain blocked by unrelated dirty `server/node/postgres_foreign_key_action_handler.go` compile errors, so validation is using the verifier worktree.
+- Next action: inspect extension comment handling for built-in `plpgsql`.
+
 ### epsilon - 2026-05-14 06:33 MST
 
 - Result: fixed the REVOKE `GRANTED BY` current-user check and the table REVOKE cascade/restrict behavior covered by the current oracle slice.
