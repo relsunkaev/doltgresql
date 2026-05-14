@@ -16,6 +16,7 @@ package node
 
 import (
 	"context"
+	"regexp"
 	"slices"
 	"strings"
 
@@ -794,6 +795,9 @@ func resolvePublicationTables(ctx *sql.Context, specs []PublicationTableSpec) ([
 		if err != nil {
 			return nil, err
 		}
+		if err = validatePublicationRowFilter(table.Schema(ctx), spec.RowFilter); err != nil {
+			return nil, err
+		}
 		relation := publications.PublicationRelation{
 			Table:     relationID,
 			Columns:   columns,
@@ -846,6 +850,340 @@ func validatePublicationColumns(tableSchema sql.Schema, columns []string) ([]str
 		seen[resolved[i]] = struct{}{}
 	}
 	return resolved, nil
+}
+
+var (
+	publicationRowFilterValidationIsNotDistinctFromNull = regexp.MustCompile(`(?i)\bis\s+not\s+distinct\s+from\s+null\b`)
+	publicationRowFilterValidationIsDistinctFromNull    = regexp.MustCompile(`(?i)\bis\s+distinct\s+from\s+null\b`)
+	publicationRowFilterValidationSimpleOperand         = `(?:[a-z_][a-z0-9_]*|true|false|null|[0-9]+(?:\.[0-9]+)?|'(?:''|[^'])*')`
+	publicationRowFilterValidationIsNotDistinctFrom     = regexp.MustCompile(`(?i)(` + publicationRowFilterValidationSimpleOperand + `)\s+is\s+not\s+distinct\s+from\s+(` + publicationRowFilterValidationSimpleOperand + `)`)
+	publicationRowFilterValidationIsDistinctFrom        = regexp.MustCompile(`(?i)(` + publicationRowFilterValidationSimpleOperand + `)\s+is\s+distinct\s+from\s+(` + publicationRowFilterValidationSimpleOperand + `)`)
+	publicationRowFilterValidationTextCast              = regexp.MustCompile(`(?i)(` + publicationRowFilterValidationSimpleOperand + `)\s*::\s*(?:text|varchar|character\s+varying)\b`)
+	publicationRowFilterValidationStringAnnotation      = regexp.MustCompile(`(?i)(` + publicationRowFilterValidationSimpleOperand + `)\s*:::\s*string\b`)
+	publicationRowFilterValidationTidCast               = regexp.MustCompile(`(?i)(` + publicationRowFilterValidationSimpleOperand + `)\s*::\s*tid\b`)
+	publicationRowFilterValidationIsNotUnknown          = regexp.MustCompile(`(?i)\bis\s+not\s+unknown\b`)
+	publicationRowFilterValidationIsUnknown             = regexp.MustCompile(`(?i)\bis\s+unknown\b`)
+	publicationRowFilterValidationWindow                = regexp.MustCompile(`(?i)\bover\s*\(`)
+)
+
+var publicationRowFilterSystemColumns = map[string]struct{}{
+	"tableoid": {},
+	"cmax":     {},
+	"xmax":     {},
+	"cmin":     {},
+	"xmin":     {},
+	"ctid":     {},
+}
+
+func validatePublicationRowFilter(tableSchema sql.Schema, rowFilter string) error {
+	rowFilter = strings.TrimSpace(rowFilter)
+	if rowFilter == "" {
+		return nil
+	}
+	if publicationRowFilterValidationWindow.MatchString(rowFilter) {
+		return publicationRowFilterWindowError()
+	}
+	expr, err := parsePublicationRowFilterForValidation(rowFilter)
+	if err != nil {
+		return err
+	}
+	boolean, err := validatePublicationRowFilterBooleanExpr(tableSchema, expr)
+	if err != nil {
+		return err
+	}
+	if !boolean {
+		return pgerror.New(pgcode.DatatypeMismatch, "argument of publication WHERE must be type boolean")
+	}
+	return nil
+}
+
+func parsePublicationRowFilterForValidation(rowFilter string) (vitess.Expr, error) {
+	rowFilter = normalizePublicationRowFilterForValidation(rowFilter)
+	statement, err := vitess.Parse("SELECT 1 WHERE " + rowFilter)
+	if err != nil {
+		return nil, err
+	}
+	selectStatement, ok := statement.(*vitess.Select)
+	if !ok || selectStatement.Where == nil {
+		return nil, errors.Errorf("publication row filter did not parse as a WHERE expression")
+	}
+	return selectStatement.Where.Expr, nil
+}
+
+func normalizePublicationRowFilterForValidation(rowFilter string) string {
+	rowFilter = publicationRowFilterValidationIsNotDistinctFromNull.ReplaceAllString(rowFilter, "IS NULL")
+	rowFilter = publicationRowFilterValidationIsDistinctFromNull.ReplaceAllString(rowFilter, "IS NOT NULL")
+	rowFilter = publicationRowFilterValidationIsNotDistinctFrom.ReplaceAllString(rowFilter, "($1 <=> $2)")
+	rowFilter = publicationRowFilterValidationIsDistinctFrom.ReplaceAllString(rowFilter, "NOT ($1 <=> $2)")
+	rowFilter = publicationRowFilterValidationTextCast.ReplaceAllString(rowFilter, "$1")
+	rowFilter = publicationRowFilterValidationStringAnnotation.ReplaceAllString(rowFilter, "$1")
+	rowFilter = publicationRowFilterValidationTidCast.ReplaceAllString(rowFilter, "$1")
+	rowFilter = normalizePublicationEscapedStringLiteralsForValidation(rowFilter)
+	rowFilter = normalizePublicationTrailingTupleCommasForValidation(rowFilter)
+	rowFilter = publicationRowFilterValidationIsNotUnknown.ReplaceAllString(rowFilter, "IS NOT NULL")
+	rowFilter = publicationRowFilterValidationIsUnknown.ReplaceAllString(rowFilter, "IS NULL")
+	return rowFilter
+}
+
+func normalizePublicationEscapedStringLiteralsForValidation(rowFilter string) string {
+	var b strings.Builder
+	b.Grow(len(rowFilter))
+	for i := 0; i < len(rowFilter); {
+		if i+1 < len(rowFilter) && (rowFilter[i] == 'e' || rowFilter[i] == 'E') && rowFilter[i+1] == '\'' && (i == 0 || !isPublicationRowFilterIdentPartForValidation(rowFilter[i-1])) {
+			b.WriteByte('\'')
+			i += 2
+			for i < len(rowFilter) {
+				switch rowFilter[i] {
+				case '\\':
+					if i+1 >= len(rowFilter) {
+						b.WriteByte('\\')
+						i++
+						continue
+					}
+					if rowFilter[i+1] == '\'' {
+						b.WriteString("''")
+					} else {
+						b.WriteByte(rowFilter[i+1])
+					}
+					i += 2
+				case '\'':
+					if i+1 < len(rowFilter) && rowFilter[i+1] == '\'' {
+						b.WriteString("''")
+						i += 2
+						continue
+					}
+					b.WriteByte('\'')
+					i++
+					goto escapedLiteralDone
+				default:
+					b.WriteByte(rowFilter[i])
+					i++
+				}
+			}
+		escapedLiteralDone:
+			continue
+		}
+		b.WriteByte(rowFilter[i])
+		i++
+	}
+	return b.String()
+}
+
+func normalizePublicationTrailingTupleCommasForValidation(rowFilter string) string {
+	var b strings.Builder
+	b.Grow(len(rowFilter))
+	inString := false
+	for i := 0; i < len(rowFilter); {
+		if rowFilter[i] == '\'' {
+			b.WriteByte(rowFilter[i])
+			i++
+			if inString && i < len(rowFilter) && rowFilter[i] == '\'' {
+				b.WriteByte(rowFilter[i])
+				i++
+				continue
+			}
+			inString = !inString
+			continue
+		}
+		if !inString && rowFilter[i] == ',' {
+			j := i + 1
+			for j < len(rowFilter) && (rowFilter[j] == ' ' || rowFilter[j] == '\t' || rowFilter[j] == '\n' || rowFilter[j] == '\r') {
+				j++
+			}
+			if j < len(rowFilter) && rowFilter[j] == ')' {
+				i = j
+				continue
+			}
+		}
+		b.WriteByte(rowFilter[i])
+		i++
+	}
+	return b.String()
+}
+
+func isPublicationRowFilterIdentPartForValidation(c byte) bool {
+	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_'
+}
+
+func validatePublicationRowFilterBooleanExpr(tableSchema sql.Schema, expr vitess.Expr) (bool, error) {
+	switch typed := expr.(type) {
+	case *vitess.AndExpr:
+		left, err := validatePublicationRowFilterBooleanExpr(tableSchema, typed.Left)
+		if err != nil || !left {
+			return left, err
+		}
+		return validatePublicationRowFilterBooleanExpr(tableSchema, typed.Right)
+	case *vitess.OrExpr:
+		left, err := validatePublicationRowFilterBooleanExpr(tableSchema, typed.Left)
+		if err != nil || !left {
+			return left, err
+		}
+		return validatePublicationRowFilterBooleanExpr(tableSchema, typed.Right)
+	case *vitess.NotExpr:
+		return validatePublicationRowFilterBooleanExpr(tableSchema, typed.Expr)
+	case *vitess.ParenExpr:
+		return validatePublicationRowFilterBooleanExpr(tableSchema, typed.Expr)
+	case *vitess.ComparisonExpr:
+		if err := validatePublicationRowFilterScalarExpr(tableSchema, typed.Left); err != nil {
+			return false, err
+		}
+		if err := validatePublicationRowFilterScalarExpr(tableSchema, typed.Right); err != nil {
+			return false, err
+		}
+		return true, nil
+	case *vitess.RangeCond:
+		if err := validatePublicationRowFilterScalarExpr(tableSchema, typed.Left); err != nil {
+			return false, err
+		}
+		if err := validatePublicationRowFilterScalarExpr(tableSchema, typed.From); err != nil {
+			return false, err
+		}
+		if err := validatePublicationRowFilterScalarExpr(tableSchema, typed.To); err != nil {
+			return false, err
+		}
+		return true, nil
+	case *vitess.IsExpr:
+		if err := validatePublicationRowFilterScalarExpr(tableSchema, typed.Expr); err != nil {
+			return false, err
+		}
+		return true, nil
+	case *vitess.ColName:
+		return validatePublicationRowFilterColumn(tableSchema, typed)
+	case vitess.BoolVal:
+		return true, nil
+	case *vitess.NullVal:
+		return true, nil
+	case *vitess.FuncExpr:
+		if err := validatePublicationRowFilterFuncExpr(tableSchema, typed); err != nil {
+			return false, err
+		}
+		if typed.Name.EqualString("coalesce") {
+			return publicationRowFilterCoalesceCanReturnBoolean(tableSchema, typed)
+		}
+		return true, nil
+	default:
+		if err := validatePublicationRowFilterScalarExpr(tableSchema, expr); err != nil {
+			return false, err
+		}
+		return false, nil
+	}
+}
+
+func validatePublicationRowFilterScalarExpr(tableSchema sql.Schema, expr vitess.Expr) error {
+	switch typed := expr.(type) {
+	case *vitess.ColName:
+		_, err := validatePublicationRowFilterColumn(tableSchema, typed)
+		return err
+	case *vitess.ParenExpr:
+		return validatePublicationRowFilterScalarExpr(tableSchema, typed.Expr)
+	case *vitess.BinaryExpr:
+		if err := validatePublicationRowFilterScalarExpr(tableSchema, typed.Left); err != nil {
+			return err
+		}
+		return validatePublicationRowFilterScalarExpr(tableSchema, typed.Right)
+	case *vitess.UnaryExpr:
+		return validatePublicationRowFilterScalarExpr(tableSchema, typed.Expr)
+	case *vitess.FuncExpr:
+		return validatePublicationRowFilterFuncExpr(tableSchema, typed)
+	case *vitess.Subquery:
+		return pgerror.New(pgcode.FeatureNotSupported, "subqueries are not allowed in publication WHERE expressions")
+	case vitess.ValTuple:
+		for _, tupleExpr := range typed {
+			if err := validatePublicationRowFilterScalarExpr(tableSchema, tupleExpr); err != nil {
+				return err
+			}
+		}
+		return nil
+	case *vitess.SQLVal, vitess.BoolVal, *vitess.NullVal:
+		return nil
+	default:
+		return nil
+	}
+}
+
+func validatePublicationRowFilterFuncExpr(tableSchema sql.Schema, expr *vitess.FuncExpr) error {
+	if expr.Over != nil {
+		return publicationRowFilterWindowError()
+	}
+	if publicationRowFilterIsAggregateFunction(expr.Name.String()) {
+		return pgerror.New(pgcode.Grouping, "aggregate functions are not allowed in publication WHERE expressions")
+	}
+	if expr.Name.EqualString("random") {
+		return pgerror.New(pgcode.FeatureNotSupported, "functions in publication WHERE expressions must be immutable")
+	}
+	for _, selectExpr := range expr.Exprs {
+		aliased, ok := selectExpr.(*vitess.AliasedExpr)
+		if !ok {
+			continue
+		}
+		if err := validatePublicationRowFilterScalarExpr(tableSchema, aliased.Expr); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func publicationRowFilterCoalesceCanReturnBoolean(tableSchema sql.Schema, expr *vitess.FuncExpr) (bool, error) {
+	for _, selectExpr := range expr.Exprs {
+		aliased, ok := selectExpr.(*vitess.AliasedExpr)
+		if !ok {
+			continue
+		}
+		switch typed := aliased.Expr.(type) {
+		case *vitess.ColName:
+			boolean, err := validatePublicationRowFilterColumn(tableSchema, typed)
+			if err != nil || boolean {
+				return boolean, err
+			}
+		case vitess.BoolVal, *vitess.NullVal:
+			return true, nil
+		case *vitess.ParenExpr:
+			nested := &vitess.FuncExpr{
+				Name:  expr.Name,
+				Exprs: vitess.SelectExprs{&vitess.AliasedExpr{Expr: typed.Expr}},
+			}
+			boolean, err := publicationRowFilterCoalesceCanReturnBoolean(tableSchema, nested)
+			if err != nil || boolean {
+				return boolean, err
+			}
+		}
+	}
+	return false, nil
+}
+
+func validatePublicationRowFilterColumn(tableSchema sql.Schema, column *vitess.ColName) (bool, error) {
+	name := column.Name.String()
+	lowerName := strings.ToLower(name)
+	if _, ok := publicationRowFilterSystemColumns[lowerName]; ok {
+		return false, pgerror.Newf(pgcode.FeatureNotSupported,
+			`cannot use system column "%s" in publication WHERE expressions`, name)
+	}
+	for _, tableColumn := range tableSchema {
+		if tableColumn.Name == name {
+			return publicationRowFilterColumnIsBoolean(tableColumn), nil
+		}
+	}
+	return false, pgerror.Newf(pgcode.UndefinedColumn, `column "%s" does not exist`, name)
+}
+
+func publicationRowFilterColumnIsBoolean(column *sql.Column) bool {
+	if doltgresType, ok := column.Type.(*pgtypes.DoltgresType); ok {
+		return doltgresType.ID == pgtypes.Bool.ID
+	}
+	return strings.EqualFold(column.Type.String(), "boolean") || strings.EqualFold(column.Type.String(), "bool")
+}
+
+func publicationRowFilterIsAggregateFunction(name string) bool {
+	switch strings.ToLower(name) {
+	case "array_agg", "avg", "bool_and", "bool_or", "count", "json_agg", "jsonb_agg", "max", "min", "string_agg", "sum":
+		return true
+	default:
+		return false
+	}
+}
+
+func publicationRowFilterWindowError() error {
+	return pgerror.New(pgcode.Windowing, "window functions are not allowed in publication WHERE expressions")
 }
 
 func resolvePublicationSchemas(ctx *sql.Context, schemaNames []string) ([]string, error) {
