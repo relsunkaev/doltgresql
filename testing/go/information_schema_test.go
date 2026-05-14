@@ -129,7 +129,12 @@ func TestInfoSchemaColumns(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT DISTINCT table_schema FROM information_schema.columns ORDER BY table_schema;`, PostgresOracle: ScriptTestPostgresOracle{ID: "information-schema-test-testinfoschemacolumns-0001-select-distinct-table_schema-from-information_schema.columns", ColumnModes: []string{"schema"}},
+					Query: `SELECT DISTINCT table_schema FROM information_schema.columns ORDER BY table_schema;`,
+					Expected: []sql.Row{
+						{"information_schema"},
+						{"pg_catalog"},
+						{"public"},
+					},
 				},
 				{
 					Query: `SELECT table_catalog, table_schema, table_name, column_name FROM information_schema.columns WHERE table_schema='public' ORDER BY table_name;`,

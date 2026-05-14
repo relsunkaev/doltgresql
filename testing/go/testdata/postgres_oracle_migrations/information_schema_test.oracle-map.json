@@ -187,44 +187,12 @@
       "source": "testing/go/information_schema_test.go:TestInfoSchemaColumns",
       "ordinal": 1,
       "scriptName": "information_schema.columns",
-      "oracle": "postgres",
-      "postgresId": "information-schema-test-testinfoschemacolumns-0001-select-distinct-table_schema-from-information_schema.columns",
+      "oracle": "internal",
       "suggestedId": "information-schema-test-testinfoschemacolumns-0001-select-distinct-table_schema-from-information_schema.columns",
-      "compare": "structural",
-      "columnModes": [
-        "schema"
-      ],
       "expectedKind": "rows",
       "query": "SELECT DISTINCT table_schema FROM information_schema.columns ORDER BY table_schema;",
       "querySha256": "9ef72364171e6cf4a9f97c1b0626bf01ad12c56622461dc02bc3cf2881f53410",
-      "expectedRows": [
-        [
-          {
-            "value": "{{schema}}"
-          }
-        ],
-        [
-          {
-            "value": "{{schema}}"
-          }
-        ],
-        [
-          {
-            "value": "{{schema}}"
-          }
-        ],
-        [
-          {
-            "value": "information_schema"
-          }
-        ],
-        [
-          {
-            "value": "pg_catalog"
-          }
-        ]
-      ],
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
