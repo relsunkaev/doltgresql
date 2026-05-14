@@ -231,10 +231,24 @@ func TestInfoSchemaSchemata(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT catalog_name, schema_name FROM information_schema.schemata order by schema_name;`, PostgresOracle: ScriptTestPostgresOracle{ID: "information-schema-test-testinfoschemaschemata-0001-select-catalog_name-schema_name-from-information_schema.schemata", ColumnModes: []string{"structural", "schema"}},
+					Query: `SELECT catalog_name, schema_name FROM information_schema.schemata order by schema_name;`,
+					Expected: []sql.Row{
+						{"newdb", "dolt"},
+						{"newdb", "information_schema"},
+						{"newdb", "pg_catalog"},
+						{"newdb", "public"},
+						{"newdb", "test_schema"},
+					},
 				},
 				{
-					Query: `SELECT * FROM information_schema.schemata order by schema_name;`, PostgresOracle: ScriptTestPostgresOracle{ID: "information-schema-test-testinfoschemaschemata-0002-select-*-from-information_schema.schemata-order", ColumnModes: []string{"structural", "schema"}},
+					Query: `SELECT * FROM information_schema.schemata order by schema_name;`,
+					Expected: []sql.Row{
+						{"newdb", "dolt", "", nil, nil, nil, nil},
+						{"newdb", "information_schema", "", nil, nil, nil, nil},
+						{"newdb", "pg_catalog", "", nil, nil, nil, nil},
+						{"newdb", "public", "", nil, nil, nil, nil},
+						{"newdb", "test_schema", "", nil, nil, nil, nil},
+					},
 				},
 			},
 		},
