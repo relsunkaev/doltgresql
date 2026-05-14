@@ -17,15 +17,18 @@ package types
 import (
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
-	srcdErrors "gopkg.in/src-d/go-errors.v1"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/utils"
 
 	"github.com/dolthub/doltgresql/core/id"
 )
 
-// ErrInvalidInputValueForEnum is returned when the input value does not match given enum type's labels.
-var ErrInvalidInputValueForEnum = srcdErrors.NewKind(`invalid input value for enum %s: "%s"`)
+// NewInvalidInputValueForEnumError is returned when the input value does not match given enum type's labels.
+func NewInvalidInputValueForEnumError(typeName string, value string) error {
+	return pgerror.Newf(pgcode.InvalidTextRepresentation, `invalid input value for enum %s: "%s"`, typeName, value)
+}
 
 // NewEnumType creates new instance of enum DoltgresType.
 func NewEnumType(ctx *sql.Context, arrayID, typeID id.Type, labels map[string]EnumLabel) *DoltgresType {
@@ -109,7 +112,7 @@ func deserializeTypeEnum(ctx *sql.Context, typ *DoltgresType, data []byte) (any,
 		return nil, errors.Errorf(`"%s" is not an enum type`, typ.Name())
 	}
 	if _, exists := typ.EnumLabels[value]; !exists {
-		return nil, ErrInvalidInputValueForEnum.New(typ.Name(), value)
+		return nil, NewInvalidInputValueForEnumError(typ.Name(), value)
 	}
 	return value, nil
 }

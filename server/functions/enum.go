@@ -52,7 +52,7 @@ var enum_in = framework.Function2{
 
 		value := val1.(string)
 		if _, exists := typ.EnumLabels[value]; !exists {
-			return nil, pgtypes.ErrInvalidInputValueForEnum.New(typ.Name(), value)
+			return nil, pgtypes.NewInvalidInputValueForEnumError(typ.Name(), value)
 		}
 		// TODO: should return the index instead of label?
 		return value, nil
@@ -124,11 +124,11 @@ var enum_cmp = framework.Function2{
 		}
 		abLabel, ok := enumType.EnumLabels[ab]
 		if !ok {
-			return nil, pgtypes.ErrInvalidInputValueForEnum.New(enumType.Name(), ab)
+			return nil, pgtypes.NewInvalidInputValueForEnumError(enumType.Name(), ab)
 		}
 		bbLabel, ok := enumType.EnumLabels[bb]
 		if !ok {
-			return nil, pgtypes.ErrInvalidInputValueForEnum.New(enumType.Name(), bb)
+			return nil, pgtypes.NewInvalidInputValueForEnumError(enumType.Name(), bb)
 		}
 		if abLabel.SortOrder == bbLabel.SortOrder {
 			return int32(0), nil
