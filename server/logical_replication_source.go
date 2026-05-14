@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/cockroachdb/errors"
+	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/jackc/pglogrepl"
 	"github.com/jackc/pgx/v5/pgproto3"
 
@@ -188,7 +189,7 @@ func (h *ConnectionHandler) startLogicalReplication(statement string) error {
 		h.closeReplicationSender()
 		return err
 	}
-	go h.runReplicationSender(queue)
+	go h.runReplicationSender(queue, options.binary)
 	return nil
 }
 
@@ -201,6 +202,7 @@ func (h *ConnectionHandler) requireReplicationRole() error {
 
 type replicationStartOptions struct {
 	publications []string
+	binary       bool
 	messages     bool
 }
 
@@ -245,7 +247,10 @@ func (h *ConnectionHandler) parseStartReplicationOptions(statement string) (repl
 			if err != nil {
 				return replicationStartOptions{}, errors.Errorf("invalid pgoutput %s option %q", key, value)
 			}
-			if key == "messages" {
+			switch key {
+			case "binary":
+				options.binary = parsed
+			case "messages":
 				options.messages = parsed
 			}
 		default:
@@ -413,13 +418,298 @@ func parseReplicationBool(value string) (bool, error) {
 	}
 }
 
-func (h *ConnectionHandler) runReplicationSender(queue <-chan replsource.WALMessage) {
+func (h *ConnectionHandler) runReplicationSender(queue <-chan replsource.WALMessage, binaryTuples bool) {
+	var converter *replicationBinaryTupleConverter
+	if binaryTuples {
+		sqlCtx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, "")
+		if err != nil {
+			h.closeReplicationSender()
+			return
+		}
+		converter = newReplicationBinaryTupleConverter(sqlCtx)
+	}
 	for message := range queue {
+		if converter != nil {
+			converted, err := converter.convert(message)
+			if err != nil {
+				h.closeReplicationSender()
+				return
+			}
+			message = converted
+		}
 		if err := h.sendXLogData(message); err != nil {
 			h.closeReplicationSender()
 			return
 		}
 	}
+}
+
+type replicationBinaryTupleConverter struct {
+	ctx       *sql.Context
+	relations map[uint32]replicationBinaryRelation
+}
+
+type replicationBinaryRelation struct {
+	columns []replicationBinaryColumn
+}
+
+type replicationBinaryColumn struct {
+	typeOID uint32
+	key     bool
+}
+
+func newReplicationBinaryTupleConverter(ctx *sql.Context) *replicationBinaryTupleConverter {
+	return &replicationBinaryTupleConverter{
+		ctx:       ctx,
+		relations: make(map[uint32]replicationBinaryRelation),
+	}
+}
+
+func (c *replicationBinaryTupleConverter) convert(message replsource.WALMessage) (replsource.WALMessage, error) {
+	if len(message.WALData) == 0 {
+		return message, nil
+	}
+	switch pglogrepl.MessageType(message.WALData[0]) {
+	case pglogrepl.MessageTypeRelation:
+		relationID, relation, err := decodeReplicationRelationColumns(message.WALData)
+		if err != nil {
+			return replsource.WALMessage{}, err
+		}
+		c.relations[relationID] = relation
+		return message, nil
+	case pglogrepl.MessageTypeInsert:
+		converted, err := c.convertInsert(message.WALData)
+		if err != nil {
+			return replsource.WALMessage{}, err
+		}
+		message.WALData = converted
+		return message, nil
+	case pglogrepl.MessageTypeUpdate:
+		converted, err := c.convertUpdate(message.WALData)
+		if err != nil {
+			return replsource.WALMessage{}, err
+		}
+		message.WALData = converted
+		return message, nil
+	case pglogrepl.MessageTypeDelete:
+		converted, err := c.convertDelete(message.WALData)
+		if err != nil {
+			return replsource.WALMessage{}, err
+		}
+		message.WALData = converted
+		return message, nil
+	default:
+		return message, nil
+	}
+}
+
+func (c *replicationBinaryTupleConverter) convertInsert(data []byte) ([]byte, error) {
+	if len(data) < 6 {
+		return nil, errors.Errorf("invalid logical replication insert message")
+	}
+	relationID := binary.BigEndian.Uint32(data[1:5])
+	relation, ok := c.relations[relationID]
+	if !ok {
+		return nil, errors.Errorf("unknown logical replication relation %d", relationID)
+	}
+	if data[5] != 'N' {
+		return nil, errors.Errorf("invalid logical replication insert tuple type %q", data[5])
+	}
+	tuple, _, err := c.convertTupleData(data[6:], relation.columns)
+	if err != nil {
+		return nil, err
+	}
+	converted := append([]byte(nil), data[:6]...)
+	return append(converted, tuple...), nil
+}
+
+func (c *replicationBinaryTupleConverter) convertUpdate(data []byte) ([]byte, error) {
+	if len(data) < 6 {
+		return nil, errors.Errorf("invalid logical replication update message")
+	}
+	relationID := binary.BigEndian.Uint32(data[1:5])
+	relation, ok := c.relations[relationID]
+	if !ok {
+		return nil, errors.Errorf("unknown logical replication relation %d", relationID)
+	}
+	converted := append([]byte(nil), data[:5]...)
+	offset := 5
+	if data[offset] == pglogrepl.UpdateMessageTupleTypeKey || data[offset] == pglogrepl.UpdateMessageTupleTypeOld {
+		tupleType := data[offset]
+		offset++
+		columns := relation.columns
+		if tupleType == pglogrepl.UpdateMessageTupleTypeKey {
+			columns = relation.keyColumns()
+		}
+		tuple, consumed, err := c.convertTupleData(data[offset:], columns)
+		if err != nil {
+			return nil, err
+		}
+		converted = append(converted, tupleType)
+		converted = append(converted, tuple...)
+		offset += consumed
+	}
+	if offset >= len(data) || data[offset] != pglogrepl.UpdateMessageTupleTypeNew {
+		return nil, errors.Errorf("invalid logical replication update new tuple")
+	}
+	offset++
+	tuple, _, err := c.convertTupleData(data[offset:], relation.columns)
+	if err != nil {
+		return nil, err
+	}
+	converted = append(converted, pglogrepl.UpdateMessageTupleTypeNew)
+	return append(converted, tuple...), nil
+}
+
+func (c *replicationBinaryTupleConverter) convertDelete(data []byte) ([]byte, error) {
+	if len(data) < 6 {
+		return nil, errors.Errorf("invalid logical replication delete message")
+	}
+	relationID := binary.BigEndian.Uint32(data[1:5])
+	relation, ok := c.relations[relationID]
+	if !ok {
+		return nil, errors.Errorf("unknown logical replication relation %d", relationID)
+	}
+	tupleType := data[5]
+	columns := relation.columns
+	if tupleType == pglogrepl.DeleteMessageTupleTypeKey {
+		columns = relation.keyColumns()
+	} else if tupleType != pglogrepl.DeleteMessageTupleTypeOld {
+		return nil, errors.Errorf("invalid logical replication delete tuple type %q", tupleType)
+	}
+	tuple, _, err := c.convertTupleData(data[6:], columns)
+	if err != nil {
+		return nil, err
+	}
+	converted := append([]byte(nil), data[:6]...)
+	return append(converted, tuple...), nil
+}
+
+func (r replicationBinaryRelation) keyColumns() []replicationBinaryColumn {
+	columns := make([]replicationBinaryColumn, 0, len(r.columns))
+	for _, column := range r.columns {
+		if column.key {
+			columns = append(columns, column)
+		}
+	}
+	return columns
+}
+
+func decodeReplicationRelationColumns(data []byte) (uint32, replicationBinaryRelation, error) {
+	if len(data) < 7 || data[0] != byte(pglogrepl.MessageTypeRelation) {
+		return 0, replicationBinaryRelation{}, errors.Errorf("invalid logical replication relation message")
+	}
+	relationID := binary.BigEndian.Uint32(data[1:5])
+	offset := 5
+	var ok bool
+	if offset, ok = skipReplicationCString(data, offset); !ok {
+		return 0, replicationBinaryRelation{}, errors.Errorf("invalid logical replication relation namespace")
+	}
+	if offset, ok = skipReplicationCString(data, offset); !ok {
+		return 0, replicationBinaryRelation{}, errors.Errorf("invalid logical replication relation name")
+	}
+	if offset+3 > len(data) {
+		return 0, replicationBinaryRelation{}, errors.Errorf("invalid logical replication relation columns")
+	}
+	offset++
+	columnCount := int(binary.BigEndian.Uint16(data[offset : offset+2]))
+	offset += 2
+	relation := replicationBinaryRelation{
+		columns: make([]replicationBinaryColumn, 0, columnCount),
+	}
+	for i := 0; i < columnCount; i++ {
+		if offset >= len(data) {
+			return 0, replicationBinaryRelation{}, errors.Errorf("invalid logical replication relation column")
+		}
+		flags := data[offset]
+		offset++
+		if offset, ok = skipReplicationCString(data, offset); !ok {
+			return 0, replicationBinaryRelation{}, errors.Errorf("invalid logical replication relation column name")
+		}
+		if offset+8 > len(data) {
+			return 0, replicationBinaryRelation{}, errors.Errorf("invalid logical replication relation column type")
+		}
+		relation.columns = append(relation.columns, replicationBinaryColumn{
+			typeOID: binary.BigEndian.Uint32(data[offset : offset+4]),
+			key:     flags == 1,
+		})
+		offset += 8
+	}
+	return relationID, relation, nil
+}
+
+func skipReplicationCString(data []byte, offset int) (int, bool) {
+	for offset < len(data) {
+		if data[offset] == 0 {
+			return offset + 1, true
+		}
+		offset++
+	}
+	return 0, false
+}
+
+func (c *replicationBinaryTupleConverter) convertTupleData(data []byte, columns []replicationBinaryColumn) ([]byte, int, error) {
+	if len(data) < 2 {
+		return nil, 0, errors.Errorf("invalid logical replication tuple")
+	}
+	columnCount := int(binary.BigEndian.Uint16(data[:2]))
+	if columnCount > len(columns) {
+		return nil, 0, errors.Errorf("logical replication tuple has %d columns, relation has %d", columnCount, len(columns))
+	}
+	offset := 2
+	converted := make([]byte, 0, len(data))
+	converted = binary.BigEndian.AppendUint16(converted, uint16(columnCount))
+	for i := 0; i < columnCount; i++ {
+		if offset >= len(data) {
+			return nil, 0, errors.Errorf("invalid logical replication tuple column")
+		}
+		dataType := data[offset]
+		offset++
+		switch dataType {
+		case pglogrepl.TupleDataTypeNull, pglogrepl.TupleDataTypeToast:
+			converted = append(converted, dataType)
+		case pglogrepl.TupleDataTypeText, pglogrepl.TupleDataTypeBinary:
+			if offset+4 > len(data) {
+				return nil, 0, errors.Errorf("invalid logical replication tuple column length")
+			}
+			length := int(binary.BigEndian.Uint32(data[offset : offset+4]))
+			offset += 4
+			if offset+length > len(data) {
+				return nil, 0, errors.Errorf("invalid logical replication tuple column data")
+			}
+			value := data[offset : offset+length]
+			offset += length
+			if dataType == pglogrepl.TupleDataTypeText {
+				var err error
+				value, err = c.convertTupleValueToBinary(columns[i].typeOID, value)
+				if err != nil {
+					return nil, 0, err
+				}
+			}
+			converted = append(converted, pglogrepl.TupleDataTypeBinary)
+			converted = binary.BigEndian.AppendUint32(converted, uint32(len(value)))
+			converted = append(converted, value...)
+		default:
+			return nil, 0, errors.Errorf("invalid logical replication tuple column data type %q", dataType)
+		}
+	}
+	return converted, offset, nil
+}
+
+func (c *replicationBinaryTupleConverter) convertTupleValueToBinary(typeOID uint32, value []byte) ([]byte, error) {
+	internalID := id.Cache().ToInternal(typeOID)
+	if internalID == "" {
+		return nil, errors.Errorf("unknown logical replication column type OID %d", typeOID)
+	}
+	doltgresType := pgtypes.GetTypeByID(id.Type(internalID))
+	if doltgresType == nil {
+		return nil, errors.Errorf("unknown logical replication column type %s", internalID)
+	}
+	parsed, err := doltgresType.IoInput(c.ctx, string(value))
+	if err != nil {
+		return nil, err
+	}
+	return doltgresType.CallSend(c.ctx, parsed)
 }
 
 func (h *ConnectionHandler) handleReplicationCopyData(message *pgproto3.CopyData) (stop bool, endOfMessages bool, err error) {
