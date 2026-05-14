@@ -3068,7 +3068,7 @@
       "expectedRows": [
         [
           {
-            "value": "postgres"
+            "value": "subscription_owner_creator"
           }
         ]
       ],
