@@ -114,15 +114,51 @@
       "source": "testing/go/issues_test.go:TestIssues",
       "ordinal": 7,
       "scriptName": "Issue #2030",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "issues-test-testissues-0007-select-entities-.-project_id-entities",
       "suggestedId": "issues-test-testissues-0007-select-entities-.-project_id-entities",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "select\n  \"entities\".\"project_id\",\n  \"entities\".\"id\",\n  \"entities\".\"name\",\n  \"entities\".\"default_sub_entity_id\",\n  \"entities_defaultSubEntity\".\"data\" as \"defaultSubEntity\"\nfrom \"entities\" \"entities\"\nleft join lateral (\n  select json_build_array(\n           \"entities_defaultSubEntity\".\"project_id\",\n           \"entities_defaultSubEntity\".\"entity_id\",\n           \"entities_defaultSubEntity\".\"id\",\n           \"entities_defaultSubEntity\".\"name\"\n         ) as \"data\"\n  from (\n    select * from \"sub_entities\" \"entities_defaultSubEntity\"\n    where \"entities_defaultSubEntity\".\"id\" = \"entities\".\"default_sub_entity_id\"\n    limit $1\n  ) \"entities_defaultSubEntity\"\n) \"entities_defaultSubEntity\" on true\nwhere (\"entities\".\"project_id\" = $2 and \"entities\".\"id\" = $3)\nlimit $4",
       "querySha256": "759b64d24c265596b615b729c0f9b3c0defab3c1dc41dbf735647fb9fe8aeb18",
-      "nonLiteral": [
-        "BindVars"
+      "bindVars": [
+        {
+          "kind": "int",
+          "value": "1"
+        },
+        {
+          "kind": "string",
+          "value": "projectA"
+        },
+        {
+          "kind": "string",
+          "value": "entityA"
+        },
+        {
+          "kind": "int",
+          "value": "1"
+        }
       ],
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "projectA"
+          },
+          {
+            "value": "entityA"
+          },
+          {
+            "value": "Entity A"
+          },
+          {
+            "value": "subA1"
+          },
+          {
+            "value": "[\"projectA\",\"entityA\",\"subA1\",\"Sub-Entity A1\"]"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {

@@ -127,16 +127,7 @@ limit $4`,
 						"projectA",
 						"entityA",
 						int64(1),
-					},
-					Expected: []sql.Row{
-						{
-							"projectA",
-							"entityA",
-							"Entity A",
-							"subA1",
-							`["projectA", "entityA", "subA1", "Sub-Entity A1"]`,
-						},
-					},
+					}, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0007-select-entities-.-project_id-entities"},
 				},
 				{
 					Query: `select
