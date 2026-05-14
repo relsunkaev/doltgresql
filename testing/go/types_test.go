@@ -1225,79 +1225,51 @@ var typesTests = []ScriptTest{
 				Query: "SELECT v1::xid FROM t_name WHERE id=1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0170-select-v1::xid-from-t_name-where", Compare: "sqlstate"},
 			},
 			{
-				Query: "SELECT ('0'::name)::boolean, ('1'::name)::boolean;",
-				Expected: []sql.Row{
-					{"f", "t"},
-				},
+				Query: "SELECT ('0'::name)::boolean, ('1'::name)::boolean;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0171-select-0-::name-::boolean-1"},
 			},
 			{
-				Query:       "SELECT v1::smallint FROM t_name WHERE id=1;",
-				ExpectedErr: "invalid input syntax for type",
+				Query: "SELECT v1::smallint FROM t_name WHERE id=1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0172-select-v1::smallint-from-t_name-where", Compare: "sqlstate"},
 			},
 			{
-				Query:       "SELECT v1::integer FROM t_name WHERE id=1;",
-				ExpectedErr: "invalid input syntax for type",
+				Query: "SELECT v1::integer FROM t_name WHERE id=1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0173-select-v1::integer-from-t_name-where", Compare: "sqlstate"},
 			},
 			{
-				Query:       "SELECT v1::bigint FROM t_name WHERE id=1;",
-				ExpectedErr: "invalid input syntax for type",
+				Query: "SELECT v1::bigint FROM t_name WHERE id=1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0174-select-v1::bigint-from-t_name-where", Compare: "sqlstate"},
 			},
 			{
-				Query:       "SELECT v1::float4 FROM t_name WHERE id=1;",
-				ExpectedErr: "invalid input syntax for type",
+				Query: "SELECT v1::float4 FROM t_name WHERE id=1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0175-select-v1::float4-from-t_name-where", Compare: "sqlstate"},
 			},
 			{
-				Query:       "SELECT v1::float8 FROM t_name WHERE id=1;",
-				ExpectedErr: "invalid input syntax for type",
+				Query: "SELECT v1::float8 FROM t_name WHERE id=1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0176-select-v1::float8-from-t_name-where", Compare: "sqlstate"},
 			},
 			{
-				Query:       "SELECT v1::numeric FROM t_name WHERE id=1;",
-				ExpectedErr: "invalid input syntax for type",
+				Query: "SELECT v1::numeric FROM t_name WHERE id=1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0177-select-v1::numeric-from-t_name-where", Compare: "sqlstate"},
 			},
 			{
-				Query:       "SELECT v1::boolean FROM t_name WHERE id=1;",
-				ExpectedErr: "invalid input syntax for type",
+				Query: "SELECT v1::boolean FROM t_name WHERE id=1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0178-select-v1::boolean-from-t_name-where", Compare: "sqlstate"},
 			},
 			{
-				Query:       "SELECT v1::oid FROM t_name WHERE id=1;",
-				ExpectedErr: "invalid input syntax for type",
+				Query: "SELECT v1::oid FROM t_name WHERE id=1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0179-select-v1::oid-from-t_name-where", Compare: "sqlstate"},
 			},
+
 			// Cast to Name from types
 			{
-				Query: "SELECT ('abc'::char(3))::name, ('abc'::varchar)::name, ('abc'::text)::name;",
-				Expected: []sql.Row{
-					{"abc", "abc", "abc"},
-				},
+				Query: "SELECT ('abc'::char(3))::name, ('abc'::varchar)::name, ('abc'::text)::name;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0180-select-abc-::char-3-::name"},
 			},
 			{
-				Query: "SELECT (10::int2)::name, (100::int4)::name, (1000::int8)::name;",
-				Expected: []sql.Row{
-					{"10", "100", "1000"},
-				},
+				Query: "SELECT (10::int2)::name, (100::int4)::name, (1000::int8)::name;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0181-select-10::int2-::name-100::int4-::name"},
 			},
 			{
-				Query: "SELECT (1.1::float4)::name, (10.1::float8)::name;",
-				Expected: []sql.Row{
-					{"1.1", "10.1"},
-				},
+				Query: "SELECT (1.1::float4)::name, (10.1::float8)::name;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0182-select-1.1::float4-::name-10.1::float8-::name"},
 			},
 			{
-				Query: "SELECT (100.0::numeric)::name;",
-				Expected: []sql.Row{
-					{"100.0"},
-				},
+				Query: "SELECT (100.0::numeric)::name;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0183-select-100.0::numeric-::name"},
 			},
 			{
-				Query: "SELECT false::name, true::name, ('0'::boolean)::name, ('1'::boolean)::name;",
-				Expected: []sql.Row{
-					{"f", "t", "f", "t"},
-				},
+				Query: "SELECT false::name, true::name, ('0'::boolean)::name, ('1'::boolean)::name;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0184-select-false::name-true::name-0-::boolean"},
 			},
 			{
-				Query: "SELECT ('123'::xid)::name, (123::oid)::name;",
-				Expected: []sql.Row{
-					{"123", "123"},
-				},
+				Query: "SELECT ('123'::xid)::name, (123::oid)::name;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testtypes-0185-select-123-::xid-::name-123::oid"},
 			},
 		},
 	},

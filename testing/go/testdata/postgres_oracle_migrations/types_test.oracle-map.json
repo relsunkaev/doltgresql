@@ -5203,12 +5203,24 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 171,
       "scriptName": "Name type, explicit casts",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0171-select-0-::name-::boolean-1",
       "suggestedId": "types-test-testtypes-0171-select-0-::name-::boolean-1",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT ('0'::name)::boolean, ('1'::name)::boolean;",
       "querySha256": "fd9ef0aa98c77d39f4f8ff4c7aec051613b10411264e5f44dc407afd42a38dd0",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -5216,12 +5228,16 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 172,
       "scriptName": "Name type, explicit casts",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0172-select-v1::smallint-from-t_name-where",
       "suggestedId": "types-test-testtypes-0172-select-v1::smallint-from-t_name-where",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "22P02",
+      "errorSeverity": "ERROR",
       "query": "SELECT v1::smallint FROM t_name WHERE id=1;",
       "querySha256": "ddee155ec4da39c001c5e4c49cc40ca218513bec8cb5c16c40badd64b11c1d6a",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -5229,12 +5245,16 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 173,
       "scriptName": "Name type, explicit casts",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0173-select-v1::integer-from-t_name-where",
       "suggestedId": "types-test-testtypes-0173-select-v1::integer-from-t_name-where",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "22P02",
+      "errorSeverity": "ERROR",
       "query": "SELECT v1::integer FROM t_name WHERE id=1;",
       "querySha256": "140d4182823271bb6ff792574843153535fc949de77889aa6e797c56519e3144",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -5242,12 +5262,16 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 174,
       "scriptName": "Name type, explicit casts",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0174-select-v1::bigint-from-t_name-where",
       "suggestedId": "types-test-testtypes-0174-select-v1::bigint-from-t_name-where",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "22P02",
+      "errorSeverity": "ERROR",
       "query": "SELECT v1::bigint FROM t_name WHERE id=1;",
       "querySha256": "57efa579def3110b1d7f4863df0047e22276483657e05429b2fbb952abd07658",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -5255,12 +5279,16 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 175,
       "scriptName": "Name type, explicit casts",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0175-select-v1::float4-from-t_name-where",
       "suggestedId": "types-test-testtypes-0175-select-v1::float4-from-t_name-where",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "22P02",
+      "errorSeverity": "ERROR",
       "query": "SELECT v1::float4 FROM t_name WHERE id=1;",
       "querySha256": "f5a8b2a9ba2191035d4d8edb7354f55a9229829f73b375258e6e7ccdb9f4d89e",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -5268,12 +5296,16 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 176,
       "scriptName": "Name type, explicit casts",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0176-select-v1::float8-from-t_name-where",
       "suggestedId": "types-test-testtypes-0176-select-v1::float8-from-t_name-where",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "22P02",
+      "errorSeverity": "ERROR",
       "query": "SELECT v1::float8 FROM t_name WHERE id=1;",
       "querySha256": "7667132a41934e8fa10f264dc1f7a0bf834be9c077270de6f3533b28fdb1fb83",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -5281,12 +5313,16 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 177,
       "scriptName": "Name type, explicit casts",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0177-select-v1::numeric-from-t_name-where",
       "suggestedId": "types-test-testtypes-0177-select-v1::numeric-from-t_name-where",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "22P02",
+      "errorSeverity": "ERROR",
       "query": "SELECT v1::numeric FROM t_name WHERE id=1;",
       "querySha256": "c6f41b7b01f676f4379c745f7797442017031e24e6a9a7917ff7f1e95b3b5c21",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -5294,12 +5330,16 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 178,
       "scriptName": "Name type, explicit casts",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0178-select-v1::boolean-from-t_name-where",
       "suggestedId": "types-test-testtypes-0178-select-v1::boolean-from-t_name-where",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "22P02",
+      "errorSeverity": "ERROR",
       "query": "SELECT v1::boolean FROM t_name WHERE id=1;",
       "querySha256": "1390f440d81a0f8426077a4623a6690a36e2b961e20eeaa899a5fb175825fb3e",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -5307,12 +5347,16 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 179,
       "scriptName": "Name type, explicit casts",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0179-select-v1::oid-from-t_name-where",
       "suggestedId": "types-test-testtypes-0179-select-v1::oid-from-t_name-where",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "22P02",
+      "errorSeverity": "ERROR",
       "query": "SELECT v1::oid FROM t_name WHERE id=1;",
       "querySha256": "900fba55c21cbad51ef53fe1a44ae4b104e5c18593bfcf2ab45f3f8f85dc5a96",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -5320,12 +5364,27 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 180,
       "scriptName": "Name type, explicit casts",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0180-select-abc-::char-3-::name",
       "suggestedId": "types-test-testtypes-0180-select-abc-::char-3-::name",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT ('abc'::char(3))::name, ('abc'::varchar)::name, ('abc'::text)::name;",
       "querySha256": "916a95c80c6ddfc0b8fa96d7390d905854d661f019e0faf3604369d6b675f489",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "abc"
+          },
+          {
+            "value": "abc"
+          },
+          {
+            "value": "abc"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -5333,12 +5392,27 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 181,
       "scriptName": "Name type, explicit casts",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0181-select-10::int2-::name-100::int4-::name",
       "suggestedId": "types-test-testtypes-0181-select-10::int2-::name-100::int4-::name",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT (10::int2)::name, (100::int4)::name, (1000::int8)::name;",
       "querySha256": "9b5dad88d40d767d35e2c16a9bf5054f0489bc1dd8feb95f97585e555dc9f836",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          },
+          {
+            "value": "100"
+          },
+          {
+            "value": "1000"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -5346,12 +5420,24 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 182,
       "scriptName": "Name type, explicit casts",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0182-select-1.1::float4-::name-10.1::float8-::name",
       "suggestedId": "types-test-testtypes-0182-select-1.1::float4-::name-10.1::float8-::name",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT (1.1::float4)::name, (10.1::float8)::name;",
       "querySha256": "cfccbd2d5cbf6470b498253b515a48a0f46811ef8e7c1c0078c4763db2cd94cc",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1.1"
+          },
+          {
+            "value": "10.1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -5359,12 +5445,21 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 183,
       "scriptName": "Name type, explicit casts",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0183-select-100.0::numeric-::name",
       "suggestedId": "types-test-testtypes-0183-select-100.0::numeric-::name",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT (100.0::numeric)::name;",
       "querySha256": "75c6bf4430c302c0618e7fb52f90741c8b8185e48e259c596314b0ce4d39648f",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "100.0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -5372,12 +5467,30 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 184,
       "scriptName": "Name type, explicit casts",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0184-select-false::name-true::name-0-::boolean",
       "suggestedId": "types-test-testtypes-0184-select-false::name-true::name-0-::boolean",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT false::name, true::name, ('0'::boolean)::name, ('1'::boolean)::name;",
       "querySha256": "83fbe3052bb2b8c35292bcf999a2f2dd1fee48cd4e078989f0ff76bbe438debd",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -5385,12 +5498,24 @@
       "source": "testing/go/types_test.go:TestTypes",
       "ordinal": 185,
       "scriptName": "Name type, explicit casts",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "types-test-testtypes-0185-select-123-::xid-::name-123::oid",
       "suggestedId": "types-test-testtypes-0185-select-123-::xid-::name-123::oid",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT ('123'::xid)::name, (123::oid)::name;",
       "querySha256": "f39ad54484ec9eafc059d7c111ae6fe48444ea03c0c1b18b387d652df2a1556d",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "123"
+          },
+          {
+            "value": "123"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
