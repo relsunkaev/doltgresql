@@ -40,10 +40,10 @@ func validateForeignKeyDefinition(ctx *sql.Context, fkDef sql.ForeignKeyConstrai
 		col := cols[strings.ToLower(fkDef.Columns[i])]
 		if col.Generated != nil {
 			if foreignKeyUpdateActionWritesReferencingColumn(fkDef.OnUpdate) {
-				return errors.Errorf("generated column %q cannot be used with ON UPDATE %s in a foreign key", col.Name, fkDef.OnUpdate)
+				return pgerror.Newf(pgcode.Syntax, "generated column %q cannot be used with ON UPDATE %s in a foreign key", col.Name, fkDef.OnUpdate)
 			}
 			if foreignKeyDeleteActionWritesReferencingColumn(fkDef.OnDelete) {
-				return errors.Errorf("generated column %q cannot be used with ON DELETE %s in a foreign key", col.Name, fkDef.OnDelete)
+				return pgerror.Newf(pgcode.Syntax, "generated column %q cannot be used with ON DELETE %s in a foreign key", col.Name, fkDef.OnDelete)
 			}
 		}
 	}
