@@ -23,6 +23,8 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/goccy/go-json"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 	"github.com/dolthub/doltgresql/utils"
@@ -441,7 +443,7 @@ func buildJsonArrayValue(ctx *sql.Context, argTypes []*pgtypes.DoltgresType, val
 
 func buildJsonObjectValue(ctx *sql.Context, fnName string, argTypes []*pgtypes.DoltgresType, values []any, sortKeys bool) (pgtypes.JsonValueObject, error) {
 	if len(values)%2 != 0 {
-		return pgtypes.JsonValueObject{}, sql.ErrInvalidArgumentNumber.New(fnName, "even number of arguments", len(values))
+		return pgtypes.JsonValueObject{}, pgerror.Newf(pgcode.InvalidParameterValue, "%s requires an even number of arguments", fnName)
 	}
 	items := make([]pgtypes.JsonValueObjectItem, 0, len(values)/2)
 	for i := 0; i < len(values); i += 2 {
@@ -678,10 +680,10 @@ func jsonBuildObjectKey(ctx *sql.Context, typ *pgtypes.DoltgresType, val any) (s
 		return "", err
 	}
 	if res == nil {
-		return "", errors.New("argument key must not be null")
+		return "", pgerror.New(pgcode.InvalidParameterValue, "argument key must not be null")
 	}
 	if jsonObjectKeyIsNonScalar(typ, res) {
-		return "", errors.New(jsonObjectNonScalarKeyErr)
+		return "", pgerror.New(pgcode.InvalidParameterValue, jsonObjectNonScalarKeyErr)
 	}
 	if str, ok := res.(string); ok {
 		return str, nil
