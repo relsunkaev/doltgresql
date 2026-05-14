@@ -1051,7 +1051,7 @@
       "suggestedId": "pg-class-reloftype-test-testtypedtablefromcompositetype-0043-update-typed_check_tasks-set-priority-=",
       "compare": "sqlstate",
       "expectedKind": "error",
-      "sqlstate": "55000",
+      "sqlstate": "23514",
       "errorSeverity": "ERROR",
       "query": "UPDATE typed_check_tasks SET priority = -1 WHERE id = 1;",
       "querySha256": "971a60e403919768bf6f88dea3848bfa362f9732f551bd7ebf99fe0d1310b317",
