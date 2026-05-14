@@ -1290,8 +1290,13 @@ func refreshPromotedOracleMap(sourceFile string, outputPath string, testNameFilt
 				return fmt.Errorf("%s: %w", entry.ID, err)
 			}
 		}
-		assertion.Cleanup = entry.Cleanup
-		assertion.CleanupProvided = len(entry.Cleanup) > 0
+		if entryUsesGeneratedSchemaIsolation(entry) {
+			assertion.Cleanup = nil
+			assertion.CleanupProvided = false
+		} else {
+			assertion.Cleanup = entry.Cleanup
+			assertion.CleanupProvided = len(entry.Cleanup) > 0
+		}
 		assertion.NeedsCleanup = false
 		expectedRows, columnModes, sqlstate, severity, expectedTag, err := readPostgresOracleExpected(ctx, conn, entry)
 		if err != nil {
@@ -1646,6 +1651,7 @@ func hasPostgresOracleBlockingNonLiteral(nonLiteral []string) bool {
 		"PriorBindVars",
 		"PriorCopyFromStdInFile",
 		"PriorDoltSpecific",
+		"PriorExpectedError",
 	)
 }
 
@@ -2109,6 +2115,13 @@ func entrySetupQueries(entry entry) []string {
 	return statementQueries(entrySetupStatements(entry))
 }
 
+func entryUsesGeneratedSchemaIsolation(entry entry) bool {
+	setup := entrySetupQueries(entry)
+	return len(setup) >= 2 &&
+		setup[0] == "CREATE SCHEMA {{quotedSchema}}" &&
+		strings.Contains(setup[1], "{{quotedSchema}}")
+}
+
 func statementsFromQueries(queries []string) []oracleStatement {
 	statements := make([]oracleStatement, 0, len(queries))
 	for _, query := range queries {
@@ -2406,11 +2419,11 @@ func migrationCandidatesFromScriptTestSlice(source string, ordinal *int, lit *as
 			candidate.NonLiteral = append(candidate.NonLiteral, scriptNonLiteral...)
 			candidate.NonLiteral = append(candidate.NonLiteral, priorNonLiteral...)
 			if !migrationCandidateMatchesPostgresIDFilter(candidate, postgresIDFilter) {
-				priorNonLiteral = appendPriorSetupNonLiteral(priorNonLiteral, assertionFields)
+				priorNonLiteral = appendPriorSetupNonLiteralForCandidate(priorNonLiteral, candidate, assertionFields)
 				continue
 			}
 			candidates = append(candidates, candidate)
-			priorNonLiteral = appendPriorSetupNonLiteral(priorNonLiteral, assertionFields)
+			priorNonLiteral = appendPriorSetupNonLiteralForCandidate(priorNonLiteral, candidate, assertionFields)
 		}
 	}
 	return candidates, nil
@@ -2597,7 +2610,7 @@ func setupStatementFromAssertion(fields map[string]ast.Expr) (oracleStatement, b
 
 func appendPriorSetupNonLiteral(nonLiteral []string, fields map[string]ast.Expr) []string {
 	if expectationKind(fields) == "error" {
-		return nonLiteral
+		return appendNonLiteral(nonLiteral, "PriorExpectedError")
 	}
 	if query, err := optionalStringLiteral(fields["Query"]); err != nil {
 		nonLiteral = append(nonLiteral, "PriorQuery")
@@ -2616,6 +2629,13 @@ func appendPriorSetupNonLiteral(nonLiteral []string, fields map[string]ast.Expr)
 		nonLiteral = append(nonLiteral, "PriorCopyFromStdInFile")
 	}
 	return nonLiteral
+}
+
+func appendPriorSetupNonLiteralForCandidate(nonLiteral []string, candidate migrationAssertion, fields map[string]ast.Expr) []string {
+	if candidate.ExpectedKind == "error" || candidate.Compare == "sqlstate" || candidate.SQLState != "" {
+		return appendNonLiteral(nonLiteral, "PriorExpectedError")
+	}
+	return appendPriorSetupNonLiteral(nonLiteral, fields)
 }
 
 func appendNonLiteral(nonLiteral []string, value string) []string {

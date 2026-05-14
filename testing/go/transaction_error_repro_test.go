@@ -78,8 +78,7 @@ func TestSavepointErrorRequiresRollbackToSavepointRepro(t *testing.T) {
 					Query: `SAVEPOINT sp;`,
 				},
 				{
-					Query:       `INSERT INTO savepoint_error_items VALUES (1, 'duplicate');`,
-					ExpectedErr: `duplicate`,
+					Query: `INSERT INTO savepoint_error_items VALUES (1, 'duplicate');`, PostgresOracle: ScriptTestPostgresOracle{ID: "transaction-error-repro-test-testsavepointerrorrequiresrollbacktosavepointrepro-0001-insert-into-savepoint_error_items-values-1"},
 				},
 				{
 					Query:       `INSERT INTO savepoint_error_items VALUES (2, 'before rollback to savepoint');`,
