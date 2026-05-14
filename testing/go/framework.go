@@ -453,9 +453,27 @@ func init() {
 // when the connection is closed (or loses its connection to the server). The accompanying [svcs.Controller] may be used
 // to wait until the server has closed.
 func CreateServer(t testing.TB, database string) (context.Context, *Connection, *svcs.Controller) {
-	port, err := sql.GetEmptyPort()
-	require.NoError(t, err)
-	return CreateServerWithPort(t, database, port)
+	require.NotEmpty(t, database)
+	var lastErr error
+	for attempt := 0; attempt < 10; attempt++ {
+		port, err := sql.GetEmptyPort()
+		require.NoError(t, err)
+
+		controller, err := runInMemoryTestServer(port)
+		if err == nil {
+			fmt.Printf("port is %d\n", port)
+			ctx := context.Background()
+			connection := newTestDatabaseConnection(t, ctx, database, serverHost, port)
+			return ctx, connection, controller
+		}
+		lastErr = err
+		if !isAddressAlreadyInUseError(err) {
+			require.NoError(t, err)
+		}
+		time.Sleep(25 * time.Millisecond)
+	}
+	require.NoError(t, lastErr)
+	return nil, nil, nil
 }
 
 // CreateServerWithPort creates a server with the given database and port, returning a connection to the server. The server will close
@@ -463,12 +481,22 @@ func CreateServer(t testing.TB, database string) (context.Context, *Connection, 
 // to wait until the server has closed.
 func CreateServerWithPort(t testing.TB, database string, port int) (context.Context, *Connection, *svcs.Controller) {
 	require.NotEmpty(t, database)
+	controller, err := runInMemoryTestServer(port)
+	require.NoError(t, err)
+	fmt.Printf("port is %d\n", port)
+
+	ctx := context.Background()
+	connection := newTestDatabaseConnection(t, ctx, database, serverHost, port)
+	return ctx, connection, controller
+}
+
+func runInMemoryTestServer(port int) (*svcs.Controller, error) {
 	largeobject.ResetForTests()
 	replsource.ResetForTests()
 	replicaidentity.ResetForTests()
 	rowsecurity.ResetForTests()
 	auth.ResetForTests(nil, nil)
-	controller, err := dserver.RunInMemory(&servercfg.DoltgresConfig{
+	return dserver.RunInMemory(&servercfg.DoltgresConfig{
 		DoltgresConfig: cfgdetails.DoltgresConfig{
 			ListenerConfig: &cfgdetails.DoltgresListenerConfig{
 				PortNumber: &port,
@@ -477,12 +505,10 @@ func CreateServerWithPort(t testing.TB, database string, port int) (context.Cont
 			LogLevelStr: &testServerLogLevel,
 		},
 	}, dserver.NewListener)
-	require.NoError(t, err)
-	fmt.Printf("port is %d\n", port)
+}
 
-	ctx := context.Background()
-	connection := newTestDatabaseConnection(t, ctx, database, serverHost, port)
-	return ctx, connection, controller
+func isAddressAlreadyInUseError(err error) bool {
+	return err != nil && strings.Contains(strings.ToLower(err.Error()), "already in use")
 }
 
 // CreateServerLocalWithPort creates a server using the local file system at [os.TempDir]. A Connection is returned to
