@@ -22,6 +22,8 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	pgexprs "github.com/dolthub/doltgresql/server/expression"
 )
@@ -86,7 +88,7 @@ func nodeSelect(ctx *Context, node *tree.Select) (vitess.SelectStatement, error)
 		return nil, errors.Errorf("SELECT INTO is only supported as a top-level statement")
 	}
 	if len(node.Locking) > 0 {
-		if err := validateLockingClauseTarget(node.Select); err != nil {
+		if err := validateLockingClauseTarget(node.Select, node.Locking); err != nil {
 			return nil, err
 		}
 	}
@@ -297,16 +299,19 @@ func selectIntoClause(node *tree.Select) *tree.SelectInto {
 	return clause.Into
 }
 
-func validateLockingClauseTarget(node tree.SelectStatement) error {
+func validateLockingClauseTarget(node tree.SelectStatement, locking tree.LockingClause) error {
 	switch node := node.(type) {
 	case *tree.ParenSelect:
 		if node.Select == nil {
 			return nil
 		}
-		return validateLockingClauseTarget(node.Select.Select)
+		return validateLockingClauseTarget(node.Select.Select, locking)
 	case *tree.SelectClause:
 		if node.Distinct || len(node.GroupBy) > 0 || node.Having != nil || selectExprsContainAggregate(node.Exprs) {
 			return errors.Errorf("FOR UPDATE is not allowed with DISTINCT, GROUP BY, aggregate, or HAVING query results")
+		}
+		if err := validateLockingClauseOfTargets(node.From, locking); err != nil {
+			return err
 		}
 	case *tree.UnionClause:
 		return errors.Errorf("FOR UPDATE is not allowed with set operation query results")
@@ -314,6 +319,54 @@ func validateLockingClauseTarget(node tree.SelectStatement) error {
 		return errors.Errorf("FOR UPDATE is not allowed with VALUES query results")
 	}
 	return nil
+}
+
+func validateLockingClauseOfTargets(from tree.From, locking tree.LockingClause) error {
+	sourceNames := map[string]struct{}{}
+	for _, table := range from.Tables {
+		collectLockingClauseSourceNames(table, sourceNames)
+	}
+
+	seenTargets := map[string]struct{}{}
+	for _, item := range locking {
+		if item == nil {
+			continue
+		}
+		for _, target := range item.Targets {
+			targetName := strings.ToLower(target.Table())
+			if targetName == "" {
+				continue
+			}
+			if _, ok := seenTargets[targetName]; ok {
+				continue
+			}
+			seenTargets[targetName] = struct{}{}
+			if _, ok := sourceNames[targetName]; !ok {
+				return pgerror.Newf(pgcode.UndefinedTable, "unresolved table name `%s` in locking clause.", targetName)
+			}
+		}
+	}
+	return nil
+}
+
+func collectLockingClauseSourceNames(table tree.TableExpr, sourceNames map[string]struct{}) {
+	switch table := table.(type) {
+	case *tree.AliasedTableExpr:
+		if table.As.Alias != "" {
+			sourceNames[strings.ToLower(string(table.As.Alias))] = struct{}{}
+			return
+		}
+		collectLockingClauseSourceNames(table.Expr, sourceNames)
+	case *tree.TableName:
+		if tableName := table.Table(); tableName != "" {
+			sourceNames[strings.ToLower(tableName)] = struct{}{}
+		}
+	case *tree.JoinTableExpr:
+		collectLockingClauseSourceNames(table.Left, sourceNames)
+		collectLockingClauseSourceNames(table.Right, sourceNames)
+	case *tree.ParenTableExpr:
+		collectLockingClauseSourceNames(table.Expr, sourceNames)
+	}
 }
 
 func selectExprsContainAggregate(exprs tree.SelectExprs) bool {
