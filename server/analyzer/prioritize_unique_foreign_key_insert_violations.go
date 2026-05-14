@@ -21,24 +21,29 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/transform"
 
 	pgnodes "github.com/dolthub/doltgresql/server/node"
-	pgtransform "github.com/dolthub/doltgresql/server/transform"
 )
 
 // PrioritizeUniqueForeignKeyInsertViolations makes FK-checked INSERTs report
 // duplicate-key errors before foreign-key errors, matching PostgreSQL.
 func PrioritizeUniqueForeignKeyInsertViolations(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, scope *plan.Scope, selector analyzer.RuleSelector, qFlags *sql.QueryFlags) (sql.Node, transform.TreeIdentity, error) {
-	return pgtransform.NodeWithOpaque(ctx, node, func(ctx *sql.Context, node sql.Node) (sql.Node, transform.TreeIdentity, error) {
-		fkHandler, ok := node.(*plan.ForeignKeyHandler)
-		if !ok {
-			return node, transform.SameTree, nil
-		}
-		wrapped, changed, err := pgnodes.WrapPostgresForeignKeyInsertHandler(ctx, fkHandler)
-		if err != nil {
-			return nil, transform.NewTree, err
-		}
-		if !changed {
-			return node, transform.SameTree, nil
-		}
-		return wrapped, transform.NewTree, nil
-	})
+	insert, ok := node.(*plan.InsertInto)
+	if !ok {
+		return node, transform.SameTree, nil
+	}
+	fkHandler, ok := insert.Destination.(*plan.ForeignKeyHandler)
+	if !ok {
+		return node, transform.SameTree, nil
+	}
+	wrapped, changed, err := pgnodes.WrapPostgresForeignKeyInsertHandler(ctx, fkHandler)
+	if err != nil {
+		return nil, transform.NewTree, err
+	}
+	if !changed {
+		return node, transform.SameTree, nil
+	}
+	next, err := insert.WithChildren(ctx, wrapped)
+	if err != nil {
+		return nil, transform.NewTree, err
+	}
+	return next, transform.NewTree, nil
 }
