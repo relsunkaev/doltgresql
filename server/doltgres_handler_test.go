@@ -34,6 +34,7 @@ func TestCastSQLErrorPreservesDDLPGCodes(t *testing.T) {
 	for _, code := range []pgcode.Code{
 		pgcode.AmbiguousFunction,
 		pgcode.CannotCoerce,
+		pgcode.CardinalityViolation,
 		pgcode.CaseNotFound,
 		pgcode.DatatypeMismatch,
 		pgcode.DependentObjectsStillExist,
@@ -64,6 +65,15 @@ func TestCastSQLErrorPreservesWrappedInsertPGCodes(t *testing.T) {
 
 	require.Equal(t, pgcode.RaiseException, pgerror.GetPGCode(castSQLError(wrapped)))
 	require.Equal(t, "reject before trigger insert", castSQLError(wrapped).Error())
+}
+
+func TestCastSQLErrorMapsExpectedSingleRow(t *testing.T) {
+	err := sql.ErrExpectedSingleRow.New()
+
+	require.Equal(t, pgcode.CardinalityViolation, pgerror.GetPGCode(castSQLError(err)))
+
+	wrapped := sql.NewWrappedInsertError(sql.NewRow(1, "bad"), err)
+	require.Equal(t, pgcode.CardinalityViolation, pgerror.GetPGCode(castSQLError(wrapped)))
 }
 
 func TestExecutionResultFieldsUsesSuppliedFields(t *testing.T) {

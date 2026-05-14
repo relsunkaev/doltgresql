@@ -280,10 +280,14 @@ func castSQLError(err error) error {
 	if sql.ErrKeyColumnDoesNotExist.Is(pgErr) {
 		return pgerror.New(pgcode.UndefinedColumn, pgErr.Error())
 	}
+	if sql.ErrExpectedSingleRow.Is(pgErr) {
+		return pgerror.New(pgcode.CardinalityViolation, pgErr.Error())
+	}
 	switch pgerror.GetPGCode(pgErr) {
 	case pgcode.ActiveSQLTransaction,
 		pgcode.AmbiguousFunction,
 		pgcode.ArraySubscript,
+		pgcode.CardinalityViolation,
 		pgcode.CaseNotFound,
 		pgcode.DeadlockDetected,
 		pgcode.CannotCoerce,
