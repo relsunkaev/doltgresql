@@ -563,12 +563,15 @@
       "source": "testing/go/drop_function_test.go:TestDropFunction",
       "ordinal": 31,
       "scriptName": "drop function with empty search_path",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "drop-function-test-testdropfunction-0031-drop-function-if-exists-public.vmstate",
       "suggestedId": "drop-function-test-testdropfunction-0031-drop-function-if-exists-public.vmstate",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "DROP FUNCTION IF EXISTS public.vmstate(s integer);",
       "querySha256": "3c582270c7f73767b7b224d144d80e42e6589c998fb6cceff2f2fbd687d3880d",
-      "needsCleanup": true,
+      "expectedRows": [],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {

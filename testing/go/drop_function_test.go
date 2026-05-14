@@ -239,8 +239,7 @@ $$ LANGUAGE plpgsql;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `DROP FUNCTION IF EXISTS public.vmstate(s integer);`,
-					Expected: []sql.Row{},
+					Query: `DROP FUNCTION IF EXISTS public.vmstate(s integer);`, PostgresOracle: ScriptTestPostgresOracle{ID: "drop-function-test-testdropfunction-0031-drop-function-if-exists-public.vmstate"},
 				},
 			},
 		},
