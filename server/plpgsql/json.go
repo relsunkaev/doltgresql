@@ -843,9 +843,12 @@ func (stmt *plpgSQL_stmt_raise) Convert() Raise {
 }
 
 // Convert converts the JSON statement into its output form.
-func (stmt *plpgSQL_stmt_return) Convert() Return {
+func (stmt *plpgSQL_stmt_return) Convert(fallbackExpression string) Return {
+	if stmt.Expression.Expression.Query != "" {
+		fallbackExpression = stmt.Expression.Expression.Query
+	}
 	return Return{
-		Expression: stmt.Expression.Expression.Query,
+		Expression: fallbackExpression,
 	}
 }
 

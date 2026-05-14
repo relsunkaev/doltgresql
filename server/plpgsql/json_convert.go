@@ -23,14 +23,19 @@ import (
 
 type jsonConversionContext struct {
 	datumNames            map[int32]string
+	returnExpressions     []string
+	returnIndex           *int
 	returnNextExpressions []string
 	returnNextIndex       *int
 }
 
 func newJSONConversionContext(datums []datum, source string) jsonConversionContext {
+	returnIndex := 0
 	returnNextIndex := 0
 	conv := jsonConversionContext{
 		datumNames:            make(map[int32]string, len(datums)),
+		returnExpressions:     extractReturnExpressions(source),
+		returnIndex:           &returnIndex,
 		returnNextExpressions: extractReturnNextExpressions(source),
 		returnNextIndex:       &returnNextIndex,
 	}
@@ -55,7 +60,26 @@ func newJSONConversionContext(datums []datum, source string) jsonConversionConte
 	return conv
 }
 
+var returnExpressionRegex = regexp.MustCompile(`(?i)\breturn(?:\s+([^;]*))?;`)
 var returnNextExpressionRegex = regexp.MustCompile(`(?i)\breturn\s+next(?:\s+([^;]*))?;`)
+
+func extractReturnExpressions(source string) []string {
+	matches := returnExpressionRegex.FindAllStringSubmatch(source, -1)
+	expressions := make([]string, 0, len(matches))
+	for _, match := range matches {
+		var expression string
+		if len(match) >= 2 {
+			expression = strings.TrimSpace(match[1])
+		}
+		lowerExpression := strings.ToLower(expression)
+		if lowerExpression == "next" || strings.HasPrefix(lowerExpression, "next ") ||
+			lowerExpression == "query" || strings.HasPrefix(lowerExpression, "query ") {
+			continue
+		}
+		expressions = append(expressions, expression)
+	}
+	return expressions
+}
 
 func extractReturnNextExpressions(source string) []string {
 	matches := returnNextExpressionRegex.FindAllStringSubmatch(source, -1)
@@ -76,6 +100,15 @@ func (conv jsonConversionContext) nextReturnNextExpression() string {
 	}
 	expression := conv.returnNextExpressions[*conv.returnNextIndex]
 	*conv.returnNextIndex = *conv.returnNextIndex + 1
+	return expression
+}
+
+func (conv jsonConversionContext) nextReturnExpression() string {
+	if conv.returnIndex == nil || *conv.returnIndex >= len(conv.returnExpressions) {
+		return ""
+	}
+	expression := conv.returnExpressions[*conv.returnIndex]
+	*conv.returnIndex = *conv.returnIndex + 1
 	return expression
 }
 
@@ -212,7 +245,7 @@ func (conv jsonConversionContext) convertStatement(stmt statement) (Statement, e
 	case stmt.Raise != nil:
 		return stmt.Raise.Convert(), nil
 	case stmt.Return != nil:
-		return stmt.Return.Convert(), nil
+		return stmt.Return.Convert(conv.nextReturnExpression()), nil
 	case stmt.ReturnNext != nil:
 		return stmt.ReturnNext.Convert(conv.nextReturnNextExpression()), nil
 	case stmt.ReturnQuery != nil:

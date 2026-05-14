@@ -133,6 +133,9 @@ func nodeCreateFunction(ctx *Context, node *tree.CreateFunction) (vitess.Stateme
 			if err != nil {
 				return nil, err
 			}
+			if err = plpgsql.ValidateReturnStatements(parsedBody, retType, returnsSet, routineHasOutputParams(params)); err != nil {
+				return nil, err
+			}
 			// parse types
 			for i, op := range parsedBody {
 				switch op.OpCode {
@@ -228,6 +231,15 @@ func nodeCreateFunction(ctx *Context, node *tree.CreateFunction) (vitess.Stateme
 		},
 		Children: defaults,
 	}, nil
+}
+
+func routineHasOutputParams(params []pgnodes.RoutineParam) bool {
+	for _, param := range params {
+		if param.Mode == procedures.ParameterMode_OUT || param.Mode == procedures.ParameterMode_INOUT {
+			return true
+		}
+	}
+	return false
 }
 
 func createRoutineOutputReturnType(params []pgnodes.RoutineParam) *pgtypes.DoltgresType {

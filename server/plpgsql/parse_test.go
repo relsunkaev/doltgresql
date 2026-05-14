@@ -190,6 +190,28 @@ func TestParseReturnNextOperations(t *testing.T) {
 	}
 }
 
+func TestParseReturnExpressionFallback(t *testing.T) {
+	ops, err := Parse(`CREATE FUNCTION func2() RETURNS INT
+		LANGUAGE plpgsql
+		AS $$
+		BEGIN
+			RETURN 5;
+		END;
+		$$;`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, op := range ops {
+		if op.OpCode == OpCode_Return {
+			if strings.ReplaceAll(op.PrimaryData, " ", "") != "SELECT5;" {
+				t.Fatalf("RETURN primary data = %q, expected SELECT 5; op: %#v", op.PrimaryData, op)
+			}
+			return
+		}
+	}
+	t.Fatalf("expected return operation; ops: %#v", ops)
+}
+
 func TestParseDynamicExecuteExpressionBindings(t *testing.T) {
 	ops, err := Parse(`CREATE FUNCTION test_block() RETURNS void AS $$
 		DECLARE
