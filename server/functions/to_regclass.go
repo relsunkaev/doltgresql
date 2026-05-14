@@ -15,7 +15,6 @@
 package functions
 
 import (
-	"strconv"
 	"strings"
 
 	"github.com/dolthub/go-mysql-server/sql"
@@ -37,10 +36,6 @@ var to_regclass_text = framework.Function1{
 	IsNonDeterministic: true,
 	Strict:             true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val1 any) (any, error) {
-		// If the string just represents a number, then we return nil.
-		if _, err := strconv.ParseUint(val1.(string), 10, 32); err == nil {
-			return nil, nil
-		}
 		oid, err := pgtypes.Regclass.IoInput(ctx, val1.(string))
 		if err != nil {
 			// Specifically for the "does not exist" error, we return nil instead of the error.

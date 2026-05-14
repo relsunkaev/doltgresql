@@ -15,7 +15,6 @@
 package functions
 
 import (
-	"fmt"
 	"strconv"
 
 	"github.com/cockroachdb/errors"
@@ -155,43 +154,35 @@ var regclassout = framework.Function1{
 			Index: func(ctx *sql.Context, schema ItemSchema, table ItemTable, index ItemIndex) (cont bool, err error) {
 				schemaName := schema.Item.SchemaName()
 				indexName := indexmetadata.DisplayNameForTable(index.Item, table.Item)
-				if _, ok := schemasMap[schemaName]; ok {
-					output = indexName
-				} else {
-					output = fmt.Sprintf("%s.%s", schemaName, indexName)
-				}
+				output = regclassOutputName(schemaName, indexName, schemasMap)
 				return false, nil
 			},
 			Sequence: func(ctx *sql.Context, schema ItemSchema, sequence ItemSequence) (cont bool, err error) {
 				schemaName := schema.Item.SchemaName()
-				if _, ok := schemasMap[schemaName]; ok {
-					output = sequence.Item.Id.SequenceName()
-				} else {
-					output = fmt.Sprintf("%s.%s", schemaName, sequence.Item.Id.SequenceName())
-				}
+				output = regclassOutputName(schemaName, sequence.Item.Id.SequenceName(), schemasMap)
 				return false, nil
 			},
 			Table: func(ctx *sql.Context, schema ItemSchema, table ItemTable) (cont bool, err error) {
 				schemaName := schema.Item.SchemaName()
-				if _, ok := schemasMap[schemaName]; ok {
-					output = table.Item.Name()
-				} else {
-					output = fmt.Sprintf("%s.%s", schemaName, table.Item.Name())
-				}
+				output = regclassOutputName(schemaName, table.Item.Name(), schemasMap)
 				return false, nil
 			},
 			View: func(ctx *sql.Context, schema ItemSchema, view ItemView) (cont bool, err error) {
 				schemaName := schema.Item.SchemaName()
-				if _, ok := schemasMap[schemaName]; ok {
-					output = view.Item.Name
-				} else {
-					output = fmt.Sprintf("%s.%s", schemaName, view.Item.Name)
-				}
+				output = regclassOutputName(schemaName, view.Item.Name, schemasMap)
 				return false, nil
 			},
 		})
 		return output, err
 	},
+}
+
+func regclassOutputName(schemaName string, relationName string, schemasMap map[string]struct{}) string {
+	quotedName := pgQuoteIdentifier(relationName)
+	if _, ok := schemasMap[schemaName]; ok {
+		return quotedName
+	}
+	return pgQuoteIdentifier(schemaName) + "." + quotedName
 }
 
 // regclassrecv represents the PostgreSQL function of regclass type IO receive.
