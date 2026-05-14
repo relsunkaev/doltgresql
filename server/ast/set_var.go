@@ -21,6 +21,8 @@ import (
 	"github.com/cockroachdb/errors"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/config"
 )
@@ -110,6 +112,9 @@ func nodeSetVar(ctx *Context, node *tree.SetVar) (vitess.Statement, error) {
 	if node.Namespace == "" && !config.IsValidPostgresConfigParameter(node.Name) && !config.IsValidDoltConfigParameter(node.Name) {
 		return nil, errors.Errorf(`ERROR: unrecognized configuration parameter "%s"`, node.Name)
 	}
+	if isCurrentTransactionParameter(node.Name) && isSetToDefault(node.Values) {
+		return nil, pgerror.Newf(pgcode.FeatureNotSupported, `parameter "%s" cannot be reset`, node.Name)
+	}
 	if node.IsLocal {
 		// PostgreSQL's SET LOCAL writes the variable for the duration
 		// of the surrounding transaction only. We rewrite it into a
@@ -170,4 +175,17 @@ func nodeSetVar(ctx *Context, node *tree.SetVar) (vitess.Statement, error) {
 			}},
 		}, nil
 	}
+}
+
+func isCurrentTransactionParameter(name string) bool {
+	switch strings.ToLower(name) {
+	case "transaction_deferrable", "transaction_read_only":
+		return true
+	default:
+		return false
+	}
+}
+
+func isSetToDefault(values tree.Exprs) bool {
+	return len(values) == 1 && strings.EqualFold(values[0].String(), "default")
 }

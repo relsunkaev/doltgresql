@@ -64,6 +64,14 @@ func getCurSetting(ctx *sql.Context, s string, missingOk bool) (any, error) {
 	}
 
 	if variable != nil {
+		if sysVar, _, ok := sql.SystemVariables.GetGlobal(s); ok {
+			if sysType, ok := sysVar.GetType().(sql.SystemVariableType); ok {
+				encoded, err := sysType.EncodeValue(variable)
+				if err == nil {
+					return encoded, nil
+				}
+			}
+		}
 		return fmt.Sprintf("%v", variable), nil
 	}
 
