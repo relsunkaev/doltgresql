@@ -10,6 +10,23 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### alpha - 2026-05-14 10:55 MST
+
+- Result: fixed the default tablespace index SQLSTATE slice by returning typed `pgcode.UndefinedObject` (`42704`) for non-`pg_default` index tablespaces while preserving the existing unsupported-tablespace message used by internal assertions.
+- Source touched: `server/ast/index_table_def.go` and `server/ast/alter_index.go`.
+- Validation in clean verifier `/private/tmp/doltgresql-alpha-basicindex-fb.IYMuyd` at `HEAD=fb120427` plus only this patch:
+  - `go test -vet=off ./testing/go -run '^TestBasicIndexing$/^(Unsupported options|PostgreSQL default tablespace index metadata|PostgreSQL alter index default tablespace)$' -count=1 -timeout=10m -v`
+  - `go test -vet=off ./server/ast -run '^$' -count=1 -timeout=10m`
+- Boundary: no oracle-map/manifest changes; later partial/INCLUDE/opclass/JSONB/index-attribute/statistics failures remain for separate slices.
+- Next action: commit this narrow AST slice, then rerun broad `TestBasicIndexing` from clean current HEAD.
+
+### alpha - 2026-05-14 10:54 MST
+
+- Lane claimed: `TestBasicIndexing` default tablespace index SQLSTATE slice.
+- Discovery proof: clean verifier `/private/tmp/doltgresql-alpha-basicindex-fb.IYMuyd` at `HEAD=fb120427`, log `/tmp/doltgresql-alpha-basicindex-fb120427.jsonl`, now gets past reloptions and fails in `PostgreSQL_default_tablespace_index_metadata` / `PostgreSQL_alter_index_default_tablespace` because non-`pg_default` tablespaces return SQLSTATE `0A000` instead of PostgreSQL `42704`.
+- Expected files: `server/ast/index_table_def.go`, `server/ast/alter_index.go`, and possibly `testing/go/index_test.go` only if message expectations need updating. Boundary: avoid later partial/INCLUDE/opclass/JSONB/index-attribute/statistics failures and peer dirty functions/manifest/startup/grant lanes.
+- Next action: preserve accepted `pg_default` behavior and return typed `UndefinedObject` for unsupported custom index tablespaces, then validate the focused tablespace groups plus touched AST package.
+
 ### alpha - 2026-05-14 10:52 MST
 
 - Result: fixed the `TestBasicIndexing` reloptions/fillfactor slice by returning PostgreSQL `22023` for invalid btree index reloptions and allowing `ALTER INDEX ... SET/RESET (...)` to update btree constraint-backed index metadata without dropping the constraint ownership marker.

@@ -21,6 +21,8 @@ import (
 
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 )
 
@@ -51,7 +53,7 @@ func nodeIndexTableDefWithOptions(
 		return nil, errors.Errorf("storage parameters are not yet supported for indexes")
 	}
 	if node.IndexParams.Tablespace != "" && (!allowDefaultTablespace || !isDefaultIndexTablespace(node.IndexParams.Tablespace)) {
-		return nil, errors.Errorf("TABLESPACE is not yet supported for indexes")
+		return nil, pgerror.New(pgcode.UndefinedObject, "TABLESPACE is not yet supported for indexes")
 	}
 
 	indexFields, err := nodeIndexElemList(ctx, node.Columns)

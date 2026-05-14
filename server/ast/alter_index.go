@@ -18,6 +18,8 @@ import (
 	"github.com/cockroachdb/errors"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	pgnodes "github.com/dolthub/doltgresql/server/node"
 )
@@ -31,7 +33,7 @@ func nodeAlterIndex(ctx *Context, node *tree.AlterIndex) (vitess.Statement, erro
 	switch cmd := node.Cmd.(type) {
 	case *tree.AlterIndexSetTablespace:
 		if !isDefaultIndexTablespaceName(cmd.Tablespace) {
-			return nil, errors.Errorf("TABLESPACE is not yet supported for indexes")
+			return nil, pgerror.New(pgcode.UndefinedObject, "TABLESPACE is not yet supported for indexes")
 		}
 		schemaName, tableName, indexName, err := tableIndexNameParts(ctx, &node.Index)
 		if err != nil {
