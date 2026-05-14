@@ -841,7 +841,7 @@ func validatePublicationColumns(tableSchema sql.Schema, columns []string) ([]str
 			}
 		}
 		if !found {
-			return nil, errors.Errorf(`column "%s" does not exist`, column)
+			return nil, pgerror.Newf(pgcode.UndefinedColumn, `column "%s" does not exist`, column)
 		}
 		if _, ok := seen[resolved[i]]; ok {
 			return nil, pgerror.Newf(pgcode.DuplicateObject, `duplicate column "%s" in publication column list`, resolved[i])
