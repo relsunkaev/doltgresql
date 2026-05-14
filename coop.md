@@ -10,6 +10,28 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### zeta - 2026-05-14 10:15 MST
+
+- Result: fixed the pg_dump read-only `PREPARE dumpFunc(...)` blocker in `TestPgDumpPsqlRestoreExternalAppDumpRoundTrip/kirooha/adtech-simple`.
+- Root cause: `PREPARE` and `EXECUTE` were classified before the handler could distinguish session-local prepared state from the prepared query body, so read-only transactions rejected even read-only prepared SELECTs.
+- Change: treat `PREPARE`/`EXECUTE` as session operations for the initial persistent-write classifier and check the stored prepared query body when `EXECUTE` runs, preserving rejection for prepared writes. Added `TestReadOnlyTransactionAllowsPrepareAndSelectExecuteRepro`.
+- Validation:
+  - red before fix: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go -run '^TestReadOnlyTransactionAllowsPrepareAndSelectExecuteRepro$' -count=1 -timeout=5m -v` failed at `PREPARE ... SELECT` with SQLSTATE `25006`.
+  - green: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go -run '^TestReadOnlyTransactionAllowsPrepareAndSelectExecuteRepro$' -count=1 -timeout=5m -v`
+  - green: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go -run '^TestSQLPreparedStatements$' -count=1 -timeout=5m -v`
+  - green: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./server -run '^$' -count=1`
+  - broader read-only subset still has an unrelated setup failure in `TestReadOnlyTransactionAllowsTemporaryTableWritesGuard` (`table "read_only_temp_target" was created but could not be found`).
+- Follow-up discovery: `kirooha/adtech-simple` now advances past the read-only `PREPARE` and fails on missing `pg_get_function_sqlbody`; not included in this commit because functions helper work is a separate lane.
+- Next action: commit this prepared/read-only slice, then re-check `coop.md` before claiming the missing `pg_get_function_sqlbody` blocker if no peer owns it.
+
+### zeta - 2026-05-14 10:10 MST
+
+- Lane claimed: `TestPgDumpPsqlRestoreExternalAppDumpRoundTrip/kirooha/adtech-simple` pg_dump failure where SQL `PREPARE dumpFunc(...) AS SELECT ...` is rejected inside pg_dump's read-only transaction.
+- Root-cause hypothesis from inspection: `rejectReadOnlyTransactionWrite` asks `node.PrepareStatement.IsReadOnly()` / `node.ExecuteStatement.IsReadOnly()` before the handler has a chance to inspect the prepared query body, so session-local `PREPARE` is treated like a persistent write and `EXECUTE` cannot distinguish SELECT bodies from DML bodies.
+- Expected files: `server/connection_handler.go` and a focused prepared/read-only regression, likely `testing/go/prepared_statement_test.go` or `testing/go/transaction_mode_repro_test.go`; stage only zeta hunks because `server/connection_handler.go` has an unrelated peer startup-DB hunk.
+- Boundary: avoiding active BasicIndexing/index oracle rows, omega oracle rewrite/inventory work, startup/core/schema/create-table/create-view/relation-schema, grant/auth, manifest/cache, functions oracle-map, and `third_party/dolt`.
+- Next action: add a focused red regression for PREPARE/EXECUTE SELECT in a read-only transaction and EXECUTE INSERT rejection, then fix the read-only classifier path.
+
 ### alpha - 2026-05-14 10:12 MST
 
 - Result: isolated the remaining BasicIndexing Dolt-specific plan rows claimed at 10:02 MST: ordinals 22, 28, 29, 30, 32, 281, 289, and 321 now use internal expectations instead of stale PostgreSQL oracle rows.

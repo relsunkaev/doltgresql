@@ -528,6 +528,45 @@ func TestSessionCharacteristicsReadOnlyPreventsWritesRepro(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestReadOnlyTransactionAllowsPrepareAndSelectExecuteRepro(t *testing.T) {
+	ctx, connection, controller := CreateServer(t, "postgres")
+	defer func() {
+		connection.Close(ctx)
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+
+	_, err := connection.Exec(ctx, `CREATE TABLE read_only_prepare_items (id INT PRIMARY KEY);`)
+	require.NoError(t, err)
+	_, err = connection.Exec(ctx, `INSERT INTO read_only_prepare_items VALUES (1);`)
+	require.NoError(t, err)
+
+	_, err = connection.Exec(ctx, `START TRANSACTION READ ONLY;`)
+	require.NoError(t, err)
+	_, err = connection.Exec(ctx, `PREPARE read_only_prepare_select AS
+		SELECT count(*) FROM read_only_prepare_items;`)
+	require.NoError(t, err)
+
+	var count int64
+	err = connection.Current.QueryRow(ctx, `EXECUTE read_only_prepare_select;`).Scan(&count)
+	require.NoError(t, err)
+	require.Equal(t, int64(1), count)
+
+	_, err = connection.Exec(ctx, `PREPARE read_only_prepare_insert(INT) AS
+		INSERT INTO read_only_prepare_items VALUES ($1);`)
+	require.NoError(t, err)
+	_, err = connection.Exec(ctx, `EXECUTE read_only_prepare_insert(2);`)
+	require.Error(t, err)
+	lowerErr := strings.ToLower(err.Error())
+	require.True(t,
+		strings.Contains(lowerErr, "read-only transaction") ||
+			strings.Contains(lowerErr, "read only transaction"),
+		"expected read-only transaction error, got %v", err)
+
+	_, err = connection.Exec(ctx, `ROLLBACK;`)
+	require.NoError(t, err)
+}
+
 // TestReadOnlyTransactionRejectsPersistentSequenceNextvalRepro reproduces a
 // read-only transaction safety bug for persistent sequence writes.
 func TestReadOnlyTransactionRejectsPersistentSequenceNextvalRepro(t *testing.T) {

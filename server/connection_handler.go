@@ -1367,6 +1367,7 @@ func injectedStatementWritesPersistentState(stmt any) bool {
 	}
 	switch stmt.(type) {
 	case node.SetTransaction, node.SetSessionCharacteristics, node.NoOp,
+		node.PrepareStatement, node.ExecuteStatement,
 		node.ListenStatement, node.UnlistenStatement, node.NotifyStatement:
 		return false
 	}
@@ -1812,6 +1813,9 @@ func (h *ConnectionHandler) executeSQLStatement(stmt node.ExecuteStatement) erro
 	preparedData, ok := h.preparedStatements[stmt.Name]
 	if !ok {
 		return preparedStatementDoesNotExistError(stmt.Name)
+	}
+	if err := h.rejectReadOnlyTransactionWrite(preparedData.Query); err != nil {
+		return err
 	}
 	if stmt.DiscardRows {
 		return errors.Errorf("EXECUTE DISCARD ROWS is not supported")
