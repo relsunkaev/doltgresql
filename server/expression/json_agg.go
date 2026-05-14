@@ -26,6 +26,8 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 	"github.com/goccy/go-json"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
@@ -291,7 +293,7 @@ func jsonAggDistinctKeyPart(ctx *sql.Context, typ *pgtypes.DoltgresType, val any
 	if typ != nil {
 		switch typ.ID.TypeName() {
 		case "json":
-			return "", errors.New("could not identify an equality operator for type json")
+			return "", pgerror.New(pgcode.UndefinedFunction, "could not identify an equality operator for type json")
 		case "jsonb":
 			value, err := pgtypes.JsonValueFromSQLValue(ctx, typ, res)
 			if err != nil {
