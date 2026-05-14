@@ -10,6 +10,29 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### epsilon - 2026-05-14 05:09 MST
+
+- Result: fixed the current `TestDateAndTimeFunction` blockers through `to_date` and the PL/pgSQL missing-regclass default blocker.
+- Root causes:
+  - Cached PostgreSQL interval rows still stored pgx interval structs instead of PostgreSQL interval text.
+  - Cached date/timestamp structural comparisons used pgx `time.Time` ISO values, while Doltgres returned PostgreSQL-style text for dates, timestamps, and BC values.
+  - `timezone('MSK', timestamp '2011-03-27 02:00:00')` used Go's normalized local wall time for a nonexistent Moscow transition, producing `23:00Z` instead of PostgreSQL's `22:00Z`.
+  - `CREATE TABLE ... DEFAULT nextval('missing_seq'::regclass)` did not validate literal regclass defaults during DDL, so the later PL/pgSQL table creation succeeded instead of surfacing `42P01`.
+- Files touched: `server/analyzer/validate_column_defaults.go`, `server/functions/timezone.go`, `testing/go/postgres_oracle_cache.go`, and the interval-normalized oracle maps/manifest for `functions`, `operators`, `pgcatalog`, `type_correctness_repro`, and `types`.
+- Fresh current-HEAD verifier `/private/tmp/doltgresql-epsilon-current-xeo64K` plus epsilon's patch passed:
+  - `go test -vet=off ./testing/go -run '^TestPostgresOracleManifestGenerated$' -count=1 -v`
+  - `go test -json -vet=off ./testing/go -run '^TestDateAndTimeFunction$/^timezone$' -count=1 -timeout=10m`
+  - `go test -json -vet=off ./testing/go -run '^TestTimezoneTextTimestampUsesWallTimeOffsetRepro$' -count=1 -timeout=10m`
+  - `go test -json -vet=off ./testing/go -run '^TestDateAndTimeFunction$/^to_date$' -count=1 -timeout=10m`
+  - `go test -json -vet=off ./testing/go -run "^TestDateAndTimeFunction$/^to_timestamp$/(SET_timezone|SELECT_to_timestamp\\('44-02-01)" -count=1 -timeout=10m`
+  - `go test -json -vet=off ./testing/go -run '^TestCreateFunctionLanguagePlpgsql$/^create_function_on_non-existent_table_that_does_not_exist_yet_with_\x27check_function_bodies\x27$' -count=1 -timeout=10m`
+  - `go test -vet=off ./server/functions -run '^$' -count=1`
+  - `git diff --check` on epsilon-owned files.
+- Current high-skip verifier log `/tmp/doltgresql-epsilon-current-highskip.jsonl` advances past `age`, `timezone`, and `to_date`, then stops at `TestDateAndTimeFunction/to_timestamp/SELECT to_timestamp('97/Feb/16', 'YYMonDD')`: expected SQLSTATE `22007`, actual `XX000`.
+- Shared checkout note: full shared-tree runs remain blocked by unrelated dirty `server/node/postgres_foreign_key_action_handler.go` compile errors, so validation used the fresh current-HEAD verifier.
+- Committed as `8c4de2a3`, `c9c2ef59`, and `9011ef9e`.
+- Next action: treat the `to_timestamp` format-error SQLSTATE gaps as a separate source/classifier lane.
+
 ### omega - 2026-05-13 22:13 MST
 
 - Lane claimed: low-count fully-convertible oracle promotion batch found by automated temp-refresh scan.
