@@ -132,10 +132,7 @@ func TestPgDogCompatibilityBoundary(t *testing.T) {
 					},
 				},
 				{
-					Query: "SELECT pg_wal_lsn_diff('0/1'::pg_lsn, '0/0'::pg_lsn);",
-					Expected: []sql.Row{
-						{Numeric("1")},
-					},
+					Query: "SELECT pg_wal_lsn_diff('0/1'::pg_lsn, '0/0'::pg_lsn);", PostgresOracle: ScriptTestPostgresOracle{ID: "pgdog-compat-test-testpgdogcompatibilityboundary-0015-select-pg_wal_lsn_diff-0/1-::pg_lsn-0/0"},
 				},
 			},
 		},

@@ -252,15 +252,24 @@
       "source": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary",
       "ordinal": 15,
       "scriptName": "PgDog logical replication metadata probes",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "pgdog-compat-test-testpgdogcompatibilityboundary-0015-select-pg_wal_lsn_diff-0/1-::pg_lsn-0/0",
       "suggestedId": "pgdog-compat-test-testpgdogcompatibilityboundary-0015-select-pg_wal_lsn_diff-0/1-::pg_lsn-0/0",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT pg_wal_lsn_diff('0/1'::pg_lsn, '0/0'::pg_lsn);",
       "querySha256": "2757bb1d4d164bc664dce7c7fc9afc33dc3b266aaf2e83ce4dc0e48c3398cc28",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
