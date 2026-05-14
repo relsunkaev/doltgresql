@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestSelect covers SELECT syntax not covered by our MySQL select tests
@@ -94,12 +92,9 @@ func TestSelect(t *testing.T) {
 					Query: "select * from (values(1,'峰哥',18),(2,'王哥',20),(3,'张哥',22)) x(id,name,age);", PostgresOracle: ScriptTestPostgresOracle{ID: "select-test-testselect-0017-select-*-from-values-1"},
 				},
 				{
-					Query:    "select * from (values(1,'峰哥',18),(2,'王哥',20),(3,'张哥',22)) x(id,name,age) limit $1;",
-					BindVars: []any{2}, // forcing this to use prepared statements
-					Expected: []sql.Row{
-						{1, "峰哥", 18},
-						{2, "王哥", 20},
-					},
+					Query:          "select * from (values(1,'峰哥',18),(2,'王哥',20),(3,'张哥',22)) x(id,name,age) limit $1;",
+					BindVars:       []any{2}, // forcing this to use prepared statements
+					PostgresOracle: ScriptTestPostgresOracle{ID: "select-test-testselect-0018-select-*-from-values-1"},
 					ExpectedColNames: []string{
 						"id",
 						"name",

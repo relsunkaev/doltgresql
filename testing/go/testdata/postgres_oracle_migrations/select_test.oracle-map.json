@@ -645,15 +645,44 @@
       "source": "testing/go/select_test.go:TestSelect",
       "ordinal": 18,
       "scriptName": "select values",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "select-test-testselect-0018-select-*-from-values-1",
       "suggestedId": "select-test-testselect-0018-select-*-from-values-1",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "select * from (values(1,'峰哥',18),(2,'王哥',20),(3,'张哥',22)) x(id,name,age) limit $1;",
       "querySha256": "0bdf4adb7625d9bd74fd3494432eb07397e7205e5861d272f303ada547ef5023",
-      "nonLiteral": [
-        "BindVars"
+      "bindVars": [
+        {
+          "kind": "int",
+          "value": "2"
+        }
       ],
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "峰哥"
+          },
+          {
+            "value": "18"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "王哥"
+          },
+          {
+            "value": "20"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
