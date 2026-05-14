@@ -842,7 +842,7 @@
       "expectedRows": [
         [
           {
-            "value": "{44614000000 true}"
+            "value": "12:23:34"
           }
         ]
       ],
