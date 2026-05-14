@@ -29,6 +29,8 @@ import (
 	"github.com/dolthub/doltgresql/core/extensions/pg_extension"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/postgres/parser/parser"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/comments"
@@ -176,7 +178,7 @@ func (c *CreateExtension) validateVersion(ext *pg_extension.ExtensionFiles) erro
 	if c.Version == "" || c.Version == ext.Control.DefaultVersion.String() {
 		return nil
 	}
-	return errors.Errorf(`extension "%s" has no installation script nor update path for version "%s"`, c.Name, c.Version)
+	return pgerror.Newf(pgcode.InvalidParameterValue, `extension "%s" has no installation script nor update path for version "%s"`, c.Name, c.Version)
 }
 
 func checkExtensionDatabaseCreatePrivilege(ctx *sql.Context) error {
