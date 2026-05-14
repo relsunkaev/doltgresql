@@ -10,6 +10,18 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### alpha - 2026-05-14 11:22 MST
+
+- Result: fixed the `pg_get_indexdef` column-deparse slice for decorated index keys. Column-specific `pg_get_indexdef(index_oid, attno, false)` now returns only the indexed attribute/expression, while full index definitions still preserve opclass/collation decorations; `pg_get_indexdef(index_oid, 0, true)` now omits schema qualification like PostgreSQL.
+- Source touched: `server/indexmetadata/index_definition.go` and `server/functions/pg_get_indexdef.go`. Boundary held: no collation/opclass validation SQLSTATE work, no JSONB GIN sidecar work, no predicate deparse work, and no oracle/manifest updates.
+- Validation in clean verifier `/private/tmp/doltgresql-alpha-pgget.TUHZdD` at `HEAD=93408a4a` plus only this alpha patch:
+  - `go test -vet=off ./testing/go -run '^TestBasicIndexing$/^PostgreSQL btree pattern opclass metadata$' -count=1 -timeout=10m -v`
+  - `go test -vet=off ./testing/go -run '^TestBasicIndexing$/^PostgreSQL btree collation metadata$/^SELECT__pg_catalog.pg_get_indexdef' -count=1 -timeout=10m -v`
+  - `go test -vet=off ./testing/go -run '^TestBasicIndexing$/^PostgreSQL index access method and opclass metadata$/^(CREATE_INDEX_jsonb_gin_(ops|path)_idx|SELECT_c.relname,__pg_catalog.pg_get_indexdef)' -count=1 -timeout=10m -v`
+  - `go test -vet=off ./server/functions ./server/indexmetadata -run '^$' -count=1 -timeout=10m`
+- Commit landed: `fix: deparse column-specific index definitions`.
+- Next action: re-run a broader `TestBasicIndexing` sweep to pick the next unclaimed blocker.
+
 ### alpha - 2026-05-14 11:14 MST
 
 - Result: fixed the INCLUDE/opclass metadata slice by adding PostgreSQL built-in OIDs for the exposed btree/jsonb GIN opclasses, allowing INCLUDE expression syntax to parse, and returning typed `0A000` for unsupported INCLUDE expressions/options.

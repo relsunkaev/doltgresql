@@ -62,12 +62,16 @@ var pg_get_indexdef_oid_integer_bool = framework.Function3{
 	Callable: func(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, val1, val2, val3 any) (any, error) {
 		oidVal := val1.(id.Id)
 		colNo := val2.(int32)
-		_ = val3.(bool)
+		pretty := val3.(bool)
 		var indexDef any
 		err := RunCallback(ctx, oidVal, Callbacks{
 			Index: func(ctx *sql.Context, schema ItemSchema, table ItemTable, index ItemIndex) (cont bool, err error) {
 				if colNo == 0 {
-					indexDef = indexmetadata.DefinitionForTable(index.Item, schema.Item.SchemaName(), table.Item, table.Item.Schema(ctx))
+					if pretty {
+						indexDef = indexmetadata.DefinitionForTableUnqualified(index.Item, table.Item, table.Item.Schema(ctx))
+					} else {
+						indexDef = indexmetadata.DefinitionForTable(index.Item, schema.Item.SchemaName(), table.Item, table.Item.Schema(ctx))
+					}
 					return false, nil
 				}
 				cols := indexmetadata.AttributeDefinitionsForSchema(index.Item, table.Item.Schema(ctx))

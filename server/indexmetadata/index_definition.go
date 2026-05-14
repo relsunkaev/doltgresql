@@ -71,6 +71,12 @@ func DefinitionForTable(index sql.Index, schema string, table sql.Table, tableSc
 	return definitionForSchema(index, schema, tableSchema, DisplayNameForTable(index, table), CommentForTable(index, table))
 }
 
+// DefinitionForTableUnqualified returns a PostgreSQL CREATE INDEX definition
+// using table-level metadata and omitting the schema qualification.
+func DefinitionForTableUnqualified(index sql.Index, table sql.Table, tableSchema sql.Schema) string {
+	return definitionForSchema(index, "", tableSchema, DisplayNameForTable(index, table), CommentForTable(index, table))
+}
+
 // CommentForTable returns PostgreSQL index metadata for index, using table
 // metadata for the native primary-key index because Dolt does not store that
 // index in the secondary index collection.
@@ -90,11 +96,14 @@ func definitionForSchema(index sql.Index, schema string, tableSchema sql.Schema,
 	if IsUnique(index) {
 		unique = " UNIQUE"
 	}
-	definition := fmt.Sprintf("CREATE%s INDEX %s ON %s.%s USING %s (%s)",
+	tableName := quoteIdentifier(index.Table())
+	if schema != "" {
+		tableName = quoteIdentifier(schema) + "." + tableName
+	}
+	definition := fmt.Sprintf("CREATE%s INDEX %s ON %s USING %s (%s)",
 		unique,
 		quoteIdentifier(displayName),
-		quoteIdentifier(schema),
-		quoteIdentifier(index.Table()),
+		tableName,
 		AccessMethod(index.IndexType(), comment),
 		strings.Join(ColumnDefinitionsForSchema(index, tableSchema), ", "),
 	)
@@ -297,10 +306,18 @@ func isDefaultOpClass(accessMethod string, opClass string, logicalColumn Logical
 	}
 }
 
-// AttributeDefinitionsForSchema returns PostgreSQL-facing index attributes,
-// including non-key INCLUDE columns after the key column definitions.
+// AttributeDefinitionsForSchema returns PostgreSQL-facing index attributes for
+// column-specific pg_get_indexdef calls, including non-key INCLUDE columns
+// after the key columns.
 func AttributeDefinitionsForSchema(index sql.Index, tableSchema sql.Schema) []string {
-	keyColumns := ColumnDefinitionsForSchema(index, tableSchema)
+	logicalColumns := LogicalColumns(index, tableSchema)
+	keyColumns := make([]string, len(logicalColumns))
+	for i, col := range logicalColumns {
+		keyColumns[i] = col.Definition
+		if !col.Expression {
+			keyColumns[i] = quoteIdentifier(keyColumns[i])
+		}
+	}
 	includeColumns := IncludeColumns(index.Comment())
 	if len(includeColumns) == 0 {
 		return keyColumns
