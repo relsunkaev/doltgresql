@@ -58,19 +58,6 @@ func oidImplicit() {
 	})
 	framework.MustAddImplicitTypeCast(framework.TypeCast{
 		FromType: pgtypes.Oid,
-		ToType:   pgtypes.Regdatabase,
-		Function: func(ctx *sql.Context, val any, targetType *pgtypes.DoltgresType) (any, error) {
-			input := val.(id.Id)
-			if input.Section() == id.Section_OID {
-				if internalID := id.Cache().ToInternal(id.Oid(input).OID()); internalID.IsValid() {
-					return internalID, nil
-				}
-			}
-			return val, nil
-		},
-	})
-	framework.MustAddImplicitTypeCast(framework.TypeCast{
-		FromType: pgtypes.Oid,
 		ToType:   pgtypes.Regproc,
 		Function: func(ctx *sql.Context, val any, targetType *pgtypes.DoltgresType) (any, error) {
 			return val, nil

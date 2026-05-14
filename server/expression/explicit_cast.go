@@ -272,7 +272,7 @@ func runtimeFromTypeForExplicitCast(fromType *pgtypes.DoltgresType, val any) *pg
 
 func isIdBackedType(fromType *pgtypes.DoltgresType) bool {
 	switch fromType.ID {
-	case pgtypes.Oid.ID, pgtypes.Regclass.ID, pgtypes.Regconfig.ID, pgtypes.Regdatabase.ID, pgtypes.Regdictionary.ID,
+	case pgtypes.Oid.ID, pgtypes.Regclass.ID, pgtypes.Regconfig.ID, pgtypes.Regdictionary.ID,
 		pgtypes.Regnamespace.ID, pgtypes.Regoperator.ID, pgtypes.Regproc.ID, pgtypes.Regprocedure.ID,
 		pgtypes.Regrole.ID, pgtypes.Regtype.ID:
 		return true

@@ -184,6 +184,12 @@ func (b *BinaryOperator) WithResolvedChildren(ctx context.Context, children []an
 }
 
 func binaryOperatorDoesNotExistError(ctx *sql.Context, left sql.Expression, operator framework.Operator, right sql.Expression) error {
+	if typeName, ok := unresolvedExpressionTypeName(ctx, left); ok {
+		return pgtypes.ErrTypeDoesNotExist.New(typeName)
+	}
+	if typeName, ok := unresolvedExpressionTypeName(ctx, right); ok {
+		return pgtypes.ErrTypeDoesNotExist.New(typeName)
+	}
 	return pgerror.Newf(
 		pgcode.UndefinedFunction,
 		"operator does not exist: %s %s %s",
@@ -191,6 +197,14 @@ func binaryOperatorDoesNotExistError(ctx *sql.Context, left sql.Expression, oper
 		operator.String(),
 		binaryOperatorTypeName(ctx, right),
 	)
+}
+
+func unresolvedExpressionTypeName(ctx *sql.Context, expr sql.Expression) (string, bool) {
+	typ, ok := expr.Type(ctx).(*pgtypes.DoltgresType)
+	if !ok || !typ.IsUnresolved {
+		return "", false
+	}
+	return typ.Name(), true
 }
 
 func binaryOperatorTypeName(ctx *sql.Context, expr sql.Expression) string {

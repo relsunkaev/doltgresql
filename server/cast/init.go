@@ -38,7 +38,6 @@ func Init() {
 	initNumeric()
 	initOid()
 	initRegclass()
-	initRegdatabase()
 	initRegnamespace()
 	initRegproc()
 	initRegprocedure()

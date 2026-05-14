@@ -64,7 +64,6 @@ func initTypeFunctions() {
 	initRecord()
 	initRegclass()
 	initRegconfig()
-	initRegdatabase()
 	initRegdictionary()
 	initRegnamespace()
 	initRegoperator()
