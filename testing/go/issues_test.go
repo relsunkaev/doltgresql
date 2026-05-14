@@ -271,50 +271,31 @@ limit 1`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0
 					Query: `UPDATE t2 SET t1b=ROW((t1b).@1+100, (t1b).@2)::t1b WHERE length(t1b::text) > 0;`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0030-update-t2-set-t1b=row-t1b", Compare: "sqlstate"},
 				},
 				{
-					Query: `SELECT * FROM t2 ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, "(101,)", nil},
-						{2, nil, "(101,)"},
-						{3, "(102,def)", nil},
-						{4, nil, "(103,xyzzy)"},
-					},
+					Query: `SELECT * FROM t2 ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0031-select-*-from-t2-order"},
 				},
 				{
-					Query:       `SELECT (id).a FROM t2;`,
-					ExpectedErr: "column notation .a applied to type",
+					Query: `SELECT (id).a FROM t2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0032-select-id-.a-from-t2", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SELECT (t1a).g FROM t2;`,
-					ExpectedErr: `column "g" not found in data type`,
+					Query: `SELECT (t1a).g FROM t2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0033-select-t1a-.g-from-t2", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SELECT (t1a).@0 FROM t2;`,
-					ExpectedErr: "out of bounds",
+					Query: `SELECT (t1a).@0 FROM t2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0034-select-t1a-.@0-from-t2", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SELECT (t1a).@3 FROM t2;`,
-					ExpectedErr: "out of bounds",
+					Query: `SELECT (t1a).@3 FROM t2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0035-select-t1a-.@3-from-t2", Compare: "sqlstate"},
 				},
 				{
-					Query:       `ALTER TABLE t1a ADD COLUMN d VARCHAR(10) DEFAULT 'abc';`,
-					ExpectedErr: `cannot alter table "t1a" because column "t2.t1a" uses its row type`,
+					Query: `ALTER TABLE t1a ADD COLUMN d VARCHAR(10) DEFAULT 'abc';`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0036-alter-table-t1a-add-column", Compare: "sqlstate"},
 				},
 				{
-					Query:    `ALTER TABLE t1a ADD COLUMN d VARCHAR(10);`,
-					Expected: []sql.Row{},
+					Query: `ALTER TABLE t1a ADD COLUMN d VARCHAR(10);`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0037-alter-table-t1a-add-column"},
 				},
 				{
-					Query:    `ALTER TABLE t1a DROP COLUMN c;`,
-					Expected: []sql.Row{},
+					Query: `ALTER TABLE t1a DROP COLUMN c;`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0038-alter-table-t1a-drop-column"},
 				},
 				{
-					Query: `SELECT * FROM t2 ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, "(101,)", nil},
-						{2, nil, "(101,)"},
-						{3, "(102,)", nil},
-						{4, nil, "(103,xyzzy)"},
-					},
+					Query: `SELECT * FROM t2 ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "issues-test-testissues-0039-select-*-from-t2-order"},
 				},
 			},
 		},

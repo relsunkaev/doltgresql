@@ -10,6 +10,17 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### omega - 2026-05-13 21:32 MST
+
+- Lane complete locally: promoted `testing/go/issues_test.go` direct candidates `TestIssues#0031-0039` from epsilon's temp-only classification.
+- Files expected: `testing/go/issues_test.go`, `testing/go/testdata/postgres_oracle_migrations/issues_test.oracle-map.json`, `testing/go/testdata/postgres_oracle_manifest.json`, and this `coop.md` entry only.
+- Automation: targeted `--refresh-oracle-map` for the nine IDs, source rewrite via `--rewrite-oracle-sources`, and manifest regeneration. `issues_test.oracle-map.json` moved from `32 postgres / 18 internal` to `41 postgres / 9 internal`.
+- Validation: manifest/cache gates passed with ICU flags and `GOFLAGS=-p=1`. Focused `TestIssues` is red, preserving oracle-confirmed mismatches in `Issue #2197 Part 2`; older red rows also remain in `Issue #2197 Part 1` and `Issue #2548`.
+- Confirmed new mismatches: `TestIssues/Issue #2197 Part 2` cached PostgreSQL rows expect composite row text such as `(101,)`, four rows after inserts, and SQLSTATEs `42809`/`42601`/`0A000`; Doltgres keeps stale composite values like `(1,abc)`, errors `cannot cast record with 3 columns to t1a`/`table "t1a" does not have column "c"` on ALTER follow-ups, and maps several composite notation errors to `XX000`.
+- Repro command shape: with ICU flags and `GOFLAGS=-p=1`, run `go test -vet=off ./testing/go -run '^TestIssues$' -count=1 -v`.
+- Boundary: avoided dirty peer source files, active read-only classifications, `third_party/dolt`, and unrelated already-committed trigger/uuid/command-tag lanes.
+- Next action: pick the next largest non-overlapping automatable residual bucket.
+
 ### omega - 2026-05-13 21:25 MST
 
 - Lane complete locally: generated trigger oracle migration batch for `testing/go/trigger_correctness_repro_test.go`.
