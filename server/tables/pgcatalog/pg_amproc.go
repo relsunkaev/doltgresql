@@ -127,6 +127,10 @@ type amproc struct {
 
 var defaultPostgresAmprocs = func() []amproc {
 	amprocs := make([]amproc, 0, len(btreeCatalogTypes)+10)
+	amprocs = append(amprocs,
+		newHashAmproc("integer_ops", "int4", "int4", int16(1), "hashint4"),
+		newHashAmproc("integer_ops", "int4", "int4", int16(2), "hashint4extended"),
+	)
 	for _, typ := range btreeCatalogTypes {
 		amprocs = append(amprocs, newBtreeAmproc(typ, int16(1), typ.compareProc))
 	}
@@ -223,6 +227,17 @@ func newJsonbHashAmproc(opclass string, procNum int16, proc string) amproc {
 		family:    jsonbHashOpfamilyID(opclass),
 		leftType:  pgCatalogTypeID("jsonb"),
 		rightType: pgCatalogTypeID("jsonb"),
+		procNum:   procNum,
+		proc:      proc,
+	}
+}
+
+func newHashAmproc(opfamily string, leftType string, rightType string, procNum int16, proc string) amproc {
+	return amproc{
+		oid:       hashAmprocID(opfamily, leftType, rightType, procNum),
+		family:    hashOpfamilyID(opfamily),
+		leftType:  pgCatalogTypeID(leftType),
+		rightType: pgCatalogTypeID(rightType),
 		procNum:   procNum,
 		proc:      proc,
 	}

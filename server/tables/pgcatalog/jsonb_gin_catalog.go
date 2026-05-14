@@ -54,12 +54,16 @@ func pgCatalogOpclassID(method string, opclass string) id.Id {
 	return id.NewId(id.Section_OperatorClass, method, opclass)
 }
 
+func hashOpfamilyID(opfamily string) id.Id {
+	return id.NewId(id.Section_OperatorFamily, accessMethodHash, opfamily)
+}
+
 func jsonbGinOpfamilyID(opclass string) id.Id {
 	return id.NewId(id.Section_OperatorFamily, indexmetadata.AccessMethodGin, opclass)
 }
 
 func jsonbHashOpfamilyID(opclass string) id.Id {
-	return id.NewId(id.Section_OperatorFamily, accessMethodHash, opclass)
+	return hashOpfamilyID(opclass)
 }
 
 func jsonbOperatorID(name string, leftType string, rightType string) id.Id {
@@ -98,6 +102,28 @@ func jsonbHashAmprocID(opclass string, procNum int16) id.Id {
 		id.Section_OperatorFamily,
 		"hash_amproc",
 		opclass,
+		strconv.FormatInt(int64(procNum), 10),
+	)
+}
+
+func hashAmopID(opfamily string, leftType string, rightType string, strategy int16) id.Id {
+	return id.NewId(
+		id.Section_Operator,
+		"hash_amop",
+		opfamily,
+		leftType,
+		rightType,
+		strconv.FormatInt(int64(strategy), 10),
+	)
+}
+
+func hashAmprocID(opfamily string, leftType string, rightType string, procNum int16) id.Id {
+	return id.NewId(
+		id.Section_OperatorFamily,
+		"hash_amproc",
+		opfamily,
+		leftType,
+		rightType,
 		strconv.FormatInt(int64(procNum), 10),
 	)
 }

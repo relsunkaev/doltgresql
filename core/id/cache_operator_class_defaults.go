@@ -45,6 +45,7 @@ func init() {
 	globalCache.setBuiltIn(NewId(Section_OperatorClass, "btree", "varbit_ops"), 10043)
 	globalCache.setBuiltIn(NewId(Section_OperatorClass, "btree", "varchar_ops"), 10044)
 	globalCache.setBuiltIn(NewId(Section_OperatorClass, "btree", "varchar_pattern_ops"), 4218)
+	globalCache.setBuiltIn(NewId(Section_OperatorClass, "hash", "int4_ops"), 1977)
 	globalCache.setBuiltIn(NewId(Section_OperatorClass, "hash", "jsonb_ops"), 10089)
 	globalCache.setBuiltIn(NewId(Section_OperatorClass, "gin", "jsonb_ops"), 10090)
 	globalCache.setBuiltIn(NewId(Section_OperatorClass, "gin", "jsonb_path_ops"), 10091)

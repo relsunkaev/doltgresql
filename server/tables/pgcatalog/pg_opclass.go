@@ -141,6 +141,7 @@ var defaultPostgresOpclasses = []opclass{
 	newBtreeOpclass("int2_ops", "int2", "integer_ops"),
 	newBtreeOpclass("int4_ops", "int4", "integer_ops"),
 	newBtreeOpclass("int8_ops", "int8", "integer_ops"),
+	newHashOpclass("int4_ops", "int4", "integer_ops"),
 	newBtreeOpclass("float4_ops", "float4", "float_ops"),
 	newBtreeOpclass("float8_ops", "float8", "float_ops"),
 	newBtreeOpclass("numeric_ops", "numeric", "numeric_ops"),
@@ -213,13 +214,17 @@ func newJsonbGinOpclass(name string, keytype id.Id, isDefault bool) opclass {
 }
 
 func newJsonbHashOpclass(name string) opclass {
+	return newHashOpclass(name, "jsonb", name)
+}
+
+func newHashOpclass(name string, typeName string, family string) opclass {
 	return opclass{
 		oid:       pgCatalogOpclassID(accessMethodHash, name),
 		opcmethod: id.NewAccessMethod(accessMethodHash).AsId(),
 		opcname:   name,
 		namespace: pgCatalogNamespaceID(),
-		family:    jsonbHashOpfamilyID(name),
-		intype:    pgCatalogTypeID("jsonb"),
+		family:    hashOpfamilyID(family),
+		intype:    pgCatalogTypeID(typeName),
 		keytype:   zeroOID(),
 		isDefault: true,
 	}

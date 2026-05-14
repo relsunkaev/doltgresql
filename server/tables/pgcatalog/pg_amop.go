@@ -185,6 +185,7 @@ var defaultPostgresAmops = func() []amop {
 		newJsonbGinAmop(indexmetadata.OpClassJsonbPathOps, "@>", "jsonb", int16(7)),
 		newJsonbGinAmop(indexmetadata.OpClassJsonbPathOps, "@?", "jsonpath", int16(15)),
 		newJsonbGinAmop(indexmetadata.OpClassJsonbPathOps, "@@", "jsonpath", int16(16)),
+		newHashAmop("integer_ops", "int4", "int4", "=", int16(1)),
 		newJsonbHashAmop(indexmetadata.OpClassJsonbOps, "=", int16(1)),
 	)
 	return amops
@@ -246,6 +247,18 @@ func newJsonbHashAmop(opclass string, operator string, strategy int16) amop {
 		rightType: pgCatalogTypeID("jsonb"),
 		strategy:  strategy,
 		operator:  jsonbOperatorID(operator, "jsonb", "jsonb"),
+		method:    id.NewAccessMethod(accessMethodHash).AsId(),
+	}
+}
+
+func newHashAmop(opfamily string, leftType string, rightType string, operator string, strategy int16) amop {
+	return amop{
+		oid:       hashAmopID(opfamily, leftType, rightType, strategy),
+		family:    hashOpfamilyID(opfamily),
+		leftType:  pgCatalogTypeID(leftType),
+		rightType: pgCatalogTypeID(rightType),
+		strategy:  strategy,
+		operator:  pgCatalogOperatorID(operator, leftType, rightType),
 		method:    id.NewAccessMethod(accessMethodHash).AsId(),
 	}
 }

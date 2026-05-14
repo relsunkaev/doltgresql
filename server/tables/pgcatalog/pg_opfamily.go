@@ -147,6 +147,7 @@ var defaultPostgresOpfamilies = []opfamily{
 	newBtreeOpfamily("varbit_ops"),
 	newJsonbGinOpfamily(indexmetadata.OpClassJsonbOps),
 	newJsonbGinOpfamily(indexmetadata.OpClassJsonbPathOps),
+	newHashOpfamily("integer_ops"),
 	newJsonbHashOpfamily(indexmetadata.OpClassJsonbOps),
 }
 
@@ -173,8 +174,12 @@ func newJsonbGinOpfamily(name string) opfamily {
 }
 
 func newJsonbHashOpfamily(name string) opfamily {
+	return newHashOpfamily(name)
+}
+
+func newHashOpfamily(name string) opfamily {
 	return opfamily{
-		oid:       jsonbHashOpfamilyID(name),
+		oid:       hashOpfamilyID(name),
 		opfmethod: id.NewAccessMethod(accessMethodHash).AsId(),
 		opfname:   name,
 		namespace: pgCatalogNamespaceID(),

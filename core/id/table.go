@@ -21,9 +21,18 @@ import (
 
 // GetFromTable returns the id from the table.
 func GetFromTable(ctx *sql.Context, tbl sql.Table) (Table, bool, error) {
-	schTbl, ok := tbl.(sql.DatabaseSchemaTable)
-	if !ok {
-		return NullTable, false, errors.Newf(`table "%s" does not specify a schema`, tbl.Name())
+	for {
+		schTbl, ok := tbl.(sql.DatabaseSchemaTable)
+		if ok {
+			schema := schTbl.DatabaseSchema()
+			if schema != nil {
+				return NewTable(schema.SchemaName(), schTbl.Name()), true, nil
+			}
+		}
+		wrapper, ok := tbl.(sql.TableWrapper)
+		if !ok {
+			return NullTable, false, errors.Newf(`table "%s" does not specify a schema`, tbl.Name())
+		}
+		tbl = wrapper.Underlying()
 	}
-	return NewTable(schTbl.DatabaseSchema().SchemaName(), schTbl.Name()), true, nil
 }

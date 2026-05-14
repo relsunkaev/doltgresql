@@ -10,6 +10,16 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### alpha - 2026-05-14 12:17 MST
+
+- Lane claimed: `TestBasicIndexing/PostgreSQL btree sort option metadata`; first failure was schema loss through a wrapped table during metadata-backed CREATE INDEX, and the fix then exposed missing built-in hash `int4_ops` catalog metadata.
+- Expected files: `core/id/table.go`, hash `int4_ops` catalog rows in `core/id/cache_operator_class_defaults.go` and `server/tables/pgcatalog/{jsonb_gin_catalog.go,pg_opclass.go,pg_opfamily.go,pg_amop.go,pg_amproc.go}`, plus the hash access-method count in `testing/go/index_test.go`. Boundary: no dirty `core/schema.go`, schema/create/constraint metadata, JSONB GIN sidecars, pg_attribute/index expression metadata, oracle/manifest, or config/session lanes.
+- Validation passed in clean verifier `/private/tmp/doltgresql-alpha-basicindex-current.DPWRcO` refreshed to `HEAD=b602eed8` plus only the alpha patch:
+  - `go test -vet=off ./testing/go -run '^TestBasicIndexing$/^(PostgreSQL btree sort option metadata|PostgreSQL hash access method boundary)$' -count=1 -timeout=10m -v`
+  - `go test -vet=off ./server/tables/pgcatalog ./core/id -run '^$' -count=1 -timeout=10m`
+- Caveat: broad `TestPg(Amop|Amproc|Opclass|Opfamily)` still fails on known wider catalog coverage gaps outside this focused slice.
+- Next action: stage only this alpha hunk and commit, then rerun BasicIndexing from current `HEAD`.
+
 ### alpha - 2026-05-14 12:14 MST
 
 - Lane claimed: `TestBasicIndexing/PostgreSQL alter expression index statistics target` SQLSTATE typing for existing ALTER INDEX statistics-target validation errors.
