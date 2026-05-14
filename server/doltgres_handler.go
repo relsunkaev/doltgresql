@@ -279,6 +279,7 @@ func castSQLError(err error) error {
 		pgcode.Grouping,
 		pgcode.InvalidForeignKey,
 		pgcode.InvalidColumnReference,
+		pgcode.InvalidColumnDefinition,
 		pgcode.InvalidObjectDefinition,
 		pgcode.InvalidTableDefinition,
 		pgcode.InvalidParameterValue,

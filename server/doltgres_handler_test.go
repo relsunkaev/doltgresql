@@ -38,6 +38,7 @@ func TestCastSQLErrorPreservesDDLPGCodes(t *testing.T) {
 		pgcode.DependentObjectsStillExist,
 		pgcode.DuplicatePreparedStatement,
 		pgcode.InvalidColumnReference,
+		pgcode.InvalidColumnDefinition,
 		pgcode.InvalidObjectDefinition,
 		pgcode.InvalidTextRepresentation,
 		pgcode.NumericValueOutOfRange,

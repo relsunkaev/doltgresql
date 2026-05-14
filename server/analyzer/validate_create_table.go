@@ -104,7 +104,7 @@ func validateInheritedGeneratedColumnOverrides(ctx *sql.Context, ct *plan.Create
 			}
 			override, ok := overrides[strings.ToLower(parentColumn.Name)]
 			if ok {
-				return errors.Errorf(`column "%s" inherits from generated column but specifies %s`, parentColumn.Name, override)
+				return pgerror.Newf(pgcode.InvalidColumnDefinition, `column "%s" inherits from generated column but specifies %s`, parentColumn.Name, override)
 			}
 		}
 	}
