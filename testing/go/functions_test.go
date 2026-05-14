@@ -443,21 +443,14 @@ func TestFunctionsOID(t *testing.T) {
 				},
 				{
 					// When the relation is from a schema on the search path, it is not qualified with the schema name
-					Query: `SELECT to_regclass(('public.testing'::regclass)::text);`,
-					Expected: []sql.Row{
-						{"testing"},
-					},
+					Query: `SELECT to_regclass(('public.testing'::regclass)::text);`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testfunctionsoid-0006-select-to_regclass-public.testing-::regclass-::text"},
 				},
 				{
 					// Clear out the current search_path setting to test fully qualified relation names
-					Query:    `SET search_path = '';`,
-					Expected: []sql.Row{},
+					Query: `SET search_path = '';`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testfunctionsoid-0007-set-search_path-="},
 				},
 				{
-					Query: `SELECT to_regclass(('public.testing'::regclass)::text);`,
-					Expected: []sql.Row{
-						{"public.testing"},
-					},
+					Query: `SELECT to_regclass(('public.testing'::regclass)::text);`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testfunctionsoid-0008-select-to_regclass-public.testing-::regclass-::text"},
 				},
 			},
 		},
@@ -712,45 +705,28 @@ func TestSystemInformationFunctions(t *testing.T) {
 					Query: `SELECT current_schema();`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testsysteminformationfunctions-0034-select-current_schema"},
 				},
 				{
-					Query:    `SET SEARCH_PATH TO public, test_schema;`,
-					Expected: []sql.Row{},
+					Query: `SET SEARCH_PATH TO public, test_schema;`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testsysteminformationfunctions-0035-set-search_path-to-public-test_schema"},
 				},
 				{
-					Query: `SELECT current_schema();`,
-					Expected: []sql.Row{
-						{"public"},
-					},
+					Query: `SELECT current_schema();`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testsysteminformationfunctions-0036-select-current_schema"},
 				},
 				{
-					Query: `SELECT current_schema;`,
-					Expected: []sql.Row{
-						{"public"},
-					},
+					Query: `SELECT current_schema;`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testsysteminformationfunctions-0037-select-current_schema"},
 				},
 				{
-					Query:    `SET SEARCH_PATH TO test_schema, public;`,
-					Expected: []sql.Row{},
+					Query: `SET SEARCH_PATH TO test_schema, public;`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testsysteminformationfunctions-0038-set-search_path-to-test_schema-public"},
 				},
 				{
-					Query: `SELECT current_schema();`,
-					Expected: []sql.Row{
-						{"test_schema"},
-					},
+					Query: `SELECT current_schema();`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testsysteminformationfunctions-0039-select-current_schema"},
 				},
 				// TODO: Implement table function for current_schema
 				{
 					Query: `SELECT * FROM current_schema();`,
-					Skip:  true,
-					Expected: []sql.Row{
-						{"public"},
-					},
+					Skip:  true, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testsysteminformationfunctions-0040-select-*-from-current_schema"},
 				},
 				{
 					Query: `SELECT * FROM current_schema;`,
-					Skip:  true,
-					Expected: []sql.Row{
-						{"public"},
-					},
+					Skip:  true, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testsysteminformationfunctions-0041-select-*-from-current_schema"},
 				},
 			},
 		},
@@ -779,20 +755,13 @@ func TestSystemInformationFunctions(t *testing.T) {
 					Query: `SELECT current_schemas(false);`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testsysteminformationfunctions-0047-select-current_schemas-false"},
 				},
 				{
-					Query:    `SET SEARCH_PATH TO public, test_schema;`,
-					Expected: []sql.Row{},
+					Query: `SET SEARCH_PATH TO public, test_schema;`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testsysteminformationfunctions-0048-set-search_path-to-public-test_schema"},
 				},
 				{
-					Query: `SELECT current_schemas(true);`,
-					Expected: []sql.Row{
-						{"{pg_catalog,public,test_schema}"},
-					},
+					Query: `SELECT current_schemas(true);`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testsysteminformationfunctions-0049-select-current_schemas-true"},
 				},
 				{
-					Query: `SELECT current_schemas(false);`,
-					Expected: []sql.Row{
-						{"{public,test_schema}"},
-					},
+					Query: `SELECT current_schemas(false);`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testsysteminformationfunctions-0050-select-current_schemas-false"},
 				},
 			},
 		},
@@ -1063,28 +1032,20 @@ func TestSystemInformationFunctions(t *testing.T) {
 					Query: `SELECT pg_get_serial_sequence('t0', 'id');`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testsysteminformationfunctions-0107-select-pg_get_serial_sequence-t0-id"},
 				},
 				{
-					Query:            `SELECT pg_get_serial_sequence('public.t1', 'id');`,
-					ExpectedColNames: []string{"pg_get_serial_sequence"},
-					Expected:         []sql.Row{{"public.t1_id_seq"}},
+					Query: `SELECT pg_get_serial_sequence('public.t1', 'id');`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testsysteminformationfunctions-0108-select-pg_get_serial_sequence-public.t1-id"},
 				},
 				{
-					Query:            `SELECT pg_get_serial_sequence('"public"."t1"', 'id');`,
-					ExpectedColNames: []string{"pg_get_serial_sequence"},
-					Expected:         []sql.Row{{"public.t1_id_seq"}},
+					Query: `SELECT pg_get_serial_sequence('"public"."t1"', 'id');`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testsysteminformationfunctions-0109-select-pg_get_serial_sequence-public-.-t1"},
 				},
 				{
 					// Test with no schema specified
-					Query:            `SELECT pg_get_serial_sequence('t1', 'id');`,
-					ExpectedColNames: []string{"pg_get_serial_sequence"},
-					Expected:         []sql.Row{{"public.t1_id_seq"}},
+					Query: `SELECT pg_get_serial_sequence('t1', 'id');`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testsysteminformationfunctions-0110-select-pg_get_serial_sequence-t1-id"},
 				},
 				{
 					// TODO: This test shouldn't pass until we're able to use
 					//       ALTER SEQUENCE OWNED BY to set the owning column.
-					Skip:             true,
-					Query:            `SELECT pg_get_serial_sequence('t2', 'id');`,
-					ExpectedColNames: []string{"pg_get_serial_sequence"},
-					Expected:         []sql.Row{{"public.t2_id_seq"}},
+					Skip:  true,
+					Query: `SELECT pg_get_serial_sequence('t2', 'id');`, PostgresOracle: ScriptTestPostgresOracle{ID: "functions-test-testsysteminformationfunctions-0111-select-pg_get_serial_sequence-t2-id"},
 				},
 			},
 		},

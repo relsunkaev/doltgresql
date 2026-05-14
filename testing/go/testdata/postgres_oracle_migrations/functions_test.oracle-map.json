@@ -2043,39 +2043,72 @@
       "source": "testing/go/functions_test.go:TestFunctionsOID",
       "ordinal": 6,
       "scriptName": "to_regclass",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "functions-test-testfunctionsoid-0006-select-to_regclass-public.testing-::regclass-::text",
       "suggestedId": "functions-test-testfunctionsoid-0006-select-to_regclass-public.testing-::regclass-::text",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT to_regclass(('public.testing'::regclass)::text);",
       "querySha256": "bfaf96071084f421cfe481c28bfe84152435bab0d03ca0c2966c2563ebcbbb0c",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "testing"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS testing CASCADE",
+        "DROP TABLE IF EXISTS \"Testing2\" CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/functions_test.go:TestFunctionsOID#0007",
       "source": "testing/go/functions_test.go:TestFunctionsOID",
       "ordinal": 7,
       "scriptName": "to_regclass",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "functions-test-testfunctionsoid-0007-set-search_path-=",
       "suggestedId": "functions-test-testfunctionsoid-0007-set-search_path-=",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SET search_path = '';",
       "querySha256": "c6d55eb8d1c044cda81abd778b14d8200b180ace30bfd2b444aaf855c34ee61d",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP TABLE IF EXISTS testing CASCADE",
+        "DROP TABLE IF EXISTS \"Testing2\" CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/functions_test.go:TestFunctionsOID#0008",
       "source": "testing/go/functions_test.go:TestFunctionsOID",
       "ordinal": 8,
       "scriptName": "to_regclass",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "functions-test-testfunctionsoid-0008-select-to_regclass-public.testing-::regclass-::text",
       "suggestedId": "functions-test-testfunctionsoid-0008-select-to_regclass-public.testing-::regclass-::text",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT to_regclass(('public.testing'::regclass)::text);",
       "querySha256": "bfaf96071084f421cfe481c28bfe84152435bab0d03ca0c2966c2563ebcbbb0c",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "public.testing"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS testing CASCADE",
+        "DROP TABLE IF EXISTS \"Testing2\" CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/functions_test.go:TestFunctionsOID#0009",
@@ -3417,91 +3450,163 @@
       "source": "testing/go/functions_test.go:TestSystemInformationFunctions",
       "ordinal": 35,
       "scriptName": "current_schema",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "functions-test-testsysteminformationfunctions-0035-set-search_path-to-public-test_schema",
       "suggestedId": "functions-test-testsysteminformationfunctions-0035-set-search_path-to-public-test_schema",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SET SEARCH_PATH TO public, test_schema;",
       "querySha256": "8afd218ded2f1c19c5acdf8fe16ab24bfea6c0ab7851dea9c5a7ec0e29ec3a3c",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS test_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/functions_test.go:TestSystemInformationFunctions#0036",
       "source": "testing/go/functions_test.go:TestSystemInformationFunctions",
       "ordinal": 36,
       "scriptName": "current_schema",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "functions-test-testsysteminformationfunctions-0036-select-current_schema",
       "suggestedId": "functions-test-testsysteminformationfunctions-0036-select-current_schema",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT current_schema();",
       "querySha256": "55cd8015872791240d7c4073889d46ed4137ca36af039565bf6b53cca6608aa4",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "public"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS test_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/functions_test.go:TestSystemInformationFunctions#0037",
       "source": "testing/go/functions_test.go:TestSystemInformationFunctions",
       "ordinal": 37,
       "scriptName": "current_schema",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "functions-test-testsysteminformationfunctions-0037-select-current_schema",
       "suggestedId": "functions-test-testsysteminformationfunctions-0037-select-current_schema",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT current_schema;",
       "querySha256": "fa5dfad64ebbd25535f52dd67adce90a5f450df958ef840470e08e74fcd9be46",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "public"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS test_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/functions_test.go:TestSystemInformationFunctions#0038",
       "source": "testing/go/functions_test.go:TestSystemInformationFunctions",
       "ordinal": 38,
       "scriptName": "current_schema",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "functions-test-testsysteminformationfunctions-0038-set-search_path-to-test_schema-public",
       "suggestedId": "functions-test-testsysteminformationfunctions-0038-set-search_path-to-test_schema-public",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SET SEARCH_PATH TO test_schema, public;",
       "querySha256": "9ed8bc1f787d8d1cb6837500a444ff5c21832d36468499178ed99e00b620f1fd",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS test_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/functions_test.go:TestSystemInformationFunctions#0039",
       "source": "testing/go/functions_test.go:TestSystemInformationFunctions",
       "ordinal": 39,
       "scriptName": "current_schema",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "functions-test-testsysteminformationfunctions-0039-select-current_schema",
       "suggestedId": "functions-test-testsysteminformationfunctions-0039-select-current_schema",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT current_schema();",
       "querySha256": "55cd8015872791240d7c4073889d46ed4137ca36af039565bf6b53cca6608aa4",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "test_schema"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS test_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/functions_test.go:TestSystemInformationFunctions#0040",
       "source": "testing/go/functions_test.go:TestSystemInformationFunctions",
       "ordinal": 40,
       "scriptName": "current_schema",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "functions-test-testsysteminformationfunctions-0040-select-*-from-current_schema",
       "suggestedId": "functions-test-testsysteminformationfunctions-0040-select-*-from-current_schema",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM current_schema();",
       "querySha256": "28a5b42ea2a5110c5912875f18e70f0a1f0286b7d3ad311a78cc3654c4c84ca2",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "test_schema"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS test_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/functions_test.go:TestSystemInformationFunctions#0041",
       "source": "testing/go/functions_test.go:TestSystemInformationFunctions",
       "ordinal": 41,
       "scriptName": "current_schema",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "functions-test-testsysteminformationfunctions-0041-select-*-from-current_schema",
       "suggestedId": "functions-test-testsysteminformationfunctions-0041-select-*-from-current_schema",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM current_schema;",
       "querySha256": "568127043f9d320bfe5623f92b3a69434cd8ef217f8b74742fb64f94bb3bb769",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "test_schema"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS test_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/functions_test.go:TestSystemInformationFunctions#0042",
@@ -3619,39 +3724,69 @@
       "source": "testing/go/functions_test.go:TestSystemInformationFunctions",
       "ordinal": 48,
       "scriptName": "current_schemas",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "functions-test-testsysteminformationfunctions-0048-set-search_path-to-public-test_schema",
       "suggestedId": "functions-test-testsysteminformationfunctions-0048-set-search_path-to-public-test_schema",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SET SEARCH_PATH TO public, test_schema;",
       "querySha256": "8afd218ded2f1c19c5acdf8fe16ab24bfea6c0ab7851dea9c5a7ec0e29ec3a3c",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS test_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/functions_test.go:TestSystemInformationFunctions#0049",
       "source": "testing/go/functions_test.go:TestSystemInformationFunctions",
       "ordinal": 49,
       "scriptName": "current_schemas",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "functions-test-testsysteminformationfunctions-0049-select-current_schemas-true",
       "suggestedId": "functions-test-testsysteminformationfunctions-0049-select-current_schemas-true",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT current_schemas(true);",
       "querySha256": "38979a53f32b323f94bb9d61bf57fa5790c56fee5de6ee5d66f1a2d5f1afdcfe",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "{pg_catalog,public,test_schema}"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS test_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/functions_test.go:TestSystemInformationFunctions#0050",
       "source": "testing/go/functions_test.go:TestSystemInformationFunctions",
       "ordinal": 50,
       "scriptName": "current_schemas",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "functions-test-testsysteminformationfunctions-0050-select-current_schemas-false",
       "suggestedId": "functions-test-testsysteminformationfunctions-0050-select-current_schemas-false",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT current_schemas(false);",
       "querySha256": "7ad01fcc63452b8b21a09effaf3040911c70be05a957dbd663cad381781014f5",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "{public,test_schema}"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS test_schema CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/functions_test.go:TestSystemInformationFunctions#0051",
@@ -4861,52 +4996,112 @@
       "source": "testing/go/functions_test.go:TestSystemInformationFunctions",
       "ordinal": 108,
       "scriptName": "pg_get_serial_sequence",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "functions-test-testsysteminformationfunctions-0108-select-pg_get_serial_sequence-public.t1-id",
       "suggestedId": "functions-test-testsysteminformationfunctions-0108-select-pg_get_serial_sequence-public.t1-id",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT pg_get_serial_sequence('public.t1', 'id');",
       "querySha256": "eae71f3404084fac9ff81c335a394caba7ab43df4141bd2595964ab47d34500f",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "public.t1_id_seq"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS t0 CASCADE",
+        "DROP TABLE IF EXISTS t1 CASCADE",
+        "DROP TABLE IF EXISTS t2 CASCADE",
+        "DROP SEQUENCE IF EXISTS t2_id_seq CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/functions_test.go:TestSystemInformationFunctions#0109",
       "source": "testing/go/functions_test.go:TestSystemInformationFunctions",
       "ordinal": 109,
       "scriptName": "pg_get_serial_sequence",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "functions-test-testsysteminformationfunctions-0109-select-pg_get_serial_sequence-public-.-t1",
       "suggestedId": "functions-test-testsysteminformationfunctions-0109-select-pg_get_serial_sequence-public-.-t1",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT pg_get_serial_sequence('\"public\".\"t1\"', 'id');",
       "querySha256": "7997619fb06beeb3cbf9bb59ff26b01748668b20d270ae4f1035fc90cb711a8c",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "public.t1_id_seq"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS t0 CASCADE",
+        "DROP TABLE IF EXISTS t1 CASCADE",
+        "DROP TABLE IF EXISTS t2 CASCADE",
+        "DROP SEQUENCE IF EXISTS t2_id_seq CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/functions_test.go:TestSystemInformationFunctions#0110",
       "source": "testing/go/functions_test.go:TestSystemInformationFunctions",
       "ordinal": 110,
       "scriptName": "pg_get_serial_sequence",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "functions-test-testsysteminformationfunctions-0110-select-pg_get_serial_sequence-t1-id",
       "suggestedId": "functions-test-testsysteminformationfunctions-0110-select-pg_get_serial_sequence-t1-id",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT pg_get_serial_sequence('t1', 'id');",
       "querySha256": "effee18b20c9c3f80558bb0e87181149daa908e02cf748ea059e79c249d355fe",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "public.t1_id_seq"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS t0 CASCADE",
+        "DROP TABLE IF EXISTS t1 CASCADE",
+        "DROP TABLE IF EXISTS t2 CASCADE",
+        "DROP SEQUENCE IF EXISTS t2_id_seq CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/functions_test.go:TestSystemInformationFunctions#0111",
       "source": "testing/go/functions_test.go:TestSystemInformationFunctions",
       "ordinal": 111,
       "scriptName": "pg_get_serial_sequence",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "functions-test-testsysteminformationfunctions-0111-select-pg_get_serial_sequence-t2-id",
       "suggestedId": "functions-test-testsysteminformationfunctions-0111-select-pg_get_serial_sequence-t2-id",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT pg_get_serial_sequence('t2', 'id');",
       "querySha256": "869717e6af6d0021cc1604355c72982d7dc21bf3486f177902cc827d4f32e755",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS t0 CASCADE",
+        "DROP TABLE IF EXISTS t1 CASCADE",
+        "DROP TABLE IF EXISTS t2 CASCADE",
+        "DROP SEQUENCE IF EXISTS t2_id_seq CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/functions_test.go:TestSystemInformationFunctions#0112",
