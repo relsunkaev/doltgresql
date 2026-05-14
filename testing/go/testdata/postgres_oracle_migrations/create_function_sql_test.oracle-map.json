@@ -206,7 +206,7 @@
       "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0010-create-function-calculate_double_sum-x-int",
       "compare": "sqlstate",
       "expectedKind": "error",
-      "sqlstate": "42723",
+      "sqlstate": "42883",
       "errorSeverity": "ERROR",
       "query": "CREATE FUNCTION calculate_double_sum(x INT, y INT)\n\t\t\t\t\t\t\tRETURNS INT\n\t\t\t\t\t\t\tLANGUAGE SQL\n\t\t\t\t\t\t\tAS $$\n\t\t\t\t\t\t\t\tSELECT add_numbers(x, y) * 2;\n\t\t\t\t\t\t\t$$;",
       "querySha256": "ec466f9e330e515d398aeba68b982404e069776aeb3317574ae635799b2d3f3a",
@@ -221,14 +221,16 @@
       "oracle": "postgres",
       "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0011-create-function-add_numbers-int-int",
       "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0011-create-function-add_numbers-int-int",
-      "compare": "sqlstate",
+      "compare": "structural",
       "expectedKind": "rows",
-      "sqlstate": "42723",
-      "errorSeverity": "ERROR",
       "query": "CREATE FUNCTION add_numbers(int, int) RETURNS int LANGUAGE sql AS 'SELECT $1 + $2';",
       "querySha256": "53ed334f83483dba6a5723bba6dc6da2c288292e69249ab3e347f5d9d1568e07",
-      "needsCleanup": false,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP FUNCTION IF EXISTS add_numbers(int, int)"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0012",
@@ -276,14 +278,16 @@
       "oracle": "postgres",
       "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0014-create-function-gen-a-int",
       "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0014-create-function-gen-a-int",
-      "compare": "sqlstate",
+      "compare": "structural",
       "expectedKind": "rows",
-      "sqlstate": "42723",
-      "errorSeverity": "ERROR",
       "query": "CREATE FUNCTION gen(a int) RETURNS SETOF INT LANGUAGE SQL AS $$ SELECT generate_series(1, a) $$ STABLE;",
       "querySha256": "140a682c5c5e4d26f800c95846e1be17e761dffe9107b2f505f932e1a7020a79",
-      "needsCleanup": false,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP FUNCTION IF EXISTS gen(int)"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0015",
@@ -325,14 +329,16 @@
       "oracle": "postgres",
       "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0016-create-function-public.sp_build_view_bathymetry_layer-returns-void",
       "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0016-create-function-public.sp_build_view_bathymetry_layer-returns-void",
-      "compare": "sqlstate",
+      "compare": "structural",
       "expectedKind": "rows",
-      "sqlstate": "42723",
-      "errorSeverity": "ERROR",
       "query": "CREATE FUNCTION public.sp_build_view_bathymetry_layer() RETURNS void\n\t\t\t\t\t\t\tLANGUAGE sql\n\t\t\t\t\t\t\tAS $$\n\t\t\t\t\t\t\t\tCREATE OR REPLACE VIEW public.view_bathymetry_layer AS\n\t\t\t\t\t\t\t\tSELECT 1;\n\t\t\t\t\t\t\t$$;",
       "querySha256": "6dae411f479b57a3833778d6a1d921c28ed58fa627ccc4c863400510d897b620",
-      "needsCleanup": false,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP FUNCTION IF EXISTS public.sp_build_view_bathymetry_layer()"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0017",
@@ -342,14 +348,23 @@
       "oracle": "postgres",
       "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0017-select-public.sp_build_view_bathymetry_layer",
       "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0017-select-public.sp_build_view_bathymetry_layer",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "42883",
-      "errorSeverity": "ERROR",
+      "compare": "structural",
+      "expectedKind": "rows",
       "query": "SELECT public.sp_build_view_bathymetry_layer()",
       "querySha256": "ef2d01af2011ca27c30885fb3585c1dba26fe58776346a0006ebc3b5257d5c63",
-      "needsCleanup": false,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP VIEW IF EXISTS public.view_bathymetry_layer",
+        "DROP FUNCTION IF EXISTS public.sp_build_view_bathymetry_layer()"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0018",
@@ -359,14 +374,23 @@
       "oracle": "postgres",
       "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0018-select-*-from-view_bathymetry_layer",
       "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0018-select-*-from-view_bathymetry_layer",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "42P01",
-      "errorSeverity": "ERROR",
+      "compare": "structural",
+      "expectedKind": "rows",
       "query": "SELECT * from view_bathymetry_layer",
       "querySha256": "fef3f234ae5263225e8c00fc8b52c7f6dd18ce02d4e0cb7635c0b377a46063ed",
-      "needsCleanup": false,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP VIEW IF EXISTS public.view_bathymetry_layer",
+        "DROP FUNCTION IF EXISTS public.sp_build_view_bathymetry_layer()"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/create_function_sql_test.go:TestCreateFunctionsLanguageSQL#0019",
@@ -490,12 +514,17 @@
       "oracle": "postgres",
       "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0026-select-d-sched",
       "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0026-select-d-sched",
-      "compare": "sqlstate",
+      "compare": "structural",
       "expectedKind": "rows",
-      "sqlstate": "55000",
-      "errorSeverity": "ERROR",
       "query": "SELECT d('sched');",
       "querySha256": "c3ade1e80d48cead1673b789c60121bbde56807cae7c6cdf7772e0abd2f9a0ab",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -512,14 +541,6 @@
       "query": "SELECT * FROM test;",
       "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
       "expectedRows": [
-        [
-          {
-            "value": "1"
-          },
-          {
-            "value": "sched"
-          }
-        ],
         [
           {
             "value": "2"
@@ -622,23 +643,12 @@
       "oracle": "postgres",
       "postgresId": "create-function-sql-test-testcreatefunctionslanguagesql-0032-select-*-from-test1",
       "suggestedId": "create-function-sql-test-testcreatefunctionslanguagesql-0032-select-*-from-test1",
-      "compare": "structural",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
       "query": "SELECT * FROM test1",
       "querySha256": "a9db975ebc840f7208e02e4c3607179f20de92a9da8b4cbce690b3c7ce97f2ed",
-      "expectedRows": [
-        [
-          {
-            "value": "-32768"
-          },
-          {
-            "value": "0"
-          },
-          {
-            "value": "f"
-          }
-        ]
-      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },

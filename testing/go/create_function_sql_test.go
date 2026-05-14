@@ -93,7 +93,7 @@ func TestCreateFunctionsLanguageSQL(t *testing.T) {
 					ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0010-create-function-calculate_double_sum-x-int", Compare: "sqlstate"},
 				},
 				{
-					Query: `CREATE FUNCTION add_numbers(int, int) RETURNS int LANGUAGE sql AS 'SELECT $1 + $2';`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0011-create-function-add_numbers-int-int", Compare: "sqlstate"},
+					Query: `CREATE FUNCTION add_numbers(int, int) RETURNS int LANGUAGE sql AS 'SELECT $1 + $2';`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0011-create-function-add_numbers-int-int", Cleanup: []string{"DROP FUNCTION IF EXISTS add_numbers(int, int)"}},
 				},
 				{
 					Query: `CREATE FUNCTION calculate_double_sum(x INT, y INT)
@@ -112,7 +112,7 @@ func TestCreateFunctionsLanguageSQL(t *testing.T) {
 			Name: "function returning multiple rows",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `CREATE FUNCTION gen(a int) RETURNS SETOF INT LANGUAGE SQL AS $$ SELECT generate_series(1, a) $$ STABLE;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0014-create-function-gen-a-int", Compare: "sqlstate"},
+					Query: `CREATE FUNCTION gen(a int) RETURNS SETOF INT LANGUAGE SQL AS $$ SELECT generate_series(1, a) $$ STABLE;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0014-create-function-gen-a-int", Cleanup: []string{"DROP FUNCTION IF EXISTS gen(int)"}},
 				},
 				{
 					Query: `SELECT * FROM gen(3);`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0015-select-*-from-gen-3"},
@@ -128,13 +128,13 @@ func TestCreateFunctionsLanguageSQL(t *testing.T) {
 							AS $$
 								CREATE OR REPLACE VIEW public.view_bathymetry_layer AS
 								SELECT 1;
-							$$;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0016-create-function-public.sp_build_view_bathymetry_layer-returns-void", Compare: "sqlstate"},
+							$$;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0016-create-function-public.sp_build_view_bathymetry_layer-returns-void", Cleanup: []string{"DROP FUNCTION IF EXISTS public.sp_build_view_bathymetry_layer()"}},
 				},
 				{
-					Query: `SELECT public.sp_build_view_bathymetry_layer()`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0017-select-public.sp_build_view_bathymetry_layer", Compare: "sqlstate"},
+					Query: `SELECT public.sp_build_view_bathymetry_layer()`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0017-select-public.sp_build_view_bathymetry_layer", Cleanup: []string{"DROP VIEW IF EXISTS public.view_bathymetry_layer", "DROP FUNCTION IF EXISTS public.sp_build_view_bathymetry_layer()"}},
 				},
 				{
-					Query: `SELECT * from view_bathymetry_layer`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0018-select-*-from-view_bathymetry_layer", Compare: "sqlstate"},
+					Query: `SELECT * from view_bathymetry_layer`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0018-select-*-from-view_bathymetry_layer", Cleanup: []string{"DROP VIEW IF EXISTS public.view_bathymetry_layer", "DROP FUNCTION IF EXISTS public.sp_build_view_bathymetry_layer()"}},
 				},
 				{
 					Query:    `SELECT public.sp_build_view_bathymetry_layer()`,
@@ -229,7 +229,7 @@ func TestCreateFunctionsLanguageSQL(t *testing.T) {
 					Query: `SELECT * FROM test;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0025-select-*-from-test"},
 				},
 				{
-					Query: `SELECT d('sched');`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0026-select-d-sched", Compare: "sqlstate"},
+					Query: `SELECT d('sched');`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0026-select-d-sched"},
 				},
 				{
 					Query: `SELECT * FROM test;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0027-select-*-from-test"},
@@ -263,7 +263,7 @@ func TestCreateFunctionsLanguageSQL(t *testing.T) {
 					Query: `SELECT drop_views();`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0031-select-drop_views"},
 				},
 				{
-					Query: `SELECT * FROM test1`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0032-select-*-from-test1"},
+					Query: `SELECT * FROM test1`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0032-select-*-from-test1", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT * FROM test2`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-sql-test-testcreatefunctionslanguagesql-0033-select-*-from-test2", Compare: "sqlstate"},
