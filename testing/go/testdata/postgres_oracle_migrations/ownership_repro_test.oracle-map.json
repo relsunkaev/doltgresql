@@ -672,13 +672,18 @@
       "oracle": "postgres",
       "postgresId": "ownership-repro-test-testalterschemaownercanusetransferredschemarepro-0001-select-id-from",
       "suggestedId": "ownership-repro-test-testalterschemaownercanusetransferredschemarepro-0001-select-id-from",
-      "compare": "sqlstate",
+      "compare": "structural",
       "expectedKind": "rows",
-      "sqlstate": "42501",
-      "errorSeverity": "ERROR",
       "username": "transferred_schema_owner",
       "query": "SELECT id FROM transferred_schema_runtime.owned_schema_table;",
       "querySha256": "ca7f04d595965711070a839b135f6528d498b544a628887d2297fb297c3c44a6",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
