@@ -12321,6 +12321,15 @@ sortby:
       NullsOrder: nullsOrder,
     }
   }
+| a_expr USING math_op opt_nulls_order
+  {
+    $$.val = &tree.Order{
+      OrderType:  tree.OrderByUsing,
+      Expr:       $1.expr(),
+      Operator:   $3.op(),
+      NullsOrder: $4.nullsOrder(),
+    }
+  }
 
 opt_nulls_order:
   NULLS FIRST
@@ -12335,9 +12344,6 @@ opt_nulls_order:
   {
     $$.val = tree.DefaultNullsOrder
   }
-
-// TODO(pmattis): Support ordering using arbitrary math ops?
-// | a_expr USING math_op {}
 
 select_limit:
   limit_clause offset_clause

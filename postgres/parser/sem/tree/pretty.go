@@ -26,6 +26,7 @@ package tree
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
 
 	"github.com/cockroachdb/errors"
@@ -1219,6 +1220,8 @@ func (node *Order) doc(p *PrettyCfg) pretty.Doc {
 	var d pretty.Doc
 	if node.OrderType == OrderByColumn {
 		d = p.Doc(node.Expr)
+	} else if node.OrderType == OrderByUsing {
+		d = p.nestUnder(p.Doc(node.Expr), pretty.Text("USING "+fmt.Sprint(node.Operator)))
 	}
 	if node.Direction != DefaultDirection {
 		d = p.nestUnder(d, pretty.Text(node.Direction.String()))

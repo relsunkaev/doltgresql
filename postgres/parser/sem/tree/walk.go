@@ -1126,7 +1126,7 @@ func (stmt *ReturningExprs) copyNode() *ReturningExprs {
 func walkOrderBy(v Visitor, order OrderBy) (OrderBy, bool) {
 	copied := false
 	for i := range order {
-		if order[i].OrderType != OrderByColumn {
+		if order[i].OrderType != OrderByColumn && order[i].OrderType != OrderByUsing {
 			continue
 		}
 		e, changed := WalkExpr(v, order[i].Expr)

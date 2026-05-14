@@ -34,19 +34,12 @@ func nodeOrderBy(ctx *Context, node tree.OrderBy, selectStmt vitess.SelectStatem
 	}
 	orderBys := make([]*vitess.Order, 0, len(node)*2)
 	for i := range node {
-		if node[i].OrderType != tree.OrderByColumn {
+		if node[i].OrderType != tree.OrderByColumn && node[i].OrderType != tree.OrderByUsing {
 			return nil, errors.Errorf("ORDER BY type is not yet supported")
 		}
-		var direction string
-		switch node[i].Direction {
-		case tree.DefaultDirection:
-			direction = vitess.AscScr
-		case tree.Ascending:
-			direction = vitess.AscScr
-		case tree.Descending:
-			direction = vitess.DescScr
-		default:
-			return nil, errors.Errorf("unknown ORDER BY sorting direction")
+		direction, err := orderByDirection(node[i])
+		if err != nil {
+			return nil, err
 		}
 
 		desiredNullsLast := direction == vitess.AscScr
@@ -96,6 +89,29 @@ func nodeOrderBy(ctx *Context, node tree.OrderBy, selectStmt vitess.SelectStatem
 		})
 	}
 	return orderBys, nil
+}
+
+func orderByDirection(order *tree.Order) (string, error) {
+	if order.OrderType == tree.OrderByUsing {
+		switch order.Operator {
+		case tree.LT:
+			return vitess.AscScr, nil
+		case tree.GT:
+			return vitess.DescScr, nil
+		default:
+			return "", errors.Errorf("ORDER BY USING operator %s is not yet supported", order.Operator)
+		}
+	}
+	switch order.Direction {
+	case tree.DefaultDirection:
+		return vitess.AscScr, nil
+	case tree.Ascending:
+		return vitess.AscScr, nil
+	case tree.Descending:
+		return vitess.DescScr, nil
+	default:
+		return "", errors.Errorf("unknown ORDER BY sorting direction")
+	}
 }
 
 func needsExplicitNullSort(direction string, desiredNullsLast bool) bool {

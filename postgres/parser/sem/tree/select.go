@@ -696,12 +696,15 @@ type OrderType int
 const (
 	// OrderByColumn is the regular "by expression/column" ORDER BY specification.
 	OrderByColumn OrderType = iota
+	// OrderByUsing orders by expression using a named operator.
+	OrderByUsing
 )
 
 // Order represents an ordering expression.
 type Order struct {
 	OrderType  OrderType
 	Expr       Expr
+	Operator   Operator
 	Direction  Direction
 	NullsOrder NullsOrder
 }
@@ -710,6 +713,10 @@ type Order struct {
 func (node *Order) Format(ctx *FmtCtx) {
 	if node.OrderType == OrderByColumn {
 		ctx.FormatNode(node.Expr)
+	} else if node.OrderType == OrderByUsing {
+		ctx.FormatNode(node.Expr)
+		ctx.WriteString(" USING ")
+		ctx.WriteString(fmt.Sprint(node.Operator))
 	}
 	if node.Direction != DefaultDirection {
 		ctx.WriteByte(' ')
@@ -724,7 +731,8 @@ func (node *Order) Format(ctx *FmtCtx) {
 // Equal checks if the node ordering is equivalent to other.
 func (node *Order) Equal(other *Order) bool {
 	return node.Expr.String() == other.Expr.String() && node.Direction == other.Direction &&
-		node.OrderType == other.OrderType && node.NullsOrder == other.NullsOrder
+		node.OrderType == other.OrderType && fmt.Sprint(node.Operator) == fmt.Sprint(other.Operator) &&
+		node.NullsOrder == other.NullsOrder
 }
 
 // Limit represents a LIMIT clause.
