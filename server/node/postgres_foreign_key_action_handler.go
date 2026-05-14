@@ -21,15 +21,49 @@ import (
 	"strings"
 
 	"github.com/dolthub/go-mysql-server/sql"
+	gmsexpression "github.com/dolthub/go-mysql-server/sql/expression"
 	"github.com/dolthub/go-mysql-server/sql/plan"
+	"github.com/dolthub/go-mysql-server/sql/transform"
 
 	"github.com/dolthub/doltgresql/server/deferrable"
 )
 
+// ForeignKeyActionValidation contains PostgreSQL-specific validation that GMS
+// FK action editors do not carry through propagated child-row rewrites.
+type ForeignKeyActionValidation struct {
+	Checks    sql.CheckConstraints
+	Reference *plan.ForeignKeyReferenceHandler
+}
+
+// ForeignKeyActionValidations is keyed by ForeignKeyActionValidationKey.
+type ForeignKeyActionValidations map[string]ForeignKeyActionValidation
+
+// ForeignKeyActionValidationKey returns a stable key for a foreign key
+// constraint across analyzer and execution packages.
+func ForeignKeyActionValidationKey(fk sql.ForeignKeyConstraint) string {
+	parts := []string{
+		fk.Database,
+		fk.SchemaName,
+		fk.Table,
+		fk.Name,
+		fk.ParentDatabase,
+		fk.ParentSchema,
+		fk.ParentTable,
+	}
+	parts = append(parts, fk.Columns...)
+	parts = append(parts, fk.ParentColumns...)
+	for i := range parts {
+		parts[i] = strings.ToLower(parts[i])
+	}
+	return strings.Join(parts, "\x00")
+}
+
 // PostgresForeignKeyActionHandler preserves GMS FK handling while honoring
-// PostgreSQL SET NULL / SET DEFAULT action column lists for UPDATE and DELETE.
+// PostgreSQL SET NULL / SET DEFAULT action column lists and child-row
+// validations for propagated referential actions.
 type PostgresForeignKeyActionHandler struct {
 	*plan.ForeignKeyHandler
+	validations ForeignKeyActionValidations
 }
 
 var _ sql.Node = (*PostgresForeignKeyActionHandler)(nil)
@@ -41,8 +75,11 @@ var _ sql.RowUpdater = (*PostgresForeignKeyActionHandler)(nil)
 var _ sql.RowDeleter = (*PostgresForeignKeyActionHandler)(nil)
 var _ sql.TableWrapper = (*PostgresForeignKeyActionHandler)(nil)
 
-func NewPostgresForeignKeyActionHandler(handler *plan.ForeignKeyHandler) *PostgresForeignKeyActionHandler {
-	return &PostgresForeignKeyActionHandler{ForeignKeyHandler: handler}
+func NewPostgresForeignKeyActionHandler(handler *plan.ForeignKeyHandler, validations ForeignKeyActionValidations) *PostgresForeignKeyActionHandler {
+	return &PostgresForeignKeyActionHandler{
+		ForeignKeyHandler: handler,
+		validations:       validations,
+	}
 }
 
 // BuildRowIter implements sql.ExecBuilderNode by delegating reads to the
@@ -59,7 +96,10 @@ func (n *PostgresForeignKeyActionHandler) WithChildren(ctx *sql.Context, childre
 	}
 	copied := *n.ForeignKeyHandler
 	copied.OriginalNode = children[0]
-	return &PostgresForeignKeyActionHandler{ForeignKeyHandler: &copied}, nil
+	return &PostgresForeignKeyActionHandler{
+		ForeignKeyHandler: &copied,
+		validations:       n.validations,
+	}, nil
 }
 
 // Updater implements sql.UpdatableTable.
@@ -74,15 +114,15 @@ func (n *PostgresForeignKeyActionHandler) Deleter(*sql.Context) sql.RowDeleter {
 
 // Update implements sql.RowUpdater.
 func (n *PostgresForeignKeyActionHandler) Update(ctx *sql.Context, old sql.Row, new sql.Row) error {
-	return postgresForeignKeyUpdate(ctx, n.Editor, old, new, 1)
+	return n.postgresForeignKeyUpdate(ctx, n.Editor, old, new, 1)
 }
 
 // Delete implements sql.RowDeleter.
 func (n *PostgresForeignKeyActionHandler) Delete(ctx *sql.Context, row sql.Row) error {
-	return postgresForeignKeyDelete(ctx, n.Editor, row, 1)
+	return n.postgresForeignKeyDelete(ctx, n.Editor, row, 1)
 }
 
-func postgresForeignKeyUpdate(ctx *sql.Context, fkEditor *plan.ForeignKeyEditor, old sql.Row, new sql.Row, depth int) error {
+func (n *PostgresForeignKeyActionHandler) postgresForeignKeyUpdate(ctx *sql.Context, fkEditor *plan.ForeignKeyEditor, old sql.Row, new sql.Row, depth int) error {
 	for _, reference := range fkEditor.References {
 		hasChange := false
 		for _, idx := range reference.RowMapper.IndexPositions {
@@ -124,15 +164,15 @@ func postgresForeignKeyUpdate(ctx *sql.Context, fkEditor *plan.ForeignKeyEditor,
 	for _, refActionData := range fkEditor.RefActions {
 		switch refActionData.ForeignKey.OnUpdate {
 		case sql.ForeignKeyReferentialAction_Cascade:
-			if err := postgresForeignKeyOnUpdateCascade(ctx, fkEditor, refActionData, old, new, depth+1); err != nil {
+			if err := n.postgresForeignKeyOnUpdateCascade(ctx, fkEditor, refActionData, old, new, depth+1); err != nil {
 				return err
 			}
 		case sql.ForeignKeyReferentialAction_SetNull:
-			if err := postgresForeignKeyOnUpdateSetNull(ctx, fkEditor, refActionData, old, new, depth+1); err != nil {
+			if err := n.postgresForeignKeyOnUpdateSetNull(ctx, fkEditor, refActionData, old, new, depth+1); err != nil {
 				return err
 			}
 		case sql.ForeignKeyReferentialAction_SetDefault:
-			if err := postgresForeignKeyOnUpdateSetDefault(ctx, fkEditor, refActionData, old, new, depth+1); err != nil {
+			if err := n.postgresForeignKeyOnUpdateSetDefault(ctx, fkEditor, refActionData, old, new, depth+1); err != nil {
 				return err
 			}
 		}
@@ -140,7 +180,7 @@ func postgresForeignKeyUpdate(ctx *sql.Context, fkEditor *plan.ForeignKeyEditor,
 	return nil
 }
 
-func postgresForeignKeyDelete(ctx *sql.Context, fkEditor *plan.ForeignKeyEditor, row sql.Row, depth int) error {
+func (n *PostgresForeignKeyActionHandler) postgresForeignKeyDelete(ctx *sql.Context, fkEditor *plan.ForeignKeyEditor, row sql.Row, depth int) error {
 	for _, refActionData := range fkEditor.RefActions {
 		switch refActionData.ForeignKey.OnDelete {
 		default:
@@ -158,15 +198,15 @@ func postgresForeignKeyDelete(ctx *sql.Context, fkEditor *plan.ForeignKeyEditor,
 	for _, refActionData := range fkEditor.RefActions {
 		switch refActionData.ForeignKey.OnDelete {
 		case sql.ForeignKeyReferentialAction_Cascade:
-			if err := postgresForeignKeyOnDeleteCascade(ctx, refActionData, row, depth+1); err != nil {
+			if err := n.postgresForeignKeyOnDeleteCascade(ctx, refActionData, row, depth+1); err != nil {
 				return err
 			}
 		case sql.ForeignKeyReferentialAction_SetNull:
-			if err := postgresForeignKeyOnDeleteSetNull(ctx, refActionData, row, depth+1); err != nil {
+			if err := n.postgresForeignKeyOnDeleteSetNull(ctx, refActionData, row, depth+1); err != nil {
 				return err
 			}
 		case sql.ForeignKeyReferentialAction_SetDefault:
-			if err := postgresForeignKeyOnDeleteSetDefault(ctx, refActionData, row, depth+1); err != nil {
+			if err := n.postgresForeignKeyOnDeleteSetDefault(ctx, refActionData, row, depth+1); err != nil {
 				return err
 			}
 		}
@@ -174,7 +214,7 @@ func postgresForeignKeyDelete(ctx *sql.Context, fkEditor *plan.ForeignKeyEditor,
 	return nil
 }
 
-func postgresForeignKeyOnUpdateCascade(ctx *sql.Context, fkEditor *plan.ForeignKeyEditor, refActionData plan.ForeignKeyRefActionData, old sql.Row, new sql.Row, depth int) error {
+func (n *PostgresForeignKeyActionHandler) postgresForeignKeyOnUpdateCascade(ctx *sql.Context, fkEditor *plan.ForeignKeyEditor, refActionData plan.ForeignKeyRefActionData, old sql.Row, new sql.Row, depth int) error {
 	if ok, err := fkEditor.ColumnsUpdated(ctx, refActionData, old, new); err != nil {
 		return err
 	} else if !ok {
@@ -200,7 +240,13 @@ func postgresForeignKeyOnUpdateCascade(ctx *sql.Context, fkEditor *plan.ForeignK
 				updatedRow[i] = new[mappedVal]
 			}
 		}
-		if err = postgresForeignKeyUpdate(ctx, refActionData.Editor, rowToUpdate, updatedRow, depth); err != nil {
+		if err = postgresForeignKeyRecomputeGeneratedColumns(ctx, refActionData.Editor, updatedRow); err != nil {
+			return err
+		}
+		if err = n.validateForeignKeyActionRow(ctx, refActionData, updatedRow, refActionData.ForeignKey.OnUpdate); err != nil {
+			return err
+		}
+		if err = n.postgresForeignKeyUpdate(ctx, refActionData.Editor, rowToUpdate, updatedRow, depth); err != nil {
 			return err
 		}
 	}
@@ -210,7 +256,7 @@ func postgresForeignKeyOnUpdateCascade(ctx *sql.Context, fkEditor *plan.ForeignK
 	return err
 }
 
-func postgresForeignKeyOnUpdateSetDefault(ctx *sql.Context, fkEditor *plan.ForeignKeyEditor, refActionData plan.ForeignKeyRefActionData, old sql.Row, new sql.Row, depth int) error {
+func (n *PostgresForeignKeyActionHandler) postgresForeignKeyOnUpdateSetDefault(ctx *sql.Context, fkEditor *plan.ForeignKeyEditor, refActionData plan.ForeignKeyRefActionData, old sql.Row, new sql.Row, depth int) error {
 	if ok, err := fkEditor.ColumnsUpdated(ctx, refActionData, old, new); err != nil {
 		return err
 	} else if !ok {
@@ -220,10 +266,10 @@ func postgresForeignKeyOnUpdateSetDefault(ctx *sql.Context, fkEditor *plan.Forei
 	if err != nil {
 		return err
 	}
-	return postgresForeignKeySetDefaultRows(ctx, refActionData, actionColumns.OnUpdate, old, depth)
+	return n.postgresForeignKeySetDefaultRows(ctx, refActionData, actionColumns.OnUpdate, old, refActionData.ForeignKey.OnUpdate, depth)
 }
 
-func postgresForeignKeyOnUpdateSetNull(ctx *sql.Context, fkEditor *plan.ForeignKeyEditor, refActionData plan.ForeignKeyRefActionData, old sql.Row, new sql.Row, depth int) error {
+func (n *PostgresForeignKeyActionHandler) postgresForeignKeyOnUpdateSetNull(ctx *sql.Context, fkEditor *plan.ForeignKeyEditor, refActionData plan.ForeignKeyRefActionData, old sql.Row, new sql.Row, depth int) error {
 	if ok, err := fkEditor.ColumnsUpdated(ctx, refActionData, old, new); err != nil {
 		return err
 	} else if !ok {
@@ -233,10 +279,10 @@ func postgresForeignKeyOnUpdateSetNull(ctx *sql.Context, fkEditor *plan.ForeignK
 	if err != nil {
 		return err
 	}
-	return postgresForeignKeySetNullRows(ctx, refActionData, actionColumns.OnUpdate, old, depth)
+	return n.postgresForeignKeySetNullRows(ctx, refActionData, actionColumns.OnUpdate, old, refActionData.ForeignKey.OnUpdate, depth)
 }
 
-func postgresForeignKeyOnDeleteCascade(ctx *sql.Context, refActionData plan.ForeignKeyRefActionData, row sql.Row, depth int) error {
+func (n *PostgresForeignKeyActionHandler) postgresForeignKeyOnDeleteCascade(ctx *sql.Context, refActionData plan.ForeignKeyRefActionData, row sql.Row, depth int) error {
 	rowIter, err := refActionData.RowMapper.GetIter(ctx, row, false)
 	if err != nil {
 		return err
@@ -251,7 +297,7 @@ func postgresForeignKeyOnDeleteCascade(ctx *sql.Context, refActionData plan.Fore
 				return sql.ErrForeignKeyDepthLimit.New()
 			}
 		}
-		if err = postgresForeignKeyDelete(ctx, refActionData.Editor, rowToDelete, depth); err != nil {
+		if err = n.postgresForeignKeyDelete(ctx, refActionData.Editor, rowToDelete, depth); err != nil {
 			return err
 		}
 	}
@@ -261,23 +307,23 @@ func postgresForeignKeyOnDeleteCascade(ctx *sql.Context, refActionData plan.Fore
 	return err
 }
 
-func postgresForeignKeyOnDeleteSetDefault(ctx *sql.Context, refActionData plan.ForeignKeyRefActionData, row sql.Row, depth int) error {
+func (n *PostgresForeignKeyActionHandler) postgresForeignKeyOnDeleteSetDefault(ctx *sql.Context, refActionData plan.ForeignKeyRefActionData, row sql.Row, depth int) error {
 	actionColumns, err := deferrable.ForeignKeyActionColumns(ctx, refActionData.ForeignKey)
 	if err != nil {
 		return err
 	}
-	return postgresForeignKeySetDefaultRows(ctx, refActionData, actionColumns.OnDelete, row, depth)
+	return n.postgresForeignKeySetDefaultRows(ctx, refActionData, actionColumns.OnDelete, row, refActionData.ForeignKey.OnDelete, depth)
 }
 
-func postgresForeignKeyOnDeleteSetNull(ctx *sql.Context, refActionData plan.ForeignKeyRefActionData, row sql.Row, depth int) error {
+func (n *PostgresForeignKeyActionHandler) postgresForeignKeyOnDeleteSetNull(ctx *sql.Context, refActionData plan.ForeignKeyRefActionData, row sql.Row, depth int) error {
 	actionColumns, err := deferrable.ForeignKeyActionColumns(ctx, refActionData.ForeignKey)
 	if err != nil {
 		return err
 	}
-	return postgresForeignKeySetNullRows(ctx, refActionData, actionColumns.OnDelete, row, depth)
+	return n.postgresForeignKeySetNullRows(ctx, refActionData, actionColumns.OnDelete, row, refActionData.ForeignKey.OnDelete, depth)
 }
 
-func postgresForeignKeySetDefaultRows(ctx *sql.Context, refActionData plan.ForeignKeyRefActionData, actionColumns []string, sourceRow sql.Row, depth int) error {
+func (n *PostgresForeignKeyActionHandler) postgresForeignKeySetDefaultRows(ctx *sql.Context, refActionData plan.ForeignKeyRefActionData, actionColumns []string, sourceRow sql.Row, action sql.ForeignKeyReferentialAction, depth int) error {
 	rowIter, err := refActionData.RowMapper.GetIter(ctx, sourceRow, false)
 	if err != nil {
 		return err
@@ -311,7 +357,13 @@ func postgresForeignKeySetDefaultRows(ctx *sql.Context, refActionData plan.Forei
 				modifiedRow[position] = nil
 			}
 		}
-		if err = postgresForeignKeyUpdate(ctx, refActionData.Editor, rowToDefault, modifiedRow, depth); err != nil {
+		if err = postgresForeignKeyRecomputeGeneratedColumns(ctx, refActionData.Editor, modifiedRow); err != nil {
+			return err
+		}
+		if err = n.validateForeignKeyActionRow(ctx, refActionData, modifiedRow, action); err != nil {
+			return err
+		}
+		if err = n.postgresForeignKeyUpdate(ctx, refActionData.Editor, rowToDefault, modifiedRow, depth); err != nil {
 			return err
 		}
 	}
@@ -321,7 +373,7 @@ func postgresForeignKeySetDefaultRows(ctx *sql.Context, refActionData plan.Forei
 	return err
 }
 
-func postgresForeignKeySetNullRows(ctx *sql.Context, refActionData plan.ForeignKeyRefActionData, actionColumns []string, sourceRow sql.Row, depth int) error {
+func (n *PostgresForeignKeyActionHandler) postgresForeignKeySetNullRows(ctx *sql.Context, refActionData plan.ForeignKeyRefActionData, actionColumns []string, sourceRow sql.Row, action sql.ForeignKeyReferentialAction, depth int) error {
 	rowIter, err := refActionData.RowMapper.GetIter(ctx, sourceRow, false)
 	if err != nil {
 		return err
@@ -345,7 +397,13 @@ func postgresForeignKeySetNullRows(ctx *sql.Context, refActionData plan.ForeignK
 		for _, position := range positions {
 			nulledRow[position] = nil
 		}
-		if err = postgresForeignKeyUpdate(ctx, refActionData.Editor, rowToNull, nulledRow, depth); err != nil {
+		if err = postgresForeignKeyRecomputeGeneratedColumns(ctx, refActionData.Editor, nulledRow); err != nil {
+			return err
+		}
+		if err = n.validateForeignKeyActionRow(ctx, refActionData, nulledRow, action); err != nil {
+			return err
+		}
+		if err = n.postgresForeignKeyUpdate(ctx, refActionData.Editor, rowToNull, nulledRow, depth); err != nil {
 			return err
 		}
 	}
@@ -381,4 +439,81 @@ func postgresForeignKeyActionPositions(refActionData plan.ForeignKeyRefActionDat
 		positions = append(positions, position)
 	}
 	return positions, nil
+}
+
+func (n *PostgresForeignKeyActionHandler) validateForeignKeyActionRow(ctx *sql.Context, refActionData plan.ForeignKeyRefActionData, row sql.Row, action sql.ForeignKeyReferentialAction) error {
+	validation, ok := n.validations[ForeignKeyActionValidationKey(refActionData.ForeignKey)]
+	if !ok {
+		return nil
+	}
+	if action == sql.ForeignKeyReferentialAction_SetDefault && validation.Reference != nil {
+		if err := validation.Reference.CheckReference(ctx, row); err != nil {
+			return err
+		}
+	}
+	for _, check := range validation.Checks {
+		if check == nil || !check.Enforced {
+			continue
+		}
+		res, err := sql.EvaluateCondition(ctx, check.Expr, row)
+		if err != nil {
+			return err
+		}
+		if sql.IsFalse(res) {
+			return sql.ErrCheckConstraintViolated.New(check.Name)
+		}
+	}
+	return nil
+}
+
+func postgresForeignKeyRecomputeGeneratedColumns(ctx *sql.Context, fkEditor *plan.ForeignKeyEditor, row sql.Row) error {
+	hasGeneratedColumn := false
+	for _, col := range fkEditor.Schema {
+		if col.Generated != nil && !col.AutoIncrement {
+			hasGeneratedColumn = true
+			break
+		}
+	}
+	if !hasGeneratedColumn {
+		return nil
+	}
+
+	colNameToIdx := make(map[string]int, len(fkEditor.Schema))
+	for i, col := range fkEditor.Schema {
+		colNameToIdx[strings.ToLower(col.Name)] = i
+		if col.Source != "" {
+			colNameToIdx[fmt.Sprintf("%s.%s", strings.ToLower(col.Source), strings.ToLower(col.Name))] = i
+		}
+	}
+	for i, col := range fkEditor.Schema {
+		if col.Generated == nil || col.AutoIncrement {
+			continue
+		}
+		generated := *col.Generated
+		expr, _, err := transform.Expr(ctx, generated.Expr, func(ctx *sql.Context, expr sql.Expression) (sql.Expression, transform.TreeIdentity, error) {
+			gf, ok := expr.(*gmsexpression.GetField)
+			if !ok {
+				return expr, transform.SameTree, nil
+			}
+			key := strings.ToLower(gf.Name())
+			if gf.Table() != "" {
+				key = fmt.Sprintf("%s.%s", strings.ToLower(gf.Table()), key)
+			}
+			idx, ok := colNameToIdx[key]
+			if !ok {
+				return nil, transform.SameTree, fmt.Errorf("field not found: %s", gf.String())
+			}
+			return gf.WithIndex(idx), transform.NewTree, nil
+		})
+		if err != nil {
+			return err
+		}
+		generated.Expr = expr
+		val, err := generated.Eval(ctx, row)
+		if err != nil {
+			return err
+		}
+		row[i] = val
+	}
+	return nil
 }
