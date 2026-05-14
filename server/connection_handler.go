@@ -4415,6 +4415,8 @@ func errMessageToSQLState(msg string) (string, bool) {
 		return pgcode.Syntax.String(), true
 	case strings.HasPrefix(msg, `role "`) && strings.HasSuffix(msg, `" does not exist`):
 		return pgcode.UndefinedObject.String(), true
+	case strings.HasPrefix(msg, `extension "`) && strings.HasSuffix(msg, `" already exists`):
+		return pgcode.DuplicateObject.String(), true
 	case strings.HasPrefix(msg, `extension "`) && strings.Contains(msg, `" must be installed in schema "`):
 		return pgcode.DuplicateObject.String(), true
 	case strings.HasPrefix(msg, "division by zero"):

@@ -155,6 +155,7 @@ func TestErrMessageToSQLStateFormatsCommonRuntimeErrors(t *testing.T) {
 		code pgcode.Code
 	}{
 		{msg: `role "missing_database_owner" does not exist`, code: pgcode.UndefinedObject},
+		{msg: `extension "pgcrypto" already exists`, code: pgcode.DuplicateObject},
 		{msg: `extension "plpgsql" must be installed in schema "pg_catalog"`, code: pgcode.DuplicateObject},
 		{msg: `division by zero`, code: pgcode.DivisionByZero},
 	} {
