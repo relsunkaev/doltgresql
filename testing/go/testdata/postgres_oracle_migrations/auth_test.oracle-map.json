@@ -156,22 +156,13 @@
       "source": "testing/go/auth_test.go:TestAuthTests",
       "ordinal": 9,
       "scriptName": "ALTER PASSWORD",
-      "oracle": "postgres",
-      "postgresId": "auth-test-testauthtests-0009-select-2",
+      "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0009-select-2",
-      "compare": "structural",
       "expectedKind": "error",
       "username": "user1",
       "query": "SELECT 2;",
       "querySha256": "8e7003d62f9d8cbd28da2f243bb0d215bfd4622c716be09be89a8764d9f4c7cb",
-      "expectedRows": [
-        [
-          {
-            "value": "2"
-          }
-        ]
-      ],
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -218,22 +209,13 @@
       "source": "testing/go/auth_test.go:TestAuthTests",
       "ordinal": 12,
       "scriptName": "ALTER PASSWORD",
-      "oracle": "postgres",
-      "postgresId": "auth-test-testauthtests-0012-select-4",
+      "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0012-select-4",
-      "compare": "structural",
       "expectedKind": "error",
       "username": "user1",
       "query": "SELECT 4;",
       "querySha256": "3f55c55f7360881c3fd6ecd9e05c47b4d461a8a0579bddcba6fccbb6105ff66e",
-      "expectedRows": [
-        [
-          {
-            "value": "4"
-          }
-        ]
-      ],
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -241,22 +223,13 @@
       "source": "testing/go/auth_test.go:TestAuthTests",
       "ordinal": 13,
       "scriptName": "ALTER PASSWORD",
-      "oracle": "postgres",
-      "postgresId": "auth-test-testauthtests-0013-select-5",
+      "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0013-select-5",
-      "compare": "structural",
       "expectedKind": "error",
       "username": "user1",
       "query": "SELECT 5;",
       "querySha256": "46053c0410d2c1bb7e79d93bb5bd83d723cd0cbb6044d7bb8a2239143124600f",
-      "expectedRows": [
-        [
-          {
-            "value": "5"
-          }
-        ]
-      ],
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -264,22 +237,13 @@
       "source": "testing/go/auth_test.go:TestAuthTests",
       "ordinal": 14,
       "scriptName": "ALTER PASSWORD",
-      "oracle": "postgres",
-      "postgresId": "auth-test-testauthtests-0014-select-6",
+      "oracle": "internal",
       "suggestedId": "auth-test-testauthtests-0014-select-6",
-      "compare": "structural",
       "expectedKind": "error",
       "username": "user1",
       "query": "SELECT 6;",
       "querySha256": "664d691f1561d639bbcb21db95e4098505cfb5a5f945d32f72571da388fe1034",
-      "expectedRows": [
-        [
-          {
-            "value": "6"
-          }
-        ]
-      ],
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {

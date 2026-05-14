@@ -83,9 +83,10 @@ func TestAuthTests(t *testing.T) {
 					Query: `ALTER USER user1 PASSWORD 'another_thing';`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0008-alter-user-user1-password-another_thing"},
 				},
 				{
-					Query:    `SELECT 2;`,
-					Username: `user1`,
-					Password: `something`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0009-select-2"},
+					Query:       `SELECT 2;`,
+					Username:    `user1`,
+					Password:    `something`,
+					ExpectedErr: `authentication failed`,
 				},
 				{
 					Query:    `SELECT 3;`,
@@ -96,20 +97,22 @@ func TestAuthTests(t *testing.T) {
 					Query: `ALTER USER user1 WITH PASSWORD NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0011-alter-user-user1-with-password"},
 				},
 				{
-					Query:    `SELECT 4;`,
-					Username: `user1`,
-					Password: `something`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0012-select-4"},
+					Query:       `SELECT 4;`,
+					Username:    `user1`,
+					Password:    `something`,
+					ExpectedErr: `authentication failed`,
 				},
 				{
-					Query:    `SELECT 5;`,
-					Username: `user1`,
-					Password: `another_thing`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0013-select-5"},
+					Query:       `SELECT 5;`,
+					Username:    `user1`,
+					Password:    `another_thing`,
+					ExpectedErr: `authentication failed`,
 				},
 				{
-					Query:    `SELECT 6;`,
-					Username: `user1`,
-					Password: ``, PostgresOracle: // Even the empty password won't work
-					ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0014-select-6"},
+					Query:       `SELECT 6;`,
+					Username:    `user1`,
+					Password:    ``, // Even the empty password won't work
+					ExpectedErr: `authentication failed`,
 				},
 				{
 					Query: `ALTER USER user1 PASSWORD 'different484';`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-test-testauthtests-0015-alter-user-user1-password-different484"},
