@@ -46,7 +46,7 @@ func nodeDropIndex(ctx *Context, node *tree.DropIndex) (vitess.Statement, error)
 		}
 	}
 	return vitess.InjectedStatement{
-		Statement: pgnodes.NewDropIndexes(node.IfExists, targets),
+		Statement: pgnodes.NewDropIndexes(node.IfExists, node.DropBehavior == tree.DropCascade, targets),
 	}, nil
 }
 

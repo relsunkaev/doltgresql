@@ -27,6 +27,8 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/comments"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
 )
@@ -50,6 +52,7 @@ type DropIndexTarget struct {
 // DropIndex handles PostgreSQL DROP INDEX, including table-less index names.
 type DropIndex struct {
 	ifExists bool
+	cascade  bool
 	targets  []DropIndexTarget
 }
 
@@ -58,7 +61,7 @@ var _ vitess.Injectable = (*DropIndex)(nil)
 
 // NewDropIndex returns a new *DropIndex.
 func NewDropIndex(ifExists bool, schema string, table string, index string) *DropIndex {
-	return NewDropIndexes(ifExists, []DropIndexTarget{{
+	return NewDropIndexes(ifExists, false, []DropIndexTarget{{
 		Schema: schema,
 		Table:  table,
 		Index:  index,
@@ -66,10 +69,11 @@ func NewDropIndex(ifExists bool, schema string, table string, index string) *Dro
 }
 
 // NewDropIndexes returns a new *DropIndex for one or more indexes.
-func NewDropIndexes(ifExists bool, targets []DropIndexTarget) *DropIndex {
+func NewDropIndexes(ifExists bool, cascade bool, targets []DropIndexTarget) *DropIndex {
 	targets = append([]DropIndexTarget(nil), targets...)
 	return &DropIndex{
 		ifExists: ifExists,
+		cascade:  cascade,
 		targets:  targets,
 	}
 }
@@ -92,9 +96,10 @@ func (d *DropIndex) Resolved() bool {
 // RowIter implements the interface sql.ExecSourceRel.
 func (d *DropIndex) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 	type targetIndex struct {
-		located     *locatedIndex
-		metadata    indexmetadata.Metadata
-		hasMetadata bool
+		located              *locatedIndex
+		metadata             indexmetadata.Metadata
+		hasMetadata          bool
+		dependentForeignKeys []sql.ForeignKeyConstraint
 	}
 	locatedIndexes := make([]targetIndex, 0, len(d.targets))
 	for _, target := range d.targets {
@@ -117,15 +122,31 @@ func (d *DropIndex) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 			return nil, err
 		}
 
+		dependentForeignKeys, err := dependentForeignKeysForLocatedIndex(ctx, located)
+		if err != nil {
+			return nil, err
+		}
+		if len(dependentForeignKeys) > 0 && !d.cascade {
+			indexName := indexmetadata.DisplayNameForTable(located.index, located.table)
+			return nil, pgerror.Newf(pgcode.DependentObjectsStillExist,
+				"cannot drop index %s because other objects depend on it", indexName)
+		}
+
 		metadata, hasMetadata := indexmetadata.DecodeComment(located.index.Comment())
 		locatedIndexes = append(locatedIndexes, targetIndex{
-			located:     located,
-			metadata:    metadata,
-			hasMetadata: hasMetadata,
+			located:              located,
+			metadata:             metadata,
+			hasMetadata:          hasMetadata,
+			dependentForeignKeys: dependentForeignKeys,
 		})
 	}
 
 	for _, target := range locatedIndexes {
+		if len(target.dependentForeignKeys) > 0 {
+			if err := DropForeignKeys(ctx, target.dependentForeignKeys); err != nil {
+				return nil, err
+			}
+		}
 		if err := target.located.alterable.DropIndex(ctx, target.located.index.ID()); err != nil {
 			if sql.ErrIndexNotFound.Is(err) && d.ifExists {
 				continue
@@ -697,6 +718,64 @@ func isPrimaryKeyIndex(index sql.Index) bool {
 
 func isConstraintBackedIndex(index sql.Index) bool {
 	return isPrimaryKeyIndex(index) || (indexmetadata.IsUnique(index) && !indexmetadata.IsStandaloneIndex(index.Comment()))
+}
+
+func dependentForeignKeysForLocatedIndex(ctx *sql.Context, located *locatedIndex) ([]sql.ForeignKeyConstraint, error) {
+	if !indexmetadata.IsUnique(located.index) {
+		return nil, nil
+	}
+	foreignKeyTable, ok := located.table.(sql.ForeignKeyTable)
+	if !ok {
+		return nil, nil
+	}
+	foreignKeys, err := foreignKeyTable.GetReferencedForeignKeys(ctx)
+	if err != nil {
+		return nil, err
+	}
+	indexColumns := indexColumnNamesForForeignKeyDependency(located.index, located.table.Schema(ctx))
+	dependentForeignKeys := make([]sql.ForeignKeyConstraint, 0, len(foreignKeys))
+	for _, foreignKey := range foreignKeys {
+		if dropIndexColumnListsEqualFold(foreignKey.ParentColumns, indexColumns) {
+			dependentForeignKeys = append(dependentForeignKeys, foreignKey)
+		}
+	}
+	return dependentForeignKeys, nil
+}
+
+func indexColumnNamesForForeignKeyDependency(index sql.Index, tableSchema sql.Schema) []string {
+	logicalColumns := indexmetadata.LogicalColumns(index, tableSchema)
+	columnNames := make([]string, 0, len(logicalColumns))
+	for _, logicalColumn := range logicalColumns {
+		if logicalColumn.Expression {
+			continue
+		}
+		columnName := logicalColumn.StorageName
+		if columnName == "" {
+			columnName = logicalColumn.Definition
+		}
+		columnNames = append(columnNames, columnName)
+	}
+	return columnNames
+}
+
+func dropIndexColumnListsEqualFold(left []string, right []string) bool {
+	if len(left) != len(right) {
+		return false
+	}
+	for i := range left {
+		if !strings.EqualFold(normalizeDropIndexColumnReference(left[i]), normalizeDropIndexColumnReference(right[i])) {
+			return false
+		}
+	}
+	return true
+}
+
+func normalizeDropIndexColumnReference(column string) string {
+	column = strings.TrimSpace(column)
+	if lastDot := strings.LastIndex(column, "."); lastDot >= 0 {
+		column = column[lastDot+1:]
+	}
+	return strings.Trim(column, "`\"")
 }
 
 func indexColumnsForRebuild(ctx *sql.Context, index sql.Index, table sql.Table) ([]sql.IndexColumn, error) {

@@ -54,26 +54,34 @@ func (d *DropDependentForeignKeys) Resolved() bool {
 
 // RowIter implements sql.ExecSourceRel.
 func (d *DropDependentForeignKeys) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error) {
-	for _, foreignKey := range d.foreignKeys {
+	if err := DropForeignKeys(ctx, d.foreignKeys); err != nil {
+		return nil, err
+	}
+	return sql.RowsToRowIter(), nil
+}
+
+// DropForeignKeys removes the given foreign-key constraints.
+func DropForeignKeys(ctx *sql.Context, foreignKeys []sql.ForeignKeyConstraint) error {
+	for _, foreignKey := range foreignKeys {
 		table, err := core.GetSqlTableFromContext(ctx, foreignKey.Database, doltdb.TableName{
 			Name:   foreignKey.Table,
 			Schema: foreignKey.SchemaName,
 		})
 		if err != nil {
-			return nil, err
+			return err
 		}
 		if table == nil {
-			return nil, sql.ErrTableNotFound.New(foreignKey.Table)
+			return sql.ErrTableNotFound.New(foreignKey.Table)
 		}
 		foreignKeyTable, ok := sql.GetUnderlyingTable(table).(sql.ForeignKeyTable)
 		if !ok {
-			return nil, sql.ErrNoForeignKeySupport.New(foreignKey.Name)
+			return sql.ErrNoForeignKeySupport.New(foreignKey.Name)
 		}
 		if err = foreignKeyTable.DropForeignKey(ctx, foreignKey.Name, foreignKey.Table, foreignKey.SchemaName); err != nil {
-			return nil, err
+			return err
 		}
 	}
-	return sql.RowsToRowIter(), nil
+	return nil
 }
 
 // Schema implements sql.ExecSourceRel.
