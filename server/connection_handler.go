@@ -1570,9 +1570,17 @@ func replicationChangeCaptureFromPrepared(prepared sessionstate.PreparedReplicat
 	return capture
 }
 
+func preparedStatementAlreadyExistsError(name string) error {
+	return pgerror.Newf(pgcode.DuplicatePreparedStatement, "prepared statement %q already exists", name)
+}
+
+func preparedStatementDoesNotExistError(name string) error {
+	return pgerror.Newf(pgcode.UndefinedPreparedStatement, "prepared statement %q does not exist", name)
+}
+
 func (h *ConnectionHandler) prepareSQLStatement(stmt node.PrepareStatement, query ConvertedQuery) error {
 	if _, ok := h.preparedStatements[stmt.Name]; ok {
-		return errors.Errorf("prepared statement %s already exists", stmt.Name)
+		return preparedStatementAlreadyExistsError(stmt.Name)
 	}
 
 	queries, err := h.convertQuery(stmt.Statement)
@@ -1803,7 +1811,7 @@ func splitPreparedStatementTypeName(typeName string) ([]string, error) {
 func (h *ConnectionHandler) executeSQLStatement(stmt node.ExecuteStatement) error {
 	preparedData, ok := h.preparedStatements[stmt.Name]
 	if !ok {
-		return errors.Errorf("prepared statement %s does not exist", stmt.Name)
+		return preparedStatementDoesNotExistError(stmt.Name)
 	}
 	if stmt.DiscardRows {
 		return errors.Errorf("EXECUTE DISCARD ROWS is not supported")
@@ -1938,7 +1946,7 @@ func (h *ConnectionHandler) executeSQLStatement(stmt node.ExecuteStatement) erro
 func (h *ConnectionHandler) createTableAsExecuteSQLStatement(stmt node.CreateTableAsExecuteStatement, query ConvertedQuery) error {
 	preparedData, ok := h.preparedStatements[stmt.Execute.Name]
 	if !ok {
-		return errors.Errorf("prepared statement %s does not exist", stmt.Execute.Name)
+		return preparedStatementDoesNotExistError(stmt.Execute.Name)
 	}
 	if stmt.Execute.DiscardRows {
 		return errors.Errorf("EXECUTE DISCARD ROWS is not supported")
@@ -2137,7 +2145,7 @@ func (h *ConnectionHandler) handleDescribe(message *pgproto3.Describe) error {
 	if message.ObjectType == 'S' {
 		preparedStatementData, ok := h.preparedStatements[message.Name]
 		if !ok {
-			return errors.Errorf("prepared statement %s does not exist", message.Name)
+			return preparedStatementDoesNotExistError(message.Name)
 		}
 
 		fields = preparedStatementData.ReturnFields
@@ -2165,7 +2173,7 @@ func (h *ConnectionHandler) handleBind(message *pgproto3.Bind) error {
 	logrus.Tracef("binding portal %q to prepared statement %s", message.DestinationPortal, message.PreparedStatement)
 	preparedData, ok := h.preparedStatements[message.PreparedStatement]
 	if !ok {
-		return errors.Errorf("prepared statement %s does not exist", message.PreparedStatement)
+		return preparedStatementDoesNotExistError(message.PreparedStatement)
 	}
 
 	if preparedData.Query.AST == nil {
@@ -3794,7 +3802,7 @@ func (h *ConnectionHandler) deallocatePreparedStatement(name string, preparedSta
 	} else {
 		_, ok := preparedStatements[name]
 		if !ok {
-			return errors.Errorf("prepared statement %s does not exist", name)
+			return preparedStatementDoesNotExistError(name)
 		}
 		delete(preparedStatements, name)
 		sessionstate.DeletePreparedStatement(h.mysqlConn.ConnectionID, name)

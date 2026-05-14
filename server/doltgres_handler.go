@@ -265,6 +265,7 @@ func castSQLError(err error) error {
 		pgcode.CheckViolation,
 		pgcode.DatatypeMismatch,
 		pgcode.DependentObjectsStillExist,
+		pgcode.DuplicatePreparedStatement,
 		pgcode.DuplicateObject,
 		pgcode.FeatureNotSupported,
 		pgcode.Grouping,
@@ -284,6 +285,7 @@ func castSQLError(err error) error {
 		pgcode.UndefinedColumn,
 		pgcode.UndefinedFunction,
 		pgcode.UndefinedObject,
+		pgcode.UndefinedPreparedStatement,
 		pgcode.Windowing,
 		pgcode.WrongObjectType:
 		return err
