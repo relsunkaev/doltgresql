@@ -28,6 +28,8 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/types"
 )
 
@@ -206,7 +208,7 @@ func domainCheckNames(domain *types.DoltgresType) []string {
 func (a *AlterDomain) validateNoNullDomainUsages(ctx *sql.Context, domainID id.Type) error {
 	return a.forEachDomainColumnValue(ctx, domainID, func(tableName string, columnName string, _ *types.DoltgresType, value any) error {
 		if value == nil {
-			return errors.Errorf(`column "%s" of table "%s" contains null values`, columnName, tableName)
+			return pgerror.Newf(pgcode.NotNullViolation, `column "%s" of table "%s" contains null values`, columnName, tableName)
 		}
 		return nil
 	})

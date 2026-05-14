@@ -66,7 +66,7 @@ func TestErrorResponseCodeFormatsExclusionConstraintViolation(t *testing.T) {
 }
 
 func TestCastSQLErrorPreservesExplicitPGCodes(t *testing.T) {
-	for _, code := range []pgcode.Code{pgcode.Syntax, pgcode.RaiseException, pgcode.CheckViolation, pgcode.GeneratedAlways, pgcode.InsufficientPrivilege} {
+	for _, code := range []pgcode.Code{pgcode.Syntax, pgcode.RaiseException, pgcode.CheckViolation, pgcode.GeneratedAlways, pgcode.InsufficientPrivilege, pgcode.NotNullViolation} {
 		err := pgerror.New(code, "plpgsql error")
 		require.Equal(t, code, pgerror.GetPGCode(castSQLError(err)))
 	}
