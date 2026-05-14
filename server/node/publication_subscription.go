@@ -865,6 +865,10 @@ func resolvePublicationSchemas(ctx *sql.Context, schemaNames []string) ([]string
 		if err != nil {
 			return nil, err
 		}
+		if publicationIsSystemSchema(schema) {
+			return nil, pgerror.Newf(pgcode.InvalidParameterValue,
+				`cannot add schema "%s" to publication`, schema)
+		}
 		exists, err := publicationSchemaExists(ctx, schema)
 		if err != nil {
 			return nil, err
