@@ -244,12 +244,15 @@ func ColumnDefinitionsForSchema(index sql.Index, tableSchema sql.Schema) []strin
 	collations := Collations(index.Comment())
 	opClasses := OpClassesForSchema(index, tableSchema)
 	sortOptions := SortOptions(index.Comment())
+	accessMethod := AccessMethod(index.IndexType(), index.Comment())
 	for i := range cols {
 		if i < len(collations) && collations[i] != "" {
 			cols[i] += " " + columnCollationDefinition(collations[i])
 		}
 		if i < len(opClasses) && opClasses[i] != "" {
-			cols[i] += " " + opClasses[i]
+			if opClass := columnOpClassDefinition(accessMethod, opClasses[i], logicalColumns[i], tableSchema); opClass != "" {
+				cols[i] += " " + opClass
+			}
 		}
 		if i < len(sortOptions) {
 			if optionDef := columnOptionDefinition(sortOptions[i]); optionDef != "" {
@@ -258,6 +261,37 @@ func ColumnDefinitionsForSchema(index sql.Index, tableSchema sql.Schema) []strin
 		}
 	}
 	return cols
+}
+
+func columnOpClassDefinition(accessMethod string, opClass string, logicalColumn LogicalColumn, tableSchema sql.Schema) string {
+	normalizedOpClass := NormalizeOpClass(opClass)
+	if isDefaultOpClass(accessMethod, normalizedOpClass, logicalColumn, tableSchema) {
+		return ""
+	}
+	return normalizedOpClass
+}
+
+func isDefaultOpClass(accessMethod string, opClass string, logicalColumn LogicalColumn, tableSchema sql.Schema) bool {
+	if logicalColumn.Expression {
+		return false
+	}
+	column, ok := schemaColumn(tableSchema, logicalColumn.StorageName)
+	if !ok {
+		column, ok = schemaColumn(tableSchema, logicalColumn.Definition)
+	}
+	if !ok {
+		return false
+	}
+	switch accessMethod {
+	case AccessMethodBtree:
+		defaultOpClass, ok := DefaultBtreeOpClassForType(column.Type)
+		return ok && opClass == defaultOpClass
+	case AccessMethodGin:
+		typ, _, ok := doltgresTypeNames(column.Type)
+		return ok && typ == "jsonb" && opClass == OpClassJsonbOps
+	default:
+		return false
+	}
 }
 
 // AttributeDefinitionsForSchema returns PostgreSQL-facing index attributes,

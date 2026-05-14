@@ -36,6 +36,8 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
 	"github.com/dolthub/doltgresql/server/jsonbgin"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -246,7 +248,7 @@ func (c *CreateJsonbGinIndex) validateTable(ctx *sql.Context, table sql.Table) (
 	}
 	dgType, ok := sch[columnIndex].Type.(*pgtypes.DoltgresType)
 	if !ok || dgType.ID != pgtypes.JsonB.ID {
-		return -1, "", errors.Errorf(`gin indexes are only supported on jsonb columns`)
+		return -1, "", pgerror.New(pgcode.UndefinedObject, `gin indexes are only supported on jsonb columns`)
 	}
 	for _, column := range sch {
 		if column.PrimaryKey {

@@ -17,6 +17,8 @@ package indexmetadata
 import (
 	"testing"
 
+	"github.com/dolthub/go-mysql-server/sql"
+
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
@@ -289,6 +291,90 @@ func TestDefaultBtreeOpClassForType(t *testing.T) {
 			}
 			if opClass != tt.opClass {
 				t.Fatalf("expected default opclass %q, got %q", tt.opClass, opClass)
+			}
+		})
+	}
+}
+
+func TestColumnOpClassDefinitionOmitsDefaults(t *testing.T) {
+	tests := []struct {
+		name          string
+		accessMethod  string
+		opClass       string
+		logicalColumn LogicalColumn
+		tableSchema   sql.Schema
+		want          string
+	}{
+		{
+			name:         "default_gin_jsonb_ops",
+			accessMethod: AccessMethodGin,
+			opClass:      OpClassJsonbOps,
+			logicalColumn: LogicalColumn{
+				Definition:  "doc",
+				StorageName: "doc",
+			},
+			tableSchema: sql.Schema{{Name: "doc", Type: pgtypes.JsonB}},
+		},
+		{
+			name:         "nondefault_gin_jsonb_path_ops",
+			accessMethod: AccessMethodGin,
+			opClass:      OpClassJsonbPathOps,
+			logicalColumn: LogicalColumn{
+				Definition:  "doc",
+				StorageName: "doc",
+			},
+			tableSchema: sql.Schema{{Name: "doc", Type: pgtypes.JsonB}},
+			want:        OpClassJsonbPathOps,
+		},
+		{
+			name:         "default_btree_int4_ops",
+			accessMethod: AccessMethodBtree,
+			opClass:      "INT4_OPS",
+			logicalColumn: LogicalColumn{
+				Definition:  "id",
+				StorageName: "id",
+			},
+			tableSchema: sql.Schema{{Name: "id", Type: pgtypes.Int32}},
+		},
+		{
+			name:         "nondefault_btree_text_pattern_ops",
+			accessMethod: AccessMethodBtree,
+			opClass:      OpClassTextPatternOps,
+			logicalColumn: LogicalColumn{
+				Definition:  "label",
+				StorageName: "label",
+			},
+			tableSchema: sql.Schema{{Name: "label", Type: pgtypes.Text}},
+			want:        OpClassTextPatternOps,
+		},
+		{
+			name:         "expression_preserves_opclass",
+			accessMethod: AccessMethodBtree,
+			opClass:      "TEXT_OPS",
+			logicalColumn: LogicalColumn{
+				Definition: "lower(label)",
+				Expression: true,
+			},
+			tableSchema: sql.Schema{{Name: "label", Type: pgtypes.Text}},
+			want:        "text_ops",
+		},
+		{
+			name:         "unknown_column_preserves_opclass",
+			accessMethod: AccessMethodGin,
+			opClass:      OpClassJsonbOps,
+			logicalColumn: LogicalColumn{
+				Definition:  "doc",
+				StorageName: "doc",
+			},
+			want: OpClassJsonbOps,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := columnOpClassDefinition(tt.accessMethod, tt.opClass, tt.logicalColumn, tt.tableSchema)
+			if got != tt.want {
+				t.Fatalf("expected opclass definition %q, got %q", tt.want, got)
 			}
 		})
 	}

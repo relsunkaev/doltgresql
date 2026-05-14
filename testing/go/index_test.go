@@ -108,7 +108,10 @@ WHERE tablename = 'jsonb_gin_build' AND indexname = 'jsonb_gin_build_doc_idx';`,
 				},
 				{
 					Query: `SELECT COUNT(*) > 0, MIN(format_version), SUM(row_count), COUNT(payload), COUNT(checksum)
-FROM dg_gin_jsonb_gin_build_jsonb_gin_build_doc_idx_posting_chunks;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testjsonbginpostingchunkbuildgate-0002-select-count-*->-0", Compare: "sqlstate"},
+FROM dg_gin_jsonb_gin_build_jsonb_gin_build_doc_idx_posting_chunks;`,
+					Expected: []sql.Row{
+						{"t", 1, 22, 11, 11},
+					},
 				},
 			},
 		},
@@ -137,7 +140,8 @@ ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testjson
 				},
 				{
 					Query: `SELECT COUNT(*) > 0, SUM(row_count) > 0
-FROM dg_gin_jsonb_gin_numeric_pk_jsonb_gin_numeric_pk_doc_idx_posting_chunks;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testjsonbginpostingchunkbuildgate-0005-select-count-*->-0", Compare: "sqlstate"},
+FROM dg_gin_jsonb_gin_numeric_pk_jsonb_gin_numeric_pk_doc_idx_posting_chunks;`,
+					Expected: []sql.Row{{"t", "t"}},
 				},
 			},
 		},
@@ -184,7 +188,8 @@ WHERE tablename = 'jsonb_gin_bad_create' AND indexname = 'jsonb_gin_bad_create_d
 				{
 					Query: `SELECT COUNT(*)
 FROM pg_catalog.pg_class
-WHERE relname = 'dg_gin_jsonb_gin_bad_create_jsonb_gin_bad_create_doc_idx_posting_chunks';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-test-testjsonbginpostingchunkbuildgate-0010-select-count-*-from-pg_catalog.pg_class"},
+WHERE relname = 'dg_gin_jsonb_gin_bad_create_jsonb_gin_bad_create_doc_idx_posting_chunks';`,
+					Expected: []sql.Row{{0}},
 				},
 			},
 		},

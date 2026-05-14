@@ -10,6 +10,21 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### alpha - 2026-05-14 09:27 MST
+
+- Result: fixed `TestJsonbGinPostingChunkBuildGate` default JSONB GIN opclass rendering and adjacent stale sidecar oracle rows.
+- Root cause: index definition formatting always printed stored opclass metadata, but PostgreSQL omits default opclasses such as `jsonb_ops` for `USING gin (doc)` and default btree opclasses; the same test also had Dolt-internal `dg_gin_*_posting_chunks` assertions incorrectly cached as PostgreSQL SQLSTATE rows, and unsupported GIN-on-text creation returned generic `XX000` instead of PostgreSQL `42704`.
+- Files touched: `server/indexmetadata/index_definition.go`, `server/indexmetadata/index_metadata_test.go`, `server/node/create_jsonb_gin_index.go`, `testing/go/index_test.go`, `testing/go/testdata/postgres_oracle_migrations/index_test.oracle-map.json`, `testing/go/testdata/postgres_oracle_manifest.json`.
+- Validation in clean verifier `/tmp/doltgresql-alpha-jsonb-opclass-219a51d4` at `HEAD=09c67f4c` plus only alpha patch:
+  - `go test -vet=off ./testing/go -run '^TestJsonbGinPostingChunkBuildGate$' -count=1 -timeout=10m -v`
+  - `go test -vet=off ./server/indexmetadata -run '^TestColumnOpClassDefinitionOmitsDefaults$' -count=1 -v`
+  - `go test -vet=off ./server/node -run '^$' -count=1`
+  - `go test -vet=off ./testing/go -run '^(TestPostgresOracleManifestGenerated|TestPostgresOraclePromotedMapSkipsDoltSidecarQueries)$' -count=1 -timeout=10m -v`
+  - `jq empty testing/go/testdata/postgres_oracle_manifest.json testing/go/testdata/postgres_oracle_migrations/index_test.oracle-map.json`
+  - `git diff --check -- server/indexmetadata/index_definition.go server/indexmetadata/index_metadata_test.go server/node/create_jsonb_gin_index.go testing/go/index_test.go testing/go/testdata/postgres_oracle_migrations/index_test.oracle-map.json testing/go/testdata/postgres_oracle_manifest.json`
+- Follow-up discovery: adjacent `TestJsonbGinPostingChunkDMLGate` passes; `TestJsonbGinPostingChunkLookupGate` now stops on a stale PostgreSQL `EXPLAIN` oracle row versus Doltgres `IndexedTableAccess`, matching zeta's discovery note. Leaving lookup EXPLAIN as the next JSONB GIN/index oracle-shape lane.
+
+
 ### alpha - 2026-05-14 08:28 MST
 
 - Result: fixed stale schema normalization metadata for `TestPgGetIndexdefQuotesIdentifiersRepro`, `TestRenameTableUpdatesIndexDefinitionsRepro`, and `TestRenameColumnUpdatesIndexDefinitionsRepro`.

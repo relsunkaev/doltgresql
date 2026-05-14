@@ -43,19 +43,16 @@
       "source": "testing/go/index_test.go:TestJsonbGinPostingChunkBuildGate",
       "ordinal": 2,
       "scriptName": "PostgreSQL jsonb gin posting chunk build gate",
-      "oracle": "postgres",
-      "postgresId": "index-test-testjsonbginpostingchunkbuildgate-0002-select-count-*->-0",
+      "oracle": "internal",
       "suggestedId": "index-test-testjsonbginpostingchunkbuildgate-0002-select-count-*->-0",
-      "compare": "sqlstate",
       "expectedKind": "rows",
-      "sqlstate": "42P01",
-      "errorSeverity": "ERROR",
       "query": "SELECT COUNT(*) > 0, MIN(format_version), SUM(row_count), COUNT(payload), COUNT(checksum)\nFROM dg_gin_jsonb_gin_build_jsonb_gin_build_doc_idx_posting_chunks;",
       "querySha256": "5fe4bab68ee89a1f2c0becb1ba5c8b74b8cc042d1369f1721b7e554f66588303",
       "nonLiteral": [
+        "DoltSpecific",
         "Expected"
       ],
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -115,16 +112,15 @@
       "source": "testing/go/index_test.go:TestJsonbGinPostingChunkBuildGate",
       "ordinal": 5,
       "scriptName": "PostgreSQL jsonb gin numeric primary key direct references",
-      "oracle": "postgres",
-      "postgresId": "index-test-testjsonbginpostingchunkbuildgate-0005-select-count-*->-0",
+      "oracle": "internal",
       "suggestedId": "index-test-testjsonbginpostingchunkbuildgate-0005-select-count-*->-0",
-      "compare": "sqlstate",
       "expectedKind": "rows",
-      "sqlstate": "42P01",
-      "errorSeverity": "ERROR",
       "query": "SELECT COUNT(*) > 0, SUM(row_count) > 0\nFROM dg_gin_jsonb_gin_numeric_pk_jsonb_gin_numeric_pk_doc_idx_posting_chunks;",
       "querySha256": "b7c67af8ed5a0a61dce94364714676485a24bd880f7fe875e01282ed83428ffb",
-      "needsCleanup": false,
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -223,21 +219,15 @@
       "source": "testing/go/index_test.go:TestJsonbGinPostingChunkBuildGate",
       "ordinal": 10,
       "scriptName": "PostgreSQL jsonb gin failed create index cleanup",
-      "oracle": "postgres",
-      "postgresId": "index-test-testjsonbginpostingchunkbuildgate-0010-select-count-*-from-pg_catalog.pg_class",
+      "oracle": "internal",
       "suggestedId": "index-test-testjsonbginpostingchunkbuildgate-0010-select-count-*-from-pg_catalog.pg_class",
-      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT COUNT(*)\nFROM pg_catalog.pg_class\nWHERE relname = 'dg_gin_jsonb_gin_bad_create_jsonb_gin_bad_create_doc_idx_posting_chunks';",
       "querySha256": "4a008335b795a6d958f2056b4f431eb78afdf60c2be4b4b0f655907cdd445c8d",
-      "expectedRows": [
-        [
-          {
-            "value": "0"
-          }
-        ]
+      "nonLiteral": [
+        "DoltSpecific"
       ],
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
