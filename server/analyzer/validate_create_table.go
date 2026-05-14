@@ -596,7 +596,7 @@ func validateBtreeOpClassTypes(colMap map[string]*sql.Column, idxDef *sql.IndexD
 		}
 		typeName, ok := indexmetadata.BtreeOpClassAcceptsType(opClass, schCol.Type)
 		if !ok {
-			return errors.Errorf(`operator class "%s" does not accept data type %s`, opClass, typeName)
+			return pgerror.Newf(pgcode.DatatypeMismatch, `operator class "%s" does not accept data type %s`, opClass, typeName)
 		}
 	}
 	return nil

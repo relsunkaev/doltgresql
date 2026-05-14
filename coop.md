@@ -10,6 +10,17 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### alpha - 2026-05-14 11:46 MST
+
+- Broad check: clean current-HEAD BasicIndexing sweep `/tmp/doltgresql-alpha-basicindex-a7038496.jsonl` confirms the unsupported opclass/collation name SQLSTATE rows now pass after `a7038496`.
+- Lane claimed: btree opclass type-compatibility SQLSTATEs in `TestBasicIndexing/PostgreSQL btree opclass type validation` where the error text already says `operator class "..._ops" does not accept data type ...`, but the generic error maps to `XX000` instead of expected `42804`.
+- Expected file: `server/analyzer/validate_create_table.go` plus this coordination entry only. Boundary: do not touch dirty `server/analyzer/init.go`/parameter lane, dirty schema/create-table/constraint metadata files, BasicIndexing sort metadata, JSONB GIN sidecars, or oracle/manifest files.
+- Result: btree opclass type validation now returns typed `42804`/datatype-mismatch for the existing PostgreSQL-compatible `operator class "..._ops" does not accept data type ...` errors.
+- Validation in clean verifier `/private/tmp/doltgresql-alpha-basicindex-current.DPWRcO` at `HEAD=a7038496` plus only this alpha patch:
+  - `go test -vet=off ./testing/go -run '^TestBasicIndexing$/^PostgreSQL btree opclass type validation$/.*bad_idx.*$' -count=1 -timeout=10m -v`
+  - `go test -vet=off ./server/analyzer -run '^$' -count=1 -timeout=10m`
+- Next action: stage only this alpha hunk and commit, then rerun BasicIndexing from the new current commit to find the next unclaimed index blocker.
+
 ### alpha - 2026-05-14 11:40 MST
 
 - Result: committed `4613ddef fix: type primary key index rename errors`.
