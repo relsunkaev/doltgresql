@@ -2319,640 +2319,1703 @@
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 138,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0138-select-e.extname-n.nspname-from-pg_catalog.pg_extension",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0138-select-e.extname-n.nspname-from-pg_catalog.pg_extension",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT e.extname, n.nspname\n\t\t\t\t\t\tFROM pg_catalog.pg_extension e\n\t\t\t\t\t\tJOIN pg_catalog.pg_namespace n ON n.oid = e.extnamespace\n\t\t\t\t\t\tWHERE e.extname = 'hstore';",
       "querySha256": "4de11b6d131376d6ec3fe28e2c43b36604cd7111c7aaa3abc8438c43e7163b21",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "hstore"
+          },
+          {
+            "value": "public"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0139",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 139,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0139-select-inventory::text-from-vending_machines-where",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0139-select-inventory::text-from-vending_machines-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT inventory::text FROM vending_machines WHERE id = 1;",
       "querySha256": "d4747363b17582c93aeff86ed53fa1a5256f672cceb827501a32ec28f8f9c15b",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "\"A\"=>\"2\", \"B\"=>\"5\""
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0140",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 140,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0140-select-inventory->-a-fetchval",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0140-select-inventory->-a-fetchval",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT inventory -> 'A', fetchval(inventory, 'B') FROM vending_machines WHERE id = 1;",
       "querySha256": "a96d9d462212de3e53d847b706744e071e8c5d3eaf3a5ced2242fdee851dd13f",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0141",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 141,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0141-select-inventory->-missing-is",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0141-select-inventory->-missing-is",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT (inventory -> 'missing') IS NULL FROM vending_machines WHERE id = 1;",
       "querySha256": "db4f1ac9fdf7a3fd92d021c59a5fa2346aace5d0b0ee450960840ced71798f93",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0142",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 142,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0142-select-inventory->-empty-inventory",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0142-select-inventory->-empty-inventory",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT inventory -> 'empty', inventory -> 'quoted key', inventory -> E'quote\"slash\\\\' FROM vending_machines WHERE id = 2;",
       "querySha256": "938f9854a9d27cb86ae5e0eec235143cb4cd3258f802c5af452ebed7387a03b4",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "null": true
+          },
+          {
+            "value": "a,b=>c"
+          },
+          {
+            "value": "v\"\\x"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0143",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 143,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0143-select-inventory-?-a-inventory",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0143-select-inventory-?-a-inventory",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT inventory ? 'A', inventory ? 'missing' FROM vending_machines WHERE id = 1;",
       "querySha256": "08ad31bc301632749f91efce2abe8957551030c144209f84369f20984a5379f2",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0144",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 144,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0144-select-exist-inventory-empty-defined",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0144-select-exist-inventory-empty-defined",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT exist(inventory, 'empty'), defined(inventory, 'empty'), isexists(inventory, 'quoted key'), isdefined(inventory, 'quoted key') FROM vending_machines WHERE id = 2;",
       "querySha256": "920acaa2407d9e5c7dc66358834f2c0641fcf5823a498a59f0f06e604534c5ca",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0145",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 145,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0145-select-inventory-?|-array[-missing",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0145-select-inventory-?|-array[-missing",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT inventory ?| ARRAY['missing', 'B'], inventory ?| ARRAY['missing', 'other'], inventory ?& ARRAY['A', 'B'], inventory ?& ARRAY['A', 'missing'] FROM vending_machines WHERE id = 1;",
       "querySha256": "97141136f5bbbebfff64838642ebd775a55442dd602db8bf958a69f724bb0c7d",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0146",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 146,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0146-select-exists_any-inventory-array[-missing",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0146-select-exists_any-inventory-array[-missing",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT exists_any(inventory, ARRAY['missing', 'quoted key']), exists_all(inventory, ARRAY['empty', 'quoted key']) FROM vending_machines WHERE id = 2;",
       "querySha256": "0fa2506b3d0475dbd3d12a3ff4ef222921eb47d08284c06aeb3582ecf04726d0",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0147",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 147,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0147-select-inventory-?|-array[null]::text[]-inventory",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0147-select-inventory-?|-array[null]::text[]-inventory",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT inventory ?| ARRAY[NULL]::text[], inventory ?& ARRAY[NULL]::text[], inventory ?| ARRAY[]::text[], inventory ?& ARRAY[]::text[] FROM vending_machines WHERE id = 1;",
       "querySha256": "231f7a50c954adc51a40f17c4060dfecbc120de57fe01fa988f9f126b2470fe4",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0148",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 148,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0148-select-inventory-@>-a-=>",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0148-select-inventory-@>-a-=>",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT inventory @> '\"A\"=>\"2\"'::public.hstore, inventory @> '\"A\"=>\"9\"'::public.hstore, inventory @> '\"missing\"=>\"1\"'::public.hstore, inventory <@ '\"A\"=>\"2\", \"B\"=>\"5\", \"C\"=>\"6\"'::public.hstore FROM vending_machines WHERE id = 1;",
       "querySha256": "89689a780bc52d6371853ab4bd9d34cf5e4727546f8e1659dd95829981591166",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0149",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 149,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0149-select-inventory-@>-empty-=>null",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0149-select-inventory-@>-empty-=>null",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT inventory @> '\"empty\"=>NULL'::public.hstore, inventory @> '\"empty\"=>\"x\"'::public.hstore, inventory <@ '\"empty\"=>NULL, \"quoted key\"=>\"a,b=>c\", \"quote\\\"slash\\\\\"=>\"v\\\"\\\\x\", \"extra\"=>\"1\"'::public.hstore FROM vending_machines WHERE id = 2;",
       "querySha256": "e5693719035ba5aaea9a875fd0b222a0edcbe0fa3a57cd35b0fce8f614f3e590",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0150",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 150,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0150-select-hs_contains-inventory-a-=>",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0150-select-hs_contains-inventory-a-=>",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT hs_contains(inventory, '\"A\"=>\"2\"'::public.hstore), hs_contained(inventory, '\"A\"=>\"2\", \"B\"=>\"5\"'::public.hstore) FROM vending_machines WHERE id = 1;",
       "querySha256": "019589038e1b6304cba4f92694b47dca75871ff1a4b6dc95c4930faf41f76732",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0151",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 151,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0151-select-inventory-||-b-=>",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0151-select-inventory-||-b-=>",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT (inventory || '\"B\"=>\"9\", \"C\"=>NULL'::public.hstore)::text, hs_concat(inventory, '\"A\"=>NULL'::public.hstore)::text FROM vending_machines WHERE id = 1;",
       "querySha256": "b9f9b4c2567af98bb0769948bf038a7375d3c43d03496981305a60b2915e469b",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "\"A\"=>\"2\", \"B\"=>\"9\", \"C\"=>NULL"
+          },
+          {
+            "value": "\"A\"=>NULL, \"B\"=>\"5\""
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0152",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 152,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0152-select-delete-inventory-a-::text",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0152-select-delete-inventory-a-::text",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT delete(inventory, 'A')::text, (inventory - 'B'::text)::text FROM vending_machines WHERE id = 1;",
       "querySha256": "31434b8beb3137dfc5d41be1b691d970299bee42e7d7a12ec1f654baaf79398e",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "\"B\"=>\"5\""
+          },
+          {
+            "value": "\"A\"=>\"2\""
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0153",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 153,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0153-select-delete-a-=>-2",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0153-select-delete-a-=>-2",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT delete('\"A\"=>\"2\", \"B\"=>\"5\", \"C\"=>\"6\"'::public.hstore, ARRAY['A', 'C'])::text, ('\"A\"=>\"2\", \"B\"=>\"5\"'::public.hstore - ARRAY[NULL]::text[])::text;",
       "querySha256": "5731287171b8501a0096eac0b6351f94bc08cabe043d8d3b21997b12fc551a72",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "\"B\"=>\"5\""
+          },
+          {
+            "value": "\"A\"=>\"2\", \"B\"=>\"5\""
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0154",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 154,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0154-select-a-=>-2-b",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0154-select-a-=>-2-b",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT ('\"A\"=>\"2\", \"B\"=>\"5\"'::public.hstore - '\"A\"=>\"9\", \"B\"=>\"5\"'::public.hstore)::text, delete('\"empty\"=>NULL, \"quoted key\"=>\"a,b=>c\"'::public.hstore, '\"empty\"=>NULL'::public.hstore)::text;",
       "querySha256": "04c2035fff8a90ca1ee8b9f44658977f3d07f6e5f67e70ffb471b0a126f0828a",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "\"A\"=>\"2\""
+          },
+          {
+            "value": "\"quoted key\"=>\"a,b=>c\""
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0155",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 155,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0155-select-array_to_string-inventory->-array[",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0155-select-array_to_string-inventory->-array[",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT array_to_string(inventory -> ARRAY['B', 'missing', 'empty', 'A'], '|', '<NULL>') FROM vending_machines WHERE id = 3;",
       "querySha256": "5fc2802de44bc35924b4d4b01fc72626ac8bb55577205025e6891b5d09a34ffe",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "5|<NULL>|<NULL>|2"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0156",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 156,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0156-select-array_to_string-slice_array-inventory-array[",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0156-select-array_to_string-slice_array-inventory-array[",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT array_to_string(slice_array(inventory, ARRAY['A', 'empty', 'missing']), '|', '<NULL>') FROM vending_machines WHERE id = 3;",
       "querySha256": "d9544c3c0de34f236b8f97a2f6a3afeec651a4a6fea4b37db2bc4d8175de2d2a",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "2|<NULL>|<NULL>"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0157",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 157,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0157-select-slice-inventory-array[-empty",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0157-select-slice-inventory-array[-empty",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT slice(inventory, ARRAY['empty', 'missing', 'A'])::text FROM vending_machines WHERE id = 3;",
       "querySha256": "094858575d779510e03f85680468a978d04f4edf54803a046ace0dbacde215b5",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "\"A\"=>\"2\", \"empty\"=>NULL"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0158",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 158,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0158-select-inventory->-array[]::text[]-::text",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0158-select-inventory->-array[]::text[]-::text",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT (inventory -> ARRAY[]::text[])::text, slice(inventory, ARRAY[]::text[])::text FROM vending_machines WHERE id = 1;",
       "querySha256": "d8bb92da4b5873e5bf24e6b264f994ccc5603f3ab1ef5e0a1bce248560c73e96",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "{}"
+          },
+          {
+            "value": ""
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0159",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 159,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0159-select-array_to_string-inventory->-array[null]::text[]",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0159-select-array_to_string-inventory->-array[null]::text[]",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT array_to_string(inventory -> ARRAY[NULL]::text[], '|', '<NULL>'), slice(inventory, ARRAY[NULL]::text[])::text FROM vending_machines WHERE id = 1;",
       "querySha256": "1f90d6618a5088294d18c0ab563e6d03a5d0d9118504e0e6dfd9977ef7d2cd4b",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "<NULL>"
+          },
+          {
+            "value": ""
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0160",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 160,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0160-select-array_to_string-akeys-inventory-|",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0160-select-array_to_string-akeys-inventory-|",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT array_to_string(akeys(inventory), '|', '<NULL>'), array_to_string(avals(inventory), '|', '<NULL>'), array_to_string(hstore_to_array(inventory), '|', '<NULL>') FROM vending_machines WHERE id = 3;",
       "querySha256": "31db39d5d6fecf5fcb7222e49a5c53859228d4dd733e04b2be2c85eed38e6109",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "A|B|empty"
+          },
+          {
+            "value": "2|5|<NULL>"
+          },
+          {
+            "value": "A|2|B|5|empty|<NULL>"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0161",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 161,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0161-select-hstore_to_matrix-inventory-::text-array_to_string",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0161-select-hstore_to_matrix-inventory-::text-array_to_string",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT hstore_to_matrix(inventory)::text, array_to_string(hstore_to_matrix(inventory), '|', '<NULL>') FROM vending_machines WHERE id = 3;",
       "querySha256": "3c222f161ca827c67a5544382ac01b73898a1b81ce1271aec9d530ab541f21b4",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "{{A,2},{B,5},{empty,NULL}}"
+          },
+          {
+            "value": "A|2|B|5|empty|<NULL>"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0162",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 162,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0162-select-array_length-hstore_to_matrix-inventory-1",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0162-select-array_length-hstore_to_matrix-inventory-1",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT array_length(hstore_to_matrix(inventory), 1), array_length(hstore_to_matrix(inventory), 2), array_upper(hstore_to_matrix(inventory), 1), array_upper(hstore_to_matrix(inventory), 2) FROM vending_machines WHERE id = 3;",
       "querySha256": "b87c2cebd76e374d8cef59b97bc46177441005b893d59c384cd104e2b1bf86d1",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0163",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 163,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0163-select-hstore_to_matrix-quote-=>-a",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0163-select-hstore_to_matrix-quote-=>-a",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT hstore_to_matrix('\"quote\"=>\"a,b\", \"emptystr\"=>\"\"'::public.hstore)::text;",
       "querySha256": "86fefc2c1c4134c6b1bc94f30fd98e98d10b84d60e0b0ed14960fbbf7a60a8fd",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "{{quote,\"a,b\"},{emptystr,\"\"}}"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0164",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 164,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0164-select-select-array_to_string-array_agg-k",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0164-select-select-array_to_string-array_agg-k",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT (SELECT array_to_string(array_agg(k), '|', '<NULL>') FROM skeys('\"A\"=>\"2\", \"B\"=>\"5\", \"empty\"=>NULL'::public.hstore) AS t(k)), (SELECT array_to_string(array_agg(v), '|', '<NULL>') FROM svals('\"A\"=>\"2\", \"B\"=>\"5\", \"empty\"=>NULL'::public.hstore) AS t(v));",
       "querySha256": "5519548f4d15d97d4b6776667fa3c71a0daf729c9b4ca963e082633cc0380a4a",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "A|B|empty"
+          },
+          {
+            "value": "2|5|<NULL>"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0165",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 165,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0165-select-select-count-*-::text",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0165-select-select-count-*-::text",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT (SELECT count(*)::text FROM skeys(''::public.hstore)), (SELECT count(*)::text FROM svals(''::public.hstore)), (SELECT count(*)::text FROM skeys(NULL::public.hstore)), (SELECT count(*)::text FROM svals(NULL::public.hstore));",
       "querySha256": "a839ded8adf5599c02dc60e227bb3f5ed6940b077e915ed010c0243abbe79713",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          },
+          {
+            "value": "0"
+          },
+          {
+            "value": "0"
+          },
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0166",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 166,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0166-select-skeys-b-=>-5",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0166-select-skeys-b-=>-5",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT skeys('\"B\"=>\"5\", \"A\"=>\"2\"'::public.hstore);",
       "querySha256": "ea0ee1b6b6d856a941ac911bff4c8744e9e1916131fad79b6867df53f49a8f13",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "A"
+          }
+        ],
+        [
+          {
+            "value": "B"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0167",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 167,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0167-select-svals-a-=>-2",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0167-select-svals-a-=>-2",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT svals('\"A\"=>\"2\", \"empty\"=>NULL, \"B\"=>\"5\"'::public.hstore);",
       "querySha256": "9a33207e73d7b7cf1649f24028ce5b9664a0d292394be30a99a51cbb0bddef39",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "5"
+          }
+        ],
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0168",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 168,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0168-select-key-coalesce-value-<null>",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0168-select-key-coalesce-value-<null>",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT key, COALESCE(value, '<NULL>') FROM each('\"B\"=>\"5\", \"A\"=>\"2\", \"empty\"=>NULL, \"quote\"=>\"a\\\"b\"'::public.hstore);",
       "querySha256": "b97ee61aaaa3258bfe64a8a12b4e29d530057a33b8efe329207465f1ac0ba820",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "A"
+          },
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "B"
+          },
+          {
+            "value": "5"
+          }
+        ],
+        [
+          {
+            "value": "empty"
+          },
+          {
+            "value": "<NULL>"
+          }
+        ],
+        [
+          {
+            "value": "quote"
+          },
+          {
+            "value": "a\"b"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0169",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 169,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0169-select-k-coalesce-v-<null>",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0169-select-k-coalesce-v-<null>",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT k, COALESCE(v, '<NULL>') FROM each('\"A\"=>\"2\", \"empty\"=>NULL'::public.hstore) AS t(k, v);",
       "querySha256": "bbb0f05559fe38bdd065c2e7ebf8ecb3b28b9790930081f326ce6efd10c03661",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "A"
+          },
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "empty"
+          },
+          {
+            "value": "<NULL>"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0170",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 170,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0170-select-k-coalesce-value-<null>",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0170-select-k-coalesce-value-<null>",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT k, COALESCE(value, '<NULL>') FROM each('\"A\"=>\"2\", \"empty\"=>NULL'::public.hstore) AS t(k);",
       "querySha256": "7004121c6ec61c7a27964a2bf207fe2738095fdb5e79dc751541ac7acc0d8a13",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "A"
+          },
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "empty"
+          },
+          {
+            "value": "<NULL>"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0171",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 171,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0171-select-select-count-*-::text",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0171-select-select-count-*-::text",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT (SELECT count(*)::text FROM each(''::public.hstore)), (SELECT count(*)::text FROM each(NULL::public.hstore));",
       "querySha256": "0ac1470da54a80fd6373a041ade61e6554fcb6c0c88464184e81c0cf8a9f6429",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          },
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0172",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 172,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0172-select-each-b-=>-5",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0172-select-each-b-=>-5",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT each('\"B\"=>\"5\", \"A\"=>\"2\"'::public.hstore);",
       "querySha256": "159c7f935a6beb266c132566f655cbb013fb771f6373fbfffe04c082e81271b3",
-      "nonLiteral": [
-        "Expected"
+      "expectedRows": [
+        [
+          {
+            "value": "(A,2)"
+          }
+        ],
+        [
+          {
+            "value": "(B,5)"
+          }
+        ]
       ],
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0173",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 173,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0173-select-hstore-array[-n-float",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0173-select-hstore-array[-n-float",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT hstore(ARRAY['n', 'float', 'bool', 'str', 'empty', 'bad'], ARRAY['12', '3.5', 'true', '012', NULL, '12x'])::text, array_to_string(hstore_to_array('\"n\"=>\"12\", \"float\"=>\"3.5\", \"bool\"=>\"true\", \"str\"=>\"012\", \"empty\"=>NULL, \"bad\"=>\"12x\"'::public.hstore), '|', '<NULL>');",
       "querySha256": "10f5dbf2110f33a5da144357b9d3182977146d5a8cbc0f851e33eb53ba61fb33",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "\"n\"=>\"12\", \"bad\"=>\"12x\", \"str\"=>\"012\", \"bool\"=>\"true\", \"empty\"=>NULL, \"float\"=>\"3.5\""
+          },
+          {
+            "value": "n|12|bad|12x|str|012|bool|true|empty|<NULL>|float|3.5"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0174",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 174,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0174-select-akeys-::public.hstore-::text-avals",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0174-select-akeys-::public.hstore-::text-avals",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT akeys(''::public.hstore)::text, avals(''::public.hstore)::text, hstore_to_array(''::public.hstore)::text;",
       "querySha256": "84a8761f77eb6ac67cfbc5616922b0ef721e6071ee6d8d2b84d2b315e5b7839b",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "{}"
+          },
+          {
+            "value": "{}"
+          },
+          {
+            "value": "{}"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0175",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 175,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0175-select-hstore_to_matrix-::public.hstore-::text-hstore_to_matrix",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0175-select-hstore_to_matrix-::public.hstore-::text-hstore_to_matrix",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT hstore_to_matrix(''::public.hstore)::text, hstore_to_matrix(NULL::public.hstore) IS NULL;",
       "querySha256": "8077251e8d62330668a4108ee78d648ba6b3e9b548befb9c6b3cfd7d87ff93f7",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "{}"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0176",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 176,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0176-select-akeys-null::public.hstore-is-null",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0176-select-akeys-null::public.hstore-is-null",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT akeys(NULL::public.hstore) IS NULL, avals(NULL::public.hstore) IS NULL, hstore_to_array(NULL::public.hstore) IS NULL, hstore_to_matrix(NULL::public.hstore) IS NULL;",
       "querySha256": "430f89d5dcad731f5f008bdd7f5ae35b0265f4a54d058852edf5acc5d5e6f505",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0177",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 177,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0177-select-hstore-a-2-::text",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0177-select-hstore-a-2-::text",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT hstore('A', '2')::text, hstore('empty', NULL)::text, hstore(NULL, 'x') IS NULL;",
       "querySha256": "372268fa64ada41ffdaae56e4434c2800054ef05c62e79fa1d310bd6ca8e04f8",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "\"A\"=>\"2\""
+          },
+          {
+            "value": "\"empty\"=>NULL"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0178",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 178,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0178-select-tconvert-a-2-::text",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0178-select-tconvert-a-2-::text",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT tconvert('A', '2')::text, tconvert('empty', NULL)::text, tconvert(NULL, 'x') IS NULL;",
       "querySha256": "31699307c80937552915f4a93df34ae97d776938ce9636717030e99d7d4ac528",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "\"A\"=>\"2\""
+          },
+          {
+            "value": "\"empty\"=>NULL"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0179",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 179,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0179-select-hstore-array[-b-a",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0179-select-hstore-array[-b-a",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT hstore(ARRAY['B', 'A', 'empty'], ARRAY['5', '2', NULL])::text, hstore(ARRAY['A', 'A'], ARRAY['1', '2'])::text, hstore(ARRAY['A'], NULL::text[])::text;",
       "querySha256": "1ee93c3b71fb87cea2c279415a38d5887180bcb80d8815d751d276c233922e8c",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "\"A\"=>\"2\", \"B\"=>\"5\", \"empty\"=>NULL"
+          },
+          {
+            "value": "\"A\"=>\"1\""
+          },
+          {
+            "value": "\"A\"=>NULL"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0180",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 180,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0180-select-hstore_version_diag-::public.hstore-::text-hstore_version_diag",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0180-select-hstore_version_diag-::public.hstore-::text-hstore_version_diag",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT hstore_version_diag(''::public.hstore)::text, hstore_version_diag('\"A\"=>\"2\"'::public.hstore)::text, hstore_version_diag(NULL::public.hstore) IS NULL;",
       "querySha256": "24eca356b3844bd3c7280027874a007974238032cf682860825db63ca3787a2a",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0181",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 181,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0181-select-hstore_out-::public.hstore-hstore_out-b",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0181-select-hstore_out-::public.hstore-hstore_out-b",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT hstore_out(''::public.hstore), hstore_out('\"B\"=>\"5\", \"A\"=>\"2\", \"empty\"=>NULL'::public.hstore), hstore_out(NULL::public.hstore) IS NULL;",
       "querySha256": "23e13e603483e6726a0b9d5e620d168e129c692ceeb1ca89952d1240c8b65dbb",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": ""
+          },
+          {
+            "value": "\"A\"=>\"2\", \"B\"=>\"5\", \"empty\"=>NULL"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0182",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 182,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0182-select-hstore_in-b-=>-5",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0182-select-hstore_in-b-=>-5",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT hstore_in('\"B\"=>\"5\", \"A\"=>\"2\", \"empty\"=>NULL')::text, hstore_in('')::text, hstore_in(NULL) IS NULL;",
       "querySha256": "306692ec4e9f3637914733352325b54c8b38c9db8028e04b1e3299295938a27c",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "\"A\"=>\"2\", \"B\"=>\"5\", \"empty\"=>NULL"
+          },
+          {
+            "value": ""
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0183",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 183,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0183-select-hstore_send-::public.hstore-::text-hstore_send",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0183-select-hstore_send-::public.hstore-::text-hstore_send",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT hstore_send(''::public.hstore)::text, hstore_send('\"B\"=>\"5\", \"A\"=>\"2\", \"empty\"=>NULL'::public.hstore)::text, hstore_send('\"quote\"=>\"a\\\"b\", \"slash\"=>\"c\\\\d\"'::public.hstore)::text, hstore_send(NULL::public.hstore) IS NULL;",
       "querySha256": "a276a65ddedae6becbd138aa288dae7d85f6fedca22d6d57861837d01f243277",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "\\x00000000"
+          },
+          {
+            "value": "\\x00000003000000014100000001320000000142000000013500000005656d707479ffffffff"
+          },
+          {
+            "value": "\\x000000020000000571756f74650000000361226200000005736c61736800000003635c64"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0184",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 184,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0184-select-hstore_hash-::public.hstore-::text-hstore_hash",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0184-select-hstore_hash-::public.hstore-::text-hstore_hash",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT hstore_hash(''::public.hstore)::text, hstore_hash('\"A\"=>\"2\"'::public.hstore)::text, hstore_hash('\"B\"=>\"5\", \"A\"=>\"2\", \"empty\"=>NULL'::public.hstore)::text, hstore_hash('\"quote\"=>\"a\\\"b\", \"slash\"=>\"c\\\\d\"'::public.hstore)::text, hstore_hash(NULL::public.hstore) IS NULL;",
       "querySha256": "630dba9acad257246846f709e3bf446feffc12b022edd17aaa28e2efb06a6867",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "-1524351049"
+          },
+          {
+            "value": "-653174632"
+          },
+          {
+            "value": "-1135331332"
+          },
+          {
+            "value": "1781935767"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0185",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 185,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0185-select-hstore_hash-a-=>-2",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0185-select-hstore_hash-a-=>-2",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT hstore_hash('\"A\"=>\"2\", \"B\"=>\"5\"'::public.hstore) = hstore_hash('\"B\"=>\"5\", \"A\"=>\"2\"'::public.hstore), hstore_hash('\"A\"=>\"first\", \"A\"=>\"second\"'::public.hstore)::text, hstore_hash('\"A\"=>\"first\"'::public.hstore)::text;",
       "querySha256": "160312610b090c7f93627a77f2d6b5a6cd90caa4c9d14d30287c3381f50999ef",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "-330768083"
+          },
+          {
+            "value": "-330768083"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0186",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 186,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0186-select-hstore_hash_extended-::public.hstore-0-::text",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0186-select-hstore_hash_extended-::public.hstore-0-::text",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT hstore_hash_extended(''::public.hstore, 0)::text, hstore_hash_extended('\"A\"=>\"2\"'::public.hstore, 0)::text, hstore_hash_extended('\"A\"=>\"2\"'::public.hstore, 42)::text, hstore_hash_extended('\"B\"=>\"5\", \"A\"=>\"2\", \"empty\"=>NULL'::public.hstore, 0)::text, hstore_hash_extended('\"B\"=>\"5\", \"A\"=>\"2\", \"empty\"=>NULL'::public.hstore, -1)::text, hstore_hash_extended(NULL::public.hstore, 0) IS NULL;",
       "querySha256": "26d72ae9bee4421e0c3403e39faab10127e8e7a832c45117f43299f60715aa80",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "1977219185673256887"
+          },
+          {
+            "value": "973419178382940312"
+          },
+          {
+            "value": "-9148714739893068701"
+          },
+          {
+            "value": "-6475142324932036612"
+          },
+          {
+            "value": "8123414359138430297"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0187",
@@ -2972,13 +4035,56 @@
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 188,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0188-select-am.amname-opf.opfname-from-pg_catalog.pg_opfamily",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0188-select-am.amname-opf.opfname-from-pg_catalog.pg_opfamily",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT am.amname, opf.opfname\nFROM pg_catalog.pg_opfamily opf\nJOIN pg_catalog.pg_am am ON am.oid = opf.opfmethod\nWHERE opf.opfname IN ('btree_hstore_ops', 'hash_hstore_ops', 'gist_hstore_ops', 'gin_hstore_ops')\nORDER BY am.amname, opf.opfname;",
       "querySha256": "81ef4a61b6b92dd6e3ca88698d1a5caeee0300681d69af858c6b8b2cf9c43887",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "btree"
+          },
+          {
+            "value": "btree_hstore_ops"
+          }
+        ],
+        [
+          {
+            "value": "gin"
+          },
+          {
+            "value": "gin_hstore_ops"
+          }
+        ],
+        [
+          {
+            "value": "gist"
+          },
+          {
+            "value": "gist_hstore_ops"
+          }
+        ],
+        [
+          {
+            "value": "hash"
+          },
+          {
+            "value": "hash_hstore_ops"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0189",
@@ -3108,273 +4214,705 @@
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 198,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0198-select-hstore-array[-a-2",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0198-select-hstore-array[-a-2",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT hstore(ARRAY['A', '2', 'B', '5', 'empty', NULL])::text, hstore(ARRAY['A', '1', 'A', '2'])::text, hstore(NULL::text[]) IS NULL;",
       "querySha256": "e1257b5576e020b0f55ba0057259881e3f2dbfdaf2d4ec3259ed3dac2ad0ba38",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "\"A\"=>\"2\", \"B\"=>\"5\", \"empty\"=>NULL"
+          },
+          {
+            "value": "\"A\"=>\"1\""
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0199",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 199,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0199-select-hstore-array[]::text[]-::text-hstore",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0199-select-hstore-array[]::text[]-::text-hstore",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT hstore(ARRAY[]::text[])::text, hstore(ARRAY[]::text[], ARRAY[]::text[])::text;",
       "querySha256": "551754960b6afc6a27414594aad1832abec5a63fbf0517c98b02beb0a820c93f",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": ""
+          },
+          {
+            "value": ""
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0200",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 200,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0200-select-hstore-row-ada-42",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0200-select-hstore-row-ada-42",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT hstore(ROW('Ada', 42, true, NULL)::hstore_person)::text;",
       "querySha256": "dd66a7c0b6286a44e8184f8d1de9bffdc2d17236fdd87fe17ea5a0cbe72f592d",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "\"age\"=>\"42\", \"name\"=>\"Ada\", \"note\"=>NULL, \"active\"=>\"t\""
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0201",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 201,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0201-select-hstore-row-1-x",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0201-select-hstore-row-1-x",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT hstore(ROW(1, 'x', NULL))::text, hstore(ROW('needs,quote', 'a\"b', false))::text;",
       "querySha256": "b1f17810a215db44deac1b69f3ab2d9e762c3931ab6548daec0694d5b49c35cf",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "\"f1\"=>\"1\", \"f2\"=>\"x\", \"f3\"=>NULL"
+          },
+          {
+            "value": "\"f1\"=>\"needs,quote\", \"f2\"=>\"a\\\"b\", \"f3\"=>\"f\""
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0202",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 202,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0202-select-hstore-null::hstore_person-::text",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0202-select-hstore-null::hstore_person-::text",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT hstore(NULL::hstore_person)::text;",
       "querySha256": "b93d18a2100d3ae26b420576ec75754838e6b20fad908c07f03f33b8c5410331",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "\"age\"=>NULL, \"name\"=>NULL, \"note\"=>NULL, \"active\"=>NULL"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0203",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 203,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0203-select-a-=>-2-b",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0203-select-a-=>-2-b",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT '\"A\"=>\"2\", \"B\"=>\"5\"'::public.hstore = '\"B\"=>\"5\", \"A\"=>\"2\"'::public.hstore, '\"A\"=>NULL'::public.hstore = '\"A\"=>NULL'::public.hstore, '\"A\"=>NULL'::public.hstore = '\"A\"=>\"\"'::public.hstore;",
       "querySha256": "2179dff47e260e15a14c1556c85802789bc77acc84fb9772f4a3322fb38eeddd",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0204",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 204,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0204-select-a-=>-2-::public.hstore",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0204-select-a-=>-2-::public.hstore",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT '\"A\"=>\"2\"'::public.hstore <> '\"A\"=>\"9\"'::public.hstore, '\"A\"=>\"2\"'::public.hstore = '\"A\"=>\"2\", \"B\"=>NULL'::public.hstore;",
       "querySha256": "5d5007ccf3ebd4440af44af1bdfd8ffec831d0dfd33d2a207542d623d8f51bec",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0205",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 205,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0205-select-hstore_cmp-::public.hstore-a-=>",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0205-select-hstore_cmp-::public.hstore-a-=>",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT hstore_cmp(''::public.hstore, '\"A\"=>\"1\"'::public.hstore)::text, hstore_cmp('\"A\"=>\"1\"'::public.hstore, '\"A\"=>\"2\"'::public.hstore)::text, hstore_cmp('\"A\"=>\"2\"'::public.hstore, '\"A\"=>\"1\"'::public.hstore)::text, hstore_cmp('\"A\"=>NULL'::public.hstore, '\"A\"=>\"\"'::public.hstore)::text, hstore_cmp('\"A\"=>\"1\"'::public.hstore, '\"A\"=>\"1\", \"B\"=>\"1\"'::public.hstore)::text;",
       "querySha256": "31ee80b7faf41079307ec46952fd3178e58abfc1fd80fd8800eea83281839536",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "-1"
+          },
+          {
+            "value": "-1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "-1"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0206",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 206,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0206-select-hstore_lt-a-=>-1",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0206-select-hstore_lt-a-=>-1",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT hstore_lt('\"A\"=>\"1\"'::public.hstore, '\"A\"=>\"2\"'::public.hstore), hstore_le('\"A\"=>\"1\"'::public.hstore, '\"A\"=>\"1\"'::public.hstore), hstore_gt('\"B\"=>\"1\"'::public.hstore, '\"AA\"=>\"1\"'::public.hstore), hstore_ge('\"A\"=>NULL'::public.hstore, '\"A\"=>\"\"'::public.hstore);",
       "querySha256": "279456b0634a68f1831b988ca52117dd6e3a250c4dc915c28b05b5032c4b1671",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0207",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 207,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0207-select-a-=>-1-::public.hstore",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0207-select-a-=>-1-::public.hstore",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT '\"A\"=>\"1\"'::public.hstore #<# '\"A\"=>\"2\"'::public.hstore, '\"A\"=>\"1\"'::public.hstore #<=# '\"A\"=>\"1\"'::public.hstore, '\"B\"=>\"1\"'::public.hstore #># '\"AA\"=>\"1\"'::public.hstore, '\"A\"=>NULL'::public.hstore #>=# '\"A\"=>\"\"'::public.hstore;",
       "querySha256": "fc7cc536eed9e3b2b5128da1fadbba4c107b3eb5c05a313739a201cb66c11ebd",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0208",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 208,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0208-select-null::public.hstore-#<#-a-=>",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0208-select-null::public.hstore-#<#-a-=>",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT NULL::public.hstore #<# '\"A\"=>\"1\"'::public.hstore IS NULL, '\"A\"=>\"1\"'::public.hstore #># NULL::public.hstore IS NULL;",
       "querySha256": "c68cf2959fe9c093b639dfd9678af0fc4acfbdaace1c172a36aaad0717e0c840",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0209",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 209,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0209-select-a-=>-1-::public.hstore",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0209-select-a-=>-1-::public.hstore",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT '\"A\"=>\"1\"'::public.hstore OPERATOR(public.#<#) '\"A\"=>\"2\"'::public.hstore;",
       "querySha256": "f61fec9bd4330223ccd9a0723ad751b9f8c9bc8103fd6756aeb910806dc206a3",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0210",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 210,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0210-select-%%-b-=>-5",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0210-select-%%-b-=>-5",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT (%% '\"B\"=>\"5\", \"A\"=>\"2\", \"empty\"=>NULL'::public.hstore)::text, (%# '\"B\"=>\"5\", \"A\"=>\"2\", \"empty\"=>NULL'::public.hstore)::text;",
       "querySha256": "a393eb600ccbb67d4e80cd0bf691b636d631d80e3d88cf7f32d4abf5dae77c94",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "{A,2,B,5,empty,NULL}"
+          },
+          {
+            "value": "{{A,2},{B,5},{empty,NULL}}"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0211",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 211,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0211-select-*-from-populate_record-null::hstore_pop_base",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0211-select-*-from-populate_record-null::hstore_pop_base",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM populate_record(NULL::hstore_pop_base, '\"a\"=>\"5\", \"b\"=>\"from hstore\", \"c\"=>\"f\", \"ignored\"=>\"x\"'::public.hstore);",
       "querySha256": "eb99bbd79d76bc698941727b2b85ab80aad0f170c6419ca68d36d1477312f6a6",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "5"
+          },
+          {
+            "value": "from hstore"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0212",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 212,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0212-select-*-from-populate_record-row",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0212-select-*-from-populate_record-row",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM populate_record(ROW(10, 'base', true)::hstore_pop_base, '\"a\"=>\"5\", \"b\"=>NULL'::public.hstore);",
       "querySha256": "6eac23d1e513cbbc94fb5b67f590e6dcf809ab356d77e24f7136fda62ff13fc6",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "5"
+          },
+          {
+            "null": true
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0213",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 213,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0213-select-*-from-populate_record-row",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0213-select-*-from-populate_record-row",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM populate_record(ROW(10, 'base', true)::hstore_pop_base, NULL::public.hstore);",
       "querySha256": "610bfc710b2cc9b7f2c61331257539dee7038aec63ba4a6a1e768eb3389bb591",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          },
+          {
+            "value": "base"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0214",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 214,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0214-select-populate_record-null::hstore_pop_base-null::public.hstore-is",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0214-select-populate_record-null::hstore_pop_base-null::public.hstore-is",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT populate_record(NULL::hstore_pop_base, NULL::public.hstore) IS NULL;",
       "querySha256": "291cd2c4c50aa0fec8f7a2879e1c4e98a145994e24537060d1ffb844b79b021a",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0215",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 215,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0215-select-row-10-base-true",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0215-select-row-10-base-true",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT ((ROW(10, 'base', true)::hstore_pop_base #= '\"a\"=>\"5\", \"b\"=>NULL'::public.hstore)).a, ((ROW(10, 'base', true)::hstore_pop_base #= '\"a\"=>\"5\", \"b\"=>NULL'::public.hstore)).b, ((ROW(10, 'base', true)::hstore_pop_base #= '\"a\"=>\"5\", \"b\"=>NULL'::public.hstore)).c;",
       "querySha256": "851d1b4ec8db05322bd5228ce791ee2546570b1459c3f076580fcf6c4b534ad9",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "5"
+          },
+          {
+            "null": true
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0216",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 216,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0216-select-row-10-base-true",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0216-select-row-10-base-true",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT ((ROW(10, 'base', true)::hstore_pop_base #= NULL::public.hstore)).a, (NULL::hstore_pop_base #= NULL::public.hstore) IS NULL;",
       "querySha256": "f50bece80f28f181012dd5eec321f19c0313a0e2fb298c39888bb8fd93ba24c9",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0217",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 217,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0217-select-*-from-populate_record-null::hstore_pop_base",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0217-select-*-from-populate_record-null::hstore_pop_base",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM populate_record(NULL::hstore_pop_base, '\"A\"=>\"5\", \"b\"=>\"exact\"'::public.hstore);",
       "querySha256": "f2ab156e388d320ac6032733f153a73b8b8bdb5c9e11cdc6a44899886242e70a",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "null": true
+          },
+          {
+            "value": "exact"
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0218",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 218,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0218-select-*-from-populate_record-null::hstore_pop_base",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0218-select-*-from-populate_record-null::hstore_pop_base",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM populate_record(NULL::hstore_pop_base, '\"b\"=>\"\"'::public.hstore);",
       "querySha256": "54ffe906e97432f7dcb59b9298adb34f9f50e975d97d98909be679d6da8b517c",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "null": true
+          },
+          {
+            "value": ""
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0219",
@@ -3394,26 +4932,58 @@
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 220,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0220-select-c-from-populate_record-null::hstore_pop_row",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0220-select-c-from-populate_record-null::hstore_pop_row",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT c FROM populate_record(NULL::hstore_pop_row, hstore(ARRAY['a', 'c'], ARRAY['1', '(9,\"needs,quote\",)']));",
       "querySha256": "17ff2448ee35bf840fb672bc267f245758fdbdeb1773b931664cb60e2f79a8cf",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "(9,\"needs,quote\",)"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0221",
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 221,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0221-select-populate_record-null::hstore_pop_base-a-=>",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0221-select-populate_record-null::hstore_pop_base-a-=>",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT (populate_record(NULL::hstore_pop_base, '\"a\"=>\"7\", \"b\"=>\"scalar\", \"c\"=>\"false\"'::public.hstore)).b;",
       "querySha256": "9021662ced9e04477544c57f0e6e067f16935e8c11e39df129161952f6abd70a",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "scalar"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0222",
@@ -3472,13 +5042,24 @@
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 226,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0226-select-*-from-populate_record-null::hstore_pop_base",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0226-select-*-from-populate_record-null::hstore_pop_base",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "22P02",
+      "errorSeverity": "ERROR",
       "query": "SELECT * FROM populate_record(NULL::hstore_pop_base, '\"a\"=>\"not-int\"'::public.hstore);",
       "querySha256": "b20aa52cca040f8599fc1686c04b05a5d14b1df23f4c4ec1754c46fa78bc1783",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0227",

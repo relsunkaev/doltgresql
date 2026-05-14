@@ -98,12 +98,12 @@ func TestCommonExtensionsProbe(t *testing.T) {
 					Query: `CREATE EXTENSION IF NOT EXISTS pgcrypto;`,
 				},
 				{
-					Query: `CREATE EXTENSION pgcrypto;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0008-create-extension-pgcrypto",
+					Query: `CREATE EXTENSION pgcrypto;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0008-create-extension-pgcrypto", Compare: "sqlstate"},
 
-						// gen_random_uuid is a builtin in PG 13+; pgcrypto used
-						// to provide it. Real-world apps depend on this being
-						// callable for default UUID PKs.
-						Compare: "sqlstate"},
+					// gen_random_uuid is a builtin in PG 13+; pgcrypto used
+					// to provide it. Real-world apps depend on this being
+					// callable for default UUID PKs.
+
 				},
 			},
 		},
@@ -967,200 +967,151 @@ ORDER BY amproc.amprocnum;`,
 					Query: `SELECT e.extname, n.nspname
 						FROM pg_catalog.pg_extension e
 						JOIN pg_catalog.pg_namespace n ON n.oid = e.extnamespace
-						WHERE e.extname = 'hstore';`,
-					Expected: []sql.Row{{"hstore", "public"}},
+						WHERE e.extname = 'hstore';`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0138-select-e.extname-n.nspname-from-pg_catalog.pg_extension", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT inventory::text FROM vending_machines WHERE id = 1;`,
-					Expected: []sql.Row{{`"A"=>"2", "B"=>"5"`}},
+					Query: `SELECT inventory::text FROM vending_machines WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0139-select-inventory::text-from-vending_machines-where", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT inventory -> 'A', fetchval(inventory, 'B') FROM vending_machines WHERE id = 1;`,
-					Expected: []sql.Row{{"2", "5"}},
+					Query: `SELECT inventory -> 'A', fetchval(inventory, 'B') FROM vending_machines WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0140-select-inventory->-a-fetchval", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT (inventory -> 'missing') IS NULL FROM vending_machines WHERE id = 1;`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT (inventory -> 'missing') IS NULL FROM vending_machines WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0141-select-inventory->-missing-is", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT inventory -> 'empty', inventory -> 'quoted key', inventory -> E'quote"slash\\' FROM vending_machines WHERE id = 2;`,
-					Expected: []sql.Row{{nil, "a,b=>c", `v"\x`}},
+					Query: `SELECT inventory -> 'empty', inventory -> 'quoted key', inventory -> E'quote"slash\\' FROM vending_machines WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0142-select-inventory->-empty-inventory", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT inventory ? 'A', inventory ? 'missing' FROM vending_machines WHERE id = 1;`,
-					Expected: []sql.Row{{"t", "f"}},
+					Query: `SELECT inventory ? 'A', inventory ? 'missing' FROM vending_machines WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0143-select-inventory-?-a-inventory", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT exist(inventory, 'empty'), defined(inventory, 'empty'), isexists(inventory, 'quoted key'), isdefined(inventory, 'quoted key') FROM vending_machines WHERE id = 2;`,
-					Expected: []sql.Row{{"t", "f", "t", "t"}},
+					Query: `SELECT exist(inventory, 'empty'), defined(inventory, 'empty'), isexists(inventory, 'quoted key'), isdefined(inventory, 'quoted key') FROM vending_machines WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0144-select-exist-inventory-empty-defined", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT inventory ?| ARRAY['missing', 'B'], inventory ?| ARRAY['missing', 'other'], inventory ?& ARRAY['A', 'B'], inventory ?& ARRAY['A', 'missing'] FROM vending_machines WHERE id = 1;`,
-					Expected: []sql.Row{{"t", "f", "t", "f"}},
+					Query: `SELECT inventory ?| ARRAY['missing', 'B'], inventory ?| ARRAY['missing', 'other'], inventory ?& ARRAY['A', 'B'], inventory ?& ARRAY['A', 'missing'] FROM vending_machines WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0145-select-inventory-?|-array[-missing", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT exists_any(inventory, ARRAY['missing', 'quoted key']), exists_all(inventory, ARRAY['empty', 'quoted key']) FROM vending_machines WHERE id = 2;`,
-					Expected: []sql.Row{{"t", "t"}},
+					Query: `SELECT exists_any(inventory, ARRAY['missing', 'quoted key']), exists_all(inventory, ARRAY['empty', 'quoted key']) FROM vending_machines WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0146-select-exists_any-inventory-array[-missing", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT inventory ?| ARRAY[NULL]::text[], inventory ?& ARRAY[NULL]::text[], inventory ?| ARRAY[]::text[], inventory ?& ARRAY[]::text[] FROM vending_machines WHERE id = 1;`,
-					Expected: []sql.Row{{"f", "t", "f", "t"}},
+					Query: `SELECT inventory ?| ARRAY[NULL]::text[], inventory ?& ARRAY[NULL]::text[], inventory ?| ARRAY[]::text[], inventory ?& ARRAY[]::text[] FROM vending_machines WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0147-select-inventory-?|-array[null]::text[]-inventory", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT inventory @> '"A"=>"2"'::public.hstore, inventory @> '"A"=>"9"'::public.hstore, inventory @> '"missing"=>"1"'::public.hstore, inventory <@ '"A"=>"2", "B"=>"5", "C"=>"6"'::public.hstore FROM vending_machines WHERE id = 1;`,
-					Expected: []sql.Row{{"t", "f", "f", "t"}},
+					Query: `SELECT inventory @> '"A"=>"2"'::public.hstore, inventory @> '"A"=>"9"'::public.hstore, inventory @> '"missing"=>"1"'::public.hstore, inventory <@ '"A"=>"2", "B"=>"5", "C"=>"6"'::public.hstore FROM vending_machines WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0148-select-inventory-@>-a-=>", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT inventory @> '"empty"=>NULL'::public.hstore, inventory @> '"empty"=>"x"'::public.hstore, inventory <@ '"empty"=>NULL, "quoted key"=>"a,b=>c", "quote\"slash\\"=>"v\"\\x", "extra"=>"1"'::public.hstore FROM vending_machines WHERE id = 2;`,
-					Expected: []sql.Row{{"t", "f", "t"}},
+					Query: `SELECT inventory @> '"empty"=>NULL'::public.hstore, inventory @> '"empty"=>"x"'::public.hstore, inventory <@ '"empty"=>NULL, "quoted key"=>"a,b=>c", "quote\"slash\\"=>"v\"\\x", "extra"=>"1"'::public.hstore FROM vending_machines WHERE id = 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0149-select-inventory-@>-empty-=>null", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT hs_contains(inventory, '"A"=>"2"'::public.hstore), hs_contained(inventory, '"A"=>"2", "B"=>"5"'::public.hstore) FROM vending_machines WHERE id = 1;`,
-					Expected: []sql.Row{{"t", "t"}},
+					Query: `SELECT hs_contains(inventory, '"A"=>"2"'::public.hstore), hs_contained(inventory, '"A"=>"2", "B"=>"5"'::public.hstore) FROM vending_machines WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0150-select-hs_contains-inventory-a-=>", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT (inventory || '"B"=>"9", "C"=>NULL'::public.hstore)::text, hs_concat(inventory, '"A"=>NULL'::public.hstore)::text FROM vending_machines WHERE id = 1;`,
-					Expected: []sql.Row{{`"A"=>"2", "B"=>"9", "C"=>NULL`, `"A"=>NULL, "B"=>"5"`}},
+					Query: `SELECT (inventory || '"B"=>"9", "C"=>NULL'::public.hstore)::text, hs_concat(inventory, '"A"=>NULL'::public.hstore)::text FROM vending_machines WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0151-select-inventory-||-b-=>", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT delete(inventory, 'A')::text, (inventory - 'B'::text)::text FROM vending_machines WHERE id = 1;`,
-					Expected: []sql.Row{{`"B"=>"5"`, `"A"=>"2"`}},
+					Query: `SELECT delete(inventory, 'A')::text, (inventory - 'B'::text)::text FROM vending_machines WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0152-select-delete-inventory-a-::text", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT delete('"A"=>"2", "B"=>"5", "C"=>"6"'::public.hstore, ARRAY['A', 'C'])::text, ('"A"=>"2", "B"=>"5"'::public.hstore - ARRAY[NULL]::text[])::text;`,
-					Expected: []sql.Row{{`"B"=>"5"`, `"A"=>"2", "B"=>"5"`}},
+					Query: `SELECT delete('"A"=>"2", "B"=>"5", "C"=>"6"'::public.hstore, ARRAY['A', 'C'])::text, ('"A"=>"2", "B"=>"5"'::public.hstore - ARRAY[NULL]::text[])::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0153-select-delete-a-=>-2", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT ('"A"=>"2", "B"=>"5"'::public.hstore - '"A"=>"9", "B"=>"5"'::public.hstore)::text, delete('"empty"=>NULL, "quoted key"=>"a,b=>c"'::public.hstore, '"empty"=>NULL'::public.hstore)::text;`,
-					Expected: []sql.Row{{`"A"=>"2"`, `"quoted key"=>"a,b=>c"`}},
+					Query: `SELECT ('"A"=>"2", "B"=>"5"'::public.hstore - '"A"=>"9", "B"=>"5"'::public.hstore)::text, delete('"empty"=>NULL, "quoted key"=>"a,b=>c"'::public.hstore, '"empty"=>NULL'::public.hstore)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0154-select-a-=>-2-b", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT array_to_string(inventory -> ARRAY['B', 'missing', 'empty', 'A'], '|', '<NULL>') FROM vending_machines WHERE id = 3;`,
-					Expected: []sql.Row{{`5|<NULL>|<NULL>|2`}},
+					Query: `SELECT array_to_string(inventory -> ARRAY['B', 'missing', 'empty', 'A'], '|', '<NULL>') FROM vending_machines WHERE id = 3;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0155-select-array_to_string-inventory->-array[", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT array_to_string(slice_array(inventory, ARRAY['A', 'empty', 'missing']), '|', '<NULL>') FROM vending_machines WHERE id = 3;`,
-					Expected: []sql.Row{{`2|<NULL>|<NULL>`}},
+					Query: `SELECT array_to_string(slice_array(inventory, ARRAY['A', 'empty', 'missing']), '|', '<NULL>') FROM vending_machines WHERE id = 3;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0156-select-array_to_string-slice_array-inventory-array[", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT slice(inventory, ARRAY['empty', 'missing', 'A'])::text FROM vending_machines WHERE id = 3;`,
-					Expected: []sql.Row{{`"A"=>"2", "empty"=>NULL`}},
+					Query: `SELECT slice(inventory, ARRAY['empty', 'missing', 'A'])::text FROM vending_machines WHERE id = 3;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0157-select-slice-inventory-array[-empty", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT (inventory -> ARRAY[]::text[])::text, slice(inventory, ARRAY[]::text[])::text FROM vending_machines WHERE id = 1;`,
-					Expected: []sql.Row{{`{}`, ``}},
+					Query: `SELECT (inventory -> ARRAY[]::text[])::text, slice(inventory, ARRAY[]::text[])::text FROM vending_machines WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0158-select-inventory->-array[]::text[]-::text", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT array_to_string(inventory -> ARRAY[NULL]::text[], '|', '<NULL>'), slice(inventory, ARRAY[NULL]::text[])::text FROM vending_machines WHERE id = 1;`,
-					Expected: []sql.Row{{`<NULL>`, ``}},
+					Query: `SELECT array_to_string(inventory -> ARRAY[NULL]::text[], '|', '<NULL>'), slice(inventory, ARRAY[NULL]::text[])::text FROM vending_machines WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0159-select-array_to_string-inventory->-array[null]::text[]", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT array_to_string(akeys(inventory), '|', '<NULL>'), array_to_string(avals(inventory), '|', '<NULL>'), array_to_string(hstore_to_array(inventory), '|', '<NULL>') FROM vending_machines WHERE id = 3;`,
-					Expected: []sql.Row{{`A|B|empty`, `2|5|<NULL>`, `A|2|B|5|empty|<NULL>`}},
+					Query: `SELECT array_to_string(akeys(inventory), '|', '<NULL>'), array_to_string(avals(inventory), '|', '<NULL>'), array_to_string(hstore_to_array(inventory), '|', '<NULL>') FROM vending_machines WHERE id = 3;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0160-select-array_to_string-akeys-inventory-|", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT hstore_to_matrix(inventory)::text, array_to_string(hstore_to_matrix(inventory), '|', '<NULL>') FROM vending_machines WHERE id = 3;`,
-					Expected: []sql.Row{{`{{A,2},{B,5},{empty,NULL}}`, `A|2|B|5|empty|<NULL>`}},
+					Query: `SELECT hstore_to_matrix(inventory)::text, array_to_string(hstore_to_matrix(inventory), '|', '<NULL>') FROM vending_machines WHERE id = 3;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0161-select-hstore_to_matrix-inventory-::text-array_to_string", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT array_length(hstore_to_matrix(inventory), 1), array_length(hstore_to_matrix(inventory), 2), array_upper(hstore_to_matrix(inventory), 1), array_upper(hstore_to_matrix(inventory), 2) FROM vending_machines WHERE id = 3;`,
-					Expected: []sql.Row{{3, 2, 3, 2}},
+					Query: `SELECT array_length(hstore_to_matrix(inventory), 1), array_length(hstore_to_matrix(inventory), 2), array_upper(hstore_to_matrix(inventory), 1), array_upper(hstore_to_matrix(inventory), 2) FROM vending_machines WHERE id = 3;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0162-select-array_length-hstore_to_matrix-inventory-1", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT hstore_to_matrix('"quote"=>"a,b", "emptystr"=>""'::public.hstore)::text;`,
-					Expected: []sql.Row{{`{{quote,"a,b"},{emptystr,""}}`}},
+					Query: `SELECT hstore_to_matrix('"quote"=>"a,b", "emptystr"=>""'::public.hstore)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0163-select-hstore_to_matrix-quote-=>-a", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT (SELECT array_to_string(array_agg(k), '|', '<NULL>') FROM skeys('"A"=>"2", "B"=>"5", "empty"=>NULL'::public.hstore) AS t(k)), (SELECT array_to_string(array_agg(v), '|', '<NULL>') FROM svals('"A"=>"2", "B"=>"5", "empty"=>NULL'::public.hstore) AS t(v));`,
-					Expected: []sql.Row{{`A|B|empty`, `2|5|<NULL>`}},
+					Query: `SELECT (SELECT array_to_string(array_agg(k), '|', '<NULL>') FROM skeys('"A"=>"2", "B"=>"5", "empty"=>NULL'::public.hstore) AS t(k)), (SELECT array_to_string(array_agg(v), '|', '<NULL>') FROM svals('"A"=>"2", "B"=>"5", "empty"=>NULL'::public.hstore) AS t(v));`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0164-select-select-array_to_string-array_agg-k", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT (SELECT count(*)::text FROM skeys(''::public.hstore)), (SELECT count(*)::text FROM svals(''::public.hstore)), (SELECT count(*)::text FROM skeys(NULL::public.hstore)), (SELECT count(*)::text FROM svals(NULL::public.hstore));`,
-					Expected: []sql.Row{{`0`, `0`, `0`, `0`}},
+					Query: `SELECT (SELECT count(*)::text FROM skeys(''::public.hstore)), (SELECT count(*)::text FROM svals(''::public.hstore)), (SELECT count(*)::text FROM skeys(NULL::public.hstore)), (SELECT count(*)::text FROM svals(NULL::public.hstore));`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0165-select-select-count-*-::text", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT skeys('"B"=>"5", "A"=>"2"'::public.hstore);`,
-					Expected: []sql.Row{{`A`}, {`B`}},
+					Query: `SELECT skeys('"B"=>"5", "A"=>"2"'::public.hstore);`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0166-select-skeys-b-=>-5", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT svals('"A"=>"2", "empty"=>NULL, "B"=>"5"'::public.hstore);`,
-					Expected: []sql.Row{{`2`}, {`5`}, {nil}},
+					Query: `SELECT svals('"A"=>"2", "empty"=>NULL, "B"=>"5"'::public.hstore);`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0167-select-svals-a-=>-2", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT key, COALESCE(value, '<NULL>') FROM each('"B"=>"5", "A"=>"2", "empty"=>NULL, "quote"=>"a\"b"'::public.hstore);`,
-					Expected: []sql.Row{{`A`, `2`}, {`B`, `5`}, {`empty`, `<NULL>`}, {`quote`, `a"b`}},
+					Query: `SELECT key, COALESCE(value, '<NULL>') FROM each('"B"=>"5", "A"=>"2", "empty"=>NULL, "quote"=>"a\"b"'::public.hstore);`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0168-select-key-coalesce-value-<null>", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT k, COALESCE(v, '<NULL>') FROM each('"A"=>"2", "empty"=>NULL'::public.hstore) AS t(k, v);`,
-					Expected: []sql.Row{{`A`, `2`}, {`empty`, `<NULL>`}},
+					Query: `SELECT k, COALESCE(v, '<NULL>') FROM each('"A"=>"2", "empty"=>NULL'::public.hstore) AS t(k, v);`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0169-select-k-coalesce-v-<null>", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT k, COALESCE(value, '<NULL>') FROM each('"A"=>"2", "empty"=>NULL'::public.hstore) AS t(k);`,
-					Expected: []sql.Row{{`A`, `2`}, {`empty`, `<NULL>`}},
+					Query: `SELECT k, COALESCE(value, '<NULL>') FROM each('"A"=>"2", "empty"=>NULL'::public.hstore) AS t(k);`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0170-select-k-coalesce-value-<null>", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT (SELECT count(*)::text FROM each(''::public.hstore)), (SELECT count(*)::text FROM each(NULL::public.hstore));`,
-					Expected: []sql.Row{{`0`, `0`}},
+					Query: `SELECT (SELECT count(*)::text FROM each(''::public.hstore)), (SELECT count(*)::text FROM each(NULL::public.hstore));`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0171-select-select-count-*-::text", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT each('"B"=>"5", "A"=>"2"'::public.hstore);`,
-					Expected: []sql.Row{{`(A,2)`}, {`(B,5)`}},
+					Query: `SELECT each('"B"=>"5", "A"=>"2"'::public.hstore);`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0172-select-each-b-=>-5", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT hstore(ARRAY['n', 'float', 'bool', 'str', 'empty', 'bad'], ARRAY['12', '3.5', 'true', '012', NULL, '12x'])::text, array_to_string(hstore_to_array('"n"=>"12", "float"=>"3.5", "bool"=>"true", "str"=>"012", "empty"=>NULL, "bad"=>"12x"'::public.hstore), '|', '<NULL>');`,
-					Expected: []sql.Row{{`"n"=>"12", "bad"=>"12x", "str"=>"012", "bool"=>"true", "empty"=>NULL, "float"=>"3.5"`, `n|12|bad|12x|str|012|bool|true|empty|<NULL>|float|3.5`}},
+					Query: `SELECT hstore(ARRAY['n', 'float', 'bool', 'str', 'empty', 'bad'], ARRAY['12', '3.5', 'true', '012', NULL, '12x'])::text, array_to_string(hstore_to_array('"n"=>"12", "float"=>"3.5", "bool"=>"true", "str"=>"012", "empty"=>NULL, "bad"=>"12x"'::public.hstore), '|', '<NULL>');`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0173-select-hstore-array[-n-float", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT akeys(''::public.hstore)::text, avals(''::public.hstore)::text, hstore_to_array(''::public.hstore)::text;`,
-					Expected: []sql.Row{{`{}`, `{}`, `{}`}},
+					Query: `SELECT akeys(''::public.hstore)::text, avals(''::public.hstore)::text, hstore_to_array(''::public.hstore)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0174-select-akeys-::public.hstore-::text-avals", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT hstore_to_matrix(''::public.hstore)::text, hstore_to_matrix(NULL::public.hstore) IS NULL;`,
-					Expected: []sql.Row{{`{}`, "t"}},
+					Query: `SELECT hstore_to_matrix(''::public.hstore)::text, hstore_to_matrix(NULL::public.hstore) IS NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0175-select-hstore_to_matrix-::public.hstore-::text-hstore_to_matrix", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT akeys(NULL::public.hstore) IS NULL, avals(NULL::public.hstore) IS NULL, hstore_to_array(NULL::public.hstore) IS NULL, hstore_to_matrix(NULL::public.hstore) IS NULL;`,
-					Expected: []sql.Row{{"t", "t", "t", "t"}},
+					Query: `SELECT akeys(NULL::public.hstore) IS NULL, avals(NULL::public.hstore) IS NULL, hstore_to_array(NULL::public.hstore) IS NULL, hstore_to_matrix(NULL::public.hstore) IS NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0176-select-akeys-null::public.hstore-is-null", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT hstore('A', '2')::text, hstore('empty', NULL)::text, hstore(NULL, 'x') IS NULL;`,
-					Expected: []sql.Row{{`"A"=>"2"`, `"empty"=>NULL`, "t"}},
+					Query: `SELECT hstore('A', '2')::text, hstore('empty', NULL)::text, hstore(NULL, 'x') IS NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0177-select-hstore-a-2-::text", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT tconvert('A', '2')::text, tconvert('empty', NULL)::text, tconvert(NULL, 'x') IS NULL;`,
-					Expected: []sql.Row{{`"A"=>"2"`, `"empty"=>NULL`, "t"}},
+					Query: `SELECT tconvert('A', '2')::text, tconvert('empty', NULL)::text, tconvert(NULL, 'x') IS NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0178-select-tconvert-a-2-::text", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT hstore(ARRAY['B', 'A', 'empty'], ARRAY['5', '2', NULL])::text, hstore(ARRAY['A', 'A'], ARRAY['1', '2'])::text, hstore(ARRAY['A'], NULL::text[])::text;`,
-					Expected: []sql.Row{{`"A"=>"2", "B"=>"5", "empty"=>NULL`, `"A"=>"1"`, `"A"=>NULL`}},
+					Query: `SELECT hstore(ARRAY['B', 'A', 'empty'], ARRAY['5', '2', NULL])::text, hstore(ARRAY['A', 'A'], ARRAY['1', '2'])::text, hstore(ARRAY['A'], NULL::text[])::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0179-select-hstore-array[-b-a", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT hstore_version_diag(''::public.hstore)::text, hstore_version_diag('"A"=>"2"'::public.hstore)::text, hstore_version_diag(NULL::public.hstore) IS NULL;`,
-					Expected: []sql.Row{{"2", "2", "t"}},
+					Query: `SELECT hstore_version_diag(''::public.hstore)::text, hstore_version_diag('"A"=>"2"'::public.hstore)::text, hstore_version_diag(NULL::public.hstore) IS NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0180-select-hstore_version_diag-::public.hstore-::text-hstore_version_diag", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT hstore_out(''::public.hstore), hstore_out('"B"=>"5", "A"=>"2", "empty"=>NULL'::public.hstore), hstore_out(NULL::public.hstore) IS NULL;`,
-					Expected: []sql.Row{{``, `"A"=>"2", "B"=>"5", "empty"=>NULL`, "t"}},
+					Query: `SELECT hstore_out(''::public.hstore), hstore_out('"B"=>"5", "A"=>"2", "empty"=>NULL'::public.hstore), hstore_out(NULL::public.hstore) IS NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0181-select-hstore_out-::public.hstore-hstore_out-b", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT hstore_in('"B"=>"5", "A"=>"2", "empty"=>NULL')::text, hstore_in('')::text, hstore_in(NULL) IS NULL;`,
-					Expected: []sql.Row{{`"A"=>"2", "B"=>"5", "empty"=>NULL`, ``, "t"}},
+					Query: `SELECT hstore_in('"B"=>"5", "A"=>"2", "empty"=>NULL')::text, hstore_in('')::text, hstore_in(NULL) IS NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0182-select-hstore_in-b-=>-5", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT hstore_send(''::public.hstore)::text, hstore_send('"B"=>"5", "A"=>"2", "empty"=>NULL'::public.hstore)::text, hstore_send('"quote"=>"a\"b", "slash"=>"c\\d"'::public.hstore)::text, hstore_send(NULL::public.hstore) IS NULL;`,
-					Expected: []sql.Row{{`\x00000000`, `\x00000003000000014100000001320000000142000000013500000005656d707479ffffffff`, `\x000000020000000571756f74650000000361226200000005736c61736800000003635c64`, "t"}},
+					Query: `SELECT hstore_send(''::public.hstore)::text, hstore_send('"B"=>"5", "A"=>"2", "empty"=>NULL'::public.hstore)::text, hstore_send('"quote"=>"a\"b", "slash"=>"c\\d"'::public.hstore)::text, hstore_send(NULL::public.hstore) IS NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0183-select-hstore_send-::public.hstore-::text-hstore_send", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT hstore_hash(''::public.hstore)::text, hstore_hash('"A"=>"2"'::public.hstore)::text, hstore_hash('"B"=>"5", "A"=>"2", "empty"=>NULL'::public.hstore)::text, hstore_hash('"quote"=>"a\"b", "slash"=>"c\\d"'::public.hstore)::text, hstore_hash(NULL::public.hstore) IS NULL;`,
-					Expected: []sql.Row{{"-1524351049", "-653174632", "-1135331332", "1781935767", "t"}},
+					Query: `SELECT hstore_hash(''::public.hstore)::text, hstore_hash('"A"=>"2"'::public.hstore)::text, hstore_hash('"B"=>"5", "A"=>"2", "empty"=>NULL'::public.hstore)::text, hstore_hash('"quote"=>"a\"b", "slash"=>"c\\d"'::public.hstore)::text, hstore_hash(NULL::public.hstore) IS NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0184-select-hstore_hash-::public.hstore-::text-hstore_hash", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT hstore_hash('"A"=>"2", "B"=>"5"'::public.hstore) = hstore_hash('"B"=>"5", "A"=>"2"'::public.hstore), hstore_hash('"A"=>"first", "A"=>"second"'::public.hstore)::text, hstore_hash('"A"=>"first"'::public.hstore)::text;`,
-					Expected: []sql.Row{{"t", "-330768083", "-330768083"}},
+					Query: `SELECT hstore_hash('"A"=>"2", "B"=>"5"'::public.hstore) = hstore_hash('"B"=>"5", "A"=>"2"'::public.hstore), hstore_hash('"A"=>"first", "A"=>"second"'::public.hstore)::text, hstore_hash('"A"=>"first"'::public.hstore)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0185-select-hstore_hash-a-=>-2", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT hstore_hash_extended(''::public.hstore, 0)::text, hstore_hash_extended('"A"=>"2"'::public.hstore, 0)::text, hstore_hash_extended('"A"=>"2"'::public.hstore, 42)::text, hstore_hash_extended('"B"=>"5", "A"=>"2", "empty"=>NULL'::public.hstore, 0)::text, hstore_hash_extended('"B"=>"5", "A"=>"2", "empty"=>NULL'::public.hstore, -1)::text, hstore_hash_extended(NULL::public.hstore, 0) IS NULL;`,
-					Expected: []sql.Row{{"1977219185673256887", "973419178382940312", "-9148714739893068701", "-6475142324932036612", "8123414359138430297", "t"}},
+					Query: `SELECT hstore_hash_extended(''::public.hstore, 0)::text, hstore_hash_extended('"A"=>"2"'::public.hstore, 0)::text, hstore_hash_extended('"A"=>"2"'::public.hstore, 42)::text, hstore_hash_extended('"B"=>"5", "A"=>"2", "empty"=>NULL'::public.hstore, 0)::text, hstore_hash_extended('"B"=>"5", "A"=>"2", "empty"=>NULL'::public.hstore, -1)::text, hstore_hash_extended(NULL::public.hstore, 0) IS NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0186-select-hstore_hash_extended-::public.hstore-0-::text", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
 					Query: `SELECT am.amname, opc.opcname, opc.opcdefault, typ.typname, COALESCE(keytyp.typname, '')
@@ -1182,13 +1133,7 @@ ORDER BY am.amname, opc.opcname;`,
 FROM pg_catalog.pg_opfamily opf
 JOIN pg_catalog.pg_am am ON am.oid = opf.opfmethod
 WHERE opf.opfname IN ('btree_hstore_ops', 'hash_hstore_ops', 'gist_hstore_ops', 'gin_hstore_ops')
-ORDER BY am.amname, opf.opfname;`,
-					Expected: []sql.Row{
-						{"btree", "btree_hstore_ops"},
-						{"gin", "gin_hstore_ops"},
-						{"gist", "gist_hstore_ops"},
-						{"hash", "hash_hstore_ops"},
-					},
+ORDER BY am.amname, opf.opfname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0188-select-am.amname-opf.opfname-from-pg_catalog.pg_opfamily", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
 					Query: `SELECT am.amname, opf.opfname, amop.amopstrategy, opr.oprname, rt.typname
@@ -1269,100 +1214,77 @@ ORDER BY am.amname, opf.opfname, amproc.amprocnum;`,
 					Expected: []sql.Row{{`{"A":"2","empty":null}`, `{"A": "2", "empty": null}`}},
 				},
 				{
-					Query:    `SELECT hstore(ARRAY['A', '2', 'B', '5', 'empty', NULL])::text, hstore(ARRAY['A', '1', 'A', '2'])::text, hstore(NULL::text[]) IS NULL;`,
-					Expected: []sql.Row{{`"A"=>"2", "B"=>"5", "empty"=>NULL`, `"A"=>"1"`, "t"}},
+					Query: `SELECT hstore(ARRAY['A', '2', 'B', '5', 'empty', NULL])::text, hstore(ARRAY['A', '1', 'A', '2'])::text, hstore(NULL::text[]) IS NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0198-select-hstore-array[-a-2", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT hstore(ARRAY[]::text[])::text, hstore(ARRAY[]::text[], ARRAY[]::text[])::text;`,
-					Expected: []sql.Row{{``, ``}},
+					Query: `SELECT hstore(ARRAY[]::text[])::text, hstore(ARRAY[]::text[], ARRAY[]::text[])::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0199-select-hstore-array[]::text[]-::text-hstore", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT hstore(ROW('Ada', 42, true, NULL)::hstore_person)::text;`,
-					Expected: []sql.Row{{`"age"=>"42", "name"=>"Ada", "note"=>NULL, "active"=>"t"`}},
+					Query: `SELECT hstore(ROW('Ada', 42, true, NULL)::hstore_person)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0200-select-hstore-row-ada-42", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT hstore(ROW(1, 'x', NULL))::text, hstore(ROW('needs,quote', 'a"b', false))::text;`,
-					Expected: []sql.Row{{`"f1"=>"1", "f2"=>"x", "f3"=>NULL`, `"f1"=>"needs,quote", "f2"=>"a\"b", "f3"=>"f"`}},
+					Query: `SELECT hstore(ROW(1, 'x', NULL))::text, hstore(ROW('needs,quote', 'a"b', false))::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0201-select-hstore-row-1-x", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT hstore(NULL::hstore_person)::text;`,
-					Expected: []sql.Row{{`"age"=>NULL, "name"=>NULL, "note"=>NULL, "active"=>NULL`}},
+					Query: `SELECT hstore(NULL::hstore_person)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0202-select-hstore-null::hstore_person-::text", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT '"A"=>"2", "B"=>"5"'::public.hstore = '"B"=>"5", "A"=>"2"'::public.hstore, '"A"=>NULL'::public.hstore = '"A"=>NULL'::public.hstore, '"A"=>NULL'::public.hstore = '"A"=>""'::public.hstore;`,
-					Expected: []sql.Row{{"t", "t", "f"}},
+					Query: `SELECT '"A"=>"2", "B"=>"5"'::public.hstore = '"B"=>"5", "A"=>"2"'::public.hstore, '"A"=>NULL'::public.hstore = '"A"=>NULL'::public.hstore, '"A"=>NULL'::public.hstore = '"A"=>""'::public.hstore;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0203-select-a-=>-2-b", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT '"A"=>"2"'::public.hstore <> '"A"=>"9"'::public.hstore, '"A"=>"2"'::public.hstore = '"A"=>"2", "B"=>NULL'::public.hstore;`,
-					Expected: []sql.Row{{"t", "f"}},
+					Query: `SELECT '"A"=>"2"'::public.hstore <> '"A"=>"9"'::public.hstore, '"A"=>"2"'::public.hstore = '"A"=>"2", "B"=>NULL'::public.hstore;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0204-select-a-=>-2-::public.hstore", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT hstore_cmp(''::public.hstore, '"A"=>"1"'::public.hstore)::text, hstore_cmp('"A"=>"1"'::public.hstore, '"A"=>"2"'::public.hstore)::text, hstore_cmp('"A"=>"2"'::public.hstore, '"A"=>"1"'::public.hstore)::text, hstore_cmp('"A"=>NULL'::public.hstore, '"A"=>""'::public.hstore)::text, hstore_cmp('"A"=>"1"'::public.hstore, '"A"=>"1", "B"=>"1"'::public.hstore)::text;`,
-					Expected: []sql.Row{{`-1`, `-1`, `1`, `1`, `-1`}},
+					Query: `SELECT hstore_cmp(''::public.hstore, '"A"=>"1"'::public.hstore)::text, hstore_cmp('"A"=>"1"'::public.hstore, '"A"=>"2"'::public.hstore)::text, hstore_cmp('"A"=>"2"'::public.hstore, '"A"=>"1"'::public.hstore)::text, hstore_cmp('"A"=>NULL'::public.hstore, '"A"=>""'::public.hstore)::text, hstore_cmp('"A"=>"1"'::public.hstore, '"A"=>"1", "B"=>"1"'::public.hstore)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0205-select-hstore_cmp-::public.hstore-a-=>", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT hstore_lt('"A"=>"1"'::public.hstore, '"A"=>"2"'::public.hstore), hstore_le('"A"=>"1"'::public.hstore, '"A"=>"1"'::public.hstore), hstore_gt('"B"=>"1"'::public.hstore, '"AA"=>"1"'::public.hstore), hstore_ge('"A"=>NULL'::public.hstore, '"A"=>""'::public.hstore);`,
-					Expected: []sql.Row{{"t", "t", "t", "t"}},
+					Query: `SELECT hstore_lt('"A"=>"1"'::public.hstore, '"A"=>"2"'::public.hstore), hstore_le('"A"=>"1"'::public.hstore, '"A"=>"1"'::public.hstore), hstore_gt('"B"=>"1"'::public.hstore, '"AA"=>"1"'::public.hstore), hstore_ge('"A"=>NULL'::public.hstore, '"A"=>""'::public.hstore);`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0206-select-hstore_lt-a-=>-1", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT '"A"=>"1"'::public.hstore #<# '"A"=>"2"'::public.hstore, '"A"=>"1"'::public.hstore #<=# '"A"=>"1"'::public.hstore, '"B"=>"1"'::public.hstore #># '"AA"=>"1"'::public.hstore, '"A"=>NULL'::public.hstore #>=# '"A"=>""'::public.hstore;`,
-					Expected: []sql.Row{{"t", "t", "t", "t"}},
+					Query: `SELECT '"A"=>"1"'::public.hstore #<# '"A"=>"2"'::public.hstore, '"A"=>"1"'::public.hstore #<=# '"A"=>"1"'::public.hstore, '"B"=>"1"'::public.hstore #># '"AA"=>"1"'::public.hstore, '"A"=>NULL'::public.hstore #>=# '"A"=>""'::public.hstore;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0207-select-a-=>-1-::public.hstore", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT NULL::public.hstore #<# '"A"=>"1"'::public.hstore IS NULL, '"A"=>"1"'::public.hstore #># NULL::public.hstore IS NULL;`,
-					Expected: []sql.Row{{"t", "t"}},
+					Query: `SELECT NULL::public.hstore #<# '"A"=>"1"'::public.hstore IS NULL, '"A"=>"1"'::public.hstore #># NULL::public.hstore IS NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0208-select-null::public.hstore-#<#-a-=>", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT '"A"=>"1"'::public.hstore OPERATOR(public.#<#) '"A"=>"2"'::public.hstore;`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT '"A"=>"1"'::public.hstore OPERATOR(public.#<#) '"A"=>"2"'::public.hstore;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0209-select-a-=>-1-::public.hstore", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT (%% '"B"=>"5", "A"=>"2", "empty"=>NULL'::public.hstore)::text, (%# '"B"=>"5", "A"=>"2", "empty"=>NULL'::public.hstore)::text;`,
-					Expected: []sql.Row{{"{A,2,B,5,empty,NULL}", "{{A,2},{B,5},{empty,NULL}}"}},
+					Query: `SELECT (%% '"B"=>"5", "A"=>"2", "empty"=>NULL'::public.hstore)::text, (%# '"B"=>"5", "A"=>"2", "empty"=>NULL'::public.hstore)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0210-select-%%-b-=>-5", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT * FROM populate_record(NULL::hstore_pop_base, '"a"=>"5", "b"=>"from hstore", "c"=>"f", "ignored"=>"x"'::public.hstore);`,
-					Expected: []sql.Row{{5, "from hstore", "f"}},
+					Query: `SELECT * FROM populate_record(NULL::hstore_pop_base, '"a"=>"5", "b"=>"from hstore", "c"=>"f", "ignored"=>"x"'::public.hstore);`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0211-select-*-from-populate_record-null::hstore_pop_base", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT * FROM populate_record(ROW(10, 'base', true)::hstore_pop_base, '"a"=>"5", "b"=>NULL'::public.hstore);`,
-					Expected: []sql.Row{{5, nil, "t"}},
+					Query: `SELECT * FROM populate_record(ROW(10, 'base', true)::hstore_pop_base, '"a"=>"5", "b"=>NULL'::public.hstore);`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0212-select-*-from-populate_record-row", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT * FROM populate_record(ROW(10, 'base', true)::hstore_pop_base, NULL::public.hstore);`,
-					Expected: []sql.Row{{10, "base", "t"}},
+					Query: `SELECT * FROM populate_record(ROW(10, 'base', true)::hstore_pop_base, NULL::public.hstore);`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0213-select-*-from-populate_record-row", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT populate_record(NULL::hstore_pop_base, NULL::public.hstore) IS NULL;`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT populate_record(NULL::hstore_pop_base, NULL::public.hstore) IS NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0214-select-populate_record-null::hstore_pop_base-null::public.hstore-is", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT ((ROW(10, 'base', true)::hstore_pop_base #= '"a"=>"5", "b"=>NULL'::public.hstore)).a, ((ROW(10, 'base', true)::hstore_pop_base #= '"a"=>"5", "b"=>NULL'::public.hstore)).b, ((ROW(10, 'base', true)::hstore_pop_base #= '"a"=>"5", "b"=>NULL'::public.hstore)).c;`,
-					Expected: []sql.Row{{5, nil, "t"}},
+					Query: `SELECT ((ROW(10, 'base', true)::hstore_pop_base #= '"a"=>"5", "b"=>NULL'::public.hstore)).a, ((ROW(10, 'base', true)::hstore_pop_base #= '"a"=>"5", "b"=>NULL'::public.hstore)).b, ((ROW(10, 'base', true)::hstore_pop_base #= '"a"=>"5", "b"=>NULL'::public.hstore)).c;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0215-select-row-10-base-true", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT ((ROW(10, 'base', true)::hstore_pop_base #= NULL::public.hstore)).a, (NULL::hstore_pop_base #= NULL::public.hstore) IS NULL;`,
-					Expected: []sql.Row{{10, "t"}},
+					Query: `SELECT ((ROW(10, 'base', true)::hstore_pop_base #= NULL::public.hstore)).a, (NULL::hstore_pop_base #= NULL::public.hstore) IS NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0216-select-row-10-base-true", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT * FROM populate_record(NULL::hstore_pop_base, '"A"=>"5", "b"=>"exact"'::public.hstore);`,
-					Expected: []sql.Row{{nil, "exact", nil}},
+					Query: `SELECT * FROM populate_record(NULL::hstore_pop_base, '"A"=>"5", "b"=>"exact"'::public.hstore);`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0217-select-*-from-populate_record-null::hstore_pop_base", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT * FROM populate_record(NULL::hstore_pop_base, '"b"=>""'::public.hstore);`,
-					Expected: []sql.Row{{nil, "", nil}},
+					Query: `SELECT * FROM populate_record(NULL::hstore_pop_base, '"b"=>""'::public.hstore);`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0218-select-*-from-populate_record-null::hstore_pop_base", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
 					Query:    `SELECT * FROM populate_record(NULL::hstore_pop_row, hstore(ARRAY['a', 'b', 'c', 'j'], ARRAY['1', '{2,"a b"}', '(9,nested,t)', '{"x":2}']));`,
 					Expected: []sql.Row{{1, `{2,"a b"}`, `(9,nested,t)`, `{"x": 2}`}},
 				},
 				{
-					Query:    `SELECT c FROM populate_record(NULL::hstore_pop_row, hstore(ARRAY['a', 'c'], ARRAY['1', '(9,"needs,quote",)']));`,
-					Expected: []sql.Row{{`(9,"needs,quote",)`}},
+					Query: `SELECT c FROM populate_record(NULL::hstore_pop_row, hstore(ARRAY['a', 'c'], ARRAY['1', '(9,"needs,quote",)']));`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0220-select-c-from-populate_record-null::hstore_pop_row", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
-					Query:    `SELECT (populate_record(NULL::hstore_pop_base, '"a"=>"7", "b"=>"scalar", "c"=>"false"'::public.hstore)).b;`,
-					Expected: []sql.Row{{"scalar"}},
+					Query: `SELECT (populate_record(NULL::hstore_pop_base, '"a"=>"7", "b"=>"scalar", "c"=>"false"'::public.hstore)).b;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0221-select-populate_record-null::hstore_pop_base-a-=>", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 				{
 					Query:       `SELECT hstore(ARRAY['A', '1', 'B']::text[]);`,
@@ -1381,8 +1303,7 @@ ORDER BY am.amname, opf.opfname, amproc.amprocnum;`,
 					ExpectedErr: `invalid input syntax for type hstore`,
 				},
 				{
-					Query:       `SELECT * FROM populate_record(NULL::hstore_pop_base, '"a"=>"not-int"'::public.hstore);`,
-					ExpectedErr: `invalid input syntax`,
+					Query: `SELECT * FROM populate_record(NULL::hstore_pop_base, '"a"=>"not-int"'::public.hstore);`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0226-select-*-from-populate_record-null::hstore_pop_base", Compare: "sqlstate", Cleanup: []string{"DROP EXTENSION IF EXISTS hstore CASCADE", "DROP TABLE IF EXISTS vending_machines CASCADE", "DROP TYPE IF EXISTS hstore_person CASCADE", "DROP TYPE IF EXISTS hstore_pop_base CASCADE", "DROP TYPE IF EXISTS hstore_pop_row CASCADE"}},
 				},
 			},
 		},
