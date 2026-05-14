@@ -79,7 +79,9 @@ type entry struct {
 	Oracle                string            `json:"oracle"`
 	Compare               string            `json:"compare"`
 	Setup                 []string          `json:"setup,omitempty"`
+	SetupStatements       []oracleStatement `json:"setupStatements,omitempty"`
 	Query                 string            `json:"query"`
+	BindVars              []oracleBindVar   `json:"bindVars,omitempty"`
 	ExpectedRows          *[][]cell         `json:"expectedRows,omitempty"`
 	ExpectedSQLState      string            `json:"expectedSqlstate,omitempty"`
 	ExpectedErrorSeverity string            `json:"expectedErrorSeverity,omitempty"`
@@ -87,6 +89,18 @@ type entry struct {
 	ColumnModes           []string          `json:"columnModes,omitempty"`
 	Cleanup               []string          `json:"cleanup,omitempty"`
 	Variables             map[string]string `json:"variables,omitempty"`
+}
+
+type oracleStatement struct {
+	Query    string          `json:"query"`
+	BindVars []oracleBindVar `json:"bindVars,omitempty"`
+}
+
+type oracleBindVar struct {
+	Kind   string   `json:"kind"`
+	Value  string   `json:"value,omitempty"`
+	Values []string `json:"values,omitempty"`
+	Null   bool     `json:"null,omitempty"`
 }
 
 type cell struct {
@@ -106,27 +120,28 @@ type migrationFile struct {
 }
 
 type migrationAssertion struct {
-	Key             string    `json:"key"`
-	Source          string    `json:"source"`
-	Ordinal         int       `json:"ordinal"`
-	ScriptName      string    `json:"scriptName,omitempty"`
-	Oracle          string    `json:"oracle"`
-	PostgresID      string    `json:"postgresId,omitempty"`
-	SuggestedID     string    `json:"suggestedId"`
-	Compare         string    `json:"compare,omitempty"`
-	ColumnModes     []string  `json:"columnModes,omitempty"`
-	ExpectedKind    string    `json:"expectedKind"`
-	SQLState        string    `json:"sqlstate,omitempty"`
-	ErrorSeverity   string    `json:"errorSeverity,omitempty"`
-	Username        string    `json:"username,omitempty"`
-	Query           string    `json:"query,omitempty"`
-	QuerySHA256     string    `json:"querySha256,omitempty"`
-	ExpectedRows    *[][]cell `json:"expectedRows,omitempty"`
-	ExpectedTag     *string   `json:"expectedTag,omitempty"`
-	NonLiteral      []string  `json:"nonLiteral,omitempty"`
-	Cleanup         []string  `json:"cleanup,omitempty"`
-	NeedsCleanup    bool      `json:"needsCleanup"`
-	CleanupProvided bool      `json:"cleanupProvided"`
+	Key             string          `json:"key"`
+	Source          string          `json:"source"`
+	Ordinal         int             `json:"ordinal"`
+	ScriptName      string          `json:"scriptName,omitempty"`
+	Oracle          string          `json:"oracle"`
+	PostgresID      string          `json:"postgresId,omitempty"`
+	SuggestedID     string          `json:"suggestedId"`
+	Compare         string          `json:"compare,omitempty"`
+	ColumnModes     []string        `json:"columnModes,omitempty"`
+	ExpectedKind    string          `json:"expectedKind"`
+	SQLState        string          `json:"sqlstate,omitempty"`
+	ErrorSeverity   string          `json:"errorSeverity,omitempty"`
+	Username        string          `json:"username,omitempty"`
+	Query           string          `json:"query,omitempty"`
+	QuerySHA256     string          `json:"querySha256,omitempty"`
+	BindVars        []oracleBindVar `json:"bindVars,omitempty"`
+	ExpectedRows    *[][]cell       `json:"expectedRows,omitempty"`
+	ExpectedTag     *string         `json:"expectedTag,omitempty"`
+	NonLiteral      []string        `json:"nonLiteral,omitempty"`
+	Cleanup         []string        `json:"cleanup,omitempty"`
+	NeedsCleanup    bool            `json:"needsCleanup"`
+	CleanupProvided bool            `json:"cleanupProvided"`
 }
 
 const defaultPostgresOracleDSN = "postgres://postgres:password@127.0.0.1:5432/postgres?sslmode=disable"
@@ -1351,10 +1366,11 @@ func mergeMigrationFiles(existing migrationFile, generated migrationFile) (migra
 }
 
 func hasUnsafeAutoIsolatedPublicReference(entry entry) bool {
-	if len(entry.Setup) < 2 || entry.Setup[0] != "CREATE SCHEMA {{quotedSchema}}" || !strings.Contains(entry.Setup[1], "{{quotedSchema}}") {
+	setup := entrySetupQueries(entry)
+	if len(setup) < 2 || setup[0] != "CREATE SCHEMA {{quotedSchema}}" || !strings.Contains(setup[1], "{{quotedSchema}}") {
 		return false
 	}
-	for _, statement := range append(append([]string{}, entry.Setup...), entry.Query) {
+	for _, statement := range append(append([]string{}, setup...), entry.Query) {
 		if hasExplicitPublicSchemaReference(statement) {
 			return true
 		}
@@ -1390,7 +1406,7 @@ func hasExplicitPublicSchemaReference(statement string) bool {
 }
 
 func hasDoltSpecificStatement(entry entry) bool {
-	for _, statement := range entry.Setup {
+	for _, statement := range entrySetupQueries(entry) {
 		if hasDoltSpecificSQL(statement) {
 			return true
 		}
@@ -1538,13 +1554,13 @@ func readPostgresOracleExpected(ctx context.Context, conn *pgx.Conn, entry entry
 	if err := resetOracleSession(ctx, conn); err != nil {
 		return nil, nil, "", "", nil, err
 	}
-	if err := runOracleStatements(ctx, conn, variables, entry.Setup); err != nil {
+	if err := runOracleStatementSteps(ctx, conn, variables, entrySetupStatements(entry)); err != nil {
 		return nil, nil, "", "", nil, err
 	}
 
-	query := expandOracleVariables(entry.Query, variables)
+	queryStatement := oracleStatement{Query: entry.Query, BindVars: entry.BindVars}
 	if entry.Compare == "sqlstate" || entry.ExpectedSQLState != "" {
-		_, err := conn.Exec(ctx, query)
+		_, err := execOracleStatement(ctx, conn, variables, queryStatement)
 		if err == nil {
 			if entry.ExpectedSQLState != "" {
 				return nil, nil, "", "", nil, fmt.Errorf("expected SQLSTATE %s but query succeeded", entry.ExpectedSQLState)
@@ -1558,7 +1574,7 @@ func readPostgresOracleExpected(ctx context.Context, conn *pgx.Conn, entry entry
 		}
 	}
 	if entry.Compare == "tag" || entry.ExpectedTag != nil {
-		commandTag, err := conn.Exec(ctx, query)
+		commandTag, err := execOracleStatement(ctx, conn, variables, queryStatement)
 		if err != nil {
 			var pgErr *pgconn.PgError
 			if !errors.As(err, &pgErr) {
@@ -1570,7 +1586,7 @@ func readPostgresOracleExpected(ctx context.Context, conn *pgx.Conn, entry entry
 		return nil, nil, "", "", &tag, nil
 	}
 
-	rows, err := conn.Query(ctx, query)
+	rows, err := queryOracleStatement(ctx, conn, variables, queryStatement)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if !errors.As(err, &pgErr) {
@@ -1952,13 +1968,153 @@ func formatPostgresUUID(bytes [16]byte) string {
 	return encoded[0:8] + "-" + encoded[8:12] + "-" + encoded[12:16] + "-" + encoded[16:20] + "-" + encoded[20:32]
 }
 
-func runOracleStatements(ctx context.Context, conn *pgx.Conn, variables map[string]string, statements []string) error {
+func entrySetupStatements(entry entry) []oracleStatement {
+	if len(entry.SetupStatements) > 0 {
+		return entry.SetupStatements
+	}
+	return statementsFromQueries(entry.Setup)
+}
+
+func entrySetupQueries(entry entry) []string {
+	return statementQueries(entrySetupStatements(entry))
+}
+
+func statementsFromQueries(queries []string) []oracleStatement {
+	statements := make([]oracleStatement, 0, len(queries))
+	for _, query := range queries {
+		statements = append(statements, oracleStatement{Query: query})
+	}
+	return statements
+}
+
+func statementQueries(statements []oracleStatement) []string {
+	queries := make([]string, 0, len(statements))
 	for _, statement := range statements {
-		if _, err := conn.Exec(ctx, expandOracleVariables(statement, variables)); err != nil {
-			return fmt.Errorf("oracle statement failed: %s: %w", statement, err)
+		queries = append(queries, statement.Query)
+	}
+	return queries
+}
+
+func statementsHaveBindVars(statements []oracleStatement) bool {
+	for _, statement := range statements {
+		if len(statement.BindVars) > 0 {
+			return true
+		}
+	}
+	return false
+}
+
+func runOracleStatements(ctx context.Context, conn *pgx.Conn, variables map[string]string, statements []string) error {
+	return runOracleStatementSteps(ctx, conn, variables, statementsFromQueries(statements))
+}
+
+func runOracleStatementSteps(ctx context.Context, conn *pgx.Conn, variables map[string]string, statements []oracleStatement) error {
+	for _, statement := range statements {
+		if _, err := execOracleStatement(ctx, conn, variables, statement); err != nil {
+			return fmt.Errorf("oracle statement failed: %s: %w", statement.Query, err)
 		}
 	}
 	return nil
+}
+
+func execOracleStatement(ctx context.Context, conn *pgx.Conn, variables map[string]string, statement oracleStatement) (pgconn.CommandTag, error) {
+	query := expandOracleVariables(statement.Query, variables)
+	args, err := oracleQueryArgs(statement.BindVars)
+	if err != nil {
+		return pgconn.CommandTag{}, err
+	}
+	return conn.Exec(ctx, query, args...)
+}
+
+func queryOracleStatement(ctx context.Context, conn *pgx.Conn, variables map[string]string, statement oracleStatement) (pgx.Rows, error) {
+	query := expandOracleVariables(statement.Query, variables)
+	args, err := oracleQueryArgs(statement.BindVars)
+	if err != nil {
+		return nil, err
+	}
+	return conn.Query(ctx, query, args...)
+}
+
+func oracleQueryArgs(bindVars []oracleBindVar) ([]interface{}, error) {
+	if len(bindVars) == 0 {
+		return nil, nil
+	}
+	args := make([]interface{}, 0, len(bindVars)+1)
+	args = append(args, pgx.QueryExecModeExec)
+	for _, bindVar := range bindVars {
+		value, err := oracleBindVarValue(bindVar)
+		if err != nil {
+			return nil, err
+		}
+		args = append(args, value)
+	}
+	return args, nil
+}
+
+func oracleBindVarValue(bindVar oracleBindVar) (interface{}, error) {
+	if bindVar.Null || bindVar.Kind == "null" {
+		return nil, nil
+	}
+	switch bindVar.Kind {
+	case "string":
+		return bindVar.Value, nil
+	case "int":
+		value, err := strconv.ParseInt(bindVar.Value, 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		return value, nil
+	case "float":
+		value, err := strconv.ParseFloat(bindVar.Value, 64)
+		if err != nil {
+			return nil, err
+		}
+		return value, nil
+	case "bool":
+		value, err := strconv.ParseBool(bindVar.Value)
+		if err != nil {
+			return nil, err
+		}
+		return value, nil
+	case "date":
+		parsed, err := time.Parse("2006-01-02", bindVar.Value)
+		if err != nil {
+			return nil, err
+		}
+		var value pgtype.Date
+		if err := value.Scan(parsed); err != nil {
+			return nil, err
+		}
+		return value, nil
+	case "timestamp":
+		parsed, err := time.Parse("2006-01-02 15:04:05", bindVar.Value)
+		if err != nil {
+			return nil, err
+		}
+		var value pgtype.Timestamp
+		if err := value.Scan(parsed); err != nil {
+			return nil, err
+		}
+		return value, nil
+	case "uuid":
+		var value pgtype.UUID
+		if err := value.Scan(bindVar.Value); err != nil {
+			return nil, err
+		}
+		return value, nil
+	case "numeric":
+		var value pgtype.Numeric
+		if err := value.Scan(bindVar.Value); err != nil {
+			return nil, err
+		}
+		return value, nil
+	case "bytes":
+		return hex.DecodeString(bindVar.Value)
+	case "stringArray":
+		return append([]string(nil), bindVar.Values...), nil
+	default:
+		return nil, fmt.Errorf("unsupported bind var kind %q", bindVar.Kind)
+	}
 }
 
 func resetOracleSession(ctx context.Context, conn *pgx.Conn) error {
@@ -2162,8 +2318,13 @@ func migrationCandidate(source string, ordinal int, scriptName string, fields ma
 	username, nonLiteral := candidateStringLiteral(fields["Username"], "Username", candidate.NonLiteral)
 	candidate.Username = username
 	candidate.NonLiteral = nonLiteral
-	if fields["BindVars"] != nil {
-		candidate.NonLiteral = append(candidate.NonLiteral, "BindVars")
+	if bindVarsExpr := fields["BindVars"]; bindVarsExpr != nil {
+		bindVars, err := bindVarsFromExpr(bindVarsExpr)
+		if err != nil {
+			candidate.NonLiteral = append(candidate.NonLiteral, "BindVars")
+		} else {
+			candidate.BindVars = bindVars
+		}
 	}
 	if fields["CopyFromStdInFile"] != nil {
 		candidate.NonLiteral = append(candidate.NonLiteral, "CopyFromStdInFile")
@@ -2277,15 +2438,23 @@ func expectationKind(fields map[string]ast.Expr) string {
 	}
 }
 
-func setupQueryFromAssertion(fields map[string]ast.Expr) (string, bool) {
-	if expectationKind(fields) == "error" || fields["BindVars"] != nil || fields["CopyFromStdInFile"] != nil {
-		return "", false
+func setupStatementFromAssertion(fields map[string]ast.Expr) (oracleStatement, bool) {
+	if expectationKind(fields) == "error" || fields["CopyFromStdInFile"] != nil {
+		return oracleStatement{}, false
 	}
 	query, err := optionalStringLiteral(fields["Query"])
 	if err != nil || query == "" {
-		return "", false
+		return oracleStatement{}, false
 	}
-	return query, true
+	statement := oracleStatement{Query: query}
+	if bindVarsExpr := fields["BindVars"]; bindVarsExpr != nil {
+		bindVars, err := bindVarsFromExpr(bindVarsExpr)
+		if err != nil {
+			return oracleStatement{}, false
+		}
+		statement.BindVars = bindVars
+	}
+	return statement, true
 }
 
 func appendPriorSetupNonLiteral(nonLiteral []string, fields map[string]ast.Expr) []string {
@@ -2299,7 +2468,9 @@ func appendPriorSetupNonLiteral(nonLiteral []string, fields map[string]ast.Expr)
 		nonLiteral = append(nonLiteral, "PriorUsername")
 	}
 	if fields["BindVars"] != nil {
-		nonLiteral = append(nonLiteral, "PriorBindVars")
+		if _, err := bindVarsFromExpr(fields["BindVars"]); err != nil {
+			nonLiteral = append(nonLiteral, "PriorBindVars")
+		}
 	}
 	if fields["CopyFromStdInFile"] != nil {
 		nonLiteral = append(nonLiteral, "PriorCopyFromStdInFile")
@@ -2367,11 +2538,11 @@ func entriesFromScriptTest(source string, ordinal *int, scriptLit *ast.Composite
 	type mappedAssertion struct {
 		lit     *ast.CompositeLit
 		ordinal int
-		setup   []string
+		setup   []oracleStatement
 		meta    oracleMeta
 	}
 	assertionLits := make([]mappedAssertion, 0)
-	priorQueries := make([]string, 0)
+	priorSetup := make([]oracleStatement, 0)
 	for _, assertionExpr := range assertionsLit.Elts {
 		assertionLit, ok := assertionExpr.(*ast.CompositeLit)
 		if !ok {
@@ -2394,8 +2565,8 @@ func entriesFromScriptTest(source string, ordinal *int, scriptLit *ast.Composite
 		if meta.ID == "" {
 			metaExpr, ok := assertionFields["PostgresOracle"]
 			if !ok {
-				if query, ok := setupQueryFromAssertion(assertionFields); ok {
-					priorQueries = append(priorQueries, query)
+				if statement, ok := setupStatementFromAssertion(assertionFields); ok {
+					priorSetup = append(priorSetup, statement)
 				}
 				continue
 			}
@@ -2406,10 +2577,10 @@ func entriesFromScriptTest(source string, ordinal *int, scriptLit *ast.Composite
 			meta = parsed
 		}
 		if meta.ID != "" {
-			assertionLits = append(assertionLits, mappedAssertion{lit: assertionLit, ordinal: assertionOrdinal, setup: append([]string(nil), priorQueries...), meta: meta})
+			assertionLits = append(assertionLits, mappedAssertion{lit: assertionLit, ordinal: assertionOrdinal, setup: append([]oracleStatement(nil), priorSetup...), meta: meta})
 		}
-		if query, ok := setupQueryFromAssertion(assertionFields); ok && !oracleMetaExpectsError(meta) {
-			priorQueries = append(priorQueries, query)
+		if statement, ok := setupStatementFromAssertion(assertionFields); ok && !oracleMetaExpectsError(meta) {
+			priorSetup = append(priorSetup, statement)
 		}
 	}
 	if len(assertionLits) == 0 {
@@ -2423,7 +2594,7 @@ func entriesFromScriptTest(source string, ordinal *int, scriptLit *ast.Composite
 
 	entries := make([]entry, 0, len(assertionLits))
 	for _, assertion := range assertionLits {
-		assertionSetup := append([]string(nil), setup...)
+		assertionSetup := statementsFromQueries(setup)
 		assertionSetup = append(assertionSetup, assertion.setup...)
 		generated, ok, err := entryFromScriptTestAssertion(source, assertionSetup, assertion.ordinal, assertion.lit, assertion.meta)
 		if err != nil {
@@ -2440,7 +2611,7 @@ func oracleMetaExpectsError(meta oracleMeta) bool {
 	return meta.ExpectedSQLState != "" || meta.Compare == "sqlstate"
 }
 
-func entryFromScriptTestAssertion(source string, setup []string, ordinal int, assertionLit *ast.CompositeLit, meta oracleMeta) (entry, bool, error) {
+func entryFromScriptTestAssertion(source string, setup []oracleStatement, ordinal int, assertionLit *ast.CompositeLit, meta oracleMeta) (entry, bool, error) {
 	fields := compositeFields(assertionLit)
 	if meta.ID == "" {
 		return entry{}, false, nil
@@ -2449,27 +2620,33 @@ func entryFromScriptTestAssertion(source string, setup []string, ordinal int, as
 	if err != nil {
 		return entry{}, false, fmt.Errorf("%s Query: %w", meta.ID, err)
 	}
+	bindVars, err := bindVarsFromExpr(fields["BindVars"])
+	if err != nil {
+		return entry{}, false, fmt.Errorf("%s BindVars: %w", meta.ID, err)
+	}
 
-	generatedSetup := append([]string(nil), setup...)
+	generatedSetup := append([]oracleStatement(nil), setup...)
 	if username, err := optionalStringLiteral(fields["Username"]); err != nil {
 		return entry{}, false, fmt.Errorf("%s Username: %w", meta.ID, err)
 	} else if username != "" {
-		generatedSetup = append(generatedSetup, "SET ROLE "+quoteIdentifier(username))
+		generatedSetup = append(generatedSetup, oracleStatement{Query: "SET ROLE " + quoteIdentifier(username)})
 	}
 	generatedCleanup := append([]string(nil), meta.Cleanup...)
 	if (len(generatedSetup) > 0 || queryNeedsGeneratedCleanup(query)) && len(generatedCleanup) == 0 {
 		if len(generatedSetup) > 0 {
-			generatedSetup = append([]string{
-				"CREATE SCHEMA {{quotedSchema}}",
-				"SET search_path TO {{quotedSchema}}, public, pg_catalog",
+			generatedSetup = append([]oracleStatement{
+				{Query: "CREATE SCHEMA {{quotedSchema}}"},
+				{Query: "SET search_path TO {{quotedSchema}}, public, pg_catalog"},
 			}, generatedSetup...)
 			generatedSetup = rewriteAutoIsolatedSetupSchemaReferences(generatedSetup)
 		}
-		if setupNeedsPlpgsql(generatedSetup) {
-			generatedSetup = append([]string{"CREATE EXTENSION IF NOT EXISTS plpgsql"}, generatedSetup...)
+		setupQueries := statementQueries(generatedSetup)
+		if setupNeedsPlpgsql(setupQueries) {
+			generatedSetup = append([]oracleStatement{{Query: "CREATE EXTENSION IF NOT EXISTS plpgsql"}}, generatedSetup...)
+			setupQueries = statementQueries(generatedSetup)
 		}
-		cleanupStatements := append(append([]string{}, generatedSetup...), query)
-		if setupSetsRole(generatedSetup) {
+		cleanupStatements := append(append([]string{}, setupQueries...), query)
+		if setupSetsRole(setupQueries) {
 			generatedCleanup = append(generatedCleanup, "RESET ROLE")
 		}
 		if len(generatedSetup) == 0 {
@@ -2497,13 +2674,18 @@ func entryFromScriptTestAssertion(source string, setup []string, ordinal int, as
 		Ordinal:               ordinal,
 		Oracle:                "postgres",
 		Compare:               meta.Compare,
-		Setup:                 generatedSetup,
 		Query:                 query,
+		BindVars:              bindVars,
 		ExpectedSQLState:      meta.ExpectedSQLState,
 		ExpectedErrorSeverity: meta.ExpectedErrorSeverity,
 		ExpectedTag:           meta.ExpectedTag,
 		ColumnModes:           meta.ColumnModes,
 		Cleanup:               generatedCleanup,
+	}
+	if statementsHaveBindVars(generatedSetup) {
+		generated.SetupStatements = generatedSetup
+	} else {
+		generated.Setup = statementQueries(generatedSetup)
 	}
 	if generated.Compare == "" {
 		generated.Compare = "structural"
@@ -2561,11 +2743,11 @@ func queryNeedsGeneratedCleanup(query string) bool {
 		len(cleanupForCreatedRoles([]string{query})) > 0
 }
 
-func rewriteAutoIsolatedSetupSchemaReferences(statements []string) []string {
-	rewritten := make([]string, len(statements))
+func rewriteAutoIsolatedSetupSchemaReferences(statements []oracleStatement) []oracleStatement {
+	rewritten := make([]oracleStatement, len(statements))
 	for i, statement := range statements {
-		statement = replaceCaseInsensitive(statement, "ON SCHEMA public TO", "ON SCHEMA {{quotedSchema}} TO")
-		statement = replaceCaseInsensitive(statement, "ON SCHEMA \"public\" TO", "ON SCHEMA {{quotedSchema}} TO")
+		statement.Query = replaceCaseInsensitive(statement.Query, "ON SCHEMA public TO", "ON SCHEMA {{quotedSchema}} TO")
+		statement.Query = replaceCaseInsensitive(statement.Query, "ON SCHEMA \"public\" TO", "ON SCHEMA {{quotedSchema}} TO")
 		rewritten[i] = statement
 	}
 	return rewritten
@@ -3088,6 +3270,172 @@ func expectedRowsFromExpr(expr ast.Expr) (*[][]cell, error) {
 		parsedRows = append(parsedRows, parsedRow)
 	}
 	return rows(parsedRows...), nil
+}
+
+func bindVarsFromExpr(expr ast.Expr) ([]oracleBindVar, error) {
+	if expr == nil {
+		return nil, nil
+	}
+	lit, ok := expr.(*ast.CompositeLit)
+	if !ok {
+		return nil, fmt.Errorf("must be a bind var slice literal")
+	}
+	bindVars := make([]oracleBindVar, 0, len(lit.Elts))
+	for _, element := range lit.Elts {
+		bindVar, err := bindVarFromExpr(element)
+		if err != nil {
+			return nil, err
+		}
+		bindVars = append(bindVars, bindVar)
+	}
+	return bindVars, nil
+}
+
+func bindVarFromExpr(expr ast.Expr) (oracleBindVar, error) {
+	switch typed := expr.(type) {
+	case *ast.BasicLit:
+		switch typed.Kind {
+		case token.STRING:
+			value, err := strconv.Unquote(typed.Value)
+			if err != nil {
+				return oracleBindVar{}, err
+			}
+			return oracleBindVar{Kind: "string", Value: value}, nil
+		case token.INT:
+			return oracleBindVar{Kind: "int", Value: typed.Value}, nil
+		case token.FLOAT:
+			return oracleBindVar{Kind: "float", Value: typed.Value}, nil
+		default:
+			return oracleBindVar{}, fmt.Errorf("unsupported bind var literal %s", typed.Value)
+		}
+	case *ast.Ident:
+		switch typed.Name {
+		case "nil":
+			return oracleBindVar{Kind: "null", Null: true}, nil
+		case "true", "false":
+			return oracleBindVar{Kind: "bool", Value: typed.Name}, nil
+		default:
+			return oracleBindVar{}, fmt.Errorf("unsupported bind var identifier %s", typed.Name)
+		}
+	case *ast.UnaryExpr:
+		if typed.Op != token.SUB {
+			return oracleBindVar{}, fmt.Errorf("unsupported bind var unary operator %s", typed.Op)
+		}
+		value, err := bindVarFromExpr(typed.X)
+		if err != nil {
+			return oracleBindVar{}, err
+		}
+		switch value.Kind {
+		case "int", "float":
+			value.Value = "-" + value.Value
+			return value, nil
+		default:
+			return oracleBindVar{}, fmt.Errorf("unsupported negative bind var kind %s", value.Kind)
+		}
+	case *ast.CallExpr:
+		return bindVarFromCallExpr(typed)
+	case *ast.CompositeLit:
+		return bindVarFromCompositeLit(typed)
+	default:
+		return oracleBindVar{}, fmt.Errorf("unsupported bind var expression %T", expr)
+	}
+}
+
+func bindVarFromCallExpr(call *ast.CallExpr) (oracleBindVar, error) {
+	name := callName(call.Fun)
+	if len(call.Args) != 1 {
+		return oracleBindVar{}, fmt.Errorf("unsupported bind var call %s", name)
+	}
+	switch name {
+	case "Date", "Timestamp", "UUID", "Numeric":
+		value, err := stringLiteral(call.Args[0])
+		if err != nil {
+			return oracleBindVar{}, fmt.Errorf("%s: %w", name, err)
+		}
+		return oracleBindVar{Kind: strings.ToLower(name), Value: value}, nil
+	case "int", "int8", "int16", "int32", "int64":
+		value, err := bindVarFromExpr(call.Args[0])
+		if err != nil {
+			return oracleBindVar{}, err
+		}
+		if value.Kind != "int" {
+			return oracleBindVar{}, fmt.Errorf("unsupported %s bind var argument kind %s", name, value.Kind)
+		}
+		return value, nil
+	case "float32", "float64":
+		value, err := bindVarFromExpr(call.Args[0])
+		if err != nil {
+			return oracleBindVar{}, err
+		}
+		if value.Kind != "float" && value.Kind != "int" {
+			return oracleBindVar{}, fmt.Errorf("unsupported %s bind var argument kind %s", name, value.Kind)
+		}
+		value.Kind = "float"
+		return value, nil
+	default:
+		return oracleBindVar{}, fmt.Errorf("unsupported bind var call %s", name)
+	}
+}
+
+func bindVarFromCompositeLit(lit *ast.CompositeLit) (oracleBindVar, error) {
+	switch arrayElementName(lit.Type) {
+	case "byte":
+		bytes := make([]byte, 0, len(lit.Elts))
+		for _, element := range lit.Elts {
+			basic, ok := element.(*ast.BasicLit)
+			if !ok || basic.Kind != token.INT {
+				return oracleBindVar{}, fmt.Errorf("byte bind var element must be an integer literal")
+			}
+			value, err := strconv.ParseUint(basic.Value, 0, 8)
+			if err != nil {
+				return oracleBindVar{}, err
+			}
+			bytes = append(bytes, byte(value))
+		}
+		return oracleBindVar{Kind: "bytes", Value: hex.EncodeToString(bytes)}, nil
+	case "string":
+		values := make([]string, 0, len(lit.Elts))
+		for _, element := range lit.Elts {
+			value, err := stringLiteral(element)
+			if err != nil {
+				return oracleBindVar{}, err
+			}
+			values = append(values, value)
+		}
+		return oracleBindVar{Kind: "stringArray", Values: values}, nil
+	default:
+		return oracleBindVar{}, fmt.Errorf("unsupported bind var composite literal")
+	}
+}
+
+func callName(expr ast.Expr) string {
+	switch typed := expr.(type) {
+	case *ast.Ident:
+		return typed.Name
+	case *ast.SelectorExpr:
+		prefix := callName(typed.X)
+		if prefix == "" {
+			return typed.Sel.Name
+		}
+		return prefix + "." + typed.Sel.Name
+	default:
+		return ""
+	}
+}
+
+func arrayElementName(expr ast.Expr) string {
+	array, ok := expr.(*ast.ArrayType)
+	if !ok {
+		return ""
+	}
+	switch typed := array.Elt.(type) {
+	case *ast.Ident:
+		return typed.Name
+	case *ast.SelectorExpr:
+		return callName(typed)
+	default:
+		return ""
+	}
 }
 
 func cellFromExpr(expr ast.Expr) (cell, error) {

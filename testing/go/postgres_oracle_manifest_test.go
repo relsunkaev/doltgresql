@@ -63,20 +63,34 @@ type postgresOracleInventory struct {
 }
 
 type postgresOracleEntry struct {
-	ID                    string            `json:"id"`
-	Source                string            `json:"source"`
-	Ordinal               int               `json:"ordinal"`
-	Oracle                string            `json:"oracle"`
-	Compare               string            `json:"compare"`
-	Setup                 []string          `json:"setup"`
-	Query                 string            `json:"query"`
-	ExpectedRows          [][]postgresCell  `json:"expectedRows"`
-	ExpectedSQLState      string            `json:"expectedSqlstate"`
-	ExpectedErrorSeverity string            `json:"expectedErrorSeverity"`
-	ExpectedTag           *string           `json:"expectedTag"`
-	ColumnModes           []string          `json:"columnModes"`
-	Cleanup               []string          `json:"cleanup"`
-	Variables             map[string]string `json:"variables"`
+	ID                    string                    `json:"id"`
+	Source                string                    `json:"source"`
+	Ordinal               int                       `json:"ordinal"`
+	Oracle                string                    `json:"oracle"`
+	Compare               string                    `json:"compare"`
+	Setup                 []string                  `json:"setup"`
+	SetupStatements       []postgresOracleStatement `json:"setupStatements"`
+	Query                 string                    `json:"query"`
+	BindVars              []postgresOracleBindVar   `json:"bindVars"`
+	ExpectedRows          [][]postgresCell          `json:"expectedRows"`
+	ExpectedSQLState      string                    `json:"expectedSqlstate"`
+	ExpectedErrorSeverity string                    `json:"expectedErrorSeverity"`
+	ExpectedTag           *string                   `json:"expectedTag"`
+	ColumnModes           []string                  `json:"columnModes"`
+	Cleanup               []string                  `json:"cleanup"`
+	Variables             map[string]string         `json:"variables"`
+}
+
+type postgresOracleStatement struct {
+	Query    string                  `json:"query"`
+	BindVars []postgresOracleBindVar `json:"bindVars"`
+}
+
+type postgresOracleBindVar struct {
+	Kind   string   `json:"kind"`
+	Value  string   `json:"value"`
+	Values []string `json:"values"`
+	Null   bool     `json:"null"`
 }
 
 type postgresCell struct {
@@ -207,7 +221,7 @@ func TestPostgresOraclePromotedMapGenerated(t *testing.T) {
 	}
 }
 
-func TestPostgresOraclePromotedMapSkipsBindVars(t *testing.T) {
+func TestPostgresOraclePromotedMapSupportsLiteralBindVars(t *testing.T) {
 	outPath := filepath.Join(t.TempDir(), "limit_test.oracle-map.json")
 	cmd := exec.Command("go", "run", "gen_postgres_oracle_manifest.go",
 		"--promote-oracle-map", "limit_test.go",
@@ -219,20 +233,18 @@ func TestPostgresOraclePromotedMapSkipsBindVars(t *testing.T) {
 	require.NoError(t, err)
 	var generated struct {
 		Assertions []struct {
-			Oracle     string   `json:"oracle"`
-			Query      string   `json:"query"`
-			NonLiteral []string `json:"nonLiteral"`
+			Oracle   string                  `json:"oracle"`
+			Query    string                  `json:"query"`
+			BindVars []postgresOracleBindVar `json:"bindVars"`
 		} `json:"assertions"`
 	}
 	require.NoError(t, json.Unmarshal(data, &generated))
 	require.Len(t, generated.Assertions, 4)
 	for _, assertion := range generated.Assertions {
-		if strings.Contains(assertion.Query, "LIMIT $1") {
-			require.Equal(t, "internal", assertion.Oracle)
-			require.Contains(t, assertion.NonLiteral, "BindVars")
-			continue
-		}
 		require.Equal(t, "postgres", assertion.Oracle)
+		if strings.Contains(assertion.Query, "LIMIT $1") {
+			require.Equal(t, []postgresOracleBindVar{{Kind: "int", Value: "2"}}, assertion.BindVars)
+		}
 	}
 }
 
@@ -409,12 +421,13 @@ func TestPostgresOraclePromotedMapSkipsPriorNonLiteralSetup(t *testing.T) {
 	require.NoError(t, json.Unmarshal(data, &generated))
 	require.Len(t, generated.Assertions, 2)
 	for _, assertion := range generated.Assertions {
-		require.Equal(t, "internal", assertion.Oracle)
 		switch assertion.Source {
 		case "testing/go/domain_correctness_repro_test.go:TestDomainTypmodCopyFromUsesCoercedValueRepro":
+			require.Equal(t, "internal", assertion.Oracle)
 			require.Contains(t, assertion.NonLiteral, "PriorCopyFromStdInFile")
 		case "testing/go/domain_correctness_repro_test.go:TestDomainTypmodBindVarsUseCoercedValueRepro":
-			require.Contains(t, assertion.NonLiteral, "PriorBindVars")
+			require.Equal(t, "postgres", assertion.Oracle)
+			require.NotContains(t, assertion.NonLiteral, "PriorBindVars")
 		default:
 			require.Failf(t, "unexpected assertion source", "%s", assertion.Source)
 		}
@@ -882,11 +895,11 @@ func runPostgresOracleEntry(t testing.TB, ctx context.Context, conn *pgx.Conn, p
 		resetOracleSession(t, ctx, conn)
 	}()
 	resetOracleSession(t, ctx, conn)
-	runOracleStatements(t, ctx, conn, variables, entry.Setup)
+	runOracleStatementSteps(t, ctx, conn, variables, postgresOracleEntrySetupStatements(entry))
 
-	query := expandOracleVariables(entry.Query, variables)
+	queryStatement := postgresOracleStatement{Query: entry.Query, BindVars: entry.BindVars}
 	if entry.ExpectedSQLState != "" {
-		_, err := conn.Exec(ctx, query)
+		_, err := execOracleStatement(ctx, conn, variables, queryStatement)
 		require.Error(t, err)
 		pgErr, ok := err.(*pgconn.PgError)
 		require.True(t, ok, "expected PostgreSQL error for %s, got %T: %v", entry.ID, err, err)
@@ -897,14 +910,14 @@ func runPostgresOracleEntry(t testing.TB, ctx context.Context, conn *pgx.Conn, p
 		return
 	}
 	if entry.ExpectedTag != nil {
-		commandTag, err := conn.Exec(ctx, query)
+		commandTag, err := execOracleStatement(ctx, conn, variables, queryStatement)
 		require.NoError(t, err)
 		require.Equal(t, *entry.ExpectedTag, commandTag.String())
 		return
 	}
 	require.NotEqual(t, "sqlstate", entry.Compare, "sqlstate comparison requires expectedSqlstate for %s", entry.ID)
 	require.NotEqual(t, "tag", entry.Compare, "tag comparison requires expectedTag for %s", entry.ID)
-	rows, err := conn.Query(ctx, query)
+	rows, err := queryOracleStatement(ctx, conn, variables, queryStatement)
 	require.NoError(t, err)
 	defer rows.Close()
 
@@ -926,9 +939,117 @@ func runPostgresOracleEntry(t testing.TB, ctx context.Context, conn *pgx.Conn, p
 
 func runOracleStatements(t testing.TB, ctx context.Context, conn *pgx.Conn, variables map[string]string, statements []string) {
 	t.Helper()
+	runOracleStatementSteps(t, ctx, conn, variables, postgresOracleStatementsFromQueries(statements))
+}
+
+func runOracleStatementSteps(t testing.TB, ctx context.Context, conn *pgx.Conn, variables map[string]string, statements []postgresOracleStatement) {
+	t.Helper()
 	for _, statement := range statements {
-		_, err := conn.Exec(ctx, expandOracleVariables(statement, variables))
-		require.NoError(t, err, "oracle statement failed: %s", statement)
+		_, err := execOracleStatement(ctx, conn, variables, statement)
+		require.NoError(t, err, "oracle statement failed: %s", statement.Query)
+	}
+}
+
+func execOracleStatement(ctx context.Context, conn *pgx.Conn, variables map[string]string, statement postgresOracleStatement) (pgconn.CommandTag, error) {
+	query := expandOracleVariables(statement.Query, variables)
+	args, err := postgresOracleQueryArgs(statement.BindVars)
+	if err != nil {
+		return pgconn.CommandTag{}, err
+	}
+	return conn.Exec(ctx, query, args...)
+}
+
+func queryOracleStatement(ctx context.Context, conn *pgx.Conn, variables map[string]string, statement postgresOracleStatement) (pgx.Rows, error) {
+	query := expandOracleVariables(statement.Query, variables)
+	args, err := postgresOracleQueryArgs(statement.BindVars)
+	if err != nil {
+		return nil, err
+	}
+	return conn.Query(ctx, query, args...)
+}
+
+func postgresOracleEntrySetupStatements(entry postgresOracleEntry) []postgresOracleStatement {
+	if len(entry.SetupStatements) > 0 {
+		return entry.SetupStatements
+	}
+	return postgresOracleStatementsFromQueries(entry.Setup)
+}
+
+func postgresOracleStatementsFromQueries(queries []string) []postgresOracleStatement {
+	statements := make([]postgresOracleStatement, 0, len(queries))
+	for _, query := range queries {
+		statements = append(statements, postgresOracleStatement{Query: query})
+	}
+	return statements
+}
+
+func postgresOracleQueryArgs(bindVars []postgresOracleBindVar) ([]interface{}, error) {
+	if len(bindVars) == 0 {
+		return nil, nil
+	}
+	args := make([]interface{}, 0, len(bindVars)+1)
+	args = append(args, pgx.QueryExecModeExec)
+	for _, bindVar := range bindVars {
+		value, err := postgresOracleBindVarValue(bindVar)
+		if err != nil {
+			return nil, err
+		}
+		args = append(args, value)
+	}
+	return args, nil
+}
+
+func postgresOracleBindVarValue(bindVar postgresOracleBindVar) (interface{}, error) {
+	if bindVar.Null || bindVar.Kind == "null" {
+		return nil, nil
+	}
+	switch bindVar.Kind {
+	case "string":
+		return bindVar.Value, nil
+	case "int":
+		return strconv.ParseInt(bindVar.Value, 10, 64)
+	case "float":
+		return strconv.ParseFloat(bindVar.Value, 64)
+	case "bool":
+		return strconv.ParseBool(bindVar.Value)
+	case "date":
+		parsed, err := time.Parse("2006-01-02", bindVar.Value)
+		if err != nil {
+			return nil, err
+		}
+		var value pgtype.Date
+		if err := value.Scan(parsed); err != nil {
+			return nil, err
+		}
+		return value, nil
+	case "timestamp":
+		parsed, err := time.Parse("2006-01-02 15:04:05", bindVar.Value)
+		if err != nil {
+			return nil, err
+		}
+		var value pgtype.Timestamp
+		if err := value.Scan(parsed); err != nil {
+			return nil, err
+		}
+		return value, nil
+	case "uuid":
+		var value pgtype.UUID
+		if err := value.Scan(bindVar.Value); err != nil {
+			return nil, err
+		}
+		return value, nil
+	case "numeric":
+		var value pgtype.Numeric
+		if err := value.Scan(bindVar.Value); err != nil {
+			return nil, err
+		}
+		return value, nil
+	case "bytes":
+		return hex.DecodeString(bindVar.Value)
+	case "stringArray":
+		return append([]string(nil), bindVar.Values...), nil
+	default:
+		return nil, fmt.Errorf("unsupported bind var kind %q", bindVar.Kind)
 	}
 }
 
