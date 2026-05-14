@@ -51,10 +51,12 @@ var session_user = framework.Function0{
 // system_user represents PostgreSQL's SQL value function of the same name.
 var system_user = framework.Function0{
 	Name:               "system_user",
-	Return:             pgtypes.Name,
+	Return:             pgtypes.Text,
 	IsNonDeterministic: true,
 	Callable: func(ctx *sql.Context) (any, error) {
-		return currentSQLUser(ctx), nil
+		// PostgreSQL returns NULL for system_user when the session has not
+		// recorded an authenticated identity, such as trust authentication.
+		return nil, nil
 	},
 }
 

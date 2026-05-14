@@ -4719,7 +4719,7 @@ var (
 	xmlForestArgPattern          = regexp.MustCompile(`(?is)^\s*(.+?)\s+as\s+([a-z_][a-z0-9_$]*)\s*$`)
 	temporalOverlapsPattern      = regexp.MustCompile(`(?is)\(\s*(date\s+'[^']+')\s*,\s*((?:date|interval)\s+'[^']+')\s*\)\s+overlaps\s+\(\s*(date\s+'[^']+')\s*,\s*((?:date|interval)\s+'[^']+')\s*\)`)
 	pgInputErrorInfoPattern      = regexp.MustCompile(`(?is)\(\s*pg_input_error_info\s*\(([^)]*)\)\s*\)\s*\.\s*sql_error_code`)
-	systemUserPattern            = regexp.MustCompile(`(?i)\bsystem_user\b`)
+	systemUserPattern            = regexp.MustCompile(`(?i)\bsystem_user\b(?:\s*\(\s*\))?`)
 	anyValuePattern              = regexp.MustCompile(`(?i)\bany_value\s*\(`)
 	advancedGroupByPattern       = regexp.MustCompile(`(?is)^\s*select\s+coalesce\s*\(\s*([a-z_][a-z0-9_]*)\s*,\s*'([^']*)'\s*\)\s+as\s+([a-z_][a-z0-9_]*)\s*,\s*coalesce\s*\(\s*([a-z_][a-z0-9_]*)\s*,\s*'([^']*)'\s*\)\s+as\s+([a-z_][a-z0-9_]*)\s*,\s*sum\s*\(\s*([a-z_][a-z0-9_]*)\s*\)::text\s+as\s+([a-z_][a-z0-9_]*)\s+from\s+([a-z_][a-z0-9_]*)\s+group\s+by\s+(.+?)\s+order\s+by\s+.+?;?\s*$`)
 )

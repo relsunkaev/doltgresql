@@ -117,4 +117,13 @@ func TestRewritePostgres16BuiltinSyntax(t *testing.T) {
 	if got != want {
 		t.Fatalf("got %q, want %q", got, want)
 	}
+
+	got, ok = rewritePostgres16BuiltinSyntax(`SELECT system_user(), system_user IS NOT NULL;`)
+	if !ok {
+		t.Fatal("expected rewrite")
+	}
+	want = `SELECT system_user(), system_user() IS NOT NULL;`
+	if got != want {
+		t.Fatalf("got %q, want %q", got, want)
+	}
 }
