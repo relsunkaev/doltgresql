@@ -193,6 +193,7 @@ func Init() {
 	initPgGetFunctionArguments()
 	initPgGetFunctionIdentityArguments()
 	initPgGetFunctionDef()
+	initPgGetFunctionSQLBody()
 	initPgGetKeywords()
 	initPgGetFunctionResult()
 	initPgGetIndexDef()

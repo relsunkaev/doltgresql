@@ -110,6 +110,14 @@ func pgGetFunctionArgDefault(ctx *sql.Context, oidVal id.Id, argNum int32) (any,
 	return metadata.ParameterDefaults[defaultIdx], nil
 }
 
+func pgGetFunctionSQLBody(ctx *sql.Context, oidVal id.Id) (any, error) {
+	_, ok, err := pgFunctionMetadataForOID(ctx, oidVal)
+	if err != nil || !ok {
+		return nil, err
+	}
+	return nil, nil
+}
+
 func pgGetFunctionDef(ctx *sql.Context, oidVal id.Id) (any, error) {
 	metadata, ok, err := pgFunctionMetadataForOID(ctx, oidVal)
 	if err != nil || !ok {
