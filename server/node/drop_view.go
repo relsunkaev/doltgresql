@@ -29,13 +29,14 @@ import (
 // DropView is a node that implements functionality specifically relevant to Doltgres' view dropping needs.
 type DropView struct {
 	gmsDropView *plan.DropView
+	cascade     bool
 }
 
 var _ sql.ExecBuilderNode = (*DropView)(nil)
 
 // NewDropView returns a new *DropView.
-func NewDropView(dropView *plan.DropView) *DropView {
-	return &DropView{gmsDropView: dropView}
+func NewDropView(dropView *plan.DropView, cascade bool) *DropView {
+	return &DropView{gmsDropView: dropView, cascade: cascade}
 }
 
 // Children implements the interface sql.ExecBuilderNode.
@@ -91,29 +92,30 @@ func (d *DropView) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sql.R
 		})
 	}
 
+	relations := make([]doltdb.TableName, len(targets))
+	for i, target := range targets {
+		relations[i] = target.relation
+	}
+	if d.cascade {
+		dependentViews, dependentTables, err := dropCascadeDependentViews(ctx, relations)
+		if err != nil {
+			return nil, err
+		}
+		targets = append(targets, dependentViews...)
+		if err := cleanupDroppedTableTargets(ctx, dependentTables); err != nil {
+			return nil, err
+		}
+	} else if err := rejectDependentViews(ctx, relations); err != nil {
+		return nil, err
+	}
+
 	dropViewIter, err := b.Build(ctx, d.gmsDropView, r)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, target := range targets {
-		if err = id.PerformOperation(ctx, id.Section_View, id.Operation_Delete, target.dbName, target.viewID, id.Null); err != nil {
-			return nil, err
-		}
-		comments.RemoveObject(target.viewID, "pg_class")
-	}
-	if len(targets) > 0 {
-		var persistErr error
-		auth.LockWrite(func() {
-			for _, target := range targets {
-				auth.RemoveRelationOwner(target.relation)
-				auth.RemoveAllTablePrivileges(target.relation)
-			}
-			persistErr = auth.PersistChanges()
-		})
-		if persistErr != nil {
-			return nil, persistErr
-		}
+	if err = cleanupDroppedViewTargets(ctx, targets); err != nil {
+		return nil, err
 	}
 	return dropViewIter, nil
 }
@@ -130,6 +132,27 @@ func dropViewExists(ctx *sql.Context, drop *plan.SingleDropView) (bool, error) {
 		return exists, err
 	}
 	return ctx.GetViewRegistry().Exists(drop.Database().Name(), drop.ViewName), nil
+}
+
+func cleanupDroppedViewTargets(ctx *sql.Context, targets []dropViewTarget) error {
+	for _, target := range targets {
+		if err := id.PerformOperation(ctx, id.Section_View, id.Operation_Delete, target.dbName, target.viewID, id.Null); err != nil {
+			return err
+		}
+		comments.RemoveObject(target.viewID, "pg_class")
+	}
+	if len(targets) == 0 {
+		return nil
+	}
+	var persistErr error
+	auth.LockWrite(func() {
+		for _, target := range targets {
+			auth.RemoveRelationOwner(target.relation)
+			auth.RemoveAllTablePrivileges(target.relation)
+		}
+		persistErr = auth.PersistChanges()
+	})
+	return persistErr
 }
 
 func checkViewOwnership(ctx *sql.Context, viewName string) error {
@@ -170,5 +193,5 @@ func (d *DropView) WithChildren(ctx *sql.Context, children ...sql.Node) (sql.Nod
 	if err != nil {
 		return nil, err
 	}
-	return &DropView{gmsDropView: gmsDropView.(*plan.DropView)}, nil
+	return &DropView{gmsDropView: gmsDropView.(*plan.DropView), cascade: d.cascade}, nil
 }

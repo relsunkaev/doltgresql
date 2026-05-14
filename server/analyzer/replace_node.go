@@ -57,7 +57,7 @@ func replaceNode(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node) (sql.Nod
 	case *plan.DropTable:
 		return pgnodes.NewDropTable(node, dropTableCascadeFromQuery(ctx.Query())), transform.NewTree, nil
 	case *plan.DropView:
-		return pgnodes.NewDropView(node), transform.NewTree, nil
+		return pgnodes.NewDropView(node, dropViewCascadeFromQuery(ctx.Query())), transform.NewTree, nil
 	case *plan.CreateCheck:
 		logicalName := core.DecodePhysicalConstraintName(node.Check.Name)
 		cleanName, options := ast.DecodeCheckConstraintNameOptions(logicalName)
@@ -104,6 +104,24 @@ func dropTableCascadeFromQuery(query string) bool {
 	if err != nil || len(statements) != 1 {
 		return false
 	}
-	dropTable, ok := statements[0].AST.(*tree.DropTable)
-	return ok && dropTable.DropBehavior == tree.DropCascade
+	switch stmt := statements[0].AST.(type) {
+	case *tree.DropTable:
+		return stmt.DropBehavior == tree.DropCascade
+	case *tree.DropView:
+		return stmt.IsMaterialized && stmt.DropBehavior == tree.DropCascade
+	default:
+		return false
+	}
+}
+
+func dropViewCascadeFromQuery(query string) bool {
+	if query == "" {
+		return false
+	}
+	statements, err := parser.Parse(query)
+	if err != nil || len(statements) != 1 {
+		return false
+	}
+	dropView, ok := statements[0].AST.(*tree.DropView)
+	return ok && !dropView.IsMaterialized && dropView.DropBehavior == tree.DropCascade
 }

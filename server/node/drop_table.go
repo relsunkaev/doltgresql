@@ -100,6 +100,23 @@ func (c *DropTable) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sql.
 		targets = append(targets, dropTableTarget{dbName: dbName, tableID: tableID, relation: doltTableName})
 	}
 
+	relations := make([]doltdb.TableName, len(targets))
+	for i, target := range targets {
+		relations[i] = target.relation
+	}
+	if c.cascade {
+		dependentViews, dependentTables, err := dropCascadeDependentViews(ctx, relations)
+		if err != nil {
+			return nil, err
+		}
+		if err = cleanupDroppedViewTargets(ctx, dependentViews); err != nil {
+			return nil, err
+		}
+		targets = append(targets, dependentTables...)
+	} else if err = rejectDependentViews(ctx, relations); err != nil {
+		return nil, err
+	}
+
 	rewritten := *c.gmsDropTable
 	rewritten.Tables = dropTables
 	gmsDropTable := &rewritten
@@ -111,25 +128,8 @@ func (c *DropTable) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sql.
 		return nil, err
 	}
 
-	for _, target := range targets {
-		if err = id.PerformOperation(ctx, id.Section_Table, id.Operation_Delete, target.dbName, target.tableID, id.Null); err != nil {
-			return nil, err
-		}
-		comments.RemoveObject(target.tableID, "pg_class")
-		rowsecurity.DropTable(uint32(ctx.Session.ID()), target.dbName, target.relation.Schema, target.relation.Name)
-	}
-	if len(targets) > 0 {
-		var persistErr error
-		auth.LockWrite(func() {
-			for _, target := range targets {
-				auth.RemoveRelationOwner(target.relation)
-				auth.RemoveAllTablePrivileges(target.relation)
-			}
-			persistErr = auth.PersistChanges()
-		})
-		if persistErr != nil {
-			return nil, persistErr
-		}
+	if err = cleanupDroppedTableTargets(ctx, targets); err != nil {
+		return nil, err
 	}
 	return dropTableIter, err
 }
@@ -309,6 +309,28 @@ type dropTableTarget struct {
 	dbName   string
 	tableID  id.Id
 	relation doltdb.TableName
+}
+
+func cleanupDroppedTableTargets(ctx *sql.Context, targets []dropTableTarget) error {
+	for _, target := range targets {
+		if err := id.PerformOperation(ctx, id.Section_Table, id.Operation_Delete, target.dbName, target.tableID, id.Null); err != nil {
+			return err
+		}
+		comments.RemoveObject(target.tableID, "pg_class")
+		rowsecurity.DropTable(uint32(ctx.Session.ID()), target.dbName, target.relation.Schema, target.relation.Name)
+	}
+	if len(targets) == 0 {
+		return nil
+	}
+	var persistErr error
+	auth.LockWrite(func() {
+		for _, target := range targets {
+			auth.RemoveRelationOwner(target.relation)
+			auth.RemoveAllTablePrivileges(target.relation)
+		}
+		persistErr = auth.PersistChanges()
+	})
+	return persistErr
 }
 
 // Schema implements the interface sql.ExecBuilderNode.

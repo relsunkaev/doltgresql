@@ -15,8 +15,6 @@
 package ast
 
 import (
-	"github.com/cockroachdb/errors"
-
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
@@ -33,7 +31,7 @@ func nodeDropView(ctx *Context, node *tree.DropView) (*vitess.DDL, error) {
 		// RESTRICT matches the default behavior — dependents already cause an
 		// error during DROP — so the keyword is accepted without changes.
 	case tree.DropCascade:
-		return nil, errors.Errorf("CASCADE is not yet supported")
+		// The executor handles dependent view removal.
 	}
 	tableNames := make([]vitess.TableName, len(node.Names))
 	for i := range node.Names {
