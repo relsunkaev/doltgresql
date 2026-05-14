@@ -10,6 +10,18 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### epsilon - 2026-05-14 06:25 MST
+
+- Result: fixed `REVOKE ... ON ALL TABLES IN SCHEMA` over-revoking the current schema.
+- Root cause: `server/ast/revoke.go` pre-sized the table target slice and then appended `IN SCHEMA` targets, leaving an extra zero-value target that resolved to `public`.
+- Files touched: `server/ast/revoke.go`.
+- Fresh verifier `/private/tmp/doltgresql-epsilon-current-xeo64K` plus epsilon's patch passed:
+  - `go test -vet=off ./testing/go -run '^TestRevokeAllTablesInSchemaDoesNotAffectOtherSchemasRepro$' -count=1 -timeout=5m`
+  - `go test -vet=off ./server/ast -run '^$' -count=1 -timeout=5m`
+- Current high-skip verifier log `/tmp/doltgresql-epsilon-current-highskip-26.jsonl` advances past the all-tables schema revoke case, then stops at `TestRevokeGrantedByRequiresCurrentUserRepro`: expected an error for `REVOKE ... GRANTED BY revoke_by_group`, got nil.
+- Shared checkout note: full shared-tree runs remain blocked by unrelated dirty `server/node/postgres_foreign_key_action_handler.go` compile errors, so validation is using the verifier worktree.
+- Next action: inspect and fix `REVOKE ... GRANTED BY` authorization.
+
 ### epsilon - 2026-05-14 05:56 MST
 
 - Result: fixed the current set-returning-function edge cases and generated-column validation SQLSTATE blockers.

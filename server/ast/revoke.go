@@ -42,8 +42,8 @@ func nodeRevoke(ctx *Context, node *tree.Revoke) (vitess.Statement, error) {
 	var revokeParameter *pgnodes.RevokeParameter
 	switch node.Targets.TargetType {
 	case privilege.Table:
-		tables := make([]doltdb.TableName, len(node.Targets.Tables)+len(node.Targets.InSchema))
-		for i, table := range node.Targets.Tables {
+		tables := make([]doltdb.TableName, 0, len(node.Targets.Tables)+len(node.Targets.InSchema))
+		for _, table := range node.Targets.Tables {
 			normalizedTable, err := table.NormalizeTablePattern()
 			if err != nil {
 				return nil, err
@@ -53,15 +53,15 @@ func nodeRevoke(ctx *Context, node *tree.Revoke) (vitess.Statement, error) {
 				if normalizedTable.ExplicitCatalog {
 					return nil, errors.Errorf("revoking privileges from other databases is not yet supported")
 				}
-				tables[i] = doltdb.TableName{
+				tables = append(tables, doltdb.TableName{
 					Name:   string(normalizedTable.ObjectName),
 					Schema: string(normalizedTable.SchemaName),
-				}
+				})
 			case *tree.AllTablesSelector:
-				tables[i] = doltdb.TableName{
+				tables = append(tables, doltdb.TableName{
 					Name:   "",
 					Schema: string(normalizedTable.SchemaName),
-				}
+				})
 			default:
 				return nil, errors.Errorf(`unexpected table type in REVOKE: %T`, normalizedTable)
 			}
