@@ -21,6 +21,7 @@ import (
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
+	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/dsess"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/analyzer"
 	"github.com/dolthub/go-mysql-server/sql/expression"
@@ -318,12 +319,29 @@ func databaseNameForSQLDatabase(db sql.Database) string {
 }
 
 func sequenceDefaultName(ctx *sql.Context, databaseName string, schemaName string, sequenceName string) string {
-	currentDatabase, _ := doltdb.SplitRevisionDbName(ctx.GetCurrentDatabase())
-	defaultDatabase, _ := doltdb.SplitRevisionDbName(databaseName)
-	if defaultDatabase == "" || strings.EqualFold(defaultDatabase, currentDatabase) {
+	if databaseName == "" || sequenceDefaultTargetsCurrentDatabase(ctx, databaseName) {
 		return doltdb.TableName{Name: sequenceName, Schema: schemaName}.String()
 	}
 	return quoteIdentifier(databaseName) + "." + quoteIdentifier(schemaName) + "." + quoteIdentifier(sequenceName)
+}
+
+func sequenceDefaultTargetsCurrentDatabase(ctx *sql.Context, databaseName string) bool {
+	if strings.EqualFold(databaseName, ctx.GetCurrentDatabase()) {
+		return true
+	}
+	targetDatabase, targetRevision := doltdb.SplitRevisionDbName(databaseName)
+	currentDatabase, currentRevision := doltdb.SplitRevisionDbName(ctx.GetCurrentDatabase())
+	if !strings.EqualFold(targetDatabase, currentDatabase) {
+		return false
+	}
+	if targetRevision == "" {
+		return true
+	}
+	if currentRevision != "" {
+		return strings.EqualFold(targetRevision, currentRevision)
+	}
+	headRef, err := dsess.DSessFromSess(ctx.Session).CWBHeadRef(ctx, targetDatabase)
+	return err == nil && strings.EqualFold(targetRevision, headRef.GetPath())
 }
 
 func quoteIdentifier(identifier string) string {
