@@ -1714,7 +1714,7 @@ func (r *replicationUpdateCaptureIter) Next(ctx *sql.Context) (sql.Row, error) {
 	}
 	if r.capture != nil && len(row) >= len(r.schema) {
 		oldRow := row[:len(r.schema)]
-		outputRow, err := rowToBytes(ctx, r.schema, oldRow, nil)
+		outputRow, err := rowToBytes(ctx, r.schema, oldRow, nil, nil)
 		if err != nil {
 			return nil, err
 		}

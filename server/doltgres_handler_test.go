@@ -23,6 +23,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
 	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -121,6 +122,14 @@ func TestSchemaToFieldDescriptionsExpandsBinaryFormat(t *testing.T) {
 	require.Len(t, fields, 2)
 	require.Equal(t, int16(1), fields[0].Format)
 	require.Equal(t, int16(1), fields[1].Format)
+}
+
+func TestRowOutputTypeUsesResultFieldType(t *testing.T) {
+	fields := []pgproto3.FieldDescription{{
+		DataTypeOID:  id.Cache().ToOID(pgtypes.TextArray.ID.AsId()),
+		TypeModifier: -1,
+	}}
+	require.Same(t, pgtypes.TextArray, rowOutputType(gmstypes.Text, fields, 0))
 }
 
 func TestConvertBindParametersReturnsNilForNoValues(t *testing.T) {

@@ -1105,7 +1105,7 @@ func resultForMax1RowIter(ctx *sql.Context, schema sql.Schema, iter sql.RowIter,
 		return nil, err
 	}
 
-	outputRow, err := rowToBytes(ctx, schema, row, formatCodes)
+	outputRow, err := rowToBytes(ctx, schema, row, formatCodes, resultFields)
 	if err != nil {
 		return nil, err
 	}
@@ -1229,7 +1229,7 @@ func (h *DoltgresHandler) resultForDefaultIter(ctx *sql.Context, schema sql.Sche
 					continue
 				}
 
-				outputRow, err := rowToBytes(ctx, schema, row, formatCodes)
+				outputRow, err := rowToBytes(ctx, schema, row, formatCodes, resultFields)
 				if err != nil {
 					return err
 				}
@@ -1271,7 +1271,7 @@ func (h *DoltgresHandler) resultForDefaultIter(ctx *sql.Context, schema sql.Sche
 	return r, processedAtLeastOneBatch, nil
 }
 
-func rowToBytes(ctx *sql.Context, s sql.Schema, row sql.Row, formatCodes []int16) ([][]byte, error) {
+func rowToBytes(ctx *sql.Context, s sql.Schema, row sql.Row, formatCodes []int16, resultFields []pgproto3.FieldDescription) ([][]byte, error) {
 	if len(row) == 0 {
 		return nil, nil
 	}
@@ -1292,7 +1292,8 @@ func rowToBytes(ctx *sql.Context, s sql.Schema, row sql.Row, formatCodes []int16
 		if v == nil {
 			o[i] = nil
 		} else if !textFormatOnly && formatCodes[i] == 1 {
-			switch d := s[i].Type.(type) {
+			typ := rowOutputType(s[i].Type, resultFields, i)
+			switch d := typ.(type) {
 			case *pgtypes.DoltgresType:
 				d, err = resolveDoltgresWireType(ctx, d)
 				if err != nil {
@@ -1314,7 +1315,7 @@ func rowToBytes(ctx *sql.Context, s sql.Schema, row sql.Row, formatCodes []int16
 				}
 			}
 		} else {
-			typ := s[i].Type
+			typ := rowOutputType(s[i].Type, resultFields, i)
 			if d, ok := typ.(*pgtypes.DoltgresType); ok {
 				typ, err = resolveDoltgresWireType(ctx, d)
 				if err != nil {
@@ -1329,6 +1330,21 @@ func rowToBytes(ctx *sql.Context, s sql.Schema, row sql.Row, formatCodes []int16
 		}
 	}
 	return o, nil
+}
+
+func rowOutputType(schemaType sql.Type, resultFields []pgproto3.FieldDescription, index int) sql.Type {
+	if index >= len(resultFields) {
+		return schemaType
+	}
+	internalID := id.Type(id.Cache().ToInternal(resultFields[index].DataTypeOID))
+	doltgresType, ok := pgtypes.IDToBuiltInDoltgresType[internalID]
+	if !ok || doltgresType == nil || doltgresType.ID == pgtypes.Unknown.ID {
+		return schemaType
+	}
+	if typmod := resultFields[index].TypeModifier; typmod != -1 {
+		doltgresType = doltgresType.WithAttTypMod(typmod)
+	}
+	return doltgresType
 }
 
 func resolveDoltgresWireType(ctx *sql.Context, typ *pgtypes.DoltgresType) (*pgtypes.DoltgresType, error) {
