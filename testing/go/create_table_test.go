@@ -397,8 +397,7 @@ func TestCreateTable(t *testing.T) {
 					Query: "INSERT INTO temp DEFAULT VALUES", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0054-insert-into-temp-default-values"},
 				},
 				{
-					Query:    "INSERT INTO temp DEFAULT VALUES",
-					Expected: []sql.Row{},
+					Query: "INSERT INTO temp DEFAULT VALUES", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0055-insert-into-temp-default-values"},
 				},
 				{
 					Query: "SELECT id FROM temp ORDER BY id", PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-test-testcreatetable-0056-select-id-from-temp-order"},

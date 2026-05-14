@@ -580,6 +580,9 @@
       "postgresId": "create-table-test-testcreatetable-0032-select-payload-from-json_checks",
       "suggestedId": "create-table-test-testcreatetable-0032-select-payload-from-json_checks",
       "compare": "structural",
+      "columnModes": [
+        "json"
+      ],
       "expectedKind": "rows",
       "query": "SELECT payload FROM json_checks;",
       "querySha256": "e64f29a942caee9d99d2512f3b2e9c129ec89af061adccdf8c8963cb251abbc7",
@@ -589,9 +592,6 @@
             "value": "{\"amount\":3}"
           }
         ]
-      ],
-      "columnModes": [
-        "json"
       ],
       "needsCleanup": false,
       "cleanupProvided": false
@@ -1076,12 +1076,15 @@
       "source": "testing/go/create_table_test.go:TestCreateTable",
       "ordinal": 55,
       "scriptName": "create temporary table with serial column",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "create-table-test-testcreatetable-0055-insert-into-temp-default-values",
       "suggestedId": "create-table-test-testcreatetable-0055-insert-into-temp-default-values",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "INSERT INTO temp DEFAULT VALUES",
       "querySha256": "b21444c46adca193e9a4bcb338fa542bfab9cff0eaebfc573b4006760788085d",
-      "needsCleanup": true,
+      "expectedRows": [],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
