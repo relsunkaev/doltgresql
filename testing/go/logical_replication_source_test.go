@@ -227,7 +227,7 @@ func TestLogicalReplicationSourceProtocolAndCatalogs(t *testing.T) {
 	_, err = conn.Current.Exec(ctx, "DELETE FROM dg_rep_items WHERE tenant_id = 45;")
 	require.NoError(t, err)
 	relation, deleteMessage, commit := receiveDeleteChange(t, replConn)
-	requireDeleteChange(t, relation, deleteMessage, "dg_rep_items", "45", "forty-five-updated")
+	requireDeleteKeyChange(t, relation, deleteMessage, "dg_rep_items", "45")
 	require.Greater(t, commit.CommitLSN, pglogrepl.LSN(0))
 
 	_, err = conn.Current.Exec(ctx, "BEGIN;")
@@ -3657,7 +3657,7 @@ func TestLogicalReplicationSourceReplaysUpdateAndDeleteAfterRestart(t *testing.T
 	relation, update, updateCommit := receiveUpdateChange(t, replConn)
 	requireUpdateChange(t, relation, update, "dg_replay_ud_items", "1", "one-updated")
 	relation, deleteMessage, deleteCommit := receiveDeleteChange(t, replConn)
-	requireDeleteChange(t, relation, deleteMessage, "dg_replay_ud_items", "2", "two")
+	requireDeleteKeyChange(t, relation, deleteMessage, "dg_replay_ud_items", "2")
 	require.Greater(t, deleteCommit.CommitLSN, updateCommit.CommitLSN)
 }
 
@@ -4080,16 +4080,15 @@ func requireUpdateChange(t *testing.T, relation *pglogrepl.RelationMessageV2, up
 	require.Equal(t, label, string(update.NewTuple.Columns[1].Data))
 }
 
-func requireDeleteChange(t *testing.T, relation *pglogrepl.RelationMessageV2, deleteMessage *pglogrepl.DeleteMessageV2, table string, tenantID string, label string) {
+func requireDeleteKeyChange(t *testing.T, relation *pglogrepl.RelationMessageV2, deleteMessage *pglogrepl.DeleteMessageV2, table string, tenantID string) {
 	t.Helper()
 	require.Equal(t, "public", relation.Namespace)
 	require.Equal(t, table, relation.RelationName)
 	require.Equal(t, relation.RelationID, deleteMessage.RelationID)
-	require.Equal(t, uint8(pglogrepl.DeleteMessageTupleTypeOld), deleteMessage.OldTupleType)
+	require.Equal(t, uint8(pglogrepl.DeleteMessageTupleTypeKey), deleteMessage.OldTupleType)
 	require.NotNil(t, deleteMessage.OldTuple)
-	require.Len(t, deleteMessage.OldTuple.Columns, 2)
+	require.Len(t, deleteMessage.OldTuple.Columns, 1)
 	require.Equal(t, tenantID, string(deleteMessage.OldTuple.Columns[0].Data))
-	require.Equal(t, label, string(deleteMessage.OldTuple.Columns[1].Data))
 }
 
 func pgTextValue(value any) string {
