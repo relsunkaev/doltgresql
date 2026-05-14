@@ -55,7 +55,7 @@ var oidvectorin = framework.Function1{
 			}
 			values[i] = innerValue
 		}
-		return values, nil
+		return pgtypes.NewArrayValue(values, []int32{0}), nil
 	},
 }
 
@@ -66,7 +66,8 @@ var oidvectorout = framework.Function1{
 	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Oidvector},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
-		return pgtypes.VectorToString(ctx, val.([]any), pgtypes.Oid)
+		values, _ := pgtypes.ArrayElements(val)
+		return pgtypes.VectorToString(ctx, values, pgtypes.Oid)
 	},
 }
 

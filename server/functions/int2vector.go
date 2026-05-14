@@ -54,7 +54,7 @@ var int2vectorin = framework.Function1{
 			}
 			values[i] = innerValue.(int16)
 		}
-		return values, nil
+		return pgtypes.NewArrayValue(values, []int32{0}), nil
 	},
 }
 
@@ -65,7 +65,8 @@ var int2vectorout = framework.Function1{
 	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Int16vector},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
-		return pgtypes.VectorToString(ctx, val.([]any), pgtypes.Int16)
+		values, _ := pgtypes.ArrayElements(val)
+		return pgtypes.VectorToString(ctx, values, pgtypes.Int16)
 	},
 }
 

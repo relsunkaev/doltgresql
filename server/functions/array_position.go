@@ -46,19 +46,19 @@ var array_position_anyarray_anyelement = framework.Function2{
 			return nil, nil
 		}
 
-		array := val1.([]any)
+		array, _ := pgtypes.ArrayElements(val1)
 		searchElement := val2
 		arrayType := t[0]
 		baseType := arrayType.ArrayBaseType()
+		lowerBound := pgtypes.ArrayLowerBound(val1, 1)
 
-		// Search for the element starting from position 1 (1-indexed)
 		for i, element := range array {
 			cmp, err := baseType.Compare(ctx, element, searchElement)
 			if err != nil {
 				return nil, err
 			}
 			if cmp == 0 {
-				return int32(i + 1), nil // PostgreSQL uses 1-indexed arrays
+				return lowerBound + int32(i), nil
 			}
 		}
 
@@ -78,14 +78,14 @@ var array_position_anyarray_anyelement_int32 = framework.Function3{
 			return nil, nil
 		}
 
-		array := val1.([]any)
+		array, _ := pgtypes.ArrayElements(val1)
 		searchElement := val2
 		start := val3.(int32)
 		arrayType := t[0]
 		baseType := arrayType.ArrayBaseType()
+		lowerBound := pgtypes.ArrayLowerBound(val1, 1)
 
-		// Convert 1-indexed start position to 0-indexed
-		startIdx := int(start - 1)
+		startIdx := int(start - lowerBound)
 		if startIdx < 0 {
 			startIdx = 0
 		}
@@ -100,7 +100,7 @@ var array_position_anyarray_anyelement_int32 = framework.Function3{
 				return nil, err
 			}
 			if cmp == 0 {
-				return int32(i + 1), nil // PostgreSQL uses 1-indexed arrays
+				return lowerBound + int32(i), nil
 			}
 		}
 
@@ -115,7 +115,7 @@ var array_position_unknown_unknown = framework.Function2{
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Unknown, pgtypes.Unknown},
 	Strict:     false,
 	Callable: func(ctx *sql.Context, t [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
-		return nil, framework.ErrFunctionDoesNotExist.New("array_position(unknown, unknown)")
+		return nil, nil
 	},
 }
 
@@ -125,7 +125,7 @@ var array_position_unknown_unknown_int32 = framework.Function3{
 	Parameters: [3]*pgtypes.DoltgresType{pgtypes.Unknown, pgtypes.Unknown, pgtypes.Int32},
 	Strict:     false,
 	Callable: func(ctx *sql.Context, t [4]*pgtypes.DoltgresType, val1 any, val2 any, val3 any) (any, error) {
-		return nil, framework.ErrFunctionDoesNotExist.New("array_position(unknown, unknown, integer)")
+		return nil, nil
 	},
 }
 
@@ -141,13 +141,15 @@ var array_position_int2vector_int2 = framework.Function2{
 		}
 
 		searchElement := val2.(int16)
-		for i, element := range val1.([]any) {
+		array, _ := pgtypes.ArrayElements(val1)
+		lowerBound := pgtypes.ArrayLowerBound(val1, 1)
+		for i, element := range array {
 			cmp, err := pgtypes.Int16.Compare(ctx, element, searchElement)
 			if err != nil {
 				return nil, err
 			}
 			if cmp == 0 {
-				return int32(i + 1), nil
+				return lowerBound + int32(i), nil
 			}
 		}
 
@@ -168,13 +170,15 @@ var array_position_int2array_oid = framework.Function2{
 		if !ok {
 			return nil, nil
 		}
-		for i, element := range val1.([]any) {
+		array, _ := pgtypes.ArrayElements(val1)
+		lowerBound := pgtypes.ArrayLowerBound(val1, 1)
+		for i, element := range array {
 			cmp, err := pgtypes.Int16.Compare(ctx, element, searchElement)
 			if err != nil {
 				return nil, err
 			}
 			if cmp == 0 {
-				return int32(i + 1), nil
+				return lowerBound + int32(i), nil
 			}
 		}
 		return nil, nil
@@ -217,20 +221,20 @@ var array_positions_anyarray_anyelement = framework.Function2{
 			return nil, nil
 		}
 
-		array := val1.([]any)
+		array, _ := pgtypes.ArrayElements(val1)
 		searchElement := val2
 		arrayType := t[0]
 		baseType := arrayType.ArrayBaseType()
+		lowerBound := pgtypes.ArrayLowerBound(val1, 1)
 		var positions []any
 
-		// Search for all occurrences of the element
 		for i, element := range array {
 			cmp, err := baseType.Compare(ctx, element, searchElement)
 			if err != nil {
 				return nil, err
 			}
 			if cmp == 0 {
-				positions = append(positions, int32(i+1)) // PostgreSQL uses 1-indexed arrays
+				positions = append(positions, lowerBound+int32(i))
 			}
 		}
 
