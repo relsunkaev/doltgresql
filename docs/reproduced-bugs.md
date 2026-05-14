@@ -12738,10 +12738,10 @@ artifacts only; no fixes are included here.
   -run TestCreateExtensionWithSchemaRequiresSchemaCreatePrivilegeRepro
   -count=1`.
 - Expected PostgreSQL behavior: installing a trusted extension into an explicit
-  target schema requires both database `CREATE` authority and `CREATE`
-  privilege on that schema, because extension objects are created there.
-- Observed Doltgres behavior: a role with database `CREATE` and only schema
-  `USAGE` can create `hstore` inside `extension_private_schema`.
+  target schema requires database `CREATE` authority; PostgreSQL does not
+  require `CREATE` privilege on the target schema.
+- Observed Doltgres behavior before the parity fix: Doltgres rejected the
+  install with `permission denied for schema extension_private_schema`.
 
 ### CREATE VIEW does not require schema CREATE privilege
 
@@ -14300,16 +14300,17 @@ They are worth keeping, but they are not counted as found bugs.
 - Observed Doltgres behavior: the test passes; a role with existing view and
   base-table privileges can read the replaced view definition.
 
-### CREATE VIEW requires source-table SELECT privileges
+### CREATE VIEW does not require source-table SELECT privileges
 
 - Guard: `TestCreateViewRequiresSelectOnSourceTableGuard` in
   `testing/go/ddl_privilege_repro_test.go`.
 - Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
   CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test ./testing/go -run
   TestCreateViewRequiresSelectOnSourceTableGuard -count=1`.
-- Expected PostgreSQL behavior: creating a view over a table requires `SELECT`
-  privilege on that source table.
-- Observed Doltgres behavior: the test passes and receives `permission denied`.
+- Expected PostgreSQL behavior: creating a view over a table does not require
+  `SELECT` privilege on that source table at definition time.
+- Observed Doltgres behavior before the parity fix: Doltgres rejected the
+  definition with `permission denied for table view_source_private`.
 
 ### CREATE TABLE AS requires source-table SELECT privileges
 

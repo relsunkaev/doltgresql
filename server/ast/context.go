@@ -44,6 +44,8 @@ type Context struct {
 	tableOIDSchema string
 	tableOIDTable  string
 
+	ignoreSelectAuthDepth int
+
 	wholeRowDuplicateAliases map[string]wholeRowDuplicateAlias
 }
 
@@ -86,6 +88,19 @@ func (ctx *Context) WithSetOpOperand(fn func() error) error {
 	ctx.setOpOperandDepth++
 	defer func() { ctx.setOpOperandDepth-- }()
 	return fn()
+}
+
+func (ctx *Context) WithSelectAuthIgnored(fn func() error) error {
+	ctx.ignoreSelectAuthDepth++
+	defer func() { ctx.ignoreSelectAuthDepth-- }()
+	return fn()
+}
+
+func (ctx *Context) SelectAuthType() string {
+	if ctx.ignoreSelectAuthDepth > 0 {
+		return auth.AuthType_IGNORE
+	}
+	return auth.AuthType_SELECT
 }
 
 func (ctx *Context) InSetOpOperand() bool {

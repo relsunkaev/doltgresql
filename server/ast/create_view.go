@@ -85,7 +85,12 @@ func nodeCreateView(ctx *Context, node *tree.CreateView) (*vitess.DDL, error) {
 		selectSource = recursiveViewSelect(node)
 		subStatement = selectSource.String()
 	}
-	selectStmt, err := nodeSelect(ctx, selectSource)
+	var selectStmt vitess.SelectStatement
+	err = ctx.WithSelectAuthIgnored(func() error {
+		var err error
+		selectStmt, err = nodeSelect(ctx, selectSource)
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}

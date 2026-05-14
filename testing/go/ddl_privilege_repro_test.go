@@ -2523,7 +2523,7 @@ func TestCreateViewRequiresSchemaCreatePrivilegeRepro(t *testing.T) {
 func TestCreateViewRequiresSelectOnSourceTableGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
-			Name: "CREATE VIEW requires SELECT on source table",
+			Name: "CREATE VIEW does not require SELECT on source table",
 			SetUpScript: []string{
 				`CREATE USER view_source_reader PASSWORD 'reader';`,
 				`CREATE TABLE view_source_private (id INT PRIMARY KEY);`,
@@ -2531,14 +2531,15 @@ func TestCreateViewRequiresSelectOnSourceTableGuard(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `CREATE VIEW view_from_private_source AS SELECT id FROM view_source_private;`,
+					Query:    `CREATE VIEW view_from_private_source AS SELECT id FROM view_source_private;`,
+					Expected: []sql.Row{},
 
 					Username: `view_source_reader`,
 					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{
 
 						// TestDropViewRequiresOwnershipRepro reproduces a security bug: Doltgres
 						// allows a role that does not own a view to drop it.
-						ID: "ddl-privilege-repro-test-testcreateviewrequiresselectonsourcetableguard-0001-create-view-view_from_private_source-as-select", Compare: "sqlstate"},
+						ID: "ddl-privilege-repro-test-testcreateviewrequiresselectonsourcetableguard-0001-create-view-view_from_private_source-as-select", Compare: "structural"},
 				},
 			},
 		},

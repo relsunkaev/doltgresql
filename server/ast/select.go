@@ -23,7 +23,6 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
-	"github.com/dolthub/doltgresql/server/auth"
 	pgexprs "github.com/dolthub/doltgresql/server/expression"
 )
 
@@ -372,7 +371,7 @@ func nodeSelectStatement(ctx *Context, node tree.SelectStatement) (vitess.Select
 	if node == nil {
 		return nil, nil
 	}
-	ctx.Auth().PushAuthType(auth.AuthType_SELECT)
+	ctx.Auth().PushAuthType(ctx.SelectAuthType())
 	defer ctx.Auth().PopAuthType()
 
 	switch node := node.(type) {
