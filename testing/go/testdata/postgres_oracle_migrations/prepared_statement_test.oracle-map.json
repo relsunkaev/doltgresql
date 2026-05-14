@@ -3789,12 +3789,21 @@
       "source": "testing/go/prepared_statement_test.go:TestSQLPreparedStatements",
       "ordinal": 3,
       "scriptName": "SQL PREPARE and EXECUTE",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testsqlpreparedstatements-0003-execute-sql_concat-ab-||-c",
       "suggestedId": "prepared-statement-test-testsqlpreparedstatements-0003-execute-sql_concat-ab-||-c",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "EXECUTE sql_concat('ab' || 'c', upper('d'));",
       "querySha256": "8574a3abf8ea10f1b9488f45ffc37d41c2a2dc5a873ce28728b4a997cc128769",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "abcD"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -3835,12 +3844,21 @@
       "source": "testing/go/prepared_statement_test.go:TestSQLPreparedStatements",
       "ordinal": 5,
       "scriptName": "SQL PREPARE and EXECUTE",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testsqlpreparedstatements-0005-execute-sql_no_params",
       "suggestedId": "prepared-statement-test-testsqlpreparedstatements-0005-execute-sql_no_params",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "EXECUTE sql_no_params;",
       "querySha256": "f14917211c3717e57a1f1357fd1be7e28543f247c6bae259484c36d4b0cafa0f",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -3870,12 +3888,27 @@
       "source": "testing/go/prepared_statement_test.go:TestSQLPreparedStatements",
       "ordinal": 7,
       "scriptName": "SQL PREPARE and EXECUTE",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testsqlpreparedstatements-0007-select-name-generic_plans-custom_plans-from",
       "suggestedId": "prepared-statement-test-testsqlpreparedstatements-0007-select-name-generic_plans-custom_plans-from",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT name, generic_plans, custom_plans FROM pg_catalog.pg_prepared_statements WHERE name = 'sql_no_params';",
       "querySha256": "fbfe4389a3b2fc731cd51eb08e0f04b8f06304ca26e322dd02eb1254d1153330",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "sql_no_params"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -3899,12 +3932,15 @@
       "source": "testing/go/prepared_statement_test.go:TestSQLPreparedStatements",
       "ordinal": 9,
       "scriptName": "SQL PREPARE and EXECUTE",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "prepared-statement-test-testsqlpreparedstatements-0009-select-name-from-pg_catalog.pg_prepared_statements",
       "suggestedId": "prepared-statement-test-testsqlpreparedstatements-0009-select-name-from-pg_catalog.pg_prepared_statements",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT name FROM pg_catalog.pg_prepared_statements;",
       "querySha256": "360b56fcb2224a6a663ee652bfe1982d85f96fa1ebe6dc770ef725cfb7b51641",
-      "needsCleanup": true,
+      "expectedRows": [],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {

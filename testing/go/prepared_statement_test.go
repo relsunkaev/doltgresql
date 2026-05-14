@@ -52,10 +52,7 @@ func TestSQLPreparedStatements(t *testing.T) {
 					Query: "PREPARE sql_concat(text, text) AS SELECT concat($1, $2);",
 				},
 				{
-					Query: "EXECUTE sql_concat('ab' || 'c', upper('d'));",
-					Expected: []sql.Row{
-						{"abcD"},
-					},
+					Query: "EXECUTE sql_concat('ab' || 'c', upper('d'));", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testsqlpreparedstatements-0003-execute-sql_concat-ab-||-c"},
 				},
 				{
 					Query: "PREPARE sql_insert(int, text) AS INSERT INTO sql_prepare_items VALUES ($1, $2);",
@@ -73,19 +70,13 @@ func TestSQLPreparedStatements(t *testing.T) {
 					Query: "PREPARE sql_no_params AS SELECT count(*) FROM sql_prepare_items;",
 				},
 				{
-					Query: "EXECUTE sql_no_params;",
-					Expected: []sql.Row{
-						{2},
-					},
+					Query: "EXECUTE sql_no_params;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testsqlpreparedstatements-0005-execute-sql_no_params"},
 				},
 				{
 					Query: "EXECUTE sql_no_params;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testsqlpreparedstatements-0006-execute-sql_no_params"},
 				},
 				{
-					Query: "SELECT name, generic_plans, custom_plans FROM pg_catalog.pg_prepared_statements WHERE name = 'sql_no_params';",
-					Expected: []sql.Row{
-						{"sql_no_params", 2, 0},
-					},
+					Query: "SELECT name, generic_plans, custom_plans FROM pg_catalog.pg_prepared_statements WHERE name = 'sql_no_params';", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testsqlpreparedstatements-0007-select-name-generic_plans-custom_plans-from"},
 				},
 				{
 					Query: "DEALLOCATE sql_add;",
@@ -97,8 +88,7 @@ func TestSQLPreparedStatements(t *testing.T) {
 					Query: "DEALLOCATE ALL;",
 				},
 				{
-					Query:    "SELECT name FROM pg_catalog.pg_prepared_statements;",
-					Expected: []sql.Row{},
+					Query: "SELECT name FROM pg_catalog.pg_prepared_statements;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testsqlpreparedstatements-0009-select-name-from-pg_catalog.pg_prepared_statements"},
 				},
 			},
 		},
