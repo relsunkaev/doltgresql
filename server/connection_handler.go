@@ -4414,6 +4414,8 @@ func errMessageToSQLState(msg string) (string, bool) {
 		return pgcode.DependentObjectsStillExist.String(), true
 	case strings.HasPrefix(msg, "cannot drop index: ") && strings.Contains(msg, " is used by foreign key "):
 		return pgcode.DependentObjectsStillExist.String(), true
+	case strings.HasPrefix(msg, `cannot drop index "`) && strings.Contains(msg, `" because constraint "`) && strings.Contains(msg, `" requires it`):
+		return pgcode.DependentObjectsStillExist.String(), true
 	case msg == "cannot create temporary relation in non-temporary schema":
 		return pgcode.InvalidTableDefinition.String(), true
 	case strings.HasPrefix(msg, "permission denied"),

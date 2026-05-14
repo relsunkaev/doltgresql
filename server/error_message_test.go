@@ -151,6 +151,10 @@ func TestErrMessageToSQLStateFormatsDropTableForeignKeyDependency(t *testing.T) 
 	code, ok = errMessageToSQLState("cannot drop index: `fk_drop_unique_parent_code_key` is used by foreign key `fk_drop_unique_child_parent_code_fkey`")
 	require.True(t, ok)
 	require.Equal(t, pgcode.DependentObjectsStillExist.String(), code)
+
+	code, ok = errMessageToSQLState(`cannot drop index "fk_drop_index_parent_code_key" because constraint "fk_drop_index_parent_code_key" on table "fk_drop_index_parent" requires it`)
+	require.True(t, ok)
+	require.Equal(t, pgcode.DependentObjectsStillExist.String(), code)
 }
 
 func TestErrMessageToSQLStateFormatsTemporaryTablePersistentSchema(t *testing.T) {
