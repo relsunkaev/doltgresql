@@ -858,7 +858,7 @@ $$ LANGUAGE plpgsql;`},
 BEGIN
 	RETURN input || '_extra';
 END;
-$$ LANGUAGE plpgsql;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0068-create-function-interpreted_as_of-input-text", Compare: "sqlstate"},
+$$ LANGUAGE plpgsql;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0068-create-function-interpreted_as_of-input-text"},
 				},
 				{
 					Query: "SELECT interpreted_as_of('abcd');", PostgresOracle: ScriptTestPostgresOracle{ID: "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0069-select-interpreted_as_of-abcd"},
