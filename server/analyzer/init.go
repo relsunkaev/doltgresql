@@ -38,6 +38,7 @@ const (
 	ruleId_ApplyTablesForAnalyzeAllTables                                         // applyTablesForAnalyzeAllTables
 	ruleId_ApplyIdentityOverride                                                  // applyIdentityOverride
 	ruleId_AssignInsertCasts                                                      // assignInsertCasts
+	ruleId_AssignUpdateJoin                                                       // assignUpdateJoin
 	ruleId_RebindInsertGeneratedSourceRefs                                        // rebindInsertGeneratedSourceRefs
 	ruleId_AssignJsonbGinLookups                                                  // assignJsonbGinLookups
 	ruleId_AssignJsonbGinMaintainers                                              // assignJsonbGinMaintainers
@@ -122,6 +123,7 @@ func Init() {
 		analyzer.Rule{Id: ruleId_ApplyIdentityOverride, Apply: ApplyIdentityOverride},
 		analyzer.Rule{Id: ruleId_AssignInsertCasts, Apply: AssignInsertCasts},
 		analyzer.Rule{Id: ruleId_AssignUpdateCasts, Apply: AssignUpdateCasts},
+		analyzer.Rule{Id: ruleId_AssignUpdateJoin, Apply: AssignUpdateJoin},
 		analyzer.Rule{Id: ruleId_UseSchemaAwareStatsProvider, Apply: UseSchemaAwareStatsProvider},
 		analyzer.Rule{Id: ruleId_AssignJsonbGinMaintainers, Apply: AssignJsonbGinMaintainers},
 		analyzer.Rule{Id: ruleId_AssignPartitionedTableWrites, Apply: AssignPartitionedTableWrites},
