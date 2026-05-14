@@ -79,8 +79,6 @@ func nodeCall(ctx *Context, node *tree.Call) (vitess.Statement, error) {
 			AuthType:    auth.AuthType_EXECUTE,
 			TargetType:  auth.AuthTargetType_FunctionIdentifiers,
 			TargetNames: []string{qualifier.String(), name.String()},
-			// TODO: need to get argument types separated by comma ( check routineArgTypesKey function )
-			Extra: "",
 		},
 	}, nil
 }
