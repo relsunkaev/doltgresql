@@ -83,7 +83,7 @@ func getViewDef(ctx *sql.Context, oidVal id.Id) (string, error) {
 	var result string
 	err := RunCallback(ctx, oidVal, Callbacks{
 		View: func(ctx *sql.Context, sch ItemSchema, view ItemView) (cont bool, err error) {
-			result, err = schemaQualifiedViewDefinition(view.Item.CreateViewStatement, sch.Item.SchemaName())
+			result, err = pgGetViewdefDefinition(view.Item.CreateViewStatement, sch.Item.SchemaName())
 			if err != nil {
 				return false, err
 			}
@@ -107,6 +107,7 @@ func getViewDef(ctx *sql.Context, oidVal id.Id) (string, error) {
 				}
 				result = cv.AsSource.String()
 			}
+			result = formatPgGetViewdefDefinition(result)
 			result = ensureTrailingSemicolon(closeTrailingStringLiteral(result))
 			return false, nil
 		},
@@ -115,10 +116,6 @@ func getViewDef(ctx *sql.Context, oidVal id.Id) (string, error) {
 		return "", err
 	}
 	return result, nil
-}
-
-func schemaQualifiedViewDefinition(createViewStatement string, defaultSchema string) (string, error) {
-	return SchemaQualifiedViewDefinition(createViewStatement, defaultSchema)
 }
 
 // SchemaQualifiedViewDefinition returns the SELECT body from a CREATE VIEW
@@ -140,6 +137,50 @@ func SchemaQualifiedViewDefinition(createViewStatement string, defaultSchema str
 	}
 	qualifySelectTableNames(cv.AsSource, defaultSchema)
 	return cv.AsSource.String(), nil
+}
+
+func pgGetViewdefDefinition(createViewStatement string, defaultSchema string) (string, error) {
+	if strings.TrimSpace(createViewStatement) == "" {
+		return "", nil
+	}
+	stmts, err := parser.Parse(createViewStatement)
+	if err != nil {
+		return "", err
+	}
+	if len(stmts) == 0 {
+		return "", errors.Errorf("expected CREATE VIEW statement, got none")
+	}
+	cv, ok := stmts[0].AST.(*tree.CreateView)
+	if !ok {
+		return "", errors.Errorf("expected CREATE VIEW statement, got %s", stmts[0].SQL)
+	}
+	if shouldSchemaQualifyPgGetViewdef(cv.AsSource) {
+		qualifySelectTableNames(cv.AsSource, defaultSchema)
+	}
+	return cv.AsSource.String(), nil
+}
+
+func shouldSchemaQualifyPgGetViewdef(sel *tree.Select) bool {
+	if sel == nil {
+		return false
+	}
+	selectClause, ok := sel.Select.(*tree.SelectClause)
+	if !ok {
+		return true
+	}
+	if len(selectClause.From.Tables) != 1 {
+		return true
+	}
+	tableExpr := selectClause.From.Tables[0]
+	for {
+		aliased, ok := tableExpr.(*tree.AliasedTableExpr)
+		if !ok {
+			break
+		}
+		tableExpr = aliased.Expr
+	}
+	_, ok = tableExpr.(*tree.TableName)
+	return !ok
 }
 
 func qualifySelectTableNames(sel *tree.Select, defaultSchema string) {
@@ -235,6 +276,19 @@ func selectDefinitionFromCreateViewStatement(createViewStatement string) string 
 	return strings.TrimSpace(query[asIdx+len("as"):])
 }
 
+func formatPgGetViewdefDefinition(query string) string {
+	query = strings.TrimSpace(query)
+	query = strings.TrimSuffix(query, ";")
+	query = strings.TrimSpace(query)
+	if query == "" {
+		return ""
+	}
+	if fromIdx := findTopLevelKeywordOutsideQuotes(query, "from"); fromIdx >= 0 {
+		query = strings.TrimRight(query[:fromIdx], " \t\r\n") + "\n   " + strings.TrimLeft(query[fromIdx:], " \t\r\n")
+	}
+	return " " + query
+}
+
 func closeTrailingStringLiteral(query string) string {
 	inSingleQuote := false
 	for i := 0; i < len(query); i++ {
@@ -282,6 +336,51 @@ func findKeywordOutsideQuotes(query string, keyword string) int {
 			}
 		default:
 			if inSingleQuote || inDoubleQuote {
+				continue
+			}
+			end := i + len(keyword)
+			if end > len(query) || strings.ToLower(query[i:end]) != lowerKeyword {
+				continue
+			}
+			if isIdentifierByte(query, i-1) || isIdentifierByte(query, end) {
+				continue
+			}
+			return i
+		}
+	}
+	return -1
+}
+
+func findTopLevelKeywordOutsideQuotes(query string, keyword string) int {
+	lowerKeyword := strings.ToLower(keyword)
+	inSingleQuote := false
+	inDoubleQuote := false
+	parenDepth := 0
+	for i := 0; i < len(query); i++ {
+		switch query[i] {
+		case '\'':
+			if inDoubleQuote {
+				continue
+			}
+			if inSingleQuote && i+1 < len(query) && query[i+1] == '\'' {
+				i++
+				continue
+			}
+			inSingleQuote = !inSingleQuote
+		case '"':
+			if !inSingleQuote {
+				inDoubleQuote = !inDoubleQuote
+			}
+		case '(':
+			if !inSingleQuote && !inDoubleQuote {
+				parenDepth++
+			}
+		case ')':
+			if !inSingleQuote && !inDoubleQuote && parenDepth > 0 {
+				parenDepth--
+			}
+		default:
+			if inSingleQuote || inDoubleQuote || parenDepth > 0 {
 				continue
 			}
 			end := i + len(keyword)
