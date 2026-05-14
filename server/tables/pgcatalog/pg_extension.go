@@ -18,6 +18,8 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/core/extensions"
+	pgext "github.com/dolthub/doltgresql/core/extensions/pg_extension"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -49,6 +51,15 @@ func (p PgExtensionHandler) RowIter(ctx *sql.Context, partition sql.Partition) (
 	}
 
 	loadedExtensions := extCollection.GetLoadedExtensions(ctx)
+	if !extCollection.HasLoadedExtension(ctx, id.NewExtension("plpgsql")) {
+		loadedExtensions = append(loadedExtensions, extensions.Extension{
+			ExtName:       id.NewExtension("plpgsql"),
+			Namespace:     id.NewNamespace("pg_catalog"),
+			Owner:         "postgres",
+			Relocatable:   false,
+			LibIdentifier: extensions.CreateLibraryIdentifier("plpgsql", pgext.ToVersion(1, 0)),
+		})
+	}
 	rows := make([]sql.Row, 0, len(loadedExtensions))
 	for _, ext := range loadedExtensions {
 		namespace := ext.Namespace

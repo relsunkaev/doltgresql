@@ -90,7 +90,7 @@ func (c *CreateExtension) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, err
 	if err != nil {
 		return nil, err
 	}
-	if extCollection.HasLoadedExtension(ctx, id.NewExtension(c.Name)) {
+	if isPreinstalledExtension(c.Name) || extCollection.HasLoadedExtension(ctx, id.NewExtension(c.Name)) {
 		if c.IfNotExists {
 			return sql.RowsToRowIter(), nil
 		}
@@ -172,6 +172,10 @@ func (c *CreateExtension) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, err
 		return nil, err
 	}
 	return sql.RowsToRowIter(), nil
+}
+
+func isPreinstalledExtension(name string) bool {
+	return strings.EqualFold(name, "plpgsql")
 }
 
 func (c *CreateExtension) validateVersion(ext *pg_extension.ExtensionFiles) error {
