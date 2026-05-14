@@ -2610,7 +2610,7 @@
       "expectedRows": [
         [
           {
-            "value": "postgres"
+            "value": "test"
           }
         ]
       ],
@@ -3226,7 +3226,7 @@
       "expectedRows": [
         [
           {
-            "value": "postgres"
+            "value": "test"
           }
         ]
       ],
@@ -3248,7 +3248,7 @@
       "expectedRows": [
         [
           {
-            "value": "postgres"
+            "value": "test"
           }
         ]
       ],
