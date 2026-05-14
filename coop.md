@@ -10,6 +10,25 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### epsilon - 2026-05-14 05:56 MST
+
+- Result: fixed the current set-returning-function edge cases and generated-column validation SQLSTATE blockers.
+- SRF root causes:
+  - `generate_subscripts` assumed array values were raw `[]any`, but `int2vectorin`/`oidvectorin` can return `pgtypes.ArrayValue`; the function now reads elements and lower bounds through the array helpers.
+  - multi-row `INSERT ... VALUES` with a set-returning function returned a generic error instead of PostgreSQL `feature_not_supported` (`0A000`).
+- Generated-column root causes:
+  - generated expression validation produced generic errors for volatile functions, malformed generated-column references, subqueries, system columns, whole-row variables, aggregate/window/SRF usage, and conflicting generated/default clauses.
+  - generated whole-row checks needed `num_nulls`/`num_nonnulls` to resolve far enough for the validator to return PostgreSQL-compatible SQLSTATEs.
+- Files touched: `server/functions/generate_subscripts.go`, `server/analyzer/optimize_functions.go`, `server/analyzer/validate_column_defaults.go`, `server/functions/num_nulls.go`, `server/functions/init.go`, and epsilon-owned classifier hunks in `server/connection_handler.go`.
+- Fresh verifier `/private/tmp/doltgresql-epsilon-current-xeo64K` plus epsilon's patch passed:
+  - `go test -json -vet=off ./testing/go -run '^TestSetReturningFunctions$/^generate_subscripts on 0-indexed array types$' -count=1 -timeout=10m`
+  - `go test -json -vet=off ./testing/go -run '^TestSetReturningFunctions$/^insert with set returning function$' -count=1 -timeout=10m`
+  - focused generated-column repros for volatile, malformed, subquery, system/tableoid, and conflicting generated/default clauses.
+  - `go test -vet=off ./server/functions ./server/analyzer -run '^$' -count=1`
+- Committed as `c0158bcd` and `6fb9dcdc`.
+- Shared checkout note: full shared-tree compiles are still blocked by unrelated dirty `server/node/postgres_foreign_key_action_handler.go` changes, so validation is using the verifier worktree.
+- Next action: rerun the high-skip verifier from current HEAD; last run reached the generated/default conflict before the focused fix passed.
+
 ### epsilon - 2026-05-14 05:34 MST
 
 - Result: fixed the `TestStringFunction` and `TestUnknownFunctions` SQLSTATE blockers discovered after the date/time slice.
