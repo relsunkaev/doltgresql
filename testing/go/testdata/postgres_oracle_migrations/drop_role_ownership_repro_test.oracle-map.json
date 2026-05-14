@@ -125,7 +125,7 @@
       "suggestedId": "drop-role-ownership-repro-test-testdroprolewithgrantedrolemembershiprepro-0001-drop-role-doomed_membership_grantor",
       "compare": "sqlstate",
       "expectedKind": "error",
-      "sqlstate": "42704",
+      "sqlstate": "2BP01",
       "errorSeverity": "ERROR",
       "query": "DROP ROLE doomed_membership_grantor;",
       "querySha256": "a246a680fe6c4629259cff18b27360e96f22659bb4f535280e69127b2f4431cc",
