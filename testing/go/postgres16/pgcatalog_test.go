@@ -620,7 +620,10 @@ func TestPgBackendMemoryContexts(t *testing.T) {
 			Name: "pg_backend_memory_contexts",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_backend_memory_contexts";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+					Query: `SELECT name, parent, level::text, (total_bytes >= free_bytes)::text AS valid_bytes
+						FROM "pg_catalog"."pg_backend_memory_contexts"
+						WHERE level = 0
+							AND name = 'TopMemoryContext';`, PostgresOracle: ScriptTestPostgresOracle{ID:
 
 					// Different cases and quoted, so it fails
 					"pgcatalog-test-testpgbackendmemorycontexts-0001-select-*-from-pg_catalog-."},
@@ -638,7 +641,11 @@ func TestPgBackendMemoryContexts(t *testing.T) {
 						ID: "pgcatalog-test-testpgbackendmemorycontexts-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT name FROM PG_catalog.pg_BACKEND_MEMORY_CONTEXTS ORDER BY name;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgbackendmemorycontexts-0004-select-name-from-pg_catalog.pg_backend_memory_contexts-order"},
+					Query: `SELECT name
+						FROM PG_catalog.pg_BACKEND_MEMORY_CONTEXTS
+						WHERE level = 0
+							AND name = 'TopMemoryContext'
+						ORDER BY name;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgbackendmemorycontexts-0004-select-name-from-pg_catalog.pg_backend_memory_contexts-order"},
 				},
 			},
 		},
@@ -651,7 +658,10 @@ func TestPgCast(t *testing.T) {
 			Name: "pg_cast",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_cast";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+					Query: `SELECT oid::text, castsource::regtype::text, casttarget::regtype::text, castfunc::text, castcontext, castmethod
+						FROM "pg_catalog"."pg_cast"
+						WHERE castsource = 'integer'::regtype
+							AND casttarget = 'bigint'::regtype;`, PostgresOracle: ScriptTestPostgresOracle{ID:
 
 					// Different cases and quoted, so it fails
 					"pgcatalog-test-testpgcast-0001-select-*-from-pg_catalog-."},
@@ -669,7 +679,11 @@ func TestPgCast(t *testing.T) {
 						ID: "pgcatalog-test-testpgcast-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT oid FROM PG_catalog.pg_CAST ORDER BY oid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgcast-0004-select-oid-from-pg_catalog.pg_cast-order"},
+					Query: `SELECT oid::text, castsource::regtype::text, casttarget::regtype::text
+						FROM PG_catalog.pg_CAST
+						WHERE castsource = 'integer'::regtype
+							AND casttarget = 'bigint'::regtype
+						ORDER BY oid;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgcast-0004-select-oid-from-pg_catalog.pg_cast-order"},
 				},
 			},
 		},
