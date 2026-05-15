@@ -71,6 +71,9 @@
       "expectedKind": "rows",
       "query": "CREATE OR REPLACE PROCEDURE interpreted_branch(input INT4) AS $$\nBEGIN\n\tDELETE FROM test WHERE v1 = 2;\n\tINSERT INTO test VALUES (2, input + 1000);\nEND;\n$$ LANGUAGE plpgsql;",
       "querySha256": "52b6c1e27c348db0f92c264614628711a15b5d9a16fd77e0fbd9094479876b39",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -116,6 +119,9 @@
       "expectedKind": "rows",
       "query": "CALL interpreted_branch(56);",
       "querySha256": "969a105baec36d07dfadbd92057df45e66886783cc5e40a96c8b95b15a6a200e",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -129,6 +135,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM test;",
       "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -142,6 +151,9 @@
       "expectedKind": "rows",
       "query": "DELETE FROM test WHERE v1 = 2;",
       "querySha256": "ca7f43a962e9db20c6f4d70bae507d40680c1aa189c5e7d6604b831695bed197",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -171,6 +183,9 @@
       "expectedKind": "rows",
       "query": "CALL interpreted_branch(57);",
       "querySha256": "6be5816383a2ed10496154c881604af81db0cd632f64552814e6556a7d806790",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -184,6 +199,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM test;",
       "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -327,6 +345,9 @@
       "expectedKind": "rows",
       "query": "CREATE PROCEDURE interpreted_merging(input INT4) AS $$\nBEGIN\n\tDELETE FROM test WHERE v1 = 3;\n\tINSERT INTO test VALUES (3, input::int4 + 1000);\nEND;\n$$ LANGUAGE plpgsql;",
       "querySha256": "461b1d12a4920da153550b4e535820865c7a9923e9224c4b3a1704d307a361db",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -388,6 +409,9 @@
       "expectedKind": "error",
       "query": "CALL interpreted_merging(55);",
       "querySha256": "a4b8a04aa3a345b9b891ea497cfa1da680cc5e27475923e52f5a91fc560ba7f4",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -401,6 +425,9 @@
       "expectedKind": "rows",
       "query": "CREATE OR REPLACE PROCEDURE interpreted_merging(input TEXT) AS $$\nBEGIN\n\tDELETE FROM test WHERE v1 = 2;\n\tINSERT INTO test VALUES (2, input::int4 + 10000);\nEND;\n$$ LANGUAGE plpgsql;",
       "querySha256": "bdd6e17a203efde7455b9d4336c4aaa0f401dfa14724114960ca40e02b88a303",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -462,6 +489,9 @@
       "expectedKind": "rows",
       "query": "CALL interpreted_merging('33');",
       "querySha256": "475232da42375da9760bb07c51223886bfc5baf40aaeed4de70e8fd73cb9c8d9",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -475,6 +505,9 @@
       "expectedKind": "rows",
       "query": "CALL interpreted_merging(77);",
       "querySha256": "8838072d10ba8ddef774cfbdc2ec74a09698b9cbeacebe0aa805cde1cde6cbc4",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -488,6 +521,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM test;",
       "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -549,6 +585,9 @@
       "expectedKind": "rows",
       "query": "CREATE OR REPLACE PROCEDURE interpreted_example(input TEXT) AS $$ BEGIN INSERT INTO test VALUES ('3' || input); END; $$ LANGUAGE plpgsql;",
       "querySha256": "e527548b8002a399c8a63b904d2fcd3ee4ebf28a3c2a4cbeb3e10603320b4d43",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -610,6 +649,9 @@
       "expectedKind": "rows",
       "query": "CREATE OR REPLACE PROCEDURE interpreted_example(input TEXT) AS $$ BEGIN INSERT INTO test VALUES ('2' || input); END; $$ LANGUAGE plpgsql;",
       "querySha256": "ddcfb39f4f5125142eee80220c54cf79c6a7f556debc020249106fb90ac2007a",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -768,6 +810,9 @@
       "expectedKind": "rows",
       "query": "CALL interpreted_example('12');",
       "querySha256": "16eb01f8a00faa517d4e93c10ddff659dafe7fb5ce54167cab5cdaaf92c14ceb",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -781,6 +826,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM test;",
       "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     }

@@ -135,6 +135,9 @@
       "expectedKind": "rows",
       "query": "insert into employees values (0, 'Sehn', 'Tim'), (1, 'Hendriks', 'Brian'), (2, 'Son','Aaron'), (3, 'Fitzgerald', 'Brian');",
       "querySha256": "bb5886bb53a60814977a7c372f41dcde466952383ed126ee3ae9493ab6042ee2",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -148,6 +151,9 @@
       "expectedKind": "rows",
       "query": "insert into teams values (0, 'Engineering'), (1, 'Sales');",
       "querySha256": "b27b7993070c545e8badf29d7c41c43a6c30c7bfdbe014aefbf17153c7ede049",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -161,6 +167,9 @@
       "expectedKind": "rows",
       "query": "insert into employees_teams(employee_id, team_id) values (0,0), (1,0), (2,0), (0,1), (3,1);",
       "querySha256": "2d51b7493166bd7d84a00f9615c0a1be6d51dc7dcb82523e0d620977b155c9ba",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -174,6 +183,9 @@
       "expectedKind": "rows",
       "query": "select first_name, last_name, team_name from employees\n\t\t\t\t\t\t\tjoin employees_teams on (employees.id=employees_teams.employee_id)\n\t\t\t\t\t\t\tjoin teams on (teams.id=employees_teams.team_id)\n\t\t\t\t\t\t\twhere team_name='Engineering';",
       "querySha256": "8db4b9158a7b743a22b7f6bbcfa63b1df96e4b02efd779763e80091d1565a728",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -187,6 +199,9 @@
       "expectedKind": "rows",
       "query": "select * from employees_teams where employee_id='0' and team_id='1';",
       "querySha256": "4bb8a79a2f79ada6aaa1ba744ebf24705f28664a0ade6ab1243a3bcf60dc28fb",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -296,6 +311,9 @@
       "expectedKind": "rows",
       "query": "drop table employees_teams;",
       "querySha256": "10ceefe9516848113530f8eb935c4bcb22ba8b6b0570b65633f0170434490cdb",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -309,6 +327,9 @@
       "expectedKind": "error",
       "query": "select count(*) from employees_teams;",
       "querySha256": "6740ff4517693b6f36300e0ee8a09fd9c643221a2de2777988cb80ce1ebdd716",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -338,6 +359,9 @@
       "expectedKind": "rows",
       "query": "select count(*) from employees_teams;",
       "querySha256": "6740ff4517693b6f36300e0ee8a09fd9c643221a2de2777988cb80ce1ebdd716",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -367,6 +391,9 @@
       "expectedKind": "rows",
       "query": "update employees SET first_name='Timothy' where first_name='Tim';",
       "querySha256": "28e0c6642c1d2149c3b84b1779fdade974d0d7c25c04e0f592d68cb79ec44237",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -380,6 +407,9 @@
       "expectedKind": "rows",
       "query": "insert INTO employees (id, first_name, last_name) values (4,'Daylon', 'Wilkins');",
       "querySha256": "1a84d0964d350bad773171b969e4dfae142e7361ac98fb70606bc8436ed95dc6",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -393,6 +423,9 @@
       "expectedKind": "rows",
       "query": "insert into employees_teams(team_id, employee_id) values (0,4);",
       "querySha256": "c2be37b90be4e787c9023370cb8b86c35418e65bd8cb596abadb55d9cb32e593",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -406,6 +439,9 @@
       "expectedKind": "rows",
       "query": "delete from employees_teams where employee_id=0 and team_id=1;",
       "querySha256": "be2b43522195aad081711ae4890647076e0a616df457e24c8069e7b2bc9151fc",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -467,6 +503,9 @@
       "expectedKind": "rows",
       "query": "select active_branch();",
       "querySha256": "0c4c3160c26b663ed9cf341289f9243be1ffa87697a75837de334e6ae335f2c7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -480,6 +519,9 @@
       "expectedKind": "rows",
       "query": "select * from employees;",
       "querySha256": "0452d7335b83a024f849ae195bd27d44925dad1c336da11d6cda143b1293bf1f",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -493,6 +535,9 @@
       "expectedKind": "rows",
       "query": "select * from employees as of 'modifications';",
       "querySha256": "f971f4023fc7869bbb1aa2d4b3968b57f4c0e7433048e689536fcebb25c3f979",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
