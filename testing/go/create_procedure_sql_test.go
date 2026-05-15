@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestSqlProcedureInsertReturningExecutesRepro reproduces a SQL procedure
@@ -111,17 +109,14 @@ func TestCreateProcedureLanguageSql(t *testing.T) {
 	)
 	VALUES (2222, new_host_connection_id)
 	RETURNING game_id;
-$$;`,
-					Expected: []sql.Row{},
+$$;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-sql-test-testcreateprocedurelanguagesql-0001-create-procedure-public.add-inout-new_host_connection_id"},
 				},
 				{
 					SkipResultsCheck: true, // TODO: need fix for returning results
-					Query:            `CALL add('f')`,
-					Expected:         []sql.Row{{"2222"}},
+					Query:            `CALL add('f')`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-sql-test-testcreateprocedurelanguagesql-0002-call-add-f"},
 				},
 				{
-					Query:    `SELECT id, game_id, host_connection_id FROM games`,
-					Expected: []sql.Row{{1, "2222", "f"}},
+					Query: `SELECT id, game_id, host_connection_id FROM games`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-sql-test-testcreateprocedurelanguagesql-0003-select-id-game_id-host_connection_id-from"},
 				},
 				{
 					Query: `CREATE PROCEDURE public.create_game(INOUT new_host_connection_id character varying)
@@ -147,16 +142,14 @@ $$;`,
 		new_host_connection_id
 	)
 	RETURNING game_id;
-$$;`,
-					Expected: []sql.Row{},
+$$;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-sql-test-testcreateprocedurelanguagesql-0004-create-procedure-public.create_game-inout-new_host_connection_id"},
 				},
 				{
 					SkipResultsCheck: true,
 					Query:            `CALL create_game('d')`,
 				},
 				{
-					Query:    `SELECT id, host_connection_id FROM games`,
-					Expected: []sql.Row{{1, "f"}, {2, "d"}},
+					Query: `SELECT id, host_connection_id FROM games`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-procedure-sql-test-testcreateprocedurelanguagesql-0005-select-id-host_connection_id-from-games"},
 				},
 			},
 		},

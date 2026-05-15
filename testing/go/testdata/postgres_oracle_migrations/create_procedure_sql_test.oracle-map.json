@@ -65,65 +65,142 @@
       "source": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql",
       "ordinal": 1,
       "scriptName": "procedure with insert returning",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "create-procedure-sql-test-testcreateprocedurelanguagesql-0001-create-procedure-public.add-inout-new_host_connection_id",
       "suggestedId": "create-procedure-sql-test-testcreateprocedurelanguagesql-0001-create-procedure-public.add-inout-new_host_connection_id",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "CREATE PROCEDURE public.add(INOUT new_host_connection_id character varying)\n    LANGUAGE sql\n    AS $$\n\tINSERT INTO public.games (\n\t\tgame_id,\n\t\thost_connection_id\n\t)\n\tVALUES (2222, new_host_connection_id)\n\tRETURNING game_id;\n$$;",
       "querySha256": "65bba6c91c18092f4c541b55b0dfa424dd3eec7ed616e33aacbe7eb0ca6ff95b",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DO $$ DECLARE r record; BEGIN FOR r IN SELECT p.oid::pg_catalog.regprocedure AS signature FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'add' AND p.prokind = 'p' LOOP EXECUTE 'DROP PROCEDURE IF EXISTS ' || r.signature || ' CASCADE'; END LOOP; END $$",
+        "DROP TABLE IF EXISTS public.games CASCADE",
+        "DROP SEQUENCE IF EXISTS public.games_id_seq CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql#0002",
       "source": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql",
       "ordinal": 2,
       "scriptName": "procedure with insert returning",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "create-procedure-sql-test-testcreateprocedurelanguagesql-0002-call-add-f",
       "suggestedId": "create-procedure-sql-test-testcreateprocedurelanguagesql-0002-call-add-f",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "CALL add('f')",
       "querySha256": "e8dae28ed33f65cf0bedf80397c90c31fc0ddd756254415bd29443a6bb985f91",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "2222"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DO $$ DECLARE r record; BEGIN FOR r IN SELECT p.oid::pg_catalog.regprocedure AS signature FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'add' AND p.prokind = 'p' LOOP EXECUTE 'DROP PROCEDURE IF EXISTS ' || r.signature || ' CASCADE'; END LOOP; END $$",
+        "DROP TABLE IF EXISTS public.games CASCADE",
+        "DROP SEQUENCE IF EXISTS public.games_id_seq CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql#0003",
       "source": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql",
       "ordinal": 3,
       "scriptName": "procedure with insert returning",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "create-procedure-sql-test-testcreateprocedurelanguagesql-0003-select-id-game_id-host_connection_id-from",
       "suggestedId": "create-procedure-sql-test-testcreateprocedurelanguagesql-0003-select-id-game_id-host_connection_id-from",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT id, game_id, host_connection_id FROM games",
       "querySha256": "9e6e16344f8533cf4db801356cb418f981923df06efde2a91048432ebe168d43",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2222"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DO $$ DECLARE r record; BEGIN FOR r IN SELECT p.oid::pg_catalog.regprocedure AS signature FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'add' AND p.prokind = 'p' LOOP EXECUTE 'DROP PROCEDURE IF EXISTS ' || r.signature || ' CASCADE'; END LOOP; END $$",
+        "DROP TABLE IF EXISTS public.games CASCADE",
+        "DROP SEQUENCE IF EXISTS public.games_id_seq CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql#0004",
       "source": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql",
       "ordinal": 4,
       "scriptName": "procedure with insert returning",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "create-procedure-sql-test-testcreateprocedurelanguagesql-0004-create-procedure-public.create_game-inout-new_host_connection_id",
       "suggestedId": "create-procedure-sql-test-testcreateprocedurelanguagesql-0004-create-procedure-public.create_game-inout-new_host_connection_id",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "CREATE PROCEDURE public.create_game(INOUT new_host_connection_id character varying)\n    LANGUAGE sql\n    AS $$\n\tWITH new_game_id_holder (new_game_id) AS (\n\t\tSELECT n.random_number\n\t\tFROM (\n\t\t\tSELECT LPAD(FLOOR(random() * 10000)::varchar, 4, '0') AS random_number\n\t\t\tFROM generate_series(1, (SELECT COUNT(*) FROM public.games) + 10)\n\t\t) AS n\n\t\tLEFT OUTER JOIN \n\t\t\tpublic.games AS g on g.game_id = n.random_number\n\t\tWHERE g.id IS NULL\n\t\tLIMIT 1\n\t)\n\tINSERT INTO public.games (\n\t\tgame_id,\n\t\thost_connection_id\n\t)\n\tVALUES ( \n\t\t(SELECT new_game_id FROM new_game_id_holder),\n\t\tnew_host_connection_id\n\t)\n\tRETURNING game_id;\n$$;",
       "querySha256": "d44b00613bab49087ef213fc8a3cfcaa0e60564e426ede8bf125b2d36fd81a6e",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DO $$ DECLARE r record; BEGIN FOR r IN SELECT p.oid::pg_catalog.regprocedure AS signature FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'add' AND p.prokind = 'p' LOOP EXECUTE 'DROP PROCEDURE IF EXISTS ' || r.signature || ' CASCADE'; END LOOP; END $$",
+        "DO $$ DECLARE r record; BEGIN FOR r IN SELECT p.oid::pg_catalog.regprocedure AS signature FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'create_game' AND p.prokind = 'p' LOOP EXECUTE 'DROP PROCEDURE IF EXISTS ' || r.signature || ' CASCADE'; END LOOP; END $$",
+        "DROP TABLE IF EXISTS public.games CASCADE",
+        "DROP SEQUENCE IF EXISTS public.games_id_seq CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql#0005",
       "source": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql",
       "ordinal": 5,
       "scriptName": "procedure with insert returning",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "create-procedure-sql-test-testcreateprocedurelanguagesql-0005-select-id-host_connection_id-from-games",
       "suggestedId": "create-procedure-sql-test-testcreateprocedurelanguagesql-0005-select-id-host_connection_id-from-games",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT id, host_connection_id FROM games",
       "querySha256": "d8b65cbe017c15e81c8cbc68eb6166e1b6b6772bc4331f477e113d30152acd2b",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "f"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "d"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DO $$ DECLARE r record; BEGIN FOR r IN SELECT p.oid::pg_catalog.regprocedure AS signature FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'add' AND p.prokind = 'p' LOOP EXECUTE 'DROP PROCEDURE IF EXISTS ' || r.signature || ' CASCADE'; END LOOP; END $$",
+        "DO $$ DECLARE r record; BEGIN FOR r IN SELECT p.oid::pg_catalog.regprocedure AS signature FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'create_game' AND p.prokind = 'p' LOOP EXECUTE 'DROP PROCEDURE IF EXISTS ' || r.signature || ' CASCADE'; END LOOP; END $$",
+        "DROP TABLE IF EXISTS public.games CASCADE",
+        "DROP SEQUENCE IF EXISTS public.games_id_seq CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql#0006",
