@@ -888,19 +888,16 @@ func TestForeignKeys(t *testing.T) {
 				Assertions: []ScriptTestAssertion{
 					{
 						Query: `ALTER TABLE ONLY public.hn_stories
-				ADD CONSTRAINT hn_stories_website_url_fkey FOREIGN KEY (website_url) REFERENCES public.websites(url) ON UPDATE CASCADE ON DELETE SET DEFAULT;`,
-						Expected: []sql.Row{},
+				ADD CONSTRAINT hn_stories_website_url_fkey FOREIGN KEY (website_url) REFERENCES public.websites(url) ON UPDATE CASCADE ON DELETE SET DEFAULT;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-keys-test-testforeignkeys-0090-alter-table-only-public.hn_stories-add"},
 					},
 					{
 						Query: "DELETE FROM public.websites WHERE title = 'foo1';",
 					},
 					{
-						Query:    "SELECT * FROM public.hn_stories where title = 'test1';",
-						Expected: []sql.Row{{"test1", nil}},
+						Query: "SELECT * FROM public.hn_stories where title = 'test1';", PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-keys-test-testforeignkeys-0091-select-*-from-public.hn_stories-where"},
 					},
 					{
-						Query:       "ALTER TABLE hn_stories ALTER COLUMN website_url SET DEFAULT (title);",
-						ExpectedErr: "cannot use column reference in DEFAULT expression",
+						Query: "ALTER TABLE hn_stories ALTER COLUMN website_url SET DEFAULT (title);", PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-keys-test-testforeignkeys-0092-alter-table-hn_stories-alter-column"},
 					},
 					{
 						Query: "DELETE FROM public.websites WHERE title = 'foo2';",
@@ -922,19 +919,16 @@ func TestForeignKeys(t *testing.T) {
 				Assertions: []ScriptTestAssertion{
 					{
 						Query: `ALTER TABLE ONLY public.hn_stories
-				ADD CONSTRAINT hn_stories_website_url_fkey FOREIGN KEY (website_url) REFERENCES public.websites(url) ON UPDATE SET DEFAULT;`,
-						Expected: []sql.Row{},
+				ADD CONSTRAINT hn_stories_website_url_fkey FOREIGN KEY (website_url) REFERENCES public.websites(url) ON UPDATE SET DEFAULT;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-keys-test-testforeignkeys-0094-alter-table-only-public.hn_stories-add"},
 					},
 					{
 						Query: "UPDATE public.websites SET url = 'http://fake.com' WHERE title = 'foo1';",
 					},
 					{
-						Query:    "SELECT * FROM public.hn_stories where title = 'test1';",
-						Expected: []sql.Row{{"test1", nil}},
+						Query: "SELECT * FROM public.hn_stories where title = 'test1';", PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-keys-test-testforeignkeys-0095-select-*-from-public.hn_stories-where"},
 					},
 					{
-						Query:       "ALTER TABLE hn_stories ALTER COLUMN website_url SET DEFAULT (title);",
-						ExpectedErr: "cannot use column reference in DEFAULT expression",
+						Query: "ALTER TABLE hn_stories ALTER COLUMN website_url SET DEFAULT (title);", PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-keys-test-testforeignkeys-0096-alter-table-hn_stories-alter-column"},
 					},
 					{
 						Query: "UPDATE public.websites SET url = 'http://doltdb.com' WHERE title = 'foo2';",

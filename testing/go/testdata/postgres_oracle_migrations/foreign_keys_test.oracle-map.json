@@ -1437,39 +1437,70 @@
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
       "ordinal": 90,
       "scriptName": "ON DELETE ... SET DEFAULT",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "foreign-keys-test-testforeignkeys-0090-alter-table-only-public.hn_stories-add",
       "suggestedId": "foreign-keys-test-testforeignkeys-0090-alter-table-only-public.hn_stories-add",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "ALTER TABLE ONLY public.hn_stories\n\t\t\t\tADD CONSTRAINT hn_stories_website_url_fkey FOREIGN KEY (website_url) REFERENCES public.websites(url) ON UPDATE CASCADE ON DELETE SET DEFAULT;",
       "querySha256": "b4c28261e1505c6305d9f685c372750b242d3ae81d97337f410775e0f93f4295",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP TABLE IF EXISTS public.hn_stories CASCADE",
+        "DROP TABLE IF EXISTS public.websites CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0091",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
       "ordinal": 91,
       "scriptName": "ON DELETE ... SET DEFAULT",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "foreign-keys-test-testforeignkeys-0091-select-*-from-public.hn_stories-where",
       "suggestedId": "foreign-keys-test-testforeignkeys-0091-select-*-from-public.hn_stories-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM public.hn_stories where title = 'test1';",
       "querySha256": "ee55abbfeaa57ad5ac91d6aa127db9d8c3bd4955ee1fea4b5b00880298d9c661",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "test1"
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS public.hn_stories CASCADE",
+        "DROP TABLE IF EXISTS public.websites CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0092",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
       "ordinal": 92,
       "scriptName": "ON DELETE ... SET DEFAULT",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "foreign-keys-test-testforeignkeys-0092-alter-table-hn_stories-alter-column",
       "suggestedId": "foreign-keys-test-testforeignkeys-0092-alter-table-hn_stories-alter-column",
-      "expectedKind": "rows",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "0A000",
+      "errorSeverity": "ERROR",
       "query": "ALTER TABLE hn_stories ALTER COLUMN website_url SET DEFAULT (title);",
       "querySha256": "f5758aa4cc3479b7f2e265603d0d8d1a877dd454915c66a065ebf3ebc51fa151",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "cleanup": [
+        "DROP TABLE IF EXISTS public.hn_stories CASCADE",
+        "DROP TABLE IF EXISTS public.websites CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0093",
@@ -1489,39 +1520,70 @@
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
       "ordinal": 94,
       "scriptName": "ON UPDATE ... SET DEFAULT",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "foreign-keys-test-testforeignkeys-0094-alter-table-only-public.hn_stories-add",
       "suggestedId": "foreign-keys-test-testforeignkeys-0094-alter-table-only-public.hn_stories-add",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "ALTER TABLE ONLY public.hn_stories\n\t\t\t\tADD CONSTRAINT hn_stories_website_url_fkey FOREIGN KEY (website_url) REFERENCES public.websites(url) ON UPDATE SET DEFAULT;",
       "querySha256": "2a2c58770bad2fec3bae16e268ae1e3d196b6d7380c495259a292a3ed157923b",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP TABLE IF EXISTS public.hn_stories CASCADE",
+        "DROP TABLE IF EXISTS public.websites CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0095",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
       "ordinal": 95,
       "scriptName": "ON UPDATE ... SET DEFAULT",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "foreign-keys-test-testforeignkeys-0095-select-*-from-public.hn_stories-where",
       "suggestedId": "foreign-keys-test-testforeignkeys-0095-select-*-from-public.hn_stories-where",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT * FROM public.hn_stories where title = 'test1';",
       "querySha256": "ee55abbfeaa57ad5ac91d6aa127db9d8c3bd4955ee1fea4b5b00880298d9c661",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "test1"
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS public.hn_stories CASCADE",
+        "DROP TABLE IF EXISTS public.websites CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0096",
       "source": "testing/go/foreign_keys_test.go:TestForeignKeys",
       "ordinal": 96,
       "scriptName": "ON UPDATE ... SET DEFAULT",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "foreign-keys-test-testforeignkeys-0096-alter-table-hn_stories-alter-column",
       "suggestedId": "foreign-keys-test-testforeignkeys-0096-alter-table-hn_stories-alter-column",
-      "expectedKind": "rows",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "0A000",
+      "errorSeverity": "ERROR",
       "query": "ALTER TABLE hn_stories ALTER COLUMN website_url SET DEFAULT (title);",
       "querySha256": "f5758aa4cc3479b7f2e265603d0d8d1a877dd454915c66a065ebf3ebc51fa151",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "cleanup": [
+        "DROP TABLE IF EXISTS public.hn_stories CASCADE",
+        "DROP TABLE IF EXISTS public.websites CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/foreign_keys_test.go:TestForeignKeys#0097",
