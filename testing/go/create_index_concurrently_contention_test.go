@@ -315,7 +315,7 @@ func TestCreateIndexConcurrentlyAllowsWritersDuringPhase1(t *testing.T) {
 		plan.WriteByte('\n')
 	}
 	require.NoError(t, rows.Err())
-	require.Contains(t, plan.String(), "IndexedTableAccess")
+	require.Contains(t, plan.String(), "Index Scan using nonblock_t_v_idx")
 }
 
 func TestCreateIndexConcurrentlyLargeTableGuardrail(t *testing.T) {
@@ -413,7 +413,7 @@ func TestCreateIndexConcurrentlyLargeTableGuardrail(t *testing.T) {
 		plan.WriteByte('\n')
 	}
 	require.NoError(t, rows.Err())
-	require.Contains(t, plan.String(), "IndexedTableAccess")
+	require.Contains(t, plan.String(), "Index Scan using large_concurrent_t_v_idx")
 }
 
 func insertLargeConcurrentRows(t *testing.T, ctx context.Context, conn *pgx.Conn, table string, count int) {
