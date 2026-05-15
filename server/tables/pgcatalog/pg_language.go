@@ -46,27 +46,72 @@ func (p PgLanguageHandler) Name() string {
 // RowIter implements the interface tables.Handler.
 func (p PgLanguageHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
 	var rows []sql.Row
+	seen := make(map[string]struct{})
 	auth.LockRead(func() {
+		for _, language := range pgLanguageBuiltinSystemLanguages {
+			rows = append(rows, pgLanguageRow(language, nil))
+			seen[language.Name] = struct{}{}
+		}
 		for _, language := range auth.GetAllLanguages() {
-			owner := catalogOwnerOID()
-			if role := auth.GetRole(language.Owner); role.IsValid() {
-				owner = id.NewId(id.Section_User, language.Owner)
+			if _, ok := seen[language.Name]; ok {
+				continue
 			}
-			rows = append(rows, sql.Row{
-				id.NewId(id.Section_FunctionLanguage, language.Name), // oid
-				language.Name,         // lanname
-				owner,                 // lanowner
-				language.IsProcedural, // lanispl
-				language.Trusted,      // lanpltrusted
-				id.Null,               // lanplcallfoid
-				id.Null,               // laninline
-				id.Null,               // lanvalidator
-				aclTextArray(auth.LanguageACLItems(language.Name)), // lanacl
-				id.NewTable(PgCatalogName, PgLanguageName).AsId(),  // tableoid
-			})
+			rows = append(rows, pgLanguageRow(language, auth.LanguageACLItems(language.Name)))
 		}
 	})
 	return sql.RowsToRowIter(rows...), nil
+}
+
+var pgLanguageBuiltinSystemLanguages = []auth.Language{
+	{
+		Name:      "c",
+		Owner:     "postgres",
+		Validator: "fmgr_c_validator",
+	},
+	{
+		Name:      "internal",
+		Owner:     "postgres",
+		Validator: "fmgr_internal_validator",
+	},
+}
+
+func pgLanguageRow(language auth.Language, aclItems []string) sql.Row {
+	owner := catalogOwnerOID()
+	if role := auth.GetRole(language.Owner); role.IsValid() {
+		owner = id.NewId(id.Section_User, language.Owner)
+	}
+	handler, inline, validator := pgLanguageFunctions(language)
+	return sql.Row{
+		id.NewId(id.Section_FunctionLanguage, language.Name), // oid
+		language.Name,          // lanname
+		owner,                  // lanowner
+		language.IsProcedural,  // lanispl
+		language.Trusted,       // lanpltrusted
+		handler,                // lanplcallfoid
+		inline,                 // laninline
+		validator,              // lanvalidator
+		aclTextArray(aclItems), // lanacl
+		id.NewTable(PgCatalogName, PgLanguageName).AsId(), // tableoid
+	}
+}
+
+func pgLanguageFunctions(language auth.Language) (handler id.Id, inline id.Id, validator id.Id) {
+	handler = zeroOID()
+	inline = zeroOID()
+	validator = zeroOID()
+	switch language.Name {
+	case "c":
+		validator = pgCatalogFunctionID("fmgr_c_validator", pgCatalogType("oid"))
+	case "internal":
+		validator = pgCatalogFunctionID("fmgr_internal_validator", pgCatalogType("oid"))
+	case "plpgsql":
+		handler = pgCatalogFunctionID("plpgsql_call_handler")
+		inline = pgCatalogFunctionID("plpgsql_inline_handler", pgCatalogType("internal"))
+		validator = pgCatalogFunctionID("plpgsql_validator", pgCatalogType("oid"))
+	case "sql":
+		validator = pgCatalogFunctionID("fmgr_sql_validator", pgCatalogType("oid"))
+	}
+	return handler, inline, validator
 }
 
 // Schema implements the interface tables.Handler.

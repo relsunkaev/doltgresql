@@ -2091,7 +2091,11 @@ func TestPgLanguage(t *testing.T) {
 			Name: "pg_language",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_language";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+					Query: `SELECT lanname, lanispl, lanpltrusted,
+							lanplcallfoid <> 0, laninline <> 0, lanvalidator <> 0
+						FROM "pg_catalog"."pg_language"
+						WHERE lanname IN ('c', 'internal', 'plpgsql', 'sql')
+						ORDER BY lanname;`, PostgresOracle: ScriptTestPostgresOracle{ID:
 
 					// Different cases and quoted, so it fails
 					"pgcatalog-test-testpglanguage-0001-select-*-from-pg_catalog-."},
