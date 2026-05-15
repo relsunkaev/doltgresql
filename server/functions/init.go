@@ -250,6 +250,7 @@ func Init() {
 	initSinh()
 	initSplitPart()
 	initSqlConstant()
+	initSqlJson()
 	initSqrt()
 	initStartsWith()
 	initStringToArray()

@@ -10,6 +10,19 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### beta - 2026-05-15 04:04 MST
+
+- Lane claimed: PostgreSQL 17 SQL/JSON constructor and query functions exposed after the JSON_TABLE fix.
+- Red proof from broader `postgres17`: `TestPostgres17SqlJsonConstructorFunctionsRepro` fails on missing `JSON_SCALAR` (`42883`) and parser rejection of `JSON_SERIALIZE(... RETURNING text)` (`42601`); `TestPostgres17SqlJsonQueryFunctionsRepro` fails on parser rejection of `JSON_EXISTS(... PASSING ...)`, parser rejection of `JSON_VALUE(... RETURNING int)`, and missing `JSON_QUERY` (`42883`).
+- Expected files: PostgreSQL grammar/AST conversion for `RETURNING` / `PASSING` forms if needed, plus server JSON function registration/evaluation paths. Boundary: no alpha pg_dump/pg_amop/opfamily catalog lane and no PG18 temporal files.
+- Change in progress: added explicit grammar support for `JSON_SERIALIZE(... RETURNING ...)`, `JSON_VALUE(... RETURNING ...)`, and `JSON_EXISTS(... PASSING ... AS ...)`, plus small SQL/JSON function implementations for `json_scalar`, `json_serialize`, `json_exists`, `json_value`, and `json_query`.
+- Validation so far: `./postgres/parser/build.sh` passed after narrowing grammar to explicit SQL/JSON productions; compile check `go test -vet=off ./postgres/parser/parser ./server/functions -run '^$' -count=1 -timeout=10m` passed with ICU env and `GOFLAGS=-p=1`.
+- Root cause confirmed: the parser only handled ordinary function-call argument lists, so PostgreSQL 17 SQL/JSON `RETURNING` and `PASSING` clauses failed before execution. The runtime also lacked the SQL/JSON constructor/query function names even though lower-level json/jsonpath helpers existed.
+- Change made: added explicit parser productions for the narrow SQL/JSON forms under test, registered `json_scalar`, `json_serialize`, `json_exists`, `json_value`, and `json_query`, normalized `strict`/`lax` jsonpath modes for these functions, and applied simple `PASSING` variable substitution for the covered `JSON_EXISTS` form.
+- Validation passed: clean beta worktree `/tmp/doltgresql-beta-sqljson-validate` at `HEAD=13986d88` plus only beta's SQL/JSON patch, then the shared checkout at `HEAD=5cb86732` after alpha's field-metadata fix landed. Shared-checkout commands: `./postgres/parser/build.sh`; `go test -vet=off ./postgres/parser/parser ./server/functions -run '^$' -count=1 -timeout=10m`; and focused `go test -vet=off ./testing/go/postgres17 -run '^(TestPostgres17SqlJsonConstructorFunctionsRepro|TestPostgres17SqlJsonQueryFunctionsRepro)$' -count=1 -timeout=10m -v`, all with ICU env and `GOFLAGS=-p=1`.
+- Commit landed in this increment: `fix(postgres17): add sql json query functions`.
+- Next action: run a fresh failfast to find the next unclaimed blocker.
+
 ### beta - 2026-05-15 04:02 MST
 
 - Lane claimed: PostgreSQL 17 `JSON_TABLE` error-handling semantics, specifically `TestPostgres17JsonTableRepro/JSON_TABLE/SELECT * FROM JSON_TABLE('[{"a":"bad"}]'::jsonb, '$[*]' COLUMNS (a_int PATH '$.a')) AS jt;`.

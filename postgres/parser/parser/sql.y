@@ -89,6 +89,13 @@ func onConflictTargetNameList(exprs tree.Exprs) (tree.NameList, bool) {
     return columns, true
 }
 
+func isSimpleFunctionName(name *tree.UnresolvedName, expected string) bool {
+    if name == nil || name.Star || name.NumParts != 1 {
+        return false
+    }
+    return strings.EqualFold(string(name.Parts[0]), expected)
+}
+
 func mergeCreateDatabaseOption(target, option *tree.CreateDatabase) *tree.CreateDatabase {
     if target == nil {
         target = &tree.CreateDatabase{}
@@ -926,7 +933,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %token <str> INNER INOUT INSERT INSTEAD INT INTEGER INTERNALLENGTH
 %token <str> INTERSECT INTERVAL INTO INTO_DB INVERTED INVOKER IS ISERROR ISNULL ISOLATION IS_TEMPLATE
 
-%token <str> JOB JOBS JOIN JSON JSONB JSON_TABLE JSON_SOME_EXISTS JSON_ALL_EXISTS JSON_PATH_EXISTS
+%token <str> JOB JOBS JOIN JSON JSONB JSON_EXISTS JSON_SERIALIZE JSON_TABLE JSON_VALUE JSON_SOME_EXISTS JSON_ALL_EXISTS JSON_PATH_EXISTS
 
 %token <str> KEY KEYS KMS KV
 
@@ -947,7 +954,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %token <str> OBJECT OBJECTS OF OFF OFFSET OID OIDS OIDVECTOR OLD ON ON_ERROR ONLY ONLY_DATABASE_STATS OPT OPTION OPTIONS OR
 %token <str> ORDER ORDINALITY OTHERS OUT OUTER OUTPUT OVER OVERLAPS OVERLAY OVERRIDING OWNED OWNER OPERATOR
 
-%token <str> PARALLEL PARAMETER PARENT PARSER PARTIAL PARTITION PARTITIONS PASSEDBYVALUE PASSWORD PATH PAUSE PAUSED PERIOD PHYSICAL
+%token <str> PARALLEL PARAMETER PARENT PARSER PARTIAL PARTITION PARTITIONS PASSEDBYVALUE PASSING PASSWORD PATH PAUSE PAUSED PERIOD PHYSICAL
 %token <str> PLACING PLAIN PLAN PLANS POINT POINTM POINTZ POINTZM POLICY POLYGON POLYGONM POLYGONZ POLYGONZM
 %token <str> POSITION PRECEDING PRECISION PREFERRED PREPARE PREPARED PRESERVE PRIMARY PRIORITY PRIVILEGES
 %token <str> PROCEDURAL PROCEDURE PROCEDURES PROGRAM PROCESS_MAIN PROCESS_TOAST PUBLIC PUBLICATION
@@ -15079,6 +15086,21 @@ func_application:
   {
     $$.val = &tree.FuncExpr{Func: $1.resolvableFuncRefFromName(), Exprs: $3.exprs(), OrderBy: $4.orderBy(), AggType: tree.GeneralAgg}
   }
+| JSON_SERIALIZE '(' a_expr RETURNING typename ')'
+  {
+    $$.val = &tree.FuncExpr{Func: tree.WrapFunction("json_serialize"), Exprs: tree.Exprs{$3.expr()}}
+  }
+| JSON_VALUE '(' a_expr ',' a_expr RETURNING typename ')'
+  {
+    $$.val = &tree.FuncExpr{Func: tree.WrapFunction("json_value"), Exprs: tree.Exprs{$3.expr(), $5.expr()}}
+  }
+| JSON_EXISTS '(' a_expr ',' a_expr PASSING a_expr AS column_name ')'
+  {
+    $$.val = &tree.FuncExpr{
+      Func: tree.WrapFunction("json_exists"),
+      Exprs: tree.Exprs{$3.expr(), $5.expr(), $7.expr(), tree.NewStrVal($9)},
+    }
+  }
 | func_name '(' func_named_arg_list ')'
   {
     exprs, names := splitCallArgs($3.callArgs())
@@ -16945,6 +16967,7 @@ unreserved_keyword:
 | PARTITION
 | PARTITIONS
 | PASSEDBYVALUE
+| PASSING
 | PASSWORD
 | PATH
 | PAUSE
@@ -17304,7 +17327,10 @@ reserved_keyword:
 | INITIALLY
 | INTERSECT
 | INTO
+| JSON_EXISTS
+| JSON_SERIALIZE
 | JSON_TABLE
+| JSON_VALUE
 | LATERAL
 | LEADING
 | LIMIT
