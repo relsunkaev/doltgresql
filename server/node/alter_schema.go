@@ -24,6 +24,8 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/types"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/auth"
 )
 
@@ -106,7 +108,7 @@ func (a *AlterSchema) renameSchema(ctx *sql.Context, sdb sql.SchemaDatabase, sch
 	if _, exists, err := sdb.GetSchema(ctx, a.NewName); err != nil {
 		return err
 	} else if exists {
-		return sql.ErrDatabaseSchemaExists.New(a.NewName)
+		return pgerror.Newf(pgcode.DuplicateSchema, `schema "%s" already exists`, a.NewName)
 	}
 	db, ok := sdb.(rootSchemaDatabase)
 	if !ok {

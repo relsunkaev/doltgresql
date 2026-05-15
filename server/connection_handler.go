@@ -4607,6 +4607,9 @@ func errMessageToSQLState(msg string) (string, bool) {
 		return pgcode.UndefinedDatabase.String(), true
 	case strings.HasPrefix(msg, `schema "`) && strings.HasSuffix(msg, `" does not exist`):
 		return pgcode.InvalidSchemaName.String(), true
+	case strings.HasPrefix(msg, `schema "`) && strings.HasSuffix(msg, `" already exists`),
+		strings.HasPrefix(msg, "can't create schema ") && strings.HasSuffix(msg, "; schema exists"):
+		return pgcode.DuplicateSchema.String(), true
 	case strings.HasPrefix(msg, `extension "`) && strings.HasSuffix(msg, `" already exists`):
 		return pgcode.DuplicateObject.String(), true
 	case strings.HasPrefix(msg, `extension "`) && strings.Contains(msg, `" must be installed in schema "`):
