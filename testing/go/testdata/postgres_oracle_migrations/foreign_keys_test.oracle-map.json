@@ -167,6 +167,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO child VALUES (2, 'two', 2)",
       "querySha256": "67af8b7672e4ed83fab9e603616077dab1460a4f63e2d1b8c7de791a46629373",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -180,6 +183,9 @@
       "expectedKind": "error",
       "query": "INSERT INTO child VALUES (3, 'three', 3)",
       "querySha256": "8a34c134886546eaec235970a513ea445c05b60de39e6dda153a21fda1c38613",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -193,6 +199,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM child",
       "querySha256": "ea4d8c2085a798e4f8f638e02f973a632d19a625ddb1e6c99a3960bc7faabf57",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -254,6 +263,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO child VALUES (2, 'two', 2)",
       "querySha256": "67af8b7672e4ed83fab9e603616077dab1460a4f63e2d1b8c7de791a46629373",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -267,6 +279,9 @@
       "expectedKind": "error",
       "query": "INSERT INTO child VALUES (3, 'three', 3)",
       "querySha256": "8a34c134886546eaec235970a513ea445c05b60de39e6dda153a21fda1c38613",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -280,6 +295,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM child.child",
       "querySha256": "0e35f64cbad11d19ade51ffb49ee383c3b3932e5f0837912c85905e57bc5ba99",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -341,6 +359,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO child VALUES (2, 'two', 2)",
       "querySha256": "67af8b7672e4ed83fab9e603616077dab1460a4f63e2d1b8c7de791a46629373",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -354,6 +375,9 @@
       "expectedKind": "error",
       "query": "INSERT INTO child VALUES (3, 'three', 3)",
       "querySha256": "8a34c134886546eaec235970a513ea445c05b60de39e6dda153a21fda1c38613",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -367,6 +391,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM child.child",
       "querySha256": "0e35f64cbad11d19ade51ffb49ee383c3b3932e5f0837912c85905e57bc5ba99",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -428,6 +455,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO child.child VALUES (2, 'two', 2)",
       "querySha256": "aebf62ce2d9954228b26debe93184ac49d4fb0e7e78bbb138ae34ef189a76f95",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -441,6 +471,9 @@
       "expectedKind": "error",
       "query": "INSERT INTO child.child VALUES (3, 'three', 3)",
       "querySha256": "71825593efa0381f237e1bafd0ce8b9b9d448e7ce6e56206b823ae7db13e4342",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -454,6 +487,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM child.child",
       "querySha256": "0e35f64cbad11d19ade51ffb49ee383c3b3932e5f0837912c85905e57bc5ba99",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -467,6 +503,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO child.child VALUES (2, 'two', 2)",
       "querySha256": "aebf62ce2d9954228b26debe93184ac49d4fb0e7e78bbb138ae34ef189a76f95",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -480,6 +519,9 @@
       "expectedKind": "error",
       "query": "INSERT INTO child VALUES (3, 'three', 3)",
       "querySha256": "8a34c134886546eaec235970a513ea445c05b60de39e6dda153a21fda1c38613",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -493,6 +535,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM child",
       "querySha256": "ea4d8c2085a798e4f8f638e02f973a632d19a625ddb1e6c99a3960bc7faabf57",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -506,6 +551,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO child.child VALUES (2, 'two', 2)",
       "querySha256": "aebf62ce2d9954228b26debe93184ac49d4fb0e7e78bbb138ae34ef189a76f95",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -519,6 +567,9 @@
       "expectedKind": "error",
       "query": "INSERT INTO child VALUES (3, 'three', 3)",
       "querySha256": "8a34c134886546eaec235970a513ea445c05b60de39e6dda153a21fda1c38613",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -532,6 +583,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM child",
       "querySha256": "ea4d8c2085a798e4f8f638e02f973a632d19a625ddb1e6c99a3960bc7faabf57",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -545,6 +599,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO child.child VALUES (2, 'two', 2)",
       "querySha256": "aebf62ce2d9954228b26debe93184ac49d4fb0e7e78bbb138ae34ef189a76f95",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -558,6 +615,9 @@
       "expectedKind": "error",
       "query": "INSERT INTO child.child VALUES (3, 'three', 3)",
       "querySha256": "71825593efa0381f237e1bafd0ce8b9b9d448e7ce6e56206b823ae7db13e4342",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -571,6 +631,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM child.child",
       "querySha256": "0e35f64cbad11d19ade51ffb49ee383c3b3932e5f0837912c85905e57bc5ba99",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -584,6 +647,9 @@
       "expectedKind": "error",
       "query": "INSERT INTO child.child VALUES (3, 'three', 3)",
       "querySha256": "71825593efa0381f237e1bafd0ce8b9b9d448e7ce6e56206b823ae7db13e4342",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -597,6 +663,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO child.child VALUES (3, 'three', 3)",
       "querySha256": "71825593efa0381f237e1bafd0ce8b9b9d448e7ce6e56206b823ae7db13e4342",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -610,6 +679,9 @@
       "expectedKind": "error",
       "query": "INSERT INTO child.child VALUES (3, 'three', 3)",
       "querySha256": "71825593efa0381f237e1bafd0ce8b9b9d448e7ce6e56206b823ae7db13e4342",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -623,6 +695,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO child.child VALUES (3, 'three', 3)",
       "querySha256": "71825593efa0381f237e1bafd0ce8b9b9d448e7ce6e56206b823ae7db13e4342",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -706,6 +781,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM public.hn_stories where title = 'test2';",
       "querySha256": "69afcf40d673a21d640bbebac85fef7ece244c9eaba9daf3830bda943c6a4aea",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -789,6 +867,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM public.hn_stories where title = 'test2';",
       "querySha256": "69afcf40d673a21d640bbebac85fef7ece244c9eaba9daf3830bda943c6a4aea",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
