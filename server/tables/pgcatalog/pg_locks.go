@@ -43,10 +43,14 @@ func (p PgLocksHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgLocksHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	entries := pgnodes.SnapshotRowLocks()
-	rows := make([]sql.Row, 0, len(entries))
+	rowLocks := pgnodes.SnapshotRowLocks()
+	relationLocks := pgnodes.SnapshotRelationLocks()
+	rows := make([]sql.Row, 0, len(rowLocks)+len(relationLocks))
+	for _, entry := range relationLocks {
+		rows = append(rows, pgLocksRelationLockRow(entry))
+	}
 	databaseID := id.NewDatabase(ctx.GetCurrentDatabase()).AsId()
-	for _, entry := range entries {
+	for _, entry := range rowLocks {
 		locktype := "tuple"
 		mode := "RowExclusiveLock"
 		if entry.Kind == pgnodes.RowLockKindTable {
@@ -81,6 +85,48 @@ func (p PgLocksHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.
 		})
 	}
 	return sql.RowsToRowIter(rows...), nil
+}
+
+func pgLocksRelationLockRow(entry pgnodes.RelationLockEntry) sql.Row {
+	return sql.Row{
+		"relation", // locktype
+		id.NewDatabase(entry.Target.Database).AsId(),               // database
+		id.NewTable(entry.Target.Schema, entry.Target.Name).AsId(), // relation
+		nil,                                 // page
+		nil,                                 // tuple
+		nil,                                 // virtualxid
+		nil,                                 // transactionid
+		nil,                                 // classid
+		nil,                                 // objid
+		nil,                                 // objsubid
+		nil,                                 // virtualtransaction
+		int32(entry.SessionID),              // pid
+		pgLocksRelationModeName(entry.Mode), // mode
+		true,                                // granted
+		false,                               // fastpath
+		nil,                                 // waitstart
+	}
+}
+
+func pgLocksRelationModeName(mode pgnodes.RelationLockMode) string {
+	switch mode {
+	case pgnodes.RelationLockAccessShare:
+		return "AccessShareLock"
+	case pgnodes.RelationLockRowShare:
+		return "RowShareLock"
+	case pgnodes.RelationLockRowExclusive:
+		return "RowExclusiveLock"
+	case pgnodes.RelationLockShareUpdateExclusive:
+		return "ShareUpdateExclusiveLock"
+	case pgnodes.RelationLockShare:
+		return "ShareLock"
+	case pgnodes.RelationLockShareRowExclusive:
+		return "ShareRowExclusiveLock"
+	case pgnodes.RelationLockExclusive:
+		return "ExclusiveLock"
+	default:
+		return "AccessExclusiveLock"
+	}
 }
 
 // Schema implements the interface tables.Handler.

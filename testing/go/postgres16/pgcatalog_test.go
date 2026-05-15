@@ -2224,14 +2224,29 @@ func TestPgLargeobjectMetadata(t *testing.T) {
 func TestPgLocks(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
-			Name: "pg_locks",
+			Name: "pg_locks relation row",
+			SetUpScript: []string{
+				`CREATE TABLE pg_locks_probe (id INT PRIMARY KEY);`,
+				`BEGIN;`,
+				`LOCK TABLE pg_locks_probe IN ACCESS SHARE MODE;`,
+			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_locks";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+					Query: `SELECT locktype, relation = 'pg_locks_probe'::regclass,
+							mode, granted, waitstart IS NULL
+						FROM "pg_catalog"."pg_locks"
+						WHERE locktype = 'relation'
+							AND relation = 'pg_locks_probe'::regclass
+						ORDER BY mode;`, PostgresOracle: ScriptTestPostgresOracle{ID:
 
 					// Different cases and quoted, so it fails
 					"pgcatalog-test-testpglocks-0001-select-*-from-pg_catalog-."},
 				},
+			},
+		},
+		{
+			Name: "pg_locks case sensitivity",
+			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT * FROM "PG_catalog"."pg_locks";`, PostgresOracle: ScriptTestPostgresOracle{
 
@@ -2244,8 +2259,18 @@ func TestPgLocks(t *testing.T) {
 						// Different cases but non-quoted, so it works
 						ID: "pgcatalog-test-testpglocks-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
+			},
+		},
+		{
+			Name: "pg_locks mixed-case lookup",
+			SetUpScript: []string{
+				`CREATE TABLE pg_locks_mixed_probe (id INT PRIMARY KEY);`,
+				`BEGIN;`,
+				`LOCK TABLE pg_locks_mixed_probe IN ACCESS SHARE MODE;`,
+			},
+			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT objid FROM PG_catalog.pg_LOCKS ORDER BY objid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpglocks-0004-select-objid-from-pg_catalog.pg_locks-order"},
+					Query: "SELECT mode FROM PG_catalog.pg_LOCKS WHERE relation = 'pg_locks_mixed_probe'::regclass ORDER BY mode;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpglocks-0004-select-objid-from-pg_catalog.pg_locks-order"},
 				},
 			},
 		},

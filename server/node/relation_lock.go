@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"sort"
 	"strings"
 	"sync"
 
@@ -312,6 +313,12 @@ type heldRelationLock struct {
 	mode      RelationLockMode
 }
 
+type RelationLockEntry struct {
+	Target    RelationLockTarget
+	SessionID uint32
+	Mode      RelationLockMode
+}
+
 var relationLocks = struct {
 	mu    sync.Mutex
 	cond  *sync.Cond
@@ -346,6 +353,32 @@ func acquireRelationLock(ctx *sql.Context, target RelationLockTarget, mode Relat
 	return func() {
 		releaseRelationLock(lock)
 	}, nil
+}
+
+func SnapshotRelationLocks() []RelationLockEntry {
+	relationLocks.mu.Lock()
+	defer relationLocks.mu.Unlock()
+
+	entries := make([]RelationLockEntry, 0)
+	for _, locks := range relationLocks.locks {
+		for _, lock := range locks {
+			entries = append(entries, RelationLockEntry{
+				Target:    lock.target,
+				SessionID: lock.sessionID,
+				Mode:      lock.mode,
+			})
+		}
+	}
+	sort.Slice(entries, func(i, j int) bool {
+		if entries[i].Target.key() != entries[j].Target.key() {
+			return entries[i].Target.key() < entries[j].Target.key()
+		}
+		if entries[i].SessionID != entries[j].SessionID {
+			return entries[i].SessionID < entries[j].SessionID
+		}
+		return entries[i].Mode < entries[j].Mode
+	})
+	return entries
 }
 
 func relationLockConflicts(key string, sessionID uint32, requested RelationLockMode) bool {
