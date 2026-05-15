@@ -246,6 +246,7 @@ type plpgSQL_stmt_execsql struct {
 type plpgSQL_stmt_open struct {
 	LineNumber int32 `json:"lineno"`
 	CursorVar  int32 `json:"curvar"`
+	ArgQuery   *expr `json:"argquery"`
 }
 
 // plpgSQL_stmt_fetch exists to match the expected JSON format.
@@ -640,11 +641,19 @@ func (stmt *plpgSQL_stmt_open) Convert(conv jsonConversionContext) (OpenCursor, 
 	if !ok {
 		return OpenCursor{}, errors.Errorf("OPEN cursor datum %d has no explicit query", stmt.CursorVar)
 	}
-	return OpenCursor{
+	openCursor := OpenCursor{
 		CursorName: cursorName,
 		Query:      query,
 		LineNumber: stmt.LineNumber,
-	}, nil
+	}
+	if stmt.ArgQuery != nil && stmt.ArgQuery.Expression.Query != "" {
+		openCursor.ArgQuery = stmt.ArgQuery.Expression.Query
+		openCursor.ArgNames = conv.cursorArgs(stmt.CursorVar)
+		if len(openCursor.ArgNames) == 0 {
+			return OpenCursor{}, errors.Errorf("OPEN cursor datum %d has arguments but no argument names", stmt.CursorVar)
+		}
+	}
+	return openCursor, nil
 }
 
 // Convert converts the JSON statement into its output form.

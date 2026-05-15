@@ -404,6 +404,52 @@ func TestParseExplicitCursorFetch(t *testing.T) {
 	}
 }
 
+func TestParseExplicitCursorParameters(t *testing.T) {
+	ops, err := Parse(`CREATE FUNCTION test_block(low_id INT, high_id INT) RETURNS int AS $$
+		DECLARE
+			item_cursor CURSOR (min_id INT, max_id INT) FOR
+				SELECT id FROM items WHERE id BETWEEN min_id AND max_id ORDER BY id;
+			row_value INT;
+		BEGIN
+			OPEN item_cursor(low_id, high_id);
+			FETCH item_cursor INTO row_value;
+			CLOSE item_cursor;
+			RETURN row_value;
+		END;
+	$$ LANGUAGE plpgsql;`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var openOp *InterpreterOperation
+	for i := range ops {
+		if ops[i].OpCode == OpCode_ForQueryInit && ops[i].Target == "item_cursor" {
+			openOp = &ops[i]
+			break
+		}
+	}
+	if openOp == nil {
+		t.Fatalf("expected explicit cursor OPEN operation; ops: %#v", ops)
+	}
+	if openOp.Options[cursorArgNamesOption] != "min_id,max_id" {
+		t.Fatalf("cursor arg names = %q; op: %#v", openOp.Options[cursorArgNamesOption], openOp)
+	}
+	if openOp.Options[cursorArgQueryBindingCountOption] != "2" {
+		t.Fatalf("query binding count = %q; op: %#v", openOp.Options[cursorArgQueryBindingCountOption], openOp)
+	}
+	if len(openOp.SecondaryData) != 4 ||
+		openOp.SecondaryData[0] != "min_id" ||
+		openOp.SecondaryData[1] != "max_id" ||
+		openOp.SecondaryData[2] != "low_id" ||
+		openOp.SecondaryData[3] != "high_id" {
+		t.Fatalf("secondary data = %#v; op: %#v", openOp.SecondaryData, openOp)
+	}
+	if !strings.Contains(openOp.Options[cursorArgQueryOption], "$1") ||
+		!strings.Contains(openOp.Options[cursorArgQueryOption], "$2") {
+		t.Fatalf("cursor arg query = %q; op: %#v", openOp.Options[cursorArgQueryOption], openOp)
+	}
+}
+
 func TestParseDynamicExecuteIntoStrict(t *testing.T) {
 	ops, err := Parse(`CREATE FUNCTION test_block() RETURNS void AS $$
 		DECLARE

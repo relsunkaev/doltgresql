@@ -551,6 +551,8 @@ func (stmt ForQueryNext) AppendOperations(ops *[]InterpreterOperation, stack *In
 type OpenCursor struct {
 	CursorName string
 	Query      string
+	ArgQuery   string
+	ArgNames   []string
 	LineNumber int32
 }
 
@@ -567,12 +569,29 @@ func (stmt OpenCursor) AppendOperations(ops *[]InterpreterOperation, stack *Inte
 	if err != nil {
 		return err
 	}
+	options := diagnosticStatementOptions(stmt.LineNumber, "OPEN", stmt.Query)
+	if options == nil {
+		options = make(map[string]string)
+	}
+	params := referencedVariables
+	if stmt.ArgQuery != "" {
+		argQueryStr, argReferencedVariables, err := substituteVariableReferences(stmt.ArgQuery, stack)
+		if err != nil {
+			return err
+		}
+		params = make([]string, 0, len(referencedVariables)+len(argReferencedVariables))
+		params = append(params, referencedVariables...)
+		params = append(params, argReferencedVariables...)
+		options[cursorArgNamesOption] = strings.Join(stmt.ArgNames, ",")
+		options[cursorArgQueryBindingCountOption] = strconv.Itoa(len(referencedVariables))
+		options[cursorArgQueryOption] = argQueryStr
+	}
 	*ops = append(*ops, InterpreterOperation{
 		OpCode:        OpCode_ForQueryInit,
 		PrimaryData:   queryStr,
-		SecondaryData: referencedVariables,
+		SecondaryData: params,
 		Target:        stmt.CursorName,
-		Options:       diagnosticStatementOptions(stmt.LineNumber, "OPEN", stmt.Query),
+		Options:       options,
 	})
 	return nil
 }

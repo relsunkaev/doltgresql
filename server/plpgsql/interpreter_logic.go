@@ -70,6 +70,9 @@ const (
 	transactionControlNoop            = "transactionControlNoop"
 	assertMessageQueryOption          = "assertMessageQuery"
 	assertConditionBindingCountOption = "assertConditionBindingCount"
+	cursorArgQueryOption              = "cursorArgQuery"
+	cursorArgNamesOption              = "cursorArgNames"
+	cursorArgQueryBindingCountOption  = "cursorArgQueryBindingCount"
 )
 
 // The interpreter has no async statement timeout hook, so bound runaway loops
@@ -803,6 +806,34 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 				if err != nil {
 					return nil, false, err
 				}
+			}
+			if argQuery := operation.Options[cursorArgQueryOption]; argQuery != "" {
+				queryBindingCount, err := strconv.Atoi(operation.Options[cursorArgQueryBindingCountOption])
+				if err != nil {
+					return nil, false, err
+				}
+				if queryBindingCount < 0 || queryBindingCount > len(bindings) {
+					return nil, false, fmt.Errorf("invalid cursor query binding count %d", queryBindingCount)
+				}
+				argNames := strings.Split(operation.Options[cursorArgNamesOption], ",")
+				queryBindings := bindings[:queryBindingCount]
+				argBindings := bindings[queryBindingCount:]
+				restoreCallSite := pushDiagnosticCallSite(ctx, operation)
+				argSchema, argRows, err := iFunc.QueryMultiReturn(ctx, stack, "SELECT "+argQuery+";", argBindings)
+				restoreCallSite()
+				if err != nil {
+					state.lastExceptionContext = diagnosticPGExceptionContext(ctx, iFunc, operation)
+					return nil, false, err
+				}
+				if len(argRows) != 1 || len(argRows[0]) != len(argNames) || len(argSchema) != len(argNames) {
+					return nil, false, errors.New("cursor arguments must return one row matching the declared parameters")
+				}
+				for idx, argName := range argNames {
+					if err = assignSQLRowValue(ctx, stack, argName, argSchema[idx].Type, argRows[0][idx]); err != nil {
+						return nil, false, err
+					}
+				}
+				bindings = queryBindings
 			}
 			schema, rows, err := iFunc.QueryMultiReturn(ctx, stack, statement, bindings)
 			if cleanupDynamicForQuery != nil {

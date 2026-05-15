@@ -23,7 +23,9 @@ import (
 
 type jsonConversionContext struct {
 	datumNames            map[int32]string
+	datumRows             map[int32][]field
 	cursorQueries         map[int32]string
+	cursorArgNames        map[int32][]string
 	returnExpressions     []string
 	returnIndex           *int
 	returnNextExpressions []string
@@ -35,7 +37,9 @@ func newJSONConversionContext(datums []datum, source string) jsonConversionConte
 	returnNextIndex := 0
 	conv := jsonConversionContext{
 		datumNames:            make(map[int32]string, len(datums)),
+		datumRows:             make(map[int32][]field),
 		cursorQueries:         make(map[int32]string),
+		cursorArgNames:        make(map[int32][]string),
 		returnExpressions:     extractReturnExpressions(source),
 		returnIndex:           &returnIndex,
 		returnNextExpressions: extractReturnNextExpressions(source),
@@ -53,6 +57,7 @@ func newJSONConversionContext(datums []datum, source string) jsonConversionConte
 			if d.Row.RefName != "" {
 				conv.datumNames[datumNumber] = d.Row.RefName
 			}
+			conv.datumRows[datumNumber] = d.Row.Fields
 		case d.Variable != nil:
 			if d.Variable.RefName != "" {
 				conv.datumNames[datumNumber] = d.Variable.RefName
@@ -60,6 +65,25 @@ func newJSONConversionContext(datums []datum, source string) jsonConversionConte
 			if d.Variable.CursorExplicitExpression != nil && d.Variable.CursorExplicitExpression.Expression.Query != "" {
 				conv.cursorQueries[datumNumber] = d.Variable.CursorExplicitExpression.Expression.Query
 			}
+		}
+	}
+	for i, d := range datums {
+		if d.Variable == nil || d.Variable.CursorExplicitExpression == nil || d.Variable.CursorExplicitArgRow < 0 {
+			continue
+		}
+		fields := conv.datumRows[d.Variable.CursorExplicitArgRow]
+		argNames := make([]string, 0, len(fields))
+		for _, cursorArg := range fields {
+			name := cursorArg.Name
+			if name == "" {
+				name, _ = conv.datumName(cursorArg.VariableNumber)
+			}
+			if name != "" {
+				argNames = append(argNames, name)
+			}
+		}
+		if len(argNames) > 0 {
+			conv.cursorArgNames[int32(i)] = argNames
 		}
 	}
 	return conv
@@ -125,6 +149,10 @@ func (conv jsonConversionContext) datumName(datumNumber int32) (string, bool) {
 func (conv jsonConversionContext) cursorQuery(datumNumber int32) (string, bool) {
 	query, ok := conv.cursorQueries[datumNumber]
 	return query, ok
+}
+
+func (conv jsonConversionContext) cursorArgs(datumNumber int32) []string {
+	return conv.cursorArgNames[datumNumber]
 }
 
 // jsonConvert handles the conversion from the JSON format into a format that is easier to work with.
