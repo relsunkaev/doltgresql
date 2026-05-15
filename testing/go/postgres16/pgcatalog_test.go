@@ -2280,10 +2280,25 @@ func TestPgLocks(t *testing.T) {
 func TestPgMatviews(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
-			Name: "pg_matviews",
+			Name: "pg_matviews row",
+			SetUpScript: []string{
+				`CREATE SCHEMA matviews_oracle_schema;`,
+				`SET search_path TO matviews_oracle_schema;`,
+				`CREATE MATERIALIZED VIEW pg_matviews_probe_reader AS SELECT 1 AS id;`,
+			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_matviews";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+					Query: `SELECT schemaname,
+							matviewname,
+							matviewowner IS NOT NULL,
+							tablespace IS NULL,
+							hasindexes,
+							ispopulated,
+							definition LIKE '%1 AS id%'
+						FROM "pg_catalog"."pg_matviews"
+						WHERE schemaname = 'matviews_oracle_schema'
+							AND matviewname = 'pg_matviews_probe_reader'
+						ORDER BY matviewname;`, PostgresOracle: ScriptTestPostgresOracle{ID:
 
 					// Different cases and quoted, so it fails
 					"pgcatalog-test-testpgmatviews-0001-select-*-from-pg_catalog-.", ColumnModes: []string{"schema", "structural", "structural", "structural", "structural",
@@ -2291,6 +2306,11 @@ func TestPgMatviews(t *testing.T) {
 						// Different cases and quoted, so it fails
 						"structural", "schema"}},
 				},
+			},
+		},
+		{
+			Name: "pg_matviews case sensitivity",
+			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT * FROM "PG_catalog"."pg_matviews";`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgmatviews-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
@@ -2300,8 +2320,18 @@ func TestPgMatviews(t *testing.T) {
 						// Different cases but non-quoted, so it works
 						ID: "pgcatalog-test-testpgmatviews-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
+			},
+		},
+		{
+			Name: "pg_matviews mixed-case lookup",
+			SetUpScript: []string{
+				`CREATE SCHEMA matviews_mixed_schema;`,
+				`SET search_path TO matviews_mixed_schema;`,
+				`CREATE MATERIALIZED VIEW pg_matviews_mixed_reader AS SELECT 1 AS id;`,
+			},
+			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT matviewname FROM PG_catalog.pg_MATVIEWS ORDER BY matviewname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgmatviews-0004-select-matviewname-from-pg_catalog.pg_matviews-order"},
+					Query: "SELECT matviewname FROM PG_catalog.pg_MATVIEWS WHERE schemaname = 'matviews_mixed_schema' ORDER BY matviewname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgmatviews-0004-select-matviewname-from-pg_catalog.pg_matviews-order"},
 				},
 			},
 		},
