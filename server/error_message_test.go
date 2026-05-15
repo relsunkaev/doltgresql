@@ -460,6 +460,9 @@ func TestErrMessageToSQLStateFormatsAlterTableDDLErrors(t *testing.T) {
 		{msg: "Multiple primary keys defined", code: pgcode.InvalidTableDefinition},
 		{msg: "unable to change type of column `id` as it is used by foreign keys", code: pgcode.DatatypeMismatch},
 		{msg: "blob/text column 'parent_id' used in key specification without a key length", code: pgcode.DatatypeMismatch},
+		{msg: `column "r" has pseudo-type record`, code: pgcode.InvalidTableDefinition},
+		{msg: `"record" is not a valid base type for a domain`, code: pgcode.DatatypeMismatch},
+		{msg: "sequence type must be smallint, integer, or bigint", code: pgcode.InvalidParameterValue},
 	} {
 		code, ok := errMessageToSQLState(tt.msg)
 		require.True(t, ok)

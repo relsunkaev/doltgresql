@@ -4410,6 +4410,8 @@ func errMessageToSQLState(msg string) (string, bool) {
 		return pgcode.UndefinedColumn.String(), true
 	case strings.HasPrefix(msg, `cannot alter table "`) && strings.Contains(msg, `" uses its row type`):
 		return pgcode.FeatureNotSupported.String(), true
+	case strings.HasPrefix(msg, `column "`) && strings.HasSuffix(msg, `" has pseudo-type record`):
+		return pgcode.InvalidTableDefinition.String(), true
 	case strings.HasPrefix(msg, `"`) && strings.HasSuffix(msg, `" is not a composite type`):
 		return pgcode.UndefinedTable.String(), true
 	case strings.HasPrefix(msg, "cannot truncate table ") && strings.Contains(msg, " as it is referenced in foreign key "):
@@ -4480,6 +4482,8 @@ func errMessageToSQLState(msg string) (string, bool) {
 		return pgcode.NotNullViolation.String(), true
 	case strings.HasPrefix(msg, "ASSIGNMENT_CAST: target is of type "):
 		return pgcode.DatatypeMismatch.String(), true
+	case msg == `"record" is not a valid base type for a domain`:
+		return pgcode.DatatypeMismatch.String(), true
 	case strings.HasPrefix(msg, "EXPLICIT CAST: cast from ") && strings.Contains(msg, " does not exist"):
 		return pgcode.CannotCoerce.String(), true
 	case msg == "cannot use subquery in check constraint":
@@ -4498,6 +4502,8 @@ func errMessageToSQLState(msg string) (string, bool) {
 	case msg == "WITH TIES cannot be specified without ORDER BY":
 		return pgcode.Syntax.String(), true
 	case strings.HasPrefix(msg, "unsupported pgcrypto digest algorithm: "):
+		return pgcode.InvalidParameterValue.String(), true
+	case msg == "sequence type must be smallint, integer, or bigint":
 		return pgcode.InvalidParameterValue.String(), true
 	case strings.HasPrefix(msg, "Variable '") && strings.Contains(msg, "' can't be set to the value of '"):
 		return pgcode.InvalidParameterValue.String(), true
