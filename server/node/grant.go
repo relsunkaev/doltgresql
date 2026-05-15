@@ -681,7 +681,7 @@ func aclRoutineExists(ctx *sql.Context, schema string, name string, argTypes str
 		return false, err
 	}
 	for _, fn := range funcs {
-		if argTypes == "" || aclRoutineArgTypesKey(fn.ID.Parameters()) == argTypes {
+		if argTypes == "" || auth.RoutineArgTypesKey(fn.ID.Parameters()) == argTypes {
 			return true, nil
 		}
 	}
@@ -698,19 +698,11 @@ func aclRoutineExists(ctx *sql.Context, schema string, name string, argTypes str
 		return false, err
 	}
 	for _, proc := range procs {
-		if argTypes == "" || aclRoutineArgTypesKey(proc.ID.Parameters()) == argTypes {
+		if argTypes == "" || auth.RoutineArgTypesKey(proc.ID.Parameters()) == argTypes {
 			return true, nil
 		}
 	}
 	return false, nil
-}
-
-func aclRoutineArgTypesKey(argTypes []id.Type) string {
-	parts := make([]string, len(argTypes))
-	for i, argType := range argTypes {
-		parts[i] = argType.TypeName()
-	}
-	return strings.Join(parts, ",")
 }
 
 func aclCompiledExtensionFunctionExists(ctx *sql.Context, schema string, name string, argTypes string) bool {
