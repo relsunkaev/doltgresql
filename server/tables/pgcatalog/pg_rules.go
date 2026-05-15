@@ -43,8 +43,20 @@ func (p PgRulesHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgRulesHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_rules row iter
-	return emptyRowIter()
+	return sql.RowsToRowIter(
+		sql.Row{
+			PgCatalogName,   // schemaname
+			PgSettingsName,  // tablename
+			"pg_settings_u", // rulename
+			"CREATE RULE pg_settings_u AS\n    ON UPDATE TO pg_catalog.pg_settings\n   WHERE (new.name = old.name) DO  SELECT set_config(old.name, new.setting, false) AS set_config;",
+		},
+		sql.Row{
+			PgCatalogName,   // schemaname
+			PgSettingsName,  // tablename
+			"pg_settings_n", // rulename
+			"CREATE RULE pg_settings_n AS\n    ON UPDATE TO pg_catalog.pg_settings DO INSTEAD NOTHING;",
+		},
+	), nil
 }
 
 // Schema implements the interface tables.Handler.
