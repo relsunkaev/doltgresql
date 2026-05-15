@@ -1,0 +1,321 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map create_procedure_plpgsql_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/create_procedure_plpgsql_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/\u003cfile\u003e:\u003cTestName\u003e#\u003cexpectation-ordinal\u003e",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0001",
+      "source": "testing/go/postgres16/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
+      "ordinal": 1,
+      "scriptName": "Simple example",
+      "oracle": "postgres",
+      "postgresId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0001-call-example-1",
+      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0001-call-example-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CALL example(1);",
+      "querySha256": "58892bacdc942c4b05a61e07a432fe465e00058569bca48f9889abfcf5540f8a",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0002",
+      "source": "testing/go/postgres16/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
+      "ordinal": 2,
+      "scriptName": "Simple example",
+      "oracle": "postgres",
+      "postgresId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0002-call-example-2",
+      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0002-call-example-2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CALL example('2');",
+      "querySha256": "1f2e2b76c204cfdb4cc3db93235a9ef0b0f8930fa9c2183458c4eca487a8be16",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0003",
+      "source": "testing/go/postgres16/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
+      "ordinal": 3,
+      "scriptName": "Simple example",
+      "oracle": "postgres",
+      "postgresId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0003-select-*-from-test",
+      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0003-select-*-from-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test;",
+      "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0004",
+      "source": "testing/go/postgres16/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
+      "ordinal": 4,
+      "scriptName": "WHILE Label",
+      "oracle": "postgres",
+      "postgresId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0004-call-interpreted_while_label-42",
+      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0004-call-interpreted_while_label-42",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CALL interpreted_while_label(42);",
+      "querySha256": "aab3d6cd3f38347fce18d648e52e9274757c5f8b9c4bfef122458f157339679c",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0005",
+      "source": "testing/go/postgres16/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
+      "ordinal": 5,
+      "scriptName": "WHILE Label",
+      "oracle": "postgres",
+      "postgresId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0005-select-*-from-test",
+      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0005-select-*-from-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test;",
+      "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "expectedRows": [
+        [
+          {
+            "value": "1000"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0006",
+      "source": "testing/go/postgres16/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
+      "ordinal": 6,
+      "scriptName": "Overloading",
+      "oracle": "postgres",
+      "postgresId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0006-call-interpreted_overload-abc",
+      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0006-call-interpreted_overload-abc",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CALL interpreted_overload('abc');",
+      "querySha256": "63fa07a1a10f0c978f7c39c1398370722175c170ec115aa2423b28aaea517a7b",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0007",
+      "source": "testing/go/postgres16/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
+      "ordinal": 7,
+      "scriptName": "Overloading",
+      "oracle": "postgres",
+      "postgresId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0007-call-interpreted_overload-abcd",
+      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0007-call-interpreted_overload-abcd",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CALL interpreted_overload('abcd');",
+      "querySha256": "b687e5fce162792b70f84e58ab679220687dbe5f6b01af1646246eb990a75f06",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0008",
+      "source": "testing/go/postgres16/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
+      "ordinal": 8,
+      "scriptName": "Overloading",
+      "oracle": "postgres",
+      "postgresId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0008-call-interpreted_overload-3",
+      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0008-call-interpreted_overload-3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CALL interpreted_overload(3);",
+      "querySha256": "a0d300ec3e5aff63466bc97055a131eb8e60cb85661e98cf0263468962742c3e",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0009",
+      "source": "testing/go/postgres16/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
+      "ordinal": 9,
+      "scriptName": "Overloading",
+      "oracle": "postgres",
+      "postgresId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0009-call-interpreted_overload-4",
+      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0009-call-interpreted_overload-4",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CALL interpreted_overload(4);",
+      "querySha256": "8aaf92e7493b005f3deb5cfc22297482077aadf1a608161ef7f67f228a6e1139",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0010",
+      "source": "testing/go/postgres16/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
+      "ordinal": 10,
+      "scriptName": "Overloading",
+      "oracle": "postgres",
+      "postgresId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0010-select-*-from-test",
+      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0010-select-*-from-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test;",
+      "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "expectedRows": [
+        [
+          {
+            "value": "abc"
+          }
+        ],
+        [
+          {
+            "value": "abcd_long"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "-4"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0011",
+      "source": "testing/go/postgres16/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
+      "ordinal": 11,
+      "scriptName": "DECLARE variable with default value of literal value or parameter reference",
+      "oracle": "postgres",
+      "postgresId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0065-call-m-a-b-1",
+      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0065-call-m-a-b-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CALL m('a', 'B', 1);",
+      "querySha256": "040fca706057f4854a9c049b9bb4f7f55a7d9c0b4a7288722c9de598f2333c1a",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0012",
+      "source": "testing/go/postgres16/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
+      "ordinal": 12,
+      "scriptName": "DECLARE variable with default value of literal value or parameter reference",
+      "oracle": "postgres",
+      "postgresId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0066-select-*-from-t",
+      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0066-select-*-from-t",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM t",
+      "querySha256": "bdd379b02821e0bc9d5bab29094f054ce781e1cd351e51bd8f6329c0799638d4",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "aB"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0013",
+      "source": "testing/go/postgres16/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
+      "ordinal": 13,
+      "scriptName": "use nested block statements and call statement in procedure body",
+      "oracle": "postgres",
+      "postgresId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0067-call-check_and_add-1-hi",
+      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0067-call-check_and_add-1-hi",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CALL check_and_add(1, 'hi');",
+      "querySha256": "c436e000c142ccde6952827bb34d4852708614ea14379d01202dbb491795cb45",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0014",
+      "source": "testing/go/postgres16/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
+      "ordinal": 14,
+      "scriptName": "use nested block statements and call statement in procedure body",
+      "oracle": "postgres",
+      "postgresId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0068-call-check_and_add-3-hellooo",
+      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0068-call-check_and_add-3-hellooo",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CALL check_and_add(3, 'hellooo');",
+      "querySha256": "775666201994c3b231112827c107c5eef52fef2fa707b1608d61417caa23f9e1",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql#0015",
+      "source": "testing/go/postgres16/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
+      "ordinal": 15,
+      "scriptName": "use nested block statements and call statement in procedure body",
+      "oracle": "postgres",
+      "postgresId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0069-select-*-from-tbl",
+      "suggestedId": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0069-select-*-from-tbl",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM tbl",
+      "querySha256": "57811100063b047be5128642863b25fbe86b9a127c4fb9a26c527744a83448f8",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "hi is too short"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "hellooo"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

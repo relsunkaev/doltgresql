@@ -1470,253 +1470,9 @@
       ]
     },
     {
-      "id": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0001-call-example-1",
-      "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 1,
-      "oracle": "postgres",
-      "compare": "structural",
-      "setup": [
-        "CREATE SCHEMA {{quotedSchema}}",
-        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
-        "CREATE TABLE test (v1 INT8);",
-        "CREATE PROCEDURE example(input INT8) AS $$\n\t\t\t\tBEGIN\n\t\t\t\t\tINSERT INTO test VALUES (input);\n\t\t\t\tEND;\n\t\t\t\t$$ LANGUAGE 'plpgsql';"
-      ],
-      "query": "CALL example(1);",
-      "expectedRows": [],
-      "cleanup": [
-        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
-      ]
-    },
-    {
-      "id": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0002-call-example-2",
-      "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 2,
-      "oracle": "postgres",
-      "compare": "structural",
-      "setup": [
-        "CREATE SCHEMA {{quotedSchema}}",
-        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
-        "CREATE TABLE test (v1 INT8);",
-        "CREATE PROCEDURE example(input INT8) AS $$\n\t\t\t\tBEGIN\n\t\t\t\t\tINSERT INTO test VALUES (input);\n\t\t\t\tEND;\n\t\t\t\t$$ LANGUAGE 'plpgsql';",
-        "CALL example(1);"
-      ],
-      "query": "CALL example('2');",
-      "expectedRows": [],
-      "cleanup": [
-        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
-      ]
-    },
-    {
-      "id": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0003-select-*-from-test",
-      "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 3,
-      "oracle": "postgres",
-      "compare": "structural",
-      "setup": [
-        "CREATE SCHEMA {{quotedSchema}}",
-        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
-        "CREATE TABLE test (v1 INT8);",
-        "CREATE PROCEDURE example(input INT8) AS $$\n\t\t\t\tBEGIN\n\t\t\t\t\tINSERT INTO test VALUES (input);\n\t\t\t\tEND;\n\t\t\t\t$$ LANGUAGE 'plpgsql';",
-        "CALL example(1);",
-        "CALL example('2');"
-      ],
-      "query": "SELECT * FROM test;",
-      "expectedRows": [
-        [
-          {
-            "value": "1"
-          }
-        ],
-        [
-          {
-            "value": "2"
-          }
-        ]
-      ],
-      "cleanup": [
-        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
-      ]
-    },
-    {
-      "id": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0004-call-interpreted_while_label-42",
-      "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 4,
-      "oracle": "postgres",
-      "compare": "structural",
-      "setup": [
-        "CREATE EXTENSION IF NOT EXISTS plpgsql",
-        "CREATE SCHEMA {{quotedSchema}}",
-        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
-        "CREATE TABLE test (v1 INT8);",
-        "CREATE PROCEDURE interpreted_while_label(input INT4) AS $$\nDECLARE\n\tcounter INT4;\nBEGIN\n\t<<while_label>>\n\tWHILE input < 1000 LOOP\n\t\tinput := input + 1;\n\t\tcounter := counter + 1;\n\t\tIF counter >= 10 THEN\n\t\t\tEXIT while_label;\n\t\tEND IF;\n\tEND LOOP;\n\tINSERT INTO test VALUES (input);\nEND;\n$$ LANGUAGE plpgsql;"
-      ],
-      "query": "CALL interpreted_while_label(42);",
-      "expectedRows": [],
-      "cleanup": [
-        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
-      ]
-    },
-    {
-      "id": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0005-select-*-from-test",
-      "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 5,
-      "oracle": "postgres",
-      "compare": "structural",
-      "setup": [
-        "CREATE EXTENSION IF NOT EXISTS plpgsql",
-        "CREATE SCHEMA {{quotedSchema}}",
-        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
-        "CREATE TABLE test (v1 INT8);",
-        "CREATE PROCEDURE interpreted_while_label(input INT4) AS $$\nDECLARE\n\tcounter INT4;\nBEGIN\n\t<<while_label>>\n\tWHILE input < 1000 LOOP\n\t\tinput := input + 1;\n\t\tcounter := counter + 1;\n\t\tIF counter >= 10 THEN\n\t\t\tEXIT while_label;\n\t\tEND IF;\n\tEND LOOP;\n\tINSERT INTO test VALUES (input);\nEND;\n$$ LANGUAGE plpgsql;",
-        "CALL interpreted_while_label(42);"
-      ],
-      "query": "SELECT * FROM test;",
-      "expectedRows": [
-        [
-          {
-            "value": "1000"
-          }
-        ]
-      ],
-      "cleanup": [
-        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
-      ]
-    },
-    {
-      "id": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0006-call-interpreted_overload-abc",
-      "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 6,
-      "oracle": "postgres",
-      "compare": "structural",
-      "setup": [
-        "CREATE EXTENSION IF NOT EXISTS plpgsql",
-        "CREATE SCHEMA {{quotedSchema}}",
-        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
-        "CREATE TABLE test (v1 TEXT);",
-        "CREATE PROCEDURE interpreted_overload(input TEXT) AS $$\nDECLARE\n\tvar1 TEXT;\nBEGIN\n\tIF length(input) > 3 THEN\n\t\tvar1 := input || '_long';\n\tELSE\n\t\tvar1 := input;\n\tEND IF;\n\tINSERT INTO test VALUES (var1);\nEND;\n$$ LANGUAGE plpgsql;",
-        "CREATE PROCEDURE interpreted_overload(input INT4) AS $$\nDECLARE\n\tvar1 INT4;\nBEGIN\n\tIF input > 3 THEN\n\t\tvar1 := -input;\n\tELSE\n\t\tvar1 := input;\n\tEND IF;\n\tINSERT INTO test VALUES (var1::text);\nEND;\n$$ LANGUAGE plpgsql;"
-      ],
-      "query": "CALL interpreted_overload('abc');",
-      "expectedRows": [],
-      "cleanup": [
-        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
-      ]
-    },
-    {
-      "id": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0007-call-interpreted_overload-abcd",
-      "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 7,
-      "oracle": "postgres",
-      "compare": "structural",
-      "setup": [
-        "CREATE EXTENSION IF NOT EXISTS plpgsql",
-        "CREATE SCHEMA {{quotedSchema}}",
-        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
-        "CREATE TABLE test (v1 TEXT);",
-        "CREATE PROCEDURE interpreted_overload(input TEXT) AS $$\nDECLARE\n\tvar1 TEXT;\nBEGIN\n\tIF length(input) > 3 THEN\n\t\tvar1 := input || '_long';\n\tELSE\n\t\tvar1 := input;\n\tEND IF;\n\tINSERT INTO test VALUES (var1);\nEND;\n$$ LANGUAGE plpgsql;",
-        "CREATE PROCEDURE interpreted_overload(input INT4) AS $$\nDECLARE\n\tvar1 INT4;\nBEGIN\n\tIF input > 3 THEN\n\t\tvar1 := -input;\n\tELSE\n\t\tvar1 := input;\n\tEND IF;\n\tINSERT INTO test VALUES (var1::text);\nEND;\n$$ LANGUAGE plpgsql;",
-        "CALL interpreted_overload('abc');"
-      ],
-      "query": "CALL interpreted_overload('abcd');",
-      "expectedRows": [],
-      "cleanup": [
-        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
-      ]
-    },
-    {
-      "id": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0008-call-interpreted_overload-3",
-      "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 8,
-      "oracle": "postgres",
-      "compare": "structural",
-      "setup": [
-        "CREATE EXTENSION IF NOT EXISTS plpgsql",
-        "CREATE SCHEMA {{quotedSchema}}",
-        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
-        "CREATE TABLE test (v1 TEXT);",
-        "CREATE PROCEDURE interpreted_overload(input TEXT) AS $$\nDECLARE\n\tvar1 TEXT;\nBEGIN\n\tIF length(input) > 3 THEN\n\t\tvar1 := input || '_long';\n\tELSE\n\t\tvar1 := input;\n\tEND IF;\n\tINSERT INTO test VALUES (var1);\nEND;\n$$ LANGUAGE plpgsql;",
-        "CREATE PROCEDURE interpreted_overload(input INT4) AS $$\nDECLARE\n\tvar1 INT4;\nBEGIN\n\tIF input > 3 THEN\n\t\tvar1 := -input;\n\tELSE\n\t\tvar1 := input;\n\tEND IF;\n\tINSERT INTO test VALUES (var1::text);\nEND;\n$$ LANGUAGE plpgsql;",
-        "CALL interpreted_overload('abc');",
-        "CALL interpreted_overload('abcd');"
-      ],
-      "query": "CALL interpreted_overload(3);",
-      "expectedRows": [],
-      "cleanup": [
-        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
-      ]
-    },
-    {
-      "id": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0009-call-interpreted_overload-4",
-      "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 9,
-      "oracle": "postgres",
-      "compare": "structural",
-      "setup": [
-        "CREATE EXTENSION IF NOT EXISTS plpgsql",
-        "CREATE SCHEMA {{quotedSchema}}",
-        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
-        "CREATE TABLE test (v1 TEXT);",
-        "CREATE PROCEDURE interpreted_overload(input TEXT) AS $$\nDECLARE\n\tvar1 TEXT;\nBEGIN\n\tIF length(input) > 3 THEN\n\t\tvar1 := input || '_long';\n\tELSE\n\t\tvar1 := input;\n\tEND IF;\n\tINSERT INTO test VALUES (var1);\nEND;\n$$ LANGUAGE plpgsql;",
-        "CREATE PROCEDURE interpreted_overload(input INT4) AS $$\nDECLARE\n\tvar1 INT4;\nBEGIN\n\tIF input > 3 THEN\n\t\tvar1 := -input;\n\tELSE\n\t\tvar1 := input;\n\tEND IF;\n\tINSERT INTO test VALUES (var1::text);\nEND;\n$$ LANGUAGE plpgsql;",
-        "CALL interpreted_overload('abc');",
-        "CALL interpreted_overload('abcd');",
-        "CALL interpreted_overload(3);"
-      ],
-      "query": "CALL interpreted_overload(4);",
-      "expectedRows": [],
-      "cleanup": [
-        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
-      ]
-    },
-    {
-      "id": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0010-select-*-from-test",
-      "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 10,
-      "oracle": "postgres",
-      "compare": "structural",
-      "setup": [
-        "CREATE EXTENSION IF NOT EXISTS plpgsql",
-        "CREATE SCHEMA {{quotedSchema}}",
-        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
-        "CREATE TABLE test (v1 TEXT);",
-        "CREATE PROCEDURE interpreted_overload(input TEXT) AS $$\nDECLARE\n\tvar1 TEXT;\nBEGIN\n\tIF length(input) > 3 THEN\n\t\tvar1 := input || '_long';\n\tELSE\n\t\tvar1 := input;\n\tEND IF;\n\tINSERT INTO test VALUES (var1);\nEND;\n$$ LANGUAGE plpgsql;",
-        "CREATE PROCEDURE interpreted_overload(input INT4) AS $$\nDECLARE\n\tvar1 INT4;\nBEGIN\n\tIF input > 3 THEN\n\t\tvar1 := -input;\n\tELSE\n\t\tvar1 := input;\n\tEND IF;\n\tINSERT INTO test VALUES (var1::text);\nEND;\n$$ LANGUAGE plpgsql;",
-        "CALL interpreted_overload('abc');",
-        "CALL interpreted_overload('abcd');",
-        "CALL interpreted_overload(3);",
-        "CALL interpreted_overload(4);"
-      ],
-      "query": "SELECT * FROM test;",
-      "expectedRows": [
-        [
-          {
-            "value": "abc"
-          }
-        ],
-        [
-          {
-            "value": "abcd_long"
-          }
-        ],
-        [
-          {
-            "value": "3"
-          }
-        ],
-        [
-          {
-            "value": "-4"
-          }
-        ]
-      ],
-      "cleanup": [
-        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
-      ]
-    },
-    {
       "id": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0011-create-procedure-interpreted_branch-input-int4",
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 11,
+      "ordinal": 1,
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
@@ -1733,7 +1489,7 @@
     {
       "id": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0012-call-interpreted_branch-4",
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 12,
+      "ordinal": 2,
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
@@ -1752,7 +1508,7 @@
     {
       "id": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0013-select-*-from-test",
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 13,
+      "ordinal": 3,
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
@@ -1781,7 +1537,7 @@
     {
       "id": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0014-delete-from-test-where-v1",
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 14,
+      "ordinal": 4,
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
@@ -1802,7 +1558,7 @@
     {
       "id": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0027-create-procedure-interpreted_merging-input-text",
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 27,
+      "ordinal": 17,
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
@@ -1820,7 +1576,7 @@
     {
       "id": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0028-call-interpreted_merging-12",
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 28,
+      "ordinal": 18,
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
@@ -1840,7 +1596,7 @@
     {
       "id": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0029-select-*-from-test",
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 29,
+      "ordinal": 19,
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
@@ -1878,7 +1634,7 @@
     {
       "id": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0030-call-interpreted_merging-55",
       "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 30,
+      "ordinal": 20,
       "oracle": "postgres",
       "compare": "sqlstate",
       "setup": [
@@ -1894,134 +1650,6 @@
       "query": "CALL interpreted_merging(55);",
       "expectedSqlstate": "42883",
       "expectedErrorSeverity": "ERROR",
-      "cleanup": [
-        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
-      ]
-    },
-    {
-      "id": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0065-call-m-a-b-1",
-      "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 65,
-      "oracle": "postgres",
-      "compare": "structural",
-      "setup": [
-        "CREATE EXTENSION IF NOT EXISTS plpgsql",
-        "CREATE SCHEMA {{quotedSchema}}",
-        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
-        "CREATE TABLE t (a int, b text);",
-        "CREATE OR REPLACE PROCEDURE m (x text, y text, e int) LANGUAGE plpgsql AS $$\ndeclare\n  xx text := x;\n  yy text := y;\n  zz int := e;\nbegin\n  insert into t values (zz, xx || yy);\nend\n$$;"
-      ],
-      "query": "CALL m('a', 'B', 1);",
-      "expectedRows": [],
-      "cleanup": [
-        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
-      ]
-    },
-    {
-      "id": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0066-select-*-from-t",
-      "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 66,
-      "oracle": "postgres",
-      "compare": "structural",
-      "setup": [
-        "CREATE EXTENSION IF NOT EXISTS plpgsql",
-        "CREATE SCHEMA {{quotedSchema}}",
-        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
-        "CREATE TABLE t (a int, b text);",
-        "CREATE OR REPLACE PROCEDURE m (x text, y text, e int) LANGUAGE plpgsql AS $$\ndeclare\n  xx text := x;\n  yy text := y;\n  zz int := e;\nbegin\n  insert into t values (zz, xx || yy);\nend\n$$;",
-        "CALL m('a', 'B', 1);"
-      ],
-      "query": "SELECT * FROM t",
-      "expectedRows": [
-        [
-          {
-            "value": "1"
-          },
-          {
-            "value": "aB"
-          }
-        ]
-      ],
-      "cleanup": [
-        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
-      ]
-    },
-    {
-      "id": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0067-call-check_and_add-1-hi",
-      "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 67,
-      "oracle": "postgres",
-      "compare": "structural",
-      "setup": [
-        "CREATE EXTENSION IF NOT EXISTS plpgsql",
-        "CREATE SCHEMA {{quotedSchema}}",
-        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
-        "CREATE TABLE tbl (a int, b text);",
-        "CREATE PROCEDURE add_value(IN a int, IN b text)\n            LANGUAGE plpgsql\n            AS $$\n        BEGIN\n            INSERT INTO tbl VALUES (a, b);\n        END;\n\t\t$$;",
-        "CREATE PROCEDURE check_and_add(IN i int, IN t text)\n            LANGUAGE plpgsql\n            AS $$\n\t\tDECLARE d text := t;\n        BEGIN\n            IF LENGTH(t) < 6 THEN\n                d = t || ' is too short';\n            END IF;\n\n            BEGIN\n                CALL add_value(i, d);\n            END;\n        END;\n        $$;"
-      ],
-      "query": "CALL check_and_add(1, 'hi');",
-      "expectedRows": [],
-      "cleanup": [
-        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
-      ]
-    },
-    {
-      "id": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0068-call-check_and_add-3-hellooo",
-      "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 68,
-      "oracle": "postgres",
-      "compare": "structural",
-      "setup": [
-        "CREATE EXTENSION IF NOT EXISTS plpgsql",
-        "CREATE SCHEMA {{quotedSchema}}",
-        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
-        "CREATE TABLE tbl (a int, b text);",
-        "CREATE PROCEDURE add_value(IN a int, IN b text)\n            LANGUAGE plpgsql\n            AS $$\n        BEGIN\n            INSERT INTO tbl VALUES (a, b);\n        END;\n\t\t$$;",
-        "CREATE PROCEDURE check_and_add(IN i int, IN t text)\n            LANGUAGE plpgsql\n            AS $$\n\t\tDECLARE d text := t;\n        BEGIN\n            IF LENGTH(t) < 6 THEN\n                d = t || ' is too short';\n            END IF;\n\n            BEGIN\n                CALL add_value(i, d);\n            END;\n        END;\n        $$;",
-        "CALL check_and_add(1, 'hi');"
-      ],
-      "query": "CALL check_and_add(3, 'hellooo');",
-      "expectedRows": [],
-      "cleanup": [
-        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
-      ]
-    },
-    {
-      "id": "create-procedure-plpgsql-test-testcreateprocedurelanguageplpgsql-0069-select-*-from-tbl",
-      "source": "testing/go/create_procedure_plpgsql_test.go:TestCreateProcedureLanguagePlpgsql",
-      "ordinal": 69,
-      "oracle": "postgres",
-      "compare": "structural",
-      "setup": [
-        "CREATE EXTENSION IF NOT EXISTS plpgsql",
-        "CREATE SCHEMA {{quotedSchema}}",
-        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
-        "CREATE TABLE tbl (a int, b text);",
-        "CREATE PROCEDURE add_value(IN a int, IN b text)\n            LANGUAGE plpgsql\n            AS $$\n        BEGIN\n            INSERT INTO tbl VALUES (a, b);\n        END;\n\t\t$$;",
-        "CREATE PROCEDURE check_and_add(IN i int, IN t text)\n            LANGUAGE plpgsql\n            AS $$\n\t\tDECLARE d text := t;\n        BEGIN\n            IF LENGTH(t) < 6 THEN\n                d = t || ' is too short';\n            END IF;\n\n            BEGIN\n                CALL add_value(i, d);\n            END;\n        END;\n        $$;",
-        "CALL check_and_add(1, 'hi');",
-        "CALL check_and_add(3, 'hellooo');"
-      ],
-      "query": "SELECT * FROM tbl",
-      "expectedRows": [
-        [
-          {
-            "value": "1"
-          },
-          {
-            "value": "hi is too short"
-          }
-        ],
-        [
-          {
-            "value": "3"
-          },
-          {
-            "value": "hellooo"
-          }
-        ]
-      ],
       "cleanup": [
         "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
       ]
