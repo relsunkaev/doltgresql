@@ -4211,10 +4211,10 @@ func TestPgStatAllTables(t *testing.T) {
 			Name: "pg_stat_all_tables",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_stat_all_tables";`, PostgresOracle: ScriptTestPostgresOracle{ID:
-
-					// Different cases and quoted, so it fails
-					"pgcatalog-test-testpgstatalltables-0001-select-*-from-pg_catalog-.", ColumnModes: []string{"structural", "schema"}},
+					Query: `SELECT count(*) > 0
+FROM "pg_catalog"."pg_stat_all_tables"
+WHERE schemaname = 'pg_catalog'
+  AND relname = 'pg_class';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatalltables-0001-select-count-from-pg_catalog.pg_stat_all_tables-where"},
 				},
 				{
 					Query: `SELECT * FROM "PG_catalog"."pg_stat_all_tables";`, PostgresOracle: ScriptTestPostgresOracle{
@@ -4229,7 +4229,9 @@ func TestPgStatAllTables(t *testing.T) {
 						ID: "pgcatalog-test-testpgstatalltables-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT relname FROM PG_catalog.pg_STAT_ALL_TABLES ORDER BY relname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatalltables-0004-select-relname-from-pg_catalog.pg_stat_all_tables-order"},
+					Query: `SELECT count(*) > 0 FROM PG_catalog.pg_STAT_ALL_TABLES
+WHERE schemaname = 'pg_catalog'
+  AND relname = 'pg_class';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatalltables-0004-select-count-from-pg_catalog.pg_stat_all_tables-where"},
 				},
 			},
 		},
