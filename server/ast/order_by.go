@@ -55,7 +55,7 @@ func nodeOrderBy(ctx *Context, node tree.OrderBy, selectStmt vitess.SelectStatem
 			return nil, errors.Errorf("unknown NULL ordering in ORDER BY")
 		}
 		var expr vitess.Expr
-		if ordinal, ok := orderByOutputOrdinal(selectStmt, node[i].Expr); ok {
+		if ordinal, ok := orderByOutputOrdinal(selectStmt, node[i].Expr); ok && !selectStatementIsSetOp(selectStmt) {
 			expr = vitess.NewIntVal([]byte(strconv.Itoa(ordinal)))
 		} else {
 			var err error
@@ -65,7 +65,7 @@ func nodeOrderBy(ctx *Context, node tree.OrderBy, selectStmt vitess.SelectStatem
 			}
 		}
 
-		if needsExplicitNullSort(direction, desiredNullsLast) {
+		if needsExplicitNullSort(direction, desiredNullsLast) && !selectStatementIsSetOp(selectStmt) {
 			nullProbeExpr := expr
 			if outputExpr, ok := orderByOutputExpr(selectStmt, node[i].Expr); ok {
 				nullProbeExpr = outputExpr
@@ -89,6 +89,17 @@ func nodeOrderBy(ctx *Context, node tree.OrderBy, selectStmt vitess.SelectStatem
 		})
 	}
 	return orderBys, nil
+}
+
+func selectStatementIsSetOp(selectStmt vitess.SelectStatement) bool {
+	switch stmt := selectStmt.(type) {
+	case *vitess.SetOp:
+		return true
+	case *vitess.ParenSelect:
+		return selectStatementIsSetOp(stmt.Select)
+	default:
+		return false
+	}
 }
 
 func orderByDirection(order *tree.Order) (string, error) {
