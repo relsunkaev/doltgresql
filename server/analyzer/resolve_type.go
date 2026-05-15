@@ -25,6 +25,9 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
+	"github.com/dolthub/doltgresql/server/auth"
 	pgexprs "github.com/dolthub/doltgresql/server/expression"
 	pgtransform "github.com/dolthub/doltgresql/server/transform"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -57,7 +60,7 @@ func ResolveTypeForNodes(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, 
 		case *plan.AddColumn:
 			col := n.Column()
 			if rt, ok := col.Type.(*pgtypes.DoltgresType); ok && !rt.IsResolvedType() {
-				dt, err := resolveType(ctx, db, rt)
+				dt, err := resolveTypeForDDL(ctx, db, rt)
 				if err != nil {
 					return nil, transform.NewTree, err
 				}
@@ -81,12 +84,12 @@ func ResolveTypeForNodes(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, 
 			}
 			return node, same, nil
 		case *pgnodes.CreateFunction:
-			retType, err := resolveType(ctx, db, n.ReturnType)
+			retType, err := resolveTypeForDDL(ctx, db, n.ReturnType)
 			if err != nil {
 				return nil, transform.NewTree, err
 			}
 			for i := range n.Parameters {
-				n.Parameters[i].Type, err = resolveType(ctx, db, n.Parameters[i].Type)
+				n.Parameters[i].Type, err = resolveTypeForDDL(ctx, db, n.Parameters[i].Type)
 				if err != nil {
 					return nil, transform.NewTree, err
 				}
@@ -96,7 +99,7 @@ func ResolveTypeForNodes(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, 
 		case *pgnodes.CreateProcedure:
 			for i := range n.Parameters {
 				var err error
-				n.Parameters[i].Type, err = resolveType(ctx, db, n.Parameters[i].Type)
+				n.Parameters[i].Type, err = resolveTypeForDDL(ctx, db, n.Parameters[i].Type)
 				if err != nil {
 					return nil, transform.NewTree, err
 				}
@@ -105,7 +108,7 @@ func ResolveTypeForNodes(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, 
 		case *plan.CreateTable:
 			for _, col := range n.TargetSchema() {
 				if rt, ok := col.Type.(*pgtypes.DoltgresType); ok && !rt.IsResolvedType() {
-					dt, err := resolveType(ctx, db, rt)
+					dt, err := resolveTypeForDDL(ctx, db, rt)
 					if err != nil {
 						return nil, transform.NewTree, err
 					}
@@ -162,7 +165,7 @@ func ResolveTypeForNodes(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, 
 		case *plan.ModifyColumn:
 			col := n.NewColumn()
 			if rt, ok := col.Type.(*pgtypes.DoltgresType); ok && !rt.IsResolvedType() {
-				dt, err := resolveType(ctx, db, rt)
+				dt, err := resolveTypeForDDL(ctx, db, rt)
 				if err != nil {
 					return nil, transform.NewTree, err
 				}
@@ -289,6 +292,53 @@ func withResolvedTypmod(resolvedTyp *pgtypes.DoltgresType, unresolvedTyp *pgtype
 		}
 	}
 	return resolvedTyp.WithAttTypMod(typmod), nil
+}
+
+func resolveTypeForDDL(ctx *sql.Context, db sql.Database, typ *pgtypes.DoltgresType) (*pgtypes.DoltgresType, error) {
+	resolvedTyp, err := resolveType(ctx, db, typ)
+	if err != nil {
+		return nil, err
+	}
+	if err = checkTypeUsagePrivilege(ctx, resolvedTyp); err != nil {
+		return nil, err
+	}
+	return resolvedTyp, nil
+}
+
+func checkTypeUsagePrivilege(ctx *sql.Context, typ *pgtypes.DoltgresType) error {
+	if typ == nil || typ.ID.SchemaName() == "pg_catalog" {
+		return nil
+	}
+	if typ.TypCategory == pgtypes.TypeCategory_ArrayTypes && typ.Elem.IsValid() {
+		typs, err := core.GetTypesCollectionFromContext(ctx)
+		if err != nil {
+			return err
+		}
+		elemTyp, err := typs.GetType(ctx, typ.Elem)
+		if err != nil {
+			return err
+		}
+		if elemTyp != nil {
+			typ = elemTyp
+		}
+	}
+	if typ.ID.SchemaName() == "pg_catalog" {
+		return nil
+	}
+
+	var err error
+	auth.LockRead(func() {
+		role := auth.GetRole(ctx.Client().User)
+		if !role.IsValid() {
+			err = errors.Errorf(`role "%s" does not exist`, ctx.Client().User)
+			return
+		}
+		if auth.RoleHasTypePrivilege(role, typ.ID.SchemaName(), typ.ID.TypeName(), typ.Owner, auth.Privilege_USAGE) {
+			return
+		}
+		err = pgerror.Newf(pgcode.InsufficientPrivilege, "permission denied for type %s", typ.ID.TypeName())
+	})
+	return err
 }
 
 func pgvectorBaseTypeName(typ *pgtypes.DoltgresType) string {

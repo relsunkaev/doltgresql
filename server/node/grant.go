@@ -739,6 +739,7 @@ func compiledFunctionParameterIDs(function framework.FunctionInterface) []id.Typ
 type aclTypeTarget struct {
 	schemaName string
 	typeName   string
+	typ        *pgtypes.DoltgresType
 }
 
 func resolveACLTypeTarget(ctx *sql.Context, typeCollection *typecollection.TypeCollection, target auth.TypePrivilegeKey, userRole auth.Role, privileges []auth.Privilege) (aclTypeTarget, error) {
@@ -757,7 +758,7 @@ func resolveACLTypeTarget(ctx *sql.Context, typeCollection *typecollection.TypeC
 		if !aclSchemaVisibleToRole(userRole, schemaName) && !aclTypeVisibleToRole(userRole, schemaName, target.Name, resolvedType, privileges) {
 			return aclTypeTarget{}, errors.Errorf("permission denied for schema %s", schemaName)
 		}
-		return aclTypeTarget{schemaName: schemaName, typeName: target.Name}, nil
+		return aclTypeTarget{schemaName: schemaName, typeName: target.Name, typ: resolvedType}, nil
 	}
 
 	searchPath, err := settings.GetCurrentSchemas(ctx)
@@ -780,7 +781,7 @@ func resolveACLTypeTarget(ctx *sql.Context, typeCollection *typecollection.TypeC
 			continue
 		}
 		if aclTypeVisibleToRole(userRole, schemaName, target.Name, resolvedType, privileges) {
-			return aclTypeTarget{schemaName: schemaName, typeName: target.Name}, nil
+			return aclTypeTarget{schemaName: schemaName, typeName: target.Name, typ: resolvedType}, nil
 		}
 	}
 	return aclTypeTarget{}, errors.Errorf(`type "%s" does not exist`, target.Name)
@@ -814,10 +815,10 @@ func aclTypeVisibleToRole(role auth.Role, schemaName string, typeName string, re
 		return true
 	}
 	for _, privilege := range privileges {
-		if aclRoleHasTypePrivilege(role, schemaName, typeName, privilege) {
+		if aclRoleHasTypePrivilege(role, schemaName, typeName, resolvedType, privilege) {
 			return true
 		}
-		if auth.HasTypePrivilegeGrantOption(auth.TypePrivilegeKey{Role: role.ID(), Schema: schemaName, Name: typeName}, privilege).IsValid() {
+		if auth.RoleHasTypePrivilegeGrantOption(role, schemaName, typeName, resolvedType.Owner, privilege).IsValid() {
 			return true
 		}
 	}
@@ -825,22 +826,11 @@ func aclTypeVisibleToRole(role auth.Role, schemaName string, typeName string, re
 }
 
 func aclTypeOwnedByRole(role auth.Role, resolvedType *pgtypes.DoltgresType) bool {
-	if role.IsSuperUser {
-		return true
-	}
-	owner := resolvedType.Owner
-	if owner == "" {
-		owner = "postgres"
-	}
-	return owner == role.Name
+	return auth.RoleOwnsType(role, resolvedType.Owner)
 }
 
-func aclRoleHasTypePrivilege(role auth.Role, schemaName string, typeName string, privilege auth.Privilege) bool {
-	if auth.HasTypePrivilege(auth.TypePrivilegeKey{Role: role.ID(), Schema: schemaName, Name: typeName}, privilege) {
-		return true
-	}
-	publicRole := auth.GetRole("public")
-	return publicRole.IsValid() && auth.HasTypePrivilege(auth.TypePrivilegeKey{Role: publicRole.ID(), Schema: schemaName, Name: typeName}, privilege)
+func aclRoleHasTypePrivilege(role auth.Role, schemaName string, typeName string, typ *pgtypes.DoltgresType, privilege auth.Privilege) bool {
+	return auth.RoleHasTypePrivilege(role, schemaName, typeName, typ.Owner, privilege)
 }
 
 // grantType handles *GrantType from within RowIter.
@@ -865,14 +855,15 @@ func (g *Grant) grantType(ctx *sql.Context) error {
 				Name:   resolvedTarget.typeName,
 			}
 			for _, privilege := range g.GrantType.Privileges {
-				grantedBy := auth.HasTypePrivilegeGrantOption(key, privilege)
+				grantedBy := auth.RoleHasTypePrivilegeGrantOption(userRole, key.Schema, key.Name, resolvedTarget.typ.Owner, privilege)
 				if !grantedBy.IsValid() {
-					if aclRoleHasTypePrivilege(userRole, key.Schema, key.Name, privilege) {
+					if aclRoleHasTypePrivilege(userRole, key.Schema, key.Name, resolvedTarget.typ, privilege) {
 						ctx.Warn(0, "no privileges were granted for %s", key.Name)
 						continue
 					}
 					return errors.Errorf(`role "%s" does not have permission to grant this privilege`, userRole.Name)
 				}
+				auth.EnsureTypeDefaultPrivileges(key.Schema, key.Name, resolvedTarget.typ.Owner)
 				auth.AddTypePrivilege(auth.TypePrivilegeKey{
 					Role:   role.ID(),
 					Schema: key.Schema,

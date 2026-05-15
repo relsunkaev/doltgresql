@@ -22,6 +22,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	"github.com/dolthub/doltgresql/server/largeobject"
@@ -97,8 +98,65 @@ var has_type_privilege_text_text = framework.Function2{
 		if err != nil {
 			return false, err
 		}
-		return authPrivilege == auth.Privilege_USAGE, nil
+		resolvedType, err := resolveTypePrivilegeName(ctx, typ.(string))
+		if err != nil {
+			return false, err
+		}
+		if resolvedType == nil || authPrivilege != auth.Privilege_USAGE {
+			return false, nil
+		}
+		if resolvedType.ID.SchemaName() == "pg_catalog" {
+			return true, nil
+		}
+		var hasPrivilege bool
+		auth.LockRead(func() {
+			role := auth.GetRole(ctx.Client().User)
+			hasPrivilege = role.IsValid() &&
+				auth.RoleHasTypePrivilege(role, resolvedType.ID.SchemaName(), resolvedType.ID.TypeName(), resolvedType.Owner, authPrivilege)
+		})
+		return hasPrivilege, nil
 	},
+}
+
+func resolveTypePrivilegeName(ctx *sql.Context, typ string) (*pgtypes.DoltgresType, error) {
+	parts := strings.Split(strings.TrimSpace(typ), ".")
+	typeName := unquoteIdentifier(parts[len(parts)-1])
+	var schemaName string
+	var explicitSchema bool
+	if len(parts) >= 2 {
+		schemaName = unquoteIdentifier(parts[len(parts)-2])
+		explicitSchema = true
+	} else {
+		var err error
+		schemaName, err = core.GetSchemaName(ctx, nil, "")
+		if err != nil {
+			return nil, err
+		}
+	}
+	typs, err := core.GetTypesCollectionFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	resolvedType, err := typs.GetType(ctx, id.NewType(schemaName, typeName))
+	if err != nil {
+		return nil, err
+	}
+	if resolvedType == nil && !explicitSchema {
+		resolvedType, err = typs.GetType(ctx, id.NewType("pg_catalog", typeName))
+	}
+	if err != nil || resolvedType == nil {
+		return resolvedType, err
+	}
+	if resolvedType.TypCategory == pgtypes.TypeCategory_ArrayTypes && resolvedType.Elem.IsValid() {
+		elemType, elemErr := typs.GetType(ctx, resolvedType.Elem)
+		if elemErr != nil {
+			return nil, elemErr
+		}
+		if elemType != nil {
+			resolvedType = elemType
+		}
+	}
+	return resolvedType, err
 }
 
 var has_database_privilege_text_text_text = framework.Function3{

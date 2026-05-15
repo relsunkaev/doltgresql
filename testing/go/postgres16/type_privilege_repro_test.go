@@ -18,6 +18,8 @@ import (
 	. "github.com/dolthub/doltgresql/testing/go"
 
 	"testing"
+
+	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestTypeUsagePrivilegeCanBeRevokedAndGrantedRepro reproduces a type ACL
@@ -29,37 +31,57 @@ func TestTypeUsagePrivilegeCanBeRevokedAndGrantedRepro(t *testing.T) {
 			Name: "type USAGE can be revoked from PUBLIC and granted to a role",
 			SetUpScript: []string{
 				`CREATE USER type_usage_acl_user PASSWORD 'pw';`,
+				`CREATE SCHEMA type_usage_acl_target AUTHORIZATION type_usage_acl_user;`,
 				`CREATE TYPE type_usage_acl_mood AS ENUM ('ok', 'sad');`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `REVOKE USAGE ON TYPE type_usage_acl_mood FROM PUBLIC;`, PostgresOracle: ScriptTestPostgresOracle{ID: "type-privilege-repro-test-testtypeusageprivilegecanberevokedandgrantedrepro-0001-revoke-usage-on-type-type_usage_acl_mood"},
+					Query:       `REVOKE USAGE ON TYPE type_usage_acl_mood FROM PUBLIC;`,
+					ExpectedTag: `REVOKE`,
 				},
 				{
-					Query: `SELECT 'ok'::type_usage_acl_mood::text;`,
-
+					Query:    `SELECT has_type_privilege('public.type_usage_acl_mood', 'USAGE');`,
+					Expected: []sql.Row{{"f"}},
 					Username: `type_usage_acl_user`,
-					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{ID: "type-privilege-repro-test-testtypeusageprivilegecanberevokedandgrantedrepro-0002-select-ok-::type_usage_acl_mood::text", Compare: "sqlstate"},
+					Password: `pw`,
+				},
+				{
+					Query:       `CREATE TABLE type_usage_acl_target.after_public_revoke (m public.type_usage_acl_mood);`,
+					ExpectedErr: `permission denied for type type_usage_acl_mood`,
+					Username:    `type_usage_acl_user`,
+					Password:    `pw`,
 				},
 				{
 					Query:       `GRANT USAGE ON TYPE type_usage_acl_mood TO type_usage_acl_user;`,
 					ExpectedTag: `GRANT`,
 				},
 				{
-					Query: `SELECT 'ok'::type_usage_acl_mood::text;`,
-
+					Query:    `SELECT has_type_privilege('public.type_usage_acl_mood', 'USAGE');`,
+					Expected: []sql.Row{{"t"}},
 					Username: `type_usage_acl_user`,
-					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{ID: "type-privilege-repro-test-testtypeusageprivilegecanberevokedandgrantedrepro-0004-select-ok-::type_usage_acl_mood::text", Compare: "sqlstate"},
+					Password: `pw`,
+				},
+				{
+					Query:       `CREATE TABLE type_usage_acl_target.after_role_grant (m public.type_usage_acl_mood);`,
+					ExpectedTag: `CREATE TABLE`,
+					Username:    `type_usage_acl_user`,
+					Password:    `pw`,
 				},
 				{
 					Query:       `REVOKE USAGE ON TYPE type_usage_acl_mood FROM type_usage_acl_user;`,
 					ExpectedTag: `REVOKE`,
 				},
 				{
-					Query: `SELECT 'ok'::type_usage_acl_mood::text;`,
-
+					Query:    `SELECT has_type_privilege('public.type_usage_acl_mood', 'USAGE');`,
+					Expected: []sql.Row{{"f"}},
 					Username: `type_usage_acl_user`,
-					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{ID: "type-privilege-repro-test-testtypeusageprivilegecanberevokedandgrantedrepro-0006-select-ok-::type_usage_acl_mood::text", Compare: "sqlstate"},
+					Password: `pw`,
+				},
+				{
+					Query:       `CREATE TABLE type_usage_acl_target.after_role_revoke (m public.type_usage_acl_mood);`,
+					ExpectedErr: `permission denied for type type_usage_acl_mood`,
+					Username:    `type_usage_acl_user`,
+					Password:    `pw`,
 				},
 			},
 		},

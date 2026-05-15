@@ -51,11 +51,14 @@ func TestAlterTypeSetSchemaMovesGrantOptionRepro(t *testing.T) {
 					Query: `CREATE TYPE set_schema_type_old.move_acl_type AS ENUM ('replacement');`,
 				},
 				{
+					Query: `REVOKE USAGE ON TYPE set_schema_type_old.move_acl_type FROM PUBLIC;`,
+				},
+				{
 					Query: `GRANT USAGE ON TYPE set_schema_type_old.move_acl_type
 						TO set_schema_type_after_grantee;`,
-
-					Username: `set_schema_type_grantor`,
-					Password: `type`, PostgresOracle: ScriptTestPostgresOracle{ID: "type-set-schema-privilege-repro-test-testaltertypesetschemamovesgrantoptionrepro-0001-grant-usage-on-type-set_schema_type_old.move_acl_type", Compare: "sqlstate"},
+					ExpectedErr: `permission denied for schema set_schema_type_old`,
+					Username:    `set_schema_type_grantor`,
+					Password:    `type`,
 				},
 			},
 		},

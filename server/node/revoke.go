@@ -23,6 +23,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/server/auth"
 )
 
@@ -33,6 +34,7 @@ type Revoke struct {
 	RevokeDatabase           *RevokeDatabase
 	RevokeSequence           *RevokeSequence
 	RevokeRoutine            *RevokeRoutine
+	RevokeType               *RevokeType
 	RevokeForeignDataWrapper *RevokeForeignDataWrapper
 	RevokeForeignServer      *RevokeForeignServer
 	RevokeLanguage           *RevokeLanguage
@@ -72,6 +74,12 @@ type RevokeSequence struct {
 type RevokeRoutine struct {
 	Privileges []auth.Privilege
 	Routines   []auth.RoutinePrivilegeKey
+}
+
+// RevokeType specifically handles the REVOKE ... ON TYPE statement.
+type RevokeType struct {
+	Privileges []auth.Privilege
+	Types      []auth.TypePrivilegeKey
 }
 
 // RevokeForeignDataWrapper specifically handles the REVOKE ... ON FOREIGN DATA WRAPPER statement.
@@ -150,6 +158,10 @@ func (r *Revoke) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error) {
 			if err = r.revokeRoutine(ctx); err != nil {
 				return
 			}
+		case r.RevokeType != nil:
+			if err = r.revokeType(ctx); err != nil {
+				return
+			}
 		case r.RevokeForeignDataWrapper != nil:
 			if err = r.revokeForeignDataWrapper(ctx); err != nil {
 				return
@@ -192,6 +204,8 @@ func (r *Revoke) String() string {
 	switch {
 	case r.RevokeTable != nil:
 		return "REVOKE TABLE"
+	case r.RevokeType != nil:
+		return "REVOKE TYPE"
 	default:
 		return "REVOKE"
 	}
@@ -433,6 +447,50 @@ func (r *Revoke) revokeRoutine(ctx *sql.Context) error {
 					Schema:   routine.Schema,
 					Name:     routine.Name,
 					ArgTypes: routine.ArgTypes,
+				}, auth.GrantedPrivilege{
+					Privilege: privilege,
+					GrantedBy: grantedByID,
+				}, r.GrantOptionFor)
+			}
+		}
+	}
+	return nil
+}
+
+// revokeType handles *RevokeType from within RowIter.
+func (r *Revoke) revokeType(ctx *sql.Context) error {
+	roles, userRole, grantedByID, err := r.common(ctx)
+	if err != nil {
+		return err
+	}
+	typeCollection, err := core.GetTypesCollectionFromContext(ctx)
+	if err != nil {
+		return err
+	}
+	resolvedTypes := make([]aclTypeTarget, len(r.RevokeType.Types))
+	for i, typ := range r.RevokeType.Types {
+		resolvedTarget, err := resolveACLTypeTarget(ctx, typeCollection, typ, userRole, r.RevokeType.Privileges)
+		if err != nil {
+			return err
+		}
+		resolvedTypes[i] = resolvedTarget
+	}
+	for _, role := range roles {
+		for _, typ := range resolvedTypes {
+			key := auth.TypePrivilegeKey{
+				Role:   userRole.ID(),
+				Schema: typ.schemaName,
+				Name:   typ.typeName,
+			}
+			for _, privilege := range r.RevokeType.Privileges {
+				if id := auth.RoleHasTypePrivilegeGrantOption(userRole, key.Schema, key.Name, typ.typ.Owner, privilege); !id.IsValid() {
+					return errors.Errorf(`role "%s" does not have permission to revoke this privilege`, userRole.Name)
+				}
+				auth.EnsureTypeDefaultPrivileges(key.Schema, key.Name, typ.typ.Owner)
+				auth.RemoveTypePrivilege(auth.TypePrivilegeKey{
+					Role:   role.ID(),
+					Schema: key.Schema,
+					Name:   key.Name,
 				}, auth.GrantedPrivilege{
 					Privilege: privilege,
 					GrantedBy: grantedByID,

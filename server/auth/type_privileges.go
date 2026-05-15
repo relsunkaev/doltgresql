@@ -97,6 +97,79 @@ func HasTypePrivilegeGrantOption(key TypePrivilegeKey, privilege Privilege) Role
 	return 0
 }
 
+// RoleHasTypePrivilege checks effective type privileges for a role. PostgreSQL
+// gives PUBLIC implicit USAGE on newly-created types until the ACL is first
+// materialized, usually by GRANT or REVOKE.
+func RoleHasTypePrivilege(role Role, schema string, name string, owner string, privilege Privilege) bool {
+	if RoleOwnsType(role, owner) {
+		return true
+	}
+	if HasTypePrivilege(TypePrivilegeKey{Role: role.ID(), Schema: schema, Name: name}, privilege) {
+		return true
+	}
+	publicRole := GetRole("public")
+	if publicRole.IsValid() && HasTypePrivilege(TypePrivilegeKey{Role: publicRole.ID(), Schema: schema, Name: name}, privilege) {
+		return true
+	}
+	return privilege == Privilege_USAGE && !hasExplicitTypePrivileges(schema, name)
+}
+
+// RoleHasTypePrivilegeGrantOption checks whether a role may grant or revoke a
+// type privilege. Type owners have implicit grant option.
+func RoleHasTypePrivilegeGrantOption(role Role, schema string, name string, owner string, privilege Privilege) RoleID {
+	if RoleOwnsType(role, owner) {
+		return role.ID()
+	}
+	return HasTypePrivilegeGrantOption(TypePrivilegeKey{Role: role.ID(), Schema: schema, Name: name}, privilege)
+}
+
+// RoleOwnsType returns whether the role owns a type, treating empty owner
+// metadata as PostgreSQL's bootstrap superuser.
+func RoleOwnsType(role Role, owner string) bool {
+	if role.IsSuperUser {
+		return true
+	}
+	if owner == "" {
+		owner = "postgres"
+	}
+	return owner == role.Name
+}
+
+// EnsureTypeDefaultPrivileges materializes PostgreSQL's default type ACL for
+// a type that has not yet had an explicit ACL. This makes later GRANT/REVOKE
+// operations visible in pg_type.typacl without showing default ACLs on
+// untouched types.
+func EnsureTypeDefaultPrivileges(schema string, name string, owner string) {
+	if hasExplicitTypePrivileges(schema, name) {
+		return
+	}
+	if owner == "" {
+		owner = "postgres"
+	}
+	ownerRole := GetRole(owner)
+	if !ownerRole.IsValid() {
+		return
+	}
+	grant := GrantedPrivilege{
+		Privilege: Privilege_USAGE,
+		GrantedBy: ownerRole.ID(),
+	}
+	AddTypePrivilege(TypePrivilegeKey{Role: ownerRole.ID(), Schema: schema, Name: name}, grant, true)
+	publicRole := GetRole("public")
+	if publicRole.IsValid() {
+		AddTypePrivilege(TypePrivilegeKey{Role: publicRole.ID(), Schema: schema, Name: name}, grant, false)
+	}
+}
+
+func hasExplicitTypePrivileges(schema string, name string) bool {
+	for key := range globalDatabase.typePrivileges.Data {
+		if key.Schema == schema && key.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
 // RemoveTypePrivilege removes the privilege from the global database.
 func RemoveTypePrivilege(key TypePrivilegeKey, privilege GrantedPrivilege, grantOptionOnly bool) {
 	if value, ok := globalDatabase.typePrivileges.Data[key]; ok {

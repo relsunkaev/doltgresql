@@ -36,6 +36,7 @@ func nodeRevoke(ctx *Context, node *tree.Revoke) (vitess.Statement, error) {
 	var revokeDatabase *pgnodes.RevokeDatabase
 	var revokeSequence *pgnodes.RevokeSequence
 	var revokeRoutine *pgnodes.RevokeRoutine
+	var revokeType *pgnodes.RevokeType
 	var revokeForeignDataWrapper *pgnodes.RevokeForeignDataWrapper
 	var revokeForeignServer *pgnodes.RevokeForeignServer
 	var revokeLanguage *pgnodes.RevokeLanguage
@@ -147,6 +148,22 @@ func nodeRevoke(ctx *Context, node *tree.Revoke) (vitess.Statement, error) {
 			Privileges: privileges,
 			Routines:   routines,
 		}
+	case privilege.Type:
+		types := make([]auth.TypePrivilegeKey, 0, len(node.Targets.Types))
+		for _, typ := range node.Targets.Types {
+			types = append(types, auth.TypePrivilegeKey{
+				Schema: typeSchema(typ),
+				Name:   typ.Parts[0],
+			})
+		}
+		privileges, err := convertPrivilegeKinds(auth.PrivilegeObject_TYPE, node.Privileges)
+		if err != nil {
+			return nil, err
+		}
+		revokeType = &pgnodes.RevokeType{
+			Privileges: privileges,
+			Types:      types,
+		}
 	case privilege.ForeignDataWrapper:
 		privileges, err := convertPrivilegeKinds(auth.PrivilegeObject_FOREIGN_DATA_WRAPPER, node.Privileges)
 		if err != nil {
@@ -193,6 +210,7 @@ func nodeRevoke(ctx *Context, node *tree.Revoke) (vitess.Statement, error) {
 			RevokeDatabase:           revokeDatabase,
 			RevokeSequence:           revokeSequence,
 			RevokeRoutine:            revokeRoutine,
+			RevokeType:               revokeType,
 			RevokeForeignDataWrapper: revokeForeignDataWrapper,
 			RevokeForeignServer:      revokeForeignServer,
 			RevokeLanguage:           revokeLanguage,

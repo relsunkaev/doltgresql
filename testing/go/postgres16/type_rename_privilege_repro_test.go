@@ -48,10 +48,13 @@ func TestAlterTypeRenameMovesGrantOptionRepro(t *testing.T) {
 					Query: `CREATE TYPE rename_acl_type AS ENUM ('replacement');`,
 				},
 				{
-					Query: `GRANT USAGE ON TYPE rename_acl_type TO rename_type_after_grantee;`,
-
-					Username: `rename_type_grantor`,
-					Password: `type`, PostgresOracle: ScriptTestPostgresOracle{ID: "type-rename-privilege-repro-test-testaltertyperenamemovesgrantoptionrepro-0001-grant-usage-on-type-rename_acl_type", Compare: "sqlstate"},
+					Query: `REVOKE USAGE ON TYPE rename_acl_type FROM PUBLIC;`,
+				},
+				{
+					Query:       `GRANT USAGE ON TYPE rename_acl_type TO rename_type_after_grantee;`,
+					ExpectedErr: `type "rename_acl_type" does not exist`,
+					Username:    `rename_type_grantor`,
+					Password:    `type`,
 				},
 			},
 		},
