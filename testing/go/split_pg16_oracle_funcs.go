@@ -460,7 +460,11 @@ func splitScriptSourceFile(sourcePath, targetDir string, moveScripts map[string]
 	if err := os.MkdirAll(targetDir, 0o755); err != nil {
 		return err
 	}
-	if err := os.WriteFile(sourcePath, topSrc, 0o644); err != nil {
+	if sourceHasDeclarations(topSrc) {
+		if err := os.WriteFile(sourcePath, topSrc, 0o644); err != nil {
+			return err
+		}
+	} else if err := os.Remove(sourcePath); err != nil {
 		return err
 	}
 	return os.WriteFile(targetPath, pgSrc, 0o644)
@@ -635,7 +639,11 @@ func splitAssertionSourceFile(sourcePath, targetDir string, moveAssertions map[s
 	if err := os.MkdirAll(targetDir, 0o755); err != nil {
 		return err
 	}
-	if err := os.WriteFile(sourcePath, topSrc, 0o644); err != nil {
+	if sourceHasDeclarations(topSrc) {
+		if err := os.WriteFile(sourcePath, topSrc, 0o644); err != nil {
+			return err
+		}
+	} else if err := os.Remove(sourcePath); err != nil {
 		return err
 	}
 	return os.WriteFile(targetPath, pgSrc, 0o644)
@@ -1065,6 +1073,12 @@ func pruneAndFormat(src []byte) ([]byte, error) {
 	return out, nil
 }
 
+func sourceHasDeclarations(src []byte) bool {
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "", src, parser.ParseComments)
+	return err == nil && len(file.Decls) > 0
+}
+
 func usedImportNames(file *ast.File) map[string]bool {
 	used := make(map[string]bool)
 	ast.Inspect(file, func(n ast.Node) bool {
@@ -1135,13 +1149,6 @@ func splitMapFile(plan filePlan, targetMapDir string) error {
 	if len(pgMap.Assertions) == 0 {
 		return fmt.Errorf("%s: no PostgreSQL assertions moved", plan.mapPath)
 	}
-	if len(topMap.Assertions) == 0 {
-		return fmt.Errorf("%s: split would leave no top-level assertions", plan.mapPath)
-	}
-
-	if err := writeJSON(plan.mapPath, topMap); err != nil {
-		return err
-	}
 	if err := os.MkdirAll(targetMapDir, 0o755); err != nil {
 		return err
 	}
@@ -1151,7 +1158,13 @@ func splitMapFile(plan filePlan, targetMapDir string) error {
 	} else if !errors.Is(err, os.ErrNotExist) {
 		return err
 	}
-	return writeJSON(targetMap, pgMap)
+	if err := writeJSON(targetMap, pgMap); err != nil {
+		return err
+	}
+	if len(topMap.Assertions) == 0 {
+		return os.Remove(plan.mapPath)
+	}
+	return writeJSON(plan.mapPath, topMap)
 }
 
 func splitScriptMapFile(plan filePlan, targetMapDir string) error {
@@ -1181,13 +1194,6 @@ func splitScriptMapFile(plan filePlan, targetMapDir string) error {
 	if len(pgMap.Assertions) == 0 {
 		return fmt.Errorf("%s: no PostgreSQL script assertions moved", plan.mapPath)
 	}
-	if len(topMap.Assertions) == 0 {
-		return fmt.Errorf("%s: split would leave no top-level assertions", plan.mapPath)
-	}
-
-	if err := writeJSON(plan.mapPath, topMap); err != nil {
-		return err
-	}
 	if err := os.MkdirAll(targetMapDir, 0o755); err != nil {
 		return err
 	}
@@ -1208,7 +1214,13 @@ func splitScriptMapFile(plan filePlan, targetMapDir string) error {
 	} else if !errors.Is(err, os.ErrNotExist) {
 		return err
 	}
-	return writeJSON(targetMap, pgMap)
+	if err := writeJSON(targetMap, pgMap); err != nil {
+		return err
+	}
+	if len(topMap.Assertions) == 0 {
+		return os.Remove(plan.mapPath)
+	}
+	return writeJSON(plan.mapPath, topMap)
 }
 
 func splitAssertionMapFile(plan filePlan, targetMapDir string) error {
@@ -1238,13 +1250,6 @@ func splitAssertionMapFile(plan filePlan, targetMapDir string) error {
 	if len(pgMap.Assertions) == 0 {
 		return fmt.Errorf("%s: no PostgreSQL assertions moved", plan.mapPath)
 	}
-	if len(topMap.Assertions) == 0 {
-		return fmt.Errorf("%s: split would leave no top-level assertions", plan.mapPath)
-	}
-
-	if err := writeJSON(plan.mapPath, topMap); err != nil {
-		return err
-	}
 	if err := os.MkdirAll(targetMapDir, 0o755); err != nil {
 		return err
 	}
@@ -1265,7 +1270,13 @@ func splitAssertionMapFile(plan filePlan, targetMapDir string) error {
 	} else if !errors.Is(err, os.ErrNotExist) {
 		return err
 	}
-	return writeJSON(targetMap, pgMap)
+	if err := writeJSON(targetMap, pgMap); err != nil {
+		return err
+	}
+	if len(topMap.Assertions) == 0 {
+		return os.Remove(plan.mapPath)
+	}
+	return writeJSON(plan.mapPath, topMap)
 }
 
 func renumberAssertions(assertions []migrationAssertion) []migrationAssertion {

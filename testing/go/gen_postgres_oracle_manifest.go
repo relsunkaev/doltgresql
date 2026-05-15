@@ -385,7 +385,7 @@ func generateManifest(canonicalPostgresMajor int) ([]byte, error) {
 	}
 	entries := scriptEntries
 	if sourceRoot == "testing/go" {
-		entries = append(oracleSelftestEntries(sourceRoot), append(dropDefinitionEntries(), scriptEntries...)...)
+		entries = append(oracleSelftestEntries(sourceRoot), scriptEntries...)
 	}
 	m := manifest{
 		GeneratedBy:            "go generate ./" + sourceRoot,
@@ -459,63 +459,6 @@ func oracleSelftestEntries(sourceRoot string) []entry {
 			ExpectedRows: rows(row(
 				value(`{one,two}`),
 			)),
-		},
-	}
-}
-
-func dropDefinitionEntries() []entry {
-	return []entry{
-		{
-			ID:      "drop-operator-if-exists-removes-existing-operator",
-			Source:  "testing/go/operator_definition_repro_test.go:TestDropOperatorIfExistsDropsExistingOperatorRepro",
-			Oracle:  "postgres",
-			Compare: "structural",
-			Setup: []string{
-				"CREATE SCHEMA {{quotedSchema}}",
-				"SET search_path TO {{quotedSchema}}, pg_catalog",
-				"CREATE FUNCTION drop_if_exists_operator_func(integer, integer) RETURNS boolean LANGUAGE SQL IMMUTABLE AS $$ SELECT ($1 % 2) = ($2 % 2) $$",
-				"CREATE OPERATOR === (LEFTARG = integer, RIGHTARG = integer, PROCEDURE = drop_if_exists_operator_func)",
-				"DROP OPERATOR IF EXISTS === (integer, integer)",
-			},
-			Query:        "SELECT COUNT(*) FROM pg_catalog.pg_operator WHERE oprname = '===' AND oprnamespace = '{{schema}}'::regnamespace AND oprleft = 'integer'::regtype AND oprright = 'integer'::regtype",
-			ExpectedRows: rows(row(value("0"))),
-			ColumnModes:  []string{"structural"},
-			Cleanup:      []string{"DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"},
-		},
-		{
-			ID:      "drop-text-search-configuration-if-exists-removes-existing-config",
-			Source:  "testing/go/text_search_definition_repro_test.go:TestDropTextSearchConfigurationIfExistsDropsExistingRepro",
-			Oracle:  "postgres",
-			Compare: "structural",
-			Setup: []string{
-				"CREATE SCHEMA {{quotedSchema}}",
-				"SET search_path TO {{quotedSchema}}, pg_catalog",
-				"CREATE TEXT SEARCH CONFIGURATION drop_existing_ts_config_repro (COPY = pg_catalog.simple)",
-				"DROP TEXT SEARCH CONFIGURATION IF EXISTS drop_existing_ts_config_repro",
-			},
-			Query:        "SELECT COUNT(*) FROM pg_catalog.pg_ts_config WHERE cfgname = 'drop_existing_ts_config_repro' AND cfgnamespace = '{{schema}}'::regnamespace",
-			ExpectedRows: rows(row(value("0"))),
-			ColumnModes:  []string{"structural"},
-			Cleanup:      []string{"DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"},
-		},
-		{
-			ID:      "drop-rule-if-exists-removes-existing-rule-side-effects",
-			Source:  "testing/go/rule_correctness_repro_test.go:TestDropRuleIfExistsRemovesExistingRuleRepro",
-			Oracle:  "postgres",
-			Compare: "structural",
-			Setup: []string{
-				"CREATE SCHEMA {{quotedSchema}}",
-				"SET search_path TO {{quotedSchema}}, pg_catalog",
-				"CREATE TABLE drop_rule_source_items (id integer PRIMARY KEY, label text)",
-				"CREATE TABLE drop_rule_audit_items (source_id integer, label text)",
-				"CREATE RULE drop_rule_source_items_audit AS ON INSERT TO drop_rule_source_items DO ALSO INSERT INTO drop_rule_audit_items VALUES (NEW.id, NEW.label)",
-				"DROP RULE IF EXISTS drop_rule_source_items_audit ON drop_rule_source_items",
-				"INSERT INTO drop_rule_source_items VALUES (1, 'after drop')",
-			},
-			Query:        "SELECT COUNT(*) FROM drop_rule_audit_items",
-			ExpectedRows: rows(row(value("0"))),
-			ColumnModes:  []string{"structural"},
-			Cleanup:      []string{"DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"},
 		},
 	}
 }

@@ -63,12 +63,15 @@ func scanScriptTestExpectationAssertions(t testing.TB, assertionFields []string)
 
 	files, err := filepath.Glob("*_test.go")
 	require.NoError(t, err)
+	postgres16Files, err := filepath.Glob(filepath.Join("postgres16", "*_test.go"))
+	require.NoError(t, err)
+	files = append(files, postgres16Files...)
 	require.NotEmpty(t, files)
 	sort.Strings(files)
 
 	records := make([]scriptAssertionOracleRecord, 0)
 	for _, file := range files {
-		if strings.HasPrefix(file, "postgres_oracle_") {
+		if strings.HasPrefix(filepath.Base(file), "postgres_oracle_") {
 			continue
 		}
 		fset := token.NewFileSet()

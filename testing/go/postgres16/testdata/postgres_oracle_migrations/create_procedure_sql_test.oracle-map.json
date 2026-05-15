@@ -1,8 +1,8 @@
 {
   "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map create_procedure_sql_test.go --force-postgres-oracle",
-  "sourceFile": "testing/go/create_procedure_sql_test.go",
+  "sourceFile": "testing/go/postgres16/create_procedure_sql_test.go",
   "defaultOracle": "internal",
-  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionKeyStyle": "testing/go/\u003cfile\u003e:\u003cTestName\u003e#\u003cexpectation-ordinal\u003e",
   "assertionFields": [
     "Expected",
     "ExpectedRaw",
@@ -14,8 +14,8 @@
   ],
   "assertions": [
     {
-      "key": "testing/go/create_procedure_sql_test.go:TestSqlProcedureInsertReturningExecutesRepro#0001",
-      "source": "testing/go/create_procedure_sql_test.go:TestSqlProcedureInsertReturningExecutesRepro",
+      "key": "testing/go/postgres16/create_procedure_sql_test.go:TestSqlProcedureInsertReturningExecutesRepro#0001",
+      "source": "testing/go/postgres16/create_procedure_sql_test.go:TestSqlProcedureInsertReturningExecutesRepro",
       "ordinal": 1,
       "scriptName": "SQL procedure INSERT RETURNING executes",
       "oracle": "postgres",
@@ -36,8 +36,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_procedure_sql_test.go:TestSqlProcedureBeginAtomicBodyRepro#0001",
-      "source": "testing/go/create_procedure_sql_test.go:TestSqlProcedureBeginAtomicBodyRepro",
+      "key": "testing/go/postgres16/create_procedure_sql_test.go:TestSqlProcedureBeginAtomicBodyRepro#0001",
+      "source": "testing/go/postgres16/create_procedure_sql_test.go:TestSqlProcedureBeginAtomicBodyRepro",
       "ordinal": 1,
       "scriptName": "SQL procedure BEGIN ATOMIC body executes",
       "oracle": "postgres",
@@ -61,8 +61,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql#0001",
-      "source": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql",
+      "key": "testing/go/postgres16/create_procedure_sql_test.go:TestCreateProcedureLanguageSql#0001",
+      "source": "testing/go/postgres16/create_procedure_sql_test.go:TestCreateProcedureLanguageSql",
       "ordinal": 1,
       "scriptName": "procedure with insert returning",
       "oracle": "postgres",
@@ -82,8 +82,8 @@
       "cleanupProvided": true
     },
     {
-      "key": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql#0002",
-      "source": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql",
+      "key": "testing/go/postgres16/create_procedure_sql_test.go:TestCreateProcedureLanguageSql#0002",
+      "source": "testing/go/postgres16/create_procedure_sql_test.go:TestCreateProcedureLanguageSql",
       "ordinal": 2,
       "scriptName": "procedure with insert returning",
       "oracle": "postgres",
@@ -109,8 +109,8 @@
       "cleanupProvided": true
     },
     {
-      "key": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql#0003",
-      "source": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql",
+      "key": "testing/go/postgres16/create_procedure_sql_test.go:TestCreateProcedureLanguageSql#0003",
+      "source": "testing/go/postgres16/create_procedure_sql_test.go:TestCreateProcedureLanguageSql",
       "ordinal": 3,
       "scriptName": "procedure with insert returning",
       "oracle": "postgres",
@@ -142,8 +142,8 @@
       "cleanupProvided": true
     },
     {
-      "key": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql#0004",
-      "source": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql",
+      "key": "testing/go/postgres16/create_procedure_sql_test.go:TestCreateProcedureLanguageSql#0004",
+      "source": "testing/go/postgres16/create_procedure_sql_test.go:TestCreateProcedureLanguageSql",
       "ordinal": 4,
       "scriptName": "procedure with insert returning",
       "oracle": "postgres",
@@ -164,8 +164,8 @@
       "cleanupProvided": true
     },
     {
-      "key": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql#0005",
-      "source": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql",
+      "key": "testing/go/postgres16/create_procedure_sql_test.go:TestCreateProcedureLanguageSql#0005",
+      "source": "testing/go/postgres16/create_procedure_sql_test.go:TestCreateProcedureLanguageSql",
       "ordinal": 5,
       "scriptName": "procedure with insert returning",
       "oracle": "postgres",
@@ -203,8 +203,8 @@
       "cleanupProvided": true
     },
     {
-      "key": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql#0006",
-      "source": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql",
+      "key": "testing/go/postgres16/create_procedure_sql_test.go:TestCreateProcedureLanguageSql#0006",
+      "source": "testing/go/postgres16/create_procedure_sql_test.go:TestCreateProcedureLanguageSql",
       "ordinal": 6,
       "scriptName": "procedure with default expression in parameter",
       "oracle": "postgres",
@@ -219,8 +219,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql#0007",
-      "source": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql",
+      "key": "testing/go/postgres16/create_procedure_sql_test.go:TestCreateProcedureLanguageSql#0007",
+      "source": "testing/go/postgres16/create_procedure_sql_test.go:TestCreateProcedureLanguageSql",
       "ordinal": 7,
       "scriptName": "procedure with default expression in parameter",
       "oracle": "postgres",
@@ -235,8 +235,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql#0008",
-      "source": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql",
+      "key": "testing/go/postgres16/create_procedure_sql_test.go:TestCreateProcedureLanguageSql#0008",
+      "source": "testing/go/postgres16/create_procedure_sql_test.go:TestCreateProcedureLanguageSql",
       "ordinal": 8,
       "scriptName": "procedure with default expression in parameter",
       "oracle": "postgres",
@@ -268,8 +268,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql#0009",
-      "source": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql",
+      "key": "testing/go/postgres16/create_procedure_sql_test.go:TestCreateProcedureLanguageSql#0009",
+      "source": "testing/go/postgres16/create_procedure_sql_test.go:TestCreateProcedureLanguageSql",
       "ordinal": 9,
       "scriptName": "procedure with default expression in parameter",
       "oracle": "postgres",
@@ -284,8 +284,8 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql#0010",
-      "source": "testing/go/create_procedure_sql_test.go:TestCreateProcedureLanguageSql",
+      "key": "testing/go/postgres16/create_procedure_sql_test.go:TestCreateProcedureLanguageSql#0010",
+      "source": "testing/go/postgres16/create_procedure_sql_test.go:TestCreateProcedureLanguageSql",
       "ordinal": 10,
       "scriptName": "procedure with default expression in parameter",
       "oracle": "postgres",
