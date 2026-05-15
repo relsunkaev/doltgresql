@@ -1420,7 +1420,7 @@ func (h *ConnectionHandler) rejectFailedTransaction(query ConvertedQuery) error 
 }
 
 func (h *ConnectionHandler) markTransactionFailed(query ConvertedQuery, err error) {
-	if err == nil || !h.inTransaction || isTransactionControlQuery(query) {
+	if err == nil || !h.inTransaction || h.transactionBeginSavepoint == "" || isTransactionControlQuery(query) || !transactionFailureAbortsQuery(query) {
 		return
 	}
 	if pgerror.GetPGCode(err) == pgcode.InFailedSQLTransaction {
@@ -1430,6 +1430,18 @@ func (h *ConnectionHandler) markTransactionFailed(query ConvertedQuery, err erro
 	if len(h.pendingReplicationSavepoints) == 0 {
 		_ = h.rollbackOpenTransactionAfterFailedCommit()
 		h.transactionBeginSavepoint = ""
+	}
+}
+
+func transactionFailureAbortsQuery(query ConvertedQuery) bool {
+	switch strings.ToUpper(query.StatementTag) {
+	case "INSERT", "UPDATE", "DELETE", "MERGE", "COPY FROM",
+		"CREATE TABLE", "ALTER TABLE", "DROP TABLE",
+		"CREATE INDEX", "ALTER INDEX", "DROP INDEX",
+		"CREATE SEQUENCE", "ALTER SEQUENCE", "DROP SEQUENCE":
+		return true
+	default:
+		return false
 	}
 }
 
