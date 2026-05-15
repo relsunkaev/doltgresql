@@ -24,6 +24,9 @@
       "username": "user1",
       "query": "SELECT 1;",
       "querySha256": "17db4fd369edb9244b9f91d9aeed145c3d04ad8ba6e95d06247f07a63527d11a",
+      "nonLiteral": [
+        "NonMigratable"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -93,6 +96,11 @@
       "username": "user1",
       "query": "SELECT 3;",
       "querySha256": "6d51e258cb323b98bf07dd6658c78c08adaf998a8e717f85e02d9c7ce869608b",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -162,6 +170,10 @@
       "username": "user1",
       "query": "SELECT 2;",
       "querySha256": "8e7003d62f9d8cbd28da2f243bb0d215bfd4622c716be09be89a8764d9f4c7cb",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -215,6 +227,12 @@
       "username": "user1",
       "query": "SELECT 4;",
       "querySha256": "3f55c55f7360881c3fd6ecd9e05c47b4d461a8a0579bddcba6fccbb6105ff66e",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorUsername",
+        "PriorExpectedError",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -229,6 +247,12 @@
       "username": "user1",
       "query": "SELECT 5;",
       "querySha256": "46053c0410d2c1bb7e79d93bb5bd83d723cd0cbb6044d7bb8a2239143124600f",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorUsername",
+        "PriorExpectedError",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -243,6 +267,12 @@
       "username": "user1",
       "query": "SELECT 6;",
       "querySha256": "664d691f1561d639bbcb21db95e4098505cfb5a5f945d32f72571da388fe1034",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorUsername",
+        "PriorExpectedError",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -291,11 +321,14 @@
       "ordinal": 17,
       "scriptName": "ALTER LOGIN",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0021-select-1",
+      "suggestedId": "auth-test-testauthtests-0017-select-1",
       "expectedKind": "error",
       "username": "user1",
       "query": "SELECT 1;",
       "querySha256": "17db4fd369edb9244b9f91d9aeed145c3d04ad8ba6e95d06247f07a63527d11a",
+      "nonLiteral": [
+        "NonMigratable"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -351,11 +384,17 @@
       "ordinal": 20,
       "scriptName": "ALTER LOGIN",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0024-select-4",
+      "suggestedId": "auth-test-testauthtests-0020-select-4",
       "expectedKind": "error",
       "username": "user4",
       "query": "SELECT 4;",
       "querySha256": "3f55c55f7360881c3fd6ecd9e05c47b4d461a8a0579bddcba6fccbb6105ff66e",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -420,11 +459,18 @@
       "ordinal": 24,
       "scriptName": "ALTER LOGIN",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0028-select-6",
+      "suggestedId": "auth-test-testauthtests-0024-select-6",
       "expectedKind": "error",
       "username": "user2",
       "query": "SELECT 6;",
       "querySha256": "664d691f1561d639bbcb21db95e4098505cfb5a5f945d32f72571da388fe1034",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -434,11 +480,14 @@
       "ordinal": 25,
       "scriptName": "CREATE USER IF NOT EXISTS",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0029-select-1",
+      "suggestedId": "auth-test-testauthtests-0025-select-1",
       "expectedKind": "error",
       "username": "user1",
       "query": "SELECT 1;",
       "querySha256": "17db4fd369edb9244b9f91d9aeed145c3d04ad8ba6e95d06247f07a63527d11a",
+      "nonLiteral": [
+        "NonMigratable"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -481,10 +530,14 @@
       "ordinal": 28,
       "scriptName": "CREATE USER IF NOT EXISTS",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0032-create-user-if-not-exists",
+      "suggestedId": "auth-test-testauthtests-0028-create-user-if-not-exists",
       "expectedKind": "rows",
       "query": "CREATE USER IF NOT EXISTS user1 PASSWORD 'hello3';",
       "querySha256": "5cf0939d34fcc71b0134dde783ff7fc37a924c5ee6c3ab7dbaaad4ab7d9a7fe5",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorExpectedError"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -494,11 +547,15 @@
       "ordinal": 29,
       "scriptName": "CREATE USER IF NOT EXISTS",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0033-select-2",
+      "suggestedId": "auth-test-testauthtests-0029-select-2",
       "expectedKind": "rows",
       "username": "user1",
       "query": "SELECT 2;",
       "querySha256": "8e7003d62f9d8cbd28da2f243bb0d215bfd4622c716be09be89a8764d9f4c7cb",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorExpectedError"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -508,10 +565,15 @@
       "ordinal": 30,
       "scriptName": "CREATE USER IF NOT EXISTS",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0034-create-role-if-not-exists",
+      "suggestedId": "auth-test-testauthtests-0030-create-role-if-not-exists",
       "expectedKind": "rows",
       "query": "CREATE ROLE IF NOT EXISTS user2 PASSWORD 'hi1' LOGIN;",
       "querySha256": "703dad8ec6b9bb0c067af721d368481e147d17b62ffd7d31ce1ee347b95693c5",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -521,10 +583,15 @@
       "ordinal": 31,
       "scriptName": "CREATE USER IF NOT EXISTS",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0035-create-role-user2-password-hi2",
+      "suggestedId": "auth-test-testauthtests-0031-create-role-user2-password-hi2",
       "expectedKind": "error",
       "query": "CREATE ROLE user2 PASSWORD 'hi2' LOGIN;",
       "querySha256": "c46293abe348ee948be1a0538d32bd3c7bdb744df939d8ff888676c95426577e",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -534,10 +601,15 @@
       "ordinal": 32,
       "scriptName": "CREATE USER IF NOT EXISTS",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0036-create-role-if-not-exists",
+      "suggestedId": "auth-test-testauthtests-0032-create-role-if-not-exists",
       "expectedKind": "rows",
       "query": "CREATE ROLE IF NOT EXISTS user2 PASSWORD 'hi3' LOGIN;",
       "querySha256": "07d9f13837520fcc43c0a046df8ffcb69ad566100494c831bf463fc11b3333f7",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -547,11 +619,16 @@
       "ordinal": 33,
       "scriptName": "CREATE USER IF NOT EXISTS",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0037-select-3",
+      "suggestedId": "auth-test-testauthtests-0033-select-3",
       "expectedKind": "rows",
       "username": "user2",
       "query": "SELECT 3;",
       "querySha256": "6d51e258cb323b98bf07dd6658c78c08adaf998a8e717f85e02d9c7ce869608b",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -688,11 +765,17 @@
       "ordinal": 41,
       "scriptName": "DROP USER IF EXISTS",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0045-select-3",
+      "suggestedId": "auth-test-testauthtests-0041-select-3",
       "expectedKind": "error",
       "username": "user1",
       "query": "SELECT 3;",
       "querySha256": "6d51e258cb323b98bf07dd6658c78c08adaf998a8e717f85e02d9c7ce869608b",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorExpectedError"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -751,11 +834,17 @@
       "ordinal": 45,
       "scriptName": "DROP USER IF EXISTS",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0049-select-4",
+      "suggestedId": "auth-test-testauthtests-0045-select-4",
       "expectedKind": "error",
       "username": "user2",
       "query": "SELECT 4;",
       "querySha256": "3f55c55f7360881c3fd6ecd9e05c47b4d461a8a0579bddcba6fccbb6105ff66e",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorExpectedError"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -898,11 +987,17 @@
       "ordinal": 53,
       "scriptName": "DROP USER with multiple users",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0057-select-4",
+      "suggestedId": "auth-test-testauthtests-0053-select-4",
       "expectedKind": "error",
       "username": "user1",
       "query": "SELECT 4;",
       "querySha256": "3f55c55f7360881c3fd6ecd9e05c47b4d461a8a0579bddcba6fccbb6105ff66e",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -935,11 +1030,19 @@
       "ordinal": 55,
       "scriptName": "DROP USER with multiple users",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0059-select-6",
+      "suggestedId": "auth-test-testauthtests-0055-select-6",
       "expectedKind": "error",
       "username": "user3",
       "query": "SELECT 6;",
       "querySha256": "664d691f1561d639bbcb21db95e4098505cfb5a5f945d32f72571da388fe1034",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorExpectedError",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -949,11 +1052,14 @@
       "ordinal": 56,
       "scriptName": "GRANT/REVOKE SELECT Privilege",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0060-select-1",
+      "suggestedId": "auth-test-testauthtests-0056-select-1",
       "expectedKind": "rows",
       "username": "user1",
       "query": "SELECT 1;",
       "querySha256": "17db4fd369edb9244b9f91d9aeed145c3d04ad8ba6e95d06247f07a63527d11a",
+      "nonLiteral": [
+        "NonMigratable"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -963,11 +1069,15 @@
       "ordinal": 57,
       "scriptName": "GRANT/REVOKE SELECT Privilege",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0061-insert-into-test-values-1",
+      "suggestedId": "auth-test-testauthtests-0057-insert-into-test-values-1",
       "expectedKind": "rows",
       "username": "user1",
       "query": "INSERT INTO test VALUES (1), (5), (6);",
       "querySha256": "d7c64976b9a31cf7e4e4da766dcfa209ebe2c7f14b377c8b69ca2ec695dc5c65",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -977,11 +1087,16 @@
       "ordinal": 58,
       "scriptName": "GRANT/REVOKE SELECT Privilege",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0062-select-*-from-test-order",
+      "suggestedId": "auth-test-testauthtests-0058-select-*-from-test-order",
       "expectedKind": "rows",
       "username": "user1",
       "query": "SELECT * FROM test ORDER BY pk",
       "querySha256": "29fc57bab114a104e0a0b99377d39dbf55b4877d096773c0f7aed290d2d78fcd",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorUsername",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -991,11 +1106,17 @@
       "ordinal": 59,
       "scriptName": "GRANT/REVOKE SELECT Privilege",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0063-select-*-from-test-order",
+      "suggestedId": "auth-test-testauthtests-0059-select-*-from-test-order",
       "expectedKind": "error",
       "username": "user2",
       "query": "SELECT * FROM test ORDER BY pk",
       "querySha256": "29fc57bab114a104e0a0b99377d39dbf55b4877d096773c0f7aed290d2d78fcd",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1005,11 +1126,18 @@
       "ordinal": 60,
       "scriptName": "GRANT/REVOKE SELECT Privilege",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0064-grant-select-on-test-to",
+      "suggestedId": "auth-test-testauthtests-0060-grant-select-on-test-to",
       "expectedKind": "rows",
       "username": "user1",
       "query": "GRANT SELECT ON test TO user2;",
       "querySha256": "08c8c4d346608aea6be5e8e4e81fc02f4b855ddf1615869fb08f6b7eeba5ce38",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorExpectedError"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1019,11 +1147,19 @@
       "ordinal": 61,
       "scriptName": "GRANT/REVOKE SELECT Privilege",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0065-select-*-from-test-order",
+      "suggestedId": "auth-test-testauthtests-0061-select-*-from-test-order",
       "expectedKind": "rows",
       "username": "user2",
       "query": "SELECT * FROM test ORDER BY pk",
       "querySha256": "29fc57bab114a104e0a0b99377d39dbf55b4877d096773c0f7aed290d2d78fcd",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorExpectedError",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1033,11 +1169,20 @@
       "ordinal": 62,
       "scriptName": "GRANT/REVOKE SELECT Privilege",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0066-revoke-select-on-test-from",
+      "suggestedId": "auth-test-testauthtests-0062-revoke-select-on-test-from",
       "expectedKind": "rows",
       "username": "user1",
       "query": "REVOKE SELECT ON test FROM user2;",
       "querySha256": "4b0e1864a62768837fb2c8d2bffda9347e8b2b5c0e172bbe03075c1ea3642a17",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1047,11 +1192,21 @@
       "ordinal": 63,
       "scriptName": "GRANT/REVOKE SELECT Privilege",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0067-select-*-from-test-order",
+      "suggestedId": "auth-test-testauthtests-0063-select-*-from-test-order",
       "expectedKind": "error",
       "username": "user2",
       "query": "SELECT * FROM test ORDER BY pk",
       "querySha256": "29fc57bab114a104e0a0b99377d39dbf55b4877d096773c0f7aed290d2d78fcd",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1061,11 +1216,21 @@
       "ordinal": 64,
       "scriptName": "GRANT/REVOKE SELECT Privilege",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0068-grant-select-on-test-to",
+      "suggestedId": "auth-test-testauthtests-0064-grant-select-on-test-to",
       "expectedKind": "rows",
       "username": "user1",
       "query": "GRANT SELECT ON test TO PUBLIC;",
       "querySha256": "e27babb50f7add3d5b7441632e365f1c710c1882aa01051b710d61b92eede11a",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1075,11 +1240,22 @@
       "ordinal": 65,
       "scriptName": "GRANT/REVOKE SELECT Privilege",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0069-select-*-from-test-order",
+      "suggestedId": "auth-test-testauthtests-0065-select-*-from-test-order",
       "expectedKind": "rows",
       "username": "user2",
       "query": "SELECT * FROM test ORDER BY pk",
       "querySha256": "29fc57bab114a104e0a0b99377d39dbf55b4877d096773c0f7aed290d2d78fcd",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1089,11 +1265,14 @@
       "ordinal": 66,
       "scriptName": "INSERT, UPDATE, DELETE Privileges",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0070-select-*-from-test-order",
+      "suggestedId": "auth-test-testauthtests-0066-select-*-from-test-order",
       "expectedKind": "error",
       "username": "user1",
       "query": "SELECT * FROM test ORDER BY pk;",
       "querySha256": "d0f6c344ab64b143c8f2dd9f13d33077378ca78179f36f00dec40fe78e1ed1f4",
+      "nonLiteral": [
+        "NonMigratable"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1103,11 +1282,15 @@
       "ordinal": 67,
       "scriptName": "INSERT, UPDATE, DELETE Privileges",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0071-with-cte-as-select-*",
+      "suggestedId": "auth-test-testauthtests-0067-with-cte-as-select-*",
       "expectedKind": "error",
       "username": "user1",
       "query": "WITH cte AS (SELECT * FROM test ORDER BY pk) SELECT * FROM cte;",
       "querySha256": "00c6fe9f16f0188cc2daf30509a7c02d8118e3a71db95b4ff779b5654e2a585b",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorExpectedError"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1117,11 +1300,15 @@
       "ordinal": 68,
       "scriptName": "INSERT, UPDATE, DELETE Privileges",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0072-insert-into-test-values-10",
+      "suggestedId": "auth-test-testauthtests-0068-insert-into-test-values-10",
       "expectedKind": "error",
       "username": "user1",
       "query": "INSERT INTO test VALUES (10);",
       "querySha256": "6b8eeb9a7cb6036db023cda9bb9aa8bd9497f1f36a3afedabf6fc8e75ffb4b2b",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorExpectedError"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1131,11 +1318,15 @@
       "ordinal": 69,
       "scriptName": "INSERT, UPDATE, DELETE Privileges",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0073-update-test-set-pk=pk+20",
+      "suggestedId": "auth-test-testauthtests-0069-update-test-set-pk=pk+20",
       "expectedKind": "error",
       "username": "user1",
       "query": "UPDATE test SET pk=pk+20;",
       "querySha256": "276fdd2e6ff66038156cab561ee80dcd7890e6043b003cc746914d9c7a63fcf7",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorExpectedError"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1145,11 +1336,15 @@
       "ordinal": 70,
       "scriptName": "INSERT, UPDATE, DELETE Privileges",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0074-delete-from-test-where-pk",
+      "suggestedId": "auth-test-testauthtests-0070-delete-from-test-where-pk",
       "expectedKind": "error",
       "username": "user1",
       "query": "DELETE FROM test WHERE pk \u003e 3;",
       "querySha256": "896b1079fa90443791a11072c2c36267a73e6b9bf67b59a3b304da3646c67cd8",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorExpectedError"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1159,11 +1354,15 @@
       "ordinal": 71,
       "scriptName": "INSERT, UPDATE, DELETE Privileges",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0075-grant-select-insert-update-delete",
+      "suggestedId": "auth-test-testauthtests-0071-grant-select-insert-update-delete",
       "expectedKind": "rows",
       "username": "postgres",
       "query": "GRANT SELECT, INSERT, UPDATE, DELETE ON test TO user1;",
       "querySha256": "879bce53f134f4effda8758b817f26e77c616c309b4855a300a69b7c38e4766e",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorExpectedError"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1173,11 +1372,16 @@
       "ordinal": 72,
       "scriptName": "INSERT, UPDATE, DELETE Privileges",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0076-select-*-from-test-order",
+      "suggestedId": "auth-test-testauthtests-0072-select-*-from-test-order",
       "expectedKind": "rows",
       "username": "user1",
       "query": "SELECT * FROM test ORDER BY pk;",
       "querySha256": "d0f6c344ab64b143c8f2dd9f13d33077378ca78179f36f00dec40fe78e1ed1f4",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1187,11 +1391,17 @@
       "ordinal": 73,
       "scriptName": "INSERT, UPDATE, DELETE Privileges",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0077-with-cte-as-select-*",
+      "suggestedId": "auth-test-testauthtests-0073-with-cte-as-select-*",
       "expectedKind": "rows",
       "username": "user1",
       "query": "WITH cte AS (SELECT * FROM test ORDER BY pk) SELECT * FROM cte;",
       "querySha256": "00c6fe9f16f0188cc2daf30509a7c02d8118e3a71db95b4ff779b5654e2a585b",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1201,11 +1411,18 @@
       "ordinal": 74,
       "scriptName": "INSERT, UPDATE, DELETE Privileges",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0078-insert-into-test-values-10",
+      "suggestedId": "auth-test-testauthtests-0074-insert-into-test-values-10",
       "expectedKind": "rows",
       "username": "user1",
       "query": "INSERT INTO test VALUES (10);",
       "querySha256": "6b8eeb9a7cb6036db023cda9bb9aa8bd9497f1f36a3afedabf6fc8e75ffb4b2b",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1215,11 +1432,19 @@
       "ordinal": 75,
       "scriptName": "INSERT, UPDATE, DELETE Privileges",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0079-update-test-set-pk=pk+20",
+      "suggestedId": "auth-test-testauthtests-0075-update-test-set-pk=pk+20",
       "expectedKind": "rows",
       "username": "user1",
       "query": "UPDATE test SET pk=pk+20;",
       "querySha256": "276fdd2e6ff66038156cab561ee80dcd7890e6043b003cc746914d9c7a63fcf7",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1229,11 +1454,20 @@
       "ordinal": 76,
       "scriptName": "INSERT, UPDATE, DELETE Privileges",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0080-delete-from-test-where-pk",
+      "suggestedId": "auth-test-testauthtests-0076-delete-from-test-where-pk",
       "expectedKind": "rows",
       "username": "user1",
       "query": "DELETE FROM test WHERE pk = 21;",
       "querySha256": "2b418b338c35f14b99abd97c074031d994a7acd6fc70daa52bff713aa6f7060b",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1243,11 +1477,21 @@
       "ordinal": 77,
       "scriptName": "INSERT, UPDATE, DELETE Privileges",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0081-select-*-from-test-order",
+      "suggestedId": "auth-test-testauthtests-0077-select-*-from-test-order",
       "expectedKind": "rows",
       "username": "user1",
       "query": "SELECT * FROM test ORDER BY pk;",
       "querySha256": "d0f6c344ab64b143c8f2dd9f13d33077378ca78179f36f00dec40fe78e1ed1f4",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1257,11 +1501,22 @@
       "ordinal": 78,
       "scriptName": "INSERT, UPDATE, DELETE Privileges",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0082-revoke-select-insert-update-delete",
+      "suggestedId": "auth-test-testauthtests-0078-revoke-select-insert-update-delete",
       "expectedKind": "rows",
       "username": "postgres",
       "query": "REVOKE SELECT, INSERT, UPDATE, DELETE ON test FROM user1;",
       "querySha256": "f8d1fe78973051607144886fb0884118c6ab539f7a7ca9bcf66d0ca4e927b37d",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1271,11 +1526,23 @@
       "ordinal": 79,
       "scriptName": "INSERT, UPDATE, DELETE Privileges",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0083-select-*-from-test-order",
+      "suggestedId": "auth-test-testauthtests-0079-select-*-from-test-order",
       "expectedKind": "error",
       "username": "user1",
       "query": "SELECT * FROM test ORDER BY pk;",
       "querySha256": "d0f6c344ab64b143c8f2dd9f13d33077378ca78179f36f00dec40fe78e1ed1f4",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1285,11 +1552,23 @@
       "ordinal": 80,
       "scriptName": "INSERT, UPDATE, DELETE Privileges",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0084-insert-into-test-values-100",
+      "suggestedId": "auth-test-testauthtests-0080-insert-into-test-values-100",
       "expectedKind": "error",
       "username": "user1",
       "query": "INSERT INTO test VALUES (100);",
       "querySha256": "39f9fb5881d1144497084501c7ae9c7a1626d6792f1e42233e492ed45a07e8d5",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1299,11 +1578,23 @@
       "ordinal": 81,
       "scriptName": "INSERT, UPDATE, DELETE Privileges",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0085-update-test-set-pk=pk+200",
+      "suggestedId": "auth-test-testauthtests-0081-update-test-set-pk=pk+200",
       "expectedKind": "error",
       "username": "user1",
       "query": "UPDATE test SET pk=pk+200;",
       "querySha256": "9ec4f48f047c677c0ceb9b0d2fb2c08379ca95a294ffaff52178e4f8ed6d5fc3",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1313,11 +1604,23 @@
       "ordinal": 82,
       "scriptName": "INSERT, UPDATE, DELETE Privileges",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0086-delete-from-test-where-pk",
+      "suggestedId": "auth-test-testauthtests-0082-delete-from-test-where-pk",
       "expectedKind": "error",
       "username": "user1",
       "query": "DELETE FROM test WHERE pk \u003e 3;",
       "querySha256": "896b1079fa90443791a11072c2c36267a73e6b9bf67b59a3b304da3646c67cd8",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1327,13 +1630,14 @@
       "ordinal": 83,
       "scriptName": "CREATE privilege ON SEQUENCE and ROUTINE",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0087-create-function-testfunc3-returns-int",
+      "suggestedId": "auth-test-testauthtests-0083-create-function-testfunc3-returns-int",
       "expectedKind": "error",
       "username": "user1",
       "query": "CREATE FUNCTION testfunc3() RETURNS int AS $$ BEGIN RETURN 3; END; $$ LANGUAGE plpgsql",
       "querySha256": "c2afe88cc08865dceff9d25332bb76a447fe3384338eb49e5fcf174d833409f9",
       "nonLiteral": [
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1344,13 +1648,15 @@
       "ordinal": 84,
       "scriptName": "CREATE privilege ON SEQUENCE and ROUTINE",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0088-create-procedure-interpreted_example_3-input-text",
+      "suggestedId": "auth-test-testauthtests-0084-create-procedure-interpreted_example_3-input-text",
       "expectedKind": "error",
       "username": "user1",
       "query": "CREATE PROCEDURE interpreted_example_3(input TEXT) AS $$ BEGIN INSERT INTO test VALUES ('3' || input); END; $$ LANGUAGE plpgsql;",
       "querySha256": "3e085d17d36e3544443582b7c6fe25fdb5708cf400c61b2ac981077b6e2ebba5",
       "nonLiteral": [
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1361,13 +1667,15 @@
       "ordinal": 85,
       "scriptName": "CREATE privilege ON SEQUENCE and ROUTINE",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0089-create-sequence-genre_id_seq_by_3-as-integer",
+      "suggestedId": "auth-test-testauthtests-0085-create-sequence-genre_id_seq_by_3-as-integer",
       "expectedKind": "error",
       "username": "user1",
       "query": "CREATE SEQUENCE genre_id_seq_by_3 AS integer START WITH 1 INCREMENT BY 2 NO MINVALUE NO MAXVALUE CACHE 1;",
       "querySha256": "1f2901bd5b13cc20fe3f63baffd1c83d4f92a0e66001ea561d53148b2c591493",
       "nonLiteral": [
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1378,13 +1686,15 @@
       "ordinal": 86,
       "scriptName": "CREATE privilege ON SEQUENCE and ROUTINE",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0090-grant-create-on-schema-public",
+      "suggestedId": "auth-test-testauthtests-0086-grant-create-on-schema-public",
       "expectedKind": "rows",
       "query": "GRANT CREATE ON SCHEMA public TO user1;",
       "querySha256": "25b2451057a988d0ec04c4779151ec12ef2799115b5a8871cd705c598226d09a",
       "nonLiteral": [
         "Username",
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1395,13 +1705,16 @@
       "ordinal": 87,
       "scriptName": "CREATE privilege ON SEQUENCE and ROUTINE",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0091-create-function-testfunc3-returns-int",
+      "suggestedId": "auth-test-testauthtests-0087-create-function-testfunc3-returns-int",
       "expectedKind": "rows",
       "username": "user1",
       "query": "CREATE FUNCTION testfunc3() RETURNS int AS $$ BEGIN RETURN 3; END; $$ LANGUAGE plpgsql",
       "querySha256": "c2afe88cc08865dceff9d25332bb76a447fe3384338eb49e5fcf174d833409f9",
       "nonLiteral": [
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1412,13 +1725,17 @@
       "ordinal": 88,
       "scriptName": "CREATE privilege ON SEQUENCE and ROUTINE",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0092-create-procedure-interpreted_example_3-input-text",
+      "suggestedId": "auth-test-testauthtests-0088-create-procedure-interpreted_example_3-input-text",
       "expectedKind": "rows",
       "username": "user1",
       "query": "CREATE PROCEDURE interpreted_example_3(input TEXT) AS $$ BEGIN INSERT INTO test VALUES ('3' || input); END; $$ LANGUAGE plpgsql;",
       "querySha256": "3e085d17d36e3544443582b7c6fe25fdb5708cf400c61b2ac981077b6e2ebba5",
       "nonLiteral": [
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1429,13 +1746,18 @@
       "ordinal": 89,
       "scriptName": "CREATE privilege ON SEQUENCE and ROUTINE",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0093-create-sequence-genre_id_seq_by_3-as-integer",
+      "suggestedId": "auth-test-testauthtests-0089-create-sequence-genre_id_seq_by_3-as-integer",
       "expectedKind": "rows",
       "username": "user1",
       "query": "CREATE SEQUENCE genre_id_seq_by_3 AS integer START WITH 1 INCREMENT BY 2 NO MINVALUE NO MAXVALUE CACHE 1;",
       "querySha256": "1f2901bd5b13cc20fe3f63baffd1c83d4f92a0e66001ea561d53148b2c591493",
       "nonLiteral": [
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1446,13 +1768,19 @@
       "ordinal": 90,
       "scriptName": "CREATE privilege ON SEQUENCE and ROUTINE",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0094-select-nextval-genre_id_seq_by_3",
+      "suggestedId": "auth-test-testauthtests-0090-select-nextval-genre_id_seq_by_3",
       "expectedKind": "rows",
       "username": "user1",
       "query": "SELECT nextval('genre_id_seq_by_3');",
       "querySha256": "908d8ad4a9d48089cd99bcd517ba7370b5e7575c661e84b753d27cd10fd31ec7",
       "nonLiteral": [
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1463,13 +1791,20 @@
       "ordinal": 91,
       "scriptName": "CREATE privilege ON SEQUENCE and ROUTINE",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0095-revoke-usage-on-sequence-genre_id_seq_by_3",
+      "suggestedId": "auth-test-testauthtests-0091-revoke-usage-on-sequence-genre_id_seq_by_3",
       "expectedKind": "rows",
       "query": "REVOKE USAGE ON SEQUENCE genre_id_seq_by_3 FROM user1;",
       "querySha256": "5276003577459b0da88f20e7834d96d2cd0d035cd2e155fd65bcf28a0dc1b9ff",
       "nonLiteral": [
         "Username",
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1480,13 +1815,21 @@
       "ordinal": 92,
       "scriptName": "CREATE privilege ON SEQUENCE and ROUTINE",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0096-select-nextval-genre_id_seq_by_3",
+      "suggestedId": "auth-test-testauthtests-0092-select-nextval-genre_id_seq_by_3",
       "expectedKind": "rows",
       "username": "user1",
       "query": "SELECT nextval('genre_id_seq_by_3');",
       "querySha256": "908d8ad4a9d48089cd99bcd517ba7370b5e7575c661e84b753d27cd10fd31ec7",
       "nonLiteral": [
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1497,13 +1840,22 @@
       "ordinal": 93,
       "scriptName": "CREATE privilege ON SEQUENCE and ROUTINE",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0097-alter-sequence-genre_id_seq_by_3-owner-to",
+      "suggestedId": "auth-test-testauthtests-0093-alter-sequence-genre_id_seq_by_3-owner-to",
       "expectedKind": "rows",
       "query": "ALTER SEQUENCE genre_id_seq_by_3 OWNER TO auth_test_user;",
       "querySha256": "42e3ceec2fcc33233aaed9d193dc48794788e5b82dd9a90273bf48b0e37c60c9",
       "nonLiteral": [
         "Username",
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1514,13 +1866,23 @@
       "ordinal": 94,
       "scriptName": "CREATE privilege ON SEQUENCE and ROUTINE",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0098-select-nextval-genre_id_seq_by_3",
+      "suggestedId": "auth-test-testauthtests-0094-select-nextval-genre_id_seq_by_3",
       "expectedKind": "error",
       "username": "user1",
       "query": "SELECT nextval('genre_id_seq_by_3');",
       "querySha256": "908d8ad4a9d48089cd99bcd517ba7370b5e7575c661e84b753d27cd10fd31ec7",
       "nonLiteral": [
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1531,13 +1893,14 @@
       "ordinal": 95,
       "scriptName": "owner of a relation has all privileges granted by default and cannot be revoked unless ownership is altered",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0099-create-table-mytable-pk-int",
+      "suggestedId": "auth-test-testauthtests-0095-create-table-mytable-pk-int",
       "expectedKind": "error",
       "username": "user1",
       "query": "CREATE TABLE mytable (pk int);",
       "querySha256": "22899e6c9d127adb8f01ab676321f65d6e1ede0aa14965dfe8bca2361f42807d",
       "nonLiteral": [
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1548,13 +1911,15 @@
       "ordinal": 96,
       "scriptName": "owner of a relation has all privileges granted by default and cannot be revoked unless ownership is altered",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0100-grant-create-on-schema-public",
+      "suggestedId": "auth-test-testauthtests-0096-grant-create-on-schema-public",
       "expectedKind": "rows",
       "query": "GRANT CREATE ON SCHEMA public TO user1;",
       "querySha256": "25b2451057a988d0ec04c4779151ec12ef2799115b5a8871cd705c598226d09a",
       "nonLiteral": [
         "Username",
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1565,13 +1930,16 @@
       "ordinal": 97,
       "scriptName": "owner of a relation has all privileges granted by default and cannot be revoked unless ownership is altered",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0101-create-table-mytable-pk-int",
+      "suggestedId": "auth-test-testauthtests-0097-create-table-mytable-pk-int",
       "expectedKind": "rows",
       "username": "user1",
       "query": "CREATE TABLE mytable (pk int);",
       "querySha256": "22899e6c9d127adb8f01ab676321f65d6e1ede0aa14965dfe8bca2361f42807d",
       "nonLiteral": [
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1582,13 +1950,17 @@
       "ordinal": 98,
       "scriptName": "owner of a relation has all privileges granted by default and cannot be revoked unless ownership is altered",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0102-select-*-from-mytable",
+      "suggestedId": "auth-test-testauthtests-0098-select-*-from-mytable",
       "expectedKind": "rows",
       "username": "user1",
       "query": "SELECT * from mytable;",
       "querySha256": "f2253f73e015f3d05ca93a079d01f5ade6e74eb09d21d3314d82bb10e7b9e1ca",
       "nonLiteral": [
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1599,13 +1971,14 @@
       "ordinal": 99,
       "scriptName": "GRANT/REVOKE USAGE ON SCHEMA",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0103-select-nextval-genre_id_seq_by_3",
+      "suggestedId": "auth-test-testauthtests-0099-select-nextval-genre_id_seq_by_3",
       "expectedKind": "error",
       "username": "user1",
       "query": "SELECT nextval('genre_id_seq_by_3');",
       "querySha256": "908d8ad4a9d48089cd99bcd517ba7370b5e7575c661e84b753d27cd10fd31ec7",
       "nonLiteral": [
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1616,13 +1989,15 @@
       "ordinal": 100,
       "scriptName": "GRANT/REVOKE USAGE ON SCHEMA",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0104-grant-usage-on-schema-public",
+      "suggestedId": "auth-test-testauthtests-0100-grant-usage-on-schema-public",
       "expectedKind": "rows",
       "query": "GRANT USAGE ON SCHEMA public TO user1;",
       "querySha256": "549376bf8976ad10c44aa7b938250b2dc92f7d99a1f683f5b177a8e447d6e793",
       "nonLiteral": [
         "Username",
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1633,13 +2008,16 @@
       "ordinal": 101,
       "scriptName": "GRANT/REVOKE USAGE ON SCHEMA",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0105-select-nextval-genre_id_seq_by_3",
+      "suggestedId": "auth-test-testauthtests-0101-select-nextval-genre_id_seq_by_3",
       "expectedKind": "rows",
       "username": "user1",
       "query": "SELECT nextval('genre_id_seq_by_3');",
       "querySha256": "908d8ad4a9d48089cd99bcd517ba7370b5e7575c661e84b753d27cd10fd31ec7",
       "nonLiteral": [
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1650,13 +2028,17 @@
       "ordinal": 102,
       "scriptName": "GRANT/REVOKE USAGE ON SCHEMA",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0106-revoke-usage-on-schema-public",
+      "suggestedId": "auth-test-testauthtests-0102-revoke-usage-on-schema-public",
       "expectedKind": "rows",
       "query": "REVOKE USAGE ON SCHEMA public FROM user1;",
       "querySha256": "fcd92a935e8049c951b0bf3f9dc4f3f45df5a0c609d23134f3c447370811673e",
       "nonLiteral": [
         "Username",
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1667,13 +2049,18 @@
       "ordinal": 103,
       "scriptName": "GRANT/REVOKE USAGE ON SCHEMA",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0107-select-nextval-genre_id_seq_by_3",
+      "suggestedId": "auth-test-testauthtests-0103-select-nextval-genre_id_seq_by_3",
       "expectedKind": "error",
       "username": "user1",
       "query": "SELECT nextval('genre_id_seq_by_3');",
       "querySha256": "908d8ad4a9d48089cd99bcd517ba7370b5e7575c661e84b753d27cd10fd31ec7",
       "nonLiteral": [
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1684,13 +2071,14 @@
       "ordinal": 104,
       "scriptName": "privileges ON FUNCTION",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0108-select-testfunc1",
+      "suggestedId": "auth-test-testauthtests-0104-select-testfunc1",
       "expectedKind": "error",
       "username": "user1",
       "query": "SELECT testfunc1();",
       "querySha256": "24b95f91fbdd102067ab3c41f09267cfdd3483f79ba5abc42fa6558dcc69c845",
       "nonLiteral": [
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1701,13 +2089,15 @@
       "ordinal": 105,
       "scriptName": "privileges ON FUNCTION",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0109-grant-all-on-function-public.testfunc1",
+      "suggestedId": "auth-test-testauthtests-0105-grant-all-on-function-public.testfunc1",
       "expectedKind": "rows",
       "query": "GRANT ALL ON FUNCTION public.testfunc1() TO user1;",
       "querySha256": "f1c5b997309c775959390e41aa90a86e3a0242e6981aaaf3088b6726f7e49df6",
       "nonLiteral": [
         "Username",
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1718,13 +2108,16 @@
       "ordinal": 106,
       "scriptName": "privileges ON FUNCTION",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0110-select-testfunc1",
+      "suggestedId": "auth-test-testauthtests-0106-select-testfunc1",
       "expectedKind": "rows",
       "username": "user1",
       "query": "SELECT testfunc1();",
       "querySha256": "24b95f91fbdd102067ab3c41f09267cfdd3483f79ba5abc42fa6558dcc69c845",
       "nonLiteral": [
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1735,13 +2128,17 @@
       "ordinal": 107,
       "scriptName": "privileges ON FUNCTION",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0111-select-testfunc2",
+      "suggestedId": "auth-test-testauthtests-0107-select-testfunc2",
       "expectedKind": "error",
       "username": "user1",
       "query": "SELECT testfunc2();",
       "querySha256": "3c8d1d8f50f9725bdb4ccaad305643d1da9671c804509df6f4936de87642ce7f",
       "nonLiteral": [
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1752,13 +2149,17 @@
       "ordinal": 108,
       "scriptName": "privileges ON FUNCTION",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0112-revoke-all-on-function-testfunc1",
+      "suggestedId": "auth-test-testauthtests-0108-revoke-all-on-function-testfunc1",
       "expectedKind": "rows",
       "query": "REVOKE ALL ON FUNCTION testfunc1() FROM user1;",
       "querySha256": "3383c56f818c85f748596a2b89acd559711fe0444c21c55af97aaef35d567d4b",
       "nonLiteral": [
         "Username",
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1769,13 +2170,18 @@
       "ordinal": 109,
       "scriptName": "privileges ON FUNCTION",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0113-select-testfunc1",
+      "suggestedId": "auth-test-testauthtests-0109-select-testfunc1",
       "expectedKind": "error",
       "username": "user1",
       "query": "SELECT testfunc1();",
       "querySha256": "24b95f91fbdd102067ab3c41f09267cfdd3483f79ba5abc42fa6558dcc69c845",
       "nonLiteral": [
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1786,13 +2192,18 @@
       "ordinal": 110,
       "scriptName": "privileges ON FUNCTION",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0114-select-upper-hello",
+      "suggestedId": "auth-test-testauthtests-0110-select-upper-hello",
       "expectedKind": "rows",
       "username": "user1",
       "query": "SELECT UPPER('hello');",
       "querySha256": "e27ed852a55df33ec6c119a10110968399fbfb1ab9b7c92147a6c8280ab237c7",
       "nonLiteral": [
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1803,13 +2214,20 @@
       "ordinal": 111,
       "scriptName": "privileges ON FUNCTION",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0115-select-dolt_checkout-main",
+      "suggestedId": "auth-test-testauthtests-0111-select-dolt_checkout-main",
       "expectedKind": "rows",
       "username": "user1",
       "query": "SELECT DOLT_CHECKOUT('main');",
       "querySha256": "58ff81e0a255165b8ba396138be58adc31b779b2c8c24540089e1a42b554647a",
       "nonLiteral": [
-        "SetUpScript"
+        "DoltSpecific",
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1820,13 +2238,14 @@
       "ordinal": 112,
       "scriptName": "privileges ON PROCEDURE",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0116-call-interpreted_example_1-12",
+      "suggestedId": "auth-test-testauthtests-0112-call-interpreted_example_1-12",
       "expectedKind": "error",
       "username": "user1",
       "query": "CALL interpreted_example_1('12');",
       "querySha256": "475ce2cbbdd9a2e24e78621b56cf9776aae5daee15ec76a790212a49e1b0cbc7",
       "nonLiteral": [
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1837,13 +2256,15 @@
       "ordinal": 113,
       "scriptName": "privileges ON PROCEDURE",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0117-grant-all-on-procedure-public.interpreted_example_1",
+      "suggestedId": "auth-test-testauthtests-0113-grant-all-on-procedure-public.interpreted_example_1",
       "expectedKind": "rows",
       "query": "GRANT ALL ON PROCEDURE public.interpreted_example_1(input TEXT) TO user1;",
       "querySha256": "78f3359a0d19d825f178fe9c5101e10f0afdd00479dd957bfe56402e217408c4",
       "nonLiteral": [
         "Username",
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1854,13 +2275,16 @@
       "ordinal": 114,
       "scriptName": "privileges ON PROCEDURE",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0118-call-interpreted_example_1-22",
+      "suggestedId": "auth-test-testauthtests-0114-call-interpreted_example_1-22",
       "expectedKind": "rows",
       "username": "user1",
       "query": "CALL interpreted_example_1('22');",
       "querySha256": "e257e2715f1b96d9443431494fd2afae85b4b35c3338b0401c06f6d49c777438",
       "nonLiteral": [
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1871,13 +2295,17 @@
       "ordinal": 115,
       "scriptName": "privileges ON PROCEDURE",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0119-select-*-from-test",
+      "suggestedId": "auth-test-testauthtests-0115-select-*-from-test",
       "expectedKind": "rows",
       "query": "SELECT * FROM test;",
       "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
       "nonLiteral": [
         "Username",
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1888,13 +2316,18 @@
       "ordinal": 116,
       "scriptName": "privileges ON PROCEDURE",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0120-call-interpreted_example_3-32",
+      "suggestedId": "auth-test-testauthtests-0116-call-interpreted_example_3-32",
       "expectedKind": "error",
       "username": "user1",
       "query": "CALL interpreted_example_3('32');",
       "querySha256": "88aa7665104fd8267f1670083c1d299b71f7ec72b9e9a5b77aa4d94a03d78ca7",
       "nonLiteral": [
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1905,13 +2338,18 @@
       "ordinal": 117,
       "scriptName": "privileges ON PROCEDURE",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0121-select-*-from-test",
+      "suggestedId": "auth-test-testauthtests-0117-select-*-from-test",
       "expectedKind": "rows",
       "query": "SELECT * FROM test;",
       "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
       "nonLiteral": [
         "Username",
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1922,13 +2360,19 @@
       "ordinal": 118,
       "scriptName": "privileges ON PROCEDURE",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0122-revoke-all-on-procedure-public.interpreted_example_1",
+      "suggestedId": "auth-test-testauthtests-0118-revoke-all-on-procedure-public.interpreted_example_1",
       "expectedKind": "rows",
       "query": "REVOKE ALL ON PROCEDURE public.interpreted_example_1(input TEXT) FROM user1;",
       "querySha256": "9017229e1f0a3ca158973e64e7d0f9acb5c936d14d641747550003d6710af812",
       "nonLiteral": [
         "Username",
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1939,13 +2383,20 @@
       "ordinal": 119,
       "scriptName": "privileges ON PROCEDURE",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0123-call-interpreted_example_1-42",
+      "suggestedId": "auth-test-testauthtests-0119-call-interpreted_example_1-42",
       "expectedKind": "error",
       "username": "user1",
       "query": "CALL interpreted_example_1('42');",
       "querySha256": "437d6e08fb527081b2f525e8af0ade6283f87643ff98a8e11bfad347be0e4f25",
       "nonLiteral": [
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1956,13 +2407,20 @@
       "ordinal": 120,
       "scriptName": "privileges ON PROCEDURE",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0124-select-*-from-test",
+      "suggestedId": "auth-test-testauthtests-0120-select-*-from-test",
       "expectedKind": "rows",
       "query": "SELECT * FROM test;",
       "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
       "nonLiteral": [
         "Username",
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1973,13 +2431,14 @@
       "ordinal": 121,
       "scriptName": "SELECT/USAGE privileges ON SEQUENCE",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0125-select-nextval-genre_id_seq_by_2",
+      "suggestedId": "auth-test-testauthtests-0121-select-nextval-genre_id_seq_by_2",
       "expectedKind": "error",
       "username": "user1",
       "query": "SELECT nextval('genre_id_seq_by_2');",
       "querySha256": "04882c15c97c01c96db0511df3ec421aaea4547d91623cd36a3e2ded43153dd0",
       "nonLiteral": [
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1990,13 +2449,15 @@
       "ordinal": 122,
       "scriptName": "SELECT/USAGE privileges ON SEQUENCE",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0126-grant-usage-on-sequence-public.genre_id_seq_by_2",
+      "suggestedId": "auth-test-testauthtests-0122-grant-usage-on-sequence-public.genre_id_seq_by_2",
       "expectedKind": "rows",
       "query": "GRANT USAGE ON SEQUENCE public.genre_id_seq_by_2 TO user1;",
       "querySha256": "735456d3a860cf7f59cc36248c268d9100ef3007f6770521f22bfe7821d981fb",
       "nonLiteral": [
         "Username",
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2007,13 +2468,16 @@
       "ordinal": 123,
       "scriptName": "SELECT/USAGE privileges ON SEQUENCE",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0127-select-nextval-genre_id_seq_by_2",
+      "suggestedId": "auth-test-testauthtests-0123-select-nextval-genre_id_seq_by_2",
       "expectedKind": "rows",
       "username": "user1",
       "query": "SELECT nextval('genre_id_seq_by_2');",
       "querySha256": "04882c15c97c01c96db0511df3ec421aaea4547d91623cd36a3e2ded43153dd0",
       "nonLiteral": [
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2024,13 +2488,17 @@
       "ordinal": 124,
       "scriptName": "SELECT/USAGE privileges ON SEQUENCE",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0128-grant-select-on-sequence-public.genre_id_seq_by_2",
+      "suggestedId": "auth-test-testauthtests-0124-grant-select-on-sequence-public.genre_id_seq_by_2",
       "expectedKind": "rows",
       "query": "GRANT SELECT ON SEQUENCE public.genre_id_seq_by_2 TO user2;",
       "querySha256": "4cc07d76abe75a625822d5fabb5941b6c0ac075347239d87b6d504fd466a04d4",
       "nonLiteral": [
         "Username",
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2041,13 +2509,18 @@
       "ordinal": 125,
       "scriptName": "SELECT/USAGE privileges ON SEQUENCE",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0129-select-nextval-genre_id_seq_by_2",
+      "suggestedId": "auth-test-testauthtests-0125-select-nextval-genre_id_seq_by_2",
       "expectedKind": "error",
       "username": "user2",
       "query": "SELECT nextval('genre_id_seq_by_2');",
       "querySha256": "04882c15c97c01c96db0511df3ec421aaea4547d91623cd36a3e2ded43153dd0",
       "nonLiteral": [
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2058,13 +2531,18 @@
       "ordinal": 126,
       "scriptName": "SELECT/USAGE privileges ON SEQUENCE",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0130-select-is_called-from-genre_id_seq_by_2",
+      "suggestedId": "auth-test-testauthtests-0126-select-is_called-from-genre_id_seq_by_2",
       "expectedKind": "rows",
       "username": "user2",
       "query": "SELECT is_called FROM genre_id_seq_by_2;",
       "querySha256": "4b822b20088c203009a797c26de2e440c76034c81e2ac9d288530dd9af6e2e9d",
       "nonLiteral": [
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2075,13 +2553,14 @@
       "ordinal": 127,
       "scriptName": "user can create table with sequence that they don't have privileges for but they cannot use it'",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0131-select-nextval-genre_id_seq_by_2",
+      "suggestedId": "auth-test-testauthtests-0127-select-nextval-genre_id_seq_by_2",
       "expectedKind": "error",
       "username": "user1",
       "query": "SELECT nextval('genre_id_seq_by_2');",
       "querySha256": "04882c15c97c01c96db0511df3ec421aaea4547d91623cd36a3e2ded43153dd0",
       "nonLiteral": [
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2092,13 +2571,15 @@
       "ordinal": 128,
       "scriptName": "user can create table with sequence that they don't have privileges for but they cannot use it'",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0132-grant-create-on-schema-public",
+      "suggestedId": "auth-test-testauthtests-0128-grant-create-on-schema-public",
       "expectedKind": "rows",
       "query": "GRANT CREATE ON SCHEMA public TO user1;",
       "querySha256": "25b2451057a988d0ec04c4779151ec12ef2799115b5a8871cd705c598226d09a",
       "nonLiteral": [
         "Username",
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2109,13 +2590,16 @@
       "ordinal": 129,
       "scriptName": "user can create table with sequence that they don't have privileges for but they cannot use it'",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0133-create-table-test_by_user1-pk-int",
+      "suggestedId": "auth-test-testauthtests-0129-create-table-test_by_user1-pk-int",
       "expectedKind": "rows",
       "username": "user1",
       "query": "create table test_by_user1 (pk int, v1 INTEGER DEFAULT nextval('genre_id_seq_by_2'));",
       "querySha256": "e8641a1fd4126ea6edd12896bec7d998276b69e0974079beb978790f883474e4",
       "nonLiteral": [
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2126,13 +2610,17 @@
       "ordinal": 130,
       "scriptName": "user can create table with sequence that they don't have privileges for but they cannot use it'",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0134-grant-all-privileges-on-all",
+      "suggestedId": "auth-test-testauthtests-0130-grant-all-privileges-on-all",
       "expectedKind": "rows",
       "query": "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO user1;",
       "querySha256": "e5d3df166bbc3cd6266055c6bcd999cce08ce2f8d5123d82d7eeec1698d2bdd6",
       "nonLiteral": [
         "Username",
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2143,13 +2631,18 @@
       "ordinal": 131,
       "scriptName": "user can create table with sequence that they don't have privileges for but they cannot use it'",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0135-insert-into-test_by_user1-pk-values",
+      "suggestedId": "auth-test-testauthtests-0131-insert-into-test_by_user1-pk-values",
       "expectedKind": "error",
       "username": "user1",
       "query": "insert into test_by_user1(pk) values (3);",
       "querySha256": "7a4bc22a584454a2fc7d180c1d24727a2b17c23e1d80c81545e2c2b244f5dec1",
       "nonLiteral": [
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2160,13 +2653,18 @@
       "ordinal": 132,
       "scriptName": "user can create table with sequence that they don't have privileges for but they cannot use it'",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0136-select-*-from-test_by_user1",
+      "suggestedId": "auth-test-testauthtests-0132-select-*-from-test_by_user1",
       "expectedKind": "rows",
       "username": "user1",
       "query": "SELECT * FROM test_by_user1;",
       "querySha256": "da64cbd66c5159354118355ba01434e081399a46a8e40633da933b5361f4c0c9",
       "nonLiteral": [
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2177,13 +2675,19 @@
       "ordinal": 133,
       "scriptName": "user can create table with sequence that they don't have privileges for but they cannot use it'",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0137-grant-usage-on-sequence-public.genre_id_seq_by_2",
+      "suggestedId": "auth-test-testauthtests-0133-grant-usage-on-sequence-public.genre_id_seq_by_2",
       "expectedKind": "rows",
       "query": "GRANT USAGE ON SEQUENCE public.genre_id_seq_by_2 TO user1;",
       "querySha256": "735456d3a860cf7f59cc36248c268d9100ef3007f6770521f22bfe7821d981fb",
       "nonLiteral": [
         "Username",
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2194,13 +2698,20 @@
       "ordinal": 134,
       "scriptName": "user can create table with sequence that they don't have privileges for but they cannot use it'",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0138-insert-into-test_by_user1-pk-values",
+      "suggestedId": "auth-test-testauthtests-0134-insert-into-test_by_user1-pk-values",
       "expectedKind": "rows",
       "username": "user1",
       "query": "insert into test_by_user1(pk) values (3);",
       "querySha256": "7a4bc22a584454a2fc7d180c1d24727a2b17c23e1d80c81545e2c2b244f5dec1",
       "nonLiteral": [
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2211,13 +2722,21 @@
       "ordinal": 135,
       "scriptName": "user can create table with sequence that they don't have privileges for but they cannot use it'",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0139-select-*-from-test_by_user1",
+      "suggestedId": "auth-test-testauthtests-0135-select-*-from-test_by_user1",
       "expectedKind": "rows",
       "username": "user1",
       "query": "SELECT * FROM test_by_user1;",
       "querySha256": "da64cbd66c5159354118355ba01434e081399a46a8e40633da933b5361f4c0c9",
       "nonLiteral": [
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2228,11 +2747,16 @@
       "ordinal": 136,
       "scriptName": "Branch Control: Namespace entries block",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0140-select-dolt_branch-otherbranch1",
+      "suggestedId": "auth-test-testauthtests-0136-select-dolt_branch-otherbranch1",
       "expectedKind": "rows",
       "username": "testuser",
       "query": "SELECT DOLT_BRANCH('otherbranch1');",
       "querySha256": "9017e625e77f433c8ead8951f2fea7ada9e36e9220451b1326ccdb7a569dc32b",
+      "nonLiteral": [
+        "DoltSpecific",
+        "DoltSpecific",
+        "NonMigratable"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2242,11 +2766,18 @@
       "ordinal": 137,
       "scriptName": "Branch Control: Namespace entries block",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0141-insert-into-dolt_branch_namespace_control-values-%",
+      "suggestedId": "auth-test-testauthtests-0137-insert-into-dolt_branch_namespace_control-values-%",
       "expectedKind": "rows",
       "username": "postgres",
       "query": "INSERT INTO dolt_branch_namespace_control VALUES ('%', 'other%', 'postgres', '%');",
       "querySha256": "305cd97dd8c90f4759b74690e922ad1c65030e839e5a617372631433656a59a5",
+      "nonLiteral": [
+        "DoltSpecific",
+        "DoltSpecific",
+        "NonMigratable",
+        "PriorDoltSpecific",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2256,11 +2787,19 @@
       "ordinal": 138,
       "scriptName": "Branch Control: Namespace entries block",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0142-select-dolt_branch-otherbranch2",
+      "suggestedId": "auth-test-testauthtests-0138-select-dolt_branch-otherbranch2",
       "expectedKind": "error",
       "username": "testuser",
       "query": "SELECT DOLT_BRANCH('otherbranch2');",
       "querySha256": "0e1c72998a3294b1b64081fd9902f1b31942cdb6267cb3eec5ec40d753117661",
+      "nonLiteral": [
+        "DoltSpecific",
+        "DoltSpecific",
+        "NonMigratable",
+        "PriorDoltSpecific",
+        "PriorUsername",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2270,11 +2809,20 @@
       "ordinal": 139,
       "scriptName": "Branch Control: Namespace entries block",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0143-insert-into-dolt_branch_namespace_control-values-%",
+      "suggestedId": "auth-test-testauthtests-0139-insert-into-dolt_branch_namespace_control-values-%",
       "expectedKind": "rows",
       "username": "postgres",
       "query": "INSERT INTO dolt_branch_namespace_control VALUES ('%', 'other%', 'testuser', '%');",
       "querySha256": "671ed7a6da347b43d008ddafeaa5b510e42684238ec76c4e04808d2cf633604b",
+      "nonLiteral": [
+        "DoltSpecific",
+        "DoltSpecific",
+        "NonMigratable",
+        "PriorDoltSpecific",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorExpectedError"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2284,11 +2832,21 @@
       "ordinal": 140,
       "scriptName": "Branch Control: Namespace entries block",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0144-select-dolt_branch-otherbranch2",
+      "suggestedId": "auth-test-testauthtests-0140-select-dolt_branch-otherbranch2",
       "expectedKind": "rows",
       "username": "testuser",
       "query": "SELECT DOLT_BRANCH('otherbranch2');",
       "querySha256": "0e1c72998a3294b1b64081fd9902f1b31942cdb6267cb3eec5ec40d753117661",
+      "nonLiteral": [
+        "DoltSpecific",
+        "DoltSpecific",
+        "NonMigratable",
+        "PriorDoltSpecific",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorExpectedError",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2298,11 +2856,22 @@
       "ordinal": 141,
       "scriptName": "Branch Control: Namespace entries block",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0145-insert-into-dolt_branch_namespace_control-values-%",
+      "suggestedId": "auth-test-testauthtests-0141-insert-into-dolt_branch_namespace_control-values-%",
       "expectedKind": "rows",
       "username": "postgres",
       "query": "INSERT INTO dolt_branch_namespace_control VALUES ('%', 'otherbranch%', 'postgres', '%');",
       "querySha256": "e024edd761850d18cdab4ceec6a7df02b8eade9e774e5e64b80e4c387be56019",
+      "nonLiteral": [
+        "DoltSpecific",
+        "DoltSpecific",
+        "NonMigratable",
+        "PriorDoltSpecific",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2312,11 +2881,23 @@
       "ordinal": 142,
       "scriptName": "Branch Control: Namespace entries block",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0146-select-dolt_branch-otherbranch3",
+      "suggestedId": "auth-test-testauthtests-0142-select-dolt_branch-otherbranch3",
       "expectedKind": "error",
       "username": "testuser",
       "query": "SELECT DOLT_BRANCH('otherbranch3');",
       "querySha256": "b6d374396733fdefa64b58c17dee275aac6b46656dcce1f379d7ae9efeb8628a",
+      "nonLiteral": [
+        "DoltSpecific",
+        "DoltSpecific",
+        "NonMigratable",
+        "PriorDoltSpecific",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2326,11 +2907,23 @@
       "ordinal": 143,
       "scriptName": "Branch Control: Namespace entries block",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0147-select-dolt_branch-other3",
+      "suggestedId": "auth-test-testauthtests-0143-select-dolt_branch-other3",
       "expectedKind": "rows",
       "username": "testuser",
       "query": "SELECT DOLT_BRANCH('other3');",
       "querySha256": "3bd8e55145a4636ecb71b3cbbe114ee47f394217f9d978628fb6bf8d7a80c984",
+      "nonLiteral": [
+        "DoltSpecific",
+        "DoltSpecific",
+        "NonMigratable",
+        "PriorDoltSpecific",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2340,11 +2933,24 @@
       "ordinal": 144,
       "scriptName": "Branch Control: Namespace entries block",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0148-insert-into-dolt_branch_namespace_control-values-%",
+      "suggestedId": "auth-test-testauthtests-0144-insert-into-dolt_branch_namespace_control-values-%",
       "expectedKind": "rows",
       "username": "postgres",
       "query": "INSERT INTO dolt_branch_namespace_control VALUES ('%', 'otherbranch%', 'testuser', '%');",
       "querySha256": "fa469b708d54edd3fe01dbcba09f864631e7a9567dc4aa96f14ffe8618bd3a72",
+      "nonLiteral": [
+        "DoltSpecific",
+        "DoltSpecific",
+        "NonMigratable",
+        "PriorDoltSpecific",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2354,11 +2960,25 @@
       "ordinal": 145,
       "scriptName": "Branch Control: Namespace entries block",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0149-select-dolt_branch-otherbranch3",
+      "suggestedId": "auth-test-testauthtests-0145-select-dolt_branch-otherbranch3",
       "expectedKind": "rows",
       "username": "testuser",
       "query": "SELECT DOLT_BRANCH('otherbranch3');",
       "querySha256": "b6d374396733fdefa64b58c17dee275aac6b46656dcce1f379d7ae9efeb8628a",
+      "nonLiteral": [
+        "DoltSpecific",
+        "DoltSpecific",
+        "NonMigratable",
+        "PriorDoltSpecific",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorExpectedError",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2368,11 +2988,16 @@
       "ordinal": 146,
       "scriptName": "Require admin to modify tables",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0150-delete-from-dolt_branch_control-where-branch",
+      "suggestedId": "auth-test-testauthtests-0146-delete-from-dolt_branch_control-where-branch",
       "expectedKind": "error",
       "username": "a",
       "query": "DELETE FROM dolt_branch_control WHERE \"branch\" = 'other';",
       "querySha256": "96f405715d83eb62e4fee3de7267981435bf8452d89fbd187dcbeab7433c8dab",
+      "nonLiteral": [
+        "DoltSpecific",
+        "DoltSpecific",
+        "NonMigratable"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2382,11 +3007,17 @@
       "ordinal": 147,
       "scriptName": "Require admin to modify tables",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0151-delete-from-dolt_branch_control-where-branch",
+      "suggestedId": "auth-test-testauthtests-0147-delete-from-dolt_branch_control-where-branch",
       "expectedKind": "error",
       "username": "b",
       "query": "DELETE FROM dolt_branch_control WHERE \"branch\" = 'other';",
       "querySha256": "96f405715d83eb62e4fee3de7267981435bf8452d89fbd187dcbeab7433c8dab",
+      "nonLiteral": [
+        "DoltSpecific",
+        "DoltSpecific",
+        "NonMigratable",
+        "PriorExpectedError"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2396,11 +3027,17 @@
       "ordinal": 148,
       "scriptName": "Require admin to modify tables",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0152-delete-from-dolt_branch_control-where-branch",
+      "suggestedId": "auth-test-testauthtests-0148-delete-from-dolt_branch_control-where-branch",
       "expectedKind": "error",
       "username": "b",
       "query": "DELETE FROM dolt_branch_control WHERE \"branch\" = 'prefix%';",
       "querySha256": "f423f8d084aef7c499969aaa10a302b90f768f001e9d87260a5f90f825f1a816",
+      "nonLiteral": [
+        "DoltSpecific",
+        "DoltSpecific",
+        "NonMigratable",
+        "PriorExpectedError"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2410,11 +3047,17 @@
       "ordinal": 149,
       "scriptName": "Require admin to modify tables",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0153-insert-into-dolt_branch_control-values-%",
+      "suggestedId": "auth-test-testauthtests-0149-insert-into-dolt_branch_control-values-%",
       "expectedKind": "rows",
       "username": "a",
       "query": "INSERT INTO dolt_branch_control VALUES ('%', 'prefix1%', 'b', '%', 'write');",
       "querySha256": "b5a5ed775cdbd3a6f462fa480077505c1f1a3f6f910718405bb6bcb6bb543d57",
+      "nonLiteral": [
+        "DoltSpecific",
+        "DoltSpecific",
+        "NonMigratable",
+        "PriorExpectedError"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2424,11 +3067,19 @@
       "ordinal": 150,
       "scriptName": "Require admin to modify tables",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0154-delete-from-dolt_branch_control-where-branch",
+      "suggestedId": "auth-test-testauthtests-0150-delete-from-dolt_branch_control-where-branch",
       "expectedKind": "error",
       "username": "b",
       "query": "DELETE FROM dolt_branch_control WHERE \"branch\" = 'prefix1%';",
       "querySha256": "b3644a3565a63a05da9ca906f8877434543fafb88fd60a5d00d9abf49d30b044",
+      "nonLiteral": [
+        "DoltSpecific",
+        "DoltSpecific",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorDoltSpecific",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2438,11 +3089,19 @@
       "ordinal": 151,
       "scriptName": "Require admin to modify tables",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0155-update-dolt_branch_control-set-branch-=",
+      "suggestedId": "auth-test-testauthtests-0151-update-dolt_branch_control-set-branch-=",
       "expectedKind": "error",
       "username": "a",
       "query": "UPDATE dolt_branch_control SET \"branch\" = 'other1' WHERE \"user\" = 'b' AND \"branch\" = 'prefix1%';",
       "querySha256": "ad5f5458f8b0874e931223fa0f4d3631ff3637ac3ec76d08c9d33c94bce8ee2a",
+      "nonLiteral": [
+        "DoltSpecific",
+        "DoltSpecific",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorDoltSpecific",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2452,11 +3111,19 @@
       "ordinal": 152,
       "scriptName": "Require admin to modify tables",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0156-update-dolt_branch_control-set-permissions-=",
+      "suggestedId": "auth-test-testauthtests-0152-update-dolt_branch_control-set-permissions-=",
       "expectedKind": "error",
       "username": "b",
       "query": "UPDATE dolt_branch_control SET \"permissions\" = 'admin' WHERE \"user\" = 'b' AND \"branch\" = 'prefix1%';",
       "querySha256": "1395cd39e91f8c262c28251b53275e5a593894985b5029d2d5d6539f0cd73b12",
+      "nonLiteral": [
+        "DoltSpecific",
+        "DoltSpecific",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorDoltSpecific",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2466,11 +3133,19 @@
       "ordinal": 153,
       "scriptName": "Require admin to modify tables",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0157-update-dolt_branch_control-set-permissions-=",
+      "suggestedId": "auth-test-testauthtests-0153-update-dolt_branch_control-set-permissions-=",
       "expectedKind": "rows",
       "username": "a",
       "query": "UPDATE dolt_branch_control SET \"permissions\" = 'admin' WHERE \"user\" = 'b' AND \"branch\" = 'prefix1%';",
       "querySha256": "1395cd39e91f8c262c28251b53275e5a593894985b5029d2d5d6539f0cd73b12",
+      "nonLiteral": [
+        "DoltSpecific",
+        "DoltSpecific",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorDoltSpecific",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2480,11 +3155,20 @@
       "ordinal": 154,
       "scriptName": "Require admin to modify tables",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0158-delete-from-dolt_branch_control-where-branch",
+      "suggestedId": "auth-test-testauthtests-0154-delete-from-dolt_branch_control-where-branch",
       "expectedKind": "rows",
       "username": "b",
       "query": "DELETE FROM dolt_branch_control WHERE \"branch\" = 'prefix1%';",
       "querySha256": "b3644a3565a63a05da9ca906f8877434543fafb88fd60a5d00d9abf49d30b044",
+      "nonLiteral": [
+        "DoltSpecific",
+        "DoltSpecific",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorDoltSpecific",
+        "PriorUsername",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2494,11 +3178,21 @@
       "ordinal": 155,
       "scriptName": "Require admin to modify tables",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0159-insert-into-dolt_branch_control-values-%",
+      "suggestedId": "auth-test-testauthtests-0155-insert-into-dolt_branch_control-values-%",
       "expectedKind": "error",
       "username": "b",
       "query": "INSERT INTO dolt_branch_control VALUES ('%', 'prefix1%', 'b', '%', 'admin');",
       "querySha256": "213aaeaf3153c2c0aa101c2f2618b8255ee659bd21fb71782f8f40821395b665",
+      "nonLiteral": [
+        "DoltSpecific",
+        "DoltSpecific",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorDoltSpecific",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2508,11 +3202,21 @@
       "ordinal": 156,
       "scriptName": "Require admin to modify tables",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0160-insert-into-dolt_branch_namespace_control-values-%",
+      "suggestedId": "auth-test-testauthtests-0156-insert-into-dolt_branch_namespace_control-values-%",
       "expectedKind": "rows",
       "username": "a",
       "query": "INSERT INTO dolt_branch_namespace_control VALUES ('%', 'prefix___', 'a', '%');",
       "querySha256": "05bc36fc8ec77195412027f4342210a06a0a4249ae055899f60fde0976438190",
+      "nonLiteral": [
+        "DoltSpecific",
+        "DoltSpecific",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorDoltSpecific",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2522,11 +3226,22 @@
       "ordinal": 157,
       "scriptName": "Require admin to modify tables",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0161-insert-into-dolt_branch_namespace_control-values-%",
+      "suggestedId": "auth-test-testauthtests-0157-insert-into-dolt_branch_namespace_control-values-%",
       "expectedKind": "error",
       "username": "b",
       "query": "INSERT INTO dolt_branch_namespace_control VALUES ('%', 'prefix', 'b', '%');",
       "querySha256": "fee50072960582959c0f7113a172e3e39d98210cd0cca977b6bd45e4265dea7a",
+      "nonLiteral": [
+        "DoltSpecific",
+        "DoltSpecific",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorDoltSpecific",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2536,11 +3251,22 @@
       "ordinal": 158,
       "scriptName": "Require admin to modify tables",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0162-update-dolt_branch_namespace_control-set-branch-=",
+      "suggestedId": "auth-test-testauthtests-0158-update-dolt_branch_namespace_control-set-branch-=",
       "expectedKind": "rows",
       "username": "a",
       "query": "UPDATE dolt_branch_namespace_control SET \"branch\" = 'prefix%';",
       "querySha256": "7e1f98c4cc7df1ccc0afd84e55a303a8688fa2e21a33989449c326c10e030783",
+      "nonLiteral": [
+        "DoltSpecific",
+        "DoltSpecific",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorDoltSpecific",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2550,11 +3276,23 @@
       "ordinal": 159,
       "scriptName": "Require admin to modify tables",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0163-update-dolt_branch_namespace_control-set-branch-=",
+      "suggestedId": "auth-test-testauthtests-0159-update-dolt_branch_namespace_control-set-branch-=",
       "expectedKind": "error",
       "username": "a",
       "query": "UPDATE dolt_branch_namespace_control SET \"branch\" = 'other';",
       "querySha256": "0aeac74ffde1b22f1524861fb58d8df3f77fab8f2b453d236ee504a12a35d412",
+      "nonLiteral": [
+        "DoltSpecific",
+        "DoltSpecific",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorDoltSpecific",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2564,11 +3302,23 @@
       "ordinal": 160,
       "scriptName": "Require admin to modify tables",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0164-delete-from-dolt_branch_namespace_control-where-branch",
+      "suggestedId": "auth-test-testauthtests-0160-delete-from-dolt_branch_namespace_control-where-branch",
       "expectedKind": "error",
       "username": "b",
       "query": "DELETE FROM dolt_branch_namespace_control WHERE \"branch\" = 'prefix%';",
       "querySha256": "7ca4227a834a080be978bc661ddf17ee4089838cc6ff6f8a3c7b04b3777ad2e4",
+      "nonLiteral": [
+        "DoltSpecific",
+        "DoltSpecific",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorDoltSpecific",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2578,11 +3328,23 @@
       "ordinal": 161,
       "scriptName": "Require admin to modify tables",
       "oracle": "internal",
-      "suggestedId": "auth-test-testauthtests-0165-update-dolt_branch_namespace_control-set-branch-=",
+      "suggestedId": "auth-test-testauthtests-0161-update-dolt_branch_namespace_control-set-branch-=",
       "expectedKind": "error",
       "username": "b",
       "query": "UPDATE dolt_branch_namespace_control SET \"branch\" = 'anything';",
       "querySha256": "c392595afd154f86eea2db921187989dca06020cb72f0d33223d19d67288d54c",
+      "nonLiteral": [
+        "DoltSpecific",
+        "DoltSpecific",
+        "NonMigratable",
+        "PriorExpectedError",
+        "PriorDoltSpecific",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     }

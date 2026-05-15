@@ -1595,7 +1595,8 @@ func hasDoltgresOnlySource(source string) bool {
 func hasNonMigratableSource(source string) bool {
 	sourceFile, _, _ := strings.Cut(source, ":")
 	switch sourceFile {
-	case "testing/go/copy_server_file_privilege_repro_test.go",
+	case "testing/go/auth_test.go",
+		"testing/go/copy_server_file_privilege_repro_test.go",
 		"testing/go/copy_test.go":
 		return true
 	default:
