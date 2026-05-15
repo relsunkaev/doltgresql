@@ -1555,6 +1555,11 @@ func hasDoltSpecificSQL(statement string) bool {
 
 var doltSpecificIdentifierPattern = regexp.MustCompile(`(^|[^a-z0-9_])dolt[._][a-z0-9_]+`)
 var doltSpecificInternalIdentifierPattern = regexp.MustCompile(`(^|[^a-z0-9_])dg_[a-z0-9_]*_posting_chunks($|[^a-z0-9_])`)
+var doltSpecificScriptNamePattern = regexp.MustCompile(`(^|[^a-z0-9_])dolt([ _.-]|$)`)
+
+func hasDoltSpecificScriptName(scriptName string) bool {
+	return doltSpecificScriptNamePattern.MatchString(strings.ToLower(scriptName))
+}
 
 func sqlCodeAndStringLiterals(statement string) (string, []string) {
 	var code strings.Builder
@@ -2406,6 +2411,9 @@ func migrationCandidatesFromScriptTestSlice(source string, ordinal *int, lit *as
 				return nil, fmt.Errorf("%s#%04d: %w", source, *ordinal, err)
 			}
 			candidate.NonLiteral = append(candidate.NonLiteral, scriptNonLiteral...)
+			if candidate.Oracle == "internal" && hasDoltSpecificScriptName(scriptName) {
+				candidate.NonLiteral = appendNonLiteral(candidate.NonLiteral, "DoltSpecific")
+			}
 			candidate.NonLiteral = append(candidate.NonLiteral, priorNonLiteral...)
 			if !migrationCandidateMatchesPostgresIDFilter(candidate, postgresIDFilter) {
 				priorNonLiteral = appendPriorSetupNonLiteralForCandidate(priorNonLiteral, candidate, assertionFields)

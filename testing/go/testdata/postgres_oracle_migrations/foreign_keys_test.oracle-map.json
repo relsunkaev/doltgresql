@@ -71,6 +71,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO test_info VALUES (2, 'two', 2)",
       "querySha256": "73461203ab5659cbc56755e2d0f9e3c9c543749af3ff1ae54440ece86aab4c5f",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -84,6 +87,9 @@
       "expectedKind": "error",
       "query": "INSERT INTO test_info VALUES (3, 'three', 3)",
       "querySha256": "8e58511c8a1e1a1275d274219445b10366260030d8b42427e763467df8d63840",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -97,6 +103,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM test_info",
       "querySha256": "ed010eb9e3d02b331c29eb4eeba4f38be03e6d74c8bc6af2f80da559dc5f3216",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },

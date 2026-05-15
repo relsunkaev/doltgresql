@@ -119,6 +119,9 @@
       "expectedKind": "error",
       "query": "SELECT * FROM public.branches",
       "querySha256": "daa5ff19ffe761eecc909750eb0394b21b4eb710fa6ec333a5d783d3839d6b45",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -132,6 +135,9 @@
       "expectedKind": "error",
       "query": "SELECT * FROM branches",
       "querySha256": "4e986392cf064f79c7c53bee66ad8003989141289cff972e995da41d871667b9",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -145,6 +151,9 @@
       "expectedKind": "rows",
       "query": "CREATE TABLE branches (id INT PRIMARY KEY)",
       "querySha256": "8233ebc22bd2789f9c2504be007631003757fc5e8e091d56c83bf64df504e1e4",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -158,6 +167,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO branches VALUES (1)",
       "querySha256": "2a2e0114e459fae5fd5865236eecc43d02c4d52e9650b75ca38ee98cfc2f1c29",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -171,6 +183,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM branches",
       "querySha256": "4e986392cf064f79c7c53bee66ad8003989141289cff972e995da41d871667b9",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -200,6 +215,9 @@
       "expectedKind": "error",
       "query": "CREATE SCHEMA dolt",
       "querySha256": "dcb1b4ce2d08f55dd106127ea34ac7d0ce7a7f7a98e23c4c9c4e14b7110ecf63",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -213,6 +231,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'dolt'",
       "querySha256": "77b53012786d3b0520d937171b708f4b142c93f0aa8d664c202427ccb2a526c5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -226,6 +247,9 @@
       "expectedKind": "rows",
       "query": "SELECT name FROM branches",
       "querySha256": "3730351de0b5f9ff8fab0760a396e6400f3f3751ea193c92fb79157167003ea4",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -239,6 +263,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM public.branches",
       "querySha256": "daa5ff19ffe761eecc909750eb0394b21b4eb710fa6ec333a5d783d3839d6b45",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -252,6 +279,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'public'",
       "querySha256": "d9fd29aed9a6b5d522ccb6c0c5d8ed59228b83126a1c8cf36004ae5f4b7fb711",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -265,6 +295,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM branches",
       "querySha256": "4e986392cf064f79c7c53bee66ad8003989141289cff972e995da41d871667b9",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -278,6 +311,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'public,dolt'",
       "querySha256": "352c66ebc6f6e10ae95e7239af24fb974a0d4e440114f8df7edbf04c0a1ed6d7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -291,6 +327,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM branches",
       "querySha256": "4e986392cf064f79c7c53bee66ad8003989141289cff972e995da41d871667b9",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -304,6 +343,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM BRANCHES",
       "querySha256": "983f583e4e591da73ccccad5bf6d024f0757780f1d9a54b24622845b82737ee7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -413,6 +455,9 @@
       "expectedKind": "rows",
       "query": "CREATE SCHEMA newschema",
       "querySha256": "2ad934d0d3cc46cab317f8eb0f127a80f4ef101e4b36687f07d213367bb2dd25",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -426,6 +471,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'newschema'",
       "querySha256": "ae2e56ddc8de1ecf970b8c3c746eaae64897012fe4d600bee84a90d6a8c5d40a",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -439,6 +487,9 @@
       "expectedKind": "rows",
       "query": "CREATE TABLE test_sch (id INT PRIMARY KEY)",
       "querySha256": "69e4a4e2620cac1d35507c094d476670bd4b8e6f602433b61a9fbfeae500909c",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -452,6 +503,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO test_sch VALUES (11)",
       "querySha256": "c6720188f2078b621dfdf18c7328d8ce5ae1830785a0d12d1f9feaafd12c6e93",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -577,6 +631,9 @@
       "expectedKind": "error",
       "query": "SELECT * FROM public.column_diff",
       "querySha256": "9e46eee72b608ce5b6826fad8a35d716c225d6e43ae676988c5c4bd98f246a40",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -590,6 +647,9 @@
       "expectedKind": "error",
       "query": "SELECT * FROM column_diff",
       "querySha256": "36fe3dcdeea81beaa3a4391a9333d3ac56c8aa638ea360b836ef2b945667836e",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -603,6 +663,9 @@
       "expectedKind": "rows",
       "query": "CREATE TABLE column_diff (id INT PRIMARY KEY)",
       "querySha256": "e149a6b8d951749c972f93441915449e9ec8d87cfc4f5df18bbdb7d6458d2278",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -616,6 +679,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO column_diff VALUES (1)",
       "querySha256": "17270d2efbfa7e9e6bf5c87fd0395818d3707f8ece39fd4fbd1cef1647007a6a",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -629,6 +695,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM column_diff",
       "querySha256": "36fe3dcdeea81beaa3a4391a9333d3ac56c8aa638ea360b836ef2b945667836e",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -658,6 +727,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'dolt'",
       "querySha256": "77b53012786d3b0520d937171b708f4b142c93f0aa8d664c202427ccb2a526c5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -671,6 +743,9 @@
       "expectedKind": "rows",
       "query": "SELECT table_name, column_name FROM column_diff WHERE table_name = 'public.test'",
       "querySha256": "df1111652382cac9b3e7337b9a39f624c05d435d0b78904fc50b51366ad129bf",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -684,6 +759,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM public.column_diff",
       "querySha256": "9e46eee72b608ce5b6826fad8a35d716c225d6e43ae676988c5c4bd98f246a40",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -697,6 +775,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'public'",
       "querySha256": "d9fd29aed9a6b5d522ccb6c0c5d8ed59228b83126a1c8cf36004ae5f4b7fb711",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -710,6 +791,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM column_diff",
       "querySha256": "36fe3dcdeea81beaa3a4391a9333d3ac56c8aa638ea360b836ef2b945667836e",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -723,6 +807,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'public,dolt'",
       "querySha256": "352c66ebc6f6e10ae95e7239af24fb974a0d4e440114f8df7edbf04c0a1ed6d7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -736,6 +823,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM column_diff",
       "querySha256": "36fe3dcdeea81beaa3a4391a9333d3ac56c8aa638ea360b836ef2b945667836e",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -749,6 +839,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM COLUMN_DIFF",
       "querySha256": "ba1e93d739e7efcd9289ea903f07103b10430f4039801e5ad8acde763ecc14e6",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -826,6 +919,9 @@
       "expectedKind": "error",
       "query": "SELECT * FROM public.commit_ancestors",
       "querySha256": "5eff722ed0a944f6cdb534f5daa32f6271894fadd0a399f5015ca86ed93028fb",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -839,6 +935,9 @@
       "expectedKind": "error",
       "query": "SELECT * FROM commit_ancestors",
       "querySha256": "a1e3bb4d4c48fd87ac32cde8e36f07ffc3cbfa894c429b8845afa9c49a5ff6a1",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -852,6 +951,9 @@
       "expectedKind": "rows",
       "query": "CREATE TABLE commit_ancestors (id INT PRIMARY KEY)",
       "querySha256": "e1a530c7c5da3ccf60970bd5ac2727b0e7449d452876617a3b9384d5b7005dff",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -865,6 +967,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO commit_ancestors VALUES (1)",
       "querySha256": "877297ac26448b772c5dceaf71003bfeda6361ede204cf988941b972ff6d6320",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -878,6 +983,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM commit_ancestors",
       "querySha256": "a1e3bb4d4c48fd87ac32cde8e36f07ffc3cbfa894c429b8845afa9c49a5ff6a1",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -907,6 +1015,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'dolt'",
       "querySha256": "77b53012786d3b0520d937171b708f4b142c93f0aa8d664c202427ccb2a526c5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -920,6 +1031,9 @@
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM commit_ancestors",
       "querySha256": "36605977fc786d36c93219622a823bfc311a5355160a6e31d4448a839763883e",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -933,6 +1047,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM public.commit_ancestors",
       "querySha256": "5eff722ed0a944f6cdb534f5daa32f6271894fadd0a399f5015ca86ed93028fb",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -946,6 +1063,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'public'",
       "querySha256": "d9fd29aed9a6b5d522ccb6c0c5d8ed59228b83126a1c8cf36004ae5f4b7fb711",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -959,6 +1079,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM commit_ancestors",
       "querySha256": "a1e3bb4d4c48fd87ac32cde8e36f07ffc3cbfa894c429b8845afa9c49a5ff6a1",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -972,6 +1095,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'public,dolt'",
       "querySha256": "352c66ebc6f6e10ae95e7239af24fb974a0d4e440114f8df7edbf04c0a1ed6d7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -985,6 +1111,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM commit_ancestors",
       "querySha256": "a1e3bb4d4c48fd87ac32cde8e36f07ffc3cbfa894c429b8845afa9c49a5ff6a1",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -998,6 +1127,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM COMMIT_ANCESTORS",
       "querySha256": "bf80ce52da53acf9868b74f9c0c28bcb102ba15d93470385640ffc5e79a59c80",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1091,6 +1223,9 @@
       "expectedKind": "rows",
       "query": "CREATE SCHEMA newschema",
       "querySha256": "2ad934d0d3cc46cab317f8eb0f127a80f4ef101e4b36687f07d213367bb2dd25",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1104,6 +1239,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'newschema'",
       "querySha256": "ae2e56ddc8de1ecf970b8c3c746eaae64897012fe4d600bee84a90d6a8c5d40a",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1117,6 +1255,9 @@
       "expectedKind": "rows",
       "query": "CREATE TABLE test_sch (id INT PRIMARY KEY)",
       "querySha256": "69e4a4e2620cac1d35507c094d476670bd4b8e6f602433b61a9fbfeae500909c",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1130,6 +1271,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO test_sch VALUES (11)",
       "querySha256": "c6720188f2078b621dfdf18c7328d8ce5ae1830785a0d12d1f9feaafd12c6e93",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1239,6 +1383,9 @@
       "expectedKind": "rows",
       "query": "CREATE TABLE test (id INT PRIMARY KEY)",
       "querySha256": "6fbff633977b9768f9566c2315ec6c70b3cea247a41427787619bfee4d8dcd95",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1252,6 +1399,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO test VALUES (12)",
       "querySha256": "5127720bb8218705bec5879c73d2590016dda85ecda11664262cb8458e1687cc",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1377,6 +1527,9 @@
       "expectedKind": "error",
       "query": "SELECT * FROM public.commits",
       "querySha256": "998e8998685754d4dc9dfc77f4fb2e98d9d0ee9918c7f9bb6da0b6a5be72b4a3",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1390,6 +1543,9 @@
       "expectedKind": "error",
       "query": "SELECT * FROM commits",
       "querySha256": "91d418d82ae850003171cc3bc95e4c645489543fb1a99170a114947c5c9279ab",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1403,6 +1559,9 @@
       "expectedKind": "rows",
       "query": "CREATE TABLE commits (id INT PRIMARY KEY)",
       "querySha256": "26e0436b844634950593d0b6b9cd4bfe960743d33d637d37778f1f4c1906ce60",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1416,6 +1575,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO commits VALUES (1)",
       "querySha256": "0968673514c1ec69f14a74aba96343f8102ca3630a65c2495adcb1a35673b8e7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1429,6 +1591,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM commits",
       "querySha256": "91d418d82ae850003171cc3bc95e4c645489543fb1a99170a114947c5c9279ab",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1458,6 +1623,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'dolt'",
       "querySha256": "77b53012786d3b0520d937171b708f4b142c93f0aa8d664c202427ccb2a526c5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1471,6 +1639,9 @@
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM commits",
       "querySha256": "b61c2289e4026631063a8f6e3200a52faaef7ad76094277759d9b69932d930db",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1484,6 +1655,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM public.commits",
       "querySha256": "998e8998685754d4dc9dfc77f4fb2e98d9d0ee9918c7f9bb6da0b6a5be72b4a3",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1497,6 +1671,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'public'",
       "querySha256": "d9fd29aed9a6b5d522ccb6c0c5d8ed59228b83126a1c8cf36004ae5f4b7fb711",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1510,6 +1687,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM commits",
       "querySha256": "91d418d82ae850003171cc3bc95e4c645489543fb1a99170a114947c5c9279ab",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1523,6 +1703,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'public,dolt'",
       "querySha256": "352c66ebc6f6e10ae95e7239af24fb974a0d4e440114f8df7edbf04c0a1ed6d7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1536,6 +1719,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM commits",
       "querySha256": "91d418d82ae850003171cc3bc95e4c645489543fb1a99170a114947c5c9279ab",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1549,6 +1735,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM COMMITS",
       "querySha256": "476e8fef4cc3cee918c6e0b8e5302da58af7bf316938fe7b9e5959b95928ffe3",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1628,6 +1817,9 @@
       "expectedKind": "error",
       "query": "SELECT * FROM public.conflicts",
       "querySha256": "de6c6b4777c0d015a1f9cdb66464f6700a1f709b4c12d6296cea2ec037f6d3b5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1641,6 +1833,9 @@
       "expectedKind": "error",
       "query": "SELECT * FROM conflicts",
       "querySha256": "ab6fda46b98bbb07f6b1fe99672aaa96c83b5a988dfbccab6da90da5b97803f6",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1654,6 +1849,9 @@
       "expectedKind": "rows",
       "query": "CREATE TABLE conflicts (id INT PRIMARY KEY)",
       "querySha256": "a8a6c47c61f0d260466bad900529fa3c357f24461f211bf14ca3800147f3c59e",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1667,6 +1865,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO conflicts VALUES (1)",
       "querySha256": "de78cc6bfc46136f4125d794d348ac08a6f712858886ead64e0a8d3d97b41fa9",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1680,6 +1881,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM conflicts",
       "querySha256": "ab6fda46b98bbb07f6b1fe99672aaa96c83b5a988dfbccab6da90da5b97803f6",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1710,6 +1914,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'dolt'",
       "querySha256": "77b53012786d3b0520d937171b708f4b142c93f0aa8d664c202427ccb2a526c5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1724,7 +1931,8 @@
       "query": "SELECT * FROM conflicts",
       "querySha256": "ab6fda46b98bbb07f6b1fe99672aaa96c83b5a988dfbccab6da90da5b97803f6",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1739,6 +1947,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM public.conflicts",
       "querySha256": "de6c6b4777c0d015a1f9cdb66464f6700a1f709b4c12d6296cea2ec037f6d3b5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1752,6 +1963,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'public'",
       "querySha256": "d9fd29aed9a6b5d522ccb6c0c5d8ed59228b83126a1c8cf36004ae5f4b7fb711",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1765,6 +1979,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM conflicts",
       "querySha256": "ab6fda46b98bbb07f6b1fe99672aaa96c83b5a988dfbccab6da90da5b97803f6",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1778,6 +1995,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'public,dolt'",
       "querySha256": "352c66ebc6f6e10ae95e7239af24fb974a0d4e440114f8df7edbf04c0a1ed6d7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1791,6 +2011,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM conflicts",
       "querySha256": "ab6fda46b98bbb07f6b1fe99672aaa96c83b5a988dfbccab6da90da5b97803f6",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1804,6 +2027,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM CONFLICTS",
       "querySha256": "b9cabf237f4db49c0b8f9133c8e8c16a2ae38b929544ee37f844864dce4a6aaf",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1929,6 +2155,9 @@
       "expectedKind": "rows",
       "query": "CREATE SCHEMA newschema",
       "querySha256": "2ad934d0d3cc46cab317f8eb0f127a80f4ef101e4b36687f07d213367bb2dd25",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1942,6 +2171,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'newschema'",
       "querySha256": "ae2e56ddc8de1ecf970b8c3c746eaae64897012fe4d600bee84a90d6a8c5d40a",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1955,6 +2187,9 @@
       "expectedKind": "rows",
       "query": "CREATE TABLE test_sch (id INT PRIMARY KEY)",
       "querySha256": "69e4a4e2620cac1d35507c094d476670bd4b8e6f602433b61a9fbfeae500909c",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1968,6 +2203,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO test_sch VALUES (11)",
       "querySha256": "c6720188f2078b621dfdf18c7328d8ce5ae1830785a0d12d1f9feaafd12c6e93",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2077,6 +2315,9 @@
       "expectedKind": "rows",
       "query": "CREATE TABLE test (id INT PRIMARY KEY)",
       "querySha256": "6fbff633977b9768f9566c2315ec6c70b3cea247a41427787619bfee4d8dcd95",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2090,6 +2331,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO test VALUES (12)",
       "querySha256": "5127720bb8218705bec5879c73d2590016dda85ecda11664262cb8458e1687cc",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2217,6 +2461,9 @@
       "expectedKind": "error",
       "query": "SELECT * FROM public.constraint_violations",
       "querySha256": "14fa5fa4059d799a3fc3bd9664cde8f5f58cae00da240c469936d54402410395",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2230,6 +2477,9 @@
       "expectedKind": "error",
       "query": "SELECT * FROM constraint_violations",
       "querySha256": "52831444968fa860c0e2212aad830984b961974fa0b40065f38c73698f20830d",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2243,6 +2493,9 @@
       "expectedKind": "rows",
       "query": "CREATE TABLE constraint_violations (id INT PRIMARY KEY)",
       "querySha256": "02d40460c6252bbacec2a7d60bf35d3d284cafe816e1d0672e23a16abd39350f",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2256,6 +2509,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO constraint_violations VALUES (1)",
       "querySha256": "f4e9e23e25499ff00b017a77f1f5525cc8f8445f6173a02555f922d52008f093",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2269,6 +2525,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM constraint_violations",
       "querySha256": "52831444968fa860c0e2212aad830984b961974fa0b40065f38c73698f20830d",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2299,6 +2558,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'dolt'",
       "querySha256": "77b53012786d3b0520d937171b708f4b142c93f0aa8d664c202427ccb2a526c5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2313,7 +2575,8 @@
       "query": "SELECT * FROM constraint_violations",
       "querySha256": "52831444968fa860c0e2212aad830984b961974fa0b40065f38c73698f20830d",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2328,6 +2591,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM public.constraint_violations",
       "querySha256": "14fa5fa4059d799a3fc3bd9664cde8f5f58cae00da240c469936d54402410395",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2341,6 +2607,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'public'",
       "querySha256": "d9fd29aed9a6b5d522ccb6c0c5d8ed59228b83126a1c8cf36004ae5f4b7fb711",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2354,6 +2623,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM constraint_violations",
       "querySha256": "52831444968fa860c0e2212aad830984b961974fa0b40065f38c73698f20830d",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2367,6 +2639,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'public,dolt'",
       "querySha256": "352c66ebc6f6e10ae95e7239af24fb974a0d4e440114f8df7edbf04c0a1ed6d7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2380,6 +2655,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM constraint_violations",
       "querySha256": "52831444968fa860c0e2212aad830984b961974fa0b40065f38c73698f20830d",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2393,6 +2671,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM CONSTRAINT_VIOLATIONS",
       "querySha256": "8751e41ef8155710360a76045595ea89a6ffa3ee0574d7d3062c5203d068a3a1",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2534,6 +2815,9 @@
       "expectedKind": "rows",
       "query": "CREATE SCHEMA newschema",
       "querySha256": "2ad934d0d3cc46cab317f8eb0f127a80f4ef101e4b36687f07d213367bb2dd25",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2547,6 +2831,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'newschema'",
       "querySha256": "ae2e56ddc8de1ecf970b8c3c746eaae64897012fe4d600bee84a90d6a8c5d40a",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2560,6 +2847,9 @@
       "expectedKind": "rows",
       "query": "CREATE TABLE test_sch (id INT PRIMARY KEY)",
       "querySha256": "69e4a4e2620cac1d35507c094d476670bd4b8e6f602433b61a9fbfeae500909c",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2573,6 +2863,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO test_sch VALUES (11)",
       "querySha256": "c6720188f2078b621dfdf18c7328d8ce5ae1830785a0d12d1f9feaafd12c6e93",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2682,6 +2975,9 @@
       "expectedKind": "rows",
       "query": "CREATE TABLE test (id INT PRIMARY KEY)",
       "querySha256": "6fbff633977b9768f9566c2315ec6c70b3cea247a41427787619bfee4d8dcd95",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2695,6 +2991,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO test VALUES (12)",
       "querySha256": "5127720bb8218705bec5879c73d2590016dda85ecda11664262cb8458e1687cc",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2788,6 +3087,9 @@
       "expectedKind": "error",
       "query": "SELECT * FROM public.docs",
       "querySha256": "f945a90f8857015e60a0aa6d5081ded1cee29510a34274c476d5d8b831836ed7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2801,6 +3103,9 @@
       "expectedKind": "error",
       "query": "SELECT * FROM docs",
       "querySha256": "7cc1043ed136f2e09259b51edf981895a9e1d2410bbd73a094ef1345692005e8",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2926,6 +3231,9 @@
       "expectedKind": "rows",
       "query": "CREATE TABLE docs (id INT PRIMARY KEY)",
       "querySha256": "4bbd0515346f1970c1e8eb8c2c61bc7e0be9605e9683287bf15e88c0a26a50d4",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2939,6 +3247,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO docs VALUES (1)",
       "querySha256": "4e594daaf0a68dddd27307c9a4aced913c1a4a5272b275ae097e5d455e095f6b",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2952,6 +3263,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM docs",
       "querySha256": "7cc1043ed136f2e09259b51edf981895a9e1d2410bbd73a094ef1345692005e8",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2981,6 +3295,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'dolt'",
       "querySha256": "77b53012786d3b0520d937171b708f4b142c93f0aa8d664c202427ccb2a526c5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2994,6 +3311,9 @@
       "expectedKind": "rows",
       "query": "SELECT doc_name FROM docs",
       "querySha256": "4db31909a630dc860e36e1f77eec0978e74ad1230d84e350e57d9cea6623935e",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3007,6 +3327,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM public.docs",
       "querySha256": "f945a90f8857015e60a0aa6d5081ded1cee29510a34274c476d5d8b831836ed7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3020,6 +3343,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'public'",
       "querySha256": "d9fd29aed9a6b5d522ccb6c0c5d8ed59228b83126a1c8cf36004ae5f4b7fb711",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3033,6 +3359,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM docs",
       "querySha256": "7cc1043ed136f2e09259b51edf981895a9e1d2410bbd73a094ef1345692005e8",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3046,6 +3375,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'public,dolt'",
       "querySha256": "352c66ebc6f6e10ae95e7239af24fb974a0d4e440114f8df7edbf04c0a1ed6d7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3059,6 +3391,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM docs",
       "querySha256": "7cc1043ed136f2e09259b51edf981895a9e1d2410bbd73a094ef1345692005e8",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3072,6 +3407,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM DOCS",
       "querySha256": "168ab3df1e1325926800a17c0a4d240815c8ceaa6133e19833c4c2fb439ab634",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3085,6 +3423,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'public'",
       "querySha256": "d9fd29aed9a6b5d522ccb6c0c5d8ed59228b83126a1c8cf36004ae5f4b7fb711",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3258,6 +3599,9 @@
       "expectedKind": "error",
       "query": "SELECT * FROM public.diff",
       "querySha256": "5be8671df2ef8e7b44db6185ccba919928fa6d9bd140b16c8268d76eb6695dd6",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3271,6 +3615,9 @@
       "expectedKind": "error",
       "query": "SELECT * FROM diff",
       "querySha256": "30f5070b47d8cd4a06b334d914483166500c8f87d4be864cc99eb49620fa5506",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3284,6 +3631,9 @@
       "expectedKind": "rows",
       "query": "CREATE TABLE diff (id INT PRIMARY KEY)",
       "querySha256": "9d98a4955df0c81442413540f0eb65a235fe37b006304f0d85d022d7592f4d7e",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3297,6 +3647,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO diff VALUES (1)",
       "querySha256": "21963afac5be0babf4845a825e753dfd3d3a63c844595874779596053acba309",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3310,6 +3663,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM diff",
       "querySha256": "30f5070b47d8cd4a06b334d914483166500c8f87d4be864cc99eb49620fa5506",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3339,6 +3695,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'dolt'",
       "querySha256": "77b53012786d3b0520d937171b708f4b142c93f0aa8d664c202427ccb2a526c5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3352,6 +3711,9 @@
       "expectedKind": "rows",
       "query": "SELECT table_name FROM diff WHERE table_name = 'public.test'",
       "querySha256": "ce368591a99ea1d406036b0afabf172312089328f2f5b2e96665ca1b89beeb36",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3365,6 +3727,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM public.diff",
       "querySha256": "5be8671df2ef8e7b44db6185ccba919928fa6d9bd140b16c8268d76eb6695dd6",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3378,6 +3743,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'public'",
       "querySha256": "d9fd29aed9a6b5d522ccb6c0c5d8ed59228b83126a1c8cf36004ae5f4b7fb711",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3391,6 +3759,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM diff",
       "querySha256": "30f5070b47d8cd4a06b334d914483166500c8f87d4be864cc99eb49620fa5506",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3404,6 +3775,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'public,dolt'",
       "querySha256": "352c66ebc6f6e10ae95e7239af24fb974a0d4e440114f8df7edbf04c0a1ed6d7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3417,6 +3791,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM diff",
       "querySha256": "30f5070b47d8cd4a06b334d914483166500c8f87d4be864cc99eb49620fa5506",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3430,6 +3807,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM DIFF",
       "querySha256": "1011da51806e8598c31e3e4acd1336f3a15a3e2d04da4dd5fd3a8ccc09655a2f",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3571,6 +3951,9 @@
       "expectedKind": "rows",
       "query": "CREATE SCHEMA newschema",
       "querySha256": "2ad934d0d3cc46cab317f8eb0f127a80f4ef101e4b36687f07d213367bb2dd25",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3584,6 +3967,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'newschema'",
       "querySha256": "ae2e56ddc8de1ecf970b8c3c746eaae64897012fe4d600bee84a90d6a8c5d40a",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3597,6 +3983,9 @@
       "expectedKind": "rows",
       "query": "CREATE TABLE test_sch (id INT PRIMARY KEY)",
       "querySha256": "69e4a4e2620cac1d35507c094d476670bd4b8e6f602433b61a9fbfeae500909c",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3610,6 +3999,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO test_sch VALUES (11)",
       "querySha256": "c6720188f2078b621dfdf18c7328d8ce5ae1830785a0d12d1f9feaafd12c6e93",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3719,6 +4111,9 @@
       "expectedKind": "rows",
       "query": "CREATE TABLE test (id INT PRIMARY KEY)",
       "querySha256": "6fbff633977b9768f9566c2315ec6c70b3cea247a41427787619bfee4d8dcd95",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3732,6 +4127,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO test VALUES (12)",
       "querySha256": "5127720bb8218705bec5879c73d2590016dda85ecda11664262cb8458e1687cc",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3793,6 +4191,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'newschema,public'",
       "querySha256": "a8398174979eb87212e359bac567f630ab21854cd3fdac6c43ecd3053dc0fac3",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3822,6 +4223,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'public,newschema'",
       "querySha256": "fa0fdd1db636119fd377f9ddd81cdd1ad150a7a15a1611c85c66790249c77251",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3931,6 +4335,9 @@
       "expectedKind": "rows",
       "query": "CREATE SCHEMA newschema",
       "querySha256": "2ad934d0d3cc46cab317f8eb0f127a80f4ef101e4b36687f07d213367bb2dd25",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3944,6 +4351,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'newschema'",
       "querySha256": "ae2e56ddc8de1ecf970b8c3c746eaae64897012fe4d600bee84a90d6a8c5d40a",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3957,6 +4367,9 @@
       "expectedKind": "rows",
       "query": "CREATE TABLE test_sch (id INT PRIMARY KEY)",
       "querySha256": "69e4a4e2620cac1d35507c094d476670bd4b8e6f602433b61a9fbfeae500909c",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3970,6 +4383,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO test_sch VALUES (11)",
       "querySha256": "c6720188f2078b621dfdf18c7328d8ce5ae1830785a0d12d1f9feaafd12c6e93",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -4079,6 +4495,9 @@
       "expectedKind": "rows",
       "query": "CREATE TABLE test (id INT PRIMARY KEY)",
       "querySha256": "6fbff633977b9768f9566c2315ec6c70b3cea247a41427787619bfee4d8dcd95",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -4092,6 +4511,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO test VALUES (12)",
       "querySha256": "5127720bb8218705bec5879c73d2590016dda85ecda11664262cb8458e1687cc",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -4153,6 +4575,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'newschema,public'",
       "querySha256": "a8398174979eb87212e359bac567f630ab21854cd3fdac6c43ecd3053dc0fac3",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -4326,6 +4751,9 @@
       "expectedKind": "rows",
       "query": "CREATE TABLE foo (pk int);",
       "querySha256": "321cc60383825ec1390bdfd0933af91b224ebb7ad7a38dde1ccef7804ad7a11a",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -4339,6 +4767,9 @@
       "expectedKind": "rows",
       "query": "CREATE TABLE generated_foo (pk int);",
       "querySha256": "a2fa72db2be34e87d5cb330979becc7c279b0e287b3231c060187167e1316ada",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -4352,6 +4783,9 @@
       "expectedKind": "rows",
       "query": "CREATE TABLE generated_exception (pk int);",
       "querySha256": "9c14b8a810fa6162aff2b4c3b0bfd16c3816d31fdb0a2e62eacc566ccf78ea06",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -4397,6 +4831,9 @@
       "expectedKind": "rows",
       "query": "CREATE SCHEMA newschema",
       "querySha256": "2ad934d0d3cc46cab317f8eb0f127a80f4ef101e4b36687f07d213367bb2dd25",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -4426,6 +4863,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'newschema'",
       "querySha256": "ae2e56ddc8de1ecf970b8c3c746eaae64897012fe4d600bee84a90d6a8c5d40a",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -4551,6 +4991,9 @@
       "expectedKind": "rows",
       "query": "CREATE TABLE foo (pk int);",
       "querySha256": "321cc60383825ec1390bdfd0933af91b224ebb7ad7a38dde1ccef7804ad7a11a",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -4564,6 +5007,9 @@
       "expectedKind": "rows",
       "query": "CREATE TABLE test_foo (pk int);",
       "querySha256": "b3c9e5d877c48b3f86f1123962d617e1d14c7c1b17f7ca1a2ea243ee75f2c82d",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -4577,6 +5023,9 @@
       "expectedKind": "rows",
       "query": "CREATE TABLE generated_foo (pk int);",
       "querySha256": "a2fa72db2be34e87d5cb330979becc7c279b0e287b3231c060187167e1316ada",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -4590,6 +5039,9 @@
       "expectedKind": "rows",
       "query": "CREATE TABLE generated_exception (pk int);",
       "querySha256": "9c14b8a810fa6162aff2b4c3b0bfd16c3816d31fdb0a2e62eacc566ccf78ea06",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -4667,6 +5119,9 @@
       "expectedKind": "error",
       "query": "SELECT * FROM public.log",
       "querySha256": "e6c276c93eac8652c5c329d5a58900c8a66d9198bc454ddf927bbb404d953166",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -4680,6 +5135,9 @@
       "expectedKind": "error",
       "query": "SELECT * FROM log",
       "querySha256": "505c16d55bc712ee90b7410b52df9015a90e1e65b0c8954cb60989d0ce827864",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -4693,6 +5151,9 @@
       "expectedKind": "rows",
       "query": "CREATE TABLE log (id INT PRIMARY KEY)",
       "querySha256": "b8ec8120bb087d33149c43933f1f3d7dc36d772470cf9ec2ef824eac9cf99bd9",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -4706,6 +5167,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO log VALUES (1)",
       "querySha256": "489d63cdeec3203ba032983d5592c0b9ad8a6250c8ecd831ee4ebc4521565106",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -4719,6 +5183,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM log",
       "querySha256": "505c16d55bc712ee90b7410b52df9015a90e1e65b0c8954cb60989d0ce827864",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -4748,6 +5215,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'dolt'",
       "querySha256": "77b53012786d3b0520d937171b708f4b142c93f0aa8d664c202427ccb2a526c5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -4761,6 +5231,9 @@
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM log",
       "querySha256": "45677d708d094fc2bca843ae1e37664240b2cb57d5c6129cf0db2e1f90687427",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -4774,6 +5247,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM public.log",
       "querySha256": "e6c276c93eac8652c5c329d5a58900c8a66d9198bc454ddf927bbb404d953166",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -4787,6 +5263,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'public'",
       "querySha256": "d9fd29aed9a6b5d522ccb6c0c5d8ed59228b83126a1c8cf36004ae5f4b7fb711",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -4800,6 +5279,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM log",
       "querySha256": "505c16d55bc712ee90b7410b52df9015a90e1e65b0c8954cb60989d0ce827864",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -4893,6 +5375,9 @@
       "expectedKind": "error",
       "query": "SELECT * FROM public.merge_status",
       "querySha256": "99c15dca0a33a7ae717d3d44fe0db8c44ee8392ede8aeac60e63231c193c5b3e",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -4906,6 +5391,9 @@
       "expectedKind": "error",
       "query": "SELECT * FROM merge_status",
       "querySha256": "69fee2a8a65939461acbfb78ad7af9003778ee357b836ae9db13f969b927d808",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -4919,6 +5407,9 @@
       "expectedKind": "rows",
       "query": "CREATE TABLE merge_status (id INT PRIMARY KEY)",
       "querySha256": "5f8bb8af0d641e84523b37f74a1d070179abfc1324cb6377367405dec9fb4649",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -4932,6 +5423,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO merge_status VALUES (1)",
       "querySha256": "b826b5103b716070d418774075520cb640d2024e32ae33b15c863e3429b71928",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -4945,6 +5439,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM merge_status",
       "querySha256": "69fee2a8a65939461acbfb78ad7af9003778ee357b836ae9db13f969b927d808",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -4974,6 +5471,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'dolt'",
       "querySha256": "77b53012786d3b0520d937171b708f4b142c93f0aa8d664c202427ccb2a526c5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -4987,6 +5487,9 @@
       "expectedKind": "rows",
       "query": "SELECT is_merging FROM merge_status",
       "querySha256": "45528010d2d4ec491af1bcfcab7e67f89aefd0012f46d16cd648de78ce480430",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5000,6 +5503,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM public.merge_status",
       "querySha256": "99c15dca0a33a7ae717d3d44fe0db8c44ee8392ede8aeac60e63231c193c5b3e",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5013,6 +5519,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'public'",
       "querySha256": "d9fd29aed9a6b5d522ccb6c0c5d8ed59228b83126a1c8cf36004ae5f4b7fb711",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5026,6 +5535,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM merge_status",
       "querySha256": "69fee2a8a65939461acbfb78ad7af9003778ee357b836ae9db13f969b927d808",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5039,6 +5551,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'public,dolt'",
       "querySha256": "352c66ebc6f6e10ae95e7239af24fb974a0d4e440114f8df7edbf04c0a1ed6d7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5052,6 +5567,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM merge_status",
       "querySha256": "69fee2a8a65939461acbfb78ad7af9003778ee357b836ae9db13f969b927d808",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5065,6 +5583,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM MERGE_STATUS",
       "querySha256": "e9498a5aa1067da10cdfaa32aeb432be01435f6fd1dfdaa722040cdd88523d7a",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5110,6 +5631,9 @@
       "expectedKind": "rows",
       "query": "DESCRIBE dolt.\"status\"",
       "querySha256": "bed8eb9208df9ccc2677d1f0fcf54aea9fdc4bb1ccaafdd90b8277579e5c290a",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5203,6 +5727,9 @@
       "expectedKind": "error",
       "query": "SELECT * FROM public.status",
       "querySha256": "c7904d83640dd599d4854ad9cce48e133fb5312ebc49387afaf08ab58c82ef95",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5216,6 +5743,9 @@
       "expectedKind": "error",
       "query": "SELECT * FROM status",
       "querySha256": "b4bdd13d970301655b254c1564c6bbeca46796268f64a2f23f8e2066c97309cf",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5229,6 +5759,9 @@
       "expectedKind": "rows",
       "query": "CREATE TABLE status (id INT PRIMARY KEY)",
       "querySha256": "28f3a2f84bdc4bde1197166d176da3ec38434be8949cfd6eef82cfba669745c6",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5242,6 +5775,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO status VALUES (1)",
       "querySha256": "6b3b57fdabdd61f5e9afbbc04ab82f82e8b67f36bc4bae280aed64e9291a7efd",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5255,6 +5791,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM status",
       "querySha256": "b4bdd13d970301655b254c1564c6bbeca46796268f64a2f23f8e2066c97309cf",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5284,6 +5823,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'dolt'",
       "querySha256": "77b53012786d3b0520d937171b708f4b142c93f0aa8d664c202427ccb2a526c5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5297,6 +5839,9 @@
       "expectedKind": "rows",
       "query": "SELECT table_name FROM status",
       "querySha256": "1b12d7a10357f20d6e9e8a48162e071ad4b3bc60a028b0b67497396a45ac04ca",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5310,6 +5855,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM public.status",
       "querySha256": "c7904d83640dd599d4854ad9cce48e133fb5312ebc49387afaf08ab58c82ef95",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5323,6 +5871,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'public'",
       "querySha256": "d9fd29aed9a6b5d522ccb6c0c5d8ed59228b83126a1c8cf36004ae5f4b7fb711",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5336,6 +5887,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM status",
       "querySha256": "b4bdd13d970301655b254c1564c6bbeca46796268f64a2f23f8e2066c97309cf",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5349,6 +5903,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'public,dolt'",
       "querySha256": "352c66ebc6f6e10ae95e7239af24fb974a0d4e440114f8df7edbf04c0a1ed6d7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5362,6 +5919,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM status",
       "querySha256": "b4bdd13d970301655b254c1564c6bbeca46796268f64a2f23f8e2066c97309cf",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5375,6 +5935,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM STATUS",
       "querySha256": "634764d16fe855ad5f147b58b2f9ef35a519f0e92389ff789b7b5ec4e97ebfc8",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5452,6 +6015,9 @@
       "expectedKind": "error",
       "query": "SELECT * FROM public.tags",
       "querySha256": "09f5c3c8f1f5968bd7161af8ad9019702c715ce7d358d553a811bb71dd1bff23",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5465,6 +6031,9 @@
       "expectedKind": "error",
       "query": "SELECT * FROM tags",
       "querySha256": "52958684fa52b7a4753cd4356482dc6c655102a501d8aa48e03b1fb3dbbad02d",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5478,6 +6047,9 @@
       "expectedKind": "rows",
       "query": "CREATE TABLE tags (id INT PRIMARY KEY)",
       "querySha256": "b1162fa233314a0770a386ac05f3e782f86f84269197dd0753eb090ee8f90c87",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5491,6 +6063,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO tags VALUES (1)",
       "querySha256": "bb0c4fc61cf54b9312009f1d7ae7356e1649dbb8193916bee75eddd2d02eba8c",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5504,6 +6079,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM tags",
       "querySha256": "52958684fa52b7a4753cd4356482dc6c655102a501d8aa48e03b1fb3dbbad02d",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5533,6 +6111,9 @@
       "expectedKind": "error",
       "query": "CREATE SCHEMA dolt",
       "querySha256": "dcb1b4ce2d08f55dd106127ea34ac7d0ce7a7f7a98e23c4c9c4e14b7110ecf63",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5546,6 +6127,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'dolt'",
       "querySha256": "77b53012786d3b0520d937171b708f4b142c93f0aa8d664c202427ccb2a526c5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5559,6 +6143,9 @@
       "expectedKind": "rows",
       "query": "SELECT tag_name FROM tags",
       "querySha256": "c857968f517e2173ef1224e437326135aebc35df7dc692633f0f699008444335",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5572,6 +6159,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM public.tags",
       "querySha256": "09f5c3c8f1f5968bd7161af8ad9019702c715ce7d358d553a811bb71dd1bff23",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5585,6 +6175,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'public'",
       "querySha256": "d9fd29aed9a6b5d522ccb6c0c5d8ed59228b83126a1c8cf36004ae5f4b7fb711",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5598,6 +6191,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM tags",
       "querySha256": "52958684fa52b7a4753cd4356482dc6c655102a501d8aa48e03b1fb3dbbad02d",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5611,6 +6207,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'public,dolt'",
       "querySha256": "352c66ebc6f6e10ae95e7239af24fb974a0d4e440114f8df7edbf04c0a1ed6d7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5624,6 +6223,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM tags",
       "querySha256": "52958684fa52b7a4753cd4356482dc6c655102a501d8aa48e03b1fb3dbbad02d",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5637,6 +6239,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM TAGS",
       "querySha256": "234961bc19a8117283ed38c027a483264e29475ba4f1f44725bfeb7819d17999",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5714,6 +6319,9 @@
       "expectedKind": "rows",
       "query": "CREATE SCHEMA newschema",
       "querySha256": "2ad934d0d3cc46cab317f8eb0f127a80f4ef101e4b36687f07d213367bb2dd25",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5727,6 +6335,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'newschema'",
       "querySha256": "ae2e56ddc8de1ecf970b8c3c746eaae64897012fe4d600bee84a90d6a8c5d40a",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5788,6 +6399,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'newschema,public'",
       "querySha256": "a8398174979eb87212e359bac567f630ab21854cd3fdac6c43ecd3053dc0fac3",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5915,6 +6529,9 @@
       "expectedKind": "error",
       "query": "SELECT * FROM public.rebase",
       "querySha256": "a520205e049e41900416ef8a7a4500e4607877444ed23e1790973db9d0a8c63c",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5928,6 +6545,9 @@
       "expectedKind": "error",
       "query": "SELECT * FROM rebase",
       "querySha256": "b73a580ed10a7f7e703a9f88b5306b1222c518ca77b5e42fcf8d641b51d3ab1b",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5941,6 +6561,9 @@
       "expectedKind": "rows",
       "query": "CREATE TABLE rebase (id INT PRIMARY KEY)",
       "querySha256": "20e8992b865e2ac0fab007170aee94d4b3b014a80fa296bb7df4aa1fffed7cf8",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5954,6 +6577,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO rebase VALUES (1)",
       "querySha256": "bbc6e434f323485295c88686e2dc6cf42f89e0c747414841205dc554da408311",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5967,6 +6593,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM rebase",
       "querySha256": "b73a580ed10a7f7e703a9f88b5306b1222c518ca77b5e42fcf8d641b51d3ab1b",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -5996,6 +6625,9 @@
       "expectedKind": "error",
       "query": "CREATE SCHEMA dolt",
       "querySha256": "dcb1b4ce2d08f55dd106127ea34ac7d0ce7a7f7a98e23c4c9c4e14b7110ecf63",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6009,6 +6641,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'dolt'",
       "querySha256": "77b53012786d3b0520d937171b708f4b142c93f0aa8d664c202427ccb2a526c5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6022,6 +6657,9 @@
       "expectedKind": "rows",
       "query": "SELECT commit_message FROM rebase",
       "querySha256": "848f3f660ed09169131aed45c3844bc183b4f3acf67b521598db42d4d764ec2f",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6035,6 +6673,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM public.rebase",
       "querySha256": "a520205e049e41900416ef8a7a4500e4607877444ed23e1790973db9d0a8c63c",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6048,6 +6689,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'public'",
       "querySha256": "d9fd29aed9a6b5d522ccb6c0c5d8ed59228b83126a1c8cf36004ae5f4b7fb711",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6061,6 +6705,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM rebase",
       "querySha256": "b73a580ed10a7f7e703a9f88b5306b1222c518ca77b5e42fcf8d641b51d3ab1b",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6074,6 +6721,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'public,dolt'",
       "querySha256": "352c66ebc6f6e10ae95e7239af24fb974a0d4e440114f8df7edbf04c0a1ed6d7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6087,6 +6737,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM rebase",
       "querySha256": "b73a580ed10a7f7e703a9f88b5306b1222c518ca77b5e42fcf8d641b51d3ab1b",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6100,6 +6753,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM REBASE",
       "querySha256": "2b1a80e9c34dd608e8a03d61483f3bbfacf15f32a3e8ac894fb04cab81e6b61e",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6113,6 +6769,9 @@
       "expectedKind": "rows",
       "query": "DROP TABLE public.rebase;",
       "querySha256": "badaa8fcbfe9e303a3a8835d3cfe6bfacb60c95739fce9cec8ca10872e6da2dd",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6336,6 +6995,9 @@
       "expectedKind": "error",
       "query": "SELECT * FROM public.remote_branches",
       "querySha256": "bac799d4b4a086e05a462e37abfa00beb7a90f0e0ce79590b87c4773999fff1e",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6349,6 +7011,9 @@
       "expectedKind": "error",
       "query": "SELECT * FROM remote_branches",
       "querySha256": "8fe27c8b5530f2f81e620e6361edd2d9b756d84fba96dc4d06a457f9017a2c12",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6362,6 +7027,9 @@
       "expectedKind": "rows",
       "query": "CREATE TABLE remote_branches (id INT PRIMARY KEY)",
       "querySha256": "106c5bdd697e91cb007f46f81fe3030780830c38b872e755541a97953711dd90",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6375,6 +7043,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO remote_branches VALUES (1)",
       "querySha256": "2a84ed66f26679f262d166dd6af6dbe1a423bc9ef64ba1e503dad15ffdf0e7dd",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6388,6 +7059,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM remote_branches",
       "querySha256": "8fe27c8b5530f2f81e620e6361edd2d9b756d84fba96dc4d06a457f9017a2c12",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6417,6 +7091,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'dolt'",
       "querySha256": "77b53012786d3b0520d937171b708f4b142c93f0aa8d664c202427ccb2a526c5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6430,6 +7107,9 @@
       "expectedKind": "rows",
       "query": "SELECT name FROM remote_branches",
       "querySha256": "fdb7f9cdd2305070f71bf7ad3ccf10b238863e0cbe6965fcf648ffc7f4db167e",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6443,6 +7123,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM public.remote_branches",
       "querySha256": "bac799d4b4a086e05a462e37abfa00beb7a90f0e0ce79590b87c4773999fff1e",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6456,6 +7139,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'public'",
       "querySha256": "d9fd29aed9a6b5d522ccb6c0c5d8ed59228b83126a1c8cf36004ae5f4b7fb711",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6469,6 +7155,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM remote_branches",
       "querySha256": "8fe27c8b5530f2f81e620e6361edd2d9b756d84fba96dc4d06a457f9017a2c12",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6482,6 +7171,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'public,dolt'",
       "querySha256": "352c66ebc6f6e10ae95e7239af24fb974a0d4e440114f8df7edbf04c0a1ed6d7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6495,6 +7187,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM remote_branches",
       "querySha256": "8fe27c8b5530f2f81e620e6361edd2d9b756d84fba96dc4d06a457f9017a2c12",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6508,6 +7203,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM REMOTE_BRANCHES",
       "querySha256": "f5e94001b31e6dad5dcd5f17e676a8b16de8d49b5552d989efd725e3feb6cf86",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6585,6 +7283,9 @@
       "expectedKind": "error",
       "query": "SELECT * FROM public.remotes",
       "querySha256": "8fe23657c6dae983925b3d7332c97cd334c852d15ed98b97ec80f7bf9a1895df",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6598,6 +7299,9 @@
       "expectedKind": "error",
       "query": "SELECT * FROM remotes",
       "querySha256": "b929384f7084029140c613c244a23c3e06ea13a8c36e6fa59224138a9ceed9f0",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6611,6 +7315,9 @@
       "expectedKind": "rows",
       "query": "CREATE TABLE remotes (id INT PRIMARY KEY)",
       "querySha256": "6f6bf840163bd8738ccbf6f413d9e75a2eaf05a86dd7fcb3b13a5932dd7f9b71",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6624,6 +7331,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO remotes VALUES (1)",
       "querySha256": "9a6f6ca551bc66074882dcdc3fa7ca924b5810018a579c259a54c4fe41514ab7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6637,6 +7347,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM remotes",
       "querySha256": "b929384f7084029140c613c244a23c3e06ea13a8c36e6fa59224138a9ceed9f0",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6666,6 +7379,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'dolt'",
       "querySha256": "77b53012786d3b0520d937171b708f4b142c93f0aa8d664c202427ccb2a526c5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6679,6 +7395,9 @@
       "expectedKind": "rows",
       "query": "SELECT name FROM remotes",
       "querySha256": "e43d76f73be92c3f7a501c9fa15dcc602c8dca1d253ebc9a290e390d8601eaa2",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6692,6 +7411,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM public.remotes",
       "querySha256": "8fe23657c6dae983925b3d7332c97cd334c852d15ed98b97ec80f7bf9a1895df",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6705,6 +7427,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'public'",
       "querySha256": "d9fd29aed9a6b5d522ccb6c0c5d8ed59228b83126a1c8cf36004ae5f4b7fb711",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6718,6 +7443,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM remotes",
       "querySha256": "b929384f7084029140c613c244a23c3e06ea13a8c36e6fa59224138a9ceed9f0",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6731,6 +7459,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'public,dolt'",
       "querySha256": "352c66ebc6f6e10ae95e7239af24fb974a0d4e440114f8df7edbf04c0a1ed6d7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6744,6 +7475,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM remotes",
       "querySha256": "b929384f7084029140c613c244a23c3e06ea13a8c36e6fa59224138a9ceed9f0",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6757,6 +7491,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM REMOTES",
       "querySha256": "ccb1556b22977e170ac919b2b0d913df5721ad7b23d8f00a11b7badb2172c920",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6834,6 +7571,9 @@
       "expectedKind": "error",
       "query": "SELECT * FROM public.schema_conflicts",
       "querySha256": "9491c9799331955878b140591e33314321882e645a17851af2531bed308838f4",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6847,6 +7587,9 @@
       "expectedKind": "error",
       "query": "SELECT * FROM schema_conflicts",
       "querySha256": "46f23f309884df02f2814a7d874e7656d8e197753d46c98f185b5c6c9e2cd3ea",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6860,6 +7603,9 @@
       "expectedKind": "rows",
       "query": "CREATE TABLE schema_conflicts (id INT PRIMARY KEY)",
       "querySha256": "f2b4e0d4929d52ece62d5fa5979c4600854aef08a04a693924fe652af2926c28",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6873,6 +7619,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO schema_conflicts VALUES (1)",
       "querySha256": "7453e46b1ca7ecad9b6e355a5d3c00b072a2df669434642fecac01db60a93446",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6886,6 +7635,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM schema_conflicts",
       "querySha256": "46f23f309884df02f2814a7d874e7656d8e197753d46c98f185b5c6c9e2cd3ea",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6915,6 +7667,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'dolt'",
       "querySha256": "77b53012786d3b0520d937171b708f4b142c93f0aa8d664c202427ccb2a526c5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6928,6 +7683,9 @@
       "expectedKind": "rows",
       "query": "SELECT table_name FROM schema_conflicts",
       "querySha256": "6453cb9ec898af0109c6cc7a70670b58a05ae5ba9df36af907eca718f58b75f3",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6941,6 +7699,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM public.schema_conflicts",
       "querySha256": "9491c9799331955878b140591e33314321882e645a17851af2531bed308838f4",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6954,6 +7715,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'public'",
       "querySha256": "d9fd29aed9a6b5d522ccb6c0c5d8ed59228b83126a1c8cf36004ae5f4b7fb711",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6967,6 +7731,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM schema_conflicts",
       "querySha256": "46f23f309884df02f2814a7d874e7656d8e197753d46c98f185b5c6c9e2cd3ea",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6980,6 +7747,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'public,dolt'",
       "querySha256": "352c66ebc6f6e10ae95e7239af24fb974a0d4e440114f8df7edbf04c0a1ed6d7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -6993,6 +7763,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM schema_conflicts",
       "querySha256": "46f23f309884df02f2814a7d874e7656d8e197753d46c98f185b5c6c9e2cd3ea",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -7006,6 +7779,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM SCHEMA_CONFLICTS",
       "querySha256": "dad1f4b370d4547b7706e67593ca0fcacbb68a2000e2ef929796893bf667f607",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -7067,6 +7843,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM public.myview",
       "querySha256": "d10b96b08e4a1cc1b916c784e1e7498cda86fa48910102160691d696e014a7c7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -7176,6 +7955,9 @@
       "expectedKind": "rows",
       "query": "CREATE SCHEMA newschema",
       "querySha256": "2ad934d0d3cc46cab317f8eb0f127a80f4ef101e4b36687f07d213367bb2dd25",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -7189,6 +7971,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'newschema'",
       "querySha256": "ae2e56ddc8de1ecf970b8c3c746eaae64897012fe4d600bee84a90d6a8c5d40a",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -7202,6 +7987,9 @@
       "expectedKind": "error",
       "query": "SELECT * FROM myview",
       "querySha256": "25b2f0c846d1b21a71b5fa1026f6354d388c26950accece10a8cdc340079dfb0",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -7215,6 +8003,9 @@
       "expectedKind": "rows",
       "query": "SELECT * FROM public.myview",
       "querySha256": "d10b96b08e4a1cc1b916c784e1e7498cda86fa48910102160691d696e014a7c7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -7228,6 +8019,9 @@
       "expectedKind": "rows",
       "query": "CREATE VIEW testView AS SELECT 1 + 1",
       "querySha256": "d8ede7b2a8acd70bcfc659ab16f907fb39105cb64be1325202c13631e18cfa4b",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -7273,6 +8067,9 @@
       "expectedKind": "rows",
       "query": "SELECT table_schema, table_name FROM information_schema.views",
       "querySha256": "e551a38a90a4e64ba6b38e665c71fddc43e95ffc7f3290d8abf76bf517db4c24",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -7334,6 +8131,9 @@
       "expectedKind": "error",
       "query": "DROP VIEW myView",
       "querySha256": "dc85af7955e850b171152e2a83bec4b589035718b7a9daa4a45510cd59ff2d4d",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -7347,6 +8147,9 @@
       "expectedKind": "rows",
       "query": "DROP VIEW public.myView",
       "querySha256": "361f6ad3af922c4d8b46940f63a654e32d0b31326618de2d618dc4cc122cd1f5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -7376,6 +8179,9 @@
       "expectedKind": "rows",
       "query": "create view public.myNewView as select 3 + 3",
       "querySha256": "09cecbc9b07ead79a048d84165c20888f0e504d0aa7e32fc999ba6cb64a3ba7e",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -7421,6 +8227,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'newschema,public'",
       "querySha256": "a8398174979eb87212e359bac567f630ab21854cd3fdac6c43ecd3053dc0fac3",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -7466,6 +8275,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'public'",
       "querySha256": "d9fd29aed9a6b5d522ccb6c0c5d8ed59228b83126a1c8cf36004ae5f4b7fb711",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -7479,6 +8291,9 @@
       "expectedKind": "rows",
       "query": "CREATE VIEW testView AS SELECT 4 + 4",
       "querySha256": "9c8084a95313cdca4f97bbf98ea8f8a9f5d62f51d4d2d7abd7928135c99af376",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -7540,6 +8355,9 @@
       "expectedKind": "rows",
       "query": "DROP VIEW IF EXISTS noexist.testView",
       "querySha256": "7d5c549e1a57aca2745afd8f215188b024fde9c1a65c2a6ed21a74e59d654dd5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -7553,6 +8371,9 @@
       "expectedKind": "rows",
       "query": "DROP VIEW IF EXISTS newschema.testView",
       "querySha256": "fb1506f910809b852237f2d82d97898ca2660560b5246c96edfa7761a594e108",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -7678,6 +8499,9 @@
       "expectedKind": "rows",
       "query": "CREATE SCHEMA newschema",
       "querySha256": "2ad934d0d3cc46cab317f8eb0f127a80f4ef101e4b36687f07d213367bb2dd25",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -7691,6 +8515,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'newschema'",
       "querySha256": "ae2e56ddc8de1ecf970b8c3c746eaae64897012fe4d600bee84a90d6a8c5d40a",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -7704,6 +8531,9 @@
       "expectedKind": "rows",
       "query": "CREATE TABLE test_sch (id INT PRIMARY KEY)",
       "querySha256": "69e4a4e2620cac1d35507c094d476670bd4b8e6f602433b61a9fbfeae500909c",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -7717,6 +8547,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO test_sch VALUES (11)",
       "querySha256": "c6720188f2078b621dfdf18c7328d8ce5ae1830785a0d12d1f9feaafd12c6e93",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -7874,6 +8707,9 @@
       "expectedKind": "rows",
       "query": "CREATE TABLE test (id INT PRIMARY KEY)",
       "querySha256": "6fbff633977b9768f9566c2315ec6c70b3cea247a41427787619bfee4d8dcd95",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -7887,6 +8723,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO test VALUES (12)",
       "querySha256": "5127720bb8218705bec5879c73d2590016dda85ecda11664262cb8458e1687cc",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -7948,6 +8787,9 @@
       "expectedKind": "rows",
       "query": "SET search_path = 'newschema,public'",
       "querySha256": "a8398174979eb87212e359bac567f630ab21854cd3fdac6c43ecd3053dc0fac3",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },

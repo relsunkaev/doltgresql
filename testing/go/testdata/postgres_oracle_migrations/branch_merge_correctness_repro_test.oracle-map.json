@@ -23,6 +23,9 @@
       "expectedKind": "rows",
       "query": "SELECT strpos(DOLT_MERGE('main')::text, 'merge successful') > 1;",
       "querySha256": "a154c77a45e9de8dfda8e1e9de27041e171f5eaf664b8930eaf503f6c84a568e",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -36,6 +39,9 @@
       "expectedKind": "rows",
       "query": "SELECT id, base_value, doubled\n\t\t\t\t\t\tFROM merge_generated_items\n\t\t\t\t\t\tORDER BY id;",
       "querySha256": "e6630258ab52317f6c8e4059d54ec0307ee3b9644da99bf533d425ab155a6dbc",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -49,6 +55,9 @@
       "expectedKind": "rows",
       "query": "BEGIN;",
       "querySha256": "09d5c7e4829721a8d33975034ec970f527d10fe2957088aecdd74a4bfde43190",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -62,6 +71,9 @@
       "expectedKind": "rows",
       "query": "SELECT strpos(DOLT_MERGE('main')::text, 'conflicts found') > 1;",
       "querySha256": "5134b1f5cda858f286ce377433678775515a34eff7feda691d79ef1b9f6437ce",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -76,7 +88,8 @@
       "query": "SELECT \"table\", num_conflicts FROM dolt_conflicts;",
       "querySha256": "a74116ec97781a2f50754514d8b857154635175061ad9bb39e85306ea16e18bf",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -91,6 +104,9 @@
       "expectedKind": "rows",
       "query": "SELECT base_base_value, base_doubled, our_base_value, our_doubled, their_base_value, their_doubled\n\t\t\t\t\t\tFROM dolt_conflicts_merge_generated_conflict_items;",
       "querySha256": "72f260a360eb23548e372aec4ac21f53d64ac24a12c93100eb24ab641f5b76a0",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -104,6 +120,9 @@
       "expectedKind": "rows",
       "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM DOLT_PREVIEW_MERGE_CONFLICTS(\n\t\t\t\t\t\t\t'main',\n\t\t\t\t\t\t\t'other',\n\t\t\t\t\t\t\t'preview_conflict_value()'\n\t\t\t\t\t\t);",
       "querySha256": "10e89a40007b5f4e1d89bcdbb6b995653b9838015d75be9d45ccc15e6e0bfd89",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -117,6 +136,9 @@
       "expectedKind": "rows",
       "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM DOLT_PREVIEW_MERGE_CONFLICTS(\n\t\t\t\t\t\t\t'main',\n\t\t\t\t\t\t\t'other',\n\t\t\t\t\t\t\t'preview_procedure_conflict_value(integer)'\n\t\t\t\t\t\t);",
       "querySha256": "01c671eb5ef7bf9ed9192bed8154068af718b0092b317f519510c582411ac141",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -130,6 +152,9 @@
       "expectedKind": "rows",
       "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM DOLT_PREVIEW_MERGE_CONFLICTS(\n\t\t\t\t\t\t\t'main',\n\t\t\t\t\t\t\t'other',\n\t\t\t\t\t\t\t'preview_trigger_conflict_items.preview_trigger_conflict_changed'\n\t\t\t\t\t\t);",
       "querySha256": "72effc34fb2a84b7088b52cc0bb00baee023b5812bb7de10698eac744df882f9",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -143,6 +168,9 @@
       "expectedKind": "rows",
       "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM DOLT_PREVIEW_MERGE_CONFLICTS(\n\t\t\t\t\t\t\t'main',\n\t\t\t\t\t\t\t'other',\n\t\t\t\t\t\t\t'preview_view_conflict_reader'\n\t\t\t\t\t\t);",
       "querySha256": "b9adcd076891e2a5c92b3324e6b082b4d09e7b47908d2ffe89720d6994176a93",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -156,6 +184,9 @@
       "expectedKind": "rows",
       "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM DOLT_PREVIEW_MERGE_CONFLICTS_SUMMARY('main', 'other');",
       "querySha256": "bd9b34ef85c9dfa7cb59bb6802b1cb7920d0b4eba506afdddea34243064465e1",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -169,6 +200,9 @@
       "expectedKind": "rows",
       "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM DOLT_PREVIEW_MERGE_CONFLICTS_SUMMARY('main', 'other');",
       "querySha256": "bd9b34ef85c9dfa7cb59bb6802b1cb7920d0b4eba506afdddea34243064465e1",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -182,6 +216,9 @@
       "expectedKind": "rows",
       "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM DOLT_PREVIEW_MERGE_CONFLICTS_SUMMARY('main', 'other');",
       "querySha256": "bd9b34ef85c9dfa7cb59bb6802b1cb7920d0b4eba506afdddea34243064465e1",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -195,6 +232,9 @@
       "expectedKind": "rows",
       "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM DOLT_PREVIEW_MERGE_CONFLICTS_SUMMARY('main', 'other');",
       "querySha256": "bd9b34ef85c9dfa7cb59bb6802b1cb7920d0b4eba506afdddea34243064465e1",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -208,6 +248,9 @@
       "expectedKind": "rows",
       "query": "SELECT strpos(DOLT_MERGE('main')::text, 'conflicts found') > 1;",
       "querySha256": "5134b1f5cda858f286ce377433678775515a34eff7feda691d79ef1b9f6437ce",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -221,6 +264,9 @@
       "expectedKind": "rows",
       "query": "BEGIN;",
       "querySha256": "09d5c7e4829721a8d33975034ec970f527d10fe2957088aecdd74a4bfde43190",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -234,6 +280,9 @@
       "expectedKind": "rows",
       "query": "SELECT strpos(DOLT_MERGE('main')::text, 'conflicts found') > 1;",
       "querySha256": "5134b1f5cda858f286ce377433678775515a34eff7feda691d79ef1b9f6437ce",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -247,6 +296,9 @@
       "expectedKind": "rows",
       "query": "BEGIN;",
       "querySha256": "09d5c7e4829721a8d33975034ec970f527d10fe2957088aecdd74a4bfde43190",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -260,6 +312,9 @@
       "expectedKind": "rows",
       "query": "SELECT strpos(DOLT_MERGE('main')::text, 'conflicts found') > 1;",
       "querySha256": "5134b1f5cda858f286ce377433678775515a34eff7feda691d79ef1b9f6437ce",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -273,6 +328,9 @@
       "expectedKind": "rows",
       "query": "BEGIN;",
       "querySha256": "09d5c7e4829721a8d33975034ec970f527d10fe2957088aecdd74a4bfde43190",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -286,6 +344,9 @@
       "expectedKind": "rows",
       "query": "SELECT strpos(DOLT_MERGE('main')::text, 'conflicts found') > 1;",
       "querySha256": "5134b1f5cda858f286ce377433678775515a34eff7feda691d79ef1b9f6437ce",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -299,6 +360,9 @@
       "expectedKind": "rows",
       "query": "SELECT strpos(DOLT_MERGE('main')::text, 'conflicts found') > 1;",
       "querySha256": "5134b1f5cda858f286ce377433678775515a34eff7feda691d79ef1b9f6437ce",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -312,6 +376,9 @@
       "expectedKind": "rows",
       "query": "SELECT strpos(DOLT_MERGE('main')::text, 'conflicts found') > 1;",
       "querySha256": "5134b1f5cda858f286ce377433678775515a34eff7feda691d79ef1b9f6437ce",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -325,6 +392,9 @@
       "expectedKind": "rows",
       "query": "SELECT strpos(DOLT_MERGE('main')::text, 'conflicts found') > 1;",
       "querySha256": "5134b1f5cda858f286ce377433678775515a34eff7feda691d79ef1b9f6437ce",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -338,6 +408,9 @@
       "expectedKind": "rows",
       "query": "SELECT merge_apply_function_value();",
       "querySha256": "6e1a47d454ba4e9c1b1a54d91e1ab112cebddbbb0569db9bfb84a8b61f5701ef",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -351,6 +424,9 @@
       "expectedKind": "rows",
       "query": "SELECT strpos(DOLT_MERGE('main')::text, 'merge successful') > 1;",
       "querySha256": "a154c77a45e9de8dfda8e1e9de27041e171f5eaf664b8930eaf503f6c84a568e",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -364,6 +440,9 @@
       "expectedKind": "rows",
       "query": "SELECT merge_apply_function_value();",
       "querySha256": "6e1a47d454ba4e9c1b1a54d91e1ab112cebddbbb0569db9bfb84a8b61f5701ef",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -377,6 +456,9 @@
       "expectedKind": "rows",
       "query": "SELECT label FROM merge_function_notes;",
       "querySha256": "a4affd7af462d157445963b6c1408229076bed195dfd3157a25b9c6ce1b7a516",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -390,6 +472,9 @@
       "expectedKind": "rows",
       "query": "SELECT COUNT(*) FROM merge_sequence_items;",
       "querySha256": "f9077839d685176b20f0dc7e78371570a72e46167bb30bbbee6b4b124c0e33dc",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -403,6 +488,9 @@
       "expectedKind": "rows",
       "query": "SELECT strpos(DOLT_MERGE('main')::text, 'merge successful') > 1;",
       "querySha256": "a154c77a45e9de8dfda8e1e9de27041e171f5eaf664b8930eaf503f6c84a568e",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -416,6 +504,9 @@
       "expectedKind": "rows",
       "query": "SELECT label FROM merge_sequence_items WHERE id = 2;",
       "querySha256": "76f1a3bb75eedd8fc5b7a18e105b86701e869c705e07e6de5c91be8aa837a340",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -430,7 +521,8 @@
       "query": "SELECT nextval('merge_sequence_items_id_seq');",
       "querySha256": "49ea26c074c599cd3ccc47f3a8a2554aaaf2bc7df1f95cd0e213f6f590646b0f",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -445,6 +537,9 @@
       "expectedKind": "rows",
       "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM information_schema.triggers\n\t\t\t\t\t\tWHERE trigger_name = 'merge_trigger_changed';",
       "querySha256": "2797db09f35d5f7225eac4405129df0b0a9a9cd3d08947f7b12c3fb92073181c",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -458,6 +553,9 @@
       "expectedKind": "rows",
       "query": "SELECT strpos(DOLT_MERGE('main')::text, 'merge successful') > 1;",
       "querySha256": "a154c77a45e9de8dfda8e1e9de27041e171f5eaf664b8930eaf503f6c84a568e",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -471,6 +569,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO merge_trigger_items VALUES (1, 'plain');",
       "querySha256": "5bb3c4ab004a531995327e8e3a50386a28222f63e4e020b3a7301229e76834b6",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -484,6 +585,9 @@
       "expectedKind": "rows",
       "query": "SELECT label FROM merge_trigger_items;",
       "querySha256": "9cc3cf94f21df935c48495cd5c7954e5e85aeb3369d525cb69fe2fdefbd8176d",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -497,6 +601,9 @@
       "expectedKind": "rows",
       "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM DOLT_PREVIEW_MERGE_CONFLICTS(\n\t\t\t\t\t\t\t'main',\n\t\t\t\t\t\t\t'other',\n\t\t\t\t\t\t\t'preview_sequence_conflict_seq'\n\t\t\t\t\t\t);",
       "querySha256": "8207d8ac7540d1dd18bc204bc2e60b0ae76c31152ec16e3b58aac0f1df869b76",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -510,6 +617,9 @@
       "expectedKind": "rows",
       "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM DOLT_PREVIEW_MERGE_CONFLICTS(\n\t\t\t\t\t\t\t'main',\n\t\t\t\t\t\t\t'other',\n\t\t\t\t\t\t\t'preview_enum_conflict_type'\n\t\t\t\t\t\t);",
       "querySha256": "05cac5f8fd86efdc949ff5e0ccd35f7e9e488a3948a1be3caaf3e88bec7a1414",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -523,6 +633,9 @@
       "expectedKind": "rows",
       "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM DOLT_PREVIEW_MERGE_CONFLICTS(\n\t\t\t\t\t\t\t'main',\n\t\t\t\t\t\t\t'other',\n\t\t\t\t\t\t\t'preview_composite_conflict_type'\n\t\t\t\t\t\t);",
       "querySha256": "6090178548d56fa0597c79d048f1d60889f6917caa771bb5dd9a194402c14758",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -536,6 +649,9 @@
       "expectedKind": "rows",
       "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM DOLT_PREVIEW_MERGE_CONFLICTS(\n\t\t\t\t\t\t\t'main',\n\t\t\t\t\t\t\t'other',\n\t\t\t\t\t\t\t'preview_domain_conflict_type'\n\t\t\t\t\t\t);",
       "querySha256": "b77a7d27eb6b39a8802e51aef2c6e4fb89110fa3824d90bac76e0bb50c610d59",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     }

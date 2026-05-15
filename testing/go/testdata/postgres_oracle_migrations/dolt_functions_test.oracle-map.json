@@ -3479,6 +3479,9 @@
       "expectedKind": "rows",
       "query": "CREATE TABLE t1 (pk int primary key);",
       "querySha256": "c3ab58c6ebc90100ccc5aba3653cbdace1084fefad63c89163f03d41a858e7f8",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3524,6 +3527,9 @@
       "expectedKind": "rows",
       "query": "CREATE TABLE t1 (pk int primary key);",
       "querySha256": "c3ab58c6ebc90100ccc5aba3653cbdace1084fefad63c89163f03d41a858e7f8",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -4395,6 +4401,9 @@
       "expectedKind": "rows",
       "query": "SET search_path TO test_schema;",
       "querySha256": "7589ec86e4dc66e5d75460af6d92632b3cea8bf177a060ec280768e185af3d9c",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },

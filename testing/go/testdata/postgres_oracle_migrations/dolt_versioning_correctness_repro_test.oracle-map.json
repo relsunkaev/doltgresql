@@ -23,6 +23,9 @@
       "expectedKind": "rows",
       "query": "SELECT label FROM stash_tracked_items;",
       "querySha256": "dd03560ec0df472acb0dd427f0dc232d9965a5349f2955832771f7eef2596f7b",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -52,6 +55,9 @@
       "expectedKind": "rows",
       "query": "SELECT label FROM stash_tracked_items;",
       "querySha256": "dd03560ec0df472acb0dd427f0dc232d9965a5349f2955832771f7eef2596f7b",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -81,6 +87,9 @@
       "expectedKind": "rows",
       "query": "SELECT label FROM stash_tracked_items;",
       "querySha256": "dd03560ec0df472acb0dd427f0dc232d9965a5349f2955832771f7eef2596f7b",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -413,6 +422,9 @@
       "expectedKind": "rows",
       "query": "SELECT id, label FROM stash_untracked_items;",
       "querySha256": "474d8cdcde3709e992f81da8c3100ac1e1240831d34890c52c2ce5b236c0659a",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -842,6 +854,9 @@
       "expectedKind": "error",
       "query": "SELECT reset_uncommitted_function_value();",
       "querySha256": "e0822c90acb2c13b2f2d9ac35641954b62b38569af8a8d0d081aa0d24e4c2978",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -855,6 +870,9 @@
       "expectedKind": "rows",
       "query": "SELECT id FROM reset_procedure_audit;",
       "querySha256": "2e259b9ff2fd451fa527acc7db94968ceb4a99843f497e6225b212f798b5e355",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -900,6 +918,9 @@
       "expectedKind": "error",
       "query": "CALL reset_uncommitted_procedure();",
       "querySha256": "ca404e477a6cac97528dac56c161bd6eb87746bc4f532fe89b20916dfcbae974",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -913,6 +934,9 @@
       "expectedKind": "rows",
       "query": "SELECT id FROM reset_uncommitted_view;",
       "querySha256": "d69e93fcebcc6c3a36540a1b2bb303665a58041d6d3b9d80d152797b08361479",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -974,6 +998,9 @@
       "expectedKind": "error",
       "query": "SELECT id FROM reset_uncommitted_view;",
       "querySha256": "d69e93fcebcc6c3a36540a1b2bb303665a58041d6d3b9d80d152797b08361479",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -987,6 +1014,9 @@
       "expectedKind": "rows",
       "query": "SELECT id FROM reset_uncommitted_matview;",
       "querySha256": "c6a106076567da91493a46de70a35944e5db127c43913dc54afa62926873e237",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1048,6 +1078,9 @@
       "expectedKind": "error",
       "query": "SELECT id FROM reset_uncommitted_matview;",
       "querySha256": "c6a106076567da91493a46de70a35944e5db127c43913dc54afa62926873e237",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1094,7 +1127,8 @@
       "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_type\n\t\t\t\t\t\tWHERE typname = 'reset_uncommitted_enum';",
       "querySha256": "ec94d6a3e820efeed0e44d32ae93ae6d89728ee8cb66a1686fa163cdf85401d7",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1142,7 +1176,8 @@
       "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_type\n\t\t\t\t\t\tWHERE typname = 'reset_uncommitted_composite';",
       "querySha256": "a8b331555fb357dfd5767b57c0d212447084eab264ffb7c7e0cdb6abf48fb70c",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1190,7 +1225,8 @@
       "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_type\n\t\t\t\t\t\tWHERE typname = 'reset_uncommitted_domain';",
       "querySha256": "8d4569d451a04cb66642162eac610a920e6671a004343ef877bd5d0e25bb219f",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1206,7 +1242,8 @@
       "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_extension\n\t\t\t\t\t\tWHERE extname = 'hstore';",
       "querySha256": "17165c81f391d3c2e0e6ad337d940a90c2ef9f4b8701130fc3eca44f90f34e97",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1222,7 +1259,8 @@
       "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_type\n\t\t\t\t\t\tWHERE typname = 'hstore';",
       "querySha256": "2a768355eac723f97f84153f23300fb510a1ba896c2cc1dfb39786fc9d2d9618",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1270,7 +1308,8 @@
       "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_extension\n\t\t\t\t\t\tWHERE extname = 'hstore';",
       "querySha256": "17165c81f391d3c2e0e6ad337d940a90c2ef9f4b8701130fc3eca44f90f34e97",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1286,7 +1325,8 @@
       "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_type\n\t\t\t\t\t\tWHERE typname = 'hstore';",
       "querySha256": "2a768355eac723f97f84153f23300fb510a1ba896c2cc1dfb39786fc9d2d9618",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1349,6 +1389,9 @@
       "expectedKind": "error",
       "query": "SELECT nextval('reset_uncommitted_sequence_value');",
       "querySha256": "e6a44c787e97356d668bbc72ade9c4bd85222d910633e5b011981129f44e1d49",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1410,6 +1453,9 @@
       "expectedKind": "rows",
       "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM information_schema.triggers\n\t\t\t\t\t\tWHERE trigger_name = 'reset_uncommitted_trigger';",
       "querySha256": "26155ff26c675a56329d779012c5ea35fb73d7aca00b1769e73b11e9521a2dfc",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1423,6 +1469,9 @@
       "expectedKind": "rows",
       "query": "SELECT reset_revision_function_value();",
       "querySha256": "880ae48dc799e19c61f66070554a8f1786b3549de0176011c3f1f831e1ef264e",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1468,6 +1517,9 @@
       "expectedKind": "rows",
       "query": "SELECT reset_revision_function_value();",
       "querySha256": "880ae48dc799e19c61f66070554a8f1786b3549de0176011c3f1f831e1ef264e",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1481,6 +1533,9 @@
       "expectedKind": "rows",
       "query": "SELECT COUNT(*) FROM reset_revision_sequence_items;",
       "querySha256": "cebedf13771ec0fea2d8b4b53f33d863e69eefd4d5719a89c7a9ee7d0865d035",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1526,6 +1581,9 @@
       "expectedKind": "rows",
       "query": "SELECT COUNT(*) FROM reset_revision_sequence_items;",
       "querySha256": "cebedf13771ec0fea2d8b4b53f33d863e69eefd4d5719a89c7a9ee7d0865d035",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1540,7 +1598,8 @@
       "query": "SELECT nextval('reset_revision_sequence_items_id_seq');",
       "querySha256": "11659b6b1d16d7be725c545cdada18ea1a30c467bd77db07badaad78a8c6353c",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1555,6 +1614,9 @@
       "expectedKind": "rows",
       "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM information_schema.triggers\n\t\t\t\t\t\tWHERE trigger_name = 'reset_revision_trigger';",
       "querySha256": "d882544c64db614b90e1224e392bcc74765f9a55854eb6e69febd43692fe05a8",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1600,6 +1662,9 @@
       "expectedKind": "rows",
       "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM information_schema.triggers\n\t\t\t\t\t\tWHERE trigger_name = 'reset_revision_trigger';",
       "querySha256": "d882544c64db614b90e1224e392bcc74765f9a55854eb6e69febd43692fe05a8",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1613,6 +1678,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO reset_revision_trigger_items VALUES (1, 'plain');",
       "querySha256": "d473d2d2dbc525ab731c68b59304e0db81df46dd748423dea7e8661fc2429179",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1626,6 +1694,9 @@
       "expectedKind": "rows",
       "query": "SELECT label FROM reset_revision_trigger_items;",
       "querySha256": "8608074ed244cdab06c9c439bb5b4270c743309a3a53854e7b2326fbbad3686d",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1719,6 +1790,9 @@
       "expectedKind": "rows",
       "query": "SELECT reset_staged_function_value();",
       "querySha256": "3bbdee7d50725614bc4b0c81bf452de4fd4c9ff938d31a9acc70633875c85014",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1829,7 +1903,8 @@
       "query": "SELECT COUNT(*) FROM reset_staged_view;",
       "querySha256": "cb78f0f531ea946b96d61cf01986eea14944a5b03c0e6b9de99881c73a705a50",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -1892,6 +1967,9 @@
       "expectedKind": "rows",
       "query": "SELECT id FROM reset_staged_matview;",
       "querySha256": "d160f63d4082db244aab3c6c1fe53cf2b658db7ab33915d9619ff90484721e37",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -1986,7 +2064,8 @@
       "query": "SELECT nextval('reset_staged_sequence_value');",
       "querySha256": "c75d05163456a480914c4f0cf49a93f017256c19ac01cd61d0719be60c3572c3",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2081,6 +2160,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO reset_staged_trigger_items VALUES (1, 'plain');",
       "querySha256": "8e992b2f67ae8f14cc18a07f3c010e61ba96db0eeb85b8fd9bf27285faea44e3",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2094,6 +2176,9 @@
       "expectedKind": "rows",
       "query": "SELECT label FROM reset_staged_trigger_items;",
       "querySha256": "7666961c734460c6442d4169cfebfb41e00f02056a8ad0cf7802fb16ecacb5d4",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2107,6 +2192,9 @@
       "expectedKind": "rows",
       "query": "SELECT checkout_function_value();",
       "querySha256": "465154dac3f5dabfa7a500015cbb17c58ead32b978f9cd4a6823c6d435479c3d",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2136,6 +2224,9 @@
       "expectedKind": "rows",
       "query": "SELECT checkout_function_value();",
       "querySha256": "465154dac3f5dabfa7a500015cbb17c58ead32b978f9cd4a6823c6d435479c3d",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2166,7 +2257,8 @@
       "query": "SELECT nextval('checkout_sequence_items_id_seq');",
       "querySha256": "c0a2b141ddffe5470e5cda7c32c18bb005a5b5cedff8ddfa9fd21ad48f32ad72",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2239,6 +2331,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO checkout_trigger_items VALUES (1, 'plain');",
       "querySha256": "7f7d1c443cf0545f9d1c680472b2329159de6c7a511d5d00ede5411ac7c16302",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2252,6 +2347,9 @@
       "expectedKind": "rows",
       "query": "SELECT label FROM checkout_trigger_items;",
       "querySha256": "69b685efbeff9cb155083eb0c291426089430d2136bfb3e7ae25d9d07909cfda",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2266,7 +2364,8 @@
       "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_extension\n\t\t\t\t\t\tWHERE extname = 'hstore';",
       "querySha256": "17165c81f391d3c2e0e6ad337d940a90c2ef9f4b8701130fc3eca44f90f34e97",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2282,7 +2381,8 @@
       "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_type\n\t\t\t\t\t\tWHERE typname = 'hstore';",
       "querySha256": "2a768355eac723f97f84153f23300fb510a1ba896c2cc1dfb39786fc9d2d9618",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2314,7 +2414,8 @@
       "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_extension\n\t\t\t\t\t\tWHERE extname = 'hstore';",
       "querySha256": "17165c81f391d3c2e0e6ad337d940a90c2ef9f4b8701130fc3eca44f90f34e97",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2330,7 +2431,8 @@
       "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_type\n\t\t\t\t\t\tWHERE typname = 'hstore';",
       "querySha256": "2a768355eac723f97f84153f23300fb510a1ba896c2cc1dfb39786fc9d2d9618",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2393,6 +2495,9 @@
       "expectedKind": "error",
       "query": "SELECT clean_uncommitted_function_value();",
       "querySha256": "1d66db63e369c65c11c21b5542d52a9d36026765a06bdf939e3f2bc75f797d5b",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2454,6 +2559,9 @@
       "expectedKind": "error",
       "query": "SELECT nextval('clean_uncommitted_sequence_value');",
       "querySha256": "81089b8b263cabef592f6f6567e3b04d02ef43d493bd3c71d54a65e7cee97824",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2500,7 +2608,8 @@
       "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_type\n\t\t\t\t\t\tWHERE typname IN (\n\t\t\t\t\t\t\t'clean_uncommitted_enum',\n\t\t\t\t\t\t\t'clean_uncommitted_composite',\n\t\t\t\t\t\t\t'clean_uncommitted_domain'\n\t\t\t\t\t\t);",
       "querySha256": "6071e35e951bab075043b538462d02e3d403cb6ba5eb29baca3853bcb0c5376b",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2548,7 +2657,8 @@
       "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_extension\n\t\t\t\t\t\tWHERE extname = 'hstore';",
       "querySha256": "17165c81f391d3c2e0e6ad337d940a90c2ef9f4b8701130fc3eca44f90f34e97",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2564,7 +2674,8 @@
       "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_type\n\t\t\t\t\t\tWHERE typname = 'hstore';",
       "querySha256": "2a768355eac723f97f84153f23300fb510a1ba896c2cc1dfb39786fc9d2d9618",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2627,6 +2738,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO clean_trigger_items VALUES (1, 'plain');",
       "querySha256": "d76e01ace3abf25909cbc2c1c6bdb3ba45d5af44c866cea25aebdccbd7de78d2",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2640,6 +2754,9 @@
       "expectedKind": "rows",
       "query": "SELECT label FROM clean_trigger_items;",
       "querySha256": "84cfe446f9b1836e2e53c717db4ee8e84a0230ca769a9dfbf15d50a4117028d2",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2653,6 +2770,9 @@
       "expectedKind": "rows",
       "query": "SELECT cherry_pick_function_value();",
       "querySha256": "605479f5f4b992c2466c4338cfda195268ccd405c6f0728877b4f906295d04f9",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2682,6 +2802,9 @@
       "expectedKind": "rows",
       "query": "SELECT cherry_pick_function_value();",
       "querySha256": "605479f5f4b992c2466c4338cfda195268ccd405c6f0728877b4f906295d04f9",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2695,6 +2818,9 @@
       "expectedKind": "rows",
       "query": "SELECT COUNT(*) FROM cherry_pick_sequence_items;",
       "querySha256": "9ead9bfeaf6f8905edecbcfeec1c69f3ac8a2258dcfb1d01bab68a4bc22d182b",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2724,6 +2850,9 @@
       "expectedKind": "rows",
       "query": "SELECT label FROM cherry_pick_sequence_items WHERE id = 2;",
       "querySha256": "3e516e04d0b5594ced0954eeb2e5d33f06e7a4f73db55109c2d8dfb530ed98eb",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2738,7 +2867,8 @@
       "query": "SELECT nextval('cherry_pick_sequence_items_id_seq');",
       "querySha256": "df9d9ccf5c23ba04ffff617f894646022d257692e6c19f572c2f5c5c21e179b2",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2753,6 +2883,9 @@
       "expectedKind": "rows",
       "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM information_schema.triggers\n\t\t\t\t\t\tWHERE trigger_name = 'cherry_pick_trigger_changed';",
       "querySha256": "c87672e1ffd08b12aced01ae0488c46a442ffa428016c35eac4f36b76edd2d28",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2782,6 +2915,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO cherry_pick_trigger_items VALUES (1, 'plain');",
       "querySha256": "788f4a067821c480d0280ef9dfacefc36664459def148244757b942f5a8b221d",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2795,6 +2931,9 @@
       "expectedKind": "rows",
       "query": "SELECT label FROM cherry_pick_trigger_items;",
       "querySha256": "4155fa70e798611e6ac2dd7529af94537cd29d5a4bd1ffae3fcd980748d328ad",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2808,6 +2947,9 @@
       "expectedKind": "rows",
       "query": "SELECT COUNT(*) FROM revert_sequence_items;",
       "querySha256": "f84f407a80641aa582167cc1a86a253506ac7cbf9869cde4cd15cd67d23c1649",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2837,6 +2979,9 @@
       "expectedKind": "rows",
       "query": "SELECT COUNT(*) FROM revert_sequence_items;",
       "querySha256": "f84f407a80641aa582167cc1a86a253506ac7cbf9869cde4cd15cd67d23c1649",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2851,7 +2996,8 @@
       "query": "SELECT nextval('revert_sequence_items_id_seq');",
       "querySha256": "3dc46ba0a17f0ab5604a9cb088a562ec830c8b91e002a7af7394e8010f61ae6d",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -2866,6 +3012,9 @@
       "expectedKind": "rows",
       "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM information_schema.triggers\n\t\t\t\t\t\tWHERE trigger_name = 'revert_trigger_changed';",
       "querySha256": "e498afb56cf7e527f2507d47825b307885864713151998e38c954a4cfb141bb5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2895,6 +3044,9 @@
       "expectedKind": "rows",
       "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM information_schema.triggers\n\t\t\t\t\t\tWHERE trigger_name = 'revert_trigger_changed';",
       "querySha256": "e498afb56cf7e527f2507d47825b307885864713151998e38c954a4cfb141bb5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2908,6 +3060,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO revert_trigger_items VALUES (1, 'plain');",
       "querySha256": "f04a2d9fab0cfaa2b34cd13375a93587898bdc47c72ee67ae6a99c210ee7edc4",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2921,6 +3076,9 @@
       "expectedKind": "rows",
       "query": "SELECT label FROM revert_trigger_items;",
       "querySha256": "0e35ad73f779455643d7f150eddb874a9942f5d9a27316daec57e57487d9849c",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2934,6 +3092,9 @@
       "expectedKind": "rows",
       "query": "SELECT rm_function_value();",
       "querySha256": "2fc0f863575471ad27ad41ad40d1e5baaf1b60bf14de150c8202d2688974fcc2",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2963,6 +3124,9 @@
       "expectedKind": "error",
       "query": "SELECT rm_function_value();",
       "querySha256": "2fc0f863575471ad27ad41ad40d1e5baaf1b60bf14de150c8202d2688974fcc2",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -2977,7 +3141,8 @@
       "query": "SELECT nextval('rm_sequence_value');",
       "querySha256": "abc79b8d8bb0cc4c096fd62a984c46a4fa556893000a63394136e41f2a4c2f6a",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "DoltSpecific"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -3008,6 +3173,9 @@
       "expectedKind": "error",
       "query": "SELECT nextval('rm_sequence_value');",
       "querySha256": "abc79b8d8bb0cc4c096fd62a984c46a4fa556893000a63394136e41f2a4c2f6a",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3021,6 +3189,9 @@
       "expectedKind": "rows",
       "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM information_schema.triggers\n\t\t\t\t\t\tWHERE trigger_name = 'rm_trigger_changed';",
       "querySha256": "aed36ace52121177a754291fb93c02dfa7dc1020999ce7c5777b7b9e0de3a535",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3050,6 +3221,9 @@
       "expectedKind": "rows",
       "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM information_schema.triggers\n\t\t\t\t\t\tWHERE trigger_name = 'rm_trigger_changed';",
       "querySha256": "aed36ace52121177a754291fb93c02dfa7dc1020999ce7c5777b7b9e0de3a535",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3063,6 +3237,9 @@
       "expectedKind": "rows",
       "query": "INSERT INTO rm_trigger_items VALUES (1, 'plain');",
       "querySha256": "3fa3e85513956e00bba3a26e32cab2a05d373af9a18c95871b76b086d0650246",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -3076,6 +3253,9 @@
       "expectedKind": "rows",
       "query": "SELECT label FROM rm_trigger_items;",
       "querySha256": "a2a4a197af5fe47dd4e22e140aee2bc393790d07d93384dfb865dba3fd6df3dc",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },

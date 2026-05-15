@@ -386,6 +386,9 @@
       "expectedKind": "rows",
       "query": "SELECT id FROM jsonb_gin_root\nWHERE doc @\u003e '{\"tags\":[\"vip\"]}'\nORDER BY id;",
       "querySha256": "99c4f9ff5154a0a1f75da3eeeb67c87786752bf6bc2a062a6ba82471758f3090",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -399,6 +402,9 @@
       "expectedKind": "rows",
       "query": "SELECT CASE WHEN COUNT(*) \u003e 0 THEN 't' ELSE 'f' END\nFROM dg_gin_jsonb_gin_root_jsonb_gin_root_idx_posting_chunks;",
       "querySha256": "3f9cbb9f2e926d2ef3f0012bdee23af5559e2523e1ae62c47b7becc3beab701f",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -412,6 +418,9 @@
       "expectedKind": "rows",
       "query": "SELECT id FROM jsonb_gin_root\nWHERE doc @\u003e '{\"tags\":[\"feature\"]}'\nORDER BY id;",
       "querySha256": "9f3efba526548b4d72d4d709daa250aaaec263ebe4b6f0846adf44401fc9e99c",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -425,6 +434,9 @@
       "expectedKind": "rows",
       "query": "SELECT id FROM jsonb_gin_root\nWHERE doc @\u003e '{\"tags\":[\"feature\"]}'\nORDER BY id;",
       "querySha256": "9f3efba526548b4d72d4d709daa250aaaec263ebe4b6f0846adf44401fc9e99c",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -438,6 +450,9 @@
       "expectedKind": "rows",
       "query": "SELECT id FROM jsonb_gin_root\nWHERE doc @\u003e '{\"tags\":[\"main\"]}' OR doc @\u003e '{\"tags\":[\"feature\"]}'\nORDER BY id;",
       "querySha256": "ee76847dc191f2f2cdc93ef5a697a6fca8260b8288e6a80ed58e6bcc704ad335",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -451,6 +466,9 @@
       "expectedKind": "rows",
       "query": "SELECT id FROM jsonb_gin_root\nWHERE doc @\u003e '{\"tags\":[\"rolled_back\"]}'\nORDER BY id;",
       "querySha256": "3719678275d45a5ef095aff1f103ff52012fb5775ecef38e18ce4fc0abf66abd",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -464,6 +482,9 @@
       "expectedKind": "rows",
       "query": "SELECT id FROM jsonb_gin_root\nWHERE doc @\u003e '{\"tags\":[\"rolled_back\"]}'\nORDER BY id;",
       "querySha256": "3719678275d45a5ef095aff1f103ff52012fb5775ecef38e18ce4fc0abf66abd",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -477,6 +498,9 @@
       "expectedKind": "rows",
       "query": "SELECT id FROM jsonb_gin_root\nWHERE doc @\u003e '{\"tags\":[\"updated\"]}'\nORDER BY id;",
       "querySha256": "e0b7399817b37fbc4bfff85f4213e9a74386a89a1ebc7cffdd768c3e1171fcb5",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -490,6 +514,9 @@
       "expectedKind": "rows",
       "query": "SELECT id FROM jsonb_gin_root\nWHERE doc @\u003e '{\"tags\":[\"vip\"]}'\nORDER BY id;",
       "querySha256": "99c4f9ff5154a0a1f75da3eeeb67c87786752bf6bc2a062a6ba82471758f3090",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -503,6 +530,9 @@
       "expectedKind": "rows",
       "query": "SELECT COUNT(*) FROM pg_catalog.pg_class\nWHERE relname = 'dg_gin_jsonb_gin_root_jsonb_gin_root_idx_posting_chunks';",
       "querySha256": "03141bc2da5521b1f6aa5934528b636f9099bf1d338df3acaa96606f6ead05d0",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
