@@ -19,7 +19,6 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
-	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/postgres/parser/duration"
 	"github.com/dolthub/doltgresql/postgres/parser/timeofday"
 	"github.com/dolthub/doltgresql/postgres/parser/timetz"
@@ -491,11 +490,18 @@ var oideq = framework.Function2{
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
 		// This method doesn't use DoltgresType.Compare because it's on the critical path for many tooling queries that
 		// examine the pg_catalog tables.
-		val1id, val2id := val1.(id.Id), val2.(id.Id)
-		if val1id == val2id {
+		val1oid, err := oidValue(val1)
+		if err != nil {
+			return nil, err
+		}
+		val2oid, err := oidValue(val2)
+		if err != nil {
+			return nil, err
+		}
+		if val1oid == val2oid {
 			return true, nil
 		}
-		return id.Cache().ToOID(val1id) == id.Cache().ToOID(val2id), nil
+		return false, nil
 	},
 }
 
