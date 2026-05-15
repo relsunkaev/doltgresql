@@ -161,19 +161,23 @@ func TestAdvisoryLockConcurrency(t *testing.T) {
 
 		// Waiter takes the blocking form. It must wait until the
 		// holder commits.
-		waitDone := make(chan time.Time, 1)
+		waitDone := make(chan struct{}, 1)
 		go func() {
 			tx, err := waiter.Begin(ctx)
 			if err != nil {
 				t.Errorf("waiter begin: %v", err)
 				return
 			}
-			defer tx.Rollback(ctx)
 			if _, err := tx.Exec(ctx, holdLock); err != nil {
+				_ = tx.Rollback(ctx)
 				t.Errorf("waiter exec: %v", err)
 				return
 			}
-			waitDone <- time.Now()
+			if err := tx.Rollback(ctx); err != nil {
+				t.Errorf("waiter rollback: %v", err)
+				return
+			}
+			waitDone <- struct{}{}
 		}()
 
 		select {
@@ -258,7 +262,9 @@ func TestAdvisoryLockConcurrency(t *testing.T) {
 
 		// Waiter blocks until the rollback below releases.
 		acquired := make(chan struct{})
+		waiterDone := make(chan struct{})
 		go func() {
+			defer close(waiterDone)
 			tx2, err := waiter.Begin(ctx)
 			if err != nil {
 				return
@@ -283,6 +289,7 @@ func TestAdvisoryLockConcurrency(t *testing.T) {
 		case <-time.After(2 * time.Second):
 			t.Fatal("waiter never acquired after holder rolled back")
 		}
+		<-waiterDone
 	})
 }
 
