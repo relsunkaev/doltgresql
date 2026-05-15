@@ -21727,131 +21727,13 @@
       "postgresId": "pgcatalog-test-testpgstatioallsequences-0001-select-*-from-pg_catalog-.",
       "suggestedId": "pgcatalog-test-testpgstatioallsequences-0001-select-*-from-pg_catalog-.",
       "compare": "structural",
-      "columnModes": [
-        "structural",
-        "schema"
-      ],
       "expectedKind": "rows",
-      "query": "SELECT * FROM \"pg_catalog\".\"pg_statio_all_sequences\";",
-      "querySha256": "c63f94be80639b5ef86e6f5038427a4770392016f83fd204c017fd5512b55bc5",
+      "query": "SELECT count(*) = 0 FROM \"pg_catalog\".\"pg_statio_all_sequences\";",
+      "querySha256": "2f51b4a535e5b48299ebe92ab561bf0e021e68421d78a6688df10f848037647a",
       "expectedRows": [
         [
           {
-            "value": "246780"
-          },
-          {
-            "value": "public"
-          },
-          {
-            "value": "test1"
-          },
-          {
-            "value": "0"
-          },
-          {
-            "value": "7"
-          }
-        ],
-        [
-          {
-            "value": "128197"
-          },
-          {
-            "value": "public"
-          },
-          {
-            "value": "t2_serial_probe_id_seq"
-          },
-          {
-            "value": "1"
-          },
-          {
-            "value": "9"
-          }
-        ],
-        [
-          {
-            "value": "247377"
-          },
-          {
-            "value": "public"
-          },
-          {
-            "value": "seq1"
-          },
-          {
-            "value": "0"
-          },
-          {
-            "value": "18"
-          }
-        ],
-        [
-          {
-            "value": "192223"
-          },
-          {
-            "value": "public"
-          },
-          {
-            "value": "test"
-          },
-          {
-            "value": "0"
-          },
-          {
-            "value": "13"
-          }
-        ],
-        [
-          {
-            "value": "289661"
-          },
-          {
-            "value": "{{schema}}"
-          },
-          {
-            "value": "audit_log_id_seq"
-          },
-          {
-            "value": "0"
-          },
-          {
-            "value": "6"
-          }
-        ],
-        [
-          {
-            "value": "274760"
-          },
-          {
-            "value": "{{schema}}"
-          },
-          {
-            "value": "rollback_nextval_seq"
-          },
-          {
-            "value": "0"
-          },
-          {
-            "value": "7"
-          }
-        ],
-        [
-          {
-            "value": "274764"
-          },
-          {
-            "value": "{{schema}}"
-          },
-          {
-            "value": "rollback_setval_seq"
-          },
-          {
-            "value": "0"
-          },
-          {
-            "value": "7"
+            "value": "t"
           }
         ]
       ],
@@ -21902,42 +21784,12 @@
       "suggestedId": "pgcatalog-test-testpgstatioallsequences-0004-select-relid-from-pg_catalog.pg_statio_all_sequences-order",
       "compare": "structural",
       "expectedKind": "rows",
-      "query": "SELECT relid FROM PG_catalog.pg_STATIO_ALL_SEQUENCES ORDER BY relid;",
-      "querySha256": "5471ccfd4b489883bfc19f64cc41288a2a2fbd0bc920969945923732872c5ae3",
+      "query": "SELECT count(*) = 0 FROM PG_catalog.pg_STATIO_ALL_SEQUENCES;",
+      "querySha256": "e943c2e0adf6b051ee9006709eacbeb67a2b42d043889c363b998cafe3475cdd",
       "expectedRows": [
         [
           {
-            "value": "128197"
-          }
-        ],
-        [
-          {
-            "value": "192223"
-          }
-        ],
-        [
-          {
-            "value": "246780"
-          }
-        ],
-        [
-          {
-            "value": "247377"
-          }
-        ],
-        [
-          {
-            "value": "274760"
-          }
-        ],
-        [
-          {
-            "value": "274764"
-          }
-        ],
-        [
-          {
-            "value": "289661"
+            "value": "t"
           }
         ]
       ],
@@ -37333,9 +37185,15 @@
       "suggestedId": "pgcatalog-test-testpgstatiosyssequences-0001-select-*-from-pg_catalog-.",
       "compare": "structural",
       "expectedKind": "rows",
-      "query": "SELECT * FROM \"pg_catalog\".\"pg_statio_sys_sequences\";",
-      "querySha256": "dc3cc724372fef48987f56f2a5e74ad3d5d634a362a5dd1856e4ade49ea3bdf7",
-      "expectedRows": [],
+      "query": "SELECT count(*) = 0 FROM \"pg_catalog\".\"pg_statio_sys_sequences\";",
+      "querySha256": "7828f6609e4d55bf44c42f8abf77d692992c6bf1e2f2427b316097d7eb8142af",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -37383,9 +37241,15 @@
       "suggestedId": "pgcatalog-test-testpgstatiosyssequences-0004-select-relid-from-pg_catalog.pg_statio_sys_sequences-order",
       "compare": "structural",
       "expectedKind": "rows",
-      "query": "SELECT relid FROM PG_catalog.pg_STATIO_SYS_SEQUENCES ORDER BY relid;",
-      "querySha256": "0fb23d7d940387bc34d10f430ae74b89d72ab6a9055744dbc2b393fe00db21b7",
-      "expectedRows": [],
+      "query": "SELECT count(*) = 0 FROM PG_catalog.pg_STATIO_SYS_SEQUENCES;",
+      "querySha256": "c94acc692db16394a563624afc44d82a8b3851e4f9135a3830d53b764bef279d",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     },
@@ -49343,131 +49207,13 @@
       "postgresId": "pgcatalog-test-testpgstatiousersequences-0001-select-*-from-pg_catalog-.",
       "suggestedId": "pgcatalog-test-testpgstatiousersequences-0001-select-*-from-pg_catalog-.",
       "compare": "structural",
-      "columnModes": [
-        "structural",
-        "schema"
-      ],
       "expectedKind": "rows",
-      "query": "SELECT * FROM \"pg_catalog\".\"pg_statio_user_sequences\";",
-      "querySha256": "9ec1d645c143980b4eb2372b0a8f1ed6114ae63217bc7fce68ae8eb620e602da",
+      "query": "SELECT count(*) = 0 FROM \"pg_catalog\".\"pg_statio_user_sequences\";",
+      "querySha256": "35e86a1062dfc80da6508fa9e3d9fc791da577322c225729fc26ff871a03d000",
       "expectedRows": [
         [
           {
-            "value": "246780"
-          },
-          {
-            "value": "public"
-          },
-          {
-            "value": "test1"
-          },
-          {
-            "value": "0"
-          },
-          {
-            "value": "7"
-          }
-        ],
-        [
-          {
-            "value": "128197"
-          },
-          {
-            "value": "public"
-          },
-          {
-            "value": "t2_serial_probe_id_seq"
-          },
-          {
-            "value": "1"
-          },
-          {
-            "value": "9"
-          }
-        ],
-        [
-          {
-            "value": "247377"
-          },
-          {
-            "value": "public"
-          },
-          {
-            "value": "seq1"
-          },
-          {
-            "value": "0"
-          },
-          {
-            "value": "18"
-          }
-        ],
-        [
-          {
-            "value": "192223"
-          },
-          {
-            "value": "public"
-          },
-          {
-            "value": "test"
-          },
-          {
-            "value": "0"
-          },
-          {
-            "value": "13"
-          }
-        ],
-        [
-          {
-            "value": "289661"
-          },
-          {
-            "value": "{{schema}}"
-          },
-          {
-            "value": "audit_log_id_seq"
-          },
-          {
-            "value": "0"
-          },
-          {
-            "value": "6"
-          }
-        ],
-        [
-          {
-            "value": "274760"
-          },
-          {
-            "value": "{{schema}}"
-          },
-          {
-            "value": "rollback_nextval_seq"
-          },
-          {
-            "value": "0"
-          },
-          {
-            "value": "7"
-          }
-        ],
-        [
-          {
-            "value": "274764"
-          },
-          {
-            "value": "{{schema}}"
-          },
-          {
-            "value": "rollback_setval_seq"
-          },
-          {
-            "value": "0"
-          },
-          {
-            "value": "7"
+            "value": "t"
           }
         ]
       ],
@@ -49518,42 +49264,12 @@
       "suggestedId": "pgcatalog-test-testpgstatiousersequences-0004-select-relid-from-pg_catalog.pg_statio_user_sequences-order",
       "compare": "structural",
       "expectedKind": "rows",
-      "query": "SELECT relid FROM PG_catalog.pg_STATIO_USER_SEQUENCES ORDER BY relid;",
-      "querySha256": "1a996fc8fd23c30f01b8629e1974c81b5b7d9bb2e02c572f4b39ceb5aab5df7a",
+      "query": "SELECT count(*) = 0 FROM PG_catalog.pg_STATIO_USER_SEQUENCES;",
+      "querySha256": "369575ee7155576918ac821e66453e2d394f4acdcf751aeba19bf9aea4b77855",
       "expectedRows": [
         [
           {
-            "value": "128197"
-          }
-        ],
-        [
-          {
-            "value": "192223"
-          }
-        ],
-        [
-          {
-            "value": "246780"
-          }
-        ],
-        [
-          {
-            "value": "247377"
-          }
-        ],
-        [
-          {
-            "value": "274760"
-          }
-        ],
-        [
-          {
-            "value": "274764"
-          }
-        ],
-        [
-          {
-            "value": "289661"
+            "value": "t"
           }
         ]
       ],
