@@ -1,5 +1,5 @@
 {
-  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map drop_database_correctness_repro_test.go --force-postgres-oracle",
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map drop_database_correctness_repro_test.go",
   "sourceFile": "testing/go/drop_database_correctness_repro_test.go",
   "defaultOracle": "internal",
   "assertionKeyStyle": "testing/go/\u003cfile\u003e:\u003cTestName\u003e#\u003cexpectation-ordinal\u003e",
@@ -23,6 +23,9 @@
       "expectedKind": "error",
       "query": "DROP DATABASE current_drop_database_repro;",
       "querySha256": "68e08222cfe34e25b34e223b6bc9808982a44fa279a68fc2721dd202870aae1d",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -36,6 +39,10 @@
       "expectedKind": "rows",
       "query": "SELECT datname\n\t\t\t\t\t\tFROM pg_database\n\t\t\t\t\t\tWHERE datname = 'current_drop_database_repro';",
       "querySha256": "0c19a7d79829e3f665e27b5fa7d54e9c9bb9662de68c0a2ec5aa980736d18841",
+      "nonLiteral": [
+        "DoltSpecific",
+        "PriorExpectedError"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     }

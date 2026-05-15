@@ -23,6 +23,9 @@
       "expectedKind": "rows",
       "query": "SELECT label FROM pgdog_items WHERE tenant_id = 1;",
       "querySha256": "1103503626e7bc9d07deaf1ce728fb236b60da8fd4c023067e7710a489a23fa3",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -36,6 +39,9 @@
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM pg_replication_slots;",
       "querySha256": "18b7e1b6d532e99691e09b1d9a5452a6fb21dfe31d5f09a07ce3a8098fb88f2c",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -49,6 +55,9 @@
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM pg_stat_replication;",
       "querySha256": "176cdeef803add47cdc5ba4dfc88ad4dda12e3ddda281c1ae7387daacdf5a59c",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -62,6 +71,9 @@
       "expectedKind": "rows",
       "query": "SELECT count(*) FROM pg_publication;",
       "querySha256": "ad66cd14598c030490f639a0002cfc0bd6ec4f69f464e281978ffeb8d2eae3e7",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -75,6 +87,9 @@
       "expectedKind": "rows",
       "query": "SELECT pg_is_in_recovery();",
       "querySha256": "5fb71473b57db3b6d63c95f418928e443dcb586c6829d10fe6bce56c538c8a60",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -88,6 +103,9 @@
       "expectedKind": "rows",
       "query": "SELECT label FROM pgdog_vectors WHERE tenant_id = '[1,0]'::vector;",
       "querySha256": "9a312d28a08744b3d9cba3fd73550bff877a0f8867b3d2b539e2207299d22a71",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -101,6 +119,9 @@
       "expectedKind": "rows",
       "query": "SELECT gid FROM pg_catalog.pg_prepared_xacts WHERE gid = 'dg_pgdog';",
       "querySha256": "c4ce739fb8f9aa8eae773fcef6f441e0b5ba3286b527e5333c1db5300d44a196",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -114,6 +135,9 @@
       "expectedKind": "rows",
       "query": "SELECT label FROM pgdog_items WHERE tenant_id = 10;",
       "querySha256": "eb52f6e249ee6badbba82f0b32b7d483c082b5d6c21905acc536b9510f4ecf7c",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -244,6 +268,10 @@
       "expectedKind": "rows",
       "query": "SELECT pg_current_wal_lsn();",
       "querySha256": "6b9aae060de9a88a9401a2fe69444850cccb79852fee59eca90fe55559565f97",
+      "nonLiteral": [
+        "DoltSpecific",
+        "PriorExpectedError"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },

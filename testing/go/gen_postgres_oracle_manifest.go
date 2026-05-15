@@ -1579,9 +1579,12 @@ func hasDoltgresOnlySource(source string) bool {
 	sourceFile, _, _ := strings.Cut(source, ":")
 	switch sourceFile {
 	case "testing/go/adaptive_encoding_test.go",
+		"testing/go/available_extensions_probe_test.go",
 		"testing/go/create_procedure_plpgsql_test.go",
+		"testing/go/drop_database_correctness_repro_test.go",
 		"testing/go/getting_started_guide_test.go",
 		"testing/go/index_test.go",
+		"testing/go/pgdog_compat_test.go",
 		"testing/go/show_test.go":
 		return true
 	default:
