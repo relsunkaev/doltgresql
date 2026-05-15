@@ -98,10 +98,12 @@ func main() {
 	filesFlag := flag.String("files", "", "comma-separated test basenames to consider, for example foo_test,bar_test")
 	splitScripts := flag.Bool("split-scripts", false, "split pure PostgreSQL ScriptTest cases inside mixed RunScripts functions instead of whole test functions")
 	splitAssertions := flag.Bool("split-assertions", false, "split leading PostgreSQL assertions inside mixed ScriptTest cases")
+	skipScriptNameFlag := flag.String("skip-script-name", "", "comma-separated ScriptTest names to exclude from script/assertion splitting")
 	dryRun := flag.Bool("dry-run", false, "print the planned split without writing files")
 	flag.Parse()
 
 	files := parseCSV(*filesFlag)
+	skipScriptNames := parseCSV(*skipScriptNameFlag)
 	if len(files) == 0 {
 		fmt.Fprintln(os.Stderr, "--files is required")
 		os.Exit(1)
@@ -112,7 +114,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	plans, err := buildPlans(*sourceDir, *mapDir, files, *splitScripts, *splitAssertions)
+	plans, err := buildPlans(*sourceDir, *mapDir, files, *splitScripts, *splitAssertions, skipScriptNames)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -187,7 +189,7 @@ func parseCSV(raw string) map[string]bool {
 	return out
 }
 
-func buildPlans(sourceDir, mapDir string, files map[string]bool, splitScripts bool, splitAssertions bool) ([]filePlan, error) {
+func buildPlans(sourceDir, mapDir string, files map[string]bool, splitScripts bool, splitAssertions bool, skipScriptNames map[string]bool) ([]filePlan, error) {
 	var plans []filePlan
 	for base := range files {
 		mapPath := filepath.Join(mapDir, base+".oracle-map.json")
@@ -255,6 +257,9 @@ func buildPlans(sourceDir, mapDir string, files map[string]bool, splitScripts bo
 				if assertion.ScriptName == "" {
 					continue
 				}
+				if skipScriptNames[assertion.ScriptName] {
+					continue
+				}
 				fn, ok := functionName(assertion.Source)
 				if !ok {
 					return nil, fmt.Errorf("%s: cannot parse source %q", mapPath, assertion.Source)
@@ -304,6 +309,9 @@ func buildPlans(sourceDir, mapDir string, files map[string]bool, splitScripts bo
 		} else if splitScripts {
 			scripts := make(map[string]map[string]bool)
 			for key, c := range byScript {
+				if skipScriptNames[key.name] {
+					continue
+				}
 				if c.postgres > 0 && c.internal == 0 {
 					if scripts[key.function] == nil {
 						scripts[key.function] = make(map[string]bool)
