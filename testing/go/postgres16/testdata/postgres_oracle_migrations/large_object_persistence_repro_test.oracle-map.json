@@ -1,0 +1,416 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map large_object_persistence_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/large_object_persistence_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/\u003cfile\u003e:\u003cTestName\u003e#\u003cexpectation-ordinal\u003e",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/large_object_persistence_repro_test.go:TestLargeObjectCreatePersistsMetadataRepro#0001",
+      "source": "testing/go/postgres16/large_object_persistence_repro_test.go:TestLargeObjectCreatePersistsMetadataRepro",
+      "ordinal": 1,
+      "scriptName": "lo_create persists large object metadata",
+      "oracle": "postgres",
+      "postgresId": "large-object-persistence-repro-test-testlargeobjectcreatepersistsmetadatarepro-0001-select-lo_create-424242",
+      "suggestedId": "large-object-persistence-repro-test-testlargeobjectcreatepersistsmetadatarepro-0001-select-lo_create-424242",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT lo_create(424242);",
+      "querySha256": "c436e000ec1c986cc19099f0b47b6fbb654e36f4e00554ae1457aa6d4cc41835",
+      "expectedRows": [
+        [
+          {
+            "value": "424242"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/large_object_persistence_repro_test.go:TestLargeObjectCreatePersistsMetadataRepro#0002",
+      "source": "testing/go/postgres16/large_object_persistence_repro_test.go:TestLargeObjectCreatePersistsMetadataRepro",
+      "ordinal": 2,
+      "scriptName": "lo_create persists large object metadata",
+      "oracle": "postgres",
+      "postgresId": "large-object-persistence-repro-test-testlargeobjectcreatepersistsmetadatarepro-0002-select-oid::text-from-pg_catalog.pg_largeobject_metadata-where",
+      "suggestedId": "large-object-persistence-repro-test-testlargeobjectcreatepersistsmetadatarepro-0002-select-oid::text-from-pg_catalog.pg_largeobject_metadata-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT oid::TEXT\n\t\t\t\t\t\tFROM pg_catalog.pg_largeobject_metadata\n\t\t\t\t\t\tWHERE oid = 424242;",
+      "querySha256": "c73d755d95a09731ce2456cbc4520b727eba340e44b57cf90afabec4cbb8aa04",
+      "expectedRows": [
+        [
+          {
+            "value": "424242"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/large_object_persistence_repro_test.go:TestLargeObjectCreatePersistsMetadataRepro#0003",
+      "source": "testing/go/postgres16/large_object_persistence_repro_test.go:TestLargeObjectCreatePersistsMetadataRepro",
+      "ordinal": 3,
+      "scriptName": "lo_create persists large object metadata",
+      "oracle": "postgres",
+      "postgresId": "large-object-persistence-repro-test-testlargeobjectcreatepersistsmetadatarepro-0003-select-lo_unlink-424242",
+      "suggestedId": "large-object-persistence-repro-test-testlargeobjectcreatepersistsmetadatarepro-0003-select-lo_unlink-424242",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT lo_unlink(424242);",
+      "querySha256": "908a5271e3f689bd0ad183188c77c1ef1b8827157e1ac138661f877078cd048e",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/large_object_persistence_repro_test.go:TestAlterLargeObjectOwnerReachesValidationRepro#0001",
+      "source": "testing/go/postgres16/large_object_persistence_repro_test.go:TestAlterLargeObjectOwnerReachesValidationRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER LARGE OBJECT OWNER reaches object validation",
+      "oracle": "postgres",
+      "postgresId": "large-object-persistence-repro-test-testalterlargeobjectownerreachesvalidationrepro-0001-alter-large-object-515151-owner",
+      "suggestedId": "large-object-persistence-repro-test-testalterlargeobjectownerreachesvalidationrepro-0001-alter-large-object-515151-owner",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42704",
+      "errorSeverity": "ERROR",
+      "query": "ALTER LARGE OBJECT 515151\n\t\t\t\t\t\tOWNER TO large_object_owner_target;",
+      "querySha256": "e99ac19fe344fae25e70ef330d23a4d8be7ab5fc53ee625aee5d920302bb6f05",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/large_object_persistence_repro_test.go:TestLargeObjectGrantPopulatesMetadataAclRepro#0001",
+      "source": "testing/go/postgres16/large_object_persistence_repro_test.go:TestLargeObjectGrantPopulatesMetadataAclRepro",
+      "ordinal": 1,
+      "scriptName": "GRANT SELECT ON LARGE OBJECT populates metadata ACL",
+      "oracle": "postgres",
+      "postgresId": "large-object-persistence-repro-test-testlargeobjectgrantpopulatesmetadataaclrepro-0001-select-coalesce-lomacl::text-like-%large_object_acl_reader=r/%",
+      "suggestedId": "large-object-persistence-repro-test-testlargeobjectgrantpopulatesmetadataaclrepro-0001-select-coalesce-lomacl::text-like-%large_object_acl_reader=r/%",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COALESCE(\n\t\t\t\t\t\t\tlomacl::TEXT LIKE '%large_object_acl_reader=r/%',\n\t\t\t\t\t\t\tfalse\n\t\t\t\t\t\t)::TEXT\n\t\t\t\t\t\tFROM pg_catalog.pg_largeobject_metadata\n\t\t\t\t\t\tWHERE oid = 424243;",
+      "querySha256": "acddfc9324dd95621097f79fb5382d25d926a6981d972d60c9b58d38682f2382",
+      "expectedRows": [
+        [
+          {
+            "value": "true"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/large_object_persistence_repro_test.go:TestLargeObjectByteaRoundTripRepro#0001",
+      "source": "testing/go/postgres16/large_object_persistence_repro_test.go:TestLargeObjectByteaRoundTripRepro",
+      "ordinal": 1,
+      "scriptName": "large object bytea round trip",
+      "oracle": "postgres",
+      "postgresId": "large-object-persistence-repro-test-testlargeobjectbytearoundtriprepro-0001-select-encode-lo_get-loid-hex",
+      "suggestedId": "large-object-persistence-repro-test-testlargeobjectbytearoundtriprepro-0001-select-encode-lo_get-loid-hex",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT encode(lo_get(loid), 'hex')\n\t\t\t\t\t\tFROM large_object_round_trip_stash;",
+      "querySha256": "b75c9586021ac32a8b979f545fe44a5d6788081ef2c66861c675aeed9f8029dd",
+      "expectedRows": [
+        [
+          {
+            "value": "deadbeef"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/large_object_persistence_repro_test.go:TestLargeObjectPutAndSlicedGetRepro#0001",
+      "source": "testing/go/postgres16/large_object_persistence_repro_test.go:TestLargeObjectPutAndSlicedGetRepro",
+      "ordinal": 1,
+      "scriptName": "large object lo_put and sliced lo_get",
+      "oracle": "postgres",
+      "postgresId": "large-object-persistence-repro-test-testlargeobjectputandslicedgetrepro-0001-select-lo_put-loid-2-decode",
+      "suggestedId": "large-object-persistence-repro-test-testlargeobjectputandslicedgetrepro-0001-select-lo_put-loid-2-decode",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT lo_put(loid, 2, decode('aabb', 'hex'))\n\t\t\t\t\t\tFROM large_object_put_stash;",
+      "querySha256": "f066bdbf26ee070c53c0d9d1fa2f25f236134afb699a2d532795b7cbc6ab9e52",
+      "expectedRows": [
+        [
+          {
+            "value": ""
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/large_object_persistence_repro_test.go:TestLargeObjectPutAndSlicedGetRepro#0002",
+      "source": "testing/go/postgres16/large_object_persistence_repro_test.go:TestLargeObjectPutAndSlicedGetRepro",
+      "ordinal": 2,
+      "scriptName": "large object lo_put and sliced lo_get",
+      "oracle": "postgres",
+      "postgresId": "large-object-persistence-repro-test-testlargeobjectputandslicedgetrepro-0002-select-encode-lo_get-loid-0",
+      "suggestedId": "large-object-persistence-repro-test-testlargeobjectputandslicedgetrepro-0002-select-encode-lo_get-loid-0",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT encode(lo_get(loid, 0, 6), 'hex')\n\t\t\t\t\t\tFROM large_object_put_stash;",
+      "querySha256": "8341d24a0a86d85f3721b0812f90777aa6070c239b3718db7420f48cb2132fc1",
+      "expectedRows": [
+        [
+          {
+            "value": "0011aabb4455"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/large_object_persistence_repro_test.go:TestLargeObjectPutAndSlicedGetRepro#0003",
+      "source": "testing/go/postgres16/large_object_persistence_repro_test.go:TestLargeObjectPutAndSlicedGetRepro",
+      "ordinal": 3,
+      "scriptName": "large object lo_put and sliced lo_get",
+      "oracle": "postgres",
+      "postgresId": "large-object-persistence-repro-test-testlargeobjectputandslicedgetrepro-0003-select-encode-lo_get-loid-2",
+      "suggestedId": "large-object-persistence-repro-test-testlargeobjectputandslicedgetrepro-0003-select-encode-lo_get-loid-2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT encode(lo_get(loid, 2, 2), 'hex')\n\t\t\t\t\t\tFROM large_object_put_stash;",
+      "querySha256": "8a94efcbc790a9af2c8c7a7480a5f77d6eedd2335b5af374c41a4ea12948274e",
+      "expectedRows": [
+        [
+          {
+            "value": "aabb"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/large_object_persistence_repro_test.go:TestLargeObjectGetRequiresSelectPrivilegeRepro#0001",
+      "source": "testing/go/postgres16/large_object_persistence_repro_test.go:TestLargeObjectGetRequiresSelectPrivilegeRepro",
+      "ordinal": 1,
+      "scriptName": "lo_get requires large-object SELECT privilege",
+      "oracle": "postgres",
+      "postgresId": "large-object-persistence-repro-test-testlargeobjectgetrequiresselectprivilegerepro-0001-select-encode-lo_get-424244-hex",
+      "suggestedId": "large-object-persistence-repro-test-testlargeobjectgetrequiresselectprivilegerepro-0001-select-encode-lo_get-424244-hex",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "large_object_get_intruder",
+      "query": "SELECT encode(lo_get(424244), 'hex');",
+      "querySha256": "d1ee88e99fef9a8d6e8bf02a75394135fc696d871685a60e812729a13931700f",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/large_object_persistence_repro_test.go:TestLargeObjectCreateRollsBackRepro#0001",
+      "source": "testing/go/postgres16/large_object_persistence_repro_test.go:TestLargeObjectCreateRollsBackRepro",
+      "ordinal": 1,
+      "scriptName": "large object creation rolls back",
+      "oracle": "postgres",
+      "postgresId": "large-object-persistence-repro-test-testlargeobjectcreaterollsbackrepro-0001-select-count-*-from-pg_catalog.pg_largeobject_metadata",
+      "suggestedId": "large-object-persistence-repro-test-testlargeobjectcreaterollsbackrepro-0001-select-count-*-from-pg_catalog.pg_largeobject_metadata",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_largeobject_metadata\n\t\t\t\t\t\tWHERE oid = 424248;",
+      "querySha256": "c536ecfc13e1a00f17a12f4b04d0d35d46b40f9837158ded0d001724ee5cfc8d",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/large_object_persistence_repro_test.go:TestLargeObjectPutRollsBackRepro#0001",
+      "source": "testing/go/postgres16/large_object_persistence_repro_test.go:TestLargeObjectPutRollsBackRepro",
+      "ordinal": 1,
+      "scriptName": "large object writes roll back",
+      "oracle": "postgres",
+      "postgresId": "large-object-persistence-repro-test-testlargeobjectputrollsbackrepro-0001-select-encode-lo_get-424249-hex",
+      "suggestedId": "large-object-persistence-repro-test-testlargeobjectputrollsbackrepro-0001-select-encode-lo_get-424249-hex",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT encode(lo_get(424249), 'hex');",
+      "querySha256": "9a1952099cf72156c0000a1cc30c7c94840ddfc303530f561bf0dcf08a84c21b",
+      "expectedRows": [
+        [
+          {
+            "value": "00112233"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/large_object_persistence_repro_test.go:TestLargeObjectUnlinkRollsBackRepro#0001",
+      "source": "testing/go/postgres16/large_object_persistence_repro_test.go:TestLargeObjectUnlinkRollsBackRepro",
+      "ordinal": 1,
+      "scriptName": "large object unlink rolls back",
+      "oracle": "postgres",
+      "postgresId": "large-object-persistence-repro-test-testlargeobjectunlinkrollsbackrepro-0001-select-lo_unlink-424250",
+      "suggestedId": "large-object-persistence-repro-test-testlargeobjectunlinkrollsbackrepro-0001-select-lo_unlink-424250",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT lo_unlink(424250);",
+      "querySha256": "493794dbc410699acd57a692ee77ff72be6d72abd6ddf479d3eab69d292265ac",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/large_object_persistence_repro_test.go:TestLargeObjectUnlinkRollsBackRepro#0002",
+      "source": "testing/go/postgres16/large_object_persistence_repro_test.go:TestLargeObjectUnlinkRollsBackRepro",
+      "ordinal": 2,
+      "scriptName": "large object unlink rolls back",
+      "oracle": "postgres",
+      "postgresId": "large-object-persistence-repro-test-testlargeobjectunlinkrollsbackrepro-0002-select-encode-lo_get-424250-hex",
+      "suggestedId": "large-object-persistence-repro-test-testlargeobjectunlinkrollsbackrepro-0002-select-encode-lo_get-424250-hex",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT encode(lo_get(424250), 'hex');",
+      "querySha256": "9657aed5a38ce4d5a50389fbf22c97dca8c623eb682ea57ad8e5f2a7d5b63710",
+      "expectedRows": [
+        [
+          {
+            "value": "aabbccdd"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/large_object_persistence_repro_test.go:TestLargeObjectCreateRollsBackToSavepointRepro#0001",
+      "source": "testing/go/postgres16/large_object_persistence_repro_test.go:TestLargeObjectCreateRollsBackToSavepointRepro",
+      "ordinal": 1,
+      "scriptName": "large object creation rolls back to savepoint",
+      "oracle": "postgres",
+      "postgresId": "large-object-persistence-repro-test-testlargeobjectcreaterollsbacktosavepointrepro-0001-select-count-*-from-pg_catalog.pg_largeobject_metadata",
+      "suggestedId": "large-object-persistence-repro-test-testlargeobjectcreaterollsbacktosavepointrepro-0001-select-count-*-from-pg_catalog.pg_largeobject_metadata",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_largeobject_metadata\n\t\t\t\t\t\tWHERE oid = 424251;",
+      "querySha256": "f2270bab10e41bb805dc8405f57be6446648f3467fd3fdd228d23543c44f051f",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/large_object_persistence_repro_test.go:TestLargeObjectPutRollsBackToSavepointRepro#0001",
+      "source": "testing/go/postgres16/large_object_persistence_repro_test.go:TestLargeObjectPutRollsBackToSavepointRepro",
+      "ordinal": 1,
+      "scriptName": "large object writes roll back to savepoint",
+      "oracle": "postgres",
+      "postgresId": "large-object-persistence-repro-test-testlargeobjectputrollsbacktosavepointrepro-0001-select-encode-lo_get-424252-hex",
+      "suggestedId": "large-object-persistence-repro-test-testlargeobjectputrollsbacktosavepointrepro-0001-select-encode-lo_get-424252-hex",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT encode(lo_get(424252), 'hex');",
+      "querySha256": "9c0f6552809585e3453f5a08cfd411d946c605a9df942bec3401616cfc96c966",
+      "expectedRows": [
+        [
+          {
+            "value": "10203040"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/large_object_persistence_repro_test.go:TestLargeObjectUnlinkRollsBackToSavepointRepro#0001",
+      "source": "testing/go/postgres16/large_object_persistence_repro_test.go:TestLargeObjectUnlinkRollsBackToSavepointRepro",
+      "ordinal": 1,
+      "scriptName": "large object unlink rolls back to savepoint",
+      "oracle": "postgres",
+      "postgresId": "large-object-persistence-repro-test-testlargeobjectunlinkrollsbacktosavepointrepro-0001-select-lo_unlink-424253",
+      "suggestedId": "large-object-persistence-repro-test-testlargeobjectunlinkrollsbacktosavepointrepro-0001-select-lo_unlink-424253",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT lo_unlink(424253);",
+      "querySha256": "a3b4530f4c068dc3a618918e28870724015688b16497f0ce8817a1c6dd327658",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/large_object_persistence_repro_test.go:TestLargeObjectUnlinkRollsBackToSavepointRepro#0002",
+      "source": "testing/go/postgres16/large_object_persistence_repro_test.go:TestLargeObjectUnlinkRollsBackToSavepointRepro",
+      "ordinal": 2,
+      "scriptName": "large object unlink rolls back to savepoint",
+      "oracle": "postgres",
+      "postgresId": "large-object-persistence-repro-test-testlargeobjectunlinkrollsbacktosavepointrepro-0002-select-encode-lo_get-424253-hex",
+      "suggestedId": "large-object-persistence-repro-test-testlargeobjectunlinkrollsbacktosavepointrepro-0002-select-encode-lo_get-424253-hex",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT encode(lo_get(424253), 'hex');",
+      "querySha256": "38dfc767985a35a8ec4cf97fd12a103f0621adc101f36bcf563cffd4902b05b3",
+      "expectedRows": [
+        [
+          {
+            "value": "55667788"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

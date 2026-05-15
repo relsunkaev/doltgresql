@@ -2,7 +2,7 @@
   "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map transaction_ddl_correctness_repro_test.go --force-postgres-oracle",
   "sourceFile": "testing/go/transaction_ddl_correctness_repro_test.go",
   "defaultOracle": "internal",
-  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionKeyStyle": "testing/go/\u003cfile\u003e:\u003cTestName\u003e#\u003cexpectation-ordinal\u003e",
   "assertionFields": [
     "Expected",
     "ExpectedRaw",
@@ -27,31 +27,6 @@
         "Expected"
       ],
       "needsCleanup": true,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/transaction_ddl_correctness_repro_test.go:TestDropTableRollbackRestoresTableGuard#0001",
-      "source": "testing/go/transaction_ddl_correctness_repro_test.go:TestDropTableRollbackRestoresTableGuard",
-      "ordinal": 1,
-      "scriptName": "DROP TABLE rolls back with transaction",
-      "oracle": "postgres",
-      "postgresId": "transaction-ddl-correctness-repro-test-testdroptablerollbackrestorestableguard-0001-select-id-label-from-tx_drop_rollback_items",
-      "suggestedId": "transaction-ddl-correctness-repro-test-testdroptablerollbackrestorestableguard-0001-select-id-label-from-tx_drop_rollback_items",
-      "compare": "structural",
-      "expectedKind": "rows",
-      "query": "SELECT id, label FROM tx_drop_rollback_items;",
-      "querySha256": "8c8b029ee8fc0fc1d582de3d36105d609bde4c1ae9fff7c5c9423d2391a10ae1",
-      "expectedRows": [
-        [
-          {
-            "value": "1"
-          },
-          {
-            "value": "kept"
-          }
-        ]
-      ],
-      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -81,31 +56,6 @@
       "query": "SELECT id, label FROM tx_alter_rollback_items;",
       "querySha256": "0aec698bcc6fdaaee19eae13890ab0367dfe291adbada4388cd1709206c7ed66",
       "needsCleanup": true,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/transaction_ddl_correctness_repro_test.go:TestCreateIndexRollbackRemovesIndexGuard#0001",
-      "source": "testing/go/transaction_ddl_correctness_repro_test.go:TestCreateIndexRollbackRemovesIndexGuard",
-      "ordinal": 1,
-      "scriptName": "CREATE INDEX rolls back with transaction",
-      "oracle": "postgres",
-      "postgresId": "transaction-ddl-correctness-repro-test-testcreateindexrollbackremovesindexguard-0001-select-count-*-from-pg_catalog.pg_class",
-      "suggestedId": "transaction-ddl-correctness-repro-test-testcreateindexrollbackremovesindexguard-0001-select-count-*-from-pg_catalog.pg_class",
-      "compare": "structural",
-      "expectedKind": "rows",
-      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE relname = 'tx_index_rollback_items_label_idx';",
-      "querySha256": "30cd216fcf17f16747bd10e28174698211620997e41e2d6eb65c74f325d945e5",
-      "expectedRows": [
-        [
-          {
-            "value": "0"
-          }
-        ]
-      ],
-      "nonLiteral": [
-        "Expected"
-      ],
-      "needsCleanup": false,
       "cleanupProvided": false
     },
     {

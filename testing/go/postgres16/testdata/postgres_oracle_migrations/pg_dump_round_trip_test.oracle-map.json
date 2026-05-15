@@ -1,0 +1,96 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map pg_dump_round_trip_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/pg_dump_round_trip_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/\u003cfile\u003e:\u003cTestName\u003e#\u003cexpectation-ordinal\u003e",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/pg_dump_round_trip_test.go:TestPgDumpPartitionedTableOpclassProbe#0001",
+      "source": "testing/go/postgres16/pg_dump_round_trip_test.go:TestPgDumpPartitionedTableOpclassProbe",
+      "ordinal": 1,
+      "scriptName": "pg_dump partitioned table opclass probe resolves regnamespace in scalar subquery",
+      "oracle": "postgres",
+      "postgresId": "pg-dump-round-trip-test-testpgdumppartitionedtableopclassprobe-0001-select-partrelid-from-pg_catalog.pg_partitioned_table-where",
+      "suggestedId": "pg-dump-round-trip-test-testpgdumppartitionedtableopclassprobe-0001-select-partrelid-from-pg_catalog.pg_partitioned_table-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT partrelid FROM pg_catalog.pg_partitioned_table WHERE\n(SELECT c.oid FROM pg_catalog.pg_opclass c JOIN pg_catalog.pg_am a ON c.opcmethod = a.oid\nWHERE opcname = 'enum_ops' AND opcnamespace = 'pg_catalog'::regnamespace AND amname = 'hash') = ANY(partclass);",
+      "querySha256": "ce317fa990925df27b556bee2e3dfcc08173a93480e643be17288593d58e8890",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/pg_dump_round_trip_test.go:TestPgDumpAlterColumnSetStorageProbe#0001",
+      "source": "testing/go/postgres16/pg_dump_round_trip_test.go:TestPgDumpAlterColumnSetStorageProbe",
+      "ordinal": 1,
+      "scriptName": "pg_dump column storage metadata is accepted",
+      "oracle": "postgres",
+      "postgresId": "pg-dump-round-trip-test-testpgdumpaltercolumnsetstorageprobe-0001-alter-table-only-public.storage_probe-alter",
+      "suggestedId": "pg-dump-round-trip-test-testpgdumpaltercolumnsetstorageprobe-0001-alter-table-only-public.storage_probe-alter",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE ONLY public.storage_probe ALTER COLUMN payload SET STORAGE EXTENDED;",
+      "querySha256": "b80590b15ac44ea12c95b0e81eed1cd96478b4da4cf1f7da17844d9c0b92fece",
+      "expectedRows": [],
+      "cleanup": [
+        "DROP TABLE IF EXISTS storage_probe CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
+    },
+    {
+      "key": "testing/go/postgres16/pg_dump_round_trip_test.go:TestPgDumpAlterColumnSetStorageProbe#0002",
+      "source": "testing/go/postgres16/pg_dump_round_trip_test.go:TestPgDumpAlterColumnSetStorageProbe",
+      "ordinal": 2,
+      "scriptName": "pg_dump column storage metadata is accepted",
+      "oracle": "postgres",
+      "postgresId": "pg-dump-round-trip-test-testpgdumpaltercolumnsetstorageprobe-0002-insert-into-storage_probe-values-1",
+      "suggestedId": "pg-dump-round-trip-test-testpgdumpaltercolumnsetstorageprobe-0002-insert-into-storage_probe-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO storage_probe VALUES (1, 'ok');",
+      "querySha256": "ba10232744e07589b09792feaddb6687679388795039b53d8836bb5a3ec9a15f",
+      "expectedRows": [],
+      "cleanup": [
+        "DROP TABLE IF EXISTS storage_probe CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
+    },
+    {
+      "key": "testing/go/postgres16/pg_dump_round_trip_test.go:TestPgDumpAlterColumnSetStorageProbe#0003",
+      "source": "testing/go/postgres16/pg_dump_round_trip_test.go:TestPgDumpAlterColumnSetStorageProbe",
+      "ordinal": 3,
+      "scriptName": "pg_dump column storage metadata is accepted",
+      "oracle": "postgres",
+      "postgresId": "pg-dump-round-trip-test-testpgdumpaltercolumnsetstorageprobe-0003-select-payload-from-storage_probe-where",
+      "suggestedId": "pg-dump-round-trip-test-testpgdumpaltercolumnsetstorageprobe-0003-select-payload-from-storage_probe-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT payload FROM storage_probe WHERE id = 1;",
+      "querySha256": "9129b1eaea659adb8b0056990fb95b8b686313dbef51cdae23e8931bbca0e3fd",
+      "expectedRows": [
+        [
+          {
+            "value": "ok"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS storage_probe CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
+    }
+  ]
+}

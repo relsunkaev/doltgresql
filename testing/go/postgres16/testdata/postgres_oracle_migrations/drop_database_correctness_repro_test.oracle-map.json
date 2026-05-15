@@ -1,0 +1,33 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map drop_database_correctness_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/drop_database_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/\u003cfile\u003e:\u003cTestName\u003e#\u003cexpectation-ordinal\u003e",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/drop_database_correctness_repro_test.go:TestDropDatabaseWithForceDropsIdleDatabase#0001",
+      "source": "testing/go/postgres16/drop_database_correctness_repro_test.go:TestDropDatabaseWithForceDropsIdleDatabase",
+      "ordinal": 1,
+      "scriptName": "DROP DATABASE WITH FORCE drops an idle database",
+      "oracle": "postgres",
+      "postgresId": "drop-database-correctness-repro-test-testdropdatabasewithforcedropsidledatabase-0001-select-datname-from-pg_database-where",
+      "suggestedId": "drop-database-correctness-repro-test-testdropdatabasewithforcedropsidledatabase-0001-select-datname-from-pg_database-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT datname\n\t\t\t\t\t\tFROM pg_database\n\t\t\t\t\t\tWHERE datname = 'force_drop_database_idle';",
+      "querySha256": "4e5bac695e132c98e574700219585dc356b2ccfea9615b02c38407c74663ad90",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

@@ -2,7 +2,7 @@
   "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map sequence_privilege_repro_test.go --force-postgres-oracle",
   "sourceFile": "testing/go/sequence_privilege_repro_test.go",
   "defaultOracle": "internal",
-  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionKeyStyle": "testing/go/\u003cfile\u003e:\u003cTestName\u003e#\u003cexpectation-ordinal\u003e",
   "assertionFields": [
     "Expected",
     "ExpectedRaw",
@@ -13,124 +13,6 @@
     "ExpectedNotices"
   ],
   "assertions": [
-    {
-      "key": "testing/go/sequence_privilege_repro_test.go:TestSetvalRequiresUpdatePrivilegeRepro#0001",
-      "source": "testing/go/sequence_privilege_repro_test.go:TestSetvalRequiresUpdatePrivilegeRepro",
-      "ordinal": 1,
-      "scriptName": "setval requires sequence UPDATE privilege",
-      "oracle": "postgres",
-      "postgresId": "sequence-privilege-repro-test-testsetvalrequiresupdateprivilegerepro-0001-select-setval-setval_private_seq-100",
-      "suggestedId": "sequence-privilege-repro-test-testsetvalrequiresupdateprivilegerepro-0001-select-setval-setval_private_seq-100",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "42501",
-      "errorSeverity": "ERROR",
-      "username": "setval_sequence_user",
-      "query": "SELECT setval('setval_private_seq', 100);",
-      "querySha256": "e1167a8ad73af73a36603d4415aa16a00369af41bb4562b6ccd2e5f1d00190a6",
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/sequence_privilege_repro_test.go:TestSetvalWithSelectOnlyRequiresUpdatePrivilegeRepro#0001",
-      "source": "testing/go/sequence_privilege_repro_test.go:TestSetvalWithSelectOnlyRequiresUpdatePrivilegeRepro",
-      "ordinal": 1,
-      "scriptName": "setval with sequence SELECT still requires UPDATE privilege",
-      "oracle": "postgres",
-      "postgresId": "sequence-privilege-repro-test-testsetvalwithselectonlyrequiresupdateprivilegerepro-0001-select-setval-setval_select_only_seq-100",
-      "suggestedId": "sequence-privilege-repro-test-testsetvalwithselectonlyrequiresupdateprivilegerepro-0001-select-setval-setval_select_only_seq-100",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "42501",
-      "errorSeverity": "ERROR",
-      "username": "setval_select_only_user",
-      "query": "SELECT setval('setval_select_only_seq', 100);",
-      "querySha256": "d32d6f15e90c267ef78641969eb791a387e196c9ed584d0eedf5de8ef1af0898",
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/sequence_privilege_repro_test.go:TestNextvalRequiresUsageOrUpdatePrivilegeRepro#0001",
-      "source": "testing/go/sequence_privilege_repro_test.go:TestNextvalRequiresUsageOrUpdatePrivilegeRepro",
-      "ordinal": 1,
-      "scriptName": "nextval with sequence SELECT requires USAGE or UPDATE privilege",
-      "oracle": "postgres",
-      "postgresId": "sequence-privilege-repro-test-testnextvalrequiresusageorupdateprivilegerepro-0001-select-nextval-nextval_select_only_seq",
-      "suggestedId": "sequence-privilege-repro-test-testnextvalrequiresusageorupdateprivilegerepro-0001-select-nextval-nextval_select_only_seq",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "42501",
-      "errorSeverity": "ERROR",
-      "username": "nextval_select_only_user",
-      "query": "SELECT nextval('nextval_select_only_seq');",
-      "querySha256": "21b1831faae05c3a75972eb27a089cdee307f34c35d592f9fefff0320b069755",
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/sequence_privilege_repro_test.go:TestNextvalAllowsUpdatePrivilegeRepro#0001",
-      "source": "testing/go/sequence_privilege_repro_test.go:TestNextvalAllowsUpdatePrivilegeRepro",
-      "ordinal": 1,
-      "scriptName": "nextval allows sequence UPDATE privilege",
-      "oracle": "postgres",
-      "postgresId": "sequence-privilege-repro-test-testnextvalallowsupdateprivilegerepro-0001-select-nextval-nextval_update_seq",
-      "suggestedId": "sequence-privilege-repro-test-testnextvalallowsupdateprivilegerepro-0001-select-nextval-nextval_update_seq",
-      "compare": "structural",
-      "expectedKind": "rows",
-      "username": "nextval_update_user",
-      "query": "SELECT nextval('nextval_update_seq');",
-      "querySha256": "b5c29914fc1ad657b4156d9f734b26986e78b8cbe3c7a9f18c4f3df0aeb3bdbe",
-      "expectedRows": [
-        [
-          {
-            "value": "1"
-          }
-        ]
-      ],
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/sequence_privilege_repro_test.go:TestSequenceRelationSelectRequiresSelectPrivilegeRepro#0001",
-      "source": "testing/go/sequence_privilege_repro_test.go:TestSequenceRelationSelectRequiresSelectPrivilegeRepro",
-      "ordinal": 1,
-      "scriptName": "sequence relation SELECT requires sequence SELECT privilege",
-      "oracle": "postgres",
-      "postgresId": "sequence-privilege-repro-test-testsequencerelationselectrequiresselectprivilegerepro-0001-select-last_value-from-relation_private_seq",
-      "suggestedId": "sequence-privilege-repro-test-testsequencerelationselectrequiresselectprivilegerepro-0001-select-last_value-from-relation_private_seq",
-      "compare": "sqlstate",
-      "expectedKind": "error",
-      "sqlstate": "42501",
-      "errorSeverity": "ERROR",
-      "username": "sequence_relation_reader",
-      "query": "SELECT last_value FROM relation_private_seq;",
-      "querySha256": "c929475e5b2649b56efbacf1710df195095e8b15f425723a51aa11e2f97ae720",
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/sequence_privilege_repro_test.go:TestSequenceRelationSelectAllowsSelectPrivilegeRepro#0001",
-      "source": "testing/go/sequence_privilege_repro_test.go:TestSequenceRelationSelectAllowsSelectPrivilegeRepro",
-      "ordinal": 1,
-      "scriptName": "sequence relation SELECT allows sequence SELECT privilege",
-      "oracle": "postgres",
-      "postgresId": "sequence-privilege-repro-test-testsequencerelationselectallowsselectprivilegerepro-0001-select-last_value-from-relation_select_seq",
-      "suggestedId": "sequence-privilege-repro-test-testsequencerelationselectallowsselectprivilegerepro-0001-select-last_value-from-relation_select_seq",
-      "compare": "structural",
-      "expectedKind": "rows",
-      "username": "sequence_relation_select_user",
-      "query": "SELECT last_value FROM relation_select_seq;",
-      "querySha256": "5a7d6431ff6d2bae8b27e02825c5ded2d418caf17180f38a5e9dc308d307e816",
-      "expectedRows": [
-        [
-          {
-            "value": "1"
-          }
-        ]
-      ],
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
     {
       "key": "testing/go/sequence_privilege_repro_test.go:TestSequenceOwnerCanUseCreatedSequenceRepro#0001",
       "source": "testing/go/sequence_privilege_repro_test.go:TestSequenceOwnerCanUseCreatedSequenceRepro",
@@ -163,52 +45,6 @@
         "SetUpScript"
       ],
       "needsCleanup": true,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/sequence_privilege_repro_test.go:TestCurrvalAllowsSequenceUsagePrivilegeRepro#0001",
-      "source": "testing/go/sequence_privilege_repro_test.go:TestCurrvalAllowsSequenceUsagePrivilegeRepro",
-      "ordinal": 1,
-      "scriptName": "currval allows sequence USAGE privilege",
-      "oracle": "postgres",
-      "postgresId": "sequence-privilege-repro-test-testcurrvalallowssequenceusageprivilegerepro-0001-select-nextval-currval_usage_seq",
-      "suggestedId": "sequence-privilege-repro-test-testcurrvalallowssequenceusageprivilegerepro-0001-select-nextval-currval_usage_seq",
-      "compare": "structural",
-      "expectedKind": "rows",
-      "username": "currval_usage_user",
-      "query": "SELECT nextval('currval_usage_seq');",
-      "querySha256": "19663f03391023338f8eb35545d3aea69ca8ea6523ccf3d5e477081cec3dedc2",
-      "expectedRows": [
-        [
-          {
-            "value": "1"
-          }
-        ]
-      ],
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/sequence_privilege_repro_test.go:TestCurrvalAllowsSequenceUsagePrivilegeRepro#0002",
-      "source": "testing/go/sequence_privilege_repro_test.go:TestCurrvalAllowsSequenceUsagePrivilegeRepro",
-      "ordinal": 2,
-      "scriptName": "currval allows sequence USAGE privilege",
-      "oracle": "postgres",
-      "postgresId": "sequence-privilege-repro-test-testcurrvalallowssequenceusageprivilegerepro-0002-select-currval-currval_usage_seq",
-      "suggestedId": "sequence-privilege-repro-test-testcurrvalallowssequenceusageprivilegerepro-0002-select-currval-currval_usage_seq",
-      "compare": "structural",
-      "expectedKind": "rows",
-      "username": "currval_usage_user",
-      "query": "SELECT currval('currval_usage_seq');",
-      "querySha256": "65b2970178f6661390d089a8bdcec51732cf7bf3241113c74c5656faf3214ce9",
-      "expectedRows": [
-        [
-          {
-            "value": "1"
-          }
-        ]
-      ],
-      "needsCleanup": false,
       "cleanupProvided": false
     }
   ]

@@ -20,29 +20,6 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 )
 
-// TestDropDatabaseWithForceDropsIdleDatabase guards that DROP DATABASE accepts
-// the WITH (FORCE) option and removes an idle target database.
-func TestDropDatabaseWithForceDropsIdleDatabase(t *testing.T) {
-	RunScripts(t, []ScriptTest{
-		{
-			Name: "DROP DATABASE WITH FORCE drops an idle database",
-			SetUpScript: []string{
-				`CREATE DATABASE force_drop_database_idle;`,
-			},
-			Assertions: []ScriptTestAssertion{
-				{
-					Query: `DROP DATABASE force_drop_database_idle WITH (FORCE);`,
-				},
-				{
-					Query: `SELECT datname
-						FROM pg_database
-						WHERE datname = 'force_drop_database_idle';`, PostgresOracle: ScriptTestPostgresOracle{ID: "drop-database-correctness-repro-test-testdropdatabasewithforcedropsidledatabase-0001-select-datname-from-pg_database-where"},
-				},
-			},
-		},
-	})
-}
-
 // TestDropDatabaseWithForceIfExistsNoopsMissingDatabase guards that combining
 // WITH (FORCE) with IF EXISTS on a non-existent target succeeds silently, the
 // same way PostgreSQL does.

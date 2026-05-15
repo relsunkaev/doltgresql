@@ -2,7 +2,7 @@
   "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map default_privileges_repro_test.go --force-postgres-oracle",
   "sourceFile": "testing/go/default_privileges_repro_test.go",
   "defaultOracle": "internal",
-  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionKeyStyle": "testing/go/\u003cfile\u003e:\u003cTestName\u003e#\u003cexpectation-ordinal\u003e",
   "assertionFields": [
     "Expected",
     "ExpectedRaw",
@@ -53,29 +53,6 @@
       "query": "SELECT nextval('default_priv_sequence');",
       "querySha256": "3fc0e80e92cee9a0366562450d06767ad75408167713857065537dba94817320",
       "needsCleanup": true,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/default_privileges_repro_test.go:TestAlterDefaultPrivilegesGrantAppliesToFutureFunctionsRepro#0001",
-      "source": "testing/go/default_privileges_repro_test.go:TestAlterDefaultPrivilegesGrantAppliesToFutureFunctionsRepro",
-      "ordinal": 1,
-      "scriptName": "default EXECUTE grant applies to future functions",
-      "oracle": "postgres",
-      "postgresId": "default-privileges-repro-test-testalterdefaultprivilegesgrantappliestofuturefunctionsrepro-0001-select-default_priv_function",
-      "suggestedId": "default-privileges-repro-test-testalterdefaultprivilegesgrantappliestofuturefunctionsrepro-0001-select-default_priv_function",
-      "compare": "structural",
-      "expectedKind": "rows",
-      "username": "default_function_user",
-      "query": "SELECT default_priv_function();",
-      "querySha256": "52076ddc926797a41a0e291f9a32846538c735b243104f24b93c6a8251e94666",
-      "expectedRows": [
-        [
-          {
-            "value": "7"
-          }
-        ]
-      ],
-      "needsCleanup": false,
       "cleanupProvided": false
     },
     {

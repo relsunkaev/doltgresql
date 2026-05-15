@@ -2,7 +2,7 @@
   "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map information_schema_visibility_repro_test.go --force-postgres-oracle",
   "sourceFile": "testing/go/information_schema_visibility_repro_test.go",
   "defaultOracle": "internal",
-  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionKeyStyle": "testing/go/\u003cfile\u003e:\u003cTestName\u003e#\u003cexpectation-ordinal\u003e",
   "assertionFields": [
     "Expected",
     "ExpectedRaw",
@@ -42,23 +42,6 @@
       "cleanupProvided": false
     },
     {
-      "key": "testing/go/information_schema_visibility_repro_test.go:TestInformationSchemaSchemataHidesUngrantableSchemasRepro#0001",
-      "source": "testing/go/information_schema_visibility_repro_test.go:TestInformationSchemaSchemataHidesUngrantableSchemasRepro",
-      "ordinal": 1,
-      "scriptName": "information_schema.schemata hides ungranted schemas",
-      "oracle": "postgres",
-      "postgresId": "information-schema-visibility-repro-test-testinformationschemaschematahidesungrantableschemasrepro-0001-select-schema_name-from-information_schema.schemata-where",
-      "suggestedId": "information-schema-visibility-repro-test-testinformationschemaschematahidesungrantableschemasrepro-0001-select-schema_name-from-information_schema.schemata-where",
-      "compare": "structural",
-      "expectedKind": "rows",
-      "username": "info_schema_schema_viewer",
-      "query": "SELECT schema_name\n\t\t\t\t\t\tFROM information_schema.schemata\n\t\t\t\t\t\tWHERE schema_name = 'info_schema_private_schema';",
-      "querySha256": "4d7286e02ff7f157be51213e1e6522e4925f6281c7237d66fb6cd1e14a478d76",
-      "expectedRows": [],
-      "needsCleanup": false,
-      "cleanupProvided": false
-    },
-    {
       "key": "testing/go/information_schema_visibility_repro_test.go:TestInformationSchemaViewsHidesUngrantableViewsRepro#0001",
       "source": "testing/go/information_schema_visibility_repro_test.go:TestInformationSchemaViewsHidesUngrantableViewsRepro",
       "ordinal": 1,
@@ -70,23 +53,6 @@
       "query": "SELECT table_name\n\t\t\t\t\t\tFROM information_schema.views\n\t\t\t\t\t\tWHERE table_schema = 'public'\n\t\t\t\t\t\t\tAND table_name = 'info_schema_private_view';",
       "querySha256": "fbf5a0e8b375fa3dc1145fe426025ac593e7a4c6ad2bbec31b7592af87caabfe",
       "needsCleanup": true,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/information_schema_visibility_repro_test.go:TestInformationSchemaTriggersHidesUngrantableTriggersRepro#0001",
-      "source": "testing/go/information_schema_visibility_repro_test.go:TestInformationSchemaTriggersHidesUngrantableTriggersRepro",
-      "ordinal": 1,
-      "scriptName": "information_schema.triggers hides ungranted triggers",
-      "oracle": "postgres",
-      "postgresId": "information-schema-visibility-repro-test-testinformationschematriggershidesungrantabletriggersrepro-0001-select-trigger_name-from-information_schema.triggers-where",
-      "suggestedId": "information-schema-visibility-repro-test-testinformationschematriggershidesungrantabletriggersrepro-0001-select-trigger_name-from-information_schema.triggers-where",
-      "compare": "structural",
-      "expectedKind": "rows",
-      "username": "info_schema_trigger_viewer",
-      "query": "SELECT trigger_name\n\t\t\t\t\t\tFROM information_schema.triggers\n\t\t\t\t\t\tWHERE event_object_schema = 'public'\n\t\t\t\t\t\t\tAND event_object_table = 'info_schema_trigger_private';",
-      "querySha256": "0dea8108bebeeec9d6e0c994e2874b7ec7a1a3e4f300276de53179260f563c30",
-      "expectedRows": [],
-      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -129,23 +95,6 @@
       "query": "SELECT column_name, privilege_type\n\t\t\t\t\t\tFROM information_schema.column_privileges\n\t\t\t\t\t\tWHERE table_schema = 'public'\n\t\t\t\t\t\t\tAND table_name = 'info_schema_column_grant_private'\n\t\t\t\t\t\t\tAND grantee = current_user\n\t\t\t\t\t\tORDER BY column_name, privilege_type;",
       "querySha256": "098fd12ea2324ed513a578924b124ca4fa6468386a7b38ee3eca08d3dcf65510",
       "needsCleanup": true,
-      "cleanupProvided": false
-    },
-    {
-      "key": "testing/go/information_schema_visibility_repro_test.go:TestInformationSchemaRoutinePrivilegesReflectsFunctionGrantRepro#0001",
-      "source": "testing/go/information_schema_visibility_repro_test.go:TestInformationSchemaRoutinePrivilegesReflectsFunctionGrantRepro",
-      "ordinal": 1,
-      "scriptName": "information_schema.routine_privileges reflects granted functions",
-      "oracle": "postgres",
-      "postgresId": "information-schema-visibility-repro-test-testinformationschemaroutineprivilegesreflectsfunctiongrantrepro-0001-select-routine_name-privilege_type-from-information_schema.routine_privileges",
-      "suggestedId": "information-schema-visibility-repro-test-testinformationschemaroutineprivilegesreflectsfunctiongrantrepro-0001-select-routine_name-privilege_type-from-information_schema.routine_privileges",
-      "compare": "structural",
-      "expectedKind": "rows",
-      "username": "info_schema_routine_grantee",
-      "query": "SELECT routine_name, privilege_type\n\t\t\t\t\t\tFROM information_schema.routine_privileges\n\t\t\t\t\t\tWHERE routine_schema = 'public'\n\t\t\t\t\t\t\tAND routine_name = 'info_schema_routine_grant_target'\n\t\t\t\t\t\t\tAND grantee = current_user\n\t\t\t\t\t\tORDER BY routine_name, privilege_type;",
-      "querySha256": "3ccbe203989bffea823a9307302fcb68e9c53aae31219783081df7996601553a",
-      "expectedRows": [],
-      "needsCleanup": false,
       "cleanupProvided": false
     }
   ]
