@@ -15,12 +15,20 @@
 package rowsecurity
 
 import (
+	"encoding/json"
+	"os"
+	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
+
+	"github.com/cockroachdb/errors"
+	"github.com/dolthub/dolt/go/libraries/utils/filesys"
 )
 
 const defaultSchemaName = "public"
 const defaultDatabaseName = "postgres"
+const stateVersion = 1
 
 // Policy is the supported subset of a PostgreSQL row-level security policy.
 type Policy struct {
@@ -51,13 +59,43 @@ type transactionSnapshot struct {
 	tables   map[tableKey]State
 }
 
+type persistentState struct {
+	Version int               `json:"version"`
+	Tables  []persistentTable `json:"tables"`
+}
+
+type persistentTable struct {
+	Database string   `json:"database"`
+	Schema   string   `json:"schema"`
+	Table    string   `json:"table"`
+	Enabled  bool     `json:"enabled,omitempty"`
+	Forced   bool     `json:"forced,omitempty"`
+	Policies []Policy `json:"policies,omitempty"`
+}
+
 var registry = struct {
 	sync.RWMutex
 	tables       map[tableKey]State
 	transactions map[uint32]transactionSnapshot
+	storageFS    filesys.Filesys
+	storagePath  string
 }{
 	tables:       map[tableKey]State{},
 	transactions: map[uint32]transactionSnapshot{},
+}
+
+// ConfigureStorage loads and persists row-level security state in the supplied filesystem.
+func ConfigureStorage(fs filesys.Filesys, storagePath string) error {
+	registry.Lock()
+	defer registry.Unlock()
+	registry.storageFS = fs
+	registry.storagePath = storagePath
+	registry.tables = map[tableKey]State{}
+	registry.transactions = map[uint32]transactionSnapshot{}
+	if fs == nil || storagePath == "" {
+		return nil
+	}
+	return loadLocked()
 }
 
 // ResetForTests clears all in-memory row-level security state.
@@ -66,6 +104,8 @@ func ResetForTests() {
 	defer registry.Unlock()
 	registry.tables = map[tableKey]State{}
 	registry.transactions = map[uint32]transactionSnapshot{}
+	registry.storageFS = nil
+	registry.storagePath = ""
 }
 
 // BeginTransaction starts tracking row-level security metadata mutations for a connection.
@@ -79,7 +119,11 @@ func BeginTransaction(connectionID uint32) {
 func CommitTransaction(connectionID uint32) {
 	registry.Lock()
 	defer registry.Unlock()
+	snapshot, ok := registry.transactions[connectionID]
 	delete(registry.transactions, connectionID)
+	if ok && snapshot.captured {
+		_ = persistLocked()
+	}
 }
 
 // RollbackTransaction restores row-level security metadata to its transaction-start state.
@@ -92,6 +136,7 @@ func RollbackTransaction(connectionID uint32) {
 	}
 	if snapshot.captured {
 		registry.tables = cloneStateMap(snapshot.tables)
+		_ = persistLocked()
 	}
 	delete(registry.transactions, connectionID)
 }
@@ -109,7 +154,8 @@ func SetTableMode(connectionID uint32, database, schema, table string, enabled *
 	if forced != nil {
 		state.Forced = *forced
 	}
-	registry.tables[key] = state
+	setStateLocked(key, state)
+	persistMutationLocked(connectionID)
 }
 
 // AddPolicy adds a row-level security policy. It returns false when a policy
@@ -131,7 +177,8 @@ func AddPolicy(connectionID uint32, database, schema, table string, policy Polic
 	}
 	trackMutationLocked(connectionID)
 	state.Policies = append(state.Policies, policy)
-	registry.tables[key] = state
+	setStateLocked(key, state)
+	persistMutationLocked(connectionID)
 	return true
 }
 
@@ -152,7 +199,8 @@ func DropPolicy(connectionID uint32, database, schema, table string, policyName 
 		}
 		trackMutationLocked(connectionID)
 		state.Policies = append(state.Policies[:i], state.Policies[i+1:]...)
-		registry.tables[key] = state
+		setStateLocked(key, state)
+		persistMutationLocked(connectionID)
 		return true
 	}
 	return false
@@ -168,6 +216,7 @@ func DropTable(connectionID uint32, database, schema, table string) {
 	}
 	trackMutationLocked(connectionID)
 	delete(registry.tables, key)
+	persistMutationLocked(connectionID)
 }
 
 // RenameTable moves row-level security state to a renamed table.
@@ -181,7 +230,8 @@ func RenameTable(connectionID uint32, database, oldSchema, oldTable, newSchema, 
 	}
 	trackMutationLocked(connectionID)
 	delete(registry.tables, oldKey)
-	registry.tables[makeKey(database, newSchema, newTable)] = state
+	setStateLocked(makeKey(database, newSchema, newTable), state)
+	persistMutationLocked(connectionID)
 }
 
 // RenameColumn rewrites policy column references for a renamed table column.
@@ -204,7 +254,8 @@ func RenameColumn(connectionID uint32, database, schema, table, oldColumn, newCo
 			state.Policies[i].CheckColumn = newColumn
 		}
 	}
-	registry.tables[key] = state
+	setStateLocked(key, state)
+	persistMutationLocked(connectionID)
 }
 
 // Get returns the row-level security state for a table.
@@ -268,6 +319,109 @@ func trackMutationLocked(connectionID uint32) {
 	snapshot.captured = true
 	snapshot.tables = cloneStateMap(registry.tables)
 	registry.transactions[connectionID] = snapshot
+}
+
+func persistMutationLocked(connectionID uint32) {
+	if _, inTransaction := registry.transactions[connectionID]; inTransaction {
+		return
+	}
+	_ = persistLocked()
+}
+
+func setStateLocked(key tableKey, state State) {
+	if !state.Enabled && !state.Forced && len(state.Policies) == 0 {
+		delete(registry.tables, key)
+		return
+	}
+	registry.tables[key] = state
+}
+
+func loadLocked() error {
+	exists, isDir := registry.storageFS.Exists(registry.storagePath)
+	if !exists {
+		return nil
+	}
+	if isDir {
+		return errors.Errorf("row-level security state path %q is a directory", registry.storagePath)
+	}
+	data, err := registry.storageFS.ReadFile(registry.storagePath)
+	if err != nil {
+		return err
+	}
+	var state persistentState
+	if err = json.Unmarshal(data, &state); err != nil {
+		return err
+	}
+	for _, stored := range state.Tables {
+		for i := range stored.Policies {
+			stored.Policies[i].Name = normalizeIdentifier(stored.Policies[i].Name)
+			stored.Policies[i].Command = strings.ToLower(strings.TrimSpace(stored.Policies[i].Command))
+			for j := range stored.Policies[i].Roles {
+				stored.Policies[i].Roles[j] = normalizeIdentifier(stored.Policies[i].Roles[j])
+			}
+		}
+		setStateLocked(makeKey(stored.Database, stored.Schema, stored.Table), State{
+			Enabled:  stored.Enabled,
+			Forced:   stored.Forced,
+			Policies: clonePolicies(stored.Policies),
+		})
+	}
+	return nil
+}
+
+func persistLocked() error {
+	if registry.storageFS == nil || registry.storagePath == "" {
+		return nil
+	}
+	if len(registry.tables) == 0 {
+		if exists, isDir := registry.storageFS.Exists(registry.storagePath); exists && !isDir {
+			return registry.storageFS.DeleteFile(registry.storagePath)
+		}
+		return nil
+	}
+	dir := filepath.Dir(registry.storagePath)
+	if dir != "." && dir != "" {
+		if err := registry.storageFS.MkDirs(dir); err != nil {
+			return err
+		}
+	}
+	data, err := json.MarshalIndent(toPersistentStateLocked(), "", "  ")
+	if err != nil {
+		return err
+	}
+	return registry.storageFS.WriteFile(registry.storagePath, data, os.ModePerm)
+}
+
+func toPersistentStateLocked() persistentState {
+	keys := make([]tableKey, 0, len(registry.tables))
+	for key := range registry.tables {
+		keys = append(keys, key)
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		if keys[i].database != keys[j].database {
+			return keys[i].database < keys[j].database
+		}
+		if keys[i].schema != keys[j].schema {
+			return keys[i].schema < keys[j].schema
+		}
+		return keys[i].table < keys[j].table
+	})
+	tables := make([]persistentTable, 0, len(keys))
+	for _, key := range keys {
+		state := registry.tables[key]
+		tables = append(tables, persistentTable{
+			Database: key.database,
+			Schema:   key.schema,
+			Table:    key.table,
+			Enabled:  state.Enabled,
+			Forced:   state.Forced,
+			Policies: clonePolicies(state.Policies),
+		})
+	}
+	return persistentState{
+		Version: stateVersion,
+		Tables:  tables,
+	}
 }
 
 func cloneStateMap(tables map[tableKey]State) map[tableKey]State {

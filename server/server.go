@@ -47,6 +47,7 @@ import (
 	"github.com/dolthub/doltgresql/server/logrepl"
 	"github.com/dolthub/doltgresql/server/replicaidentity"
 	"github.com/dolthub/doltgresql/server/replsource"
+	"github.com/dolthub/doltgresql/server/rowsecurity"
 	"github.com/dolthub/doltgresql/server/sessionstate"
 	pgtables "github.com/dolthub/doltgresql/server/tables"
 	"github.com/dolthub/doltgresql/servercfg"
@@ -149,6 +150,9 @@ func runServer(ctx context.Context, cfg *servercfg.DoltgresConfig, dEnv *env.Dol
 		return nil, err
 	}
 	if err = replicaidentity.ConfigureStorage(dataDirFs, filepath.Join(cfgDir, "replica_identity.json")); err != nil {
+		return nil, err
+	}
+	if err = rowsecurity.ConfigureStorage(dataDirFs, filepath.Join(cfgDir, "row_security.json")); err != nil {
 		return nil, err
 	}
 	if err = largeobject.ConfigureStorage(dataDirFs, filepath.Join(cfgDir, "large_objects.json")); err != nil {
