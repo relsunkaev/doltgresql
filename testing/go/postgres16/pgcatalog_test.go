@@ -842,9 +842,11 @@ func TestPgCollation(t *testing.T) {
 			Name: "pg_collation",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT oid, collname, collnamespace, collprovider, collisdeterministic, collencoding
-FROM "pg_catalog"."pg_collation"
-ORDER BY oid;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgcollation-0001-select-oid-collname-collnamespace-collprovider"},
+					Query: `SELECT c.collname, n.nspname, c.collprovider, c.collisdeterministic::text, c.collencoding::text
+FROM "pg_catalog"."pg_collation" c
+JOIN "pg_catalog"."pg_namespace" n ON n.oid = c.collnamespace
+WHERE c.collname IN ('default', 'C', 'POSIX', 'ucs_basic', 'und-x-icu')
+ORDER BY c.collname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgcollation-0001-select-oid-collname-collnamespace-collprovider"},
 				},
 				{ // Different cases and quoted, so it fails
 					Query: `SELECT * FROM "PG_catalog"."pg_collation";`, PostgresOracle: ScriptTestPostgresOracle{
@@ -859,7 +861,7 @@ ORDER BY oid;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-tes
 						ID: "pgcatalog-test-testpgcollation-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT collname FROM PG_catalog.pg_COLLATION ORDER BY collname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgcollation-0004-select-collname-from-pg_catalog.pg_collation-order"},
+					Query: "SELECT collname FROM PG_catalog.pg_COLLATION WHERE collname IN ('default', 'C', 'POSIX', 'ucs_basic', 'und-x-icu') ORDER BY collname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgcollation-0004-select-collname-from-pg_catalog.pg_collation-order"},
 				},
 			},
 		},

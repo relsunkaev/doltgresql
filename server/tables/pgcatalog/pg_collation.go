@@ -98,6 +98,7 @@ type pgCollation struct {
 	oid       id.Id
 	name      string
 	provider  string
+	encoding  int32
 	collate   any
 	ctype     any
 	icuLocale any
@@ -109,11 +110,13 @@ var pgCollationRows = []pgCollation{
 		oid:      id.NewCollation("pg_catalog", indexmetadata.CollationDefault).AsId(),
 		name:     indexmetadata.CollationDefault,
 		provider: "d",
+		encoding: -1,
 	},
 	{
 		oid:      id.NewCollation("pg_catalog", indexmetadata.CollationC).AsId(),
 		name:     indexmetadata.CollationC,
 		provider: "c",
+		encoding: -1,
 		collate:  indexmetadata.CollationC,
 		ctype:    indexmetadata.CollationC,
 	},
@@ -121,6 +124,7 @@ var pgCollationRows = []pgCollation{
 		oid:      id.NewCollation("pg_catalog", indexmetadata.CollationPOSIX).AsId(),
 		name:     indexmetadata.CollationPOSIX,
 		provider: "c",
+		encoding: -1,
 		collate:  indexmetadata.CollationPOSIX,
 		ctype:    indexmetadata.CollationPOSIX,
 	},
@@ -128,6 +132,7 @@ var pgCollationRows = []pgCollation{
 		oid:      id.NewCollation("pg_catalog", indexmetadata.CollationUcsBasic).AsId(),
 		name:     indexmetadata.CollationUcsBasic,
 		provider: "c",
+		encoding: 6,
 		collate:  indexmetadata.CollationC,
 		ctype:    indexmetadata.CollationC,
 	},
@@ -135,6 +140,7 @@ var pgCollationRows = []pgCollation{
 		oid:       id.NewCollation("pg_catalog", indexmetadata.CollationUndIcu).AsId(),
 		name:      indexmetadata.CollationUndIcu,
 		provider:  "i",
+		encoding:  -1,
 		icuLocale: "und",
 	},
 }
@@ -147,7 +153,7 @@ func (collation pgCollation) toRow() sql.Row {
 		id.NewId(id.Section_User, "postgres"), // collowner
 		collation.provider,                    // collprovider
 		true,                                  // collisdeterministic
-		int32(-1),                             // collencoding
+		collation.encoding,                    // collencoding
 		collation.collate,                     // collcollate
 		collation.ctype,                       // collctype
 		collation.icuLocale,                   // colliculocale
