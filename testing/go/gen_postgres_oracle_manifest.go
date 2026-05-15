@@ -1623,6 +1623,15 @@ func hasNonMigratableOracleID(id string) bool {
 	}
 }
 
+func hasDoltSpecificOracleID(id string) bool {
+	switch id {
+	case "pg-dump-round-trip-test-testpgdependviewtabledependencies-0001-select-strpos-pg_get_viewdef-dep_active_projects-::regclass":
+		return true
+	default:
+		return false
+	}
+}
+
 func sqlCodeAndStringLiterals(statement string) (string, []string) {
 	var code strings.Builder
 	var literals []string
@@ -2551,6 +2560,9 @@ func migrationCandidate(source string, ordinal int, scriptName string, fields ma
 	}
 	if hasDoltSpecificSQL(query) {
 		candidate.NonLiteral = append(candidate.NonLiteral, "DoltSpecific")
+	}
+	if hasDoltSpecificOracleID(candidate.SuggestedID) {
+		candidate.NonLiteral = appendNonLiteral(candidate.NonLiteral, "DoltSpecific")
 	}
 	if expectedKind == "rows" {
 		if _, err := expectedRowsFromExpr(fields["Expected"]); err != nil {

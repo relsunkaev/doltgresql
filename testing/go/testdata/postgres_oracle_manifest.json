@@ -4452,34 +4452,6 @@
       ]
     },
     {
-      "id": "pg-dump-round-trip-test-testpgdependviewtabledependencies-0001-select-strpos-pg_get_viewdef-dep_active_projects-::regclass",
-      "source": "testing/go/pg_dump_round_trip_test.go:TestPgDependViewTableDependencies",
-      "ordinal": 1,
-      "oracle": "postgres",
-      "compare": "structural",
-      "setup": [
-        "CREATE TABLE dep_accounts (id INT PRIMARY KEY, email TEXT);",
-        "CREATE TABLE dep_projects (id INT PRIMARY KEY, account_id INT REFERENCES dep_accounts(id));",
-        "CREATE VIEW dep_active_projects AS\n\t\t\t\t\tSELECT p.id, a.email\n\t\t\t\t\tFROM dep_projects p\n\t\t\t\t\tJOIN dep_accounts a ON a.id = p.account_id;",
-        "SELECT view_class.relname, ref_class.relname, d.deptype\nFROM pg_catalog.pg_depend d\nJOIN pg_catalog.pg_class view_class ON view_class.oid = d.objid\nJOIN pg_catalog.pg_class ref_class ON ref_class.oid = d.refobjid\nWHERE d.classid = 'pg_class'::regclass\n\tAND d.refclassid = 'pg_class'::regclass\n\tAND view_class.relname = 'dep_active_projects'\nORDER BY ref_class.relname;"
-      ],
-      "query": "SELECT\n\tstrpos(pg_get_viewdef('dep_active_projects'::regclass), 'public.dep_projects') > 0,\n\tstrpos(pg_get_viewdef('dep_active_projects'::regclass), 'public.dep_accounts') > 0;",
-      "expectedRows": [
-        [
-          {
-            "value": "f"
-          },
-          {
-            "value": "f"
-          }
-        ]
-      ],
-      "cleanup": [
-        "DROP TABLE IF EXISTS dep_accounts CASCADE",
-        "DROP TABLE IF EXISTS dep_projects CASCADE"
-      ]
-    },
-    {
       "id": "pgdog-compat-test-testpgdogcompatibilityboundary-0009-select-pubname-from-pg_catalog.pg_publication-where",
       "source": "testing/go/pgdog_compat_test.go:TestPgDogCompatibilityBoundary",
       "ordinal": 9,

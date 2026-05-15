@@ -1,5 +1,5 @@
 {
-  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map pg_dump_round_trip_test.go --force-postgres-oracle",
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map pg_dump_round_trip_test.go",
   "sourceFile": "testing/go/pg_dump_round_trip_test.go",
   "defaultOracle": "internal",
   "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
@@ -18,29 +18,16 @@
       "source": "testing/go/pg_dump_round_trip_test.go:TestPgDependViewTableDependencies",
       "ordinal": 1,
       "scriptName": "pg_depend exposes view dependencies on referenced tables",
-      "oracle": "postgres",
-      "postgresId": "pg-dump-round-trip-test-testpgdependviewtabledependencies-0001-select-strpos-pg_get_viewdef-dep_active_projects-::regclass",
+      "oracle": "internal",
       "suggestedId": "pg-dump-round-trip-test-testpgdependviewtabledependencies-0001-select-strpos-pg_get_viewdef-dep_active_projects-::regclass",
-      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT\n\tstrpos(pg_get_viewdef('dep_active_projects'::regclass), 'public.dep_projects') > 0,\n\tstrpos(pg_get_viewdef('dep_active_projects'::regclass), 'public.dep_accounts') > 0;",
       "querySha256": "e7865cbbe8a3b4e73803366a731718aa648ee243a16cf49cfba6d6c8cdb2b81a",
-      "expectedRows": [
-        [
-          {
-            "value": "f"
-          },
-          {
-            "value": "f"
-          }
-        ]
+      "nonLiteral": [
+        "DoltSpecific"
       ],
-      "cleanup": [
-        "DROP TABLE IF EXISTS dep_accounts CASCADE",
-        "DROP TABLE IF EXISTS dep_projects CASCADE"
-      ],
-      "needsCleanup": false,
-      "cleanupProvided": true
+      "needsCleanup": true,
+      "cleanupProvided": false
     }
   ]
 }

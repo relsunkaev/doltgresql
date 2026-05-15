@@ -14,7 +14,10 @@
 
 package functions
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestPgGetViewdefKeepsVisibleRelationNamesUnqualified(t *testing.T) {
 	got, err := pgGetViewdefDefinition("CREATE VIEW test_view AS SELECT name FROM test", "public")
@@ -25,6 +28,25 @@ func TestPgGetViewdefKeepsVisibleRelationNamesUnqualified(t *testing.T) {
 	want := " SELECT name\n   FROM test;"
 	if got != want {
 		t.Fatalf("got %q, want %q", got, want)
+	}
+}
+
+func TestPgGetViewdefTextDefinitionQualifiesJoinRelations(t *testing.T) {
+	got, err := pgGetViewdefDefinitionForView(
+		"dep_active_projects",
+		"",
+		"SELECT p.id, a.email FROM dep_projects AS p JOIN dep_accounts AS a ON a.id = p.account_id",
+		"public",
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got = ensureTrailingSemicolon(formatPgGetViewdefDefinition(got))
+	if !strings.Contains(got, "public.dep_projects") {
+		t.Fatalf("expected public.dep_projects in %q", got)
+	}
+	if !strings.Contains(got, "public.dep_accounts") {
+		t.Fatalf("expected public.dep_accounts in %q", got)
 	}
 }
 

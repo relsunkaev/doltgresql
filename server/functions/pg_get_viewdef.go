@@ -83,7 +83,7 @@ func getViewDef(ctx *sql.Context, oidVal id.Id) (string, error) {
 	var result string
 	err := RunCallback(ctx, oidVal, Callbacks{
 		View: func(ctx *sql.Context, sch ItemSchema, view ItemView) (cont bool, err error) {
-			result, err = pgGetViewdefDefinition(view.Item.CreateViewStatement, sch.Item.SchemaName())
+			result, err = pgGetViewdefDefinitionForView(view.Item.Name, view.Item.CreateViewStatement, view.Item.TextDefinition, sch.Item.SchemaName())
 			if err != nil {
 				return false, err
 			}
@@ -116,6 +116,17 @@ func getViewDef(ctx *sql.Context, oidVal id.Id) (string, error) {
 		return "", err
 	}
 	return result, nil
+}
+
+func pgGetViewdefDefinitionForView(viewName string, createViewStatement string, textDefinition string, defaultSchema string) (string, error) {
+	result, err := pgGetViewdefDefinition(createViewStatement, defaultSchema)
+	if err != nil || result != "" {
+		return result, err
+	}
+	if strings.TrimSpace(textDefinition) == "" {
+		return "", nil
+	}
+	return pgGetViewdefDefinition("CREATE VIEW "+quoteIdentifierIfNeeded(viewName)+" AS "+textDefinition, defaultSchema)
 }
 
 // SchemaQualifiedViewDefinition returns the SELECT body from a CREATE VIEW
