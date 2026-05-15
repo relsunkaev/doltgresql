@@ -99,7 +99,7 @@ func (iter *pgPublicationRelRowIter) Next(ctx *sql.Context) (sql.Row, error) {
 			pub.ID.AsId(),
 			relation.Table.AsId(),
 			nullableString(relation.RowFilter),
-			attNums,
+			nullableAnySlice(attNums),
 			id.NewTable(PgCatalogName, PgPublicationRelName).AsId(),
 		}, nil
 	}
@@ -109,4 +109,11 @@ func (iter *pgPublicationRelRowIter) Next(ctx *sql.Context) (sql.Row, error) {
 // Close implements the interface sql.RowIter.
 func (iter *pgPublicationRelRowIter) Close(ctx *sql.Context) error {
 	return nil
+}
+
+func nullableAnySlice(values []any) any {
+	if values == nil {
+		return nil
+	}
+	return values
 }

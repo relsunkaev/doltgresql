@@ -3297,27 +3297,75 @@ func TestPgPublicationRel(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "pg_publication_rel",
+			SetUpScript: []string{
+				`CREATE TABLE pg_publication_rel_oracle_items (
+					id int PRIMARY KEY
+				);`,
+				`CREATE PUBLICATION pg_publication_rel_oracle_pub
+					FOR TABLE pg_publication_rel_oracle_items
+					WITH (publish = 'insert');`,
+			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_publication_rel";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+					Query: `SELECT p.pubname,
+	c.relname,
+	pr.oid <> 0 AS has_oid,
+	pr.prpubid = p.oid AS pubid_matches,
+	pr.prrelid = c.oid AS relid_matches,
+	pr.prqual IS NULL AS no_filter,
+	pr.prattrs IS NULL AS all_columns,
+	pr.tableoid <> 0 AS has_tableoid
+FROM "pg_catalog"."pg_publication_rel" pr
+JOIN "pg_catalog"."pg_publication" p ON p.oid = pr.prpubid
+JOIN "pg_catalog"."pg_class" c ON c.oid = pr.prrelid
+WHERE p.pubname = 'pg_publication_rel_oracle_pub'
+ORDER BY p.pubname, c.relname;`, PostgresOracle: ScriptTestPostgresOracle{ID:
 
 					// Different cases and quoted, so it fails
 					"pgcatalog-test-testpgpublicationrel-0001-select-*-from-pg_catalog-."},
 				},
+			},
+		},
+		{
+			Name: "pg_publication_rel schema case sensitivity",
+			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT * FROM "PG_catalog"."pg_publication_rel";`, PostgresOracle: ScriptTestPostgresOracle{
 
 						// Different cases and quoted, so it fails
 						ID: "pgcatalog-test-testpgpublicationrel-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
+			},
+		},
+		{
+			Name: "pg_publication_rel relation case sensitivity",
+			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT * FROM "pg_catalog"."PG_publication_rel";`, PostgresOracle: ScriptTestPostgresOracle{
 
 						// Different cases but non-quoted, so it works
 						ID: "pgcatalog-test-testpgpublicationrel-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
+			},
+		},
+		{
+			Name: "pg_publication_rel mixed-case lookup",
+			SetUpScript: []string{
+				`CREATE TABLE pg_publication_rel_mixed_items (
+					id int PRIMARY KEY
+				);`,
+				`CREATE PUBLICATION pg_publication_rel_mixed_pub
+					FOR TABLE pg_publication_rel_mixed_items
+					WITH (publish = 'insert');`,
+			},
+			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT oid FROM PG_catalog.pg_PUBLICATION_REL ORDER BY oid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgpublicationrel-0004-select-oid-from-pg_catalog.pg_publication_rel-order"},
+					Query: `SELECT c.relname
+FROM PG_catalog.pg_PUBLICATION_REL pr
+JOIN PG_catalog.pg_PUBLICATION p ON p.oid = pr.prpubid
+JOIN PG_catalog.pg_CLASS c ON c.oid = pr.prrelid
+WHERE p.pubname = 'pg_publication_rel_mixed_pub'
+ORDER BY c.relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgpublicationrel-0004-select-oid-from-pg_catalog.pg_publication_rel-order"},
 				},
 			},
 		},
