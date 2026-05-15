@@ -51,10 +51,13 @@ func (p PgAuthMembersHandler) RowIter(ctx *sql.Context, partition sql.Partition)
 			grantor = membership.Member
 		}
 		rows = append(rows, sql.Row{
+			pgAuthMembersOID(membership),
 			id.NewId(id.Section_User, membership.Group.Name),
 			id.NewId(id.Section_User, membership.Member.Name),
-			id.NewId(id.Section_User, grantor.Name),
+			pgAuthMembersGrantor(membership, grantor),
 			membership.WithAdminOption,
+			membership.WithInheritOption,
+			membership.WithSetOption,
 		})
 	}
 	return sql.RowsToRowIter(rows...), nil
@@ -70,8 +73,31 @@ func (p PgAuthMembersHandler) PkSchema() sql.PrimaryKeySchema {
 
 // pgAuthMembersSchema is the schema for pg_auth_members.
 var pgAuthMembersSchema = sql.Schema{
+	{Name: "oid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgAuthMembersName},
 	{Name: "roleid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgAuthMembersName},
 	{Name: "member", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgAuthMembersName},
 	{Name: "grantor", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgAuthMembersName},
 	{Name: "admin_option", Type: pgtypes.Bool, Default: nil, Nullable: false, Source: PgAuthMembersName},
+	{Name: "inherit_option", Type: pgtypes.Bool, Default: nil, Nullable: false, Source: PgAuthMembersName},
+	{Name: "set_option", Type: pgtypes.Bool, Default: nil, Nullable: false, Source: PgAuthMembersName},
+}
+
+var pgAuthMembersBuiltinOIDs = map[[2]string]uint32{
+	{"pg_read_all_settings", "pg_monitor"}: 10226,
+	{"pg_read_all_stats", "pg_monitor"}:    10227,
+	{"pg_stat_scan_tables", "pg_monitor"}:  10228,
+}
+
+func pgAuthMembersOID(membership auth.RoleMembershipInfo) id.Id {
+	if oid, ok := pgAuthMembersBuiltinOIDs[[2]string{membership.Group.Name, membership.Member.Name}]; ok {
+		return id.NewOID(oid).AsId()
+	}
+	return id.NewId(id.Section_User, PgAuthMembersName, membership.Group.Name, membership.Member.Name)
+}
+
+func pgAuthMembersGrantor(membership auth.RoleMembershipInfo, grantor auth.Role) id.Id {
+	if _, ok := pgAuthMembersBuiltinOIDs[[2]string{membership.Group.Name, membership.Member.Name}]; ok {
+		return id.NewOID(10).AsId()
+	}
+	return id.NewId(id.Section_User, grantor.Name)
 }

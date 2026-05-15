@@ -27,18 +27,22 @@ type RoleMembership struct {
 
 // RoleMembershipValue contains specific membership information between two roles.
 type RoleMembershipValue struct {
-	Member          RoleID
-	Group           RoleID
-	WithAdminOption bool
-	GrantedBy       RoleID
+	Member            RoleID
+	Group             RoleID
+	WithAdminOption   bool
+	WithInheritOption bool
+	WithSetOption     bool
+	GrantedBy         RoleID
 }
 
 // RoleMembershipInfo is a resolved role-membership row.
 type RoleMembershipInfo struct {
-	Member          Role
-	Group           Role
-	Grantor         Role
-	WithAdminOption bool
+	Member            Role
+	Group             Role
+	Grantor           Role
+	WithAdminOption   bool
+	WithInheritOption bool
+	WithSetOption     bool
 }
 
 // NewRoleMembership returns a new *RoleMembership.
@@ -50,6 +54,11 @@ func NewRoleMembership() *RoleMembership {
 
 // AddMemberToGroup adds the member role to the group role.
 func AddMemberToGroup(member RoleID, group RoleID, withAdminOption bool, grantedBy RoleID) {
+	AddMemberToGroupWithOptions(member, group, withAdminOption, true, true, grantedBy)
+}
+
+// AddMemberToGroupWithOptions adds the member role to the group role with explicit PostgreSQL membership options.
+func AddMemberToGroupWithOptions(member RoleID, group RoleID, withAdminOption bool, withInheritOption bool, withSetOption bool, grantedBy RoleID) {
 	// We'll perform a sanity check for circular membership. This should be done before this call is made, but since we
 	// make assumptions that circular relationships are forbidden (which could lead to infinite loops otherwise), we
 	// enforce it here too.
@@ -62,10 +71,12 @@ func AddMemberToGroup(member RoleID, group RoleID, withAdminOption bool, granted
 		globalDatabase.roleMembership.Data[member] = groupMap
 	}
 	groupMap[group] = RoleMembershipValue{
-		Member:          member,
-		Group:           group,
-		WithAdminOption: withAdminOption,
-		GrantedBy:       grantedBy,
+		Member:            member,
+		Group:             group,
+		WithAdminOption:   withAdminOption,
+		WithInheritOption: withInheritOption,
+		WithSetOption:     withSetOption,
+		GrantedBy:         grantedBy,
 	}
 }
 
@@ -82,11 +93,11 @@ func IsRoleAMember(member RoleID, group RoleID) (groupID RoleID, inheritsPrivile
 	if groupMap, ok := globalDatabase.roleMembership.Data[member]; ok {
 		for _, value := range groupMap {
 			if value.Group == group {
-				return group, globalDatabase.rolesByID[member].InheritPrivileges, value.WithAdminOption
+				return group, globalDatabase.rolesByID[member].InheritPrivileges && value.WithInheritOption, value.WithAdminOption
 			}
 			// This recursively walks through memberships
-			if groupID, _, hasWithAdminOption = IsRoleAMember(value.Group, group); groupID.IsValid() {
-				return groupID, globalDatabase.rolesByID[member].InheritPrivileges, hasWithAdminOption
+			if groupID, inheritsPrivileges, hasWithAdminOption = IsRoleAMember(value.Group, group); groupID.IsValid() {
+				return groupID, globalDatabase.rolesByID[member].InheritPrivileges && value.WithInheritOption && inheritsPrivileges, hasWithAdminOption
 			}
 		}
 	}
@@ -119,10 +130,12 @@ func GetAllRoleMemberships() []RoleMembershipInfo {
 			}
 			grantor := globalDatabase.rolesByID[membership.GrantedBy]
 			memberships = append(memberships, RoleMembershipInfo{
-				Member:          member,
-				Group:           group,
-				Grantor:         grantor,
-				WithAdminOption: membership.WithAdminOption,
+				Member:            member,
+				Group:             group,
+				Grantor:           grantor,
+				WithAdminOption:   membership.WithAdminOption,
+				WithInheritOption: membership.WithInheritOption,
+				WithSetOption:     membership.WithSetOption,
 			})
 		}
 	}
@@ -144,7 +157,10 @@ func GetAllGroupsWithMember(member RoleID, inheritsPrivilegesOnly bool) []RoleID
 	}
 	groupMap := globalDatabase.roleMembership.Data[member]
 	groups := make([]RoleID, 0, len(groupMap))
-	for groupID := range groupMap {
+	for groupID, membership := range groupMap {
+		if inheritsPrivilegesOnly && !membership.WithInheritOption {
+			continue
+		}
 		groups = append(groups, groupID)
 	}
 	return groups
@@ -180,6 +196,8 @@ func (membership *RoleMembership) serialize(writer *utils.Writer) {
 			writer.Uint64(uint64(mapValue.Member))
 			writer.Uint64(uint64(mapValue.Group))
 			writer.Bool(mapValue.WithAdminOption)
+			writer.Bool(mapValue.WithInheritOption)
+			writer.Bool(mapValue.WithSetOption)
 			writer.Uint64(uint64(mapValue.GrantedBy))
 		}
 	}
@@ -189,7 +207,7 @@ func (membership *RoleMembership) serialize(writer *utils.Writer) {
 func (membership *RoleMembership) deserialize(version uint32, reader *utils.Reader) {
 	membership.Data = make(map[RoleID]map[RoleID]RoleMembershipValue)
 	switch version {
-	case 0, 1:
+	case 0, 1, 2:
 		// Read the total number of members
 		memberCount := reader.Uint64()
 		for memberIdx := uint64(0); memberIdx < memberCount; memberIdx++ {
@@ -203,6 +221,13 @@ func (membership *RoleMembership) deserialize(version uint32, reader *utils.Read
 				value.Member = RoleID(reader.Uint64())
 				value.Group = RoleID(reader.Uint64())
 				value.WithAdminOption = reader.Bool()
+				if version >= 2 {
+					value.WithInheritOption = reader.Bool()
+					value.WithSetOption = reader.Bool()
+				} else {
+					value.WithInheritOption = true
+					value.WithSetOption = true
+				}
 				value.GrantedBy = RoleID(reader.Uint64())
 				// Add the information to the map
 				groupMap[value.Group] = value

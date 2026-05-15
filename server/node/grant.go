@@ -46,7 +46,7 @@ type Grant struct {
 	GrantParameter          *GrantParameter
 	GrantRole               *GrantRole
 	ToRoles                 []string
-	WithGrantOption         bool // This is "WITH ADMIN OPTION" for GrantRole only
+	WithGrantOption         bool
 	GrantedBy               string
 }
 
@@ -125,7 +125,10 @@ type GrantParameter struct {
 
 // GrantRole specifically handles the GRANT <roles> TO <roles> statement.
 type GrantRole struct {
-	Groups []string
+	Groups            []string
+	WithAdminOption   bool
+	WithInheritOption bool
+	WithSetOption     bool
 }
 
 var _ sql.ExecSourceRel = (*Grant)(nil)
@@ -868,7 +871,14 @@ func (g *Grant) grantRole(ctx *sql.Context) error {
 				// TODO: grab the actual error message
 				return errors.Errorf(`role "%s" does not have permission to grant role "%s"`, userRole.Name, group.Name)
 			}
-			auth.AddMemberToGroup(member.ID(), group.ID(), g.WithGrantOption, memberGroupID)
+			auth.AddMemberToGroupWithOptions(
+				member.ID(),
+				group.ID(),
+				g.GrantRole.WithAdminOption,
+				g.GrantRole.WithInheritOption,
+				g.GrantRole.WithSetOption,
+				memberGroupID,
+			)
 		}
 	}
 	return nil

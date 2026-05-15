@@ -15,6 +15,8 @@
 package ast
 
 import (
+	"strings"
+
 	pgnodes "github.com/dolthub/doltgresql/server/node"
 
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
@@ -27,15 +29,32 @@ func nodeGrantRole(ctx *Context, node *tree.GrantRole) (vitess.Statement, error)
 	if node == nil {
 		return nil, nil
 	}
+	withAdminOption, withInheritOption, withSetOption := nodeGrantRoleOptions(node.WithOption)
 	return vitess.InjectedStatement{
 		Statement: &pgnodes.Grant{
 			GrantRole: &pgnodes.GrantRole{
-				Groups: node.Roles.ToStrings(),
+				Groups:            node.Roles.ToStrings(),
+				WithAdminOption:   withAdminOption,
+				WithInheritOption: withInheritOption,
+				WithSetOption:     withSetOption,
 			},
-			ToRoles:         node.Members,
-			WithGrantOption: len(node.WithOption) > 0,
-			GrantedBy:       node.GrantedBy,
+			ToRoles:   node.Members,
+			GrantedBy: node.GrantedBy,
 		},
 		Children: nil,
 	}, nil
+}
+
+func nodeGrantRoleOptions(withOption string) (withAdminOption bool, withInheritOption bool, withSetOption bool) {
+	withInheritOption = true
+	withSetOption = true
+	switch strings.ToUpper(withOption) {
+	case "ADMIN OPTION", "ADMIN TRUE":
+		withAdminOption = true
+	case "INHERIT FALSE":
+		withInheritOption = false
+	case "SET FALSE":
+		withSetOption = false
+	}
+	return withAdminOption, withInheritOption, withSetOption
 }
