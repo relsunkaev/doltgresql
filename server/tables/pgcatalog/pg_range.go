@@ -20,6 +20,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/indexmetadata"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -49,24 +50,24 @@ func (p PgRangeHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.
 
 func pgBuiltinRangeRows() []sql.Row {
 	return []sql.Row{
-		pgBuiltinRangeRow("int4range", pgtypes.Int32.ID),
-		pgBuiltinRangeRow("int8range", pgtypes.Int64.ID),
-		pgBuiltinRangeRow("numrange", pgtypes.Numeric.ID),
-		pgBuiltinRangeRow("daterange", pgtypes.Date.ID),
-		pgBuiltinRangeRow("tsrange", pgtypes.Timestamp.ID),
-		pgBuiltinRangeRow("tstzrange", pgtypes.TimestampTZ.ID),
+		pgBuiltinRangeRow("int4range", pgtypes.Int32.ID, "int4multirange", "int4_ops", "int4range_canonical", "int4range_subdiff"),
+		pgBuiltinRangeRow("int8range", pgtypes.Int64.ID, "int8multirange", "int8_ops", "int8range_canonical", "int8range_subdiff"),
+		pgBuiltinRangeRow("numrange", pgtypes.Numeric.ID, "nummultirange", "numeric_ops", "-", "numrange_subdiff"),
+		pgBuiltinRangeRow("daterange", pgtypes.Date.ID, "datemultirange", "date_ops", "daterange_canonical", "daterange_subdiff"),
+		pgBuiltinRangeRow("tsrange", pgtypes.Timestamp.ID, "tsmultirange", "timestamp_ops", "-", "tsrange_subdiff"),
+		pgBuiltinRangeRow("tstzrange", pgtypes.TimestampTZ.ID, "tstzmultirange", "timestamptz_ops", "-", "tstzrange_subdiff"),
 	}
 }
 
-func pgBuiltinRangeRow(rangeName string, subtype id.Type) sql.Row {
+func pgBuiltinRangeRow(rangeName string, subtype id.Type, multirangeName string, subtypeOpclass string, canonical string, subtypeDiff string) sql.Row {
 	return sql.Row{
 		id.NewType("pg_catalog", rangeName).AsId(), // rngtypid
 		subtype.AsId(), // rngsubtype
-		zeroOID(),      // rngmultitypid
-		zeroOID(),      // rngcollation
-		zeroOID(),      // rngsubopc
-		"-",            // rngcanonical
-		"-",            // rngsubdiff
+		id.NewType("pg_catalog", multirangeName).AsId(), // rngmultitypid
+		zeroOID(), // rngcollation
+		pgCatalogOpclassID(indexmetadata.AccessMethodBtree, subtypeOpclass), // rngsubopc
+		canonical,   // rngcanonical
+		subtypeDiff, // rngsubdiff
 	}
 }
 
