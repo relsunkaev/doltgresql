@@ -18475,3 +18475,38 @@ Use this file to avoid overlapping work. Add short entries with:
   - `go test -vet=off ./testing/go/postgres16 -run '^TestSetStatements$/(set_config_with_is_local=true_reverts_at_transaction_end|set_config_with_is_local=true_reverts_on_ROLLBACK|set_config_with_is_local=true_under_autocommit_reverts_at_statement_end|SET_LOCAL_var_rolls_back_at_ROLLBACK)$' -count=1 -timeout=10m -v`
   - `go test -vet=off ./server/functions -run '^$' -count=1`
 - Next beta target: commit this focused GUC increment, then take a fresh non-overlapping failure discovery pass outside alpha's active Dolt merge FK and citext/pgcatalog lanes.
+
+### beta - 2026-05-15 01:50 MST
+
+- Commit landed: `031cced3 fix(guc): preserve reverted custom setting placeholder`.
+- Post-commit state: focused PG16 GUC lane is closed; the committed scope was `server/functions/xact_vars.go` plus beta coordination notes.
+- Tests run before commit with ICU env: `TestSetLocalReadFromTrigger`, the four focused `TestSetStatements` GUC subtests, and `./server/functions -run '^$'`; all passed.
+- Next beta target: run a current `./testing/go/...` discovery pass and choose the first non-overlapping failure outside alpha's active Dolt merge FK lane.
+
+### beta - 2026-05-15 01:56 MST
+
+- Discovery update: `go test -json -vet=off ./testing/go/... -count=1 -failfast -timeout=60m > /tmp/doltgresql-beta-testing-go-discovery-0150.json` with ICU env and `GOFLAGS=-p=1` was stopped after the local Docker runtime hung in `TestPerlDBIClientSmoke`.
+- Result before stop: root `./testing/go` had not reported a failing test before `TestPerlDBIClientSmoke`; slow client smokes and root Dolt regression tests were passing up to that point.
+- Harness finding: a parallel `docker ps --format ...` probe also hung, and the active process tree showed `docker run --rm -it --name redis ... redis:latest`, so this is currently a local Docker gate rather than an assertion failure.
+- Next beta target: continue current source-failure discovery in `./testing/go/enginetest`, `./testing/go/postgres16`, and `./testing/go/postgres18` while leaving the Docker-backed root client smoke as an environment blocker to revisit.
+
+### beta - 2026-05-15 01:58 MST
+
+- Lane claimed: enginetest `TestColumnAliases/column_aliases_in_two_scopes/SELECT 1 as a, (select a union select a) as b;`.
+- Red proof: `go test -json -vet=off ./testing/go/enginetest ./testing/go/postgres16 ./testing/go/postgres18 -count=1 -failfast -timeout=60m > /tmp/doltgresql-beta-subpkg-discovery-0156.json` with ICU env and `GOFLAGS=-p=1` fails first with `ERROR: the subquery returned more than 1 row (SQLSTATE 21000)`.
+- Suspected root cause: nested column-alias resolution for a scalar subquery containing `UNION` is not matching MySQL/GMS semantics, likely causing the two `select a` arms to evaluate as distinct rows instead of a duplicate-eliminated single row.
+- Expected files: likely analyzer/expression resolution or the enginetest compatibility converter/harness after focused reproduction; boundary: no alpha Dolt merge FK lane, no peer dirty EXPLAIN files (`server/analyzer/replace_node.go`, `server/doltgres_handler.go`, `server/node/postgres_explain.go`), no test weakening.
+- Next action: reproduce the focused `TestColumnAliases` subcase, inspect query conversion/analyzer behavior, and patch the smallest source-side root cause.
+
+### beta - 2026-05-15 02:04 MST
+
+- Lane result: fixed the recurring `TestColumnAliases/column_aliases_in_two_scopes` scalar-subquery `UNION` failure while preserving the recursive CTE set-op output-name fix from `6720757e`.
+- Root cause: `server/ast/select.go` aliased every unqualified bare column in every set-operation operand after `6720757e`. That made the scalar subquery `(select a union select a)` leak operand aliases and return two distinct rows, but the alias is only needed when a surrounding CTE without an explicit column list derives output names from the top-level set-op operands.
+- Change made: added scoped AST conversion state so implicit bare-column set-op aliases are emitted only at the operand depth used for CTE output-name derivation. Non-CTE scalar set-op operands stay unaliased; qualified set-op source-name preservation is unchanged.
+- Regression coverage: added `TestScalarSubquerySetOpBareColumnDoesNotLeakAlias` alongside the existing recursive CTE alias unit test.
+- Validation passed with ICU env:
+  - `go test -vet=off ./server/ast -run 'TestSetOpBareColumnKeepsOutputAlias|TestScalarSubquerySetOpBareColumnDoesNotLeakAlias' -count=1 -timeout=10m -v`
+  - `go test -vet=off ./testing/go/enginetest -run '^TestColumnAliases$/column_aliases_in_two_scopes$' -count=1 -timeout=10m -v`
+  - `go test -vet=off ./server/ast ./server/analyzer -run '^$' -count=1 -timeout=10m`
+  - `go test -vet=off ./testing/go/enginetest -run '^TestScripts$/Subqueries_inside_NOT_EXISTS_clause_with_correlated_column_filter$' -count=1 -timeout=10m -v`
+- Next beta target: stage/commit only beta AST/CTE-alias files plus beta coop hunks, leaving alpha's peer EXPLAIN files unstaged, then rerun subpackage discovery.

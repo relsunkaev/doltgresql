@@ -39,9 +39,20 @@ func nodeCTE(ctx *Context, node *tree.CTE) (*vitess.CommonTableExpr, error) {
 		return nil, errors.Errorf("unsupported CTE statement type: %T", node.Stmt)
 	}
 
-	selectStmt, err := nodeSelect(ctx, subSelect)
-	if err != nil {
-		return nil, err
+	var selectStmt vitess.SelectStatement
+	convertSelect := func() error {
+		var err error
+		selectStmt, err = nodeSelect(ctx, subSelect)
+		return err
+	}
+	if len(cols) == 0 && treeSelectStatementIsSetOp(subSelect.Select) {
+		if err := ctx.WithSetOpOutputAliases(convertSelect); err != nil {
+			return nil, err
+		}
+	} else {
+		if err := convertSelect(); err != nil {
+			return nil, err
+		}
 	}
 
 	subQuery := &vitess.Subquery{
@@ -56,6 +67,17 @@ func nodeCTE(ctx *Context, node *tree.CTE) (*vitess.CommonTableExpr, error) {
 		},
 		Columns: cols,
 	}, nil
+}
+
+func treeSelectStatementIsSetOp(node tree.SelectStatement) bool {
+	switch node := node.(type) {
+	case *tree.UnionClause:
+		return true
+	case *tree.ParenSelect:
+		return node != nil && node.Select != nil && treeSelectStatementIsSetOp(node.Select.Select)
+	default:
+		return false
+	}
 }
 
 // nodeWith handles *tree.With nodes.

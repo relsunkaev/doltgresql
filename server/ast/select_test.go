@@ -48,3 +48,33 @@ SELECT * FROM r;
 		t.Fatalf("got alias %q, want issue_id", got)
 	}
 }
+
+func TestScalarSubquerySetOpBareColumnDoesNotLeakAlias(t *testing.T) {
+	stmt, err := parser.ParseOne(`SELECT 1 as a, (select a union select a) as b;`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	converted, err := Convert(stmt)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	selectStmt := converted.(*vitess.Select)
+	outerExpr := selectStmt.SelectExprs[1].(*vitess.AliasedExpr)
+	subquery := outerExpr.Expr.(*vitess.Subquery)
+	subquerySelect := subquery.Select
+	if paren, ok := subquerySelect.(*vitess.ParenSelect); ok {
+		subquerySelect = paren.Select
+	}
+	setOp := subquerySelect.(*vitess.SetOp)
+	left := setOp.Left.(*vitess.Select)
+	right := setOp.Right.(*vitess.Select)
+	leftExpr := left.SelectExprs[0].(*vitess.AliasedExpr)
+	rightExpr := right.SelectExprs[0].(*vitess.AliasedExpr)
+	if got := leftExpr.As.String(); got != "" {
+		t.Fatalf("left operand alias = %q, want empty", got)
+	}
+	if got := rightExpr.As.String(); got != "" {
+		t.Fatalf("right operand alias = %q, want empty", got)
+	}
+}

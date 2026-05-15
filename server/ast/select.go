@@ -507,7 +507,7 @@ func nodeSelectExpr(ctx *Context, node tree.SelectExpr) (vitess.SelectExpr, erro
 			sourceName := ""
 			if node.As != "" {
 				as = outputColumnIdent(string(node.As))
-			} else if expr.NumParts == 1 {
+			} else if expr.NumParts == 1 && ctx.SetOpOutputAliasesNeeded() {
 				as = outputColumnIdent(expr.Parts[0])
 			} else if colName.Qualifier.Name.String() != "" && expr.NumParts > 0 {
 				as = outputColumnIdent(expr.Parts[0])

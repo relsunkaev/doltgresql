@@ -41,6 +41,12 @@ type Context struct {
 	// subset of columns.
 	setOpOperandDepth int
 
+	// setOpOutputAliasDepth marks the specific set-operation operand
+	// depth whose bare output columns need explicit aliases because a
+	// surrounding CTE without an explicit column list derives its output
+	// schema from them.
+	setOpOutputAliasDepth int
+
 	tableOIDSchema string
 	tableOIDTable  string
 
@@ -92,6 +98,13 @@ func (ctx *Context) WithSetOpOperand(fn func() error) error {
 	return fn()
 }
 
+func (ctx *Context) WithSetOpOutputAliases(fn func() error) error {
+	prev := ctx.setOpOutputAliasDepth
+	ctx.setOpOutputAliasDepth = ctx.setOpOperandDepth + 1
+	defer func() { ctx.setOpOutputAliasDepth = prev }()
+	return fn()
+}
+
 func (ctx *Context) WithSelectAuthIgnored(fn func() error) error {
 	ctx.ignoreSelectAuthDepth++
 	defer func() { ctx.ignoreSelectAuthDepth-- }()
@@ -107,6 +120,10 @@ func (ctx *Context) SelectAuthType() string {
 
 func (ctx *Context) InSetOpOperand() bool {
 	return ctx.setOpOperandDepth > 0
+}
+
+func (ctx *Context) SetOpOutputAliasesNeeded() bool {
+	return ctx.setOpOutputAliasDepth > 0 && ctx.setOpOperandDepth == ctx.setOpOutputAliasDepth
 }
 
 func (ctx *Context) WithTableOIDRelation(schemaName, tableName string, fn func() error) error {
