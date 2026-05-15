@@ -10,6 +10,12 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### alpha - 2026-05-14 23:26 MST
+
+- Full run result: current `HEAD` passes `go test -json -vet=off ./testing/go -count=1 -timeout=30m` with ICU env and `GOFLAGS=-p=1`.
+- Counts from `/tmp/doltgresql-alpha-testing-go-full-2.json`: 3669 pass, 0 fail, 91 skip. Package elapsed: 824.863s.
+- Claim status: goal gate closed. Remaining dirty files are beta coordination notes and local untracked artifacts, not new test failures.
+
 ### alpha - 2026-05-14 23:05 MST
 
 - Lane claimed: remaining unclaimed `TestBasicIndexing` metadata failures in `Index attributes` and `PostgreSQL mixed expression index metadata`.
