@@ -3896,26 +3896,40 @@ func TestPgSequences(t *testing.T) {
 func TestPgSettings(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
-			Name: "pg_settings",
+			Name: "pg_settings supported parameters",
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT name, setting FROM "pg_catalog"."pg_settings"
 						WHERE name IN ('server_version_num', 'wal_sender_timeout') ORDER BY name;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgsettings-0001-select-name-setting-from-pg_catalog"},
 				},
+			},
+		},
+		{
+			Name: "pg_settings schema case sensitivity",
+			Assertions: []ScriptTestAssertion{
 				{ // Different cases and quoted, so it fails
 					Query: `SELECT * FROM "PG_catalog"."pg_settings";`, PostgresOracle: ScriptTestPostgresOracle{
-
-						// Different cases and quoted, so it fails
 						ID: "pgcatalog-test-testpgsettings-0002-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
+			},
+		},
+		{
+			Name: "pg_settings relation case sensitivity",
+			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT * FROM "pg_catalog"."PG_settings";`, PostgresOracle: ScriptTestPostgresOracle{
-
-						// Different cases but non-quoted, so it works
 						ID: "pgcatalog-test-testpgsettings-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
+			},
+		},
+		{
+			Name: "pg_settings mixed-case lookup",
+			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT name FROM PG_catalog.pg_SETTINGS ORDER BY name;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgsettings-0004-select-name-from-pg_catalog.pg_settings-order"},
+					Query: `SELECT name
+						FROM PG_catalog.pg_SETTINGS
+						WHERE name IN ('server_version_num', 'wal_sender_timeout')
+						ORDER BY name;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgsettings-0004-select-name-from-pg_catalog.pg_settings-order"},
 				},
 			},
 		},
