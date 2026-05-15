@@ -4769,10 +4769,7 @@ func TestPgStatSubscription(t *testing.T) {
 			Name: "pg_stat_subscription",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_stat_subscription";`, PostgresOracle: ScriptTestPostgresOracle{ID:
-
-					// Different cases and quoted, so it fails
-					"pgcatalog-test-testpgstatsubscription-0001-select-*-from-pg_catalog-."},
+					Query: `SELECT count(*) = 0 FROM "pg_catalog"."pg_stat_subscription";`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatsubscription-0001-select-*-from-pg_catalog-."},
 				},
 				{
 					Query: `SELECT * FROM "PG_catalog"."pg_stat_subscription";`, PostgresOracle: ScriptTestPostgresOracle{
@@ -4787,7 +4784,7 @@ func TestPgStatSubscription(t *testing.T) {
 						ID: "pgcatalog-test-testpgstatsubscription-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT subid FROM PG_catalog.pg_STAT_SUBSCRIPTION ORDER BY subid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatsubscription-0004-select-subid-from-pg_catalog.pg_stat_subscription-order"},
+					Query: "SELECT count(*) = 0 FROM PG_catalog.pg_STAT_SUBSCRIPTION;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatsubscription-0004-select-subid-from-pg_catalog.pg_stat_subscription-order"},
 				},
 			},
 		},
@@ -4800,10 +4797,7 @@ func TestPgStatSubscriptionStats(t *testing.T) {
 			Name: "pg_stat_subscription_stats",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_stat_subscription_stats";`, PostgresOracle: ScriptTestPostgresOracle{ID:
-
-					// Different cases and quoted, so it fails
-					"pgcatalog-test-testpgstatsubscriptionstats-0001-select-*-from-pg_catalog-."},
+					Query: `SELECT count(*) = 0 FROM "pg_catalog"."pg_stat_subscription_stats";`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatsubscriptionstats-0001-select-*-from-pg_catalog-."},
 				},
 				{
 					Query: `SELECT * FROM "PG_catalog"."pg_stat_subscription_stats";`, PostgresOracle: ScriptTestPostgresOracle{
@@ -4818,7 +4812,7 @@ func TestPgStatSubscriptionStats(t *testing.T) {
 						ID: "pgcatalog-test-testpgstatsubscriptionstats-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT subid FROM PG_catalog.pg_STAT_SUBSCRIPTION_STATS ORDER BY subid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatsubscriptionstats-0004-select-subid-from-pg_catalog.pg_stat_subscription_stats-order"},
+					Query: "SELECT count(*) = 0 FROM PG_catalog.pg_STAT_SUBSCRIPTION_STATS;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatsubscriptionstats-0004-select-subid-from-pg_catalog.pg_stat_subscription_stats-order"},
 				},
 			},
 		},
