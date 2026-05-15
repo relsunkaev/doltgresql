@@ -15,8 +15,6 @@
 package pgcatalog
 
 import (
-	"io"
-
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/server/tables"
@@ -43,17 +41,32 @@ func (p PgStatSlruHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgStatSlruHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	return sql.RowsToRowIter(sql.Row{
-		"subtrans", // name
-		int64(0),   // blks_zeroed
-		int64(0),   // blks_hit
-		int64(0),   // blks_read
-		int64(0),   // blks_written
-		int64(0),   // blks_exists
-		int64(0),   // flushes
-		int64(0),   // truncates
-		nil,        // stats_reset
-	}), nil
+	rows := make([]sql.Row, 0, len(pgStatSlruNames))
+	for _, name := range pgStatSlruNames {
+		rows = append(rows, sql.Row{
+			name,     // name
+			int64(0), // blks_zeroed
+			int64(0), // blks_hit
+			int64(0), // blks_read
+			int64(0), // blks_written
+			int64(0), // blks_exists
+			int64(0), // flushes
+			int64(0), // truncates
+			nil,      // stats_reset
+		})
+	}
+	return sql.RowsToRowIter(rows...), nil
+}
+
+var pgStatSlruNames = []string{
+	"CommitTs",
+	"MultiXactMember",
+	"MultiXactOffset",
+	"Notify",
+	"Serial",
+	"Subtrans",
+	"Xact",
+	"other",
 }
 
 // Schema implements the interface tables.Handler.
@@ -75,20 +88,4 @@ var pgStatSlruSchema = sql.Schema{
 	{Name: "flushes", Type: pgtypes.Int64, Default: nil, Nullable: true, Source: PgStatSlruName},
 	{Name: "truncates", Type: pgtypes.Int64, Default: nil, Nullable: true, Source: PgStatSlruName},
 	{Name: "stats_reset", Type: pgtypes.TimestampTZ, Default: nil, Nullable: true, Source: PgStatSlruName},
-}
-
-// pgStatSlruRowIter is the sql.RowIter for the pg_stat_slru table.
-type pgStatSlruRowIter struct {
-}
-
-var _ sql.RowIter = (*pgStatSlruRowIter)(nil)
-
-// Next implements the interface sql.RowIter.
-func (iter *pgStatSlruRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
-}
-
-// Close implements the interface sql.RowIter.
-func (iter *pgStatSlruRowIter) Close(ctx *sql.Context) error {
-	return nil
 }

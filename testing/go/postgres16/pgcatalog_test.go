@@ -4696,9 +4696,17 @@ func TestPgStatSlru(t *testing.T) {
 			Name: "pg_stat_slru",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_stat_slru";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+					Query: `SELECT name,
+							blks_zeroed >= 0 AS blks_zeroed_nonnegative,
+							blks_hit >= 0 AS blks_hit_nonnegative,
+							blks_read >= 0 AS blks_read_nonnegative,
+							blks_written >= 0 AS blks_written_nonnegative,
+							blks_exists >= 0 AS blks_exists_nonnegative,
+							flushes >= 0 AS flushes_nonnegative,
+							truncates >= 0 AS truncates_nonnegative
+						FROM "pg_catalog"."pg_stat_slru"
+						ORDER BY name;`, PostgresOracle: ScriptTestPostgresOracle{ID:
 
-					// Different cases and quoted, so it fails
 					"pgcatalog-test-testpgstatslru-0001-select-*-from-pg_catalog-."},
 				},
 				{
