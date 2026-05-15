@@ -189,9 +189,9 @@ func TestPgGetAclReflectsTableGrantRepro(t *testing.T) {
 		{
 			Name: "pg_get_acl reflects table grants",
 			SetUpScript: []string{
-				`CREATE ROLE pg_get_acl_reader;`,
+				`CREATE ROLE acl_get_reader;`,
 				`CREATE TABLE pg_get_acl_target (id INT PRIMARY KEY);`,
-				`GRANT SELECT ON pg_get_acl_target TO pg_get_acl_reader;`,
+				`GRANT SELECT ON pg_get_acl_target TO acl_get_reader;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
