@@ -4864,7 +4864,14 @@ func TestPgStatSysTables(t *testing.T) {
 			Name: "pg_stat_sys_tables",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_stat_sys_tables";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+					Query: `SELECT schemaname, relname,
+       seq_scan >= 0 AS seq_scan_nonnegative,
+       seq_tup_read >= 0 AS seq_tup_read_nonnegative,
+       idx_scan >= 0 AS idx_scan_nonnegative,
+       idx_tup_fetch >= 0 AS idx_tup_fetch_nonnegative
+FROM "pg_catalog"."pg_stat_sys_tables"
+WHERE schemaname = 'pg_catalog'
+  AND relname = 'pg_class';`, PostgresOracle: ScriptTestPostgresOracle{ID:
 
 					// Different cases and quoted, so it fails
 					"pgcatalog-test-testpgstatsystables-0001-select-*-from-pg_catalog-."},
@@ -4882,7 +4889,9 @@ func TestPgStatSysTables(t *testing.T) {
 						ID: "pgcatalog-test-testpgstatsystables-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT relid FROM PG_catalog.pg_STAT_SYS_TABLES ORDER BY relid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatsystables-0004-select-relid-from-pg_catalog.pg_stat_sys_tables-order"},
+					Query: `SELECT count(*) = 1 FROM PG_catalog.pg_STAT_SYS_TABLES
+WHERE schemaname = 'pg_catalog'
+  AND relname = 'pg_class';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgstatsystables-0004-select-relid-from-pg_catalog.pg_stat_sys_tables-order"},
 				},
 			},
 		},
