@@ -20,6 +20,8 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/expression"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -159,7 +161,7 @@ func checkRecordArgs(v1, v2 interface{}) (leftRecord, rightRecord []pgtypes.Reco
 	}
 
 	if len(leftRecord) != len(rightRecord) {
-		return nil, nil, fmt.Errorf("unequal number of entries in row expressions")
+		return nil, nil, pgerror.New(pgcode.Syntax, "unequal number of entries in row expressions")
 	}
 
 	return leftRecord, rightRecord, nil

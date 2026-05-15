@@ -21,6 +21,8 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/stretchr/testify/require"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/compare"
 	"github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/functions/binary"
@@ -89,6 +91,19 @@ func TestCompareRecordsEqualityNullSemantics(t *testing.T) {
 			require.Equal(t, tt.want, got)
 		})
 	}
+}
+
+func TestCompareRecordsArityMismatchSQLState(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+
+	_, err := compare.CompareRecords(
+		ctx,
+		framework.Operator_BinaryEqual,
+		int32Record(int32(1), int32(2)),
+		int32Record(int32(1)),
+	)
+	require.Error(t, err)
+	require.Equal(t, pgcode.Syntax, pgerror.GetPGCode(err))
 }
 
 func TestRecordsAreNotDistinctNullSemantics(t *testing.T) {
