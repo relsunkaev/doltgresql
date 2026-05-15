@@ -10,6 +10,24 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### beta - 2026-05-15 02:29 MST
+
+- Lane claimed: `TestDoltMerge/ancestor_contains_fk,_main_parent_remove_with_backup,_other_child_add,_restrict`, specifically the setup insert into `parent` failing with duplicate key on converter-created `dg_fk_parent_v1`.
+- Red proof: clean verifier failfast `/tmp/doltgresql-beta-enginetest-failfast-0225.json` gets past the alias regressions and stops when `INSERT INTO parent VALUES (10, 1), (20, 2), (30, 2);` returns `ERROR: duplicate unique key given: [2] (dg_fk_parent_v1) (SQLSTATE 23505)`.
+- Root cause candidate: the enginetest MySQL FK compatibility converter creates a unique helper index on the referenced column to satisfy PostgreSQL FK DDL, but that unique index remains user-visible/enforced for later data changes even though the MySQL source only declared a non-unique index. The merge script needs FK validity without adding a uniqueness constraint that MySQL would not have.
+- Expected files: `testing/go/enginetest/query_converter_test.go` unless inspection proves the harness needs a setup-only FK workaround elsewhere. Boundary: no alpha partial-index metadata files, no PostgreSQL oracle changes, no runtime FK rule changes outside the enginetest converter.
+- Next action: inspect the converter FK helper path and DoltMerge setup shape, then choose the smallest compatibility change that lets the MySQL FK setup execute without enforcing extra uniqueness.
+- Root cause confirmed: `8125516a` made PostgreSQL accept MySQL/Dolt foreign keys on non-unique referenced indexes by injecting a unique helper index, but that changes table semantics and breaks later duplicate parent keys. The underlying desired behavior is MySQL/Dolt FK validation against a referenced index, not PostgreSQL's unique-reference rule.
+- Change plan: remove the converter-created unique helper and gate a narrow `doltgres_allow_non_unique_foreign_key_references` session parameter for the enginetest harness only. Native PostgreSQL tests should keep the default unique-reference requirement.
+- Expected files updated: `testing/go/enginetest/query_converter_test.go`, `testing/go/enginetest/doltgres_harness_test.go`, `server/analyzer/foreign_key.go`, and `server/config/parameters_list.go`. Boundary remains no alpha partial-index metadata files and no PostgreSQL oracle weakening.
+- Change made: removed the `dg_fk_*` unique helper index from the enginetest converter; added the `doltgres_allow_non_unique_foreign_key_references` session parameter; the enginetest harness sets it on its pgx connection; FK validation accepts a matching non-unique referenced index only when that parameter is `on`.
+- Validation passed: `go test -vet=off ./testing/go/enginetest -run '^TestConvertQuery$' -count=1 -timeout=10m -v`; `go test -vet=off ./server/analyzer ./server/config -run '^$' -count=1 -timeout=10m`; `go test -vet=off ./testing/go/postgres16 -run '^TestAlterTable$/^Add_Foreign_Key_Constraint$' -count=1 -timeout=10m -v`; focused `go test -vet=off ./testing/go/enginetest -run '^TestDoltMerge$/ancestor_contains_fk,_main_parent_remove_with_backup,_other_child_add,_restrict$' -count=1 -timeout=10m -v`; and adjacent `go test -vet=off ./testing/go/enginetest -run '^TestScripts$/failed_statements_data_validation_for_DELETE,_REPLACE$' -count=1 -timeout=10m -v`, all with ICU env and `GOFLAGS=-p=1`.
+- Note: an earlier concurrent `TestScripts` run failed with `Port 5433 already in use`; it was invalid and the sequential rerun passed.
+- Broader enginetest failfast result: `/tmp/doltgresql-beta-enginetest-failfast-0238.json` gets past the FK duplicate-key blocker and stops at `TestDoltRevert/dolt_revert() --continue: multiple table conflicts/select \`table\` from dolt_conflicts order by \`table\`;`.
+- New blocker: the query converter stripped MySQL backticks from reserved identifier ``table`` and sent `select table from dolt_conflicts order by table asc nulls first`, which PostgreSQL rejects with `ERROR: at or near "table": syntax error (SQLSTATE 42601)`.
+- Counts before failfast stop: 939 pass, 570 skip, 1 fail. This is a separate reserved-identifier conversion issue, not part of the FK fix.
+- Next action: commit the FK compatibility increment, then claim the reserved-identifier conversion lane if still unowned.
+
 ### beta - 2026-05-15 02:03 MST
 
 - Discovery update: post-`9e2f27d2` subpackage failfast `go test -json -vet=off ./testing/go/enginetest ./testing/go/postgres16 ./testing/go/postgres18 -count=1 -failfast -timeout=60m > /tmp/doltgresql-beta-subpkg-discovery-0208.json` stops in `TestOrderByGroupBy/Basic order by/group by cases/SELECT id as alias1, (SELECT alias1+1 group by alias1 having alias1 > 0) FROM members where id < 6;`.
@@ -28,7 +46,8 @@ Use this file to avoid overlapping work. Add short entries with:
 - Validation passed with ICU env in the shared checkout before alpha's active `DROP OWNED` parser lane dirtied the build: `go test -vet=off ./testing/go/enginetest -run '^TestConvertQuery$' -count=1 -timeout=10m -v`, `go test -vet=off ./testing/go/enginetest -run '^TestColumnAliases$/column_aliases_in_two_scopes$' -count=1 -timeout=10m -v`, and `go test -vet=off ./testing/go/enginetest -run '^TestOrderByGroupBy$' -count=1 -timeout=10m -v`.
 - Clean-verifier validation passed at `HEAD=e9d36d86` with only the beta alias patch applied, local `third_party/dolt` linked, and `./postgres/parser/build.sh` run: `go test -vet=off ./testing/go/enginetest -run '^TestConvertQuery$' -count=1 -timeout=10m -v`, `go test -vet=off ./testing/go/enginetest -run '^TestColumnAliases$' -count=1 -timeout=10m -v`, and `go test -vet=off ./testing/go/enginetest -run '^TestOrderByGroupBy$' -count=1 -timeout=10m -v`.
 - Broader verifier failfast `/tmp/doltgresql-beta-enginetest-failfast-0225.json` now gets past the alias failures and stops in the separate pre-existing `TestDoltMerge/ancestor_contains_fk,_main_parent_remove_with_backup,_other_child_add,_restrict` setup, where `INSERT INTO parent VALUES (10, 1), (20, 2), (30, 2);` hits the converter-created unique FK helper index `dg_fk_parent_v1`. This is not part of the alias regression fix.
-- Next beta action: commit the alias regression fix, then re-check `coop.md` before deciding whether the DoltMerge FK converter behavior is unowned.
+- Commit landed beta - 2026-05-15 02:28 MST: `5e03d745 fix(enginetest): constrain scalar subquery alias rewrites`, staging only `testing/go/enginetest/query_converter_test.go` plus beta-owned coop hunks. Peer alpha coop entries remain unstaged in the shared checkout.
+- Next beta action: re-check `coop.md`, then claim the DoltMerge FK converter behavior if still unowned.
 
 ### beta - 2026-05-15 00:02 MST
 

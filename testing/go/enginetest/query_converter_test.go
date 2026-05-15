@@ -1493,9 +1493,6 @@ func transformCreateTable(stmt *sqlparser.DDL, state *queryConversionState) ([]s
 	for _, c := range stmt.TableSpec.Constraints {
 		switch c := c.Details.(type) {
 		case *sqlparser.ForeignKeyDefinition:
-			if uniqueIndex, ok := createForeignKeyReferencedIndexStatement(c); ok {
-				queries = append(queries, uniqueIndex)
-			}
 			queries = append(queries, createForeignKeyStatement(createTable.Table, c))
 		case *sqlparser.CheckConstraintDefinition:
 			queries = append(queries, createCheckConstraintStatement(createTable.Table, c))
@@ -1525,36 +1522,6 @@ func createCheckConstraintStatement(table tree.TableName, c *sqlparser.CheckCons
 
 	ctx := formatNodeWithUnqualifiedTableNames(&alter)
 	return ctx.String()
-}
-
-func createForeignKeyReferencedIndexStatement(c *sqlparser.ForeignKeyDefinition) (string, bool) {
-	if len(c.ReferencedColumns) == 0 {
-		return "", false
-	}
-
-	indexNameParts := make([]string, 0, len(c.ReferencedColumns)+3)
-	indexNameParts = append(indexNameParts, "dg", "fk", strings.ToLower(c.ReferencedTable.Name.String()))
-	indexFields := make(tree.IndexElemList, len(c.ReferencedColumns))
-	for i, col := range c.ReferencedColumns {
-		colName := mysqlColumnName(col)
-		indexNameParts = append(indexNameParts, string(colName))
-		indexFields[i] = tree.IndexElem{
-			Column:    colName,
-			Direction: tree.Ascending,
-		}
-	}
-
-	createIndex := tree.CreateIndex{
-		Name:          tree.Name(strings.Join(indexNameParts, "_")),
-		Table:         tree.MakeTableNameWithSchema("", "", tree.Name(c.ReferencedTable.Name.String())),
-		Unique:        true,
-		IfNotExists:   true,
-		NullsDistinct: true,
-		Columns:       indexFields,
-	}
-
-	ctx := formatNodeWithUnqualifiedTableNames(&createIndex)
-	return ctx.String(), true
 }
 
 func createForeignKeyStatement(table tree.TableName, c *sqlparser.ForeignKeyDefinition) string {
@@ -2283,7 +2250,6 @@ func TestConvertQuery(t *testing.T) {
 			input: "CREATE TABLE child (pk BIGINT PRIMARY KEY, CONSTRAINT fk_parent FOREIGN KEY (pk) REFERENCES parent (v1));",
 			expected: []string{
 				"CREATE TABLE child (pk BIGINT NOT NULL PRIMARY KEY)",
-				"CREATE UNIQUE INDEX IF NOT EXISTS dg_fk_parent_v1 ON parent ( v1 ASC ) NULLS DISTINCT ",
 				"ALTER TABLE child ADD FOREIGN KEY (pk) REFERENCES parent (v1) ON DELETE RESTRICT ON UPDATE RESTRICT",
 			},
 		},

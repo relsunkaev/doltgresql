@@ -775,6 +775,10 @@ func (d *DoltgresQueryEngine) getConnection() (*pgx.Conn, error) {
 	if err != nil {
 		return nil, err
 	}
+	if _, err = db.Exec(context.Background(), "SET doltgres_allow_non_unique_foreign_key_references = on"); err != nil {
+		_ = db.Close(context.Background())
+		return nil, err
+	}
 
 	d.conn = db
 	return d.conn, nil

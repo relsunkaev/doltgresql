@@ -130,7 +130,8 @@ func validateForeignKeyReferenceHasUniqueIndex(ctx *sql.Context, fkDef sql.Forei
 	}
 
 	var foundTable bool
-	var foundUniqueIndex bool
+	var foundReferenceIndex bool
+	allowNonUniqueReferenceIndex := allowNonUniqueForeignKeyReferenceIndex(ctx)
 	err = functions.IterateCurrentDatabase(ctx, functions.Callbacks{
 		Table: func(ctx *sql.Context, schema functions.ItemSchema, table functions.ItemTable) (bool, error) {
 			if foreignKeyReferenceTargetsTable(schema, table, parentSchema, fkDef.ParentTable) {
@@ -143,8 +144,8 @@ func validateForeignKeyReferenceHasUniqueIndex(ctx *sql.Context, fkDef sql.Forei
 				return true, nil
 			}
 			foundTable = true
-			if foreignKeyReferenceIndexMatches(index.Item, fkDef.ParentColumns) {
-				foundUniqueIndex = true
+			if foreignKeyReferenceIndexMatches(index.Item, fkDef.ParentColumns, allowNonUniqueReferenceIndex) {
+				foundReferenceIndex = true
 				return false, nil
 			}
 			return true, nil
@@ -153,18 +154,35 @@ func validateForeignKeyReferenceHasUniqueIndex(ctx *sql.Context, fkDef sql.Forei
 	if err != nil {
 		return err
 	}
-	if foundTable && !foundUniqueIndex {
+	if foundTable && !foundReferenceIndex {
 		return pgerror.Newf(pgcode.InvalidForeignKey, `there is no unique constraint matching given keys for referenced table "%s"`, fkDef.ParentTable)
 	}
 	return nil
+}
+
+func allowNonUniqueForeignKeyReferenceIndex(ctx *sql.Context) bool {
+	value, err := ctx.GetSessionVariable(ctx, "doltgres_allow_non_unique_foreign_key_references")
+	if err != nil {
+		return false
+	}
+	switch v := value.(type) {
+	case string:
+		return strings.EqualFold(v, "on")
+	case int8:
+		return v != 0
+	case bool:
+		return v
+	default:
+		return false
+	}
 }
 
 func foreignKeyReferenceTargetsTable(schema functions.ItemSchema, table functions.ItemTable, schemaName, tableName string) bool {
 	return strings.EqualFold(schema.Item.SchemaName(), schemaName) && strings.EqualFold(table.Item.Name(), tableName)
 }
 
-func foreignKeyReferenceIndexMatches(index sql.Index, parentColumns []string) bool {
-	if !index.IsUnique() || index.IsSpatial() || index.IsFullText() || len(index.PrefixLengths()) > 0 {
+func foreignKeyReferenceIndexMatches(index sql.Index, parentColumns []string, allowNonUnique bool) bool {
+	if (!allowNonUnique && !index.IsUnique()) || index.IsSpatial() || index.IsFullText() || len(index.PrefixLengths()) > 0 {
 		return false
 	}
 	expressions := index.Expressions()

@@ -69,6 +69,17 @@ var postgresConfigParameters = map[string]sql.SystemVariable{
 		ResetVal:  "off",
 		Scope:     GetPgsqlScope(PsqlScopeSession),
 	},
+	"doltgres_allow_non_unique_foreign_key_references": &Parameter{
+		Name:      "doltgres_allow_non_unique_foreign_key_references",
+		Default:   "off",
+		Category:  "Developer Options",
+		ShortDesc: "Allows MySQL/Dolt foreign keys to reference non-unique indexed columns.",
+		Context:   ParameterContextSuperUser,
+		Type:      newPostgresSystemBoolType("doltgres_allow_non_unique_foreign_key_references"),
+		Source:    ParameterSourceDefault,
+		ResetVal:  "off",
+		Scope:     GetPgsqlScope(PsqlScopeSession),
+	},
 	"application_name": &Parameter{
 		Name:      "application_name",
 		Default:   "psql",
