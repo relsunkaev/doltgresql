@@ -40,9 +40,6 @@ func TestVacuumTableRequiresOwnershipRepro(t *testing.T) {
 					Username: `vacuum_intruder`,
 					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
 
-						// TestPgMaintainRoleAllowsVacuumRepro reproduces a predefined-role privilege
-						// bug: membership in pg_maintain should allow VACUUM on another role's table
-						// without table ownership.
 						ID:      "maintenance-privilege-repro-test-testvacuumtablerequiresownershiprepro-0001-vacuum-vacuum_private",
 						Compare: "sqlstate"},
 				},
@@ -51,22 +48,20 @@ func TestVacuumTableRequiresOwnershipRepro(t *testing.T) {
 	})
 }
 
-func TestPgMaintainRoleAllowsVacuumRepro(t *testing.T) {
+// TestPgMaintainRoleIsAbsentInPostgres16Repro keeps the PostgreSQL 16 boundary
+// explicit. pg_maintain is a PostgreSQL 17 predefined role, while PostgreSQL 16
+// has table-level MAINTAIN privilege coverage below.
+func TestPgMaintainRoleIsAbsentInPostgres16Repro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
-			Name: "pg_maintain allows VACUUM",
+			Name: "pg_maintain is absent in PostgreSQL 16",
 			SetUpScript: []string{
 				`CREATE USER maintain_vacuum_user PASSWORD 'pw';`,
-				`CREATE TABLE maintain_vacuum_private (id INT PRIMARY KEY);`,
-				`INSERT INTO maintain_vacuum_private VALUES (1);`,
-				`GRANT USAGE ON SCHEMA public TO maintain_vacuum_user;`,
-				`GRANT pg_maintain TO maintain_vacuum_user;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `VACUUM maintain_vacuum_private;`,
-					Username: `maintain_vacuum_user`,
-					Password: `pw`,
+					Query:       `GRANT pg_maintain TO maintain_vacuum_user;`,
+					ExpectedErr: `role "pg_maintain" does not exist`,
 				},
 			},
 		},
