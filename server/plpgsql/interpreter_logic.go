@@ -858,6 +858,24 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 					return nil, false, err
 				}
 			}
+		case OpCode_CursorFetch:
+			schema, row, ok := stack.AdvanceCursor(operation.PrimaryData)
+			if !ok {
+				if err := setFoundVariable(ctx, stack, false); err != nil {
+					return nil, false, err
+				}
+				state.lastRowCount = 0
+				continue
+			}
+			if err := assignForQueryRow(ctx, stack, operation.Target, schema, row); err != nil {
+				return nil, false, err
+			}
+			if err := setFoundVariable(ctx, stack, true); err != nil {
+				return nil, false, err
+			}
+			state.lastRowCount = 1
+		case OpCode_CursorClose:
+			stack.CloseCursor(operation.PrimaryData)
 		case OpCode_ReturnQuery:
 			statement := operation.PrimaryData
 			bindings := operation.SecondaryData

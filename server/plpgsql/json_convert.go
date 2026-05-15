@@ -23,6 +23,7 @@ import (
 
 type jsonConversionContext struct {
 	datumNames            map[int32]string
+	cursorQueries         map[int32]string
 	returnExpressions     []string
 	returnIndex           *int
 	returnNextExpressions []string
@@ -34,6 +35,7 @@ func newJSONConversionContext(datums []datum, source string) jsonConversionConte
 	returnNextIndex := 0
 	conv := jsonConversionContext{
 		datumNames:            make(map[int32]string, len(datums)),
+		cursorQueries:         make(map[int32]string),
 		returnExpressions:     extractReturnExpressions(source),
 		returnIndex:           &returnIndex,
 		returnNextExpressions: extractReturnNextExpressions(source),
@@ -54,6 +56,9 @@ func newJSONConversionContext(datums []datum, source string) jsonConversionConte
 		case d.Variable != nil:
 			if d.Variable.RefName != "" {
 				conv.datumNames[datumNumber] = d.Variable.RefName
+			}
+			if d.Variable.CursorExplicitExpression != nil && d.Variable.CursorExplicitExpression.Expression.Query != "" {
+				conv.cursorQueries[datumNumber] = d.Variable.CursorExplicitExpression.Expression.Query
 			}
 		}
 	}
@@ -115,6 +120,11 @@ func (conv jsonConversionContext) nextReturnExpression() string {
 func (conv jsonConversionContext) datumName(datumNumber int32) (string, bool) {
 	name, ok := conv.datumNames[datumNumber]
 	return name, ok
+}
+
+func (conv jsonConversionContext) cursorQuery(datumNumber int32) (string, bool) {
+	query, ok := conv.cursorQueries[datumNumber]
+	return query, ok
 }
 
 // jsonConvert handles the conversion from the JSON format into a format that is easier to work with.
@@ -249,6 +259,8 @@ func (conv jsonConversionContext) convertStatement(stmt statement) (Statement, e
 		return stmt.If.Convert(conv)
 	case stmt.Loop != nil:
 		return stmt.Loop.Convert(conv)
+	case stmt.Open != nil:
+		return stmt.Open.Convert(conv)
 	case stmt.Perform != nil:
 		return stmt.Perform.Convert(), nil
 	case stmt.Raise != nil:
@@ -261,6 +273,10 @@ func (conv jsonConversionContext) convertStatement(stmt statement) (Statement, e
 		return stmt.ReturnQuery.Convert(), nil
 	case stmt.Rollback != nil:
 		return stmt.Rollback.Convert(), nil
+	case stmt.Fetch != nil:
+		return stmt.Fetch.Convert(conv)
+	case stmt.Close != nil:
+		return stmt.Close.Convert(conv)
 	case stmt.While != nil:
 		return stmt.While.Convert(conv)
 	default:

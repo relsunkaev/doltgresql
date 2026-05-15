@@ -45,6 +45,8 @@ const (
 	OpCode_ReturnNext   OpCode = 21 // https://www.postgresql.org/docs/current/plpgsql-control-structures.html#PLPGSQL-STATEMENTS-RETURNING-RETURN-NEXT
 	OpCode_ForEachInit  OpCode = 22 // Initialize a cursor for FOREACH ... IN ARRAY LOOP
 	OpCode_Assert       OpCode = 23 // https://www.postgresql.org/docs/current/plpgsql-errors-and-messages.html#PLPGSQL-STATEMENTS-ASSERT
+	OpCode_CursorFetch  OpCode = 24 // Fetch one row from an explicit cursor
+	OpCode_CursorClose  OpCode = 25 // Close an explicit cursor
 	// New OpCode values MUST be added to the END of this list!
 	// Function OpCodes are persisted to disk, so these values MUST be stable across Doltgres versions.
 )

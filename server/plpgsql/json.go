@@ -242,6 +242,27 @@ type plpgSQL_stmt_execsql struct {
 	Target     datum   `json:"target"`
 }
 
+// plpgSQL_stmt_open exists to match the expected JSON format.
+type plpgSQL_stmt_open struct {
+	LineNumber int32 `json:"lineno"`
+	CursorVar  int32 `json:"curvar"`
+}
+
+// plpgSQL_stmt_fetch exists to match the expected JSON format.
+type plpgSQL_stmt_fetch struct {
+	LineNumber int32 `json:"lineno"`
+	Target     datum `json:"target"`
+	CursorVar  int32 `json:"curvar"`
+	Direction  int32 `json:"direction"`
+	HowMany    int64 `json:"how_many"`
+}
+
+// plpgSQL_stmt_close exists to match the expected JSON format.
+type plpgSQL_stmt_close struct {
+	LineNumber int32 `json:"lineno"`
+	CursorVar  int32 `json:"curvar"`
+}
+
 // plpgSQL_stmt_getdiag exists to match the expected JSON format.
 type plpgSQL_stmt_getdiag struct {
 	LineNumber int32             `json:"lineno"`
@@ -366,11 +387,14 @@ type plpgSQL_type struct {
 
 // plpgSQL_var exists to match the expected JSON format.
 type plpgSQL_var struct {
-	RefName    string      `json:"refname"`
-	Type       datatype    `json:"datatype"`
-	LineNumber int32       `json:"lineno"`
-	NotNull    bool        `json:"notnull"`
-	Default    default_val `json:"default_val"`
+	RefName                  string      `json:"refname"`
+	Type                     datatype    `json:"datatype"`
+	LineNumber               int32       `json:"lineno"`
+	NotNull                  bool        `json:"notnull"`
+	Default                  default_val `json:"default_val"`
+	CursorExplicitExpression *expr       `json:"cursor_explicit_expr"`
+	CursorExplicitArgRow     int32       `json:"cursor_explicit_argrow"`
+	CursorOptions            int32       `json:"cursor_options"`
 }
 
 // sqlstmt exists to match the expected JSON format.
@@ -387,16 +411,19 @@ type statement struct {
 	Call        *plpgSQL_stmt_call         `json:"PLpgSQL_stmt_call"`
 	Case        *plpgSQL_stmt_case         `json:"PLpgSQL_stmt_case"`
 	Commit      *plpgSQL_stmt_commit       `json:"PLpgSQL_stmt_commit"`
+	Close       *plpgSQL_stmt_close        `json:"PLpgSQL_stmt_close"`
 	DynExec     *plpgSQL_stmt_dynexecute   `json:"PLpgSQL_stmt_dynexecute"`
 	DynForSLoop *plpgSQL_stmt_dynfors      `json:"PLpgSQL_stmt_dynfors"`
 	ExecSQL     *plpgSQL_stmt_execsql      `json:"PLpgSQL_stmt_execsql"`
 	Exit        *plpgSQL_stmt_exit         `json:"PLpgSQL_stmt_exit"`
+	Fetch       *plpgSQL_stmt_fetch        `json:"PLpgSQL_stmt_fetch"`
 	ForILoop    *plpgSQL_stmt_fori         `json:"PLpgSQL_stmt_fori"`
 	ForEachLoop *plpgSQL_stmt_foreach_a    `json:"PLpgSQL_stmt_foreach_a"`
 	ForSLoop    *plpgSQL_stmt_fors         `json:"PLpgSQL_stmt_fors"`
 	GetDiag     *plpgSQL_stmt_getdiag      `json:"PLpgSQL_stmt_getdiag"`
 	If          *plpgSQL_stmt_if           `json:"PLpgSQL_stmt_if"`
 	Loop        *plpgSQL_stmt_loop         `json:"PLpgSQL_stmt_loop"`
+	Open        *plpgSQL_stmt_open         `json:"PLpgSQL_stmt_open"`
 	Perform     *plpgSQL_stmt_perform      `json:"PLpgSQL_stmt_perform"`
 	Raise       *plpgSQL_stmt_raise        `json:"PLpgSQL_stmt_raise"`
 	Return      *plpgSQL_stmt_return       `json:"PLpgSQL_stmt_return"`
@@ -599,6 +626,55 @@ func (stmt *plpgSQL_stmt_execsql) Convert() (ExecuteSQL, error) {
 		Statement:  stmt.SQLStmt.Expr.Query,
 		Target:     target,
 		Strict:     stmt.Strict,
+		LineNumber: stmt.LineNumber,
+	}, nil
+}
+
+// Convert converts the JSON statement into its output form.
+func (stmt *plpgSQL_stmt_open) Convert(conv jsonConversionContext) (OpenCursor, error) {
+	cursorName, ok := conv.datumName(stmt.CursorVar)
+	if !ok {
+		return OpenCursor{}, errors.Errorf("OPEN cursor datum %d could not be resolved", stmt.CursorVar)
+	}
+	query, ok := conv.cursorQuery(stmt.CursorVar)
+	if !ok {
+		return OpenCursor{}, errors.Errorf("OPEN cursor datum %d has no explicit query", stmt.CursorVar)
+	}
+	return OpenCursor{
+		CursorName: cursorName,
+		Query:      query,
+		LineNumber: stmt.LineNumber,
+	}, nil
+}
+
+// Convert converts the JSON statement into its output form.
+func (stmt *plpgSQL_stmt_fetch) Convert(conv jsonConversionContext) (FetchCursor, error) {
+	if stmt.Direction != 0 || stmt.HowMany != 1 {
+		return FetchCursor{}, errors.New("only forward one-row cursor FETCH is supported")
+	}
+	cursorName, ok := conv.datumName(stmt.CursorVar)
+	if !ok {
+		return FetchCursor{}, errors.Errorf("FETCH cursor datum %d could not be resolved", stmt.CursorVar)
+	}
+	targetName, err := targetNameFromDatum(stmt.Target)
+	if err != nil {
+		return FetchCursor{}, err
+	}
+	return FetchCursor{
+		CursorName: cursorName,
+		Target:     targetName,
+		LineNumber: stmt.LineNumber,
+	}, nil
+}
+
+// Convert converts the JSON statement into its output form.
+func (stmt *plpgSQL_stmt_close) Convert(conv jsonConversionContext) (CloseCursor, error) {
+	cursorName, ok := conv.datumName(stmt.CursorVar)
+	if !ok {
+		return CloseCursor{}, errors.Errorf("CLOSE cursor datum %d could not be resolved", stmt.CursorVar)
+	}
+	return CloseCursor{
+		CursorName: cursorName,
 		LineNumber: stmt.LineNumber,
 	}, nil
 }

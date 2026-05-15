@@ -361,6 +361,49 @@ func TestParseDynamicForExecuteExpressionBindings(t *testing.T) {
 	}
 }
 
+func TestParseExplicitCursorFetch(t *testing.T) {
+	ops, err := Parse(`CREATE FUNCTION test_block() RETURNS int AS $$
+		DECLARE
+			item_cursor CURSOR FOR SELECT x FROM (VALUES (1), (2)) AS v(x) ORDER BY x;
+			row_value INT;
+		BEGIN
+			OPEN item_cursor;
+			FETCH item_cursor INTO row_value;
+			CLOSE item_cursor;
+			RETURN row_value;
+		END;
+	$$ LANGUAGE plpgsql;`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var openOp, fetchOp, closeOp *InterpreterOperation
+	for i := range ops {
+		switch ops[i].OpCode {
+		case OpCode_ForQueryInit:
+			if ops[i].Target == "item_cursor" {
+				openOp = &ops[i]
+			}
+		case OpCode_CursorFetch:
+			fetchOp = &ops[i]
+		case OpCode_CursorClose:
+			closeOp = &ops[i]
+		}
+	}
+	if openOp == nil {
+		t.Fatalf("expected explicit cursor OPEN operation; ops: %#v", ops)
+	}
+	if !strings.Contains(openOp.PrimaryData, "SELECT x FROM") {
+		t.Fatalf("OPEN query = %q; op: %#v", openOp.PrimaryData, openOp)
+	}
+	if fetchOp == nil || fetchOp.PrimaryData != "item_cursor" || fetchOp.Target != "row_value" {
+		t.Fatalf("expected FETCH from item_cursor into row_value; op: %#v ops: %#v", fetchOp, ops)
+	}
+	if closeOp == nil || closeOp.PrimaryData != "item_cursor" {
+		t.Fatalf("expected CLOSE for item_cursor; op: %#v ops: %#v", closeOp, ops)
+	}
+}
+
 func TestParseDynamicExecuteIntoStrict(t *testing.T) {
 	ops, err := Parse(`CREATE FUNCTION test_block() RETURNS void AS $$
 		DECLARE

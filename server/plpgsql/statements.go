@@ -547,6 +547,84 @@ func (stmt ForQueryNext) AppendOperations(ops *[]InterpreterOperation, stack *In
 	return nil
 }
 
+// OpenCursor executes an explicit cursor's query and stores its rows on the stack.
+type OpenCursor struct {
+	CursorName string
+	Query      string
+	LineNumber int32
+}
+
+var _ Statement = OpenCursor{}
+
+// OperationSize implements the interface Statement.
+func (OpenCursor) OperationSize() int32 {
+	return 1
+}
+
+// AppendOperations implements the interface Statement.
+func (stmt OpenCursor) AppendOperations(ops *[]InterpreterOperation, stack *InterpreterStack) error {
+	queryStr, referencedVariables, err := substituteVariableReferences(stmt.Query, stack)
+	if err != nil {
+		return err
+	}
+	*ops = append(*ops, InterpreterOperation{
+		OpCode:        OpCode_ForQueryInit,
+		PrimaryData:   queryStr,
+		SecondaryData: referencedVariables,
+		Target:        stmt.CursorName,
+		Options:       diagnosticStatementOptions(stmt.LineNumber, "OPEN", stmt.Query),
+	})
+	return nil
+}
+
+// FetchCursor fetches one row from an explicit cursor into a PL/pgSQL target.
+type FetchCursor struct {
+	CursorName string
+	Target     string
+	LineNumber int32
+}
+
+var _ Statement = FetchCursor{}
+
+// OperationSize implements the interface Statement.
+func (FetchCursor) OperationSize() int32 {
+	return 1
+}
+
+// AppendOperations implements the interface Statement.
+func (stmt FetchCursor) AppendOperations(ops *[]InterpreterOperation, stack *InterpreterStack) error {
+	*ops = append(*ops, InterpreterOperation{
+		OpCode:      OpCode_CursorFetch,
+		PrimaryData: stmt.CursorName,
+		Target:      stmt.Target,
+		Options:     diagnosticStatementOptions(stmt.LineNumber, "FETCH", stmt.CursorName),
+	})
+	return nil
+}
+
+// CloseCursor closes an explicit cursor.
+type CloseCursor struct {
+	CursorName string
+	LineNumber int32
+}
+
+var _ Statement = CloseCursor{}
+
+// OperationSize implements the interface Statement.
+func (CloseCursor) OperationSize() int32 {
+	return 1
+}
+
+// AppendOperations implements the interface Statement.
+func (stmt CloseCursor) AppendOperations(ops *[]InterpreterOperation, stack *InterpreterStack) error {
+	*ops = append(*ops, InterpreterOperation{
+		OpCode:      OpCode_CursorClose,
+		PrimaryData: stmt.CursorName,
+		Options:     diagnosticStatementOptions(stmt.LineNumber, "CLOSE", stmt.CursorName),
+	})
+	return nil
+}
+
 // Goto jumps to the counter at the given offset.
 type Goto struct {
 	Offset         int32
