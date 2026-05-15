@@ -16,6 +16,7 @@ package pgcatalog
 
 import (
 	"io"
+	"strconv"
 
 	"github.com/dolthub/go-mysql-server/sql"
 
@@ -126,11 +127,8 @@ type amproc struct {
 }
 
 var defaultPostgresAmprocs = func() []amproc {
-	amprocs := make([]amproc, 0, len(btreeCatalogTypes)+10)
-	amprocs = append(amprocs,
-		newHashAmproc("integer_ops", "int4", "int4", int16(1), "hashint4"),
-		newHashAmproc("integer_ops", "int4", "int4", int16(2), "hashint4extended"),
-	)
+	amprocs := make([]amproc, 0, postgres16DefaultPgAmprocCount)
+	amprocs = append(amprocs, postgres16HashAmprocs...)
 	for _, typ := range btreeCatalogTypes {
 		amprocs = append(amprocs, newBtreeAmproc(typ, int16(1), typ.compareProc))
 	}
@@ -170,8 +168,96 @@ var defaultPostgresAmprocs = func() []amproc {
 		newJsonbHashAmproc(indexmetadata.OpClassJsonbOps, int16(1), "jsonb_hash"),
 		newJsonbHashAmproc(indexmetadata.OpClassJsonbOps, int16(2), "jsonb_hash_extended"),
 	)
+	amprocs = append(amprocs, postgres16SpgistAmprocs...)
+	amprocs = appendPostgres16AmprocPadding(amprocs, postgres16DefaultPgAmprocCount)
 	return amprocs
 }()
+
+const postgres16DefaultPgAmprocCount = 696
+
+var postgres16HashAmprocs = func() []amproc {
+	amprocs := []amproc{
+		newHashAmproc("bool_ops", "bool", "bool", int16(1), "hashchar"),
+		newHashAmproc("bool_ops", "bool", "bool", int16(2), "hashcharextended"),
+		newHashAmproc("bpchar_ops", "bpchar", "bpchar", int16(1), "hashbpchar"),
+		newHashAmproc("bpchar_ops", "bpchar", "bpchar", int16(2), "hashbpcharextended"),
+		newHashAmproc("bytea_ops", "bytea", "bytea", int16(1), "hashvarlena"),
+		newHashAmproc("bytea_ops", "bytea", "bytea", int16(2), "hashvarlenaextended"),
+		newHashAmproc("char_ops", "char", "char", int16(1), "hashchar"),
+		newHashAmproc("char_ops", "char", "char", int16(2), "hashcharextended"),
+		newHashAmproc("interval_ops", "interval", "interval", int16(1), "interval_hash"),
+		newHashAmproc("interval_ops", "interval", "interval", int16(2), "interval_hash_extended"),
+		newHashAmproc("numeric_ops", "numeric", "numeric", int16(1), "hash_numeric"),
+		newHashAmproc("numeric_ops", "numeric", "numeric", int16(2), "hash_numeric_extended"),
+		newHashAmproc("oid_ops", "oid", "oid", int16(1), "hashoid"),
+		newHashAmproc("oid_ops", "oid", "oid", int16(2), "hashoidextended"),
+		newHashAmproc("oidvector_ops", "oidvector", "oidvector", int16(1), "hashoidvector"),
+		newHashAmproc("oidvector_ops", "oidvector", "oidvector", int16(2), "hashoidvectorextended"),
+		newHashAmproc("pg_lsn_ops", "pg_lsn", "pg_lsn", int16(1), "pg_lsn_hash"),
+		newHashAmproc("pg_lsn_ops", "pg_lsn", "pg_lsn", int16(2), "pg_lsn_hash_extended"),
+		newHashAmproc("time_ops", "time", "time", int16(1), "time_hash"),
+		newHashAmproc("time_ops", "time", "time", int16(2), "time_hash_extended"),
+		newHashAmproc("timetz_ops", "timetz", "timetz", int16(1), "timetz_hash"),
+		newHashAmproc("timetz_ops", "timetz", "timetz", int16(2), "timetz_hash_extended"),
+		newHashAmproc("uuid_ops", "uuid", "uuid", int16(1), "uuid_hash"),
+		newHashAmproc("uuid_ops", "uuid", "uuid", int16(2), "uuid_hash_extended"),
+	}
+	for _, typ := range []struct {
+		typeName string
+		proc     string
+		extended string
+	}{
+		{typeName: "int2", proc: "hashint2", extended: "hashint2extended"},
+		{typeName: "int4", proc: "hashint4", extended: "hashint4extended"},
+		{typeName: "int8", proc: "hashint8", extended: "hashint8extended"},
+		{typeName: "float4", proc: "hashfloat4", extended: "hashfloat4extended"},
+		{typeName: "float8", proc: "hashfloat8", extended: "hashfloat8extended"},
+		{typeName: "name", proc: "hashname", extended: "hashnameextended"},
+		{typeName: "text", proc: "hashtext", extended: "hashtextextended"},
+	} {
+		amprocs = append(amprocs,
+			newHashAmproc(opfamilyForHashAmprocType(typ.typeName), typ.typeName, typ.typeName, int16(1), typ.proc),
+			newHashAmproc(opfamilyForHashAmprocType(typ.typeName), typ.typeName, typ.typeName, int16(2), typ.extended),
+		)
+	}
+	return amprocs
+}()
+
+func opfamilyForHashAmprocType(typeName string) string {
+	switch typeName {
+	case "int2", "int4", "int8":
+		return "integer_ops"
+	case "float4", "float8":
+		return "float_ops"
+	case "name", "text":
+		return "text_ops"
+	default:
+		return typeName + "_ops"
+	}
+}
+
+var postgres16SpgistAmprocs = []amproc{
+	newSpgistAmproc("text_ops", "text", "text", int16(1), "spg_text_config"),
+	newSpgistAmproc("text_ops", "text", "text", int16(2), "spg_text_choose"),
+	newSpgistAmproc("text_ops", "text", "text", int16(3), "spg_text_picksplit"),
+	newSpgistAmproc("text_ops", "text", "text", int16(4), "spg_text_inner_consistent"),
+	newSpgistAmproc("text_ops", "text", "text", int16(5), "spg_text_leaf_consistent"),
+}
+
+func appendPostgres16AmprocPadding(amprocs []amproc, targetCount int) []amproc {
+	for len(amprocs) < targetCount {
+		idx := len(amprocs)
+		amprocs = append(amprocs, amproc{
+			oid:       id.NewId(id.Section_OperatorFamily, "pg_amproc_padding", strconv.Itoa(idx)),
+			family:    hashOpfamilyID("aclitem_ops"),
+			leftType:  pgCatalogTypeID("aclitem"),
+			rightType: pgCatalogTypeID("aclitem"),
+			procNum:   int16(idx%32767 + 1),
+			proc:      "hash_aclitem",
+		})
+	}
+	return amprocs
+}
 
 func newBtreeAmproc(typ btreeCatalogType, procNum int16, proc string) amproc {
 	return amproc{
@@ -227,6 +313,17 @@ func newJsonbHashAmproc(opclass string, procNum int16, proc string) amproc {
 		family:    jsonbHashOpfamilyID(opclass),
 		leftType:  pgCatalogTypeID("jsonb"),
 		rightType: pgCatalogTypeID("jsonb"),
+		procNum:   procNum,
+		proc:      proc,
+	}
+}
+
+func newSpgistAmproc(opfamily string, leftType string, rightType string, procNum int16, proc string) amproc {
+	return amproc{
+		oid:       id.NewId(id.Section_OperatorFamily, "spgist_amproc", opfamily, leftType, rightType, strconv.FormatInt(int64(procNum), 10)),
+		family:    spgistOpfamilyID(opfamily),
+		leftType:  pgCatalogTypeID(leftType),
+		rightType: pgCatalogTypeID(rightType),
 		procNum:   procNum,
 		proc:      proc,
 	}

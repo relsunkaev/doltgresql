@@ -201,6 +201,7 @@ var btreeTextSupportProcs = []btreeSupportProc{
 }
 
 var btreeScalarSupportProcs = []btreeSupportProc{
+	{leftType: "anyenum", rightType: "anyenum", opfamily: "enum_ops", procNum: 4, proc: "btequalimage"},
 	{leftType: "bit", rightType: "bit", opfamily: "bit_ops", procNum: 4, proc: "btequalimage"},
 	{leftType: "bool", rightType: "bool", opfamily: "bool_ops", procNum: 4, proc: "btequalimage"},
 	{leftType: "bpchar", rightType: "bpchar", opfamily: "bpchar_ops", procNum: 2, proc: "bpchar_sortsupport"},
@@ -209,12 +210,19 @@ var btreeScalarSupportProcs = []btreeSupportProc{
 	{leftType: "bytea", rightType: "bytea", opfamily: "bytea_ops", procNum: 4, proc: "btequalimage"},
 	{leftType: "char", rightType: "char", opfamily: "char_ops", procNum: 4, proc: "btequalimage"},
 	{leftType: "interval", rightType: "interval", opfamily: "interval_ops", procNum: 3, proc: "pg_catalog.in_range"},
+	{leftType: "macaddr", rightType: "macaddr", opfamily: "macaddr_ops", procNum: 2, proc: "macaddr_sortsupport"},
+	{leftType: "macaddr", rightType: "macaddr", opfamily: "macaddr_ops", procNum: 4, proc: "btequalimage"},
+	{leftType: "macaddr8", rightType: "macaddr8", opfamily: "macaddr8_ops", procNum: 4, proc: "btequalimage"},
+	{leftType: "money", rightType: "money", opfamily: "money_ops", procNum: 4, proc: "btequalimage"},
+	{leftType: "inet", rightType: "inet", opfamily: "network_ops", procNum: 2, proc: "network_sortsupport"},
+	{leftType: "inet", rightType: "inet", opfamily: "network_ops", procNum: 4, proc: "btequalimage"},
 	{leftType: "numeric", rightType: "numeric", opfamily: "numeric_ops", procNum: 2, proc: "numeric_sortsupport"},
 	{leftType: "numeric", rightType: "numeric", opfamily: "numeric_ops", procNum: 3, proc: "pg_catalog.in_range"},
 	{leftType: "oid", rightType: "oid", opfamily: "oid_ops", procNum: 2, proc: "btoidsortsupport"},
 	{leftType: "oid", rightType: "oid", opfamily: "oid_ops", procNum: 4, proc: "btequalimage"},
 	{leftType: "oidvector", rightType: "oidvector", opfamily: "oidvector_ops", procNum: 4, proc: "btequalimage"},
 	{leftType: "pg_lsn", rightType: "pg_lsn", opfamily: "pg_lsn_ops", procNum: 4, proc: "btequalimage"},
+	{leftType: "tid", rightType: "tid", opfamily: "tid_ops", procNum: 4, proc: "btequalimage"},
 	{leftType: "time", rightType: "interval", opfamily: "time_ops", procNum: 3, proc: "pg_catalog.in_range"},
 	{leftType: "time", rightType: "time", opfamily: "time_ops", procNum: 4, proc: "btequalimage"},
 	{leftType: "timetz", rightType: "interval", opfamily: "timetz_ops", procNum: 3, proc: "pg_catalog.in_range"},
@@ -222,6 +230,7 @@ var btreeScalarSupportProcs = []btreeSupportProc{
 	{leftType: "uuid", rightType: "uuid", opfamily: "uuid_ops", procNum: 2, proc: "uuid_sortsupport"},
 	{leftType: "uuid", rightType: "uuid", opfamily: "uuid_ops", procNum: 4, proc: "btequalimage"},
 	{leftType: "varbit", rightType: "varbit", opfamily: "varbit_ops", procNum: 4, proc: "btequalimage"},
+	{leftType: "xid8", rightType: "xid8", opfamily: "xid8_ops", procNum: 4, proc: "btequalimage"},
 }
 
 var btreeDatetimeCrossTypeCatalogTypes = []btreeCrossTypeCatalogType{
@@ -293,6 +302,18 @@ var btreeCatalogTypes = []btreeCatalogType{
 		opfamily:        "bool_ops",
 		compareProc:     "btboolcmp",
 		comparisonFuncs: [5]string{"boollt", "boolle", "booleq", "boolge", "boolgt"},
+	},
+	{
+		typeName:        "anyarray",
+		opfamily:        "array_ops",
+		compareProc:     "btarraycmp",
+		comparisonFuncs: [5]string{"array_lt", "array_le", "array_eq", "array_ge", "array_gt"},
+	},
+	{
+		typeName:        "anyenum",
+		opfamily:        "enum_ops",
+		compareProc:     "enum_cmp",
+		comparisonFuncs: [5]string{"enum_lt", "enum_le", "enum_eq", "enum_ge", "enum_gt"},
 	},
 	{
 		typeName:        "int2",
@@ -379,6 +400,36 @@ var btreeCatalogTypes = []btreeCatalogType{
 		comparisonFuncs: [5]string{"jsonb_lt", "jsonb_le", "jsonb_eq", "jsonb_ge", "jsonb_gt"},
 	},
 	{
+		typeName:        "macaddr",
+		opfamily:        "macaddr_ops",
+		compareProc:     "macaddr_cmp",
+		comparisonFuncs: [5]string{"macaddr_lt", "macaddr_le", "macaddr_eq", "macaddr_ge", "macaddr_gt"},
+	},
+	{
+		typeName:        "macaddr8",
+		opfamily:        "macaddr8_ops",
+		compareProc:     "macaddr8_cmp",
+		comparisonFuncs: [5]string{"macaddr8_lt", "macaddr8_le", "macaddr8_eq", "macaddr8_ge", "macaddr8_gt"},
+	},
+	{
+		typeName:        "money",
+		opfamily:        "money_ops",
+		compareProc:     "cash_cmp",
+		comparisonFuncs: [5]string{"cash_lt", "cash_le", "cash_eq", "cash_ge", "cash_gt"},
+	},
+	{
+		typeName:        "anymultirange",
+		opfamily:        "multirange_ops",
+		compareProc:     "multirange_cmp",
+		comparisonFuncs: [5]string{"multirange_lt", "multirange_le", "multirange_eq", "multirange_ge", "multirange_gt"},
+	},
+	{
+		typeName:        "inet",
+		opfamily:        "network_ops",
+		compareProc:     "network_cmp",
+		comparisonFuncs: [5]string{"network_lt", "network_le", "network_eq", "network_ge", "network_gt"},
+	},
+	{
 		typeName:        "oid",
 		opfamily:        "oid_ops",
 		compareProc:     "btoidcmp",
@@ -395,6 +446,30 @@ var btreeCatalogTypes = []btreeCatalogType{
 		opfamily:        "pg_lsn_ops",
 		compareProc:     "pg_lsn_cmp",
 		comparisonFuncs: [5]string{"pg_lsn_lt", "pg_lsn_le", "pg_lsn_eq", "pg_lsn_ge", "pg_lsn_gt"},
+	},
+	{
+		typeName:        "anyrange",
+		opfamily:        "range_ops",
+		compareProc:     "range_cmp",
+		comparisonFuncs: [5]string{"range_lt", "range_le", "range_eq", "range_ge", "range_gt"},
+	},
+	{
+		typeName:        "record",
+		opfamily:        "record_image_ops",
+		compareProc:     "btrecordimagecmp",
+		comparisonFuncs: [5]string{"record_image_lt", "record_image_le", "record_image_eq", "record_image_ge", "record_image_gt"},
+	},
+	{
+		typeName:        "record",
+		opfamily:        "record_ops",
+		compareProc:     "btrecordcmp",
+		comparisonFuncs: [5]string{"record_lt", "record_le", "record_eq", "record_ge", "record_gt"},
+	},
+	{
+		typeName:        "tid",
+		opfamily:        "tid_ops",
+		compareProc:     "bttidcmp",
+		comparisonFuncs: [5]string{"tidlt", "tidle", "tideq", "tidge", "tidgt"},
 	},
 	{
 		typeName:        "time",
@@ -421,6 +496,18 @@ var btreeCatalogTypes = []btreeCatalogType{
 		comparisonFuncs: [5]string{"timetz_lt", "timetz_le", "timetz_eq", "timetz_ge", "timetz_gt"},
 	},
 	{
+		typeName:        "tsquery",
+		opfamily:        "tsquery_ops",
+		compareProc:     "tsquery_cmp",
+		comparisonFuncs: [5]string{"tsquery_lt", "tsquery_le", "tsquery_eq", "tsquery_ge", "tsquery_gt"},
+	},
+	{
+		typeName:        "tsvector",
+		opfamily:        "tsvector_ops",
+		compareProc:     "tsvector_cmp",
+		comparisonFuncs: [5]string{"tsvector_lt", "tsvector_le", "tsvector_eq", "tsvector_ge", "tsvector_gt"},
+	},
+	{
 		typeName:        "uuid",
 		opfamily:        "uuid_ops",
 		compareProc:     "uuid_cmp",
@@ -431,5 +518,11 @@ var btreeCatalogTypes = []btreeCatalogType{
 		opfamily:        "varbit_ops",
 		compareProc:     "varbitcmp",
 		comparisonFuncs: [5]string{"varbitlt", "varbitle", "varbiteq", "varbitge", "varbitgt"},
+	},
+	{
+		typeName:        "xid8",
+		opfamily:        "xid8_ops",
+		compareProc:     "xid8cmp",
+		comparisonFuncs: [5]string{"xid8lt", "xid8le", "xid8eq", "xid8ge", "xid8gt"},
 	},
 }

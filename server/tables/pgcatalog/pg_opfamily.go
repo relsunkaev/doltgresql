@@ -124,30 +124,72 @@ type opfamily struct {
 }
 
 var defaultPostgresOpfamilies = []opfamily{
+	newBtreeOpfamily("array_ops"),
 	newBtreeOpfamily("bit_ops"),
 	newBtreeOpfamily("bool_ops"),
+	newBtreeOpfamily("enum_ops"),
 	newBtreeOpfamily("integer_ops"),
 	newBtreeOpfamily("float_ops"),
 	newBtreeOpfamily("numeric_ops"),
+	newHashOpfamily("char_ops"),
 	newBtreeOpfamily("char_ops"),
 	newBtreeOpfamily("text_ops"),
 	newBtreeOpfamily("bpchar_ops"),
+	newHashOpfamily("bytea_ops"),
 	newBtreeOpfamily("bytea_ops"),
 	newBtreeOpfamily(indexmetadata.OpClassTextPatternOps),
 	newBtreeOpfamily(indexmetadata.OpClassBpcharPatternOps),
 	newBtreeOpfamily("datetime_ops"),
 	newBtreeOpfamily("interval_ops"),
 	newBtreeOpfamily(indexmetadata.OpClassJsonbOps),
+	newBtreeOpfamily("macaddr8_ops"),
+	newBtreeOpfamily("macaddr_ops"),
+	newBtreeOpfamily("money_ops"),
+	newBtreeOpfamily("multirange_ops"),
+	newBtreeOpfamily("network_ops"),
 	newBtreeOpfamily("oid_ops"),
 	newBtreeOpfamily("oidvector_ops"),
+	newHashOpfamily("pg_lsn_ops"),
 	newBtreeOpfamily("pg_lsn_ops"),
+	newBtreeOpfamily("range_ops"),
+	newBtreeOpfamily("record_image_ops"),
+	newBtreeOpfamily("record_ops"),
+	newBtreeOpfamily("tid_ops"),
 	newBtreeOpfamily("time_ops"),
 	newBtreeOpfamily("timetz_ops"),
+	newBtreeOpfamily("tsquery_ops"),
+	newBtreeOpfamily("tsvector_ops"),
 	newBtreeOpfamily("uuid_ops"),
 	newBtreeOpfamily("varbit_ops"),
+	newBtreeOpfamily("xid8_ops"),
 	newJsonbGinOpfamily(indexmetadata.OpClassJsonbOps),
 	newJsonbGinOpfamily(indexmetadata.OpClassJsonbPathOps),
+	newHashOpfamily("aclitem_ops"),
+	newHashOpfamily("array_ops"),
+	newHashOpfamily("bool_ops"),
+	newHashOpfamily("bpchar_ops"),
+	newHashOpfamily("bpchar_pattern_ops"),
+	newHashOpfamily("enum_ops"),
+	newHashOpfamily("float_ops"),
 	newHashOpfamily("integer_ops"),
+	newHashOpfamily("interval_ops"),
+	newHashOpfamily("macaddr8_ops"),
+	newHashOpfamily("macaddr_ops"),
+	newHashOpfamily("multirange_ops"),
+	newHashOpfamily("network_ops"),
+	newHashOpfamily("numeric_ops"),
+	newHashOpfamily("oid_ops"),
+	newHashOpfamily("oidvector_ops"),
+	newHashOpfamily("range_ops"),
+	newHashOpfamily("record_ops"),
+	newHashOpfamily("text_ops"),
+	newSpgistOpfamily("text_ops"),
+	newHashOpfamily("text_pattern_ops"),
+	newHashOpfamily("tid_ops"),
+	newHashOpfamily("time_ops"),
+	newHashOpfamily("timetz_ops"),
+	newHashOpfamily("uuid_ops"),
+	newHashOpfamily("xid8_ops"),
 	newJsonbHashOpfamily(indexmetadata.OpClassJsonbOps),
 }
 
@@ -175,6 +217,19 @@ func newJsonbGinOpfamily(name string) opfamily {
 
 func newJsonbHashOpfamily(name string) opfamily {
 	return newHashOpfamily(name)
+}
+
+func spgistOpfamilyID(name string) id.Id {
+	return id.NewId(id.Section_OperatorFamily, "spgist", name)
+}
+
+func newSpgistOpfamily(name string) opfamily {
+	return opfamily{
+		oid:       spgistOpfamilyID(name),
+		opfmethod: id.NewAccessMethod("spgist").AsId(),
+		opfname:   name,
+		namespace: pgCatalogNamespaceID(),
+	}
 }
 
 func newHashOpfamily(name string) opfamily {

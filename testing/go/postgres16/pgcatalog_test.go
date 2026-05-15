@@ -126,7 +126,7 @@ JOIN "pg_catalog"."pg_type" lt ON lt.oid = amop.amoplefttype
 JOIN "pg_catalog"."pg_type" rt ON rt.oid = amop.amoprighttype
 JOIN "pg_catalog"."pg_operator" opr ON opr.oid = amop.amopopr
 WHERE opf.opfname IN ('bytea_ops', 'interval_ops', 'oid_ops', 'time_ops', 'timetz_ops')
-ORDER BY opf.opfname, amop.amopstrategy;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgamop-0006-select-opf.opfname-lt.typname-rt.typname-amop.amopstrategy"},
+ORDER BY opf.opfname, amop.amopstrategy, opr.oprname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgamop-0006-select-opf.opfname-lt.typname-rt.typname-amop.amopstrategy"},
 				},
 				{
 					Query: `SELECT opf.opfname, lt.typname, rt.typname, amop.amopstrategy, opr.oprname, opr.oprcode
@@ -136,7 +136,7 @@ JOIN "pg_catalog"."pg_type" lt ON lt.oid = amop.amoplefttype
 JOIN "pg_catalog"."pg_type" rt ON rt.oid = amop.amoprighttype
 JOIN "pg_catalog"."pg_operator" opr ON opr.oid = amop.amopopr
 WHERE opf.opfname IN ('bit_ops', 'char_ops', 'oidvector_ops', 'pg_lsn_ops', 'varbit_ops')
-ORDER BY opf.opfname, amop.amopstrategy;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgamop-0007-select-opf.opfname-lt.typname-rt.typname-amop.amopstrategy"},
+ORDER BY opf.opfname, amop.amopstrategy, opr.oprname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgamop-0007-select-opf.opfname-lt.typname-rt.typname-amop.amopstrategy"},
 				},
 				{
 					Query: `SELECT am.amname, opf.opfname, amop.amopstrategy, opr.oprname
@@ -188,7 +188,7 @@ JOIN "pg_catalog"."pg_opfamily" opf ON opf.oid = amproc.amprocfamily
 JOIN "pg_catalog"."pg_type" lt ON lt.oid = amproc.amproclefttype
 JOIN "pg_catalog"."pg_type" rt ON rt.oid = amproc.amprocrighttype
 WHERE opf.opfname = 'datetime_ops'
-ORDER BY lt.typname, rt.typname, amproc.amprocnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgamproc-0002-select-lt.typname-rt.typname-amproc.amprocnum-amproc.amproc"},
+ORDER BY lt.typname, rt.typname, amproc.amprocnum, amproc.amproc;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgamproc-0002-select-lt.typname-rt.typname-amproc.amprocnum-amproc.amproc"},
 				},
 				{
 					Query: `SELECT opf.opfname, lt.typname, rt.typname, amproc.amprocnum, amproc.amproc
@@ -197,7 +197,7 @@ JOIN "pg_catalog"."pg_opfamily" opf ON opf.oid = amproc.amprocfamily
 JOIN "pg_catalog"."pg_type" lt ON lt.oid = amproc.amproclefttype
 JOIN "pg_catalog"."pg_type" rt ON rt.oid = amproc.amprocrighttype
 WHERE opf.opfname IN ('bool_ops', 'bpchar_ops', 'numeric_ops', 'uuid_ops')
-ORDER BY opf.opfname, lt.typname, rt.typname, amproc.amprocnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgamproc-0003-select-opf.opfname-lt.typname-rt.typname-amproc.amprocnum"},
+ORDER BY opf.opfname, lt.typname, rt.typname, amproc.amprocnum, amproc.amproc;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgamproc-0003-select-opf.opfname-lt.typname-rt.typname-amproc.amprocnum"},
 				},
 				{
 					Query: `SELECT lt.typname, rt.typname, amproc.amprocnum, amproc.amproc
@@ -206,7 +206,7 @@ JOIN "pg_catalog"."pg_opfamily" opf ON opf.oid = amproc.amprocfamily
 JOIN "pg_catalog"."pg_type" lt ON lt.oid = amproc.amproclefttype
 JOIN "pg_catalog"."pg_type" rt ON rt.oid = amproc.amprocrighttype
 WHERE opf.opfname = 'integer_ops'
-ORDER BY lt.typname, rt.typname, amproc.amprocnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgamproc-0004-select-lt.typname-rt.typname-amproc.amprocnum-amproc.amproc"},
+ORDER BY lt.typname, rt.typname, amproc.amprocnum, amproc.amproc;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgamproc-0004-select-lt.typname-rt.typname-amproc.amprocnum-amproc.amproc"},
 				},
 				{
 					Query: `SELECT lt.typname, rt.typname, amproc.amprocnum, amproc.amproc
@@ -215,7 +215,7 @@ JOIN "pg_catalog"."pg_opfamily" opf ON opf.oid = amproc.amprocfamily
 JOIN "pg_catalog"."pg_type" lt ON lt.oid = amproc.amproclefttype
 JOIN "pg_catalog"."pg_type" rt ON rt.oid = amproc.amprocrighttype
 WHERE opf.opfname = 'float_ops'
-ORDER BY lt.typname, rt.typname, amproc.amprocnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgamproc-0005-select-lt.typname-rt.typname-amproc.amprocnum-amproc.amproc"},
+ORDER BY lt.typname, rt.typname, amproc.amprocnum, amproc.amproc;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgamproc-0005-select-lt.typname-rt.typname-amproc.amprocnum-amproc.amproc"},
 				},
 				{
 					Query: `SELECT lt.typname, rt.typname, amproc.amprocnum, amproc.amproc
@@ -224,7 +224,7 @@ JOIN "pg_catalog"."pg_opfamily" opf ON opf.oid = amproc.amprocfamily
 JOIN "pg_catalog"."pg_type" lt ON lt.oid = amproc.amproclefttype
 JOIN "pg_catalog"."pg_type" rt ON rt.oid = amproc.amprocrighttype
 WHERE opf.opfname = 'text_ops'
-ORDER BY lt.typname, rt.typname, amproc.amprocnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgamproc-0006-select-lt.typname-rt.typname-amproc.amprocnum-amproc.amproc"},
+ORDER BY lt.typname, rt.typname, amproc.amprocnum, amproc.amproc;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgamproc-0006-select-lt.typname-rt.typname-amproc.amprocnum-amproc.amproc"},
 				},
 				{
 					Query: `SELECT opf.opfname, lt.typname, rt.typname, amproc.amprocnum, amproc.amproc
@@ -233,7 +233,7 @@ JOIN "pg_catalog"."pg_opfamily" opf ON opf.oid = amproc.amprocfamily
 JOIN "pg_catalog"."pg_type" lt ON lt.oid = amproc.amproclefttype
 JOIN "pg_catalog"."pg_type" rt ON rt.oid = amproc.amprocrighttype
 WHERE opf.opfname IN ('bytea_ops', 'interval_ops', 'oid_ops', 'time_ops', 'timetz_ops')
-ORDER BY opf.opfname, lt.typname, rt.typname, amproc.amprocnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgamproc-0007-select-opf.opfname-lt.typname-rt.typname-amproc.amprocnum"},
+ORDER BY opf.opfname, lt.typname, rt.typname, amproc.amprocnum, amproc.amproc;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgamproc-0007-select-opf.opfname-lt.typname-rt.typname-amproc.amprocnum"},
 				},
 				{
 					Query: `SELECT opf.opfname, lt.typname, rt.typname, amproc.amprocnum, amproc.amproc
@@ -242,7 +242,7 @@ JOIN "pg_catalog"."pg_opfamily" opf ON opf.oid = amproc.amprocfamily
 JOIN "pg_catalog"."pg_type" lt ON lt.oid = amproc.amproclefttype
 JOIN "pg_catalog"."pg_type" rt ON rt.oid = amproc.amprocrighttype
 WHERE opf.opfname IN ('bit_ops', 'char_ops', 'oidvector_ops', 'pg_lsn_ops', 'varbit_ops')
-ORDER BY opf.opfname, lt.typname, rt.typname, amproc.amprocnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgamproc-0008-select-opf.opfname-lt.typname-rt.typname-amproc.amprocnum"},
+ORDER BY opf.opfname, lt.typname, rt.typname, amproc.amprocnum, amproc.amproc;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgamproc-0008-select-opf.opfname-lt.typname-rt.typname-amproc.amprocnum"},
 				},
 				{
 					Query: `SELECT am.amname, opf.opfname, amproc.amprocnum, amproc.amproc
