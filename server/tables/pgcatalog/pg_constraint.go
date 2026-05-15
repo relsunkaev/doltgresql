@@ -420,7 +420,7 @@ func cachePgConstraints(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error 
 				tableComment = commented.Comment()
 			}
 			for i, col := range table.Item.Schema(ctx) {
-				if col.Nullable || col.PrimaryKey || col.HiddenSystem {
+				if col.Nullable || col.HiddenSystem {
 					continue
 				}
 				constraintName := notNullConstraintName(table.Item.Name(), col.Name)
@@ -557,7 +557,11 @@ func cachePgConstraints(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error 
 
 			conKey := make([]any, len(index.Item.Expressions()))
 			for i, expr := range index.Item.Expressions() {
-				conKey[i] = tableColToIdxMap[expr]
+				colIdx, ok := tableColToIdxMap[expr]
+				if !ok {
+					colIdx = tableColToIdxMap[fmt.Sprintf("%s.%s", table.Item.Name(), indexColumnName(expr))]
+				}
+				conKey[i] = colIdx
 			}
 
 			constraint := &pgConstraint{
