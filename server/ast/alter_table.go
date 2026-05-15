@@ -844,7 +844,7 @@ func nodeAlterTableAlterColumnType(ctx *Context, node *tree.AlterTableAlterColum
 	}
 
 	if resolvedType == pgtypes.Record {
-		return nil, errors.Errorf(`column "%s" has pseudo-type record`, node.Column.String())
+		return nil, pgerror.Newf(pgcode.InvalidTableDefinition, `column "%s" has pseudo-type record`, node.Column.String())
 	}
 
 	return &vitess.DDL{

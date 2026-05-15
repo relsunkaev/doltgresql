@@ -15,10 +15,10 @@
 package ast
 
 import (
-	"github.com/cockroachdb/errors"
-
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	pgnodes "github.com/dolthub/doltgresql/server/node"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -89,7 +89,7 @@ func nodeAlterType(ctx *Context, node *tree.AlterType) (vitess.Statement, error)
 					return nil, err
 				}
 				if dataType == pgtypes.Record {
-					return nil, errors.Errorf(`column "%s" has pseudo-type record`, action.ColName)
+					return nil, pgerror.Newf(pgcode.InvalidTableDefinition, `column "%s" has pseudo-type record`, action.ColName)
 				}
 			}
 			actions[i] = pgnodes.AlterTypeAttributeAction{

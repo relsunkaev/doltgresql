@@ -43,7 +43,7 @@ func nodeColumnTableDef(ctx *Context, node *tree.ColumnTableDef, tableName vites
 	}
 
 	if resolvedType == pgtypes.Record {
-		return nil, errors.Errorf(`column "%s" has pseudo-type record`, node.Name.String())
+		return nil, pgerror.Newf(pgcode.InvalidTableDefinition, `column "%s" has pseudo-type record`, node.Name.String())
 	}
 
 	var isNull vitess.BoolVal
