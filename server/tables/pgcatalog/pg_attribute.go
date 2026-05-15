@@ -104,6 +104,9 @@ func cachePgAttributes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 				attrelidAttnameIdx.Add(attr)
 				attributes = append(attributes, attr)
 			}
+			for _, attr := range tableSystemAttributes(table.OID.AsId()) {
+				addAttr(attr)
+			}
 			for _, col := range table.Item.Schema(ctx) {
 				if col.HiddenSystem {
 					continue
@@ -212,6 +215,35 @@ func tableColumnAttribute(relationID id.Id, schemaName string, tableName string,
 		atttypmod:      typeMeta.atttypmod,
 		attoptions:     attoptions,
 		attmissingval:  attmissingval,
+	}
+}
+
+func tableSystemAttributes(relationID id.Id) []*pgAttribute {
+	return []*pgAttribute{
+		systemColumnAttribute(relationID, "tableoid", "oid", 4, -6, true, string(pgtypes.TypeAlignment_Int)),
+		systemColumnAttribute(relationID, "cmax", "cid", 4, -5, true, string(pgtypes.TypeAlignment_Int)),
+		systemColumnAttribute(relationID, "xmax", "xid", 4, -4, true, string(pgtypes.TypeAlignment_Int)),
+		systemColumnAttribute(relationID, "cmin", "cid", 4, -3, true, string(pgtypes.TypeAlignment_Int)),
+		systemColumnAttribute(relationID, "xmin", "xid", 4, -2, true, string(pgtypes.TypeAlignment_Int)),
+		systemColumnAttribute(relationID, "ctid", "tid", 6, -1, false, string(pgtypes.TypeAlignment_Short)),
+	}
+}
+
+func systemColumnAttribute(relationID id.Id, name string, typeName string, length int16, attnum int16, byVal bool, align string) *pgAttribute {
+	return &pgAttribute{
+		attrelid:       relationID,
+		attrelidNative: id.Cache().ToOID(relationID),
+		attname:        name,
+		atttypid:       id.NewType("pg_catalog", typeName).AsId(),
+		attlen:         length,
+		attnum:         attnum,
+		attbyval:       byVal,
+		attalign:       align,
+		attnotnull:     true,
+		attstorage:     string(pgtypes.TypeStorage_Plain),
+		attstattarget:  0,
+		attcollation:   id.Null,
+		atttypmod:      -1,
 	}
 }
 

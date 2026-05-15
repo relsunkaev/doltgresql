@@ -133,7 +133,7 @@ func columnDefaultText(col *sql.Column) string {
 		return generatedColumnText(col.Generated)
 	}
 	if col.Default != nil {
-		return columnDefaultValueText(col.Default)
+		return columnDefaultValueText(col.Type, col.Default)
 	}
 	return ""
 }
@@ -162,14 +162,43 @@ func postgresParsedExpressionString(expr string) string {
 	return tree.AsString(parsed)
 }
 
-func columnDefaultValueText(def *sql.ColumnDefaultValue) string {
+func columnDefaultValueText(typ sql.Type, def *sql.ColumnDefaultValue) string {
 	if def == nil {
 		return ""
 	}
 	if def.Expr != nil {
-		return annotateFunctionStringLiteralDefaults(stripRedundantOuterParens(def.Expr.String()))
+		return annotateStringLiteralDefaultType(annotateFunctionStringLiteralDefaults(stripRedundantOuterParens(def.Expr.String())), typ)
 	}
 	return def.String()
+}
+
+func annotateStringLiteralDefaultType(expr string, typ sql.Type) string {
+	if expr == "" || expr[0] != '\'' {
+		return expr
+	}
+	var copied strings.Builder
+	next := copySingleQuotedString(&copied, expr, 0)
+	if strings.TrimSpace(expr[next:]) != "" {
+		return expr
+	}
+	castName := stringLiteralDefaultCastName(typ)
+	if castName == "" {
+		return expr
+	}
+	return expr + "::" + castName
+}
+
+func stringLiteralDefaultCastName(typ sql.Type) string {
+	doltgresType, ok := doltgresType(typ)
+	if !ok || !doltgresType.IsStringType() {
+		return ""
+	}
+	switch doltgresType.Name() {
+	case "varchar":
+		return "character varying"
+	default:
+		return doltgresType.Name()
+	}
 }
 
 func annotateFunctionStringLiteralDefaults(expr string) string {

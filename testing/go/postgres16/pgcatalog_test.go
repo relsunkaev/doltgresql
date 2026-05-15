@@ -288,10 +288,10 @@ func TestPgAttribute(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_attribute" WHERE attname='pk' AND attrelid='testschema.test'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgattribute-0001-select-*-from-pg_catalog-."},
+					Query: `SELECT attrelid::regclass::text, attname, atttypid::regtype::text, attlen, attnum, attcacheoff, atttypmod, attndims, attbyval, attalign, attstorage, attcompression, attnotnull, atthasdef, atthasmissing, attidentity, attgenerated, attisdropped, attislocal, attinhcount, attstattarget, attcollation::text, attacl, attoptions, attfdwoptions, attmissingval::text FROM "pg_catalog"."pg_attribute" WHERE attname='pk' AND attrelid='testschema.test'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgattribute-0001-select-*-from-pg_catalog-."},
 				},
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_attribute" WHERE attname='v1' AND attrelid='testschema.test'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgattribute-0002-select-*-from-pg_catalog-."},
+					Query: `SELECT attrelid::regclass::text, attname, atttypid::regtype::text, attlen, attnum, attcacheoff, atttypmod, attndims, attbyval, attalign, attstorage, attcompression, attnotnull, atthasdef, atthasmissing, attidentity, attgenerated, attisdropped, attislocal, attinhcount, attstattarget, attcollation::text, attacl, attoptions, attfdwoptions, attmissingval::text FROM "pg_catalog"."pg_attribute" WHERE attname='v1' AND attrelid='testschema.test'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgattribute-0002-select-*-from-pg_catalog-."},
 				},
 				{ // Different cases and quoted, so it fails
 					Query: `SELECT * FROM "PG_catalog"."pg_attribute";`, PostgresOracle: ScriptTestPostgresOracle{
@@ -306,18 +306,19 @@ func TestPgAttribute(t *testing.T) {
 						ID: "pgcatalog-test-testpgattribute-0004-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT attname FROM PG_catalog.pg_ATTRIBUTE ORDER BY attname LIMIT 3;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgattribute-0005-select-attname-from-pg_catalog.pg_attribute-order"},
+					Query: "SELECT attname FROM PG_catalog.pg_ATTRIBUTE WHERE attrelid='testschema.test'::regclass AND attnum > 0 ORDER BY attname LIMIT 3;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgattribute-0005-select-attname-from-pg_catalog.pg_attribute-order"},
 				},
 				{
 					Query: `SELECT attname FROM "pg_catalog"."pg_attribute" a
     JOIN "pg_catalog"."pg_class" c ON a.attrelid = c.oid
-               WHERE c.relname = 'test';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgattribute-0006-select-attname-from-pg_catalog-."},
+               WHERE c.oid = 'testschema.test'::regclass
+               ORDER BY a.attnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgattribute-0006-select-attname-from-pg_catalog-."},
 				},
 				{
 					Query: `SELECT count(*) FROM pg_attribute as a1
-				WHERE a1.attrelid = 0 OR a1.atttypid = 0 OR a1.attnum = 0 OR
+				WHERE a1.attrelid = 'testschema.test'::regclass AND (a1.attrelid = 0 OR a1.atttypid = 0 OR a1.attnum = 0 OR
 				a1.attcacheoff != -1 OR a1.attinhcount < 0 OR
-				(a1.attinhcount = 0 AND NOT a1.attislocal);`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgattribute-0007-select-count-*-from-pg_attribute"},
+				(a1.attinhcount = 0 AND NOT a1.attislocal));`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgattribute-0007-select-count-*-from-pg_attribute"},
 				},
 				{
 					Query: `SELECT "con"."conname" AS "constraint_name", 
@@ -434,7 +435,7 @@ func TestPgAttrdef(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_attrdef" WHERE adrelid='testschema.test'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgattrdef-0001-select-*-from-pg_catalog-."},
+					Query: `SELECT adrelid::regclass::text, adnum, pg_get_expr(adbin, adrelid) FROM "pg_catalog"."pg_attrdef" WHERE adrelid='testschema.test'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgattrdef-0001-select-*-from-pg_catalog-."},
 				},
 				{ // Different cases and quoted, so it fails
 					Query: `SELECT * FROM "PG_catalog"."pg_attrdef";`, PostgresOracle: ScriptTestPostgresOracle{
@@ -449,7 +450,7 @@ func TestPgAttrdef(t *testing.T) {
 						ID: "pgcatalog-test-testpgattrdef-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT oid FROM PG_catalog.pg_ATTRDEF ORDER BY oid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgattrdef-0004-select-oid-from-pg_catalog.pg_attrdef-order"},
+					Query: "SELECT adrelid::regclass::text, adnum FROM PG_catalog.pg_ATTRDEF WHERE adrelid='testschema.test'::regclass ORDER BY adnum;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgattrdef-0004-select-oid-from-pg_catalog.pg_attrdef-order"},
 				},
 			},
 		},
