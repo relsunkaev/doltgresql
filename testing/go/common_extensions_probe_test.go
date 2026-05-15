@@ -862,8 +862,7 @@ ORDER BY amproc.amprocnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "commo
 						FROM pg_catalog.pg_opclass opc
 						JOIN pg_catalog.pg_am am ON am.oid = opc.opcmethod
 						JOIN pg_catalog.pg_type typ ON typ.oid = opc.opcintype
-						WHERE opc.opcname = 'citext_ops';`,
-					Expected: []sql.Row{{"citext_ops", "btree", "citext", "true"}},
+						WHERE opc.opcname = 'citext_ops';`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0128-select-opc.opcname-am.amname-typ.typname-opc.opcdefault::text"},
 				},
 				{
 					Query: `SELECT opf.opfname, amop.amopstrategy, opr.oprname
@@ -890,16 +889,7 @@ ORDER BY amproc.amprocnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "commo
 					Query: `SELECT ('Alice@Example.com'::public.citext <> 'alice@example.com'::public.citext)::text, ('bob@example.com'::public.citext > 'ALICE@example.com'::public.citext)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0132-select-alice@example.com-::public.citext-<>-alice@example.com", Cleanup: []string{"DROP EXTENSION IF EXISTS citext CASCADE", "DROP TABLE IF EXISTS app_users CASCADE"}},
 				},
 				{
-					Query: `EXPLAIN SELECT id FROM app_users WHERE email = 'alice@example.com'::public.citext;`,
-					Expected: []sql.Row{
-						{"Project"},
-						{" ├─ columns: [app_users.id]"},
-						{" └─ Filter"},
-						{"     ├─ app_users.email = 'alice@example.com'"},
-						{"     └─ IndexedTableAccess(app_users)"},
-						{"         ├─ index: [app_users.__doltgres_citext_94cb67fc_0]"},
-						{"         └─ filters: [{[alice@example.com, alice@example.com]}]"},
-					},
+					Query: `EXPLAIN SELECT id FROM app_users WHERE email = 'alice@example.com'::public.citext;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0133-explain-select-id-from-app_users"},
 				},
 				{
 					Query: `SELECT id FROM app_users WHERE email = 'alice@example.com'::public.citext;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0134-select-id-from-app_users-where", Cleanup: []string{"DROP EXTENSION IF EXISTS citext CASCADE", "DROP TABLE IF EXISTS app_users CASCADE"}},
@@ -1085,13 +1075,7 @@ JOIN pg_catalog.pg_am am ON am.oid = opc.opcmethod
 JOIN pg_catalog.pg_type typ ON typ.oid = opc.opcintype
 LEFT JOIN pg_catalog.pg_type keytyp ON keytyp.oid = opc.opckeytype
 WHERE opc.opcname IN ('btree_hstore_ops', 'hash_hstore_ops', 'gist_hstore_ops', 'gin_hstore_ops')
-ORDER BY am.amname, opc.opcname;`,
-					Expected: []sql.Row{
-						{"btree", "btree_hstore_ops", "t", "hstore", ""},
-						{"gin", "gin_hstore_ops", "t", "hstore", "text"},
-						{"gist", "gist_hstore_ops", "t", "hstore", ""},
-						{"hash", "hash_hstore_ops", "t", "hstore", ""},
-					},
+ORDER BY am.amname, opc.opcname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "common-extensions-probe-test-testcommonextensionsprobe-0187-select-am.amname-opc.opcname-opc.opcdefault-typ.typname"},
 				},
 				{
 					Query: `SELECT am.amname, opf.opfname

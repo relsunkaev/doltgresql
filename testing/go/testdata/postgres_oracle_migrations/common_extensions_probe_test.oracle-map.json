@@ -2425,13 +2425,49 @@
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 128,
       "scriptName": "CREATE EXTENSION citext installs case-insensitive text type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0128-select-opc.opcname-am.amname-typ.typname-opc.opcdefault::text",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0128-select-opc.opcname-am.amname-typ.typname-opc.opcdefault::text",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT opc.opcname, am.amname, typ.typname, opc.opcdefault::text\n\t\t\t\t\t\tFROM pg_catalog.pg_opclass opc\n\t\t\t\t\t\tJOIN pg_catalog.pg_am am ON am.oid = opc.opcmethod\n\t\t\t\t\t\tJOIN pg_catalog.pg_type typ ON typ.oid = opc.opcintype\n\t\t\t\t\t\tWHERE opc.opcname = 'citext_ops';",
       "querySha256": "8f55b17ae6d017478735e2f3d3c6230591dd829d88c2d9c1f22d5d383975f743",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "citext_ops"
+          },
+          {
+            "value": "btree"
+          },
+          {
+            "value": "citext"
+          },
+          {
+            "value": "true"
+          }
+        ],
+        [
+          {
+            "value": "citext_ops"
+          },
+          {
+            "value": "hash"
+          },
+          {
+            "value": "citext"
+          },
+          {
+            "value": "true"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS citext CASCADE",
+        "DROP TABLE IF EXISTS app_users CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0129",
@@ -2607,13 +2643,34 @@
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 133,
       "scriptName": "CREATE EXTENSION citext installs case-insensitive text type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0133-explain-select-id-from-app_users",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0133-explain-select-id-from-app_users",
+      "compare": "structural",
+      "columnModes": [
+        "explain"
+      ],
       "expectedKind": "rows",
       "query": "EXPLAIN SELECT id FROM app_users WHERE email = 'alice@example.com'::public.citext;",
       "querySha256": "5409ef7b47481b27ae5553c60689c53a6dc31510cfe977b60a493235f9e7dbac",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "Index Scan using app_users_email_key on app_users  (cost=0.15..8.17 rows=1 width=4)"
+          }
+        ],
+        [
+          {
+            "value": "  Index Cond: (email = 'alice@example.com'::citext)"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS citext CASCADE",
+        "DROP TABLE IF EXISTS app_users CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0134",
@@ -4417,13 +4474,92 @@
       "source": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe",
       "ordinal": 187,
       "scriptName": "CREATE EXTENSION hstore installs text-compatible type",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "common-extensions-probe-test-testcommonextensionsprobe-0187-select-am.amname-opc.opcname-opc.opcdefault-typ.typname",
       "suggestedId": "common-extensions-probe-test-testcommonextensionsprobe-0187-select-am.amname-opc.opcname-opc.opcdefault-typ.typname",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT am.amname, opc.opcname, opc.opcdefault, typ.typname, COALESCE(keytyp.typname, '')\nFROM pg_catalog.pg_opclass opc\nJOIN pg_catalog.pg_am am ON am.oid = opc.opcmethod\nJOIN pg_catalog.pg_type typ ON typ.oid = opc.opcintype\nLEFT JOIN pg_catalog.pg_type keytyp ON keytyp.oid = opc.opckeytype\nWHERE opc.opcname IN ('btree_hstore_ops', 'hash_hstore_ops', 'gist_hstore_ops', 'gin_hstore_ops')\nORDER BY am.amname, opc.opcname;",
       "querySha256": "284f46a2b7a93b2a597ed7d1b09d94c9251c9355d5d9228295bb7e27ba28d957",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "btree"
+          },
+          {
+            "value": "btree_hstore_ops"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "hstore"
+          },
+          {
+            "value": ""
+          }
+        ],
+        [
+          {
+            "value": "gin"
+          },
+          {
+            "value": "gin_hstore_ops"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "hstore"
+          },
+          {
+            "value": "text"
+          }
+        ],
+        [
+          {
+            "value": "gist"
+          },
+          {
+            "value": "gist_hstore_ops"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "hstore"
+          },
+          {
+            "value": "ghstore"
+          }
+        ],
+        [
+          {
+            "value": "hash"
+          },
+          {
+            "value": "hash_hstore_ops"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "hstore"
+          },
+          {
+            "value": ""
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP TABLE IF EXISTS vending_machines CASCADE",
+        "DROP TYPE IF EXISTS hstore_person CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_base CASCADE",
+        "DROP TYPE IF EXISTS hstore_pop_row CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/common_extensions_probe_test.go:TestCommonExtensionsProbe#0188",
