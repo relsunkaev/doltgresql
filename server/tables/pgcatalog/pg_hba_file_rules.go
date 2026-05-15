@@ -44,15 +44,17 @@ func (p PgHbaFileRulesHandler) Name() string {
 // RowIter implements the interface tables.Handler.
 func (p PgHbaFileRulesHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
 	return sql.RowsToRowIter(sql.Row{
-		int32(1),     // line_number
-		"host",       // type
-		[]any{"all"}, // database
-		[]any{"all"}, // user_name
-		"0.0.0.0/0",  // address
-		nil,          // netmask
-		"trust",      // auth_method
-		nil,          // options
-		nil,          // error
+		int32(1),      // rule_number
+		"pg_hba.conf", // file_name
+		int32(1),      // line_number
+		"host",        // type
+		[]any{"all"},  // database
+		[]any{"all"},  // user_name
+		"0.0.0.0/0",   // address
+		nil,           // netmask
+		"trust",       // auth_method
+		nil,           // options
+		nil,           // error
 	}), nil
 }
 
@@ -66,6 +68,8 @@ func (p PgHbaFileRulesHandler) PkSchema() sql.PrimaryKeySchema {
 
 // pgHbaFileRulesSchema is the schema for pg_hba_file_rules.
 var pgHbaFileRulesSchema = sql.Schema{
+	{Name: "rule_number", Type: pgtypes.Int32, Default: nil, Nullable: true, Source: PgHbaFileRulesName},
+	{Name: "file_name", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgHbaFileRulesName},
 	{Name: "line_number", Type: pgtypes.Int32, Default: nil, Nullable: true, Source: PgHbaFileRulesName},
 	{Name: "type", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgHbaFileRulesName},
 	{Name: "database", Type: pgtypes.TextArray, Default: nil, Nullable: true, Source: PgHbaFileRulesName},

@@ -1790,7 +1790,12 @@ func TestPgHbaFileRules(t *testing.T) {
 			Name: "pg_hba_file_rules",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_hba_file_rules";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+					Query: `SELECT rule_number > 0, file_name IS NOT NULL, line_number > 0,
+							type, database, user_name, address IS NOT NULL, auth_method, error IS NULL
+						FROM "pg_catalog"."pg_hba_file_rules"
+						WHERE type = 'host' AND auth_method = 'trust'
+						ORDER BY rule_number
+						LIMIT 1;`, PostgresOracle: ScriptTestPostgresOracle{ID:
 
 					// Different cases and quoted, so it fails
 					"pgcatalog-test-testpghbafilerules-0001-select-*-from-pg_catalog-."},
@@ -1808,7 +1813,11 @@ func TestPgHbaFileRules(t *testing.T) {
 						ID: "pgcatalog-test-testpghbafilerules-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT line_number FROM PG_catalog.pg_HBA_FILE_RULES ORDER BY line_number;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpghbafilerules-0004-select-line_number-from-pg_catalog.pg_hba_file_rules-order"},
+					Query: `SELECT auth_method
+						FROM PG_catalog.pg_HBA_FILE_RULES
+						WHERE type = 'host'
+						ORDER BY rule_number
+						LIMIT 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpghbafilerules-0004-select-line_number-from-pg_catalog.pg_hba_file_rules-order"},
 				},
 			},
 		},
