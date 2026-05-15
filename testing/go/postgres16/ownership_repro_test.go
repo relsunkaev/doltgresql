@@ -657,7 +657,7 @@ func TestDropOwnedRevokesGrantedPrivilegesRepro(t *testing.T) {
 					Query: `SELECT id FROM public.drop_owned_grants;`,
 
 					Username: `drop_owned_grantee`,
-					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{ID: "ownership-repro-test-testdropownedrevokesgrantedprivilegesrepro-0001-select-id-from-drop_owned_grants", Compare: "sqlstate"},
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{ID: "ownership-repro-test-testdropownedrevokesgrantedprivilegesrepro-0001-select-id-from-drop_owned_grants"},
 				},
 				{
 					Query: `DROP OWNED BY drop_owned_grantee;`,

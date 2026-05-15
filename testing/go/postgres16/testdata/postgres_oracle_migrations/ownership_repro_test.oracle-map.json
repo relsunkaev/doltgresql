@@ -547,7 +547,7 @@
       "oracle": "postgres",
       "postgresId": "ownership-repro-test-testdropownedrevokesgrantedprivilegesrepro-0001-select-id-from-drop_owned_grants",
       "suggestedId": "ownership-repro-test-testdropownedrevokesgrantedprivilegesrepro-0001-select-id-from-drop_owned_grants",
-      "compare": "sqlstate",
+      "compare": "structural",
       "expectedKind": "rows",
       "username": "drop_owned_grantee",
       "query": "SELECT id FROM public.drop_owned_grants;",
