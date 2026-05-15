@@ -560,7 +560,7 @@ func (j *jsonTableRowIter) Next(ctx *sql.Context) (sql.Row, error) {
 		}
 		row[i], err = jsonPopulateValue(ctx, col.typ, nil, matches[0])
 		if err != nil {
-			return nil, err
+			row[i] = nil
 		}
 	}
 	return row, nil

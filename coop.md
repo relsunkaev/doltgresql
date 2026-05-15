@@ -10,6 +10,27 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### beta - 2026-05-15 04:02 MST
+
+- Lane claimed: PostgreSQL 17 `JSON_TABLE` error-handling semantics, specifically `TestPostgres17JsonTableRepro/JSON_TABLE/SELECT * FROM JSON_TABLE('[{"a":"bad"}]'::jsonb, '$[*]' COLUMNS (a_int PATH '$.a')) AS jt;`.
+- Red proof: post-`postgres16` subpackage run `go test -json -vet=off ./testing/go/postgres17 ./testing/go/postgres18 ./testing/go/regression/schedule ./testing/go/regression/tool ./testing/go/scrubber -count=1 -failfast -timeout=60m > /tmp/doltgresql-beta-post16-subpkg-failfast-0402.json` stops immediately in `postgres17`; Doltgres returns `ERROR: invalid input syntax for type int4: "bad" ... (SQLSTATE 22P02)` where the test expects the row to succeed with default JSON_TABLE error behavior.
+- Expected files after initial read: `testing/go/postgres17/*json_table*` for spec confirmation and JSON_TABLE implementation/parser/row-iterator files found by `rg`. Boundary: no alpha pg_dump/pg_amop/opfamily catalog lane and no PG18 temporal files.
+- Root cause confirmed: `server/functions/json_table_functions.go` used the shared `jsonPopulateValue` coercion helper and propagated per-column type input errors out of the JSON_TABLE row iterator. PostgreSQL 17's default JSON_TABLE column behavior for this repro is to keep the row and emit `NULL` for the failed column.
+- Change made: JSON_TABLE row coercion now leaves the column `NULL` when a matched value cannot be coerced, while still preserving path evaluation errors.
+- Validation passed: focused bad-cast repro, full `go test -vet=off ./testing/go/postgres17 -run '^TestPostgres17JsonTableRepro$' -count=1 -timeout=10m -v`, and compile check `go test -vet=off ./server/functions -run '^$' -count=1 -timeout=10m`, all with ICU env and `GOFLAGS=-p=1`.
+- Broader `postgres17` result after this fix: full package advances to separate SQL/JSON constructor/query gaps: missing `JSON_SCALAR`, parse gap for `JSON_SERIALIZE(... RETURNING ...)`, parse gap for `JSON_EXISTS(... PASSING ...)`, parse gap for `JSON_VALUE(... RETURNING ...)`, and missing `JSON_QUERY`.
+- Next action: commit the JSON_TABLE default-null-on-error increment, then decide whether beta should claim the SQL/JSON constructor/query lane after re-checking `coop.md`.
+
+### beta - 2026-05-15 03:59 MST
+
+- Full-suite failfast result: `go test -json -vet=off ./testing/go/... -count=1 -failfast -timeout=60m > /tmp/doltgresql-beta-testing-go-failfast-0351.json` from `HEAD=e733ee7f` stopped in root package `TestPgDumpPsqlRestoreDrizzleRoundTrip`.
+- Counts before failfast stop: 3052 pass, 83 skip, 2 fail events including the package-level fail.
+- Red proof: `pg_dump_round_trip_test.go:303` returned `signal: segmentation fault` from the external `pg_dump` invocation after `TestPerlDBIClientSmoke` skipped due unavailable Docker runtime. JSON tail also shows `error receiving message: unexpected EOF`.
+- Coordination: alpha already claimed the same pg_dump dependency/catalog metadata lane at 03:58 with focused repro, so beta is not claiming or touching that area.
+- Related subpackage discovery: root-excluded run `go test -json -vet=off ./testing/go/benchmark ./testing/go/enginetest ./testing/go/postgres16 ./testing/go/postgres17 ./testing/go/postgres18 ./testing/go/regression/schedule ./testing/go/regression/tool ./testing/go/scrubber -count=1 -failfast -timeout=60m > /tmp/doltgresql-beta-subpkg-failfast-0400.json` stopped in `postgres16` at `TestPgAmop` after 10752 pass and 794 skip.
+- Subpackage red proof: `pg_amop` btree opfamily count query expects 35 PostgreSQL rows but Doltgres returns 21, missing families such as `array_ops`, `enum_ops`, network/range/record/tsquery/tsvector/xid-related rows. This appears to overlap alpha's active pg_dump `pg_amop` / opfamily catalog metadata lane, so beta is not claiming it.
+- Next action: wait for or re-check after alpha's pg_dump lane lands, then run a fresh failfast to find the next unclaimed blocker.
+
 ### beta - 2026-05-15 03:30 MST
 
 - Lane claimed: PostgreSQL 18 temporal constraints, specifically `TestPostgres18WithoutOverlapsTemporalUniqueRepro` and `TestPostgres18TemporalForeignKeyPeriodRepro` failing during setup on `WITHOUT OVERLAPS` syntax.
