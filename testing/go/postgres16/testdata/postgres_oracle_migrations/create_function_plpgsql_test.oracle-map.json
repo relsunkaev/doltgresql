@@ -1,0 +1,2896 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map create_function_plpgsql_test.go --oracle-script-name Branching,Merging No Conflict --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/create_function_plpgsql_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0001",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 1,
+      "scriptName": "ALIAS",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0001-select-interpreted_alias-123",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0001-select-interpreted_alias-123",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_alias('123');",
+      "querySha256": "97f34dac2bdb240e0006b7563fe962d9156a429921e96c1935e3da59a8654eca",
+      "expectedRows": [
+        [
+          {
+            "value": "123"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0002",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 2,
+      "scriptName": "Assignment",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0002-select-interpreted_assignment-hello",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0002-select-interpreted_assignment-hello",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_assignment('Hello');",
+      "querySha256": "ec96f0abe0405499f8d426ed7a9ed68508d834904485fa71e76bf2077bf10644",
+      "expectedRows": [
+        [
+          {
+            "value": "Initial: Hello - Greeting"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0003",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 3,
+      "scriptName": "Assignment",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0003-select-interpreted_assignment-bye",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0003-select-interpreted_assignment-bye",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_assignment('Bye');",
+      "querySha256": "323f339d86904a52b53334f6b12e53c2fb3eff26b54e95e56611ea4d034b74af",
+      "expectedRows": [
+        [
+          {
+            "value": "Initial: Bye - Farewell"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0004",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 4,
+      "scriptName": "Assignment",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0004-select-interpreted_assignment-abc",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0004-select-interpreted_assignment-abc",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_assignment('abc');",
+      "querySha256": "76756bd7e28c5c2bbf82cc2831efa6578f462b7f02c72d0479a83cd4d810ce2a",
+      "expectedRows": [
+        [
+          {
+            "value": "Initial: abc - Else"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0005",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 5,
+      "scriptName": "Assignment",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0005-select-interpreted_assignment-something",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0005-select-interpreted_assignment-something",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_assignment('something');",
+      "querySha256": "d27d918db9a3e95f0faad07e92a19ce8185a3a3f6898fc3af43af55c3b8eb5b6",
+      "expectedRows": [
+        [
+          {
+            "value": "Initial: something - Over 5"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0006",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 6,
+      "scriptName": "CASE, with ELSE",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0006-select-interpreted_case-1",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0006-select-interpreted_case-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_case(1);",
+      "querySha256": "65645b38b7dc3b831e5bb4a9bc0ec3dae06c924f02c5286d9f09be5229a068ab",
+      "expectedRows": [
+        [
+          {
+            "value": "one or two"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0007",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 7,
+      "scriptName": "CASE, with ELSE",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0007-select-interpreted_case-2",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0007-select-interpreted_case-2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_case(2);",
+      "querySha256": "27bd68b545f3bd12425145ee7219c582c6146ecdb7d07faca43d3da4d3f76da4",
+      "expectedRows": [
+        [
+          {
+            "value": "one or two"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0008",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 8,
+      "scriptName": "CASE, with ELSE",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0008-select-interpreted_case-0",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0008-select-interpreted_case-0",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_case(0);",
+      "querySha256": "c9f880563059c0bd11ce5476e5c3bfb07c1b3c5a79702c9e6a3f1b06e6f651c2",
+      "expectedRows": [
+        [
+          {
+            "value": "other value than one or two"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0009",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 9,
+      "scriptName": "CASE, without ELSE",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0009-select-interpreted_case-1",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0009-select-interpreted_case-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_case(1);",
+      "querySha256": "65645b38b7dc3b831e5bb4a9bc0ec3dae06c924f02c5286d9f09be5229a068ab",
+      "expectedRows": [
+        [
+          {
+            "value": "one or two"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0010",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 10,
+      "scriptName": "CASE, without ELSE",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0010-select-interpreted_case-2",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0010-select-interpreted_case-2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_case(2);",
+      "querySha256": "27bd68b545f3bd12425145ee7219c582c6146ecdb7d07faca43d3da4d3f76da4",
+      "expectedRows": [
+        [
+          {
+            "value": "one or two"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0011",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 11,
+      "scriptName": "CASE, without ELSE",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0011-select-interpreted_case-0",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0011-select-interpreted_case-0",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "20000",
+      "errorSeverity": "ERROR",
+      "query": "SELECT interpreted_case(0);",
+      "querySha256": "c9f880563059c0bd11ce5476e5c3bfb07c1b3c5a79702c9e6a3f1b06e6f651c2",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0012",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 12,
+      "scriptName": "Searched CASE, with ELSE",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0012-select-interpreted_case-0",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0012-select-interpreted_case-0",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_case(0);",
+      "querySha256": "c9f880563059c0bd11ce5476e5c3bfb07c1b3c5a79702c9e6a3f1b06e6f651c2",
+      "expectedRows": [
+        [
+          {
+            "value": "value is between zero and ten"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0013",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 13,
+      "scriptName": "Searched CASE, with ELSE",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0013-select-interpreted_case-1",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0013-select-interpreted_case-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_case(1);",
+      "querySha256": "65645b38b7dc3b831e5bb4a9bc0ec3dae06c924f02c5286d9f09be5229a068ab",
+      "expectedRows": [
+        [
+          {
+            "value": "value is between zero and ten"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0014",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 14,
+      "scriptName": "Searched CASE, with ELSE",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0014-select-interpreted_case-10",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0014-select-interpreted_case-10",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_case(10);",
+      "querySha256": "b0e28dbfabd5b5b9942a6f4e736f571a8041128b233971f4e1aef8e4de031b09",
+      "expectedRows": [
+        [
+          {
+            "value": "value is between zero and ten"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0015",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 15,
+      "scriptName": "Searched CASE, with ELSE",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0015-select-interpreted_case-11",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0015-select-interpreted_case-11",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_case(11);",
+      "querySha256": "66a96248a450a3849ad2e0bcbb50565090676c7e51dcc5e9d00ee998ccbc88fc",
+      "expectedRows": [
+        [
+          {
+            "value": "value is between eleven and twenty"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0016",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 16,
+      "scriptName": "Searched CASE, with ELSE",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0016-select-interpreted_case-21",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0016-select-interpreted_case-21",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_case(21);",
+      "querySha256": "fc717690d54c549b90138012a0c160bb7a9c5f0182a8c2b09a455e41d00791c5",
+      "expectedRows": [
+        [
+          {
+            "value": "value is out of bounds"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0017",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 17,
+      "scriptName": "Searched CASE, without ELSE",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0017-select-interpreted_case-0",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0017-select-interpreted_case-0",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_case(0);",
+      "querySha256": "c9f880563059c0bd11ce5476e5c3bfb07c1b3c5a79702c9e6a3f1b06e6f651c2",
+      "expectedRows": [
+        [
+          {
+            "value": "value is between zero and ten"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0018",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 18,
+      "scriptName": "Searched CASE, without ELSE",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0018-select-interpreted_case-1",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0018-select-interpreted_case-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_case(1);",
+      "querySha256": "65645b38b7dc3b831e5bb4a9bc0ec3dae06c924f02c5286d9f09be5229a068ab",
+      "expectedRows": [
+        [
+          {
+            "value": "value is between zero and ten"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0019",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 19,
+      "scriptName": "Searched CASE, without ELSE",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0019-select-interpreted_case-10",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0019-select-interpreted_case-10",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_case(10);",
+      "querySha256": "b0e28dbfabd5b5b9942a6f4e736f571a8041128b233971f4e1aef8e4de031b09",
+      "expectedRows": [
+        [
+          {
+            "value": "value is between zero and ten"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0020",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 20,
+      "scriptName": "Searched CASE, without ELSE",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0020-select-interpreted_case-11",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0020-select-interpreted_case-11",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_case(11);",
+      "querySha256": "66a96248a450a3849ad2e0bcbb50565090676c7e51dcc5e9d00ee998ccbc88fc",
+      "expectedRows": [
+        [
+          {
+            "value": "value is between eleven and twenty"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0021",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 21,
+      "scriptName": "Searched CASE, without ELSE",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0021-select-interpreted_case-21",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0021-select-interpreted_case-21",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "20000",
+      "errorSeverity": "ERROR",
+      "query": "SELECT interpreted_case(21);",
+      "querySha256": "fc717690d54c549b90138012a0c160bb7a9c5f0182a8c2b09a455e41d00791c5",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0022",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 22,
+      "scriptName": "CONTINUE",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0022-select-interpreted_continue",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0022-select-interpreted_continue",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_continue();",
+      "querySha256": "4c823b656a2f9919bb296447f349d99201e81c240783e7c899fc6b1e2afb7229",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0023",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 23,
+      "scriptName": "CONTINUE Label",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0023-select-interpreted_continue_label",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0023-select-interpreted_continue_label",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_continue_label();",
+      "querySha256": "6269c6a534559cc7d42abf2e91d1f4e39e4a855732e2439de9a9c486502767fb",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0024",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 24,
+      "scriptName": "EXIT",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0024-select-interpreted_exit",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0024-select-interpreted_exit",
+      "compare": "sqlstate",
+      "expectedKind": "rows",
+      "sqlstate": "57014",
+      "errorSeverity": "ERROR",
+      "query": "SELECT interpreted_exit();",
+      "querySha256": "c60233d8cf6c932a866cc95a5510c7a6a014da13928b7b4260033bbc44f83243",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0025",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 25,
+      "scriptName": "EXIT WHEN",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0025-select-interpreted_exit_when",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0025-select-interpreted_exit_when",
+      "compare": "sqlstate",
+      "expectedKind": "rows",
+      "sqlstate": "57014",
+      "errorSeverity": "ERROR",
+      "query": "SELECT interpreted_exit_when();",
+      "querySha256": "2c33bcefa0232f2c074b0497c10a8c9091e0cdde6281b25003a0ea5c0de415bf",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0026",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 26,
+      "scriptName": "LOOP",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0026-select-interpreted_loop",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0026-select-interpreted_loop",
+      "compare": "sqlstate",
+      "expectedKind": "rows",
+      "sqlstate": "57014",
+      "errorSeverity": "ERROR",
+      "query": "SELECT interpreted_loop();",
+      "querySha256": "79df4901416f79b96d9ab05ac6861ca6b6dda84ed9bc579cd4b2ad40bd3089a4",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0027",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 27,
+      "scriptName": "LOOP Label",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0027-select-interpreted_loop_label",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0027-select-interpreted_loop_label",
+      "compare": "sqlstate",
+      "expectedKind": "rows",
+      "sqlstate": "57014",
+      "errorSeverity": "ERROR",
+      "query": "SELECT interpreted_loop_label();",
+      "querySha256": "13ba0b28c4c8747c9b7ecc59c528d88434e19d5aea0ecadd807b195c60b1574d",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0028",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 28,
+      "scriptName": "PERFORM",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0028-select-nextval-test_sequence",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0028-select-nextval-test_sequence",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test_sequence');",
+      "querySha256": "32c91e70471881b33bbd5e47d2700e65ae631009fd1e889cf032f9404fe72fda",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0029",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 29,
+      "scriptName": "PERFORM",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0029-select-interpreted_perform",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0029-select-interpreted_perform",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_perform();",
+      "querySha256": "5e8fce59ac620a430aec7147244c2c3f6dc9985b191cbeb69c6b80f26353f48a",
+      "expectedRows": [
+        [
+          {
+            "value": ""
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0030",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 30,
+      "scriptName": "PERFORM",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0030-select-nextval-test_sequence",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0030-select-nextval-test_sequence",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nextval('test_sequence');",
+      "querySha256": "32c91e70471881b33bbd5e47d2700e65ae631009fd1e889cf032f9404fe72fda",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0031",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 31,
+      "scriptName": "RETURNS SETOF",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0031-select-func2",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0031-select-func2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT func2();",
+      "querySha256": "5e8fb017260ffff421494a1db2f9cbfbaaf42533423899937d90e66800ce4de1",
+      "expectedRows": [
+        [
+          {
+            "value": "(1,username,t)"
+          }
+        ],
+        [
+          {
+            "value": "(2,another,f)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0032",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 32,
+      "scriptName": "RETURNS SETOF",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0032-select-func2-func2",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0032-select-func2-func2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT func2(), func2();",
+      "querySha256": "35043b543fb88fe87962ded7f83c786cfe9c7dd3f1f72e18f9e6e70f82f81542",
+      "expectedRows": [
+        [
+          {
+            "value": "(1,username,t)"
+          },
+          {
+            "value": "(1,username,t)"
+          }
+        ],
+        [
+          {
+            "value": "(2,another,f)"
+          },
+          {
+            "value": "(2,another,f)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0033",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 33,
+      "scriptName": "RETURNS SETOF with no results",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0033-select-func2",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0033-select-func2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT func2();",
+      "querySha256": "5e8fb017260ffff421494a1db2f9cbfbaaf42533423899937d90e66800ce4de1",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0034",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 34,
+      "scriptName": "RETURNS SETOF with no results",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0034-select-func2-func2",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0034-select-func2-func2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT func2(), func2();",
+      "querySha256": "35043b543fb88fe87962ded7f83c786cfe9c7dd3f1f72e18f9e6e70f82f81542",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0035",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 35,
+      "scriptName": "RETURNS SETOF with type from other schema",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0035-select-func2",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0035-select-func2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT func2();",
+      "querySha256": "5e8fb017260ffff421494a1db2f9cbfbaaf42533423899937d90e66800ce4de1",
+      "expectedRows": [
+        [
+          {
+            "value": "(1,username,t)"
+          }
+        ],
+        [
+          {
+            "value": "(2,another,f)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0036",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 36,
+      "scriptName": "RETURNS SETOF with type from other schema",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0036-select-func2-func2",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0036-select-func2-func2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT func2(), func2();",
+      "querySha256": "35043b543fb88fe87962ded7f83c786cfe9c7dd3f1f72e18f9e6e70f82f81542",
+      "expectedRows": [
+        [
+          {
+            "value": "(1,username,t)"
+          },
+          {
+            "value": "(1,username,t)"
+          }
+        ],
+        [
+          {
+            "value": "(2,another,f)"
+          },
+          {
+            "value": "(2,another,f)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0037",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 37,
+      "scriptName": "RETURNS SETOF with param",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0037-select-func3-111",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0037-select-func3-111",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT func3(111);",
+      "querySha256": "bce858cda5a20e12eb2cb67d558122583334f402d9e8ff23413b24e9380af127",
+      "expectedRows": [
+        [
+          {
+            "value": "(111,username,t)"
+          }
+        ],
+        [
+          {
+            "value": "(111,another,f)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0038",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 38,
+      "scriptName": "RETURNS SETOF with param",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0038-select-func3-111-func3-222",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0038-select-func3-111-func3-222",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT func3(111), func3(222);",
+      "querySha256": "1e7ffd94e0c66217cb923230ed95e3c9dad004a8cbfb64d066213c1ed6f89216",
+      "expectedRows": [
+        [
+          {
+            "value": "(111,username,t)"
+          },
+          {
+            "value": "(222,username,t)"
+          }
+        ],
+        [
+          {
+            "value": "(111,another,f)"
+          },
+          {
+            "value": "(222,another,f)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0039",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 39,
+      "scriptName": "RETURNS TABLE",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0039-select-func2",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0039-select-func2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT func2();",
+      "querySha256": "5e8fb017260ffff421494a1db2f9cbfbaaf42533423899937d90e66800ce4de1",
+      "expectedRows": [
+        [
+          {
+            "value": "(1,username,t)"
+          }
+        ],
+        [
+          {
+            "value": "(2,another,f)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0040",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 40,
+      "scriptName": "RETURNS TABLE",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0040-select-func2-func2",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0040-select-func2-func2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT func2(), func2();",
+      "querySha256": "35043b543fb88fe87962ded7f83c786cfe9c7dd3f1f72e18f9e6e70f82f81542",
+      "expectedRows": [
+        [
+          {
+            "value": "(1,username,t)"
+          },
+          {
+            "value": "(1,username,t)"
+          }
+        ],
+        [
+          {
+            "value": "(2,another,f)"
+          },
+          {
+            "value": "(2,another,f)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0041",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 41,
+      "scriptName": "RETURNS TABLE with single field",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0041-select-func2",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0041-select-func2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT func2();",
+      "querySha256": "5e8fb017260ffff421494a1db2f9cbfbaaf42533423899937d90e66800ce4de1",
+      "expectedRows": [
+        [
+          {
+            "value": "username1"
+          }
+        ],
+        [
+          {
+            "value": "username2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0042",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 42,
+      "scriptName": "RETURNS TABLE with single field",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0042-select-func2-func2",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0042-select-func2-func2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT func2(), func2();",
+      "querySha256": "35043b543fb88fe87962ded7f83c786cfe9c7dd3f1f72e18f9e6e70f82f81542",
+      "expectedRows": [
+        [
+          {
+            "value": "username1"
+          },
+          {
+            "value": "username1"
+          }
+        ],
+        [
+          {
+            "value": "username2"
+          },
+          {
+            "value": "username2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0043",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 43,
+      "scriptName": "RETURNS TABLE with types from other schema",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0043-select-func2",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0043-select-func2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT func2();",
+      "querySha256": "5e8fb017260ffff421494a1db2f9cbfbaaf42533423899937d90e66800ce4de1",
+      "expectedRows": [
+        [
+          {
+            "value": "(1,username1)"
+          }
+        ],
+        [
+          {
+            "value": "(2,username2)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0044",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 44,
+      "scriptName": "RETURNS TABLE with types from other schema",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0044-select-func2-func2",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0044-select-func2-func2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT func2(), func2();",
+      "querySha256": "35043b543fb88fe87962ded7f83c786cfe9c7dd3f1f72e18f9e6e70f82f81542",
+      "expectedRows": [
+        [
+          {
+            "value": "(1,username1)"
+          },
+          {
+            "value": "(1,username1)"
+          }
+        ],
+        [
+          {
+            "value": "(2,username2)"
+          },
+          {
+            "value": "(2,username2)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0045",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 45,
+      "scriptName": "RETURNS TABLE with param",
+      "oracle": "internal",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0045-select-func3-111",
+      "expectedKind": "rows",
+      "query": "SELECT func3(111);",
+      "querySha256": "bce858cda5a20e12eb2cb67d558122583334f402d9e8ff23413b24e9380af127",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0046",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 46,
+      "scriptName": "RETURNS TABLE with param",
+      "oracle": "internal",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0046-select-func3-111-func3-222",
+      "expectedKind": "rows",
+      "query": "SELECT func3(111), func3(222);",
+      "querySha256": "1e7ffd94e0c66217cb923230ed95e3c9dad004a8cbfb64d066213c1ed6f89216",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0047",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 47,
+      "scriptName": "RETURNS TABLE with join query",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0047-select-count-*-from-select",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0047-select-count-*-from-select",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM (\n\t\t\t\t\t\tSELECT c.id, c.name, SUM(o.amount) AS total_spent\n\t\t\t\t\t\tFROM customers c\n\t\t\t\t\t\tJOIN orders o ON o.customer_id = c.id\n\t\t\t\t\t\tGROUP BY c.id, c.name\n\t\t\t\t\t) q;",
+      "querySha256": "ad870d4a005bdd3dc403a65cf953046b3f2a23ada57ddee7668ffca884302ed9",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0048",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 48,
+      "scriptName": "RETURNS TABLE with join query",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0048-select-count-*-from-select",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0048-select-count-*-from-select",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM (\n\t\t\t\t\t\tSELECT c.id, c.name, SUM(o.amount) AS total_spent\n\t\t\t\t\t\tFROM customers c\n\t\t\t\t\t\tJOIN orders o ON o.customer_id = c.id\n\t\t\t\t\t\tGROUP BY c.id, c.name\n\t\t\t\t\t\tHAVING SUM(o.amount) >= 1\n\t\t\t\t\t) q;",
+      "querySha256": "d5067ef41fad8981d9906c5a59b40b03e037d4a077718c8a8e5cb4f06b9efe7a",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0049",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 49,
+      "scriptName": "RETURNS TABLE with join query",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0049-select-func2-1",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0049-select-func2-1",
+      "compare": "sqlstate",
+      "expectedKind": "rows",
+      "sqlstate": "42804",
+      "errorSeverity": "ERROR",
+      "query": "SELECT func2(1);",
+      "querySha256": "c64e0099a2967c876febd68a02d450e70227cd2338a72b7366d8f49d1cadbe44",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0050",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 50,
+      "scriptName": "RETURNS TABLE with join query",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0050-select-func2-11",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0050-select-func2-11",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42804",
+      "errorSeverity": "ERROR",
+      "query": "SELECT func2(11);",
+      "querySha256": "bdf2415a23be91b42934ef0810c256aac4d4177fb6ef5163796f4d342c82e30b",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0051",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 51,
+      "scriptName": "RETURNS TABLE with join query",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0051-select-func2-111",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0051-select-func2-111",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42804",
+      "errorSeverity": "ERROR",
+      "query": "SELECT func2(111);",
+      "querySha256": "638466b663493506b1273dae51b07e3c7555b56f0ed01004ae6603304fba26c2",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0052",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 52,
+      "scriptName": "RETURNS SETOF with composite param",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0052-select-func3-222-passedin-false",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0052-select-func3-222-passedin-false",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT func3((222,'passedin',false)::user_summary);",
+      "querySha256": "1ac0d38c94d8404c83b8c8b90257ee1d5598a087d713ca7474406e6b82623c77",
+      "expectedRows": [
+        [
+          {
+            "value": "(222,passedin,f)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0053",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 53,
+      "scriptName": "RAISE",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0053-select-interpreted_raise1-123",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0053-select-interpreted_raise1-123",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "SELECT interpreted_raise1('123');",
+      "querySha256": "26cb3230bf5160e0c667fd6c3daaa62073bf5d07db3f60fbb536e0987ed09448",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0054",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 54,
+      "scriptName": "RAISE",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0054-select-interpreted_raise2-123",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0054-select-interpreted_raise2-123",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "P0001",
+      "errorSeverity": "ERROR",
+      "query": "SELECT interpreted_raise2('123');",
+      "querySha256": "c30378b1c6f55511970875457e412a227df980e563df491f0f45bf5d8dc17f2a",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0055",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 55,
+      "scriptName": "SELECT INTO",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0055-select-interpreted_select_into-1",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0055-select-interpreted_select_into-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_select_into(1);",
+      "querySha256": "bcbddcc14922ef34bd106141f1ddf4f6c44c16e1da8ba3e90a14575f7176edf1",
+      "expectedRows": [
+        [
+          {
+            "value": "abc"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0056",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 56,
+      "scriptName": "SELECT INTO",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0056-select-interpreted_select_into-2",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0056-select-interpreted_select_into-2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_select_into(2);",
+      "querySha256": "fe85d65a39b07efb115a8128d58b228d9526c3c120d5f308ff7af6c63c294d68",
+      "expectedRows": [
+        [
+          {
+            "value": "def"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0057",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 57,
+      "scriptName": "SELECT INTO",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0057-select-interpreted_select_into-3",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0057-select-interpreted_select_into-3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_select_into(3);",
+      "querySha256": "5b908d8b08b18196cd71cf34d786adcb59877789dbd83ad05b9ab10cab6f8c23",
+      "expectedRows": [
+        [
+          {
+            "value": "ghi"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0058",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 58,
+      "scriptName": "SELECT INTO",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0058-select-interpreted_select_into-4",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0058-select-interpreted_select_into-4",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_select_into(4);",
+      "querySha256": "f7ef9cd11d21c76e5647fd97d96ccbe6c82c4807509fd94ff835f4db35b80703",
+      "expectedRows": [
+        [
+          {
+            "value": "out of bounds"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0059",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 59,
+      "scriptName": "WHILE",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0059-select-interpreted_while-42",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0059-select-interpreted_while-42",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_while(42);",
+      "querySha256": "f589c74a5975dcb5e1a3e8fcf78571ba39a7c7dfaabbeaa60031d9e1af5fb0f6",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0060",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 60,
+      "scriptName": "WHILE Label",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0060-select-interpreted_while_label-42",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0060-select-interpreted_while_label-42",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_while_label(42);",
+      "querySha256": "b60b91d78010bcf7b8af60c4a8019730a43b76a4ca0eb24b8a9e32173c27e5c0",
+      "expectedRows": [
+        [
+          {
+            "value": "1000"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0061",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 61,
+      "scriptName": "NULL",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0061-select-interpreted_null-42",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0061-select-interpreted_null-42",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_null(42);",
+      "querySha256": "8ed0f426c3ef8bebc53907116dfabe025cf6736672a82383748f21337b55c48a",
+      "expectedRows": [
+        [
+          {
+            "value": "Yes"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0062",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 62,
+      "scriptName": "NULL",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0062-select-interpreted_null-43",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0062-select-interpreted_null-43",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_null(43);",
+      "querySha256": "bd88e9cbf7c5bec3e6512600dc7cd19f390d1f175324640c86068cbfbfa2e3ed",
+      "expectedRows": [
+        [
+          {
+            "value": "No"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0063",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 63,
+      "scriptName": "Variable reference substitution",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0063-select-test1-hello",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0063-select-test1-hello",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT test1('Hello');",
+      "querySha256": "ebdc0b152fa9d52d3cf6ff2311eed4c1afedb691265afa29a87fb6c39c332474",
+      "expectedRows": [
+        [
+          {
+            "value": "inputHellovar1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0064",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 64,
+      "scriptName": "Overloading",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0064-select-interpreted_overload-abc",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0064-select-interpreted_overload-abc",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_overload('abc');",
+      "querySha256": "8d153a97b504d2db301209aa877019d4b5111770c1da804474a83a34c7654139",
+      "expectedRows": [
+        [
+          {
+            "value": "abc"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0065",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 65,
+      "scriptName": "Overloading",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0065-select-interpreted_overload-abcd",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0065-select-interpreted_overload-abcd",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_overload('abcd');",
+      "querySha256": "7ca576fe515583290cebcd7462040512ceca93f4f3d5b8985b60970f40c3fb8b",
+      "expectedRows": [
+        [
+          {
+            "value": "abcd_long"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0066",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 66,
+      "scriptName": "Overloading",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0066-select-interpreted_overload-3",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0066-select-interpreted_overload-3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_overload(3);",
+      "querySha256": "0dfe5d899276c973b9f5d5029742f257434ae9e2c2ee9ce18d246e19362a827b",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0067",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 67,
+      "scriptName": "Overloading",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0067-select-interpreted_overload-4",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0067-select-interpreted_overload-4",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_overload(4);",
+      "querySha256": "b5c805674f44ff46139d764dd0ebdec2872e86e40045715af23601d52a38c246",
+      "expectedRows": [
+        [
+          {
+            "value": "-4"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0068",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 68,
+      "scriptName": "Branching",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0068-create-function-interpreted_as_of-input-text",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0068-create-function-interpreted_as_of-input-text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE FUNCTION interpreted_as_of(input TEXT) RETURNS TEXT AS $$\nBEGIN\n\tRETURN input || '_extra';\nEND;\n$$ LANGUAGE plpgsql;",
+      "querySha256": "213e60b535f23ed988c2ba3cc3e83e7259866fc8c5d9bc9b825442de24dba454",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0069",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 69,
+      "scriptName": "Branching",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0069-select-interpreted_as_of-abcd",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0069-select-interpreted_as_of-abcd",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_as_of('abcd');",
+      "querySha256": "a93bc5168bb68f0061733abddf1bf16839a8be238aa04a796eef1bdffb1ea752",
+      "expectedRows": [
+        [
+          {
+            "value": "abcd_extra"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0070",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 70,
+      "scriptName": "Branching",
+      "oracle": "internal",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0070-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0071",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 71,
+      "scriptName": "Branching",
+      "oracle": "internal",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0071-select-length-dolt_commit-m-initial",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'initial')::text) = 34;",
+      "querySha256": "05355d06ae2e762642620d5304c1ece579bc1553fba6c5a09d424dd252967f25",
+      "nonLiteral": [
+        "DoltSpecific",
+        "PriorDoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0072",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 72,
+      "scriptName": "Branching",
+      "oracle": "internal",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0072-select-dolt_checkout-b-other",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_checkout('-b', 'other')",
+      "querySha256": "eb1ba66170764046947aad49472a195661fcfa082f2e8cf8fd66ad1edbf87dda",
+      "nonLiteral": [
+        "DoltSpecific",
+        "PriorDoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0073",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 73,
+      "scriptName": "Branching",
+      "oracle": "internal",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0073-create-or-replace-function-interpreted_as_of",
+      "expectedKind": "rows",
+      "query": "CREATE OR REPLACE FUNCTION interpreted_as_of(input TEXT) RETURNS TEXT AS $$\nBEGIN\n\tRETURN input;\nEND;\n$$ LANGUAGE plpgsql;",
+      "querySha256": "f92ae48970ac6b4a37688f72bbf272a92236a952d6be7c8b017c72c9771c4d28",
+      "nonLiteral": [
+        "PriorDoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0074",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 74,
+      "scriptName": "Branching",
+      "oracle": "internal",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0074-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific",
+        "PriorDoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0075",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 75,
+      "scriptName": "Branching",
+      "oracle": "internal",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0075-select-length-dolt_commit-m-updated",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'updated func')::text) = 34;",
+      "querySha256": "30ae714244989d2f0ac7bb00a967ca58374236309aafc110095c4b5e43994b0c",
+      "nonLiteral": [
+        "DoltSpecific",
+        "PriorDoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0076",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 76,
+      "scriptName": "Branching",
+      "oracle": "internal",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0076-select-interpreted_as_of-abc",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_as_of('abc');",
+      "querySha256": "dc4b542c267b293f7a99716ed33a15c1cab34071c18d7290dd25baaee57b9cb2",
+      "nonLiteral": [
+        "PriorDoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0077",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 77,
+      "scriptName": "Branching",
+      "oracle": "internal",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0077-select-dolt_checkout-main",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_checkout('main')",
+      "querySha256": "692db5c3d58a12710a4b2b6513b13d4a2d2b71c46bf68a6d288ec3caf5cc26bc",
+      "nonLiteral": [
+        "DoltSpecific",
+        "PriorDoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0078",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 78,
+      "scriptName": "Branching",
+      "oracle": "internal",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0078-select-interpreted_as_of-abcd",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_as_of('abcd');",
+      "querySha256": "a93bc5168bb68f0061733abddf1bf16839a8be238aa04a796eef1bdffb1ea752",
+      "nonLiteral": [
+        "PriorDoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0079",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 79,
+      "scriptName": "Merging No Conflict",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0079-create-function-interpreted_merging-input-text",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0079-create-function-interpreted_merging-input-text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE FUNCTION interpreted_merging(input TEXT) RETURNS TEXT AS $$\nBEGIN\n\tRETURN input || '_extra';\nEND;\n$$ LANGUAGE plpgsql;",
+      "querySha256": "3197b14e6142735440a81f8a1043c1c1a9aae4ac97deb171476e8acf81819edc",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0080",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 80,
+      "scriptName": "Merging No Conflict",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0080-select-interpreted_merging-abcd",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0080-select-interpreted_merging-abcd",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_merging('abcd');",
+      "querySha256": "86984178f1613dcfa5f09996fa338759e6bd9b3db88d8bdb02b1ad64584128aa",
+      "expectedRows": [
+        [
+          {
+            "value": "abcd_extra"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0081",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 81,
+      "scriptName": "Merging No Conflict",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0081-select-interpreted_merging-55",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0081-select-interpreted_merging-55",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42883",
+      "errorSeverity": "ERROR",
+      "query": "SELECT interpreted_merging(55);",
+      "querySha256": "e056e470498e4a862ad0e5893417bfcecfc61d080f094f56d6f1fcd2e079ade5",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0082",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 82,
+      "scriptName": "Merging No Conflict",
+      "oracle": "internal",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0082-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0083",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 83,
+      "scriptName": "Merging No Conflict",
+      "oracle": "internal",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0083-select-length-dolt_commit-m-initial",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'initial')::text) = 34;",
+      "querySha256": "05355d06ae2e762642620d5304c1ece579bc1553fba6c5a09d424dd252967f25",
+      "nonLiteral": [
+        "DoltSpecific",
+        "PriorDoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0084",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 84,
+      "scriptName": "Merging No Conflict",
+      "oracle": "internal",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0084-select-dolt_checkout-b-other",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_checkout('-b', 'other')",
+      "querySha256": "eb1ba66170764046947aad49472a195661fcfa082f2e8cf8fd66ad1edbf87dda",
+      "nonLiteral": [
+        "DoltSpecific",
+        "PriorDoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0085",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 85,
+      "scriptName": "Merging No Conflict",
+      "oracle": "internal",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0085-create-function-interpreted_merging-input-int4",
+      "expectedKind": "rows",
+      "query": "CREATE FUNCTION interpreted_merging(input INT4) RETURNS INT4 AS $$\nBEGIN\n\tRETURN input + 11;\nEND;\n$$ LANGUAGE plpgsql;",
+      "querySha256": "f3efbf89f809d8909a5fd3bc799cc9d6e11091706b4318f0598c516dafe2883b",
+      "nonLiteral": [
+        "PriorDoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0086",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 86,
+      "scriptName": "Merging No Conflict",
+      "oracle": "internal",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0086-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific",
+        "PriorDoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0087",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 87,
+      "scriptName": "Merging No Conflict",
+      "oracle": "internal",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0087-select-length-dolt_commit-m-another",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'another func')::text) = 34;",
+      "querySha256": "ec9533b88524e145d376b5a5b60d522e4d0f23cad4aedfc6d2dbaebb192a4c4a",
+      "nonLiteral": [
+        "DoltSpecific",
+        "PriorDoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0088",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 88,
+      "scriptName": "Merging No Conflict",
+      "oracle": "internal",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0088-select-interpreted_merging-55",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_merging(55);",
+      "querySha256": "e056e470498e4a862ad0e5893417bfcecfc61d080f094f56d6f1fcd2e079ade5",
+      "nonLiteral": [
+        "PriorDoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0089",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 89,
+      "scriptName": "Merging No Conflict",
+      "oracle": "internal",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0089-select-dolt_checkout-main",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_checkout('main')",
+      "querySha256": "692db5c3d58a12710a4b2b6513b13d4a2d2b71c46bf68a6d288ec3caf5cc26bc",
+      "nonLiteral": [
+        "DoltSpecific",
+        "PriorDoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0090",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 90,
+      "scriptName": "Merging No Conflict",
+      "oracle": "internal",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0090-insert-into-test-values-80",
+      "expectedKind": "rows",
+      "query": "INSERT INTO test VALUES (80);",
+      "querySha256": "fd7dd6f5937c23be0541806df527272d5568c70e8285cd595275e884591ac776",
+      "nonLiteral": [
+        "PriorDoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0091",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 91,
+      "scriptName": "Merging No Conflict",
+      "oracle": "internal",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0091-select-dolt_add-.",
+      "expectedKind": "rows",
+      "query": "SELECT dolt_add('.');",
+      "querySha256": "a3d337d3cae6622c2f47f4abe7fd4e848e960f68ff16d69d8689b329be788498",
+      "nonLiteral": [
+        "DoltSpecific",
+        "PriorDoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0092",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 92,
+      "scriptName": "Merging No Conflict",
+      "oracle": "internal",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0092-select-length-dolt_commit-m-updated",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_commit('-m', 'updated table')::text) = 34;",
+      "querySha256": "57e7d3ac3191afc9db1394c1ffef2180960bf2ad53f1f1cec3f3494acb603885",
+      "nonLiteral": [
+        "DoltSpecific",
+        "PriorDoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0093",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 93,
+      "scriptName": "Merging No Conflict",
+      "oracle": "internal",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0093-select-interpreted_merging-abcde",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_merging('abcde');",
+      "querySha256": "fb83f8841456b445a02aec81977712d31114088bca6f39041b05a88ba0b7ed1d",
+      "nonLiteral": [
+        "PriorDoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0094",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 94,
+      "scriptName": "Merging No Conflict",
+      "oracle": "internal",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0094-select-interpreted_merging-67",
+      "expectedKind": "error",
+      "query": "SELECT interpreted_merging(67);",
+      "querySha256": "3f752de78f4a39961edc05862848e4382471e0cc4c2035dee1c302b443e0d173",
+      "nonLiteral": [
+        "PriorDoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0095",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 95,
+      "scriptName": "Merging No Conflict",
+      "oracle": "internal",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0095-select-*-from-test",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test;",
+      "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "nonLiteral": [
+        "PriorDoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0096",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 96,
+      "scriptName": "Merging No Conflict",
+      "oracle": "internal",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0096-select-length-dolt_merge-other-::text",
+      "expectedKind": "rows",
+      "query": "SELECT length(dolt_merge('other')::text) = 57;",
+      "querySha256": "a41a3448f115a67ee26b748a1e764cda6fe66de9ef02cf191c65025251ee5283",
+      "nonLiteral": [
+        "DoltSpecific",
+        "PriorDoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0097",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 97,
+      "scriptName": "Merging No Conflict",
+      "oracle": "internal",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0097-select-interpreted_merging-abcdef",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_merging('abcdef');",
+      "querySha256": "738368efd6d6c60f89952b90da8828a13e476a69393f18353b44255d1674023d",
+      "nonLiteral": [
+        "PriorDoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0098",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 98,
+      "scriptName": "Merging No Conflict",
+      "oracle": "internal",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0098-select-interpreted_merging-58",
+      "expectedKind": "rows",
+      "query": "SELECT interpreted_merging(58);",
+      "querySha256": "876d8c9a38e363352e00020aca3cd4dd865564baa190b973b6c2111ef96d4bb0",
+      "nonLiteral": [
+        "PriorDoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0099",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 99,
+      "scriptName": "Merging No Conflict",
+      "oracle": "internal",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0099-select-*-from-test",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test;",
+      "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "nonLiteral": [
+        "PriorDoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0100",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 100,
+      "scriptName": "INSERT values from function",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0100-insert-into-test-values-insertion_text",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0100-insert-into-test-values-insertion_text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO test VALUES (insertion_text()), (insertion_text());",
+      "querySha256": "24a0a640cfbb46dae9748a6f2cb62becf086744292b96f8d6eb1eee7c2ae8b2f",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0101",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 101,
+      "scriptName": "INSERT values from function",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0101-select-*-from-test",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0101-select-*-from-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test;",
+      "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "expectedRows": [
+        [
+          {
+            "value": "example"
+          }
+        ],
+        [
+          {
+            "value": "example"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0102",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 102,
+      "scriptName": "Create function on different branch",
+      "oracle": "internal",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0102-select-f1-abcd",
+      "expectedKind": "rows",
+      "query": "SELECT f1('abcd');",
+      "querySha256": "49c4a448a418f47e3d252ec19a93af99ec2f11f86d1d868dedfca271c03a6fbd",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0103",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 103,
+      "scriptName": "Create function on different branch",
+      "oracle": "internal",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0103-select-postgres/b1-.public.f1-55",
+      "expectedKind": "rows",
+      "query": "SELECT \"postgres/b1\".public.f1(55);",
+      "querySha256": "5c9f7050ca872a6f35dbd8cdec5210073ac2c1bdf490a389a45c14b15390c302",
+      "nonLiteral": [
+        "DoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0104",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 104,
+      "scriptName": "Create function on different branch",
+      "oracle": "internal",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0104-select-f1-55",
+      "expectedKind": "rows",
+      "query": "SELECT f1(55);",
+      "querySha256": "55299784a3125d8a8384fa804c16851eefbb5552d679d8eef3c352c620ea164e",
+      "nonLiteral": [
+        "DoltSpecific",
+        "PriorDoltSpecific"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0105",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 105,
+      "scriptName": "Nested IF statements with exceptions",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0105-create-function-public.fn_name-returns-trigger",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0105-create-function-public.fn_name-returns-trigger",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE FUNCTION public.fn_name() RETURNS trigger\n    LANGUAGE plpgsql\n    AS $$\nBEGIN\n    IF NEW.start_date IS NOT NULL\n       AND NEW.end_date IS NULL\n    THEN\n        NEW.end_date := NEW.start_date + INTERVAL '31 day';\n    END IF;\n    IF NEW.start_date IS NOT NULL\n       AND NEW.end_date IS NOT NULL\n    THEN\n        IF NEW.end_date < NEW.start_date THEN\n            RAISE EXCEPTION 'end_date (%) start_date (%)',\n                NEW.end_date, NEW.start_date;\n        END IF;\n        IF NEW.end_date > (NEW.start_date + INTERVAL '31 day') THEN\n            RAISE EXCEPTION 'Too far (start_date=%, end_date=%)',\n                NEW.start_date, NEW.end_date;\n        END IF;\n    END IF;\n    RETURN NEW;\nEND;\n$$;",
+      "querySha256": "189a4f87faa79ac9b87147a2e2f811296de86a252433180cf2e26abfd5cb996f",
+      "expectedRows": [],
+      "cleanup": [
+        "DO $$ DECLARE r record; BEGIN FOR r IN SELECT p.oid::pg_catalog.regprocedure AS signature FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'fn_name' AND p.prokind = 'f' LOOP EXECUTE 'DROP FUNCTION IF EXISTS ' || r.signature || ' CASCADE'; END LOOP; END $$",
+        "DROP TABLE IF EXISTS public.table_name CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0106",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 106,
+      "scriptName": "Nested IF statements with exceptions",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0106-create-trigger-trig_name-before-insert",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0106-create-trigger-trig_name-before-insert",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE TRIGGER trig_name BEFORE INSERT OR UPDATE ON public.table_name FOR EACH ROW EXECUTE FUNCTION public.fn_name();",
+      "querySha256": "a20a4813cb40615e72e5e8e0be0e4aa3413c2ab51187fe2690116fd03f2653e1",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0107",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 107,
+      "scriptName": "Nested IF statements with exceptions",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0107-insert-into-public.table_name-values-2025-01-02",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0107-insert-into-public.table_name-values-2025-01-02",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO public.table_name VALUES ('2025-01-02', '2025-02-02');",
+      "querySha256": "8d79b8029309109ee89844bc77cf003a59d1d1c0da959406ef4ebce76b663e21",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0108",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 108,
+      "scriptName": "Nested IF statements with exceptions",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0108-insert-into-public.table_name-values-2025-04-05",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0108-insert-into-public.table_name-values-2025-04-05",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO public.table_name VALUES ('2025-04-05', NULL);",
+      "querySha256": "52fe525d422a835f42914d7d6910cdc2d8dca40505072df5e83a69e4a9cf2ad7",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0109",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 109,
+      "scriptName": "Nested IF statements with exceptions",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0109-insert-into-public.table_name-values-2025-09-10",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0109-insert-into-public.table_name-values-2025-09-10",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "P0001",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO public.table_name VALUES ('2025-09-10', '2025-07-08');",
+      "querySha256": "064d732038c359963226dc504f4a23d2b8c2ec50b795bd4c1e0d17088a1814ec",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0110",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 110,
+      "scriptName": "Nested IF statements with exceptions",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0110-insert-into-public.table_name-values-2025-11-11",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0110-insert-into-public.table_name-values-2025-11-11",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "P0001",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO public.table_name VALUES ('2025-11-11', '2025-12-31');",
+      "querySha256": "7e8b545c2954f65570b7e6026d6fd93a10625c5d69e32ba2d74e521000d5c51e",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0111",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 111,
+      "scriptName": "Table as type for functions",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0111-select-total-t-from-test",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0111-select-total-t-from-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT total(t) FROM test AS t;",
+      "querySha256": "1e52c4a6e4fe2501edade768246fcc9bdfbc59eb729b0fc4ac256b852db5e0ae",
+      "expectedRows": [
+        [
+          {
+            "value": "7.5"
+          }
+        ],
+        [
+          {
+            "value": "6"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0112",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 112,
+      "scriptName": "Table as type for functions",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0112-select-pricehike-t-10.0-from",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0112-select-pricehike-t-10.0-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT priceHike(t, 10.0) FROM test AS t;",
+      "querySha256": "d44bf55866a6b37a829a1bc68dcc943b6ed51cab2d063fd62b10fb77c9aac3de",
+      "expectedRows": [
+        [
+          {
+            "value": "(1,apple,3,12.5)"
+          }
+        ],
+        [
+          {
+            "value": "(2,banana,5,11.2)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0113",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 113,
+      "scriptName": "Table as type for functions",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0113-select-pricehike-row-3-orange",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0113-select-pricehike-row-3-orange",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT priceHike(ROW(3, 'orange', 1, 1.8)::test, 100.0);",
+      "querySha256": "2c7fe381bf57a2281231aa5531a78db66209053d52e8b851ebe677023813d93d",
+      "expectedRows": [
+        [
+          {
+            "value": "(3,orange,1,101.8)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0114",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 114,
+      "scriptName": "Table as type for functions",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0114-select-singlereturn",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0114-select-singlereturn",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT singleReturn();",
+      "querySha256": "123947ddbbb124271cd9407ad049a1c62b733a64d6d37fae5d404cbf6d1f24ef",
+      "expectedRows": [
+        [
+          {
+            "value": "(1,apple,3,2.5)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0115",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 115,
+      "scriptName": "Table as type for columns",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0115-create-table-t2-v1-int4",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0115-create-table-t2-v1-int4",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE TABLE t2 (v1 INT4 PRIMARY KEY, v2 t1 NOT NULL);",
+      "querySha256": "2dc81273e75c7a6ecd62f87febefbaf63210722ec7fd4b25614d41a1301cf247",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0116",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 116,
+      "scriptName": "Table as type for columns",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0116-insert-into-t2-values-1",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0116-insert-into-t2-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO t2 VALUES (1, ROW(0, 'hello')::t1), (2, ROW(10, 'world')::t1);",
+      "querySha256": "9543a9ffd6a468efb60ec7896d893f2c8352b715f8c3d5b03e2331d176c0a243",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0117",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 117,
+      "scriptName": "Table as type for columns",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0117-select-*-from-t2-order",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0117-select-*-from-t2-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM t2 ORDER BY v1;",
+      "querySha256": "3e4a01f2143674359b5580e407fda78994a76e7d85a145f9d94016eafdd03ced",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "(0,hello)"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "(10,world)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0118",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 118,
+      "scriptName": "AlexTransit_venderctl import dump",
+      "oracle": "internal",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0118-create-function-public.tax_job_trans-t-public.trans",
+      "expectedKind": "rows",
+      "query": "CREATE FUNCTION public.tax_job_trans(t public.trans) RETURNS public.tax_job\n    LANGUAGE plpgsql\n    AS '\n    # print_strict_params ON\nDECLARE\n    tjd jsonb;\n    ops jsonb;\n    tj tax_job;\n    name text;\nBEGIN\n    -- lock trans row\n    PERFORM\n        1\n    FROM\n        trans\n    WHERE (vmid, vmtime) = (t.vmid,\n        t.vmtime)\nLIMIT 1\nFOR UPDATE;\n    -- if trans already has tax_job assigned, just return it\n    IF t.tax_job_id IS NOT NULL THEN\n        SELECT\n            * INTO STRICT tj\n        FROM\n            tax_job\n        WHERE\n            id = t.tax_job_id;\n        RETURN tj;\n    END IF;\n    -- op code to human friendly name via catalog\n    SELECT\n        catalog.name INTO name\n    FROM\n        catalog\n    WHERE (vmid, code) = (t.vmid,\n        t.menu_code);\n    IF NOT found THEN\n        name := ''#'' || t.menu_code;\n    END IF;\n    ops := jsonb_build_array (jsonb_build_object(''vmid'', t.vmid, ''time'', t.vmtime, ''name'', name, ''code'', t.menu_code, ''amount'', 1, ''price'', t.price, ''method'', t.method));\n    INSERT INTO tax_job (state, created, modified, scheduled, processor, ops, gross)\n        VALUES (''sched'', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ''ru2019'', ops, t.price)\n    RETURNING\n        * INTO STRICT tj;\n    UPDATE\n        trans\n    SET\n        tax_job_id = tj.id\n    WHERE (vmid, vmtime) = (t.vmid,\n        t.vmtime);\n    RETURN tj;\nEND;\n';",
+      "querySha256": "05ef457ed0e5afba05c0b92b1bf7f0654d3b40175ca661d8ef272d568108d3a7",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0119",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 119,
+      "scriptName": "AlexTransit_venderctl import dump",
+      "oracle": "internal",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0119-select-public.tax_job_trans-trans.*-from-public.trans",
+      "expectedKind": "rows",
+      "query": "SELECT public.tax_job_trans(trans.*) FROM public.trans;",
+      "querySha256": "7c65941c9309924b3db64a99b800fb38cb0f1119ec4708b0f4537b70d9bd8c2c",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0120",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 120,
+      "scriptName": "resolve type with empty search path",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0120-create-function-public.ambienttempdetail_insertupdate-p_panel_project_id-integer",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0120-create-function-public.ambienttempdetail_insertupdate-p_panel_project_id-integer",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE FUNCTION public.ambienttempdetail_insertupdate(p_panel_project_id integer, p_threshold_value numeric, p_reading_interval_in_min integer) RETURNS integer\n    LANGUAGE plpgsql\n    AS $$\nDECLARE\n    v_rtn_value INTEGER;\nBEGIN\n    IF NOT EXISTS (SELECT * FROM AmbientTempDetail WHERE PanelProjectId = p_panel_project_id) THEN\n        INSERT INTO AmbientTempDetail (PanelProjectId, Threshold_Value, ReadingIntervalInMin)\n        VALUES (p_panel_project_id, p_threshold_value, p_reading_interval_in_min)\n        RETURNING TempDetailId INTO v_rtn_value;\n    ELSE\n        UPDATE AmbientTempDetail\n        SET PanelProjectId = p_panel_project_id,\n            Threshold_Value = p_threshold_value,\n            ReadingIntervalInMin = p_reading_interval_in_min\n        WHERE PanelProjectId = p_panel_project_id;\n        v_rtn_value := p_panel_project_id;\n    END IF;\n    \n    RETURN v_rtn_value;\nEND;\n$$;",
+      "querySha256": "e5303f23d77a7c445914b1df32f0e06e0d7ca3f881995ad93ab437163bc3ba3a",
+      "expectedRows": [],
+      "cleanup": [
+        "DO $$ DECLARE r record; BEGIN FOR r IN SELECT p.oid::pg_catalog.regprocedure AS signature FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'ambienttempdetail_insertupdate' AND p.prokind = 'f' LOOP EXECUTE 'DROP FUNCTION IF EXISTS ' || r.signature || ' CASCADE'; END LOOP; END $$",
+        "DROP TABLE IF EXISTS public.ambienttempdetail CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0121",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 121,
+      "scriptName": "resolve type with empty search path",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0121-select-public.ambienttempdetail_insertupdate-101-25.5-15",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0121-select-public.ambienttempdetail_insertupdate-101-25.5-15",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT public.ambienttempdetail_insertupdate(101, 25.5, 15);",
+      "querySha256": "4d9e99099af783c2df348f7c94218e7e1a202115e0301f26b76329fe23a2bb71",
+      "expectedRows": [
+        [
+          {
+            "value": "101"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0122",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 122,
+      "scriptName": "create function on non-existent table that does not exist yet with 'check_function_bodies'",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0122-show-check_function_bodies",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0122-show-check_function_bodies",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SHOW check_function_bodies;",
+      "querySha256": "39c767fdb2b2324a1b3a8dccff3206c13799f6e5548355c1956cbba2c9ea0455",
+      "expectedRows": [
+        [
+          {
+            "value": "on"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0123",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 123,
+      "scriptName": "create function on non-existent table that does not exist yet with 'check_function_bodies'",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0123-create-function-public.film_in_stock-p_film_id-integer",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0123-create-function-public.film_in_stock-p_film_id-integer",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
+      "query": "CREATE FUNCTION public.film_in_stock(p_film_id integer, p_store_id integer, OUT p_film_count integer) RETURNS SETOF integer\n    LANGUAGE sql\n    AS $_$\n     SELECT inventory_id\n     FROM inventory\n     WHERE film_id = $1\n     AND store_id = $2\n     AND inventory_in_stock(inventory_id);\n$_$;",
+      "querySha256": "08804154c859a988a661bdaadd94a33513a0922a15c8ee22471528ba5f3058e2",
+      "cleanup": [
+        "DO $$ DECLARE r record; BEGIN FOR r IN SELECT p.oid::pg_catalog.regprocedure AS signature FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'film_in_stock' AND p.prokind = 'f' LOOP EXECUTE 'DROP FUNCTION IF EXISTS ' || r.signature || ' CASCADE'; END LOOP; END $$"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0124",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 124,
+      "scriptName": "create function on non-existent table that does not exist yet with 'check_function_bodies'",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0124-set-check_function_bodies-=-false",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0124-set-check_function_bodies-=-false",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SET check_function_bodies = false;",
+      "querySha256": "278b6c5556f418de1dd898938974d430f193c1e1bcfddf88ac0d90c959c28a50",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0125",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 125,
+      "scriptName": "create function on non-existent table that does not exist yet with 'check_function_bodies'",
+      "oracle": "internal",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0125-create-function-public.film_in_stock-p_film_id-integer",
+      "expectedKind": "rows",
+      "query": "CREATE FUNCTION public.film_in_stock(p_film_id integer, p_store_id integer, OUT p_film_count integer) RETURNS SETOF integer\n    LANGUAGE sql\n    AS $_$\n     SELECT inventory_id\n     FROM inventory\n     WHERE film_id = $1\n     AND store_id = $2\n     AND inventory_in_stock(inventory_id);\n$_$;",
+      "querySha256": "08804154c859a988a661bdaadd94a33513a0922a15c8ee22471528ba5f3058e2",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0126",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 126,
+      "scriptName": "create function on non-existent table that does not exist yet with 'check_function_bodies'",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0126-create-table-public.inventory-inventory_id-integer",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0126-create-table-public.inventory-inventory_id-integer",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TABLE public.inventory (\n    inventory_id integer DEFAULT nextval('public.inventory_inventory_id_seq'::regclass) NOT NULL,\n    film_id smallint NOT NULL,\n    store_id smallint NOT NULL,\n    last_update timestamp without time zone DEFAULT now() NOT NULL\n);\n",
+      "querySha256": "cd8a9b7f627c05da6353ed241388c92df0abe90d9e55c29c77e7e2123e41746d",
+      "cleanup": [
+        "DO $$ DECLARE r record; BEGIN FOR r IN SELECT p.oid::pg_catalog.regprocedure AS signature FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'film_in_stock' AND p.prokind = 'f' LOOP EXECUTE 'DROP FUNCTION IF EXISTS ' || r.signature || ' CASCADE'; END LOOP; END $$",
+        "DROP TABLE IF EXISTS public.inventory CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0127",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 127,
+      "scriptName": "DECLARE variable with default value of literal value or parameter reference",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0127-create-or-replace-function-d",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0127-create-or-replace-function-d",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE OR REPLACE FUNCTION d() RETURNS TEXT[] AS $$ DECLARE chars TEXT[] := '{A,B,C,D,E,F,G,H}'; BEGIN RETURN chars; END; $$ LANGUAGE plpgsql;",
+      "querySha256": "253e7e1bc234aed834ce95737bbbbb2b5e07361b6deda5dd9b2828e90214447e",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0128",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 128,
+      "scriptName": "DECLARE variable with default value of literal value or parameter reference",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0128-select-d",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0128-select-d",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT d();",
+      "querySha256": "fea70ff4ae2aab70bd50ec6deef4ff297366f43b014b04e79bb005a1e06dc6bf",
+      "expectedRows": [
+        [
+          {
+            "value": "{A,B,C,D,E,F,G,H}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0129",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 129,
+      "scriptName": "DECLARE variable with default value of literal value or parameter reference",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0129-select-mylt2-a-b-1",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0129-select-mylt2-a-b-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT mylt2('a', 'B', 1) as f;",
+      "querySha256": "a924fc2145e5e88b25e7c7b96265b2d30b5c33958a7f65d73d7e859eed11a4ba",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0130",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 130,
+      "scriptName": "FOR I LOOP statement",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0130-create-or-replace-function-code",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0130-create-or-replace-function-code",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE OR REPLACE FUNCTION code()\nRETURNS VARCHAR AS $$\nDECLARE\nchars TEXT[] := '{A,B,C,D,E,F,G,H}';\n  result TEXT := '';\n  i INTEGER;\nBEGIN\nFOR i IN 1..3 LOOP\n    result := result || chars[1+i];\nEND LOOP;\nRETURN result;\nEND;\n$$ LANGUAGE plpgsql;",
+      "querySha256": "77e00d436c0df025c629aa599d8d207d50d09605422e632f6aa9976c735c5334",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0131",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 131,
+      "scriptName": "FOR I LOOP statement",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0131-select-code",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0131-select-code",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT code();",
+      "querySha256": "274672bcab848c851071de32aa2a55bf094ab77ae6e7ff3c6e588998b6768ea4",
+      "expectedRows": [
+        [
+          {
+            "value": "BCD"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0132",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 132,
+      "scriptName": "FOR S LOOP statement",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0132-create-function-delete_deck_tree-p_id-bigint",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0132-create-function-delete_deck_tree-p_id-bigint",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE FUNCTION delete_deck_tree(p_id bigint) RETURNS void\n            LANGUAGE plpgsql\n            AS $$\n        DECLARE\n           r record;\n        BEGIN\n           DELETE FROM decks WHERE parent = p_id;\n        \n           FOR r IN SELECT id FROM decks WHERE parent = p_id LOOP\n              PERFORM delete_deck_tree(r.id);\n           END LOOP;\n        \n           DELETE FROM decks WHERE id = p_id;\n        END;\n        $$;",
+      "querySha256": "370a609fe6656a51e598b3e6da1456c4bcc6c335568c1b17a709c619e1212ef6",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0133",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 133,
+      "scriptName": "FOR S LOOP statement",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0133-select-*-from-decks",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0133-select-*-from-decks",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * from decks;",
+      "querySha256": "0103aeeef005074717fdcc3ea6b15c7b2f3eb106d6f933aa9291333107b8d706",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "name1"
+          },
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "name2"
+          },
+          {
+            "value": "4"
+          }
+        ],
+        [
+          {
+            "value": "5"
+          },
+          {
+            "value": "name3"
+          },
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "7"
+          },
+          {
+            "value": "name4"
+          },
+          {
+            "value": "9"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0134",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 134,
+      "scriptName": "FOR S LOOP statement",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0134-select-delete_deck_tree-1",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0134-select-delete_deck_tree-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT delete_deck_tree(1);",
+      "querySha256": "a53fb2f2738ea3a283454bde0245eea0ee72a1e102da6f766c02f1e4bc6154bd",
+      "expectedRows": [
+        [
+          {
+            "value": ""
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0135",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 135,
+      "scriptName": "FOR S LOOP statement",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0135-select-*-from-decks",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0135-select-*-from-decks",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * from decks;",
+      "querySha256": "0103aeeef005074717fdcc3ea6b15c7b2f3eb106d6f933aa9291333107b8d706",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "name2"
+          },
+          {
+            "value": "4"
+          }
+        ],
+        [
+          {
+            "value": "7"
+          },
+          {
+            "value": "name4"
+          },
+          {
+            "value": "9"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0136",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 136,
+      "scriptName": "use multiple types returning in block statement",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0136-create-function-return_table-returns-int",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0136-create-function-return_table-returns-int",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE FUNCTION return_table() RETURNS int AS $$ \nDECLARE ti int; tt text; \nBEGIN \n\tINSERT INTO test VALUES (3, 'w') returning * INTO ti, tt; \n\tRETURN ti; \nEND; \n$$ LANGUAGE plpgsql;",
+      "querySha256": "b049965be8a1a34a3708fd6dbeabfa6b90d822afebf0d98cb99fbdc691d53cba",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0137",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 137,
+      "scriptName": "use multiple types returning in block statement",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0137-select-return_table",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0137-select-return_table",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select return_table();",
+      "querySha256": "4b1e43a48518860aa8605b8bba10ea25093b950e075fec9247f4d3d7cf3d14e2",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0138",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 138,
+      "scriptName": "distinct expression over function",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0138-create-function-func1-returns-int4",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0138-create-function-func1-returns-int4",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE FUNCTION func1() RETURNS INT4 AS $$\nDECLARE\n  ret INT4;\nBEGIN\n  INSERT INTO test VALUES (DEFAULT) RETURNING pk INTO ret;\n  IF ret % 2 <> 0 THEN\n    RETURN NULL;\n  END IF;\n  RETURN ret;\nEND; $$ LANGUAGE plpgsql;",
+      "querySha256": "ef7b3913f110757376441eebb59b31711ba58ad6530f706238ea4417b4793baa",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0139",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 139,
+      "scriptName": "distinct expression over function",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0139-select-func1-is-distinct-from",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0139-select-func1-is-distinct-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT func1() IS DISTINCT FROM func1() as DISTINCT_RESULT;",
+      "querySha256": "4a62a960e0699fbca7c73d85678db4e502a0be4c95629115a6997c5eb9199d28",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql#0140",
+      "source": "testing/go/postgres16/create_function_plpgsql_test.go:TestCreateFunctionLanguagePlpgsql",
+      "ordinal": 140,
+      "scriptName": "distinct expression over function",
+      "oracle": "postgres",
+      "postgresId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0140-select-*-from-test",
+      "suggestedId": "create-function-plpgsql-test-testcreatefunctionlanguageplpgsql-0140-select-*-from-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test;",
+      "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

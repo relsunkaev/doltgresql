@@ -1,0 +1,2839 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map alter_table_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/alter_table_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0001",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 1,
+      "scriptName": "Add Foreign Key Constraint",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0001-alter-table-parent-add-foreign",
+      "suggestedId": "alter-table-test-testaltertable-0001-alter-table-parent-add-foreign",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE parent ADD FOREIGN KEY (c1) REFERENCES child (pk) ON DELETE CASCADE;",
+      "querySha256": "ea7a553bdd06e7513acc552f94113cb32d1d01261f33a767443a7e3a5af8e98f",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0002",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 2,
+      "scriptName": "Add Foreign Key Constraint",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0002-insert-into-parent-values-10",
+      "suggestedId": "alter-table-test-testaltertable-0002-insert-into-parent-values-10",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23503",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO parent VALUES (10, 10, 10);",
+      "querySha256": "4811d4030c0be4b5cc2e9b6527821c4809989c7abf57815e3e055a3288c5d766",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0003",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 3,
+      "scriptName": "Add Foreign Key Constraint",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0003-alter-table-parent-add-foreign",
+      "suggestedId": "alter-table-test-testaltertable-0003-alter-table-parent-add-foreign",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23503",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE parent ADD FOREIGN KEY (c2) REFERENCES child (pk);",
+      "querySha256": "0ffd2e3dcc30c321598749e81bbe84fbf8ecae87061d309ee7447e1c9b7ccefd",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0004",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 4,
+      "scriptName": "Add Foreign Key Constraint",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0004-alter-table-parent-add-foreign",
+      "suggestedId": "alter-table-test-testaltertable-0004-alter-table-parent-add-foreign",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42830",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE parent ADD FOREIGN KEY (c1, c2) REFERENCES child (pk, c1);",
+      "querySha256": "e133a5ff4eab7b2e94c798a0dc6a2b02d6521b5ea73dae494a88751819d46ba5",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0005",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 5,
+      "scriptName": "Add Foreign Key Constraint",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0005-alter-table-parent-add-constraint",
+      "suggestedId": "alter-table-test-testaltertable-0005-alter-table-parent-add-constraint",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE parent ADD CONSTRAINT match_full_single FOREIGN KEY (c1) REFERENCES child (pk) MATCH FULL;",
+      "querySha256": "b224b245c0951344c32fdc21225c8c789cc3ed517e3b89d9e98edfbf21240250",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0006",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 6,
+      "scriptName": "Add Foreign Key Constraint",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0006-insert-into-parent-values-20",
+      "suggestedId": "alter-table-test-testaltertable-0006-insert-into-parent-values-20",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23503",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO parent VALUES (20, 20, 20);",
+      "querySha256": "2e7effbd53213204183d080bb3ff3bcbad68a2afd1b61f76f528bd2eb79721ed",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0007",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 7,
+      "scriptName": "Add Foreign Key Constraint",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0007-insert-into-parent-values-20",
+      "suggestedId": "alter-table-test-testaltertable-0007-insert-into-parent-values-20",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO parent VALUES (20, NULL, 20);",
+      "querySha256": "34478adf36d29528b68df6189ec777dab2fb50d0be5b72ef4201b8026470d235",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0008",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 8,
+      "scriptName": "Add Foreign Key Constraint",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0008-alter-table-parent-add-foreign",
+      "suggestedId": "alter-table-test-testaltertable-0008-alter-table-parent-add-foreign",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42830",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE parent ADD FOREIGN KEY (c1, c2) REFERENCES child (pk, c1) MATCH FULL;",
+      "querySha256": "c612af2a98d6e378e288109977d8729e57afa949259baf658f0fdcbfb03278ec",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0009",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 9,
+      "scriptName": "Add Foreign Key Constraint",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0009-alter-table-parent-add-foreign",
+      "suggestedId": "alter-table-test-testaltertable-0009-alter-table-parent-add-foreign",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "0A000",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE parent ADD FOREIGN KEY (c1, c2) REFERENCES child (pk, c1) MATCH PARTIAL;",
+      "querySha256": "796d8ba084d8da8ea1452dafcbeff258a8c7084a9d80ae0bc3149071c8b26820",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0010",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 10,
+      "scriptName": "Add Unique Constraint",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0010-create-unique-index-on-t1",
+      "suggestedId": "alter-table-test-testaltertable-0010-create-unique-index-on-t1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE UNIQUE INDEX ON t1(c1);",
+      "querySha256": "f054d59add9989ca960fd0af568e495dd39f2e54632202976ab05c5677432a64",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0011",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 11,
+      "scriptName": "Add Unique Constraint",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0011-insert-into-t1-values-2",
+      "suggestedId": "alter-table-test-testaltertable-0011-insert-into-t1-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO t1 VALUES (2, 1);",
+      "querySha256": "65a0b62becd41870a71f0773aa0500e93c77caa651d306d1d2da468bba8afe8a",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0012",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 12,
+      "scriptName": "Add Unique Constraint",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0012-alter-table-t2-add-constraint",
+      "suggestedId": "alter-table-test-testaltertable-0012-alter-table-t2-add-constraint",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE t2 ADD CONSTRAINT uniq1 UNIQUE (c1);",
+      "querySha256": "9c2938794ecd3b0bb7f7bb8111c6b67d3d75b201bd4f2b718e52a8cff24c07f9",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0013",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 13,
+      "scriptName": "Add Unique Constraint",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0013-insert-into-t2-values-2",
+      "suggestedId": "alter-table-test-testaltertable-0013-insert-into-t2-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO t2 VALUES (2, 1);",
+      "querySha256": "1990c0af2065d83ec5d6c2924312ce42f77a7e23f37f24c9271d4270af3910d7",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0014",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 14,
+      "scriptName": "Add Check Constraint",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0014-alter-table-t1-add-constraint",
+      "suggestedId": "alter-table-test-testaltertable-0014-alter-table-t1-add-constraint",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE t1 ADD CONSTRAINT constraint1 CHECK (c1 > 100);",
+      "querySha256": "5b90e37373afd15d3f25c2e1b847ed218ca942c56f7928860601ec6a21223c49",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0015",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 15,
+      "scriptName": "Add Check Constraint",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0015-alter-table-t1-add-constraint",
+      "suggestedId": "alter-table-test-testaltertable-0015-alter-table-t1-add-constraint",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE t1 ADD CONSTRAINT constraint1 CHECK (c1 < 100);",
+      "querySha256": "8b39dcf505de2e4d0ec8f5c08fc4aaa90d0de69a9b7269a97e35a413bddb230a",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0016",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 16,
+      "scriptName": "Add Check Constraint",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0016-insert-into-t1-values-2",
+      "suggestedId": "alter-table-test-testaltertable-0016-insert-into-t1-values-2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO t1 VALUES (2, 2);",
+      "querySha256": "7bc7e664db587d76c0f0a9a8db5890ff1186aeaa36d282fd86b8deabb69e39b7",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0017",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 17,
+      "scriptName": "Add Check Constraint",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0017-insert-into-t1-values-3",
+      "suggestedId": "alter-table-test-testaltertable-0017-insert-into-t1-values-3",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO t1 VALUES (3, 101);",
+      "querySha256": "d4d52b03384b05bbc49ac23851bb105aad3e087fa22aec4fde57acc7a0719b3f",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0018",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 18,
+      "scriptName": "Add Check Constraint with IN tuple",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0018-alter-table-t1-add-constraint",
+      "suggestedId": "alter-table-test-testaltertable-0018-alter-table-t1-add-constraint",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE t1 ADD CONSTRAINT constraint1 CHECK (c1 in (100));",
+      "querySha256": "0f718f3ae67726afb9106d716898689eb3a48f11da87f5a185615d9e40df5994",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0019",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 19,
+      "scriptName": "Add Check Constraint with IN tuple",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0019-alter-table-t1-add-constraint",
+      "suggestedId": "alter-table-test-testaltertable-0019-alter-table-t1-add-constraint",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE t1 ADD CONSTRAINT constraint1 CHECK (c1 in (1,2));",
+      "querySha256": "71670cdbcb416e92385f9b6ce25fded4bc418cc24bc7bb1bb98abfab491b6704",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0020",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 20,
+      "scriptName": "Add Check Constraint with IN tuple",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0020-insert-into-t1-values-2",
+      "suggestedId": "alter-table-test-testaltertable-0020-insert-into-t1-values-2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO t1 VALUES (2, 2);",
+      "querySha256": "7bc7e664db587d76c0f0a9a8db5890ff1186aeaa36d282fd86b8deabb69e39b7",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0021",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 21,
+      "scriptName": "Add Check Constraint with IN tuple",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0021-insert-into-t1-values-3",
+      "suggestedId": "alter-table-test-testaltertable-0021-insert-into-t1-values-3",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO t1 VALUES (3, 101);",
+      "querySha256": "d4d52b03384b05bbc49ac23851bb105aad3e087fa22aec4fde57acc7a0719b3f",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0022",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 22,
+      "scriptName": "Add Check Constraint and another constraint in same statement",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0022-alter-table-t1-add-constraint",
+      "suggestedId": "alter-table-test-testaltertable-0022-alter-table-t1-add-constraint",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": " ALTER TABLE t1 ADD CONSTRAINT check_a CHECK (c1 IN (1)), ALTER c1 SET NOT NULL;",
+      "querySha256": "d8be5865a8a6013e42f329abb63dd46cbfd3901bcc313a5bbd83b664e3f084ca",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0023",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 23,
+      "scriptName": "Add Check Constraint and another constraint in same statement",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0023-insert-into-t1-values-2",
+      "suggestedId": "alter-table-test-testaltertable-0023-insert-into-t1-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO t1 VALUES (2, 2);",
+      "querySha256": "7bc7e664db587d76c0f0a9a8db5890ff1186aeaa36d282fd86b8deabb69e39b7",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0024",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 24,
+      "scriptName": "Add Check Constraint and another constraint in same statement",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0024-insert-into-t1-values-1",
+      "suggestedId": "alter-table-test-testaltertable-0024-insert-into-t1-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23502",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO t1 VALUES (1, NULL);",
+      "querySha256": "216063a156c6a82e732f93091de9cef89f56a771c7e44e199f367305b187b834",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0025",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 25,
+      "scriptName": "Drop Constraint",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0025-alter-table-t1-drop-constraint",
+      "suggestedId": "alter-table-test-testaltertable-0025-alter-table-t1-drop-constraint",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE t1 DROP CONSTRAINT constraint1;",
+      "querySha256": "f719d2241be0c04b8b1c35861fe87af58b70d3d34dd9469c7abda76896040527",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0026",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 26,
+      "scriptName": "Drop Constraint",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0026-insert-into-t1-values-1",
+      "suggestedId": "alter-table-test-testaltertable-0026-insert-into-t1-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO t1 VALUES (1, 1);",
+      "querySha256": "d2e9909d6cdbd01e360f45c3ba7a3f5c7fe53da929f7b3daee22c1dab2413de6",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0027",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 27,
+      "scriptName": "Drop Constraint",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0027-alter-table-t1-drop-constraint",
+      "suggestedId": "alter-table-test-testaltertable-0027-alter-table-t1-drop-constraint",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42704",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE t1 DROP CONSTRAINT doesnotexist;",
+      "querySha256": "83b80c9fcaf3d57d55c26c365223f89995e4cd4575dad92690711bf5ce3201db",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0028",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 28,
+      "scriptName": "Drop Constraint",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0028-alter-table-t1-drop-constraint",
+      "suggestedId": "alter-table-test-testaltertable-0028-alter-table-t1-drop-constraint",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE t1 DROP CONSTRAINT IF EXISTS doesnotexist;",
+      "querySha256": "d3a1d0a3a1840a6ca138cc823e7507d824798168f6cce3f8d0152dfe8f6898a0",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0029",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 29,
+      "scriptName": "Add Primary Key",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0029-alter-table-test1-add-primary",
+      "suggestedId": "alter-table-test-testaltertable-0029-alter-table-test1-add-primary",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE test1 ADD PRIMARY KEY (a);",
+      "querySha256": "0718604c2045ac175c939b694c2556b32a9458154352d39b838d5938d4b5f84d",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0030",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 30,
+      "scriptName": "Add Primary Key",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0030-insert-into-test1-values-1",
+      "suggestedId": "alter-table-test-testaltertable-0030-insert-into-test1-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "INSERT into test1 values (1, 2), (1, 3);",
+      "querySha256": "21976de5fa7ed61b2e7bea45c7f2c1cf102fa701cf4ee891dad1e58e082b6ee0",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0031",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 31,
+      "scriptName": "Add Primary Key",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0031-alter-table-test2-add-primary",
+      "suggestedId": "alter-table-test-testaltertable-0031-alter-table-test2-add-primary",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE test2 ADD PRIMARY KEY (a, b);",
+      "querySha256": "c17eae180808a69a70ab2796dcf99fb21496d4dece1981e9f0feefd6fb65264b",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0032",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 32,
+      "scriptName": "Add Primary Key",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0032-insert-into-test2-values-1",
+      "suggestedId": "alter-table-test-testaltertable-0032-insert-into-test2-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "INSERT into test2 values (1, 2, 3), (1, 2, 4);",
+      "querySha256": "ad8a9691d137d7f78e6335cad7df108e7f0ae7f0d65042cb54a8f00f85c7d393",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0033",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 33,
+      "scriptName": "Add Primary Key",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0033-alter-table-pktable1-add-primary",
+      "suggestedId": "alter-table-test-testaltertable-0033-alter-table-pktable1-add-primary",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P16",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE pkTable1 ADD PRIMARY KEY (a);",
+      "querySha256": "594f812a228f4f3074467199dd450d6ef7ab231c97a1fb17b89e86624fe8ab7f",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0034",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 34,
+      "scriptName": "Add Primary Key",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0034-alter-table-duplicaterows-add-primary",
+      "suggestedId": "alter-table-test-testaltertable-0034-alter-table-duplicaterows-add-primary",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE duplicateRows ADD PRIMARY KEY (a);",
+      "querySha256": "0ee6a20ca3a0d971b6915c2daf67bdcc347bead69cf4aa19eee689afc1ccb500",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0035",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 35,
+      "scriptName": "Add Primary Key",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0035-alter-table-if-exists-doesnotexist",
+      "suggestedId": "alter-table-test-testaltertable-0035-alter-table-if-exists-doesnotexist",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE IF EXISTS doesNotExist ADD PRIMARY KEY (a, b);",
+      "querySha256": "bcb3fc5a3b97c6265400a9b5618fd9436adb6e03729685b90f6a4521a3afe568",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0036",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 36,
+      "scriptName": "Add Primary Key on text column",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0036-alter-table-test1-add-primary",
+      "suggestedId": "alter-table-test-testaltertable-0036-alter-table-test1-add-primary",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE test1 ADD PRIMARY KEY (a);",
+      "querySha256": "0718604c2045ac175c939b694c2556b32a9458154352d39b838d5938d4b5f84d",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0037",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 37,
+      "scriptName": "Add Primary Key on text column",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0037-insert-into-test1-values-a",
+      "suggestedId": "alter-table-test-testaltertable-0037-insert-into-test1-values-a",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "INSERT into test1 values ('a', 3);",
+      "querySha256": "9a91761d6300e39ea8eb3e5822c6857bab59bb007b095878df2644dd0c13a623",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0038",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 38,
+      "scriptName": "Add Primary Key on text column",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0038-select-*-from-test1",
+      "suggestedId": "alter-table-test-testaltertable-0038-select-*-from-test1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from test1;",
+      "querySha256": "b7b3692f327258fe77b2e71c9e2af02ce519db4303b6676a2e2c4b2ec6b44b5d",
+      "expectedRows": [
+        [
+          {
+            "value": "a"
+          },
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "b"
+          },
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0039",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 39,
+      "scriptName": "Add primary key with generated column",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0039-select-has_data-from-t1",
+      "suggestedId": "alter-table-test-testaltertable-0039-select-has_data-from-t1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "Select has_data from t1;",
+      "querySha256": "f1e41fca7b4dbb6588b348ed8cbd5c7fdb205ebcf91c88341b966c62c81731b1",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0040",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 40,
+      "scriptName": "Add Column",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0040-alter-table-test1-add-column",
+      "suggestedId": "alter-table-test-testaltertable-0040-alter-table-test1-add-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE test1 ADD COLUMN c INT NOT NULL DEFAULT 42;",
+      "querySha256": "afd7424dacd42c71bebd7441f21a76188f1a4c40d3ad30c6b76926c9b71b9afe",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0041",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 41,
+      "scriptName": "Add Column",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0041-select-*-from-test1",
+      "suggestedId": "alter-table-test-testaltertable-0041-select-*-from-test1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from test1;",
+      "querySha256": "b7b3692f327258fe77b2e71c9e2af02ce519db4303b6676a2e2c4b2ec6b44b5d",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "42"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0042",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 42,
+      "scriptName": "Add Column",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0042-alter-table-test1-add-column",
+      "suggestedId": "alter-table-test-testaltertable-0042-alter-table-test1-add-column",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42704",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE test1 ADD COLUMN l non_existing_type;",
+      "querySha256": "2f160bc2bebec2c3072e94ceaf07466ee02ed0658952f2ea0ac2de32270badaf",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0043",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 43,
+      "scriptName": "Add Column",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0043-alter-table-test1-add-column",
+      "suggestedId": "alter-table-test-testaltertable-0043-alter-table-test1-add-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE test1 ADD COLUMN m xid;",
+      "querySha256": "6adb7bf574cef1d5ea8546efa36627087c7de738912fad0d717e5cfee0d473fc",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0044",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 44,
+      "scriptName": "Add column with inline check constraint",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0044-alter-table-test1-add-column",
+      "suggestedId": "alter-table-test-testaltertable-0044-alter-table-test1-add-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE test1 ADD COLUMN c INT NOT NULL DEFAULT 42 CONSTRAINT chk1 CHECK (c > 0);",
+      "querySha256": "ba945373ee09d1cd5d64112b707d74d203928de1a1d894285098eebb0bdaa007",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0045",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 45,
+      "scriptName": "Add column with inline check constraint",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0045-insert-into-test1-values-2",
+      "suggestedId": "alter-table-test-testaltertable-0045-insert-into-test1-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO test1 VALUES (2, 2, -2);",
+      "querySha256": "e35fe60254f0df5ab18aeda9899b631357e48a353ade6522c0ee04e3e7d36d15",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0046",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 46,
+      "scriptName": "Add column with inline check constraint to table with existing data",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0046-alter-table-test1-add-column",
+      "suggestedId": "alter-table-test-testaltertable-0046-alter-table-test1-add-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE test1 ADD COLUMN c INT NOT NULL DEFAULT 42 CONSTRAINT chk1 CHECK (c > 0);",
+      "querySha256": "ba945373ee09d1cd5d64112b707d74d203928de1a1d894285098eebb0bdaa007",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0047",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 47,
+      "scriptName": "Add column with inline check constraint to table with existing data",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0047-insert-into-test1-values-2",
+      "suggestedId": "alter-table-test-testaltertable-0047-insert-into-test1-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO test1 VALUES (2, 2, -2);",
+      "querySha256": "e35fe60254f0df5ab18aeda9899b631357e48a353ade6522c0ee04e3e7d36d15",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0048",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 48,
+      "scriptName": "Add column with inline check constraint to table with existing data",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0048-alter-table-test1-add-column",
+      "suggestedId": "alter-table-test-testaltertable-0048-alter-table-test1-add-column",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE test1 ADD COLUMN c2 INT CONSTRAINT chk2 CHECK (c2 IS NOT NULL);",
+      "querySha256": "8693f3543a71c980af127e21753f0ad9fd9fcbb0a9d2821cdae6e7dc4b3248c0",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0049",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 49,
+      "scriptName": "Drop Column",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0049-alter-table-test1-drop-column",
+      "suggestedId": "alter-table-test-testaltertable-0049-alter-table-test1-drop-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE test1 DROP COLUMN c;",
+      "querySha256": "751acc5817fcac91db94d4400cd7382dc76b4bf9d78963bf7b6d0b7388b17479",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0050",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 50,
+      "scriptName": "Drop Column",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0050-select-*-from-test1",
+      "suggestedId": "alter-table-test-testaltertable-0050-select-*-from-test1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from test1;",
+      "querySha256": "b7b3692f327258fe77b2e71c9e2af02ce519db4303b6676a2e2c4b2ec6b44b5d",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0051",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 51,
+      "scriptName": "Drop Column",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0051-alter-table-test1-drop-column",
+      "suggestedId": "alter-table-test-testaltertable-0051-alter-table-test1-drop-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE test1 DROP COLUMN d;",
+      "querySha256": "a5229be46d8fdddd9fd8885b0cf120646e55be382794e41cc30ee51085e225ec",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0052",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 52,
+      "scriptName": "Drop Column",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0052-select-*-from-test1",
+      "suggestedId": "alter-table-test-testaltertable-0052-select-*-from-test1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from test1;",
+      "querySha256": "b7b3692f327258fe77b2e71c9e2af02ce519db4303b6676a2e2c4b2ec6b44b5d",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0053",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 53,
+      "scriptName": "Drop Column",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0053-alter-table-test1-drop-column",
+      "suggestedId": "alter-table-test-testaltertable-0053-alter-table-test1-drop-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE test1 DROP COLUMN IF EXISTS zzz;",
+      "querySha256": "1214467937553c4b230d9a7964ce0297199d8996615a1071e72151ce65ff364a",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0054",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 54,
+      "scriptName": "Drop Column",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0054-alter-table-if-exists-doesnotexist",
+      "suggestedId": "alter-table-test-testaltertable-0054-alter-table-if-exists-doesnotexist",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE IF EXISTS doesNotExist DROP COLUMN z;",
+      "querySha256": "2f04c6065e21378a4be78459c7df17c1088bcf3edffb7c9c9a3e960a2e6f116a",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0055",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 55,
+      "scriptName": "Rename Column",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0055-alter-table-test1-rename-column",
+      "suggestedId": "alter-table-test-testaltertable-0055-alter-table-test1-rename-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE test1 RENAME COLUMN c to jjj;",
+      "querySha256": "bf794028013da715d6f2acfd303c594708680982042b4d08f4c327ec095ee887",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0056",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 56,
+      "scriptName": "Rename Column",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0056-select-*-from-test1-where",
+      "suggestedId": "alter-table-test-testaltertable-0056-select-*-from-test1-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from test1 where jjj=3;",
+      "querySha256": "1c63c734407a213e06dc662dba94d9c6fccca2688c30900f9eb9741c810738dc",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0057",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 57,
+      "scriptName": "Set Column Default",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0057-alter-table-test1-alter-column",
+      "suggestedId": "alter-table-test-testaltertable-0057-alter-table-test1-alter-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE test1 ALTER COLUMN c SET DEFAULT 43;",
+      "querySha256": "9516dd1a1bb9b4925448b57a7ba271730443331749fc47d3b6ad9fa3447b0e04",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0058",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 58,
+      "scriptName": "Set Column Default",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0058-insert-into-test1-a-values",
+      "suggestedId": "alter-table-test-testaltertable-0058-insert-into-test1-a-values",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO test1 (a) VALUES (1);",
+      "querySha256": "57935d54bc08f7e640f3bbc1eac4ba088de39ab26c292581191e1b4dc21bd7ac",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0059",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 59,
+      "scriptName": "Set Column Default",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0059-select-*-from-test1",
+      "suggestedId": "alter-table-test-testaltertable-0059-select-*-from-test1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test1;",
+      "querySha256": "3f6eb4a5821e856dcdcdb961af904a50a500e06a4d445d674be9bcae981182b9",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "42"
+          },
+          {
+            "value": "43"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0060",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 60,
+      "scriptName": "Set Column Default",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0060-alter-table-test1-alter-column",
+      "suggestedId": "alter-table-test-testaltertable-0060-alter-table-test1-alter-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE test1 ALTER COLUMN b DROP DEFAULT;",
+      "querySha256": "a0b2e4a289e88a285f604772fff9fbb9f6a9e55e7955bf04e9702a8e7f207365",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0061",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 61,
+      "scriptName": "Set Column Default",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0061-insert-into-test1-a-values",
+      "suggestedId": "alter-table-test-testaltertable-0061-insert-into-test1-a-values",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO test1 (a) VALUES (2);",
+      "querySha256": "7618d099d2fbfc06646e8e93666a210f846ea6b523c19698d42d80f27518c9e1",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0062",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 62,
+      "scriptName": "Set Column Default",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0062-select-*-from-test1-where",
+      "suggestedId": "alter-table-test-testaltertable-0062-select-*-from-test1-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test1 where a = 2;",
+      "querySha256": "e7a16f9226467ed3b89c22acf46b1e4b949864a88af6b369ef31f2c9515f6bb7",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "null": true
+          },
+          {
+            "value": "43"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0063",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 63,
+      "scriptName": "Set Column Default",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0063-alter-table-test1-alter-column",
+      "suggestedId": "alter-table-test-testaltertable-0063-alter-table-test1-alter-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE test1 ALTER COLUMN c SET DEFAULT length('hello world');",
+      "querySha256": "54c9a48a61352a78becd052632396d60d5a00db7b4196b1bcc7885f39cc5b255",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0064",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 64,
+      "scriptName": "Set Column Default",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0064-insert-into-test1-a-values",
+      "suggestedId": "alter-table-test-testaltertable-0064-insert-into-test1-a-values",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO test1 (a) VALUES (3);",
+      "querySha256": "1f703b5de3e3ad246a5d76e113b51b186827d71a469ce89296859756ba82bbd9",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0065",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 65,
+      "scriptName": "Set Column Default",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0065-select-*-from-test1-where",
+      "suggestedId": "alter-table-test-testaltertable-0065-select-*-from-test1-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test1 where a = 3;",
+      "querySha256": "83907629d2aa68e726151ed206a1529dc480dc7da0497a9b0d40613a59d217c3",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          },
+          {
+            "null": true
+          },
+          {
+            "value": "11"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0066",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 66,
+      "scriptName": "Set Column Nullability",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0066-alter-table-test1-alter-column",
+      "suggestedId": "alter-table-test-testaltertable-0066-alter-table-test1-alter-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE test1 ALTER COLUMN b SET NOT NULL;",
+      "querySha256": "76aa7efe945cddd3eb45262fd38e400b35352e99aa4149568b461df45ec3bc51",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0067",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 67,
+      "scriptName": "Set Column Nullability",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0067-insert-into-test1-values-1",
+      "suggestedId": "alter-table-test-testaltertable-0067-insert-into-test1-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23502",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO test1 VALUES (1, NULL);",
+      "querySha256": "904a247ca9b6f56c89908e2ecc4b5d06ec35d1b323c7840200f08051a6ff10c0",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0068",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 68,
+      "scriptName": "Set Column Nullability",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0068-alter-table-test1-alter-column",
+      "suggestedId": "alter-table-test-testaltertable-0068-alter-table-test1-alter-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE test1 ALTER COLUMN b DROP NOT NULL;",
+      "querySha256": "ce7f3e649ef90c4210a1ce0ac142543a7793eff89c72aa7f2c32fb4007394728",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0069",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 69,
+      "scriptName": "Set Column Nullability",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0069-insert-into-test1-values-2",
+      "suggestedId": "alter-table-test-testaltertable-0069-insert-into-test1-values-2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO test1 VALUES (2, NULL);",
+      "querySha256": "46a5c4efe8a8b699b5fa90f116d89d4e36610c5b8b507d3deaff0ca1be03ce54",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0070",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 70,
+      "scriptName": "Set Column Nullability",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0070-select-*-from-test1-where",
+      "suggestedId": "alter-table-test-testaltertable-0070-select-*-from-test1-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test1 where a = 2;",
+      "querySha256": "e7a16f9226467ed3b89c22acf46b1e4b949864a88af6b369ef31f2c9515f6bb7",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0071",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 71,
+      "scriptName": "Set Column Nullability",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0071-alter-table-test1-alter-column",
+      "suggestedId": "alter-table-test-testaltertable-0071-alter-table-test1-alter-column",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23502",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE test1 ALTER COLUMN b SET NOT NULL;",
+      "querySha256": "76aa7efe945cddd3eb45262fd38e400b35352e99aa4149568b461df45ec3bc51",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0072",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 72,
+      "scriptName": "Alter Column Type",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0072-insert-into-test1-values-1",
+      "suggestedId": "alter-table-test-testaltertable-0072-insert-into-test1-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22003",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO test1 VALUES (1, 32769);",
+      "querySha256": "ba89384d40870dd1ab562b64a96306a2da11efafa4f0212ad25709aa070246b0",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0073",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 73,
+      "scriptName": "Alter Column Type",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0073-alter-table-test1-alter-column",
+      "suggestedId": "alter-table-test-testaltertable-0073-alter-table-test1-alter-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE test1 ALTER COLUMN b TYPE INT;",
+      "querySha256": "237ebdd2f19cd0bb6a41e0d29a7e1b5db041ccf07bf89da18081dd397994e4b0",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0074",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 74,
+      "scriptName": "Alter Column Type",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0074-insert-into-test1-values-1",
+      "suggestedId": "alter-table-test-testaltertable-0074-insert-into-test1-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO test1 VALUES (1, 32769);",
+      "querySha256": "ba89384d40870dd1ab562b64a96306a2da11efafa4f0212ad25709aa070246b0",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0075",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 75,
+      "scriptName": "Alter Column Type",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0075-select-*-from-test1",
+      "suggestedId": "alter-table-test-testaltertable-0075-select-*-from-test1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test1;",
+      "querySha256": "3f6eb4a5821e856dcdcdb961af904a50a500e06a4d445d674be9bcae981182b9",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "32769"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0076",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 76,
+      "scriptName": "Alter Column Type",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0076-alter-table-test1-alter-column",
+      "suggestedId": "alter-table-test-testaltertable-0076-alter-table-test1-alter-column",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22003",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE test1 ALTER COLUMN b TYPE smallint;",
+      "querySha256": "a521205584e1e6df27dc9ca5b346fb1a89ce64b6d1c488e071cad29b9b5af868",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0077",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 77,
+      "scriptName": "ALTER COLUMN resolves column default expressions",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0077-alter-table-t1-alter-column",
+      "suggestedId": "alter-table-test-testaltertable-0077-alter-table-t1-alter-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE t1 ALTER COLUMN c1 SET NOT NULL;",
+      "querySha256": "69bb7ddd3f5730484eacd0a5666ae2a2109c9dd579867ba1cea4290c1399bbe4",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0078",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 78,
+      "scriptName": "ALTER COLUMN resolves column default expressions",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0078-alter-table-t2-alter-column",
+      "suggestedId": "alter-table-test-testaltertable-0078-alter-table-t2-alter-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE t2 ALTER COLUMN c1 TYPE VARCHAR(50);",
+      "querySha256": "db93f165ccd95d5634328d2cbe517b5ccd92edce720c7d9802d410daaf18d168",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0079",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 79,
+      "scriptName": "ALTER COLUMN resolves column default expressions",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0079-alter-table-t3-alter-column",
+      "suggestedId": "alter-table-test-testaltertable-0079-alter-table-t3-alter-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE t3 ALTER COLUMN c1 DROP NOT NULL;",
+      "querySha256": "015359e698037dd00c1d0b5507c4d4678cc352b6db7953608037917df69d0bc8",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0080",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 80,
+      "scriptName": "ALTER COLUMN resolves column default expressions",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0080-alter-table-t4-rename-column",
+      "suggestedId": "alter-table-test-testaltertable-0080-alter-table-t4-rename-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE t4 RENAME COLUMN c1 TO ccc1;",
+      "querySha256": "3b1d734ce5174782a06723e9c3cfe60b0da191de12f617833a0f3c818b467110",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0081",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 81,
+      "scriptName": "ALTER TABLE ADD COLUMN with inline FK constraint",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0081-alter-table-t-add-column",
+      "suggestedId": "alter-table-test-testaltertable-0081-alter-table-t-add-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE t ADD COLUMN c1 int REFERENCES parent(id);",
+      "querySha256": "57a1d2d2fbffc1061d0b1ed925b3dc5a44f4d567f297cd75a447a8dc562c731b",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0082",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 82,
+      "scriptName": "ALTER TABLE ADD COLUMN with inline FK constraint",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0082-select-conname-as-constraint_name-pg_get_constraintdef",
+      "suggestedId": "alter-table-test-testaltertable-0082-select-conname-as-constraint_name-pg_get_constraintdef",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT conname AS constraint_name, pg_get_constraintdef(oid) AS constraint_definition FROM pg_constraint WHERE conrelid = 't'::regclass AND contype='f';",
+      "querySha256": "4a900cc3389f7a7d73bb0db363b0e89cf7d26374b7cb8ed91836789ced031b4c",
+      "expectedRows": [
+        [
+          {
+            "value": "t_c1_fkey"
+          },
+          {
+            "value": "FOREIGN KEY (c1) REFERENCES parent(id)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0083",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 83,
+      "scriptName": "ALTER TABLE ADD COLUMN with inline FK constraint",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0083-insert-into-t-values-abc",
+      "suggestedId": "alter-table-test-testaltertable-0083-insert-into-t-values-abc",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23503",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO t VALUES ('abc', 123);",
+      "querySha256": "9fe0b4a184811d8bdfbada0d4a1310bc7c96680c32ac4c6b00f5b6aedb4dc537",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0084",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 84,
+      "scriptName": "Rename table",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0084-alter-table-doesnotexist-rename-to",
+      "suggestedId": "alter-table-test-testaltertable-0084-alter-table-doesnotexist-rename-to",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE doesnotexist RENAME TO t3;",
+      "querySha256": "7f29f60c512da1c26bae572883051104ce9721bb82b38c045e11d36e85edb0b3",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0085",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 85,
+      "scriptName": "Rename table",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0085-select-*-from-t3",
+      "suggestedId": "alter-table-test-testaltertable-0085-select-*-from-t3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM t3;",
+      "querySha256": "7a566c4857913a7036f01e6cdf27c64aca342293f736b477b2ff37c3490aa91f",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0086",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 86,
+      "scriptName": "Rename table",
+      "oracle": "internal",
+      "suggestedId": "alter-table-test-testaltertable-0086-select-*-from-public.t3",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM public.t3;",
+      "querySha256": "f52337954d40d3a5facdaa213fd76b366db997c05e58b4c98b0fb9f587a8fb03",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0087",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 87,
+      "scriptName": "Rename table",
+      "oracle": "internal",
+      "suggestedId": "alter-table-test-testaltertable-0087-select-*-from-t1",
+      "expectedKind": "error",
+      "query": "SELECT * FROM t1;",
+      "querySha256": "705ed92fce8bae521c178f905e91a39a40d0a76df77bdc5f8d73ceb90ded92c3",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0088",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 88,
+      "scriptName": "Rename table",
+      "oracle": "internal",
+      "suggestedId": "alter-table-test-testaltertable-0088-alter-table-t3-rename-to",
+      "expectedKind": "error",
+      "query": "ALTER TABLE t3 RENAME TO t2;",
+      "querySha256": "462606de63ba2e3da7e8d4d7ade5242a97b1e67f592c92feb167a469cc1b052e",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0089",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 89,
+      "scriptName": "Rename table",
+      "oracle": "internal",
+      "suggestedId": "alter-table-test-testaltertable-0089-select-*-from-s1.t4",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM s1.t4;",
+      "querySha256": "f01b4a355d23abfc587b41a5392fc3d3d529a02d97c75a0e88abcbd864e42773",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0090",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 90,
+      "scriptName": "alter table add primary key with timestamp column default values",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0090-select-created_at-is-not-null",
+      "suggestedId": "alter-table-test-testaltertable-0090-select-created_at-is-not-null",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select created_at is not null from t1 where id = 1;",
+      "querySha256": "fd0a2006ce138386d294674f494dcc09f01d858dea2d9359d28417284e2a46a9",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS t1 CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0091",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 91,
+      "scriptName": "alter table add primary key with timestamp column default values",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0091-select-updated_at-is-not-null",
+      "suggestedId": "alter-table-test-testaltertable-0091-select-updated_at-is-not-null",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select updated_at is not null from t1 where id = 1;",
+      "querySha256": "1346eb4e7ae4368c4b350758565821197015d5efbe484f496f54214139d14cea",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS t1 CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0092",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 92,
+      "scriptName": "alter table add primary key with timestamp column default values",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0092-select-created_at-=-updated_at-from",
+      "suggestedId": "alter-table-test-testaltertable-0092-select-created_at-=-updated_at-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select created_at = updated_at from t1 where id = 1;",
+      "querySha256": "5066f505bfb47201789b79fb2c0279abb87ef78c719f0fd9cf82e153a71563aa",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS t1 CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0093",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 93,
+      "scriptName": "alter table add primary key with uuid column default values",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0093-select-uid-is-not-null",
+      "suggestedId": "alter-table-test-testaltertable-0093-select-uid-is-not-null",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select uid is not null from t1 where id = 1;",
+      "querySha256": "3f2cb850c775eec36081332790dfc51e3490fb5f542d6ccdd87600e6a99d5222",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS t1 CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0094",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 94,
+      "scriptName": "alter table add primary key with uuid column default values",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0094-select-uid-is-not-null",
+      "suggestedId": "alter-table-test-testaltertable-0094-select-uid-is-not-null",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select uid is not null from t1 where id = 2;",
+      "querySha256": "2f5ad175617c113624a26a831108d0beff851349dbdf9f4b5a89845051be6d7f",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS t1 CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0095",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 95,
+      "scriptName": "alter table add primary key with uuid column default values",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0095-select-select-uid-from-t1",
+      "suggestedId": "alter-table-test-testaltertable-0095-select-select-uid-from-t1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select (select uid from t1 where id = 2) = (select uid from t1 where id = 1);",
+      "querySha256": "baa4ff53167c343c7b008654486328b460ce22b4d4484face759cdf49ecc32ac",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS t1 CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0096",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 96,
+      "scriptName": "alter table drop primary key",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0096-alter-table-t1-drop-constraint",
+      "suggestedId": "alter-table-test-testaltertable-0096-alter-table-t1-drop-constraint",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE t1 DROP CONSTRAINT t1_pkey;",
+      "querySha256": "ab60a85ae2ad6927d234ec182b8b736e46eca33b82784a690bf21eca9242141b",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0097",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 97,
+      "scriptName": "alter table drop primary key",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0097-insert-into-t1-values-1",
+      "suggestedId": "alter-table-test-testaltertable-0097-insert-into-t1-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO t1 VALUES (1), (2);",
+      "querySha256": "45e13ae6e070fd3e07998002a3f9a512d817f4262180984ff9f663e509bb8b9c",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0098",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 98,
+      "scriptName": "ALTER TABLE RENAME with table types",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0098-select-*-from-t2",
+      "suggestedId": "alter-table-test-testaltertable-0098-select-*-from-t2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM t2;",
+      "querySha256": "4cca2c8c0018c1898b41584c73e1a45f20b923e803a8639f5977973176d7ba92",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "(1,abc)"
+          },
+          {
+            "value": "(abc,1)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0099",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 99,
+      "scriptName": "ALTER TABLE RENAME with table types",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0099-alter-table-t1a-rename-to",
+      "suggestedId": "alter-table-test-testaltertable-0099-alter-table-t1a-rename-to",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE t1a RENAME TO t1x;",
+      "querySha256": "6958f021dd6415d4c3cc8dbe45031d5d31fc326b08b42a70ab32dc05442a5123",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0100",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 100,
+      "scriptName": "ALTER TABLE RENAME with table types",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0100-insert-into-t2-values-2",
+      "suggestedId": "alter-table-test-testaltertable-0100-insert-into-t2-values-2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO t2 VALUES (2, ROW(2, 'def'), ROW('def', 2));",
+      "querySha256": "ec8f592f752e4e2cbe110b879747a1f86ec513622479b37a3cb861b8737604b0",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0101",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 101,
+      "scriptName": "ALTER TABLE RENAME with table types",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0101-select-*-from-t2",
+      "suggestedId": "alter-table-test-testaltertable-0101-select-*-from-t2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM t2;",
+      "querySha256": "4cca2c8c0018c1898b41584c73e1a45f20b923e803a8639f5977973176d7ba92",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "(1,abc)"
+          },
+          {
+            "value": "(abc,1)"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "(2,def)"
+          },
+          {
+            "value": "(def,2)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0102",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 102,
+      "scriptName": "ALTER TABLE RENAME with table types",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0102-alter-table-t1x-rename-to",
+      "suggestedId": "alter-table-test-testaltertable-0102-alter-table-t1x-rename-to",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE t1x RENAME TO t1y;",
+      "querySha256": "05d898928b341c5e4e85bbadc3dadbea7ba6881c4a29d0b258affd39b28e5ffe",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0103",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 103,
+      "scriptName": "ALTER TABLE RENAME with table types",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0103-insert-into-t2-values-3",
+      "suggestedId": "alter-table-test-testaltertable-0103-insert-into-t2-values-3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO t2 VALUES (3, ROW(4, 'ghi'), ROW('kjl', 5));",
+      "querySha256": "e9062fa0d4761f7796fd0ae2419d60826345c2ff0ffcf94c1959fa62eba1f815",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0104",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 104,
+      "scriptName": "ALTER TABLE RENAME with table types",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0104-select-*-from-t2",
+      "suggestedId": "alter-table-test-testaltertable-0104-select-*-from-t2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM t2;",
+      "querySha256": "4cca2c8c0018c1898b41584c73e1a45f20b923e803a8639f5977973176d7ba92",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "(1,abc)"
+          },
+          {
+            "value": "(abc,1)"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "(2,def)"
+          },
+          {
+            "value": "(def,2)"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "(4,ghi)"
+          },
+          {
+            "value": "(kjl,5)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0105",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 105,
+      "scriptName": "ALTER TABLE RENAME COLUMN with table types",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0105-select-*-from-t2",
+      "suggestedId": "alter-table-test-testaltertable-0105-select-*-from-t2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM t2;",
+      "querySha256": "4cca2c8c0018c1898b41584c73e1a45f20b923e803a8639f5977973176d7ba92",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "(2,abc)"
+          },
+          {
+            "value": "(def,3)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0106",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 106,
+      "scriptName": "ALTER TABLE RENAME COLUMN with table types",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0106-alter-table-t1a-rename-column",
+      "suggestedId": "alter-table-test-testaltertable-0106-alter-table-t1a-rename-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE t1a RENAME COLUMN a TO x;",
+      "querySha256": "ced3785e0c7545051992238f525016845a369dadbe35f8cd3830754624b174e7",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0107",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 107,
+      "scriptName": "ALTER TABLE RENAME COLUMN with table types",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0107-select-t1a-.a-from-t2",
+      "suggestedId": "alter-table-test-testaltertable-0107-select-t1a-.a-from-t2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42703",
+      "errorSeverity": "ERROR",
+      "query": "SELECT (t1a).a FROM t2;",
+      "querySha256": "4209aa06987cc202bb8f20c3461fbdea676aceeba0743a1d9b713168173ed67d",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0108",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 108,
+      "scriptName": "ALTER TABLE RENAME COLUMN with table types",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0108-select-t1a-.x-t1a-.@1",
+      "suggestedId": "alter-table-test-testaltertable-0108-select-t1a-.x-t1a-.@1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "SELECT (t1a).x, (t1a).@1 FROM t2;",
+      "querySha256": "b18936838bb6b6cfc3b8f3f5c7911a31b1968844861d3a993c9cce548bd9fcc5",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0109",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 109,
+      "scriptName": "ALTER TABLE RENAME COLUMN with table types",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0109-alter-table-t1b-rename-column",
+      "suggestedId": "alter-table-test-testaltertable-0109-alter-table-t1b-rename-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE t1b RENAME COLUMN b TO bb;",
+      "querySha256": "829aa0b027c60904459513cf5e0a3f96f4da169e522bcb5212353eb5b6130100",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0110",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 110,
+      "scriptName": "ALTER TABLE RENAME COLUMN with table types",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0110-alter-table-t1b-rename-column",
+      "suggestedId": "alter-table-test-testaltertable-0110-alter-table-t1b-rename-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE t1b RENAME COLUMN a TO aa;",
+      "querySha256": "7a720be6dd8978ec5bc8a56a3d22f1b68c0a1cf916cc3f2288f88d69addec3df",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0111",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 111,
+      "scriptName": "ALTER TABLE RENAME COLUMN with table types",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0111-select-*-from-t2",
+      "suggestedId": "alter-table-test-testaltertable-0111-select-*-from-t2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM t2;",
+      "querySha256": "4cca2c8c0018c1898b41584c73e1a45f20b923e803a8639f5977973176d7ba92",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "(2,abc)"
+          },
+          {
+            "value": "(def,3)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0112",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 112,
+      "scriptName": "ALTER TABLE RENAME COLUMN with table types",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0112-insert-into-t2-values-4",
+      "suggestedId": "alter-table-test-testaltertable-0112-insert-into-t2-values-4",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO t2 VALUES (4, ROW(5, 'ghi'), ROW('jkl', 6));",
+      "querySha256": "259ff50fa573ca157f7af1d3e2d8666fdeb61fec6d62b4700869678e4414888a",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0113",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 113,
+      "scriptName": "ALTER TABLE RENAME COLUMN with table types",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0113-select-t1b-.aa-t1b-.@1",
+      "suggestedId": "alter-table-test-testaltertable-0113-select-t1b-.aa-t1b-.@1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "SELECT (t1b).aa, (t1b).@1, (t1b).bb, (t1b).@2 FROM t2;",
+      "querySha256": "cce0270740bf1db6bedb3ab8f0543badac3567f1259cbcd2d4194c30e80e8eda",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0114",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 114,
+      "scriptName": "ALTER TABLE SET DEFAULT with table types",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0114-select-*-from-t2",
+      "suggestedId": "alter-table-test-testaltertable-0114-select-*-from-t2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM t2;",
+      "querySha256": "4cca2c8c0018c1898b41584c73e1a45f20b923e803a8639f5977973176d7ba92",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "(2,abc)"
+          },
+          {
+            "value": "(def,3)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0115",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 115,
+      "scriptName": "ALTER TABLE SET DEFAULT with table types",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0115-alter-table-t1a-alter-column",
+      "suggestedId": "alter-table-test-testaltertable-0115-alter-table-t1a-alter-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE t1a ALTER COLUMN a SET DEFAULT 55;",
+      "querySha256": "8a581432205afba5d24eebafead540b941f626f959cff0ff599b98429da5426c",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0116",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 116,
+      "scriptName": "ALTER TABLE SET DEFAULT with table types",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0116-alter-table-t1b-alter-column",
+      "suggestedId": "alter-table-test-testaltertable-0116-alter-table-t1b-alter-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE t1b ALTER COLUMN b SET DEFAULT 77, ALTER COLUMN a SET DEFAULT 'hi';",
+      "querySha256": "27f5674fc329de23f3c3a115e718311e2891e2a38139b0cce9e3c414ffe14556",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0117",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 117,
+      "scriptName": "ALTER TABLE SET DEFAULT with table types",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0117-insert-into-t2-values-4",
+      "suggestedId": "alter-table-test-testaltertable-0117-insert-into-t2-values-4",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO t2 VALUES (4, ROW(5, 'ghi'), ROW('kjl', 6));",
+      "querySha256": "d127a94d36a9f235c157c3ed9f101b75f67240af23e3c869c47f3b2593fb4149",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0118",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 118,
+      "scriptName": "ALTER TABLE SET DEFAULT with table types",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0118-select-*-from-t2",
+      "suggestedId": "alter-table-test-testaltertable-0118-select-*-from-t2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM t2;",
+      "querySha256": "4cca2c8c0018c1898b41584c73e1a45f20b923e803a8639f5977973176d7ba92",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "(2,abc)"
+          },
+          {
+            "value": "(def,3)"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "(5,ghi)"
+          },
+          {
+            "value": "(kjl,6)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0119",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 119,
+      "scriptName": "ALTER TABLE DROP DEFAULT with table types",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0119-select-*-from-t2",
+      "suggestedId": "alter-table-test-testaltertable-0119-select-*-from-t2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM t2;",
+      "querySha256": "4cca2c8c0018c1898b41584c73e1a45f20b923e803a8639f5977973176d7ba92",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "(2,abc)"
+          },
+          {
+            "value": "(def,3)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0120",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 120,
+      "scriptName": "ALTER TABLE DROP DEFAULT with table types",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0120-alter-table-t1a-alter-column",
+      "suggestedId": "alter-table-test-testaltertable-0120-alter-table-t1a-alter-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE t1a ALTER COLUMN a DROP DEFAULT;",
+      "querySha256": "c526393930882187a525ce1b92915b573d516aa6606ffffe5e1fc36c641d063d",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0121",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 121,
+      "scriptName": "ALTER TABLE DROP DEFAULT with table types",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0121-alter-table-t1a-alter-column",
+      "suggestedId": "alter-table-test-testaltertable-0121-alter-table-t1a-alter-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE t1a ALTER COLUMN b DROP DEFAULT, ALTER COLUMN a DROP DEFAULT;",
+      "querySha256": "bfc7cec7666929f0b15d59456722dd92fbed16d98d9bd8ab2ee0ac41b73d633a",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0122",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 122,
+      "scriptName": "ALTER TABLE DROP DEFAULT with table types",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0122-insert-into-t2-values-4",
+      "suggestedId": "alter-table-test-testaltertable-0122-insert-into-t2-values-4",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO t2 VALUES (4, ROW(5, 'ghi'), ROW('kjl', 6));",
+      "querySha256": "d127a94d36a9f235c157c3ed9f101b75f67240af23e3c869c47f3b2593fb4149",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0123",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 123,
+      "scriptName": "ALTER TABLE DROP DEFAULT with table types",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0123-select-*-from-t2",
+      "suggestedId": "alter-table-test-testaltertable-0123-select-*-from-t2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM t2;",
+      "querySha256": "4cca2c8c0018c1898b41584c73e1a45f20b923e803a8639f5977973176d7ba92",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "(2,abc)"
+          },
+          {
+            "value": "(def,3)"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "(5,ghi)"
+          },
+          {
+            "value": "(kjl,6)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0124",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 124,
+      "scriptName": "ALTER TABLE SET DATA TYPE with table types",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0124-select-*-from-t2",
+      "suggestedId": "alter-table-test-testaltertable-0124-select-*-from-t2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM t2;",
+      "querySha256": "4cca2c8c0018c1898b41584c73e1a45f20b923e803a8639f5977973176d7ba92",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "(2,abc)"
+          },
+          {
+            "value": "(def,3)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0125",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 125,
+      "scriptName": "ALTER TABLE SET DATA TYPE with table types",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0125-alter-table-t1a-alter-column",
+      "suggestedId": "alter-table-test-testaltertable-0125-alter-table-t1a-alter-column",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "0A000",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE t1a ALTER COLUMN a SET DATA TYPE INT8;",
+      "querySha256": "36eb7ae7c6c4395887f4a693d053949f3ef6e2253f3a94084838b9e36e342f5c",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0126",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 126,
+      "scriptName": "ALTER TABLE SET DATA TYPE with table types",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0126-alter-table-t1a-alter-column",
+      "suggestedId": "alter-table-test-testaltertable-0126-alter-table-t1a-alter-column",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "0A000",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE t1a ALTER COLUMN a SET DATA TYPE INT4;",
+      "querySha256": "9f19e242682cb9ffdd52971e2a108143b7a32b52ce3f841347e327504a9b0dd3",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0127",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 127,
+      "scriptName": "ALTER TABLE SET DATA TYPE with table types",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0127-alter-table-t2-drop-column",
+      "suggestedId": "alter-table-test-testaltertable-0127-alter-table-t2-drop-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE t2 DROP COLUMN t1a;",
+      "querySha256": "847167ad7aa02bf1e17abc59f132df21a8224d643b8b4e2e0c291dd9070bf958",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0128",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 128,
+      "scriptName": "ALTER TABLE SET DATA TYPE with table types",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0128-alter-table-t1a-alter-column",
+      "suggestedId": "alter-table-test-testaltertable-0128-alter-table-t1a-alter-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE t1a ALTER COLUMN a SET DATA TYPE INT8, ALTER COLUMN b SET DATA TYPE TEXT;",
+      "querySha256": "a9f04f712856544ed3c02e0df2090e06240edcfa124e6a0fcddb3a9d275b5580",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0129",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 129,
+      "scriptName": "ALTER TABLE SET DATA TYPE with table types",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0129-select-*-from-t2",
+      "suggestedId": "alter-table-test-testaltertable-0129-select-*-from-t2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM t2;",
+      "querySha256": "4cca2c8c0018c1898b41584c73e1a45f20b923e803a8639f5977973176d7ba92",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "(def,3)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0130",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 130,
+      "scriptName": "ALTER TABLE SET/DROP NOT NULL with table types",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0130-select-*-from-t2",
+      "suggestedId": "alter-table-test-testaltertable-0130-select-*-from-t2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM t2;",
+      "querySha256": "4cca2c8c0018c1898b41584c73e1a45f20b923e803a8639f5977973176d7ba92",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "(2,abc)"
+          },
+          {
+            "value": "(def,3)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0131",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 131,
+      "scriptName": "ALTER TABLE SET/DROP NOT NULL with table types",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0131-alter-table-t1a-alter-column",
+      "suggestedId": "alter-table-test-testaltertable-0131-alter-table-t1a-alter-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE t1a ALTER COLUMN a SET NOT NULL;",
+      "querySha256": "16a14b6f0074157a0bb746b2ad18d85acc1618be27675a48dc02a680aec7dfcf",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0132",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 132,
+      "scriptName": "ALTER TABLE SET/DROP NOT NULL with table types",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0132-alter-table-t1b-alter-column",
+      "suggestedId": "alter-table-test-testaltertable-0132-alter-table-t1b-alter-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE t1b ALTER COLUMN b SET NOT NULL, ALTER COLUMN a SET NOT NULL;",
+      "querySha256": "e614cc2439957abc6607ebdd6d45b18869e38f5bb88e69bf51b6f55024df0888",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0133",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 133,
+      "scriptName": "ALTER TABLE SET/DROP NOT NULL with table types",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0133-insert-into-t1a-values-null",
+      "suggestedId": "alter-table-test-testaltertable-0133-insert-into-t1a-values-null",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23502",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO t1a VALUES (NULL, 'hi');",
+      "querySha256": "0e971c1a1519e6212fadaf6b7a9679af7c6a38fce2560a37c1e4a80f2a063697",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0134",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 134,
+      "scriptName": "ALTER TABLE SET/DROP NOT NULL with table types",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0134-insert-into-t2-values-4",
+      "suggestedId": "alter-table-test-testaltertable-0134-insert-into-t2-values-4",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO t2 VALUES (4, ROW(NULL, 'ghi'), ROW(NULL, 6));",
+      "querySha256": "890631571409c19a1c08b1edbe3b0af605ff5646eceddf03004a9c18b25d1142",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0135",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 135,
+      "scriptName": "ALTER TABLE SET/DROP NOT NULL with table types",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0135-select-*-from-t2",
+      "suggestedId": "alter-table-test-testaltertable-0135-select-*-from-t2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM t2;",
+      "querySha256": "4cca2c8c0018c1898b41584c73e1a45f20b923e803a8639f5977973176d7ba92",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "(2,abc)"
+          },
+          {
+            "value": "(def,3)"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "(,ghi)"
+          },
+          {
+            "value": "(,6)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0136",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 136,
+      "scriptName": "ALTER TABLE SET/DROP NOT NULL with table types",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0136-alter-table-t1b-alter-column",
+      "suggestedId": "alter-table-test-testaltertable-0136-alter-table-t1b-alter-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE t1b ALTER COLUMN b DROP NOT NULL, ALTER COLUMN a DROP NOT NULL;",
+      "querySha256": "e511f13cb724d37b66d12b0f5f0cfa6afdbf43e32c390f4927bab572cf5dd88a",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0137",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 137,
+      "scriptName": "ALTER TABLE SET/DROP NOT NULL with table types",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0137-select-*-from-t2",
+      "suggestedId": "alter-table-test-testaltertable-0137-select-*-from-t2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM t2;",
+      "querySha256": "4cca2c8c0018c1898b41584c73e1a45f20b923e803a8639f5977973176d7ba92",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "(2,abc)"
+          },
+          {
+            "value": "(def,3)"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "(,ghi)"
+          },
+          {
+            "value": "(,6)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0138",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 138,
+      "scriptName": "ALTER TABLE RENAME on view",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0138-alter-table-attmp_view-rename-to",
+      "suggestedId": "alter-table-test-testaltertable-0138-alter-table-attmp_view-rename-to",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE attmp_view RENAME TO attmp_view_new;",
+      "querySha256": "bd672a672e3438a7dae32867f58f3d4b2c14265ab963a4782158772d7c6e7995",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0139",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 139,
+      "scriptName": "ALTER TABLE IF EXISTS",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0139-alter-table-if-exists-t1a",
+      "suggestedId": "alter-table-test-testaltertable-0139-alter-table-if-exists-t1a",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE IF EXISTS t1a ALTER COLUMN a SET NOT NULL;",
+      "querySha256": "48a63a711b4e180d23967763e2630be5aa14d058001a18369643a8f653012b93",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0140",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 140,
+      "scriptName": "ALTER TABLE with schema defined that is not the current schema",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0140-alter-table-only-grassroots.users-add",
+      "suggestedId": "alter-table-test-testaltertable-0140-alter-table-only-grassroots.users-add",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE ONLY grassroots.users ADD CONSTRAINT users_email_key UNIQUE (email);",
+      "querySha256": "35eddef5d34d46c57696c3bc6bf53766ec7fc8313555c9e5c1315b9fb273527c",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0141",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 141,
+      "scriptName": "setting foreign key to SET NULL on NOT NULL defined column",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0141-alter-table-only-public.products-add",
+      "suggestedId": "alter-table-test-testaltertable-0141-alter-table-only-public.products-add",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE ONLY public.products\n\t\t   ADD CONSTRAINT fk_category_id FOREIGN KEY (category_id) REFERENCES public.categories(category_id) ON UPDATE SET NULL ON DELETE SET NULL;",
+      "querySha256": "fc6f716ba18259a8f4ac8dbb268908787ffc13bdf1d3335f4d806a0ccd7b3f7a",
+      "expectedRows": [],
+      "cleanup": [
+        "DROP TABLE IF EXISTS public.products CASCADE",
+        "DROP TABLE IF EXISTS public.categories CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0142",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 142,
+      "scriptName": "setting foreign key to SET NULL on NOT NULL defined column",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0142-delete-from-categories-where-category_id",
+      "suggestedId": "alter-table-test-testaltertable-0142-delete-from-categories-where-category_id",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23502",
+      "errorSeverity": "ERROR",
+      "query": "DELETE FROM categories WHERE category_id = 1;",
+      "querySha256": "0c7b7b4d62e090eef69584f554e2545a0867f012740ed651891b5884ea81a01a",
+      "cleanup": [
+        "DROP TABLE IF EXISTS public.products CASCADE",
+        "DROP TABLE IF EXISTS public.categories CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0143",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 143,
+      "scriptName": "use double quoted column name for SET DEFAULT",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0143-alter-table-only-pages_links-alter",
+      "suggestedId": "alter-table-test-testaltertable-0143-alter-table-only-pages_links-alter",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE ONLY pages_links ALTER COLUMN \"idRefferer\" SET DEFAULT nextval('pages_links_idrefferer_seq'::regclass);",
+      "querySha256": "fdc8999dadec300305e4c679a2a58854de546209f415ce1a6201cbac5f79bba0",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0144",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 144,
+      "scriptName": "use double quoted column name for SET DEFAULT",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0144-insert-into-pages_links-iddestination-values",
+      "suggestedId": "alter-table-test-testaltertable-0144-insert-into-pages_links-iddestination-values",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO pages_links (\"idDestination\") VALUES (1);",
+      "querySha256": "37b3251f03e61da45803544209b2f35599c20b0bac39ac38cbe77d39b13cb238",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0145",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 145,
+      "scriptName": "use double quoted column name for SET DEFAULT",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0145-select-idrefferer-::text-iddestination-::text",
+      "suggestedId": "alter-table-test-testaltertable-0145-select-idrefferer-::text-iddestination-::text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT \"idRefferer\"::text, \"idDestination\"::text FROM pages_links;",
+      "querySha256": "6a27344fbeedffd9f8d57fe0e7fa67a0315f526c062a0cc5e3ea3cec3284243f",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/alter_table_test.go:TestAlterTable#0146",
+      "source": "testing/go/postgres16/alter_table_test.go:TestAlterTable",
+      "ordinal": 146,
+      "scriptName": "foreign key names can be the same but should be on different tables",
+      "oracle": "postgres",
+      "postgresId": "alter-table-test-testaltertable-0146-alter-table-only-public.boards-add",
+      "suggestedId": "alter-table-test-testaltertable-0146-alter-table-only-public.boards-add",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE ONLY public.boards\n    ADD CONSTRAINT fk_project_id FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;",
+      "querySha256": "95d0fa9caf9bb383aedc1e0dfec266ed584251db44c0b7c62925a9f4260654b4",
+      "expectedRows": [],
+      "cleanup": [
+        "DROP TABLE IF EXISTS public.boards CASCADE",
+        "DROP TABLE IF EXISTS public.project_assignments CASCADE",
+        "DROP TABLE IF EXISTS public.projects CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
+    }
+  ]
+}

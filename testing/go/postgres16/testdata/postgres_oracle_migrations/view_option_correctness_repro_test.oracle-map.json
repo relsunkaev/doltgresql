@@ -1,0 +1,142 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map view_option_correctness_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/view_option_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/view_option_correctness_repro_test.go:TestCreateViewSecurityBarrierPersistsReloptionRepro#0001",
+      "source": "testing/go/postgres16/view_option_correctness_repro_test.go:TestCreateViewSecurityBarrierPersistsReloptionRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE VIEW security_barrier persists reloption",
+      "oracle": "postgres",
+      "postgresId": "view-option-correctness-repro-test-testcreateviewsecuritybarrierpersistsreloptionrepro-0001-select-cast-reloptions-as-text",
+      "suggestedId": "view-option-correctness-repro-test-testcreateviewsecuritybarrierpersistsreloptionrepro-0001-select-cast-reloptions-as-text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT CAST(reloptions AS TEXT)\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE relname = 'security_barrier_view';",
+      "querySha256": "ce396d7bffa2d9d0c6e81d417cacca193059bf5a158925ea627750ce573f8aa5",
+      "expectedRows": [
+        [
+          {
+            "value": "{security_barrier=true}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/view_option_correctness_repro_test.go:TestCreateViewSecurityInvokerPersistsReloptionRepro#0001",
+      "source": "testing/go/postgres16/view_option_correctness_repro_test.go:TestCreateViewSecurityInvokerPersistsReloptionRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE VIEW security_invoker persists reloption",
+      "oracle": "postgres",
+      "postgresId": "view-option-correctness-repro-test-testcreateviewsecurityinvokerpersistsreloptionrepro-0001-select-cast-reloptions-as-text",
+      "suggestedId": "view-option-correctness-repro-test-testcreateviewsecurityinvokerpersistsreloptionrepro-0001-select-cast-reloptions-as-text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT CAST(reloptions AS TEXT)\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE relname = 'security_invoker_metadata_view';",
+      "querySha256": "f063b03e04c1a7bf6f142a3a5c6b034e3105d98ed42c0c074d3fbf0634102a6c",
+      "expectedRows": [
+        [
+          {
+            "value": "{security_invoker=true}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/view_option_correctness_repro_test.go:TestCreateViewBareSecurityOptionsPersistTrueReloptionsRepro#0001",
+      "source": "testing/go/postgres16/view_option_correctness_repro_test.go:TestCreateViewBareSecurityOptionsPersistTrueReloptionsRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE VIEW bare security options persist true reloptions",
+      "oracle": "postgres",
+      "postgresId": "view-option-correctness-repro-test-testcreateviewbaresecurityoptionspersisttruereloptionsrepro-0001-select-relname-cast-reloptions-as",
+      "suggestedId": "view-option-correctness-repro-test-testcreateviewbaresecurityoptionspersisttruereloptionsrepro-0001-select-relname-cast-reloptions-as",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT relname, CAST(reloptions AS TEXT)\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE relname IN (\n\t\t\t\t\t\t\t'bare_security_barrier_view',\n\t\t\t\t\t\t\t'bare_security_invoker_view'\n\t\t\t\t\t\t)\n\t\t\t\t\t\tORDER BY relname;",
+      "querySha256": "a1e822c416d41bdd6cdd08ec61bcb2041a5bed1cdeb4b381105b4a8e3dfa9f5a",
+      "expectedRows": [
+        [
+          {
+            "value": "bare_security_barrier_view"
+          },
+          {
+            "value": "{security_barrier=true}"
+          }
+        ],
+        [
+          {
+            "value": "bare_security_invoker_view"
+          },
+          {
+            "value": "{security_invoker=true}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/view_option_correctness_repro_test.go:TestCreateOrReplaceViewSecurityInvokerPersistsReloptionRepro#0001",
+      "source": "testing/go/postgres16/view_option_correctness_repro_test.go:TestCreateOrReplaceViewSecurityInvokerPersistsReloptionRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE OR REPLACE VIEW security_invoker persists reloption",
+      "oracle": "postgres",
+      "postgresId": "view-option-correctness-repro-test-testcreateorreplaceviewsecurityinvokerpersistsreloptionrepro-0001-select-cast-reloptions-as-text",
+      "suggestedId": "view-option-correctness-repro-test-testcreateorreplaceviewsecurityinvokerpersistsreloptionrepro-0001-select-cast-reloptions-as-text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT CAST(reloptions AS TEXT)\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE relname = 'replace_invoker_metadata_view';",
+      "querySha256": "2a54015aa5f7b6fee72a31010823daa61bc19cb36d33a9337412e94a9a637f88",
+      "expectedRows": [
+        [
+          {
+            "value": "{security_invoker=true}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/view_option_correctness_repro_test.go:TestCreateViewCheckOptionPersistsMetadataRepro#0001",
+      "source": "testing/go/postgres16/view_option_correctness_repro_test.go:TestCreateViewCheckOptionPersistsMetadataRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE VIEW WITH LOCAL CHECK OPTION persists metadata",
+      "oracle": "internal",
+      "suggestedId": "view-option-correctness-repro-test-testcreateviewcheckoptionpersistsmetadatarepro-0001-select-check_option-from-information_schema.views-where",
+      "expectedKind": "rows",
+      "query": "SELECT check_option\n\t\t\t\t\t\tFROM information_schema.views\n\t\t\t\t\t\tWHERE table_schema = 'public'\n\t\t\t\t\t\t\tAND table_name = 'check_option_positive';",
+      "querySha256": "64c2b736b16830180ead6e9e29b3baa8fc30cfd241ea6fb0a15fbc910f9b2bef",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/view_option_correctness_repro_test.go:TestCreateViewCheckOptionReloptionPersistsMetadataRepro#0001",
+      "source": "testing/go/postgres16/view_option_correctness_repro_test.go:TestCreateViewCheckOptionReloptionPersistsMetadataRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE VIEW WITH check_option reloption persists metadata",
+      "oracle": "internal",
+      "suggestedId": "view-option-correctness-repro-test-testcreateviewcheckoptionreloptionpersistsmetadatarepro-0001-select-check_option-from-information_schema.views-where",
+      "expectedKind": "rows",
+      "query": "SELECT check_option\n\t\t\t\t\t\tFROM information_schema.views\n\t\t\t\t\t\tWHERE table_schema = 'public'\n\t\t\t\t\t\t\tAND table_name = 'check_option_reloption_positive';",
+      "querySha256": "4c452f39740a41772a3fb9f4018ce7fd3d04f05f9c02fb6307dd77bf0b43c8e1",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    }
+  ]
+}

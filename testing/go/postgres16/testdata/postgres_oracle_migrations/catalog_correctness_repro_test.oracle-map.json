@@ -1,0 +1,3220 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map catalog_correctness_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/catalog_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgClassNamespaceOidLookupDoesNotRequireWarmCacheRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgClassNamespaceOidLookupDoesNotRequireWarmCacheRepro",
+      "ordinal": 1,
+      "scriptName": "pg_class namespace OID lookup does not require warmed cache",
+      "oracle": "internal",
+      "suggestedId": "catalog-correctness-repro-test-testpgclassnamespaceoidlookupdoesnotrequirewarmcacherepro-0001-select-c.relname-from-pg_catalog.pg_class-c",
+      "expectedKind": "rows",
+      "query": "SELECT c.relname\n\t\t\t\t\t\tFROM pg_catalog.pg_class c\n\t\t\t\t\t\tWHERE c.relnamespace = 2638679668\n\t\t\t\t\t\t\tAND c.relname = 'testtable';",
+      "querySha256": "2ab197ebd7fca35bbf9bb871d5f94cafd802429b14e08454096a32af348fb2a7",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedSchemaNamesAreCaseSensitiveRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedSchemaNamesAreCaseSensitiveRepro",
+      "ordinal": 1,
+      "scriptName": "quoted schema names remain distinct from folded unquoted names",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testquotedschemanamesarecasesensitiverepro-0001-create-schema-caseschema",
+      "suggestedId": "catalog-correctness-repro-test-testquotedschemanamesarecasesensitiverepro-0001-create-schema-caseschema",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE SCHEMA caseschema;",
+      "querySha256": "62e2f1d9c3aed5d5a87ae9d7ed18a567dd7d17f2922721484260946680d36ce2",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedSchemaNamesAreCaseSensitiveRepro#0002",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedSchemaNamesAreCaseSensitiveRepro",
+      "ordinal": 2,
+      "scriptName": "quoted schema names remain distinct from folded unquoted names",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testquotedschemanamesarecasesensitiverepro-0002-select-nspname-from-pg_catalog.pg_namespace-where",
+      "suggestedId": "catalog-correctness-repro-test-testquotedschemanamesarecasesensitiverepro-0002-select-nspname-from-pg_catalog.pg_namespace-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT nspname\n\t\t\t\t\t\tFROM pg_catalog.pg_namespace\n\t\t\t\t\t\tWHERE nspname IN ('CaseSchema', 'caseschema')\n\t\t\t\t\t\tORDER BY nspname;",
+      "querySha256": "52f306ad3d232873ad04919c614ed122e6772bf79172f866a6cdbf5bb1225050",
+      "expectedRows": [
+        [
+          {
+            "value": "CaseSchema"
+          }
+        ],
+        [
+          {
+            "value": "caseschema"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedDatabaseNamesAreCaseSensitiveRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedDatabaseNamesAreCaseSensitiveRepro",
+      "ordinal": 1,
+      "scriptName": "quoted database names remain distinct from folded unquoted names",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testquoteddatabasenamesarecasesensitiverepro-0001-create-database-casedatabase",
+      "suggestedId": "catalog-correctness-repro-test-testquoteddatabasenamesarecasesensitiverepro-0001-create-database-casedatabase",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE DATABASE \"CaseDatabase\";",
+      "querySha256": "f5d3755919f7150ce511af16ee3c21fa3f5d53a0b7f9514ec5c249820d72d298",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedDatabaseNamesAreCaseSensitiveRepro#0002",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedDatabaseNamesAreCaseSensitiveRepro",
+      "ordinal": 2,
+      "scriptName": "quoted database names remain distinct from folded unquoted names",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testquoteddatabasenamesarecasesensitiverepro-0002-create-database-casedatabase",
+      "suggestedId": "catalog-correctness-repro-test-testquoteddatabasenamesarecasesensitiverepro-0002-create-database-casedatabase",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE DATABASE casedatabase;",
+      "querySha256": "18c41b2c718ec7b164c496dcc87b41e051861f5394276abab623b1c2a5d54b12",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedDatabaseNamesAreCaseSensitiveRepro#0003",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedDatabaseNamesAreCaseSensitiveRepro",
+      "ordinal": 3,
+      "scriptName": "quoted database names remain distinct from folded unquoted names",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testquoteddatabasenamesarecasesensitiverepro-0003-select-datname-from-pg_catalog.pg_database-where",
+      "suggestedId": "catalog-correctness-repro-test-testquoteddatabasenamesarecasesensitiverepro-0003-select-datname-from-pg_catalog.pg_database-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT datname\n\t\t\t\t\t\tFROM pg_catalog.pg_database\n\t\t\t\t\t\tWHERE datname IN ('CaseDatabase', 'casedatabase')\n\t\t\t\t\t\tORDER BY datname;",
+      "querySha256": "1bc83f292f6de6939d11647f1863b6d230c0292ff5f4f15b46e3d823024fdeaf",
+      "expectedRows": [
+        [
+          {
+            "value": "CaseDatabase"
+          }
+        ],
+        [
+          {
+            "value": "casedatabase"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedTableNamesAreCaseSensitiveRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedTableNamesAreCaseSensitiveRepro",
+      "ordinal": 1,
+      "scriptName": "quoted table names remain distinct from folded unquoted names",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testquotedtablenamesarecasesensitiverepro-0001-create-table-casetable-id-int",
+      "suggestedId": "catalog-correctness-repro-test-testquotedtablenamesarecasesensitiverepro-0001-create-table-casetable-id-int",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE TABLE casetable (id INT PRIMARY KEY, label TEXT);",
+      "querySha256": "60b398b8724626a33e413469e58d150aa6a04a490e3cfe9d353fec82cada04ef",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedTableNamesAreCaseSensitiveRepro#0002",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedTableNamesAreCaseSensitiveRepro",
+      "ordinal": 2,
+      "scriptName": "quoted table names remain distinct from folded unquoted names",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testquotedtablenamesarecasesensitiverepro-0002-insert-into-casetable-values-2",
+      "suggestedId": "catalog-correctness-repro-test-testquotedtablenamesarecasesensitiverepro-0002-insert-into-casetable-values-2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO casetable VALUES (2, 'folded');",
+      "querySha256": "969df696798a699852a6bc325713f26dbc044a305704b168d5764a1641cd248c",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedTableNamesAreCaseSensitiveRepro#0003",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedTableNamesAreCaseSensitiveRepro",
+      "ordinal": 3,
+      "scriptName": "quoted table names remain distinct from folded unquoted names",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testquotedtablenamesarecasesensitiverepro-0003-select-id-label-from-casetable",
+      "suggestedId": "catalog-correctness-repro-test-testquotedtablenamesarecasesensitiverepro-0003-select-id-label-from-casetable",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label FROM \"CaseTable\" ORDER BY id;",
+      "querySha256": "d826df874e0c292480ef26391310caa2dc9b5f8ae60438e502a873e78937184f",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "quoted"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedTableNamesAreCaseSensitiveRepro#0004",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedTableNamesAreCaseSensitiveRepro",
+      "ordinal": 4,
+      "scriptName": "quoted table names remain distinct from folded unquoted names",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testquotedtablenamesarecasesensitiverepro-0004-select-id-label-from-casetable",
+      "suggestedId": "catalog-correctness-repro-test-testquotedtablenamesarecasesensitiverepro-0004-select-id-label-from-casetable",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label FROM casetable ORDER BY id;",
+      "querySha256": "74f74cd583bea0d8258616469e11927894779c7683ef84f5096178b0011aa445",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "folded"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedTableNamesAreCaseSensitiveRepro#0005",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedTableNamesAreCaseSensitiveRepro",
+      "ordinal": 5,
+      "scriptName": "quoted table names remain distinct from folded unquoted names",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testquotedtablenamesarecasesensitiverepro-0005-select-relname-from-pg_catalog.pg_class-where",
+      "suggestedId": "catalog-correctness-repro-test-testquotedtablenamesarecasesensitiverepro-0005-select-relname-from-pg_catalog.pg_class-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT relname\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE relnamespace = current_schema()::regnamespace\n\t\t\t\t\t\t\tAND relname IN ('CaseTable', 'casetable')\n\t\t\t\t\t\tORDER BY relname;",
+      "querySha256": "10034db0153d78e0f12855b4f482dee50a27302e83b044a26b6e2193bf63c400",
+      "expectedRows": [
+        [
+          {
+            "value": "CaseTable"
+          }
+        ],
+        [
+          {
+            "value": "casetable"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedViewNamesAreCaseSensitiveRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedViewNamesAreCaseSensitiveRepro",
+      "ordinal": 1,
+      "scriptName": "quoted view names remain distinct from folded unquoted names",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testquotedviewnamesarecasesensitiverepro-0001-create-view-caseview-as-select",
+      "suggestedId": "catalog-correctness-repro-test-testquotedviewnamesarecasesensitiverepro-0001-create-view-caseview-as-select",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE VIEW caseview AS\n\t\t\t\t\t\tSELECT id, label FROM quoted_view_source WHERE id = 2;",
+      "querySha256": "9af25911032c5ff789c80baa64c43195284e7c9509248e33cb9e82e152b336e0",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedViewNamesAreCaseSensitiveRepro#0002",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedViewNamesAreCaseSensitiveRepro",
+      "ordinal": 2,
+      "scriptName": "quoted view names remain distinct from folded unquoted names",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testquotedviewnamesarecasesensitiverepro-0002-select-id-label-from-caseview",
+      "suggestedId": "catalog-correctness-repro-test-testquotedviewnamesarecasesensitiverepro-0002-select-id-label-from-caseview",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label FROM \"CaseView\";",
+      "querySha256": "83419392cb5ff226abad0028131f95095f79804a28c65aa4777a3e7d72dc59ee",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "quoted"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedViewNamesAreCaseSensitiveRepro#0003",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedViewNamesAreCaseSensitiveRepro",
+      "ordinal": 3,
+      "scriptName": "quoted view names remain distinct from folded unquoted names",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testquotedviewnamesarecasesensitiverepro-0003-select-id-label-from-caseview",
+      "suggestedId": "catalog-correctness-repro-test-testquotedviewnamesarecasesensitiverepro-0003-select-id-label-from-caseview",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label FROM caseview;",
+      "querySha256": "2f183f8c143e9ec52d9b20987a85ab4468c19156d391633ae66247e6997495f4",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "folded"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedViewNamesAreCaseSensitiveRepro#0004",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedViewNamesAreCaseSensitiveRepro",
+      "ordinal": 4,
+      "scriptName": "quoted view names remain distinct from folded unquoted names",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testquotedviewnamesarecasesensitiverepro-0004-select-relname-from-pg_catalog.pg_class-where",
+      "suggestedId": "catalog-correctness-repro-test-testquotedviewnamesarecasesensitiverepro-0004-select-relname-from-pg_catalog.pg_class-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT relname\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE relnamespace = current_schema()::regnamespace\n\t\t\t\t\t\t\tAND relkind = 'v'\n\t\t\t\t\t\t\tAND relname IN ('CaseView', 'caseview')\n\t\t\t\t\t\tORDER BY relname;",
+      "querySha256": "0e2715e29928029d25ff1b072c966547e168a8497b8bc0360b8505fe16cdc85e",
+      "expectedRows": [
+        [
+          {
+            "value": "CaseView"
+          }
+        ],
+        [
+          {
+            "value": "caseview"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedMaterializedViewNamesAreCaseSensitiveRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedMaterializedViewNamesAreCaseSensitiveRepro",
+      "ordinal": 1,
+      "scriptName": "quoted materialized view names remain distinct from folded unquoted names",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testquotedmaterializedviewnamesarecasesensitiverepro-0001-create-materialized-view-casematview-as",
+      "suggestedId": "catalog-correctness-repro-test-testquotedmaterializedviewnamesarecasesensitiverepro-0001-create-materialized-view-casematview-as",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE MATERIALIZED VIEW casematview AS\n\t\t\t\t\t\tSELECT id, label FROM quoted_matview_source WHERE id = 2;",
+      "querySha256": "a32225e72544e04fcde54d8af15a1e9d805ab2a1db4e5d3cfcaa77792ba43972",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedMaterializedViewNamesAreCaseSensitiveRepro#0002",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedMaterializedViewNamesAreCaseSensitiveRepro",
+      "ordinal": 2,
+      "scriptName": "quoted materialized view names remain distinct from folded unquoted names",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testquotedmaterializedviewnamesarecasesensitiverepro-0002-select-id-label-from-casematview",
+      "suggestedId": "catalog-correctness-repro-test-testquotedmaterializedviewnamesarecasesensitiverepro-0002-select-id-label-from-casematview",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label FROM \"CaseMatView\";",
+      "querySha256": "fc65781be9139cd2d64b1212c1dd48e094d32a3c6604d8c379bfdf33db088416",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "quoted"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedMaterializedViewNamesAreCaseSensitiveRepro#0003",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedMaterializedViewNamesAreCaseSensitiveRepro",
+      "ordinal": 3,
+      "scriptName": "quoted materialized view names remain distinct from folded unquoted names",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testquotedmaterializedviewnamesarecasesensitiverepro-0003-select-id-label-from-casematview",
+      "suggestedId": "catalog-correctness-repro-test-testquotedmaterializedviewnamesarecasesensitiverepro-0003-select-id-label-from-casematview",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label FROM casematview;",
+      "querySha256": "880a7f441196aa1976276af46bdefaae05a36da5ad0aacf462dd693fafa456d7",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "folded"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedMaterializedViewNamesAreCaseSensitiveRepro#0004",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedMaterializedViewNamesAreCaseSensitiveRepro",
+      "ordinal": 4,
+      "scriptName": "quoted materialized view names remain distinct from folded unquoted names",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testquotedmaterializedviewnamesarecasesensitiverepro-0004-select-relname-from-pg_catalog.pg_class-where",
+      "suggestedId": "catalog-correctness-repro-test-testquotedmaterializedviewnamesarecasesensitiverepro-0004-select-relname-from-pg_catalog.pg_class-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT relname\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE relnamespace = current_schema()::regnamespace\n\t\t\t\t\t\t\tAND relkind = 'm'\n\t\t\t\t\t\t\tAND relname IN ('CaseMatView', 'casematview')\n\t\t\t\t\t\tORDER BY relname;",
+      "querySha256": "db867f8946aef3abac5145ed80de81ec8a7c45bd18c8137d4a79a0235130422d",
+      "expectedRows": [
+        [
+          {
+            "value": "CaseMatView"
+          }
+        ],
+        [
+          {
+            "value": "casematview"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedSequenceNamesAreCaseSensitive#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedSequenceNamesAreCaseSensitive",
+      "ordinal": 1,
+      "scriptName": "quoted sequence names remain distinct from folded unquoted names",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testquotedsequencenamesarecasesensitive-0001-create-sequence-casesequence",
+      "suggestedId": "catalog-correctness-repro-test-testquotedsequencenamesarecasesensitive-0001-create-sequence-casesequence",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE SEQUENCE casesequence;",
+      "querySha256": "a1c2177aad12db03701b4d68ab5805ecbdaacf66fa833a1635d85f0dab2ff1af",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedSequenceNamesAreCaseSensitive#0002",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedSequenceNamesAreCaseSensitive",
+      "ordinal": 2,
+      "scriptName": "quoted sequence names remain distinct from folded unquoted names",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testquotedsequencenamesarecasesensitive-0002-select-relname-from-pg_catalog.pg_class-where",
+      "suggestedId": "catalog-correctness-repro-test-testquotedsequencenamesarecasesensitive-0002-select-relname-from-pg_catalog.pg_class-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT relname\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE relnamespace = current_schema()::regnamespace\n\t\t\t\t\t\t\tAND relkind = 'S'\n\t\t\t\t\t\t\tAND relname IN ('CaseSequence', 'casesequence')\n\t\t\t\t\t\tORDER BY relname;",
+      "querySha256": "ed22c4a2d28e67e88f664f680ccb51bf8181fe9a4ab8971d14815eb04c273ebf",
+      "expectedRows": [
+        [
+          {
+            "value": "CaseSequence"
+          }
+        ],
+        [
+          {
+            "value": "casesequence"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedColumnNamesAreCaseSensitiveRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedColumnNamesAreCaseSensitiveRepro",
+      "ordinal": 1,
+      "scriptName": "quoted column names remain distinct from folded unquoted names",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testquotedcolumnnamesarecasesensitiverepro-0001-select-casecolumn-casecolumn-from-quoted_column_items",
+      "suggestedId": "catalog-correctness-repro-test-testquotedcolumnnamesarecasesensitiverepro-0001-select-casecolumn-casecolumn-from-quoted_column_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT \"CaseColumn\", casecolumn FROM quoted_column_items;",
+      "querySha256": "c2a07730b379b2c8c8e9ad45b2114722c89fba482503f01253f413444e444109",
+      "expectedRows": [
+        [
+          {
+            "value": "quoted"
+          },
+          {
+            "value": "folded"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedColumnNamesAreCaseSensitiveRepro#0002",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedColumnNamesAreCaseSensitiveRepro",
+      "ordinal": 2,
+      "scriptName": "quoted column names remain distinct from folded unquoted names",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testquotedcolumnnamesarecasesensitiverepro-0002-select-attname-from-pg_catalog.pg_attribute-where",
+      "suggestedId": "catalog-correctness-repro-test-testquotedcolumnnamesarecasesensitiverepro-0002-select-attname-from-pg_catalog.pg_attribute-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT attname\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute\n\t\t\t\t\t\tWHERE attrelid = 'quoted_column_items'::regclass\n\t\t\t\t\t\t\tAND attname IN ('CaseColumn', 'casecolumn')\n\t\t\t\t\t\tORDER BY attname;",
+      "querySha256": "d02f4e444c3a0e9684016fb34dac91d1b5a1846f1b1cac8d177099d7f469325e",
+      "expectedRows": [
+        [
+          {
+            "value": "CaseColumn"
+          }
+        ],
+        [
+          {
+            "value": "casecolumn"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedColumnNamesAreCaseSensitiveRepro#0003",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedColumnNamesAreCaseSensitiveRepro",
+      "ordinal": 3,
+      "scriptName": "quoted column names remain distinct from folded unquoted names",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testquotedcolumnnamesarecasesensitiverepro-0003-select-column_name-from-information_schema.columns-where",
+      "suggestedId": "catalog-correctness-repro-test-testquotedcolumnnamesarecasesensitiverepro-0003-select-column_name-from-information_schema.columns-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT column_name\n\t\t\t\t\t\tFROM information_schema.columns\n\t\t\t\t\t\tWHERE table_name = 'quoted_column_items'\n\t\t\t\t\t\t\tAND column_name IN ('CaseColumn', 'casecolumn')\n\t\t\t\t\t\tORDER BY column_name;",
+      "querySha256": "87b3fa12596e4a8d5218364945bf9b094f42b16ef859fa94834a74aa3531464e",
+      "expectedRows": [
+        [
+          {
+            "value": "CaseColumn"
+          }
+        ],
+        [
+          {
+            "value": "casecolumn"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestDroppedColumnRemainsInPgAttributeRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestDroppedColumnRemainsInPgAttributeRepro",
+      "ordinal": 1,
+      "scriptName": "dropped columns remain in pg_attribute",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testdroppedcolumnremainsinpgattributerepro-0001-select-attnum::text-attisdropped::text-case-when",
+      "suggestedId": "catalog-correctness-repro-test-testdroppedcolumnremainsinpgattributerepro-0001-select-attnum::text-attisdropped::text-case-when",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT attnum::TEXT,\n\t\t\t\t\t\t\tattisdropped::TEXT,\n\t\t\t\t\t\t\tCASE WHEN attisdropped THEN 'dropped' ELSE attname END\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute\n\t\t\t\t\t\tWHERE attrelid = 'dropped_column_metadata_items'::regclass\n\t\t\t\t\t\t\tAND attnum > 0\n\t\t\t\t\t\tORDER BY attnum;",
+      "querySha256": "6b1549196479e86f9de2f3664e3e2ccdb2d3152562bfa5025a8d7fdd86051ff3",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "false"
+          },
+          {
+            "value": "a"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "true"
+          },
+          {
+            "value": "dropped"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "false"
+          },
+          {
+            "value": "c"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgAttributePhysicalTypeMetadataRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgAttributePhysicalTypeMetadataRepro",
+      "ordinal": 1,
+      "scriptName": "pg_attribute exposes type-specific physical metadata",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpgattributephysicaltypemetadatarepro-0001-select-attname-attlen::text-attbyval::text-attalign",
+      "suggestedId": "catalog-correctness-repro-test-testpgattributephysicaltypemetadatarepro-0001-select-attname-attlen::text-attbyval::text-attalign",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT attname,\n\t\t\t\t\t\t\tattlen::TEXT,\n\t\t\t\t\t\t\tattbyval::TEXT,\n\t\t\t\t\t\t\tattalign,\n\t\t\t\t\t\t\tattstorage\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute\n\t\t\t\t\t\tWHERE attrelid = 'attribute_type_metadata_items'::regclass\n\t\t\t\t\t\t\tAND attnum > 0\n\t\t\t\t\t\tORDER BY attnum;",
+      "querySha256": "54136244b50d695d167b31a8fdaafe39dd5feb0911a872baeae49f04ee889245",
+      "expectedRows": [
+        [
+          {
+            "value": "i"
+          },
+          {
+            "value": "4"
+          },
+          {
+            "value": "true"
+          },
+          {
+            "value": "i"
+          },
+          {
+            "value": "p"
+          }
+        ],
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "-1"
+          },
+          {
+            "value": "false"
+          },
+          {
+            "value": "i"
+          },
+          {
+            "value": "x"
+          }
+        ],
+        [
+          {
+            "value": "b"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "true"
+          },
+          {
+            "value": "c"
+          },
+          {
+            "value": "p"
+          }
+        ],
+        [
+          {
+            "value": "n"
+          },
+          {
+            "value": "-1"
+          },
+          {
+            "value": "false"
+          },
+          {
+            "value": "i"
+          },
+          {
+            "value": "m"
+          }
+        ],
+        [
+          {
+            "value": "ts"
+          },
+          {
+            "value": "8"
+          },
+          {
+            "value": "true"
+          },
+          {
+            "value": "d"
+          },
+          {
+            "value": "p"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgAttributeMissingValueMetadataRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgAttributeMissingValueMetadataRepro",
+      "ordinal": 1,
+      "scriptName": "pg_attribute records missing value metadata",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpgattributemissingvaluemetadatarepro-0001-select-attname-atthasmissing::text-attmissingval::text-from",
+      "suggestedId": "catalog-correctness-repro-test-testpgattributemissingvaluemetadatarepro-0001-select-attname-atthasmissing::text-attmissingval::text-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT attname,\n\t\t\t\t\t\t\tatthasmissing::TEXT,\n\t\t\t\t\t\t\tattmissingval::TEXT\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute\n\t\t\t\t\t\tWHERE attrelid = 'attribute_missing_value_items'::regclass\n\t\t\t\t\t\t\tAND attname = 'marker';",
+      "querySha256": "ec2e79090c455adfb1d8e469f9caeaa8030caf56d4e78e2d3509daef26c55b32",
+      "expectedRows": [
+        [
+          {
+            "value": "marker"
+          },
+          {
+            "value": "true"
+          },
+          {
+            "value": "{7}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgAttributeMissingValueMetadataRepro#0002",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgAttributeMissingValueMetadataRepro",
+      "ordinal": 2,
+      "scriptName": "pg_attribute records missing value metadata",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpgattributemissingvaluemetadatarepro-0002-select-id-marker-from-attribute_missing_value_items",
+      "suggestedId": "catalog-correctness-repro-test-testpgattributemissingvaluemetadatarepro-0002-select-id-marker-from-attribute_missing_value_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, marker FROM attribute_missing_value_items;",
+      "querySha256": "a50906d03ce22f65605f46be5e90ea9df7402a5c542009efa32ad6b429fa03e1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgAttributeColumnAclMetadataRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgAttributeColumnAclMetadataRepro",
+      "ordinal": 1,
+      "scriptName": "pg_attribute records column ACL metadata",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpgattributecolumnaclmetadatarepro-0001-select-attname-attacl-is-null",
+      "suggestedId": "catalog-correctness-repro-test-testpgattributecolumnaclmetadatarepro-0001-select-attname-attacl-is-null",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT attname,\n\t\t\t\t\t\t\t(attacl IS NULL)::TEXT,\n\t\t\t\t\t\t\tCOALESCE(attacl::TEXT LIKE '{attribute_attacl_reader=r/%}', false)::TEXT\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute\n\t\t\t\t\t\tWHERE attrelid = 'attribute_attacl_items'::regclass\n\t\t\t\t\t\t\tAND attname IN ('id', 'secret')\n\t\t\t\t\t\tORDER BY attname;",
+      "querySha256": "203229f596c060afd233cd0d56dd8c70b2708a0c778822eaf1d987e5734fbbda",
+      "expectedRows": [
+        [
+          {
+            "value": "id"
+          },
+          {
+            "value": "true"
+          },
+          {
+            "value": "false"
+          }
+        ],
+        [
+          {
+            "value": "secret"
+          },
+          {
+            "value": "false"
+          },
+          {
+            "value": "true"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgAttributeColumnOptionsMetadataRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgAttributeColumnOptionsMetadataRepro",
+      "ordinal": 1,
+      "scriptName": "pg_attribute records column options metadata",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpgattributecolumnoptionsmetadatarepro-0001-select-attname-cast-attoptions-as",
+      "suggestedId": "catalog-correctness-repro-test-testpgattributecolumnoptionsmetadatarepro-0001-select-attname-cast-attoptions-as",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT attname, CAST(attoptions AS TEXT)\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute\n\t\t\t\t\t\tWHERE attrelid = 'attribute_options_items'::regclass\n\t\t\t\t\t\t\tAND attname = 'category';",
+      "querySha256": "1f2acf8c906df1755169a5eb41fc306ac8865bb42cf9b8f188bf936de57bbbd1",
+      "expectedRows": [
+        [
+          {
+            "value": "category"
+          },
+          {
+            "value": "{n_distinct=100,n_distinct_inherited=200}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedIndexNamesAreCaseSensitiveRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedIndexNamesAreCaseSensitiveRepro",
+      "ordinal": 1,
+      "scriptName": "quoted index names remain distinct from folded unquoted names",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testquotedindexnamesarecasesensitiverepro-0001-create-index-caseindex-on-quoted_index_items",
+      "suggestedId": "catalog-correctness-repro-test-testquotedindexnamesarecasesensitiverepro-0001-create-index-caseindex-on-quoted_index_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE INDEX caseindex ON quoted_index_items (second_label);",
+      "querySha256": "f58b1b049975f4e7dbe2e3a9259424971e5418c9b89b6bed76487de5e249932f",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedIndexNamesAreCaseSensitiveRepro#0002",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedIndexNamesAreCaseSensitiveRepro",
+      "ordinal": 2,
+      "scriptName": "quoted index names remain distinct from folded unquoted names",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testquotedindexnamesarecasesensitiverepro-0002-select-relname-from-pg_catalog.pg_class-where",
+      "suggestedId": "catalog-correctness-repro-test-testquotedindexnamesarecasesensitiverepro-0002-select-relname-from-pg_catalog.pg_class-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT relname\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE relnamespace = current_schema()::regnamespace\n\t\t\t\t\t\t\tAND relkind = 'i'\n\t\t\t\t\t\t\tAND relname IN ('CaseIndex', 'caseindex')\n\t\t\t\t\t\tORDER BY relname;",
+      "querySha256": "d0c661ad2a7293955cb99b9349221fbf6d0750bd7a29ed01b357f309c8175db4",
+      "expectedRows": [
+        [
+          {
+            "value": "CaseIndex"
+          }
+        ],
+        [
+          {
+            "value": "caseindex"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedConstraintNamesAreCaseSensitiveRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedConstraintNamesAreCaseSensitiveRepro",
+      "ordinal": 1,
+      "scriptName": "quoted constraint names remain distinct from folded unquoted names",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testquotedconstraintnamesarecasesensitiverepro-0001-alter-table-quoted_constraint_items-add-constraint",
+      "suggestedId": "catalog-correctness-repro-test-testquotedconstraintnamesarecasesensitiverepro-0001-alter-table-quoted_constraint_items-add-constraint",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE quoted_constraint_items\n\t\t\t\t\t\tADD CONSTRAINT caseconstraint CHECK (amount < 100);",
+      "querySha256": "3612fa0ac57c57c776668897a4cbbc0e849c4c638b8766d94058d540838efc17",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedConstraintNamesAreCaseSensitiveRepro#0002",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedConstraintNamesAreCaseSensitiveRepro",
+      "ordinal": 2,
+      "scriptName": "quoted constraint names remain distinct from folded unquoted names",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testquotedconstraintnamesarecasesensitiverepro-0002-select-conname-from-pg_catalog.pg_constraint-where",
+      "suggestedId": "catalog-correctness-repro-test-testquotedconstraintnamesarecasesensitiverepro-0002-select-conname-from-pg_catalog.pg_constraint-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT conname\n\t\t\t\t\t\tFROM pg_catalog.pg_constraint\n\t\t\t\t\t\tWHERE conrelid = 'quoted_constraint_items'::regclass\n\t\t\t\t\t\t\tAND conname IN ('CaseConstraint', 'caseconstraint')\n\t\t\t\t\t\tORDER BY conname;",
+      "querySha256": "93b60ed376e8c00af2208b8d9cc432f2bec4e0eddaa3508b71b46cf7a9c5bc26",
+      "expectedRows": [
+        [
+          {
+            "value": "CaseConstraint"
+          }
+        ],
+        [
+          {
+            "value": "caseconstraint"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedFunctionNamesAreCaseSensitiveRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedFunctionNamesAreCaseSensitiveRepro",
+      "ordinal": 1,
+      "scriptName": "quoted function names remain distinct from folded unquoted names",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testquotedfunctionnamesarecasesensitiverepro-0001-create-function-casefunction-value-integer",
+      "suggestedId": "catalog-correctness-repro-test-testquotedfunctionnamesarecasesensitiverepro-0001-create-function-casefunction-value-integer",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE FUNCTION casefunction(value integer)\n\t\t\t\t\t\tRETURNS integer\n\t\t\t\t\t\tLANGUAGE SQL\n\t\t\t\t\t\tAS $$ SELECT value + 2 $$;",
+      "querySha256": "c23fb8eceb60e2c2c31ec16d404c890b04044da5c5e30c9d86fa3ff5c14b0998",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedFunctionNamesAreCaseSensitiveRepro#0002",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedFunctionNamesAreCaseSensitiveRepro",
+      "ordinal": 2,
+      "scriptName": "quoted function names remain distinct from folded unquoted names",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testquotedfunctionnamesarecasesensitiverepro-0002-select-casefunction-10-casefunction-10",
+      "suggestedId": "catalog-correctness-repro-test-testquotedfunctionnamesarecasesensitiverepro-0002-select-casefunction-10-casefunction-10",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT \"CaseFunction\"(10), casefunction(10);",
+      "querySha256": "0d622dac5eebaf85d953e60468c759df4024a4769413f5c77cc3877bd22fe1e3",
+      "expectedRows": [
+        [
+          {
+            "value": "11"
+          },
+          {
+            "value": "12"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedProcedureNamesAreCaseSensitiveRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedProcedureNamesAreCaseSensitiveRepro",
+      "ordinal": 1,
+      "scriptName": "quoted procedure names remain distinct from folded unquoted names",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testquotedprocedurenamesarecasesensitiverepro-0001-create-procedure-caseprocedure-input-text",
+      "suggestedId": "catalog-correctness-repro-test-testquotedprocedurenamesarecasesensitiverepro-0001-create-procedure-caseprocedure-input-text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE PROCEDURE caseprocedure(input TEXT)\n\t\t\t\t\t\tLANGUAGE plpgsql\n\t\t\t\t\t\tAS $$\n\t\t\t\t\t\tBEGIN\n\t\t\t\t\t\t\tINSERT INTO quoted_procedure_calls VALUES ('folded:' || input);\n\t\t\t\t\t\tEND;\n\t\t\t\t\t\t$$;",
+      "querySha256": "51bb552dcbd145d27c2b9e4b30fd0b0520be0f2aadff807287f2c12eec253b6c",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedProcedureNamesAreCaseSensitiveRepro#0002",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedProcedureNamesAreCaseSensitiveRepro",
+      "ordinal": 2,
+      "scriptName": "quoted procedure names remain distinct from folded unquoted names",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testquotedprocedurenamesarecasesensitiverepro-0002-call-caseprocedure-one",
+      "suggestedId": "catalog-correctness-repro-test-testquotedprocedurenamesarecasesensitiverepro-0002-call-caseprocedure-one",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CALL \"CaseProcedure\"('one');",
+      "querySha256": "f2f443da88f2f7cc04760baf1ba4624c0742f174992201516f327976948c0aa0",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedProcedureNamesAreCaseSensitiveRepro#0003",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedProcedureNamesAreCaseSensitiveRepro",
+      "ordinal": 3,
+      "scriptName": "quoted procedure names remain distinct from folded unquoted names",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testquotedprocedurenamesarecasesensitiverepro-0003-call-caseprocedure-two",
+      "suggestedId": "catalog-correctness-repro-test-testquotedprocedurenamesarecasesensitiverepro-0003-call-caseprocedure-two",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CALL caseprocedure('two');",
+      "querySha256": "49e616bd85dbb61b887d353cdbfcfdd383738200cc8e73bd167981fe9ec223f7",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedProcedureNamesAreCaseSensitiveRepro#0004",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedProcedureNamesAreCaseSensitiveRepro",
+      "ordinal": 4,
+      "scriptName": "quoted procedure names remain distinct from folded unquoted names",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testquotedprocedurenamesarecasesensitiverepro-0004-select-label-from-quoted_procedure_calls-order",
+      "suggestedId": "catalog-correctness-repro-test-testquotedprocedurenamesarecasesensitiverepro-0004-select-label-from-quoted_procedure_calls-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT label FROM quoted_procedure_calls ORDER BY label;",
+      "querySha256": "c771f9a19106ec8c78a9cda8e1608d5cf302978c9bc05ae667a545d559cbdc25",
+      "expectedRows": [
+        [
+          {
+            "value": "folded:two"
+          }
+        ],
+        [
+          {
+            "value": "quoted:one"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedDomainNamesAreCaseSensitive#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedDomainNamesAreCaseSensitive",
+      "ordinal": 1,
+      "scriptName": "quoted domain names remain distinct from folded unquoted names",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testquoteddomainnamesarecasesensitive-0001-create-domain-casedomain-as-integer",
+      "suggestedId": "catalog-correctness-repro-test-testquoteddomainnamesarecasesensitive-0001-create-domain-casedomain-as-integer",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE DOMAIN casedomain AS integer CHECK (VALUE < 100);",
+      "querySha256": "afea5f43edbee03b21873c6adec54b6e5bc65b6775c0736b9b6fc218d1e3ef4c",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedDomainNamesAreCaseSensitive#0002",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestQuotedDomainNamesAreCaseSensitive",
+      "ordinal": 2,
+      "scriptName": "quoted domain names remain distinct from folded unquoted names",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testquoteddomainnamesarecasesensitive-0002-select-typname-from-pg_catalog.pg_type-where",
+      "suggestedId": "catalog-correctness-repro-test-testquoteddomainnamesarecasesensitive-0002-select-typname-from-pg_catalog.pg_type-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT typname\n\t\t\t\t\t\tFROM pg_catalog.pg_type\n\t\t\t\t\t\tWHERE typnamespace = current_schema()::regnamespace\n\t\t\t\t\t\t\tAND typname IN ('CaseDomain', 'casedomain')\n\t\t\t\t\t\tORDER BY typname;",
+      "querySha256": "1a28640845fa0709b22a55f555cc491d9c78f1c889317a4a55353a43c8009eb0",
+      "expectedRows": [
+        [
+          {
+            "value": "CaseDomain"
+          }
+        ],
+        [
+          {
+            "value": "casedomain"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgGetExprReturnsGeneratedColumnExpressionRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgGetExprReturnsGeneratedColumnExpressionRepro",
+      "ordinal": 1,
+      "scriptName": "pg_get_expr returns generated column expression",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpggetexprreturnsgeneratedcolumnexpressionrepro-0001-select-pg_get_expr-adbin-adrelid-from",
+      "suggestedId": "catalog-correctness-repro-test-testpggetexprreturnsgeneratedcolumnexpressionrepro-0001-select-pg_get_expr-adbin-adrelid-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_get_expr(adbin, adrelid)\n\t\t\t\t\t\tFROM pg_catalog.pg_attrdef\n\t\t\t\t\t\tWHERE adrelid = 'attrdef_generated_temperature'::regclass;",
+      "querySha256": "f7068d243f137fe4f611b313dae8ff69907742adb281bd832fb15253e13f2f04",
+      "expectedRows": [
+        [
+          {
+            "value": "(((celsius * 9) / 5) + 32)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgAttrdefDefaultExpressionsRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgAttrdefDefaultExpressionsRepro",
+      "ordinal": 1,
+      "scriptName": "pg_attrdef exposes ordinary column defaults",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpgattrdefdefaultexpressionsrepro-0001-select-a.attname-pg_get_expr-d.adbin-d.adrelid",
+      "suggestedId": "catalog-correctness-repro-test-testpgattrdefdefaultexpressionsrepro-0001-select-a.attname-pg_get_expr-d.adbin-d.adrelid",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT a.attname,\n\t\t\t\t\t\t\tpg_get_expr(d.adbin, d.adrelid)\n\t\t\t\t\t\tFROM pg_catalog.pg_attrdef d\n\t\t\t\t\t\tJOIN pg_catalog.pg_attribute a\n\t\t\t\t\t\t\tON a.attrelid = d.adrelid\n\t\t\t\t\t\t\tAND a.attnum = d.adnum\n\t\t\t\t\t\tWHERE d.adrelid = 'attrdef_default_items'::regclass\n\t\t\t\t\t\tORDER BY a.attnum;",
+      "querySha256": "53dfd16b0ca79cfcb402fff6b25964f1bc8dae81739006abb3a54c4de48313c7",
+      "expectedRows": [
+        [
+          {
+            "value": "id"
+          },
+          {
+            "value": "42"
+          }
+        ],
+        [
+          {
+            "value": "label"
+          },
+          {
+            "value": "lower('ABC'::text)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestInformationSchemaGeneratedColumnExpressionRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestInformationSchemaGeneratedColumnExpressionRepro",
+      "ordinal": 1,
+      "scriptName": "information_schema exposes generated column expression",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testinformationschemageneratedcolumnexpressionrepro-0001-select-generation_expression-is-not-null",
+      "suggestedId": "catalog-correctness-repro-test-testinformationschemageneratedcolumnexpressionrepro-0001-select-generation_expression-is-not-null",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT generation_expression IS NOT NULL\n\t\t\t\t\t\tFROM information_schema.columns\n\t\t\t\t\t\tWHERE table_name = 'information_schema_generated_items'\n\t\t\t\t\t\t\tAND column_name = 'doubled';",
+      "querySha256": "b19954c1c25ab0f5b43858340a9f9ed43a893cfc4db76678433b094d778e9b7a",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestIdentityColumnCatalogMetadataRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestIdentityColumnCatalogMetadataRepro",
+      "ordinal": 1,
+      "scriptName": "identity columns expose catalog metadata",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testidentitycolumncatalogmetadatarepro-0001-select-attname-attidentity-from-pg_catalog.pg_attribute",
+      "suggestedId": "catalog-correctness-repro-test-testidentitycolumncatalogmetadatarepro-0001-select-attname-attidentity-from-pg_catalog.pg_attribute",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT attname, attidentity\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute\n\t\t\t\t\t\tWHERE attrelid = 'identity_catalog_items'::regclass\n\t\t\t\t\t\t\tAND attname IN ('always_id', 'default_id')\n\t\t\t\t\t\tORDER BY attname;",
+      "querySha256": "ee6d8d80d0f3073dda2cd2915bbaef5046f0441dc71d693db7480f37fe743d4d",
+      "expectedRows": [
+        [
+          {
+            "value": "always_id"
+          },
+          {
+            "value": "a"
+          }
+        ],
+        [
+          {
+            "value": "default_id"
+          },
+          {
+            "value": "d"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestIdentityColumnCatalogMetadataRepro#0002",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestIdentityColumnCatalogMetadataRepro",
+      "ordinal": 2,
+      "scriptName": "identity columns expose catalog metadata",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testidentitycolumncatalogmetadatarepro-0002-select-column_name-is_identity-identity_generation-from",
+      "suggestedId": "catalog-correctness-repro-test-testidentitycolumncatalogmetadatarepro-0002-select-column_name-is_identity-identity_generation-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT column_name, is_identity, identity_generation\n\t\t\t\t\t\tFROM information_schema.columns\n\t\t\t\t\t\tWHERE table_name = 'identity_catalog_items'\n\t\t\t\t\t\t\tAND column_name IN ('always_id', 'default_id')\n\t\t\t\t\t\tORDER BY column_name;",
+      "querySha256": "10644dd295fea25a3e27f5fd1f5d6b497ee7b57af2b3eb1fbbc6e1feb2f875e1",
+      "expectedRows": [
+        [
+          {
+            "value": "always_id"
+          },
+          {
+            "value": "YES"
+          },
+          {
+            "value": "ALWAYS"
+          }
+        ],
+        [
+          {
+            "value": "default_id"
+          },
+          {
+            "value": "YES"
+          },
+          {
+            "value": "BY DEFAULT"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestInformationSchemaDomainColumnMetadataRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestInformationSchemaDomainColumnMetadataRepro",
+      "ordinal": 1,
+      "scriptName": "information_schema exposes domain column metadata",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testinformationschemadomaincolumnmetadatarepro-0001-select-data_type-domain_catalog-domain_schema-domain_name",
+      "suggestedId": "catalog-correctness-repro-test-testinformationschemadomaincolumnmetadatarepro-0001-select-data_type-domain_catalog-domain_schema-domain_name",
+      "compare": "structural",
+      "columnModes": [
+        "structural",
+        "structural",
+        "schema"
+      ],
+      "expectedKind": "rows",
+      "query": "SELECT data_type, domain_catalog, domain_schema, domain_name\n\t\t\t\t\t\tFROM information_schema.columns\n\t\t\t\t\t\tWHERE table_name = 'domain_metadata_items'\n\t\t\t\t\t\t\tAND column_name = 'amount';",
+      "querySha256": "0178cb7dea7132d68d25ba6a9dd533538fe8bf5d553c56e4fdadbc8b27f5e1e2",
+      "expectedRows": [
+        [
+          {
+            "value": "integer"
+          },
+          {
+            "value": "postgres"
+          },
+          {
+            "value": "{{schema}}"
+          },
+          {
+            "value": "positive_amount"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestInformationSchemaViewUpdatabilityMetadataRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestInformationSchemaViewUpdatabilityMetadataRepro",
+      "ordinal": 1,
+      "scriptName": "information_schema exposes view updatability metadata",
+      "oracle": "internal",
+      "suggestedId": "catalog-correctness-repro-test-testinformationschemaviewupdatabilitymetadatarepro-0001-select-check_option-is_updatable-is_insertable_into-is_trigger_updatable",
+      "expectedKind": "rows",
+      "query": "SELECT check_option, is_updatable, is_insertable_into,\n\t\t\t\t\t\t\tis_trigger_updatable, is_trigger_deletable, is_trigger_insertable_into\n\t\t\t\t\t\tFROM information_schema.views\n\t\t\t\t\t\tWHERE table_schema = 'public'\n\t\t\t\t\t\t\tAND table_name = 'view_metadata_simple';",
+      "querySha256": "56e10a2e00eba7ab9cab917f424fba4886ad6f662dd8d881155353201a771694",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgViewsViewownerMetadataRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgViewsViewownerMetadataRepro",
+      "ordinal": 1,
+      "scriptName": "pg_views exposes view owner",
+      "oracle": "internal",
+      "suggestedId": "catalog-correctness-repro-test-testpgviewsviewownermetadatarepro-0001-select-viewowner-from-pg_catalog.pg_views-where",
+      "expectedKind": "rows",
+      "query": "SELECT viewowner\n\t\t\t\t\t\tFROM pg_catalog.pg_views\n\t\t\t\t\t\tWHERE schemaname = 'public'\n\t\t\t\t\t\t\tAND viewname = 'pg_views_owner_reader';",
+      "querySha256": "7a120f119e95f8d4f354132aec828d02d4d38117161ad1b368e7047c536d4cf4",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgGetViewdefWrapColumnOverloadRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgGetViewdefWrapColumnOverloadRepro",
+      "ordinal": 1,
+      "scriptName": "pg_get_viewdef oid integer overload returns definition",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpggetviewdefwrapcolumnoverloadrepro-0001-select-pg_get_viewdef-pg_get_viewdef_wrap_reader-::regclass-0",
+      "suggestedId": "catalog-correctness-repro-test-testpggetviewdefwrapcolumnoverloadrepro-0001-select-pg_get_viewdef-pg_get_viewdef_wrap_reader-::regclass-0",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_get_viewdef('pg_get_viewdef_wrap_reader'::regclass, 0) IS NOT NULL;",
+      "querySha256": "94cd2d7f9f270e531a51affd30d04cace569da2b1201ce9eb9bf3aa099f84fdd",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgGetTriggerdefPrettyOverloadRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgGetTriggerdefPrettyOverloadRepro",
+      "ordinal": 1,
+      "scriptName": "pg_get_triggerdef pretty overload returns definition",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpggettriggerdefprettyoverloadrepro-0001-select-pg_get_triggerdef-oid-true-is",
+      "suggestedId": "catalog-correctness-repro-test-testpggettriggerdefprettyoverloadrepro-0001-select-pg_get_triggerdef-oid-true-is",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_get_triggerdef(oid, true) IS NOT NULL\n\t\t\t\t\t\tFROM pg_catalog.pg_trigger\n\t\t\t\t\t\tWHERE tgname = 'pg_get_triggerdef_pretty_before_insert';",
+      "querySha256": "5222b0dd92c4fc55a41c1f33d47ff459cb24e293b453365be2749de76564e4f3",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestTriggerConditionMetadataRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestTriggerConditionMetadataRepro",
+      "ordinal": 1,
+      "scriptName": "trigger condition metadata is exposed",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testtriggerconditionmetadatarepro-0001-select-tgqual-is-not-null",
+      "suggestedId": "catalog-correctness-repro-test-testtriggerconditionmetadatarepro-0001-select-tgqual-is-not-null",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT tgqual IS NOT NULL\n\t\t\t\t\t\tFROM pg_catalog.pg_trigger\n\t\t\t\t\t\tWHERE tgname = 'trigger_condition_metadata_before_insert';",
+      "querySha256": "67599d037b9abfdddcce468e9e8aac2962f15210b69e4523571f877dca9ae7e9",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestTriggerConditionMetadataRepro#0002",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestTriggerConditionMetadataRepro",
+      "ordinal": 2,
+      "scriptName": "trigger condition metadata is exposed",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testtriggerconditionmetadatarepro-0002-select-action_condition-is-not-null",
+      "suggestedId": "catalog-correctness-repro-test-testtriggerconditionmetadatarepro-0002-select-action_condition-is-not-null",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT action_condition IS NOT NULL\n\t\t\t\t\t\tFROM information_schema.triggers\n\t\t\t\t\t\tWHERE trigger_name = 'trigger_condition_metadata_before_insert';",
+      "querySha256": "a21c73b54ebb234a90badf9ad4f996155e3f3cc5cf1969095b6085a55641292a",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgGetFunctionCatalogIntrospectionRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgGetFunctionCatalogIntrospectionRepro",
+      "ordinal": 1,
+      "scriptName": "pg_get_function helpers render built-in function metadata",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpggetfunctioncatalogintrospectionrepro-0001-select-pg_get_function_result-31::oid",
+      "suggestedId": "catalog-correctness-repro-test-testpggetfunctioncatalogintrospectionrepro-0001-select-pg_get_function_result-31::oid",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_get_function_result(31::oid);",
+      "querySha256": "5d9d2b7e57a2abadcc1d40bf8c9309bc834b905efa0262a55219012bf7a3f472",
+      "expectedRows": [
+        [
+          {
+            "value": "cstring"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgGetFunctionCatalogIntrospectionRepro#0002",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgGetFunctionCatalogIntrospectionRepro",
+      "ordinal": 2,
+      "scriptName": "pg_get_function helpers render built-in function metadata",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpggetfunctioncatalogintrospectionrepro-0002-select-pg_get_function_identity_arguments-31::oid",
+      "suggestedId": "catalog-correctness-repro-test-testpggetfunctioncatalogintrospectionrepro-0002-select-pg_get_function_identity_arguments-31::oid",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_get_function_identity_arguments(31::oid);",
+      "querySha256": "8b793314073aa1865d70fadab1757db883ad19f54976161c69c5320ed3912fa9",
+      "expectedRows": [
+        [
+          {
+            "value": "bytea"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgGetFunctionCatalogIntrospectionRepro#0003",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgGetFunctionCatalogIntrospectionRepro",
+      "ordinal": 3,
+      "scriptName": "pg_get_function helpers render built-in function metadata",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpggetfunctioncatalogintrospectionrepro-0003-select-pg_get_functiondef-31::oid-like-create",
+      "suggestedId": "catalog-correctness-repro-test-testpggetfunctioncatalogintrospectionrepro-0003-select-pg_get_functiondef-31::oid-like-create",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_get_functiondef(31::oid) LIKE\n\t\t\t\t\t\t'CREATE OR REPLACE FUNCTION pg_catalog.byteaout(bytea)%RETURNS cstring%LANGUAGE internal%byteaout%';",
+      "querySha256": "7031d18443258cc1b6653a5512c19b423cbb495ef0174a21230e40d8ee56d310",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgGetFunctionUserDefinedIntrospectionRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgGetFunctionUserDefinedIntrospectionRepro",
+      "ordinal": 1,
+      "scriptName": "pg_get_function helpers render user-defined function metadata",
+      "oracle": "internal",
+      "suggestedId": "catalog-correctness-repro-test-testpggetfunctionuserdefinedintrospectionrepro-0001-select-pg_get_function_result-p.oid-pg_get_function_identity_arguments-p.oid",
+      "expectedKind": "rows",
+      "query": "SELECT\n\t\t\t\t\t\t\tpg_get_function_result(p.oid),\n\t\t\t\t\t\t\tpg_get_function_identity_arguments(p.oid),\n\t\t\t\t\t\t\tpg_get_function_arguments(p.oid),\n\t\t\t\t\t\t\tpg_get_functiondef(p.oid) LIKE\n\t\t\t\t\t\t\t\t'CREATE OR REPLACE FUNCTION public.introspect_user_function(input_value integer, label text)%RETURNS text%LANGUAGE sql%IMMUTABLE STRICT%SELECT%'\n\t\t\t\t\t\tFROM pg_catalog.pg_proc p\n\t\t\t\t\t\tJOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace\n\t\t\t\t\t\tWHERE n.nspname = 'public'\n\t\t\t\t\t\t\tAND p.proname = 'introspect_user_function';",
+      "querySha256": "212e1e61325d936d540c6e404916ab9635ce786b5d8d592ea04f61c01fb3b2d1",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgEncodingToCharMapsKnownEncodingIdsRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgEncodingToCharMapsKnownEncodingIdsRepro",
+      "ordinal": 1,
+      "scriptName": "pg_encoding_to_char maps known encoding ids",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpgencodingtocharmapsknownencodingidsrepro-0001-select-pg_encoding_to_char-0-pg_encoding_to_char-6",
+      "suggestedId": "catalog-correctness-repro-test-testpgencodingtocharmapsknownencodingidsrepro-0001-select-pg_encoding_to_char-0-pg_encoding_to_char-6",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_encoding_to_char(0), pg_encoding_to_char(6);",
+      "querySha256": "29fd918251ff369fd753a88bd772eb784de3f3e147a6a4f9333a4f58aed270ec",
+      "expectedRows": [
+        [
+          {
+            "value": "SQL_ASCII"
+          },
+          {
+            "value": "UTF8"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestRelationSizeHelpersReportStoredDataRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestRelationSizeHelpersReportStoredDataRepro",
+      "ordinal": 1,
+      "scriptName": "relation size helpers report stored table and index data",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testrelationsizehelpersreportstoreddatarepro-0001-select-pg_relation_size-relation_size_items-::regclass->",
+      "suggestedId": "catalog-correctness-repro-test-testrelationsizehelpersreportstoreddatarepro-0001-select-pg_relation_size-relation_size_items-::regclass->",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT\n\t\t\t\t\t\t\tpg_relation_size('relation_size_items'::regclass) > 0,\n\t\t\t\t\t\t\tpg_relation_size('relation_size_items'::regclass, 'main') > 0,\n\t\t\t\t\t\t\tpg_table_size('relation_size_items'::regclass) > 0,\n\t\t\t\t\t\t\tpg_indexes_size('relation_size_items'::regclass) > 0,\n\t\t\t\t\t\t\tpg_total_relation_size('relation_size_items'::regclass) > 0;",
+      "querySha256": "4e4645bf52d82d7f071117eb517c77862c9402fa21f70d5f998a6f6f322b6a2d",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgBackendMemoryContextsReportsTopContextRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgBackendMemoryContextsReportsTopContextRepro",
+      "ordinal": 1,
+      "scriptName": "pg_backend_memory_contexts reports TopMemoryContext",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpgbackendmemorycontextsreportstopcontextrepro-0001-select-count-*->-0",
+      "suggestedId": "catalog-correctness-repro-test-testpgbackendmemorycontextsreportstopcontextrepro-0001-select-count-*->-0",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) > 0\n\t\t\t\t\t\tFROM pg_catalog.pg_backend_memory_contexts\n\t\t\t\t\t\tWHERE level = 0\n\t\t\t\t\t\t\tAND name = 'TopMemoryContext'\n\t\t\t\t\t\t\tAND total_bytes >= free_bytes;",
+      "querySha256": "99c54edae5d2dcf0771fb9eb95aa4bc5f85167dc1c9422c40b4dbab0f4eb165a",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgHbaFileRulesReportsParsedRulesRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgHbaFileRulesReportsParsedRulesRepro",
+      "ordinal": 1,
+      "scriptName": "pg_hba_file_rules reports parsed rules",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpghbafilerulesreportsparsedrulesrepro-0001-select-count-*->-0",
+      "suggestedId": "catalog-correctness-repro-test-testpghbafilerulesreportsparsedrulesrepro-0001-select-count-*->-0",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) > 0,\n\t\t\t\t\t\t\tcount(*) FILTER (WHERE error IS NOT NULL) = 0\n\t\t\t\t\t\tFROM pg_catalog.pg_hba_file_rules;",
+      "querySha256": "157a46158e7094bd0d8e3a235b30be97cc39e86e5a9641f7085142668488f92a",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgShmemAllocationsReportsAllocationRowsRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgShmemAllocationsReportsAllocationRowsRepro",
+      "ordinal": 1,
+      "scriptName": "pg_shmem_allocations reports allocation rows",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpgshmemallocationsreportsallocationrowsrepro-0001-select-count-*->-0",
+      "suggestedId": "catalog-correctness-repro-test-testpgshmemallocationsreportsallocationrowsrepro-0001-select-count-*->-0",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) > 0\n\t\t\t\t\t\tFROM pg_catalog.pg_shmem_allocations\n\t\t\t\t\t\tWHERE allocated_size >= size\n\t\t\t\t\t\t\tAND size >= 0;",
+      "querySha256": "91dca85fba64fbf1787ef8405da819110e4a053140b71f043d67ec935c94b4ca",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatActivityReportsCurrentBackendRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatActivityReportsCurrentBackendRepro",
+      "ordinal": 1,
+      "scriptName": "pg_stat_activity reports the current backend",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpgstatactivityreportscurrentbackendrepro-0001-select-count-*->-0",
+      "suggestedId": "catalog-correctness-repro-test-testpgstatactivityreportscurrentbackendrepro-0001-select-count-*->-0",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) > 0\n\t\t\t\t\t\tFROM pg_catalog.pg_stat_activity\n\t\t\t\t\t\tWHERE pid = pg_backend_pid();",
+      "querySha256": "48f8397da817cc90381be639f9c9bf98ca2eb8145cbba8d81cb5ba07f7a4dc64",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatSslReportsCurrentBackendRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatSslReportsCurrentBackendRepro",
+      "ordinal": 1,
+      "scriptName": "pg_stat_ssl reports the current backend",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpgstatsslreportscurrentbackendrepro-0001-select-count-*->-0",
+      "suggestedId": "catalog-correctness-repro-test-testpgstatsslreportscurrentbackendrepro-0001-select-count-*->-0",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) > 0\n\t\t\t\t\t\tFROM pg_catalog.pg_stat_ssl\n\t\t\t\t\t\tWHERE pid = pg_backend_pid();",
+      "querySha256": "c165f3abdcbfe8556c3dd9bbf125f3e1cb4bbb1d8ef0cf1c60c87dcd4b93918e",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatGssapiReportsCurrentBackendRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatGssapiReportsCurrentBackendRepro",
+      "ordinal": 1,
+      "scriptName": "pg_stat_gssapi reports the current backend",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpgstatgssapireportscurrentbackendrepro-0001-select-count-*->-0",
+      "suggestedId": "catalog-correctness-repro-test-testpgstatgssapireportscurrentbackendrepro-0001-select-count-*->-0",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) > 0\n\t\t\t\t\t\tFROM pg_catalog.pg_stat_gssapi\n\t\t\t\t\t\tWHERE pid = pg_backend_pid();",
+      "querySha256": "d54d8b85b1b5f9dbb9e8b86d39177759b3f1a9049db96108ab897870bdde7f66",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatUserTablesReportsUserRelationsRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatUserTablesReportsUserRelationsRepro",
+      "ordinal": 1,
+      "scriptName": "pg_stat_user_tables reports user tables",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpgstatusertablesreportsuserrelationsrepro-0001-select-schemaname-relname-n_tup_ins->=",
+      "suggestedId": "catalog-correctness-repro-test-testpgstatusertablesreportsuserrelationsrepro-0001-select-schemaname-relname-n_tup_ins->=",
+      "compare": "structural",
+      "columnModes": [
+        "schema"
+      ],
+      "expectedKind": "rows",
+      "query": "SELECT schemaname, relname, n_tup_ins >= 0\n\t\t\t\t\t\tFROM pg_catalog.pg_stat_user_tables\n\t\t\t\t\t\tWHERE relname = 'stat_user_table_items';",
+      "querySha256": "7a26465384c3a1ec702a26025aa34583363f0127b5c2a32de92b6dd2ccb38cca",
+      "expectedRows": [
+        [
+          {
+            "value": "{{schema}}"
+          },
+          {
+            "value": "stat_user_table_items"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatAllTablesReportsUserRelationsRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatAllTablesReportsUserRelationsRepro",
+      "ordinal": 1,
+      "scriptName": "pg_stat_all_tables reports user tables",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpgstatalltablesreportsuserrelationsrepro-0001-select-schemaname-relname-n_tup_ins->=",
+      "suggestedId": "catalog-correctness-repro-test-testpgstatalltablesreportsuserrelationsrepro-0001-select-schemaname-relname-n_tup_ins->=",
+      "compare": "structural",
+      "columnModes": [
+        "schema"
+      ],
+      "expectedKind": "rows",
+      "query": "SELECT schemaname, relname, n_tup_ins >= 0\n\t\t\t\t\t\tFROM pg_catalog.pg_stat_all_tables\n\t\t\t\t\t\tWHERE relname = 'stat_all_table_items';",
+      "querySha256": "43c5178fec1d3351d124fe5b57b8985c94e7e740607a87408b567d74230c7de0",
+      "expectedRows": [
+        [
+          {
+            "value": "{{schema}}"
+          },
+          {
+            "value": "stat_all_table_items"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatSysTablesReportsSystemRelationsRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatSysTablesReportsSystemRelationsRepro",
+      "ordinal": 1,
+      "scriptName": "pg_stat_sys_tables reports system tables",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpgstatsystablesreportssystemrelationsrepro-0001-select-count-*->-0",
+      "suggestedId": "catalog-correctness-repro-test-testpgstatsystablesreportssystemrelationsrepro-0001-select-count-*->-0",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) > 0\n\t\t\t\t\t\tFROM pg_catalog.pg_stat_sys_tables\n\t\t\t\t\t\tWHERE schemaname = 'pg_catalog'\n\t\t\t\t\t\t\tAND relname = 'pg_class';",
+      "querySha256": "f9c570fede8f493f9adf4fe22d5895b3171e64e67404e9f1d26befbba184924b",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatioUserTablesReportsUserRelationsRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatioUserTablesReportsUserRelationsRepro",
+      "ordinal": 1,
+      "scriptName": "pg_statio_user_tables reports user tables",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpgstatiousertablesreportsuserrelationsrepro-0001-select-schemaname-relname-heap_blks_read->=",
+      "suggestedId": "catalog-correctness-repro-test-testpgstatiousertablesreportsuserrelationsrepro-0001-select-schemaname-relname-heap_blks_read->=",
+      "compare": "structural",
+      "columnModes": [
+        "schema"
+      ],
+      "expectedKind": "rows",
+      "query": "SELECT schemaname, relname, heap_blks_read >= 0\n\t\t\t\t\t\tFROM pg_catalog.pg_statio_user_tables\n\t\t\t\t\t\tWHERE relname = 'statio_user_table_items';",
+      "querySha256": "5dd46dc059825fbefd6179be3edd4140f8ffbfcec2f7a4ff2d26d457b262f446",
+      "expectedRows": [
+        [
+          {
+            "value": "{{schema}}"
+          },
+          {
+            "value": "statio_user_table_items"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatioAllTablesReportsUserRelationsRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatioAllTablesReportsUserRelationsRepro",
+      "ordinal": 1,
+      "scriptName": "pg_statio_all_tables reports user tables",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpgstatioalltablesreportsuserrelationsrepro-0001-select-schemaname-relname-heap_blks_read->=",
+      "suggestedId": "catalog-correctness-repro-test-testpgstatioalltablesreportsuserrelationsrepro-0001-select-schemaname-relname-heap_blks_read->=",
+      "compare": "structural",
+      "columnModes": [
+        "schema"
+      ],
+      "expectedKind": "rows",
+      "query": "SELECT schemaname, relname, heap_blks_read >= 0\n\t\t\t\t\t\tFROM pg_catalog.pg_statio_all_tables\n\t\t\t\t\t\tWHERE relname = 'statio_all_table_items';",
+      "querySha256": "af8246ec11a58660eeb3006167db4ac471de195f1b0c550221e6e6005dcace8c",
+      "expectedRows": [
+        [
+          {
+            "value": "{{schema}}"
+          },
+          {
+            "value": "statio_all_table_items"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatioSysTablesReportsSystemRelationsRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatioSysTablesReportsSystemRelationsRepro",
+      "ordinal": 1,
+      "scriptName": "pg_statio_sys_tables reports system tables",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpgstatiosystablesreportssystemrelationsrepro-0001-select-count-*->-0",
+      "suggestedId": "catalog-correctness-repro-test-testpgstatiosystablesreportssystemrelationsrepro-0001-select-count-*->-0",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) > 0\n\t\t\t\t\t\tFROM pg_catalog.pg_statio_sys_tables\n\t\t\t\t\t\tWHERE schemaname = 'pg_catalog'\n\t\t\t\t\t\t\tAND relname = 'pg_class';",
+      "querySha256": "8f38447381a0781b4c5109e4d487d21731f4a74d3db91696ee3d785699844427",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatXactUserTablesReportsUserRelationsRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatXactUserTablesReportsUserRelationsRepro",
+      "ordinal": 1,
+      "scriptName": "pg_stat_xact_user_tables reports user tables",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpgstatxactusertablesreportsuserrelationsrepro-0001-select-schemaname-relname-n_tup_ins->=",
+      "suggestedId": "catalog-correctness-repro-test-testpgstatxactusertablesreportsuserrelationsrepro-0001-select-schemaname-relname-n_tup_ins->=",
+      "compare": "structural",
+      "columnModes": [
+        "schema"
+      ],
+      "expectedKind": "rows",
+      "query": "SELECT schemaname, relname, n_tup_ins >= 0\n\t\t\t\t\t\tFROM pg_catalog.pg_stat_xact_user_tables\n\t\t\t\t\t\tWHERE relname = 'stat_xact_user_table_items';",
+      "querySha256": "8cf020e612abcaf61b18eafb3f6555f23e4a53fa6b6c9aa049e017139cf84523",
+      "expectedRows": [
+        [
+          {
+            "value": "{{schema}}"
+          },
+          {
+            "value": "stat_xact_user_table_items"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatXactAllTablesReportsUserRelationsRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatXactAllTablesReportsUserRelationsRepro",
+      "ordinal": 1,
+      "scriptName": "pg_stat_xact_all_tables reports user tables",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpgstatxactalltablesreportsuserrelationsrepro-0001-select-schemaname-relname-n_tup_ins->=",
+      "suggestedId": "catalog-correctness-repro-test-testpgstatxactalltablesreportsuserrelationsrepro-0001-select-schemaname-relname-n_tup_ins->=",
+      "compare": "structural",
+      "columnModes": [
+        "schema"
+      ],
+      "expectedKind": "rows",
+      "query": "SELECT schemaname, relname, n_tup_ins >= 0\n\t\t\t\t\t\tFROM pg_catalog.pg_stat_xact_all_tables\n\t\t\t\t\t\tWHERE relname = 'stat_xact_all_table_items';",
+      "querySha256": "beb0b9b3d98567038d43f8e4700e0e7015614d91ed5d4cfbad51a916fd516a50",
+      "expectedRows": [
+        [
+          {
+            "value": "{{schema}}"
+          },
+          {
+            "value": "stat_xact_all_table_items"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatXactSysTablesReportsSystemRelationsRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatXactSysTablesReportsSystemRelationsRepro",
+      "ordinal": 1,
+      "scriptName": "pg_stat_xact_sys_tables reports system tables",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpgstatxactsystablesreportssystemrelationsrepro-0001-select-count-*->-0",
+      "suggestedId": "catalog-correctness-repro-test-testpgstatxactsystablesreportssystemrelationsrepro-0001-select-count-*->-0",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) > 0\n\t\t\t\t\t\tFROM pg_catalog.pg_stat_xact_sys_tables\n\t\t\t\t\t\tWHERE schemaname = 'pg_catalog'\n\t\t\t\t\t\t\tAND relname = 'pg_class';",
+      "querySha256": "5f8ed1786bdc2cad6f55d28c38aeefb08e9310853bff9967174591b42b24e276",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatUserFunctionsTracksUserFunctionCallsRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatUserFunctionsTracksUserFunctionCallsRepro",
+      "ordinal": 1,
+      "scriptName": "pg_stat_user_functions reports called user functions",
+      "oracle": "internal",
+      "suggestedId": "catalog-correctness-repro-test-testpgstatuserfunctionstracksuserfunctioncallsrepro-0001-select-count-*->-0",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) > 0\n\t\t\t\t\t\tFROM pg_catalog.pg_stat_user_functions\n\t\t\t\t\t\tWHERE schemaname = 'public'\n\t\t\t\t\t\t\tAND funcname = 'stat_user_function_target'\n\t\t\t\t\t\t\tAND calls >= 1\n\t\t\t\t\t\t\tAND total_time >= 0\n\t\t\t\t\t\t\tAND self_time >= 0;",
+      "querySha256": "9c9337f45b0d2cddc3b49197d3741e087744e35b80bf68df4a018e4f6fecdc7c",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatXactUserFunctionsTracksCurrentTransactionCallsRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatXactUserFunctionsTracksCurrentTransactionCallsRepro",
+      "ordinal": 1,
+      "scriptName": "pg_stat_xact_user_functions reports current transaction calls",
+      "oracle": "internal",
+      "suggestedId": "catalog-correctness-repro-test-testpgstatxactuserfunctionstrackscurrenttransactioncallsrepro-0001-select-count-*->-0",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) > 0\n\t\t\t\t\t\tFROM pg_catalog.pg_stat_xact_user_functions\n\t\t\t\t\t\tWHERE schemaname = 'public'\n\t\t\t\t\t\t\tAND funcname = 'stat_xact_user_function_target'\n\t\t\t\t\t\t\tAND calls >= 1\n\t\t\t\t\t\t\tAND total_time >= 0\n\t\t\t\t\t\t\tAND self_time >= 0;",
+      "querySha256": "55ecc0163086b307618f1c849d656d52c6c5026d73c5ad52cc01a0eb63c44c51",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatDatabaseReportsCurrentDatabaseRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatDatabaseReportsCurrentDatabaseRepro",
+      "ordinal": 1,
+      "scriptName": "pg_stat_database reports the current database",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpgstatdatabasereportscurrentdatabaserepro-0001-select-count-*->-0",
+      "suggestedId": "catalog-correctness-repro-test-testpgstatdatabasereportscurrentdatabaserepro-0001-select-count-*->-0",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) > 0\n\t\t\t\t\t\tFROM pg_catalog.pg_stat_database\n\t\t\t\t\t\tWHERE datname = current_database();",
+      "querySha256": "fa9f23383ca3b5a6d07f66dffee26ea61688167d0d2192cd97d5831d2a12c8f9",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatArchiverReportsClusterRowRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatArchiverReportsClusterRowRepro",
+      "ordinal": 1,
+      "scriptName": "pg_stat_archiver reports one cluster-wide row",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpgstatarchiverreportsclusterrowrepro-0001-select-count-*-=-1",
+      "suggestedId": "catalog-correctness-repro-test-testpgstatarchiverreportsclusterrowrepro-0001-select-count-*-=-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) = 1 FROM pg_catalog.pg_stat_archiver;",
+      "querySha256": "c8743856db3955f700c10569a0a2c3aa9a572dd0698dd3841ad7b168340d3d22",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatBgwriterReportsClusterRowRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatBgwriterReportsClusterRowRepro",
+      "ordinal": 1,
+      "scriptName": "pg_stat_bgwriter reports one cluster-wide row",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpgstatbgwriterreportsclusterrowrepro-0001-select-count-*-=-1",
+      "suggestedId": "catalog-correctness-repro-test-testpgstatbgwriterreportsclusterrowrepro-0001-select-count-*-=-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) = 1 FROM pg_catalog.pg_stat_bgwriter;",
+      "querySha256": "f619e7c01090e9ca2e7e3b768df6a17c7c98163e7040a07aef8b5114a9061f6f",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatDatabaseConflictsReportsCurrentDatabaseRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatDatabaseConflictsReportsCurrentDatabaseRepro",
+      "ordinal": 1,
+      "scriptName": "pg_stat_database_conflicts reports the current database",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpgstatdatabaseconflictsreportscurrentdatabaserepro-0001-select-count-*->-0",
+      "suggestedId": "catalog-correctness-repro-test-testpgstatdatabaseconflictsreportscurrentdatabaserepro-0001-select-count-*->-0",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) > 0\n\t\t\t\t\t\tFROM pg_catalog.pg_stat_database_conflicts\n\t\t\t\t\t\tWHERE datname = current_database();",
+      "querySha256": "e5dbdbfa615da36357cf4e7dc59981ab47fe0df15bbee33e9a68d24d766da324",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatWalReportsClusterRowRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatWalReportsClusterRowRepro",
+      "ordinal": 1,
+      "scriptName": "pg_stat_wal reports one cluster-wide row",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpgstatwalreportsclusterrowrepro-0001-select-count-*-=-1",
+      "suggestedId": "catalog-correctness-repro-test-testpgstatwalreportsclusterrowrepro-0001-select-count-*-=-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) = 1 FROM pg_catalog.pg_stat_wal;",
+      "querySha256": "2b857c671cd6ca0d915430b3dc7a8ab14da7c5b898db5569b8dbd082f0c2aebf",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatSlruReportsCacheRowsRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatSlruReportsCacheRowsRepro",
+      "ordinal": 1,
+      "scriptName": "pg_stat_slru reports cache rows",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpgstatslrureportscacherowsrepro-0001-select-count-*->-0",
+      "suggestedId": "catalog-correctness-repro-test-testpgstatslrureportscacherowsrepro-0001-select-count-*->-0",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) > 0 FROM pg_catalog.pg_stat_slru;",
+      "querySha256": "6f626fb44dfa0e6373fbef7103c141a84e737bcb363f3060a514e7e95dc9f46c",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatIoCatalogShapeRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatIoCatalogShapeRepro",
+      "ordinal": 1,
+      "scriptName": "pg_stat_io exposes PostgreSQL 16 columns and rows",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpgstatiocatalogshaperepro-0001-select-count-*-=-18",
+      "suggestedId": "catalog-correctness-repro-test-testpgstatiocatalogshaperepro-0001-select-count-*-=-18",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) = 18\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute\n\t\t\t\t\t\tWHERE attrelid = 'pg_catalog.pg_stat_io'::regclass\n\t\t\t\t\t\t\tAND NOT attisdropped\n\t\t\t\t\t\t\tAND attname IN (\n\t\t\t\t\t\t\t\t'backend_type', 'object', 'context', 'reads', 'read_time',\n\t\t\t\t\t\t\t\t'writes', 'write_time', 'writebacks', 'writeback_time',\n\t\t\t\t\t\t\t\t'extends', 'extend_time', 'op_bytes', 'hits', 'evictions',\n\t\t\t\t\t\t\t\t'reuses', 'fsyncs', 'fsync_time', 'stats_reset'\n\t\t\t\t\t\t\t);",
+      "querySha256": "777a888b541908e9f896c9acc31eb3fc97926c56c181a6977337f4c7e98442c8",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatIoCatalogShapeRepro#0002",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgStatIoCatalogShapeRepro",
+      "ordinal": 2,
+      "scriptName": "pg_stat_io exposes PostgreSQL 16 columns and rows",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpgstatiocatalogshaperepro-0002-select-count-*->-0",
+      "suggestedId": "catalog-correctness-repro-test-testpgstatiocatalogshaperepro-0002-select-count-*->-0",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) > 0 FROM pg_catalog.pg_stat_io;",
+      "querySha256": "70c9ce8285ddf1a93e89628666cb58699ef42d12c6a732217581323e409da9eb",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgTableIsVisibleHonorsSearchPathShadowingRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgTableIsVisibleHonorsSearchPathShadowingRepro",
+      "ordinal": 1,
+      "scriptName": "pg_table_is_visible honors search path shadowing",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpgtableisvisiblehonorssearchpathshadowingrepro-0001-select-pg_table_is_visible-visible_first.shadowed_table-::regclass-pg_table_is_visible",
+      "suggestedId": "catalog-correctness-repro-test-testpgtableisvisiblehonorssearchpathshadowingrepro-0001-select-pg_table_is_visible-visible_first.shadowed_table-::regclass-pg_table_is_visible",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_table_is_visible('visible_first.shadowed_table'::regclass),\n\t\t\t\t\t\tpg_table_is_visible('visible_second.shadowed_table'::regclass);",
+      "querySha256": "faa05f17389f517e306faf8ee2392f6096366748c95aa1ac76b881c833763bb9",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestRegtypeResolvesSchemaQualifiedDomainsRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestRegtypeResolvesSchemaQualifiedDomainsRepro",
+      "ordinal": 1,
+      "scriptName": "regtype resolves schema-qualified domains",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testregtyperesolvesschemaqualifieddomainsrepro-0001-select-regtype_schema_first.lookup_domain-::regtype-is-not",
+      "suggestedId": "catalog-correctness-repro-test-testregtyperesolvesschemaqualifieddomainsrepro-0001-select-regtype_schema_first.lookup_domain-::regtype-is-not",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 'regtype_schema_first.lookup_domain'::regtype IS NOT NULL,\n\t\t\t\t\t\t'regtype_schema_second.lookup_domain'::regtype IS NOT NULL;",
+      "querySha256": "f7f8afa0da17f533e8cd2686c12790ac634c64723194eac944a67d9f2a061c16",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestRegtypeResolvesUserDefinedTypesRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestRegtypeResolvesUserDefinedTypesRepro",
+      "ordinal": 1,
+      "scriptName": "regtype resolves user-defined types",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testregtyperesolvesuserdefinedtypesrepro-0001-select-regtype_lookup_enum-::regtype::text-regtype_lookup_composite-::regtype::text",
+      "suggestedId": "catalog-correctness-repro-test-testregtyperesolvesuserdefinedtypesrepro-0001-select-regtype_lookup_enum-::regtype::text-regtype_lookup_composite-::regtype::text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT\n\t\t\t\t\t\t\t'regtype_lookup_enum'::regtype::text,\n\t\t\t\t\t\t\t'regtype_lookup_composite'::regtype::text,\n\t\t\t\t\t\t\t'regtype_lookup_domain'::regtype::text;",
+      "querySha256": "8ff3e409ef091b15ffd16c28928516faaeab4693de3e8db331b1fbf0b8712134",
+      "expectedRows": [
+        [
+          {
+            "value": "regtype_lookup_enum"
+          },
+          {
+            "value": "regtype_lookup_composite"
+          },
+          {
+            "value": "regtype_lookup_domain"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestToRegtypeResolvesUserDefinedTypesRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestToRegtypeResolvesUserDefinedTypesRepro",
+      "ordinal": 1,
+      "scriptName": "to_regtype resolves user-defined types",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testtoregtyperesolvesuserdefinedtypesrepro-0001-select-to_regtype-to_regtype_lookup_enum-::text-to_regtype",
+      "suggestedId": "catalog-correctness-repro-test-testtoregtyperesolvesuserdefinedtypesrepro-0001-select-to_regtype-to_regtype_lookup_enum-::text-to_regtype",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT\n\t\t\t\t\t\t\tto_regtype('to_regtype_lookup_enum')::text,\n\t\t\t\t\t\t\tto_regtype('to_regtype_lookup_composite')::text,\n\t\t\t\t\t\t\tto_regtype('to_regtype_lookup_domain')::text;",
+      "querySha256": "88e8bd2872c1e7270102de95e63f684404713d74ba502b05f569659504dc205a",
+      "expectedRows": [
+        [
+          {
+            "value": "to_regtype_lookup_enum"
+          },
+          {
+            "value": "to_regtype_lookup_composite"
+          },
+          {
+            "value": "to_regtype_lookup_domain"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgTypeIsVisibleHonorsSearchPathShadowingRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgTypeIsVisibleHonorsSearchPathShadowingRepro",
+      "ordinal": 1,
+      "scriptName": "pg_type_is_visible honors search path shadowing",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpgtypeisvisiblehonorssearchpathshadowingrepro-0001-select-pg_type_is_visible-select-t.oid-from",
+      "suggestedId": "catalog-correctness-repro-test-testpgtypeisvisiblehonorssearchpathshadowingrepro-0001-select-pg_type_is_visible-select-t.oid-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT\n\t\t\t\t\t\t\tpg_type_is_visible((\n\t\t\t\t\t\t\t\tSELECT t.oid\n\t\t\t\t\t\t\t\tFROM pg_catalog.pg_type t\n\t\t\t\t\t\t\t\tJOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace\n\t\t\t\t\t\t\t\tWHERE n.nspname = 'visible_type_first'\n\t\t\t\t\t\t\t\t\tAND t.typname = 'shadowed_domain'\n\t\t\t\t\t\t\t)),\n\t\t\t\t\t\t\tpg_type_is_visible((\n\t\t\t\t\t\t\t\tSELECT t.oid\n\t\t\t\t\t\t\t\tFROM pg_catalog.pg_type t\n\t\t\t\t\t\t\t\tJOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace\n\t\t\t\t\t\t\t\tWHERE n.nspname = 'visible_type_second'\n\t\t\t\t\t\t\t\t\tAND t.typname = 'shadowed_domain'\n\t\t\t\t\t\t\t));",
+      "querySha256": "3652b55f1de959704bd61679c0320f937fe199c50fef8d7bd8ad78db668fc755",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgCastExposesBuiltinCastsRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgCastExposesBuiltinCastsRepro",
+      "ordinal": 1,
+      "scriptName": "pg_cast exposes built-in integer to bigint cast",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpgcastexposesbuiltincastsrepro-0001-select-castsource::regtype::text-casttarget::regtype::text-castcontext-castmethod",
+      "suggestedId": "catalog-correctness-repro-test-testpgcastexposesbuiltincastsrepro-0001-select-castsource::regtype::text-casttarget::regtype::text-castcontext-castmethod",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT castsource::regtype::text, casttarget::regtype::text, castcontext, castmethod\n\t\t\t\t\t\tFROM pg_catalog.pg_cast\n\t\t\t\t\t\tWHERE castsource = 'integer'::regtype\n\t\t\t\t\t\t\tAND casttarget = 'bigint'::regtype;",
+      "querySha256": "06cc4a42a766414538a854803d0f9dd2abaa91810df31d5d4caa6b0244041151",
+      "expectedRows": [
+        [
+          {
+            "value": "integer"
+          },
+          {
+            "value": "bigint"
+          },
+          {
+            "value": "i"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgOperatorEqualityMergeHashFlagsRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgOperatorEqualityMergeHashFlagsRepro",
+      "ordinal": 1,
+      "scriptName": "pg_operator exposes equality merge and hash flags",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpgoperatorequalitymergehashflagsrepro-0001-select-oprcanmerge-oprcanhash-from-pg_catalog.pg_operator",
+      "suggestedId": "catalog-correctness-repro-test-testpgoperatorequalitymergehashflagsrepro-0001-select-oprcanmerge-oprcanhash-from-pg_catalog.pg_operator",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT oprcanmerge, oprcanhash\n\t\t\t\t\t\tFROM pg_catalog.pg_operator\n\t\t\t\t\t\tWHERE oprname = '='\n\t\t\t\t\t\t\tAND oprleft = 'integer'::regtype\n\t\t\t\t\t\t\tAND oprright = 'integer'::regtype;",
+      "querySha256": "b99f95ea9c9d83cde08a6558bdaa84349e00d8343c3bd13dedeb0bacd2410823",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgLanguageExposesBuiltinLanguagesRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgLanguageExposesBuiltinLanguagesRepro",
+      "ordinal": 1,
+      "scriptName": "pg_language exposes SQL and PLpgSQL languages",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpglanguageexposesbuiltinlanguagesrepro-0001-select-lanname-from-pg_catalog.pg_language-where",
+      "suggestedId": "catalog-correctness-repro-test-testpglanguageexposesbuiltinlanguagesrepro-0001-select-lanname-from-pg_catalog.pg_language-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT lanname\n\t\t\t\t\t\tFROM pg_catalog.pg_language\n\t\t\t\t\t\tWHERE lanname IN ('sql', 'plpgsql')\n\t\t\t\t\t\tORDER BY lanname;",
+      "querySha256": "a22821e95a42e118c80a1084e4248f9d2afb17f394f19b6b230d687968a95beb",
+      "expectedRows": [
+        [
+          {
+            "value": "plpgsql"
+          }
+        ],
+        [
+          {
+            "value": "sql"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgTablespaceExposesBuiltinTablespacesRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgTablespaceExposesBuiltinTablespacesRepro",
+      "ordinal": 1,
+      "scriptName": "pg_tablespace exposes built-in tablespaces",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpgtablespaceexposesbuiltintablespacesrepro-0001-select-spcname-from-pg_catalog.pg_tablespace-where",
+      "suggestedId": "catalog-correctness-repro-test-testpgtablespaceexposesbuiltintablespacesrepro-0001-select-spcname-from-pg_catalog.pg_tablespace-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT spcname\n\t\t\t\t\t\tFROM pg_catalog.pg_tablespace\n\t\t\t\t\t\tWHERE spcname IN ('pg_default', 'pg_global')\n\t\t\t\t\t\tORDER BY spcname;",
+      "querySha256": "69eaff2690b5f9844e20f2c78f5da00dda2ff99efc36f1d323a6aa7347c383f2",
+      "expectedRows": [
+        [
+          {
+            "value": "pg_default"
+          }
+        ],
+        [
+          {
+            "value": "pg_global"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgTimezoneCatalogsExposeUtcRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgTimezoneCatalogsExposeUtcRepro",
+      "ordinal": 1,
+      "scriptName": "pg_timezone catalog views expose UTC",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpgtimezonecatalogsexposeutcrepro-0001-select-name-abbrev-from-pg_catalog.pg_timezone_names",
+      "suggestedId": "catalog-correctness-repro-test-testpgtimezonecatalogsexposeutcrepro-0001-select-name-abbrev-from-pg_catalog.pg_timezone_names",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT name, abbrev\n\t\t\t\t\t\tFROM pg_catalog.pg_timezone_names\n\t\t\t\t\t\tWHERE name = 'UTC';",
+      "querySha256": "139bc75e92001755853692b9ff7a5634418c63aac0e4c714f9755e0d32220c7a",
+      "expectedRows": [
+        [
+          {
+            "value": "UTC"
+          },
+          {
+            "value": "UTC"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgTimezoneCatalogsExposeUtcRepro#0002",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgTimezoneCatalogsExposeUtcRepro",
+      "ordinal": 2,
+      "scriptName": "pg_timezone catalog views expose UTC",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpgtimezonecatalogsexposeutcrepro-0002-select-abbrev-from-pg_catalog.pg_timezone_abbrevs-where",
+      "suggestedId": "catalog-correctness-repro-test-testpgtimezonecatalogsexposeutcrepro-0002-select-abbrev-from-pg_catalog.pg_timezone_abbrevs-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT abbrev\n\t\t\t\t\t\tFROM pg_catalog.pg_timezone_abbrevs\n\t\t\t\t\t\tWHERE abbrev = 'UTC';",
+      "querySha256": "52c7d49576451822b2f7de491dc220c882fe2f8dfce8185e86ee190560e753bd",
+      "expectedRows": [
+        [
+          {
+            "value": "UTC"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgRangeExposesBuiltinRangesRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgRangeExposesBuiltinRangesRepro",
+      "ordinal": 1,
+      "scriptName": "pg_range exposes built-in range types",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpgrangeexposesbuiltinrangesrepro-0001-select-rngtypid::regtype::text-rngsubtype::regtype::text-from-pg_catalog.pg_range",
+      "suggestedId": "catalog-correctness-repro-test-testpgrangeexposesbuiltinrangesrepro-0001-select-rngtypid::regtype::text-rngsubtype::regtype::text-from-pg_catalog.pg_range",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT rngtypid::regtype::text, rngsubtype::regtype::text\n\t\t\t\t\t\tFROM pg_catalog.pg_range\n\t\t\t\t\t\tWHERE rngtypid::regtype::text = 'int4range';",
+      "querySha256": "9363ce2de8b645c70619e0c436df62786768385e55bb953c6d96d761b97aea83",
+      "expectedRows": [
+        [
+          {
+            "value": "int4range"
+          },
+          {
+            "value": "integer"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestTextSearchCatalogsExposeBuiltinsRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestTextSearchCatalogsExposeBuiltinsRepro",
+      "ordinal": 1,
+      "scriptName": "text-search catalogs expose built-ins",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testtextsearchcatalogsexposebuiltinsrepro-0001-select-cfgname-from-pg_catalog.pg_ts_config-where",
+      "suggestedId": "catalog-correctness-repro-test-testtextsearchcatalogsexposebuiltinsrepro-0001-select-cfgname-from-pg_catalog.pg_ts_config-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT cfgname\n\t\t\t\t\t\tFROM pg_catalog.pg_ts_config\n\t\t\t\t\t\tWHERE cfgname = 'english';",
+      "querySha256": "118f695b647ea6585e200782e37b6d81bfd01fbc1e7236ebe7036c3d335589ec",
+      "expectedRows": [
+        [
+          {
+            "value": "english"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestTextSearchCatalogsExposeBuiltinsRepro#0002",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestTextSearchCatalogsExposeBuiltinsRepro",
+      "ordinal": 2,
+      "scriptName": "text-search catalogs expose built-ins",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testtextsearchcatalogsexposebuiltinsrepro-0002-select-dictname-from-pg_catalog.pg_ts_dict-where",
+      "suggestedId": "catalog-correctness-repro-test-testtextsearchcatalogsexposebuiltinsrepro-0002-select-dictname-from-pg_catalog.pg_ts_dict-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT dictname\n\t\t\t\t\t\tFROM pg_catalog.pg_ts_dict\n\t\t\t\t\t\tWHERE dictname = 'english_stem';",
+      "querySha256": "5acd3ebeb23443ffa2b87da14be035af5cd3756340523a2389b591839117a27b",
+      "expectedRows": [
+        [
+          {
+            "value": "english_stem"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestTextSearchCatalogsExposeBuiltinsRepro#0003",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestTextSearchCatalogsExposeBuiltinsRepro",
+      "ordinal": 3,
+      "scriptName": "text-search catalogs expose built-ins",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testtextsearchcatalogsexposebuiltinsrepro-0003-select-prsname-from-pg_catalog.pg_ts_parser-where",
+      "suggestedId": "catalog-correctness-repro-test-testtextsearchcatalogsexposebuiltinsrepro-0003-select-prsname-from-pg_catalog.pg_ts_parser-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT prsname\n\t\t\t\t\t\tFROM pg_catalog.pg_ts_parser\n\t\t\t\t\t\tWHERE prsname = 'default';",
+      "querySha256": "c4c97a2f8499f44c8e0a9dc04baf56a24e64055d44fb13d5e8c6d9ed0036351c",
+      "expectedRows": [
+        [
+          {
+            "value": "default"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestTextSearchCatalogsExposeBuiltinsRepro#0004",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestTextSearchCatalogsExposeBuiltinsRepro",
+      "ordinal": 4,
+      "scriptName": "text-search catalogs expose built-ins",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testtextsearchcatalogsexposebuiltinsrepro-0004-select-tmplname-from-pg_catalog.pg_ts_template-where",
+      "suggestedId": "catalog-correctness-repro-test-testtextsearchcatalogsexposebuiltinsrepro-0004-select-tmplname-from-pg_catalog.pg_ts_template-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT tmplname\n\t\t\t\t\t\tFROM pg_catalog.pg_ts_template\n\t\t\t\t\t\tWHERE tmplname = 'simple';",
+      "querySha256": "69156fa39508f6d753ae7ffb5be74bb055ef17c4f2f5fd833a2627925e444c7c",
+      "expectedRows": [
+        [
+          {
+            "value": "simple"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestMiscBuiltinCatalogsExposeRowsRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestMiscBuiltinCatalogsExposeRowsRepro",
+      "ordinal": 1,
+      "scriptName": "misc built-in catalogs expose rows",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testmiscbuiltincatalogsexposerowsrepro-0001-select-name-from-pg_catalog.pg_config-where",
+      "suggestedId": "catalog-correctness-repro-test-testmiscbuiltincatalogsexposerowsrepro-0001-select-name-from-pg_catalog.pg_config-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT name\n\t\t\t\t\t\tFROM pg_catalog.pg_config\n\t\t\t\t\t\tWHERE name = 'BINDIR';",
+      "querySha256": "c948334efcd3a05aa915ffa4352803897c104bf209f83d94185648bb4dcd2837",
+      "expectedRows": [
+        [
+          {
+            "value": "BINDIR"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestMiscBuiltinCatalogsExposeRowsRepro#0002",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestMiscBuiltinCatalogsExposeRowsRepro",
+      "ordinal": 2,
+      "scriptName": "misc built-in catalogs expose rows",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testmiscbuiltincatalogsexposerowsrepro-0002-select-conname-from-pg_catalog.pg_conversion-where",
+      "suggestedId": "catalog-correctness-repro-test-testmiscbuiltincatalogsexposerowsrepro-0002-select-conname-from-pg_catalog.pg_conversion-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT conname\n\t\t\t\t\t\tFROM pg_catalog.pg_conversion\n\t\t\t\t\t\tWHERE conname = 'utf8_to_iso_8859_1';",
+      "querySha256": "f271c59f923e6b7788a1702d023be0880ef10448418bfbf536755334e0e83ca8",
+      "expectedRows": [
+        [
+          {
+            "value": "utf8_to_iso_8859_1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestMiscBuiltinCatalogsExposeRowsRepro#0003",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestMiscBuiltinCatalogsExposeRowsRepro",
+      "ordinal": 3,
+      "scriptName": "misc built-in catalogs expose rows",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testmiscbuiltincatalogsexposerowsrepro-0003-select-count-*->-0",
+      "suggestedId": "catalog-correctness-repro-test-testmiscbuiltincatalogsexposerowsrepro-0003-select-count-*->-0",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) > 0\n\t\t\t\t\t\tFROM pg_catalog.pg_aggregate;",
+      "querySha256": "0a67f86e2a5198d93dedcfece0a2772723e2b425ea0e12bca68a9b391004d866",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgProcExposesBuiltinFunctionsRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgProcExposesBuiltinFunctionsRepro",
+      "ordinal": 1,
+      "scriptName": "pg_proc exposes built-in functions",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpgprocexposesbuiltinfunctionsrepro-0001-select-count-*->-0",
+      "suggestedId": "catalog-correctness-repro-test-testpgprocexposesbuiltinfunctionsrepro-0001-select-count-*->-0",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) > 0\n\t\t\t\t\t\tFROM pg_catalog.pg_proc\n\t\t\t\t\t\tWHERE proname = 'abs';",
+      "querySha256": "1517c71757ebf77da3041456988122ed30ce6e97f59f67c4492846be619e84f5",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgInitPrivsExposesBuiltinInitialPrivilegesRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgInitPrivsExposesBuiltinInitialPrivilegesRepro",
+      "ordinal": 1,
+      "scriptName": "pg_init_privs exposes built-in initial privileges",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpginitprivsexposesbuiltininitialprivilegesrepro-0001-select-count-*->-0",
+      "suggestedId": "catalog-correctness-repro-test-testpginitprivsexposesbuiltininitialprivilegesrepro-0001-select-count-*->-0",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) > 0\n\t\t\t\t\t\tFROM pg_catalog.pg_init_privs;",
+      "querySha256": "ad6e8c91681be80ee928b7b50262c4c55157ec8e052750eaeacc548a0d2a7180",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestAlterRoleSetPopulatesPgDbRoleSettingRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestAlterRoleSetPopulatesPgDbRoleSettingRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER ROLE SET populates pg_db_role_setting",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testalterrolesetpopulatespgdbrolesettingrepro-0001-select-setrole::regrole::text-setdatabase-array_to_string-setconfig",
+      "suggestedId": "catalog-correctness-repro-test-testalterrolesetpopulatespgdbrolesettingrepro-0001-select-setrole::regrole::text-setdatabase-array_to_string-setconfig",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT setrole::regrole::text, setdatabase, array_to_string(setconfig, ',')\n\t\t\t\t\t\tFROM pg_catalog.pg_db_role_setting\n\t\t\t\t\t\tWHERE setrole = 'role_setting_catalog'::regrole;",
+      "querySha256": "646ee05508aa10115415f46010bca4f0ffe6cdbfb123eed9801b552f75d36726",
+      "expectedRows": [
+        [
+          {
+            "value": "role_setting_catalog"
+          },
+          {
+            "value": "0"
+          },
+          {
+            "value": "work_mem=64kB"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestAlterRoleResetSettingRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestAlterRoleResetSettingRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER ROLE RESET setting succeeds",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testalterroleresetsettingrepro-0001-select-count-*-from-pg_catalog.pg_db_role_setting",
+      "suggestedId": "catalog-correctness-repro-test-testalterroleresetsettingrepro-0001-select-count-*-from-pg_catalog.pg_db_role_setting",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_db_role_setting\n\t\t\t\t\t\tWHERE setrole = 'role_reset_setting_catalog'::regrole;",
+      "querySha256": "525449cf5f4664a1247c2de6f73c7b2ac87e01430e1f4a2676145e865ef50291",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestAlterRoleInDatabaseSetPopulatesPgDbRoleSettingRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestAlterRoleInDatabaseSetPopulatesPgDbRoleSettingRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER ROLE IN DATABASE SET populates pg_db_role_setting",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testalterroleindatabasesetpopulatespgdbrolesettingrepro-0001-select-setrole::regrole::text-datname-array_to_string-setconfig",
+      "suggestedId": "catalog-correctness-repro-test-testalterroleindatabasesetpopulatespgdbrolesettingrepro-0001-select-setrole::regrole::text-datname-array_to_string-setconfig",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT setrole::regrole::text, datname, array_to_string(setconfig, ',')\n\t\t\t\t\t\tFROM pg_catalog.pg_db_role_setting\n\t\t\t\t\t\tJOIN pg_catalog.pg_database ON setdatabase = pg_database.oid\n\t\t\t\t\t\tWHERE setrole = 'role_database_setting_catalog'::regrole;",
+      "querySha256": "71ee5809d80d7c952ddc5b4914b7f9c6a62a3b239b7e89329e03ad3475567bac",
+      "expectedRows": [
+        [
+          {
+            "value": "role_database_setting_catalog"
+          },
+          {
+            "value": "role_database_setting_db"
+          },
+          {
+            "value": "work_mem=64kB"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestCompositeTypeCatalogRelidRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestCompositeTypeCatalogRelidRepro",
+      "ordinal": 1,
+      "scriptName": "composite types expose pg_type typrelid and pg_class row",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testcompositetypecatalogrelidrepro-0001-select-typname-typtype-typrelid-<>",
+      "suggestedId": "catalog-correctness-repro-test-testcompositetypecatalogrelidrepro-0001-select-typname-typtype-typrelid-<>",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT typname, typtype, typrelid <> 0::oid\n\t\t\t\t\t\tFROM pg_catalog.pg_type\n\t\t\t\t\t\tWHERE typname = 'composite_catalog_type';",
+      "querySha256": "94dcff0fd63a453c4d0b0ef32a6314a3355f9346f9165817e1742e512261576a",
+      "expectedRows": [
+        [
+          {
+            "value": "composite_catalog_type"
+          },
+          {
+            "value": "c"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestCompositeTypeCatalogRelidRepro#0002",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestCompositeTypeCatalogRelidRepro",
+      "ordinal": 2,
+      "scriptName": "composite types expose pg_type typrelid and pg_class row",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testcompositetypecatalogrelidrepro-0002-select-c.relname-c.relkind-from-pg_catalog.pg_class",
+      "suggestedId": "catalog-correctness-repro-test-testcompositetypecatalogrelidrepro-0002-select-c.relname-c.relkind-from-pg_catalog.pg_class",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT c.relname, c.relkind\n\t\t\t\t\t\tFROM pg_catalog.pg_class c\n\t\t\t\t\t\tJOIN pg_catalog.pg_type t ON t.typrelid = c.oid\n\t\t\t\t\t\tWHERE t.typname = 'composite_catalog_type';",
+      "querySha256": "ad5f88ee3d61f7c0ff1880aa5677307e021dd2e08736caf33a225e5bbaa51c7c",
+      "expectedRows": [
+        [
+          {
+            "value": "composite_catalog_type"
+          },
+          {
+            "value": "c"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestFormatTypeInvalidOidRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestFormatTypeInvalidOidRepro",
+      "ordinal": 1,
+      "scriptName": "format_type renders InvalidOid",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testformattypeinvalidoidrepro-0001-select-format_type-0::oid-null-format_type",
+      "suggestedId": "catalog-correctness-repro-test-testformattypeinvalidoidrepro-0001-select-format_type-0::oid-null-format_type",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT format_type(0::oid, NULL), format_type(0::oid, 20);",
+      "querySha256": "ce289bec393b7aa2095f67054de105e359fbebe8bcbb74d5d91036216b05ddec",
+      "expectedRows": [
+        [
+          {
+            "value": "-"
+          },
+          {
+            "value": "-"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestFormatTypeDomainAttributeRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestFormatTypeDomainAttributeRepro",
+      "ordinal": 1,
+      "scriptName": "format_type renders domain attribute types",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testformattypedomainattributerepro-0001-select-format_type-atttypid-atttypmod-from",
+      "suggestedId": "catalog-correctness-repro-test-testformattypedomainattributerepro-0001-select-format_type-atttypid-atttypmod-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT format_type(atttypid, atttypmod)\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute\n\t\t\t\t\t\tWHERE attrelid = 'format_type_domain_items'::regclass\n\t\t\t\t\t\t\tAND attname = 'amount';",
+      "querySha256": "c03c23049debff5b4c707c2a71395ceffe698195e3703731a9c867e4ab6efb76",
+      "expectedRows": [
+        [
+          {
+            "value": "format_type_domain"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestRegroleTypeResolvesRolesRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestRegroleTypeResolvesRolesRepro",
+      "ordinal": 1,
+      "scriptName": "regrole resolves role names",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testregroletyperesolvesrolesrepro-0001-select-regrole_catalog_user-::regrole::text",
+      "suggestedId": "catalog-correctness-repro-test-testregroletyperesolvesrolesrepro-0001-select-regrole_catalog_user-::regrole::text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 'regrole_catalog_user'::regrole::text;",
+      "querySha256": "c0084133f6814c3bb9450a29168bcf771cda0968165e49fe217df85bd48f5cdb",
+      "expectedRows": [
+        [
+          {
+            "value": "regrole_catalog_user"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestRegroleTypeResolvesRolesRepro#0002",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestRegroleTypeResolvesRolesRepro",
+      "ordinal": 2,
+      "scriptName": "regrole resolves role names",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testregroletyperesolvesrolesrepro-0002-select-0::regrole::text",
+      "suggestedId": "catalog-correctness-repro-test-testregroletyperesolvesrolesrepro-0002-select-0::regrole::text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 0::regrole::text;",
+      "querySha256": "1aa21bb298baf72b5a231e7b22ab3c1fa5ab4d0bfe559cf545dfdac64a3431eb",
+      "expectedRows": [
+        [
+          {
+            "value": "-"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestAdditionalRegTypesResolveBuiltinsRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestAdditionalRegTypesResolveBuiltinsRepro",
+      "ordinal": 1,
+      "scriptName": "additional reg types resolve built-ins",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testadditionalregtypesresolvebuiltinsrepro-0001-select-abs-integer-::regprocedure::text",
+      "suggestedId": "catalog-correctness-repro-test-testadditionalregtypesresolvebuiltinsrepro-0001-select-abs-integer-::regprocedure::text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 'abs(integer)'::regprocedure::text;",
+      "querySha256": "e7c66e9c98b9830b6455f2ffbd3ef31caeed42d8f65543e17759e351d17c3271",
+      "expectedRows": [
+        [
+          {
+            "value": "abs(integer)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestAdditionalRegTypesResolveBuiltinsRepro#0002",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestAdditionalRegTypesResolveBuiltinsRepro",
+      "ordinal": 2,
+      "scriptName": "additional reg types resolve built-ins",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testadditionalregtypesresolvebuiltinsrepro-0002-select-+-integer-integer-::regoperator::text",
+      "suggestedId": "catalog-correctness-repro-test-testadditionalregtypesresolvebuiltinsrepro-0002-select-+-integer-integer-::regoperator::text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT '+(integer,integer)'::regoperator::text;",
+      "querySha256": "5fd11dd34294ef086d744db02fae3a8dd3fb438f88421cc9e16a3cdfd4746dfa",
+      "expectedRows": [
+        [
+          {
+            "value": "+(integer,integer)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestAdditionalRegTypesResolveBuiltinsRepro#0003",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestAdditionalRegTypesResolveBuiltinsRepro",
+      "ordinal": 3,
+      "scriptName": "additional reg types resolve built-ins",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testadditionalregtypesresolvebuiltinsrepro-0003-select-english-::regconfig::text",
+      "suggestedId": "catalog-correctness-repro-test-testadditionalregtypesresolvebuiltinsrepro-0003-select-english-::regconfig::text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 'english'::regconfig::text;",
+      "querySha256": "b5706cab0d56d77c802905c29df7b369b443cec717e6a531557a75d572ba6ded",
+      "expectedRows": [
+        [
+          {
+            "value": "english"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestAdditionalRegTypesResolveBuiltinsRepro#0004",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestAdditionalRegTypesResolveBuiltinsRepro",
+      "ordinal": 4,
+      "scriptName": "additional reg types resolve built-ins",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testadditionalregtypesresolvebuiltinsrepro-0004-select-simple-::regdictionary::text",
+      "suggestedId": "catalog-correctness-repro-test-testadditionalregtypesresolvebuiltinsrepro-0004-select-simple-::regdictionary::text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 'simple'::regdictionary::text;",
+      "querySha256": "1dd0eaffcdce847faf8e1554a37a0cc6a5c032eae403fd65643d19daaa2c6d7c",
+      "expectedRows": [
+        [
+          {
+            "value": "simple"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestToRegnamespaceResolvesSchemaNamesRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestToRegnamespaceResolvesSchemaNamesRepro",
+      "ordinal": 1,
+      "scriptName": "to_regnamespace resolves schema names",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testtoregnamespaceresolvesschemanamesrepro-0001-select-to_regnamespace-pg_catalog-::text-to_regnamespace",
+      "suggestedId": "catalog-correctness-repro-test-testtoregnamespaceresolvesschemanamesrepro-0001-select-to_regnamespace-pg_catalog-::text-to_regnamespace",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT to_regnamespace('pg_catalog')::text,\n\t\t\t\t\t\tto_regnamespace('missing_schema_for_to_regnamespace') IS NULL;",
+      "querySha256": "7b17116f45ebdae0b3a654e8576575dcf1d70ad7a5b5be847889f2a840c7541b",
+      "expectedRows": [
+        [
+          {
+            "value": "pg_catalog"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestToRegprocedureResolvesFunctionSignaturesRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestToRegprocedureResolvesFunctionSignaturesRepro",
+      "ordinal": 1,
+      "scriptName": "to_regprocedure resolves function signatures",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testtoregprocedureresolvesfunctionsignaturesrepro-0001-select-to_regprocedure-array_in-cstring-oid",
+      "suggestedId": "catalog-correctness-repro-test-testtoregprocedureresolvesfunctionsignaturesrepro-0001-select-to_regprocedure-array_in-cstring-oid",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT to_regprocedure('array_in(cstring,oid,integer)')::text,\n\t\t\t\t\t\tto_regprocedure('missing_function_for_to_regprocedure(integer)') IS NULL;",
+      "querySha256": "58035162b5a12dcd6a4fbd6b643474e57916a3bd4b86aa11be1dec84f1b425d2",
+      "expectedRows": [
+        [
+          {
+            "value": "array_in(cstring,oid,integer)"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestIntervalTypmodCatalogMetadataRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestIntervalTypmodCatalogMetadataRepro",
+      "ordinal": 1,
+      "scriptName": "interval typmods round-trip through catalog metadata",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testintervaltypmodcatalogmetadatarepro-0001-select-attname-atttypmod-format_type-atttypid",
+      "suggestedId": "catalog-correctness-repro-test-testintervaltypmodcatalogmetadatarepro-0001-select-attname-atttypmod-format_type-atttypid",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT attname, atttypmod, format_type(atttypid, atttypmod)\n\t\t\t\t\t\tFROM pg_catalog.pg_attribute\n\t\t\t\t\t\tWHERE attrelid = 'interval_typmod_catalog'::regclass\n\t\t\t\t\t\t\tAND attnum > 0\n\t\t\t\t\t\tORDER BY attnum;",
+      "querySha256": "0e1f4b80ce058ecf1243565237c3a1c7a207e6ffe95f2accdbf9d4875a173c6c",
+      "expectedRows": [
+        [
+          {
+            "value": "ym"
+          },
+          {
+            "value": "458751"
+          },
+          {
+            "value": "interval year to month"
+          }
+        ],
+        [
+          {
+            "value": "ds3"
+          },
+          {
+            "value": "470286339"
+          },
+          {
+            "value": "interval day to second(3)"
+          }
+        ],
+        [
+          {
+            "value": "p2"
+          },
+          {
+            "value": "2147418114"
+          },
+          {
+            "value": "interval(2)"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestTemporaryTableRelpersistenceCatalogMetadataRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestTemporaryTableRelpersistenceCatalogMetadataRepro",
+      "ordinal": 1,
+      "scriptName": "temporary table relpersistence metadata",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testtemporarytablerelpersistencecatalogmetadatarepro-0001-select-relpersistence-from-pg_catalog.pg_class-where",
+      "suggestedId": "catalog-correctness-repro-test-testtemporarytablerelpersistencecatalogmetadatarepro-0001-select-relpersistence-from-pg_catalog.pg_class-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT relpersistence\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE relname = 'temp_rel_persistence';",
+      "querySha256": "bf4b7c0dc81c9f23452421d5012aaf6304304ba65388ac8572cc4be8507e3164",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestUnloggedTableRelpersistenceCatalogMetadataRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestUnloggedTableRelpersistenceCatalogMetadataRepro",
+      "ordinal": 1,
+      "scriptName": "unlogged table relpersistence metadata",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testunloggedtablerelpersistencecatalogmetadatarepro-0001-select-relpersistence-from-pg_catalog.pg_class-where",
+      "suggestedId": "catalog-correctness-repro-test-testunloggedtablerelpersistencecatalogmetadatarepro-0001-select-relpersistence-from-pg_catalog.pg_class-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT relpersistence\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE relname = 'unlogged_rel_persistence';",
+      "querySha256": "65541a4e9fb13b8d72ee17b87c11bb742b3c18570fcc530d24830eb79e266a28",
+      "expectedRows": [
+        [
+          {
+            "value": "u"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestUnloggedSequenceRelpersistenceCatalogMetadataRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestUnloggedSequenceRelpersistenceCatalogMetadataRepro",
+      "ordinal": 1,
+      "scriptName": "unlogged sequence relpersistence metadata",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testunloggedsequencerelpersistencecatalogmetadatarepro-0001-select-relpersistence-from-pg_catalog.pg_class-where",
+      "suggestedId": "catalog-correctness-repro-test-testunloggedsequencerelpersistencecatalogmetadatarepro-0001-select-relpersistence-from-pg_catalog.pg_class-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT relpersistence\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE relname = 'unlogged_sequence_rel_persistence';",
+      "querySha256": "6d9b9ca75ad79aab76c296d88c34c4e81012ff6cb7e64e40a5ba491b55dea2a6",
+      "expectedRows": [
+        [
+          {
+            "value": "u"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgClassColumnAndCheckCountsRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgClassColumnAndCheckCountsRepro",
+      "ordinal": 1,
+      "scriptName": "pg_class exposes relnatts and relchecks",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpgclasscolumnandcheckcountsrepro-0001-select-relnatts-relchecks-from-pg_catalog.pg_class",
+      "suggestedId": "catalog-correctness-repro-test-testpgclasscolumnandcheckcountsrepro-0001-select-relnatts-relchecks-from-pg_catalog.pg_class",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT relnatts, relchecks\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE oid = 'pg_class_count_target'::regclass;",
+      "querySha256": "1121d884aa08feb5010fc544f51747bbca0d5e5369397b3d94c401d77cb2f543",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgClassViewRuleMetadataRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgClassViewRuleMetadataRepro",
+      "ordinal": 1,
+      "scriptName": "pg_class exposes view column and rule metadata",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpgclassviewrulemetadatarepro-0001-select-relnatts-relhasrules-from-pg_catalog.pg_class",
+      "suggestedId": "catalog-correctness-repro-test-testpgclassviewrulemetadatarepro-0001-select-relnatts-relhasrules-from-pg_catalog.pg_class",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT relnatts, relhasrules\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE oid = 'pg_class_view_metadata'::regclass;",
+      "querySha256": "9028a8336019867d13e4ac96d590532fccf2ecf528b2d4b2d18b705d67c771b5",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestCreateViewPopulatesPgRewriteRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestCreateViewPopulatesPgRewriteRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE VIEW populates pg_rewrite",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testcreateviewpopulatespgrewriterepro-0001-select-rulename-from-pg_catalog.pg_rewrite-where",
+      "suggestedId": "catalog-correctness-repro-test-testcreateviewpopulatespgrewriterepro-0001-select-rulename-from-pg_catalog.pg_rewrite-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT rulename\n\t\t\t\t\t\tFROM pg_catalog.pg_rewrite\n\t\t\t\t\t\tWHERE ev_class = 'rewrite_catalog_view'::regclass\n\t\t\t\t\t\t\tAND rulename = '_RETURN';",
+      "querySha256": "f10028980ae3c7e223b7056932ef646d626a0ebf6ba4faf5e45da29ad0c407f3",
+      "expectedRows": [
+        [
+          {
+            "value": "_RETURN"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestColumnDefaultSequenceDependencyPopulatesPgDependRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestColumnDefaultSequenceDependencyPopulatesPgDependRepro",
+      "ordinal": 1,
+      "scriptName": "column default sequence dependency populates pg_depend",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testcolumndefaultsequencedependencypopulatespgdependrepro-0001-select-d.deptype-from-pg_catalog.pg_depend-d",
+      "suggestedId": "catalog-correctness-repro-test-testcolumndefaultsequencedependencypopulatespgdependrepro-0001-select-d.deptype-from-pg_catalog.pg_depend-d",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT d.deptype\n\t\t\t\t\t\tFROM pg_catalog.pg_depend d\n\t\t\t\t\t\tJOIN pg_catalog.pg_class s ON d.refobjid = s.oid\n\t\t\t\t\t\tJOIN pg_catalog.pg_attrdef ad ON d.objid = ad.oid\n\t\t\t\t\t\tJOIN pg_catalog.pg_class t ON ad.adrelid = t.oid\n\t\t\t\t\t\tWHERE s.relname = 'depend_catalog_seq'\n\t\t\t\t\t\t\tAND t.relname = 'depend_catalog_items';",
+      "querySha256": "87e02289f6da41a30e859570489c1b9c83e4e0684fa8f3edca3ed713a7f6ad72",
+      "expectedRows": [
+        [
+          {
+            "value": "n"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestTableOwnershipPopulatesPgShdependRepro#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestTableOwnershipPopulatesPgShdependRepro",
+      "ordinal": 1,
+      "scriptName": "table ownership populates pg_shdepend",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testtableownershippopulatespgshdependrepro-0001-select-d.deptype-from-pg_catalog.pg_shdepend-d",
+      "suggestedId": "catalog-correctness-repro-test-testtableownershippopulatespgshdependrepro-0001-select-d.deptype-from-pg_catalog.pg_shdepend-d",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT d.deptype\n\t\t\t\t\t\tFROM pg_catalog.pg_shdepend d\n\t\t\t\t\t\tJOIN pg_catalog.pg_class c ON d.objid = c.oid\n\t\t\t\t\t\tJOIN pg_catalog.pg_roles r ON d.refobjid = r.oid\n\t\t\t\t\t\tWHERE c.relname = 'shdepend_catalog_items'\n\t\t\t\t\t\t\tAND r.rolname = 'shdepend_catalog_owner';",
+      "querySha256": "cf13d00e365f971cf61bc04d62962f82ea89a1b647b31f656ae630846fd41391",
+      "expectedRows": [
+        [
+          {
+            "value": "o"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgTypeRegprocColumnComparisonGuard#0001",
+      "source": "testing/go/postgres16/catalog_correctness_repro_test.go:TestPgTypeRegprocColumnComparisonGuard",
+      "ordinal": 1,
+      "scriptName": "pg_type typsubscript compares to regproc literal",
+      "oracle": "postgres",
+      "postgresId": "catalog-correctness-repro-test-testpgtyperegproccolumncomparisonguard-0001-select-t1.oid-t1.typname-as-basetype",
+      "suggestedId": "catalog-correctness-repro-test-testpgtyperegproccolumncomparisonguard-0001-select-t1.oid-t1.typname-as-basetype",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT t1.oid, t1.typname AS basetype, t2.typname AS arraytype, t2.typsubscript\n\t\t\t\t\t\tFROM pg_catalog.pg_type t1\n\t\t\t\t\t\tLEFT JOIN pg_catalog.pg_type t2 ON t1.typarray = t2.oid\n\t\t\t\t\t\tWHERE t1.typarray <> 0\n\t\t\t\t\t\t\tAND (t2.oid IS NULL OR t2.typsubscript <> 'array_subscript_handler'::regproc);",
+      "querySha256": "beeff8724c3adfeae97036315a6a099154e5d2e59b89a3f42086ed5c86b680f8",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

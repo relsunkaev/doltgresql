@@ -1,0 +1,281 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map grant_revoke_correctness_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/grant_revoke_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/grant_revoke_correctness_repro_test.go:TestRevokeGrantedByOnlyRemovesNamedGrantorRepro#0001",
+      "source": "testing/go/postgres16/grant_revoke_correctness_repro_test.go:TestRevokeGrantedByOnlyRemovesNamedGrantorRepro",
+      "ordinal": 1,
+      "scriptName": "REVOKE GRANTED BY keeps other grantors' privileges",
+      "oracle": "internal",
+      "suggestedId": "grant-revoke-correctness-repro-test-testrevokegrantedbyonlyremovesnamedgrantorrepro-0001-select-id-from-revoke_granted_by_items",
+      "expectedKind": "rows",
+      "username": "revoke_grantee",
+      "query": "SELECT id\n\t\t\t\t\t\tFROM revoke_granted_by_items;",
+      "querySha256": "c2b916483a3dc9a271764ab0adf563b50e6319ce05559abe142e07d2acbb0f52",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/grant_revoke_correctness_repro_test.go:TestRevokeGrantOptionForGrantedByOnlyRemovesNamedGrantorRepro#0001",
+      "source": "testing/go/postgres16/grant_revoke_correctness_repro_test.go:TestRevokeGrantOptionForGrantedByOnlyRemovesNamedGrantorRepro",
+      "ordinal": 1,
+      "scriptName": "REVOKE GRANT OPTION GRANTED BY keeps other grantors' grant option",
+      "oracle": "internal",
+      "suggestedId": "grant-revoke-correctness-repro-test-testrevokegrantoptionforgrantedbyonlyremovesnamedgrantorrepro-0001-select-id-from-revoke_option_items",
+      "expectedKind": "rows",
+      "username": "revoke_option_delegate",
+      "query": "SELECT id\n\t\t\t\t\t\tFROM revoke_option_items;",
+      "querySha256": "29090d15678317eb46d8b6a9edb4de187cf49c37d8178f7400631f2f06c61da8",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/grant_revoke_correctness_repro_test.go:TestRevokeGrantedByRequiresCurrentUserRepro#0001",
+      "source": "testing/go/postgres16/grant_revoke_correctness_repro_test.go:TestRevokeGrantedByRequiresCurrentUserRepro",
+      "ordinal": 1,
+      "scriptName": "REVOKE GRANTED BY requires current user",
+      "oracle": "postgres",
+      "postgresId": "grant-revoke-correctness-repro-test-testrevokegrantedbyrequirescurrentuserrepro-0001-revoke-select-on-revoke_by_group_items-from",
+      "suggestedId": "grant-revoke-correctness-repro-test-testrevokegrantedbyrequirescurrentuserrepro-0001-revoke-select-on-revoke_by_group_items-from",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "0A000",
+      "errorSeverity": "ERROR",
+      "username": "revoke_by_member",
+      "query": "REVOKE SELECT ON revoke_by_group_items\n\t\t\t\t\t\tFROM revoke_by_grantee\n\t\t\t\t\t\tGRANTED BY revoke_by_group;",
+      "querySha256": "119f656f30a060e4d8ea0f24946d67efd6b8b12a66f01b71970a2b9755077c03",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/grant_revoke_correctness_repro_test.go:TestRevokeGrantedByRequiresCurrentUserRepro#0002",
+      "source": "testing/go/postgres16/grant_revoke_correctness_repro_test.go:TestRevokeGrantedByRequiresCurrentUserRepro",
+      "ordinal": 2,
+      "scriptName": "REVOKE GRANTED BY requires current user",
+      "oracle": "postgres",
+      "postgresId": "grant-revoke-correctness-repro-test-testrevokegrantedbyrequirescurrentuserrepro-0002-select-id-from-revoke_by_group_items",
+      "suggestedId": "grant-revoke-correctness-repro-test-testrevokegrantedbyrequirescurrentuserrepro-0002-select-id-from-revoke_by_group_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "revoke_by_grantee",
+      "query": "SELECT id\n\t\t\t\t\t\tFROM revoke_by_group_items;",
+      "querySha256": "a25e5c7c0cf04c7097dfc5e5939f5a1ff20a584b115d18beaf01c20f6a0b89d0",
+      "expectedRows": [
+        [
+          {
+            "value": "11"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/grant_revoke_correctness_repro_test.go:TestRevokeSequenceGrantedByOnlyRemovesNamedGrantorRepro#0001",
+      "source": "testing/go/postgres16/grant_revoke_correctness_repro_test.go:TestRevokeSequenceGrantedByOnlyRemovesNamedGrantorRepro",
+      "ordinal": 1,
+      "scriptName": "sequence REVOKE GRANTED BY keeps other grantors' privileges",
+      "oracle": "internal",
+      "suggestedId": "grant-revoke-correctness-repro-test-testrevokesequencegrantedbyonlyremovesnamedgrantorrepro-0001-select-nextval-revoke_sequence_target",
+      "expectedKind": "rows",
+      "username": "revoke_sequence_grantee",
+      "query": "SELECT nextval('revoke_sequence_target');",
+      "querySha256": "923a2554a309709b6386ffa790ff1d8c949cfdce2a5c3989233a2bad9bae97f4",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/grant_revoke_correctness_repro_test.go:TestRevokeRoutineGrantedByOnlyRemovesNamedGrantorRepro#0001",
+      "source": "testing/go/postgres16/grant_revoke_correctness_repro_test.go:TestRevokeRoutineGrantedByOnlyRemovesNamedGrantorRepro",
+      "ordinal": 1,
+      "scriptName": "routine REVOKE GRANTED BY keeps other grantors' privileges",
+      "oracle": "internal",
+      "suggestedId": "grant-revoke-correctness-repro-test-testrevokeroutinegrantedbyonlyremovesnamedgrantorrepro-0001-select-revoke_routine_target-4",
+      "expectedKind": "rows",
+      "username": "revoke_routine_grantee",
+      "query": "SELECT revoke_routine_target(4);",
+      "querySha256": "cf728e21ee794433f45c653b6de7b98edf7d2802c447ae6a03a8474ea3e2d76d",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/grant_revoke_correctness_repro_test.go:TestRevokeGrantOptionCascadeRemovesDependentTableGrantRepro#0001",
+      "source": "testing/go/postgres16/grant_revoke_correctness_repro_test.go:TestRevokeGrantOptionCascadeRemovesDependentTableGrantRepro",
+      "ordinal": 1,
+      "scriptName": "REVOKE GRANT OPTION CASCADE removes dependent table grant",
+      "oracle": "postgres",
+      "postgresId": "grant-revoke-correctness-repro-test-testrevokegrantoptioncascaderemovesdependenttablegrantrepro-0001-select-id-from-cascade_items",
+      "suggestedId": "grant-revoke-correctness-repro-test-testrevokegrantoptioncascaderemovesdependenttablegrantrepro-0001-select-id-from-cascade_items",
+      "compare": "structural",
+      "expectedKind": "error",
+      "username": "cascade_leaf",
+      "query": "SELECT id FROM cascade_items;",
+      "querySha256": "18ecd19aa9c7b97e273d934ef79da7be94c4dd43a2a05ed70ba6cd855cb9caef",
+      "expectedRows": [
+        [
+          {
+            "value": "13"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/grant_revoke_correctness_repro_test.go:TestRevokeCascadeRemovesDependentTableGrantRepro#0001",
+      "source": "testing/go/postgres16/grant_revoke_correctness_repro_test.go:TestRevokeCascadeRemovesDependentTableGrantRepro",
+      "ordinal": 1,
+      "scriptName": "REVOKE CASCADE removes dependent table grant",
+      "oracle": "postgres",
+      "postgresId": "grant-revoke-correctness-repro-test-testrevokecascaderemovesdependenttablegrantrepro-0001-select-id-from-full_cascade_items",
+      "suggestedId": "grant-revoke-correctness-repro-test-testrevokecascaderemovesdependenttablegrantrepro-0001-select-id-from-full_cascade_items",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "full_cascade_middle",
+      "query": "SELECT id FROM full_cascade_items;",
+      "querySha256": "0e80037003a29646020efaa3df9a7acd4d94ab96b363dd579ad93522ca9182d1",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/grant_revoke_correctness_repro_test.go:TestRevokeCascadeRemovesDependentTableGrantRepro#0002",
+      "source": "testing/go/postgres16/grant_revoke_correctness_repro_test.go:TestRevokeCascadeRemovesDependentTableGrantRepro",
+      "ordinal": 2,
+      "scriptName": "REVOKE CASCADE removes dependent table grant",
+      "oracle": "postgres",
+      "postgresId": "grant-revoke-correctness-repro-test-testrevokecascaderemovesdependenttablegrantrepro-0002-select-id-from-full_cascade_items",
+      "suggestedId": "grant-revoke-correctness-repro-test-testrevokecascaderemovesdependenttablegrantrepro-0002-select-id-from-full_cascade_items",
+      "compare": "structural",
+      "expectedKind": "error",
+      "username": "full_cascade_leaf",
+      "query": "SELECT id FROM full_cascade_items;",
+      "querySha256": "0e80037003a29646020efaa3df9a7acd4d94ab96b363dd579ad93522ca9182d1",
+      "expectedRows": [
+        [
+          {
+            "value": "31"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/grant_revoke_correctness_repro_test.go:TestRevokeRestrictRejectsDependentTableGrantRepro#0001",
+      "source": "testing/go/postgres16/grant_revoke_correctness_repro_test.go:TestRevokeRestrictRejectsDependentTableGrantRepro",
+      "ordinal": 1,
+      "scriptName": "REVOKE RESTRICT rejects dependent table grant",
+      "oracle": "postgres",
+      "postgresId": "grant-revoke-correctness-repro-test-testrevokerestrictrejectsdependenttablegrantrepro-0001-revoke-select-on-restrict_items-from",
+      "suggestedId": "grant-revoke-correctness-repro-test-testrevokerestrictrejectsdependenttablegrantrepro-0001-revoke-select-on-restrict_items-from",
+      "compare": "structural",
+      "expectedKind": "error",
+      "username": "restrict_grantor",
+      "query": "REVOKE SELECT ON restrict_items\n\t\t\t\t\t\tFROM restrict_middle RESTRICT;",
+      "querySha256": "3afcf0d2f656d4f844e2c461a035af7ad02262c2bef5487b8700371be0c68f6c",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/grant_revoke_correctness_repro_test.go:TestRevokeRestrictRejectsDependentTableGrantRepro#0002",
+      "source": "testing/go/postgres16/grant_revoke_correctness_repro_test.go:TestRevokeRestrictRejectsDependentTableGrantRepro",
+      "ordinal": 2,
+      "scriptName": "REVOKE RESTRICT rejects dependent table grant",
+      "oracle": "postgres",
+      "postgresId": "grant-revoke-correctness-repro-test-testrevokerestrictrejectsdependenttablegrantrepro-0002-select-id-from-restrict_items",
+      "suggestedId": "grant-revoke-correctness-repro-test-testrevokerestrictrejectsdependenttablegrantrepro-0002-select-id-from-restrict_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "restrict_middle",
+      "query": "SELECT id FROM restrict_items;",
+      "querySha256": "9fb70833c57523dc01d2829f1cbc7931fc7f321d8d80e319fb499c06ecf39b80",
+      "expectedRows": [
+        [
+          {
+            "value": "17"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/grant_revoke_correctness_repro_test.go:TestRevokeRestrictRejectsDependentTableGrantRepro#0003",
+      "source": "testing/go/postgres16/grant_revoke_correctness_repro_test.go:TestRevokeRestrictRejectsDependentTableGrantRepro",
+      "ordinal": 3,
+      "scriptName": "REVOKE RESTRICT rejects dependent table grant",
+      "oracle": "postgres",
+      "postgresId": "grant-revoke-correctness-repro-test-testrevokerestrictrejectsdependenttablegrantrepro-0003-select-id-from-restrict_items",
+      "suggestedId": "grant-revoke-correctness-repro-test-testrevokerestrictrejectsdependenttablegrantrepro-0003-select-id-from-restrict_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "restrict_leaf",
+      "query": "SELECT id FROM restrict_items;",
+      "querySha256": "9fb70833c57523dc01d2829f1cbc7931fc7f321d8d80e319fb499c06ecf39b80",
+      "expectedRows": [
+        [
+          {
+            "value": "17"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/grant_revoke_correctness_repro_test.go:TestRevokeGrantOptionRestrictRejectsDependentTableGrantRepro#0001",
+      "source": "testing/go/postgres16/grant_revoke_correctness_repro_test.go:TestRevokeGrantOptionRestrictRejectsDependentTableGrantRepro",
+      "ordinal": 1,
+      "scriptName": "REVOKE GRANT OPTION RESTRICT rejects dependent table grant",
+      "oracle": "postgres",
+      "postgresId": "grant-revoke-correctness-repro-test-testrevokegrantoptionrestrictrejectsdependenttablegrantrepro-0001-revoke-grant-option-for-select",
+      "suggestedId": "grant-revoke-correctness-repro-test-testrevokegrantoptionrestrictrejectsdependenttablegrantrepro-0001-revoke-grant-option-for-select",
+      "compare": "structural",
+      "expectedKind": "error",
+      "username": "restrict_option_grantor",
+      "query": "REVOKE GRANT OPTION FOR SELECT ON restrict_option_items\n\t\t\t\t\t\tFROM restrict_option_middle RESTRICT;",
+      "querySha256": "eb7dc112e7dc182385fc6c8270f108cf666419b17b89cdced50a5c8b0237e789",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/grant_revoke_correctness_repro_test.go:TestRevokeGrantOptionRestrictRejectsDependentTableGrantRepro#0002",
+      "source": "testing/go/postgres16/grant_revoke_correctness_repro_test.go:TestRevokeGrantOptionRestrictRejectsDependentTableGrantRepro",
+      "ordinal": 2,
+      "scriptName": "REVOKE GRANT OPTION RESTRICT rejects dependent table grant",
+      "oracle": "postgres",
+      "postgresId": "grant-revoke-correctness-repro-test-testrevokegrantoptionrestrictrejectsdependenttablegrantrepro-0002-select-id-from-restrict_option_items",
+      "suggestedId": "grant-revoke-correctness-repro-test-testrevokegrantoptionrestrictrejectsdependenttablegrantrepro-0002-select-id-from-restrict_option_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "restrict_option_delegate",
+      "query": "SELECT id FROM restrict_option_items;",
+      "querySha256": "1b3dc2e0038d9d2191c33d787bbb30634d8fc2defe1e23a4537feb1984a5fd8d",
+      "expectedRows": [
+        [
+          {
+            "value": "19"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

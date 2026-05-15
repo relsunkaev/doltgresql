@@ -1,0 +1,97 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map session_authorization_privilege_guard_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/session_authorization_privilege_guard_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/session_authorization_privilege_guard_test.go:TestSetSessionAuthorizationRequiresSuperuserForOtherInitialUsers#0001",
+      "source": "testing/go/postgres16/session_authorization_privilege_guard_test.go:TestSetSessionAuthorizationRequiresSuperuserForOtherInitialUsers",
+      "ordinal": 1,
+      "scriptName": "SET SESSION AUTHORIZATION rejects other roles for normal users",
+      "oracle": "postgres",
+      "postgresId": "session-authorization-privilege-guard-test-testsetsessionauthorizationrequiressuperuserforotherinitialusers-0001-select-current_user-session_user",
+      "suggestedId": "session-authorization-privilege-guard-test-testsetsessionauthorizationrequiressuperuserforotherinitialusers-0001-select-current_user-session_user",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "session_auth_actor",
+      "query": "SELECT current_user, session_user;",
+      "querySha256": "f1f1669043de3a1bc91bdbbb7ccfde4530c01b4e8191eb2940a3447da2ccb43f",
+      "expectedRows": [
+        [
+          {
+            "value": "session_auth_actor"
+          },
+          {
+            "value": "postgres"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/session_authorization_privilege_guard_test.go:TestSetSessionAuthorizationRequiresSuperuserForOtherInitialUsers#0002",
+      "source": "testing/go/postgres16/session_authorization_privilege_guard_test.go:TestSetSessionAuthorizationRequiresSuperuserForOtherInitialUsers",
+      "ordinal": 2,
+      "scriptName": "SET SESSION AUTHORIZATION rejects other roles for normal users",
+      "oracle": "postgres",
+      "postgresId": "session-authorization-privilege-guard-test-testsetsessionauthorizationrequiressuperuserforotherinitialusers-0002-select-current_user-session_user",
+      "suggestedId": "session-authorization-privilege-guard-test-testsetsessionauthorizationrequiressuperuserforotherinitialusers-0002-select-current_user-session_user",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "session_auth_actor",
+      "query": "SELECT current_user, session_user;",
+      "querySha256": "f1f1669043de3a1bc91bdbbb7ccfde4530c01b4e8191eb2940a3447da2ccb43f",
+      "expectedRows": [
+        [
+          {
+            "value": "session_auth_actor"
+          },
+          {
+            "value": "session_auth_actor"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/session_authorization_privilege_guard_test.go:TestSetSessionAuthorizationRequiresSuperuserForOtherInitialUsers#0003",
+      "source": "testing/go/postgres16/session_authorization_privilege_guard_test.go:TestSetSessionAuthorizationRequiresSuperuserForOtherInitialUsers",
+      "ordinal": 3,
+      "scriptName": "SET SESSION AUTHORIZATION rejects other roles for normal users",
+      "oracle": "internal",
+      "suggestedId": "session-authorization-privilege-guard-test-testsetsessionauthorizationrequiressuperuserforotherinitialusers-0003-set-session-authorization-session_auth_target",
+      "expectedKind": "error",
+      "username": "session_auth_actor",
+      "query": "SET SESSION AUTHORIZATION session_auth_target;",
+      "querySha256": "39563d73df03ecd51e3b2bf821b28dbfdb914c409d4b3a170977e5953ac0d7f5",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/session_authorization_privilege_guard_test.go:TestSetSessionAuthorizationRequiresSuperuserForOtherInitialUsers#0004",
+      "source": "testing/go/postgres16/session_authorization_privilege_guard_test.go:TestSetSessionAuthorizationRequiresSuperuserForOtherInitialUsers",
+      "ordinal": 4,
+      "scriptName": "SET SESSION AUTHORIZATION rejects other roles for normal users",
+      "oracle": "internal",
+      "suggestedId": "session-authorization-privilege-guard-test-testsetsessionauthorizationrequiressuperuserforotherinitialusers-0004-select-current_user-session_user",
+      "expectedKind": "rows",
+      "username": "session_auth_actor",
+      "query": "SELECT current_user, session_user;",
+      "querySha256": "f1f1669043de3a1bc91bdbbb7ccfde4530c01b4e8191eb2940a3447da2ccb43f",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    }
+  ]
+}

@@ -1,0 +1,2335 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map smoke_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/smoke_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0001",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 1,
+      "scriptName": "Simple statements",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0001-create-table-test2-pk-bigint",
+      "suggestedId": "smoke-test-testsmoketests-0001-create-table-test2-pk-bigint",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE TABLE test2 (pk BIGINT PRIMARY KEY, v1 BIGINT);",
+      "querySha256": "06dbcfea32675df627118f5cf38efe05af843a154e992fdfac8ffdc8e44cd207",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0002",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 2,
+      "scriptName": "Simple statements",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0002-insert-into-test-values-1",
+      "suggestedId": "smoke-test-testsmoketests-0002-insert-into-test-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO test VALUES (1, 1), (2, 2);",
+      "querySha256": "4f390cd630ae1a95ec2414e25a5ac8f70e983c3e263cfef078244c0a7116a117",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0003",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 3,
+      "scriptName": "Simple statements",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0003-insert-into-test2-values-3",
+      "suggestedId": "smoke-test-testsmoketests-0003-insert-into-test2-values-3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO test2 VALUES (3, 3), (4, 4);",
+      "querySha256": "190714da1f11f2ecb6dd1c8b821dc3a2c307218a30eff5c64cca705f90bdef04",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0004",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 4,
+      "scriptName": "Simple statements",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0004-select-*-from-test",
+      "suggestedId": "smoke-test-testsmoketests-0004-select-*-from-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test;",
+      "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0005",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 5,
+      "scriptName": "Simple statements",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0005-select-*-from-test2",
+      "suggestedId": "smoke-test-testsmoketests-0005-select-*-from-test2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test2;",
+      "querySha256": "5152862317cd3a429ebfa2cf04e3305a393198314e94cd6cf501bad62e41ca16",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0006",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 6,
+      "scriptName": "Simple statements",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0006-select-test2.pk-from-test2",
+      "suggestedId": "smoke-test-testsmoketests-0006-select-test2.pk-from-test2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT test2.pk FROM test2;",
+      "querySha256": "f3680ba20c9353966276cd0b71b147fadf6a0fcdb25eddf8b3065ccf7c981dd6",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0007",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 7,
+      "scriptName": "Simple statements",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0007-select-*-from-test-order",
+      "suggestedId": "smoke-test-testsmoketests-0007-select-*-from-test-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test ORDER BY 1 LIMIT 1 OFFSET 1;",
+      "querySha256": "a20c626d8902efa66489cc066a6a8eea82422807c13359a261e1a0be582a9a8b",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0008",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 8,
+      "scriptName": "Simple statements",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0008-select-null-=-null",
+      "suggestedId": "smoke-test-testsmoketests-0008-select-null-=-null",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT NULL = NULL",
+      "querySha256": "0b9af6b721e06b86d233af8e81da90c76cdb93c0bcd0a8802e1510741d009b26",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0009",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 9,
+      "scriptName": "Simple statements",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0009",
+      "suggestedId": "smoke-test-testsmoketests-0009",
+      "compare": "tag",
+      "expectedKind": "tag",
+      "query": ";",
+      "querySha256": "41b805ea7ac014e23556e98bb374702a08344268f92489a02f0880849394a1e4",
+      "expectedTag": "",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0010",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 10,
+      "scriptName": "Simple statements",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0010",
+      "suggestedId": "smoke-test-testsmoketests-0010",
+      "compare": "tag",
+      "expectedKind": "tag",
+      "query": " ; ",
+      "querySha256": "8f9d30bd9a842f0b7ed8d38e9b9eae69ddceee60fd88aee67205cc73bb5e45b1",
+      "expectedTag": "",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0011",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 11,
+      "scriptName": "Simple statements",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0011-this-is-only-a-comment",
+      "suggestedId": "smoke-test-testsmoketests-0011-this-is-only-a-comment",
+      "compare": "tag",
+      "expectedKind": "tag",
+      "query": "-- this is only a comment",
+      "querySha256": "5a63ea2e353cd99f14cce298d23ab4bead346aa8e9b6fc710134e061579e251f",
+      "expectedTag": "",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0012",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 12,
+      "scriptName": "Insert statements",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0012-insert-into-test-values-1",
+      "suggestedId": "smoke-test-testsmoketests-0012-insert-into-test-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO test VALUES (1, 2, 3);",
+      "querySha256": "c09b5e530000e188e5df200fc823a927bf115bd5a1b1108a27a47e02deca5d1f",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0013",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 13,
+      "scriptName": "Insert statements",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0013-insert-into-test-v1-pk",
+      "suggestedId": "smoke-test-testsmoketests-0013-insert-into-test-v1-pk",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO test (v1, pk) VALUES (5, 4);",
+      "querySha256": "bd6f462c9b6a44346a3f135a1c06e1e100acf2246ddaf17684cb805972776af8",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0014",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 14,
+      "scriptName": "Insert statements",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0014-insert-into-test-pk-v2",
+      "suggestedId": "smoke-test-testsmoketests-0014-insert-into-test-pk-v2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO test (pk, v2) SELECT pk + 5, v2 + 10 FROM test WHERE v2 IS NOT NULL;",
+      "querySha256": "544f1d834f6266ec684de116106bd6c37e10e44e50b110241d1f464c57cc0187",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0015",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 15,
+      "scriptName": "Insert statements",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0015-select-*-from-test",
+      "suggestedId": "smoke-test-testsmoketests-0015-select-*-from-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test;",
+      "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "5"
+          },
+          {
+            "null": true
+          }
+        ],
+        [
+          {
+            "value": "6"
+          },
+          {
+            "null": true
+          },
+          {
+            "value": "13"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0016",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 16,
+      "scriptName": "Update statements",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0016-update-test-set-v2-=",
+      "suggestedId": "smoke-test-testsmoketests-0016-update-test-set-v2-=",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "UPDATE test SET v2 = 10;",
+      "querySha256": "9efb98681e7fd4ba42e449b25ab0d9aaad690aed2c31a62e6445be26bc689bc7",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0017",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 17,
+      "scriptName": "Update statements",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0017-update-test-set-v1-=",
+      "suggestedId": "smoke-test-testsmoketests-0017-update-test-set-v1-=",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "UPDATE test SET v1 = pk + v2;",
+      "querySha256": "05eafb80851c351cf42fb077ccbb2f00e9efae7c6f2d6fa491105e7eb53271f2",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0018",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 18,
+      "scriptName": "Update statements",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0018-select-*-from-test",
+      "suggestedId": "smoke-test-testsmoketests-0018-select-*-from-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test;",
+      "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "11"
+          },
+          {
+            "value": "10"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "14"
+          },
+          {
+            "value": "10"
+          }
+        ],
+        [
+          {
+            "value": "7"
+          },
+          {
+            "value": "17"
+          },
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0019",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 19,
+      "scriptName": "Update statements",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0019-update-test-set-pk-=",
+      "suggestedId": "smoke-test-testsmoketests-0019-update-test-set-pk-=",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "UPDATE test SET pk = subquery.val FROM (SELECT 22 as val) AS subquery WHERE pk >= 7;",
+      "querySha256": "710ea7684be501ccbf3713d13d135a3864b4c87fe4ef408034e12d87145d6705",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0020",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 20,
+      "scriptName": "Update statements",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0020-select-*-from-test",
+      "suggestedId": "smoke-test-testsmoketests-0020-select-*-from-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test;",
+      "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "11"
+          },
+          {
+            "value": "10"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "14"
+          },
+          {
+            "value": "10"
+          }
+        ],
+        [
+          {
+            "value": "22"
+          },
+          {
+            "value": "17"
+          },
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0021",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 21,
+      "scriptName": "Delete statements",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0021-delete-from-test-where-v2",
+      "suggestedId": "smoke-test-testsmoketests-0021-delete-from-test-where-v2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "DELETE FROM test WHERE v2 = 9;",
+      "querySha256": "33eab12ee6f8ae2064e694c91021223bd0d5079d1a1f079671365efbcc1c7174",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0022",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 22,
+      "scriptName": "Delete statements",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0022-delete-from-test-where-v1",
+      "suggestedId": "smoke-test-testsmoketests-0022-delete-from-test-where-v1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "DELETE FROM test WHERE v1 = pk;",
+      "querySha256": "4e24ba4016f8ee1191d44efe2d07138b03703d5deb3967312745ec5ed016fce6",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0023",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 23,
+      "scriptName": "Delete statements",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0023-select-*-from-test",
+      "suggestedId": "smoke-test-testsmoketests-0023-select-*-from-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test;",
+      "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0024",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 24,
+      "scriptName": "USE statements",
+      "oracle": "internal",
+      "suggestedId": "smoke-test-testsmoketests-0024-select-*-from-t1-order",
+      "expectedKind": "rows",
+      "query": "select * from t1 order by 1;",
+      "querySha256": "e5786c5be78b76e47143739130e251bb28def8b72babf5bdf5813b63ac9e7b87",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0025",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 25,
+      "scriptName": "USE statements",
+      "oracle": "internal",
+      "suggestedId": "smoke-test-testsmoketests-0025-select-*-from-t1-order",
+      "expectedKind": "rows",
+      "query": "select * from t1 order by 1;",
+      "querySha256": "e5786c5be78b76e47143739130e251bb28def8b72babf5bdf5813b63ac9e7b87",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0026",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 26,
+      "scriptName": "USE statements",
+      "oracle": "internal",
+      "suggestedId": "smoke-test-testsmoketests-0026-select-*-from-t1-order",
+      "expectedKind": "rows",
+      "query": "select * from t1 order by 1;",
+      "querySha256": "e5786c5be78b76e47143739130e251bb28def8b72babf5bdf5813b63ac9e7b87",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0027",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 27,
+      "scriptName": "USE statements",
+      "oracle": "internal",
+      "suggestedId": "smoke-test-testsmoketests-0027-select-*-from-t1-order",
+      "expectedKind": "rows",
+      "query": "select * from t1 order by 1;",
+      "querySha256": "e5786c5be78b76e47143739130e251bb28def8b72babf5bdf5813b63ac9e7b87",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0028",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 28,
+      "scriptName": "Boolean results",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0028-select-1-in-2",
+      "suggestedId": "smoke-test-testsmoketests-0028-select-1-in-2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 1 IN (2);",
+      "querySha256": "e10cb1354d8dc16b64988f61d4bef0067a8ec966abedcd8bae91f14ac94d0393",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0029",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 29,
+      "scriptName": "Boolean results",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0029-select-2-in-2",
+      "suggestedId": "smoke-test-testsmoketests-0029-select-2-in-2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 2 IN (2);",
+      "querySha256": "79792e6f735a51cfeec89aa43146f5b9e1b19280ab0ceb2baab8488aeeff07e3",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0030",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 30,
+      "scriptName": "Commit and diff across branches",
+      "oracle": "internal",
+      "suggestedId": "smoke-test-testsmoketests-0030-select-dolt_checkout-main",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_CHECKOUT('main');",
+      "querySha256": "58ff81e0a255165b8ba396138be58adc31b779b2c8c24540089e1a42b554647a",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0031",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 31,
+      "scriptName": "Commit and diff across branches",
+      "oracle": "internal",
+      "suggestedId": "smoke-test-testsmoketests-0031-select-*-from-test",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test;",
+      "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0032",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 32,
+      "scriptName": "Commit and diff across branches",
+      "oracle": "internal",
+      "suggestedId": "smoke-test-testsmoketests-0032-select-dolt_checkout-other",
+      "expectedKind": "rows",
+      "query": "SELECT DOLT_CHECKOUT('other');",
+      "querySha256": "9b1408f0bd2b282d20679101537e337ecbc3d1ae0e17528413556c677044d7c8",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0033",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 33,
+      "scriptName": "Commit and diff across branches",
+      "oracle": "internal",
+      "suggestedId": "smoke-test-testsmoketests-0033-select-*-from-test",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test;",
+      "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0034",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 34,
+      "scriptName": "Commit and diff across branches",
+      "oracle": "internal",
+      "suggestedId": "smoke-test-testsmoketests-0034-select-from_pk-to_pk-from_v1-to_v1",
+      "expectedKind": "rows",
+      "query": "SELECT from_pk, to_pk, from_v1, to_v1 FROM dolt_diff_test;",
+      "querySha256": "deab164cd4191a12006df9e20d3389619096bdd2347001a98ddf6e40c7d51bfe",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0035",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 35,
+      "scriptName": "ARRAY expression",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0035-select-array[v1]::boolean[]-from-test1-order",
+      "suggestedId": "smoke-test-testsmoketests-0035-select-array[v1]::boolean[]-from-test1-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ARRAY[v1]::boolean[] FROM test1 ORDER BY id;",
+      "querySha256": "3a83bb46483e33b5b59e585c16328073de0cfd7c65ce4c445a66b55f9be72fb8",
+      "expectedRows": [
+        [
+          {
+            "value": "{true}"
+          }
+        ],
+        [
+          {
+            "value": "{false}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0036",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 36,
+      "scriptName": "ARRAY expression",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0036-select-array[v1]-from-test1-order",
+      "suggestedId": "smoke-test-testsmoketests-0036-select-array[v1]-from-test1-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ARRAY[v1] FROM test1 ORDER BY id;",
+      "querySha256": "da99f3523226cdbbf1afaba32785ac0394332fcb1bb8b83e92ae58e5d7fc7ca8",
+      "expectedRows": [
+        [
+          {
+            "value": "{true}"
+          }
+        ],
+        [
+          {
+            "value": "{false}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0037",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 37,
+      "scriptName": "ARRAY expression",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0037-select-array[v1-true-v1]-from",
+      "suggestedId": "smoke-test-testsmoketests-0037-select-array[v1-true-v1]-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ARRAY[v1, true, v1] FROM test1 ORDER BY id;",
+      "querySha256": "e6f35fa428e19f6895076bd5b9aae3244777f176cb708fb236b72f59508857c9",
+      "expectedRows": [
+        [
+          {
+            "value": "{true,true,true}"
+          }
+        ],
+        [
+          {
+            "value": "{false,true,false}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0038",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 38,
+      "scriptName": "ARRAY expression",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0038-select-array[1::float8-2::numeric]",
+      "suggestedId": "smoke-test-testsmoketests-0038-select-array[1::float8-2::numeric]",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ARRAY[1::float8, 2::numeric];",
+      "querySha256": "c823d0f5bc864b46287c1a02e11f6c2b5c9bfc3b9c626999d705bdc150510335",
+      "expectedRows": [
+        [
+          {
+            "value": "{1,2}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0039",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 39,
+      "scriptName": "ARRAY expression",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0039-select-array[1::float8-null]",
+      "suggestedId": "smoke-test-testsmoketests-0039-select-array[1::float8-null]",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ARRAY[1::float8, NULL];",
+      "querySha256": "0e0895d5112a69c05689011ed8c867a1578aebb30b34d85a8b71e4fad5b358d4",
+      "expectedRows": [
+        [
+          {
+            "value": "{1,NULL}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0040",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 40,
+      "scriptName": "ARRAY expression",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0040-select-array[1::int2-2::int4-3::int8]::varchar[]",
+      "suggestedId": "smoke-test-testsmoketests-0040-select-array[1::int2-2::int4-3::int8]::varchar[]",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ARRAY[1::int2, 2::int4, 3::int8]::varchar[];",
+      "querySha256": "847be3cb8dd50955b3d4203ffb08c3cec990bb4ffc60be6f20e12378444e0e0e",
+      "expectedRows": [
+        [
+          {
+            "value": "{1,2,3}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0041",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 41,
+      "scriptName": "ARRAY expression",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0041-select-array[1::int8]::int",
+      "suggestedId": "smoke-test-testsmoketests-0041-select-array[1::int8]::int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42846",
+      "errorSeverity": "ERROR",
+      "query": "SELECT ARRAY[1::int8]::int;",
+      "querySha256": "8277f66eecae386891d17e1b81446fd077a1887807eade5f30a5f28f92186a79",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0042",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 42,
+      "scriptName": "ARRAY expression",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0042-select-array[1::int8-2::varchar]",
+      "suggestedId": "smoke-test-testsmoketests-0042-select-array[1::int8-2::varchar]",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42804",
+      "errorSeverity": "ERROR",
+      "query": "SELECT ARRAY[1::int8, 2::varchar];",
+      "querySha256": "02f202e4b190998cc16347470b1e397881d4b78056c6a9a7f76ccf03474232ef",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0043",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 43,
+      "scriptName": "Array casting",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0043-select-{true-false-true}-::boolean[]",
+      "suggestedId": "smoke-test-testsmoketests-0043-select-{true-false-true}-::boolean[]",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT '{true,false,true}'::boolean[];",
+      "querySha256": "7f9ee24072c4abac9cd97350da573ca0cb0aabeac83d56ebd05a000832bc2935",
+      "expectedRows": [
+        [
+          {
+            "value": "{true,false,true}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0044",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 44,
+      "scriptName": "Array casting",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0044-select-{-\\x68656c6c6f-\\x776f726c64-\\x6578616d706c65",
+      "suggestedId": "smoke-test-testsmoketests-0044-select-{-\\x68656c6c6f-\\x776f726c64-\\x6578616d706c65",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT '{\"\\x68656c6c6f\", \"\\x776f726c64\", \"\\x6578616d706c65\"}'::bytea[]::text[];",
+      "querySha256": "d77f84bfaae79668be4629266600b9dd877391363c0424f02fea45c89bf2187d",
+      "expectedRows": [
+        [
+          {
+            "value": "{\\x7836383635366336633666,\\x7837373666373236633634,\\x783635373836313664373036633635}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0045",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 45,
+      "scriptName": "Array casting",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0045-select-{-\\\\x68656c6c6f-\\\\x776f726c64-\\\\x6578616d706c65",
+      "suggestedId": "smoke-test-testsmoketests-0045-select-{-\\\\x68656c6c6f-\\\\x776f726c64-\\\\x6578616d706c65",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT '{\"\\\\x68656c6c6f\", \"\\\\x776f726c64\", \"\\\\x6578616d706c65\"}'::bytea[]::text[];",
+      "querySha256": "84da9c4184dad41ef7ec38daafc0c13081655fc2c302a153529afa08fa17abd1",
+      "expectedRows": [
+        [
+          {
+            "value": "{\\x68656c6c6f,\\x776f726c64,\\x6578616d706c65}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0046",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 46,
+      "scriptName": "Array casting",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0046-select-{-abcd-efgh-ijkl",
+      "suggestedId": "smoke-test-testsmoketests-0046-select-{-abcd-efgh-ijkl",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT '{\"abcd\", \"efgh\", \"ijkl\"}'::char(3)[];",
+      "querySha256": "1c496c38321135a3435f728a5d608425f3865f0cfb573aeba848d654a4621dfb",
+      "expectedRows": [
+        [
+          {
+            "value": "[abc efg ijk]"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0047",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 47,
+      "scriptName": "Array casting",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0047-select-{-2020-02-03-2020-04-05-2020-06-06",
+      "suggestedId": "smoke-test-testsmoketests-0047-select-{-2020-02-03-2020-04-05-2020-06-06",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT '{\"2020-02-03\", \"2020-04-05\", \"2020-06-06\"}'::date[];",
+      "querySha256": "ae59e538d900d76f9262e203fa4a7266d0768583d95517639fb81763f316ff91",
+      "expectedRows": [
+        [
+          {
+            "value": "[2020-02-03 00:00:00 +0000 UTC 2020-04-05 00:00:00 +0000 UTC 2020-06-06 00:00:00 +0000 UTC]"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0048",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 48,
+      "scriptName": "Array casting",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0048-select-{1.25-2.5-3.75}-::float4[]",
+      "suggestedId": "smoke-test-testsmoketests-0048-select-{1.25-2.5-3.75}-::float4[]",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT '{1.25,2.5,3.75}'::float4[];",
+      "querySha256": "16583949c2c5019dc1b7f41513fb8c31accc3ebfc23650e5c667ad7e5277e861",
+      "expectedRows": [
+        [
+          {
+            "value": "{1.25,2.5,3.75}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0049",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 49,
+      "scriptName": "Array casting",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0049-select-{4.25-5.5-6.75}-::float8[]",
+      "suggestedId": "smoke-test-testsmoketests-0049-select-{4.25-5.5-6.75}-::float8[]",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT '{4.25,5.5,6.75}'::float8[];",
+      "querySha256": "afc09347a714a1edc6918d712acacae2b8a7fe5848395a39663202baf6e9b8e3",
+      "expectedRows": [
+        [
+          {
+            "value": "{4.25,5.5,6.75}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0050",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 50,
+      "scriptName": "Array casting",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0050-select-{1-2-3}-::int2[]",
+      "suggestedId": "smoke-test-testsmoketests-0050-select-{1-2-3}-::int2[]",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT '{1,2,3}'::int2[];",
+      "querySha256": "c3029b8f7315dcb5d48ea6f4830217b78d17af9d65553a57339b1d8fa5702275",
+      "expectedRows": [
+        [
+          {
+            "value": "{1,2,3}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0051",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 51,
+      "scriptName": "Array casting",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0051-select-{4-5-6}-::int4[]",
+      "suggestedId": "smoke-test-testsmoketests-0051-select-{4-5-6}-::int4[]",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT '{4,5,6}'::int4[];",
+      "querySha256": "e06d9ce0689baa3881bf18481608c8100bef00eb2a6e9aea7aed5e035e1dc246",
+      "expectedRows": [
+        [
+          {
+            "value": "{4,5,6}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0052",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 52,
+      "scriptName": "Array casting",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0052-select-{7-8-9}-::int8[]",
+      "suggestedId": "smoke-test-testsmoketests-0052-select-{7-8-9}-::int8[]",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT '{7,8,9}'::int8[];",
+      "querySha256": "442fb729a1cc25e16f547b04dfe4959309a88a57554b99dc759f063192e418f3",
+      "expectedRows": [
+        [
+          {
+            "value": "{7,8,9}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0053",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 53,
+      "scriptName": "Array casting",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0053-select-{-{\\-a\\-:\\",
+      "suggestedId": "smoke-test-testsmoketests-0053-select-{-{\\-a\\-:\\",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT '{\"{\\\"a\\\":\\\"val1\\\"}\", \"{\\\"b\\\":\\\"value2\\\"}\", \"{\\\"c\\\": \\\"object_value3\\\"}\"}'::json[];",
+      "querySha256": "9b70adb2ffb4325d0a424dfea1d3345aca98ed99c8d8a47f260baecb5f690348",
+      "expectedRows": [
+        [
+          {
+            "value": "[map[a:val1] map[b:value2] map[c:object_value3]]"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0054",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 54,
+      "scriptName": "Array casting",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0054-select-{-{\\-d\\-:\\",
+      "suggestedId": "smoke-test-testsmoketests-0054-select-{-{\\-d\\-:\\",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT '{\"{\\\"d\\\":\\\"val1\\\"}\", \"{\\\"e\\\":\\\"value2\\\"}\", \"{\\\"f\\\": \\\"object_value3\\\"}\"}'::jsonb[];",
+      "querySha256": "e111a695ddf7e1aff3520c3abda583c5c59ee0e074f55f062c2c33d0bcb98558",
+      "expectedRows": [
+        [
+          {
+            "value": "[map[d:val1] map[e:value2] map[f:object_value3]]"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0055",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 55,
+      "scriptName": "Array casting",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0055-select-{-the-legendary-formula",
+      "suggestedId": "smoke-test-testsmoketests-0055-select-{-the-legendary-formula",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT '{\"the\", \"legendary\", \"formula\"}'::name[];",
+      "querySha256": "d94cad184fb3dc9365ddd8c7a95ee366f06fdcb5f9ba69c3222650f1d0ca97a1",
+      "expectedRows": [
+        [
+          {
+            "value": "[the legendary formula]"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0056",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 56,
+      "scriptName": "Array casting",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0056-select-{10.01-20.02-30.03}-::numeric[]",
+      "suggestedId": "smoke-test-testsmoketests-0056-select-{10.01-20.02-30.03}-::numeric[]",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT '{10.01,20.02,30.03}'::numeric[];",
+      "querySha256": "b4db232e6e49594d188265e74b17f1e79712a1b878eacfed56817db6ba6c6c67",
+      "expectedRows": [
+        [
+          {
+            "value": "{{1001 -2 false finite true},{2002 -2 false finite true},{3003 -2 false finite true}}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0057",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 57,
+      "scriptName": "Array casting",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0057-select-{1-10-100}-::oid[]",
+      "suggestedId": "smoke-test-testsmoketests-0057-select-{1-10-100}-::oid[]",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT '{1,10,100}'::oid[];",
+      "querySha256": "3ef81cb6de711b771ebe6de88b751fd476641bf7c43464dc45c2340856f5cbbc",
+      "expectedRows": [
+        [
+          {
+            "value": "[1 10 100]"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0058",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 58,
+      "scriptName": "Array casting",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0058-select-{-this-is-some",
+      "suggestedId": "smoke-test-testsmoketests-0058-select-{-this-is-some",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT '{\"this\", \"is\", \"some\", \"text\"}'::text[], '{text,without,quotes}'::text[], '{null,NULL,\"NULL\",\"quoted\"}'::text[];",
+      "querySha256": "b97d6bc5f5c8b9ccad8f2370998281cf24f5902758d503bcb2f8d4f43db717b8",
+      "expectedRows": [
+        [
+          {
+            "value": "{this,is,some,text}"
+          },
+          {
+            "value": "{text,without,quotes}"
+          },
+          {
+            "value": "{NULL,NULL,NULL,quoted}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0059",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 59,
+      "scriptName": "Array casting",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0059-select-{-12:12:13-14:14:15-16:16:17",
+      "suggestedId": "smoke-test-testsmoketests-0059-select-{-12:12:13-14:14:15-16:16:17",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT '{\"12:12:13\", \"14:14:15\", \"16:16:17\"}'::time[];",
+      "querySha256": "e06b874a5edeb8aadd14411f2dd51ac7e63047529d4b660148315afdd694d9fd",
+      "expectedRows": [
+        [
+          {
+            "value": "[{43933000000 true} {51255000000 true} {58577000000 true}]"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0060",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 60,
+      "scriptName": "Array casting",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0060-select-{-2020-02-03-12:13:14-2020-04-05",
+      "suggestedId": "smoke-test-testsmoketests-0060-select-{-2020-02-03-12:13:14-2020-04-05",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT '{\"2020-02-03 12:13:14\", \"2020-04-05 15:16:17\", \"2020-06-06 18:19:20\"}'::timestamp[];",
+      "querySha256": "5c98dc6166ad9f69177287849cb8e9b6a5eb43c0b4c7de6a4263582d1563d81b",
+      "expectedRows": [
+        [
+          {
+            "value": "[2020-02-03 12:13:14 +0000 UTC 2020-04-05 15:16:17 +0000 UTC 2020-06-06 18:19:20 +0000 UTC]"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0061",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 61,
+      "scriptName": "Array casting",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0061-select-{-3920fd79-7b53-437c-b647-d450b58b4532-a594c217-4c63-4669-96ec-40eed180b7cf-4367b70d-8d8b-4969-a1aa-bf59536455fb",
+      "suggestedId": "smoke-test-testsmoketests-0061-select-{-3920fd79-7b53-437c-b647-d450b58b4532-a594c217-4c63-4669-96ec-40eed180b7cf-4367b70d-8d8b-4969-a1aa-bf59536455fb",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT '{\"3920fd79-7b53-437c-b647-d450b58b4532\", \"a594c217-4c63-4669-96ec-40eed180b7cf\", \"4367b70d-8d8b-4969-a1aa-bf59536455fb\"}'::uuid[];",
+      "querySha256": "c0f63fc9795d7f8fa5f16dbd17238fc199746023f19b9efb824994f9a41270d8",
+      "expectedRows": [
+        [
+          {
+            "value": "[[57 32 253 121 123 83 67 124 182 71 212 80 181 139 69 50] [165 148 194 23 76 99 70 105 150 236 64 238 209 128 183 207] [67 103 183 13 141 139 73 105 161 170 191 89 83 100 85 251]]"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0062",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 62,
+      "scriptName": "Array casting",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0062-select-{-somewhere-over-the",
+      "suggestedId": "smoke-test-testsmoketests-0062-select-{-somewhere-over-the",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT '{\"somewhere\", \"over\", \"the\", \"rainbow\"}'::varchar(5)[];",
+      "querySha256": "e2b491dd458ac352aaf8aa1a32404cd0292336ffe9e498496184d79b5baefb15",
+      "expectedRows": [
+        [
+          {
+            "value": "{somew,over,the,rainb}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0063",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 63,
+      "scriptName": "Array casting",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0063-select-{1-2-3}-::xid[]",
+      "suggestedId": "smoke-test-testsmoketests-0063-select-{1-2-3}-::xid[]",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT '{1,2,3}'::xid[];",
+      "querySha256": "3015d53c8d87013659ea61ddf3872225cfd0ade42bd92998e8a50310603de2b3",
+      "expectedRows": [
+        [
+          {
+            "value": "[1 2 3]"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0064",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 64,
+      "scriptName": "Array casting",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0064-select-{-abc-def-}",
+      "suggestedId": "smoke-test-testsmoketests-0064-select-{-abc-def-}",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22P02",
+      "errorSeverity": "ERROR",
+      "query": "SELECT '{\"abc\"\"\",\"def\"}'::text[];",
+      "querySha256": "1754ead811a258918b779e99eb92ff16e29fc3aca2a1b70f30ed9298b5dee742",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0065",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 65,
+      "scriptName": "Array casting",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0065-select-{a-b-c-::text[]",
+      "suggestedId": "smoke-test-testsmoketests-0065-select-{a-b-c-::text[]",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22P02",
+      "errorSeverity": "ERROR",
+      "query": "SELECT '{a,b,c'::text[];",
+      "querySha256": "00041311fd51c743303763494daef7a1bf0b44f32da50df779460ffcaa9d6a27",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0066",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 66,
+      "scriptName": "Array casting",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0066-select-a-b-c}-::text[]",
+      "suggestedId": "smoke-test-testsmoketests-0066-select-a-b-c}-::text[]",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22P02",
+      "errorSeverity": "ERROR",
+      "query": "SELECT 'a,b,c}'::text[];",
+      "querySha256": "40b5f852467a70545bb1d227cde6b222feaff6450c97eaa1c40f652d61486df1",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0067",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 67,
+      "scriptName": "Array casting",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0067-select-{-a-b-c}",
+      "suggestedId": "smoke-test-testsmoketests-0067-select-{-a-b-c}",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22P02",
+      "errorSeverity": "ERROR",
+      "query": "SELECT '{\"a,b,c}'::text[];",
+      "querySha256": "654a994d691a2f6046b7af4cb821f2de691fddc774278d876a6d6b20e2757823",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0068",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 68,
+      "scriptName": "Array casting",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0068-select-{a-b-c}-::text[]",
+      "suggestedId": "smoke-test-testsmoketests-0068-select-{a-b-c}-::text[]",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22P02",
+      "errorSeverity": "ERROR",
+      "query": "SELECT '{a\",b,c}'::text[];",
+      "querySha256": "a7deba73577c9b795cd47d6cb484e0b0d61612550f005d112cb5bfeee24d39c4",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0069",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 69,
+      "scriptName": "Array casting",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0069-select-{a-b-c}-::text[]",
+      "suggestedId": "smoke-test-testsmoketests-0069-select-{a-b-c}-::text[]",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22P02",
+      "errorSeverity": "ERROR",
+      "query": "SELECT '{a,b,\"c}'::text[];",
+      "querySha256": "8e5c59f4a0139ef8e1b4eee9a73742621eaaf68d9c97c4b722c18dfecf08f567",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0070",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 70,
+      "scriptName": "Array casting",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0070-select-{a-b-c-}",
+      "suggestedId": "smoke-test-testsmoketests-0070-select-{a-b-c-}",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22P02",
+      "errorSeverity": "ERROR",
+      "query": "SELECT '{a,b,c\"}'::text[];",
+      "querySha256": "04fadbd8e5e9f133bcaab7ebf96e7a89a61a30dfc023e118e72b38ffdfaea3bc",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0071",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 71,
+      "scriptName": "BETWEEN",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0071-select-*-from-test-where",
+      "suggestedId": "smoke-test-testsmoketests-0071-select-*-from-test-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test WHERE v1 BETWEEN 1 AND 4 ORDER BY v1;",
+      "querySha256": "96dd34e295413e8979fd52faee4de961c5312c99728be30bba7a990a13a03cb8",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0072",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 72,
+      "scriptName": "BETWEEN",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0072-select-*-from-test-where",
+      "suggestedId": "smoke-test-testsmoketests-0072-select-*-from-test-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test WHERE v1 BETWEEN 2 AND 4 ORDER BY v1;",
+      "querySha256": "a992151527210e73762127b0d5719131895e861415858167156e7eb563e90d04",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0073",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 73,
+      "scriptName": "BETWEEN",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0073-select-*-from-test-where",
+      "suggestedId": "smoke-test-testsmoketests-0073-select-*-from-test-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test WHERE v1 BETWEEN 4 AND 2 ORDER BY v1;",
+      "querySha256": "5b866e8900c3b74d2be63153bf6a3a3518f09c2d961459a05f4d8575332ced3d",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0074",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 74,
+      "scriptName": "BETWEEN",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0074-select-*-from-test-where",
+      "suggestedId": "smoke-test-testsmoketests-0074-select-*-from-test-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test WHERE v1 BETWEEN SYMMETRIC 1 AND 4 ORDER BY v1;",
+      "querySha256": "8e3888aef547f150dcce5eaaa0bd7091b8e01ff80f2d034729a147ffa7ae05f8",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0075",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 75,
+      "scriptName": "BETWEEN",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0075-select-*-from-test-where",
+      "suggestedId": "smoke-test-testsmoketests-0075-select-*-from-test-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test WHERE v1 BETWEEN SYMMETRIC 2 AND 4 ORDER BY v1;",
+      "querySha256": "d6e637dfa26a78204acae1bf84cc95a5f8040af2db5eae9fb30fa4965c229445",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0076",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 76,
+      "scriptName": "BETWEEN",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0076-select-*-from-test-where",
+      "suggestedId": "smoke-test-testsmoketests-0076-select-*-from-test-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test WHERE v1 BETWEEN SYMMETRIC 4 AND 2 ORDER BY v1;",
+      "querySha256": "efb6c6ea6baa10bb9dbef9ce1575583655b9730afaef187c40ad7317e29cd528",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0077",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 77,
+      "scriptName": "BETWEEN",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0077-select-*-from-test-where",
+      "suggestedId": "smoke-test-testsmoketests-0077-select-*-from-test-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test WHERE v1 NOT BETWEEN 1 AND 4 ORDER BY v1;",
+      "querySha256": "c0a968d23da53456f2f4c043664929fb6eb34ab34417b46bc88599169d1abefb",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0078",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 78,
+      "scriptName": "BETWEEN",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0078-select-*-from-test-where",
+      "suggestedId": "smoke-test-testsmoketests-0078-select-*-from-test-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test WHERE v1 NOT BETWEEN 2 AND 4 ORDER BY v1;",
+      "querySha256": "08c553f3dc7471197948d59a398693d783f73d193985a01898ddf9bd2d0776f9",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0079",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 79,
+      "scriptName": "BETWEEN",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0079-select-*-from-test-where",
+      "suggestedId": "smoke-test-testsmoketests-0079-select-*-from-test-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test WHERE v1 NOT BETWEEN 4 AND 2 ORDER BY v1;",
+      "querySha256": "74340439dfda663054ab5033958523969e5d026bd3ae1df3e62df42b372e8a4b",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0080",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 80,
+      "scriptName": "BETWEEN",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0080-select-*-from-test-where",
+      "suggestedId": "smoke-test-testsmoketests-0080-select-*-from-test-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test WHERE v1 NOT BETWEEN SYMMETRIC 1 AND 4 ORDER BY v1;",
+      "querySha256": "efde77bc6864c4aef4c0396d060ae4b4262bd194455c5c5abec06f5e0b4ee8bb",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0081",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 81,
+      "scriptName": "BETWEEN",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0081-select-*-from-test-where",
+      "suggestedId": "smoke-test-testsmoketests-0081-select-*-from-test-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test WHERE v1 NOT BETWEEN SYMMETRIC 2 AND 4 ORDER BY v1;",
+      "querySha256": "b4407e6188ad31fe52ac7a0c92610ff9d3903e6d8c31bb84c2247cef3026b427",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0082",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 82,
+      "scriptName": "BETWEEN",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0082-select-*-from-test-where",
+      "suggestedId": "smoke-test-testsmoketests-0082-select-*-from-test-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test WHERE v1 NOT BETWEEN SYMMETRIC 4 AND 2 ORDER BY v1;",
+      "querySha256": "0ba516d0abcf58c8aa958de652d486f22cbc8a6acb5d0163396a58fd18db91f7",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0083",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 83,
+      "scriptName": "IN",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0083-select-*-from-test-where",
+      "suggestedId": "smoke-test-testsmoketests-0083-select-*-from-test-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test WHERE v1 IN (2, '3', 4) ORDER BY v1;",
+      "querySha256": "60f4e98db3d0af68a66c4fbe95448c444b8c6a38221a620efb5745548393b89f",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0084",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 84,
+      "scriptName": "IN",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0084-create-index-v2_idx-on-test",
+      "suggestedId": "smoke-test-testsmoketests-0084-create-index-v2_idx-on-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE INDEX v2_idx ON test(v2);",
+      "querySha256": "5a5040bd81b4f7e2e9f8c232cad8cfdf817e445796988c442dd989877a0c3d2b",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0085",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 85,
+      "scriptName": "IN",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0085-select-*-from-test-where",
+      "suggestedId": "smoke-test-testsmoketests-0085-select-*-from-test-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test WHERE v2 IN (2, '3', 4) ORDER BY v1;",
+      "querySha256": "26479284a49c7414c6a09ca46240a730f01a39d3d08b4dc9d3db1964ebb7d982",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0086",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 86,
+      "scriptName": "SUM",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0086-select-sum-v1-from-test",
+      "suggestedId": "smoke-test-testsmoketests-0086-select-sum-v1-from-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT SUM(v1) FROM test WHERE v1 BETWEEN 3 AND 5;",
+      "querySha256": "cd701b33ca35620ceca1dcd9bb0668b00e30f69cbe7367a12d9a702db6979cab",
+      "expectedRows": [
+        [
+          {
+            "value": "12"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0087",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 87,
+      "scriptName": "SUM",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0087-select-pg_typeof-sum-v1-from",
+      "suggestedId": "smoke-test-testsmoketests-0087-select-pg_typeof-sum-v1-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_typeof(SUM(v1)) FROM test WHERE v1 BETWEEN 3 AND 5;",
+      "querySha256": "14f3f965806718a2ccece5343e90c66b3c321808b10a0a76817c4fb8ea389b0a",
+      "expectedRows": [
+        [
+          {
+            "value": "bigint"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0088",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 88,
+      "scriptName": "SUM",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0088-create-index-v1_idx-on-test",
+      "suggestedId": "smoke-test-testsmoketests-0088-create-index-v1_idx-on-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE INDEX v1_idx ON test(v1);",
+      "querySha256": "7c185088c7fe3559bf94b5ee4ce51a14552e45b74c01f15061c37cd6f53a46d7",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0089",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 89,
+      "scriptName": "SUM",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0089-select-sum-v1-from-test",
+      "suggestedId": "smoke-test-testsmoketests-0089-select-sum-v1-from-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT SUM(v1) FROM test WHERE v1 BETWEEN 3 AND 5;",
+      "querySha256": "cd701b33ca35620ceca1dcd9bb0668b00e30f69cbe7367a12d9a702db6979cab",
+      "expectedRows": [
+        [
+          {
+            "value": "12"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0090",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 90,
+      "scriptName": "Empty statement",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0090",
+      "suggestedId": "smoke-test-testsmoketests-0090",
+      "compare": "tag",
+      "expectedKind": "tag",
+      "query": ";",
+      "querySha256": "41b805ea7ac014e23556e98bb374702a08344268f92489a02f0880849394a1e4",
+      "expectedTag": "",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0091",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 91,
+      "scriptName": "Unsupported MySQL statements",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0091-show-create-table",
+      "suggestedId": "smoke-test-testsmoketests-0091-show-create-table",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "SHOW CREATE TABLE;",
+      "querySha256": "7de1c1a0d73e70e66140e8f34eb8aab121727666ef54a9c739776ccc39f7ec73",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0092",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 92,
+      "scriptName": "querying tables with same name as pg_catalog tables",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0092-select-attname-from-pg_catalog.pg_attribute-order",
+      "suggestedId": "smoke-test-testsmoketests-0092-select-attname-from-pg_catalog.pg_attribute-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT attname FROM pg_catalog.pg_attribute ORDER BY attname LIMIT 3;",
+      "querySha256": "d383d2737336e31bc361259687848d6180c7cd300baeca6a4aca651d22e1b404",
+      "expectedRows": [
+        [
+          {
+            "value": "........pg.dropped.2........"
+          }
+        ],
+        [
+          {
+            "value": "........pg.dropped.2........"
+          }
+        ],
+        [
+          {
+            "value": "a"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0093",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 93,
+      "scriptName": "querying tables with same name as pg_catalog tables",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0093-select-attname-from-pg_attribute-order",
+      "suggestedId": "smoke-test-testsmoketests-0093-select-attname-from-pg_attribute-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT attname FROM pg_attribute ORDER BY attname LIMIT 3;",
+      "querySha256": "f51ddd5748fc16b16cda2f60478af12c7a9f7f4719ad952d145e003db2b5d1a8",
+      "expectedRows": [
+        [
+          {
+            "value": "........pg.dropped.2........"
+          }
+        ],
+        [
+          {
+            "value": "........pg.dropped.2........"
+          }
+        ],
+        [
+          {
+            "value": "a"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0094",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 94,
+      "scriptName": "querying tables with same name as pg_catalog tables",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0094-create-table-pg_attribute-id-int",
+      "suggestedId": "smoke-test-testsmoketests-0094-create-table-pg_attribute-id-int",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE TABLE pg_attribute (id INT);",
+      "querySha256": "924d57438ab11d4c6f0a3c33adede6f25f7b6fd6b19bba28e7c130180ee9e6f4",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0095",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 95,
+      "scriptName": "querying tables with same name as pg_catalog tables",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0095-insert-into-pg_attribute-values-1",
+      "suggestedId": "smoke-test-testsmoketests-0095-insert-into-pg_attribute-values-1",
+      "compare": "structural",
+      "expectedKind": "error",
+      "query": "insert into pg_attribute values (1);",
+      "querySha256": "80c846bf3d0ecc6badf5398e54bb69449572288be3c2a647e2acea514faa181d",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0096",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 96,
+      "scriptName": "querying tables with same name as pg_catalog tables",
+      "oracle": "internal",
+      "suggestedId": "smoke-test-testsmoketests-0096-insert-into-public.pg_attribute-values-1",
+      "expectedKind": "rows",
+      "query": "insert into public.pg_attribute values (1);",
+      "querySha256": "c43a236ba1c31fb067b96717fdf3c146e5d1fcf9f50c1dd1a5daba6424c19092",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0097",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 97,
+      "scriptName": "querying tables with same name as pg_catalog tables",
+      "oracle": "internal",
+      "suggestedId": "smoke-test-testsmoketests-0097-select-attname-from-pg_attribute-order",
+      "expectedKind": "rows",
+      "query": "SELECT attname FROM pg_attribute ORDER BY attname LIMIT 3;",
+      "querySha256": "f51ddd5748fc16b16cda2f60478af12c7a9f7f4719ad952d145e003db2b5d1a8",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0098",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 98,
+      "scriptName": "querying tables with same name as pg_catalog tables",
+      "oracle": "internal",
+      "suggestedId": "smoke-test-testsmoketests-0098-select-*-from-public.pg_attribute",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM public.pg_attribute;",
+      "querySha256": "1914f5eddf1452f33b4ec5561ef78eecac9c9b09c341d8392ef1f5d7284cf803",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0099",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 99,
+      "scriptName": "querying tables with same name as pg_catalog tables",
+      "oracle": "internal",
+      "suggestedId": "smoke-test-testsmoketests-0099-drop-table-pg_attribute",
+      "expectedKind": "error",
+      "query": "drop table pg_attribute;",
+      "querySha256": "36c77af618909235d4c17a65f4723e7c6078aa07efd5e5bb6deb616f910262bb",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0100",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 100,
+      "scriptName": "querying tables with same name as pg_catalog tables",
+      "oracle": "internal",
+      "suggestedId": "smoke-test-testsmoketests-0100-drop-table-public.pg_attribute",
+      "expectedKind": "rows",
+      "query": "drop table public.pg_attribute;",
+      "querySha256": "d6191a31c39bb1c9107a6f491daf28f731bded0ce593a3bd8a183defad34df02",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0101",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 101,
+      "scriptName": "querying tables with same name as pg_catalog tables",
+      "oracle": "internal",
+      "suggestedId": "smoke-test-testsmoketests-0101-select-*-from-public.pg_attribute",
+      "expectedKind": "error",
+      "query": "SELECT * FROM public.pg_attribute;",
+      "querySha256": "1914f5eddf1452f33b4ec5561ef78eecac9c9b09c341d8392ef1f5d7284cf803",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0102",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 102,
+      "scriptName": "200 Row Test",
+      "oracle": "internal",
+      "suggestedId": "smoke-test-testsmoketests-0102-select-*-from-test-order",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test ORDER BY pk;",
+      "querySha256": "d0f6c344ab64b143c8f2dd9f13d33077378ca78179f36f00dec40fe78e1ed1f4",
+      "nonLiteral": [
+        "SetUpScript"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0103",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 103,
+      "scriptName": "INDEX as column name",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0103-select-*-from-test1",
+      "suggestedId": "smoke-test-testsmoketests-0103-select-*-from-test1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test1;",
+      "querySha256": "3f6eb4a5821e856dcdcdb961af904a50a500e06a4d445d674be9bcae981182b9",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0104",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 104,
+      "scriptName": "INDEX as column name",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0104-select-*-from-test2",
+      "suggestedId": "smoke-test-testsmoketests-0104-select-*-from-test2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test2;",
+      "querySha256": "5152862317cd3a429ebfa2cf04e3305a393198314e94cd6cf501bad62e41ca16",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0105",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 105,
+      "scriptName": "INDEX as column name",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0105-insert-into-test1-values-1",
+      "suggestedId": "smoke-test-testsmoketests-0105-insert-into-test1-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO test1 VALUES (-1);",
+      "querySha256": "8f608a33720f091d358e45461f121a597b58b8d6f95f62ca98e5f0e98a3b70eb",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestSmokeTests#0106",
+      "source": "testing/go/postgres16/smoke_test.go:TestSmokeTests",
+      "ordinal": 106,
+      "scriptName": "INDEX as column name",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testsmoketests-0106-insert-into-test2-values-1",
+      "suggestedId": "smoke-test-testsmoketests-0106-insert-into-test2-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO test2 VALUES (-1);",
+      "querySha256": "7c356ed5d15b1806575d6fb33a77975f8dbd72916701d1d4bfc85cea0e871a30",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestEmptyQuery#0001",
+      "source": "testing/go/postgres16/smoke_test.go:TestEmptyQuery",
+      "ordinal": 1,
+      "scriptName": "Empty query test",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testemptyquery-0001",
+      "suggestedId": "smoke-test-testemptyquery-0001",
+      "compare": "tag",
+      "expectedKind": "tag",
+      "query": ";",
+      "querySha256": "41b805ea7ac014e23556e98bb374702a08344268f92489a02f0880849394a1e4",
+      "expectedRows": [],
+      "expectedTag": "",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/smoke_test.go:TestEmptyQuery#0002",
+      "source": "testing/go/postgres16/smoke_test.go:TestEmptyQuery",
+      "ordinal": 2,
+      "scriptName": "Empty query test",
+      "oracle": "postgres",
+      "postgresId": "smoke-test-testemptyquery-0002",
+      "suggestedId": "smoke-test-testemptyquery-0002",
+      "compare": "tag",
+      "expectedKind": "tag",
+      "query": " ",
+      "querySha256": "36a9e7f1c95b82ffb99743e0c5c4ce95d83c9a430aac59f84ef3cbfab6145068",
+      "expectedRows": [],
+      "expectedTag": "",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

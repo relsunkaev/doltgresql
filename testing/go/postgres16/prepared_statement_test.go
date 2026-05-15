@@ -1,0 +1,1313 @@
+// Copyright 2023 Dolthub, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package postgres16
+
+import (
+	. "github.com/dolthub/doltgresql/testing/go"
+
+	"testing"
+	"time"
+
+	"github.com/dolthub/go-mysql-server/sql"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestPreparedStatements(t *testing.T) {
+	RunScripts(t, preparedStatementTests)
+}
+
+func TestPreparedPgCatalog(t *testing.T) {
+	RunScripts(t, pgCatalogTests)
+}
+
+func TestSQLPreparedStatements(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "SQL PREPARE and EXECUTE",
+			SetUpScript: []string{
+				"CREATE TABLE sql_prepare_items (pk int primary key, v text);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: "PREPARE sql_add(int, int) AS SELECT $1::int + $2::int AS sum;",
+				},
+				{
+					Query: "EXECUTE sql_add(2, 5);", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testsqlpreparedstatements-0001-execute-sql_add-2-5"},
+				},
+				{
+					Query: "SELECT name, from_sql, generic_plans, custom_plans FROM pg_catalog.pg_prepared_statements WHERE name = 'sql_add';", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testsqlpreparedstatements-0002-select-name-from_sql-generic_plans-custom_plans"},
+				},
+				{
+					Query: "PREPARE sql_concat(text, text) AS SELECT concat($1, $2);",
+				},
+				{
+					Query: "EXECUTE sql_concat('ab' || 'c', upper('d'));", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testsqlpreparedstatements-0003-execute-sql_concat-ab-||-c"},
+				},
+				{
+					Query: "PREPARE sql_insert(int, text) AS INSERT INTO sql_prepare_items VALUES ($1, $2);",
+				},
+				{
+					Query: "EXECUTE sql_insert(1, 'one');",
+				},
+				{
+					Query: "EXECUTE sql_insert(2, 'two');",
+				},
+				{
+					Query: "SELECT * FROM sql_prepare_items ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testsqlpreparedstatements-0004-select-*-from-sql_prepare_items-order"},
+				},
+				{
+					Query: "PREPARE sql_no_params AS SELECT count(*) FROM sql_prepare_items;",
+				},
+				{
+					Query: "EXECUTE sql_no_params;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testsqlpreparedstatements-0005-execute-sql_no_params"},
+				},
+				{
+					Query: "EXECUTE sql_no_params;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testsqlpreparedstatements-0006-execute-sql_no_params"},
+				},
+				{
+					Query: "SELECT name, generic_plans, custom_plans FROM pg_catalog.pg_prepared_statements WHERE name = 'sql_no_params';", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testsqlpreparedstatements-0007-select-name-generic_plans-custom_plans-from"},
+				},
+				{
+					Query: "DEALLOCATE sql_add;",
+				},
+				{
+					Query: "SELECT name FROM pg_catalog.pg_prepared_statements WHERE name = 'sql_add';", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testsqlpreparedstatements-0008-select-name-from-pg_catalog.pg_prepared_statements-where"},
+				},
+				{
+					Query: "DEALLOCATE ALL;",
+				},
+				{
+					Query: "SELECT name FROM pg_catalog.pg_prepared_statements;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testsqlpreparedstatements-0009-select-name-from-pg_catalog.pg_prepared_statements"},
+				},
+			},
+		},
+		{
+			Name: "SQL PREPARE errors",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: "PREPARE sql_dup AS SELECT 1;",
+				},
+				{
+					Query: "PREPARE sql_dup AS SELECT 2;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testsqlpreparedstatements-0010-prepare-sql_dup-as-select-2", Compare: "sqlstate"},
+				},
+				{
+					Query: "EXECUTE sql_missing;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testsqlpreparedstatements-0011-execute-sql_missing", Compare: "sqlstate"},
+				},
+				{
+					Query: "EXECUTE sql_dup(1);", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testsqlpreparedstatements-0012-execute-sql_dup-1"},
+				},
+			},
+		},
+	})
+}
+
+var preparedStatementTests = []ScriptTest{
+	{
+		Name: "Expressions without tables",
+		Assertions: []ScriptTestAssertion{
+			{
+				Query:    "SELECT CONCAT($1::text, $2::text)",
+				BindVars: []any{"hello", "world"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0001-select-concat-$1::text-$2::text"},
+			},
+			{
+				Query:    "SELECT $1::integer + $2::integer",
+				BindVars: []any{1, 2}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0002-select-$1::integer-+-$2::integer"},
+			},
+			{
+				Query:    "select $1 as test",
+				BindVars: []any{"hello"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0003-select-$1-as-test"},
+			},
+		},
+	},
+	{
+		Name: "Expressions with tables",
+		Assertions: []ScriptTestAssertion{
+			{
+				Query:    "SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = $1);",
+				BindVars: []any{"public"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0004-select-exists-select-1-from"},
+			},
+			{
+				Query:    "SELECT nspname FROM pg_namespace LIMIT $1;",
+				BindVars: []any{1},
+				Expected: []sql.Row{{"dolt"}},
+			},
+			{
+				Query:    "SELECT nspname FROM pg_namespace OFFSET $1;",
+				BindVars: []any{1},
+				Expected: []sql.Row{
+					{"information_schema"},
+					{"pg_catalog"},
+					{"public"},
+				},
+			},
+		},
+	},
+	{
+		Name: "Integer insert with string bindvars",
+		SetUpScript: []string{
+			"drop table if exists test",
+			"CREATE TABLE test (pk BIGINT PRIMARY KEY, v1 BIGINT);",
+		},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query:    "INSERT INTO test VALUES ($1, $2), ($3, $4);",
+				BindVars: []any{"1", "2", "3", "4"},
+			},
+			{
+				Query: "SELECT * FROM test order by pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0007-select-*-from-test-order"},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE v1 = $1;",
+				BindVars: []any{"2"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0008-select-*-from-test-where"},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE v1 = $1;",
+				BindVars: []any{"3"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0009-select-*-from-test-where"},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE v1 + $1 = $2;",
+				BindVars: []any{"1", "3"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0010-select-*-from-test-where"},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE pk + v1 = $1;",
+				BindVars: []any{"3"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0011-select-*-from-test-where"},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE v1 = $1::integer + $2::integer;",
+				BindVars: []any{"1", "3"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0012-select-*-from-test-where"},
+			},
+		},
+	},
+	{
+		Name: "Integer insert with binary bindvars",
+		SetUpScript: []string{
+			"drop table if exists test",
+			"CREATE TABLE test (pk BIGINT PRIMARY KEY, v1 BIGINT);",
+		},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query:    "INSERT INTO test VALUES ($1, $2), ($3, $4);",
+				BindVars: []any{1, 2, 3, 4},
+			},
+			{
+				Query: "SELECT * FROM test order by pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0013-select-*-from-test-order"},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE v1 = $1;",
+				BindVars: []any{2}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0014-select-*-from-test-where"},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE v1 = $1;",
+				BindVars: []any{3}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0015-select-*-from-test-where"},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE v1 + $1 = $2;",
+				BindVars: []any{1, 3}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0016-select-*-from-test-where"},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE pk + v1 = $1;",
+				BindVars: []any{3}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0017-select-*-from-test-where"},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE v1 = $1::integer + $2::integer;",
+				BindVars: []any{1, 3}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0018-select-*-from-test-where"},
+			},
+			{
+				Query:    "INSERT INTO test VALUES ($1, $2) returning *",
+				BindVars: []any{2, nil}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0019-insert-into-test-values-$1"},
+			},
+		},
+	},
+	{
+		Name: "Integer types",
+		SetUpScript: []string{
+			"drop table if exists test",
+			"CREATE TABLE test (pk BIGINT PRIMARY KEY, v2 SMALLINT, v4 INTEGER, v5 BIGINT);",
+		},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query:    "INSERT INTO test VALUES ($1, $2, $3, $4) returning *",
+				BindVars: []any{1, 10, 100, 1000}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0020-insert-into-test-values-$1"},
+			},
+			{
+				Query:    "INSERT INTO test VALUES ($1, $2, $3, $4) returning *",
+				BindVars: []any{2, nil, nil, nil}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0021-insert-into-test-values-$1"},
+			},
+		},
+	},
+	{
+		Name: "Integer update",
+		SetUpScript: []string{
+			"drop table if exists test",
+			"CREATE TABLE test (pk BIGINT PRIMARY KEY, v1 BIGINT);",
+		},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query:    "INSERT INTO test VALUES ($1, $2), ($3, $4);",
+				BindVars: []any{1, 2, 3, 4},
+			},
+			{
+				Query:    "UPDATE test set v1 = $1 WHERE pk = $2;",
+				BindVars: []any{5, 1},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE v1 = $1;",
+				BindVars: []any{5}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0022-select-*-from-test-where"},
+			},
+		},
+	},
+	{
+		Name: "Integer delete",
+		SetUpScript: []string{
+			"drop table if exists test",
+			"CREATE TABLE test (pk BIGINT PRIMARY KEY, v1 BIGINT);",
+		},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query:    "INSERT INTO test VALUES ($1, $2), ($3, $4);",
+				BindVars: []any{1, 2, 3, 4},
+			},
+			{
+				Query:    "DELETE FROM test WHERE pk = $1;",
+				BindVars: []any{1},
+			},
+			{
+				Query: "SELECT * FROM test order by 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0023-select-*-from-test-order"},
+			},
+		},
+	},
+	{
+		Name: "String insert",
+		SetUpScript: []string{
+			"drop table if exists test",
+			"CREATE TABLE test (pk BIGINT PRIMARY KEY, s character varying(20));",
+		},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query:    "INSERT INTO test VALUES ($1, $2), ($3, $4);",
+				BindVars: []any{1, "hello", 3, "goodbye"},
+			},
+			{
+				Query: "SELECT * FROM test order by pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0024-select-*-from-test-order"},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE s = $1;",
+				BindVars: []any{"hello"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0025-select-*-from-test-where"},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE s = concat($1::text, $2::text);",
+				BindVars: []any{"he", "llo"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0026-select-*-from-test-where"},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE concat(s, '!') = $1",
+				BindVars: []any{"hello!"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0027-select-*-from-test-where"},
+			},
+			{
+				Query:    "INSERT INTO test VALUES ($1, $2) returning *",
+				BindVars: []any{2, nil}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0028-insert-into-test-values-$1"},
+			},
+		},
+	},
+	{
+		Name: "String update",
+		SetUpScript: []string{
+			"drop table if exists test",
+			"CREATE TABLE test (pk BIGINT PRIMARY KEY, s character varying(20));",
+		},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query:    "INSERT INTO test VALUES ($1, $2), ($3, $4);",
+				BindVars: []any{1, "hello", 3, "goodbye"},
+			},
+			{
+				Query:    "UPDATE test set s = $1 WHERE pk = $2;",
+				BindVars: []any{"new value", 1},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE s = $1;",
+				BindVars: []any{"new value"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0029-select-*-from-test-where"},
+			},
+		},
+	},
+	{
+		Name: "String delete",
+		SetUpScript: []string{
+			"drop table if exists test",
+			"CREATE TABLE test (pk BIGINT PRIMARY KEY, s character varying(20));",
+		},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query:    "INSERT INTO test VALUES ($1, $2), ($3, $4);",
+				BindVars: []any{1, "hello", 3, "goodbye"},
+			},
+			{
+				Query:    "DELETE FROM test WHERE s = $1;",
+				BindVars: []any{"hello"},
+			},
+			{
+				Query: "SELECT * FROM test ORDER BY 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0030-select-*-from-test-order"},
+			},
+		},
+	},
+	{
+		Name: "Float insert with string bindvars",
+		SetUpScript: []string{
+			"drop table if exists test",
+			"CREATE TABLE test (pk BIGINT PRIMARY KEY, f1 DOUBLE PRECISION);",
+		},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query:    "INSERT INTO test VALUES ($1, $2), ($3, $4);",
+				BindVars: []any{"1", "1.1", "3", "3.3"},
+			},
+			{
+				Query: "SELECT * FROM test ORDER BY 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0031-select-*-from-test-order"},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE f1 = $1;",
+				BindVars: []any{"1.1"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0032-select-*-from-test-where"},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE f1 + $1 = $2;",
+				BindVars: []any{"1.0", "2.1"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0033-select-*-from-test-where"},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE f1 = $1::decimal + $2::decimal;",
+				BindVars: []any{"1.0", "0.1"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0034-select-*-from-test-where"},
+			},
+		},
+	},
+	{
+		Name: "Float insert with binary bindvars",
+		SetUpScript: []string{
+			"drop table if exists test",
+			"CREATE TABLE test (pk BIGINT PRIMARY KEY, f1 DOUBLE PRECISION);",
+		},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query:    "INSERT INTO test VALUES ($1, $2), ($3, $4);",
+				BindVars: []any{1, 1.1, 3, 3.3},
+			},
+			{
+				Query: "SELECT * FROM test ORDER BY 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0035-select-*-from-test-order"},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE f1 = $1;",
+				BindVars: []any{1.1}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0036-select-*-from-test-where"},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE f1 + $1 = $2;",
+				BindVars: []any{1.0, 2.1}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0037-select-*-from-test-where"},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE f1 = $1::decimal + $2::decimal;",
+				BindVars: []any{1.0, 0.1}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0038-select-*-from-test-where"},
+			},
+		},
+	},
+	{
+		Name: "Float update",
+		SetUpScript: []string{
+			"drop table if exists test",
+			"CREATE TABLE test (pk BIGINT PRIMARY KEY, f1 DOUBLE PRECISION);",
+		},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query:    "INSERT INTO test VALUES ($1, $2), ($3, $4);",
+				BindVars: []any{1, 1.1, 3, 3.3},
+			},
+			{
+				Query:    "UPDATE test set f1 = $1 WHERE f1 = $2;",
+				BindVars: []any{2.2, 1.1},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE f1 = $1;",
+				BindVars: []any{2.2}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0039-select-*-from-test-where"},
+			},
+		},
+	},
+	{
+		Name: "Float delete",
+		SetUpScript: []string{
+			"drop table if exists test",
+			"CREATE TABLE test (pk BIGINT PRIMARY KEY, f1 DOUBLE PRECISION);",
+		},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query:    "INSERT INTO test VALUES ($1, $2), ($3, $4);",
+				BindVars: []any{1, 1.1, 3, 3.3},
+			},
+			{
+				Query:    "DELETE FROM test WHERE f1 = $1;",
+				BindVars: []any{1.1},
+			},
+			{
+				Query: "SELECT * FROM test order by 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0040-select-*-from-test-order"},
+			},
+		},
+	},
+	{
+		Name: "Date insert, update, delete with string bindvars",
+		SetUpScript: []string{
+			"drop table if exists test",
+			"CREATE TABLE test (pk BIGINT PRIMARY KEY, v1 DATE);",
+		},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query:    "INSERT INTO test VALUES ($1, $2), ($3, $4);",
+				BindVars: []any{"1", "2022-02-02", "3", "2024-04-01 -07"},
+			},
+			{
+				Query: "SELECT * FROM test order by pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0041-select-*-from-test-order"},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE v1 = $1;",
+				BindVars: []any{"2022-02-02"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0042-select-*-from-test-where"},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE v1 = $1;",
+				BindVars: []any{"2022-02-03"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0043-select-*-from-test-where"},
+			},
+			{
+				Query:    "UPDATE test set v1 = $1 WHERE pk = $2;",
+				BindVars: []any{"2022-02-03", "1"},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE v1 = $1;",
+				BindVars: []any{"2022-02-03"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0044-select-*-from-test-where"},
+			},
+			{
+				Query:    "DELETE FROM test WHERE pk = $1;",
+				BindVars: []any{"1"},
+			},
+			{
+				Query: "SELECT * FROM test order by 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0045-select-*-from-test-order"},
+			},
+			{
+				Query:    "INSERT INTO test VALUES ($1, $2) returning *;",
+				BindVars: []any{"5", nil}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0046-insert-into-test-values-$1"},
+			},
+		},
+	},
+	{
+		Name: "Date insert, update, delete with binary bindvars",
+		SetUpScript: []string{
+			"drop table if exists test",
+			"CREATE TABLE test (pk BIGINT PRIMARY KEY, v1 DATE);",
+		},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query:    "INSERT INTO test VALUES ($1, $2), ($3, $4);",
+				BindVars: []any{1, Date("2022-02-02"), 3, Date("2024-04-01")},
+			},
+			{
+				Query: "SELECT * FROM test order by pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0047-select-*-from-test-order"},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE v1 = $1;",
+				BindVars: []any{Date("2022-02-02")}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0048-select-*-from-test-where"},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE v1 = $1;",
+				BindVars: []any{Date("2022-02-03")}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0049-select-*-from-test-where"},
+			},
+			{
+				Query:    "UPDATE test set v1 = $1 WHERE pk = $2;",
+				BindVars: []any{Date("2022-02-03"), 1},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE v1 = $1;",
+				BindVars: []any{Date("2022-02-03")}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0050-select-*-from-test-where"},
+			},
+			{
+				Query:    "DELETE FROM test WHERE pk = $1;",
+				BindVars: []any{1},
+			},
+			{
+				Query: "SELECT * FROM test order by 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0051-select-*-from-test-order"},
+			},
+		},
+	},
+	{
+		Name: "Timestamp insert with string bindvars",
+		SetUpScript: []string{
+			"drop table if exists test",
+			"CREATE TABLE test (pk BIGINT PRIMARY KEY, t1 TIMESTAMP);",
+		},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query: "INSERT INTO test VALUES ($1, $2), ($3, $4);",
+				BindVars: []any{
+					"1", "2023-01-15 14:30",
+					"2", "2024-12-25 09:15:30",
+				},
+			},
+			{
+				Query: "SELECT * FROM test ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0052-select-*-from-test-order"},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE t1 = $1;",
+				BindVars: []any{"2023-01-15 14:30"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0053-select-*-from-test-where"},
+			},
+			{
+				Query:    "UPDATE test SET t1 = $1 WHERE pk = $2;",
+				BindVars: []any{"2023-01-15 16:45", "1"},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE t1 = $1;",
+				BindVars: []any{"2023-01-15 16:45"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0054-select-*-from-test-where"},
+			},
+			{
+				Query:    "DELETE FROM test WHERE t1 = $1;",
+				BindVars: []any{"2023-01-15 16:45"},
+			},
+			{
+				Query: "SELECT * FROM test ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0055-select-*-from-test-order"},
+			},
+			{
+				Query:    "INSERT INTO test VALUES ($1, $2) returning *;",
+				BindVars: []any{"3", nil}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0056-insert-into-test-values-$1"},
+			},
+		},
+	},
+	{
+		Name: "Timestamp insert with binary bindvars",
+		SetUpScript: []string{
+			"drop table if exists test",
+			"CREATE TABLE test (pk BIGINT PRIMARY KEY, t1 TIMESTAMP);",
+		},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query: "INSERT INTO test VALUES ($1, $2), ($3, $4);",
+				BindVars: []any{
+					1, Timestamp("2023-01-15 14:30:00"),
+					2, Timestamp("2024-12-25 09:15:30"),
+				},
+			},
+			{
+				Query: "SELECT * FROM test ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0057-select-*-from-test-order"},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE t1 = $1;",
+				BindVars: []any{Timestamp("2023-01-15 14:30:00")}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0058-select-*-from-test-where"},
+			},
+			{
+				Query:    "UPDATE test SET t1 = $1 WHERE pk = $2;",
+				BindVars: []any{Timestamp("2023-01-15 16:45:00"), 1},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE t1 = $1;",
+				BindVars: []any{Timestamp("2023-01-15 16:45:00")}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0059-select-*-from-test-where"},
+			},
+			{
+				Query: "DELETE FROM test WHERE t1 = $1;",
+				BindVars: []any{
+					Timestamp("2023-01-15 16:45:00")},
+			},
+			{
+				Query: "SELECT * FROM test ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0060-select-*-from-test-order"},
+			},
+		},
+	},
+	{
+		Name: "Timestamp with timezone insert with string bindvars",
+		SetUpScript: []string{
+			"drop table if exists test",
+			"CREATE TABLE test (pk BIGINT PRIMARY KEY, t1 TIMESTAMPTZ);",
+		},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query:    "INSERT INTO test VALUES ($1, $2), ($3, $4);",
+				BindVars: []any{"1", "2023-01-15 14:30:00+00", "2", "2024-12-25 09:15:30-05"},
+			},
+			{
+				Query: "SELECT pk FROM test ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0061-select-pk-from-test-order"},
+			},
+			{
+				Query:    "SELECT pk FROM test WHERE t1 = $1;",
+				BindVars: []any{"2023-01-15 14:30:00+00"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0062-select-pk-from-test-where"},
+			},
+		},
+	},
+	{
+		Name: "Timestamp with timezone insert with binary bindvars",
+		SetUpScript: []string{
+			"drop table if exists test",
+			"CREATE TABLE test (pk BIGINT PRIMARY KEY, t1 TIMESTAMPTZ);",
+		},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query: "INSERT INTO test VALUES ($1, $2), ($3, $4);",
+				BindVars: []any{
+					1, time.Date(2023, 1, 15, 14, 30, 0, 0, time.UTC), // +00 timezone
+					2, time.Date(2024, 12, 25, 9, 15, 30, 0, time.FixedZone("EST", -5*60*60)), // -05 timezone
+				},
+			},
+			{
+				Query: "SELECT pk FROM test ORDER BY pk;",
+				Expected: []sql.Row{
+					{1},
+					{2},
+				},
+			},
+			{
+				Query:    "SELECT pk FROM test WHERE t1 = $1;",
+				BindVars: []any{time.Date(2023, 1, 15, 14, 30, 0, 0, time.UTC)},
+				Expected: []sql.Row{
+					{1},
+				},
+			},
+		},
+	},
+	{
+		Name: "Time insert with string bindvars",
+		SetUpScript: []string{
+			"drop table if exists test",
+			"CREATE TABLE test (pk BIGINT PRIMARY KEY, t1 TIME);",
+		},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query:    "INSERT INTO test VALUES ($1, $2), ($3, $4);",
+				BindVars: []any{"1", "14:30:00", "2", "09:15:30"},
+			},
+			{
+				Query: "SELECT * FROM test ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0065-select-*-from-test-order"},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE t1 = $1;",
+				BindVars: []any{"14:30:00"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0066-select-*-from-test-where"},
+			},
+			{
+				Query:    "UPDATE test SET t1 = $1 WHERE pk = $2;",
+				BindVars: []any{"16:45:00", "1"},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE t1 = $1;",
+				BindVars: []any{"16:45:00"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0067-select-*-from-test-where"},
+			},
+			{
+				Query:    "DELETE FROM test WHERE t1 = $1;",
+				BindVars: []any{"16:45:00"},
+			},
+			{
+				Query: "SELECT * FROM test ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0068-select-*-from-test-order"},
+			},
+		},
+	},
+	{
+		Name: "Time insert with binary bindvars",
+		SetUpScript: []string{
+			"drop table if exists test",
+			"CREATE TABLE test (pk BIGINT PRIMARY KEY, t1 TIME);",
+		},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query:    "INSERT INTO test VALUES ($1, $2), ($3, $4);",
+				BindVars: []any{1, time.Date(0, 1, 1, 14, 30, 0, 0, time.UTC), 2, time.Date(0, 1, 1, 9, 15, 30, 0, time.UTC)},
+			},
+			{
+				Query: "SELECT * FROM test ORDER BY pk;",
+				Expected: []sql.Row{
+					{1, "14:30:00"},
+					{2, "09:15:30"},
+				},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE t1 = $1;",
+				BindVars: []any{time.Date(0, 1, 1, 14, 30, 0, 0, time.UTC)},
+				Expected: []sql.Row{
+					{1, "14:30:00"},
+				},
+			},
+			{
+				Query:    "UPDATE test SET t1 = $1 WHERE pk = $2;",
+				BindVars: []any{time.Date(0, 1, 1, 16, 45, 0, 0, time.UTC), 1},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE t1 = $1;",
+				BindVars: []any{time.Date(0, 1, 1, 16, 45, 0, 0, time.UTC)},
+				Expected: []sql.Row{
+					{1, "16:45:00"},
+				},
+			},
+			{
+				Query:    "DELETE FROM test WHERE t1 = $1;",
+				BindVars: []any{time.Date(0, 1, 1, 16, 45, 0, 0, time.UTC)},
+			},
+			{
+				Query: "SELECT * FROM test ORDER BY pk;",
+				Expected: []sql.Row{
+					{2, "09:15:30"},
+				},
+			},
+		},
+	},
+	{
+		Name: "UUID insert with string bindvars",
+		SetUpScript: []string{
+			"drop table if exists test",
+			"CREATE TABLE test (pk BIGINT PRIMARY KEY, u1 UUID);",
+		},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query:    "INSERT INTO test VALUES ($1, $2), ($3, $4);",
+				BindVars: []any{"1", "550e8400-e29b-41d4-a716-446655440000", "2", "6ba7b810-9dad-11d1-80b4-00c04fd430c8"},
+			},
+			{
+				Query: "SELECT * FROM test ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0073-select-*-from-test-order"},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE u1 = $1;",
+				BindVars: []any{"550e8400-e29b-41d4-a716-446655440000"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0074-select-*-from-test-where"},
+			},
+			{
+				Query:    "UPDATE test SET u1 = $1 WHERE pk = $2;",
+				BindVars: []any{"123e4567-e89b-12d3-a456-426614174000", "1"},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE u1 = $1;",
+				BindVars: []any{"123e4567-e89b-12d3-a456-426614174000"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0075-select-*-from-test-where"},
+			},
+			{
+				Query:    "DELETE FROM test WHERE u1 = $1;",
+				BindVars: []any{"123e4567-e89b-12d3-a456-426614174000"},
+			},
+			{
+				Query: "SELECT * FROM test ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0076-select-*-from-test-order"},
+			},
+			{
+				Query:    "INSERT INTO test VALUES ($1, $2) returning *;",
+				BindVars: []any{"3", nil}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0077-insert-into-test-values-$1"},
+			},
+		},
+	},
+	{
+		Name: "UUID insert with binary bindvars",
+		SetUpScript: []string{
+			"drop table if exists test",
+			"CREATE TABLE test (pk BIGINT PRIMARY KEY, u1 UUID);",
+		},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query: "INSERT INTO test VALUES ($1, $2), ($3, $4);",
+				BindVars: []any{
+					1, UUID("550e8400-e29b-41d4-a716-446655440000"),
+					2, UUID("6ba7b810-9dad-11d1-80b4-00c04fd430c8")},
+			},
+			{
+				Query: "SELECT * FROM test ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0078-select-*-from-test-order"},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE u1 = $1;",
+				BindVars: []any{UUID("550e8400-e29b-41d4-a716-446655440000")}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0079-select-*-from-test-where"},
+			},
+			{
+				Query:    "UPDATE test SET u1 = $1 WHERE pk = $2;",
+				BindVars: []any{UUID("123e4567-e89b-12d3-a456-426614174000"), 1},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE u1 = $1;",
+				BindVars: []any{UUID("123e4567-e89b-12d3-a456-426614174000")}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0080-select-*-from-test-where"},
+			},
+			{
+				Query:    "DELETE FROM test WHERE u1 = $1;",
+				BindVars: []any{UUID("123e4567-e89b-12d3-a456-426614174000")},
+			},
+			{
+				Query: "SELECT * FROM test ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0081-select-*-from-test-order"},
+			},
+		},
+	},
+	{
+		Name: "Numeric/Decimal insert with string bindvars",
+		SetUpScript: []string{
+			"drop table if exists test",
+			"CREATE TABLE test (pk BIGINT PRIMARY KEY, n1 NUMERIC(10,2), n2 DECIMAL(8,3));",
+		},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query:    "INSERT INTO test VALUES ($1, $2, $3), ($4, $5, $6);",
+				BindVars: []any{"1", "123.45", "67.890", "2", "999.99", "12.345"},
+			},
+			{
+				Query: "SELECT * FROM test ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0082-select-*-from-test-order"},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE n1 = $1;",
+				BindVars: []any{"123.45"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0083-select-*-from-test-where"},
+			},
+			{
+				Query:    "UPDATE test SET n1 = $1, n2 = $2 WHERE pk = $3;",
+				BindVars: []any{"456.78", "98.765", "1"},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE n1 = $1;",
+				BindVars: []any{"456.78"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0084-select-*-from-test-where"},
+			},
+			{
+				Query:    "DELETE FROM test WHERE n2 = $1;",
+				BindVars: []any{"98.765"},
+			},
+			{
+				Query: "SELECT * FROM test ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0085-select-*-from-test-order"},
+			},
+			{
+				Query:    "INSERT INTO test VALUES ($1, $2, $3) returning *;",
+				BindVars: []any{"3", nil, nil}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0086-insert-into-test-values-$1"},
+			},
+		},
+	},
+	{
+		Name: "Numeric/Decimal insert with binary bindvars",
+		SetUpScript: []string{
+			"drop table if exists test",
+			"CREATE TABLE test (pk BIGINT PRIMARY KEY, n1 NUMERIC(10,2), n2 DECIMAL(8,3));",
+		},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query: "INSERT INTO test VALUES ($1, $2, $3), ($4, $5, $6);",
+				BindVars: []any{
+					1, Numeric("123.45"), Numeric("67.890"),
+					2, Numeric("999.99"), Numeric("12.345")},
+			},
+			{
+				Query: "SELECT * FROM test ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0087-select-*-from-test-order"},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE n1 = $1;",
+				BindVars: []any{Numeric("123.45")}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0088-select-*-from-test-where"},
+			},
+			{
+				Query:    "UPDATE test SET n1 = $1, n2 = $2 WHERE pk = $3;",
+				BindVars: []any{Numeric("456.78"), Numeric("98.765"), 1},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE n1 = $1;",
+				BindVars: []any{Numeric("456.78")}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0089-select-*-from-test-where"},
+			},
+			{
+				Query:    "DELETE FROM test WHERE n2 = $1;",
+				BindVars: []any{Numeric("98.765")},
+			},
+			{
+				Query: "SELECT * FROM test ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0090-select-*-from-test-order"},
+			},
+		},
+	},
+	{
+		Name: "Boolean insert with string bindvars",
+		SetUpScript: []string{
+			"drop table if exists test",
+			"CREATE TABLE test (pk BIGINT PRIMARY KEY, b1 BOOLEAN);",
+		},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query:    "INSERT INTO test VALUES ($1, $2), ($3, $4), ($5, $6);",
+				BindVars: []any{"1", "true", "2", "false", "3", "true"},
+			},
+			{
+				Query: "SELECT * FROM test ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0091-select-*-from-test-order"},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE b1 = $1;",
+				BindVars: []any{"true"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0092-select-*-from-test-where"},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE b1 = $1;",
+				BindVars: []any{"false"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0093-select-*-from-test-where"},
+			},
+			{
+				Query:    "UPDATE test SET b1 = $1 WHERE pk = $2;",
+				BindVars: []any{"false", "1"},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE b1 = $1 ORDER BY pk;",
+				BindVars: []any{"false"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0094-select-*-from-test-where"},
+			},
+			{
+				Query:    "DELETE FROM test WHERE b1 = $1;",
+				BindVars: []any{"false"},
+			},
+			{
+				Query: "SELECT * FROM test ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0095-select-*-from-test-order"},
+			},
+			{
+				Query:    "INSERT INTO test VALUES ($1, $2) returning *;",
+				BindVars: []any{"4", nil}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0096-insert-into-test-values-$1"},
+			},
+		},
+	},
+	{
+		Name: "Boolean insert with binary bindvars",
+		SetUpScript: []string{
+			"drop table if exists test",
+			"CREATE TABLE test (pk BIGINT PRIMARY KEY, b1 BOOLEAN);",
+		},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query:    "INSERT INTO test VALUES ($1, $2), ($3, $4), ($5, $6);",
+				BindVars: []any{1, true, 2, false, 3, true},
+			},
+			{
+				Query: "SELECT * FROM test ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0097-select-*-from-test-order"},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE b1 = $1;",
+				BindVars: []any{true}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0098-select-*-from-test-where"},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE b1 = $1;",
+				BindVars: []any{false}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0099-select-*-from-test-where"},
+			},
+			{
+				Query:    "UPDATE test SET b1 = $1 WHERE pk = $2;",
+				BindVars: []any{false, 1},
+			},
+			{
+				Query:    "SELECT * FROM test WHERE b1 = $1 ORDER BY pk;",
+				BindVars: []any{false}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0100-select-*-from-test-where"},
+			},
+			{
+				Query:    "DELETE FROM test WHERE b1 = $1;",
+				BindVars: []any{false},
+			},
+			{
+				Query: "SELECT * FROM test ORDER BY pk;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0101-select-*-from-test-order"},
+			},
+		},
+	},
+	{
+		Name: "pg_get_viewdef function",
+		SetUpScript: []string{
+			"CREATE TABLE test (id int, name text)",
+			"INSERT INTO test VALUES (1,'desk'), (2,'chair')",
+			"CREATE VIEW test_view AS SELECT name FROM test",
+		},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query:    `select pg_get_viewdef($1::regclass);`,
+				BindVars: []any{"test_view"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0102-select-pg_get_viewdef-$1::regclass"},
+			},
+		},
+	},
+	{
+		Name: "insert returning",
+		SetUpScript: []string{
+			"CREATE TABLE test (id serial, name text)",
+		},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query:    `INSERT INTO test (name) VALUES ($1) RETURNING id;`,
+				BindVars: []any{"test_name"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0103-insert-into-test-name-values"},
+			},
+		},
+	},
+	{
+		Name: "define placeholder unordered",
+		Assertions: []ScriptTestAssertion{
+			{
+				Query:    "SELECT $3::text, $1::integer + $2::integer",
+				BindVars: []any{1, 3, "hi"}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0104-select-$3::text-$1::integer-+-$2::integer"},
+			},
+		},
+	},
+	{
+		Name: "Bytea with binary bindvars",
+		SetUpScript: []string{
+			"CREATE TABLE t_bytea (id INTEGER primary key, v1 BYTEA);",
+			"INSERT INTO t_bytea VALUES (1, E'\\\\xDEADBEEF'), (2, '\\xC0FFEE'), (3, ''), (4, NULL);",
+		},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query: "SELECT * FROM t_bytea ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0105-select-*-from-t_bytea-order", ColumnModes: []string{"structural", "bytea"}},
+			},
+			{
+				Query:    "SELECT * FROM t_bytea WHERE v1 = $1 ORDER BY id;",
+				BindVars: []any{[]byte{0xC0, 0xFF, 0xEE}}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0106-select-*-from-t_bytea-where", ColumnModes: []string{"structural", "bytea"}},
+			},
+			{
+				Query:    "UPDATE t_bytea SET v1 = $1 WHERE id = $2;",
+				BindVars: []any{`\xC0FFEE`, 4},
+			},
+			{
+				Query:    "SELECT * FROM t_bytea WHERE v1 = $1 ORDER BY id;",
+				BindVars: []any{[]byte{0xC0, 0xFF, 0xEE}}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0107-select-*-from-t_bytea-where", ColumnModes: []string{"structural", "bytea"}},
+			},
+			{
+				Query:    "DELETE FROM t_bytea WHERE v1 = $1;",
+				BindVars: []any{[]byte{0xDE, 0xAD, 0xBE, 0xEF}},
+			},
+			{
+				Query: "SELECT * FROM t_bytea ORDER BY id;", PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0108-select-*-from-t_bytea-order", ColumnModes: []string{"structural", "bytea"}},
+			},
+			{
+				Query:    "INSERT INTO t_bytea VALUES ($1, $2) returning *;",
+				BindVars: []any{5, nil}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0109-insert-into-t_bytea-values-$1"},
+			},
+		},
+	},
+	{
+		Name: "Bind parameter to compatible different types",
+		SetUpScript: []string{
+			"CREATE TABLE text_test (id text, code varchar(10))",
+			"CREATE TABLE num_test(small int2, large int8, other float4)",
+			"INSERT INTO text_test values ('foo', 'bar'), ('bar', 'foo')",
+			"INSERT INTO num_test values (0,0,0), (1, 2, 1.5)",
+		},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query:    "SELECT * FROM text_test where id = any($1) and code = any($1)",
+				BindVars: []any{[]string{"foo", "bar"}}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0110-select-*-from-text_test-where"},
+			},
+			{
+				Query:    "SELECT * from num_test where small = $1 and large = $1 and other = $1",
+				BindVars: []any{0}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0111-select-*-from-num_test-where"},
+			},
+			{
+				Query:    "SELECT * from num_test where small = $1::INTEGER and large = $1::INTEGER and other = $1::INTEGER",
+				BindVars: []any{0}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0112-select-*-from-num_test-where"},
+			},
+			{
+				Query:    "SELECT * FROM num_test where small = $1 or other = $1",
+				BindVars: []any{1.5}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0113-select-*-from-num_test-where", Compare: "sqlstate"},
+			},
+		},
+	},
+	{
+		Name: "Cannot bind parameter to column with incompatible type",
+		SetUpScript: []string{
+			"CREATE TABLE text_test (fullname text, id int)",
+		},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query:    "SELECT * FROM text_test where fullname = $1 and id = $1",
+				BindVars: []any{1}, PostgresOracle: ScriptTestPostgresOracle{ID: "prepared-statement-test-testpreparedstatements-0114-select-*-from-text_test-where", Compare: "sqlstate"},
+			},
+		},
+	},
+}
+
+var pgCatalogTests = []ScriptTest{
+	{
+		Name: "pg_namespace",
+		SetUpScript: []string{
+			`CREATE SCHEMA testschema;`,
+		},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query:    `SELECT * FROM "pg_catalog"."pg_namespace" WHERE nspname=$1;`,
+				BindVars: []any{"testschema"},
+				Expected: []sql.Row{{2638679668, "testschema", 0, nil}},
+			},
+			{
+				Query:    `SELECT * FROM "pg_catalog"."pg_namespace" WHERE oid=$1;`,
+				BindVars: []any{2638679668},
+				Expected: []sql.Row{{2638679668, "testschema", 0, nil}},
+			},
+		},
+	},
+	{
+		Name: "pg_tables",
+		SetUpScript: []string{
+			`CREATE TABLE testing (pk INT primary key, v1 INT);`,
+		},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query:    `SELECT * FROM "pg_catalog"."pg_tables" WHERE tablename=$1;`,
+				BindVars: []any{"testing"},
+				Expected: []sql.Row{{"public", "testing", "postgres", nil, "t", "f", "f", "f"}},
+			},
+			{
+				Query:    `SELECT count(*) FROM "pg_catalog"."pg_tables" WHERE schemaname=$1;`,
+				BindVars: []any{"pg_catalog"},
+				Expected: []sql.Row{{139}},
+			},
+		},
+	},
+	{
+		Name: "pg_class",
+		SetUpScript: []string{
+			`CREATE SCHEMA testschema;`,
+			`CREATE TABLE testschema.testtable (id int primary key, v1 text)`,
+		},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query:    "select distinct relnamespace from pg_catalog.pg_class c INNER JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid WHERE n.nspname=$1;",
+				BindVars: []any{"testschema"},
+				Expected: []sql.Row{{2638679668}},
+			},
+			// TODO: when this test is run in isolation without the query above, the below query returns no rows. This is
+			//  because the process of converting an OID to its internal ID can only proceed in one direction: from internal
+			//  to OID. When the above query runs, it causes the internal ID for the testschema namespace to be cached,
+			//  allowing the reverse lookup to succeed in subsequent queries. For OIDs that have not yet been cached in this
+			//  manner, lookups by their OID will fail. This doesn't impact all queries since many of them get an index
+			//  lookup on OID, which has the side effect of converting everything to numeric IDs anyway. But for queries
+			//  that use a normal comparison function for an OID literal value, the conversion to an internal ID of the
+			//  appropriate type (e.g. id.Namespace) cannot happen in the |oidin| function in some cases because the internal
+			//  to OID mapping hasn't yet been established for that schema element, so the comparison fails, yielding
+			//  incorrect results.
+			//  To fix this, we need to correctly seed the internal ID cache with all schema elements in the database.
+			{
+				Query: `SELECT c.oid,pg_catalog.pg_get_expr(c.relpartbound, c.oid) as partition_expr,  pg_catalog.pg_get_partkeydef(c.oid) as partition_key 
+FROM pg_catalog.pg_class c
+WHERE c.relnamespace=$1 AND c.relkind not in ('i','I','c') and c.oid not in (select oid from pg_catalog.pg_class where left(relname, 5) = 'dolt_');`,
+				BindVars: []any{2638679668},
+				Expected: []sql.Row{{1712283605, nil, ""}},
+			},
+			{
+				Query: `SELECT c.oid,d.description,pg_catalog.pg_get_expr(c.relpartbound, c.oid) as partition_expr,  pg_catalog.pg_get_partkeydef(c.oid) as partition_key 
+FROM pg_catalog.pg_class c
+LEFT OUTER JOIN pg_catalog.pg_description d ON d.objoid=c.oid AND d.objsubid=0 AND d.classoid='pg_class'::regclass
+WHERE c.relnamespace=$1 AND c.relkind not in ('i','I','c') and c.oid not in (select oid from pg_catalog.pg_class where left(relname, 5) = 'dolt_');`,
+				BindVars: []any{2638679668},
+				Expected: []sql.Row{{1712283605, nil, nil, ""}},
+			},
+			{
+				Query: `SELECT d.description from pg_catalog.pg_description d WHERE d.classoid='pg_class'::regclass`,
+				// TODO: add expected values (pg_description not yet implemented)
+			},
+			{
+				Query:    `select c.oid,pg_catalog.pg_total_relation_size(c.oid) as total_rel_size,pg_catalog.pg_relation_size(c.oid) as rel_size FROM pg_class c WHERE c.relnamespace=$1 and c.oid not in (select oid from pg_catalog.pg_class where left(relname, 5) = 'dolt_');`,
+				BindVars: []any{2638679668},
+				Expected: []sql.Row{{444447634, 0, 0}, {1712283605, 0, 0}},
+			},
+			{
+				Query: `SELECT c.relname, a.attrelid, a.attname, a.atttypid, pg_catalog.pg_get_expr(ad.adbin, ad.adrelid, true) as def_value,dsc.description,dep.objid 
+FROM pg_catalog.pg_attribute a 
+INNER JOIN pg_catalog.pg_class c ON (a.attrelid=c.oid) 
+LEFT OUTER JOIN pg_catalog.pg_attrdef ad ON (a.attrelid=ad.adrelid AND a.attnum = ad.adnum) 
+LEFT OUTER JOIN pg_catalog.pg_description dsc ON (c.oid=dsc.objoid AND a.attnum = dsc.objsubid) 
+LEFT OUTER JOIN pg_depend dep on dep.refobjid = a.attrelid AND dep.deptype = 'i' and dep.refobjsubid = a.attnum and dep.classid = dep.refclassid 
+WHERE NOT a.attisdropped AND c.relkind not in ('i','I','c') AND c.oid=$1 ORDER BY a.attnum`,
+				BindVars: []any{1712283605},
+				Expected: []sql.Row{{"testtable", 1712283605, "id", 23, nil, nil, nil}, {"testtable", 1712283605, "v1", 25, nil, nil, nil}},
+			},
+		},
+	},
+}
+
+func TestPreparedErrorHandling(t *testing.T) {
+	tt := ScriptTest{
+		Name: "error handling doesn't foul session",
+		SetUpScript: []string{
+			"CREATE TABLE test (pk BIGINT PRIMARY KEY, v1 BIGINT);",
+			"insert into test values (1, 1), (2, 2), (3, 3), (4, 4), (5, 5), (6, 6), (7, 7);",
+		},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query:       "select v1 from doesNotExist where pk = 1;",
+				ExpectedErr: "table not found",
+			},
+			{
+				Query:    "select v1 from test where pk = 1;",
+				Expected: []sql.Row{{1}},
+			},
+			{
+				Query:    "select v1 from test where pk = 2;",
+				Expected: []sql.Row{{2}},
+			},
+			{
+				Query:    "select v1 from test where pk = 3;",
+				Expected: []sql.Row{{3}},
+			},
+			{
+				Query:    "select v1 from test where pk = 4;",
+				Expected: []sql.Row{{4}},
+			},
+			{
+				Query:    "select v1 from test where pk = 5;",
+				Expected: []sql.Row{{5}},
+			},
+			{
+				Query:    "select v1 from test where pk = 6;",
+				Expected: []sql.Row{{6}},
+			},
+			{
+				Query:    "select v1 from test where pk = 7;",
+				Expected: []sql.Row{{7}},
+			},
+		},
+	}
+
+	RunScriptN(t, tt, 20)
+}
+
+// RunScriptN runs the assertions of the given script n times using the same connection
+func RunScriptN(t *testing.T, script ScriptTest, n int) {
+	scriptDatabase := script.Database
+	if len(scriptDatabase) == 0 {
+		scriptDatabase = "postgres"
+	}
+	ctx, conn, controller := CreateServer(t, scriptDatabase)
+	defer func() {
+		conn.Close(ctx)
+		controller.Stop()
+		err := controller.WaitForStop()
+		require.NoError(t, err)
+	}()
+
+	// Run the setup
+	for _, query := range script.SetUpScript {
+		rows, err := conn.Query(ctx, query)
+		require.NoError(t, err)
+		_, _, err = ReadRows(rows, true)
+		assert.NoError(t, err)
+	}
+
+	for i := 0; i < n; i++ {
+		t.Run(script.Name, func(t *testing.T) {
+			// Run the assertions
+			for _, assertion := range script.Assertions {
+				t.Run(assertion.Query, func(t *testing.T) {
+					if assertion.Skip {
+						t.Skip("Skip has been set in the assertion")
+					}
+					rows, err := conn.Query(ctx, assertion.Query)
+					if err == nil {
+						defer rows.Close()
+					}
+
+					var errorSeen string
+
+					if assertion.ExpectedErr == "" {
+						require.NoError(t, err)
+					} else if err != nil {
+						errorSeen = err.Error()
+					}
+
+					if errorSeen == "" {
+						foundRows, foundRawRows, err := ReadRows(rows, true)
+						if assertion.ExpectedErr == "" {
+							require.NoError(t, err)
+							if assertion.ExpectedRaw != nil {
+								assert.Equal(t, assertion.ExpectedRaw, foundRawRows)
+							} else {
+								assert.Equal(t, NormalizeExpectedRow(rows.FieldDescriptions(), assertion.Expected), foundRows)
+							}
+						} else if err != nil {
+							errorSeen = err.Error()
+						}
+					}
+
+					if assertion.ExpectedErr != "" {
+						require.False(t, errorSeen == "", "Expected error but got none")
+						assert.Contains(t, errorSeen, assertion.ExpectedErr)
+					}
+				})
+			}
+		})
+	}
+}

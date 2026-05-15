@@ -1,0 +1,1936 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map trigger_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/trigger_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0001",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 1,
+      "scriptName": "BEFORE INSERT",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0001-insert-into-test-values-1",
+      "suggestedId": "trigger-test-testcreatetrigger-0001-insert-into-test-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO test VALUES (1, 'hi'), (2, 'there');",
+      "querySha256": "37691e4d0f3967659d99c6a5b4d72beff815813c31c080bbde10beea286f36cb",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0002",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 2,
+      "scriptName": "BEFORE INSERT",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0002-select-*-from-test",
+      "suggestedId": "trigger-test-testcreatetrigger-0002-select-*-from-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test;",
+      "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "hi_1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "there_2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0003",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 3,
+      "scriptName": "BEFORE UPDATE",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0003-update-test-set-v1-=",
+      "suggestedId": "trigger-test-testcreatetrigger-0003-update-test-set-v1-=",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "UPDATE test SET v1 = v1 || '|' WHERE pk IN (1, 2);",
+      "querySha256": "177d7094d49231268b34f208a96ce36cf2b42dd9105a08b1279c385be2f54cb3",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0004",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 4,
+      "scriptName": "BEFORE UPDATE",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0004-select-*-from-test",
+      "suggestedId": "trigger-test-testcreatetrigger-0004-select-*-from-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test;",
+      "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "hi|_1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "there|_2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0005",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 5,
+      "scriptName": "BEFORE DELETE",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0005-select-*-from-test",
+      "suggestedId": "trigger-test-testcreatetrigger-0005-select-*-from-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test;",
+      "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "hi"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "there"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0006",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 6,
+      "scriptName": "BEFORE DELETE",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0006-select-*-from-test2",
+      "suggestedId": "trigger-test-testcreatetrigger-0006-select-*-from-test2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test2;",
+      "querySha256": "5152862317cd3a429ebfa2cf04e3305a393198314e94cd6cf501bad62e41ca16",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0007",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 7,
+      "scriptName": "BEFORE DELETE",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0007-delete-from-test-where-pk",
+      "suggestedId": "trigger-test-testcreatetrigger-0007-delete-from-test-where-pk",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "DELETE FROM test WHERE pk = 1;",
+      "querySha256": "08b34afe2aa95795e82026e0906b3e619c25f70afc5cba71e2d2019de8d5262a",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0008",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 8,
+      "scriptName": "BEFORE DELETE",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0008-select-*-from-test",
+      "suggestedId": "trigger-test-testcreatetrigger-0008-select-*-from-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test;",
+      "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "there"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0009",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 9,
+      "scriptName": "BEFORE DELETE",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0009-select-*-from-test2",
+      "suggestedId": "trigger-test-testcreatetrigger-0009-select-*-from-test2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test2;",
+      "querySha256": "5152862317cd3a429ebfa2cf04e3305a393198314e94cd6cf501bad62e41ca16",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "hi"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0010",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 10,
+      "scriptName": "BEFORE INSERT returning NULL",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0010-insert-into-test-values-1",
+      "suggestedId": "trigger-test-testcreatetrigger-0010-insert-into-test-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO test VALUES (1, 'hi'), (2, 'there');",
+      "querySha256": "37691e4d0f3967659d99c6a5b4d72beff815813c31c080bbde10beea286f36cb",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0011",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 11,
+      "scriptName": "BEFORE INSERT returning NULL",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0011-select-*-from-test",
+      "suggestedId": "trigger-test-testcreatetrigger-0011-select-*-from-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test;",
+      "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0012",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 12,
+      "scriptName": "BEFORE INSERT returning NULL",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0012-select-*-from-test2",
+      "suggestedId": "trigger-test-testcreatetrigger-0012-select-*-from-test2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test2;",
+      "querySha256": "5152862317cd3a429ebfa2cf04e3305a393198314e94cd6cf501bad62e41ca16",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "hi_1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "there_2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0013",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 13,
+      "scriptName": "BEFORE UPDATE returning NULL",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0013-update-test-set-v1-=",
+      "suggestedId": "trigger-test-testcreatetrigger-0013-update-test-set-v1-=",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "UPDATE test SET v1 = v1 || '|' WHERE pk IN (1, 2);",
+      "querySha256": "177d7094d49231268b34f208a96ce36cf2b42dd9105a08b1279c385be2f54cb3",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0014",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 14,
+      "scriptName": "BEFORE UPDATE returning NULL",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0014-select-*-from-test",
+      "suggestedId": "trigger-test-testcreatetrigger-0014-select-*-from-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test;",
+      "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "hi"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "there"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0015",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 15,
+      "scriptName": "BEFORE UPDATE returning NULL",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0015-select-*-from-test2",
+      "suggestedId": "trigger-test-testcreatetrigger-0015-select-*-from-test2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test2;",
+      "querySha256": "5152862317cd3a429ebfa2cf04e3305a393198314e94cd6cf501bad62e41ca16",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "hi|_1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "there|_2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0016",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 16,
+      "scriptName": "BEFORE DELETE returning NULL",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0016-select-*-from-test",
+      "suggestedId": "trigger-test-testcreatetrigger-0016-select-*-from-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test;",
+      "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "hi"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "there"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0017",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 17,
+      "scriptName": "BEFORE DELETE returning NULL",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0017-select-*-from-test2",
+      "suggestedId": "trigger-test-testcreatetrigger-0017-select-*-from-test2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test2;",
+      "querySha256": "5152862317cd3a429ebfa2cf04e3305a393198314e94cd6cf501bad62e41ca16",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0018",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 18,
+      "scriptName": "BEFORE DELETE returning NULL",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0018-delete-from-test-where-pk",
+      "suggestedId": "trigger-test-testcreatetrigger-0018-delete-from-test-where-pk",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "DELETE FROM test WHERE pk = 1;",
+      "querySha256": "08b34afe2aa95795e82026e0906b3e619c25f70afc5cba71e2d2019de8d5262a",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0019",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 19,
+      "scriptName": "BEFORE DELETE returning NULL",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0019-select-*-from-test",
+      "suggestedId": "trigger-test-testcreatetrigger-0019-select-*-from-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test;",
+      "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "hi"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "there"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0020",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 20,
+      "scriptName": "BEFORE DELETE returning NULL",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0020-select-*-from-test2",
+      "suggestedId": "trigger-test-testcreatetrigger-0020-select-*-from-test2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test2;",
+      "querySha256": "5152862317cd3a429ebfa2cf04e3305a393198314e94cd6cf501bad62e41ca16",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "hi"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0021",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 21,
+      "scriptName": "BEFORE UPDATE with DELETE DML",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0021-select-*-from-test",
+      "suggestedId": "trigger-test-testcreatetrigger-0021-select-*-from-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test;",
+      "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "hi"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "there"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0022",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 22,
+      "scriptName": "BEFORE UPDATE with DELETE DML",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0022-select-*-from-test2",
+      "suggestedId": "trigger-test-testcreatetrigger-0022-select-*-from-test2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test2;",
+      "querySha256": "5152862317cd3a429ebfa2cf04e3305a393198314e94cd6cf501bad62e41ca16",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0023",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 23,
+      "scriptName": "BEFORE UPDATE with DELETE DML",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0023-delete-from-test-where-pk",
+      "suggestedId": "trigger-test-testcreatetrigger-0023-delete-from-test-where-pk",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "DELETE FROM test WHERE pk = 1;",
+      "querySha256": "08b34afe2aa95795e82026e0906b3e619c25f70afc5cba71e2d2019de8d5262a",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0024",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 24,
+      "scriptName": "BEFORE UPDATE with DELETE DML",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0024-select-*-from-test",
+      "suggestedId": "trigger-test-testcreatetrigger-0024-select-*-from-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test;",
+      "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "there"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0025",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 25,
+      "scriptName": "BEFORE UPDATE with DELETE DML",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0025-select-*-from-test2",
+      "suggestedId": "trigger-test-testcreatetrigger-0025-select-*-from-test2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test2;",
+      "querySha256": "5152862317cd3a429ebfa2cf04e3305a393198314e94cd6cf501bad62e41ca16",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0026",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 26,
+      "scriptName": "AFTER INSERT",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0026-insert-into-test-values-1",
+      "suggestedId": "trigger-test-testcreatetrigger-0026-insert-into-test-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO test VALUES (1, 'hi'), (2, 'there');",
+      "querySha256": "37691e4d0f3967659d99c6a5b4d72beff815813c31c080bbde10beea286f36cb",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0027",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 27,
+      "scriptName": "AFTER INSERT",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0027-select-*-from-test",
+      "suggestedId": "trigger-test-testcreatetrigger-0027-select-*-from-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test;",
+      "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "hi"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "there"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0028",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 28,
+      "scriptName": "AFTER INSERT",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0028-select-*-from-test2",
+      "suggestedId": "trigger-test-testcreatetrigger-0028-select-*-from-test2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test2;",
+      "querySha256": "5152862317cd3a429ebfa2cf04e3305a393198314e94cd6cf501bad62e41ca16",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "hi_1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "there_2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0029",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 29,
+      "scriptName": "AFTER UPDATE",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0029-update-test-set-v1-=",
+      "suggestedId": "trigger-test-testcreatetrigger-0029-update-test-set-v1-=",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "UPDATE test SET v1 = v1 || '|' WHERE pk IN (1, 2);",
+      "querySha256": "177d7094d49231268b34f208a96ce36cf2b42dd9105a08b1279c385be2f54cb3",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0030",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 30,
+      "scriptName": "AFTER UPDATE",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0030-select-*-from-test",
+      "suggestedId": "trigger-test-testcreatetrigger-0030-select-*-from-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test;",
+      "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "hi|"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "there|"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0031",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 31,
+      "scriptName": "AFTER UPDATE",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0031-select-*-from-test2",
+      "suggestedId": "trigger-test-testcreatetrigger-0031-select-*-from-test2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test2;",
+      "querySha256": "5152862317cd3a429ebfa2cf04e3305a393198314e94cd6cf501bad62e41ca16",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "hi|_1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "there|_2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0032",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 32,
+      "scriptName": "AFTER DELETE returning NULL",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0032-select-*-from-test",
+      "suggestedId": "trigger-test-testcreatetrigger-0032-select-*-from-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test;",
+      "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "hi"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "there"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0033",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 33,
+      "scriptName": "AFTER DELETE returning NULL",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0033-select-*-from-test2",
+      "suggestedId": "trigger-test-testcreatetrigger-0033-select-*-from-test2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test2;",
+      "querySha256": "5152862317cd3a429ebfa2cf04e3305a393198314e94cd6cf501bad62e41ca16",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0034",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 34,
+      "scriptName": "AFTER DELETE returning NULL",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0034-delete-from-test-where-pk",
+      "suggestedId": "trigger-test-testcreatetrigger-0034-delete-from-test-where-pk",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "DELETE FROM test WHERE pk = 1;",
+      "querySha256": "08b34afe2aa95795e82026e0906b3e619c25f70afc5cba71e2d2019de8d5262a",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0035",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 35,
+      "scriptName": "AFTER DELETE returning NULL",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0035-select-*-from-test",
+      "suggestedId": "trigger-test-testcreatetrigger-0035-select-*-from-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test;",
+      "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "there"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0036",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 36,
+      "scriptName": "AFTER DELETE returning NULL",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0036-select-*-from-test2",
+      "suggestedId": "trigger-test-testcreatetrigger-0036-select-*-from-test2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test2;",
+      "querySha256": "5152862317cd3a429ebfa2cf04e3305a393198314e94cd6cf501bad62e41ca16",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "hi"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0037",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 37,
+      "scriptName": "Cascading DELETE into INSERT, different tables",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0037-select-*-from-test",
+      "suggestedId": "trigger-test-testcreatetrigger-0037-select-*-from-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test;",
+      "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "hi"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "there"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0038",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 38,
+      "scriptName": "Cascading DELETE into INSERT, different tables",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0038-select-*-from-test2",
+      "suggestedId": "trigger-test-testcreatetrigger-0038-select-*-from-test2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test2;",
+      "querySha256": "5152862317cd3a429ebfa2cf04e3305a393198314e94cd6cf501bad62e41ca16",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0039",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 39,
+      "scriptName": "Cascading DELETE into INSERT, different tables",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0039-delete-from-test-where-pk",
+      "suggestedId": "trigger-test-testcreatetrigger-0039-delete-from-test-where-pk",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "DELETE FROM test WHERE pk = 1;",
+      "querySha256": "08b34afe2aa95795e82026e0906b3e619c25f70afc5cba71e2d2019de8d5262a",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0040",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 40,
+      "scriptName": "Cascading DELETE into INSERT, different tables",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0040-select-*-from-test",
+      "suggestedId": "trigger-test-testcreatetrigger-0040-select-*-from-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test;",
+      "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "there"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0041",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 41,
+      "scriptName": "Cascading DELETE into INSERT, different tables",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0041-select-*-from-test2",
+      "suggestedId": "trigger-test-testcreatetrigger-0041-select-*-from-test2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test2;",
+      "querySha256": "5152862317cd3a429ebfa2cf04e3305a393198314e94cd6cf501bad62e41ca16",
+      "expectedRows": [
+        [
+          {
+            "value": "101"
+          },
+          {
+            "value": "hi"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0042",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 42,
+      "scriptName": "Cascading INSERT into UPDATE, same table",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0042-insert-into-test-values-1",
+      "suggestedId": "trigger-test-testcreatetrigger-0042-insert-into-test-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO test VALUES (1, 'hi'), (2, 'there');",
+      "querySha256": "37691e4d0f3967659d99c6a5b4d72beff815813c31c080bbde10beea286f36cb",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0043",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 43,
+      "scriptName": "Cascading INSERT into UPDATE, same table",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0043-select-*-from-test-order",
+      "suggestedId": "trigger-test-testcreatetrigger-0043-select-*-from-test-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test ORDER BY pk;",
+      "querySha256": "d0f6c344ab64b143c8f2dd9f13d33077378ca78179f36f00dec40fe78e1ed1f4",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "hi2_u"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "there"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0044",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 44,
+      "scriptName": "Multiple triggers on same table",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0044-insert-into-test-values-1",
+      "suggestedId": "trigger-test-testcreatetrigger-0044-insert-into-test-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO test VALUES (1, 'hi'), (2, 'there');",
+      "querySha256": "37691e4d0f3967659d99c6a5b4d72beff815813c31c080bbde10beea286f36cb",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0045",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 45,
+      "scriptName": "Multiple triggers on same table",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0045-select-*-from-test-order",
+      "suggestedId": "trigger-test-testcreatetrigger-0045-select-*-from-test-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test ORDER BY pk;",
+      "querySha256": "d0f6c344ab64b143c8f2dd9f13d33077378ca78179f36f00dec40fe78e1ed1f4",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "hiabc"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "thereabc"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0046",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 46,
+      "scriptName": "Stack depth limit exceeded",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0046-insert-into-test-values-1",
+      "suggestedId": "trigger-test-testcreatetrigger-0046-insert-into-test-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "54001",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO test VALUES (1, 'hi'), (2, 'there');",
+      "querySha256": "37691e4d0f3967659d99c6a5b4d72beff815813c31c080bbde10beea286f36cb",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0047",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 47,
+      "scriptName": "DELETE TABLE deletes attached triggers",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0047-create-trigger-test_trigger-before-insert",
+      "suggestedId": "trigger-test-testcreatetrigger-0047-create-trigger-test_trigger-before-insert",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42710",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TRIGGER test_trigger BEFORE INSERT ON test FOR EACH ROW EXECUTE FUNCTION trigger_func();",
+      "querySha256": "34a49267665d04bcc71695e46f873b36597661a8ad23a3e37c81fcd6b22aea31",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0048",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 48,
+      "scriptName": "DELETE TABLE deletes attached triggers",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0048-create-trigger-test_trigger2-before-update",
+      "suggestedId": "trigger-test-testcreatetrigger-0048-create-trigger-test_trigger2-before-update",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42710",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TRIGGER test_trigger2 BEFORE UPDATE ON test FOR EACH ROW EXECUTE FUNCTION trigger_func();",
+      "querySha256": "3e3928ba551512edc77df3a3117886f8e2d4457025060225c4d114e93d02522f",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0049",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 49,
+      "scriptName": "DELETE TABLE deletes attached triggers",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0049-drop-table-test",
+      "suggestedId": "trigger-test-testcreatetrigger-0049-drop-table-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "DROP TABLE test;",
+      "querySha256": "1920399cfd616e85ebc13909f0c90d706ae089e80890732293d7db85b79da2df",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0050",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 50,
+      "scriptName": "DELETE TABLE deletes attached triggers",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0050-create-table-test-pk-int",
+      "suggestedId": "trigger-test-testcreatetrigger-0050-create-table-test-pk-int",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE TABLE test (pk INT PRIMARY KEY, v1 TEXT);",
+      "querySha256": "0fceee6de9363bb9931c98999c3563387f3cbd46a03fb9f72d573e3dbac13d90",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0051",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 51,
+      "scriptName": "DELETE TABLE deletes attached triggers",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0051-create-trigger-test_trigger-before-insert",
+      "suggestedId": "trigger-test-testcreatetrigger-0051-create-trigger-test_trigger-before-insert",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE TRIGGER test_trigger BEFORE INSERT ON test FOR EACH ROW EXECUTE FUNCTION trigger_func();",
+      "querySha256": "34a49267665d04bcc71695e46f873b36597661a8ad23a3e37c81fcd6b22aea31",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0052",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 52,
+      "scriptName": "DELETE TABLE deletes attached triggers",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0052-create-trigger-test_trigger2-before-update",
+      "suggestedId": "trigger-test-testcreatetrigger-0052-create-trigger-test_trigger2-before-update",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE TRIGGER test_trigger2 BEFORE UPDATE ON test FOR EACH ROW EXECUTE FUNCTION trigger_func();",
+      "querySha256": "3e3928ba551512edc77df3a3117886f8e2d4457025060225c4d114e93d02522f",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0053",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 53,
+      "scriptName": "TRUNCATE statement triggers",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0053-create-trigger-row_truncate-before-truncate",
+      "suggestedId": "trigger-test-testcreatetrigger-0053-create-trigger-row_truncate-before-truncate",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "0A000",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TRIGGER row_truncate BEFORE TRUNCATE ON test FOR EACH ROW EXECUTE FUNCTION truncate_trigger_func();",
+      "querySha256": "a4a57dfe142d0e46c667102185e689d7d83d3c085304f1a0be4e960fffc2786b",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0054",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 54,
+      "scriptName": "TRUNCATE statement triggers",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0054-select-tgname-tgtype::int-from-pg_trigger",
+      "suggestedId": "trigger-test-testcreatetrigger-0054-select-tgname-tgtype::int-from-pg_trigger",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT tgname, tgtype::int\n\t\t\t\t\t\tFROM pg_trigger\n\t\t\t\t\t\tWHERE tgname IN ('before_truncate', 'after_truncate')\n\t\t\t\t\t\tORDER BY tgname;",
+      "querySha256": "9c53f11cde10d1ac97fe9579783cd2b90931ee7f9838fb6ed08ce315633cab99",
+      "expectedRows": [
+        [
+          {
+            "value": "after_truncate"
+          },
+          {
+            "value": "32"
+          }
+        ],
+        [
+          {
+            "value": "before_truncate"
+          },
+          {
+            "value": "34"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0055",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 55,
+      "scriptName": "TRUNCATE statement triggers",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0055-select-event_manipulation-action_timing-action_orientation-from",
+      "suggestedId": "trigger-test-testcreatetrigger-0055-select-event_manipulation-action_timing-action_orientation-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT event_manipulation, action_timing, action_orientation\n\t\t\t\t\t\tFROM information_schema.triggers\n\t\t\t\t\t\tWHERE trigger_name IN ('before_truncate', 'after_truncate')\n\t\t\t\t\t\tORDER BY trigger_name;",
+      "querySha256": "9ed45476578c66ca1358bc4fcfc28427769f8b4f34ddfada675c907ce5ca620b",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0056",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 56,
+      "scriptName": "TRUNCATE statement triggers",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0056-select-*-from-test",
+      "suggestedId": "trigger-test-testcreatetrigger-0056-select-*-from-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test;",
+      "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0057",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 57,
+      "scriptName": "TRUNCATE statement triggers",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0057-select-seq-entry-op-table_name",
+      "suggestedId": "trigger-test-testcreatetrigger-0057-select-seq-entry-op-table_name",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT seq, entry, op, table_name FROM trigger_log ORDER BY seq;",
+      "querySha256": "5349314458c4eb5c2c6ba43667c585863377a91b504e05c0616da806cd0077e2",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "BEFORE STATEMENT"
+          },
+          {
+            "value": "TRUNCATE"
+          },
+          {
+            "value": "test"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "AFTER STATEMENT"
+          },
+          {
+            "value": "TRUNCATE"
+          },
+          {
+            "value": "test"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0058",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 58,
+      "scriptName": "WHEN on BEFORE INSERT",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0058-insert-into-test-values-0",
+      "suggestedId": "trigger-test-testcreatetrigger-0058-insert-into-test-values-0",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO test VALUES (0, 'hi'), (1, 'there'), (2, 'dude');",
+      "querySha256": "f43a058b5625e74e59504a56db585abcdc0a93b8ba955a596efcd7096f526214",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0059",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 59,
+      "scriptName": "WHEN on BEFORE INSERT",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0059-select-*-from-test",
+      "suggestedId": "trigger-test-testcreatetrigger-0059-select-*-from-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test;",
+      "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          },
+          {
+            "value": "0_hi"
+          }
+        ],
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "there"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "dude_2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0060",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 60,
+      "scriptName": "WHEN with non-boolean expression",
+      "oracle": "internal",
+      "suggestedId": "trigger-test-testcreatetrigger-0060-insert-into-test-values-1",
+      "expectedKind": "error",
+      "query": "INSERT INTO test VALUES (1, 'hi'), (2, 'there');",
+      "querySha256": "37691e4d0f3967659d99c6a5b4d72beff815813c31c080bbde10beea286f36cb",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0061",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 61,
+      "scriptName": "Table as type",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0061-insert-into-test-values-1",
+      "suggestedId": "trigger-test-testcreatetrigger-0061-insert-into-test-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO test VALUES (1, 'apple', 3, 2.5), (2, 'banana', -5, -1.2);",
+      "querySha256": "3064fa85864841b70fef315cc73f7d76aa24632bd49e79ce8aacf289a31b0590",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0062",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 62,
+      "scriptName": "Table as type",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0062-select-*-from-test",
+      "suggestedId": "trigger-test-testcreatetrigger-0062-select-*-from-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test;",
+      "querySha256": "c75f76d83f5a5b18689c6af7aa4cadf7df73e58fffcd743b0ecba10278eafbb1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "apple"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "2.5"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "banana"
+          },
+          {
+            "value": "5"
+          },
+          {
+            "value": "-1.2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0063",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 63,
+      "scriptName": "trigger to call procedure that updates another table using dynamic execute",
+      "oracle": "internal",
+      "suggestedId": "trigger-test-testcreatetrigger-0063-create-or-replace-function-update_collections",
+      "expectedKind": "rows",
+      "query": "CREATE OR REPLACE FUNCTION update_collections()\n  RETURNS trigger AS $$\n  DECLARE\n    BEGIN\n    IF TG_OP = 'INSERT' THEN\n      EXECUTE 'update public.\"Collections\" set total_tracks=total_tracks+1 where id = $1;'\n      USING NEW.collection_id;\n    END IF;\n\n    IF TG_OP = 'DELETE' THEN \n      EXECUTE 'update public.\"Collections\" set total_tracks=total_tracks-1 where id = $1;'\n      USING OLD.collection_id;\n    END IF;\n    \n    RETURN NEW;\n    END;\n$$ LANGUAGE plpgsql;",
+      "querySha256": "27dba1046af1b505350b371e316a2a81b943fb88a9717a1959454a7dafb8f376",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0064",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 64,
+      "scriptName": "trigger to call procedure that updates another table using dynamic execute",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0064-create-trigger-update_collection-after-insert",
+      "suggestedId": "trigger-test-testcreatetrigger-0064-create-trigger-update_collection-after-insert",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE TRIGGER update_collection\n\t\t\t\tAFTER INSERT OR DELETE ON public.\"CollectionItems\"\n\t\t\t\tFOR EACH ROW EXECUTE PROCEDURE update_collections();",
+      "querySha256": "422ff793706302e4bdbd4c9f576f7d3776980148f5f8419b30f91f85eb72fc43",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0065",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 65,
+      "scriptName": "trigger to call procedure that updates another table using dynamic execute",
+      "oracle": "internal",
+      "suggestedId": "trigger-test-testcreatetrigger-0065-insert-into-public.-collectionitems-collection_id",
+      "expectedKind": "rows",
+      "query": "INSERT INTO public.\"CollectionItems\" (collection_id, track_id) VALUES ('550e8400-e29b-41d4-a716-446655440000', 101);",
+      "querySha256": "14c50ba8ab59cf9e99148b4e8964f04d3fb478d24c20dd72d92d1d22545a5791",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0066",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 66,
+      "scriptName": "trigger to call procedure that updates another table using dynamic execute",
+      "oracle": "internal",
+      "suggestedId": "trigger-test-testcreatetrigger-0066-select-total_tracks-from-public.-collections",
+      "expectedKind": "rows",
+      "query": "SELECT total_tracks FROM public.\"Collections\"",
+      "querySha256": "55c8397554d0d85071f2cedc68d14cfdca5578010c8a77385f77d3aa895362a1",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0067",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 67,
+      "scriptName": "DROP TRIGGER",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0067-drop-trigger-test_trigger-on-test",
+      "suggestedId": "trigger-test-testcreatetrigger-0067-drop-trigger-test_trigger-on-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "DROP TRIGGER test_trigger ON test;",
+      "querySha256": "6b155197c24294f55cf9c6fd646a1f3cd405681ba5c8c0ee71ddcfdd28d39c5f",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestCreateTrigger#0068",
+      "source": "testing/go/postgres16/trigger_test.go:TestCreateTrigger",
+      "ordinal": 68,
+      "scriptName": "DROP TRIGGER",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-testcreatetrigger-0068-drop-trigger-if-exists-test_trigger",
+      "suggestedId": "trigger-test-testcreatetrigger-0068-drop-trigger-if-exists-test_trigger",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "DROP TRIGGER IF EXISTS test_trigger ON test;",
+      "querySha256": "a8eedba1237eb9fc4c98ae41626a71802f0d82cca1d85a72e9bc9f806712618f",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestStatementTriggerTransitionTables#0001",
+      "source": "testing/go/postgres16/trigger_test.go:TestStatementTriggerTransitionTables",
+      "ordinal": 1,
+      "scriptName": "plain statement triggers fire once",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-teststatementtriggertransitiontables-0001-select-phase-seen_count-from-plain_audit",
+      "suggestedId": "trigger-test-teststatementtriggertransitiontables-0001-select-phase-seen_count-from-plain_audit",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT phase, seen_count FROM plain_audit ORDER BY seq;",
+      "querySha256": "c61728e392568965371ef8ba507db6344404caa477ceaa5c86cfc9311f3c259b",
+      "expectedRows": [
+        [
+          {
+            "value": "BEFORE:STATEMENT:INSERT"
+          },
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "AFTER:STATEMENT:INSERT"
+          },
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestStatementTriggerTransitionTables#0002",
+      "source": "testing/go/postgres16/trigger_test.go:TestStatementTriggerTransitionTables",
+      "ordinal": 2,
+      "scriptName": "plain statement triggers fire once",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-teststatementtriggertransitiontables-0002-select-count-*-from-plain_target",
+      "suggestedId": "trigger-test-teststatementtriggertransitiontables-0002-select-count-*-from-plain_target",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) FROM plain_target;",
+      "querySha256": "66039d6c3bccfff3d7b7d5d1f0df5195fa09a91c06579ba83c304ebb484cdb10",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestStatementTriggerTransitionTables#0003",
+      "source": "testing/go/postgres16/trigger_test.go:TestStatementTriggerTransitionTables",
+      "ordinal": 3,
+      "scriptName": "AFTER statement triggers see transition tables",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-teststatementtriggertransitiontables-0003-select-tg_name-tg_when-tg_level-tg_op",
+      "suggestedId": "trigger-test-teststatementtriggertransitiontables-0003-select-tg_name-tg_when-tg_level-tg_op",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT tg_name, tg_when, tg_level, tg_op, old_count, new_count, old_sum, new_sum\n\t\t\t\t\t\tFROM statement_audit ORDER BY seq;",
+      "querySha256": "04f934ae6db855c52e8c1089a405964de31e372949c2aedd16ab2be53bb8c9bd",
+      "expectedRows": [
+        [
+          {
+            "value": "audit_insert"
+          },
+          {
+            "value": "AFTER"
+          },
+          {
+            "value": "STATEMENT"
+          },
+          {
+            "value": "INSERT"
+          },
+          {
+            "value": "0"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "0"
+          },
+          {
+            "value": "60"
+          }
+        ],
+        [
+          {
+            "value": "audit_update"
+          },
+          {
+            "value": "AFTER"
+          },
+          {
+            "value": "STATEMENT"
+          },
+          {
+            "value": "UPDATE"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "30"
+          },
+          {
+            "value": "32"
+          }
+        ],
+        [
+          {
+            "value": "audit_update"
+          },
+          {
+            "value": "AFTER"
+          },
+          {
+            "value": "STATEMENT"
+          },
+          {
+            "value": "UPDATE"
+          },
+          {
+            "value": "0"
+          },
+          {
+            "value": "0"
+          },
+          {
+            "value": "0"
+          },
+          {
+            "value": "0"
+          }
+        ],
+        [
+          {
+            "value": "audit_delete"
+          },
+          {
+            "value": "AFTER"
+          },
+          {
+            "value": "STATEMENT"
+          },
+          {
+            "value": "DELETE"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "0"
+          },
+          {
+            "value": "30"
+          },
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestStatementTriggerTransitionTables#0004",
+      "source": "testing/go/postgres16/trigger_test.go:TestStatementTriggerTransitionTables",
+      "ordinal": 4,
+      "scriptName": "AFTER statement trigger self-query sees post-statement target state",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-teststatementtriggertransitiontables-0004-select-op-row_count-value_sum-from",
+      "suggestedId": "trigger-test-teststatementtriggertransitiontables-0004-select-op-row_count-value_sum-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT op, row_count, value_sum FROM self_query_audit ORDER BY seq;",
+      "querySha256": "9da1d6a1507acb60e2bafbd3b79e4eb1f2f7d53bd0fef0935393cda62c6907bd",
+      "expectedRows": [
+        [
+          {
+            "value": "INSERT"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "60"
+          }
+        ],
+        [
+          {
+            "value": "UPDATE"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "62"
+          }
+        ],
+        [
+          {
+            "value": "DELETE"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "32"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_test.go:TestStatementTriggerTransitionTables#0005",
+      "source": "testing/go/postgres16/trigger_test.go:TestStatementTriggerTransitionTables",
+      "ordinal": 5,
+      "scriptName": "AFTER row triggers see statement transition tables",
+      "oracle": "postgres",
+      "postgresId": "trigger-test-teststatementtriggertransitiontables-0005-select-op-row_id-old_count-new_count",
+      "suggestedId": "trigger-test-teststatementtriggertransitiontables-0005-select-op-row_id-old_count-new_count",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT op, row_id, old_count, new_count, old_sum, new_sum\n\t\t\t\t\t\tFROM row_transition_audit ORDER BY seq;",
+      "querySha256": "882150c5a685fedb631e910a56f908ea2506866d4eebe6d4cd648e14682536db",
+      "expectedRows": [
+        [
+          {
+            "value": "INSERT"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "0"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "0"
+          },
+          {
+            "value": "60"
+          }
+        ],
+        [
+          {
+            "value": "INSERT"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "0"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "0"
+          },
+          {
+            "value": "60"
+          }
+        ],
+        [
+          {
+            "value": "INSERT"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "0"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "0"
+          },
+          {
+            "value": "60"
+          }
+        ],
+        [
+          {
+            "value": "UPDATE"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "30"
+          },
+          {
+            "value": "32"
+          }
+        ],
+        [
+          {
+            "value": "UPDATE"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "30"
+          },
+          {
+            "value": "32"
+          }
+        ],
+        [
+          {
+            "value": "DELETE"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "0"
+          },
+          {
+            "value": "30"
+          },
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

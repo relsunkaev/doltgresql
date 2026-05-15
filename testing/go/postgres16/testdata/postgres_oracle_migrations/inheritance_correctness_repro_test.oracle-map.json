@@ -1,0 +1,832 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map inheritance_correctness_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/inheritance_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestInheritedTableRowsVisibleThroughParentRepro#0001",
+      "source": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestInheritedTableRowsVisibleThroughParentRepro",
+      "ordinal": 1,
+      "scriptName": "inherited child rows are visible through parent scans",
+      "oracle": "postgres",
+      "postgresId": "inheritance-correctness-repro-test-testinheritedtablerowsvisiblethroughparentrepro-0001-select-id-label-from-inherit_parent_scan",
+      "suggestedId": "inheritance-correctness-repro-test-testinheritedtablerowsvisiblethroughparentrepro-0001-select-id-label-from-inherit_parent_scan",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label FROM inherit_parent_scan;",
+      "querySha256": "efd0ebdf38773a83549d01b7e67ffc8d42084a3922f82e9df9bb811e1c0022d4",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "child"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestInheritedChildRowsUpdatedThroughParentRepro#0001",
+      "source": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestInheritedChildRowsUpdatedThroughParentRepro",
+      "ordinal": 1,
+      "scriptName": "UPDATE parent updates inherited child rows",
+      "oracle": "internal",
+      "suggestedId": "inheritance-correctness-repro-test-testinheritedchildrowsupdatedthroughparentrepro-0001-select-id-label-extra-from",
+      "expectedKind": "rows",
+      "query": "SELECT id, label, extra\n\t\t\t\t\t\tFROM inherit_child_update;",
+      "querySha256": "a6280c91471635f7c3c1abc91525507d53042ac58787ff3d8b3fc28638cf2e0c",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestInheritedChildRowsDeletedThroughParentRepro#0001",
+      "source": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestInheritedChildRowsDeletedThroughParentRepro",
+      "ordinal": 1,
+      "scriptName": "DELETE parent deletes inherited child rows",
+      "oracle": "internal",
+      "suggestedId": "inheritance-correctness-repro-test-testinheritedchildrowsdeletedthroughparentrepro-0001-select-count-*-from-inherit_child_delete",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) FROM inherit_child_delete;",
+      "querySha256": "b75b7fbbf5ce97fc8af256a36d3e567a72400d1abd1128a6d4038065d2741a8e",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestTruncateInheritedParentTruncatesChildRowsRepro#0001",
+      "source": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestTruncateInheritedParentTruncatesChildRowsRepro",
+      "ordinal": 1,
+      "scriptName": "TRUNCATE parent truncates inherited child rows",
+      "oracle": "postgres",
+      "postgresId": "inheritance-correctness-repro-test-testtruncateinheritedparenttruncateschildrowsrepro-0001-select-count-*-from-only",
+      "suggestedId": "inheritance-correctness-repro-test-testtruncateinheritedparenttruncateschildrowsrepro-0001-select-count-*-from-only",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) FROM ONLY inherit_parent_truncate;",
+      "querySha256": "faa628e5ae6a22ce3540529a881dac0fcfe739e424a7344130bcb9d77c190faf",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestTruncateInheritedParentTruncatesChildRowsRepro#0002",
+      "source": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestTruncateInheritedParentTruncatesChildRowsRepro",
+      "ordinal": 2,
+      "scriptName": "TRUNCATE parent truncates inherited child rows",
+      "oracle": "postgres",
+      "postgresId": "inheritance-correctness-repro-test-testtruncateinheritedparenttruncateschildrowsrepro-0002-select-count-*-from-inherit_child_truncate",
+      "suggestedId": "inheritance-correctness-repro-test-testtruncateinheritedparenttruncateschildrowsrepro-0002-select-count-*-from-inherit_child_truncate",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) FROM inherit_child_truncate;",
+      "querySha256": "2ee28976e736d8a94da5428c34722c28bf849f54d5818c17b6778bdd76d5f3b3",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestInheritedGeneratedColumnRejectsDefaultOverrideRepro#0001",
+      "source": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestInheritedGeneratedColumnRejectsDefaultOverrideRepro",
+      "ordinal": 1,
+      "scriptName": "inherited generated columns reject default overrides",
+      "oracle": "postgres",
+      "postgresId": "inheritance-correctness-repro-test-testinheritedgeneratedcolumnrejectsdefaultoverriderepro-0001-create-table-inherit_generated_default_child-x-int",
+      "suggestedId": "inheritance-correctness-repro-test-testinheritedgeneratedcolumnrejectsdefaultoverriderepro-0001-create-table-inherit_generated_default_child-x-int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42611",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TABLE inherit_generated_default_child (\n\t\t\t\t\t\tx INT,\n\t\t\t\t\t\tb INT DEFAULT 10\n\t\t\t\t\t) INHERITS (inherit_generated_parent);",
+      "querySha256": "61e3cdf58e1d3e04f5c162ce689bed3fa14b0d4551efa4f4196679f24bd03cde",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestInheritedGeneratedColumnRejectsIdentityOverrideRepro#0001",
+      "source": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestInheritedGeneratedColumnRejectsIdentityOverrideRepro",
+      "ordinal": 1,
+      "scriptName": "inherited generated columns reject identity overrides",
+      "oracle": "postgres",
+      "postgresId": "inheritance-correctness-repro-test-testinheritedgeneratedcolumnrejectsidentityoverriderepro-0001-create-table-inherit_generated_identity_child-x-int",
+      "suggestedId": "inheritance-correctness-repro-test-testinheritedgeneratedcolumnrejectsidentityoverriderepro-0001-create-table-inherit_generated_identity_child-x-int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42611",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TABLE inherit_generated_identity_child (\n\t\t\t\t\t\tx INT,\n\t\t\t\t\t\tb INT GENERATED ALWAYS AS IDENTITY\n\t\t\t\t\t) INHERITS (inherit_generated_identity_parent);",
+      "querySha256": "d2440bd094cd52369f85c92d59712fa5f97908b012c2237a3ea7ded4918bc81c",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestAlterInheritedParentAddColumnPropagatesToChildRepro#0001",
+      "source": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestAlterInheritedParentAddColumnPropagatesToChildRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER parent ADD COLUMN propagates to inherited child",
+      "oracle": "postgres",
+      "postgresId": "inheritance-correctness-repro-test-testalterinheritedparentaddcolumnpropagatestochildrepro-0001-select-id-label-marker-extra",
+      "suggestedId": "inheritance-correctness-repro-test-testalterinheritedparentaddcolumnpropagatestochildrepro-0001-select-id-label-marker-extra",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label, marker, extra\n\t\t\t\t\t\tFROM inherit_child_add_column;",
+      "querySha256": "12df3bd6ba140499570183dffb75ccbb0255fb87c3f51048d4c24eda899819d7",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "child"
+          },
+          {
+            "value": "added"
+          },
+          {
+            "value": "extra"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestAlterInheritedParentRenameColumnPropagatesToChildRepro#0001",
+      "source": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestAlterInheritedParentRenameColumnPropagatesToChildRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER parent RENAME COLUMN propagates to inherited child",
+      "oracle": "postgres",
+      "postgresId": "inheritance-correctness-repro-test-testalterinheritedparentrenamecolumnpropagatestochildrepro-0001-select-id-title-extra-from",
+      "suggestedId": "inheritance-correctness-repro-test-testalterinheritedparentrenamecolumnpropagatestochildrepro-0001-select-id-title-extra-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, title, extra\n\t\t\t\t\t\tFROM inherit_child_rename_column;",
+      "querySha256": "57c1cec955c1727332dca2f01b4a5aa30a590af22b514936223126961674fb22",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "child"
+          },
+          {
+            "value": "extra"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestAlterInheritedParentDropColumnPropagatesToChildRepro#0001",
+      "source": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestAlterInheritedParentDropColumnPropagatesToChildRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER parent DROP COLUMN propagates to inherited child",
+      "oracle": "internal",
+      "suggestedId": "inheritance-correctness-repro-test-testalterinheritedparentdropcolumnpropagatestochildrepro-0001-select-column_name-from-information_schema.columns-where",
+      "expectedKind": "rows",
+      "query": "SELECT column_name\n\t\t\t\t\t\tFROM information_schema.columns\n\t\t\t\t\t\tWHERE table_schema = 'public'\n\t\t\t\t\t\t\tAND table_name = 'inherit_child_drop_column'\n\t\t\t\t\t\tORDER BY ordinal_position;",
+      "querySha256": "f60a6d37aabe90eaab2c74d6a1f398c1453be7003f79a1b286c2f947328dda94",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestAlterInheritedParentColumnTypePropagatesToChildRepro#0001",
+      "source": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestAlterInheritedParentColumnTypePropagatesToChildRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER parent column TYPE propagates to inherited child",
+      "oracle": "postgres",
+      "postgresId": "inheritance-correctness-repro-test-testalterinheritedparentcolumntypepropagatestochildrepro-0001-select-amount::text-pg_typeof-amount-::text",
+      "suggestedId": "inheritance-correctness-repro-test-testalterinheritedparentcolumntypepropagatestochildrepro-0001-select-amount::text-pg_typeof-amount-::text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT amount::TEXT, pg_typeof(amount)::TEXT, extra\n\t\t\t\t\t\tFROM inherit_child_type;",
+      "querySha256": "61bbbf067b9368735ae4cd67dc94657148f3ee31f0dd4e92b2bc4eb45b288b35",
+      "expectedRows": [
+        [
+          {
+            "value": "42"
+          },
+          {
+            "value": "bigint"
+          },
+          {
+            "value": "extra"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestAlterInheritedParentAddCheckPropagatesToChildRepro#0001",
+      "source": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestAlterInheritedParentAddCheckPropagatesToChildRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER parent ADD CHECK propagates to inherited child",
+      "oracle": "postgres",
+      "postgresId": "inheritance-correctness-repro-test-testalterinheritedparentaddcheckpropagatestochildrepro-0001-insert-into-inherit_child_add_check-values-1",
+      "suggestedId": "inheritance-correctness-repro-test-testalterinheritedparentaddcheckpropagatestochildrepro-0001-insert-into-inherit_child_add_check-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO inherit_child_add_check VALUES (-1, 'bad', 'extra');",
+      "querySha256": "af52cddffb114fe025856aa72322b22b640e4786c3cbebf2e709ad49e9c1219c",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestAlterInheritedParentAddCheckPropagatesToChildRepro#0002",
+      "source": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestAlterInheritedParentAddCheckPropagatesToChildRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER parent ADD CHECK propagates to inherited child",
+      "oracle": "postgres",
+      "postgresId": "inheritance-correctness-repro-test-testalterinheritedparentaddcheckpropagatestochildrepro-0002-select-count-*-from-inherit_child_add_check",
+      "suggestedId": "inheritance-correctness-repro-test-testalterinheritedparentaddcheckpropagatestochildrepro-0002-select-count-*-from-inherit_child_add_check",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) FROM inherit_child_add_check;",
+      "querySha256": "d73040be164d1bac5c48c9c66c8d99a2b39d396d276514f83438802ab929f1a8",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestAlterInheritedParentAddCheckNoInheritStaysLocalRepro#0001",
+      "source": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestAlterInheritedParentAddCheckNoInheritStaysLocalRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER parent ADD CHECK NO INHERIT stays local",
+      "oracle": "postgres",
+      "postgresId": "inheritance-correctness-repro-test-testalterinheritedparentaddchecknoinheritstayslocalrepro-0001-insert-into-inherit_parent_add_check_no_inherit-values-1",
+      "suggestedId": "inheritance-correctness-repro-test-testalterinheritedparentaddchecknoinheritstayslocalrepro-0001-insert-into-inherit_parent_add_check_no_inherit-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO inherit_parent_add_check_no_inherit VALUES (-1, 'bad parent');",
+      "querySha256": "dc95216f7d3b1ececfd02fb44623dbadb90ed5f8bc565eac6cf60cd0c1814185",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestAlterInheritedParentAddCheckNoInheritStaysLocalRepro#0002",
+      "source": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestAlterInheritedParentAddCheckNoInheritStaysLocalRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER parent ADD CHECK NO INHERIT stays local",
+      "oracle": "postgres",
+      "postgresId": "inheritance-correctness-repro-test-testalterinheritedparentaddchecknoinheritstayslocalrepro-0002-select-count-*-from-inherit_child_add_check_no_inherit",
+      "suggestedId": "inheritance-correctness-repro-test-testalterinheritedparentaddchecknoinheritstayslocalrepro-0002-select-count-*-from-inherit_child_add_check_no_inherit",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) FROM inherit_child_add_check_no_inherit;",
+      "querySha256": "bf5ae1166aa72673cd355f04d7fbc02ddd119cc09c54dada166a952259faa2ed",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestAlterInheritedParentSetNotNullPropagatesToChildRepro#0001",
+      "source": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestAlterInheritedParentSetNotNullPropagatesToChildRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER parent SET NOT NULL propagates to inherited child",
+      "oracle": "postgres",
+      "postgresId": "inheritance-correctness-repro-test-testalterinheritedparentsetnotnullpropagatestochildrepro-0001-insert-into-inherit_child_set_not_null-values-1",
+      "suggestedId": "inheritance-correctness-repro-test-testalterinheritedparentsetnotnullpropagatestochildrepro-0001-insert-into-inherit_child_set_not_null-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23502",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO inherit_child_set_not_null VALUES (1, NULL, 'extra');",
+      "querySha256": "38ae6ec47eeb585b9bec6aa412d2d15393a2ca7bae525481a250ccb71a626ae9",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestAlterInheritedParentSetNotNullPropagatesToChildRepro#0002",
+      "source": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestAlterInheritedParentSetNotNullPropagatesToChildRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER parent SET NOT NULL propagates to inherited child",
+      "oracle": "postgres",
+      "postgresId": "inheritance-correctness-repro-test-testalterinheritedparentsetnotnullpropagatestochildrepro-0002-select-count-*-from-inherit_child_set_not_null",
+      "suggestedId": "inheritance-correctness-repro-test-testalterinheritedparentsetnotnullpropagatestochildrepro-0002-select-count-*-from-inherit_child_set_not_null",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) FROM inherit_child_set_not_null;",
+      "querySha256": "73a869cd55eb74c2a01f036f1c8298d80614ee6e7f01f56b8fef9db2b4543b91",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestAlterInheritedParentAddCheckValidatesExistingChildRowsRepro#0001",
+      "source": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestAlterInheritedParentAddCheckValidatesExistingChildRowsRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER parent ADD CHECK validates existing child rows",
+      "oracle": "postgres",
+      "postgresId": "inheritance-correctness-repro-test-testalterinheritedparentaddcheckvalidatesexistingchildrowsrepro-0001-alter-table-inherit_parent_existing_check-add-constraint",
+      "suggestedId": "inheritance-correctness-repro-test-testalterinheritedparentaddcheckvalidatesexistingchildrowsrepro-0001-alter-table-inherit_parent_existing_check-add-constraint",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE inherit_parent_existing_check\n\t\t\t\t\t\tADD CONSTRAINT inherit_parent_existing_positive CHECK (id > 0);",
+      "querySha256": "13142f545310801966591f0e2a732d7fc3f590b1ec4fe8d44b0a3da29fd5f3a3",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestAlterInheritedParentAddCheckValidatesExistingChildRowsRepro#0002",
+      "source": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestAlterInheritedParentAddCheckValidatesExistingChildRowsRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER parent ADD CHECK validates existing child rows",
+      "oracle": "postgres",
+      "postgresId": "inheritance-correctness-repro-test-testalterinheritedparentaddcheckvalidatesexistingchildrowsrepro-0002-select-count-*-from-pg_catalog.pg_constraint",
+      "suggestedId": "inheritance-correctness-repro-test-testalterinheritedparentaddcheckvalidatesexistingchildrowsrepro-0002-select-count-*-from-pg_catalog.pg_constraint",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_constraint\n\t\t\t\t\t\tWHERE conname = 'inherit_parent_existing_positive';",
+      "querySha256": "09b7faccc8c5ae40974d5e062abd354754b677de449890c8cf2aadcbf7641154",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestAlterInheritedParentSetNotNullValidatesExistingChildRowsRepro#0001",
+      "source": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestAlterInheritedParentSetNotNullValidatesExistingChildRowsRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER parent SET NOT NULL validates existing child rows",
+      "oracle": "postgres",
+      "postgresId": "inheritance-correctness-repro-test-testalterinheritedparentsetnotnullvalidatesexistingchildrowsrepro-0001-alter-table-inherit_parent_existing_not_null-alter-column",
+      "suggestedId": "inheritance-correctness-repro-test-testalterinheritedparentsetnotnullvalidatesexistingchildrowsrepro-0001-alter-table-inherit_parent_existing_not_null-alter-column",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23502",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE inherit_parent_existing_not_null\n\t\t\t\t\t\tALTER COLUMN label SET NOT NULL;",
+      "querySha256": "975adfb5b48822eb0b3eed6965112cee0f9a1fac9f4fc1f9e27da0ee6d78501f",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestDropInheritedParentRequiresCascadeRepro#0001",
+      "source": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestDropInheritedParentRequiresCascadeRepro",
+      "ordinal": 1,
+      "scriptName": "DROP parent table rejects inherited child dependency",
+      "oracle": "postgres",
+      "postgresId": "inheritance-correctness-repro-test-testdropinheritedparentrequirescascaderepro-0001-drop-table-inherit_parent_drop_restrict",
+      "suggestedId": "inheritance-correctness-repro-test-testdropinheritedparentrequirescascaderepro-0001-drop-table-inherit_parent_drop_restrict",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "2BP01",
+      "errorSeverity": "ERROR",
+      "query": "DROP TABLE inherit_parent_drop_restrict;",
+      "querySha256": "c6f2887f6e850e0cb80e11001c2009cd84c5dc711e63153807be89b1ae1e46ba",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestDropInheritedParentRequiresCascadeRepro#0002",
+      "source": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestDropInheritedParentRequiresCascadeRepro",
+      "ordinal": 2,
+      "scriptName": "DROP parent table rejects inherited child dependency",
+      "oracle": "postgres",
+      "postgresId": "inheritance-correctness-repro-test-testdropinheritedparentrequirescascaderepro-0002-select-to_regclass-inherit_parent_drop_restrict-is-not",
+      "suggestedId": "inheritance-correctness-repro-test-testdropinheritedparentrequirescascaderepro-0002-select-to_regclass-inherit_parent_drop_restrict-is-not",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT to_regclass('inherit_parent_drop_restrict') IS NOT NULL,\n\t\t\t\t\t\t\tto_regclass('inherit_child_drop_restrict') IS NOT NULL;",
+      "querySha256": "7cf9e2a6cb2228010f709beb716452f94bf4f96cd7a129c750ccc142a5b80f64",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestDropInheritedParentCascadeDropsChildRepro#0001",
+      "source": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestDropInheritedParentCascadeDropsChildRepro",
+      "ordinal": 1,
+      "scriptName": "DROP parent table CASCADE drops inherited child",
+      "oracle": "postgres",
+      "postgresId": "inheritance-correctness-repro-test-testdropinheritedparentcascadedropschildrepro-0001-select-to_regclass-inherit_parent_drop_cascade-is-null",
+      "suggestedId": "inheritance-correctness-repro-test-testdropinheritedparentcascadedropschildrepro-0001-select-to_regclass-inherit_parent_drop_cascade-is-null",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT to_regclass('inherit_parent_drop_cascade') IS NULL,\n\t\t\t\t\t\t\tto_regclass('inherit_child_drop_cascade') IS NULL;",
+      "querySha256": "52852d400e8d1b7df71364df74390277ddd9ae498133652cf006b951b0ec23c5",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestDropInheritedParentCascadeDropsGrandchildGuard#0001",
+      "source": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestDropInheritedParentCascadeDropsGrandchildGuard",
+      "ordinal": 1,
+      "scriptName": "DROP parent table CASCADE recursively drops inherited descendants",
+      "oracle": "postgres",
+      "postgresId": "inheritance-correctness-repro-test-testdropinheritedparentcascadedropsgrandchildguard-0001-select-to_regclass-inherit_parent_drop_cascade_deep-is-null",
+      "suggestedId": "inheritance-correctness-repro-test-testdropinheritedparentcascadedropsgrandchildguard-0001-select-to_regclass-inherit_parent_drop_cascade_deep-is-null",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT to_regclass('inherit_parent_drop_cascade_deep') IS NULL,\n\t\t\t\t\t\t\tto_regclass('inherit_child_drop_cascade_deep') IS NULL,\n\t\t\t\t\t\t\tto_regclass('inherit_grandchild_drop_cascade_deep') IS NULL;",
+      "querySha256": "ff327475b874e194c86fe334c786fa36de61cc3f901d58071f55d67843e3dba0",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestInheritedChildUsesParentDefaultsGuard#0001",
+      "source": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestInheritedChildUsesParentDefaultsGuard",
+      "ordinal": 1,
+      "scriptName": "inherited child uses parent defaults",
+      "oracle": "postgres",
+      "postgresId": "inheritance-correctness-repro-test-testinheritedchildusesparentdefaultsguard-0001-select-id-label-extra-from",
+      "suggestedId": "inheritance-correctness-repro-test-testinheritedchildusesparentdefaultsguard-0001-select-id-label-extra-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label, extra\n\t\t\t\t\t\tFROM inherit_child_default;",
+      "querySha256": "0ea6f5563c17b22fb1d79b252c96dff119a88d32f379d5ec262cd3e012298a6b",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          },
+          {
+            "value": "parent-default"
+          },
+          {
+            "value": "extra"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestAlterInheritedParentSetDefaultPropagatesToChildRepro#0001",
+      "source": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestAlterInheritedParentSetDefaultPropagatesToChildRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER parent SET DEFAULT propagates to inherited child",
+      "oracle": "postgres",
+      "postgresId": "inheritance-correctness-repro-test-testalterinheritedparentsetdefaultpropagatestochildrepro-0001-select-id-label-extra-from",
+      "suggestedId": "inheritance-correctness-repro-test-testalterinheritedparentsetdefaultpropagatestochildrepro-0001-select-id-label-extra-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label, extra\n\t\t\t\t\t\tFROM inherit_child_set_default;",
+      "querySha256": "ffd09609e7dba758434dfe36bfe90cee74844fec5d4c2023ca3774cfae7aef6f",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "new-default"
+          },
+          {
+            "value": "extra"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestAlterInheritedParentSetDefaultPropagatesToGrandchildGuard#0001",
+      "source": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestAlterInheritedParentSetDefaultPropagatesToGrandchildGuard",
+      "ordinal": 1,
+      "scriptName": "ALTER parent SET DEFAULT propagates to inherited grandchild",
+      "oracle": "postgres",
+      "postgresId": "inheritance-correctness-repro-test-testalterinheritedparentsetdefaultpropagatestograndchildguard-0001-select-id-label-child_extra-grandchild_extra",
+      "suggestedId": "inheritance-correctness-repro-test-testalterinheritedparentsetdefaultpropagatestograndchildguard-0001-select-id-label-child_extra-grandchild_extra",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label, child_extra, grandchild_extra\n\t\t\t\t\t\tFROM inherit_grandchild_set_default;",
+      "querySha256": "13b9f25bac42205d78365bcd33b82ef531e26c20b4c5a2d86bdfc946818c36ce",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "grandparent-default"
+          },
+          {
+            "value": "child"
+          },
+          {
+            "value": "grandchild"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestAlterInheritedParentDropDefaultPropagatesToChildRepro#0001",
+      "source": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestAlterInheritedParentDropDefaultPropagatesToChildRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER parent DROP DEFAULT propagates to inherited child",
+      "oracle": "postgres",
+      "postgresId": "inheritance-correctness-repro-test-testalterinheritedparentdropdefaultpropagatestochildrepro-0001-select-id-label-extra-from",
+      "suggestedId": "inheritance-correctness-repro-test-testalterinheritedparentdropdefaultpropagatestochildrepro-0001-select-id-label-extra-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label, extra\n\t\t\t\t\t\tFROM inherit_child_drop_default;",
+      "querySha256": "c534b08061bc7f3fe7353836dc0922e8e4f72fcb7d3ad0ee66967f71af384603",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "null": true
+          },
+          {
+            "value": "extra"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestAlterInheritedParentDropNotNullPropagatesToChildRepro#0001",
+      "source": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestAlterInheritedParentDropNotNullPropagatesToChildRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER parent DROP NOT NULL propagates to inherited child",
+      "oracle": "postgres",
+      "postgresId": "inheritance-correctness-repro-test-testalterinheritedparentdropnotnullpropagatestochildrepro-0001-select-id-label-extra-from",
+      "suggestedId": "inheritance-correctness-repro-test-testalterinheritedparentdropnotnullpropagatestochildrepro-0001-select-id-label-extra-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label, extra\n\t\t\t\t\t\tFROM inherit_child_drop_not_null;",
+      "querySha256": "e28ae05ae1f5b2af9ba665335393d48ede3a0ba710385667c20e103b4db75b1a",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "null": true
+          },
+          {
+            "value": "extra"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestAlterTableInheritAttachesChildRepro#0001",
+      "source": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestAlterTableInheritAttachesChildRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER TABLE INHERIT attaches child to parent",
+      "oracle": "postgres",
+      "postgresId": "inheritance-correctness-repro-test-testaltertableinheritattacheschildrepro-0001-select-id-label-from-inherit_parent_attach",
+      "suggestedId": "inheritance-correctness-repro-test-testaltertableinheritattacheschildrepro-0001-select-id-label-from-inherit_parent_attach",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM inherit_parent_attach;",
+      "querySha256": "9da7af419bf430ee4d8db96a7bc3ff61515d5ded66b8d7ad5f0745618ca858db",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "child"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestAlterTableInheritAttachesChildRepro#0002",
+      "source": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestAlterTableInheritAttachesChildRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER TABLE INHERIT attaches child to parent",
+      "oracle": "postgres",
+      "postgresId": "inheritance-correctness-repro-test-testaltertableinheritattacheschildrepro-0002-select-child.relname-parent.relname-from-pg_catalog.pg_inherits",
+      "suggestedId": "inheritance-correctness-repro-test-testaltertableinheritattacheschildrepro-0002-select-child.relname-parent.relname-from-pg_catalog.pg_inherits",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT child.relname, parent.relname\n\t\t\t\t\t\tFROM pg_catalog.pg_inherits inh\n\t\t\t\t\t\tJOIN pg_catalog.pg_class child ON child.oid = inh.inhrelid\n\t\t\t\t\t\tJOIN pg_catalog.pg_class parent ON parent.oid = inh.inhparent\n\t\t\t\t\t\tWHERE child.relname = 'inherit_child_attach';",
+      "querySha256": "5dec42124d8e906954dec3cc39b28ce12775d45bc4b029451fb2f93b2a28c637",
+      "expectedRows": [
+        [
+          {
+            "value": "inherit_child_attach"
+          },
+          {
+            "value": "inherit_parent_attach"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestAlterTableNoInheritDetachesChildRepro#0001",
+      "source": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestAlterTableNoInheritDetachesChildRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER TABLE NO INHERIT detaches child from parent",
+      "oracle": "postgres",
+      "postgresId": "inheritance-correctness-repro-test-testaltertablenoinheritdetacheschildrepro-0001-select-count-*-from-pg_catalog.pg_inherits",
+      "suggestedId": "inheritance-correctness-repro-test-testaltertablenoinheritdetacheschildrepro-0001-select-count-*-from-pg_catalog.pg_inherits",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_inherits inh\n\t\t\t\t\t\tJOIN pg_catalog.pg_class child ON child.oid = inh.inhrelid\n\t\t\t\t\t\tWHERE child.relname = 'inherit_child_detach';",
+      "querySha256": "a19362825763a129d24fa1ceb51757cf76752c0ef626d3f0cecd61cf30c70359",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestInheritedChildEnforcesParentCheckConstraintGuard#0001",
+      "source": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestInheritedChildEnforcesParentCheckConstraintGuard",
+      "ordinal": 1,
+      "scriptName": "inherited child enforces parent CHECK constraint",
+      "oracle": "postgres",
+      "postgresId": "inheritance-correctness-repro-test-testinheritedchildenforcesparentcheckconstraintguard-0001-insert-into-inherit_child_check-values-1",
+      "suggestedId": "inheritance-correctness-repro-test-testinheritedchildenforcesparentcheckconstraintguard-0001-insert-into-inherit_child_check-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO inherit_child_check VALUES (-1, 'bad', 'extra');",
+      "querySha256": "ea6fe5d1f51fe3fbd16074a431e537dad3c55d71e54f6443e02b75feb45400e3",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestInheritedChildEnforcesParentCheckConstraintGuard#0002",
+      "source": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestInheritedChildEnforcesParentCheckConstraintGuard",
+      "ordinal": 2,
+      "scriptName": "inherited child enforces parent CHECK constraint",
+      "oracle": "postgres",
+      "postgresId": "inheritance-correctness-repro-test-testinheritedchildenforcesparentcheckconstraintguard-0002-select-count-*-from-inherit_child_check",
+      "suggestedId": "inheritance-correctness-repro-test-testinheritedchildenforcesparentcheckconstraintguard-0002-select-count-*-from-inherit_child_check",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) FROM inherit_child_check;",
+      "querySha256": "bcfb3dbfa189cae868cdd56a299d077acf6be4055680f9c8cc5d1cd81324ee61",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestInheritedChildEnforcesParentNotNullConstraintGuard#0001",
+      "source": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestInheritedChildEnforcesParentNotNullConstraintGuard",
+      "ordinal": 1,
+      "scriptName": "inherited child enforces parent NOT NULL constraint",
+      "oracle": "postgres",
+      "postgresId": "inheritance-correctness-repro-test-testinheritedchildenforcesparentnotnullconstraintguard-0001-insert-into-inherit_child_not_null-values-1",
+      "suggestedId": "inheritance-correctness-repro-test-testinheritedchildenforcesparentnotnullconstraintguard-0001-insert-into-inherit_child_not_null-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23502",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO inherit_child_not_null VALUES (1, NULL, 'extra');",
+      "querySha256": "2a1846f184a42110dbfaad9015ff21dc6dbd53b17ad8f9a02e9db0d5470c221e",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestInheritedChildEnforcesParentNotNullConstraintGuard#0002",
+      "source": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestInheritedChildEnforcesParentNotNullConstraintGuard",
+      "ordinal": 2,
+      "scriptName": "inherited child enforces parent NOT NULL constraint",
+      "oracle": "postgres",
+      "postgresId": "inheritance-correctness-repro-test-testinheritedchildenforcesparentnotnullconstraintguard-0002-select-count-*-from-inherit_child_not_null",
+      "suggestedId": "inheritance-correctness-repro-test-testinheritedchildenforcesparentnotnullconstraintguard-0002-select-count-*-from-inherit_child_not_null",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) FROM inherit_child_not_null;",
+      "querySha256": "bafb93ee33f858cde84b53c0b86aabffe7c63a938cda8de2a467ede460834b96",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestCreateTableInheritsPersistsPgInheritsMetadataRepro#0001",
+      "source": "testing/go/postgres16/inheritance_correctness_repro_test.go:TestCreateTableInheritsPersistsPgInheritsMetadataRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLE INHERITS persists pg_inherits metadata",
+      "oracle": "postgres",
+      "postgresId": "inheritance-correctness-repro-test-testcreatetableinheritspersistspginheritsmetadatarepro-0001-select-child.relname-parent.relname-from-pg_catalog.pg_inherits",
+      "suggestedId": "inheritance-correctness-repro-test-testcreatetableinheritspersistspginheritsmetadatarepro-0001-select-child.relname-parent.relname-from-pg_catalog.pg_inherits",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT child.relname, parent.relname\n\t\t\t\t\t\tFROM pg_catalog.pg_inherits inh\n\t\t\t\t\t\tJOIN pg_catalog.pg_class child ON child.oid = inh.inhrelid\n\t\t\t\t\t\tJOIN pg_catalog.pg_class parent ON parent.oid = inh.inhparent\n\t\t\t\t\t\tWHERE child.relname = 'inherit_child_catalog';",
+      "querySha256": "8c91420a96fd89191386b1e31946a76d6c902e20febbfd340f4005435062e95e",
+      "expectedRows": [
+        [
+          {
+            "value": "inherit_child_catalog"
+          },
+          {
+            "value": "inherit_parent_catalog"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

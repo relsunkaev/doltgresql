@@ -1,0 +1,340 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map parameters_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/parameters_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/parameters_test.go:TestParameters#0001",
+      "source": "testing/go/postgres16/parameters_test.go:TestParameters",
+      "ordinal": 1,
+      "scriptName": "default_with_oids",
+      "oracle": "postgres",
+      "postgresId": "parameters-test-testparameters-0001-select-default_with_oids",
+      "suggestedId": "parameters-test-testparameters-0001-select-default_with_oids",
+      "compare": "sqlstate",
+      "expectedKind": "rows",
+      "sqlstate": "42703",
+      "errorSeverity": "ERROR",
+      "query": "SELECT default_with_oids;",
+      "querySha256": "6ba9d194b9481173cb9968bea3bb0c469432a1b2c6ef61a4d57835f7c61c2ae6",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/parameters_test.go:TestParameters#0002",
+      "source": "testing/go/postgres16/parameters_test.go:TestParameters",
+      "ordinal": 2,
+      "scriptName": "default_with_oids",
+      "oracle": "postgres",
+      "postgresId": "parameters-test-testparameters-0002-set-default_with_oids-=-false",
+      "suggestedId": "parameters-test-testparameters-0002-set-default_with_oids-=-false",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SET default_with_oids = false;",
+      "querySha256": "4b587144f86ce2b0d277a35b17df700b76f4f4993dc83ea82c1a51cc9bea52d9",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/parameters_test.go:TestParameters#0003",
+      "source": "testing/go/postgres16/parameters_test.go:TestParameters",
+      "ordinal": 3,
+      "scriptName": "DateStyle",
+      "oracle": "postgres",
+      "postgresId": "parameters-test-testparameters-0003-show-datestyle",
+      "suggestedId": "parameters-test-testparameters-0003-show-datestyle",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SHOW DateStyle;",
+      "querySha256": "e5bf72c0043bf54ccd1b9c11aa9e42f8f82d3019f9357913aba0eadfba5c6aed",
+      "expectedRows": [
+        [
+          {
+            "value": "ISO, MDY"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/parameters_test.go:TestParameters#0004",
+      "source": "testing/go/postgres16/parameters_test.go:TestParameters",
+      "ordinal": 4,
+      "scriptName": "DateStyle",
+      "oracle": "postgres",
+      "postgresId": "parameters-test-testparameters-0004-select-timestamp-2001/02/04-04:05:06.789",
+      "suggestedId": "parameters-test-testparameters-0004-select-timestamp-2001/02/04-04:05:06.789",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT timestamp '2001/02/04 04:05:06.789';",
+      "querySha256": "e3a2cbdb6ec4b2a5671b64db0b454be70338fe1c33a8852e7c298f771ffa4873",
+      "expectedRows": [
+        [
+          {
+            "value": "2001-02-04T04:05:06.789"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/parameters_test.go:TestParameters#0005",
+      "source": "testing/go/postgres16/parameters_test.go:TestParameters",
+      "ordinal": 5,
+      "scriptName": "DateStyle",
+      "oracle": "postgres",
+      "postgresId": "parameters-test-testparameters-0005-set-datestyle-=-german",
+      "suggestedId": "parameters-test-testparameters-0005-set-datestyle-=-german",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SET datestyle = 'german';",
+      "querySha256": "2a7de991be15414ba6b7079569842a23e0e43bda086715f486aa674d65d06a85",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/parameters_test.go:TestParameters#0006",
+      "source": "testing/go/postgres16/parameters_test.go:TestParameters",
+      "ordinal": 6,
+      "scriptName": "DateStyle",
+      "oracle": "postgres",
+      "postgresId": "parameters-test-testparameters-0006-show-datestyle",
+      "suggestedId": "parameters-test-testparameters-0006-show-datestyle",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SHOW DateStyle;",
+      "querySha256": "e5bf72c0043bf54ccd1b9c11aa9e42f8f82d3019f9357913aba0eadfba5c6aed",
+      "expectedRows": [
+        [
+          {
+            "value": "German, DMY"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/parameters_test.go:TestParameters#0007",
+      "source": "testing/go/postgres16/parameters_test.go:TestParameters",
+      "ordinal": 7,
+      "scriptName": "DateStyle",
+      "oracle": "internal",
+      "suggestedId": "parameters-test-testparameters-0007-select-timestamp-2001/02/04-04:05:06.789",
+      "expectedKind": "rows",
+      "query": "SELECT timestamp '2001/02/04 04:05:06.789';",
+      "querySha256": "e3a2cbdb6ec4b2a5671b64db0b454be70338fe1c33a8852e7c298f771ffa4873",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/parameters_test.go:TestParameters#0008",
+      "source": "testing/go/postgres16/parameters_test.go:TestParameters",
+      "ordinal": 8,
+      "scriptName": "DateStyle",
+      "oracle": "postgres",
+      "postgresId": "parameters-test-testparameters-0008-set-datestyle-=-ymd",
+      "suggestedId": "parameters-test-testparameters-0008-set-datestyle-=-ymd",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SET datestyle = 'YMD';",
+      "querySha256": "a3bbca20c1bf28e093e21922b79974690827f4a6dfd6e433c924e8168949aa26",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/parameters_test.go:TestParameters#0009",
+      "source": "testing/go/postgres16/parameters_test.go:TestParameters",
+      "ordinal": 9,
+      "scriptName": "DateStyle",
+      "oracle": "postgres",
+      "postgresId": "parameters-test-testparameters-0009-show-datestyle",
+      "suggestedId": "parameters-test-testparameters-0009-show-datestyle",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SHOW DateStyle;",
+      "querySha256": "e5bf72c0043bf54ccd1b9c11aa9e42f8f82d3019f9357913aba0eadfba5c6aed",
+      "expectedRows": [
+        [
+          {
+            "value": "German, YMD"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/parameters_test.go:TestParameters#0010",
+      "source": "testing/go/postgres16/parameters_test.go:TestParameters",
+      "ordinal": 10,
+      "scriptName": "DateStyle",
+      "oracle": "postgres",
+      "postgresId": "parameters-test-testparameters-0010-set-datestyle-=-sql",
+      "suggestedId": "parameters-test-testparameters-0010-set-datestyle-=-sql",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SET datestyle = 'sQl';",
+      "querySha256": "67afc63a9ae85179fd1a9db5359d4f3f3293460b51d4cce2fe062ae256fb580d",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/parameters_test.go:TestParameters#0011",
+      "source": "testing/go/postgres16/parameters_test.go:TestParameters",
+      "ordinal": 11,
+      "scriptName": "DateStyle",
+      "oracle": "postgres",
+      "postgresId": "parameters-test-testparameters-0011-show-datestyle",
+      "suggestedId": "parameters-test-testparameters-0011-show-datestyle",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SHOW DateStyle;",
+      "querySha256": "e5bf72c0043bf54ccd1b9c11aa9e42f8f82d3019f9357913aba0eadfba5c6aed",
+      "expectedRows": [
+        [
+          {
+            "value": "SQL, YMD"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/parameters_test.go:TestParameters#0012",
+      "source": "testing/go/postgres16/parameters_test.go:TestParameters",
+      "ordinal": 12,
+      "scriptName": "DateStyle",
+      "oracle": "internal",
+      "suggestedId": "parameters-test-testparameters-0012-select-timestamp-2001/02/04-04:05:06.789",
+      "expectedKind": "rows",
+      "query": "SELECT timestamp '2001/02/04 04:05:06.789';",
+      "querySha256": "e3a2cbdb6ec4b2a5671b64db0b454be70338fe1c33a8852e7c298f771ffa4873",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/parameters_test.go:TestParameters#0013",
+      "source": "testing/go/postgres16/parameters_test.go:TestParameters",
+      "ordinal": 13,
+      "scriptName": "DateStyle",
+      "oracle": "postgres",
+      "postgresId": "parameters-test-testparameters-0013-set-datestyle-=-postgres",
+      "suggestedId": "parameters-test-testparameters-0013-set-datestyle-=-postgres",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SET datestyle = 'postgreS';",
+      "querySha256": "c896f96ab4ad8f1a2ebbef37c010a30573eb9cd2afa315a4412450e7a2ab372f",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/parameters_test.go:TestParameters#0014",
+      "source": "testing/go/postgres16/parameters_test.go:TestParameters",
+      "ordinal": 14,
+      "scriptName": "DateStyle",
+      "oracle": "postgres",
+      "postgresId": "parameters-test-testparameters-0014-show-datestyle",
+      "suggestedId": "parameters-test-testparameters-0014-show-datestyle",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SHOW DateStyle;",
+      "querySha256": "e5bf72c0043bf54ccd1b9c11aa9e42f8f82d3019f9357913aba0eadfba5c6aed",
+      "expectedRows": [
+        [
+          {
+            "value": "Postgres, YMD"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/parameters_test.go:TestParameters#0015",
+      "source": "testing/go/postgres16/parameters_test.go:TestParameters",
+      "ordinal": 15,
+      "scriptName": "DateStyle",
+      "oracle": "internal",
+      "suggestedId": "parameters-test-testparameters-0015-select-timestamp-2001/02/04-04:05:06.789",
+      "expectedKind": "rows",
+      "query": "SELECT timestamp '2001/02/04 04:05:06.789';",
+      "querySha256": "e3a2cbdb6ec4b2a5671b64db0b454be70338fe1c33a8852e7c298f771ffa4873",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/parameters_test.go:TestParameters#0016",
+      "source": "testing/go/postgres16/parameters_test.go:TestParameters",
+      "ordinal": 16,
+      "scriptName": "DateStyle",
+      "oracle": "postgres",
+      "postgresId": "parameters-test-testparameters-0016-reset-datestyle",
+      "suggestedId": "parameters-test-testparameters-0016-reset-datestyle",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "RESET datestyle;",
+      "querySha256": "9c0cf489c7a9d11addc4d975624445e75042edbf911e95e42de783c9107d08af",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/parameters_test.go:TestParameters#0017",
+      "source": "testing/go/postgres16/parameters_test.go:TestParameters",
+      "ordinal": 17,
+      "scriptName": "DateStyle",
+      "oracle": "postgres",
+      "postgresId": "parameters-test-testparameters-0017-show-datestyle",
+      "suggestedId": "parameters-test-testparameters-0017-show-datestyle",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SHOW DateStyle;",
+      "querySha256": "e5bf72c0043bf54ccd1b9c11aa9e42f8f82d3019f9357913aba0eadfba5c6aed",
+      "expectedRows": [
+        [
+          {
+            "value": "ISO, MDY"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/parameters_test.go:TestParameters#0018",
+      "source": "testing/go/postgres16/parameters_test.go:TestParameters",
+      "ordinal": 18,
+      "scriptName": "DateStyle",
+      "oracle": "postgres",
+      "postgresId": "parameters-test-testparameters-0018-set-datestyle-=-unknown",
+      "suggestedId": "parameters-test-testparameters-0018-set-datestyle-=-unknown",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "SET datestyle = 'unknown';",
+      "querySha256": "7dad2ff15ff97013d06cc997575ca25fc2bf3bb1a6f8caf484b09f94adc32dde",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

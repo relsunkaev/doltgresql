@@ -1,0 +1,823 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map column_privilege_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/column_privilege_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnSelectGrantAllowsGrantedColumnsRepro#0001",
+      "source": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnSelectGrantAllowsGrantedColumnsRepro",
+      "ordinal": 1,
+      "scriptName": "column SELECT grant allows granted columns",
+      "oracle": "postgres",
+      "postgresId": "column-privilege-repro-test-testcolumnselectgrantallowsgrantedcolumnsrepro-0001-select-id-public_value-from-column_select_allowed_private",
+      "suggestedId": "column-privilege-repro-test-testcolumnselectgrantallowsgrantedcolumnsrepro-0001-select-id-public_value-from-column_select_allowed_private",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "column_select_allowed_user",
+      "query": "SELECT id, public_value\n\t\t\t\t\t\tFROM column_select_allowed_private;",
+      "querySha256": "2f0c9ed322474d97153892d12d7568fc006c50079ff9db63bbc630f072c8ca03",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "public"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnSelectGrantAllowsGrantedColumnsRepro#0002",
+      "source": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnSelectGrantAllowsGrantedColumnsRepro",
+      "ordinal": 2,
+      "scriptName": "column SELECT grant allows granted columns",
+      "oracle": "postgres",
+      "postgresId": "column-privilege-repro-test-testcolumnselectgrantallowsgrantedcolumnsrepro-0002-select-private_value-from-column_select_allowed_private",
+      "suggestedId": "column-privilege-repro-test-testcolumnselectgrantallowsgrantedcolumnsrepro-0002-select-private_value-from-column_select_allowed_private",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "column_select_allowed_user",
+      "query": "SELECT private_value FROM column_select_allowed_private;",
+      "querySha256": "69f9b1ac9068e8085635aca53b5f45e86d439bd649c7d9d9f77bec59fdd1c60e",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnInsertGrantDoesNotAllowOtherColumnsGuard#0001",
+      "source": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnInsertGrantDoesNotAllowOtherColumnsGuard",
+      "ordinal": 1,
+      "scriptName": "column INSERT grant does not allow other columns",
+      "oracle": "postgres",
+      "postgresId": "column-privilege-repro-test-testcolumninsertgrantdoesnotallowothercolumnsguard-0001-insert-into-column_insert_private-id-public_value",
+      "suggestedId": "column-privilege-repro-test-testcolumninsertgrantdoesnotallowothercolumnsguard-0001-insert-into-column_insert_private-id-public_value",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "column_insert_user",
+      "query": "INSERT INTO column_insert_private\n\t\t\t\t\t\t(id, public_value, private_value)\n\t\t\t\t\t\tVALUES (1, 'public', 'private');",
+      "querySha256": "069fa28304ab408de5277427676405f8a04046f7f53277828bb0fb2f9594ac45",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnInsertGrantDoesNotAllowOtherColumnsGuard#0002",
+      "source": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnInsertGrantDoesNotAllowOtherColumnsGuard",
+      "ordinal": 2,
+      "scriptName": "column INSERT grant does not allow other columns",
+      "oracle": "postgres",
+      "postgresId": "column-privilege-repro-test-testcolumninsertgrantdoesnotallowothercolumnsguard-0002-select-count-*-from-column_insert_private",
+      "suggestedId": "column-privilege-repro-test-testcolumninsertgrantdoesnotallowothercolumnsguard-0002-select-count-*-from-column_insert_private",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM column_insert_private;",
+      "querySha256": "9149170af3d6c4c586c950f983e630a520919f55350a3e6a7a921831787d0959",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnInsertGrantAllowsGrantedColumnsRepro#0001",
+      "source": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnInsertGrantAllowsGrantedColumnsRepro",
+      "ordinal": 1,
+      "scriptName": "column INSERT grant allows granted columns",
+      "oracle": "postgres",
+      "postgresId": "column-privilege-repro-test-testcolumninsertgrantallowsgrantedcolumnsrepro-0001-select-id-public_value-private_value-from",
+      "suggestedId": "column-privilege-repro-test-testcolumninsertgrantallowsgrantedcolumnsrepro-0001-select-id-public_value-private_value-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, public_value, private_value\n\t\t\t\t\t\tFROM column_insert_allowed_private;",
+      "querySha256": "91d0912bef94be7fdf149258ecd99139e3d261b8a3d6a361f82646a26f5db173",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "public"
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/column_privilege_repro_test.go:TestCteSelectUsesUnderlyingTablePrivilegesRepro#0001",
+      "source": "testing/go/postgres16/column_privilege_repro_test.go:TestCteSelectUsesUnderlyingTablePrivilegesRepro",
+      "ordinal": 1,
+      "scriptName": "CTE SELECT uses underlying table privileges",
+      "oracle": "postgres",
+      "postgresId": "column-privilege-repro-test-testcteselectusesunderlyingtableprivilegesrepro-0001-with-visible_items-as-select-id",
+      "suggestedId": "column-privilege-repro-test-testcteselectusesunderlyingtableprivilegesrepro-0001-with-visible_items-as-select-id",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "cte_select_user",
+      "query": "WITH visible_items AS (\n\t\t\t\t\t\t\tSELECT id, label FROM cte_select_private\n\t\t\t\t\t\t)\n\t\t\t\t\t\tSELECT id, label FROM visible_items ORDER BY id;",
+      "querySha256": "c2b91da87ebd6f13339fb2ae1b39c391b753575a0be616f88bace0a10d93b3d7",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "visible"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "also visible"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/column_privilege_repro_test.go:TestCreateTableAsAllowsGrantedSourceColumnsRepro#0001",
+      "source": "testing/go/postgres16/column_privilege_repro_test.go:TestCreateTableAsAllowsGrantedSourceColumnsRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLE AS allows granted source columns",
+      "oracle": "internal",
+      "suggestedId": "column-privilege-repro-test-testcreatetableasallowsgrantedsourcecolumnsrepro-0001-select-id-public_value-from-ctas_column_copy",
+      "expectedKind": "rows",
+      "username": "ctas_column_user",
+      "query": "SELECT id, public_value FROM ctas_column_copy;",
+      "querySha256": "5d81117b934230e760429751d35fd91424ff772ed2ba130bc63c11a88e29b3af",
+      "nonLiteral": [
+        "PriorUsername"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/column_privilege_repro_test.go:TestCreateTableAsRejectsUngrantedSourceColumnsGuard#0001",
+      "source": "testing/go/postgres16/column_privilege_repro_test.go:TestCreateTableAsRejectsUngrantedSourceColumnsGuard",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLE AS rejects ungranted source columns",
+      "oracle": "postgres",
+      "postgresId": "column-privilege-repro-test-testcreatetableasrejectsungrantedsourcecolumnsguard-0001-create-table-ctas_column_denied_copy-as-select",
+      "suggestedId": "column-privilege-repro-test-testcreatetableasrejectsungrantedsourcecolumnsguard-0001-create-table-ctas_column_denied_copy-as-select",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "ctas_column_denied_user",
+      "query": "CREATE TABLE ctas_column_denied_copy AS\n\t\t\t\t\t\tSELECT id, private_value FROM ctas_column_denied_private;",
+      "querySha256": "ff861b839fc508f94276fecbdb16c3246672a7fbad3f3df4961fb5c502a68df0",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/column_privilege_repro_test.go:TestCreateTableAsRejectsUngrantedSourceColumnsGuard#0002",
+      "source": "testing/go/postgres16/column_privilege_repro_test.go:TestCreateTableAsRejectsUngrantedSourceColumnsGuard",
+      "ordinal": 2,
+      "scriptName": "CREATE TABLE AS rejects ungranted source columns",
+      "oracle": "internal",
+      "suggestedId": "column-privilege-repro-test-testcreatetableasrejectsungrantedsourcecolumnsguard-0002-select-to_regclass-public.ctas_column_denied_copy-::text",
+      "expectedKind": "rows",
+      "query": "SELECT to_regclass('public.ctas_column_denied_copy')::text;",
+      "querySha256": "a17f2e0bc42331002bef6adb7664d2a0ddc4a6b7aae190e0aac0012909bd050e",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/column_privilege_repro_test.go:TestCreateViewAllowsGrantedSourceColumnsRepro#0001",
+      "source": "testing/go/postgres16/column_privilege_repro_test.go:TestCreateViewAllowsGrantedSourceColumnsRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE VIEW allows granted source columns",
+      "oracle": "postgres",
+      "postgresId": "column-privilege-repro-test-testcreateviewallowsgrantedsourcecolumnsrepro-0001-select-id-public_value-from-view_column_reader",
+      "suggestedId": "column-privilege-repro-test-testcreateviewallowsgrantedsourcecolumnsrepro-0001-select-id-public_value-from-view_column_reader",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, public_value FROM view_column_reader;",
+      "querySha256": "e79c7123459ceb4fa62f2ad5ef99169c23281d045f7cedd97a53f49215c67638",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "public"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/column_privilege_repro_test.go:TestCreateMaterializedViewAllowsGrantedSourceColumnsRepro#0001",
+      "source": "testing/go/postgres16/column_privilege_repro_test.go:TestCreateMaterializedViewAllowsGrantedSourceColumnsRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE MATERIALIZED VIEW allows granted source columns",
+      "oracle": "postgres",
+      "postgresId": "column-privilege-repro-test-testcreatematerializedviewallowsgrantedsourcecolumnsrepro-0001-select-id-public_value-from-mv_column_reader",
+      "suggestedId": "column-privilege-repro-test-testcreatematerializedviewallowsgrantedsourcecolumnsrepro-0001-select-id-public_value-from-mv_column_reader",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, public_value FROM mv_column_reader;",
+      "querySha256": "1152ae93e494c14356819183235be1fed0b62550215ea495ca7f6cce1d5a2cfc",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "public"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnInsertReturningRequiresSelectPrivilegeGuard#0001",
+      "source": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnInsertReturningRequiresSelectPrivilegeGuard",
+      "ordinal": 1,
+      "scriptName": "INSERT RETURNING requires SELECT on returned columns",
+      "oracle": "postgres",
+      "postgresId": "column-privilege-repro-test-testcolumninsertreturningrequiresselectprivilegeguard-0001-insert-into-column_insert_returning_private-id-public_value",
+      "suggestedId": "column-privilege-repro-test-testcolumninsertreturningrequiresselectprivilegeguard-0001-insert-into-column_insert_returning_private-id-public_value",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "column_insert_returning_user",
+      "query": "INSERT INTO column_insert_returning_private\n\t\t\t\t\t\t(id, public_value, private_value)\n\t\t\t\t\t\tVALUES (1, 'public', 'private')\n\t\t\t\t\t\tRETURNING private_value;",
+      "querySha256": "af764439d4e239819d36507922233dcf97aad2b6c603ee1cf7c140e072c11250",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnInsertReturningRequiresSelectPrivilegeGuard#0002",
+      "source": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnInsertReturningRequiresSelectPrivilegeGuard",
+      "ordinal": 2,
+      "scriptName": "INSERT RETURNING requires SELECT on returned columns",
+      "oracle": "postgres",
+      "postgresId": "column-privilege-repro-test-testcolumninsertreturningrequiresselectprivilegeguard-0002-select-count-*-from-column_insert_returning_private",
+      "suggestedId": "column-privilege-repro-test-testcolumninsertreturningrequiresselectprivilegeguard-0002-select-count-*-from-column_insert_returning_private",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM column_insert_returning_private;",
+      "querySha256": "d8bfa99eea697f56af41d028addaa79f48064b61b5f7b9d9c12cb398fb6e19f8",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/column_privilege_repro_test.go:TestInsertSelectRequiresSelectOnSourceTableRepro#0001",
+      "source": "testing/go/postgres16/column_privilege_repro_test.go:TestInsertSelectRequiresSelectOnSourceTableRepro",
+      "ordinal": 1,
+      "scriptName": "INSERT SELECT requires SELECT on source table",
+      "oracle": "postgres",
+      "postgresId": "column-privilege-repro-test-testinsertselectrequiresselectonsourcetablerepro-0001-insert-into-insert_select_target_private-id-public_value",
+      "suggestedId": "column-privilege-repro-test-testinsertselectrequiresselectonsourcetablerepro-0001-insert-into-insert_select_target_private-id-public_value",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "insert_select_source_user",
+      "query": "INSERT INTO insert_select_target_private (id, public_value)\n\t\t\t\t\t\tSELECT id, private_value FROM insert_select_source_private;",
+      "querySha256": "6fcfb824ec56c5425467d3b549cf917f7134b87df14cbb798d8944b7e909a174",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/column_privilege_repro_test.go:TestInsertSelectRequiresSelectOnSourceTableRepro#0002",
+      "source": "testing/go/postgres16/column_privilege_repro_test.go:TestInsertSelectRequiresSelectOnSourceTableRepro",
+      "ordinal": 2,
+      "scriptName": "INSERT SELECT requires SELECT on source table",
+      "oracle": "postgres",
+      "postgresId": "column-privilege-repro-test-testinsertselectrequiresselectonsourcetablerepro-0002-select-count-*-from-insert_select_target_private",
+      "suggestedId": "column-privilege-repro-test-testinsertselectrequiresselectonsourcetablerepro-0002-select-count-*-from-insert_select_target_private",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM insert_select_target_private;",
+      "querySha256": "5ced09ed99b47d148234998a0b3e23983b8a9224573e134a3ecf29ff7f8549e6",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnUpdateGrantDoesNotAllowOtherColumnsRepro#0001",
+      "source": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnUpdateGrantDoesNotAllowOtherColumnsRepro",
+      "ordinal": 1,
+      "scriptName": "column UPDATE grant does not allow other columns",
+      "oracle": "postgres",
+      "postgresId": "column-privilege-repro-test-testcolumnupdategrantdoesnotallowothercolumnsrepro-0001-update-column_update_private-set-private_value-=",
+      "suggestedId": "column-privilege-repro-test-testcolumnupdategrantdoesnotallowothercolumnsrepro-0001-update-column_update_private-set-private_value-=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "column_update_user",
+      "query": "UPDATE column_update_private SET private_value = 'changed' WHERE id = 1;",
+      "querySha256": "304bf2579a9d897d47f34f242fac9769050b4b652f728f8d02381a8c6527b838",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnUpdateGrantDoesNotAllowOtherColumnsRepro#0002",
+      "source": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnUpdateGrantDoesNotAllowOtherColumnsRepro",
+      "ordinal": 2,
+      "scriptName": "column UPDATE grant does not allow other columns",
+      "oracle": "postgres",
+      "postgresId": "column-privilege-repro-test-testcolumnupdategrantdoesnotallowothercolumnsrepro-0002-select-id-public_value-private_value-from",
+      "suggestedId": "column-privilege-repro-test-testcolumnupdategrantdoesnotallowothercolumnsrepro-0002-select-id-public_value-private_value-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, public_value, private_value FROM column_update_private;",
+      "querySha256": "41692f235beb237718e1494c320880c55df6b8b2f7db8a21358d1f6edaa921c3",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "public"
+          },
+          {
+            "value": "private"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnUpdateGrantAllowsGrantedColumnsRepro#0001",
+      "source": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnUpdateGrantAllowsGrantedColumnsRepro",
+      "ordinal": 1,
+      "scriptName": "column UPDATE grant allows granted columns",
+      "oracle": "postgres",
+      "postgresId": "column-privilege-repro-test-testcolumnupdategrantallowsgrantedcolumnsrepro-0001-select-id-public_value-private_value-from",
+      "suggestedId": "column-privilege-repro-test-testcolumnupdategrantallowsgrantedcolumnsrepro-0001-select-id-public_value-private_value-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, public_value, private_value\n\t\t\t\t\t\tFROM column_update_allowed_private;",
+      "querySha256": "3a7d4a5d37614bd04e1386137c1ed5a89c0619a85706c2c18c3fc7183382a068",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "changed"
+          },
+          {
+            "value": "private"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnUpdateGrantRequiresSelectForSourceColumnsRepro#0001",
+      "source": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnUpdateGrantRequiresSelectForSourceColumnsRepro",
+      "ordinal": 1,
+      "scriptName": "column UPDATE grant requires SELECT on source columns",
+      "oracle": "postgres",
+      "postgresId": "column-privilege-repro-test-testcolumnupdategrantrequiresselectforsourcecolumnsrepro-0001-update-column_update_source_private-set-public_value-=",
+      "suggestedId": "column-privilege-repro-test-testcolumnupdategrantrequiresselectforsourcecolumnsrepro-0001-update-column_update_source_private-set-public_value-=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "column_update_source_user",
+      "query": "UPDATE column_update_source_private SET public_value = private_value WHERE id = 1;",
+      "querySha256": "cdc9f673dc968f840391432575cf650012898819ce1f379f2d6944b47f1d89ea",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnUpdateGrantRequiresSelectForSourceColumnsRepro#0002",
+      "source": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnUpdateGrantRequiresSelectForSourceColumnsRepro",
+      "ordinal": 2,
+      "scriptName": "column UPDATE grant requires SELECT on source columns",
+      "oracle": "postgres",
+      "postgresId": "column-privilege-repro-test-testcolumnupdategrantrequiresselectforsourcecolumnsrepro-0002-select-id-public_value-private_value-from",
+      "suggestedId": "column-privilege-repro-test-testcolumnupdategrantrequiresselectforsourcecolumnsrepro-0002-select-id-public_value-private_value-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, public_value, private_value FROM column_update_source_private;",
+      "querySha256": "8189bcbe823f4b3a64f41268c93da0214d93dda84848c5a29f6b890dc7c78a39",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "public"
+          },
+          {
+            "value": "private"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnUpdateRequiresSelectForWhereColumnsRepro#0001",
+      "source": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnUpdateRequiresSelectForWhereColumnsRepro",
+      "ordinal": 1,
+      "scriptName": "column UPDATE grant requires SELECT on WHERE columns",
+      "oracle": "postgres",
+      "postgresId": "column-privilege-repro-test-testcolumnupdaterequiresselectforwherecolumnsrepro-0001-update-column_update_where_private-set-public_value-=",
+      "suggestedId": "column-privilege-repro-test-testcolumnupdaterequiresselectforwherecolumnsrepro-0001-update-column_update_where_private-set-public_value-=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "column_update_where_user",
+      "query": "UPDATE column_update_where_private\n\t\t\t\t\t\tSET public_value = 'changed'\n\t\t\t\t\t\tWHERE private_value = 'private';",
+      "querySha256": "113e08d57c3b9dc5acf58c07ae49f9dd9a698a0a82e5afdce6104f2608c49a7a",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnUpdateRequiresSelectForWhereColumnsRepro#0002",
+      "source": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnUpdateRequiresSelectForWhereColumnsRepro",
+      "ordinal": 2,
+      "scriptName": "column UPDATE grant requires SELECT on WHERE columns",
+      "oracle": "postgres",
+      "postgresId": "column-privilege-repro-test-testcolumnupdaterequiresselectforwherecolumnsrepro-0002-select-id-public_value-private_value-from",
+      "suggestedId": "column-privilege-repro-test-testcolumnupdaterequiresselectforwherecolumnsrepro-0002-select-id-public_value-private_value-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, public_value, private_value FROM column_update_where_private;",
+      "querySha256": "3f6445ff53b5b89e8f4493ac0d3c9075f719dd041987f2f4a054d32638682572",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "public"
+          },
+          {
+            "value": "private"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/column_privilege_repro_test.go:TestUpdateFromRequiresSelectOnSourceTableRepro#0001",
+      "source": "testing/go/postgres16/column_privilege_repro_test.go:TestUpdateFromRequiresSelectOnSourceTableRepro",
+      "ordinal": 1,
+      "scriptName": "UPDATE FROM requires SELECT on source table",
+      "oracle": "postgres",
+      "postgresId": "column-privilege-repro-test-testupdatefromrequiresselectonsourcetablerepro-0001-update-update_from_target_private-as-t-set",
+      "suggestedId": "column-privilege-repro-test-testupdatefromrequiresselectonsourcetablerepro-0001-update-update_from_target_private-as-t-set",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "update_from_source_user",
+      "query": "UPDATE update_from_target_private AS t\n\t\t\t\t\t\tSET public_value = s.private_value\n\t\t\t\t\t\tFROM update_from_source_private AS s\n\t\t\t\t\t\tWHERE t.id = s.id;",
+      "querySha256": "191a9f6141a4514316f0af6bcfba0f80a48e6b7685cb15eed82284836b7f49d7",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/column_privilege_repro_test.go:TestUpdateFromRequiresSelectOnSourceTableRepro#0002",
+      "source": "testing/go/postgres16/column_privilege_repro_test.go:TestUpdateFromRequiresSelectOnSourceTableRepro",
+      "ordinal": 2,
+      "scriptName": "UPDATE FROM requires SELECT on source table",
+      "oracle": "postgres",
+      "postgresId": "column-privilege-repro-test-testupdatefromrequiresselectonsourcetablerepro-0002-select-id-public_value-from-update_from_target_private",
+      "suggestedId": "column-privilege-repro-test-testupdatefromrequiresselectonsourcetablerepro-0002-select-id-public_value-from-update_from_target_private",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, public_value FROM update_from_target_private;",
+      "querySha256": "44c22ff2b89a8386f54b08ca7ee6f0623c4a4bc9122ed7dfb08347a69463a039",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "public"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnOnConflictUpdateRequiresSelectForSourceColumnsRepro#0001",
+      "source": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnOnConflictUpdateRequiresSelectForSourceColumnsRepro",
+      "ordinal": 1,
+      "scriptName": "ON CONFLICT UPDATE requires SELECT on source columns",
+      "oracle": "postgres",
+      "postgresId": "column-privilege-repro-test-testcolumnonconflictupdaterequiresselectforsourcecolumnsrepro-0001-insert-into-column_upsert_source_private-id-public_value",
+      "suggestedId": "column-privilege-repro-test-testcolumnonconflictupdaterequiresselectforsourcecolumnsrepro-0001-insert-into-column_upsert_source_private-id-public_value",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "column_upsert_source_user",
+      "query": "INSERT INTO column_upsert_source_private (id, public_value)\n\t\t\t\t\t\tVALUES (1, 'ignored')\n\t\t\t\t\t\tON CONFLICT (id) DO UPDATE\n\t\t\t\t\t\tSET public_value = column_upsert_source_private.private_value;",
+      "querySha256": "8dff35c648c52e7a9c41752fb353169c2cbc466d750d9fbdf6cc15de9b28a51e",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnOnConflictUpdateRequiresSelectForSourceColumnsRepro#0002",
+      "source": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnOnConflictUpdateRequiresSelectForSourceColumnsRepro",
+      "ordinal": 2,
+      "scriptName": "ON CONFLICT UPDATE requires SELECT on source columns",
+      "oracle": "postgres",
+      "postgresId": "column-privilege-repro-test-testcolumnonconflictupdaterequiresselectforsourcecolumnsrepro-0002-select-id-public_value-private_value-from",
+      "suggestedId": "column-privilege-repro-test-testcolumnonconflictupdaterequiresselectforsourcecolumnsrepro-0002-select-id-public_value-private_value-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, public_value, private_value FROM column_upsert_source_private;",
+      "querySha256": "611921146e2575fa083b23e80560b3aaec649aca826801dfa53ea3772025009d",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "public"
+          },
+          {
+            "value": "private"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnOnConflictUpdateRequiresSelectForWhereColumnsRepro#0001",
+      "source": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnOnConflictUpdateRequiresSelectForWhereColumnsRepro",
+      "ordinal": 1,
+      "scriptName": "ON CONFLICT UPDATE requires SELECT on WHERE columns",
+      "oracle": "postgres",
+      "postgresId": "column-privilege-repro-test-testcolumnonconflictupdaterequiresselectforwherecolumnsrepro-0001-insert-into-column_upsert_where_private-id-public_value",
+      "suggestedId": "column-privilege-repro-test-testcolumnonconflictupdaterequiresselectforwherecolumnsrepro-0001-insert-into-column_upsert_where_private-id-public_value",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "column_upsert_where_user",
+      "query": "INSERT INTO column_upsert_where_private (id, public_value)\n\t\t\t\t\t\tVALUES (1, 'changed')\n\t\t\t\t\t\tON CONFLICT (id) DO UPDATE\n\t\t\t\t\t\tSET public_value = EXCLUDED.public_value\n\t\t\t\t\t\tWHERE column_upsert_where_private.private_value = 'private';",
+      "querySha256": "9daa361de757c94d18bd35e4f80d0f30c50ec748d463cbd178321d2976eba7f3",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnOnConflictUpdateRequiresSelectForWhereColumnsRepro#0002",
+      "source": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnOnConflictUpdateRequiresSelectForWhereColumnsRepro",
+      "ordinal": 2,
+      "scriptName": "ON CONFLICT UPDATE requires SELECT on WHERE columns",
+      "oracle": "postgres",
+      "postgresId": "column-privilege-repro-test-testcolumnonconflictupdaterequiresselectforwherecolumnsrepro-0002-select-id-public_value-private_value-from",
+      "suggestedId": "column-privilege-repro-test-testcolumnonconflictupdaterequiresselectforwherecolumnsrepro-0002-select-id-public_value-private_value-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, public_value, private_value FROM column_upsert_where_private;",
+      "querySha256": "09f508bd4e9d7ce14893f44533dd2bcb1c60d49e08c7e2e0ab4b4c1a940a1a0d",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "public"
+          },
+          {
+            "value": "private"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnOnConflictUpdateRequiresUpdatePrivilegeRepro#0001",
+      "source": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnOnConflictUpdateRequiresUpdatePrivilegeRepro",
+      "ordinal": 1,
+      "scriptName": "ON CONFLICT UPDATE requires UPDATE on target columns",
+      "oracle": "postgres",
+      "postgresId": "column-privilege-repro-test-testcolumnonconflictupdaterequiresupdateprivilegerepro-0001-insert-into-column_upsert_update_private-id-public_value",
+      "suggestedId": "column-privilege-repro-test-testcolumnonconflictupdaterequiresupdateprivilegerepro-0001-insert-into-column_upsert_update_private-id-public_value",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "column_upsert_update_user",
+      "query": "INSERT INTO column_upsert_update_private (id, public_value)\n\t\t\t\t\t\tVALUES (1, 'changed')\n\t\t\t\t\t\tON CONFLICT (id) DO UPDATE\n\t\t\t\t\t\tSET public_value = EXCLUDED.public_value;",
+      "querySha256": "553780e7b86183bc098886374dd71d86b173260482b3335216e2a8dc8c45f496",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnOnConflictUpdateRequiresUpdatePrivilegeRepro#0002",
+      "source": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnOnConflictUpdateRequiresUpdatePrivilegeRepro",
+      "ordinal": 2,
+      "scriptName": "ON CONFLICT UPDATE requires UPDATE on target columns",
+      "oracle": "postgres",
+      "postgresId": "column-privilege-repro-test-testcolumnonconflictupdaterequiresupdateprivilegerepro-0002-select-id-public_value-from-column_upsert_update_private",
+      "suggestedId": "column-privilege-repro-test-testcolumnonconflictupdaterequiresupdateprivilegerepro-0002-select-id-public_value-from-column_upsert_update_private",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, public_value FROM column_upsert_update_private;",
+      "querySha256": "20d8c93e086aa9e6ebba4080e3bdb1d4d9df00b034c10b2cc880aff8745a3961",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "original"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnDeleteRequiresSelectForWhereColumnsRepro#0001",
+      "source": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnDeleteRequiresSelectForWhereColumnsRepro",
+      "ordinal": 1,
+      "scriptName": "column DELETE grant requires SELECT on WHERE columns",
+      "oracle": "postgres",
+      "postgresId": "column-privilege-repro-test-testcolumndeleterequiresselectforwherecolumnsrepro-0001-delete-from-column_delete_where_private-where-private_value",
+      "suggestedId": "column-privilege-repro-test-testcolumndeleterequiresselectforwherecolumnsrepro-0001-delete-from-column_delete_where_private-where-private_value",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "column_delete_where_user",
+      "query": "DELETE FROM column_delete_where_private WHERE private_value = 'private';",
+      "querySha256": "5d2fe4c48c3aeff44d91e5b44d25399d4aa1ea08987d0697d792098ba9a9ff6f",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnDeleteRequiresSelectForWhereColumnsRepro#0002",
+      "source": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnDeleteRequiresSelectForWhereColumnsRepro",
+      "ordinal": 2,
+      "scriptName": "column DELETE grant requires SELECT on WHERE columns",
+      "oracle": "postgres",
+      "postgresId": "column-privilege-repro-test-testcolumndeleterequiresselectforwherecolumnsrepro-0002-select-id-public_value-private_value-from",
+      "suggestedId": "column-privilege-repro-test-testcolumndeleterequiresselectforwherecolumnsrepro-0002-select-id-public_value-private_value-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, public_value, private_value FROM column_delete_where_private;",
+      "querySha256": "ddb072edd19f9ec4d48f71204a479aa63ad134ddc166beb72b4d1bbd8b69e0e5",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "public"
+          },
+          {
+            "value": "private"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnDeleteReturningRequiresSelectPrivilegeRepro#0001",
+      "source": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnDeleteReturningRequiresSelectPrivilegeRepro",
+      "ordinal": 1,
+      "scriptName": "DELETE RETURNING requires SELECT on returned columns",
+      "oracle": "postgres",
+      "postgresId": "column-privilege-repro-test-testcolumndeletereturningrequiresselectprivilegerepro-0001-delete-from-column_delete_returning_private-where-id",
+      "suggestedId": "column-privilege-repro-test-testcolumndeletereturningrequiresselectprivilegerepro-0001-delete-from-column_delete_returning_private-where-id",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "column_delete_returning_user",
+      "query": "DELETE FROM column_delete_returning_private\n\t\t\t\t\t\tWHERE id = 1\n\t\t\t\t\t\tRETURNING private_value;",
+      "querySha256": "ec914de31d5445e13eaac1de6e2bd2a230acd1dbea96626e7b4a651a4764a7f9",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnDeleteReturningRequiresSelectPrivilegeRepro#0002",
+      "source": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnDeleteReturningRequiresSelectPrivilegeRepro",
+      "ordinal": 2,
+      "scriptName": "DELETE RETURNING requires SELECT on returned columns",
+      "oracle": "postgres",
+      "postgresId": "column-privilege-repro-test-testcolumndeletereturningrequiresselectprivilegerepro-0002-select-id-public_value-private_value-from",
+      "suggestedId": "column-privilege-repro-test-testcolumndeletereturningrequiresselectprivilegerepro-0002-select-id-public_value-private_value-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, public_value, private_value FROM column_delete_returning_private;",
+      "querySha256": "7de5a2e3d583fa3bcef41172fe8cda315422c8df64abb923bad3ac2b28ffafd4",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "public"
+          },
+          {
+            "value": "private"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnUpdateReturningRequiresSelectPrivilegeGuard#0001",
+      "source": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnUpdateReturningRequiresSelectPrivilegeGuard",
+      "ordinal": 1,
+      "scriptName": "UPDATE RETURNING requires SELECT on returned columns",
+      "oracle": "postgres",
+      "postgresId": "column-privilege-repro-test-testcolumnupdatereturningrequiresselectprivilegeguard-0001-update-column_update_returning_private-set-public_value-=",
+      "suggestedId": "column-privilege-repro-test-testcolumnupdatereturningrequiresselectprivilegeguard-0001-update-column_update_returning_private-set-public_value-=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "column_update_returning_user",
+      "query": "UPDATE column_update_returning_private\n\t\t\t\t\t\tSET public_value = 'changed'\n\t\t\t\t\t\tWHERE id = 1\n\t\t\t\t\t\tRETURNING private_value;",
+      "querySha256": "ec31909026407a7b4045c4fdacf81803e1ddb93bf533178891052b72ac36abf0",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnUpdateReturningRequiresSelectPrivilegeGuard#0002",
+      "source": "testing/go/postgres16/column_privilege_repro_test.go:TestColumnUpdateReturningRequiresSelectPrivilegeGuard",
+      "ordinal": 2,
+      "scriptName": "UPDATE RETURNING requires SELECT on returned columns",
+      "oracle": "postgres",
+      "postgresId": "column-privilege-repro-test-testcolumnupdatereturningrequiresselectprivilegeguard-0002-select-id-public_value-private_value-from",
+      "suggestedId": "column-privilege-repro-test-testcolumnupdatereturningrequiresselectprivilegeguard-0002-select-id-public_value-private_value-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, public_value, private_value FROM column_update_returning_private;",
+      "querySha256": "8f31239bf960205354cc61949779c09ecadd74a8770839afa589cb0f4dc34c5a",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "public"
+          },
+          {
+            "value": "private"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

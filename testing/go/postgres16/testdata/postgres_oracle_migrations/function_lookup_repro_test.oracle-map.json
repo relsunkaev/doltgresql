@@ -1,0 +1,503 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map function_lookup_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/function_lookup_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/function_lookup_repro_test.go:TestAlterFunctionRenameRepro#0001",
+      "source": "testing/go/postgres16/function_lookup_repro_test.go:TestAlterFunctionRenameRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER FUNCTION RENAME TO updates function lookup",
+      "oracle": "postgres",
+      "postgresId": "function-lookup-repro-test-testalterfunctionrenamerepro-0001-select-rename_function_new",
+      "suggestedId": "function-lookup-repro-test-testalterfunctionrenamerepro-0001-select-rename_function_new",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT rename_function_new();",
+      "querySha256": "ddd9bfbbed9c86fc79f48c8c0b5b181a9f12c779ba8b1041bb95b279ca42e5ea",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/function_lookup_repro_test.go:TestAlterFunctionRenameRepro#0002",
+      "source": "testing/go/postgres16/function_lookup_repro_test.go:TestAlterFunctionRenameRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER FUNCTION RENAME TO updates function lookup",
+      "oracle": "postgres",
+      "postgresId": "function-lookup-repro-test-testalterfunctionrenamerepro-0002-select-rename_function_old",
+      "suggestedId": "function-lookup-repro-test-testalterfunctionrenamerepro-0002-select-rename_function_old",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42883",
+      "errorSeverity": "ERROR",
+      "query": "SELECT rename_function_old();",
+      "querySha256": "27ebf56171ac91670b85cbe488cb1e8581a8e56979591acdf92ca20ddef5097f",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/function_lookup_repro_test.go:TestAlterRoutineRenameFunctionRepro#0001",
+      "source": "testing/go/postgres16/function_lookup_repro_test.go:TestAlterRoutineRenameFunctionRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER ROUTINE RENAME TO updates function lookup",
+      "oracle": "postgres",
+      "postgresId": "function-lookup-repro-test-testalterroutinerenamefunctionrepro-0001-select-rename_routine_new",
+      "suggestedId": "function-lookup-repro-test-testalterroutinerenamefunctionrepro-0001-select-rename_routine_new",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT rename_routine_new();",
+      "querySha256": "925292de4aa2c9c0468f3a09938b784cbfa8f64bbda58b8e86bc6b7ca8f06e42",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/function_lookup_repro_test.go:TestAlterRoutineRenameFunctionRepro#0002",
+      "source": "testing/go/postgres16/function_lookup_repro_test.go:TestAlterRoutineRenameFunctionRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER ROUTINE RENAME TO updates function lookup",
+      "oracle": "postgres",
+      "postgresId": "function-lookup-repro-test-testalterroutinerenamefunctionrepro-0002-select-rename_routine_old",
+      "suggestedId": "function-lookup-repro-test-testalterroutinerenamefunctionrepro-0002-select-rename_routine_old",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42883",
+      "errorSeverity": "ERROR",
+      "query": "SELECT rename_routine_old();",
+      "querySha256": "c7ef7940e1870a7f3c6d8d2cf912d9c4e2c74c66009b33c731c64feb899b0774",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/function_lookup_repro_test.go:TestDropRoutineFunctionRepro#0001",
+      "source": "testing/go/postgres16/function_lookup_repro_test.go:TestDropRoutineFunctionRepro",
+      "ordinal": 1,
+      "scriptName": "DROP ROUTINE removes function",
+      "oracle": "postgres",
+      "postgresId": "function-lookup-repro-test-testdroproutinefunctionrepro-0001-select-drop_routine_value",
+      "suggestedId": "function-lookup-repro-test-testdroproutinefunctionrepro-0001-select-drop_routine_value",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42883",
+      "errorSeverity": "ERROR",
+      "query": "SELECT drop_routine_value();",
+      "querySha256": "a3a5ed1d1e779aceed742c6b61b1329cac30cdd3a3d8dd2de1960d02854b9734",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/function_lookup_repro_test.go:TestDropRoutineFunctionRepro#0002",
+      "source": "testing/go/postgres16/function_lookup_repro_test.go:TestDropRoutineFunctionRepro",
+      "ordinal": 2,
+      "scriptName": "DROP ROUTINE removes procedure",
+      "oracle": "postgres",
+      "postgresId": "function-lookup-repro-test-testdroproutinefunctionrepro-0002-call-drop_routine_proc_value",
+      "suggestedId": "function-lookup-repro-test-testdroproutinefunctionrepro-0002-call-drop_routine_proc_value",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42883",
+      "errorSeverity": "ERROR",
+      "query": "CALL drop_routine_proc_value();",
+      "querySha256": "85f1b5cea95ecb98ecb5c3b3bd6bd9d562c567da9559249b9ba81c2ecb1e34ae",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/function_lookup_repro_test.go:TestDropRoutineFunctionRepro#0003",
+      "source": "testing/go/postgres16/function_lookup_repro_test.go:TestDropRoutineFunctionRepro",
+      "ordinal": 3,
+      "scriptName": "DROP ROUTINE removes procedure",
+      "oracle": "postgres",
+      "postgresId": "function-lookup-repro-test-testdroproutinefunctionrepro-0003-select-count-*-from-drop_routine_proc_audit",
+      "suggestedId": "function-lookup-repro-test-testdroproutinefunctionrepro-0003-select-count-*-from-drop_routine_proc_audit",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) FROM drop_routine_proc_audit;",
+      "querySha256": "0a402bffca1dcc68fab6d86aacfe0861d55dd8cf50ec494b444b7e66820de091",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/function_lookup_repro_test.go:TestSchemaQualifiedFunctionLookupUsesExplicitSchemaRepro#0001",
+      "source": "testing/go/postgres16/function_lookup_repro_test.go:TestSchemaQualifiedFunctionLookupUsesExplicitSchemaRepro",
+      "ordinal": 1,
+      "scriptName": "schema-qualified function lookup uses explicit schema",
+      "oracle": "postgres",
+      "postgresId": "function-lookup-repro-test-testschemaqualifiedfunctionlookupusesexplicitschemarepro-0001-select-dg_lookup_probe",
+      "suggestedId": "function-lookup-repro-test-testschemaqualifiedfunctionlookupusesexplicitschemarepro-0001-select-dg_lookup_probe",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT dg_lookup_probe();",
+      "querySha256": "74743f376f1dd7b43d4f57d587be75d2a15f88ddbe33a5d1edf2405717fd6381",
+      "expectedRows": [
+        [
+          {
+            "value": "a"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/function_lookup_repro_test.go:TestSchemaQualifiedFunctionLookupUsesExplicitSchemaRepro#0002",
+      "source": "testing/go/postgres16/function_lookup_repro_test.go:TestSchemaQualifiedFunctionLookupUsesExplicitSchemaRepro",
+      "ordinal": 2,
+      "scriptName": "schema-qualified function lookup uses explicit schema",
+      "oracle": "postgres",
+      "postgresId": "function-lookup-repro-test-testschemaqualifiedfunctionlookupusesexplicitschemarepro-0002-select-dg_fn_lookup_b.dg_lookup_probe",
+      "suggestedId": "function-lookup-repro-test-testschemaqualifiedfunctionlookupusesexplicitschemarepro-0002-select-dg_fn_lookup_b.dg_lookup_probe",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT dg_fn_lookup_b.dg_lookup_probe();",
+      "querySha256": "c7835cc53aac424dc0740dadd43e93acbca622b76809465988eef95b68dd8f7a",
+      "expectedRows": [
+        [
+          {
+            "value": "b"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/function_lookup_repro_test.go:TestSchemaQualifiedFunctionSideEffectsUseExplicitSchemaRepro#0001",
+      "source": "testing/go/postgres16/function_lookup_repro_test.go:TestSchemaQualifiedFunctionSideEffectsUseExplicitSchemaRepro",
+      "ordinal": 1,
+      "scriptName": "schema-qualified function side effects use explicit schema",
+      "oracle": "postgres",
+      "postgresId": "function-lookup-repro-test-testschemaqualifiedfunctionsideeffectsuseexplicitschemarepro-0001-select-dg_fn_effect_b.lookup_mutator",
+      "suggestedId": "function-lookup-repro-test-testschemaqualifiedfunctionsideeffectsuseexplicitschemarepro-0001-select-dg_fn_effect_b.lookup_mutator",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT dg_fn_effect_b.lookup_mutator();",
+      "querySha256": "0f73ae9490ca96441db4d9880f18cf0eb80b805d5297862a0167d855f29c1ccb",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/function_lookup_repro_test.go:TestSchemaQualifiedFunctionSideEffectsUseExplicitSchemaRepro#0002",
+      "source": "testing/go/postgres16/function_lookup_repro_test.go:TestSchemaQualifiedFunctionSideEffectsUseExplicitSchemaRepro",
+      "ordinal": 2,
+      "scriptName": "schema-qualified function side effects use explicit schema",
+      "oracle": "postgres",
+      "postgresId": "function-lookup-repro-test-testschemaqualifiedfunctionsideeffectsuseexplicitschemarepro-0002-select-label-from-dg_fn_effect_audit",
+      "suggestedId": "function-lookup-repro-test-testschemaqualifiedfunctionsideeffectsuseexplicitschemarepro-0002-select-label-from-dg_fn_effect_audit",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT label FROM dg_fn_effect_audit;",
+      "querySha256": "ac1468efe3c2d3e11fdfe3d60e3368f65598e32795563365681910e8a0362119",
+      "expectedRows": [
+        [
+          {
+            "value": "b"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/function_lookup_repro_test.go:TestSchemaQualifiedDefaultFunctionUsesExplicitSchemaRepro#0001",
+      "source": "testing/go/postgres16/function_lookup_repro_test.go:TestSchemaQualifiedDefaultFunctionUsesExplicitSchemaRepro",
+      "ordinal": 1,
+      "scriptName": "schema-qualified default function uses explicit schema",
+      "oracle": "postgres",
+      "postgresId": "function-lookup-repro-test-testschemaqualifieddefaultfunctionusesexplicitschemarepro-0001-select-value-from-dg_default_fn_items",
+      "suggestedId": "function-lookup-repro-test-testschemaqualifieddefaultfunctionusesexplicitschemarepro-0001-select-value-from-dg_default_fn_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT value FROM dg_default_fn_items;",
+      "querySha256": "569cabe35d2056f882dc54af465a495c1367edb73c52e5b520ddc2ffa38c3b7f",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/function_lookup_repro_test.go:TestUnqualifiedDefaultFunctionBindsAtCreateTimeRepro#0001",
+      "source": "testing/go/postgres16/function_lookup_repro_test.go:TestUnqualifiedDefaultFunctionBindsAtCreateTimeRepro",
+      "ordinal": 1,
+      "scriptName": "unqualified default function binds at create time",
+      "oracle": "postgres",
+      "postgresId": "function-lookup-repro-test-testunqualifieddefaultfunctionbindsatcreatetimerepro-0001-select-value-from-dg_default_bind_a.dg_default_bind_items",
+      "suggestedId": "function-lookup-repro-test-testunqualifieddefaultfunctionbindsatcreatetimerepro-0001-select-value-from-dg_default_bind_a.dg_default_bind_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT value FROM dg_default_bind_a.dg_default_bind_items;",
+      "querySha256": "65b030ed0b26579e214a69cfe4925b7f6df168ecb8d06a909eba7dae0ecb790e",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/function_lookup_repro_test.go:TestSchemaQualifiedUniqueExpressionIndexUsesExplicitSchemaRepro#0001",
+      "source": "testing/go/postgres16/function_lookup_repro_test.go:TestSchemaQualifiedUniqueExpressionIndexUsesExplicitSchemaRepro",
+      "ordinal": 1,
+      "scriptName": "schema-qualified unique expression index uses explicit schema",
+      "oracle": "postgres",
+      "postgresId": "function-lookup-repro-test-testschemaqualifieduniqueexpressionindexusesexplicitschemarepro-0001-insert-into-dg_unique_fn_items-values-2",
+      "suggestedId": "function-lookup-repro-test-testschemaqualifieduniqueexpressionindexusesexplicitschemarepro-0001-insert-into-dg_unique_fn_items-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO dg_unique_fn_items VALUES (2, 11);",
+      "querySha256": "c128e4a412b07dde98fe49de4403ee09124135b083f6d15caf1f1024b17d0c58",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/function_lookup_repro_test.go:TestSchemaQualifiedUniqueExpressionIndexUsesExplicitSchemaRepro#0002",
+      "source": "testing/go/postgres16/function_lookup_repro_test.go:TestSchemaQualifiedUniqueExpressionIndexUsesExplicitSchemaRepro",
+      "ordinal": 2,
+      "scriptName": "schema-qualified unique expression index uses explicit schema",
+      "oracle": "postgres",
+      "postgresId": "function-lookup-repro-test-testschemaqualifieduniqueexpressionindexusesexplicitschemarepro-0002-select-count-*-from-dg_unique_fn_items",
+      "suggestedId": "function-lookup-repro-test-testschemaqualifieduniqueexpressionindexusesexplicitschemarepro-0002-select-count-*-from-dg_unique_fn_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) FROM dg_unique_fn_items;",
+      "querySha256": "e812cb3673b8e70324d520dad084a845bb95d42f4ccdcdf7d534f45b83f3a98d",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/function_lookup_repro_test.go:TestUnqualifiedUniqueExpressionIndexBindsAtCreateTimeRepro#0001",
+      "source": "testing/go/postgres16/function_lookup_repro_test.go:TestUnqualifiedUniqueExpressionIndexBindsAtCreateTimeRepro",
+      "ordinal": 1,
+      "scriptName": "unqualified unique expression index binds at create time",
+      "oracle": "postgres",
+      "postgresId": "function-lookup-repro-test-testunqualifieduniqueexpressionindexbindsatcreatetimerepro-0001-select-count-*-from-dg_unique_bind_a.dg_unique_bind_items",
+      "suggestedId": "function-lookup-repro-test-testunqualifieduniqueexpressionindexbindsatcreatetimerepro-0001-select-count-*-from-dg_unique_bind_a.dg_unique_bind_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) FROM dg_unique_bind_a.dg_unique_bind_items;",
+      "querySha256": "f7d96e08e037cdae28a057a508a22db9558803842c906fff63ddf1fd853e7c1b",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/function_lookup_repro_test.go:TestUnqualifiedTriggerFunctionBindsAtCreateTimeRepro#0001",
+      "source": "testing/go/postgres16/function_lookup_repro_test.go:TestUnqualifiedTriggerFunctionBindsAtCreateTimeRepro",
+      "ordinal": 1,
+      "scriptName": "unqualified trigger function binds at create time",
+      "oracle": "internal",
+      "suggestedId": "function-lookup-repro-test-testunqualifiedtriggerfunctionbindsatcreatetimerepro-0001-select-label-from-public.dg_trigger_bind_log",
+      "expectedKind": "rows",
+      "query": "SELECT label FROM public.dg_trigger_bind_log;",
+      "querySha256": "605ca0d0c9ec8cb32d18cfebc1b9b6211bfbe9f764e38c7e14d710d5bf0a6632",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/function_lookup_repro_test.go:TestSchemaQualifiedGeneratedColumnFunctionUsesExplicitSchemaRepro#0001",
+      "source": "testing/go/postgres16/function_lookup_repro_test.go:TestSchemaQualifiedGeneratedColumnFunctionUsesExplicitSchemaRepro",
+      "ordinal": 1,
+      "scriptName": "schema-qualified generated column function uses explicit schema",
+      "oracle": "postgres",
+      "postgresId": "function-lookup-repro-test-testschemaqualifiedgeneratedcolumnfunctionusesexplicitschemarepro-0001-select-derived-from-dg_generated_fn_items",
+      "suggestedId": "function-lookup-repro-test-testschemaqualifiedgeneratedcolumnfunctionusesexplicitschemarepro-0001-select-derived-from-dg_generated_fn_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT derived FROM dg_generated_fn_items;",
+      "querySha256": "6d211b800231c44750c06355d4435ff179ab8b0b6b1ec2e84fd8edea73fc39cd",
+      "expectedRows": [
+        [
+          {
+            "value": "205"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/function_lookup_repro_test.go:TestUnqualifiedGeneratedColumnFunctionBindsAtCreateTimeRepro#0001",
+      "source": "testing/go/postgres16/function_lookup_repro_test.go:TestUnqualifiedGeneratedColumnFunctionBindsAtCreateTimeRepro",
+      "ordinal": 1,
+      "scriptName": "unqualified generated column function binds at create time",
+      "oracle": "postgres",
+      "postgresId": "function-lookup-repro-test-testunqualifiedgeneratedcolumnfunctionbindsatcreatetimerepro-0001-select-derived-from",
+      "suggestedId": "function-lookup-repro-test-testunqualifiedgeneratedcolumnfunctionbindsatcreatetimerepro-0001-select-derived-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT derived FROM dg_generated_bind_a.dg_generated_bind_items;",
+      "querySha256": "cb028e3fa0f7ea7ed614b7de56e48f63152f96428e29c883fb42fcd543794265",
+      "expectedRows": [
+        [
+          {
+            "value": "105"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/function_lookup_repro_test.go:TestSchemaQualifiedViewFunctionUsesExplicitSchemaRepro#0001",
+      "source": "testing/go/postgres16/function_lookup_repro_test.go:TestSchemaQualifiedViewFunctionUsesExplicitSchemaRepro",
+      "ordinal": 1,
+      "scriptName": "schema-qualified view function uses explicit schema",
+      "oracle": "internal",
+      "suggestedId": "function-lookup-repro-test-testschemaqualifiedviewfunctionusesexplicitschemarepro-0001-select-resolved-from-dg_view_fn_view",
+      "expectedKind": "rows",
+      "query": "SELECT resolved FROM dg_view_fn_view;",
+      "querySha256": "306d301648d2ef577e720727c8e2277da908d60f4c8216d6f4a1990c5909cc66",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/function_lookup_repro_test.go:TestUnqualifiedViewFunctionBindsAtCreateTimeRepro#0001",
+      "source": "testing/go/postgres16/function_lookup_repro_test.go:TestUnqualifiedViewFunctionBindsAtCreateTimeRepro",
+      "ordinal": 1,
+      "scriptName": "unqualified view function binds at create time",
+      "oracle": "internal",
+      "suggestedId": "function-lookup-repro-test-testunqualifiedviewfunctionbindsatcreatetimerepro-0001-select-resolved-from-dg_view_bind_a.bind_view",
+      "expectedKind": "rows",
+      "query": "SELECT resolved FROM dg_view_bind_a.bind_view;",
+      "querySha256": "fcb45e9488ab044f71d0657f2281252ba795c5485b5126d0eac7918ac394e70b",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/function_lookup_repro_test.go:TestSchemaQualifiedMaterializedViewFunctionUsesExplicitSchemaRepro#0001",
+      "source": "testing/go/postgres16/function_lookup_repro_test.go:TestSchemaQualifiedMaterializedViewFunctionUsesExplicitSchemaRepro",
+      "ordinal": 1,
+      "scriptName": "schema-qualified materialized view function uses explicit schema",
+      "oracle": "internal",
+      "suggestedId": "function-lookup-repro-test-testschemaqualifiedmaterializedviewfunctionusesexplicitschemarepro-0001-select-resolved-from-dg_matview_fn_view",
+      "expectedKind": "rows",
+      "query": "SELECT resolved FROM dg_matview_fn_view;",
+      "querySha256": "7c65787c2131f04894823276bb5d53d1090f6f02e74297b9c64fb93606ff2a81",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/function_lookup_repro_test.go:TestUnqualifiedMaterializedViewFunctionBindsAtCreateTimeRepro#0001",
+      "source": "testing/go/postgres16/function_lookup_repro_test.go:TestUnqualifiedMaterializedViewFunctionBindsAtCreateTimeRepro",
+      "ordinal": 1,
+      "scriptName": "unqualified materialized view function binds at create time",
+      "oracle": "internal",
+      "suggestedId": "function-lookup-repro-test-testunqualifiedmaterializedviewfunctionbindsatcreatetimerepro-0001-select-resolved-from-dg_matview_bind_a.bind_matview",
+      "expectedKind": "rows",
+      "query": "SELECT resolved FROM dg_matview_bind_a.bind_matview;",
+      "querySha256": "1b3697012ef7f95e58ce608165a2ad30becd36f1335879467f69514ad63f1464",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/function_lookup_repro_test.go:TestFunctionSetSearchPathOptionAppliesDuringExecutionRepro#0001",
+      "source": "testing/go/postgres16/function_lookup_repro_test.go:TestFunctionSetSearchPathOptionAppliesDuringExecutionRepro",
+      "ordinal": 1,
+      "scriptName": "function SET search_path controls unqualified lookup",
+      "oracle": "postgres",
+      "postgresId": "function-lookup-repro-test-testfunctionsetsearchpathoptionappliesduringexecutionrepro-0001-select-function_set_path_count",
+      "suggestedId": "function-lookup-repro-test-testfunctionsetsearchpathoptionappliesduringexecutionrepro-0001-select-function_set_path_count",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT function_set_path_count();",
+      "querySha256": "4f3d2b14dfd01c21b1dbb0163d1e7d8f3632679169584fe08bdb1528c9d2b970",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/function_lookup_repro_test.go:TestFunctionSetSearchPathOptionAppliesDuringExecutionRepro#0002",
+      "source": "testing/go/postgres16/function_lookup_repro_test.go:TestFunctionSetSearchPathOptionAppliesDuringExecutionRepro",
+      "ordinal": 2,
+      "scriptName": "function SET search_path controls unqualified lookup",
+      "oracle": "postgres",
+      "postgresId": "function-lookup-repro-test-testfunctionsetsearchpathoptionappliesduringexecutionrepro-0002-select-current_setting-search_path",
+      "suggestedId": "function-lookup-repro-test-testfunctionsetsearchpathoptionappliesduringexecutionrepro-0002-select-current_setting-search_path",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT current_setting('search_path');",
+      "querySha256": "914bfee6089d6ceacd0c51cb93d8093a0c94dee9279fdaf8fe5c051924485ece",
+      "expectedRows": [
+        [
+          {
+            "value": "dg_fn_set_attacker, public"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

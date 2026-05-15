@@ -1,0 +1,225 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map language_privilege_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/language_privilege_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/language_privilege_repro_test.go:TestLanguageUsagePrivilegeCanBeRevokedAndGrantedRepro#0001",
+      "source": "testing/go/postgres16/language_privilege_repro_test.go:TestLanguageUsagePrivilegeCanBeRevokedAndGrantedRepro",
+      "ordinal": 1,
+      "scriptName": "language USAGE can be revoked from PUBLIC and granted to a role",
+      "oracle": "postgres",
+      "postgresId": "language-privilege-repro-test-testlanguageusageprivilegecanberevokedandgrantedrepro-0001-revoke-usage-on-language-plpgsql",
+      "suggestedId": "language-privilege-repro-test-testlanguageusageprivilegecanberevokedandgrantedrepro-0001-revoke-usage-on-language-plpgsql",
+      "compare": "tag",
+      "expectedKind": "tag",
+      "query": "REVOKE USAGE ON LANGUAGE plpgsql FROM PUBLIC;",
+      "querySha256": "aab6d6e5b9ac666b8ee66140d94359674d55d26cc5e82279969256e67b841cc3",
+      "expectedTag": "REVOKE",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/language_privilege_repro_test.go:TestLanguageUsagePrivilegeCanBeRevokedAndGrantedRepro#0002",
+      "source": "testing/go/postgres16/language_privilege_repro_test.go:TestLanguageUsagePrivilegeCanBeRevokedAndGrantedRepro",
+      "ordinal": 2,
+      "scriptName": "language USAGE can be revoked from PUBLIC and granted to a role",
+      "oracle": "postgres",
+      "postgresId": "language-privilege-repro-test-testlanguageusageprivilegecanberevokedandgrantedrepro-0002-create-function-language_acl_denied-returns-int",
+      "suggestedId": "language-privilege-repro-test-testlanguageusageprivilegecanberevokedandgrantedrepro-0002-create-function-language_acl_denied-returns-int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "language_usage_acl_user",
+      "query": "CREATE FUNCTION language_acl_denied() RETURNS INT\n\t\t\t\t\t\tLANGUAGE plpgsql\n\t\t\t\t\t\tAS $$ BEGIN RETURN 7; END; $$;",
+      "querySha256": "0dc5dd5b1dc982f99b78203e852886dedfbb3dd15a45cebcbca309dd34f23ab4",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/language_privilege_repro_test.go:TestLanguageUsagePrivilegeCanBeRevokedAndGrantedRepro#0003",
+      "source": "testing/go/postgres16/language_privilege_repro_test.go:TestLanguageUsagePrivilegeCanBeRevokedAndGrantedRepro",
+      "ordinal": 3,
+      "scriptName": "language USAGE can be revoked from PUBLIC and granted to a role",
+      "oracle": "internal",
+      "suggestedId": "language-privilege-repro-test-testlanguageusageprivilegecanberevokedandgrantedrepro-0003-grant-usage-on-language-plpgsql",
+      "expectedKind": "tag",
+      "query": "GRANT USAGE ON LANGUAGE plpgsql TO language_usage_acl_user;",
+      "querySha256": "5308d609cfcee0f170a2a7670b8090bfba29c62c9ca0a02942f2742b09d379e6",
+      "nonLiteral": [
+        "PriorExpectedError"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/language_privilege_repro_test.go:TestLanguageUsagePrivilegeCanBeRevokedAndGrantedRepro#0004",
+      "source": "testing/go/postgres16/language_privilege_repro_test.go:TestLanguageUsagePrivilegeCanBeRevokedAndGrantedRepro",
+      "ordinal": 4,
+      "scriptName": "language USAGE can be revoked from PUBLIC and granted to a role",
+      "oracle": "internal",
+      "suggestedId": "language-privilege-repro-test-testlanguageusageprivilegecanberevokedandgrantedrepro-0004-revoke-usage-on-language-plpgsql",
+      "expectedKind": "tag",
+      "query": "REVOKE USAGE ON LANGUAGE plpgsql FROM language_usage_acl_user;",
+      "querySha256": "2987952ba51882bc9d3caf86c559b4c3c2220fe3d34a3657aff0b31eba5a5c67",
+      "nonLiteral": [
+        "PriorExpectedError",
+        "PriorUsername"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/language_privilege_repro_test.go:TestLanguageUsagePrivilegeCanBeRevokedAndGrantedRepro#0005",
+      "source": "testing/go/postgres16/language_privilege_repro_test.go:TestLanguageUsagePrivilegeCanBeRevokedAndGrantedRepro",
+      "ordinal": 5,
+      "scriptName": "language USAGE can be revoked from PUBLIC and granted to a role",
+      "oracle": "postgres",
+      "postgresId": "language-privilege-repro-test-testlanguageusageprivilegecanberevokedandgrantedrepro-0005-create-function-language_acl_denied_again-returns-int",
+      "suggestedId": "language-privilege-repro-test-testlanguageusageprivilegecanberevokedandgrantedrepro-0005-create-function-language_acl_denied_again-returns-int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "language_usage_acl_user",
+      "query": "CREATE FUNCTION language_acl_denied_again() RETURNS INT\n\t\t\t\t\t\tLANGUAGE plpgsql\n\t\t\t\t\t\tAS $$ BEGIN RETURN 7; END; $$;",
+      "querySha256": "fca7b18b43b1377609ca1674a74441b5f0365e19af34e4a2147c18913bfc36f5",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/language_privilege_repro_test.go:TestCreateUntrustedLanguageRequiresSuperuserRepro#0001",
+      "source": "testing/go/postgres16/language_privilege_repro_test.go:TestCreateUntrustedLanguageRequiresSuperuserRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE LANGUAGE for untrusted language requires superuser",
+      "oracle": "postgres",
+      "postgresId": "language-privilege-repro-test-testcreateuntrustedlanguagerequiressuperuserrepro-0001-create-language-untrusted_user_lang-handler-plpgsql_call_handler",
+      "suggestedId": "language-privilege-repro-test-testcreateuntrustedlanguagerequiressuperuserrepro-0001-create-language-untrusted_user_lang-handler-plpgsql_call_handler",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "untrusted_language_creator",
+      "query": "CREATE LANGUAGE untrusted_user_lang HANDLER plpgsql_call_handler;",
+      "querySha256": "2ec82d592cab8694c274a1a99c7d678e277d21299de62ef5c122753071d19ac3",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/language_privilege_repro_test.go:TestAlterLanguageOwnerUpdatesPgLanguageRepro#0001",
+      "source": "testing/go/postgres16/language_privilege_repro_test.go:TestAlterLanguageOwnerUpdatesPgLanguageRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER LANGUAGE OWNER TO updates pg_language",
+      "oracle": "postgres",
+      "postgresId": "language-privilege-repro-test-testalterlanguageownerupdatespglanguagerepro-0001-select-pg_get_userbyid-lanowner-from-pg_catalog.pg_language",
+      "suggestedId": "language-privilege-repro-test-testalterlanguageownerupdatespglanguagerepro-0001-select-pg_get_userbyid-lanowner-from-pg_catalog.pg_language",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_get_userbyid(lanowner)\n\t\t\t\t\t\tFROM pg_catalog.pg_language\n\t\t\t\t\t\tWHERE lanname = 'plpgsql';",
+      "querySha256": "c200b38e15632c66c4efa5adfa89bea1f9893fc9465cf0e1fe0baaa9a1f6de8d",
+      "expectedRows": [
+        [
+          {
+            "value": "language_owner_target"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/language_privilege_repro_test.go:TestAlterLanguageOwnerToRequiresOwnershipRepro#0001",
+      "source": "testing/go/postgres16/language_privilege_repro_test.go:TestAlterLanguageOwnerToRequiresOwnershipRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER LANGUAGE OWNER TO requires language ownership",
+      "oracle": "postgres",
+      "postgresId": "language-privilege-repro-test-testalterlanguageownertorequiresownershiprepro-0001-alter-language-plpgsql-owner-to",
+      "suggestedId": "language-privilege-repro-test-testalterlanguageownertorequiresownershiprepro-0001-alter-language-plpgsql-owner-to",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "language_owner_hijacker",
+      "query": "ALTER LANGUAGE plpgsql OWNER TO language_owner_hijacker;",
+      "querySha256": "9bd6af6c5f54fab2b7f8ae447663719dc564f4964c778ce28df2f386a5acd0cf",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/language_privilege_repro_test.go:TestDropLanguageRequiresOwnershipRepro#0001",
+      "source": "testing/go/postgres16/language_privilege_repro_test.go:TestDropLanguageRequiresOwnershipRepro",
+      "ordinal": 1,
+      "scriptName": "DROP LANGUAGE requires language ownership",
+      "oracle": "postgres",
+      "postgresId": "language-privilege-repro-test-testdroplanguagerequiresownershiprepro-0001-drop-language-plpgsql",
+      "suggestedId": "language-privilege-repro-test-testdroplanguagerequiresownershiprepro-0001-drop-language-plpgsql",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "language_dropper",
+      "query": "DROP LANGUAGE plpgsql;",
+      "querySha256": "8c07727222725df8c9d98ba9de3ece3a8fd6d75a075e95eb73218a5218f8d4de",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/language_privilege_repro_test.go:TestDropLanguageRequiresOwnershipRepro#0002",
+      "source": "testing/go/postgres16/language_privilege_repro_test.go:TestDropLanguageRequiresOwnershipRepro",
+      "ordinal": 2,
+      "scriptName": "DROP LANGUAGE requires language ownership",
+      "oracle": "postgres",
+      "postgresId": "language-privilege-repro-test-testdroplanguagerequiresownershiprepro-0002-select-count-*-from-pg_catalog.pg_language",
+      "suggestedId": "language-privilege-repro-test-testdroplanguagerequiresownershiprepro-0002-select-count-*-from-pg_catalog.pg_language",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_language\n\t\t\t\t\t\tWHERE lanname = 'plpgsql';",
+      "querySha256": "8b4a7df5f2b53336ed6e8897abf93994b5a69360d3b20e3720f7ec7a577d66cc",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/language_privilege_repro_test.go:TestCreateLanguagePopulatesPgLanguageRepro#0001",
+      "source": "testing/go/postgres16/language_privilege_repro_test.go:TestCreateLanguagePopulatesPgLanguageRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE LANGUAGE populates pg_language",
+      "oracle": "postgres",
+      "postgresId": "language-privilege-repro-test-testcreatelanguagepopulatespglanguagerepro-0001-select-lanname-from-pg_catalog.pg_language-where",
+      "suggestedId": "language-privilege-repro-test-testcreatelanguagepopulatespglanguagerepro-0001-select-lanname-from-pg_catalog.pg_language-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT lanname\n\t\t\t\t\t\tFROM pg_catalog.pg_language\n\t\t\t\t\t\tWHERE lanname = 'compat_lang';",
+      "querySha256": "e1538610b5c73a16f62ea04a111cb605c3f3b7c372e35184e072343ecd44e0e3",
+      "expectedRows": [
+        [
+          {
+            "value": "compat_lang"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}
