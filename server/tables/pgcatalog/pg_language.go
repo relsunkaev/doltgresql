@@ -88,7 +88,7 @@ var pgLanguageSchema = sql.Schema{
 	{Name: "laninline", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgLanguageName},
 	{Name: "lanvalidator", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgLanguageName},
 	{Name: "lanacl", Type: pgtypes.TextArray, Default: nil, Nullable: true, Source: PgLanguageName}, // TODO: aclitem[] type
-	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgLanguageName},
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgLanguageName, Hidden: true},
 }
 
 // pgLanguageRowIter is the sql.RowIter for the pg_language table.

@@ -311,7 +311,7 @@ var pgTypeSchema = sql.Schema{
 	{Name: "typdefaultbin", Type: pgtypes.Text, Default: nil, Nullable: true, Source: pgTypeName}, // TODO: type pg_node_tree, collation C
 	{Name: "typdefault", Type: pgtypes.Text, Default: nil, Nullable: true, Source: pgTypeName},    // TODO: collation C
 	{Name: "typacl", Type: pgtypes.TextArray, Default: nil, Nullable: true, Source: pgTypeName},   // TODO: type aclitem[]
-	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: pgTypeName},
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: pgTypeName, Hidden: true},
 }
 
 // pgType represents a row in the pg_type table.

@@ -116,7 +116,7 @@ var PgConversionSchema = sql.Schema{
 	{Name: "contoencoding", Type: pgtypes.Int32, Default: nil, Nullable: false, Source: PgConversionName},
 	{Name: "conproc", Type: pgtypes.Text, Default: nil, Nullable: false, Source: PgConversionName}, // TODO: regproc type
 	{Name: "condefault", Type: pgtypes.Bool, Default: nil, Nullable: false, Source: PgConversionName},
-	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgConversionName},
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgConversionName, Hidden: true},
 }
 
 // pgConversionRowIter is the sql.RowIter for the pg_conversion table.

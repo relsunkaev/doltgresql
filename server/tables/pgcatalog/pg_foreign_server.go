@@ -84,7 +84,7 @@ var pgForeignServerSchema = sql.Schema{
 	{Name: "srvversion", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgForeignServerName},      // TODO: collation C
 	{Name: "srvacl", Type: pgtypes.TextArray, Default: nil, Nullable: true, Source: PgForeignServerName},     // TODO: aclitem[] type
 	{Name: "srvoptions", Type: pgtypes.TextArray, Default: nil, Nullable: true, Source: PgForeignServerName}, // TODO: collation C
-	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgForeignServerName},
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgForeignServerName, Hidden: true},
 }
 
 func nullableText(text string) any {

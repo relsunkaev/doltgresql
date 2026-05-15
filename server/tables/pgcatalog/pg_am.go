@@ -70,7 +70,7 @@ var pgAmSchema = sql.Schema{
 	{Name: "amname", Type: pgtypes.Name, Default: nil, Nullable: false, Source: PgAmName},
 	{Name: "amhandler", Type: pgtypes.Regproc, Default: nil, Nullable: false, Source: PgAmName},
 	{Name: "amtype", Type: pgtypes.InternalChar, Default: nil, Nullable: false, Source: PgAmName},
-	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgAmName},
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgAmName, Hidden: true},
 }
 
 // pgAmRowIter is the sql.RowIter for the pg_am table.

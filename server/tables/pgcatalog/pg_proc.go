@@ -117,7 +117,7 @@ var pgProcSchema = sql.Schema{
 	{Name: "prosqlbody", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgProcName},     // TODO: type pg_node_tree, collation C
 	{Name: "proconfig", Type: pgtypes.TextArray, Default: nil, Nullable: true, Source: PgProcName}, // TODO: collation C
 	{Name: "proacl", Type: pgtypes.TextArray, Default: nil, Nullable: true, Source: PgProcName},    // TODO: type aclitem[]
-	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgProcName},
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgProcName, Hidden: true},
 }
 
 func pgProcRoutineArgs(paramTypes []id.Type, paramNames []string, paramModes []coreprocedures.ParameterMode) (pronargs int16, proargtypes []any, proallargtypes []any, proargmodes []any, proargnames []any, provariadic any) {

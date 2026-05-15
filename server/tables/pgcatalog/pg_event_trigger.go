@@ -64,7 +64,7 @@ var PgEventTriggerSchema = sql.Schema{
 	{Name: "evtfoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgEventTriggerName},
 	{Name: "evtenabled", Type: pgtypes.InternalChar, Default: nil, Nullable: false, Source: PgEventTriggerName},
 	{Name: "evttags", Type: pgtypes.TextArray, Default: nil, Nullable: true, Source: PgEventTriggerName}, // TODO: collation C
-	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgEventTriggerName},
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgEventTriggerName, Hidden: true},
 }
 
 // pgEventTriggerRowIter is the sql.RowIter for the pg_event_trigger table.

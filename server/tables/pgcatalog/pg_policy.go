@@ -65,7 +65,7 @@ var pgPolicySchema = sql.Schema{
 	{Name: "polroles", Type: pgtypes.OidArray, Default: nil, Nullable: false, Source: PgPolicyName},
 	{Name: "polqual", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgPolicyName},      // TODO: pg_node_tree type, collation C
 	{Name: "polwithcheck", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgPolicyName}, // TODO: pg_node_tree type, collation C
-	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgPolicyName},
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgPolicyName, Hidden: true},
 }
 
 // pgPolicyRowIter is the sql.RowIter for the pg_policy table.

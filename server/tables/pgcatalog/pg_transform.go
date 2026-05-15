@@ -76,7 +76,7 @@ var pgTransformSchema = sql.Schema{
 	{Name: "trflang", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgTransformName},
 	{Name: "trffromsql", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgTransformName}, // TODO: regproc type
 	{Name: "trftosql", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgTransformName},   // TODO: regproc type
-	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgTransformName},
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgTransformName, Hidden: true},
 }
 
 func transformFunctionID(name string) id.Id {

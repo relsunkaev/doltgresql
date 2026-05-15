@@ -65,7 +65,7 @@ var pgPublicationNamespaceSchema = sql.Schema{
 	{Name: "oid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgPublicationNamespaceName},
 	{Name: "pnpubid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgPublicationNamespaceName},
 	{Name: "pnnspid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgPublicationNamespaceName},
-	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgPublicationNamespaceName},
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgPublicationNamespaceName, Hidden: true},
 }
 
 // pgPublicationNamespaceRowIter is the sql.RowIter for the pg_publication_namespace table.

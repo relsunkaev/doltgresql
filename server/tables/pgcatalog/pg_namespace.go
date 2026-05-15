@@ -233,7 +233,7 @@ var pgNamespaceSchema = sql.Schema{
 	{Name: "nspname", Type: pgtypes.Name, Default: nil, Nullable: false, Source: PgNamespaceName},
 	{Name: "nspowner", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgNamespaceName},
 	{Name: "nspacl", Type: pgtypes.TextArray, Default: nil, Nullable: true, Source: PgNamespaceName}, // TODO: type aclitem[]
-	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgNamespaceName},
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgNamespaceName, Hidden: true},
 }
 
 // lessNamespaceOid is a sort function for pgNamespace based on oid.
