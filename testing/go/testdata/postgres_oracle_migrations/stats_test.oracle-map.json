@@ -2,7 +2,7 @@
   "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map stats_test.go --force-postgres-oracle",
   "sourceFile": "testing/go/stats_test.go",
   "defaultOracle": "internal",
-  "assertionKeyStyle": "testing/go/\u003cfile\u003e:\u003cTestName\u003e#\u003cexpectation-ordinal\u003e",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
   "assertionFields": [
     "Expected",
     "ExpectedRaw",
@@ -18,26 +18,38 @@
       "source": "testing/go/stats_test.go:TestStats",
       "ordinal": 1,
       "scriptName": "ANALYZE statement",
-      "oracle": "internal",
-      "suggestedId": "stats-test-teststats-0003-analyze-public.t",
+      "oracle": "postgres",
+      "postgresId": "stats-test-teststats-0001-analyze-public.t",
+      "suggestedId": "stats-test-teststats-0001-analyze-public.t",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "ANALYZE public.t;",
       "querySha256": "5eb35817af3b337afe1befec8b6a84820108ba1128429413a5a87dc1a32a5de7",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP TABLE IF EXISTS t CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/stats_test.go:TestStats#0002",
       "source": "testing/go/stats_test.go:TestStats",
       "ordinal": 2,
       "scriptName": "ANALYZE statement",
-      "oracle": "internal",
-      "suggestedId": "stats-test-teststats-0004-analyze-postgres.public.t",
+      "oracle": "postgres",
+      "postgresId": "stats-test-teststats-0002-analyze-postgres.public.t",
+      "suggestedId": "stats-test-teststats-0002-analyze-postgres.public.t",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "ANALYZE postgres.public.t;",
       "querySha256": "792e1ac947d44dbc174f96a68e55d87973462a4dcf5c67050a74616c848ea63e",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [],
+      "cleanup": [
+        "DROP TABLE IF EXISTS t CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     },
     {
       "key": "testing/go/stats_test.go:TestStats#0003",
@@ -45,10 +57,13 @@
       "ordinal": 3,
       "scriptName": "ANALYZE statement",
       "oracle": "internal",
-      "suggestedId": "stats-test-teststats-0005-analyze-doesnotexists.public.t",
+      "suggestedId": "stats-test-teststats-0003-analyze-doesnotexists.public.t",
       "expectedKind": "error",
       "query": "ANALYZE doesnotexists.public.t;",
       "querySha256": "a330fb88987991c524f83942378e039d84f8e0a45783c364d9d40b6ff8fe4d6c",
+      "nonLiteral": [
+        "NonMigratable"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },

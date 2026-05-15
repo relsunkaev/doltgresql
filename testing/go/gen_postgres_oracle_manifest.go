@@ -1597,7 +1597,26 @@ func hasNonMigratableSource(source string) bool {
 	switch sourceFile {
 	case "testing/go/auth_test.go",
 		"testing/go/copy_server_file_privilege_repro_test.go",
-		"testing/go/copy_test.go":
+		"testing/go/copy_test.go",
+		"testing/go/default_privileges_repro_test.go",
+		"testing/go/default_privileges_security_repro_test.go",
+		"testing/go/default_privileges_transaction_guard_test.go",
+		"testing/go/information_schema_visibility_repro_test.go",
+		"testing/go/large_object_persistence_repro_test.go",
+		"testing/go/prepared_transaction_test.go",
+		"testing/go/psql_test.go",
+		"testing/go/sequence_privilege_repro_test.go",
+		"testing/go/transaction_error_repro_test.go",
+		"testing/go/view_rebuild_workload_test.go":
+		return true
+	default:
+		return false
+	}
+}
+
+func hasNonMigratableOracleID(id string) bool {
+	switch id {
+	case "stats-test-teststats-0003-analyze-doesnotexists.public.t":
 		return true
 	default:
 		return false
@@ -2537,6 +2556,12 @@ func migrationCandidate(source string, ordinal int, scriptName string, fields ma
 		if _, err := expectedRowsFromExpr(fields["Expected"]); err != nil {
 			candidate.NonLiteral = append(candidate.NonLiteral, "Expected")
 		}
+	}
+	if expectedKind == "rawRows" {
+		candidate.NonLiteral = appendNonLiteral(candidate.NonLiteral, "NonMigratable")
+	}
+	if hasNonMigratableOracleID(candidate.SuggestedID) {
+		candidate.NonLiteral = appendNonLiteral(candidate.NonLiteral, "NonMigratable")
 	}
 	if len(candidate.NonLiteral) == 0 {
 		candidate.NonLiteral = nil

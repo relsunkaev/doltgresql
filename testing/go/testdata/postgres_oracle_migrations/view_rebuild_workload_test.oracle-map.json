@@ -24,7 +24,8 @@
       "query": "SELECT email, tag, event_type, status, rn::text, tag_count::text\nFROM account_event_summary\nORDER BY email, rn;",
       "querySha256": "d0b90b308bdd59b82f561b5602c5b85fcce65a4c167690b1d9da7f52c9873f51",
       "nonLiteral": [
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -39,7 +40,8 @@
       "expectedKind": "rows",
       "nonLiteral": [
         "Query",
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -55,7 +57,9 @@
       "query": "SELECT email, tag, event_type, status, rn::text, tag_count::text\nFROM account_event_summary\nORDER BY email, rn;",
       "querySha256": "d0b90b308bdd59b82f561b5602c5b85fcce65a4c167690b1d9da7f52c9873f51",
       "nonLiteral": [
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorQuery"
       ],
       "needsCleanup": true,
       "cleanupProvided": false

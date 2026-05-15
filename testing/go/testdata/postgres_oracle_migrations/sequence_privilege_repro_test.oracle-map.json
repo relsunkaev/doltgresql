@@ -2,7 +2,7 @@
   "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map sequence_privilege_repro_test.go --force-postgres-oracle",
   "sourceFile": "testing/go/sequence_privilege_repro_test.go",
   "defaultOracle": "internal",
-  "assertionKeyStyle": "testing/go/\u003cfile\u003e:\u003cTestName\u003e#\u003cexpectation-ordinal\u003e",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
   "assertionFields": [
     "Expected",
     "ExpectedRaw",
@@ -25,7 +25,8 @@
       "query": "CREATE SEQUENCE owner_created_seq;",
       "querySha256": "6703fe64381f9e2f25bff3b7fc7749bd19df3821c24e6fa5670c17f0303d5f33",
       "nonLiteral": [
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -42,7 +43,9 @@
       "query": "SELECT nextval('owner_created_seq');",
       "querySha256": "10e20293cfbfe67c99a638c8c0867ec226b9aa8406ac69e1d61810973373778e",
       "nonLiteral": [
-        "SetUpScript"
+        "SetUpScript",
+        "NonMigratable",
+        "PriorUsername"
       ],
       "needsCleanup": true,
       "cleanupProvided": false

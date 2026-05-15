@@ -2,7 +2,7 @@
   "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map large_object_persistence_repro_test.go --force-postgres-oracle",
   "sourceFile": "testing/go/large_object_persistence_repro_test.go",
   "defaultOracle": "internal",
-  "assertionKeyStyle": "testing/go/\u003cfile\u003e:\u003cTestName\u003e#\u003cexpectation-ordinal\u003e",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
   "assertionFields": [
     "Expected",
     "ExpectedRaw",
@@ -41,6 +41,10 @@
       "expectedKind": "rows",
       "query": "SELECT pg_get_userbyid(lomowner)\n\t\t\t\t\t\tFROM pg_catalog.pg_largeobject_metadata\n\t\t\t\t\t\tWHERE oid = 424255;",
       "querySha256": "380d7c72657685338fcc066c09369f782bd0877fbe5470c420d83c08c83dd9c8",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorExpectedError"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -72,6 +76,10 @@
       "expectedKind": "rows",
       "query": "SELECT encode(lo_get(424245), 'hex');",
       "querySha256": "e58129077630dba2f7449c0519eafe63e2cef1219472b0ad25d42ebd8a0921a6",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorExpectedError"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -104,6 +112,10 @@
       "username": "large_object_compat_intruder",
       "query": "SELECT encode(lo_get(424256), 'hex');",
       "querySha256": "7e4992382736a05e9a061d738f5bca932983f732a86d5213472c86a2c544e89e",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorExpectedError"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -135,6 +147,10 @@
       "expectedKind": "rows",
       "query": "SELECT oid::TEXT\n\t\t\t\t\t\tFROM pg_catalog.pg_largeobject_metadata\n\t\t\t\t\t\tWHERE oid = 424246;",
       "querySha256": "85bd67100a77884e489a292867c57f6a9e278e36db156cdd9e100e5d11027333",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorExpectedError"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     }

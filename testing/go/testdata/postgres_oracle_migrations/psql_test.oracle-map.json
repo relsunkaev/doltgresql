@@ -2,7 +2,7 @@
   "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map psql_test.go --force-postgres-oracle",
   "sourceFile": "testing/go/psql_test.go",
   "defaultOracle": "internal",
-  "assertionKeyStyle": "testing/go/\u003cfile\u003e:\u003cTestName\u003e#\u003cexpectation-ordinal\u003e",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
   "assertionFields": [
     "Expected",
     "ExpectedRaw",
@@ -19,10 +19,11 @@
       "ordinal": 1,
       "scriptName": "\\dt tablename",
       "oracle": "internal",
-      "suggestedId": "psql-test-testpsqlcommands-0009",
+      "suggestedId": "psql-test-testpsqlcommands-0001",
       "expectedKind": "rows",
       "nonLiteral": [
-        "Query"
+        "Query",
+        "NonMigratable"
       ],
       "needsCleanup": true,
       "cleanupProvided": false

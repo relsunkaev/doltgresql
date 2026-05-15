@@ -2,7 +2,7 @@
   "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map information_schema_visibility_repro_test.go --oracle-postgres-id information-schema-visibility-repro-test-testinformationschemacolumnprivilegesreflectscolumngrantrepro-0001-select-column_name-privilege_type-from-information_schema.column_privileges,information-schema-visibility-repro-test-testinformationschemacolumnshidesungrantablecolumnsrepro-0001-select-column_name-from-information_schema.columns-where,information-schema-visibility-repro-test-testinformationschematableprivilegeshidesungrantabletablesrepro-0001-select-table_name-from-information_schema.table_privileges-where,information-schema-visibility-repro-test-testinformationschematableprivilegesreflectstablegrantrepro-0001-select-table_name-privilege_type-from-information_schema.table_privileges,information-schema-visibility-repro-test-testinformationschematableshidesungrantabletablesrepro-0001-select-table_name-from-information_schema.tables-where,information-schema-visibility-repro-test-testinformationschemaviewshidesungrantableviewsrepro-0001-select-table_name-from-information_schema.views-where",
   "sourceFile": "testing/go/information_schema_visibility_repro_test.go",
   "defaultOracle": "internal",
-  "assertionKeyStyle": "testing/go/\u003cfile\u003e:\u003cTestName\u003e#\u003cexpectation-ordinal\u003e",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
   "assertionFields": [
     "Expected",
     "ExpectedRaw",
@@ -24,6 +24,9 @@
       "username": "info_schema_table_grantee",
       "query": "SELECT table_name, privilege_type\n\t\t\t\t\t\tFROM information_schema.table_privileges\n\t\t\t\t\t\tWHERE table_schema = 'public'\n\t\t\t\t\t\t\tAND table_name = 'info_schema_table_grant_private'\n\t\t\t\t\t\t\tAND grantee = current_user\n\t\t\t\t\t\tORDER BY table_name, privilege_type;",
       "querySha256": "711e05dfe8ef1322a93cd85c82cf3c1c090cd70521950b1b992276b0e665f30c",
+      "nonLiteral": [
+        "NonMigratable"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -38,6 +41,9 @@
       "username": "info_schema_column_grantee",
       "query": "SELECT column_name, privilege_type\n\t\t\t\t\t\tFROM information_schema.column_privileges\n\t\t\t\t\t\tWHERE table_schema = 'public'\n\t\t\t\t\t\t\tAND table_name = 'info_schema_column_grant_private'\n\t\t\t\t\t\t\tAND grantee = current_user\n\t\t\t\t\t\tORDER BY column_name, privilege_type;",
       "querySha256": "098fd12ea2324ed513a578924b124ca4fa6468386a7b38ee3eca08d3dcf65510",
+      "nonLiteral": [
+        "NonMigratable"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     }

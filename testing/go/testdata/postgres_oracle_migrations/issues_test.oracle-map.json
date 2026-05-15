@@ -2,7 +2,7 @@
   "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map issues_test.go --force-postgres-oracle",
   "sourceFile": "testing/go/issues_test.go",
   "defaultOracle": "internal",
-  "assertionKeyStyle": "testing/go/\u003cfile\u003e:\u003cTestName\u003e#\u003cexpectation-ordinal\u003e",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
   "assertionFields": [
     "Expected",
     "ExpectedRaw",
@@ -115,10 +115,13 @@
       "ordinal": 7,
       "scriptName": "Issue #2049",
       "oracle": "internal",
-      "suggestedId": "issues-test-testissues-0009-select-*-from-jsonb_test",
+      "suggestedId": "issues-test-testissues-0007-select-*-from-jsonb_test",
       "expectedKind": "rawRows",
       "query": "SELECT * FROM jsonb_test;",
       "querySha256": "1a2272ba8824eb84136a7a74ab8e7c5b831e1b95b9681c5529997cdf0e6acbe9",
+      "nonLiteral": [
+        "NonMigratable"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },

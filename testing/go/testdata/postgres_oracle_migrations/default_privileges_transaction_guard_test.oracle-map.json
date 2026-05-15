@@ -24,7 +24,8 @@
       "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_default_acl\n\t\t\t\t\t\tWHERE defaclnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')\n\t\t\t\t\t\t\tAND defaclobjtype = 'r';",
       "querySha256": "b9b964c21784a085a1ec6db8e639c2d8b9474ab1fc4ce71ec1f73c4e62cd0129",
       "nonLiteral": [
-        "Expected"
+        "Expected",
+        "NonMigratable"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -40,6 +41,9 @@
       "username": "rollback_default_reader",
       "query": "SELECT id, secret FROM rollback_default_private;",
       "querySha256": "e155e1c993573da4b402b38c9452291994cc5aaaffe16c0b8e1974d4e9cd821b",
+      "nonLiteral": [
+        "NonMigratable"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     }

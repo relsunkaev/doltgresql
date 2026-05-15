@@ -24,6 +24,9 @@
       "username": "default_priv_hijacker",
       "query": "ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public\n\t\t\t\t\t\tGRANT SELECT ON TABLES TO default_priv_hijacker;",
       "querySha256": "624091d3109f06e0305df60a861d385010504b99537c02c2994f99d4421bf829",
+      "nonLiteral": [
+        "NonMigratable"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     },
@@ -56,6 +59,12 @@
       "username": "default_priv_owner_reader",
       "query": "SELECT id, label FROM default_priv_owner_items;",
       "querySha256": "9cf72e94b9754e0ff68ebe505d8495db6b10f0251fc6dcc48eaf2c865904b913",
+      "nonLiteral": [
+        "NonMigratable",
+        "PriorUsername",
+        "PriorUsername",
+        "PriorUsername"
+      ],
       "needsCleanup": true,
       "cleanupProvided": false
     }

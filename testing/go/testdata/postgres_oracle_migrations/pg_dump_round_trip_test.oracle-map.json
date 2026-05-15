@@ -2,7 +2,7 @@
   "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map pg_dump_round_trip_test.go --force-postgres-oracle",
   "sourceFile": "testing/go/pg_dump_round_trip_test.go",
   "defaultOracle": "internal",
-  "assertionKeyStyle": "testing/go/\u003cfile\u003e:\u003cTestName\u003e#\u003cexpectation-ordinal\u003e",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
   "assertionFields": [
     "Expected",
     "ExpectedRaw",
@@ -18,13 +18,29 @@
       "source": "testing/go/pg_dump_round_trip_test.go:TestPgDependViewTableDependencies",
       "ordinal": 1,
       "scriptName": "pg_depend exposes view dependencies on referenced tables",
-      "oracle": "internal",
-      "suggestedId": "pg-dump-round-trip-test-testpgdependviewtabledependencies-0002-select-strpos-pg_get_viewdef-dep_active_projects-::regclass",
+      "oracle": "postgres",
+      "postgresId": "pg-dump-round-trip-test-testpgdependviewtabledependencies-0001-select-strpos-pg_get_viewdef-dep_active_projects-::regclass",
+      "suggestedId": "pg-dump-round-trip-test-testpgdependviewtabledependencies-0001-select-strpos-pg_get_viewdef-dep_active_projects-::regclass",
+      "compare": "structural",
       "expectedKind": "rows",
-      "query": "SELECT\n\tstrpos(pg_get_viewdef('dep_active_projects'::regclass), 'public.dep_projects') \u003e 0,\n\tstrpos(pg_get_viewdef('dep_active_projects'::regclass), 'public.dep_accounts') \u003e 0;",
+      "query": "SELECT\n\tstrpos(pg_get_viewdef('dep_active_projects'::regclass), 'public.dep_projects') > 0,\n\tstrpos(pg_get_viewdef('dep_active_projects'::regclass), 'public.dep_accounts') > 0;",
       "querySha256": "e7865cbbe8a3b4e73803366a731718aa648ee243a16cf49cfba6d6c8cdb2b81a",
-      "needsCleanup": true,
-      "cleanupProvided": false
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP TABLE IF EXISTS dep_accounts CASCADE",
+        "DROP TABLE IF EXISTS dep_projects CASCADE"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": true
     }
   ]
 }

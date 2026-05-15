@@ -41,6 +41,7 @@
       "query": "INSERT INTO transaction_error_items VALUES (2, 'after error');",
       "querySha256": "c5dff7cf8ee63036d2e8d2b29f1a7c0b62d1f7697f8a1afe34ccaf4223f1e4cf",
       "nonLiteral": [
+        "NonMigratable",
         "PriorExpectedError"
       ],
       "needsCleanup": true,
@@ -57,6 +58,7 @@
       "query": "SELECT * FROM transaction_error_items ORDER BY id;",
       "querySha256": "50c1d3d17e6a13cf3dee65444ce82b5b144c06c9ff081458e8139fce04f57f01",
       "nonLiteral": [
+        "NonMigratable",
         "PriorExpectedError"
       ],
       "needsCleanup": true,
@@ -90,7 +92,7 @@
       "query": "INSERT INTO savepoint_error_items VALUES (2, 'before rollback to savepoint');",
       "querySha256": "d0dc6d0bf8198c68bb32cb28827d9d88d76fd0bf56fd4e85d1bcc52e80b4c51a",
       "nonLiteral": [
-        "PriorExpectedError"
+        "NonMigratable"
       ],
       "needsCleanup": true,
       "cleanupProvided": false
@@ -106,6 +108,7 @@
       "query": "SELECT id, label\n\t\t\t\t\t\tFROM savepoint_error_items\n\t\t\t\t\t\tORDER BY id;",
       "querySha256": "bc624cf5ea961b9feca06c42e4838feda382591e4c61b35d3dd25a5dd83b321d",
       "nonLiteral": [
+        "NonMigratable",
         "PriorExpectedError"
       ],
       "needsCleanup": true,
