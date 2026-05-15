@@ -707,15 +707,34 @@ func TestPgClass(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				// Table
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_class" WHERE relname='testing' order by 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclass-0001-select-*-from-pg_catalog-."},
+					Query: `SELECT c.relname, n.nspname, c.relkind, c.relpersistence, c.relnatts::text,
+							c.relhasindex::text, c.relhasrules::text, c.relhastriggers::text,
+							c.relrowsecurity::text, c.relreplident
+						FROM "pg_catalog"."pg_class" c
+						JOIN "pg_catalog"."pg_namespace" n ON n.oid = c.relnamespace
+						WHERE c.relname='testing' AND n.nspname = 'testschema'
+						ORDER BY c.relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclass-0001-select-*-from-pg_catalog-."},
 				},
 				// Index
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_class" WHERE relname='testing_pkey';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclass-0002-select-*-from-pg_catalog-."},
+					Query: `SELECT c.relname, n.nspname, c.relkind, am.amname, c.relpersistence,
+							c.relhasindex::text, c.relhasrules::text, c.relhastriggers::text,
+							c.relrowsecurity::text
+						FROM "pg_catalog"."pg_class" c
+						JOIN "pg_catalog"."pg_namespace" n ON n.oid = c.relnamespace
+						LEFT JOIN "pg_catalog"."pg_am" am ON am.oid = c.relam
+						WHERE c.relname='testing_pkey' AND n.nspname = 'testschema'
+						ORDER BY c.relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclass-0002-select-*-from-pg_catalog-."},
 				},
 				// View
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_class" WHERE relname='testview';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclass-0003-select-*-from-pg_catalog-."},
+					Query: `SELECT c.relname, n.nspname, c.relkind, c.relpersistence, c.relnatts::text,
+							c.relhasindex::text, c.relhasrules::text, c.relhastriggers::text,
+							c.relrowsecurity::text
+						FROM "pg_catalog"."pg_class" c
+						JOIN "pg_catalog"."pg_namespace" n ON n.oid = c.relnamespace
+						WHERE c.relname='testview' AND n.nspname = 'testschema'
+						ORDER BY c.relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclass-0003-select-*-from-pg_catalog-."},
 				},
 				{ // Different cases and quoted, so it fails
 					Query: `SELECT * FROM "PG_catalog"."pg_class";`, PostgresOracle: ScriptTestPostgresOracle{
@@ -730,13 +749,23 @@ func TestPgClass(t *testing.T) {
 						ID: "pgcatalog-test-testpgclass-0005-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT relname FROM PG_catalog.pg_CLASS where relnamespace not in (select oid from pg_namespace where nspname = 'dolt') ORDER BY relname ASC LIMIT 3;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclass-0006-select-relname-from-pg_catalog.pg_class-where"},
+					Query: `SELECT c.relname
+						FROM PG_catalog.pg_CLASS c
+						JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid
+						WHERE n.nspname = 'testschema'
+							AND c.relname IN ('testing', 'testing_pkey', 'testview')
+						ORDER BY c.relname ASC;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclass-0006-select-relname-from-pg_catalog.pg_class-where"},
 				},
 				{
 					Query: "SELECT relname from pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid  WHERE n.nspname = 'testschema' and left(relname, 5) <> 'dolt_' ORDER BY relname;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclass-0007-select-relname-from-pg_catalog.pg_class-c"},
 				},
 				{
-					Query: "SELECT relname from pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid  WHERE n.nspname = 'pg_catalog' LIMIT 3;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclass-0008-select-relname-from-pg_catalog.pg_class-c"},
+					Query: `SELECT relname
+						FROM pg_catalog.pg_class c
+						JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid
+						WHERE n.nspname = 'pg_catalog'
+							AND relname IN ('pg_am', 'pg_class', 'pg_namespace')
+						ORDER BY relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclass-0008-select-relname-from-pg_catalog.pg_class-c"},
 				},
 				{
 					Query: `SELECT relname FROM "pg_class" WHERE relname='testing';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclass-0009-select-relname-from-pg_class-where"},
@@ -761,13 +790,29 @@ func TestPgClass(t *testing.T) {
 					Query: `SELECT * FROM "pg_catalog"."pg_class" WHERE oid='testing'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclass-0011-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_class" WHERE oid='testschema.testing'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclass-0012-select-*-from-pg_catalog-."},
+					Query: `SELECT c.relname, n.nspname, c.relkind, c.relpersistence, c.relnatts::text,
+							c.relhasindex::text, c.relhasrules::text, c.relhastriggers::text,
+							c.relrowsecurity::text, c.relreplident
+						FROM "pg_catalog"."pg_class" c
+						JOIN "pg_catalog"."pg_namespace" n ON n.oid = c.relnamespace
+						WHERE c.oid='testschema.testing'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclass-0012-select-*-from-pg_catalog-."},
 				},
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_class" WHERE oid='testschema.testing_pkey'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclass-0013-select-*-from-pg_catalog-."},
+					Query: `SELECT c.relname, n.nspname, c.relkind, am.amname, c.relpersistence,
+							c.relhasindex::text, c.relhasrules::text, c.relhastriggers::text,
+							c.relrowsecurity::text
+						FROM "pg_catalog"."pg_class" c
+						JOIN "pg_catalog"."pg_namespace" n ON n.oid = c.relnamespace
+						LEFT JOIN "pg_catalog"."pg_am" am ON am.oid = c.relam
+						WHERE c.oid='testschema.testing_pkey'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclass-0013-select-*-from-pg_catalog-."},
 				},
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_class" WHERE oid='testschema.testview'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclass-0014-select-*-from-pg_catalog-."},
+					Query: `SELECT c.relname, n.nspname, c.relkind, c.relpersistence, c.relnatts::text,
+							c.relhasindex::text, c.relhasrules::text, c.relhastriggers::text,
+							c.relrowsecurity::text
+						FROM "pg_catalog"."pg_class" c
+						JOIN "pg_catalog"."pg_namespace" n ON n.oid = c.relnamespace
+						WHERE c.oid='testschema.testview'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclass-0014-select-*-from-pg_catalog-."},
 				},
 			},
 		},
@@ -784,7 +829,7 @@ func TestPgClass(t *testing.T) {
 JOIN pg_class t ON t.oid = i.indrelid 
 JOIN pg_class ix ON ix.oid = i.indexrelid 
 JOIN pg_namespace n ON t.relnamespace = n.oid 
-JOIN pg_am AS am ON ix.relam = am.oid WHERE t.relname = 'foo' AND n.nspname = 'public';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclass-0015-select-ix.relname-as-index_name-upper"},
+JOIN pg_am AS am ON ix.relam = am.oid WHERE t.relname = 'foo' AND n.nspname = current_schema() ORDER BY ix.relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgclass-0015-select-ix.relname-as-index_name-upper"},
 				},
 			},
 		},
