@@ -27,8 +27,11 @@ import (
 )
 
 type testInterpretedFunction struct {
-	returnType *pgtypes.DoltgresType
-	statements []InterpreterOperation
+	returnType     *pgtypes.DoltgresType
+	parameterNames []string
+	parameterTypes []*pgtypes.DoltgresType
+	parameterModes []uint8
+	statements     []InterpreterOperation
 }
 
 var _ InterpretedFunction = testInterpretedFunction{}
@@ -42,15 +45,15 @@ func (f testInterpretedFunction) GetName() string {
 }
 
 func (f testInterpretedFunction) GetParameters() []*pgtypes.DoltgresType {
-	return nil
+	return f.parameterTypes
 }
 
 func (f testInterpretedFunction) GetParameterNames() []string {
-	return nil
+	return f.parameterNames
 }
 
 func (f testInterpretedFunction) GetParameterModes() []uint8 {
-	return nil
+	return f.parameterModes
 }
 
 func (f testInterpretedFunction) GetReturn() *pgtypes.DoltgresType {
@@ -135,6 +138,30 @@ func TestCallNonVoidFunctionWithoutReturnRequiresReturnValue(t *testing.T) {
 	_, err := Call(sql.NewEmptyContext(), testInterpretedFunction{returnType: pgtypes.Int32}, nil, nil, nil)
 	require.Error(t, err)
 	require.Equal(t, pgcode.RoutineExceptionFunctionExecutedNoReturnStatement, pgerror.GetPGCode(err))
+}
+
+func TestCallInitializesOutParametersWithoutConsumingInputs(t *testing.T) {
+	result, err := Call(sql.NewEmptyContext(), testInterpretedFunction{
+		returnType:     pgtypes.Int32,
+		parameterNames: []string{"input_value", "doubled"},
+		parameterTypes: []*pgtypes.DoltgresType{pgtypes.Int32, pgtypes.Int32},
+		parameterModes: []uint8{0, 1},
+	}, nil, nil, []any{int32(4)})
+
+	require.NoError(t, err)
+	require.Equal(t, sql.Row{nil}, result)
+}
+
+func TestCallReturnsInoutParametersFromInputValues(t *testing.T) {
+	result, err := Call(sql.NewEmptyContext(), testInterpretedFunction{
+		returnType:     pgtypes.Int32,
+		parameterNames: []string{"value"},
+		parameterTypes: []*pgtypes.DoltgresType{pgtypes.Int32},
+		parameterModes: []uint8{2},
+	}, nil, nil, []any{int32(7)})
+
+	require.NoError(t, err)
+	require.Equal(t, sql.Row{int32(7)}, result)
 }
 
 func TestImplicitBareReturnInNonVoidFunctionRequiresReturnValue(t *testing.T) {

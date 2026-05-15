@@ -170,10 +170,14 @@ func (c *CreateFunction) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, erro
 	paramTypes := make([]id.Type, len(c.Parameters))
 	paramModes := make([]procedures.ParameterMode, len(c.Parameters))
 	paramDefaults := make([]string, len(c.Parameters))
+	inputParamTypes := make([]id.Type, 0, len(c.Parameters))
 	for i, param := range c.Parameters {
 		paramNames[i] = param.Name
 		paramTypes[i] = param.Type.ID
 		paramModes[i] = param.Mode
+		if param.Mode != procedures.ParameterMode_OUT {
+			inputParamTypes = append(inputParamTypes, param.Type.ID)
+		}
 		if param.Default != nil {
 			paramDefaults[i] = param.Default.String()
 		}
@@ -183,7 +187,7 @@ func (c *CreateFunction) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, erro
 	if err != nil {
 		return nil, err
 	}
-	funcID := id.NewFunction(schemaName, c.FunctionName, paramTypes...)
+	funcID := id.NewFunction(schemaName, c.FunctionName, inputParamTypes...)
 	owner := ctx.Client().User
 	replacedExisting := false
 	if c.Replace && funcCollection.HasFunction(ctx, funcID) {
@@ -244,7 +248,7 @@ func (c *CreateFunction) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, erro
 		return nil, err
 	}
 	if !replacedExisting {
-		if err = auth.ApplyDefaultPrivilegesToRoutine(owner, schemaName, c.FunctionName, auth.RoutineArgTypesKey(paramTypes)); err != nil {
+		if err = auth.ApplyDefaultPrivilegesToRoutine(owner, schemaName, c.FunctionName, auth.RoutineArgTypesKey(inputParamTypes)); err != nil {
 			return nil, err
 		}
 	}

@@ -264,7 +264,7 @@ func createRoutineOutputReturnType(params []pgnodes.RoutineParam) *pgtypes.Doltg
 func createAnonymousCompositeTypeFromRoutineParams(params []pgnodes.RoutineParam) *pgtypes.DoltgresType {
 	attrs := make([]pgtypes.CompositeAttribute, len(params))
 	for i, param := range params {
-		attrs[i] = pgtypes.NewCompositeAttribute(nil, id.Null, param.Name, param.Type.ID, -1, int16(i), "")
+		attrs[i] = pgtypes.NewCompositeAttribute(nil, id.Null, param.Name, param.Type.ID, -1, int16(i+1), "")
 	}
 
 	typeIdString := "table("
@@ -274,7 +274,7 @@ func createAnonymousCompositeTypeFromRoutineParams(params []pgnodes.RoutineParam
 		}
 		typeIdString += attr.Name
 		typeIdString += ":"
-		typeIdString += attr.TypeID.TypeName()
+		typeIdString += anonymousCompositeAttributeTypeName(attr.TypeID)
 	}
 	typeIdString += ")"
 
@@ -296,7 +296,7 @@ func createAnonymousCompositeType(ctx *Context, fieldTypes []tree.SimpleColumnDe
 			return nil, errors.Errorf("return table field type could not be resolved")
 		}
 		attrs[i] = pgtypes.NewCompositeAttribute(nil, id.Null, fieldType.Name.String(),
-			resolvedType.ID, resolvedType.GetAttTypMod(), int16(i), "")
+			resolvedType.ID, resolvedType.GetAttTypMod(), int16(i+1), "")
 	}
 
 	typeIdString := "table("
@@ -306,7 +306,7 @@ func createAnonymousCompositeType(ctx *Context, fieldTypes []tree.SimpleColumnDe
 		}
 		typeIdString += attr.Name
 		typeIdString += ":"
-		typeIdString += attr.TypeID.TypeName()
+		typeIdString += anonymousCompositeAttributeTypeName(attr.TypeID)
 	}
 	typeIdString += ")"
 
@@ -314,6 +314,13 @@ func createAnonymousCompositeType(ctx *Context, fieldTypes []tree.SimpleColumnDe
 	typeId := id.NewType("", typeIdString)
 
 	return pgtypes.NewCompositeType(context.Background(), id.Null, id.NullType, typeId, attrs), nil
+}
+
+func anonymousCompositeAttributeTypeName(typeID id.Type) string {
+	if schemaName := typeID.SchemaName(); schemaName != "" {
+		return schemaName + "." + typeID.TypeName()
+	}
+	return typeID.TypeName()
 }
 
 // handleLanguageSQLAs handles parsing SQL definition strings in both CREATE FUNCTION and CREATE PROCEDURE

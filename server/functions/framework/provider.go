@@ -24,6 +24,7 @@ import (
 	"github.com/dolthub/doltgresql/core/extensions"
 	corefunctions "github.com/dolthub/doltgresql/core/functions"
 	"github.com/dolthub/doltgresql/core/id"
+	coreprocedures "github.com/dolthub/doltgresql/core/procedures"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
@@ -186,6 +187,7 @@ func (fp *FunctionProvider) Function(ctx *sql.Context, name string) (sql.Functio
 				ReturnType:         returnType,
 				ParameterNames:     overload.ParameterNames,
 				ParameterTypes:     paramTypes,
+				ParameterModes:     functionParameterModes(overload.ParameterModes),
 				Variadic:           overload.Variadic,
 				SetOf:              overload.SetOf,
 				IsNonDeterministic: overload.IsNonDeterministic,
@@ -213,6 +215,17 @@ func (fp *FunctionProvider) Function(ctx *sql.Context, name string) (sql.Functio
 			return NewCompiledFunction(ctx, functionName, params, overloadTree, false), nil
 		},
 	}, true
+}
+
+func functionParameterModes(modes []coreprocedures.ParameterMode) []uint8 {
+	if len(modes) == 0 {
+		return nil
+	}
+	ret := make([]uint8, len(modes))
+	for i, mode := range modes {
+		ret[i] = uint8(mode)
+	}
+	return ret
 }
 
 func getUnqualifiedFunctionOverloads(ctx *sql.Context, funcCollection *corefunctions.Collection, functionName string) ([]corefunctions.Function, error) {

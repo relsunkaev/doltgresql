@@ -19,6 +19,7 @@ import (
 
 	"github.com/cockroachdb/errors"
 
+	"github.com/dolthub/doltgresql/core/procedures"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
@@ -41,13 +42,14 @@ func NewOverloads() *Overloads {
 // Add adds the given function to the overload collection. Returns an error if the there's a problem with the
 // function's declaration.
 func (o *Overloads) Add(function FunctionInterface) error {
-	key := keyForParamTypes(function.GetParameters())
+	params := callableParameterTypes(function)
+	key := keyForParamTypes(params)
 	if _, ok := o.ByParamType[key]; ok {
 		return errors.Errorf("duplicate function overload for `%s`", function.GetName())
 	}
 
-	if function.VariadicIndex() >= 0 {
-		varArgsType := function.GetParameters()[function.VariadicIndex()]
+	if variadicIndex := callableVariadicIndex(function); variadicIndex >= 0 {
+		varArgsType := params[variadicIndex]
 		if !varArgsType.IsArrayType() {
 			return errors.Errorf("variadic parameter must be an array type for function `%s`", function.GetName())
 		}
@@ -70,12 +72,70 @@ func keyForParamTypes(types []*pgtypes.DoltgresType) string {
 	return sb.String()
 }
 
+type parameterModer interface {
+	GetParameterModes() []uint8
+}
+
+func callableParameterTypes(function FunctionInterface) []*pgtypes.DoltgresType {
+	params := function.GetParameters()
+	moder, ok := function.(parameterModer)
+	if !ok {
+		return params
+	}
+	modes := moder.GetParameterModes()
+	if len(modes) == 0 {
+		return params
+	}
+	filtered := make([]*pgtypes.DoltgresType, 0, len(params))
+	for i, param := range params {
+		mode := uint8(procedures.ParameterMode_IN)
+		if i < len(modes) {
+			mode = modes[i]
+		}
+		if mode == uint8(procedures.ParameterMode_OUT) {
+			continue
+		}
+		filtered = append(filtered, param)
+	}
+	return filtered
+}
+
+func callableVariadicIndex(function FunctionInterface) int {
+	variadicIndex := function.VariadicIndex()
+	if variadicIndex < 0 {
+		return -1
+	}
+	moder, ok := function.(parameterModer)
+	if !ok {
+		return variadicIndex
+	}
+	modes := moder.GetParameterModes()
+	if len(modes) == 0 {
+		return variadicIndex
+	}
+	callableIndex := 0
+	for i := 0; i <= variadicIndex; i++ {
+		mode := uint8(procedures.ParameterMode_IN)
+		if i < len(modes) {
+			mode = modes[i]
+		}
+		if mode == uint8(procedures.ParameterMode_OUT) {
+			continue
+		}
+		if i == variadicIndex {
+			return callableIndex
+		}
+		callableIndex++
+	}
+	return -1
+}
+
 // overloadsForParams returns all overloads matching the number of params given, without regard for types.
 func (o *Overloads) overloadsForParams(numParams int) []Overload {
 	results := make([]Overload, 0, len(o.AllOverloads))
 	for _, overload := range o.AllOverloads {
-		params := overload.GetParameters()
-		variadicIndex := overload.VariadicIndex()
+		params := callableParameterTypes(overload)
+		variadicIndex := callableVariadicIndex(overload)
 		if overload.IsCVariadic() {
 			if len(params) <= numParams {
 				paramTypes := make([]*pgtypes.DoltgresType, numParams)

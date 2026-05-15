@@ -22,6 +22,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/core/procedures"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
@@ -52,6 +53,26 @@ func TestCompiledFunctionUserDefinedFunctionsRequireStatementRunner(t *testing.T
 		_, err := compiled.callResolvedFunction(ctx, fn, nil)
 		require.ErrorContains(t, err, "statement runner is not available")
 	}
+}
+
+func TestOverloadsIgnorePureOutParametersForCallableSignature(t *testing.T) {
+	overloads := NewOverloads()
+	err := overloads.Add(InterpretedFunction{
+		ID:             id.NewFunction("public", "out_value", pgtypes.Int32.ID),
+		ReturnType:     pgtypes.Int32,
+		ParameterTypes: []*pgtypes.DoltgresType{pgtypes.Int32, pgtypes.Int32, pgtypes.Int32},
+		ParameterModes: []uint8{
+			uint8(procedures.ParameterMode_IN),
+			uint8(procedures.ParameterMode_OUT),
+			uint8(procedures.ParameterMode_OUT),
+		},
+	})
+
+	require.NoError(t, err)
+	_, ok := overloads.ExactMatchForTypes(pgtypes.Int32)
+	require.True(t, ok)
+	require.Len(t, overloads.overloadsForParams(1), 1)
+	require.Empty(t, overloads.overloadsForParams(3))
 }
 
 func TestCatalogInternalCharTypeForUnknownOperatorLiteral(t *testing.T) {

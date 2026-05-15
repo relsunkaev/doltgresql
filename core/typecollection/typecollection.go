@@ -235,10 +235,17 @@ func createAnonymousCompositeType(ctx context.Context, returnType id.Type) (*pgt
 			return nil, fmt.Errorf("unexpected anonymous composite type attribute syntax: %s", attributeNameAndType)
 		}
 
-		typeId := id.NewType("", split[1])
-		attrs[i] = pgtypes.NewCompositeAttribute(nil, id.Null, split[0], typeId, -1, int16(i), "")
+		typeId := anonymousCompositeAttributeTypeID(split[1])
+		attrs[i] = pgtypes.NewCompositeAttribute(nil, id.Null, split[0], typeId, -1, int16(i+1), "")
 	}
 	return pgtypes.NewCompositeType(ctx, id.Null, id.NullType, returnType, attrs), nil
+}
+
+func anonymousCompositeAttributeTypeID(typeName string) id.Type {
+	if dotIndex := strings.LastIndexByte(typeName, '.'); dotIndex > 0 && dotIndex < len(typeName)-1 {
+		return id.NewType(typeName[:dotIndex], typeName[dotIndex+1:])
+	}
+	return id.NewType("", typeName)
 }
 
 // HasType checks if a type exists with given schema and type name.

@@ -120,6 +120,11 @@ func (iFunc InterpretedFunction) IsSRF() bool {
 	}
 }
 
+// IsSetReturning returns whether the function was declared with RETURNS SETOF.
+func (iFunc InterpretedFunction) IsSetReturning() bool {
+	return iFunc.SetOf
+}
+
 // NonDeterministic implements the interface FunctionInterface.
 func (iFunc InterpretedFunction) NonDeterministic() bool {
 	return iFunc.IsNonDeterministic

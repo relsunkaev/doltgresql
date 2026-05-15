@@ -163,11 +163,19 @@ func Call(ctx *sql.Context, iFunc InterpretedFunction, runner sql.StatementRunne
 	// Add the parameters
 	parameterTypes := iFunc.GetParameters()
 	parameterNames := iFunc.GetParameterNames()
-	if len(vals) != len(parameterTypes) {
-		return nil, fmt.Errorf("parameter count mismatch: expected %d got %d", len(parameterTypes), len(vals))
+	parameterModes := iFunc.GetParameterModes()
+	expectedInputCount := callableParameterCount(parameterTypes, parameterModes)
+	if len(vals) != expectedInputCount {
+		return nil, fmt.Errorf("parameter count mismatch: expected %d got %d", expectedInputCount, len(vals))
 	}
-	for i := range vals {
-		stack.NewVariableWithValue(parameterNames[i], parameterTypes[i], vals[i])
+	inputIdx := 0
+	for i, parameterType := range parameterTypes {
+		var parameterValue any
+		if parameterModeAt(parameterModes, i) != 1 {
+			parameterValue = vals[inputIdx]
+			inputIdx++
+		}
+		stack.NewVariableWithValue(parameterNames[i], parameterType, parameterValue)
 	}
 	if statementsUseFoundVariable(iFunc.GetStatements()) {
 		initFoundVariable(stack)
@@ -183,16 +191,45 @@ func Call(ctx *sql.Context, iFunc InterpretedFunction, runner sql.StatementRunne
 	if err != nil || returned {
 		return result, err
 	}
+	if outputRow := procedureOutputRow(iFunc, stack); outputRow != nil && !isDeclaredSetReturning(iFunc) {
+		if iFunc.IsSRF() {
+			return sql.RowsToRowIter(outputRow), nil
+		}
+		return outputRow, nil
+	}
 	if iFunc.IsSRF() {
 		return sql.RowsToRowIter(), nil
-	}
-	if outputRow := procedureOutputRow(iFunc, stack); outputRow != nil {
-		return outputRow, nil
 	}
 	if iFunc.GetReturn().ID == pgtypes.Void.ID {
 		return "", nil
 	}
 	return nil, functionExecutedNoReturnStatementError()
+}
+
+func callableParameterCount(parameterTypes []*pgtypes.DoltgresType, parameterModes []uint8) int {
+	count := 0
+	for i := range parameterTypes {
+		if parameterModeAt(parameterModes, i) != 1 {
+			count++
+		}
+	}
+	return count
+}
+
+func parameterModeAt(parameterModes []uint8, idx int) uint8 {
+	if idx >= 0 && idx < len(parameterModes) {
+		return parameterModes[idx]
+	}
+	return 0
+}
+
+type setReturningFunction interface {
+	IsSetReturning() bool
+}
+
+func isDeclaredSetReturning(iFunc InterpretedFunction) bool {
+	setReturning, ok := iFunc.(setReturningFunction)
+	return ok && setReturning.IsSetReturning()
 }
 
 func procedureOutputRow(iFunc InterpretedFunction, stack InterpreterStack) sql.Row {
@@ -743,11 +780,14 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 			}
 
 			if len(operation.PrimaryData) == 0 {
+				if outputRow := procedureOutputRow(iFunc, stack); outputRow != nil && !isDeclaredSetReturning(iFunc) {
+					if iFunc.IsSRF() && !isDeclaredSetReturning(iFunc) {
+						return sql.RowsToRowIter(outputRow), true, nil
+					}
+					return outputRow, true, nil
+				}
 				if iFunc.IsSRF() {
 					return sql.RowsToRowIter(), true, nil
-				}
-				if outputRow := procedureOutputRow(iFunc, stack); outputRow != nil {
-					return outputRow, true, nil
 				}
 				if iFunc.GetReturn().ID == pgtypes.Void.ID {
 					return "", true, nil
