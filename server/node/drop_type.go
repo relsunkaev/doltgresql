@@ -113,7 +113,7 @@ func (c *DropType) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 	if extension, ok, err := extensionOwningType(ctx, typeID); err != nil {
 		return nil, err
 	} else if ok {
-		return nil, errors.Errorf("cannot drop type %s because extension %s requires it", typ.String(), extension)
+		return nil, pgerror.Newf(pgcode.DependentObjectsStillExist, "cannot drop type %s because extension %s requires it", typ.String(), extension)
 	}
 	if _, ok := types.IDToBuiltInDoltgresType[typ.ID]; ok {
 		return nil, types.ErrCannotDropSystemType.New(typ.String())

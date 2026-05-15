@@ -29,6 +29,8 @@ import (
 	coreextensions "github.com/dolthub/doltgresql/core/extensions"
 	corefunctions "github.com/dolthub/doltgresql/core/functions"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/comments"
 	pgexprs "github.com/dolthub/doltgresql/server/expression"
@@ -111,9 +113,6 @@ func (c *DropExtension) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error
 	err = funcCollection.IterateFunctions(ctx, func(f corefunctions.Function) (stop bool, err error) {
 		for _, extID := range extensionsToDrop {
 			if slices.Contains(f.ExtensionDeps, extID.Name()) {
-				if !c.Cascade {
-					return true, errors.Errorf(`cannot drop extension "%s" because other objects depend on it`, extID.Name())
-				}
 				functionsToDrop = append(functionsToDrop, f.ID)
 				break
 			}
@@ -129,7 +128,7 @@ func (c *DropExtension) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error
 		return nil, err
 	}
 	if len(dependentColumns) > 0 && !c.Cascade {
-		return nil, errors.Errorf(`cannot drop extension "%s" because other objects depend on it`, dependentColumns[0].extension)
+		return nil, pgerror.Newf(pgcode.DependentObjectsStillExist, `cannot drop extension "%s" because other objects depend on it`, dependentColumns[0].extension)
 	}
 	if c.Cascade {
 		for _, dep := range dependentColumns {
