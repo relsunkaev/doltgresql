@@ -1415,14 +1415,32 @@ func TestPgDepend(t *testing.T) {
 func TestPgDescription(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
-			Name: "pg_description",
+			Name: "pg_description comments",
+			SetUpScript: []string{
+				`CREATE TABLE pg_description_items (
+					id integer PRIMARY KEY,
+					note text
+				);`,
+				`COMMENT ON TABLE pg_description_items IS 'visible table description';`,
+				`COMMENT ON COLUMN pg_description_items.note IS 'visible column description';`,
+			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM "pg_catalog"."pg_description";`, PostgresOracle: ScriptTestPostgresOracle{ID:
+					Query: `SELECT d.classoid::regclass::text, c.relname, d.objsubid, d.description
+						FROM "pg_catalog"."pg_description" d
+						JOIN pg_catalog.pg_class c ON d.objoid = c.oid
+						JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid
+						WHERE c.relname = 'pg_description_items'
+							AND n.nspname = current_schema()
+						ORDER BY d.objsubid, d.description;`, PostgresOracle: ScriptTestPostgresOracle{ID:
 
-					// Different cases and quoted, so it fails
 					"pgcatalog-test-testpgdescription-0001-select-*-from-pg_catalog-."},
 				},
+			},
+		},
+		{
+			Name: "pg_description case sensitivity",
+			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT * FROM "PG_catalog"."pg_description";`, PostgresOracle: ScriptTestPostgresOracle{
 
@@ -1435,8 +1453,27 @@ func TestPgDescription(t *testing.T) {
 						// Different cases but non-quoted, so it works
 						ID: "pgcatalog-test-testpgdescription-0003-select-*-from-pg_catalog-.", Compare: "sqlstate"},
 				},
+			},
+		},
+		{
+			Name: "pg_description mixed-case identifiers",
+			SetUpScript: []string{
+				`CREATE TABLE pg_description_items (
+					id integer PRIMARY KEY,
+					note text
+				);`,
+				`COMMENT ON TABLE pg_description_items IS 'visible table description';`,
+				`COMMENT ON COLUMN pg_description_items.note IS 'visible column description';`,
+			},
+			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT objoid FROM PG_catalog.pg_DESCRIPTION ORDER BY objoid;", PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgdescription-0004-select-objoid-from-pg_catalog.pg_description-order"},
+					Query: `SELECT d.objsubid
+						FROM PG_catalog.pg_DESCRIPTION d
+						JOIN PG_catalog.pg_CLASS c ON d.objoid = c.oid
+						JOIN PG_catalog.pg_NAMESPACE n ON c.relnamespace = n.oid
+						WHERE c.relname = 'pg_description_items'
+							AND n.nspname = current_schema()
+						ORDER BY d.objsubid;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pgcatalog-test-testpgdescription-0004-select-objoid-from-pg_catalog.pg_description-order"},
 				},
 			},
 		},
