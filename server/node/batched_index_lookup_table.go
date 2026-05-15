@@ -39,6 +39,7 @@ type batchedIndexLookupIndexedTable struct {
 }
 
 var _ sql.IndexedTable = (*batchedIndexLookupIndexedTable)(nil)
+var _ sql.TableWrapper = (*batchedIndexLookupIndexedTable)(nil)
 var _ sql.ProjectedTable = (*batchedIndexLookupIndexedTable)(nil)
 var _ sql.PrimaryKeyTable = (*batchedIndexLookupIndexedTable)(nil)
 
@@ -66,6 +67,10 @@ func WrapBatchedIndexLookupIndexedTable(table sql.IndexedTable, index sql.Index)
 
 func (t *batchedIndexLookupIndexedTable) Name() string {
 	return t.underlying.Name()
+}
+
+func (t *batchedIndexLookupIndexedTable) Underlying() sql.Table {
+	return t.underlying
 }
 
 func (t *batchedIndexLookupIndexedTable) String() string {

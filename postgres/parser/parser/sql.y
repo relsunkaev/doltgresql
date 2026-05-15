@@ -1552,6 +1552,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %type <[]tree.NamedColumnQualification> col_constraint_list
 %type <tree.NamedColumnQualification> col_qualification
 %type <tree.ColumnQualification> col_qualification_elem col_qual_generated_identity
+%type <bool> generated_column_virtual
 %type <tree.CompositeKeyMatchMethod> key_match
 %type <tree.ReferenceActions> reference_actions
 %type <tree.RefAction> reference_action reference_on_delete reference_on_update
@@ -9379,9 +9380,9 @@ col_qualification_elem:
   {
     $$.val = &tree.ColumnDefault{Expr: $2.expr()}
   }
-| GENERATED_ALWAYS ALWAYS AS '(' a_expr ')' STORED
+| GENERATED_ALWAYS ALWAYS AS '(' a_expr ')' generated_column_virtual
   {
-    $$.val = &tree.ColumnComputedDef{Expr: $5.expr()}
+    $$.val = &tree.ColumnComputedDef{Expr: $5.expr(), Virtual: $7.bool()}
   }
 | col_qual_generated_identity
 | UNIQUE opt_nulls_distinct constraint_index_params
@@ -9407,6 +9408,16 @@ col_qualification_elem:
       Actions: $5.referenceActions(),
       Match: $4.compositeKeyMatchMethod(),
     }
+  }
+
+generated_column_virtual:
+  STORED
+  {
+    $$.val = false
+  }
+| VIRTUAL
+  {
+    $$.val = true
   }
 
 col_qual_generated_identity:

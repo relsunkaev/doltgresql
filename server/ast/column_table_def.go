@@ -177,7 +177,7 @@ func nodeColumnTableDef(ctx *Context, node *tree.ColumnTableDef, tableName vites
 			KeyOpt:        keyOpt,
 			ForeignKeyDef: fkDef,
 			GeneratedExpr: generated,
-			Stored:        generated != nil, // postgres generated columns are always stored, never virtual
+			Stored:        vitess.BoolVal(generated != nil && !node.Computed.Virtual),
 		},
 	}
 

@@ -342,6 +342,7 @@ type ColumnTableDef struct {
 		Computed  bool
 		ByDefault bool
 		Expr      Expr
+		Virtual   bool
 		Options   SequenceOptions
 	}
 }
@@ -480,6 +481,7 @@ func NewColumnTableDef(
 			d.Computed.Computed = true
 			d.Computed.ByDefault = t.ByDefault
 			d.Computed.Expr = t.Expr
+			d.Computed.Virtual = t.Virtual
 			d.Computed.Options = t.Options
 		default:
 			return nil, errors.AssertionFailedf("unexpected column qualification: %T", c)
@@ -559,7 +561,11 @@ func (node *ColumnTableDef) Format(ctx *FmtCtx) {
 		if node.Computed.Expr != nil {
 			ctx.WriteString(" ( ")
 			ctx.FormatNode(node.Computed.Expr)
-			ctx.WriteString(" ) STORED")
+			if node.Computed.Virtual {
+				ctx.WriteString(" ) VIRTUAL")
+			} else {
+				ctx.WriteString(" ) STORED")
+			}
 		} else {
 			ctx.WriteString(" IDENTITY")
 			if node.Computed.Options != nil {
@@ -705,6 +711,7 @@ type ColumnDefault struct {
 type ColumnComputedDef struct {
 	Expr      Expr
 	ByDefault bool
+	Virtual   bool
 	Options   SequenceOptions
 }
 

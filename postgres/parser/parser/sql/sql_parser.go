@@ -120,6 +120,9 @@ func (p PostgresFormatter) GenerateCreateTableColumnDefinition(col *sql.Column, 
 
 	if col.Generated != nil {
 		storedStr := " STORED"
+		if col.Virtual {
+			storedStr = " VIRTUAL"
+		}
 		stmt = fmt.Sprintf("%s GENERATED ALWAYS AS %s%s", stmt, col.Generated.String(), storedStr)
 	}
 

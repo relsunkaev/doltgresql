@@ -10,6 +10,16 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### beta - 2026-05-15 03:00 MST
+
+- Lane claimed: `TestPostgres18VirtualGeneratedColumnRepro/virtual_generated_columns_compute_on_read`, specifically PostgreSQL 18 `GENERATED ALWAYS AS (...) VIRTUAL` parsing during setup.
+- Red proof: `go test -json -vet=off ./testing/go/postgres18 -count=1 -failfast -timeout=30m > /tmp/doltgresql-beta-postgres18-failfast-0300.json` stops immediately with `ERROR: at or near "virtual": syntax error (SQLSTATE 42601)` on `CREATE TABLE generated_virtual_items (...)`.
+- Root cause: the PostgreSQL grammar only accepted `STORED` generated columns, so `VIRTUAL` failed during setup. After parsing was fixed, reads still returned the physical `NULL` slot because the PostgreSQL index-stat wrapper hid the nested GMS `VirtualColumnTable` from row execution; the same transparency gap existed in the batched lookup wrapper.
+- Change made: parser/AST/create-table conversion now preserve `VIRTUAL` vs `STORED`, PostgreSQL `SHOW CREATE` formatting prints `VIRTUAL`, and the index-stat / batched-lookup indexed-table wrappers now implement `sql.TableWrapper` so GMS can find and execute virtual-column projections through index scans.
+- Validation passed: `./postgres/parser/build.sh`; `go test -vet=off ./postgres/parser/parser ./server/ast ./server/node ./server/analyzer -run '^$' -count=1 -timeout=10m`; focused `go test -vet=off ./testing/go/postgres18 -run '^TestPostgres18VirtualGeneratedColumnRepro$' -count=1 -timeout=10m -v`; and wrapper coverage `go test -vet=off ./server/node -run '^(TestBatchedIndexLookup|TestIndexStats|Test.*IndexStats)' -count=1 -timeout=10m -v`, all with ICU env and `GOFLAGS=-p=1`.
+- Broader `postgres18` failfast result: `/tmp/doltgresql-beta-postgres18-failfast-0315.json` gets past the virtual generated column repro and stops in `TestPostgres18NotNullConstraintCatalogRepro/pg_constraint_exposes_NOT_NULL_constraints`, where cached PG18 expects two `contype = 'n'` rows (`{1}` and `{2}`) but Doltgres returns empty.
+- Next action: commit the virtual generated column increment, then claim the NOT NULL `pg_constraint` postgres18 blocker if still unowned.
+
 ### beta - 2026-05-15 02:46 MST
 
 - Lane claimed: `TestDoltMergeArtifacts/merge_error_lists_all_constraint_violations_when_table_has_multiple_violations/CALL_DOLT_MERGE('right');`, specifically the merge constraint-violation error text mismatch.

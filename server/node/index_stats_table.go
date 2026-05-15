@@ -27,6 +27,7 @@ type IndexStatsTable struct {
 }
 
 var _ sql.IndexedTable = (*IndexStatsTable)(nil)
+var _ sql.TableWrapper = (*IndexStatsTable)(nil)
 var _ sql.ProjectedTable = (*IndexStatsTable)(nil)
 var _ sql.PrimaryKeyTable = (*IndexStatsTable)(nil)
 var _ sql.DatabaseSchemaTable = (*IndexStatsTable)(nil)
@@ -48,6 +49,10 @@ func WrapIndexStatsTable(table sql.IndexedTable, indexOID uint32) (sql.IndexedTa
 
 func (t *IndexStatsTable) Name() string {
 	return t.underlying.Name()
+}
+
+func (t *IndexStatsTable) Underlying() sql.Table {
+	return t.underlying
 }
 
 func (t *IndexStatsTable) String() string {
