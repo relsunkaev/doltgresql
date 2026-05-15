@@ -1,0 +1,58 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map session_authorization_transaction_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/session_authorization_transaction_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/session_authorization_transaction_repro_test.go:TestSetSessionAuthorizationRejectedInTransactionRepro#0001",
+      "source": "testing/go/postgres16/session_authorization_transaction_repro_test.go:TestSetSessionAuthorizationRejectedInTransactionRepro",
+      "ordinal": 1,
+      "scriptName": "SET SESSION AUTHORIZATION is rejected inside transaction",
+      "oracle": "postgres",
+      "postgresId": "session-authorization-transaction-repro-test-testsetsessionauthorizationrejectedintransactionrepro-0001-set-session-authorization-txn_session_auth_target",
+      "suggestedId": "session-authorization-transaction-repro-test-testsetsessionauthorizationrejectedintransactionrepro-0001-set-session-authorization-txn_session_auth_target",
+      "compare": "structural",
+      "expectedKind": "error",
+      "query": "SET SESSION AUTHORIZATION txn_session_auth_target;",
+      "querySha256": "db902fa64caa73d1f900daa683f15a1224a19c93c4ff546ae3db39a8ae2e6d0a",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/session_authorization_transaction_repro_test.go:TestSetSessionAuthorizationRejectedInTransactionRepro#0002",
+      "source": "testing/go/postgres16/session_authorization_transaction_repro_test.go:TestSetSessionAuthorizationRejectedInTransactionRepro",
+      "ordinal": 2,
+      "scriptName": "SET SESSION AUTHORIZATION is rejected inside transaction",
+      "oracle": "postgres",
+      "postgresId": "session-authorization-transaction-repro-test-testsetsessionauthorizationrejectedintransactionrepro-0002-select-current_user-session_user",
+      "suggestedId": "session-authorization-transaction-repro-test-testsetsessionauthorizationrejectedintransactionrepro-0002-select-current_user-session_user",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT current_user, session_user;",
+      "querySha256": "f1f1669043de3a1bc91bdbbb7ccfde4530c01b4e8191eb2940a3447da2ccb43f",
+      "expectedRows": [
+        [
+          {
+            "value": "postgres"
+          },
+          {
+            "value": "postgres"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

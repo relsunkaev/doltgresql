@@ -1,0 +1,61 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map cursor_correctness_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/cursor_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/cursor_correctness_repro_test.go:TestCursorWithHoldSurvivesCommitRepro#0001",
+      "source": "testing/go/postgres16/cursor_correctness_repro_test.go:TestCursorWithHoldSurvivesCommitRepro",
+      "ordinal": 1,
+      "scriptName": "WITH HOLD cursor survives commit",
+      "oracle": "postgres",
+      "postgresId": "cursor-correctness-repro-test-testcursorwithholdsurvivescommitrepro-0001-fetch-next-from-hold_cur",
+      "suggestedId": "cursor-correctness-repro-test-testcursorwithholdsurvivescommitrepro-0001-fetch-next-from-hold_cur",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "FETCH NEXT FROM hold_cur;",
+      "querySha256": "bafa8a579494f0b47f641b6b98f66ae3f4abbe4318e4eec6fdcc0109e552ad08",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/cursor_correctness_repro_test.go:TestCursorWithHoldSurvivesCommitRepro#0002",
+      "source": "testing/go/postgres16/cursor_correctness_repro_test.go:TestCursorWithHoldSurvivesCommitRepro",
+      "ordinal": 2,
+      "scriptName": "WITH HOLD cursor survives commit",
+      "oracle": "postgres",
+      "postgresId": "cursor-correctness-repro-test-testcursorwithholdsurvivescommitrepro-0002-fetch-next-from-hold_cur",
+      "suggestedId": "cursor-correctness-repro-test-testcursorwithholdsurvivescommitrepro-0002-fetch-next-from-hold_cur",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "FETCH NEXT FROM hold_cur;",
+      "querySha256": "bafa8a579494f0b47f641b6b98f66ae3f4abbe4318e4eec6fdcc0109e552ad08",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

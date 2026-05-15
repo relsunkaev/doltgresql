@@ -1,0 +1,35 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map procedure_drop_privilege_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/procedure_drop_privilege_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/procedure_drop_privilege_repro_test.go:TestDropProcedureClearsExecutePrivilegeRepro#0001",
+      "source": "testing/go/postgres16/procedure_drop_privilege_repro_test.go:TestDropProcedureClearsExecutePrivilegeRepro",
+      "ordinal": 1,
+      "scriptName": "DROP PROCEDURE clears EXECUTE privilege before recreate",
+      "oracle": "postgres",
+      "postgresId": "procedure-drop-privilege-repro-test-testdropprocedureclearsexecuteprivilegerepro-0001-call-drop_recreate_acl_proc",
+      "suggestedId": "procedure-drop-privilege-repro-test-testdropprocedureclearsexecuteprivilegerepro-0001-call-drop_recreate_acl_proc",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "drop_recreate_procedure_user",
+      "query": "CALL drop_recreate_acl_proc();",
+      "querySha256": "6a4f9f8f1654efa01c7a1e90beb77781613791c67d5d09be993bf0c18309838a",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

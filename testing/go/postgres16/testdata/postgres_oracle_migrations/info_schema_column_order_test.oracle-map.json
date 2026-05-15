@@ -1,0 +1,279 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map info_schema_column_order_test.go",
+  "sourceFile": "testing/go/postgres16/info_schema_column_order_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/info_schema_column_order_test.go:TestInfoSchemaColumnsOrdering#0001",
+      "source": "testing/go/postgres16/info_schema_column_order_test.go:TestInfoSchemaColumnsOrdering",
+      "ordinal": 1,
+      "scriptName": "ordinal_position reflects DDL column order",
+      "oracle": "postgres",
+      "postgresId": "info-schema-column-order-test-testinfoschemacolumnsordering-0001-select-column_name-ordinal_position::text-from-information_schema.columns",
+      "suggestedId": "info-schema-column-order-test-testinfoschemacolumnsordering-0001-select-column_name-ordinal_position::text-from-information_schema.columns",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT column_name, ordinal_position::text\n\t\t\t\t\t\tFROM information_schema.columns\n\t\t\t\t\t\tWHERE table_name = 'invoices'\n\t\t\t\t\t\tORDER BY ordinal_position;",
+      "querySha256": "cc6c209786c462f892594fc050b8d91cf2e0f36fb09610bf7e45c1ca336e498d",
+      "expectedRows": [
+        [
+          {
+            "value": "id"
+          },
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "customer"
+          },
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "amount"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "currency"
+          },
+          {
+            "value": "4"
+          }
+        ],
+        [
+          {
+            "value": "due_date"
+          },
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/info_schema_column_order_test.go:TestInfoSchemaColumnsOrdering#0002",
+      "source": "testing/go/postgres16/info_schema_column_order_test.go:TestInfoSchemaColumnsOrdering",
+      "ordinal": 2,
+      "scriptName": "is_nullable reports YES/NO accurately",
+      "oracle": "postgres",
+      "postgresId": "info-schema-column-order-test-testinfoschemacolumnsordering-0002-select-column_name-is_nullable-from-information_schema.columns",
+      "suggestedId": "info-schema-column-order-test-testinfoschemacolumnsordering-0002-select-column_name-is_nullable-from-information_schema.columns",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT column_name, is_nullable\n\t\t\t\t\t\tFROM information_schema.columns\n\t\t\t\t\t\tWHERE table_name = 'accounts'\n\t\t\t\t\t\tORDER BY ordinal_position;",
+      "querySha256": "e9a31041856d3037c8f5c07aab7ad1947a83fc0df191fbb80b8386c67899f600",
+      "expectedRows": [
+        [
+          {
+            "value": "id"
+          },
+          {
+            "value": "NO"
+          }
+        ],
+        [
+          {
+            "value": "email"
+          },
+          {
+            "value": "NO"
+          }
+        ],
+        [
+          {
+            "value": "nickname"
+          },
+          {
+            "value": "YES"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/info_schema_column_order_test.go:TestInfoSchemaColumnsOrdering#0003",
+      "source": "testing/go/postgres16/info_schema_column_order_test.go:TestInfoSchemaColumnsOrdering",
+      "ordinal": 3,
+      "scriptName": "data_type column reports PG type names",
+      "oracle": "postgres",
+      "postgresId": "info-schema-column-order-test-testinfoschemacolumnsordering-0003-select-column_name-data_type-from-information_schema.columns",
+      "suggestedId": "info-schema-column-order-test-testinfoschemacolumnsordering-0003-select-column_name-data_type-from-information_schema.columns",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT column_name, data_type\n\t\t\t\t\t\tFROM information_schema.columns\n\t\t\t\t\t\tWHERE table_name = 'shapes'\n\t\t\t\t\t\tORDER BY ordinal_position;",
+      "querySha256": "adf9e12811160750c94787629f376aa3be15bd46c06f8b3ce8b3e40de326fbb3",
+      "expectedRows": [
+        [
+          {
+            "value": "id"
+          },
+          {
+            "value": "integer"
+          }
+        ],
+        [
+          {
+            "value": "label"
+          },
+          {
+            "value": "text"
+          }
+        ],
+        [
+          {
+            "value": "qty"
+          },
+          {
+            "value": "integer"
+          }
+        ],
+        [
+          {
+            "value": "price"
+          },
+          {
+            "value": "numeric"
+          }
+        ],
+        [
+          {
+            "value": "ts"
+          },
+          {
+            "value": "timestamp without time zone"
+          }
+        ],
+        [
+          {
+            "value": "code"
+          },
+          {
+            "value": "character varying"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/info_schema_column_order_test.go:TestInfoSchemaColumnsOrdering#0004",
+      "source": "testing/go/postgres16/info_schema_column_order_test.go:TestInfoSchemaColumnsOrdering",
+      "ordinal": 4,
+      "scriptName": "array columns report ARRAY data type and array udt name",
+      "oracle": "postgres",
+      "postgresId": "info-schema-column-order-test-testinfoschemacolumnsordering-0004-select-column_name-data_type-udt_name-from",
+      "suggestedId": "info-schema-column-order-test-testinfoschemacolumnsordering-0004-select-column_name-data_type-udt_name-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT column_name, data_type, udt_name\n\t\t\t\t\t\tFROM information_schema.columns\n\t\t\t\t\t\tWHERE table_name = 'array_shapes'\n\t\t\t\t\t\tORDER BY ordinal_position;",
+      "querySha256": "635da9491309b3df5434b50068c4ff07959b1d66a1643e8303577faa63931d42",
+      "expectedRows": [
+        [
+          {
+            "value": "id"
+          },
+          {
+            "value": "integer"
+          },
+          {
+            "value": "int4"
+          }
+        ],
+        [
+          {
+            "value": "tags"
+          },
+          {
+            "value": "ARRAY"
+          },
+          {
+            "value": "_text"
+          }
+        ],
+        [
+          {
+            "value": "scores"
+          },
+          {
+            "value": "ARRAY"
+          },
+          {
+            "value": "_int4"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/info_schema_column_order_test.go:TestInfoSchemaColumnsOrdering#0005",
+      "source": "testing/go/postgres16/info_schema_column_order_test.go:TestInfoSchemaColumnsOrdering",
+      "ordinal": 5,
+      "scriptName": "column_default surfaces literal and expression defaults",
+      "oracle": "postgres",
+      "postgresId": "info-schema-column-order-test-testinfoschemacolumnsordering-0005-select-column_name-column_default-is-not",
+      "suggestedId": "info-schema-column-order-test-testinfoschemacolumnsordering-0005-select-column_name-column_default-is-not",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT column_name,\n\t\t\t\t\t\t(column_default IS NOT NULL)::text AS has_default\n\t\t\t\t\t\tFROM information_schema.columns\n\t\t\t\t\t\tWHERE table_name = 'flags'\n\t\t\t\t\t\tORDER BY ordinal_position;",
+      "querySha256": "624fc456ef4e46ccead7ba6b6ea74157650785af4eb839b4cb1c8ed8644c318f",
+      "expectedRows": [
+        [
+          {
+            "value": "id"
+          },
+          {
+            "value": "false"
+          }
+        ],
+        [
+          {
+            "value": "active"
+          },
+          {
+            "value": "true"
+          }
+        ],
+        [
+          {
+            "value": "ttl"
+          },
+          {
+            "value": "true"
+          }
+        ],
+        [
+          {
+            "value": "created_at"
+          },
+          {
+            "value": "true"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

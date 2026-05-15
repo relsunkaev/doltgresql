@@ -1,0 +1,161 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map aggregate_distinct_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/aggregate_distinct_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/aggregate_distinct_test.go:TestAggregateDistinct#0001",
+      "source": "testing/go/postgres16/aggregate_distinct_test.go:TestAggregateDistinct",
+      "ordinal": 1,
+      "scriptName": "string_agg(DISTINCT ...)",
+      "oracle": "postgres",
+      "postgresId": "aggregate-distinct-test-testaggregatedistinct-0001-select-entity_id-length-string_agg-distinct",
+      "suggestedId": "aggregate-distinct-test-testaggregatedistinct-0001-select-entity_id-length-string_agg-distinct",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT entity_id,\n\t\t\t\t\t\tlength(string_agg(DISTINCT tag, '')) AS distinct_tag_chars\n\t\t\t\t\t\tFROM tags\n\t\t\t\t\t\tGROUP BY entity_id\n\t\t\t\t\t\tORDER BY entity_id;",
+      "querySha256": "398e5e01801e3c76055c1e56992353cec8b33c69a83a413fd40b8fb493aa5a00",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/aggregate_distinct_test.go:TestAggregateDistinct#0002",
+      "source": "testing/go/postgres16/aggregate_distinct_test.go:TestAggregateDistinct",
+      "ordinal": 2,
+      "scriptName": "string_agg(DISTINCT ...)",
+      "oracle": "postgres",
+      "postgresId": "aggregate-distinct-test-testaggregatedistinct-0002-select-entity_id-string_agg-distinct-tag",
+      "suggestedId": "aggregate-distinct-test-testaggregatedistinct-0002-select-entity_id-string_agg-distinct-tag",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT entity_id,\n\t\t\t\t\t\tstring_agg(DISTINCT tag, ',' ORDER BY tag DESC) AS tags\n\t\t\t\t\t\tFROM tags\n\t\t\t\t\t\tGROUP BY entity_id\n\t\t\t\t\t\tORDER BY entity_id;",
+      "querySha256": "95b9da9b5c990cbc86304c7d380165d611682e941b2111ed253b462362e9dec1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "b,a"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "d,c"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/aggregate_distinct_test.go:TestAggregateDistinct#0003",
+      "source": "testing/go/postgres16/aggregate_distinct_test.go:TestAggregateDistinct",
+      "ordinal": 3,
+      "scriptName": "array_agg(DISTINCT ...)",
+      "oracle": "postgres",
+      "postgresId": "aggregate-distinct-test-testaggregatedistinct-0003-select-user_id-array_length-array_agg-distinct",
+      "suggestedId": "aggregate-distinct-test-testaggregatedistinct-0003-select-user_id-array_length-array_agg-distinct",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT user_id,\n\t\t\t\t\t\tarray_length(array_agg(DISTINCT group_id), 1) AS distinct_count\n\t\t\t\t\t\tFROM memberships\n\t\t\t\t\t\tGROUP BY user_id\n\t\t\t\t\t\tORDER BY user_id;",
+      "querySha256": "90614cd7a0e934a737d7dbb1889fe0ae9847a1293183a906d1b7ad88d820d4fc",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/aggregate_distinct_test.go:TestAggregateDistinct#0004",
+      "source": "testing/go/postgres16/aggregate_distinct_test.go:TestAggregateDistinct",
+      "ordinal": 4,
+      "scriptName": "array_agg(DISTINCT ...)",
+      "oracle": "postgres",
+      "postgresId": "aggregate-distinct-test-testaggregatedistinct-0004-select-user_id-array_agg-distinct-group_id",
+      "suggestedId": "aggregate-distinct-test-testaggregatedistinct-0004-select-user_id-array_agg-distinct-group_id",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT user_id,\n\t\t\t\t\t\tarray_agg(DISTINCT group_id ORDER BY group_id DESC) AS group_ids\n\t\t\t\t\t\tFROM memberships\n\t\t\t\t\t\tGROUP BY user_id\n\t\t\t\t\t\tORDER BY user_id;",
+      "querySha256": "779cf24e9002447c916a3461cf2b2578a77709bd7488bfd9d46c3e94635a74fa",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "{20,10}"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "{40,30}"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

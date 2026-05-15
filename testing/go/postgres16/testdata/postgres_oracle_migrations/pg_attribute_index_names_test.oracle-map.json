@@ -1,0 +1,88 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map pg_attribute_index_names_test.go",
+  "sourceFile": "testing/go/postgres16/pg_attribute_index_names_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/pg_attribute_index_names_test.go:TestPgAttributeIndexAttributeNames#0001",
+      "source": "testing/go/postgres16/pg_attribute_index_names_test.go:TestPgAttributeIndexAttributeNames",
+      "ordinal": 1,
+      "scriptName": "pg_attribute reports real column names for index entries",
+      "oracle": "postgres",
+      "postgresId": "pg-attribute-index-names-test-testpgattributeindexattributenames-0001-select-a.attname-from-pg_catalog.pg_attribute-a",
+      "suggestedId": "pg-attribute-index-names-test-testpgattributeindexattributenames-0001-select-a.attname-from-pg_catalog.pg_attribute-a",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT a.attname\nFROM pg_catalog.pg_attribute a\nJOIN pg_catalog.pg_class c ON c.oid = a.attrelid\nWHERE c.relname = 't_idxnames_code_idx'\nORDER BY a.attnum;",
+      "querySha256": "ebf4e63b59448930b1c506b74dda1ef62e0feda70ec23f360bd131f11de0719f",
+      "expectedRows": [
+        [
+          {
+            "value": "code"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/pg_attribute_index_names_test.go:TestPgAttributeIndexAttributeNames#0002",
+      "source": "testing/go/postgres16/pg_attribute_index_names_test.go:TestPgAttributeIndexAttributeNames",
+      "ordinal": 2,
+      "scriptName": "pg_attribute reports real column names for index entries",
+      "oracle": "postgres",
+      "postgresId": "pg-attribute-index-names-test-testpgattributeindexattributenames-0002-select-a.attname-from-pg_catalog.pg_attribute-a",
+      "suggestedId": "pg-attribute-index-names-test-testpgattributeindexattributenames-0002-select-a.attname-from-pg_catalog.pg_attribute-a",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT a.attname\nFROM pg_catalog.pg_attribute a\nJOIN pg_catalog.pg_class c ON c.oid = a.attrelid\nWHERE c.relname = 't_idxnames_multi_idx'\nORDER BY a.attnum;",
+      "querySha256": "9b2acd13131243112465a922099385370449b1b5e2cfd7f1c474f8251f4d3f4f",
+      "expectedRows": [
+        [
+          {
+            "value": "hits"
+          }
+        ],
+        [
+          {
+            "value": "code"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/pg_attribute_index_names_test.go:TestPgAttributeIndexAttributeNames#0003",
+      "source": "testing/go/postgres16/pg_attribute_index_names_test.go:TestPgAttributeIndexAttributeNames",
+      "ordinal": 3,
+      "scriptName": "pg_attribute reports real column names for index entries",
+      "oracle": "postgres",
+      "postgresId": "pg-attribute-index-names-test-testpgattributeindexattributenames-0003-select-a.attname-from-pg_catalog.pg_attribute-a",
+      "suggestedId": "pg-attribute-index-names-test-testpgattributeindexattributenames-0003-select-a.attname-from-pg_catalog.pg_attribute-a",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT a.attname\nFROM pg_catalog.pg_attribute a\nJOIN pg_catalog.pg_class c ON c.oid = a.attrelid\nWHERE c.relname = 't_idxnames_pkey'\nORDER BY a.attnum;",
+      "querySha256": "4499c63c597d90296478df27d980884d7c98e66319016cf5532d26b37b4599f4",
+      "expectedRows": [
+        [
+          {
+            "value": "id"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

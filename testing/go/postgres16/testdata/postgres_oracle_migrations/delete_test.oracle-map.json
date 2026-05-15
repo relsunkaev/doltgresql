@@ -1,0 +1,132 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map delete_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/delete_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/delete_test.go:TestDelete#0001",
+      "source": "testing/go/postgres16/delete_test.go:TestDelete",
+      "ordinal": 1,
+      "scriptName": "simple delete",
+      "oracle": "postgres",
+      "postgresId": "delete-test-testdelete-0001-delete-from-t123-where-id",
+      "suggestedId": "delete-test-testdelete-0001-delete-from-t123-where-id",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "DELETE FROM t123 where id = 1;",
+      "querySha256": "e6415fa6acce7cfe7be55f61433b393bd2996be671a232f887f2b4def978aa56",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/delete_test.go:TestDelete#0002",
+      "source": "testing/go/postgres16/delete_test.go:TestDelete",
+      "ordinal": 2,
+      "scriptName": "simple delete",
+      "oracle": "postgres",
+      "postgresId": "delete-test-testdelete-0002-select-*-from-t123",
+      "suggestedId": "delete-test-testdelete-0002-select-*-from-t123",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM t123;",
+      "querySha256": "733f3336cebef2a5914608d96d64f9e7153ea0d3af189bcdc1e1c729c263e6b4",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "two"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/delete_test.go:TestDelete#0003",
+      "source": "testing/go/postgres16/delete_test.go:TestDelete",
+      "ordinal": 3,
+      "scriptName": "delete returning",
+      "oracle": "postgres",
+      "postgresId": "delete-test-testdelete-0003-delete-from-t123-where-id",
+      "suggestedId": "delete-test-testdelete-0003-delete-from-t123-where-id",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "DELETE FROM t123 where id = 1 RETURNING id, c1;",
+      "querySha256": "3872b8a047c79633f497c879497f611173bcc2ee0551da8055b0171c0cc05d00",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "one"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/delete_test.go:TestDelete#0004",
+      "source": "testing/go/postgres16/delete_test.go:TestDelete",
+      "ordinal": 4,
+      "scriptName": "delete returning",
+      "oracle": "postgres",
+      "postgresId": "delete-test-testdelete-0004-delete-from-t123-returning-*",
+      "suggestedId": "delete-test-testdelete-0004-delete-from-t123-returning-*",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "DELETE FROM t123 RETURNING *;",
+      "querySha256": "6aad1a7211912b9d9c7a044781ede81e60d136443f605f0c0f1d41587b0acedd",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "two"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "three"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/delete_test.go:TestDelete#0005",
+      "source": "testing/go/postgres16/delete_test.go:TestDelete",
+      "ordinal": 5,
+      "scriptName": "delete returning",
+      "oracle": "postgres",
+      "postgresId": "delete-test-testdelete-0005-select-*-from-t123",
+      "suggestedId": "delete-test-testdelete-0005-select-*-from-t123",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM t123;",
+      "querySha256": "733f3336cebef2a5914608d96d64f9e7153ea0d3af189bcdc1e1c729c263e6b4",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map function_comment_drop_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/function_comment_drop_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/function_comment_drop_repro_test.go:TestDropFunctionClearsCommentRepro#0001",
+      "source": "testing/go/postgres16/function_comment_drop_repro_test.go:TestDropFunctionClearsCommentRepro",
+      "ordinal": 1,
+      "scriptName": "DROP FUNCTION clears function comment before recreate",
+      "oracle": "postgres",
+      "postgresId": "function-comment-drop-repro-test-testdropfunctionclearscommentrepro-0001-select-obj_description-select-oid-from",
+      "suggestedId": "function-comment-drop-repro-test-testdropfunctionclearscommentrepro-0001-select-obj_description-select-oid-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT obj_description(\n\t\t\t\t\t\t(SELECT oid FROM pg_proc WHERE proname = 'drop_recreate_comment_func'),\n\t\t\t\t\t\t'pg_proc');",
+      "querySha256": "d51bb28f6952e6a3762110518906e9a466c0e6e837afb0f6c02cc6ed5e29bbf1",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

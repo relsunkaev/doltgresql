@@ -1,0 +1,369 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map datetime_workload_test.go",
+  "sourceFile": "testing/go/postgres16/datetime_workload_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/postgres16/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/datetime_workload_test.go:TestDateTimeWorkload#0001",
+      "source": "testing/go/postgres16/datetime_workload_test.go:TestDateTimeWorkload",
+      "ordinal": 1,
+      "scriptName": "text-to-date and text-to-timestamp casts",
+      "oracle": "postgres",
+      "postgresId": "datetime-workload-test-testdatetimeworkload-0001-select-2026-05-08-::date::text",
+      "suggestedId": "datetime-workload-test-testdatetimeworkload-0001-select-2026-05-08-::date::text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT '2026-05-08'::date::text;",
+      "querySha256": "d13fecdad18a62509dd3dd5ff485255d2bc2393d9f42e443d5fc3f8696da3d40",
+      "expectedRows": [
+        [
+          {
+            "value": "2026-05-08"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/datetime_workload_test.go:TestDateTimeWorkload#0002",
+      "source": "testing/go/postgres16/datetime_workload_test.go:TestDateTimeWorkload",
+      "ordinal": 2,
+      "scriptName": "text-to-date and text-to-timestamp casts",
+      "oracle": "postgres",
+      "postgresId": "datetime-workload-test-testdatetimeworkload-0002-select-2026-05-08-10:30:45-::timestamp::text",
+      "suggestedId": "datetime-workload-test-testdatetimeworkload-0002-select-2026-05-08-10:30:45-::timestamp::text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT '2026-05-08 10:30:45'::timestamp::text;",
+      "querySha256": "892360bbc7a90df73156bfafd5a3359e296abe18dedc25b1a469eba9c2a81830",
+      "expectedRows": [
+        [
+          {
+            "value": "2026-05-08 10:30:45"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/datetime_workload_test.go:TestDateTimeWorkload#0003",
+      "source": "testing/go/postgres16/datetime_workload_test.go:TestDateTimeWorkload",
+      "ordinal": 3,
+      "scriptName": "text-to-date and text-to-timestamp casts",
+      "oracle": "postgres",
+      "postgresId": "datetime-workload-test-testdatetimeworkload-0003-select-cast-2026-05-08-as-date",
+      "suggestedId": "datetime-workload-test-testdatetimeworkload-0003-select-cast-2026-05-08-as-date",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT CAST('2026-05-08' AS DATE)::text;",
+      "querySha256": "508296ead3d886acc90ba76f90f42d3f73a978e41e4003ea42e79a64779adb10",
+      "expectedRows": [
+        [
+          {
+            "value": "2026-05-08"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/datetime_workload_test.go:TestDateTimeWorkload#0004",
+      "source": "testing/go/postgres16/datetime_workload_test.go:TestDateTimeWorkload",
+      "ordinal": 4,
+      "scriptName": "make_date and make_timestamp",
+      "oracle": "postgres",
+      "postgresId": "datetime-workload-test-testdatetimeworkload-0004-select-make_date-2026-5-8",
+      "suggestedId": "datetime-workload-test-testdatetimeworkload-0004-select-make_date-2026-5-8",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT make_date(2026, 5, 8)::text;",
+      "querySha256": "623c0eb70af1fdb998073ac59d357b0fbf90725bfcf9c7da247b54e759fd994f",
+      "expectedRows": [
+        [
+          {
+            "value": "2026-05-08"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/datetime_workload_test.go:TestDateTimeWorkload#0005",
+      "source": "testing/go/postgres16/datetime_workload_test.go:TestDateTimeWorkload",
+      "ordinal": 5,
+      "scriptName": "make_date and make_timestamp",
+      "oracle": "postgres",
+      "postgresId": "datetime-workload-test-testdatetimeworkload-0005-select-make_timestamp-2026-5-8",
+      "suggestedId": "datetime-workload-test-testdatetimeworkload-0005-select-make_timestamp-2026-5-8",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT make_timestamp(2026, 5, 8, 10, 30, 45)::text;",
+      "querySha256": "0b155d54ee6cefadfff5e7994378d212a7ae361fc32e4ed5610bab4576d0e606",
+      "expectedRows": [
+        [
+          {
+            "value": "2026-05-08 10:30:45"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/datetime_workload_test.go:TestDateTimeWorkload#0006",
+      "source": "testing/go/postgres16/datetime_workload_test.go:TestDateTimeWorkload",
+      "ordinal": 6,
+      "scriptName": "extract for date parts",
+      "oracle": "postgres",
+      "postgresId": "datetime-workload-test-testdatetimeworkload-0006-select-extract-year-from-2026-05-08",
+      "suggestedId": "datetime-workload-test-testdatetimeworkload-0006-select-extract-year-from-2026-05-08",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT extract(year FROM '2026-05-08'::date)::text;",
+      "querySha256": "7bc59005605a22dc643b00e6da8073e9ae500acbad1f3f0e60f6de87b081d1b8",
+      "expectedRows": [
+        [
+          {
+            "value": "2026"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/datetime_workload_test.go:TestDateTimeWorkload#0007",
+      "source": "testing/go/postgres16/datetime_workload_test.go:TestDateTimeWorkload",
+      "ordinal": 7,
+      "scriptName": "extract for date parts",
+      "oracle": "postgres",
+      "postgresId": "datetime-workload-test-testdatetimeworkload-0007-select-extract-month-from-2026-05-08",
+      "suggestedId": "datetime-workload-test-testdatetimeworkload-0007-select-extract-month-from-2026-05-08",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT extract(month FROM '2026-05-08'::date)::text;",
+      "querySha256": "29ff67b6ca501b289c71be2c639f0d0d759b4b902ed747bcc26fdd0a2855be3b",
+      "expectedRows": [
+        [
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/datetime_workload_test.go:TestDateTimeWorkload#0008",
+      "source": "testing/go/postgres16/datetime_workload_test.go:TestDateTimeWorkload",
+      "ordinal": 8,
+      "scriptName": "extract for date parts",
+      "oracle": "postgres",
+      "postgresId": "datetime-workload-test-testdatetimeworkload-0008-select-extract-day-from-2026-05-08",
+      "suggestedId": "datetime-workload-test-testdatetimeworkload-0008-select-extract-day-from-2026-05-08",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT extract(day FROM '2026-05-08'::date)::text;",
+      "querySha256": "ce2079bd49f9b1d61e6ff67c7777e6450917cceb3fa3fd6a04ca3c6ef253b69b",
+      "expectedRows": [
+        [
+          {
+            "value": "8"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/datetime_workload_test.go:TestDateTimeWorkload#0009",
+      "source": "testing/go/postgres16/datetime_workload_test.go:TestDateTimeWorkload",
+      "ordinal": 9,
+      "scriptName": "extract for date parts",
+      "oracle": "postgres",
+      "postgresId": "datetime-workload-test-testdatetimeworkload-0009-select-extract-quarter-from-2026-05-08",
+      "suggestedId": "datetime-workload-test-testdatetimeworkload-0009-select-extract-quarter-from-2026-05-08",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT extract(quarter FROM '2026-05-08'::date)::text;",
+      "querySha256": "af64385b41ff9374b3c0da53a107409c54e10eb8f4a6afab2f7705555be9f72e",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/datetime_workload_test.go:TestDateTimeWorkload#0010",
+      "source": "testing/go/postgres16/datetime_workload_test.go:TestDateTimeWorkload",
+      "ordinal": 10,
+      "scriptName": "extract for date parts",
+      "oracle": "postgres",
+      "postgresId": "datetime-workload-test-testdatetimeworkload-0010-select-extract-dow-from-2026-05-08",
+      "suggestedId": "datetime-workload-test-testdatetimeworkload-0010-select-extract-dow-from-2026-05-08",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT extract(dow FROM '2026-05-08'::date)::text;",
+      "querySha256": "35b78fd398abe132c44dc9049f60f364fdfbe3a1818ef81f6c976ea1ed3476e7",
+      "expectedRows": [
+        [
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/datetime_workload_test.go:TestDateTimeWorkload#0011",
+      "source": "testing/go/postgres16/datetime_workload_test.go:TestDateTimeWorkload",
+      "ordinal": 11,
+      "scriptName": "extract for date parts",
+      "oracle": "postgres",
+      "postgresId": "datetime-workload-test-testdatetimeworkload-0011-select-extract-hour-from-2026-05-08",
+      "suggestedId": "datetime-workload-test-testdatetimeworkload-0011-select-extract-hour-from-2026-05-08",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT extract(hour FROM '2026-05-08 10:30:45'::timestamp)::text;",
+      "querySha256": "765298bef40558f2ffe472eb50fcdb5da936223e33273f68b7460fbedcbdc0eb",
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/datetime_workload_test.go:TestDateTimeWorkload#0012",
+      "source": "testing/go/postgres16/datetime_workload_test.go:TestDateTimeWorkload",
+      "ordinal": 12,
+      "scriptName": "date arithmetic and INTERVAL math",
+      "oracle": "postgres",
+      "postgresId": "datetime-workload-test-testdatetimeworkload-0012-select-2026-05-08-::date-+-interval",
+      "suggestedId": "datetime-workload-test-testdatetimeworkload-0012-select-2026-05-08-::date-+-interval",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ('2026-05-08'::date + INTERVAL '1 day')::date::text;",
+      "querySha256": "dfe5d59d47b56e1aa970ced385a1ee6238e469498093356db219731368920492",
+      "expectedRows": [
+        [
+          {
+            "value": "2026-05-09"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/datetime_workload_test.go:TestDateTimeWorkload#0013",
+      "source": "testing/go/postgres16/datetime_workload_test.go:TestDateTimeWorkload",
+      "ordinal": 13,
+      "scriptName": "date arithmetic and INTERVAL math",
+      "oracle": "postgres",
+      "postgresId": "datetime-workload-test-testdatetimeworkload-0013-select-2026-05-08-::date-interval-1",
+      "suggestedId": "datetime-workload-test-testdatetimeworkload-0013-select-2026-05-08-::date-interval-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ('2026-05-08'::date - INTERVAL '1 month')::date::text;",
+      "querySha256": "46a02b2d124774cd7edbc5386f6d7bb55c7e3ce916bc6fe5c8e901e7d99339c3",
+      "expectedRows": [
+        [
+          {
+            "value": "2026-04-08"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/datetime_workload_test.go:TestDateTimeWorkload#0014",
+      "source": "testing/go/postgres16/datetime_workload_test.go:TestDateTimeWorkload",
+      "ordinal": 14,
+      "scriptName": "date arithmetic and INTERVAL math",
+      "oracle": "postgres",
+      "postgresId": "datetime-workload-test-testdatetimeworkload-0014-select-2026-05-08-::date-2026-05-01-::date",
+      "suggestedId": "datetime-workload-test-testdatetimeworkload-0014-select-2026-05-08-::date-2026-05-01-::date",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ('2026-05-08'::date - '2026-05-01'::date)::text;",
+      "querySha256": "95a5f36fdc700646a0537cba0f5d706477c7f26cbdfba7bbe88ff54619ed7ab5",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/datetime_workload_test.go:TestDateTimeWorkload#0015",
+      "source": "testing/go/postgres16/datetime_workload_test.go:TestDateTimeWorkload",
+      "ordinal": 15,
+      "scriptName": "date_trunc",
+      "oracle": "postgres",
+      "postgresId": "datetime-workload-test-testdatetimeworkload-0015-select-date_trunc-month-2026-05-08-10:30:45",
+      "suggestedId": "datetime-workload-test-testdatetimeworkload-0015-select-date_trunc-month-2026-05-08-10:30:45",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT date_trunc('month', '2026-05-08 10:30:45'::timestamp)::text;",
+      "querySha256": "cb6a5c5e50e5ea1f9a5e54239a126da94816a5c7a774bdcc31e65e318366f5c1",
+      "expectedRows": [
+        [
+          {
+            "value": "2026-05-01 00:00:00"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/datetime_workload_test.go:TestDateTimeWorkload#0016",
+      "source": "testing/go/postgres16/datetime_workload_test.go:TestDateTimeWorkload",
+      "ordinal": 16,
+      "scriptName": "date_trunc",
+      "oracle": "postgres",
+      "postgresId": "datetime-workload-test-testdatetimeworkload-0016-select-date_trunc-hour-2026-05-08-10:30:45",
+      "suggestedId": "datetime-workload-test-testdatetimeworkload-0016-select-date_trunc-hour-2026-05-08-10:30:45",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT date_trunc('hour', '2026-05-08 10:30:45'::timestamp)::text;",
+      "querySha256": "414e28ab8487b89277bad9a0b413c859a87ab210a063617e4e113f01bdd3f1e7",
+      "expectedRows": [
+        [
+          {
+            "value": "2026-05-08 10:00:00"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

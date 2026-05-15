@@ -1,0 +1,39 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map database_comment_drop_repro_test.go --oracle-test-name TestDropDatabaseClearsCommentRepro --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/database_comment_drop_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/database_comment_drop_repro_test.go:TestDropDatabaseClearsCommentRepro#0001",
+      "source": "testing/go/postgres16/database_comment_drop_repro_test.go:TestDropDatabaseClearsCommentRepro",
+      "ordinal": 1,
+      "scriptName": "DROP DATABASE clears database comment before recreate",
+      "oracle": "postgres",
+      "postgresId": "database-comment-drop-repro-test-testdropdatabaseclearscommentrepro-0001-select-shobj_description-select-oid-from",
+      "suggestedId": "database-comment-drop-repro-test-testdropdatabaseclearscommentrepro-0001-select-shobj_description-select-oid-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT shobj_description(\n\t\t\t\t\t\t(SELECT oid FROM pg_database\n\t\t\t\t\t\t WHERE datname = 'drop_recreate_comment_database'),\n\t\t\t\t\t\t'pg_database');",
+      "querySha256": "625778614f10d03f90b7af68923d26a9a7b57a0a7b22a03838b5f4d76abc9c5a",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

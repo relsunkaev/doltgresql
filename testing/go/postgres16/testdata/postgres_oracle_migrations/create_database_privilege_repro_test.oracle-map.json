@@ -1,0 +1,355 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map create_database_privilege_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/create_database_privilege_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/postgres16/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/create_database_privilege_repro_test.go:TestCreateDatabaseRequiresCreatedbPrivilegeRepro#0001",
+      "source": "testing/go/postgres16/create_database_privilege_repro_test.go:TestCreateDatabaseRequiresCreatedbPrivilegeRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE DATABASE requires CREATEDB privilege",
+      "oracle": "postgres",
+      "postgresId": "create-database-privilege-repro-test-testcreatedatabaserequirescreatedbprivilegerepro-0001-create-database-unauthorized_db",
+      "suggestedId": "create-database-privilege-repro-test-testcreatedatabaserequirescreatedbprivilegerepro-0001-create-database-unauthorized_db",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "db_creator",
+      "query": "CREATE DATABASE unauthorized_db;",
+      "querySha256": "d9cd155d8aac308e2b131ee99e6cafbd6e72ca2a009edb44b5f1395595e295a4",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_database_privilege_repro_test.go:TestDropDatabaseRequiresOwnershipRepro#0001",
+      "source": "testing/go/postgres16/create_database_privilege_repro_test.go:TestDropDatabaseRequiresOwnershipRepro",
+      "ordinal": 1,
+      "scriptName": "DROP DATABASE requires database ownership",
+      "oracle": "postgres",
+      "postgresId": "create-database-privilege-repro-test-testdropdatabaserequiresownershiprepro-0001-drop-database-protected_db",
+      "suggestedId": "create-database-privilege-repro-test-testdropdatabaserequiresownershiprepro-0001-drop-database-protected_db",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "db_dropper",
+      "query": "DROP DATABASE protected_db;",
+      "querySha256": "bd226bb497aa4e08850297f516c861a6a47a876a7d06a54c8d0d47628eabadd2",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_database_privilege_repro_test.go:TestDropDatabaseRequiresOwnershipDespiteAllPrivilegesRepro#0001",
+      "source": "testing/go/postgres16/create_database_privilege_repro_test.go:TestDropDatabaseRequiresOwnershipDespiteAllPrivilegesRepro",
+      "ordinal": 1,
+      "scriptName": "DROP DATABASE requires ownership despite ALL PRIVILEGES",
+      "oracle": "postgres",
+      "postgresId": "create-database-privilege-repro-test-testdropdatabaserequiresownershipdespiteallprivilegesrepro-0001-drop-database-protected_all_db",
+      "suggestedId": "create-database-privilege-repro-test-testdropdatabaserequiresownershipdespiteallprivilegesrepro-0001-drop-database-protected_all_db",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "drop_database_intruder",
+      "query": "DROP DATABASE protected_all_db;",
+      "querySha256": "1ba17ead88bd0bf1d1522448c2e88a0aee46e4addb5e67e6040e2d9f6c3f1ad4",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_database_privilege_repro_test.go:TestDropDatabaseRequiresOwnershipDespiteAllPrivilegesRepro#0002",
+      "source": "testing/go/postgres16/create_database_privilege_repro_test.go:TestDropDatabaseRequiresOwnershipDespiteAllPrivilegesRepro",
+      "ordinal": 2,
+      "scriptName": "DROP DATABASE requires ownership despite ALL PRIVILEGES",
+      "oracle": "postgres",
+      "postgresId": "create-database-privilege-repro-test-testdropdatabaserequiresownershipdespiteallprivilegesrepro-0002-select-datname-from-pg_database-where",
+      "suggestedId": "create-database-privilege-repro-test-testdropdatabaserequiresownershipdespiteallprivilegesrepro-0002-select-datname-from-pg_database-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT datname FROM pg_database WHERE datname = 'protected_all_db';",
+      "querySha256": "3e63473d61a3ea49ddb32e880e7692f68668e80b8c80fa30d7a90a5c924cf454",
+      "expectedRows": [
+        [
+          {
+            "value": "protected_all_db"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_database_privilege_repro_test.go:TestAlterDatabaseOwnerToRequiresOwnershipRepro#0001",
+      "source": "testing/go/postgres16/create_database_privilege_repro_test.go:TestAlterDatabaseOwnerToRequiresOwnershipRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER DATABASE OWNER TO requires database ownership",
+      "oracle": "postgres",
+      "postgresId": "create-database-privilege-repro-test-testalterdatabaseownertorequiresownershiprepro-0001-alter-database-owner_to_database_private-owner-to",
+      "suggestedId": "create-database-privilege-repro-test-testalterdatabaseownertorequiresownershiprepro-0001-alter-database-owner_to_database_private-owner-to",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "db_owner_hijacker",
+      "query": "ALTER DATABASE owner_to_database_private OWNER TO db_owner_hijacker;",
+      "querySha256": "61b4b32cdf32c5815fbac986e61c60e16a8e8e8e0ffcefe9bc10a94f5471e96f",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_database_privilege_repro_test.go:TestAlterDatabaseRenameToRequiresOwnershipRepro#0001",
+      "source": "testing/go/postgres16/create_database_privilege_repro_test.go:TestAlterDatabaseRenameToRequiresOwnershipRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER DATABASE RENAME TO requires database ownership",
+      "oracle": "postgres",
+      "postgresId": "create-database-privilege-repro-test-testalterdatabaserenametorequiresownershiprepro-0001-alter-database-rename_to_database_private-rename-to",
+      "suggestedId": "create-database-privilege-repro-test-testalterdatabaserenametorequiresownershiprepro-0001-alter-database-rename_to_database_private-rename-to",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "db_renamer",
+      "query": "ALTER DATABASE rename_to_database_private\n\t\t\t\t\t\tRENAME TO renamed_by_non_owner;",
+      "querySha256": "a7a035b0051697d635b57e1e4c1d1da43c0611bc94184a90fbc1418663e186c1",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_database_privilege_repro_test.go:TestAlterDatabaseRenameToRequiresOwnershipRepro#0002",
+      "source": "testing/go/postgres16/create_database_privilege_repro_test.go:TestAlterDatabaseRenameToRequiresOwnershipRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER DATABASE RENAME TO requires database ownership",
+      "oracle": "postgres",
+      "postgresId": "create-database-privilege-repro-test-testalterdatabaserenametorequiresownershiprepro-0002-select-datname-from-pg_catalog.pg_database-where",
+      "suggestedId": "create-database-privilege-repro-test-testalterdatabaserenametorequiresownershiprepro-0002-select-datname-from-pg_catalog.pg_database-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT datname\n\t\t\t\t\t\tFROM pg_catalog.pg_database\n\t\t\t\t\t\tWHERE datname IN ('rename_to_database_private', 'renamed_by_non_owner')\n\t\t\t\t\t\tORDER BY datname;",
+      "querySha256": "3cb1e93966a9a52885c39c40ed4790f98411a3f12206294df5dd205ac0f1bc85",
+      "expectedRows": [
+        [
+          {
+            "value": "rename_to_database_private"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_database_privilege_repro_test.go:TestAlterDatabaseSetRequiresOwnershipRepro#0001",
+      "source": "testing/go/postgres16/create_database_privilege_repro_test.go:TestAlterDatabaseSetRequiresOwnershipRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER DATABASE SET requires database ownership",
+      "oracle": "postgres",
+      "postgresId": "create-database-privilege-repro-test-testalterdatabasesetrequiresownershiprepro-0001-alter-database-setting_database_private-set-work_mem",
+      "suggestedId": "create-database-privilege-repro-test-testalterdatabasesetrequiresownershiprepro-0001-alter-database-setting_database_private-set-work_mem",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "db_setting_intruder",
+      "query": "ALTER DATABASE setting_database_private SET work_mem = '64kB';",
+      "querySha256": "fbec336f324c9ee1ef22ba914523ce85371eeb68cd545badc35e8e8924cd08b0",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_database_privilege_repro_test.go:TestAlterDatabaseSetRequiresOwnershipRepro#0002",
+      "source": "testing/go/postgres16/create_database_privilege_repro_test.go:TestAlterDatabaseSetRequiresOwnershipRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER DATABASE SET requires database ownership",
+      "oracle": "postgres",
+      "postgresId": "create-database-privilege-repro-test-testalterdatabasesetrequiresownershiprepro-0002-select-count-*-from-pg_catalog.pg_db_role_setting",
+      "suggestedId": "create-database-privilege-repro-test-testalterdatabasesetrequiresownershiprepro-0002-select-count-*-from-pg_catalog.pg_db_role_setting",
+      "compare": "sqlstate",
+      "expectedKind": "rows",
+      "sqlstate": "42704",
+      "errorSeverity": "ERROR",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_db_role_setting\n\t\t\t\t\t\tWHERE setdatabase = 'setting_database_private'::regdatabase;",
+      "querySha256": "90dddf135902bfaab5ea2842e240b97cb28a385f745f9240b4fd82c2bb289719",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_database_privilege_repro_test.go:TestAlterDatabaseCatalogOptionsRequireOwnershipRepro#0001",
+      "source": "testing/go/postgres16/create_database_privilege_repro_test.go:TestAlterDatabaseCatalogOptionsRequireOwnershipRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER DATABASE catalog options require database ownership",
+      "oracle": "postgres",
+      "postgresId": "create-database-privilege-repro-test-testalterdatabasecatalogoptionsrequireownershiprepro-0001-alter-database-metadata_allow_database_private-with-allow_connections",
+      "suggestedId": "create-database-privilege-repro-test-testalterdatabasecatalogoptionsrequireownershiprepro-0001-alter-database-metadata_allow_database_private-with-allow_connections",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "db_metadata_intruder",
+      "query": "ALTER DATABASE metadata_allow_database_private\n\t\t\t\t\t\tWITH ALLOW_CONNECTIONS false;",
+      "querySha256": "f6df43a7ea80c0be6a4be0330ecfa982ae9919b896de9d11dfe7f67ea0923813",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_database_privilege_repro_test.go:TestAlterDatabaseCatalogOptionsRequireOwnershipRepro#0002",
+      "source": "testing/go/postgres16/create_database_privilege_repro_test.go:TestAlterDatabaseCatalogOptionsRequireOwnershipRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER DATABASE catalog options require database ownership",
+      "oracle": "postgres",
+      "postgresId": "create-database-privilege-repro-test-testalterdatabasecatalogoptionsrequireownershiprepro-0002-alter-database-metadata_connection_database_private-with-connection",
+      "suggestedId": "create-database-privilege-repro-test-testalterdatabasecatalogoptionsrequireownershiprepro-0002-alter-database-metadata_connection_database_private-with-connection",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "db_metadata_intruder",
+      "query": "ALTER DATABASE metadata_connection_database_private\n\t\t\t\t\t\tWITH CONNECTION LIMIT 0;",
+      "querySha256": "7dbc227f5dfcfe3e5bfcc750162518e7e5dfaddf8be0997508c71642a43ee6b2",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_database_privilege_repro_test.go:TestAlterDatabaseCatalogOptionsRequireOwnershipRepro#0003",
+      "source": "testing/go/postgres16/create_database_privilege_repro_test.go:TestAlterDatabaseCatalogOptionsRequireOwnershipRepro",
+      "ordinal": 3,
+      "scriptName": "ALTER DATABASE catalog options require database ownership",
+      "oracle": "postgres",
+      "postgresId": "create-database-privilege-repro-test-testalterdatabasecatalogoptionsrequireownershiprepro-0003-alter-database-metadata_template_database_private-with-is_template",
+      "suggestedId": "create-database-privilege-repro-test-testalterdatabasecatalogoptionsrequireownershiprepro-0003-alter-database-metadata_template_database_private-with-is_template",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "db_metadata_intruder",
+      "query": "ALTER DATABASE metadata_template_database_private\n\t\t\t\t\t\tWITH IS_TEMPLATE true;",
+      "querySha256": "2c470fa01d440a4ec8f07138e86975e803c867aad7031c3b5ec9e7f83734523b",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_database_privilege_repro_test.go:TestAlterDatabaseCatalogOptionsRequireOwnershipRepro#0004",
+      "source": "testing/go/postgres16/create_database_privilege_repro_test.go:TestAlterDatabaseCatalogOptionsRequireOwnershipRepro",
+      "ordinal": 4,
+      "scriptName": "ALTER DATABASE catalog options require database ownership",
+      "oracle": "postgres",
+      "postgresId": "create-database-privilege-repro-test-testalterdatabasecatalogoptionsrequireownershiprepro-0004-select-datname-datallowconn-datconnlimit-datistemplate",
+      "suggestedId": "create-database-privilege-repro-test-testalterdatabasecatalogoptionsrequireownershiprepro-0004-select-datname-datallowconn-datconnlimit-datistemplate",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT datname, datallowconn, datconnlimit, datistemplate\n\t\t\t\t\t\tFROM pg_catalog.pg_database\n\t\t\t\t\t\tWHERE datname IN (\n\t\t\t\t\t\t\t'metadata_allow_database_private',\n\t\t\t\t\t\t\t'metadata_connection_database_private',\n\t\t\t\t\t\t\t'metadata_template_database_private'\n\t\t\t\t\t\t)\n\t\t\t\t\t\tORDER BY datname;",
+      "querySha256": "9b85c570adc35c77ef62a487239a6ac4736b32df6f11147079a98d9883c25c9a",
+      "expectedRows": [
+        [
+          {
+            "value": "metadata_allow_database_private"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "-1"
+          },
+          {
+            "value": "f"
+          }
+        ],
+        [
+          {
+            "value": "metadata_connection_database_private"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "-1"
+          },
+          {
+            "value": "f"
+          }
+        ],
+        [
+          {
+            "value": "metadata_template_database_private"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "-1"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_database_privilege_repro_test.go:TestAlterDatabaseResetRequiresOwnershipRepro#0001",
+      "source": "testing/go/postgres16/create_database_privilege_repro_test.go:TestAlterDatabaseResetRequiresOwnershipRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER DATABASE RESET requires database ownership",
+      "oracle": "postgres",
+      "postgresId": "create-database-privilege-repro-test-testalterdatabaseresetrequiresownershiprepro-0001-alter-database-reset_setting_database_private-reset-work_mem",
+      "suggestedId": "create-database-privilege-repro-test-testalterdatabaseresetrequiresownershiprepro-0001-alter-database-reset_setting_database_private-reset-work_mem",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "db_reset_intruder",
+      "query": "ALTER DATABASE reset_setting_database_private RESET work_mem;",
+      "querySha256": "e9cdee4989bf5e85304aff7690b9f2995396831ef47c7d7b277acd2dfef5bbc9",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_database_privilege_repro_test.go:TestAlterDatabaseResetRequiresOwnershipRepro#0002",
+      "source": "testing/go/postgres16/create_database_privilege_repro_test.go:TestAlterDatabaseResetRequiresOwnershipRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER DATABASE RESET requires database ownership",
+      "oracle": "postgres",
+      "postgresId": "create-database-privilege-repro-test-testalterdatabaseresetrequiresownershiprepro-0002-alter-database-reset_all_database_private-reset-all",
+      "suggestedId": "create-database-privilege-repro-test-testalterdatabaseresetrequiresownershiprepro-0002-alter-database-reset_all_database_private-reset-all",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "db_reset_intruder",
+      "query": "ALTER DATABASE reset_all_database_private RESET ALL;",
+      "querySha256": "e909f52ba5c5d553fdf2e3f8324c34272743ead93387ae567ba77b42e531070c",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_database_privilege_repro_test.go:TestAlterDatabaseResetRequiresOwnershipRepro#0003",
+      "source": "testing/go/postgres16/create_database_privilege_repro_test.go:TestAlterDatabaseResetRequiresOwnershipRepro",
+      "ordinal": 3,
+      "scriptName": "ALTER DATABASE RESET requires database ownership",
+      "oracle": "postgres",
+      "postgresId": "create-database-privilege-repro-test-testalterdatabaseresetrequiresownershiprepro-0003-select-setdatabase::regdatabase::text-array_to_string-setconfig-from",
+      "suggestedId": "create-database-privilege-repro-test-testalterdatabaseresetrequiresownershiprepro-0003-select-setdatabase::regdatabase::text-array_to_string-setconfig-from",
+      "compare": "sqlstate",
+      "expectedKind": "rows",
+      "sqlstate": "42704",
+      "errorSeverity": "ERROR",
+      "query": "SELECT setdatabase::regdatabase::text, array_to_string(setconfig, ',')\n\t\t\t\t\t\tFROM pg_catalog.pg_db_role_setting\n\t\t\t\t\t\tWHERE setdatabase IN (\n\t\t\t\t\t\t\t'reset_setting_database_private'::regdatabase,\n\t\t\t\t\t\t\t'reset_all_database_private'::regdatabase\n\t\t\t\t\t\t)\n\t\t\t\t\t\tORDER BY setdatabase::regdatabase::text;",
+      "querySha256": "edc7883403fdf4ea1268ef266d8b59dbf0934abda0499d9d60a9bd66e4b544f2",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

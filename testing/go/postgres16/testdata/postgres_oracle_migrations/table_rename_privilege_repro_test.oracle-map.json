@@ -1,0 +1,69 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map table_rename_privilege_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/table_rename_privilege_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/table_rename_privilege_repro_test.go:TestAlterTableRenamePreservesTablePrivilegesRepro#0001",
+      "source": "testing/go/postgres16/table_rename_privilege_repro_test.go:TestAlterTableRenamePreservesTablePrivilegesRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER TABLE RENAME preserves table privileges",
+      "oracle": "postgres",
+      "postgresId": "table-rename-privilege-repro-test-testaltertablerenamepreservestableprivilegesrepro-0001-select-id-label-from-rename_priv_items",
+      "suggestedId": "table-rename-privilege-repro-test-testaltertablerenamepreservestableprivilegesrepro-0001-select-id-label-from-rename_priv_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "rename_priv_reader",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM rename_priv_items;",
+      "querySha256": "ddddd323d8e28d706c3e9856cf47b1ac2fb5de1c360eb862297addc5df0008c1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "visible after rename"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/table_rename_privilege_repro_test.go:TestAlterTableRenamePreservesTablePrivilegesRepro#0002",
+      "source": "testing/go/postgres16/table_rename_privilege_repro_test.go:TestAlterTableRenamePreservesTablePrivilegesRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER TABLE RENAME preserves table privileges",
+      "oracle": "postgres",
+      "postgresId": "table-rename-privilege-repro-test-testaltertablerenamepreservestableprivilegesrepro-0002-select-id-label-from-rename_priv_items_renamed",
+      "suggestedId": "table-rename-privilege-repro-test-testaltertablerenamepreservestableprivilegesrepro-0002-select-id-label-from-rename_priv_items_renamed",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "rename_priv_reader",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM rename_priv_items_renamed;",
+      "querySha256": "7693be137eba261c2bdbd23b68b95fe8fbb851ad0fcf8c8e4d16ef6b5a601e93",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "visible after rename"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

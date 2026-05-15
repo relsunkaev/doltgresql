@@ -1,0 +1,550 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map coercion_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/coercion_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/postgres16/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/coercion_test.go:TestCoercion#0001",
+      "source": "testing/go/postgres16/coercion_test.go:TestCoercion",
+      "ordinal": 1,
+      "scriptName": "Raw Literals",
+      "oracle": "postgres",
+      "postgresId": "coercion-test-testcoercion-0001-select-0",
+      "suggestedId": "coercion-test-testcoercion-0001-select-0",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 0",
+      "querySha256": "3adec4a4a21edef159da73579fdc4799efff9e8ce2a5ab2b7df70627e5d509bc",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/coercion_test.go:TestCoercion#0002",
+      "source": "testing/go/postgres16/coercion_test.go:TestCoercion",
+      "ordinal": 2,
+      "scriptName": "Raw Literals",
+      "oracle": "postgres",
+      "postgresId": "coercion-test-testcoercion-0002-select-0.5",
+      "suggestedId": "coercion-test-testcoercion-0002-select-0.5",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 0.5",
+      "querySha256": "b3318a895414733a61fa2c450c2550b01955160824edbd59f9674b7214b7fd23",
+      "expectedRows": [
+        [
+          {
+            "value": "0.5"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/coercion_test.go:TestCoercion#0003",
+      "source": "testing/go/postgres16/coercion_test.go:TestCoercion",
+      "ordinal": 3,
+      "scriptName": "Raw Literals",
+      "oracle": "postgres",
+      "postgresId": "coercion-test-testcoercion-0003-select-0.50",
+      "suggestedId": "coercion-test-testcoercion-0003-select-0.50",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 0.50",
+      "querySha256": "b866138bf022ca59cd5663602e89e2638b9caaf0f308246c36cd2d0dfd302850",
+      "expectedRows": [
+        [
+          {
+            "value": "0.5"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/coercion_test.go:TestCoercion#0004",
+      "source": "testing/go/postgres16/coercion_test.go:TestCoercion",
+      "ordinal": 4,
+      "scriptName": "Raw Literals",
+      "oracle": "postgres",
+      "postgresId": "coercion-test-testcoercion-0004-select-0.5",
+      "suggestedId": "coercion-test-testcoercion-0004-select-0.5",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT -0.5",
+      "querySha256": "5ca04cce9d949001db7aef07539c5b391d4f46afa2121134b924936a9d137054",
+      "expectedRows": [
+        [
+          {
+            "value": "-0.5"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/coercion_test.go:TestCoercion#0005",
+      "source": "testing/go/postgres16/coercion_test.go:TestCoercion",
+      "ordinal": 5,
+      "scriptName": "Raw Literals",
+      "oracle": "postgres",
+      "postgresId": "coercion-test-testcoercion-0005-select-12345671297673227365.5123624235623456",
+      "suggestedId": "coercion-test-testcoercion-0005-select-12345671297673227365.5123624235623456",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 12345671297673227365.5123624235623456",
+      "querySha256": "b347bb1060fd680f4895672f34add1a0becae3c72371d2f6ee08e60f2b21634f",
+      "expectedRows": [
+        [
+          {
+            "value": "12345671297673227365.5123624235623456"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/coercion_test.go:TestCoercion#0006",
+      "source": "testing/go/postgres16/coercion_test.go:TestCoercion",
+      "ordinal": 6,
+      "scriptName": "Raw Literals",
+      "oracle": "postgres",
+      "postgresId": "coercion-test-testcoercion-0006-select-1",
+      "suggestedId": "coercion-test-testcoercion-0006-select-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 1",
+      "querySha256": "e004ebd5b5532a4b85984a62f8ad48a81aa3460c1ca07701f386135d72cdecf5",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/coercion_test.go:TestCoercion#0007",
+      "source": "testing/go/postgres16/coercion_test.go:TestCoercion",
+      "ordinal": 7,
+      "scriptName": "Raw Literals",
+      "oracle": "postgres",
+      "postgresId": "coercion-test-testcoercion-0007-select-1",
+      "suggestedId": "coercion-test-testcoercion-0007-select-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT -1",
+      "querySha256": "8ec09e1e7f63bf66b1e1d48df5b8601b1faca68b4c31f81dacde7da9b7576aac",
+      "expectedRows": [
+        [
+          {
+            "value": "-1"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/coercion_test.go:TestCoercion#0008",
+      "source": "testing/go/postgres16/coercion_test.go:TestCoercion",
+      "ordinal": 8,
+      "scriptName": "Raw Literals",
+      "oracle": "postgres",
+      "postgresId": "coercion-test-testcoercion-0008-select-70000",
+      "suggestedId": "coercion-test-testcoercion-0008-select-70000",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 70000",
+      "querySha256": "e90e78a6f57ec08888308d6bc1054eaec247a7f4b8e3f3dbef5fc11269b2d8d7",
+      "expectedRows": [
+        [
+          {
+            "value": "70000"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/coercion_test.go:TestCoercion#0009",
+      "source": "testing/go/postgres16/coercion_test.go:TestCoercion",
+      "ordinal": 9,
+      "scriptName": "Raw Literals",
+      "oracle": "postgres",
+      "postgresId": "coercion-test-testcoercion-0009-select-5000000000",
+      "suggestedId": "coercion-test-testcoercion-0009-select-5000000000",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 5000000000",
+      "querySha256": "c0dd9a00191c8e4e151add263a66393848d4fa575b961c87cb9cd7d7ec4e44f1",
+      "expectedRows": [
+        [
+          {
+            "value": "5000000000"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/coercion_test.go:TestCoercion#0010",
+      "source": "testing/go/postgres16/coercion_test.go:TestCoercion",
+      "ordinal": 10,
+      "scriptName": "Raw Literals",
+      "oracle": "postgres",
+      "postgresId": "coercion-test-testcoercion-0010-select-9223372036854775808",
+      "suggestedId": "coercion-test-testcoercion-0010-select-9223372036854775808",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 9223372036854775808",
+      "querySha256": "55362ba145676d5c9a0ada96aa654dfbdad2d52c1e339ae26f4abe1577fcb19f",
+      "expectedRows": [
+        [
+          {
+            "value": "9223372036854775808"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/coercion_test.go:TestCoercion#0011",
+      "source": "testing/go/postgres16/coercion_test.go:TestCoercion",
+      "ordinal": 11,
+      "scriptName": "Raw Literals",
+      "oracle": "postgres",
+      "postgresId": "coercion-test-testcoercion-0011-select",
+      "suggestedId": "coercion-test-testcoercion-0011-select",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ''",
+      "querySha256": "c12fae5aafadf6d877b222eabbbb7f1343810b1f621b810fc01e9e277f728991",
+      "expectedRows": [
+        [
+          {
+            "value": ""
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/coercion_test.go:TestCoercion#0012",
+      "source": "testing/go/postgres16/coercion_test.go:TestCoercion",
+      "ordinal": 12,
+      "scriptName": "Raw Literals",
+      "oracle": "postgres",
+      "postgresId": "coercion-test-testcoercion-0012-select-test",
+      "suggestedId": "coercion-test-testcoercion-0012-select-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 'test'",
+      "querySha256": "77de30fe085756a79c1a1a8841de5a152df0b56d6ac8b4d90c5d0184d744c636",
+      "expectedRows": [
+        [
+          {
+            "value": "test"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/coercion_test.go:TestCoercion#0013",
+      "source": "testing/go/postgres16/coercion_test.go:TestCoercion",
+      "ordinal": 13,
+      "scriptName": "Raw Literals",
+      "oracle": "postgres",
+      "postgresId": "coercion-test-testcoercion-0013-select-0",
+      "suggestedId": "coercion-test-testcoercion-0013-select-0",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT '0'",
+      "querySha256": "538ecc33a33376fcbd9b9a3316f33a4fcccddc5f0b3613b3adbc94e00925010b",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/coercion_test.go:TestCoercion#0014",
+      "source": "testing/go/postgres16/coercion_test.go:TestCoercion",
+      "ordinal": 14,
+      "scriptName": "Math Functions",
+      "oracle": "postgres",
+      "postgresId": "coercion-test-testcoercion-0014-select-abs-1",
+      "suggestedId": "coercion-test-testcoercion-0014-select-abs-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT abs(1)",
+      "querySha256": "d793ef2eb2eeb03bd5c1ddc7ac244690a31b4a769d8623d42f801f09edf8fa23",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/coercion_test.go:TestCoercion#0015",
+      "source": "testing/go/postgres16/coercion_test.go:TestCoercion",
+      "ordinal": 15,
+      "scriptName": "Math Functions",
+      "oracle": "postgres",
+      "postgresId": "coercion-test-testcoercion-0015-select-abs-1.5",
+      "suggestedId": "coercion-test-testcoercion-0015-select-abs-1.5",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT abs(1.5)",
+      "querySha256": "c088696d08448e128220d4d828e081a0aa16b32c95d229e714e1ece9d4f9e288",
+      "expectedRows": [
+        [
+          {
+            "value": "1.5"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/coercion_test.go:TestCoercion#0016",
+      "source": "testing/go/postgres16/coercion_test.go:TestCoercion",
+      "ordinal": 16,
+      "scriptName": "Math Functions",
+      "oracle": "postgres",
+      "postgresId": "coercion-test-testcoercion-0016-select-abs-5000000000",
+      "suggestedId": "coercion-test-testcoercion-0016-select-abs-5000000000",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT abs(5000000000)",
+      "querySha256": "0ed1262d93f5f1bfdd436be3fe953e95bd729519b4cf4289bf5cad9c24477fbd",
+      "expectedRows": [
+        [
+          {
+            "value": "5000000000"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/coercion_test.go:TestCoercion#0017",
+      "source": "testing/go/postgres16/coercion_test.go:TestCoercion",
+      "ordinal": 17,
+      "scriptName": "Math Functions",
+      "oracle": "postgres",
+      "postgresId": "coercion-test-testcoercion-0017-select-abs-9223372036854775808",
+      "suggestedId": "coercion-test-testcoercion-0017-select-abs-9223372036854775808",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT abs(9223372036854775808)",
+      "querySha256": "19f38cf278dd43025fc66ff61af1ea035ed146a5671f3b5547212429e9d5b562",
+      "expectedRows": [
+        [
+          {
+            "value": "9223372036854775808"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/coercion_test.go:TestCoercion#0018",
+      "source": "testing/go/postgres16/coercion_test.go:TestCoercion",
+      "ordinal": 18,
+      "scriptName": "Math Functions",
+      "oracle": "postgres",
+      "postgresId": "coercion-test-testcoercion-0018-select-abs-1",
+      "suggestedId": "coercion-test-testcoercion-0018-select-abs-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT abs('1')",
+      "querySha256": "ad745f406057d0714b874a99cccb15651294ca2bf4756b474d53fca774de70d5",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/coercion_test.go:TestCoercion#0019",
+      "source": "testing/go/postgres16/coercion_test.go:TestCoercion",
+      "ordinal": 19,
+      "scriptName": "Math Functions",
+      "oracle": "postgres",
+      "postgresId": "coercion-test-testcoercion-0019-select-abs-1.5",
+      "suggestedId": "coercion-test-testcoercion-0019-select-abs-1.5",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT abs('1.5')",
+      "querySha256": "1afab37a0a543ea74f6cb9d43c65af9eb2b72ee943db26703855c62ca898c99b",
+      "expectedRows": [
+        [
+          {
+            "value": "1.5"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/coercion_test.go:TestCoercion#0020",
+      "source": "testing/go/postgres16/coercion_test.go:TestCoercion",
+      "ordinal": 20,
+      "scriptName": "Math Functions",
+      "oracle": "postgres",
+      "postgresId": "coercion-test-testcoercion-0020-select-abs-12345671297673227365.5123624235623456",
+      "suggestedId": "coercion-test-testcoercion-0020-select-abs-12345671297673227365.5123624235623456",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT abs('12345671297673227365.5123624235623456')",
+      "querySha256": "aeb57c8320a6ee5dd9f24eff8a9984b99115e86265e403dd13e2a1eac7d7e09b",
+      "expectedRows": [
+        [
+          {
+            "value": "1.2345671297673228e+19"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/coercion_test.go:TestCoercion#0021",
+      "source": "testing/go/postgres16/coercion_test.go:TestCoercion",
+      "ordinal": 21,
+      "scriptName": "Math Functions",
+      "oracle": "postgres",
+      "postgresId": "coercion-test-testcoercion-0021-select-factorial-1",
+      "suggestedId": "coercion-test-testcoercion-0021-select-factorial-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT factorial('1')",
+      "querySha256": "b619d2787d6497e42268ea44ce88714a8023ab7c2cc9318a202d7a296a815799",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/coercion_test.go:TestCoercion#0022",
+      "source": "testing/go/postgres16/coercion_test.go:TestCoercion",
+      "ordinal": 22,
+      "scriptName": "Math Functions",
+      "oracle": "postgres",
+      "postgresId": "coercion-test-testcoercion-0022-select-factorial-1.5",
+      "suggestedId": "coercion-test-testcoercion-0022-select-factorial-1.5",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22P02",
+      "errorSeverity": "ERROR",
+      "query": "SELECT factorial('1.5')",
+      "querySha256": "a829f4791eaa16739f51856dc493caa442ebcee5f691726821b48fd66fa8a21e",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

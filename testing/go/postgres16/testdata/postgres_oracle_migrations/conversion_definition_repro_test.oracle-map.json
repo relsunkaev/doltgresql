@@ -1,0 +1,114 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map conversion_definition_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/conversion_definition_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/conversion_definition_repro_test.go:TestCreateConversionPersistsPgConversionRepro#0001",
+      "source": "testing/go/postgres16/conversion_definition_repro_test.go:TestCreateConversionPersistsPgConversionRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE CONVERSION populates pg_conversion",
+      "oracle": "postgres",
+      "postgresId": "conversion-definition-repro-test-testcreateconversionpersistspgconversionrepro-0001-select-conname-from-pg_catalog.pg_conversion-where",
+      "suggestedId": "conversion-definition-repro-test-testcreateconversionpersistspgconversionrepro-0001-select-conname-from-pg_catalog.pg_conversion-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT conname\n\t\t\t\t\t\tFROM pg_catalog.pg_conversion\n\t\t\t\t\t\tWHERE conname = 'custom_latin1_to_utf8';",
+      "querySha256": "66c321e42d565496fc6be19b998c857d7dc794e5a5315ce12d38d1beae1ec8d4",
+      "expectedRows": [
+        [
+          {
+            "value": "custom_latin1_to_utf8"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/conversion_definition_repro_test.go:TestCreateConversionRequiresSchemaCreatePrivilegeRepro#0001",
+      "source": "testing/go/postgres16/conversion_definition_repro_test.go:TestCreateConversionRequiresSchemaCreatePrivilegeRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE CONVERSION requires schema CREATE privilege",
+      "oracle": "postgres",
+      "postgresId": "conversion-definition-repro-test-testcreateconversionrequiresschemacreateprivilegerepro-0001-create-conversion-unauthorized_latin1_to_utf8-for-latin1",
+      "suggestedId": "conversion-definition-repro-test-testcreateconversionrequiresschemacreateprivilegerepro-0001-create-conversion-unauthorized_latin1_to_utf8-for-latin1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "conversion_creator",
+      "query": "CREATE CONVERSION unauthorized_latin1_to_utf8\n\t\t\t\t\t\tFOR 'LATIN1' TO 'UTF8'\n\t\t\t\t\t\tFROM iso8859_1_to_utf8;",
+      "querySha256": "f46577d646a16d04b7e3450d41c8fc04efce30c621faa29310a64235a6a37211",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/conversion_definition_repro_test.go:TestDropConversionRequiresOwnershipRepro#0001",
+      "source": "testing/go/postgres16/conversion_definition_repro_test.go:TestDropConversionRequiresOwnershipRepro",
+      "ordinal": 1,
+      "scriptName": "DROP CONVERSION requires ownership",
+      "oracle": "postgres",
+      "postgresId": "conversion-definition-repro-test-testdropconversionrequiresownershiprepro-0001-drop-conversion-owner_private_latin1_to_utf8",
+      "suggestedId": "conversion-definition-repro-test-testdropconversionrequiresownershiprepro-0001-drop-conversion-owner_private_latin1_to_utf8",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42704",
+      "errorSeverity": "ERROR",
+      "username": "conversion_dropper",
+      "query": "DROP CONVERSION owner_private_latin1_to_utf8;",
+      "querySha256": "41894b2afbb9d56833cfba80eb9b7fca661d860709787299ae2ca643ddc8f011",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/conversion_definition_repro_test.go:TestDropConversionRequiresOwnershipRepro#0002",
+      "source": "testing/go/postgres16/conversion_definition_repro_test.go:TestDropConversionRequiresOwnershipRepro",
+      "ordinal": 2,
+      "scriptName": "DROP CONVERSION requires ownership",
+      "oracle": "postgres",
+      "postgresId": "conversion-definition-repro-test-testdropconversionrequiresownershiprepro-0002-select-conname-from-pg_catalog.pg_conversion-where",
+      "suggestedId": "conversion-definition-repro-test-testdropconversionrequiresownershiprepro-0002-select-conname-from-pg_catalog.pg_conversion-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT conname\n\t\t\t\t\t\tFROM pg_catalog.pg_conversion\n\t\t\t\t\t\tWHERE conname = 'owner_private_latin1_to_utf8';",
+      "querySha256": "8c7139a9e0d88046f878cf5f582c25578fa5cd19f891f783a8465ec82f527e71",
+      "expectedRows": [
+        [
+          {
+            "value": "owner_private_latin1_to_utf8"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/conversion_definition_repro_test.go:TestAlterConversionMissingReachesValidationRepro#0001",
+      "source": "testing/go/postgres16/conversion_definition_repro_test.go:TestAlterConversionMissingReachesValidationRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER CONVERSION missing target reaches validation",
+      "oracle": "postgres",
+      "postgresId": "conversion-definition-repro-test-testalterconversionmissingreachesvalidationrepro-0001-alter-conversion-missing_conversion_repro-rename-to",
+      "suggestedId": "conversion-definition-repro-test-testalterconversionmissingreachesvalidationrepro-0001-alter-conversion-missing_conversion_repro-rename-to",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42704",
+      "errorSeverity": "ERROR",
+      "query": "ALTER CONVERSION missing_conversion_repro RENAME TO renamed_conversion_repro;",
+      "querySha256": "51369131cd793ede706e58f3a87babadc2304bdbbbd00f277a646f61e4081371",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

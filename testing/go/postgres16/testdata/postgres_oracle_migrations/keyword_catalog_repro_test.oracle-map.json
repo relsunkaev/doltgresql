@@ -1,0 +1,45 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map keyword_catalog_repro_test.go --oracle-test-name TestPgGetKeywordsExposesReservedWordsRepro --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/keyword_catalog_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/keyword_catalog_repro_test.go:TestPgGetKeywordsExposesReservedWordsRepro#0001",
+      "source": "testing/go/postgres16/keyword_catalog_repro_test.go:TestPgGetKeywordsExposesReservedWordsRepro",
+      "ordinal": 1,
+      "scriptName": "pg_get_keywords exposes reserved keyword metadata",
+      "oracle": "postgres",
+      "postgresId": "keyword-catalog-repro-test-testpggetkeywordsexposesreservedwordsrepro-0001-select-word-catcode-catdesc-from",
+      "suggestedId": "keyword-catalog-repro-test-testpggetkeywordsexposesreservedwordsrepro-0001-select-word-catcode-catdesc-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT word, catcode, catdesc\n\t\t\t\t\t\tFROM pg_catalog.pg_get_keywords()\n\t\t\t\t\t\tWHERE word = 'select';",
+      "querySha256": "bf035b03b259d20d1229c5799869c188aebb8000ee36fe37d1352e010b1cbdf0",
+      "expectedRows": [
+        [
+          {
+            "value": "select"
+          },
+          {
+            "value": "R"
+          },
+          {
+            "value": "reserved"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

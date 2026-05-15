@@ -1,0 +1,39 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map view_comment_drop_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/view_comment_drop_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/view_comment_drop_repro_test.go:TestDropViewClearsCommentRepro#0001",
+      "source": "testing/go/postgres16/view_comment_drop_repro_test.go:TestDropViewClearsCommentRepro",
+      "ordinal": 1,
+      "scriptName": "DROP VIEW clears view comment before recreate",
+      "oracle": "postgres",
+      "postgresId": "view-comment-drop-repro-test-testdropviewclearscommentrepro-0001-select-obj_description-drop_recreate_comment_view-::regclass-pg_class",
+      "suggestedId": "view-comment-drop-repro-test-testdropviewclearscommentrepro-0001-select-obj_description-drop_recreate_comment_view-::regclass-pg_class",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT obj_description(\n\t\t\t\t\t\t'drop_recreate_comment_view'::regclass,\n\t\t\t\t\t\t'pg_class');",
+      "querySha256": "d43671d6d8977ef852336d48a988cf8b05cef9ef7f33a2bb7e4b024568867e0c",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

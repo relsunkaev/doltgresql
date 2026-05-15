@@ -1,0 +1,280 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map set_operations_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/set_operations_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/set_operations_test.go:TestSetOperations#0001",
+      "source": "testing/go/postgres16/set_operations_test.go:TestSetOperations",
+      "ordinal": 1,
+      "scriptName": "Test intersect",
+      "oracle": "postgres",
+      "postgresId": "set-operations-test-testsetoperations-0001-select-*-from-b-intersect",
+      "suggestedId": "set-operations-test-testsetoperations-0001-select-*-from-b-intersect",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from b intersect select * from c order by 1,2;",
+      "querySha256": "293bdcbea55a1799d91554983bed5cd06f76c4d6a01c08fefe9f0fe1689ab09e",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/set_operations_test.go:TestSetOperations#0002",
+      "source": "testing/go/postgres16/set_operations_test.go:TestSetOperations",
+      "ordinal": 2,
+      "scriptName": "Test intersect",
+      "oracle": "postgres",
+      "postgresId": "set-operations-test-testsetoperations-0002-table-b-order-by-m",
+      "suggestedId": "set-operations-test-testsetoperations-0002-table-b-order-by-m",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "(table b order by m limit 1 offset 1) intersect (table c order by m limit 1);",
+      "querySha256": "c72cb98ed7ba580863a60e0154ee280ccea167c1b8fb004b9fcaa0e7f35409e7",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/set_operations_test.go:TestSetOperations#0003",
+      "source": "testing/go/postgres16/set_operations_test.go:TestSetOperations",
+      "ordinal": 3,
+      "scriptName": "Test union",
+      "oracle": "postgres",
+      "postgresId": "set-operations-test-testsetoperations-0003-select-*-from-b-union",
+      "suggestedId": "set-operations-test-testsetoperations-0003-select-*-from-b-union",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from b union select * from c order by 1,2;",
+      "querySha256": "bb0b79231b14c24cf26ccfc150289ff41f678fca4dad85a8b0663aff5e9dae7c",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/set_operations_test.go:TestSetOperations#0004",
+      "source": "testing/go/postgres16/set_operations_test.go:TestSetOperations",
+      "ordinal": 4,
+      "scriptName": "Test union",
+      "oracle": "postgres",
+      "postgresId": "set-operations-test-testsetoperations-0004-select-*-from-b-union",
+      "suggestedId": "set-operations-test-testsetoperations-0004-select-*-from-b-union",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from b union all select * from c order by 1,2;",
+      "querySha256": "194bc8665eb742c08a62d87d22ca3d86c7e99ff223fb1bb5fdf01285ffca41bb",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "4"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/set_operations_test.go:TestSetOperations#0005",
+      "source": "testing/go/postgres16/set_operations_test.go:TestSetOperations",
+      "ordinal": 5,
+      "scriptName": "Test union",
+      "oracle": "postgres",
+      "postgresId": "set-operations-test-testsetoperations-0005-table-b-order-by-m",
+      "suggestedId": "set-operations-test-testsetoperations-0005-table-b-order-by-m",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "(table b order by m limit 1 offset 1) union (table c order by m limit 1);",
+      "querySha256": "99fc8ab271dbf9651c3df544083f9907fb1a72547bd14a67dc29cd38701623a3",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/set_operations_test.go:TestSetOperations#0006",
+      "source": "testing/go/postgres16/set_operations_test.go:TestSetOperations",
+      "ordinal": 6,
+      "scriptName": "Test union",
+      "oracle": "postgres",
+      "postgresId": "set-operations-test-testsetoperations-0006-table-b-order-by-m",
+      "suggestedId": "set-operations-test-testsetoperations-0006-table-b-order-by-m",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "(table b order by m limit 1 offset 1) union all (table c order by m limit 1);",
+      "querySha256": "396824a3c4195714dd5d281e5a4f402007b5878580d91314c1e9e3731027cde2",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/set_operations_test.go:TestSetOperations#0007",
+      "source": "testing/go/postgres16/set_operations_test.go:TestSetOperations",
+      "ordinal": 7,
+      "scriptName": "Test except",
+      "oracle": "postgres",
+      "postgresId": "set-operations-test-testsetoperations-0007-select-*-from-b-except",
+      "suggestedId": "set-operations-test-testsetoperations-0007-select-*-from-b-except",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from b except select * from c order by 1,2;",
+      "querySha256": "a78f58b81d4d3303b9338b3d41146a11a044a53d55bf3f2d84aa294303b88cc5",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/set_operations_test.go:TestSetOperations#0008",
+      "source": "testing/go/postgres16/set_operations_test.go:TestSetOperations",
+      "ordinal": 8,
+      "scriptName": "Test except",
+      "oracle": "postgres",
+      "postgresId": "set-operations-test-testsetoperations-0008-table-b-order-by-m",
+      "suggestedId": "set-operations-test-testsetoperations-0008-table-b-order-by-m",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "(table b order by m limit 1 offset 1) except (table c order by m limit 1);",
+      "querySha256": "787cdab5b6792dc7026e805e9f377796bef3bb91e5c5c0410ff7fa9e8792d0b5",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

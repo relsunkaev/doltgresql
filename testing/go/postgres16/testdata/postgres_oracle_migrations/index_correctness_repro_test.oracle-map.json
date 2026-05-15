@@ -1,0 +1,1000 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map index_correctness_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/index_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestCreateIndexConcurrentlyRejectsTransactionBlockRepro#0001",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestCreateIndexConcurrentlyRejectsTransactionBlockRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE INDEX CONCURRENTLY rejects transaction block",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testcreateindexconcurrentlyrejectstransactionblockrepro-0001-create-index-concurrently-concurrent_index_tx_items_label_idx-on",
+      "suggestedId": "index-correctness-repro-test-testcreateindexconcurrentlyrejectstransactionblockrepro-0001-create-index-concurrently-concurrent_index_tx_items_label_idx-on",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "25001",
+      "errorSeverity": "ERROR",
+      "query": "CREATE INDEX CONCURRENTLY concurrent_index_tx_items_label_idx\n\t\t\t\t\t\tON concurrent_index_tx_items (label);",
+      "querySha256": "2b1232ec7c800db9a3b2387e68a6ddca0cd164e2417bec705e4da4b71f45607c",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestCreateIndexConcurrentlyRejectsTransactionBlockRepro#0002",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestCreateIndexConcurrentlyRejectsTransactionBlockRepro",
+      "ordinal": 2,
+      "scriptName": "CREATE INDEX CONCURRENTLY rejects transaction block",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testcreateindexconcurrentlyrejectstransactionblockrepro-0002-select-count-*-::text-from",
+      "suggestedId": "index-correctness-repro-test-testcreateindexconcurrentlyrejectstransactionblockrepro-0002-select-count-*-::text-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)::TEXT\n\t\t\t\t\t\tFROM pg_catalog.pg_indexes\n\t\t\t\t\t\tWHERE schemaname = current_schema()\n\t\t\t\t\t\t\tAND tablename = 'concurrent_index_tx_items'\n\t\t\t\t\t\t\tAND indexname = 'concurrent_index_tx_items_label_idx';",
+      "querySha256": "31362e71893aba0368f36be359fae02e05d169314eea3404ade933f61c983a58",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestDropIndexConcurrentlyRejectsTransactionBlockRepro#0001",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestDropIndexConcurrentlyRejectsTransactionBlockRepro",
+      "ordinal": 1,
+      "scriptName": "DROP INDEX CONCURRENTLY rejects transaction block",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testdropindexconcurrentlyrejectstransactionblockrepro-0001-drop-index-concurrently-drop_concurrent_index_tx_items_label_idx",
+      "suggestedId": "index-correctness-repro-test-testdropindexconcurrentlyrejectstransactionblockrepro-0001-drop-index-concurrently-drop_concurrent_index_tx_items_label_idx",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "25001",
+      "errorSeverity": "ERROR",
+      "query": "DROP INDEX CONCURRENTLY drop_concurrent_index_tx_items_label_idx;",
+      "querySha256": "4c37c0bd3bbfed9be3cb99ca3806a420b6e4edc6973bf5feb01d0781f0154e2e",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestDropIndexConcurrentlyRejectsTransactionBlockRepro#0002",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestDropIndexConcurrentlyRejectsTransactionBlockRepro",
+      "ordinal": 2,
+      "scriptName": "DROP INDEX CONCURRENTLY rejects transaction block",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testdropindexconcurrentlyrejectstransactionblockrepro-0002-select-count-*-::text-from",
+      "suggestedId": "index-correctness-repro-test-testdropindexconcurrentlyrejectstransactionblockrepro-0002-select-count-*-::text-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)::TEXT\n\t\t\t\t\t\tFROM pg_catalog.pg_indexes\n\t\t\t\t\t\tWHERE schemaname = current_schema()\n\t\t\t\t\t\t\tAND tablename = 'drop_concurrent_index_tx_items'\n\t\t\t\t\t\t\tAND indexname = 'drop_concurrent_index_tx_items_label_idx';",
+      "querySha256": "f57d6c0e999828cca78528795b1501dc2e6fa40c1362514b2c2934f8707f89f2",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestClusterMarksIndexClusteredRepro#0001",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestClusterMarksIndexClusteredRepro",
+      "ordinal": 1,
+      "scriptName": "CLUSTER marks selected index as clustered",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testclustermarksindexclusteredrepro-0001-select-c.relname-from-pg_catalog.pg_index-i",
+      "suggestedId": "index-correctness-repro-test-testclustermarksindexclusteredrepro-0001-select-c.relname-from-pg_catalog.pg_index-i",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT c.relname\n\t\t\t\t\t\tFROM pg_catalog.pg_index i\n\t\t\t\t\t\tJOIN pg_catalog.pg_class c ON c.oid = i.indexrelid\n\t\t\t\t\t\tJOIN pg_catalog.pg_class t ON t.oid = i.indrelid\n\t\t\t\t\t\tWHERE t.relname = 'cluster_metadata_items'\n\t\t\t\t\t\t\tAND i.indisclustered\n\t\t\t\t\t\tORDER BY c.relname;",
+      "querySha256": "5b9c4a8518818c7d9548831056432861fa9ddc5a3d91dc6fdd9cd22e91447f63",
+      "expectedRows": [
+        [
+          {
+            "value": "cluster_metadata_items_label_idx"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestPartialUniqueIndexEnforcesPredicateRepro#0001",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestPartialUniqueIndexEnforcesPredicateRepro",
+      "ordinal": 1,
+      "scriptName": "partial unique index enforces predicate",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testpartialuniqueindexenforcespredicaterepro-0001-insert-into-partial_unique_items-values-4",
+      "suggestedId": "index-correctness-repro-test-testpartialuniqueindexenforcespredicaterepro-0001-insert-into-partial_unique_items-values-4",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO partial_unique_items VALUES (4, 10, true);",
+      "querySha256": "974dce344cd18e843e43e88a9626689c4966dceab34bc5d33e420a33f2b73436",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestPartialUniqueIndexEnforcesPredicateRepro#0002",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestPartialUniqueIndexEnforcesPredicateRepro",
+      "ordinal": 2,
+      "scriptName": "partial unique index enforces predicate",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testpartialuniqueindexenforcespredicaterepro-0002-select-id-code-active-from",
+      "suggestedId": "index-correctness-repro-test-testpartialuniqueindexenforcespredicaterepro-0002-select-id-code-active-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, code, active\n\t\t\t\t\t\tFROM partial_unique_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "9b835a65dbff484ea80ad2d956dc9d55f9ce07d0ef35df7603bb62b9c986a20e",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "10"
+          },
+          {
+            "value": "t"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "10"
+          },
+          {
+            "value": "f"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "10"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestPartialUniqueIndexUpdatesPredicateMembershipGuard#0001",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestPartialUniqueIndexUpdatesPredicateMembershipGuard",
+      "ordinal": 1,
+      "scriptName": "partial unique index updates predicate membership",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testpartialuniqueindexupdatespredicatemembershipguard-0001-update-partial_unique_update_items-set-active-=",
+      "suggestedId": "index-correctness-repro-test-testpartialuniqueindexupdatespredicatemembershipguard-0001-update-partial_unique_update_items-set-active-=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "UPDATE partial_unique_update_items SET active = true WHERE id = 2;",
+      "querySha256": "3995ba60d161c9e16cdcd6733647623e1a7c9dd11c841411feac80c8aae9cf92",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestPartialUniqueIndexUpdatesPredicateMembershipGuard#0002",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestPartialUniqueIndexUpdatesPredicateMembershipGuard",
+      "ordinal": 2,
+      "scriptName": "partial unique index updates predicate membership",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testpartialuniqueindexupdatespredicatemembershipguard-0002-select-id-code-active-from",
+      "suggestedId": "index-correctness-repro-test-testpartialuniqueindexupdatespredicatemembershipguard-0002-select-id-code-active-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, code, active\n\t\t\t\t\t\tFROM partial_unique_update_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "f24e527c655ed45b7358e4fbbab2ff44b8c3f1e13ee3ba7e1f4fdf7dcb8bcc6b",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "10"
+          },
+          {
+            "value": "f"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "10"
+          },
+          {
+            "value": "t"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "20"
+          },
+          {
+            "value": "f"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "10"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestOnConflictUsesPartialUniqueIndexPredicateRepro#0001",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestOnConflictUsesPartialUniqueIndexPredicateRepro",
+      "ordinal": 1,
+      "scriptName": "ON CONFLICT infers partial unique index predicate",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testonconflictusespartialuniqueindexpredicaterepro-0001-select-id-code-active-note",
+      "suggestedId": "index-correctness-repro-test-testonconflictusespartialuniqueindexpredicaterepro-0001-select-id-code-active-note",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, code, active, note\n\t\t\t\t\t\tFROM partial_upsert_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "046734bda8bde8a8084e6c611b03f0bcebdb12b8888e89840c607dc13effded3",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "10"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "new-active"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "10"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "inactive"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestOnConflictWithoutPredicateRejectsPartialUniqueIndexRepro#0001",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestOnConflictWithoutPredicateRejectsPartialUniqueIndexRepro",
+      "ordinal": 1,
+      "scriptName": "ON CONFLICT without predicate rejects partial unique index",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testonconflictwithoutpredicaterejectspartialuniqueindexrepro-0001-insert-into-partial_upsert_missing_predicate_items-values-1",
+      "suggestedId": "index-correctness-repro-test-testonconflictwithoutpredicaterejectspartialuniqueindexrepro-0001-insert-into-partial_upsert_missing_predicate_items-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P10",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO partial_upsert_missing_predicate_items VALUES (1, 10, false)\n\t\t\t\t\t\tON CONFLICT (code) DO NOTHING;",
+      "querySha256": "adf9754f50127ffba6731cd36fc662c27fec9925a77ec5a4acb549b9401a918d",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestOnConflictWithoutPredicateRejectsPartialUniqueIndexRepro#0002",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestOnConflictWithoutPredicateRejectsPartialUniqueIndexRepro",
+      "ordinal": 2,
+      "scriptName": "ON CONFLICT without predicate rejects partial unique index",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testonconflictwithoutpredicaterejectspartialuniqueindexrepro-0002-select-count-*-from-partial_upsert_missing_predicate_items",
+      "suggestedId": "index-correctness-repro-test-testonconflictwithoutpredicaterejectspartialuniqueindexrepro-0002-select-count-*-from-partial_upsert_missing_predicate_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM partial_upsert_missing_predicate_items;",
+      "querySha256": "a8220e114328b27a46f0f7cc3ae0063955cce866107c302431dfaf490f794771",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestUniqueExpressionIndexEnforcesComputedValuesRepro#0001",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestUniqueExpressionIndexEnforcesComputedValuesRepro",
+      "ordinal": 1,
+      "scriptName": "unique expression index enforces computed values",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testuniqueexpressionindexenforcescomputedvaluesrepro-0001-insert-into-unique_expression_items-values-2",
+      "suggestedId": "index-correctness-repro-test-testuniqueexpressionindexenforcescomputedvaluesrepro-0001-insert-into-unique_expression_items-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO unique_expression_items VALUES (2, 'user@example.com');",
+      "querySha256": "6945c678185fa41e26956c7c2eef4f41ede019a4529e4202aed16622555c95b6",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestUniqueExpressionIndexEnforcesComputedValuesRepro#0002",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestUniqueExpressionIndexEnforcesComputedValuesRepro",
+      "ordinal": 2,
+      "scriptName": "unique expression index enforces computed values",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testuniqueexpressionindexenforcescomputedvaluesrepro-0002-select-id-email-from-unique_expression_items",
+      "suggestedId": "index-correctness-repro-test-testuniqueexpressionindexenforcescomputedvaluesrepro-0002-select-id-email-from-unique_expression_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, email\n\t\t\t\t\t\tFROM unique_expression_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "a43c16fcf6e6cc6a875454530b3f5ddf2e454d9559e8e72f9d601e7813247faa",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "User@Example.com"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestUniqueExpressionIndexEnforcesUpdatedComputedValuesGuard#0001",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestUniqueExpressionIndexEnforcesUpdatedComputedValuesGuard",
+      "ordinal": 1,
+      "scriptName": "unique expression index enforces updated computed values",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testuniqueexpressionindexenforcesupdatedcomputedvaluesguard-0001-update-unique_expression_update_items-set-email-=",
+      "suggestedId": "index-correctness-repro-test-testuniqueexpressionindexenforcesupdatedcomputedvaluesguard-0001-update-unique_expression_update_items-set-email-=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "UPDATE unique_expression_update_items SET email = 'user@example.com' WHERE id = 2;",
+      "querySha256": "08e12a663596f3dc8079b541c44be8b8f38444fa5a11674f4adf8f93fc078622",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestUniqueExpressionIndexEnforcesUpdatedComputedValuesGuard#0002",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestUniqueExpressionIndexEnforcesUpdatedComputedValuesGuard",
+      "ordinal": 2,
+      "scriptName": "unique expression index enforces updated computed values",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testuniqueexpressionindexenforcesupdatedcomputedvaluesguard-0002-select-id-email-from-unique_expression_update_items",
+      "suggestedId": "index-correctness-repro-test-testuniqueexpressionindexenforcesupdatedcomputedvaluesguard-0002-select-id-email-from-unique_expression_update_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, email\n\t\t\t\t\t\tFROM unique_expression_update_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "426f2cfad638da50f3e6cea7a623ceb776a9a88dcbdf360b06085a72a73ec372",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "User@Example.com"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "Other@Example.com"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestOnConflictUsesUniqueExpressionIndexRepro#0001",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestOnConflictUsesUniqueExpressionIndexRepro",
+      "ordinal": 1,
+      "scriptName": "ON CONFLICT infers unique expression index",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testonconflictusesuniqueexpressionindexrepro-0001-select-id-email-note-from",
+      "suggestedId": "index-correctness-repro-test-testonconflictusesuniqueexpressionindexrepro-0001-select-id-email-note-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, email, note\n\t\t\t\t\t\tFROM expression_upsert_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "2b2b265211378632fffe65e322a5e2538d6df861eeb3e821d4c4a00eb463077c",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "User@Example.com"
+          },
+          {
+            "value": "new"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestOnConflictOnConstraintUsesNamedUniqueConstraintRepro#0001",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestOnConflictOnConstraintUsesNamedUniqueConstraintRepro",
+      "ordinal": 1,
+      "scriptName": "ON CONFLICT ON CONSTRAINT uses named unique constraint",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testonconflictonconstraintusesnameduniqueconstraintrepro-0001-select-id-code-note-from",
+      "suggestedId": "index-correctness-repro-test-testonconflictonconstraintusesnameduniqueconstraintrepro-0001-select-id-code-note-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, code, note\n\t\t\t\t\t\tFROM named_constraint_upsert_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "65288f89b50625a4639752ca433cf02d89b5c5c777f5ea827856d65eac16a9a1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "10"
+          },
+          {
+            "value": "new"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestUniqueIndexIncludeColumnsDoNotAffectUniquenessRepro#0001",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestUniqueIndexIncludeColumnsDoNotAffectUniquenessRepro",
+      "ordinal": 1,
+      "scriptName": "unique index include columns do not affect uniqueness",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testuniqueindexincludecolumnsdonotaffectuniquenessrepro-0001-insert-into-unique_include_items-values-2",
+      "suggestedId": "index-correctness-repro-test-testuniqueindexincludecolumnsdonotaffectuniquenessrepro-0001-insert-into-unique_include_items-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO unique_include_items VALUES (2, 10, 'second');",
+      "querySha256": "fa388c364eef78d4c81cbb37631582bbd75838b151231ba7b478ff15769f21e5",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestUniqueIndexIncludeColumnsDoNotAffectUniquenessRepro#0002",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestUniqueIndexIncludeColumnsDoNotAffectUniquenessRepro",
+      "ordinal": 2,
+      "scriptName": "unique index include columns do not affect uniqueness",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testuniqueindexincludecolumnsdonotaffectuniquenessrepro-0002-select-id-code-label-from",
+      "suggestedId": "index-correctness-repro-test-testuniqueindexincludecolumnsdonotaffectuniquenessrepro-0002-select-id-code-label-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, code, label\n\t\t\t\t\t\tFROM unique_include_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "36c95e18518c5c8011130f6670c2596ea1320b4d15f3a2efcbf562c7bd0d84f1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "10"
+          },
+          {
+            "value": "first"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestUniqueIndexNullsNotDistinctRejectsDuplicateNullsRepro#0001",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestUniqueIndexNullsNotDistinctRejectsDuplicateNullsRepro",
+      "ordinal": 1,
+      "scriptName": "unique index NULLS NOT DISTINCT rejects duplicate NULLs",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testuniqueindexnullsnotdistinctrejectsduplicatenullsrepro-0001-insert-into-unique_nulls_not_distinct_items-values-2",
+      "suggestedId": "index-correctness-repro-test-testuniqueindexnullsnotdistinctrejectsduplicatenullsrepro-0001-insert-into-unique_nulls_not_distinct_items-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO unique_nulls_not_distinct_items VALUES (2, NULL);",
+      "querySha256": "66d31f99e2e39b2e186562304459b51f951b39132c09c4ebe05744e393d87ccf",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestUniqueIndexNullsNotDistinctRejectsDuplicateNullsRepro#0002",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestUniqueIndexNullsNotDistinctRejectsDuplicateNullsRepro",
+      "ordinal": 2,
+      "scriptName": "unique index NULLS NOT DISTINCT rejects duplicate NULLs",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testuniqueindexnullsnotdistinctrejectsduplicatenullsrepro-0002-select-id-code-from-unique_nulls_not_distinct_items",
+      "suggestedId": "index-correctness-repro-test-testuniqueindexnullsnotdistinctrejectsduplicatenullsrepro-0002-select-id-code-from-unique_nulls_not_distinct_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, code\n\t\t\t\t\t\tFROM unique_nulls_not_distinct_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "166678c7277c6a4875744cd31fba29d66c65aead755e42ed6086e94365682d01",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestUniqueIndexNullsNotDistinctRejectsUpdatedDuplicateNullsGuard#0001",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestUniqueIndexNullsNotDistinctRejectsUpdatedDuplicateNullsGuard",
+      "ordinal": 1,
+      "scriptName": "unique index NULLS NOT DISTINCT rejects updated duplicate NULLs",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testuniqueindexnullsnotdistinctrejectsupdatedduplicatenullsguard-0001-update-unique_nulls_not_distinct_update_items-set-code-=",
+      "suggestedId": "index-correctness-repro-test-testuniqueindexnullsnotdistinctrejectsupdatedduplicatenullsguard-0001-update-unique_nulls_not_distinct_update_items-set-code-=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "UPDATE unique_nulls_not_distinct_update_items SET code = NULL WHERE id = 2;",
+      "querySha256": "bd52c72ee13f8dcf8bac49eae8a3d1e1858be88d8bfe5c3afe32f4df0b4fd244",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestUniqueIndexNullsNotDistinctRejectsUpdatedDuplicateNullsGuard#0002",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestUniqueIndexNullsNotDistinctRejectsUpdatedDuplicateNullsGuard",
+      "ordinal": 2,
+      "scriptName": "unique index NULLS NOT DISTINCT rejects updated duplicate NULLs",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testuniqueindexnullsnotdistinctrejectsupdatedduplicatenullsguard-0002-select-id-code-from-unique_nulls_not_distinct_update_items",
+      "suggestedId": "index-correctness-repro-test-testuniqueindexnullsnotdistinctrejectsupdatedduplicatenullsguard-0002-select-id-code-from-unique_nulls_not_distinct_update_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, code\n\t\t\t\t\t\tFROM unique_nulls_not_distinct_update_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "bf7c510e276e9644b6fff10ee354f51dbf8f321d85664440ab316990699c6788",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "null": true
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestOnConflictUsesNullsNotDistinctUniqueIndexRepro#0001",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestOnConflictUsesNullsNotDistinctUniqueIndexRepro",
+      "ordinal": 1,
+      "scriptName": "ON CONFLICT uses NULLS NOT DISTINCT unique index",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testonconflictusesnullsnotdistinctuniqueindexrepro-0001-insert-into-nulls_not_distinct_upsert_items-values-2",
+      "suggestedId": "index-correctness-repro-test-testonconflictusesnullsnotdistinctuniqueindexrepro-0001-insert-into-nulls_not_distinct_upsert_items-values-2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO nulls_not_distinct_upsert_items VALUES (2, NULL, 'new')\n\t\t\t\t\t\tON CONFLICT (code) DO UPDATE\n\t\t\t\t\t\tSET label = EXCLUDED.label\n\t\t\t\t\t\tRETURNING id, code, label;",
+      "querySha256": "696715067ad51440ba179f7a945a78647fbd5dfd9ece1201d88b742058a7ab12",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "null": true
+          },
+          {
+            "value": "new"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestOnConflictUsesNullsNotDistinctUniqueIndexRepro#0002",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestOnConflictUsesNullsNotDistinctUniqueIndexRepro",
+      "ordinal": 2,
+      "scriptName": "ON CONFLICT uses NULLS NOT DISTINCT unique index",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testonconflictusesnullsnotdistinctuniqueindexrepro-0002-select-id-code-label-from",
+      "suggestedId": "index-correctness-repro-test-testonconflictusesnullsnotdistinctuniqueindexrepro-0002-select-id-code-label-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, code, label\n\t\t\t\t\t\tFROM nulls_not_distinct_upsert_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "f692c4df442817eb6873bf77c256635fd41d73a7006aedf1d67364e69f0ab796",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "null": true
+          },
+          {
+            "value": "new"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestCreateUniqueIndexNullsNotDistinctRejectsExistingDuplicateNullsRepro#0001",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestCreateUniqueIndexNullsNotDistinctRejectsExistingDuplicateNullsRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE UNIQUE INDEX NULLS NOT DISTINCT rejects existing duplicate NULLs",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testcreateuniqueindexnullsnotdistinctrejectsexistingduplicatenullsrepro-0001-create-unique-index-on-create_nulls_not_distinct_existing_items",
+      "suggestedId": "index-correctness-repro-test-testcreateuniqueindexnullsnotdistinctrejectsexistingduplicatenullsrepro-0001-create-unique-index-on-create_nulls_not_distinct_existing_items",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "CREATE UNIQUE INDEX create_nulls_not_distinct_existing_code_idx\n\t\t\t\t\t\tON create_nulls_not_distinct_existing_items (code)\n\t\t\t\t\t\tNULLS NOT DISTINCT;",
+      "querySha256": "7b564719fdf3bf11e5483aa925978f0d7a8d0796655ff82241cc52d263e78901",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestCreateUniqueIndexNullsNotDistinctRejectsExistingDuplicateNullsRepro#0002",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestCreateUniqueIndexNullsNotDistinctRejectsExistingDuplicateNullsRepro",
+      "ordinal": 2,
+      "scriptName": "CREATE UNIQUE INDEX NULLS NOT DISTINCT rejects existing duplicate NULLs",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testcreateuniqueindexnullsnotdistinctrejectsexistingduplicatenullsrepro-0002-select-count-*-from-pg_indexes",
+      "suggestedId": "index-correctness-repro-test-testcreateuniqueindexnullsnotdistinctrejectsexistingduplicatenullsrepro-0002-select-count-*-from-pg_indexes",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_indexes\n\t\t\t\t\t\tWHERE tablename = 'create_nulls_not_distinct_existing_items'\n\t\t\t\t\t\t\tAND indexname = 'create_nulls_not_distinct_existing_code_idx';",
+      "querySha256": "dc73424bb0dd19133cec0216a7b18d641528effab68cf22e6eca8a9562c30bf3",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestCreateUniqueIndexRejectsExistingDuplicatesRepro#0001",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestCreateUniqueIndexRejectsExistingDuplicatesRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE UNIQUE INDEX rejects existing duplicates",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testcreateuniqueindexrejectsexistingduplicatesrepro-0001-create-unique-index-on-create_unique_existing_duplicate_items",
+      "suggestedId": "index-correctness-repro-test-testcreateuniqueindexrejectsexistingduplicatesrepro-0001-create-unique-index-on-create_unique_existing_duplicate_items",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "CREATE UNIQUE INDEX create_unique_existing_duplicate_code_idx\n\t\t\t\t\t\tON create_unique_existing_duplicate_items (code);",
+      "querySha256": "a0d5560a80ea636a9f631ab9c6c2acb7c501808d57a5f96d76258a69a2387d8e",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestCreateUniqueIndexRejectsExistingDuplicatesRepro#0002",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestCreateUniqueIndexRejectsExistingDuplicatesRepro",
+      "ordinal": 2,
+      "scriptName": "CREATE UNIQUE INDEX rejects existing duplicates",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testcreateuniqueindexrejectsexistingduplicatesrepro-0002-select-count-*-from-pg_indexes",
+      "suggestedId": "index-correctness-repro-test-testcreateuniqueindexrejectsexistingduplicatesrepro-0002-select-count-*-from-pg_indexes",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)\n\t\t\t\t\t\tFROM pg_indexes\n\t\t\t\t\t\tWHERE tablename = 'create_unique_existing_duplicate_items'\n\t\t\t\t\t\t\tAND indexname = 'create_unique_existing_duplicate_code_idx';",
+      "querySha256": "c936f387aea2f8c9f28780a969f33e79e8255d99636e22205a5cdc73323a3a34",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestIndexDefinitionsRejectInvalidExpressionsRepro#0001",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestIndexDefinitionsRejectInvalidExpressionsRepro",
+      "ordinal": 1,
+      "scriptName": "index expression rejects set-returning functions",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testindexdefinitionsrejectinvalidexpressionsrepro-0001-create-index-index_srf_expression_items_idx-on-index_srf_expression_items",
+      "suggestedId": "index-correctness-repro-test-testindexdefinitionsrejectinvalidexpressionsrepro-0001-create-index-index_srf_expression_items_idx-on-index_srf_expression_items",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "0A000",
+      "errorSeverity": "ERROR",
+      "query": "CREATE INDEX index_srf_expression_items_idx\n\t\t\t\t\t\tON index_srf_expression_items ((generate_series(1, 2)));",
+      "querySha256": "01c6ddb41c7ff79e96bc7e3f503f4bcb452b65a09dd4ff47ac871dbe6295c898",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestIndexDefinitionsRejectInvalidExpressionsRepro#0002",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestIndexDefinitionsRejectInvalidExpressionsRepro",
+      "ordinal": 2,
+      "scriptName": "index expression rejects volatile functions",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testindexdefinitionsrejectinvalidexpressionsrepro-0002-create-index-index_volatile_expression_items_idx-on-index_volatile_expression_items",
+      "suggestedId": "index-correctness-repro-test-testindexdefinitionsrejectinvalidexpressionsrepro-0002-create-index-index_volatile_expression_items_idx-on-index_volatile_expression_items",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P17",
+      "errorSeverity": "ERROR",
+      "query": "CREATE INDEX index_volatile_expression_items_idx\n\t\t\t\t\t\tON index_volatile_expression_items ((random()));",
+      "querySha256": "2fe2002eedef32e7746858712ae679e93d9dd436be0bfd9a75d9c3ee3758d25e",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestIndexDefinitionsRejectInvalidExpressionsRepro#0003",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestIndexDefinitionsRejectInvalidExpressionsRepro",
+      "ordinal": 3,
+      "scriptName": "index expression rejects stable functions",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testindexdefinitionsrejectinvalidexpressionsrepro-0003-create-index-index_stable_expression_items_idx-on-index_stable_expression_items",
+      "suggestedId": "index-correctness-repro-test-testindexdefinitionsrejectinvalidexpressionsrepro-0003-create-index-index_stable_expression_items_idx-on-index_stable_expression_items",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P17",
+      "errorSeverity": "ERROR",
+      "query": "CREATE INDEX index_stable_expression_items_idx\n\t\t\t\t\t\tON index_stable_expression_items ((now()));",
+      "querySha256": "5c32ac2be4e70cd0e066d2e96a6bded7b6a64079f0c6f15ef292fb10c09ece4c",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestIndexDefinitionsRejectInvalidExpressionsRepro#0004",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestIndexDefinitionsRejectInvalidExpressionsRepro",
+      "ordinal": 4,
+      "scriptName": "index expression rejects user-defined volatile functions",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testindexdefinitionsrejectinvalidexpressionsrepro-0004-create-index-index_udf_volatile_expression_items_idx-on-index_udf_volatile_expression_items",
+      "suggestedId": "index-correctness-repro-test-testindexdefinitionsrejectinvalidexpressionsrepro-0004-create-index-index_udf_volatile_expression_items_idx-on-index_udf_volatile_expression_items",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P17",
+      "errorSeverity": "ERROR",
+      "query": "CREATE INDEX index_udf_volatile_expression_items_idx\n\t\t\t\t\t\tON index_udf_volatile_expression_items ((index_udf_volatile_value(v)));",
+      "querySha256": "092a74f979569ea0ae09382a39beaba93ab76bd72b213f15e6abab6f2f6640ac",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestIndexDefinitionsRejectInvalidExpressionsRepro#0005",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestIndexDefinitionsRejectInvalidExpressionsRepro",
+      "ordinal": 5,
+      "scriptName": "index expression rejects user-defined stable functions",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testindexdefinitionsrejectinvalidexpressionsrepro-0005-create-index-index_udf_stable_expression_items_idx-on-index_udf_stable_expression_items",
+      "suggestedId": "index-correctness-repro-test-testindexdefinitionsrejectinvalidexpressionsrepro-0005-create-index-index_udf_stable_expression_items_idx-on-index_udf_stable_expression_items",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P17",
+      "errorSeverity": "ERROR",
+      "query": "CREATE INDEX index_udf_stable_expression_items_idx\n\t\t\t\t\t\tON index_udf_stable_expression_items ((index_udf_stable_value(v)));",
+      "querySha256": "da0f64d364cda41f2610c066b95367c909e560098143429ea5ead8c9352f8790",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestIndexDefinitionsRejectInvalidExpressionsRepro#0006",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestIndexDefinitionsRejectInvalidExpressionsRepro",
+      "ordinal": 6,
+      "scriptName": "index expression rejects aggregate functions",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testindexdefinitionsrejectinvalidexpressionsrepro-0006-create-index-index_aggregate_expression_items_idx-on-index_aggregate_expression_items",
+      "suggestedId": "index-correctness-repro-test-testindexdefinitionsrejectinvalidexpressionsrepro-0006-create-index-index_aggregate_expression_items_idx-on-index_aggregate_expression_items",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42803",
+      "errorSeverity": "ERROR",
+      "query": "CREATE INDEX index_aggregate_expression_items_idx\n\t\t\t\t\t\tON index_aggregate_expression_items ((avg(v)));",
+      "querySha256": "1b7361d46c8fdad2b01a98510757bb478f80ecb6ca2cd82f8603e1238fff7586",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestIndexDefinitionsRejectInvalidExpressionsRepro#0007",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestIndexDefinitionsRejectInvalidExpressionsRepro",
+      "ordinal": 7,
+      "scriptName": "partial index predicate rejects set-returning functions",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testindexdefinitionsrejectinvalidexpressionsrepro-0007-create-index-partial_index_srf_predicate_items_idx-on-partial_index_srf_predicate_items",
+      "suggestedId": "index-correctness-repro-test-testindexdefinitionsrejectinvalidexpressionsrepro-0007-create-index-partial_index_srf_predicate_items_idx-on-partial_index_srf_predicate_items",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "0A000",
+      "errorSeverity": "ERROR",
+      "query": "CREATE INDEX partial_index_srf_predicate_items_idx\n\t\t\t\t\t\tON partial_index_srf_predicate_items (id)\n\t\t\t\t\t\tWHERE generate_series(1, 2) > 0;",
+      "querySha256": "8e191ff68ddb2c44891f20698209d51233784735a7cf25242a2bd90e35096779",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestIndexDefinitionsRejectInvalidExpressionsRepro#0008",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestIndexDefinitionsRejectInvalidExpressionsRepro",
+      "ordinal": 8,
+      "scriptName": "partial index predicate rejects volatile functions",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testindexdefinitionsrejectinvalidexpressionsrepro-0008-create-index-on-partial_index_volatile_predicate_items-id",
+      "suggestedId": "index-correctness-repro-test-testindexdefinitionsrejectinvalidexpressionsrepro-0008-create-index-on-partial_index_volatile_predicate_items-id",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P17",
+      "errorSeverity": "ERROR",
+      "query": "CREATE INDEX partial_index_volatile_predicate_items_idx\n\t\t\t\t\t\tON partial_index_volatile_predicate_items (id)\n\t\t\t\t\t\tWHERE random() > 0;",
+      "querySha256": "ccd4fcfa61478d1e37b35aedd7ca1f8aa47fe5c81ff3c75db48f6c2b954cbe56",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestIndexDefinitionsRejectInvalidExpressionsRepro#0009",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestIndexDefinitionsRejectInvalidExpressionsRepro",
+      "ordinal": 9,
+      "scriptName": "partial index predicate rejects stable functions",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testindexdefinitionsrejectinvalidexpressionsrepro-0009-create-index-partial_index_stable_predicate_items_idx-on-partial_index_stable_predicate_items",
+      "suggestedId": "index-correctness-repro-test-testindexdefinitionsrejectinvalidexpressionsrepro-0009-create-index-partial_index_stable_predicate_items_idx-on-partial_index_stable_predicate_items",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P17",
+      "errorSeverity": "ERROR",
+      "query": "CREATE INDEX partial_index_stable_predicate_items_idx\n\t\t\t\t\t\tON partial_index_stable_predicate_items (id)\n\t\t\t\t\t\tWHERE now() IS NOT NULL;",
+      "querySha256": "c657632c3398f1d3fd055f96394bb8d43198588f87cf2a9acdea59ba97e7cb19",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestIndexDefinitionsRejectInvalidExpressionsRepro#0010",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestIndexDefinitionsRejectInvalidExpressionsRepro",
+      "ordinal": 10,
+      "scriptName": "partial index predicate rejects user-defined volatile functions",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testindexdefinitionsrejectinvalidexpressionsrepro-0010-create-index-on-id-where",
+      "suggestedId": "index-correctness-repro-test-testindexdefinitionsrejectinvalidexpressionsrepro-0010-create-index-on-id-where",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P17",
+      "errorSeverity": "ERROR",
+      "query": "CREATE INDEX partial_index_udf_volatile_predicate_items_idx\n\t\t\t\t\t\tON partial_index_udf_volatile_predicate_items (id)\n\t\t\t\t\t\tWHERE partial_index_udf_volatile_keep(v);",
+      "querySha256": "9fa66fcd5f861c438802a6aa1884e82a482a59c8340102032173279f24d93358",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestIndexDefinitionsRejectInvalidExpressionsRepro#0011",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestIndexDefinitionsRejectInvalidExpressionsRepro",
+      "ordinal": 11,
+      "scriptName": "partial index predicate rejects user-defined stable functions",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testindexdefinitionsrejectinvalidexpressionsrepro-0011-create-index-on-partial_index_udf_stable_predicate_items-id",
+      "suggestedId": "index-correctness-repro-test-testindexdefinitionsrejectinvalidexpressionsrepro-0011-create-index-on-partial_index_udf_stable_predicate_items-id",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P17",
+      "errorSeverity": "ERROR",
+      "query": "CREATE INDEX partial_index_udf_stable_predicate_items_idx\n\t\t\t\t\t\tON partial_index_udf_stable_predicate_items (id)\n\t\t\t\t\t\tWHERE partial_index_udf_stable_keep(v);",
+      "querySha256": "74e315bab92d768b3f2dc93383fb5d06c35629a18dbb285f6aa531c8b91514d1",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestIndexDefinitionsRejectInvalidExpressionsRepro#0012",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestIndexDefinitionsRejectInvalidExpressionsRepro",
+      "ordinal": 12,
+      "scriptName": "partial index predicate rejects subqueries",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testindexdefinitionsrejectinvalidexpressionsrepro-0012-create-index-on-partial_index_subquery_predicate_items-id",
+      "suggestedId": "index-correctness-repro-test-testindexdefinitionsrejectinvalidexpressionsrepro-0012-create-index-on-partial_index_subquery_predicate_items-id",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "0A000",
+      "errorSeverity": "ERROR",
+      "query": "CREATE INDEX partial_index_subquery_predicate_items_idx\n\t\t\t\t\t\tON partial_index_subquery_predicate_items (id)\n\t\t\t\t\t\tWHERE id > (SELECT 0);",
+      "querySha256": "7add4c2ebd426267cad6825c23d4034cc6de8cc1849bef5e98d7cb0cc81a8753",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/index_correctness_repro_test.go:TestOnConflictDoNothingHandlesUniqueExpressionIndexRepro#0001",
+      "source": "testing/go/postgres16/index_correctness_repro_test.go:TestOnConflictDoNothingHandlesUniqueExpressionIndexRepro",
+      "ordinal": 1,
+      "scriptName": "ON CONFLICT DO NOTHING handles unique expression index",
+      "oracle": "postgres",
+      "postgresId": "index-correctness-repro-test-testonconflictdonothinghandlesuniqueexpressionindexrepro-0001-select-id-email-from-expression_do_nothing_items",
+      "suggestedId": "index-correctness-repro-test-testonconflictdonothinghandlesuniqueexpressionindexrepro-0001-select-id-email-from-expression_do_nothing_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, email\n\t\t\t\t\t\tFROM expression_do_nothing_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "c8ac809c6b10d46168ff46029f81870b39c16ac565f9135141a5d786afb2d72f",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "User@Example.com"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

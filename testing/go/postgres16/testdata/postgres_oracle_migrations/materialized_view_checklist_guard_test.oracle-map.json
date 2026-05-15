@@ -1,0 +1,239 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map materialized_view_checklist_guard_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/materialized_view_checklist_guard_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/materialized_view_checklist_guard_test.go:TestMaterializedViewConcurrentUniqueIndexChecklistGuard#0001",
+      "source": "testing/go/postgres16/materialized_view_checklist_guard_test.go:TestMaterializedViewConcurrentUniqueIndexChecklistGuard",
+      "ordinal": 1,
+      "scriptName": "concurrent refresh accepts multi-column unique index",
+      "oracle": "postgres",
+      "postgresId": "materialized-view-checklist-guard-test-testmaterializedviewconcurrentuniqueindexchecklistguard-0001-select-a-b-v-from",
+      "suggestedId": "materialized-view-checklist-guard-test-testmaterializedviewconcurrentuniqueindexchecklistguard-0001-select-a-b-v-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT a, b, v FROM mv_multi ORDER BY a, b;",
+      "querySha256": "258cd46a0d107902b81e1d44ec9ff3757d5850176d0a91f0d50486d11cf1e6f5",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "new"
+          }
+        ],
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "keep"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/materialized_view_checklist_guard_test.go:TestMaterializedViewConcurrentUniqueIndexChecklistGuard#0002",
+      "source": "testing/go/postgres16/materialized_view_checklist_guard_test.go:TestMaterializedViewConcurrentUniqueIndexChecklistGuard",
+      "ordinal": 2,
+      "scriptName": "concurrent refresh accepts unique index with include columns",
+      "oracle": "postgres",
+      "postgresId": "materialized-view-checklist-guard-test-testmaterializedviewconcurrentuniqueindexchecklistguard-0002-select-id-v-from-mv_include",
+      "suggestedId": "materialized-view-checklist-guard-test-testmaterializedviewconcurrentuniqueindexchecklistguard-0002-select-id-v-from-mv_include",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, v FROM mv_include ORDER BY id;",
+      "querySha256": "a186d13f7c58cc29e402829595918d520b547d87344267ceefe658d91623859f",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "new"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "keep"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/materialized_view_checklist_guard_test.go:TestMaterializedViewConcurrentUniqueIndexChecklistGuard#0003",
+      "source": "testing/go/postgres16/materialized_view_checklist_guard_test.go:TestMaterializedViewConcurrentUniqueIndexChecklistGuard",
+      "ordinal": 3,
+      "scriptName": "concurrent refresh rejects expression unique index",
+      "oracle": "postgres",
+      "postgresId": "materialized-view-checklist-guard-test-testmaterializedviewconcurrentuniqueindexchecklistguard-0003-refresh-materialized-view-concurrently-mv_expr",
+      "suggestedId": "materialized-view-checklist-guard-test-testmaterializedviewconcurrentuniqueindexchecklistguard-0003-refresh-materialized-view-concurrently-mv_expr",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "55000",
+      "errorSeverity": "ERROR",
+      "query": "REFRESH MATERIALIZED VIEW CONCURRENTLY mv_expr;",
+      "querySha256": "b5a6ae93d93576746ccd0538511094949302fa6360c42c6a8821638ef5b223a3",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/materialized_view_checklist_guard_test.go:TestMaterializedViewConcurrentUniqueIndexChecklistGuard#0004",
+      "source": "testing/go/postgres16/materialized_view_checklist_guard_test.go:TestMaterializedViewConcurrentUniqueIndexChecklistGuard",
+      "ordinal": 4,
+      "scriptName": "concurrent refresh rejects expression unique index",
+      "oracle": "postgres",
+      "postgresId": "materialized-view-checklist-guard-test-testmaterializedviewconcurrentuniqueindexchecklistguard-0004-select-id-v-from-mv_expr",
+      "suggestedId": "materialized-view-checklist-guard-test-testmaterializedviewconcurrentuniqueindexchecklistguard-0004-select-id-v-from-mv_expr",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, v FROM mv_expr ORDER BY id;",
+      "querySha256": "02f66be5da6dfa798b3282887531a43e14f8f02c737acfc7ec6e9f96d1caffb4",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "old"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "keep"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/materialized_view_checklist_guard_test.go:TestRefreshMaterializedViewFailedQueryPreservesSnapshotGuard#0001",
+      "source": "testing/go/postgres16/materialized_view_checklist_guard_test.go:TestRefreshMaterializedViewFailedQueryPreservesSnapshotGuard",
+      "ordinal": 1,
+      "scriptName": "non-concurrent refresh preserves snapshot when stored query errors",
+      "oracle": "postgres",
+      "postgresId": "materialized-view-checklist-guard-test-testrefreshmaterializedviewfailedquerypreservessnapshotguard-0001-refresh-materialized-view-mv_refresh_error",
+      "suggestedId": "materialized-view-checklist-guard-test-testrefreshmaterializedviewfailedquerypreservessnapshotguard-0001-refresh-materialized-view-mv_refresh_error",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22012",
+      "errorSeverity": "ERROR",
+      "query": "REFRESH MATERIALIZED VIEW mv_refresh_error;",
+      "querySha256": "992a98dcdfcf8055f2927be5c561ff756c82c32412a86846bb48bbcb1e5e59da",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/materialized_view_checklist_guard_test.go:TestRefreshMaterializedViewFailedQueryPreservesSnapshotGuard#0002",
+      "source": "testing/go/postgres16/materialized_view_checklist_guard_test.go:TestRefreshMaterializedViewFailedQueryPreservesSnapshotGuard",
+      "ordinal": 2,
+      "scriptName": "non-concurrent refresh preserves snapshot when stored query errors",
+      "oracle": "postgres",
+      "postgresId": "materialized-view-checklist-guard-test-testrefreshmaterializedviewfailedquerypreservessnapshotguard-0002-select-id-quotient-from-mv_refresh_error",
+      "suggestedId": "materialized-view-checklist-guard-test-testrefreshmaterializedviewfailedquerypreservessnapshotguard-0002-select-id-quotient-from-mv_refresh_error",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, quotient FROM mv_refresh_error ORDER BY id;",
+      "querySha256": "5dc3a40820ee6ee7dc7d6594cb3c03dcbbd17ad552480c2fdb0479a98a2773a4",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "-10"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/materialized_view_checklist_guard_test.go:TestRefreshMaterializedViewFailedQueryPreservesSnapshotGuard#0003",
+      "source": "testing/go/postgres16/materialized_view_checklist_guard_test.go:TestRefreshMaterializedViewFailedQueryPreservesSnapshotGuard",
+      "ordinal": 3,
+      "scriptName": "concurrent refresh preserves snapshot when stored query errors",
+      "oracle": "postgres",
+      "postgresId": "materialized-view-checklist-guard-test-testrefreshmaterializedviewfailedquerypreservessnapshotguard-0003-refresh-materialized-view-concurrently-mv_concurrent_refresh_error",
+      "suggestedId": "materialized-view-checklist-guard-test-testrefreshmaterializedviewfailedquerypreservessnapshotguard-0003-refresh-materialized-view-concurrently-mv_concurrent_refresh_error",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22012",
+      "errorSeverity": "ERROR",
+      "query": "REFRESH MATERIALIZED VIEW CONCURRENTLY mv_concurrent_refresh_error;",
+      "querySha256": "7e33435108c0eb8b708ce1e280c23e1780db16c346f662b5913de06e7a2052b5",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/materialized_view_checklist_guard_test.go:TestRefreshMaterializedViewFailedQueryPreservesSnapshotGuard#0004",
+      "source": "testing/go/postgres16/materialized_view_checklist_guard_test.go:TestRefreshMaterializedViewFailedQueryPreservesSnapshotGuard",
+      "ordinal": 4,
+      "scriptName": "concurrent refresh preserves snapshot when stored query errors",
+      "oracle": "postgres",
+      "postgresId": "materialized-view-checklist-guard-test-testrefreshmaterializedviewfailedquerypreservessnapshotguard-0004-select-id-quotient-from-mv_concurrent_refresh_error",
+      "suggestedId": "materialized-view-checklist-guard-test-testrefreshmaterializedviewfailedquerypreservessnapshotguard-0004-select-id-quotient-from-mv_concurrent_refresh_error",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, quotient FROM mv_concurrent_refresh_error ORDER BY id;",
+      "querySha256": "077d4a6c5125583f0170f7dc3fa2cdde02a351f15a747aa747a8c875f6081cf9",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "-10"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

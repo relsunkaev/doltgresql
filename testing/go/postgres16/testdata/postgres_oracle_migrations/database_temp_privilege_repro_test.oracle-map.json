@@ -1,0 +1,53 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map database_temp_privilege_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/database_temp_privilege_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/database_temp_privilege_repro_test.go:TestCreateTemporaryTableRequiresDatabaseTemporaryPrivilegeRepro#0001",
+      "source": "testing/go/postgres16/database_temp_privilege_repro_test.go:TestCreateTemporaryTableRequiresDatabaseTemporaryPrivilegeRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE TEMPORARY TABLE requires database TEMPORARY privilege",
+      "oracle": "postgres",
+      "postgresId": "database-temp-privilege-repro-test-testcreatetemporarytablerequiresdatabasetemporaryprivilegerepro-0001-create-temporary-table-temp_privilege_denied-id",
+      "suggestedId": "database-temp-privilege-repro-test-testcreatetemporarytablerequiresdatabasetemporaryprivilegerepro-0001-create-temporary-table-temp_privilege_denied-id",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "temp_table_user",
+      "query": "CREATE TEMPORARY TABLE temp_privilege_denied (id INT);",
+      "querySha256": "32ada843b67e1eb47e47a6330f89da8f6b3267eeb5d79e9b1bb6a7a188bf33ec",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/database_temp_privilege_repro_test.go:TestCreateTemporaryTableAsRequiresDatabaseTemporaryPrivilegeRepro#0001",
+      "source": "testing/go/postgres16/database_temp_privilege_repro_test.go:TestCreateTemporaryTableAsRequiresDatabaseTemporaryPrivilegeRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE TEMPORARY TABLE AS requires database TEMPORARY privilege",
+      "oracle": "postgres",
+      "postgresId": "database-temp-privilege-repro-test-testcreatetemporarytableasrequiresdatabasetemporaryprivilegerepro-0001-create-temporary-table-temp_ctas_privilege_denied-as",
+      "suggestedId": "database-temp-privilege-repro-test-testcreatetemporarytableasrequiresdatabasetemporaryprivilegerepro-0001-create-temporary-table-temp_ctas_privilege_denied-as",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "temp_table_as_user",
+      "query": "CREATE TEMPORARY TABLE temp_ctas_privilege_denied AS SELECT 1 AS id;",
+      "querySha256": "88676a25e2a73a11a9c31244e85eef9e50d2675edc3793513fb22a424277ad0c",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

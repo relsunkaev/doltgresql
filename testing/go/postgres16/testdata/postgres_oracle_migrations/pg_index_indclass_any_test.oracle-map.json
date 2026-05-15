@@ -1,0 +1,208 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map pg_index_indclass_any_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/pg_index_indclass_any_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/pg_index_indclass_any_test.go:TestPgIndexIndclassAny#0001",
+      "source": "testing/go/postgres16/pg_index_indclass_any_test.go:TestPgIndexIndclassAny",
+      "ordinal": 1,
+      "scriptName": "ANY(indclass) is a boolean predicate",
+      "oracle": "postgres",
+      "postgresId": "pg-index-indclass-any-test-testpgindexindclassany-0001-select-1-where-2-=",
+      "suggestedId": "pg-index-indclass-any-test-testpgindexindclassany-0001-select-1-where-2-=",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 1 WHERE 2 = ANY(ARRAY[1, 2, 3]);",
+      "querySha256": "a698e5e57a7aa10b37589d33538514c0580c8008de34c2af0deae807943dde14",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/pg_index_indclass_any_test.go:TestPgIndexVectorSlices#0001",
+      "source": "testing/go/postgres16/pg_index_indclass_any_test.go:TestPgIndexVectorSlices",
+      "ordinal": 1,
+      "scriptName": "pg_index indkey preserves vector lower bound through array casts",
+      "oracle": "postgres",
+      "postgresId": "pg-index-indclass-any-test-testpgindexvectorslices-0001-select-i.indkey[0]::text-i.indkey[1]::text-from-pg_catalog.pg_index",
+      "suggestedId": "pg-index-indclass-any-test-testpgindexvectorslices-0001-select-i.indkey[0]::text-i.indkey[1]::text-from-pg_catalog.pg_index",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT i.indkey[0]::text, i.indkey[1]::text\nFROM pg_catalog.pg_index i\nJOIN pg_catalog.pg_class c ON c.oid = i.indexrelid\nWHERE c.relname = 'idxslice_label_category_idx';",
+      "querySha256": "6f8ce601545a9c5fcf2f1601c87bf641b87409a4979f4dbcab5baf0e694abd62",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/pg_index_indclass_any_test.go:TestPgIndexVectorSlices#0002",
+      "source": "testing/go/postgres16/pg_index_indclass_any_test.go:TestPgIndexVectorSlices",
+      "ordinal": 2,
+      "scriptName": "pg_index indkey preserves vector lower bound through array casts",
+      "oracle": "postgres",
+      "postgresId": "pg-index-indclass-any-test-testpgindexvectorslices-0002-select-array_to_string-i.indkey::smallint[]-[:i.indnkeyatts-1]",
+      "suggestedId": "pg-index-indclass-any-test-testpgindexvectorslices-0002-select-array_to_string-i.indkey::smallint[]-[:i.indnkeyatts-1]",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT array_to_string((i.indkey::smallint[])[:i.indnkeyatts - 1], ',')\nFROM pg_catalog.pg_index i\nJOIN pg_catalog.pg_class c ON c.oid = i.indexrelid\nWHERE c.relname = 'idxslice_label_category_idx';",
+      "querySha256": "1b2a2484ab42a5545f4666a590f7ae157367692500ad3b654f97c5484cbc9b0f",
+      "expectedRows": [
+        [
+          {
+            "value": "2,3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/pg_index_indclass_any_test.go:TestPgIndexVectorSlices#0003",
+      "source": "testing/go/postgres16/pg_index_indclass_any_test.go:TestPgIndexVectorSlices",
+      "ordinal": 3,
+      "scriptName": "pg_index indkey preserves vector lower bound through array casts",
+      "oracle": "postgres",
+      "postgresId": "pg-index-indclass-any-test-testpgindexvectorslices-0003-with-indexed_columns-as-select-col.table_pos",
+      "suggestedId": "pg-index-indclass-any-test-testpgindexvectorslices-0003-with-indexed_columns-as-select-col.table_pos",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "WITH indexed_columns AS (\n\t  SELECT col.table_pos\n  FROM pg_catalog.pg_index i\n  JOIN pg_catalog.pg_class c ON c.oid = i.indexrelid\n  JOIN LATERAL (\n    SELECT col.table_pos\n    FROM UNNEST((i.indkey::smallint[])[:i.indnkeyatts - 1])\n      WITH ORDINALITY AS col(table_pos, index_pos)\n  ) AS col ON true\n  WHERE c.relname = 'idxslice_label_category_idx'\n)\nSELECT array_to_string(array_agg(table_pos ORDER BY table_pos), ',') FROM indexed_columns;",
+      "querySha256": "733205bf522af5e2285a17811ac5f2fa39c854912ed1f5ce1ab7c710fa50cebd",
+      "expectedRows": [
+        [
+          {
+            "value": "2,3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/pg_index_indclass_any_test.go:TestPgIndexVectorSlices#0004",
+      "source": "testing/go/postgres16/pg_index_indclass_any_test.go:TestPgIndexVectorSlices",
+      "ordinal": 4,
+      "scriptName": "pg_index indkey preserves vector lower bound through array casts",
+      "oracle": "postgres",
+      "postgresId": "pg-index-indclass-any-test-testpgindexvectorslices-0004-select-array_to_string-array_agg-a.attname-order",
+      "suggestedId": "pg-index-indclass-any-test-testpgindexvectorslices-0004-select-array_to_string-array_agg-a.attname-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT array_to_string(array_agg(a.attname ORDER BY idx.ord), ',')\nFROM (\n  SELECT i.indrelid,\n         pg_catalog.unnest(i.indkey) AS attnum,\n         pg_catalog.generate_subscripts(i.indkey, 1) AS ord\n  FROM pg_catalog.pg_index i\n  JOIN pg_catalog.pg_class c ON c.oid = i.indexrelid\n  WHERE c.relname = 'idxslice_label_category_idx'\n) AS idx\nJOIN pg_catalog.pg_attribute a\n  ON a.attrelid = idx.indrelid\n AND a.attnum = idx.attnum;",
+      "querySha256": "1634a6cde265a94234b456da9670a0071fd2d101d55c7c630452c20dba93470d",
+      "expectedRows": [
+        [
+          {
+            "value": "label,category"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/pg_index_indclass_any_test.go:TestPgIndexVectorSlices#0005",
+      "source": "testing/go/postgres16/pg_index_indclass_any_test.go:TestPgIndexVectorSlices",
+      "ordinal": 5,
+      "scriptName": "pg_index indkey preserves vector lower bound through array casts",
+      "oracle": "postgres",
+      "postgresId": "pg-index-indclass-any-test-testpgindexvectorslices-0005-with-indexed_columns-as-select-pg_indexes.schemaname",
+      "suggestedId": "pg-index-indclass-any-test-testpgindexvectorslices-0005-with-indexed_columns-as-select-pg_indexes.schemaname",
+      "compare": "structural",
+      "columnModes": [
+        "schema"
+      ],
+      "expectedKind": "rows",
+      "query": "WITH indexed_columns AS (\n  SELECT\n      pg_indexes.schemaname as \"schema\",\n      pg_indexes.tablename as \"tableName\",\n      pg_indexes.indexname as \"name\",\n      index_column.name as \"col\",\n      CASE WHEN pg_index.indoption[index_column.pos-1] & 1 = 1 THEN 'DESC' ELSE 'ASC' END as \"dir\",\n      pg_index.indisunique as \"unique\",\n      pg_index.indisprimary as \"isPrimaryKey\",\n      pg_index.indisreplident as \"isReplicaIdentity\",\n      pg_index.indimmediate as \"isImmediate\"\n    FROM pg_catalog.pg_indexes\n    JOIN pg_catalog.pg_namespace ON pg_indexes.schemaname = pg_namespace.nspname\n    JOIN pg_catalog.pg_class pc ON\n      pc.relname = pg_indexes.indexname\n      AND pc.relnamespace = pg_namespace.oid\n    JOIN pg_catalog.pg_publication_tables as pb ON\n      pb.schemaname = pg_indexes.schemaname AND\n      pb.tablename = pg_indexes.tablename\n    JOIN pg_catalog.pg_index ON pg_index.indexrelid = pc.oid\n    JOIN LATERAL (\n      SELECT array_agg(attname) as attnames, array_agg(attgenerated != '') as generated FROM pg_catalog.pg_attribute\n        WHERE attrelid = pg_index.indrelid\n          AND attnum = ANY( (pg_index.indkey::smallint[] )[:pg_index.indnkeyatts - 1] )\n    ) as indexed ON true\n    JOIN LATERAL (\n      SELECT pg_attribute.attname as name, col.index_pos as pos\n        FROM UNNEST( (pg_index.indkey::smallint[])[:pg_index.indnkeyatts - 1] )\n          WITH ORDINALITY as col(table_pos, index_pos)\n        JOIN pg_catalog.pg_attribute ON attrelid = pg_index.indrelid AND attnum = col.table_pos\n    ) AS index_column ON true\n    LEFT JOIN pg_catalog.pg_constraint ON pg_constraint.conindid = pc.oid\n    WHERE pb.pubname IN ('idxslice_pub')\n      AND pg_index.indexprs IS NULL\n      AND pg_index.indpred IS NULL\n      AND (pg_constraint.contype IS NULL OR pg_constraint.contype IN ('p', 'u'))\n      AND indexed.attnames <@ pb.attnames\n      AND (current_setting('server_version_num')::int >= 160000 OR false = ALL(indexed.generated))\n)\nSELECT \"schema\", \"tableName\", \"name\", \"col\", \"dir\", \"unique\", \"isPrimaryKey\", \"isReplicaIdentity\", \"isImmediate\"\nFROM indexed_columns\nORDER BY \"schema\", \"tableName\", \"name\", \"col\";",
+      "querySha256": "2fdce5598468ce8b5bdf30121a8c5aa70faf512f38c3dab8815f2ac72a9bd142",
+      "expectedRows": [
+        [
+          {
+            "value": "{{schema}}"
+          },
+          {
+            "value": "idxslice_t"
+          },
+          {
+            "value": "idxslice_label_category_idx"
+          },
+          {
+            "value": "category"
+          },
+          {
+            "value": "ASC"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "t"
+          }
+        ],
+        [
+          {
+            "value": "{{schema}}"
+          },
+          {
+            "value": "idxslice_t"
+          },
+          {
+            "value": "idxslice_label_category_idx"
+          },
+          {
+            "value": "label"
+          },
+          {
+            "value": "ASC"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

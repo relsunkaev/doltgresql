@@ -1,0 +1,287 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map expression_operator_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/expression_operator_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/postgres16/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/expression_operator_repro_test.go:TestILikePatternMatchRepro#0001",
+      "source": "testing/go/postgres16/expression_operator_repro_test.go:TestILikePatternMatchRepro",
+      "ordinal": 1,
+      "scriptName": "ILIKE evaluates case-insensitive pattern",
+      "oracle": "postgres",
+      "postgresId": "expression-operator-repro-test-testilikepatternmatchrepro-0001-select-alpha-ilike-a%-alpha",
+      "suggestedId": "expression-operator-repro-test-testilikepatternmatchrepro-0001-select-alpha-ilike-a%-alpha",
+      "expectedKind": "unknown",
+      "query": "SELECT 'Alpha' ILIKE 'a%',\n\t\t\t\t\t\t'Alpha' ILIKE 'ALP_A',\n\t\t\t\t\t\t'Alpha' NOT ILIKE 'b%';",
+      "querySha256": "48746738d57f1f934fb850480d12551e4492133b80d9cbde4a9f340606d21fab",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expression_operator_repro_test.go:TestSimilarToPatternMatchRepro#0001",
+      "source": "testing/go/postgres16/expression_operator_repro_test.go:TestSimilarToPatternMatchRepro",
+      "ordinal": 1,
+      "scriptName": "SIMILAR TO evaluates SQL regular expression pattern",
+      "oracle": "postgres",
+      "postgresId": "expression-operator-repro-test-testsimilartopatternmatchrepro-0001-select-abc-similar-to-a%",
+      "suggestedId": "expression-operator-repro-test-testsimilartopatternmatchrepro-0001-select-abc-similar-to-a%",
+      "expectedKind": "unknown",
+      "query": "SELECT 'abc' SIMILAR TO 'a%(b|c)',\n\t\t\t\t\t\t'adc' SIMILAR TO 'a%(b|c)',\n\t\t\t\t\t\t'abx' SIMILAR TO 'a%(b|c)';",
+      "querySha256": "459cf67cb3d17775e4bdbc681b763ae3fa2273103532df66d8c452c1007f2e48",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expression_operator_repro_test.go:TestCaseInsensitiveRegexMatchRepro#0001",
+      "source": "testing/go/postgres16/expression_operator_repro_test.go:TestCaseInsensitiveRegexMatchRepro",
+      "ordinal": 1,
+      "scriptName": "case-insensitive regex operators evaluate matches",
+      "oracle": "postgres",
+      "postgresId": "expression-operator-repro-test-testcaseinsensitiveregexmatchrepro-0001-select-alpha-~*-^a-alpha",
+      "suggestedId": "expression-operator-repro-test-testcaseinsensitiveregexmatchrepro-0001-select-alpha-~*-^a-alpha",
+      "expectedKind": "unknown",
+      "query": "SELECT 'Alpha' ~* '^a',\n\t\t\t\t\t\t'Alpha' ~* 'LPH',\n\t\t\t\t\t\t'Alpha' !~* '^b';",
+      "querySha256": "54d79c89de4d5429525ec22c868511176e7ebbf80d87e5b70a687bd0fa816896",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expression_operator_repro_test.go:TestPowerOperatorRepro#0001",
+      "source": "testing/go/postgres16/expression_operator_repro_test.go:TestPowerOperatorRepro",
+      "ordinal": 1,
+      "scriptName": "power operator evaluates numeric exponentiation",
+      "oracle": "postgres",
+      "postgresId": "expression-operator-repro-test-testpoweroperatorrepro-0001-select-2-^-3-::text",
+      "suggestedId": "expression-operator-repro-test-testpoweroperatorrepro-0001-select-2-^-3-::text",
+      "expectedKind": "unknown",
+      "query": "SELECT (2 ^ 3)::text, (4 ^ 0.5)::text;",
+      "querySha256": "9f942be91be81f4767422b461a55275a6ce4d06fee98e71342a0deddc049f4ab",
+      "expectedRows": [
+        [
+          {
+            "value": "8"
+          },
+          {
+            "value": "2.0000000000000000"
+          }
+        ]
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expression_operator_repro_test.go:TestUnaryNumericOperatorsRepro#0001",
+      "source": "testing/go/postgres16/expression_operator_repro_test.go:TestUnaryNumericOperatorsRepro",
+      "ordinal": 1,
+      "scriptName": "unary numeric operators evaluate roots and absolute value",
+      "oracle": "postgres",
+      "postgresId": "expression-operator-repro-test-testunarynumericoperatorsrepro-0001-select-|/-25.0-::text-||/",
+      "suggestedId": "expression-operator-repro-test-testunarynumericoperatorsrepro-0001-select-|/-25.0-::text-||/",
+      "expectedKind": "unknown",
+      "query": "SELECT (|/ 25.0)::text, (||/ 27.0)::text, (@ -5.0)::text;",
+      "querySha256": "a50fabc88eff4f486514ce2945eae8553a57bb5bd1f60ab250e5413f8a40923c",
+      "expectedRows": [
+        [
+          {
+            "value": "5"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "5.0"
+          }
+        ]
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expression_operator_repro_test.go:TestUnaryPlusOperatorGuard#0001",
+      "source": "testing/go/postgres16/expression_operator_repro_test.go:TestUnaryPlusOperatorGuard",
+      "ordinal": 1,
+      "scriptName": "unary plus preserves numeric value",
+      "oracle": "postgres",
+      "postgresId": "expression-operator-repro-test-testunaryplusoperatorguard-0001-select-+1-::text-+-2",
+      "suggestedId": "expression-operator-repro-test-testunaryplusoperatorguard-0001-select-+1-::text-+-2",
+      "expectedKind": "unknown",
+      "query": "SELECT (+1)::text, (+(-2))::text, (+'3'::int)::text;",
+      "querySha256": "3d2ef43a0a4688820b369da17be53d2ea30bef4043356ed4306c1e02873a86ea",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "-2"
+          },
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expression_operator_repro_test.go:TestPostgres16IntegerLiteralSyntaxRepro#0001",
+      "source": "testing/go/postgres16/expression_operator_repro_test.go:TestPostgres16IntegerLiteralSyntaxRepro",
+      "ordinal": 1,
+      "scriptName": "PostgreSQL integer literal prefixes and underscores",
+      "oracle": "postgres",
+      "postgresId": "expression-operator-repro-test-testpostgres16integerliteralsyntaxrepro-0001-select-1_000::text",
+      "suggestedId": "expression-operator-repro-test-testpostgres16integerliteralsyntaxrepro-0001-select-1_000::text",
+      "expectedKind": "unknown",
+      "query": "SELECT 1_000::text;",
+      "querySha256": "8a6f537085bc28fe576284a9c2f3a200fac43cf6a4ab80bcf77d8f5077dd2573",
+      "expectedRows": [
+        [
+          {
+            "value": "1000"
+          }
+        ]
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expression_operator_repro_test.go:TestPostgres16IntegerLiteralSyntaxRepro#0002",
+      "source": "testing/go/postgres16/expression_operator_repro_test.go:TestPostgres16IntegerLiteralSyntaxRepro",
+      "ordinal": 2,
+      "scriptName": "PostgreSQL integer literal prefixes and underscores",
+      "oracle": "postgres",
+      "postgresId": "expression-operator-repro-test-testpostgres16integerliteralsyntaxrepro-0002-select-0x10::text",
+      "suggestedId": "expression-operator-repro-test-testpostgres16integerliteralsyntaxrepro-0002-select-0x10::text",
+      "expectedKind": "unknown",
+      "query": "SELECT 0x10::text;",
+      "querySha256": "a626789826ae374f6b12b1865e4cf49b3018e81343dbe4247ba53d6cab05868a",
+      "expectedRows": [
+        [
+          {
+            "value": "16"
+          }
+        ]
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expression_operator_repro_test.go:TestPostgres16IntegerLiteralSyntaxRepro#0003",
+      "source": "testing/go/postgres16/expression_operator_repro_test.go:TestPostgres16IntegerLiteralSyntaxRepro",
+      "ordinal": 3,
+      "scriptName": "PostgreSQL integer literal prefixes and underscores",
+      "oracle": "postgres",
+      "postgresId": "expression-operator-repro-test-testpostgres16integerliteralsyntaxrepro-0003-select-0o10::text",
+      "suggestedId": "expression-operator-repro-test-testpostgres16integerliteralsyntaxrepro-0003-select-0o10::text",
+      "expectedKind": "unknown",
+      "query": "SELECT 0o10::text;",
+      "querySha256": "90ed9e2179ff2c32766ebbda6f8695e8be5cdcf1d7c1e7db1b2148d042ff82ef",
+      "expectedRows": [
+        [
+          {
+            "value": "8"
+          }
+        ]
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expression_operator_repro_test.go:TestPostgres16IntegerLiteralSyntaxRepro#0004",
+      "source": "testing/go/postgres16/expression_operator_repro_test.go:TestPostgres16IntegerLiteralSyntaxRepro",
+      "ordinal": 4,
+      "scriptName": "PostgreSQL integer literal prefixes and underscores",
+      "oracle": "postgres",
+      "postgresId": "expression-operator-repro-test-testpostgres16integerliteralsyntaxrepro-0004-select-0b1010::text",
+      "suggestedId": "expression-operator-repro-test-testpostgres16integerliteralsyntaxrepro-0004-select-0b1010::text",
+      "expectedKind": "unknown",
+      "query": "SELECT 0b1010::text;",
+      "querySha256": "e4fedce1d861443392fe40c2c0f450a266d15fdc37d9818197c8a0f0c9d02d3d",
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/expression_operator_repro_test.go:TestTemporalOverlapsOperatorRepro#0001",
+      "source": "testing/go/postgres16/expression_operator_repro_test.go:TestTemporalOverlapsOperatorRepro",
+      "ordinal": 1,
+      "scriptName": "OVERLAPS evaluates period intersection",
+      "oracle": "postgres",
+      "postgresId": "expression-operator-repro-test-testtemporaloverlapsoperatorrepro-0001-select-date-2024-01-01-date-2024-01-10",
+      "suggestedId": "expression-operator-repro-test-testtemporaloverlapsoperatorrepro-0001-select-date-2024-01-01-date-2024-01-10",
+      "expectedKind": "unknown",
+      "query": "SELECT (DATE '2024-01-01', DATE '2024-01-10')\n\t\t\t\t\t\t\tOVERLAPS (DATE '2024-01-05', DATE '2024-01-20'),\n\t\t\t\t\t\t(DATE '2024-01-01', DATE '2024-01-02')\n\t\t\t\t\t\t\tOVERLAPS (DATE '2024-01-02', DATE '2024-01-03'),\n\t\t\t\t\t\t(DATE '2024-01-01', INTERVAL '2 days')\n\t\t\t\t\t\t\tOVERLAPS (DATE '2024-01-02', INTERVAL '1 day');",
+      "querySha256": "44cb1584014bec2364024866ae504a2ef0a5727662ffbd128811d12debc583a3",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    }
+  ]
+}

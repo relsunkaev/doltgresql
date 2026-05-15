@@ -1,0 +1,413 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map routine_argument_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/routine_argument_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/postgres16/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/routine_argument_repro_test.go:TestFunctionDefaultArgumentCatalogRepro#0001",
+      "source": "testing/go/postgres16/routine_argument_repro_test.go:TestFunctionDefaultArgumentCatalogRepro",
+      "ordinal": 1,
+      "scriptName": "function default arguments populate pg_proc metadata",
+      "oracle": "postgres",
+      "postgresId": "routine-argument-repro-test-testfunctiondefaultargumentcatalogrepro-0001-select-pronargs::text-pronargdefaults::text-proargdefaults-is",
+      "suggestedId": "routine-argument-repro-test-testfunctiondefaultargumentcatalogrepro-0001-select-pronargs::text-pronargdefaults::text-proargdefaults-is",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pronargs::text, pronargdefaults::text, proargdefaults IS NOT NULL\n\t\t\t\t\t\tFROM pg_catalog.pg_proc\n\t\t\t\t\t\tWHERE proname = 'default_arg_function';",
+      "querySha256": "510976a60fff4982627f71c58ac36e10a8abf5a8c7664aff29855960cb454b81",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/routine_argument_repro_test.go:TestProcedureDefaultArgumentCatalogRepro#0001",
+      "source": "testing/go/postgres16/routine_argument_repro_test.go:TestProcedureDefaultArgumentCatalogRepro",
+      "ordinal": 1,
+      "scriptName": "procedure default arguments populate pg_proc metadata",
+      "oracle": "postgres",
+      "postgresId": "routine-argument-repro-test-testproceduredefaultargumentcatalogrepro-0001-select-pronargs::text-pronargdefaults::text-proargdefaults-is",
+      "suggestedId": "routine-argument-repro-test-testproceduredefaultargumentcatalogrepro-0001-select-pronargs::text-pronargdefaults::text-proargdefaults-is",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pronargs::text, pronargdefaults::text, proargdefaults IS NOT NULL\n\t\t\t\t\t\tFROM pg_catalog.pg_proc\n\t\t\t\t\t\tWHERE proname = 'default_arg_procedure';",
+      "querySha256": "fbe1bdf076246a67c0b35f7d3fec7032cff7b6b9de282e27fb556e70025a7489",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/routine_argument_repro_test.go:TestFunctionDefaultArgumentIntrospectionRepro#0001",
+      "source": "testing/go/postgres16/routine_argument_repro_test.go:TestFunctionDefaultArgumentIntrospectionRepro",
+      "ordinal": 1,
+      "scriptName": "pg_get_function_arg_default renders function defaults",
+      "oracle": "postgres",
+      "postgresId": "routine-argument-repro-test-testfunctiondefaultargumentintrospectionrepro-0001-select-pg_get_function_arg_default-p.oid-1-from",
+      "suggestedId": "routine-argument-repro-test-testfunctiondefaultargumentintrospectionrepro-0001-select-pg_get_function_arg_default-p.oid-1-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_get_function_arg_default(p.oid, 1)\n\t\t\t\t\t\tFROM pg_catalog.pg_proc p\n\t\t\t\t\t\tWHERE p.proname = 'introspect_default_arg_function';",
+      "querySha256": "5ebc649210838c50e5e757cbda9ff9de2688325bafdc6966b22e653015d5723e",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/routine_argument_repro_test.go:TestFunctionDefaultArgumentAmbiguousOverloadRepro#0001",
+      "source": "testing/go/postgres16/routine_argument_repro_test.go:TestFunctionDefaultArgumentAmbiguousOverloadRepro",
+      "ordinal": 1,
+      "scriptName": "defaulted overload call reports ambiguity",
+      "oracle": "postgres",
+      "postgresId": "routine-argument-repro-test-testfunctiondefaultargumentambiguousoverloadrepro-0001-select-default_ambiguous_overload-5",
+      "suggestedId": "routine-argument-repro-test-testfunctiondefaultargumentambiguousoverloadrepro-0001-select-default_ambiguous_overload-5",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42725",
+      "errorSeverity": "ERROR",
+      "query": "SELECT default_ambiguous_overload(5);",
+      "querySha256": "34d3d05f82b1c32fa42c9e6b0bb753fb78648d15297f50cf2f9ec765f7668c19",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/routine_argument_repro_test.go:TestProcedureDefaultArgumentAmbiguousOverloadRepro#0001",
+      "source": "testing/go/postgres16/routine_argument_repro_test.go:TestProcedureDefaultArgumentAmbiguousOverloadRepro",
+      "ordinal": 1,
+      "scriptName": "defaulted procedure overload call reports ambiguity",
+      "oracle": "postgres",
+      "postgresId": "routine-argument-repro-test-testproceduredefaultargumentambiguousoverloadrepro-0001-call-default_ambiguous_proc-5",
+      "suggestedId": "routine-argument-repro-test-testproceduredefaultargumentambiguousoverloadrepro-0001-call-default_ambiguous_proc-5",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42725",
+      "errorSeverity": "ERROR",
+      "query": "CALL default_ambiguous_proc(5);",
+      "querySha256": "b136bcb05841fc21cb6d6ab485bc65cb0d56afa2b66c1af053a49bae8a816ca5",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/routine_argument_repro_test.go:TestRoutineDefaultArgumentValidationRepro#0001",
+      "source": "testing/go/postgres16/routine_argument_repro_test.go:TestRoutineDefaultArgumentValidationRepro",
+      "ordinal": 1,
+      "scriptName": "routine default arguments are validated",
+      "oracle": "postgres",
+      "postgresId": "routine-argument-repro-test-testroutinedefaultargumentvalidationrepro-0001-create-function-default_before_required_function-first_value-int",
+      "suggestedId": "routine-argument-repro-test-testroutinedefaultargumentvalidationrepro-0001-create-function-default_before_required_function-first_value-int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P13",
+      "errorSeverity": "ERROR",
+      "query": "CREATE FUNCTION default_before_required_function(\n\t\t\t\t\t\tfirst_value INT DEFAULT 1,\n\t\t\t\t\t\tsecond_value INT\n\t\t\t\t\t)\n\t\t\t\t\tRETURNS INT\n\t\t\t\t\tLANGUAGE SQL\n\t\t\t\t\tAS $$ SELECT first_value + second_value $$;",
+      "querySha256": "7709236275dc037bd3084a85166aa62c212e1c2993ccc5f11885af28af35182b",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/routine_argument_repro_test.go:TestRoutineDefaultArgumentValidationRepro#0002",
+      "source": "testing/go/postgres16/routine_argument_repro_test.go:TestRoutineDefaultArgumentValidationRepro",
+      "ordinal": 2,
+      "scriptName": "routine default arguments are validated",
+      "oracle": "postgres",
+      "postgresId": "routine-argument-repro-test-testroutinedefaultargumentvalidationrepro-0002-create-function-out_default_function-out-result_value",
+      "suggestedId": "routine-argument-repro-test-testroutinedefaultargumentvalidationrepro-0002-create-function-out_default_function-out-result_value",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P13",
+      "errorSeverity": "ERROR",
+      "query": "CREATE FUNCTION out_default_function(\n\t\t\t\t\t\tOUT result_value INT DEFAULT 1\n\t\t\t\t\t)\n\t\t\t\t\tLANGUAGE SQL\n\t\t\t\t\tAS $$ SELECT 1 $$;",
+      "querySha256": "96fdbb471fc58de3acd34c6535b761953a48bbe78242f1e82b6ded253cb610be",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/routine_argument_repro_test.go:TestRoutineDefaultArgumentValidationRepro#0003",
+      "source": "testing/go/postgres16/routine_argument_repro_test.go:TestRoutineDefaultArgumentValidationRepro",
+      "ordinal": 3,
+      "scriptName": "routine default arguments are validated",
+      "oracle": "postgres",
+      "postgresId": "routine-argument-repro-test-testroutinedefaultargumentvalidationrepro-0003-create-procedure-out_default_procedure-out-result_value",
+      "suggestedId": "routine-argument-repro-test-testroutinedefaultargumentvalidationrepro-0003-create-procedure-out_default_procedure-out-result_value",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P13",
+      "errorSeverity": "ERROR",
+      "query": "CREATE PROCEDURE out_default_procedure(\n\t\t\t\t\t\tOUT result_value INT DEFAULT 1\n\t\t\t\t\t)\n\t\t\t\t\tLANGUAGE SQL\n\t\t\t\t\tAS $$ SELECT 1 $$;",
+      "querySha256": "58a98fa82e01878eca3cbb09d21c9c51a5c928c1f8c4ebbbb808766ddcebdad0",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/routine_argument_repro_test.go:TestRoutineDefaultArgumentValidationRepro#0004",
+      "source": "testing/go/postgres16/routine_argument_repro_test.go:TestRoutineDefaultArgumentValidationRepro",
+      "ordinal": 4,
+      "scriptName": "routine default arguments are validated",
+      "oracle": "postgres",
+      "postgresId": "routine-argument-repro-test-testroutinedefaultargumentvalidationrepro-0004-create-function-variadic_before_required_function-variadic-values_in",
+      "suggestedId": "routine-argument-repro-test-testroutinedefaultargumentvalidationrepro-0004-create-function-variadic_before_required_function-variadic-values_in",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P13",
+      "errorSeverity": "ERROR",
+      "query": "CREATE FUNCTION variadic_before_required_function(\n\t\t\t\t\t\tVARIADIC values_in INT[],\n\t\t\t\t\t\ttrailing_value INT\n\t\t\t\t\t)\n\t\t\t\t\tRETURNS INT\n\t\t\t\t\tLANGUAGE SQL\n\t\t\t\t\tAS $$ SELECT trailing_value $$;",
+      "querySha256": "435342737dc56b13bf153bb8919f5d81bf4d7e6b98219f5729a1716000e577b7",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/routine_argument_repro_test.go:TestRoutineDefaultArgumentValidationRepro#0005",
+      "source": "testing/go/postgres16/routine_argument_repro_test.go:TestRoutineDefaultArgumentValidationRepro",
+      "ordinal": 5,
+      "scriptName": "routine default arguments are validated",
+      "oracle": "postgres",
+      "postgresId": "routine-argument-repro-test-testroutinedefaultargumentvalidationrepro-0005-create-procedure-variadic_before_out_procedure-variadic-values_in",
+      "suggestedId": "routine-argument-repro-test-testroutinedefaultargumentvalidationrepro-0005-create-procedure-variadic_before_out_procedure-variadic-values_in",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P13",
+      "errorSeverity": "ERROR",
+      "query": "CREATE PROCEDURE variadic_before_out_procedure(\n\t\t\t\t\t\tVARIADIC values_in INT[],\n\t\t\t\t\t\tOUT result_value INT\n\t\t\t\t\t)\n\t\t\t\t\tLANGUAGE SQL\n\t\t\t\t\tAS $$ SELECT 1 $$;",
+      "querySha256": "afb900c0e378c4887fde37084578899d57423d8059c47996bcec31cc2fa8d3e7",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/routine_argument_repro_test.go:TestFunctionInoutArgumentCatalogRepro#0001",
+      "source": "testing/go/postgres16/routine_argument_repro_test.go:TestFunctionInoutArgumentCatalogRepro",
+      "ordinal": 1,
+      "scriptName": "function INOUT arguments populate pg_proc metadata",
+      "oracle": "postgres",
+      "postgresId": "routine-argument-repro-test-testfunctioninoutargumentcatalogrepro-0001-select-pronargs::text-array_to_string-proargmodes-array_to_string",
+      "suggestedId": "routine-argument-repro-test-testfunctioninoutargumentcatalogrepro-0001-select-pronargs::text-array_to_string-proargmodes-array_to_string",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT\n\t\t\t\t\t\t\tpronargs::text,\n\t\t\t\t\t\t\tarray_to_string(proargmodes, ','),\n\t\t\t\t\t\t\tarray_to_string(proargnames, ',')\n\t\t\t\t\t\tFROM pg_catalog.pg_proc\n\t\t\t\t\t\tWHERE proname = 'catalog_inout_argument_function';",
+      "querySha256": "a87c021e75d34d900fdeb3bd3b7cdf553a538a4d5af9ea8fccac8748fe370211",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "b"
+          },
+          {
+            "value": "value_seen"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/routine_argument_repro_test.go:TestFunctionInoutArgumentCatalogRepro#0002",
+      "source": "testing/go/postgres16/routine_argument_repro_test.go:TestFunctionInoutArgumentCatalogRepro",
+      "ordinal": 2,
+      "scriptName": "function INOUT arguments populate pg_proc metadata",
+      "oracle": "postgres",
+      "postgresId": "routine-argument-repro-test-testfunctioninoutargumentcatalogrepro-0002-select-catalog_inout_argument_function-4",
+      "suggestedId": "routine-argument-repro-test-testfunctioninoutargumentcatalogrepro-0002-select-catalog_inout_argument_function-4",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT catalog_inout_argument_function(4);",
+      "querySha256": "7825dd9a36aa24af4e99093c0230ac5ecf5961994f485e2c00d6a353e4cc2c08",
+      "expectedRows": [
+        [
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/routine_argument_repro_test.go:TestProcedureInoutArgumentCatalogRepro#0001",
+      "source": "testing/go/postgres16/routine_argument_repro_test.go:TestProcedureInoutArgumentCatalogRepro",
+      "ordinal": 1,
+      "scriptName": "procedure INOUT arguments populate pg_proc metadata",
+      "oracle": "postgres",
+      "postgresId": "routine-argument-repro-test-testprocedureinoutargumentcatalogrepro-0001-select-pronargs::text-array_to_string-proargmodes-array_to_string",
+      "suggestedId": "routine-argument-repro-test-testprocedureinoutargumentcatalogrepro-0001-select-pronargs::text-array_to_string-proargmodes-array_to_string",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT\n\t\t\t\t\t\t\tpronargs::text,\n\t\t\t\t\t\t\tarray_to_string(proargmodes, ','),\n\t\t\t\t\t\t\tarray_to_string(proargnames, ',')\n\t\t\t\t\t\tFROM pg_catalog.pg_proc\n\t\t\t\t\t\tWHERE proname = 'catalog_inout_argument_procedure';",
+      "querySha256": "4cca35d6e7a43936e753cf8b953cd045f5e6fe8a38a816715f1751b2232ce27e",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "b"
+          },
+          {
+            "value": "value_seen"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/routine_argument_repro_test.go:TestVariadicSqlFunctionCallRepro#0001",
+      "source": "testing/go/postgres16/routine_argument_repro_test.go:TestVariadicSqlFunctionCallRepro",
+      "ordinal": 1,
+      "scriptName": "VARIADIC SQL function accepts expanded and array calls",
+      "oracle": "postgres",
+      "postgresId": "routine-argument-repro-test-testvariadicsqlfunctioncallrepro-0001-select-provariadic-<>-0-array_to_string",
+      "suggestedId": "routine-argument-repro-test-testvariadicsqlfunctioncallrepro-0001-select-provariadic-<>-0-array_to_string",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT provariadic <> 0, array_to_string(proargmodes, ',')\n\t\t\t\t\t\tFROM pg_catalog.pg_proc\n\t\t\t\t\t\tWHERE proname = 'variadic_sql_count';",
+      "querySha256": "42410adb72575093701f3094c1f2c7cb0ed46649e043ed8b83f8727bcf561ac7",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "v"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/routine_argument_repro_test.go:TestVariadicSqlFunctionCallRepro#0002",
+      "source": "testing/go/postgres16/routine_argument_repro_test.go:TestVariadicSqlFunctionCallRepro",
+      "ordinal": 2,
+      "scriptName": "VARIADIC SQL function accepts expanded and array calls",
+      "oracle": "postgres",
+      "postgresId": "routine-argument-repro-test-testvariadicsqlfunctioncallrepro-0002-select-variadic_sql_count-1-2-3",
+      "suggestedId": "routine-argument-repro-test-testvariadicsqlfunctioncallrepro-0002-select-variadic_sql_count-1-2-3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT variadic_sql_count(1, 2, 3);",
+      "querySha256": "7dc62e0b6e321fac8f12718128d0c28d1776643267cadf7016ad2e210bf9786b",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/routine_argument_repro_test.go:TestVariadicSqlFunctionCallRepro#0003",
+      "source": "testing/go/postgres16/routine_argument_repro_test.go:TestVariadicSqlFunctionCallRepro",
+      "ordinal": 3,
+      "scriptName": "VARIADIC SQL function accepts expanded and array calls",
+      "oracle": "postgres",
+      "postgresId": "routine-argument-repro-test-testvariadicsqlfunctioncallrepro-0003-select-variadic_sql_count-variadic-array[4-5]",
+      "suggestedId": "routine-argument-repro-test-testvariadicsqlfunctioncallrepro-0003-select-variadic_sql_count-variadic-array[4-5]",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT variadic_sql_count(VARIADIC ARRAY[4, 5]);",
+      "querySha256": "460e82703574af2589a91a18d07e53d85a5b661bb9351c6a0993f6dd98d35dd0",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/routine_argument_repro_test.go:TestVariadicSqlProcedureCallRepro#0001",
+      "source": "testing/go/postgres16/routine_argument_repro_test.go:TestVariadicSqlProcedureCallRepro",
+      "ordinal": 1,
+      "scriptName": "VARIADIC SQL procedure accepts expanded and array calls",
+      "oracle": "postgres",
+      "postgresId": "routine-argument-repro-test-testvariadicsqlprocedurecallrepro-0001-select-provariadic-<>-0-array_to_string",
+      "suggestedId": "routine-argument-repro-test-testvariadicsqlprocedurecallrepro-0001-select-provariadic-<>-0-array_to_string",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT provariadic <> 0, array_to_string(proargmodes, ',')\n\t\t\t\t\t\tFROM pg_catalog.pg_proc\n\t\t\t\t\t\tWHERE proname = 'variadic_sql_proc';",
+      "querySha256": "38c7e02323b3c65a8eae82c32619e390f7d9258e2971de1a8ed10486e4ba4bdc",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "v"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/routine_argument_repro_test.go:TestVariadicSqlProcedureCallRepro#0002",
+      "source": "testing/go/postgres16/routine_argument_repro_test.go:TestVariadicSqlProcedureCallRepro",
+      "ordinal": 2,
+      "scriptName": "VARIADIC SQL procedure accepts expanded and array calls",
+      "oracle": "postgres",
+      "postgresId": "routine-argument-repro-test-testvariadicsqlprocedurecallrepro-0002-select-value_seen-from-variadic_proc_audit-order",
+      "suggestedId": "routine-argument-repro-test-testvariadicsqlprocedurecallrepro-0002-select-value_seen-from-variadic_proc_audit-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT value_seen FROM variadic_proc_audit ORDER BY value_seen;",
+      "querySha256": "7bc8007a202c68b51632e9d20c67144e8d2db53114a8725154759a66806a2758",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

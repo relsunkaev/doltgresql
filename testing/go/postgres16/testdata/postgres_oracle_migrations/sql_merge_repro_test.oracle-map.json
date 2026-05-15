@@ -1,0 +1,58 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map sql_merge_repro_test.go",
+  "sourceFile": "testing/go/postgres16/sql_merge_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/sql_merge_repro_test.go:TestSqlMergeUpdateAndInsertRepro#0001",
+      "source": "testing/go/postgres16/sql_merge_repro_test.go:TestSqlMergeUpdateAndInsertRepro",
+      "ordinal": 1,
+      "scriptName": "SQL MERGE updates matched rows and inserts unmatched rows",
+      "oracle": "postgres",
+      "postgresId": "sql-merge-repro-test-testsqlmergeupdateandinsertrepro-0001-select-id-label-from-sql_merge_target",
+      "suggestedId": "sql-merge-repro-test-testsqlmergeupdateandinsertrepro-0001-select-id-label-from-sql_merge_target",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM sql_merge_target\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "b3aec1024280ef77dd86572cd12ec32a8ceacb823005e9faf63c7552a3418584",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "updated"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "keep"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "inserted"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

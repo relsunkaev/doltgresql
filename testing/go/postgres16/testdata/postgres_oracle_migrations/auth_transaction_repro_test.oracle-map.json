@@ -1,0 +1,228 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map auth_transaction_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/auth_transaction_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/auth_transaction_repro_test.go:TestRollbackRevertsAlterDatabaseSetRepro#0001",
+      "source": "testing/go/postgres16/auth_transaction_repro_test.go:TestRollbackRevertsAlterDatabaseSetRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK reverts ALTER DATABASE SET",
+      "oracle": "postgres",
+      "postgresId": "auth-transaction-repro-test-testrollbackrevertsalterdatabasesetrepro-0001-select-count-*-from-pg_catalog.pg_db_role_setting",
+      "suggestedId": "auth-transaction-repro-test-testrollbackrevertsalterdatabasesetrepro-0001-select-count-*-from-pg_catalog.pg_db_role_setting",
+      "compare": "sqlstate",
+      "expectedKind": "rows",
+      "sqlstate": "42704",
+      "errorSeverity": "ERROR",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_db_role_setting\n\t\t\t\t\t\tWHERE setdatabase = 'rollback_database_setting_catalog'::regdatabase;",
+      "querySha256": "02aa3e342ab6f06ad6ce495abc7fd78d1d7255507f4dd22f08553f09b58a0659",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/auth_transaction_repro_test.go:TestCommitKeepsAlterDatabaseSet#0001",
+      "source": "testing/go/postgres16/auth_transaction_repro_test.go:TestCommitKeepsAlterDatabaseSet",
+      "ordinal": 1,
+      "scriptName": "COMMIT keeps ALTER DATABASE SET",
+      "oracle": "postgres",
+      "postgresId": "auth-transaction-repro-test-testcommitkeepsalterdatabaseset-0001-select-array_to_string-setconfig-from-pg_catalog.pg_db_role_setting",
+      "suggestedId": "auth-transaction-repro-test-testcommitkeepsalterdatabaseset-0001-select-array_to_string-setconfig-from-pg_catalog.pg_db_role_setting",
+      "compare": "sqlstate",
+      "expectedKind": "rows",
+      "sqlstate": "42704",
+      "errorSeverity": "ERROR",
+      "query": "SELECT array_to_string(setconfig, ',')\n\t\t\t\t\t\tFROM pg_catalog.pg_db_role_setting\n\t\t\t\t\t\tWHERE setdatabase = 'commit_database_setting_catalog'::regdatabase;",
+      "querySha256": "fd61240169fcc5cb332fe1b3ee585112fe0f97799346f9537a8325b1fbb110cf",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/auth_transaction_repro_test.go:TestRollbackRestoresPreviousAlterDatabaseSet#0001",
+      "source": "testing/go/postgres16/auth_transaction_repro_test.go:TestRollbackRestoresPreviousAlterDatabaseSet",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK restores previous ALTER DATABASE SET",
+      "oracle": "postgres",
+      "postgresId": "auth-transaction-repro-test-testrollbackrestorespreviousalterdatabaseset-0001-select-array_to_string-setconfig-from-pg_catalog.pg_db_role_setting",
+      "suggestedId": "auth-transaction-repro-test-testrollbackrestorespreviousalterdatabaseset-0001-select-array_to_string-setconfig-from-pg_catalog.pg_db_role_setting",
+      "compare": "sqlstate",
+      "expectedKind": "rows",
+      "sqlstate": "42704",
+      "errorSeverity": "ERROR",
+      "query": "SELECT array_to_string(setconfig, ',')\n\t\t\t\t\t\tFROM pg_catalog.pg_db_role_setting\n\t\t\t\t\t\tWHERE setdatabase = 'rollback_restore_database_setting'::regdatabase;",
+      "querySha256": "52f73a228d0f48b8c86ec56f9862a061c770c24bce48759e77972a5e0c4dd894",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/auth_transaction_repro_test.go:TestRollbackRevertsAlterDatabaseCatalogOptionsRepro#0001",
+      "source": "testing/go/postgres16/auth_transaction_repro_test.go:TestRollbackRevertsAlterDatabaseCatalogOptionsRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK reverts ALTER DATABASE catalog options",
+      "oracle": "postgres",
+      "postgresId": "auth-transaction-repro-test-testrollbackrevertsalterdatabasecatalogoptionsrepro-0001-select-datconnlimit-from-pg_catalog.pg_database-where",
+      "suggestedId": "auth-transaction-repro-test-testrollbackrevertsalterdatabasecatalogoptionsrepro-0001-select-datconnlimit-from-pg_catalog.pg_database-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT datconnlimit\n\t\t\t\t\t\tFROM pg_catalog.pg_database\n\t\t\t\t\t\tWHERE datname = 'rollback_database_options_catalog';",
+      "querySha256": "f793eb7124b5073167c9df6cc6d9c6a3969474cef15864d6bf4be458add5779f",
+      "expectedRows": [
+        [
+          {
+            "value": "-1"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/auth_transaction_repro_test.go:TestRollbackRevertsAlterRoleSetRepro#0001",
+      "source": "testing/go/postgres16/auth_transaction_repro_test.go:TestRollbackRevertsAlterRoleSetRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK reverts ALTER ROLE SET",
+      "oracle": "postgres",
+      "postgresId": "auth-transaction-repro-test-testrollbackrevertsalterrolesetrepro-0001-select-count-*-from-pg_catalog.pg_db_role_setting",
+      "suggestedId": "auth-transaction-repro-test-testrollbackrevertsalterrolesetrepro-0001-select-count-*-from-pg_catalog.pg_db_role_setting",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_db_role_setting\n\t\t\t\t\t\tWHERE setrole = 'rollback_role_setting_catalog'::regrole;",
+      "querySha256": "dec168d18221c03ede59344c8e2aed9b57a18e2e2110f1352e132d6eb5499b3b",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/auth_transaction_repro_test.go:TestRollbackRevertsAlterRoleOptionsRepro#0001",
+      "source": "testing/go/postgres16/auth_transaction_repro_test.go:TestRollbackRevertsAlterRoleOptionsRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK reverts ALTER ROLE options",
+      "oracle": "postgres",
+      "postgresId": "auth-transaction-repro-test-testrollbackrevertsalterroleoptionsrepro-0001-select-rolconnlimit-from-pg_catalog.pg_roles-where",
+      "suggestedId": "auth-transaction-repro-test-testrollbackrevertsalterroleoptionsrepro-0001-select-rolconnlimit-from-pg_catalog.pg_roles-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT rolconnlimit\n\t\t\t\t\t\tFROM pg_catalog.pg_roles\n\t\t\t\t\t\tWHERE rolname = 'rollback_role_options_catalog';",
+      "querySha256": "03df41cd39ee21c9ee5398e57c9073e03128953f19bae9e73a4c0de59f6c9c53",
+      "expectedRows": [
+        [
+          {
+            "value": "-1"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/auth_transaction_repro_test.go:TestRollbackDropsCreatedRoleRepro#0001",
+      "source": "testing/go/postgres16/auth_transaction_repro_test.go:TestRollbackDropsCreatedRoleRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK drops created role",
+      "oracle": "postgres",
+      "postgresId": "auth-transaction-repro-test-testrollbackdropscreatedrolerepro-0001-select-count-*-from-pg_catalog.pg_roles",
+      "suggestedId": "auth-transaction-repro-test-testrollbackdropscreatedrolerepro-0001-select-count-*-from-pg_catalog.pg_roles",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_roles\n\t\t\t\t\t\tWHERE rolname = 'rollback_created_role';",
+      "querySha256": "15e0378acde073023a1f95b080ff2af0666643fa3d111e13ed284c6e1fd4d7d0",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/auth_transaction_repro_test.go:TestRollbackRestoresDroppedRoleRepro#0001",
+      "source": "testing/go/postgres16/auth_transaction_repro_test.go:TestRollbackRestoresDroppedRoleRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK restores dropped role",
+      "oracle": "postgres",
+      "postgresId": "auth-transaction-repro-test-testrollbackrestoresdroppedrolerepro-0001-select-count-*-from-pg_catalog.pg_roles",
+      "suggestedId": "auth-transaction-repro-test-testrollbackrestoresdroppedrolerepro-0001-select-count-*-from-pg_catalog.pg_roles",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_roles\n\t\t\t\t\t\tWHERE rolname = 'rollback_dropped_role';",
+      "querySha256": "80ab8c78f04c306a3132ff98fd897824fe54af0478aa637dbbe44db454fa9974",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/auth_transaction_repro_test.go:TestRollbackRevertsGrantTablePrivilegeRepro#0001",
+      "source": "testing/go/postgres16/auth_transaction_repro_test.go:TestRollbackRevertsGrantTablePrivilegeRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK reverts GRANT table privilege",
+      "oracle": "postgres",
+      "postgresId": "auth-transaction-repro-test-testrollbackrevertsgranttableprivilegerepro-0001-select-has_table_privilege-rollback_grant_table_reader-rollback_grant_table_private-select",
+      "suggestedId": "auth-transaction-repro-test-testrollbackrevertsgranttableprivilegerepro-0001-select-has_table_privilege-rollback_grant_table_reader-rollback_grant_table_private-select",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT has_table_privilege(\n\t\t\t\t\t\t'rollback_grant_table_reader',\n\t\t\t\t\t\t'rollback_grant_table_private',\n\t\t\t\t\t\t'SELECT'\n\t\t\t\t\t);",
+      "querySha256": "c83c6e46af3b36a40977dfdf79bab8174116307c6ca86d5aefafe64d323defb2",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/auth_transaction_repro_test.go:TestRollbackRevertsRevokeTablePrivilegeRepro#0001",
+      "source": "testing/go/postgres16/auth_transaction_repro_test.go:TestRollbackRevertsRevokeTablePrivilegeRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK reverts REVOKE table privilege",
+      "oracle": "postgres",
+      "postgresId": "auth-transaction-repro-test-testrollbackrevertsrevoketableprivilegerepro-0001-select-has_table_privilege-rollback_revoke_table_reader-rollback_revoke_table_private-select",
+      "suggestedId": "auth-transaction-repro-test-testrollbackrevertsrevoketableprivilegerepro-0001-select-has_table_privilege-rollback_revoke_table_reader-rollback_revoke_table_private-select",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT has_table_privilege(\n\t\t\t\t\t\t'rollback_revoke_table_reader',\n\t\t\t\t\t\t'rollback_revoke_table_private',\n\t\t\t\t\t\t'SELECT'\n\t\t\t\t\t);",
+      "querySha256": "4375e3474cc863d84ede8ff7cbc454583e14421562b01e9d552b59922a47bd3e",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

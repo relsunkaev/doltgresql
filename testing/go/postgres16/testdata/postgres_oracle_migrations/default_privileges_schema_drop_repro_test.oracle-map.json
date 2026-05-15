@@ -1,0 +1,58 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map default_privileges_schema_drop_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/default_privileges_schema_drop_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/default_privileges_schema_drop_repro_test.go:TestDropSchemaClearsDefaultPrivilegesRepro#0001",
+      "source": "testing/go/postgres16/default_privileges_schema_drop_repro_test.go:TestDropSchemaClearsDefaultPrivilegesRepro",
+      "ordinal": 1,
+      "scriptName": "DROP SCHEMA clears schema-scoped default table privileges",
+      "oracle": "postgres",
+      "postgresId": "default-privileges-schema-drop-repro-test-testdropschemaclearsdefaultprivilegesrepro-0001-select-label-from-drop_schema_default_acl.before_drop",
+      "suggestedId": "default-privileges-schema-drop-repro-test-testdropschemaclearsdefaultprivilegesrepro-0001-select-label-from-drop_schema_default_acl.before_drop",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "drop_schema_default_reader",
+      "query": "SELECT label FROM drop_schema_default_acl.before_drop;",
+      "querySha256": "0f4bfa638e88fe9456515f54c0310cb2c9a51726a0902eed6995c17e024a5731",
+      "expectedRows": [
+        [
+          {
+            "value": "old visible"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/default_privileges_schema_drop_repro_test.go:TestDropSchemaClearsDefaultPrivilegesRepro#0002",
+      "source": "testing/go/postgres16/default_privileges_schema_drop_repro_test.go:TestDropSchemaClearsDefaultPrivilegesRepro",
+      "ordinal": 2,
+      "scriptName": "DROP SCHEMA clears schema-scoped default table privileges",
+      "oracle": "postgres",
+      "postgresId": "default-privileges-schema-drop-repro-test-testdropschemaclearsdefaultprivilegesrepro-0002-select-label-from-drop_schema_default_acl.after_drop",
+      "suggestedId": "default-privileges-schema-drop-repro-test-testdropschemaclearsdefaultprivilegesrepro-0002-select-label-from-drop_schema_default_acl.after_drop",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "drop_schema_default_reader",
+      "query": "SELECT label FROM drop_schema_default_acl.after_drop;",
+      "querySha256": "c81187b913d014edcf3c408fdfe13b474f26d79796d090f15926aab4d5ed0347",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map view_search_path_repro_test.go",
+  "sourceFile": "testing/go/postgres16/view_search_path_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/view_search_path_repro_test.go:TestSearchPathResolvesViewsInLaterSchemasRepro#0001",
+      "source": "testing/go/postgres16/view_search_path_repro_test.go:TestSearchPathResolvesViewsInLaterSchemasRepro",
+      "ordinal": 1,
+      "scriptName": "search_path resolves views in later schemas",
+      "oracle": "postgres",
+      "postgresId": "view-search-path-repro-test-testsearchpathresolvesviewsinlaterschemasrepro-0001-select-v-from-search_path_view-order",
+      "suggestedId": "view-search-path-repro-test-testsearchpathresolvesviewsinlaterschemasrepro-0001-select-v-from-search_path_view-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT v FROM search_path_view ORDER BY id;",
+      "querySha256": "2b34179bb7a8984a00b6e1de1034178b2338cfc28621b85978cc3468d58bb488",
+      "expectedRows": [
+        [
+          {
+            "value": "4"
+          }
+        ],
+        [
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

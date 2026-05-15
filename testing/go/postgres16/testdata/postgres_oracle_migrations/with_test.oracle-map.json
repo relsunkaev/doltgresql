@@ -1,0 +1,220 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map with_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/with_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/with_test.go:TestWithStatements#0001",
+      "source": "testing/go/postgres16/with_test.go:TestWithStatements",
+      "ordinal": 1,
+      "scriptName": "basic values statements",
+      "oracle": "postgres",
+      "postgresId": "with-test-testwithstatements-0001-with-cte-as-select-1",
+      "suggestedId": "with-test-testwithstatements-0001-with-cte-as-select-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "with cte as (select 1) select * from cte;",
+      "querySha256": "688b5b6a6cd9a44dde3f20766aa377282ed9e6d08fe75c41fd224878be25e2d2",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/with_test.go:TestWithStatements#0002",
+      "source": "testing/go/postgres16/with_test.go:TestWithStatements",
+      "ordinal": 2,
+      "scriptName": "basic values statements",
+      "oracle": "postgres",
+      "postgresId": "with-test-testwithstatements-0002-with-cte-as-select-1",
+      "suggestedId": "with-test-testwithstatements-0002-with-cte-as-select-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "with cte as (select 1, 2, 3 union select 4, 5, 6) select * from cte;",
+      "querySha256": "01c472ae74241e5ede7259a03356dd618f5f62970529d9260bd3b0f271d35017",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "5"
+          },
+          {
+            "value": "6"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/with_test.go:TestWithStatements#0003",
+      "source": "testing/go/postgres16/with_test.go:TestWithStatements",
+      "ordinal": 3,
+      "scriptName": "basic values statements",
+      "oracle": "postgres",
+      "postgresId": "with-test-testwithstatements-0003-with-cte-as-values-1",
+      "suggestedId": "with-test-testwithstatements-0003-with-cte-as-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "with cte as (values (1)) select * from cte;",
+      "querySha256": "27d04d7c5a09a2a03a1f9c4b68d57eb16d01f88b99baff7bedae853f5d6a6d40",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/with_test.go:TestWithStatements#0004",
+      "source": "testing/go/postgres16/with_test.go:TestWithStatements",
+      "ordinal": 4,
+      "scriptName": "basic values statements",
+      "oracle": "postgres",
+      "postgresId": "with-test-testwithstatements-0004-with-cte-as-values-1",
+      "suggestedId": "with-test-testwithstatements-0004-with-cte-as-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "with cte as (values (1, 2, 3) union values (4, 5, 6)) select * from cte;",
+      "querySha256": "b0d8a2ef4e52a6923124f44a85fec75656c3eb1a4a299f37d5eb4bcbd430df99",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "5"
+          },
+          {
+            "value": "6"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/with_test.go:TestWithStatements#0005",
+      "source": "testing/go/postgres16/with_test.go:TestWithStatements",
+      "ordinal": 5,
+      "scriptName": "basic values statements",
+      "oracle": "postgres",
+      "postgresId": "with-test-testwithstatements-0005-with-cte-as-select-1",
+      "suggestedId": "with-test-testwithstatements-0005-with-cte-as-select-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "with cte as (select 1, 2, 3 union values (4, 5, 6)) select * from cte;",
+      "querySha256": "67859a306f0e45df07104dd27d528902989154c96109752e57cd1daef3336fb3",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "5"
+          },
+          {
+            "value": "6"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/with_test.go:TestWithStatements#0006",
+      "source": "testing/go/postgres16/with_test.go:TestWithStatements",
+      "ordinal": 6,
+      "scriptName": "basic values statements",
+      "oracle": "postgres",
+      "postgresId": "with-test-testwithstatements-0006-with-recursive-cte-x-as",
+      "suggestedId": "with-test-testwithstatements-0006-with-recursive-cte-x-as",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "with recursive cte(x) as (select 1 union all select x + 1 from cte) select * from cte limit 5;",
+      "querySha256": "8d1aa8ea8d53cd21a1778cc84763a77e47dd5041cf5617beb03f54133189b32e",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          }
+        ],
+        [
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

@@ -1,0 +1,139 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map parameter_privilege_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/parameter_privilege_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/parameter_privilege_repro_test.go:TestGrantOnConfigurationParameterRepro#0001",
+      "source": "testing/go/postgres16/parameter_privilege_repro_test.go:TestGrantOnConfigurationParameterRepro",
+      "ordinal": 1,
+      "scriptName": "GRANT SET on configuration parameter",
+      "oracle": "postgres",
+      "postgresId": "parameter-privilege-repro-test-testgrantonconfigurationparameterrepro-0001-grant-set-on-parameter-work_mem",
+      "suggestedId": "parameter-privilege-repro-test-testgrantonconfigurationparameterrepro-0001-grant-set-on-parameter-work_mem",
+      "compare": "tag",
+      "expectedKind": "tag",
+      "query": "GRANT SET ON PARAMETER work_mem TO parameter_set_grantee;",
+      "querySha256": "d557ea846a26fed4f4ffe5b60af28bc54cdb02e88446f4d9482038ed67b23b9d",
+      "expectedTag": "GRANT",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/parameter_privilege_repro_test.go:TestGrantOnConfigurationParameterRepro#0002",
+      "source": "testing/go/postgres16/parameter_privilege_repro_test.go:TestGrantOnConfigurationParameterRepro",
+      "ordinal": 2,
+      "scriptName": "GRANT ALTER SYSTEM on configuration parameter",
+      "oracle": "postgres",
+      "postgresId": "parameter-privilege-repro-test-testgrantonconfigurationparameterrepro-0002-grant-alter-system-on-parameter",
+      "suggestedId": "parameter-privilege-repro-test-testgrantonconfigurationparameterrepro-0002-grant-alter-system-on-parameter",
+      "compare": "tag",
+      "expectedKind": "tag",
+      "query": "GRANT ALTER SYSTEM ON PARAMETER work_mem TO parameter_alter_system_grantee;",
+      "querySha256": "7c99ba9819e4f8a59395d1215dbc01fc370a84fca9e1ce5bd278bd8e7e0d0677",
+      "expectedTag": "GRANT",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/parameter_privilege_repro_test.go:TestRevokeOnConfigurationParameterRepro#0001",
+      "source": "testing/go/postgres16/parameter_privilege_repro_test.go:TestRevokeOnConfigurationParameterRepro",
+      "ordinal": 1,
+      "scriptName": "REVOKE SET on configuration parameter",
+      "oracle": "postgres",
+      "postgresId": "parameter-privilege-repro-test-testrevokeonconfigurationparameterrepro-0001-revoke-set-on-parameter-work_mem",
+      "suggestedId": "parameter-privilege-repro-test-testrevokeonconfigurationparameterrepro-0001-revoke-set-on-parameter-work_mem",
+      "compare": "tag",
+      "expectedKind": "tag",
+      "query": "REVOKE SET ON PARAMETER work_mem FROM parameter_set_revokee;",
+      "querySha256": "2de505165cc3e56f5c031448464372b9fcdfad72a9d00e9cb9ba08fc8bb30a0a",
+      "expectedTag": "REVOKE",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/parameter_privilege_repro_test.go:TestRevokeOnConfigurationParameterRepro#0002",
+      "source": "testing/go/postgres16/parameter_privilege_repro_test.go:TestRevokeOnConfigurationParameterRepro",
+      "ordinal": 2,
+      "scriptName": "REVOKE ALTER SYSTEM on configuration parameter",
+      "oracle": "postgres",
+      "postgresId": "parameter-privilege-repro-test-testrevokeonconfigurationparameterrepro-0002-revoke-alter-system-on-parameter",
+      "suggestedId": "parameter-privilege-repro-test-testrevokeonconfigurationparameterrepro-0002-revoke-alter-system-on-parameter",
+      "compare": "tag",
+      "expectedKind": "tag",
+      "query": "REVOKE ALTER SYSTEM ON PARAMETER work_mem FROM parameter_alter_system_revokee;",
+      "querySha256": "e8a7f6a186df7dcc7335e660cd0ea310b69e0dba656e64bb6c08600c163da047",
+      "expectedTag": "REVOKE",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/parameter_privilege_repro_test.go:TestHasParameterPrivilegeHelperRepro#0001",
+      "source": "testing/go/postgres16/parameter_privilege_repro_test.go:TestHasParameterPrivilegeHelperRepro",
+      "ordinal": 1,
+      "scriptName": "has_parameter_privilege reports parameter privileges",
+      "oracle": "postgres",
+      "postgresId": "parameter-privilege-repro-test-testhasparameterprivilegehelperrepro-0001-select-has_parameter_privilege-work_mem-set",
+      "suggestedId": "parameter-privilege-repro-test-testhasparameterprivilegehelperrepro-0001-select-has_parameter_privilege-work_mem-set",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT has_parameter_privilege('work_mem', 'SET');",
+      "querySha256": "71dda7c0bc136e60665f5d770b973a56aecb694680671ffb4f6c640f34dbd88e",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/parameter_privilege_repro_test.go:TestSetSuperuserOnlyParameterRequiresSuperuserRepro#0001",
+      "source": "testing/go/postgres16/parameter_privilege_repro_test.go:TestSetSuperuserOnlyParameterRequiresSuperuserRepro",
+      "ordinal": 1,
+      "scriptName": "SET superuser-only parameter requires superuser",
+      "oracle": "postgres",
+      "postgresId": "parameter-privilege-repro-test-testsetsuperuseronlyparameterrequiressuperuserrepro-0001-set-session_preload_libraries-=-unsafe_library",
+      "suggestedId": "parameter-privilege-repro-test-testsetsuperuseronlyparameterrequiressuperuserrepro-0001-set-session_preload_libraries-=-unsafe_library",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "parameter_superuser_intruder",
+      "query": "SET session_preload_libraries = 'unsafe_library';",
+      "querySha256": "5654b4e5e5e615b27f4e86148518691e8c81d29f262e461cf3697ea7236d1db9",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/parameter_privilege_repro_test.go:TestSetSuperuserOnlyParameterRequiresSuperuserRepro#0002",
+      "source": "testing/go/postgres16/parameter_privilege_repro_test.go:TestSetSuperuserOnlyParameterRequiresSuperuserRepro",
+      "ordinal": 2,
+      "scriptName": "SET superuser-only parameter requires superuser",
+      "oracle": "postgres",
+      "postgresId": "parameter-privilege-repro-test-testsetsuperuseronlyparameterrequiressuperuserrepro-0002-select-current_setting-session_preload_libraries",
+      "suggestedId": "parameter-privilege-repro-test-testsetsuperuseronlyparameterrequiressuperuserrepro-0002-select-current_setting-session_preload_libraries",
+      "compare": "sqlstate",
+      "expectedKind": "rows",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "parameter_superuser_intruder",
+      "query": "SELECT current_setting('session_preload_libraries');",
+      "querySha256": "4c144b1737d04445b17a11e9209a8a9abb4e0933e94984d5387cf57978b67df3",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map type_comment_drop_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/type_comment_drop_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/type_comment_drop_repro_test.go:TestDropTypeClearsCommentRepro#0001",
+      "source": "testing/go/postgres16/type_comment_drop_repro_test.go:TestDropTypeClearsCommentRepro",
+      "ordinal": 1,
+      "scriptName": "DROP TYPE clears type comment before recreate",
+      "oracle": "postgres",
+      "postgresId": "type-comment-drop-repro-test-testdroptypeclearscommentrepro-0001-select-obj_description-select-oid-from",
+      "suggestedId": "type-comment-drop-repro-test-testdroptypeclearscommentrepro-0001-select-obj_description-select-oid-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT obj_description(\n\t\t\t\t\t\t(SELECT oid FROM pg_type WHERE typname = 'drop_recreate_comment_type'),\n\t\t\t\t\t\t'pg_type');",
+      "querySha256": "468a82f2a6b3f160893a5f38c3083bc67517d1f549fba6651b1e711a7271fdd7",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

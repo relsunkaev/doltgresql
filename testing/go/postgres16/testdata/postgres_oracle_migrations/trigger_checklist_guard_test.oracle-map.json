@@ -1,0 +1,194 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map trigger_checklist_guard_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/trigger_checklist_guard_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/trigger_checklist_guard_test.go:TestStatementTriggerChecklistGuard#0001",
+      "source": "testing/go/postgres16/trigger_checklist_guard_test.go:TestStatementTriggerChecklistGuard",
+      "ordinal": 1,
+      "scriptName": "zero-row update and delete statement triggers fire once",
+      "oracle": "postgres",
+      "postgresId": "trigger-checklist-guard-test-teststatementtriggerchecklistguard-0001-select-entry-from-audit-order",
+      "suggestedId": "trigger-checklist-guard-test-teststatementtriggerchecklistguard-0001-select-entry-from-audit-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT entry FROM audit ORDER BY seq;",
+      "querySha256": "90974b17f700eddd32448d4b29384f91c2e63d00cc221dd93703005d56057124",
+      "expectedRows": [
+        [
+          {
+            "value": "BEFORE:STATEMENT:UPDATE"
+          }
+        ],
+        [
+          {
+            "value": "AFTER:STATEMENT:UPDATE"
+          }
+        ],
+        [
+          {
+            "value": "BEFORE:STATEMENT:DELETE"
+          }
+        ],
+        [
+          {
+            "value": "AFTER:STATEMENT:DELETE"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_checklist_guard_test.go:TestStatementTriggerChecklistGuard#0002",
+      "source": "testing/go/postgres16/trigger_checklist_guard_test.go:TestStatementTriggerChecklistGuard",
+      "ordinal": 2,
+      "scriptName": "transition table shadows and restores existing temporary table",
+      "oracle": "postgres",
+      "postgresId": "trigger-checklist-guard-test-teststatementtriggerchecklistguard-0002-select-seen_count-seen_sum-from-audit",
+      "suggestedId": "trigger-checklist-guard-test-teststatementtriggerchecklistguard-0002-select-seen_count-seen_sum-from-audit",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT seen_count, seen_sum FROM audit;",
+      "querySha256": "a389cf15806a574a31c1da3edfe660ba63df4d513191b57f85be0e6c36603943",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "30"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_checklist_guard_test.go:TestStatementTriggerChecklistGuard#0003",
+      "source": "testing/go/postgres16/trigger_checklist_guard_test.go:TestStatementTriggerChecklistGuard",
+      "ordinal": 3,
+      "scriptName": "transition table shadows and restores existing temporary table",
+      "oracle": "postgres",
+      "postgresId": "trigger-checklist-guard-test-teststatementtriggerchecklistguard-0003-select-marker-from-new_rows",
+      "suggestedId": "trigger-checklist-guard-test-teststatementtriggerchecklistguard-0003-select-marker-from-new_rows",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT marker FROM new_rows;",
+      "querySha256": "c95e1d94c7efd34974c00dbfa0914ebaa6ad41d21e05f466a11b3a34034aa9c3",
+      "expectedRows": [
+        [
+          {
+            "value": "42"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_checklist_guard_test.go:TestStatementTriggerChecklistGuard#0004",
+      "source": "testing/go/postgres16/trigger_checklist_guard_test.go:TestStatementTriggerChecklistGuard",
+      "ordinal": 4,
+      "scriptName": "transition table is dropped after trigger function returns",
+      "oracle": "postgres",
+      "postgresId": "trigger-checklist-guard-test-teststatementtriggerchecklistguard-0004-select-count-*-from-new_rows",
+      "suggestedId": "trigger-checklist-guard-test-teststatementtriggerchecklistguard-0004-select-count-*-from-new_rows",
+      "compare": "structural",
+      "expectedKind": "error",
+      "query": "SELECT count(*) FROM new_rows;",
+      "querySha256": "0603709d2ffd27568d2a16d85e7b74f7c6ada41e42ec25d4e0a3c1da73d76d3e",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_checklist_guard_test.go:TestTransitionTableValidationChecklistGuard#0001",
+      "source": "testing/go/postgres16/trigger_checklist_guard_test.go:TestTransitionTableValidationChecklistGuard",
+      "ordinal": 1,
+      "scriptName": "transition table trigger validation",
+      "oracle": "postgres",
+      "postgresId": "trigger-checklist-guard-test-testtransitiontablevalidationchecklistguard-0001-create-trigger-multi_event_transition-after-insert",
+      "suggestedId": "trigger-checklist-guard-test-testtransitiontablevalidationchecklistguard-0001-create-trigger-multi_event_transition-after-insert",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "0A000",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TRIGGER multi_event_transition\n\t\t\t\t\t\tAFTER INSERT OR UPDATE ON target\n\t\t\t\t\t\tREFERENCING NEW TABLE AS new_rows\n\t\t\t\t\t\tFOR EACH STATEMENT EXECUTE FUNCTION audit_fn();",
+      "querySha256": "9b2f30d1ae52c10aab5513bae3d94792d030f613060b6c737672a933bb723f60",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_checklist_guard_test.go:TestTransitionTableValidationChecklistGuard#0002",
+      "source": "testing/go/postgres16/trigger_checklist_guard_test.go:TestTransitionTableValidationChecklistGuard",
+      "ordinal": 2,
+      "scriptName": "transition table trigger validation",
+      "oracle": "postgres",
+      "postgresId": "trigger-checklist-guard-test-testtransitiontablevalidationchecklistguard-0002-create-trigger-insert_old_transition-after-insert",
+      "suggestedId": "trigger-checklist-guard-test-testtransitiontablevalidationchecklistguard-0002-create-trigger-insert_old_transition-after-insert",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P17",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TRIGGER insert_old_transition\n\t\t\t\t\t\tAFTER INSERT ON target\n\t\t\t\t\t\tREFERENCING OLD TABLE AS old_rows\n\t\t\t\t\t\tFOR EACH STATEMENT EXECUTE FUNCTION audit_fn();",
+      "querySha256": "c31f9720ef484fc46de6835eda2c77e2e7c565bb379df1521794fdcca49eed3e",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_checklist_guard_test.go:TestTransitionTableValidationChecklistGuard#0003",
+      "source": "testing/go/postgres16/trigger_checklist_guard_test.go:TestTransitionTableValidationChecklistGuard",
+      "ordinal": 3,
+      "scriptName": "transition table trigger validation",
+      "oracle": "postgres",
+      "postgresId": "trigger-checklist-guard-test-testtransitiontablevalidationchecklistguard-0003-create-trigger-delete_new_transition-after-delete",
+      "suggestedId": "trigger-checklist-guard-test-testtransitiontablevalidationchecklistguard-0003-create-trigger-delete_new_transition-after-delete",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P17",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TRIGGER delete_new_transition\n\t\t\t\t\t\tAFTER DELETE ON target\n\t\t\t\t\t\tREFERENCING NEW TABLE AS new_rows\n\t\t\t\t\t\tFOR EACH STATEMENT EXECUTE FUNCTION audit_fn();",
+      "querySha256": "f68281ab1d633e0525ac0b5d28631b1b48e96e7262f802a970298589e2af23af",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/trigger_checklist_guard_test.go:TestTransitionTableValidationChecklistGuard#0004",
+      "source": "testing/go/postgres16/trigger_checklist_guard_test.go:TestTransitionTableValidationChecklistGuard",
+      "ordinal": 4,
+      "scriptName": "transition table trigger validation",
+      "oracle": "postgres",
+      "postgresId": "trigger-checklist-guard-test-testtransitiontablevalidationchecklistguard-0004-create-trigger-duplicate_name_transition-after-update",
+      "suggestedId": "trigger-checklist-guard-test-testtransitiontablevalidationchecklistguard-0004-create-trigger-duplicate_name_transition-after-update",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P17",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TRIGGER duplicate_name_transition\n\t\t\t\t\t\tAFTER UPDATE ON target\n\t\t\t\t\t\tREFERENCING OLD TABLE AS changed_rows NEW TABLE AS changed_rows\n\t\t\t\t\t\tFOR EACH STATEMENT EXECUTE FUNCTION audit_fn();",
+      "querySha256": "cb9c5033d1a3644c07b6452de0f9ce31ad4d5b1ed88b48eaf6c59866bd9ff421",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

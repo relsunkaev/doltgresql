@@ -1,0 +1,64 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map operator_definition_repro_test.go --oracle-test-name TestCreateOperatorInstallsCallableOperatorRepro,TestDropOperatorIfExistsDropsExistingOperatorRepro --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/operator_definition_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/operator_definition_repro_test.go:TestCreateOperatorInstallsCallableOperatorRepro#0001",
+      "source": "testing/go/postgres16/operator_definition_repro_test.go:TestCreateOperatorInstallsCallableOperatorRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE OPERATOR installs callable operator",
+      "oracle": "postgres",
+      "postgresId": "operator-definition-repro-test-testcreateoperatorinstallscallableoperatorrepro-0001-select-2-===-4-2",
+      "suggestedId": "operator-definition-repro-test-testcreateoperatorinstallscallableoperatorrepro-0001-select-2-===-4-2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 2 === 4, 2 === 3;",
+      "querySha256": "59de0dc65691f2c12bd300665145deb338072203d3daf21533bf56571882a4e7",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/operator_definition_repro_test.go:TestDropOperatorIfExistsDropsExistingOperatorRepro#0001",
+      "source": "testing/go/postgres16/operator_definition_repro_test.go:TestDropOperatorIfExistsDropsExistingOperatorRepro",
+      "ordinal": 1,
+      "scriptName": "DROP OPERATOR IF EXISTS removes existing operator",
+      "oracle": "postgres",
+      "postgresId": "operator-definition-repro-test-testdropoperatorifexistsdropsexistingoperatorrepro-0001-select-count-*-from-pg_operator",
+      "suggestedId": "operator-definition-repro-test-testdropoperatorifexistsdropsexistingoperatorrepro-0001-select-count-*-from-pg_operator",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_operator\n\t\t\t\t\t\tWHERE oprname = '==='\n\t\t\t\t\t\t  AND oprleft = 'integer'::regtype\n\t\t\t\t\t\t  AND oprright = 'integer'::regtype;",
+      "querySha256": "0cf6ddc217d85f6036989eafda223a84a92d7eef4d650ba0eba096839725797d",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

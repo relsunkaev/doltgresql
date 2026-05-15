@@ -1,0 +1,122 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map session_replication_role_probe_test.go --oracle-test-name TestSessionReplicationRoleProbe",
+  "sourceFile": "testing/go/postgres16/session_replication_role_probe_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/session_replication_role_probe_test.go:TestSessionReplicationRoleProbe#0001",
+      "source": "testing/go/postgres16/session_replication_role_probe_test.go:TestSessionReplicationRoleProbe",
+      "ordinal": 1,
+      "scriptName": "SET session_replication_role keyword acceptance",
+      "oracle": "postgres",
+      "postgresId": "session-replication-role-probe-test-testsessionreplicationroleprobe-0001-show-session_replication_role",
+      "suggestedId": "session-replication-role-probe-test-testsessionreplicationroleprobe-0001-show-session_replication_role",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SHOW session_replication_role;",
+      "querySha256": "e5cce497d458eef2f8216e322a2d3f0797f7772396893cb4c2cf50f8cc6ca5f8",
+      "expectedRows": [
+        [
+          {
+            "value": "replica"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/session_replication_role_probe_test.go:TestSessionReplicationRoleProbe#0002",
+      "source": "testing/go/postgres16/session_replication_role_probe_test.go:TestSessionReplicationRoleProbe",
+      "ordinal": 2,
+      "scriptName": "SET session_replication_role keyword acceptance",
+      "oracle": "postgres",
+      "postgresId": "session-replication-role-probe-test-testsessionreplicationroleprobe-0002-show-session_replication_role",
+      "suggestedId": "session-replication-role-probe-test-testsessionreplicationroleprobe-0002-show-session_replication_role",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SHOW session_replication_role;",
+      "querySha256": "e5cce497d458eef2f8216e322a2d3f0797f7772396893cb4c2cf50f8cc6ca5f8",
+      "expectedRows": [
+        [
+          {
+            "value": "origin"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/session_replication_role_probe_test.go:TestSessionReplicationRoleProbe#0003",
+      "source": "testing/go/postgres16/session_replication_role_probe_test.go:TestSessionReplicationRoleProbe",
+      "ordinal": 3,
+      "scriptName": "session_replication_role = replica suppresses FK enforcement",
+      "oracle": "postgres",
+      "postgresId": "session-replication-role-probe-test-testsessionreplicationroleprobe-0003-insert-into-c-values-2",
+      "suggestedId": "session-replication-role-probe-test-testsessionreplicationroleprobe-0003-insert-into-c-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23503",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO c VALUES (2, 999);",
+      "querySha256": "5af510ac8568c52adcb6c6440826cc1e318f72c26bba7fc9fe6bfb7dc2cd7276",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/session_replication_role_probe_test.go:TestSessionReplicationRoleProbe#0004",
+      "source": "testing/go/postgres16/session_replication_role_probe_test.go:TestSessionReplicationRoleProbe",
+      "ordinal": 4,
+      "scriptName": "session_replication_role = replica suppresses trigger firing",
+      "oracle": "postgres",
+      "postgresId": "session-replication-role-probe-test-testsessionreplicationroleprobe-0004-select-count-*-::text-from",
+      "suggestedId": "session-replication-role-probe-test-testsessionreplicationroleprobe-0004-select-count-*-::text-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)::TEXT FROM audit_log;",
+      "querySha256": "8ec0be68da6e43b4a93c511189ed19930e7e2e3688a4f1da18a3628474d5c79f",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/session_replication_role_probe_test.go:TestSessionReplicationRoleProbe#0005",
+      "source": "testing/go/postgres16/session_replication_role_probe_test.go:TestSessionReplicationRoleProbe",
+      "ordinal": 5,
+      "scriptName": "session_replication_role = replica suppresses trigger firing",
+      "oracle": "postgres",
+      "postgresId": "session-replication-role-probe-test-testsessionreplicationroleprobe-0005-select-count-*-::text-from",
+      "suggestedId": "session-replication-role-probe-test-testsessionreplicationroleprobe-0005-select-count-*-::text-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)::TEXT FROM audit_log;",
+      "querySha256": "8ec0be68da6e43b4a93c511189ed19930e7e2e3688a4f1da18a3628474d5c79f",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

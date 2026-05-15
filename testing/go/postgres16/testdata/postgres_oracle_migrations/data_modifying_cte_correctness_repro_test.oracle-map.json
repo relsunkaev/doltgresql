@@ -1,0 +1,381 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map data_modifying_cte_correctness_repro_test.go",
+  "sourceFile": "testing/go/postgres16/data_modifying_cte_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/postgres16/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/data_modifying_cte_correctness_repro_test.go:TestDataModifyingCtesRepro#0001",
+      "source": "testing/go/postgres16/data_modifying_cte_correctness_repro_test.go:TestDataModifyingCtesRepro",
+      "ordinal": 1,
+      "scriptName": "INSERT CTE returns inserted rows",
+      "oracle": "postgres",
+      "postgresId": "data-modifying-cte-correctness-repro-test-testdatamodifyingctesrepro-0001-with-inserted-as-insert-into",
+      "suggestedId": "data-modifying-cte-correctness-repro-test-testdatamodifyingctesrepro-0001-with-inserted-as-insert-into",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "WITH inserted AS (\n\t\t\t\t\t\t\tINSERT INTO insert_cte_items VALUES (1, 'one'), (2, 'two')\n\t\t\t\t\t\t\tRETURNING id, label\n\t\t\t\t\t\t)\n\t\t\t\t\t\tSELECT id, label FROM inserted ORDER BY id;",
+      "querySha256": "d354af7d6e9af2659e918b7e29f1ff6ba19ff4b0987d6558a5a23971666403b5",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "one"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "two"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/data_modifying_cte_correctness_repro_test.go:TestDataModifyingCtesRepro#0002",
+      "source": "testing/go/postgres16/data_modifying_cte_correctness_repro_test.go:TestDataModifyingCtesRepro",
+      "ordinal": 2,
+      "scriptName": "INSERT CTE returns inserted rows",
+      "oracle": "postgres",
+      "postgresId": "data-modifying-cte-correctness-repro-test-testdatamodifyingctesrepro-0002-select-id-label-from-insert_cte_items",
+      "suggestedId": "data-modifying-cte-correctness-repro-test-testdatamodifyingctesrepro-0002-select-id-label-from-insert_cte_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM insert_cte_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "9507bb4aacbf4681b255f2d5638cfa1858dcdcde22e5fcdfd7f3acd89746dabc",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "one"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "two"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/data_modifying_cte_correctness_repro_test.go:TestDataModifyingCtesRepro#0003",
+      "source": "testing/go/postgres16/data_modifying_cte_correctness_repro_test.go:TestDataModifyingCtesRepro",
+      "ordinal": 3,
+      "scriptName": "UPDATE CTE returns updated rows",
+      "oracle": "postgres",
+      "postgresId": "data-modifying-cte-correctness-repro-test-testdatamodifyingctesrepro-0003-with-updated-as-update-update_cte_items",
+      "suggestedId": "data-modifying-cte-correctness-repro-test-testdatamodifyingctesrepro-0003-with-updated-as-update-update_cte_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "WITH updated AS (\n\t\t\t\t\t\t\tUPDATE update_cte_items\n\t\t\t\t\t\t\tSET qty = qty + 5\n\t\t\t\t\t\t\tWHERE id = 1\n\t\t\t\t\t\t\tRETURNING id, qty\n\t\t\t\t\t\t)\n\t\t\t\t\t\tSELECT id, qty FROM updated;",
+      "querySha256": "022ec68c0e0288d69cd03c54c826fc6b3909e25b20d17cbc3a04b4991df03868",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "15"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/data_modifying_cte_correctness_repro_test.go:TestDataModifyingCtesRepro#0004",
+      "source": "testing/go/postgres16/data_modifying_cte_correctness_repro_test.go:TestDataModifyingCtesRepro",
+      "ordinal": 4,
+      "scriptName": "UPDATE CTE returns updated rows",
+      "oracle": "postgres",
+      "postgresId": "data-modifying-cte-correctness-repro-test-testdatamodifyingctesrepro-0004-select-id-qty-from-update_cte_items",
+      "suggestedId": "data-modifying-cte-correctness-repro-test-testdatamodifyingctesrepro-0004-select-id-qty-from-update_cte_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, qty\n\t\t\t\t\t\tFROM update_cte_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "7322d45d106aad3c829aa5ddafd487e3e836856573ecb2bdca0f50b9e669d566",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "15"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "20"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/data_modifying_cte_correctness_repro_test.go:TestDataModifyingCtesRepro#0005",
+      "source": "testing/go/postgres16/data_modifying_cte_correctness_repro_test.go:TestDataModifyingCtesRepro",
+      "ordinal": 5,
+      "scriptName": "DELETE CTE returns deleted rows",
+      "oracle": "postgres",
+      "postgresId": "data-modifying-cte-correctness-repro-test-testdatamodifyingctesrepro-0005-with-deleted-as-delete-from",
+      "suggestedId": "data-modifying-cte-correctness-repro-test-testdatamodifyingctesrepro-0005-with-deleted-as-delete-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "WITH deleted AS (\n\t\t\t\t\t\t\tDELETE FROM delete_cte_items\n\t\t\t\t\t\t\tWHERE id = 1\n\t\t\t\t\t\t\tRETURNING id, label\n\t\t\t\t\t\t)\n\t\t\t\t\t\tSELECT id, label FROM deleted;",
+      "querySha256": "3b306b6c2dac797400efc87a76d200aa30ef98c939f0e4d32a55eeffa24621f9",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "remove"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/data_modifying_cte_correctness_repro_test.go:TestDataModifyingCtesRepro#0006",
+      "source": "testing/go/postgres16/data_modifying_cte_correctness_repro_test.go:TestDataModifyingCtesRepro",
+      "ordinal": 6,
+      "scriptName": "DELETE CTE returns deleted rows",
+      "oracle": "postgres",
+      "postgresId": "data-modifying-cte-correctness-repro-test-testdatamodifyingctesrepro-0006-select-id-label-from-delete_cte_items",
+      "suggestedId": "data-modifying-cte-correctness-repro-test-testdatamodifyingctesrepro-0006-select-id-label-from-delete_cte_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM delete_cte_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "1c0fc7e88588c54fbce41a8de3fb5a1aad8bb58125d95f6e7cef22fd314489d8",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "keep"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/data_modifying_cte_correctness_repro_test.go:TestReadOnlyCteFeedsOuterDataModificationRepro#0001",
+      "source": "testing/go/postgres16/data_modifying_cte_correctness_repro_test.go:TestReadOnlyCteFeedsOuterDataModificationRepro",
+      "ordinal": 1,
+      "scriptName": "read-only CTE feeds outer INSERT",
+      "oracle": "postgres",
+      "postgresId": "data-modifying-cte-correctness-repro-test-testreadonlyctefeedsouterdatamodificationrepro-0001-with-source_rows-as-select-id",
+      "suggestedId": "data-modifying-cte-correctness-repro-test-testreadonlyctefeedsouterdatamodificationrepro-0001-with-source_rows-as-select-id",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "WITH source_rows AS (\n\t\t\t\t\t\t\tSELECT id, qty FROM cte_insert_source WHERE qty >= 10\n\t\t\t\t\t\t)\n\t\t\t\t\t\tINSERT INTO cte_insert_target\n\t\t\t\t\t\tSELECT id, qty + 1 FROM source_rows\n\t\t\t\t\t\tRETURNING id, qty;",
+      "querySha256": "05d331fc801fce558a332e1b769d1abd00cd85a1d236a13d969ae660060d3633",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "11"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "21"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/data_modifying_cte_correctness_repro_test.go:TestReadOnlyCteFeedsOuterDataModificationRepro#0002",
+      "source": "testing/go/postgres16/data_modifying_cte_correctness_repro_test.go:TestReadOnlyCteFeedsOuterDataModificationRepro",
+      "ordinal": 2,
+      "scriptName": "read-only CTE feeds outer INSERT",
+      "oracle": "postgres",
+      "postgresId": "data-modifying-cte-correctness-repro-test-testreadonlyctefeedsouterdatamodificationrepro-0002-select-id-qty-from-cte_insert_target",
+      "suggestedId": "data-modifying-cte-correctness-repro-test-testreadonlyctefeedsouterdatamodificationrepro-0002-select-id-qty-from-cte_insert_target",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, qty FROM cte_insert_target ORDER BY id;",
+      "querySha256": "552f4ecbfb7947fc3b07e5937d48258a746039a059114c485a6bcecdbfcc7e3d",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "11"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "21"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/data_modifying_cte_correctness_repro_test.go:TestReadOnlyCteFeedsOuterDataModificationRepro#0003",
+      "source": "testing/go/postgres16/data_modifying_cte_correctness_repro_test.go:TestReadOnlyCteFeedsOuterDataModificationRepro",
+      "ordinal": 3,
+      "scriptName": "read-only CTE feeds outer UPDATE",
+      "oracle": "postgres",
+      "postgresId": "data-modifying-cte-correctness-repro-test-testreadonlyctefeedsouterdatamodificationrepro-0003-with-deltas-as-select-id",
+      "suggestedId": "data-modifying-cte-correctness-repro-test-testreadonlyctefeedsouterdatamodificationrepro-0003-with-deltas-as-select-id",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "WITH deltas AS (\n\t\t\t\t\t\t\tSELECT id, delta FROM cte_update_source\n\t\t\t\t\t\t)\n\t\t\t\t\t\tUPDATE cte_update_target AS t\n\t\t\t\t\t\tSET qty = qty + d.delta\n\t\t\t\t\t\tFROM deltas AS d\n\t\t\t\t\t\tWHERE t.id = d.id\n\t\t\t\t\t\tRETURNING t.id, t.qty;",
+      "querySha256": "4887372fc9086ae708fa4251b025297ffb0406042309ea75bbbd794244154e85",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "15"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "27"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/data_modifying_cte_correctness_repro_test.go:TestReadOnlyCteFeedsOuterDataModificationRepro#0004",
+      "source": "testing/go/postgres16/data_modifying_cte_correctness_repro_test.go:TestReadOnlyCteFeedsOuterDataModificationRepro",
+      "ordinal": 4,
+      "scriptName": "read-only CTE feeds outer UPDATE",
+      "oracle": "postgres",
+      "postgresId": "data-modifying-cte-correctness-repro-test-testreadonlyctefeedsouterdatamodificationrepro-0004-select-id-qty-from-cte_update_target",
+      "suggestedId": "data-modifying-cte-correctness-repro-test-testreadonlyctefeedsouterdatamodificationrepro-0004-select-id-qty-from-cte_update_target",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, qty FROM cte_update_target ORDER BY id;",
+      "querySha256": "8bc4ba55e1cbaa8d7f6708d4b2d84dc02502b5a62100794049026e328cbf1659",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "15"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "27"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/data_modifying_cte_correctness_repro_test.go:TestReadOnlyCteFeedsOuterDataModificationRepro#0005",
+      "source": "testing/go/postgres16/data_modifying_cte_correctness_repro_test.go:TestReadOnlyCteFeedsOuterDataModificationRepro",
+      "ordinal": 5,
+      "scriptName": "read-only CTE feeds outer DELETE",
+      "oracle": "postgres",
+      "postgresId": "data-modifying-cte-correctness-repro-test-testreadonlyctefeedsouterdatamodificationrepro-0005-with-doomed-as-select-id",
+      "suggestedId": "data-modifying-cte-correctness-repro-test-testreadonlyctefeedsouterdatamodificationrepro-0005-with-doomed-as-select-id",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "WITH doomed AS (\n\t\t\t\t\t\t\tSELECT id FROM cte_delete_source\n\t\t\t\t\t\t)\n\t\t\t\t\t\tDELETE FROM cte_delete_target\n\t\t\t\t\t\tWHERE id IN (SELECT id FROM doomed)\n\t\t\t\t\t\tRETURNING id, label;",
+      "querySha256": "6941ba4bf02a04f8ff6e044e0cd11d9edc6042ea33869615b8a6c674a9d766ad",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "delete-a"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "delete-b"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/data_modifying_cte_correctness_repro_test.go:TestReadOnlyCteFeedsOuterDataModificationRepro#0006",
+      "source": "testing/go/postgres16/data_modifying_cte_correctness_repro_test.go:TestReadOnlyCteFeedsOuterDataModificationRepro",
+      "ordinal": 6,
+      "scriptName": "read-only CTE feeds outer DELETE",
+      "oracle": "postgres",
+      "postgresId": "data-modifying-cte-correctness-repro-test-testreadonlyctefeedsouterdatamodificationrepro-0006-select-id-label-from-cte_delete_target",
+      "suggestedId": "data-modifying-cte-correctness-repro-test-testreadonlyctefeedsouterdatamodificationrepro-0006-select-id-label-from-cte_delete_target",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label FROM cte_delete_target ORDER BY id;",
+      "querySha256": "ab90f4183b552bdcc148503e9cc987040f73ee08ea038ab01bc2f153a1a73123",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "keep"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

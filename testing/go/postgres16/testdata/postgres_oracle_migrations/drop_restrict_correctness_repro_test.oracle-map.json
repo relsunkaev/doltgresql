@@ -1,0 +1,127 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map drop_restrict_correctness_repro_test.go",
+  "sourceFile": "testing/go/postgres16/drop_restrict_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/drop_restrict_correctness_repro_test.go:TestDropTriggerAcceptsRestrict#0001",
+      "source": "testing/go/postgres16/drop_restrict_correctness_repro_test.go:TestDropTriggerAcceptsRestrict",
+      "ordinal": 1,
+      "scriptName": "DROP TRIGGER accepts explicit RESTRICT",
+      "oracle": "postgres",
+      "postgresId": "drop-restrict-correctness-repro-test-testdroptriggeracceptsrestrict-0001-select-count-*-from-drop_trigger_restrict_audit",
+      "suggestedId": "drop-restrict-correctness-repro-test-testdroptriggeracceptsrestrict-0001-select-count-*-from-drop_trigger_restrict_audit",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM drop_trigger_restrict_audit;",
+      "querySha256": "e8eb29f9207e626a75867866ee0b345be6820cd24e8c851c7e7b443b821bc20c",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/drop_restrict_correctness_repro_test.go:TestDropTriggerAcceptsCascade#0001",
+      "source": "testing/go/postgres16/drop_restrict_correctness_repro_test.go:TestDropTriggerAcceptsCascade",
+      "ordinal": 1,
+      "scriptName": "DROP TRIGGER accepts explicit CASCADE",
+      "oracle": "postgres",
+      "postgresId": "drop-restrict-correctness-repro-test-testdroptriggeracceptscascade-0001-select-count-*-from-drop_trigger_cascade_audit",
+      "suggestedId": "drop-restrict-correctness-repro-test-testdroptriggeracceptscascade-0001-select-count-*-from-drop_trigger_cascade_audit",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM drop_trigger_cascade_audit;",
+      "querySha256": "97435a74424d396c602fd37b7633fa01d41fa41cdc1d6ea46dcfcf5ab3d06bd8",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/drop_restrict_correctness_repro_test.go:TestDropFunctionCascadeRepro#0001",
+      "source": "testing/go/postgres16/drop_restrict_correctness_repro_test.go:TestDropFunctionCascadeRepro",
+      "ordinal": 1,
+      "scriptName": "DROP FUNCTION CASCADE drops dependent triggers",
+      "oracle": "postgres",
+      "postgresId": "drop-restrict-correctness-repro-test-testdropfunctioncascaderepro-0001-select-count-*-from-drop_function_cascade_audit",
+      "suggestedId": "drop-restrict-correctness-repro-test-testdropfunctioncascaderepro-0001-select-count-*-from-drop_function_cascade_audit",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM drop_function_cascade_audit;",
+      "querySha256": "b73d93d305f27cf0bb95a9ca0a21d5476f39006075244a85dbe6de6f9ff8b442",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/drop_restrict_correctness_repro_test.go:TestDropProcedureAcceptsCascade#0001",
+      "source": "testing/go/postgres16/drop_restrict_correctness_repro_test.go:TestDropProcedureAcceptsCascade",
+      "ordinal": 1,
+      "scriptName": "DROP PROCEDURE accepts explicit CASCADE",
+      "oracle": "postgres",
+      "postgresId": "drop-restrict-correctness-repro-test-testdropprocedureacceptscascade-0001-select-count-*-from-pg_proc",
+      "suggestedId": "drop-restrict-correctness-repro-test-testdropprocedureacceptscascade-0001-select-count-*-from-pg_proc",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_proc\n\t\t\t\t\t\tWHERE proname = 'drop_procedure_cascade_proc';",
+      "querySha256": "c67c32ea78b3ec4901b3d44ab3d84f6f39f8e52fbf68671a81661575ce78187d",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/drop_restrict_correctness_repro_test.go:TestTruncateAcceptsRestrict#0001",
+      "source": "testing/go/postgres16/drop_restrict_correctness_repro_test.go:TestTruncateAcceptsRestrict",
+      "ordinal": 1,
+      "scriptName": "TRUNCATE accepts explicit RESTRICT",
+      "oracle": "postgres",
+      "postgresId": "drop-restrict-correctness-repro-test-testtruncateacceptsrestrict-0001-select-count-*-from-truncate_restrict_items",
+      "suggestedId": "drop-restrict-correctness-repro-test-testtruncateacceptsrestrict-0001-select-count-*-from-truncate_restrict_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM truncate_restrict_items;",
+      "querySha256": "f6ce51a7279ed5295cf19a7edc355357953f36a5d7acd071470e809555e26e0e",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

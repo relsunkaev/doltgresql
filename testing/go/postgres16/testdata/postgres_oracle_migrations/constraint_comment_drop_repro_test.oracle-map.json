@@ -1,0 +1,39 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map constraint_comment_drop_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/constraint_comment_drop_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/constraint_comment_drop_repro_test.go:TestDropConstraintClearsCommentRepro#0001",
+      "source": "testing/go/postgres16/constraint_comment_drop_repro_test.go:TestDropConstraintClearsCommentRepro",
+      "ordinal": 1,
+      "scriptName": "DROP CONSTRAINT clears constraint comment before recreate",
+      "oracle": "postgres",
+      "postgresId": "constraint-comment-drop-repro-test-testdropconstraintclearscommentrepro-0001-select-obj_description-select-oid-from",
+      "suggestedId": "constraint-comment-drop-repro-test-testdropconstraintclearscommentrepro-0001-select-obj_description-select-oid-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT obj_description(\n\t\t\t\t\t\t(SELECT oid FROM pg_constraint\n\t\t\t\t\t\t WHERE conname = 'drop_recreate_comment_constraint'\n\t\t\t\t\t\t   AND conrelid = 'drop_recreate_comment_constraint_table'::regclass),\n\t\t\t\t\t\t'pg_constraint');",
+      "querySha256": "53c8e6377a14c72dd4a7bb75eb78a5393fab57029505e10d24c3b6c45329140c",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

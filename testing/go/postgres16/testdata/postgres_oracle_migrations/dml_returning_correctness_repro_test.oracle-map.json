@@ -1,0 +1,101 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map dml_returning_correctness_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/dml_returning_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/dml_returning_correctness_repro_test.go:TestDmlReturningCanProjectTableoidRepro#0001",
+      "source": "testing/go/postgres16/dml_returning_correctness_repro_test.go:TestDmlReturningCanProjectTableoidRepro",
+      "ordinal": 1,
+      "scriptName": "DML RETURNING can project tableoid",
+      "oracle": "postgres",
+      "postgresId": "dml-returning-correctness-repro-test-testdmlreturningcanprojecttableoidrepro-0001-insert-into-returning_tableoid_items-values-1",
+      "suggestedId": "dml-returning-correctness-repro-test-testdmlreturningcanprojecttableoidrepro-0001-insert-into-returning_tableoid_items-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO returning_tableoid_items VALUES (1, 10)\n\t\t\t\t\t\tRETURNING tableoid::regclass::text, id, v;",
+      "querySha256": "e170a73c193d48cef519f47b3178e2c430b67fb43c7a00e019416caa96b7ff0b",
+      "expectedRows": [
+        [
+          {
+            "value": "returning_tableoid_items"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/dml_returning_correctness_repro_test.go:TestDmlReturningCanProjectTableoidRepro#0002",
+      "source": "testing/go/postgres16/dml_returning_correctness_repro_test.go:TestDmlReturningCanProjectTableoidRepro",
+      "ordinal": 2,
+      "scriptName": "DML RETURNING can project tableoid",
+      "oracle": "postgres",
+      "postgresId": "dml-returning-correctness-repro-test-testdmlreturningcanprojecttableoidrepro-0002-update-returning_tableoid_items-set-v-=",
+      "suggestedId": "dml-returning-correctness-repro-test-testdmlreturningcanprojecttableoidrepro-0002-update-returning_tableoid_items-set-v-=",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "UPDATE returning_tableoid_items\n\t\t\t\t\t\tSET v = 20\n\t\t\t\t\t\tWHERE id = 1\n\t\t\t\t\t\tRETURNING tableoid::regclass::text, id, v;",
+      "querySha256": "97d14bc7dde9488122f0f9bae8971afcbc1b0ac9be58a538492d29a572189a7a",
+      "expectedRows": [
+        [
+          {
+            "value": "returning_tableoid_items"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "20"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/dml_returning_correctness_repro_test.go:TestDmlReturningCanProjectTableoidRepro#0003",
+      "source": "testing/go/postgres16/dml_returning_correctness_repro_test.go:TestDmlReturningCanProjectTableoidRepro",
+      "ordinal": 3,
+      "scriptName": "DML RETURNING can project tableoid",
+      "oracle": "postgres",
+      "postgresId": "dml-returning-correctness-repro-test-testdmlreturningcanprojecttableoidrepro-0003-delete-from-returning_tableoid_items-where-id",
+      "suggestedId": "dml-returning-correctness-repro-test-testdmlreturningcanprojecttableoidrepro-0003-delete-from-returning_tableoid_items-where-id",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "DELETE FROM returning_tableoid_items\n\t\t\t\t\t\tWHERE id = 1\n\t\t\t\t\t\tRETURNING tableoid::regclass::text, id, v;",
+      "querySha256": "a7913dd0b22c01d85e1838b30ac713642ec5e355f2e6369061f32ac644431807",
+      "expectedRows": [
+        [
+          {
+            "value": "returning_tableoid_items"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "20"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map view_drop_privilege_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/view_drop_privilege_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/view_drop_privilege_repro_test.go:TestDropViewClearsViewPrivilegesRepro#0001",
+      "source": "testing/go/postgres16/view_drop_privilege_repro_test.go:TestDropViewClearsViewPrivilegesRepro",
+      "ordinal": 1,
+      "scriptName": "DROP VIEW clears view privileges before recreate",
+      "oracle": "postgres",
+      "postgresId": "view-drop-privilege-repro-test-testdropviewclearsviewprivilegesrepro-0001-select-id-label-from-drop_recreate_view_target",
+      "suggestedId": "view-drop-privilege-repro-test-testdropviewclearsviewprivilegesrepro-0001-select-id-label-from-drop_recreate_view_target",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "drop_recreate_view_reader",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM drop_recreate_view_target;",
+      "querySha256": "3d42d22cddebff9a0eae056c7a72587feb097ec891d06424a7e13e610bb6cbde",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "new sensitive"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/view_drop_privilege_repro_test.go:TestDropViewClearsViewPrivilegesRepro#0002",
+      "source": "testing/go/postgres16/view_drop_privilege_repro_test.go:TestDropViewClearsViewPrivilegesRepro",
+      "ordinal": 2,
+      "scriptName": "DROP VIEW clears view privileges before recreate",
+      "oracle": "postgres",
+      "postgresId": "view-drop-privilege-repro-test-testdropviewclearsviewprivilegesrepro-0002-select-id-label-from-drop_recreate_view_target",
+      "suggestedId": "view-drop-privilege-repro-test-testdropviewclearsviewprivilegesrepro-0002-select-id-label-from-drop_recreate_view_target",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "drop_recreate_view_reader",
+      "query": "SELECT id, label FROM drop_recreate_view_target;",
+      "querySha256": "f986bca67b526d2f514dde823a63cf64275a2a4ac0c41c91a10186f1698671a4",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

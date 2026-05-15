@@ -1,0 +1,39 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map tablespace_correctness_repro_test.go",
+  "sourceFile": "testing/go/postgres16/tablespace_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/tablespace_correctness_repro_test.go:TestCreateTablespaceInPlaceCatalogRepro#0001",
+      "source": "testing/go/postgres16/tablespace_correctness_repro_test.go:TestCreateTablespaceInPlaceCatalogRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLESPACE records pg_tablespace row",
+      "oracle": "postgres",
+      "postgresId": "tablespace-correctness-repro-test-testcreatetablespaceinplacecatalogrepro-0001-select-spcname-from-pg_catalog.pg_tablespace-where",
+      "suggestedId": "tablespace-correctness-repro-test-testcreatetablespaceinplacecatalogrepro-0001-select-spcname-from-pg_catalog.pg_tablespace-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT spcname\n\t\t\t\t\t\tFROM pg_catalog.pg_tablespace\n\t\t\t\t\t\tWHERE spcname = 'repro_tblspace';",
+      "querySha256": "c544d985f9bf61d5b09b0d37670515e36b252e891bea4a76406c104e7929ef67",
+      "expectedRows": [
+        [
+          {
+            "value": "repro_tblspace"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

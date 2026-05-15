@@ -1,0 +1,199 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map jsonb_expansion_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/jsonb_expansion_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/jsonb_expansion_test.go:TestJsonbExpansionWorkload#0001",
+      "source": "testing/go/postgres16/jsonb_expansion_test.go:TestJsonbExpansionWorkload",
+      "ordinal": 1,
+      "scriptName": "-> and ->> against object keys",
+      "oracle": "postgres",
+      "postgresId": "jsonb-expansion-test-testjsonbexpansionworkload-0001-select-id-payload->>-kind-as",
+      "suggestedId": "jsonb-expansion-test-testjsonbexpansionworkload-0001-select-id-payload->>-kind-as",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, payload->>'kind' AS kind, payload->>'ts' AS ts\n\t\t\t\t\t\tFROM events\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "1dfa7cbd4ff24736273a2e2078ade523ca6c6544e0206b957d5f599caba8d468",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "click"
+          },
+          {
+            "value": "1234"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "view"
+          },
+          {
+            "value": "1235"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/jsonb_expansion_test.go:TestJsonbExpansionWorkload#0002",
+      "source": "testing/go/postgres16/jsonb_expansion_test.go:TestJsonbExpansionWorkload",
+      "ordinal": 2,
+      "scriptName": "-> and ->> against object keys",
+      "oracle": "postgres",
+      "postgresId": "jsonb-expansion-test-testjsonbexpansionworkload-0002-select-id-payload->-user->>",
+      "suggestedId": "jsonb-expansion-test-testjsonbexpansionworkload-0002-select-id-payload->-user->>",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id,\n\t\t\t\t\t\tpayload->'user'->>'name' AS user_name,\n\t\t\t\t\t\tpayload->'user'->>'id'   AS user_id\n\t\t\t\t\t\tFROM events\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "b37817c5ed315ddd59932a22bbd75a00f7cbf3766b072b696aed94a54b9b88cb",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "Alice"
+          },
+          {
+            "value": "100"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "Bob"
+          },
+          {
+            "value": "200"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/jsonb_expansion_test.go:TestJsonbExpansionWorkload#0003",
+      "source": "testing/go/postgres16/jsonb_expansion_test.go:TestJsonbExpansionWorkload",
+      "ordinal": 3,
+      "scriptName": "#> and #>> path operators",
+      "oracle": "postgres",
+      "postgresId": "jsonb-expansion-test-testjsonbexpansionworkload-0003-select-doc#>>-{a-b-c}",
+      "suggestedId": "jsonb-expansion-test-testjsonbexpansionworkload-0003-select-doc#>>-{a-b-c}",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT doc#>>'{a,b,c}' AS deep FROM docs WHERE id = 1;",
+      "querySha256": "e042fabdecc690b7a09ef7ec6850d0fbdbebc2dda2364c3e842783b6a035a1e1",
+      "expectedRows": [
+        [
+          {
+            "value": "deep"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/jsonb_expansion_test.go:TestJsonbExpansionWorkload#0004",
+      "source": "testing/go/postgres16/jsonb_expansion_test.go:TestJsonbExpansionWorkload",
+      "ordinal": 4,
+      "scriptName": "#> and #>> path operators",
+      "oracle": "postgres",
+      "postgresId": "jsonb-expansion-test-testjsonbexpansionworkload-0004-select-doc#>>-{list-1}-as",
+      "suggestedId": "jsonb-expansion-test-testjsonbexpansionworkload-0004-select-doc#>>-{list-1}-as",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT doc#>>'{list,1}' AS second FROM docs WHERE id = 1;",
+      "querySha256": "ddeadd0ec7d60b4d368bd5c51f3e5af32eafc0150babdbc8795ff0652efcf89d",
+      "expectedRows": [
+        [
+          {
+            "value": "20"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/jsonb_expansion_test.go:TestJsonbExpansionWorkload#0005",
+      "source": "testing/go/postgres16/jsonb_expansion_test.go:TestJsonbExpansionWorkload",
+      "ordinal": 5,
+      "scriptName": "jsonb_array_elements expands array values",
+      "oracle": "postgres",
+      "postgresId": "jsonb-expansion-test-testjsonbexpansionworkload-0005-select-count-*-::text-from",
+      "suggestedId": "jsonb-expansion-test-testjsonbexpansionworkload-0005-select-count-*-::text-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)::text FROM (SELECT jsonb_array_elements(items) FROM bags) t;",
+      "querySha256": "a8907e965e4578ff0f1f07a436339a6e0aeb0024f4c28d811dc32a4e2ef7fb11",
+      "expectedRows": [
+        [
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/jsonb_expansion_test.go:TestJsonbExpansionWorkload#0006",
+      "source": "testing/go/postgres16/jsonb_expansion_test.go:TestJsonbExpansionWorkload",
+      "ordinal": 6,
+      "scriptName": "jsonb_object_keys lists object keys",
+      "oracle": "postgres",
+      "postgresId": "jsonb-expansion-test-testjsonbexpansionworkload-0006-select-k-from-jsonb_object_keys-{",
+      "suggestedId": "jsonb-expansion-test-testjsonbexpansionworkload-0006-select-k-from-jsonb_object_keys-{",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT k FROM jsonb_object_keys('{\"a\": 1, \"b\": 2, \"c\": 3}'::jsonb) k\n\t\t\t\t\t\tORDER BY k;",
+      "querySha256": "8c01db663f7bc0201a29bad76d8ac99e24e5fb78456b6f14c4e7f639e0d7933b",
+      "expectedRows": [
+        [
+          {
+            "value": "a"
+          }
+        ],
+        [
+          {
+            "value": "b"
+          }
+        ],
+        [
+          {
+            "value": "c"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

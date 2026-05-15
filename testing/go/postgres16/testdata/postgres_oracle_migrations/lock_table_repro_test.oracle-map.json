@@ -1,0 +1,52 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map lock_table_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/lock_table_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/lock_table_repro_test.go:TestLockTableRequiresTransactionBlockRepro#0001",
+      "source": "testing/go/postgres16/lock_table_repro_test.go:TestLockTableRequiresTransactionBlockRepro",
+      "ordinal": 1,
+      "scriptName": "LOCK TABLE requires explicit transaction block",
+      "oracle": "postgres",
+      "postgresId": "lock-table-repro-test-testlocktablerequirestransactionblockrepro-0001-lock-table-lock_transaction_target-in-access",
+      "suggestedId": "lock-table-repro-test-testlocktablerequirestransactionblockrepro-0001-lock-table-lock_transaction_target-in-access",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "25P01",
+      "errorSeverity": "ERROR",
+      "query": "LOCK TABLE lock_transaction_target IN ACCESS EXCLUSIVE MODE;",
+      "querySha256": "6c2db50fe6c3e9f7d895a98bc3050cf44a4cbaa59d6b1d86123a019a644dc912",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/lock_table_repro_test.go:TestLockTableRequiresTablePrivilegeRepro#0001",
+      "source": "testing/go/postgres16/lock_table_repro_test.go:TestLockTableRequiresTablePrivilegeRepro",
+      "ordinal": 1,
+      "scriptName": "LOCK TABLE requires privileges on locked relation",
+      "oracle": "postgres",
+      "postgresId": "lock-table-repro-test-testlocktablerequirestableprivilegerepro-0001-lock-table-lock_table_private-in-access",
+      "suggestedId": "lock-table-repro-test-testlocktablerequirestableprivilegerepro-0001-lock-table-lock_table_private-in-access",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "lock_table_user",
+      "query": "LOCK TABLE lock_table_private IN ACCESS EXCLUSIVE MODE;",
+      "querySha256": "6143d5b777066b7428a60b8621a2ccaec456afa5113d23bfaeed362d5aa57ac1",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

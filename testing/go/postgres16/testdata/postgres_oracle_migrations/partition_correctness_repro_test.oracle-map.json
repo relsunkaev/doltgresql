@@ -1,0 +1,59 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map partition_correctness_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/partition_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/partition_correctness_repro_test.go:TestCreateTablePartitionByPersistsPartitionMetadataRepro#0001",
+      "source": "testing/go/postgres16/partition_correctness_repro_test.go:TestCreateTablePartitionByPersistsPartitionMetadataRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLE PARTITION BY persists partition metadata",
+      "oracle": "postgres",
+      "postgresId": "partition-correctness-repro-test-testcreatetablepartitionbypersistspartitionmetadatarepro-0001-select-relkind-pg_get_partkeydef-oid-from",
+      "suggestedId": "partition-correctness-repro-test-testcreatetablepartitionbypersistspartitionmetadatarepro-0001-select-relkind-pg_get_partkeydef-oid-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT relkind, pg_get_partkeydef(oid)\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE oid = 'partition_catalog_parent'::regclass;",
+      "querySha256": "f6b902cb2911c65a520c9813614f26cfb218bbdd143bb673097f0ab14820a08b",
+      "expectedRows": [
+        [
+          {
+            "value": "p"
+          },
+          {
+            "value": "LIST (id)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/partition_correctness_repro_test.go:TestPartitionedTableWithoutPartitionRejectsInsertRepro#0001",
+      "source": "testing/go/postgres16/partition_correctness_repro_test.go:TestPartitionedTableWithoutPartitionRejectsInsertRepro",
+      "ordinal": 1,
+      "scriptName": "partitioned table with no partition rejects insert",
+      "oracle": "postgres",
+      "postgresId": "partition-correctness-repro-test-testpartitionedtablewithoutpartitionrejectsinsertrepro-0001-insert-into-partition_insert_parent-values-1",
+      "suggestedId": "partition-correctness-repro-test-testpartitionedtablewithoutpartitionrejectsinsertrepro-0001-insert-into-partition_insert_parent-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23514",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO partition_insert_parent VALUES (1, 'a');",
+      "querySha256": "dc07bb19f1a11bc0e24408e531cce59c335694b7beb1828a8c0f241747bef3f2",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

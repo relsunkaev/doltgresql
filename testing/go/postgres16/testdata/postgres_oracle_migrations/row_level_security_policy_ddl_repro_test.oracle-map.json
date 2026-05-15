@@ -1,0 +1,37 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --migration-candidates-dir",
+  "sourceFile": "testing/go/postgres16/row_level_security_policy_ddl_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/row_level_security_policy_ddl_repro_test.go:TestCreatePolicyRejectsDuplicatePolicyNameRepro#0001",
+      "source": "testing/go/postgres16/row_level_security_policy_ddl_repro_test.go:TestCreatePolicyRejectsDuplicatePolicyNameRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE POLICY rejects duplicate policy name",
+      "oracle": "postgres",
+      "postgresId": "rls-create-policy-rejects-duplicate-name",
+      "suggestedId": "row-level-security-policy-ddl-repro-test-testcreatepolicyrejectsduplicatepolicynamerepro-0001-create-policy-rls_duplicate_policy_docs_select-on-rls_duplicate_policy_docs",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42710",
+      "errorSeverity": "ERROR",
+      "query": "CREATE POLICY rls_duplicate_policy_docs_select\n\t\t\t\t\t\tON rls_duplicate_policy_docs\n\t\t\t\t\t\tFOR SELECT\n\t\t\t\t\t\tUSING (false);",
+      "querySha256": "85ac9edeb6d272e72d9e1e64a0b45a2964c94a6bbb1afbbbd65d0166a8482cab",
+      "cleanup": [
+        "DROP TABLE IF EXISTS rls_duplicate_policy_docs"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": true
+    }
+  ]
+}

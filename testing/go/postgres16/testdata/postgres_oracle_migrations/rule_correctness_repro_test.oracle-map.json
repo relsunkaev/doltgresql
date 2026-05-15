@@ -1,0 +1,89 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map rule_correctness_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/rule_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/rule_correctness_repro_test.go:TestCreateRuleDoAlsoExecutesAuditInsertRepro#0001",
+      "source": "testing/go/postgres16/rule_correctness_repro_test.go:TestCreateRuleDoAlsoExecutesAuditInsertRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE RULE DO ALSO executes audit insert",
+      "oracle": "postgres",
+      "postgresId": "rule-correctness-repro-test-testcreateruledoalsoexecutesauditinsertrepro-0001-select-source_id-label-from-rule_audit_items",
+      "suggestedId": "rule-correctness-repro-test-testcreateruledoalsoexecutesauditinsertrepro-0001-select-source_id-label-from-rule_audit_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT source_id, label\n\t\t\t\t\t\tFROM rule_audit_items\n\t\t\t\t\t\tORDER BY source_id;",
+      "querySha256": "3929a74f94e15e6b5694e17230564920e5f76aef96b7b1726e5c42d304b09485",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "alpha"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "beta"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/rule_correctness_repro_test.go:TestDropRuleIfExistsRemovesExistingRuleRepro#0001",
+      "source": "testing/go/postgres16/rule_correctness_repro_test.go:TestDropRuleIfExistsRemovesExistingRuleRepro",
+      "ordinal": 1,
+      "scriptName": "DROP RULE IF EXISTS removes existing rule side effects",
+      "oracle": "postgres",
+      "postgresId": "rule-correctness-repro-test-testdropruleifexistsremovesexistingrulerepro-0001-select-count-*-from-drop_rule_audit_items",
+      "suggestedId": "rule-correctness-repro-test-testdropruleifexistsremovesexistingrulerepro-0001-select-count-*-from-drop_rule_audit_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*) FROM drop_rule_audit_items;",
+      "querySha256": "b4f5644e8b115f2c3f01cc0817499d459a2301a5300c9fb65a52ffd802c61d35",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/rule_correctness_repro_test.go:TestAlterRuleMissingReachesValidationRepro#0001",
+      "source": "testing/go/postgres16/rule_correctness_repro_test.go:TestAlterRuleMissingReachesValidationRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER RULE missing target reaches validation",
+      "oracle": "postgres",
+      "postgresId": "rule-correctness-repro-test-testalterrulemissingreachesvalidationrepro-0001-alter-rule-missing_rule_repro-on-alter_missing_rule_target",
+      "suggestedId": "rule-correctness-repro-test-testalterrulemissingreachesvalidationrepro-0001-alter-rule-missing_rule_repro-on-alter_missing_rule_target",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42704",
+      "errorSeverity": "ERROR",
+      "query": "ALTER RULE missing_rule_repro ON alter_missing_rule_target RENAME TO renamed_rule_repro;",
+      "querySha256": "70524f481dfba3ea10c9ea245e96807cb415a7475e6baf1cfb2774fb99c4181b",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map subscription_oracle_repro_test.go",
+  "sourceFile": "testing/go/postgres16/subscription_oracle_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/subscription_oracle_repro_test.go:TestSubscriptionAddPublicationRefreshRejectedWhenDisabledRepro#0001",
+      "source": "testing/go/postgres16/subscription_oracle_repro_test.go:TestSubscriptionAddPublicationRefreshRejectedWhenDisabledRepro",
+      "ordinal": 1,
+      "scriptName": "subscription add publication refresh rejected when disabled",
+      "oracle": "postgres",
+      "postgresId": "subscription-oracle-repro-test-testsubscriptionaddpublicationrefreshrejectedwhendisabledrepro-0001-alter-subscription-sub_disabled_sub-add-publication",
+      "suggestedId": "subscription-oracle-repro-test-testsubscriptionaddpublicationrefreshrejectedwhendisabledrepro-0001-alter-subscription-sub_disabled_sub-add-publication",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "55000",
+      "errorSeverity": "ERROR",
+      "query": "ALTER SUBSCRIPTION sub_disabled_sub ADD PUBLICATION sub_disabled_extra WITH (copy_data = false);",
+      "querySha256": "f4981470f9a337d7ed03d7c3021569095fc9553a04adc5e2dc4245055dbf22ca",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/subscription_oracle_repro_test.go:TestSubscriptionAddPublicationRefreshFalseUpdatesCatalog#0001",
+      "source": "testing/go/postgres16/subscription_oracle_repro_test.go:TestSubscriptionAddPublicationRefreshFalseUpdatesCatalog",
+      "ordinal": 1,
+      "scriptName": "subscription add publication refresh false updates catalog",
+      "oracle": "postgres",
+      "postgresId": "subscription-oracle-repro-test-testsubscriptionaddpublicationrefreshfalseupdatescatalog-0001-select-array_to_string-subpublications-from-pg_catalog.pg_subscription",
+      "suggestedId": "subscription-oracle-repro-test-testsubscriptionaddpublicationrefreshfalseupdatescatalog-0001-select-array_to_string-subpublications-from-pg_catalog.pg_subscription",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT array_to_string(subpublications, ',') FROM pg_catalog.pg_subscription WHERE subname = 'sub_refresh_false_sub';",
+      "querySha256": "beed11c9313eb6d0be9b2df502c6cbee155d69868eb3debeb61eca59c85d5c24",
+      "expectedRows": [
+        [
+          {
+            "value": "sub_refresh_false_pub,sub_refresh_false_extra"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

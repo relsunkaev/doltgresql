@@ -1,0 +1,85 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map security_definer_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/security_definer_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/security_definer_repro_test.go:TestSecurityDefinerFunctionUsesOwnerPrivilegesRepro#0001",
+      "source": "testing/go/postgres16/security_definer_repro_test.go:TestSecurityDefinerFunctionUsesOwnerPrivilegesRepro",
+      "ordinal": 1,
+      "scriptName": "SECURITY DEFINER function reads through owner privileges",
+      "oracle": "postgres",
+      "postgresId": "security-definer-repro-test-testsecuritydefinerfunctionusesownerprivilegesrepro-0001-select-definer_secret",
+      "suggestedId": "security-definer-repro-test-testsecuritydefinerfunctionusesownerprivilegesrepro-0001-select-definer_secret",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "definer_reader",
+      "query": "SELECT definer_secret();",
+      "querySha256": "e5d918de4f0fdfc3f84b8a81d9a586f29d9f8e94f9306f393d4004ff2338055e",
+      "expectedRows": [
+        [
+          {
+            "value": "alpha"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/security_definer_repro_test.go:TestSecurityDefinerProcedureUsesOwnerPrivilegesRepro#0001",
+      "source": "testing/go/postgres16/security_definer_repro_test.go:TestSecurityDefinerProcedureUsesOwnerPrivilegesRepro",
+      "ordinal": 1,
+      "scriptName": "SECURITY DEFINER procedure writes through owner privileges",
+      "oracle": "postgres",
+      "postgresId": "security-definer-repro-test-testsecuritydefinerprocedureusesownerprivilegesrepro-0001-call-definer_proc_insert",
+      "suggestedId": "security-definer-repro-test-testsecuritydefinerprocedureusesownerprivilegesrepro-0001-call-definer_proc_insert",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "definer_proc_caller",
+      "query": "CALL definer_proc_insert();",
+      "querySha256": "81207f5df40721b9f3a9e47f84d28fc6d7ee3c4d1e908278aba703e5176e59e9",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/security_definer_repro_test.go:TestSecurityDefinerProcedureUsesOwnerPrivilegesRepro#0002",
+      "source": "testing/go/postgres16/security_definer_repro_test.go:TestSecurityDefinerProcedureUsesOwnerPrivilegesRepro",
+      "ordinal": 2,
+      "scriptName": "SECURITY DEFINER procedure writes through owner privileges",
+      "oracle": "postgres",
+      "postgresId": "security-definer-repro-test-testsecuritydefinerprocedureusesownerprivilegesrepro-0002-select-id-secret-from-definer_proc_private",
+      "suggestedId": "security-definer-repro-test-testsecuritydefinerprocedureusesownerprivilegesrepro-0002-select-id-secret-from-definer_proc_private",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, secret FROM definer_proc_private ORDER BY id;",
+      "querySha256": "79436e4735d767bc572743834c1b49d1e355cfbf38635ce53c4ea20b5d115e5e",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "alpha"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

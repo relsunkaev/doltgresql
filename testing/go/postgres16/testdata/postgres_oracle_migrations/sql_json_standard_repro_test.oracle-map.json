@@ -1,0 +1,127 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map sql_json_standard_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/sql_json_standard_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/sql_json_standard_repro_test.go:TestSqlJsonConstructorFunctionsRepro#0001",
+      "source": "testing/go/postgres16/sql_json_standard_repro_test.go:TestSqlJsonConstructorFunctionsRepro",
+      "ordinal": 1,
+      "scriptName": "SQL/JSON constructor functions evaluate JSON values",
+      "oracle": "postgres",
+      "postgresId": "sql-json-standard-repro-test-testsqljsonconstructorfunctionsrepro-0001-select-json-{-a-:123",
+      "suggestedId": "sql-json-standard-repro-test-testsqljsonconstructorfunctionsrepro-0001-select-json-{-a-:123",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT JSON('{\"a\":123, \"b\":[true,\"foo\"]}')::jsonb::text;",
+      "querySha256": "ed9bb7e6bc77e3b1cb801de39c55125310abc0b91cdabb2e952d63357c9c6240",
+      "expectedRows": [
+        [
+          {
+            "value": "{\"a\": 123, \"b\": [true, \"foo\"]}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/sql_json_standard_repro_test.go:TestPostgres16SqlJsonConstructorSyntaxRepro#0001",
+      "source": "testing/go/postgres16/sql_json_standard_repro_test.go:TestPostgres16SqlJsonConstructorSyntaxRepro",
+      "ordinal": 1,
+      "scriptName": "PostgreSQL 16 SQL/JSON constructor syntax evaluates",
+      "oracle": "postgres",
+      "postgresId": "sql-json-standard-repro-test-testpostgres16sqljsonconstructorsyntaxrepro-0001-select-json_array-1-true-x",
+      "suggestedId": "sql-json-standard-repro-test-testpostgres16sqljsonconstructorsyntaxrepro-0001-select-json_array-1-true-x",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT JSON_ARRAY(1, true, 'x' RETURNING jsonb)::text;",
+      "querySha256": "7664d9d37c6672725f98ce711dd7ff59c5ca16e98fa74ccdb1fcac0d07733b65",
+      "expectedRows": [
+        [
+          {
+            "value": "[1, true, \"x\"]"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/sql_json_standard_repro_test.go:TestPostgres16SqlJsonConstructorSyntaxRepro#0002",
+      "source": "testing/go/postgres16/sql_json_standard_repro_test.go:TestPostgres16SqlJsonConstructorSyntaxRepro",
+      "ordinal": 2,
+      "scriptName": "PostgreSQL 16 SQL/JSON constructor syntax evaluates",
+      "oracle": "postgres",
+      "postgresId": "sql-json-standard-repro-test-testpostgres16sqljsonconstructorsyntaxrepro-0002-select-json_object-a-value-1",
+      "suggestedId": "sql-json-standard-repro-test-testpostgres16sqljsonconstructorsyntaxrepro-0002-select-json_object-a-value-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT JSON_OBJECT('a' VALUE 1, 'b' VALUE 'x' RETURNING jsonb)::text;",
+      "querySha256": "b063fa584cc2d7c77d80e111ed0c1745a5254656c68f26b09c44cd3e404de1e5",
+      "expectedRows": [
+        [
+          {
+            "value": "{\"a\": 1, \"b\": \"x\"}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/sql_json_standard_repro_test.go:TestPostgres16SqlJsonConstructorSyntaxRepro#0003",
+      "source": "testing/go/postgres16/sql_json_standard_repro_test.go:TestPostgres16SqlJsonConstructorSyntaxRepro",
+      "ordinal": 3,
+      "scriptName": "PostgreSQL 16 SQL/JSON constructor syntax evaluates",
+      "oracle": "postgres",
+      "postgresId": "sql-json-standard-repro-test-testpostgres16sqljsonconstructorsyntaxrepro-0003-select-json_arrayagg-v-order-by",
+      "suggestedId": "sql-json-standard-repro-test-testpostgres16sqljsonconstructorsyntaxrepro-0003-select-json_arrayagg-v-order-by",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT JSON_ARRAYAGG(v ORDER BY v RETURNING jsonb)::text FROM (VALUES (2), (1)) AS t(v);",
+      "querySha256": "c24ccfd767d9cab532685a7283b69ac7d1003d41b6386fa75030f5ec462850c3",
+      "expectedRows": [
+        [
+          {
+            "value": "[1, 2]"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/sql_json_standard_repro_test.go:TestPostgres16SqlJsonConstructorSyntaxRepro#0004",
+      "source": "testing/go/postgres16/sql_json_standard_repro_test.go:TestPostgres16SqlJsonConstructorSyntaxRepro",
+      "ordinal": 4,
+      "scriptName": "PostgreSQL 16 SQL/JSON constructor syntax evaluates",
+      "oracle": "postgres",
+      "postgresId": "sql-json-standard-repro-test-testpostgres16sqljsonconstructorsyntaxrepro-0004-select-json_objectagg-k-value-v",
+      "suggestedId": "sql-json-standard-repro-test-testpostgres16sqljsonconstructorsyntaxrepro-0004-select-json_objectagg-k-value-v",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT JSON_OBJECTAGG(k VALUE v RETURNING jsonb)::text FROM (VALUES ('a', 1), ('b', 2)) AS t(k, v);",
+      "querySha256": "4c91743e8853833aed2e84f97b3ae11022c2827b5ab8cd03355fc81bdceb966b",
+      "expectedRows": [
+        [
+          {
+            "value": "{\"a\": 1, \"b\": 2}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

@@ -1,0 +1,259 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map command_tag_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/command_tag_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/postgres16/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/command_tag_test.go:TestCommandTag#0001",
+      "source": "testing/go/postgres16/command_tag_test.go:TestCommandTag",
+      "ordinal": 1,
+      "scriptName": "set",
+      "oracle": "postgres",
+      "postgresId": "command-tag-test-testcommandtag-0001-set-extra_float_digits-=-3",
+      "suggestedId": "command-tag-test-testcommandtag-0001-set-extra_float_digits-=-3",
+      "compare": "tag",
+      "expectedKind": "tag",
+      "query": "SET extra_float_digits = 3",
+      "querySha256": "38a25c79c14dcb96c95b50d34e0e6b493dedb68644698dc67e06e187ad1d3988",
+      "expectedTag": "SET",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/command_tag_test.go:TestCommandTag#0002",
+      "source": "testing/go/postgres16/command_tag_test.go:TestCommandTag",
+      "ordinal": 2,
+      "scriptName": "show",
+      "oracle": "postgres",
+      "postgresId": "command-tag-test-testcommandtag-0002-show-extra_float_digits",
+      "suggestedId": "command-tag-test-testcommandtag-0002-show-extra_float_digits",
+      "compare": "tag",
+      "expectedKind": "tag",
+      "query": "SHOW extra_float_digits",
+      "querySha256": "7381bc8271e9c3cef80b897525ee9ef6324ee26a61eef89cf1b3cdc72a3dfa19",
+      "expectedTag": "SHOW",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/command_tag_test.go:TestCommandTag#0003",
+      "source": "testing/go/postgres16/command_tag_test.go:TestCommandTag",
+      "ordinal": 3,
+      "scriptName": "create database",
+      "oracle": "postgres",
+      "postgresId": "command-tag-test-testcommandtag-0003-create-database-mydb",
+      "suggestedId": "command-tag-test-testcommandtag-0003-create-database-mydb",
+      "compare": "tag",
+      "expectedKind": "tag",
+      "query": "CREATE DATABASE mydb",
+      "querySha256": "69d228904e024d9dbc9513e1f5161180a50031e1af2120a49571efead28a27f1",
+      "expectedTag": "CREATE DATABASE",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/command_tag_test.go:TestCommandTag#0004",
+      "source": "testing/go/postgres16/command_tag_test.go:TestCommandTag",
+      "ordinal": 4,
+      "scriptName": "insert",
+      "oracle": "postgres",
+      "postgresId": "command-tag-test-testcommandtag-0004-insert-into-table0-values-1",
+      "suggestedId": "command-tag-test-testcommandtag-0004-insert-into-table0-values-1",
+      "compare": "tag",
+      "expectedKind": "tag",
+      "query": "INSERT INTO table0 VALUES (1,'Dolt'), (2,'Doltgres'), (3,'DoltHub')",
+      "querySha256": "aec1cccbbb765fd9f977708949fd3ecaadb17497e57fae3ec5eeeb66b66da96c",
+      "expectedTag": "INSERT 0 3",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/command_tag_test.go:TestCommandTag#0005",
+      "source": "testing/go/postgres16/command_tag_test.go:TestCommandTag",
+      "ordinal": 5,
+      "scriptName": "insert",
+      "oracle": "postgres",
+      "postgresId": "command-tag-test-testcommandtag-0005-select-*-from-table0-order",
+      "suggestedId": "command-tag-test-testcommandtag-0005-select-*-from-table0-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM table0 order by id",
+      "querySha256": "2e7290c3437ed0d606dd9ee13c12325a5558fe4f8b31f68ae218eb486d759fbf",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "Dolt"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "Doltgres"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "DoltHub"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/command_tag_test.go:TestCommandTag#0006",
+      "source": "testing/go/postgres16/command_tag_test.go:TestCommandTag",
+      "ordinal": 6,
+      "scriptName": "insert",
+      "oracle": "postgres",
+      "postgresId": "command-tag-test-testcommandtag-0006-select-*-from-table0",
+      "suggestedId": "command-tag-test-testcommandtag-0006-select-*-from-table0",
+      "compare": "tag",
+      "expectedKind": "tag",
+      "query": "SELECT * FROM table0",
+      "querySha256": "156028c312e258df673b2393cb6de039c10219bd93bfcff448db874f279ab946",
+      "expectedTag": "SELECT 3",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/command_tag_test.go:TestCommandTag#0007",
+      "source": "testing/go/postgres16/command_tag_test.go:TestCommandTag",
+      "ordinal": 7,
+      "scriptName": "update",
+      "oracle": "postgres",
+      "postgresId": "command-tag-test-testcommandtag-0007-update-table0-set-id-=",
+      "suggestedId": "command-tag-test-testcommandtag-0007-update-table0-set-id-=",
+      "compare": "tag",
+      "expectedKind": "tag",
+      "query": "UPDATE table0 SET id = 4 WHERE name = 'Doltgres'",
+      "querySha256": "8da1cf4cc9ca832ecf86c13b4749db12b50983aa9d055207b14825e5080ee148",
+      "expectedTag": "UPDATE 1",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/command_tag_test.go:TestCommandTag#0008",
+      "source": "testing/go/postgres16/command_tag_test.go:TestCommandTag",
+      "ordinal": 8,
+      "scriptName": "update",
+      "oracle": "postgres",
+      "postgresId": "command-tag-test-testcommandtag-0008-select-*-from-table0-order",
+      "suggestedId": "command-tag-test-testcommandtag-0008-select-*-from-table0-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM table0 order by id",
+      "querySha256": "2e7290c3437ed0d606dd9ee13c12325a5558fe4f8b31f68ae218eb486d759fbf",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "Dolt"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "DoltHub"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "Doltgres"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/command_tag_test.go:TestCommandTag#0009",
+      "source": "testing/go/postgres16/command_tag_test.go:TestCommandTag",
+      "ordinal": 9,
+      "scriptName": "update",
+      "oracle": "postgres",
+      "postgresId": "command-tag-test-testcommandtag-0009-select-*-from-table0-where",
+      "suggestedId": "command-tag-test-testcommandtag-0009-select-*-from-table0-where",
+      "compare": "tag",
+      "expectedKind": "tag",
+      "query": "SELECT * FROM table0 WHERE name <> 'Dolt'",
+      "querySha256": "f123980f3183b88eefd75be9fbdbc891eed91648b4b16fb71a59acd3f09a3f59",
+      "expectedTag": "SELECT 2",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/command_tag_test.go:TestCommandTag#0010",
+      "source": "testing/go/postgres16/command_tag_test.go:TestCommandTag",
+      "ordinal": 10,
+      "scriptName": "delete",
+      "oracle": "postgres",
+      "postgresId": "command-tag-test-testcommandtag-0010-delete-from-table0",
+      "suggestedId": "command-tag-test-testcommandtag-0010-delete-from-table0",
+      "compare": "tag",
+      "expectedKind": "tag",
+      "query": "DELETE FROM table0",
+      "querySha256": "3dd12249d05e133f1332daa91564a58ba65e8b5e9c185d4a0756b288f3dec6ce",
+      "expectedTag": "DELETE 3",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/command_tag_test.go:TestCommandTag#0011",
+      "source": "testing/go/postgres16/command_tag_test.go:TestCommandTag",
+      "ordinal": 11,
+      "scriptName": "delete",
+      "oracle": "postgres",
+      "postgresId": "command-tag-test-testcommandtag-0011-select-*-from-table0-order",
+      "suggestedId": "command-tag-test-testcommandtag-0011-select-*-from-table0-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM table0 order by id",
+      "querySha256": "2e7290c3437ed0d606dd9ee13c12325a5558fe4f8b31f68ae218eb486d759fbf",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/command_tag_test.go:TestCommandTag#0012",
+      "source": "testing/go/postgres16/command_tag_test.go:TestCommandTag",
+      "ordinal": 12,
+      "scriptName": "delete",
+      "oracle": "postgres",
+      "postgresId": "command-tag-test-testcommandtag-0012-select-*-from-table0",
+      "suggestedId": "command-tag-test-testcommandtag-0012-select-*-from-table0",
+      "compare": "tag",
+      "expectedKind": "tag",
+      "query": "SELECT * FROM table0",
+      "querySha256": "156028c312e258df673b2393cb6de039c10219bd93bfcff448db874f279ab946",
+      "expectedTag": "SELECT 0",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

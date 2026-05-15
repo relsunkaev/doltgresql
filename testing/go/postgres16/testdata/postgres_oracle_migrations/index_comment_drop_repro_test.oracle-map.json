@@ -1,0 +1,39 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map index_comment_drop_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/index_comment_drop_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/index_comment_drop_repro_test.go:TestDropIndexClearsCommentRepro#0001",
+      "source": "testing/go/postgres16/index_comment_drop_repro_test.go:TestDropIndexClearsCommentRepro",
+      "ordinal": 1,
+      "scriptName": "DROP INDEX clears index comment before recreate",
+      "oracle": "postgres",
+      "postgresId": "index-comment-drop-repro-test-testdropindexclearscommentrepro-0001-select-obj_description-drop_recreate_comment_index_idx-::regclass-pg_class",
+      "suggestedId": "index-comment-drop-repro-test-testdropindexclearscommentrepro-0001-select-obj_description-drop_recreate_comment_index_idx-::regclass-pg_class",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT obj_description(\n\t\t\t\t\t\t'drop_recreate_comment_index_idx'::regclass,\n\t\t\t\t\t\t'pg_class');",
+      "querySha256": "7f669ac399c047537159d6623d674439037fd9eacb718f0cebe191b49d9d0134",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

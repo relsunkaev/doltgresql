@@ -1,0 +1,237 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map create_extension_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/create_extension_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/postgres16/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/create_extension_test.go:TestCreateExtension#0001",
+      "source": "testing/go/postgres16/create_extension_test.go:TestCreateExtension",
+      "ordinal": 1,
+      "scriptName": "Extension Test: uuid-ossp",
+      "oracle": "postgres",
+      "postgresId": "create-extension-test-testcreateextension-0001-select-uuid_ns_url",
+      "suggestedId": "create-extension-test-testcreateextension-0001-select-uuid_ns_url",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT uuid_ns_url();",
+      "querySha256": "ef3cc82df2741dceb6a951e4fd4351cbeff5c2142f7458eac5376f0b0ad506fe",
+      "expectedRows": [
+        [
+          {
+            "value": "6ba7b811-9dad-11d1-80b4-00c04fd430c8"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_extension_test.go:TestCreateExtension#0002",
+      "source": "testing/go/postgres16/create_extension_test.go:TestCreateExtension",
+      "ordinal": 2,
+      "scriptName": "Extension Test: uuid-ossp",
+      "oracle": "postgres",
+      "postgresId": "create-extension-test-testcreateextension-0002-select-uuid_generate_v3-00000000-0000-0000-0000-000000000000-::uuid-example",
+      "suggestedId": "create-extension-test-testcreateextension-0002-select-uuid_generate_v3-00000000-0000-0000-0000-000000000000-::uuid-example",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT uuid_generate_v3('00000000-0000-0000-0000-000000000000'::uuid, 'example text');",
+      "querySha256": "eb5f8e776f329b5ddc94768759f4d0672790067d6ee4c8d43250caface43be30",
+      "expectedRows": [
+        [
+          {
+            "value": "[165 91 135 90 27 217 49 175 172 102 125 131 35 120 92 110]"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_extension_test.go:TestCreateExtension#0003",
+      "source": "testing/go/postgres16/create_extension_test.go:TestCreateExtension",
+      "ordinal": 3,
+      "scriptName": "Extension Test: uuid-ossp",
+      "oracle": "postgres",
+      "postgresId": "create-extension-test-testcreateextension-0003-select-uuid_generate_v3-00000000-0000-0000-0000-000000000001-::uuid-example",
+      "suggestedId": "create-extension-test-testcreateextension-0003-select-uuid_generate_v3-00000000-0000-0000-0000-000000000001-::uuid-example",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT uuid_generate_v3('00000000-0000-0000-0000-000000000001'::uuid, 'example text');",
+      "querySha256": "20f55ca8efa702de1ebb4614eff01e08b225a3f6357763f0168a9a90837c9bba",
+      "expectedRows": [
+        [
+          {
+            "value": "[163 25 171 81 142 38 55 198 148 47 125 213 253 165 195 239]"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_extension_test.go:TestCreateExtension#0004",
+      "source": "testing/go/postgres16/create_extension_test.go:TestCreateExtension",
+      "ordinal": 4,
+      "scriptName": "Extension Test: uuid-ossp",
+      "oracle": "postgres",
+      "postgresId": "create-extension-test-testcreateextension-0004-select-uuid_generate_v3-uuid_ns_url-example-text",
+      "suggestedId": "create-extension-test-testcreateextension-0004-select-uuid_generate_v3-uuid_ns_url-example-text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT uuid_generate_v3(uuid_ns_url(), 'example text');",
+      "querySha256": "ec14fa7ca3693f1adcb36123839fbd24b1a5dce72bce15fb11aab074be5e443b",
+      "expectedRows": [
+        [
+          {
+            "value": "[101 65 38 47 214 34 62 53 136 115 43 34 117 145 191 105]"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_extension_test.go:TestCreateExtension#0005",
+      "source": "testing/go/postgres16/create_extension_test.go:TestCreateExtension",
+      "ordinal": 5,
+      "scriptName": "Extension Test: uuid-ossp",
+      "oracle": "postgres",
+      "postgresId": "create-extension-test-testcreateextension-0005-select-uuid_nil",
+      "suggestedId": "create-extension-test-testcreateextension-0005-select-uuid_nil",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT uuid_nil();",
+      "querySha256": "d3ef910e4b52ca4b20d1caa9baa2c19fcdb9ffe335a3c58aba6f23dcf70f3c36",
+      "expectedRows": [
+        [
+          {
+            "value": "00000000-0000-0000-0000-000000000000"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_extension_test.go:TestCreateExtension#0006",
+      "source": "testing/go/postgres16/create_extension_test.go:TestCreateExtension",
+      "ordinal": 6,
+      "scriptName": "Extension Test: uuid-ossp",
+      "oracle": "postgres",
+      "postgresId": "create-extension-test-testcreateextension-0006-select-length-uuid_nil-::text",
+      "suggestedId": "create-extension-test-testcreateextension-0006-select-length-uuid_nil-::text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT length(uuid_nil()::text);",
+      "querySha256": "7244f35b9c09a75c01800436871508fe75a0297b98cd4452c637921a057769b5",
+      "expectedRows": [
+        [
+          {
+            "value": "36"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_extension_test.go:TestCreateExtension#0007",
+      "source": "testing/go/postgres16/create_extension_test.go:TestCreateExtension",
+      "ordinal": 7,
+      "scriptName": "Extension Test: uuid-ossp",
+      "oracle": "postgres",
+      "postgresId": "create-extension-test-testcreateextension-0007-select-length-uuid_generate_v4-::text",
+      "suggestedId": "create-extension-test-testcreateextension-0007-select-length-uuid_generate_v4-::text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT length(uuid_generate_v4()::text);",
+      "querySha256": "7ed855af6b818f071647f2bb2de954463539b584256d5f982cd22b6fd482f49a",
+      "expectedRows": [
+        [
+          {
+            "value": "36"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_extension_test.go:TestCreateExtension#0008",
+      "source": "testing/go/postgres16/create_extension_test.go:TestCreateExtension",
+      "ordinal": 8,
+      "scriptName": "Extension Test: uuid-ossp",
+      "oracle": "postgres",
+      "postgresId": "create-extension-test-testcreateextension-0008-select-uuid_generate_v4-=-uuid_nil",
+      "suggestedId": "create-extension-test-testcreateextension-0008-select-uuid_generate_v4-=-uuid_nil",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT uuid_generate_v4() = uuid_nil();",
+      "querySha256": "d2f616e7c53efc761a1462853d304d5f9bb79f6f79c2e55d32a3c27ed9c3bec4",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_extension_test.go:TestCreateExtension#0009",
+      "source": "testing/go/postgres16/create_extension_test.go:TestCreateExtension",
+      "ordinal": 9,
+      "scriptName": "Extension Test: uuid-ossp",
+      "oracle": "postgres",
+      "postgresId": "create-extension-test-testcreateextension-0009-with-u1-as-select-uuid_nil",
+      "suggestedId": "create-extension-test-testcreateextension-0009-with-u1-as-select-uuid_nil",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "WITH u1 AS (SELECT uuid_nil() AS id), u2 AS (SELECT uuid_nil() AS id) SELECT (SELECT id FROM u1) = (SELECT id FROM u2);",
+      "querySha256": "6f39cec6e46ed42c5813d01bf9c7817eed78801ff559eea8b296fa6ba180d1bf",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/create_extension_test.go:TestCreateExtension#0010",
+      "source": "testing/go/postgres16/create_extension_test.go:TestCreateExtension",
+      "ordinal": 10,
+      "scriptName": "Extension Test: uuid-ossp",
+      "oracle": "postgres",
+      "postgresId": "create-extension-test-testcreateextension-0010-with-u1-as-select-uuid_generate_v4",
+      "suggestedId": "create-extension-test-testcreateextension-0010-with-u1-as-select-uuid_generate_v4",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "WITH u1 AS (SELECT uuid_generate_v4() AS id), u2 AS (SELECT uuid_generate_v4() AS id) SELECT (SELECT id FROM u1) = (SELECT id FROM u2);",
+      "querySha256": "8423f6041e80e67db8da0c8918d295376cc44148d8073267181a16bda3a53df6",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

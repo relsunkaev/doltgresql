@@ -1,0 +1,810 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map lock_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/lock_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/postgres16/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks#0001",
+      "source": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks",
+      "ordinal": 1,
+      "scriptName": "basic lock tests",
+      "oracle": "postgres",
+      "postgresId": "lock-test-testadvisorylocks-0001-select-pg_advisory_lock-1",
+      "suggestedId": "lock-test-testadvisorylocks-0001-select-pg_advisory_lock-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_advisory_lock(1)",
+      "querySha256": "638b99284dce1b88e090552d292df145f6ce77ec6c6f87ce7348d49358f9f8f2",
+      "expectedRows": [
+        [
+          {
+            "value": ""
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks#0002",
+      "source": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks",
+      "ordinal": 2,
+      "scriptName": "basic lock tests",
+      "oracle": "postgres",
+      "postgresId": "lock-test-testadvisorylocks-0002-select-pg_try_advisory_lock-2",
+      "suggestedId": "lock-test-testadvisorylocks-0002-select-pg_try_advisory_lock-2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_try_advisory_lock(2)",
+      "querySha256": "c4771b8550fb63e444e75ecd215c4950f7bfdafcadb554a30d94d68af1d44fe0",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks#0003",
+      "source": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks",
+      "ordinal": 3,
+      "scriptName": "basic lock tests",
+      "oracle": "postgres",
+      "postgresId": "lock-test-testadvisorylocks-0003-select-pg_try_advisory_lock-1",
+      "suggestedId": "lock-test-testadvisorylocks-0003-select-pg_try_advisory_lock-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "user1",
+      "query": "SELECT pg_try_advisory_lock(1)",
+      "querySha256": "f78cfa1a6063854d8c6784bb503386b6df38578e197f7cd6924a73bd7483a88b",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks#0004",
+      "source": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks",
+      "ordinal": 4,
+      "scriptName": "basic lock tests",
+      "oracle": "postgres",
+      "postgresId": "lock-test-testadvisorylocks-0004-select-pg_try_advisory_lock-2",
+      "suggestedId": "lock-test-testadvisorylocks-0004-select-pg_try_advisory_lock-2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "user1",
+      "query": "SELECT pg_try_advisory_lock(2)",
+      "querySha256": "c4771b8550fb63e444e75ecd215c4950f7bfdafcadb554a30d94d68af1d44fe0",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks#0005",
+      "source": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks",
+      "ordinal": 5,
+      "scriptName": "basic lock tests",
+      "oracle": "postgres",
+      "postgresId": "lock-test-testadvisorylocks-0005-select-pg_advisory_unlock-1",
+      "suggestedId": "lock-test-testadvisorylocks-0005-select-pg_advisory_unlock-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_advisory_unlock(1)",
+      "querySha256": "fabba52b34e14196b6305671c060d934b9afc6dccc5fc77454fbe45365bdf429",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks#0006",
+      "source": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks",
+      "ordinal": 6,
+      "scriptName": "basic lock tests",
+      "oracle": "postgres",
+      "postgresId": "lock-test-testadvisorylocks-0006-select-pg_advisory_unlock-2",
+      "suggestedId": "lock-test-testadvisorylocks-0006-select-pg_advisory_unlock-2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_advisory_unlock(2)",
+      "querySha256": "6b6af4b21793417d37b50dbbc2460ee905eb8da63fe8002321e14402390fec4e",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks#0007",
+      "source": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks",
+      "ordinal": 7,
+      "scriptName": "basic lock tests",
+      "oracle": "postgres",
+      "postgresId": "lock-test-testadvisorylocks-0007-select-pg_advisory_unlock-3",
+      "suggestedId": "lock-test-testadvisorylocks-0007-select-pg_advisory_unlock-3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_advisory_unlock(3)",
+      "querySha256": "5fdc6fcb4389f9d6408876a21206fb8ddea1c66ad7122f671247c1d9f8bb4a5a",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks#0008",
+      "source": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks",
+      "ordinal": 8,
+      "scriptName": "pg_advisory_xact_lock auto-releases at end of transaction",
+      "oracle": "postgres",
+      "postgresId": "lock-test-testadvisorylocks-0008-begin",
+      "suggestedId": "lock-test-testadvisorylocks-0008-begin",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "BEGIN;",
+      "querySha256": "09d5c7e4829721a8d33975034ec970f527d10fe2957088aecdd74a4bfde43190",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks#0009",
+      "source": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks",
+      "ordinal": 9,
+      "scriptName": "pg_advisory_xact_lock auto-releases at end of transaction",
+      "oracle": "postgres",
+      "postgresId": "lock-test-testadvisorylocks-0009-select-pg_advisory_xact_lock-101",
+      "suggestedId": "lock-test-testadvisorylocks-0009-select-pg_advisory_xact_lock-101",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_advisory_xact_lock(101);",
+      "querySha256": "abb4c614cac97fed4785b1ffc829166d91f98da8613d3d17e5de581681dcb1be",
+      "expectedRows": [
+        [
+          {
+            "value": ""
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks#0010",
+      "source": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks",
+      "ordinal": 10,
+      "scriptName": "pg_advisory_xact_lock auto-releases at end of transaction",
+      "oracle": "postgres",
+      "postgresId": "lock-test-testadvisorylocks-0010-select-pg_try_advisory_xact_lock-101",
+      "suggestedId": "lock-test-testadvisorylocks-0010-select-pg_try_advisory_xact_lock-101",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "xactuser",
+      "query": "SELECT pg_try_advisory_xact_lock(101);",
+      "querySha256": "a86c3720d72e8e1a621625e7701859ed5f5999ce08e2a599529b9b17869192c3",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks#0011",
+      "source": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks",
+      "ordinal": 11,
+      "scriptName": "pg_advisory_xact_lock auto-releases at end of transaction",
+      "oracle": "postgres",
+      "postgresId": "lock-test-testadvisorylocks-0011-commit",
+      "suggestedId": "lock-test-testadvisorylocks-0011-commit",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "COMMIT;",
+      "querySha256": "2db35aa37c4005aa96055e900adc9bfbbd70d106820fefcb83216b7cc3f95422",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks#0012",
+      "source": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks",
+      "ordinal": 12,
+      "scriptName": "pg_advisory_xact_lock auto-releases at end of transaction",
+      "oracle": "postgres",
+      "postgresId": "lock-test-testadvisorylocks-0012-select-pg_try_advisory_xact_lock-101",
+      "suggestedId": "lock-test-testadvisorylocks-0012-select-pg_try_advisory_xact_lock-101",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "xactuser",
+      "query": "SELECT pg_try_advisory_xact_lock(101);",
+      "querySha256": "a86c3720d72e8e1a621625e7701859ed5f5999ce08e2a599529b9b17869192c3",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks#0013",
+      "source": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks",
+      "ordinal": 13,
+      "scriptName": "pg_advisory_xact_lock auto-releases on ROLLBACK",
+      "oracle": "postgres",
+      "postgresId": "lock-test-testadvisorylocks-0013-begin",
+      "suggestedId": "lock-test-testadvisorylocks-0013-begin",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "BEGIN;",
+      "querySha256": "09d5c7e4829721a8d33975034ec970f527d10fe2957088aecdd74a4bfde43190",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks#0014",
+      "source": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks",
+      "ordinal": 14,
+      "scriptName": "pg_advisory_xact_lock auto-releases on ROLLBACK",
+      "oracle": "postgres",
+      "postgresId": "lock-test-testadvisorylocks-0014-select-pg_advisory_xact_lock-202",
+      "suggestedId": "lock-test-testadvisorylocks-0014-select-pg_advisory_xact_lock-202",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_advisory_xact_lock(202);",
+      "querySha256": "58b6534f0c53c626ea73ac062f33d17a566a41c26a39b9db2f707fa1569be381",
+      "expectedRows": [
+        [
+          {
+            "value": ""
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks#0015",
+      "source": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks",
+      "ordinal": 15,
+      "scriptName": "pg_advisory_xact_lock auto-releases on ROLLBACK",
+      "oracle": "postgres",
+      "postgresId": "lock-test-testadvisorylocks-0015-select-pg_try_advisory_xact_lock-202",
+      "suggestedId": "lock-test-testadvisorylocks-0015-select-pg_try_advisory_xact_lock-202",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "rolluser",
+      "query": "SELECT pg_try_advisory_xact_lock(202);",
+      "querySha256": "7acb1ba8b463f325649cbe06cd292755faece6a5e0b3e16351d2a80559cdff40",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks#0016",
+      "source": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks",
+      "ordinal": 16,
+      "scriptName": "pg_advisory_xact_lock auto-releases on ROLLBACK",
+      "oracle": "postgres",
+      "postgresId": "lock-test-testadvisorylocks-0016-rollback",
+      "suggestedId": "lock-test-testadvisorylocks-0016-rollback",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ROLLBACK;",
+      "querySha256": "9be868b5fc7744c6a5fa794bedc41fd4f93c13f4ccbc84805546b17682d2505c",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks#0017",
+      "source": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks",
+      "ordinal": 17,
+      "scriptName": "pg_advisory_xact_lock auto-releases on ROLLBACK",
+      "oracle": "postgres",
+      "postgresId": "lock-test-testadvisorylocks-0017-select-pg_try_advisory_xact_lock-202",
+      "suggestedId": "lock-test-testadvisorylocks-0017-select-pg_try_advisory_xact_lock-202",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "rolluser",
+      "query": "SELECT pg_try_advisory_xact_lock(202);",
+      "querySha256": "7acb1ba8b463f325649cbe06cd292755faece6a5e0b3e16351d2a80559cdff40",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks#0018",
+      "source": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks",
+      "ordinal": 18,
+      "scriptName": "pg_advisory_xact_lock under autocommit releases per-statement",
+      "oracle": "postgres",
+      "postgresId": "lock-test-testadvisorylocks-0018-select-pg_advisory_xact_lock-303",
+      "suggestedId": "lock-test-testadvisorylocks-0018-select-pg_advisory_xact_lock-303",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_advisory_xact_lock(303);",
+      "querySha256": "c3c139aa197a58b6042fe6726278a394996bb6914b2c0cfa51f7b1af5bd3f944",
+      "expectedRows": [
+        [
+          {
+            "value": ""
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks#0019",
+      "source": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks",
+      "ordinal": 19,
+      "scriptName": "pg_advisory_xact_lock under autocommit releases per-statement",
+      "oracle": "postgres",
+      "postgresId": "lock-test-testadvisorylocks-0019-select-pg_try_advisory_xact_lock-303",
+      "suggestedId": "lock-test-testadvisorylocks-0019-select-pg_try_advisory_xact_lock-303",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "autouser",
+      "query": "SELECT pg_try_advisory_xact_lock(303);",
+      "querySha256": "214e8b336c3536e5b72b9b0908187f4f640c586c9f890919f67b871e1f53ad2c",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks#0020",
+      "source": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks",
+      "ordinal": 20,
+      "scriptName": "pg_try_advisory_xact_lock returns false without blocking on contention",
+      "oracle": "postgres",
+      "postgresId": "lock-test-testadvisorylocks-0020-select-pg_try_advisory_xact_lock-404",
+      "suggestedId": "lock-test-testadvisorylocks-0020-select-pg_try_advisory_xact_lock-404",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "tryuser",
+      "query": "SELECT pg_try_advisory_xact_lock(404);",
+      "querySha256": "7d8a93b97e2629218706172f90c4abeff30b528a0d707aab5886fc186827ecb5",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks#0021",
+      "source": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks",
+      "ordinal": 21,
+      "scriptName": "pg_try_advisory_xact_lock returns false without blocking on contention",
+      "oracle": "postgres",
+      "postgresId": "lock-test-testadvisorylocks-0021-select-pg_advisory_unlock-404",
+      "suggestedId": "lock-test-testadvisorylocks-0021-select-pg_advisory_unlock-404",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_advisory_unlock(404);",
+      "querySha256": "fca296bd471316cad769fdef34a15abe1a54222485dbf3b8ac15dae0519f26ca",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks#0022",
+      "source": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks",
+      "ordinal": 22,
+      "scriptName": "pg_try_advisory_xact_lock returns false without blocking on contention",
+      "oracle": "postgres",
+      "postgresId": "lock-test-testadvisorylocks-0022-select-pg_try_advisory_xact_lock-404",
+      "suggestedId": "lock-test-testadvisorylocks-0022-select-pg_try_advisory_xact_lock-404",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "tryuser",
+      "query": "SELECT pg_try_advisory_xact_lock(404);",
+      "querySha256": "7d8a93b97e2629218706172f90c4abeff30b528a0d707aab5886fc186827ecb5",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks#0023",
+      "source": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks",
+      "ordinal": 23,
+      "scriptName": "advisory locks integrate with hashtext for derived keys",
+      "oracle": "postgres",
+      "postgresId": "lock-test-testadvisorylocks-0023-select-pg_advisory_xact_lock-hashtext-job-1",
+      "suggestedId": "lock-test-testadvisorylocks-0023-select-pg_advisory_xact_lock-hashtext-job-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_advisory_xact_lock(hashtext('job-1'));",
+      "querySha256": "f624900928c3dac8b14ce6f1528448f96499b01eadac1c2d0f82c97232a9577b",
+      "expectedRows": [
+        [
+          {
+            "value": ""
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks#0024",
+      "source": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks",
+      "ordinal": 24,
+      "scriptName": "advisory locks integrate with hashtext for derived keys",
+      "oracle": "postgres",
+      "postgresId": "lock-test-testadvisorylocks-0024-select-pg_try_advisory_lock-hashtext-job-2",
+      "suggestedId": "lock-test-testadvisorylocks-0024-select-pg_try_advisory_lock-hashtext-job-2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_try_advisory_lock(hashtext('job-2'));",
+      "querySha256": "9aecc174dbaf47155f5cc5818afa1e2dc833eb1862fa33e08df0141fb10b5051",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks#0025",
+      "source": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks",
+      "ordinal": 25,
+      "scriptName": "advisory locks integrate with hashtext for derived keys",
+      "oracle": "postgres",
+      "postgresId": "lock-test-testadvisorylocks-0025-select-pg_advisory_unlock-hashtext-job-2",
+      "suggestedId": "lock-test-testadvisorylocks-0025-select-pg_advisory_unlock-hashtext-job-2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_advisory_unlock(hashtext('job-2'));",
+      "querySha256": "effc1f4b489af3ae41ac431ca2474cc5ca7b30afd3566b75323e3fea334d7cb4",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks#0026",
+      "source": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks",
+      "ordinal": 26,
+      "scriptName": "pg_advisory_unlock_all releases session locks",
+      "oracle": "postgres",
+      "postgresId": "lock-test-testadvisorylocks-0026-select-pg_advisory_lock-501",
+      "suggestedId": "lock-test-testadvisorylocks-0026-select-pg_advisory_lock-501",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_advisory_lock(501);",
+      "querySha256": "3918870fd8a0d0e5f0433eeac1943457e0232d4eb89d9d686c819da6ddff30ff",
+      "expectedRows": [
+        [
+          {
+            "value": ""
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks#0027",
+      "source": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks",
+      "ordinal": 27,
+      "scriptName": "pg_advisory_unlock_all releases session locks",
+      "oracle": "postgres",
+      "postgresId": "lock-test-testadvisorylocks-0027-select-pg_advisory_lock-502",
+      "suggestedId": "lock-test-testadvisorylocks-0027-select-pg_advisory_lock-502",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_advisory_lock(502);",
+      "querySha256": "08b39911c079693a61ced159cd4c8756db43680226161e510c854fba274a1f6b",
+      "expectedRows": [
+        [
+          {
+            "value": ""
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks#0028",
+      "source": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks",
+      "ordinal": 28,
+      "scriptName": "pg_advisory_unlock_all releases session locks",
+      "oracle": "postgres",
+      "postgresId": "lock-test-testadvisorylocks-0028-select-pg_advisory_unlock-501-pg_advisory_unlock-502",
+      "suggestedId": "lock-test-testadvisorylocks-0028-select-pg_advisory_unlock-501-pg_advisory_unlock-502",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_advisory_unlock(501), pg_advisory_unlock(502);",
+      "querySha256": "656ba6b23acaa8a4d9d689e89036de01880da409c72184464d68653c56e469c5",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks#0029",
+      "source": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks",
+      "ordinal": 29,
+      "scriptName": "advisory lock (int4, int4) overloads",
+      "oracle": "postgres",
+      "postgresId": "lock-test-testadvisorylocks-0029-select-pg_advisory_lock-10::int4-20::int4",
+      "suggestedId": "lock-test-testadvisorylocks-0029-select-pg_advisory_lock-10::int4-20::int4",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_advisory_lock(10::int4, 20::int4);",
+      "querySha256": "5722420667122a891d8154e872f821f73bf6c3cfba8ce9e0776ddf0319e1de14",
+      "expectedRows": [
+        [
+          {
+            "value": ""
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks#0030",
+      "source": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks",
+      "ordinal": 30,
+      "scriptName": "advisory lock (int4, int4) overloads",
+      "oracle": "postgres",
+      "postgresId": "lock-test-testadvisorylocks-0030-select-pg_try_advisory_lock-10::int4-20::int4",
+      "suggestedId": "lock-test-testadvisorylocks-0030-select-pg_try_advisory_lock-10::int4-20::int4",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "pairuser",
+      "query": "SELECT pg_try_advisory_lock(10::int4, 20::int4);",
+      "querySha256": "5bed211ddd4bb7bda633855019c57eb1d04ca74dd1b7f5f2d2d9e56d2dfa7317",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks#0031",
+      "source": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks",
+      "ordinal": 31,
+      "scriptName": "advisory lock (int4, int4) overloads",
+      "oracle": "postgres",
+      "postgresId": "lock-test-testadvisorylocks-0031-select-pg_advisory_unlock-10::int4-20::int4",
+      "suggestedId": "lock-test-testadvisorylocks-0031-select-pg_advisory_unlock-10::int4-20::int4",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_advisory_unlock(10::int4, 20::int4);",
+      "querySha256": "659b5dd342debf4a26c25953a6d648d7d141abc25acd40197f7fd8bbdd4fb409",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks#0032",
+      "source": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks",
+      "ordinal": 32,
+      "scriptName": "advisory lock (int4, int4) overloads",
+      "oracle": "postgres",
+      "postgresId": "lock-test-testadvisorylocks-0032-select-pg_try_advisory_lock-10::int4-20::int4",
+      "suggestedId": "lock-test-testadvisorylocks-0032-select-pg_try_advisory_lock-10::int4-20::int4",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "pairuser",
+      "query": "SELECT pg_try_advisory_lock(10::int4, 20::int4);",
+      "querySha256": "5bed211ddd4bb7bda633855019c57eb1d04ca74dd1b7f5f2d2d9e56d2dfa7317",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks#0033",
+      "source": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks",
+      "ordinal": 33,
+      "scriptName": "advisory lock (int4, int4) overloads",
+      "oracle": "postgres",
+      "postgresId": "lock-test-testadvisorylocks-0033-select-pg_advisory_unlock-10::int4-20::int4",
+      "suggestedId": "lock-test-testadvisorylocks-0033-select-pg_advisory_unlock-10::int4-20::int4",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "pairuser",
+      "query": "SELECT pg_advisory_unlock(10::int4, 20::int4);",
+      "querySha256": "659b5dd342debf4a26c25953a6d648d7d141abc25acd40197f7fd8bbdd4fb409",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks#0034",
+      "source": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks",
+      "ordinal": 34,
+      "scriptName": "pg_try_advisory_xact_lock is reentrant within the same session",
+      "oracle": "postgres",
+      "postgresId": "lock-test-testadvisorylocks-0034-begin",
+      "suggestedId": "lock-test-testadvisorylocks-0034-begin",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "BEGIN;",
+      "querySha256": "09d5c7e4829721a8d33975034ec970f527d10fe2957088aecdd74a4bfde43190",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks#0035",
+      "source": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks",
+      "ordinal": 35,
+      "scriptName": "pg_try_advisory_xact_lock is reentrant within the same session",
+      "oracle": "postgres",
+      "postgresId": "lock-test-testadvisorylocks-0035-select-pg_advisory_xact_lock-707",
+      "suggestedId": "lock-test-testadvisorylocks-0035-select-pg_advisory_xact_lock-707",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_advisory_xact_lock(707);",
+      "querySha256": "e2c9001128c89c9c36a2378e2d65c6329d81bc958addc0b8c750d3d37c3ee88a",
+      "expectedRows": [
+        [
+          {
+            "value": ""
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks#0036",
+      "source": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks",
+      "ordinal": 36,
+      "scriptName": "pg_try_advisory_xact_lock is reentrant within the same session",
+      "oracle": "postgres",
+      "postgresId": "lock-test-testadvisorylocks-0036-select-pg_try_advisory_xact_lock-707",
+      "suggestedId": "lock-test-testadvisorylocks-0036-select-pg_try_advisory_xact_lock-707",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_try_advisory_xact_lock(707);",
+      "querySha256": "3c8ee269c3025a2e8b2239b57eeda7e700da545cc9dcf9102ef2280676039088",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks#0037",
+      "source": "testing/go/postgres16/lock_test.go:TestAdvisoryLocks",
+      "ordinal": 37,
+      "scriptName": "pg_try_advisory_xact_lock is reentrant within the same session",
+      "oracle": "postgres",
+      "postgresId": "lock-test-testadvisorylocks-0037-commit",
+      "suggestedId": "lock-test-testadvisorylocks-0037-commit",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "COMMIT;",
+      "querySha256": "2db35aa37c4005aa96055e900adc9bfbbd70d106820fefcb83216b7cc3f95422",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

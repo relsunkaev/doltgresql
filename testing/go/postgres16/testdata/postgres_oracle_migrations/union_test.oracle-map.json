@@ -1,0 +1,244 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map union_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/union_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/union_test.go:TestUnion#0001",
+      "source": "testing/go/postgres16/union_test.go:TestUnion",
+      "ordinal": 1,
+      "scriptName": "union tests",
+      "oracle": "postgres",
+      "postgresId": "union-test-testunion-0001-select-*-from-t1-union",
+      "suggestedId": "union-test-testunion-0001-select-*-from-t1-union",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM t1 UNION SELECT * FROM t2;",
+      "querySha256": "f63a2a062c87c4c452157d09df7f6f527f67638e187bcc0ab933d0965783dfd1",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          }
+        ],
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/union_test.go:TestUnion#0002",
+      "source": "testing/go/postgres16/union_test.go:TestUnion",
+      "ordinal": 2,
+      "scriptName": "union tests",
+      "oracle": "postgres",
+      "postgresId": "union-test-testunion-0002-select-123-union-select-456",
+      "suggestedId": "union-test-testunion-0002-select-123-union-select-456",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 123 UNION SELECT 456;",
+      "querySha256": "542f5e6c22d08ca775e34d5623b8f2ec53f02756c5733a9871eba02d89f0e98d",
+      "expectedRows": [
+        [
+          {
+            "value": "123"
+          }
+        ],
+        [
+          {
+            "value": "456"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/union_test.go:TestUnion#0003",
+      "source": "testing/go/postgres16/union_test.go:TestUnion",
+      "ordinal": 3,
+      "scriptName": "union tests",
+      "oracle": "postgres",
+      "postgresId": "union-test-testunion-0003-select-*-from-values-123",
+      "suggestedId": "union-test-testunion-0003-select-*-from-values-123",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (VALUES (123), (456)) a UNION SELECT * FROM (VALUES (456), (789)) b;",
+      "querySha256": "b6b3b46222f7e4607750f61768b8eae942a2dada68c7e863ab91b33420d7c584",
+      "expectedRows": [
+        [
+          {
+            "value": "456"
+          }
+        ],
+        [
+          {
+            "value": "123"
+          }
+        ],
+        [
+          {
+            "value": "789"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/union_test.go:TestIntersect#0001",
+      "source": "testing/go/postgres16/union_test.go:TestIntersect",
+      "ordinal": 1,
+      "scriptName": "intersect tests",
+      "oracle": "postgres",
+      "postgresId": "union-test-testintersect-0001-select-*-from-t1-intersect",
+      "suggestedId": "union-test-testintersect-0001-select-*-from-t1-intersect",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM t1 INTERSECT SELECT * FROM t2;",
+      "querySha256": "447f29ae209521343be472026bebb12c4c34536fa727578e0b5fc4edf6c27b7d",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/union_test.go:TestIntersect#0002",
+      "source": "testing/go/postgres16/union_test.go:TestIntersect",
+      "ordinal": 2,
+      "scriptName": "intersect tests",
+      "oracle": "postgres",
+      "postgresId": "union-test-testintersect-0002-select-123-intersect-select-456",
+      "suggestedId": "union-test-testintersect-0002-select-123-intersect-select-456",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 123 INTERSECT SELECT 456;",
+      "querySha256": "1f0cd9a53d21c1a6dbd42f61cf3576b367b3a2c31c965e2e7d1a00c8de61dd94",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/union_test.go:TestIntersect#0003",
+      "source": "testing/go/postgres16/union_test.go:TestIntersect",
+      "ordinal": 3,
+      "scriptName": "intersect tests",
+      "oracle": "postgres",
+      "postgresId": "union-test-testintersect-0003-select-*-from-values-123",
+      "suggestedId": "union-test-testintersect-0003-select-*-from-values-123",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (VALUES (123), (456)) a INTERSECT SELECT * FROM (VALUES (456), (789)) b;",
+      "querySha256": "2a7ba69284c8a2df6acca7f0528b8b4937170d6ef0695bcd4765add800c297c9",
+      "expectedRows": [
+        [
+          {
+            "value": "456"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/union_test.go:TestExcept#0001",
+      "source": "testing/go/postgres16/union_test.go:TestExcept",
+      "ordinal": 1,
+      "scriptName": "except tests",
+      "oracle": "postgres",
+      "postgresId": "union-test-testexcept-0001-select-*-from-t1-except",
+      "suggestedId": "union-test-testexcept-0001-select-*-from-t1-except",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM t1 EXCEPT SELECT * FROM t2;",
+      "querySha256": "5055f0d19a3147f0031b20600dd5c1da8348b7210e804249677502c7b11d8ca1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/union_test.go:TestExcept#0002",
+      "source": "testing/go/postgres16/union_test.go:TestExcept",
+      "ordinal": 2,
+      "scriptName": "except tests",
+      "oracle": "postgres",
+      "postgresId": "union-test-testexcept-0002-select-123-except-select-456",
+      "suggestedId": "union-test-testexcept-0002-select-123-except-select-456",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 123 EXCEPT SELECT 456;",
+      "querySha256": "bb94e7e3fa0669e98a738b3cb7ea164b2ac2adb24d4fac959cc9f9cf1962c602",
+      "expectedRows": [
+        [
+          {
+            "value": "123"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/union_test.go:TestExcept#0003",
+      "source": "testing/go/postgres16/union_test.go:TestExcept",
+      "ordinal": 3,
+      "scriptName": "except tests",
+      "oracle": "postgres",
+      "postgresId": "union-test-testexcept-0003-select-*-from-values-123",
+      "suggestedId": "union-test-testexcept-0003-select-*-from-values-123",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM (VALUES (123), (456)) a EXCEPT SELECT * FROM (VALUES (456), (789)) b;",
+      "querySha256": "bf01cadd482792728254be3b1d65bfbe9f45636a78d3686d49f0331edc0eb1cf",
+      "expectedRows": [
+        [
+          {
+            "value": "123"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

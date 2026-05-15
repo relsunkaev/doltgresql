@@ -1,0 +1,517 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map role_catalog_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/role_catalog_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/postgres16/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/role_catalog_repro_test.go:TestPgDatabaseOwnerRoleExistsRepro#0001",
+      "source": "testing/go/postgres16/role_catalog_repro_test.go:TestPgDatabaseOwnerRoleExistsRepro",
+      "ordinal": 1,
+      "scriptName": "pg_database_owner predefined role exists",
+      "oracle": "postgres",
+      "postgresId": "role-catalog-repro-test-testpgdatabaseownerroleexistsrepro-0001-select-rolname-rolcanlogin-rolsuper-from",
+      "suggestedId": "role-catalog-repro-test-testpgdatabaseownerroleexistsrepro-0001-select-rolname-rolcanlogin-rolsuper-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT rolname, rolcanlogin, rolsuper\n\t\t\t\t\t\tFROM pg_catalog.pg_roles\n\t\t\t\t\t\tWHERE rolname = 'pg_database_owner';",
+      "querySha256": "996685737d675492beb697b55ef62ff52e13beec5666c370d57b70794b1b3c1c",
+      "expectedRows": [
+        [
+          {
+            "value": "pg_database_owner"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/role_catalog_repro_test.go:TestPublicSchemaOwnedByPgDatabaseOwnerRepro#0001",
+      "source": "testing/go/postgres16/role_catalog_repro_test.go:TestPublicSchemaOwnedByPgDatabaseOwnerRepro",
+      "ordinal": 1,
+      "scriptName": "public schema is owned by pg_database_owner",
+      "oracle": "postgres",
+      "postgresId": "role-catalog-repro-test-testpublicschemaownedbypgdatabaseownerrepro-0001-select-pg_get_userbyid-nspowner-from-pg_catalog.pg_namespace",
+      "suggestedId": "role-catalog-repro-test-testpublicschemaownedbypgdatabaseownerrepro-0001-select-pg_get_userbyid-nspowner-from-pg_catalog.pg_namespace",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_get_userbyid(nspowner)\n\t\t\t\t\t\tFROM pg_catalog.pg_namespace\n\t\t\t\t\t\tWHERE nspname = 'public';",
+      "querySha256": "3a45589e916dcedaeb0911efc1e7fb9d0fe07fad30fef6801304b4fc5cfbfb8d",
+      "expectedRows": [
+        [
+          {
+            "value": "pg_database_owner"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/role_catalog_repro_test.go:TestServerFilePredefinedRolesExistRepro#0001",
+      "source": "testing/go/postgres16/role_catalog_repro_test.go:TestServerFilePredefinedRolesExistRepro",
+      "ordinal": 1,
+      "scriptName": "server-file predefined roles exist",
+      "oracle": "postgres",
+      "postgresId": "role-catalog-repro-test-testserverfilepredefinedrolesexistrepro-0001-select-rolname-rolcanlogin-rolsuper-from",
+      "suggestedId": "role-catalog-repro-test-testserverfilepredefinedrolesexistrepro-0001-select-rolname-rolcanlogin-rolsuper-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT rolname, rolcanlogin, rolsuper\n\t\t\t\t\t\tFROM pg_catalog.pg_roles\n\t\t\t\t\t\tWHERE rolname IN (\n\t\t\t\t\t\t\t'pg_read_server_files',\n\t\t\t\t\t\t\t'pg_write_server_files',\n\t\t\t\t\t\t\t'pg_execute_server_program'\n\t\t\t\t\t\t)\n\t\t\t\t\t\tORDER BY rolname;",
+      "querySha256": "07a322db9251bd855fc1c6b8e131d9c772a27e7c2e04420f089ca50d0c182b6d",
+      "expectedRows": [
+        [
+          {
+            "value": "pg_execute_server_program"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "f"
+          }
+        ],
+        [
+          {
+            "value": "pg_read_server_files"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "f"
+          }
+        ],
+        [
+          {
+            "value": "pg_write_server_files"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/role_catalog_repro_test.go:TestDataAndMonitoringPredefinedRolesExistRepro#0001",
+      "source": "testing/go/postgres16/role_catalog_repro_test.go:TestDataAndMonitoringPredefinedRolesExistRepro",
+      "ordinal": 1,
+      "scriptName": "data and monitoring predefined roles exist",
+      "oracle": "postgres",
+      "postgresId": "role-catalog-repro-test-testdataandmonitoringpredefinedrolesexistrepro-0001-select-rolname-rolcanlogin-rolsuper-from",
+      "suggestedId": "role-catalog-repro-test-testdataandmonitoringpredefinedrolesexistrepro-0001-select-rolname-rolcanlogin-rolsuper-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT rolname, rolcanlogin, rolsuper\n\t\t\t\t\t\tFROM pg_catalog.pg_roles\n\t\t\t\t\t\tWHERE rolname IN (\n\t\t\t\t\t\t\t'pg_read_all_data',\n\t\t\t\t\t\t\t'pg_write_all_data',\n\t\t\t\t\t\t\t'pg_monitor',\n\t\t\t\t\t\t\t'pg_read_all_settings',\n\t\t\t\t\t\t\t'pg_read_all_stats',\n\t\t\t\t\t\t\t'pg_stat_scan_tables',\n\t\t\t\t\t\t\t'pg_signal_backend'\n\t\t\t\t\t\t)\n\t\t\t\t\t\tORDER BY rolname;",
+      "querySha256": "cb3d76f6ce72be3aa4784b3b361b7b7f5465f87811f7f5fdff976584867c015d",
+      "expectedRows": [
+        [
+          {
+            "value": "pg_monitor"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "f"
+          }
+        ],
+        [
+          {
+            "value": "pg_read_all_data"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "f"
+          }
+        ],
+        [
+          {
+            "value": "pg_read_all_settings"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "f"
+          }
+        ],
+        [
+          {
+            "value": "pg_read_all_stats"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "f"
+          }
+        ],
+        [
+          {
+            "value": "pg_signal_backend"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "f"
+          }
+        ],
+        [
+          {
+            "value": "pg_stat_scan_tables"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "f"
+          }
+        ],
+        [
+          {
+            "value": "pg_write_all_data"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/role_catalog_repro_test.go:TestPgMonitorInheritsMonitoringRolesRepro#0001",
+      "source": "testing/go/postgres16/role_catalog_repro_test.go:TestPgMonitorInheritsMonitoringRolesRepro",
+      "ordinal": 1,
+      "scriptName": "pg_monitor inherits monitoring memberships",
+      "oracle": "postgres",
+      "postgresId": "role-catalog-repro-test-testpgmonitorinheritsmonitoringrolesrepro-0001-select-pg_get_userbyid-roleid-pg_get_userbyid-member",
+      "suggestedId": "role-catalog-repro-test-testpgmonitorinheritsmonitoringrolesrepro-0001-select-pg_get_userbyid-roleid-pg_get_userbyid-member",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT pg_get_userbyid(roleid), pg_get_userbyid(member)\n\t\t\t\t\t\tFROM pg_catalog.pg_auth_members\n\t\t\t\t\t\tWHERE pg_get_userbyid(member) = 'pg_monitor'\n\t\t\t\t\t\tORDER BY pg_get_userbyid(roleid);",
+      "querySha256": "b1cadad6490572dc97d79ce7789cd3f60c32e46f339b965047c8209a966806ed",
+      "expectedRows": [
+        [
+          {
+            "value": "pg_read_all_settings"
+          },
+          {
+            "value": "pg_monitor"
+          }
+        ],
+        [
+          {
+            "value": "pg_read_all_stats"
+          },
+          {
+            "value": "pg_monitor"
+          }
+        ],
+        [
+          {
+            "value": "pg_stat_scan_tables"
+          },
+          {
+            "value": "pg_monitor"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/role_catalog_repro_test.go:TestPgReadAllDataRoleAllowsTableReadsRepro#0001",
+      "source": "testing/go/postgres16/role_catalog_repro_test.go:TestPgReadAllDataRoleAllowsTableReadsRepro",
+      "ordinal": 1,
+      "scriptName": "pg_read_all_data allows table reads",
+      "oracle": "postgres",
+      "postgresId": "role-catalog-repro-test-testpgreadalldataroleallowstablereadsrepro-0001-select-id-secret-from-read_all_data_private",
+      "suggestedId": "role-catalog-repro-test-testpgreadalldataroleallowstablereadsrepro-0001-select-id-secret-from-read_all_data_private",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "read_all_data_user",
+      "query": "SELECT id, secret\n\t\t\t\t\t\tFROM read_all_data_private;",
+      "querySha256": "67ed0f00744eb5cd3ad24b17d9bd788faf8372b010a2f59a24c47f031ab1c304",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "visible through predefined role"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/role_catalog_repro_test.go:TestMaintenancePredefinedRolesExistRepro#0001",
+      "source": "testing/go/postgres16/role_catalog_repro_test.go:TestMaintenancePredefinedRolesExistRepro",
+      "ordinal": 1,
+      "scriptName": "maintenance predefined roles exist",
+      "oracle": "postgres",
+      "postgresId": "role-catalog-repro-test-testmaintenancepredefinedrolesexistrepro-0001-select-rolname-rolcanlogin-rolsuper-from",
+      "suggestedId": "role-catalog-repro-test-testmaintenancepredefinedrolesexistrepro-0001-select-rolname-rolcanlogin-rolsuper-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT rolname, rolcanlogin, rolsuper\n\t\t\t\t\t\tFROM pg_catalog.pg_roles\n\t\t\t\t\t\tWHERE rolname IN (\n\t\t\t\t\t\t\t'pg_maintain',\n\t\t\t\t\t\t\t'pg_signal_autovacuum_worker'\n\t\t\t\t\t\t)\n\t\t\t\t\t\tORDER BY rolname;",
+      "querySha256": "3ec2e41ba8ec01f2810f5b5129835d18c1a548c17c43db3fdb05b62ffa3fcd9a",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/role_catalog_repro_test.go:TestCheckpointPredefinedRoleExistsRepro#0001",
+      "source": "testing/go/postgres16/role_catalog_repro_test.go:TestCheckpointPredefinedRoleExistsRepro",
+      "ordinal": 1,
+      "scriptName": "checkpoint predefined role exists",
+      "oracle": "postgres",
+      "postgresId": "role-catalog-repro-test-testcheckpointpredefinedroleexistsrepro-0001-select-rolname-rolcanlogin-rolsuper-from",
+      "suggestedId": "role-catalog-repro-test-testcheckpointpredefinedroleexistsrepro-0001-select-rolname-rolcanlogin-rolsuper-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT rolname, rolcanlogin, rolsuper\n\t\t\t\t\t\tFROM pg_catalog.pg_roles\n\t\t\t\t\t\tWHERE rolname = 'pg_checkpoint';",
+      "querySha256": "d75c354e6f345e0a6449e2f48887dc78dfa54793dd37c34117b756347e09aee1",
+      "expectedRows": [
+        [
+          {
+            "value": "pg_checkpoint"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/role_catalog_repro_test.go:TestCreateSubscriptionPredefinedRoleExistsRepro#0001",
+      "source": "testing/go/postgres16/role_catalog_repro_test.go:TestCreateSubscriptionPredefinedRoleExistsRepro",
+      "ordinal": 1,
+      "scriptName": "subscription predefined role exists",
+      "oracle": "postgres",
+      "postgresId": "role-catalog-repro-test-testcreatesubscriptionpredefinedroleexistsrepro-0001-select-rolname-rolcanlogin-rolsuper-from",
+      "suggestedId": "role-catalog-repro-test-testcreatesubscriptionpredefinedroleexistsrepro-0001-select-rolname-rolcanlogin-rolsuper-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT rolname, rolcanlogin, rolsuper\n\t\t\t\t\t\tFROM pg_catalog.pg_roles\n\t\t\t\t\t\tWHERE rolname = 'pg_create_subscription';",
+      "querySha256": "ae24494dd55291d7ff6cace17fdf2e4ee7d8765a2fb377a4f5f4aa3ed61ef46e",
+      "expectedRows": [
+        [
+          {
+            "value": "pg_create_subscription"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/role_catalog_repro_test.go:TestUseReservedConnectionsPredefinedRoleExistsRepro#0001",
+      "source": "testing/go/postgres16/role_catalog_repro_test.go:TestUseReservedConnectionsPredefinedRoleExistsRepro",
+      "ordinal": 1,
+      "scriptName": "reserved-connections predefined role exists",
+      "oracle": "postgres",
+      "postgresId": "role-catalog-repro-test-testusereservedconnectionspredefinedroleexistsrepro-0001-select-rolname-rolcanlogin-rolsuper-from",
+      "suggestedId": "role-catalog-repro-test-testusereservedconnectionspredefinedroleexistsrepro-0001-select-rolname-rolcanlogin-rolsuper-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT rolname, rolcanlogin, rolsuper\n\t\t\t\t\t\tFROM pg_catalog.pg_roles\n\t\t\t\t\t\tWHERE rolname = 'pg_use_reserved_connections';",
+      "querySha256": "72598ba73bf5c5da5e9a597184cb038bb9e9e9efdc488ac03e74a0566a36c9fb",
+      "expectedRows": [
+        [
+          {
+            "value": "pg_use_reserved_connections"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/role_catalog_repro_test.go:TestCreateUserPopulatesPgShadowRepro#0001",
+      "source": "testing/go/postgres16/role_catalog_repro_test.go:TestCreateUserPopulatesPgShadowRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE USER populates pg_shadow",
+      "oracle": "postgres",
+      "postgresId": "role-catalog-repro-test-testcreateuserpopulatespgshadowrepro-0001-select-usename-usesuper-usecreatedb-from",
+      "suggestedId": "role-catalog-repro-test-testcreateuserpopulatespgshadowrepro-0001-select-usename-usesuper-usecreatedb-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT usename, usesuper, usecreatedb\n\t\t\t\t\t\tFROM pg_catalog.pg_shadow\n\t\t\t\t\t\tWHERE usename = 'shadow_catalog_user';",
+      "querySha256": "17a68f41fa991fe78fa3727330161b44249c442c5f0a35b0314c4fdd9e9cd893",
+      "expectedRows": [
+        [
+          {
+            "value": "shadow_catalog_user"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/role_catalog_repro_test.go:TestCreateUserPopulatesPgAuthidPasswordRepro#0001",
+      "source": "testing/go/postgres16/role_catalog_repro_test.go:TestCreateUserPopulatesPgAuthidPasswordRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE USER populates pg_authid rolpassword",
+      "oracle": "postgres",
+      "postgresId": "role-catalog-repro-test-testcreateuserpopulatespgauthidpasswordrepro-0001-select-rolname-rolpassword-is-not",
+      "suggestedId": "role-catalog-repro-test-testcreateuserpopulatespgauthidpasswordrepro-0001-select-rolname-rolpassword-is-not",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT rolname, rolpassword IS NOT NULL\n\t\t\t\t\t\tFROM pg_catalog.pg_authid\n\t\t\t\t\t\tWHERE rolname = 'authid_password_user';",
+      "querySha256": "b0419dd15247bd78c788b4559bb777398669d761c1ba8a4bf161937e6584bdf3",
+      "expectedRows": [
+        [
+          {
+            "value": "authid_password_user"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/role_catalog_repro_test.go:TestCreateUserPopulatesPgUserPasswordMaskRepro#0001",
+      "source": "testing/go/postgres16/role_catalog_repro_test.go:TestCreateUserPopulatesPgUserPasswordMaskRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE USER populates pg_user password mask",
+      "oracle": "postgres",
+      "postgresId": "role-catalog-repro-test-testcreateuserpopulatespguserpasswordmaskrepro-0001-select-usename-passwd-from-pg_catalog.pg_user",
+      "suggestedId": "role-catalog-repro-test-testcreateuserpopulatespguserpasswordmaskrepro-0001-select-usename-passwd-from-pg_catalog.pg_user",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT usename, passwd\n\t\t\t\t\t\tFROM pg_catalog.pg_user\n\t\t\t\t\t\tWHERE usename = 'pguser_password_user';",
+      "querySha256": "42c4be3dbf3c24051ba5fc7bf3e7eed15e48d96193638b5c152e7296af96e7a3",
+      "expectedRows": [
+        [
+          {
+            "value": "pguser_password_user"
+          },
+          {
+            "value": "********"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/role_catalog_repro_test.go:TestQuotedRoleNamesAreCaseSensitive#0001",
+      "source": "testing/go/postgres16/role_catalog_repro_test.go:TestQuotedRoleNamesAreCaseSensitive",
+      "ordinal": 1,
+      "scriptName": "quoted role names remain distinct from folded unquoted names",
+      "oracle": "postgres",
+      "postgresId": "role-catalog-repro-test-testquotedrolenamesarecasesensitive-0001-create-role-caserole-login-password",
+      "suggestedId": "role-catalog-repro-test-testquotedrolenamesarecasesensitive-0001-create-role-caserole-login-password",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE ROLE caserole LOGIN PASSWORD 'folded';",
+      "querySha256": "c1eb1916cd3c1dd4ed38b2a4d1c71c3d6ea89482290f9e3c936cc677c8831dd9",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/role_catalog_repro_test.go:TestQuotedRoleNamesAreCaseSensitive#0002",
+      "source": "testing/go/postgres16/role_catalog_repro_test.go:TestQuotedRoleNamesAreCaseSensitive",
+      "ordinal": 2,
+      "scriptName": "quoted role names remain distinct from folded unquoted names",
+      "oracle": "postgres",
+      "postgresId": "role-catalog-repro-test-testquotedrolenamesarecasesensitive-0002-select-rolname-from-pg_catalog.pg_roles-where",
+      "suggestedId": "role-catalog-repro-test-testquotedrolenamesarecasesensitive-0002-select-rolname-from-pg_catalog.pg_roles-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT rolname\n\t\t\t\t\t\tFROM pg_catalog.pg_roles\n\t\t\t\t\t\tWHERE rolname IN ('CaseRole', 'caserole')\n\t\t\t\t\t\tORDER BY rolname;",
+      "querySha256": "a03961550b879d976ec9eeb90cc3b7a1b45f9de86f59375cd0356bb61663424a",
+      "expectedRows": [
+        [
+          {
+            "value": "CaseRole"
+          }
+        ],
+        [
+          {
+            "value": "caserole"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/role_catalog_repro_test.go:TestPgAuthidRequiresCatalogPrivilegeGuard#0001",
+      "source": "testing/go/postgres16/role_catalog_repro_test.go:TestPgAuthidRequiresCatalogPrivilegeGuard",
+      "ordinal": 1,
+      "scriptName": "pg_authid requires catalog privilege",
+      "oracle": "postgres",
+      "postgresId": "role-catalog-repro-test-testpgauthidrequirescatalogprivilegeguard-0001-select-rolname-from-pg_catalog.pg_authid-limit",
+      "suggestedId": "role-catalog-repro-test-testpgauthidrequirescatalogprivilegeguard-0001-select-rolname-from-pg_catalog.pg_authid-limit",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "authid_reader",
+      "query": "SELECT rolname FROM pg_catalog.pg_authid LIMIT 1;",
+      "querySha256": "36d42b3642322ff2c38b346f28e88a7f09f41b252fb9aa9169345108f703b313",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

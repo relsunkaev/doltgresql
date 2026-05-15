@@ -1,0 +1,515 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map row_level_security_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/row_level_security_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/row_level_security_repro_test.go:TestRowLevelSecurityDefaultDenyRepro#0001",
+      "source": "testing/go/postgres16/row_level_security_repro_test.go:TestRowLevelSecurityDefaultDenyRepro",
+      "ordinal": 1,
+      "scriptName": "RLS enabled without policies hides rows from granted non-owner",
+      "oracle": "postgres",
+      "postgresId": "row-level-security-repro-test-testrowlevelsecuritydefaultdenyrepro-0001-select-id-label-from-rls_secrets",
+      "suggestedId": "row-level-security-repro-test-testrowlevelsecuritydefaultdenyrepro-0001-select-id-label-from-rls_secrets",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "rls_reader",
+      "query": "SELECT id, label FROM rls_secrets ORDER BY id;",
+      "querySha256": "316d9dfacea1644b3ce59bf61eba5406446c3b6ab5df7f559948cd561761f743",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/row_level_security_repro_test.go:TestRowLevelSecuritySelectPolicyFiltersRowsRepro#0001",
+      "source": "testing/go/postgres16/row_level_security_repro_test.go:TestRowLevelSecuritySelectPolicyFiltersRowsRepro",
+      "ordinal": 1,
+      "scriptName": "RLS SELECT policy filters visible rows",
+      "oracle": "postgres",
+      "postgresId": "row-level-security-repro-test-testrowlevelsecurityselectpolicyfiltersrowsrepro-0001-select-id-label-from-rls_policy_docs",
+      "suggestedId": "row-level-security-repro-test-testrowlevelsecurityselectpolicyfiltersrowsrepro-0001-select-id-label-from-rls_policy_docs",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "rls_policy_reader",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM rls_policy_docs\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "f9f78a21c7b4afbf7fc8648e3475ca74741285c9208837aeb0a89a9cf31c2581",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "visible"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/row_level_security_repro_test.go:TestRowSecurityOffDoesNotBypassPoliciesRepro#0001",
+      "source": "testing/go/postgres16/row_level_security_repro_test.go:TestRowSecurityOffDoesNotBypassPoliciesRepro",
+      "ordinal": 1,
+      "scriptName": "row_security off does not bypass policies",
+      "oracle": "postgres",
+      "postgresId": "row-level-security-repro-test-testrowsecurityoffdoesnotbypasspoliciesrepro-0001-select-id-label-from-rls_guc_docs",
+      "suggestedId": "row-level-security-repro-test-testrowsecurityoffdoesnotbypasspoliciesrepro-0001-select-id-label-from-rls_guc_docs",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "rls_guc_reader",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM rls_guc_docs\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "b4339550f5258bb13657e88f8154779c34fb9490219519ec1677444e30342c59",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/row_level_security_repro_test.go:TestRowLevelSecurityDefaultDenyInsertRepro#0001",
+      "source": "testing/go/postgres16/row_level_security_repro_test.go:TestRowLevelSecurityDefaultDenyInsertRepro",
+      "ordinal": 1,
+      "scriptName": "RLS enabled without policies blocks inserts from granted non-owner",
+      "oracle": "postgres",
+      "postgresId": "row-level-security-repro-test-testrowlevelsecuritydefaultdenyinsertrepro-0001-insert-into-rls_insert_secrets-values-1",
+      "suggestedId": "row-level-security-repro-test-testrowlevelsecuritydefaultdenyinsertrepro-0001-insert-into-rls_insert_secrets-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "rls_insert_user",
+      "query": "INSERT INTO rls_insert_secrets VALUES (1, 'leaked');",
+      "querySha256": "dda2b928c6a2ef5256496bf632486648fd35a2ae74497747d76b3b85cec8b591",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/row_level_security_repro_test.go:TestRowLevelSecurityDefaultDenyInsertRepro#0002",
+      "source": "testing/go/postgres16/row_level_security_repro_test.go:TestRowLevelSecurityDefaultDenyInsertRepro",
+      "ordinal": 2,
+      "scriptName": "RLS enabled without policies blocks inserts from granted non-owner",
+      "oracle": "postgres",
+      "postgresId": "row-level-security-repro-test-testrowlevelsecuritydefaultdenyinsertrepro-0002-select-count-*-from-rls_insert_secrets",
+      "suggestedId": "row-level-security-repro-test-testrowlevelsecuritydefaultdenyinsertrepro-0002-select-count-*-from-rls_insert_secrets",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) FROM rls_insert_secrets;",
+      "querySha256": "cb67b97ade5a40c9c86bc49cc578e5339c324d1623e02b626e3f8c1283bbed5f",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/row_level_security_repro_test.go:TestRowLevelSecurityInsertPolicyWithCheckRepro#0001",
+      "source": "testing/go/postgres16/row_level_security_repro_test.go:TestRowLevelSecurityInsertPolicyWithCheckRepro",
+      "ordinal": 1,
+      "scriptName": "RLS INSERT WITH CHECK rejects invalid rows",
+      "oracle": "postgres",
+      "postgresId": "row-level-security-repro-test-testrowlevelsecurityinsertpolicywithcheckrepro-0001-insert-into-rls_insert_check_docs-values-2",
+      "suggestedId": "row-level-security-repro-test-testrowlevelsecurityinsertpolicywithcheckrepro-0001-insert-into-rls_insert_check_docs-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "rls_insert_check_user",
+      "query": "INSERT INTO rls_insert_check_docs\n\t\t\t\t\t\tVALUES (2, 'other_user', 'blocked');",
+      "querySha256": "ecfc637011d37032a71003b007933ab1a4452b6c8a45dd52430bb098498767f6",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/row_level_security_repro_test.go:TestRowLevelSecurityInsertPolicyWithCheckRepro#0002",
+      "source": "testing/go/postgres16/row_level_security_repro_test.go:TestRowLevelSecurityInsertPolicyWithCheckRepro",
+      "ordinal": 2,
+      "scriptName": "RLS INSERT WITH CHECK rejects invalid rows",
+      "oracle": "postgres",
+      "postgresId": "row-level-security-repro-test-testrowlevelsecurityinsertpolicywithcheckrepro-0002-select-id-owner_name-label-from",
+      "suggestedId": "row-level-security-repro-test-testrowlevelsecurityinsertpolicywithcheckrepro-0002-select-id-owner_name-label-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, owner_name, label\n\t\t\t\t\t\tFROM rls_insert_check_docs\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "c2d7afb80e07170b06794188805de5f6494295d014e94c46f23e2b643da2cd1a",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "rls_insert_check_user"
+          },
+          {
+            "value": "allowed"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/row_level_security_repro_test.go:TestRowLevelSecurityUpdatePolicyWithCheckRepro#0001",
+      "source": "testing/go/postgres16/row_level_security_repro_test.go:TestRowLevelSecurityUpdatePolicyWithCheckRepro",
+      "ordinal": 1,
+      "scriptName": "RLS UPDATE policy filters rows and rejects invalid new rows",
+      "oracle": "postgres",
+      "postgresId": "row-level-security-repro-test-testrowlevelsecurityupdatepolicywithcheckrepro-0001-update-rls_update_policy_docs-set-label-=",
+      "suggestedId": "row-level-security-repro-test-testrowlevelsecurityupdatepolicywithcheckrepro-0001-update-rls_update_policy_docs-set-label-=",
+      "compare": "sqlstate",
+      "expectedKind": "rows",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "rls_update_policy_user",
+      "query": "UPDATE rls_update_policy_docs\n\t\t\t\t\t\tSET label = 'changed'\n\t\t\t\t\t\tWHERE id = 1\n\t\t\t\t\t\tRETURNING id;",
+      "querySha256": "a3ddd6d5d323163b935cb922586e2fbf1098ceac45ba5a35e10c8495ea32e5d2",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/row_level_security_repro_test.go:TestRowLevelSecurityUpdatePolicyWithCheckRepro#0002",
+      "source": "testing/go/postgres16/row_level_security_repro_test.go:TestRowLevelSecurityUpdatePolicyWithCheckRepro",
+      "ordinal": 2,
+      "scriptName": "RLS UPDATE policy filters rows and rejects invalid new rows",
+      "oracle": "postgres",
+      "postgresId": "row-level-security-repro-test-testrowlevelsecurityupdatepolicywithcheckrepro-0002-update-rls_update_policy_docs-set-label-=",
+      "suggestedId": "row-level-security-repro-test-testrowlevelsecurityupdatepolicywithcheckrepro-0002-update-rls_update_policy_docs-set-label-=",
+      "compare": "sqlstate",
+      "expectedKind": "rows",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "rls_update_policy_user",
+      "query": "UPDATE rls_update_policy_docs\n\t\t\t\t\t\tSET label = 'blocked'\n\t\t\t\t\t\tWHERE id = 2\n\t\t\t\t\t\tRETURNING id;",
+      "querySha256": "79f7c70d5feb43601f7bd3a19847f3e7863dd5358498f35b4a746c875f7841b2",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/row_level_security_repro_test.go:TestRowLevelSecurityUpdatePolicyWithCheckRepro#0003",
+      "source": "testing/go/postgres16/row_level_security_repro_test.go:TestRowLevelSecurityUpdatePolicyWithCheckRepro",
+      "ordinal": 3,
+      "scriptName": "RLS UPDATE policy filters rows and rejects invalid new rows",
+      "oracle": "postgres",
+      "postgresId": "row-level-security-repro-test-testrowlevelsecurityupdatepolicywithcheckrepro-0003-update-rls_update_policy_docs-set-owner_name-=",
+      "suggestedId": "row-level-security-repro-test-testrowlevelsecurityupdatepolicywithcheckrepro-0003-update-rls_update_policy_docs-set-owner_name-=",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "rls_update_policy_user",
+      "query": "UPDATE rls_update_policy_docs\n\t\t\t\t\t\tSET owner_name = 'other_user'\n\t\t\t\t\t\tWHERE id = 1;",
+      "querySha256": "2a94a7ddc99d6222084c0edc2b77259fbf783dfb508ad02df3dba1506e3bce22",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/row_level_security_repro_test.go:TestRowLevelSecurityUpdatePolicyWithCheckRepro#0004",
+      "source": "testing/go/postgres16/row_level_security_repro_test.go:TestRowLevelSecurityUpdatePolicyWithCheckRepro",
+      "ordinal": 4,
+      "scriptName": "RLS UPDATE policy filters rows and rejects invalid new rows",
+      "oracle": "postgres",
+      "postgresId": "row-level-security-repro-test-testrowlevelsecurityupdatepolicywithcheckrepro-0004-select-id-owner_name-label-from",
+      "suggestedId": "row-level-security-repro-test-testrowlevelsecurityupdatepolicywithcheckrepro-0004-select-id-owner_name-label-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, owner_name, label\n\t\t\t\t\t\tFROM rls_update_policy_docs\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "b81ce5673b3386b6f8c8132976ecdadee550429c9883e158a98eae063d7796bf",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "rls_update_policy_user"
+          },
+          {
+            "value": "changed"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "other_user"
+          },
+          {
+            "value": "blocked"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/row_level_security_repro_test.go:TestRowLevelSecurityDefaultDenyUpdateRepro#0001",
+      "source": "testing/go/postgres16/row_level_security_repro_test.go:TestRowLevelSecurityDefaultDenyUpdateRepro",
+      "ordinal": 1,
+      "scriptName": "RLS enabled without policies blocks updates from granted non-owner",
+      "oracle": "postgres",
+      "postgresId": "row-level-security-repro-test-testrowlevelsecuritydefaultdenyupdaterepro-0001-update-rls_update_secrets-set-label-=",
+      "suggestedId": "row-level-security-repro-test-testrowlevelsecuritydefaultdenyupdaterepro-0001-update-rls_update_secrets-set-label-=",
+      "compare": "sqlstate",
+      "expectedKind": "rows",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "rls_update_user",
+      "query": "UPDATE rls_update_secrets\n\t\t\t\t\t\tSET label = 'changed'\n\t\t\t\t\t\tWHERE id = 1\n\t\t\t\t\t\tRETURNING id;",
+      "querySha256": "c4ca73802274ade4c747553d73b73b8ced00a85955ceaa168f328c3d52a28636",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/row_level_security_repro_test.go:TestRowLevelSecurityDefaultDenyUpdateRepro#0002",
+      "source": "testing/go/postgres16/row_level_security_repro_test.go:TestRowLevelSecurityDefaultDenyUpdateRepro",
+      "ordinal": 2,
+      "scriptName": "RLS enabled without policies blocks updates from granted non-owner",
+      "oracle": "postgres",
+      "postgresId": "row-level-security-repro-test-testrowlevelsecuritydefaultdenyupdaterepro-0002-select-label-from-rls_update_secrets-where",
+      "suggestedId": "row-level-security-repro-test-testrowlevelsecuritydefaultdenyupdaterepro-0002-select-label-from-rls_update_secrets-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT label FROM rls_update_secrets WHERE id = 1;",
+      "querySha256": "1c765545c080c57546c7ff0fd4b0122b79a1ae252609344caea90f802afec3d9",
+      "expectedRows": [
+        [
+          {
+            "value": "changed"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/row_level_security_repro_test.go:TestRowLevelSecurityDeletePolicyFiltersRowsRepro#0001",
+      "source": "testing/go/postgres16/row_level_security_repro_test.go:TestRowLevelSecurityDeletePolicyFiltersRowsRepro",
+      "ordinal": 1,
+      "scriptName": "RLS DELETE policy filters target rows",
+      "oracle": "postgres",
+      "postgresId": "row-level-security-repro-test-testrowlevelsecuritydeletepolicyfiltersrowsrepro-0001-delete-from-rls_delete_policy_docs-returning-id",
+      "suggestedId": "row-level-security-repro-test-testrowlevelsecuritydeletepolicyfiltersrowsrepro-0001-delete-from-rls_delete_policy_docs-returning-id",
+      "compare": "sqlstate",
+      "expectedKind": "rows",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "rls_delete_policy_user",
+      "query": "DELETE FROM rls_delete_policy_docs\n\t\t\t\t\t\tRETURNING id;",
+      "querySha256": "3fe12dcbaee3ebd78290ce3784165f9decbaad32ddcde60360dd29223891778a",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/row_level_security_repro_test.go:TestRowLevelSecurityDeletePolicyFiltersRowsRepro#0002",
+      "source": "testing/go/postgres16/row_level_security_repro_test.go:TestRowLevelSecurityDeletePolicyFiltersRowsRepro",
+      "ordinal": 2,
+      "scriptName": "RLS DELETE policy filters target rows",
+      "oracle": "postgres",
+      "postgresId": "row-level-security-repro-test-testrowlevelsecuritydeletepolicyfiltersrowsrepro-0002-select-id-owner_name-label-from",
+      "suggestedId": "row-level-security-repro-test-testrowlevelsecuritydeletepolicyfiltersrowsrepro-0002-select-id-owner_name-label-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, owner_name, label\n\t\t\t\t\t\tFROM rls_delete_policy_docs\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "684ccd2a653da46eb9d2eff9018ae94ed3c6dd9c59843f2408fbdc91c720566e",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/row_level_security_repro_test.go:TestRowLevelSecurityDefaultDenyDeleteRepro#0001",
+      "source": "testing/go/postgres16/row_level_security_repro_test.go:TestRowLevelSecurityDefaultDenyDeleteRepro",
+      "ordinal": 1,
+      "scriptName": "RLS enabled without policies blocks deletes from granted non-owner",
+      "oracle": "postgres",
+      "postgresId": "row-level-security-repro-test-testrowlevelsecuritydefaultdenydeleterepro-0001-delete-from-rls_delete_secrets-where-id",
+      "suggestedId": "row-level-security-repro-test-testrowlevelsecuritydefaultdenydeleterepro-0001-delete-from-rls_delete_secrets-where-id",
+      "compare": "sqlstate",
+      "expectedKind": "rows",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "rls_delete_user",
+      "query": "DELETE FROM rls_delete_secrets\n\t\t\t\t\t\tWHERE id = 1\n\t\t\t\t\t\tRETURNING id;",
+      "querySha256": "6640df8e9bc66f17b47b8634504e9b8005ab43ed59d78494ed15d959ab94857a",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/row_level_security_repro_test.go:TestRowLevelSecurityDefaultDenyDeleteRepro#0002",
+      "source": "testing/go/postgres16/row_level_security_repro_test.go:TestRowLevelSecurityDefaultDenyDeleteRepro",
+      "ordinal": 2,
+      "scriptName": "RLS enabled without policies blocks deletes from granted non-owner",
+      "oracle": "postgres",
+      "postgresId": "row-level-security-repro-test-testrowlevelsecuritydefaultdenydeleterepro-0002-select-count-*-from-rls_delete_secrets",
+      "suggestedId": "row-level-security-repro-test-testrowlevelsecuritydefaultdenydeleterepro-0002-select-count-*-from-rls_delete_secrets",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) FROM rls_delete_secrets;",
+      "querySha256": "b71f554fdf184beb9e95d5780df435ce776f0bbd732b8243c9eb6f0358cf0ab2",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/row_level_security_repro_test.go:TestRowLevelSecurityPgClassMetadataRepro#0001",
+      "source": "testing/go/postgres16/row_level_security_repro_test.go:TestRowLevelSecurityPgClassMetadataRepro",
+      "ordinal": 1,
+      "scriptName": "RLS settings update pg_class metadata",
+      "oracle": "postgres",
+      "postgresId": "row-level-security-repro-test-testrowlevelsecuritypgclassmetadatarepro-0001-select-relrowsecurity-relforcerowsecurity-from-pg_catalog.pg_class",
+      "suggestedId": "row-level-security-repro-test-testrowlevelsecuritypgclassmetadatarepro-0001-select-relrowsecurity-relforcerowsecurity-from-pg_catalog.pg_class",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT relrowsecurity, relforcerowsecurity\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE oid = 'rls_catalog_target'::regclass;",
+      "querySha256": "1ca799cde933a1c31500c8e2f28ca9c4c0723e6faded377f2e4eda928c7c7ae5",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/row_level_security_repro_test.go:TestRowLevelSecurityNoForcePgClassMetadataRepro#0001",
+      "source": "testing/go/postgres16/row_level_security_repro_test.go:TestRowLevelSecurityNoForcePgClassMetadataRepro",
+      "ordinal": 1,
+      "scriptName": "NO FORCE RLS clears pg_class forced metadata",
+      "oracle": "postgres",
+      "postgresId": "row-level-security-repro-test-testrowlevelsecuritynoforcepgclassmetadatarepro-0001-select-relrowsecurity-relforcerowsecurity-from-pg_catalog.pg_class",
+      "suggestedId": "row-level-security-repro-test-testrowlevelsecuritynoforcepgclassmetadatarepro-0001-select-relrowsecurity-relforcerowsecurity-from-pg_catalog.pg_class",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT relrowsecurity, relforcerowsecurity\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE oid = 'rls_no_force_catalog_target'::regclass;",
+      "querySha256": "00bab7176b1b7077e3f5f731a921a8a7a0b7b7018f7cd110565765ffad4c54cf",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/row_level_security_repro_test.go:TestRowLevelSecurityTableOwnerBypassesPolicyUnlessForcedRepro#0001",
+      "source": "testing/go/postgres16/row_level_security_repro_test.go:TestRowLevelSecurityTableOwnerBypassesPolicyUnlessForcedRepro",
+      "ordinal": 1,
+      "scriptName": "table owner bypasses non-forced RLS",
+      "oracle": "postgres",
+      "postgresId": "rls-table-owner-bypasses-unforced-rls",
+      "suggestedId": "row-level-security-repro-test-testrowlevelsecuritytableownerbypassespolicyunlessforcedrepro-0001-select-id-label-from-rls_owner_bypass_docs",
+      "expectedKind": "unknown",
+      "username": "rls_owner_bypass_user",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM rls_owner_bypass_docs\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "42c6c33a5923429fca0f5635e6164870730e1d2ae2639d57537a0b86af55820b",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "visible to owner"
+          }
+        ]
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/row_level_security_repro_test.go:TestForcedRowLevelSecurityAppliesToTableOwnerRepro#0001",
+      "source": "testing/go/postgres16/row_level_security_repro_test.go:TestForcedRowLevelSecurityAppliesToTableOwnerRepro",
+      "ordinal": 1,
+      "scriptName": "FORCE RLS applies policy to table owner",
+      "oracle": "postgres",
+      "postgresId": "row-level-security-repro-test-testforcedrowlevelsecurityappliestotableownerrepro-0001-select-id-label-from-rls_force_owner_docs",
+      "suggestedId": "row-level-security-repro-test-testforcedrowlevelsecurityappliestotableownerrepro-0001-select-id-label-from-rls_force_owner_docs",
+      "compare": "sqlstate",
+      "expectedKind": "rows",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "rls_forced_owner",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM rls_force_owner_docs\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "035c18497c774c9e35bdad3fc2809353f9405ec2658282408061ea53358aed49",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/row_level_security_repro_test.go:TestRowSecurityActiveReportsPolicyStateRepro#0001",
+      "source": "testing/go/postgres16/row_level_security_repro_test.go:TestRowSecurityActiveReportsPolicyStateRepro",
+      "ordinal": 1,
+      "scriptName": "row_security_active reports active RLS",
+      "oracle": "postgres",
+      "postgresId": "row-level-security-repro-test-testrowsecurityactivereportspolicystaterepro-0001-select-row_security_active-rls_active_docs-::regclass",
+      "suggestedId": "row-level-security-repro-test-testrowsecurityactivereportspolicystaterepro-0001-select-row_security_active-rls_active_docs-::regclass",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT row_security_active('rls_active_docs'::regclass);",
+      "querySha256": "be9fedd7e54e66492e0dbd67b492b4656f8a3b2b05dff078af9cbf7e28a10310",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/row_level_security_repro_test.go:TestRowSecurityActiveReportsPolicyStateRepro#0002",
+      "source": "testing/go/postgres16/row_level_security_repro_test.go:TestRowSecurityActiveReportsPolicyStateRepro",
+      "ordinal": 2,
+      "scriptName": "row_security_active reports active RLS",
+      "oracle": "postgres",
+      "postgresId": "row-level-security-repro-test-testrowsecurityactivereportspolicystaterepro-0002-select-row_security_active-rls_active_docs-::regclass",
+      "suggestedId": "row-level-security-repro-test-testrowsecurityactivereportspolicystaterepro-0002-select-row_security_active-rls_active_docs-::regclass",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "rls_active_reader",
+      "query": "SELECT row_security_active('rls_active_docs'::regclass);",
+      "querySha256": "be9fedd7e54e66492e0dbd67b492b4656f8a3b2b05dff078af9cbf7e28a10310",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

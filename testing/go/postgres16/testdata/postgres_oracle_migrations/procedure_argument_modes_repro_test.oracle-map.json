@@ -1,0 +1,175 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map procedure_argument_modes_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/postgres16/procedure_argument_modes_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/postgres16/procedure_argument_modes_repro_test.go:TestAlterProcedureRenameRepro#0001",
+      "source": "testing/go/postgres16/procedure_argument_modes_repro_test.go:TestAlterProcedureRenameRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER PROCEDURE RENAME TO updates procedure lookup",
+      "oracle": "postgres",
+      "postgresId": "procedure-argument-modes-repro-test-testalterprocedurerenamerepro-0001-select-value-from-rename_procedure_audit",
+      "suggestedId": "procedure-argument-modes-repro-test-testalterprocedurerenamerepro-0001-select-value-from-rename_procedure_audit",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT value FROM rename_procedure_audit;",
+      "querySha256": "09a09034183bbc247fbdcb98566850c9e190fb77a414f4930a13b9341ff081d3",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/procedure_argument_modes_repro_test.go:TestAlterProcedureRenameRepro#0002",
+      "source": "testing/go/postgres16/procedure_argument_modes_repro_test.go:TestAlterProcedureRenameRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER PROCEDURE RENAME TO updates procedure lookup",
+      "oracle": "postgres",
+      "postgresId": "procedure-argument-modes-repro-test-testalterprocedurerenamerepro-0002-call-rename_procedure_old",
+      "suggestedId": "procedure-argument-modes-repro-test-testalterprocedurerenamerepro-0002-call-rename_procedure_old",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42883",
+      "errorSeverity": "ERROR",
+      "query": "CALL rename_procedure_old();",
+      "querySha256": "f225915b9b570a8dd54d1e2103061b2ee380517910cb6c5be0d09a4b1a9fbdb6",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/procedure_argument_modes_repro_test.go:TestProcedureOutArgumentsReturnRowsRepro#0001",
+      "source": "testing/go/postgres16/procedure_argument_modes_repro_test.go:TestProcedureOutArgumentsReturnRowsRepro",
+      "ordinal": 1,
+      "scriptName": "CALL returns INOUT procedure result",
+      "oracle": "postgres",
+      "postgresId": "procedure-argument-modes-repro-test-testprocedureoutargumentsreturnrowsrepro-0001-call-proc_inout_value-5",
+      "suggestedId": "procedure-argument-modes-repro-test-testprocedureoutargumentsreturnrowsrepro-0001-call-proc_inout_value-5",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CALL proc_inout_value(5);",
+      "querySha256": "d30a55b7ae9102f646babb6ccb38fee81a26290200030d45570adc1d8004b186",
+      "expectedRows": [
+        [
+          {
+            "value": "12"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/procedure_argument_modes_repro_test.go:TestProcedureOutArgumentsReturnRowsRepro#0002",
+      "source": "testing/go/postgres16/procedure_argument_modes_repro_test.go:TestProcedureOutArgumentsReturnRowsRepro",
+      "ordinal": 2,
+      "scriptName": "CALL returns OUT procedure result",
+      "oracle": "postgres",
+      "postgresId": "procedure-argument-modes-repro-test-testprocedureoutargumentsreturnrowsrepro-0002-call-proc_out_value-7-null",
+      "suggestedId": "procedure-argument-modes-repro-test-testprocedureoutargumentsreturnrowsrepro-0002-call-proc_out_value-7-null",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CALL proc_out_value(7, NULL);",
+      "querySha256": "8616ba9cbc82e39c173b7b4455dbd27ab7b3a1b63ef2b69cfe4c1a87bff72ca2",
+      "expectedRows": [
+        [
+          {
+            "value": "14"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/procedure_argument_modes_repro_test.go:TestProcedureCallNamedArgumentsRepro#0001",
+      "source": "testing/go/postgres16/procedure_argument_modes_repro_test.go:TestProcedureCallNamedArgumentsRepro",
+      "ordinal": 1,
+      "scriptName": "CALL accepts named procedure arguments",
+      "oracle": "postgres",
+      "postgresId": "procedure-argument-modes-repro-test-testprocedurecallnamedargumentsrepro-0001-select-value_seen-label_seen-from-proc_named_call_audit",
+      "suggestedId": "procedure-argument-modes-repro-test-testprocedurecallnamedargumentsrepro-0001-select-value_seen-label_seen-from-proc_named_call_audit",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT value_seen, label_seen FROM proc_named_call_audit;",
+      "querySha256": "e5446bca79a4bf41f01370670f32178be1b94f713e78ae379cfb5cf0ec83aed0",
+      "expectedRows": [
+        [
+          {
+            "value": "7"
+          },
+          {
+            "value": "custom"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/procedure_argument_modes_repro_test.go:TestProcedureSetSearchPathOptionAppliesDuringExecutionRepro#0001",
+      "source": "testing/go/postgres16/procedure_argument_modes_repro_test.go:TestProcedureSetSearchPathOptionAppliesDuringExecutionRepro",
+      "ordinal": 1,
+      "scriptName": "procedure SET search_path controls unqualified writes",
+      "oracle": "postgres",
+      "postgresId": "procedure-argument-modes-repro-test-testproceduresetsearchpathoptionappliesduringexecutionrepro-0001-select-current_setting-search_path",
+      "suggestedId": "procedure-argument-modes-repro-test-testproceduresetsearchpathoptionappliesduringexecutionrepro-0001-select-current_setting-search_path",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT current_setting('search_path');",
+      "querySha256": "914bfee6089d6ceacd0c51cb93d8093a0c94dee9279fdaf8fe5c051924485ece",
+      "expectedRows": [
+        [
+          {
+            "value": "dg_proc_set_attacker, public"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/postgres16/procedure_argument_modes_repro_test.go:TestProcedureSetSearchPathOptionAppliesDuringExecutionRepro#0002",
+      "source": "testing/go/postgres16/procedure_argument_modes_repro_test.go:TestProcedureSetSearchPathOptionAppliesDuringExecutionRepro",
+      "ordinal": 2,
+      "scriptName": "procedure SET search_path controls unqualified writes",
+      "oracle": "postgres",
+      "postgresId": "procedure-argument-modes-repro-test-testproceduresetsearchpathoptionappliesduringexecutionrepro-0002-select-select-count-*-from",
+      "suggestedId": "procedure-argument-modes-repro-test-testproceduresetsearchpathoptionappliesduringexecutionrepro-0002-select-select-count-*-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT\n\t\t\t\t\t\t(SELECT count(*) FROM dg_proc_set_safe.audit_items),\n\t\t\t\t\t\t(SELECT count(*) FROM dg_proc_set_attacker.audit_items);",
+      "querySha256": "d4a1bc965125239fad7ed4fed9e370c87d4a6115c875de3e33ffd46d5ed0e36b",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}
