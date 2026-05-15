@@ -15,6 +15,7 @@
 package functions
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -62,7 +63,11 @@ var int8out = framework.Function1{
 		if val == nil {
 			return nil, nil
 		}
-		return strconv.FormatInt(val.(int64), 10), nil
+		iVal, err := int8Value(val)
+		if err != nil {
+			return nil, err
+		}
+		return strconv.FormatInt(iVal, 10), nil
 	},
 }
 
@@ -89,10 +94,31 @@ var int8send = framework.Function1{
 	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Int64},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		iVal, err := int8Value(val)
+		if err != nil {
+			return nil, err
+		}
 		writer := utils.NewWireWriter()
-		writer.WriteInt64(val.(int64))
+		writer.WriteInt64(iVal)
 		return writer.BufferData(), nil
 	},
+}
+
+func int8Value(val any) (int64, error) {
+	switch n := val.(type) {
+	case int64:
+		return n, nil
+	case int:
+		return int64(n), nil
+	case int32:
+		return int64(n), nil
+	case int16:
+		return int64(n), nil
+	case int8:
+		return int64(n), nil
+	default:
+		return 0, fmt.Errorf("expected int8 value, got %T", val)
+	}
 }
 
 // btint8cmp represents the PostgreSQL function of int8 type compare.

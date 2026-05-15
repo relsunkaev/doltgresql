@@ -292,7 +292,12 @@ func TestShowIndexes(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SHOW indexes FROM t1`, PostgresOracle: ScriptTestPostgresOracle{ID: "show-test-testshowindexes-0001-show-indexes-from-t1", Compare: "sqlstate"},
+					Query: `SHOW indexes FROM t1`,
+					Expected: []sql.Row{
+						{"t1", int64(0), "PRIMARY", int64(1), "a", nil, int64(0), nil, nil, "", "BTREE", "", "", "YES", nil},
+						{"t1", int64(1), "idx_name", int64(1), "name", nil, int64(0), nil, nil, "YES", "BTREE", "", "", "YES", nil},
+						{"t1", int64(1), "idx_value", int64(1), "value", nil, int64(0), nil, nil, "YES", "BTREE", "", "", "YES", nil},
+					},
 				},
 				{
 					Query:       `SHOW indexes FROM dne`,

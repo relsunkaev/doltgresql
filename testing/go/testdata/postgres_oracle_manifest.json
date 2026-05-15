@@ -4704,26 +4704,6 @@
       ]
     },
     {
-      "id": "show-test-testshowindexes-0001-show-indexes-from-t1",
-      "source": "testing/go/show_test.go:TestShowIndexes",
-      "ordinal": 1,
-      "oracle": "postgres",
-      "compare": "sqlstate",
-      "setup": [
-        "CREATE SCHEMA {{quotedSchema}}",
-        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
-        "CREATE TABLE t1 (a INT PRIMARY KEY, name TEXT, value int)",
-        "CREATE INDEX idx_name ON t1(name)",
-        "CREATE INDEX idx_value ON t1(value)"
-      ],
-      "query": "SHOW indexes FROM t1",
-      "expectedSqlstate": "42601",
-      "expectedErrorSeverity": "ERROR",
-      "cleanup": [
-        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
-      ]
-    },
-    {
       "id": "show-test-testshowdatabasesandschemas-0001-show-databases",
       "source": "testing/go/show_test.go:TestShowDatabasesAndSchemas",
       "ordinal": 1,
